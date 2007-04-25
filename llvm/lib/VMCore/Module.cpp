@@ -45,6 +45,12 @@ GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
 }
+GlobalAlias *ilist_traits<GlobalAlias>::createSentinel() {
+  GlobalAlias *Ret = new GlobalAlias(Type::Int32Ty, GlobalValue::ExternalLinkage);
+  // This should not be garbage monitored.
+  LeakDetector::removeGarbageObject(Ret);
+  return Ret;
+}
 
 iplist<Function> &ilist_traits<Function>::getList(Module *M) {
   return M->getFunctionList();
@@ -52,11 +58,15 @@ iplist<Function> &ilist_traits<Function>::getList(Module *M) {
 iplist<GlobalVariable> &ilist_traits<GlobalVariable>::getList(Module *M) {
   return M->getGlobalList();
 }
+iplist<GlobalAlias> &ilist_traits<GlobalAlias>::getList(Module *M) {
+  return M->getAliasList();
+}
 
 // Explicit instantiations of SymbolTableListTraits since some of the methods
 // are not in the public header file.
 template class SymbolTableListTraits<GlobalVariable, Module>;
 template class SymbolTableListTraits<Function, Module>;
+template class SymbolTableListTraits<GlobalAlias, Module>;
 
 //===----------------------------------------------------------------------===//
 // Primitive Module methods.
@@ -72,6 +82,7 @@ Module::~Module() {
   dropAllReferences();
   GlobalList.clear();
   FunctionList.clear();
+  AliasList.clear();
   LibraryList.clear();
   delete ValSymTab;
   delete TypeSymTab;
@@ -209,6 +220,18 @@ GlobalVariable *Module::getGlobalVariable(const std::string &Name,
       return Result;
   }
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// Methods for easy access to the global variables in the module.
+//
+
+// getNamedAlias - Look up the specified global in the module symbol table.
+// If it does not exist, return null.
+//
+GlobalAlias *Module::getNamedAlias(const std::string &Name) const {
+  const ValueSymbolTable &SymTab = getValueSymbolTable();
+  return dyn_cast_or_null<GlobalAlias>(SymTab.lookup(Name));
 }
 
 //===----------------------------------------------------------------------===//

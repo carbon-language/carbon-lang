@@ -498,7 +498,8 @@ outside of the current module.</p>
 <p>It is illegal for a function <i>declaration</i>
 to have any linkage type other than "externally visible", <tt>dllimport</tt>,
 or <tt>extern_weak</tt>.</p>
-
+<p>Aliases can have only <tt>external</tt>, <tt>internal</tt> and <tt>weak</tt>
+linkages.
 </div>
 
 <!-- ======================================================================= -->
@@ -602,12 +603,11 @@ All Global Variables and Functions have one of the following visibility styles:
 
 <p>Global variables define regions of memory allocated at compilation time
 instead of run-time.  Global variables may optionally be initialized, may have
-an explicit section to be placed in, and may
-have an optional explicit alignment specified.  A variable may be defined as
-"thread_local", which means that it will not be shared by threads (each thread
-will have a separated copy of the variable).
-A variable may be defined as a global "constant," which indicates that the
-contents of the variable will <b>never</b> be modified (enabling better
+an explicit section to be placed in, and may have an optional explicit alignment
+specified.  A variable may be defined as "thread_local", which means that it
+will not be shared by threads (each thread will have a separated copy of the
+variable).  A variable may be defined as a global "constant," which indicates
+that the contents of the variable will <b>never</b> be modified (enabling better
 optimization, allowing the global data to be placed in the read-only section of
 an executable, etc).  Note that variables that need runtime initialization
 cannot be marked "constant" as there is a store to the variable.</p>
@@ -697,6 +697,27 @@ function is forced to have at least that much alignment.  All alignments must be
 a power of 2.</p>
 
 </div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="aliasstructure">Aliases</a>
+</div>
+<div class="doc_text">
+  <p>Aliases act as "second name" for the aliasee value (which can be either
+  function or global variable). Aliases may have an
+  optional <a href="#linkage">linkage type</a>, and an
+  optional <a href="#visibility">visibility style</a>.</p>
+
+  <h5>Syntax:</h5>
+
+  <pre>
+    @&lt;Name&gt; = [Linkage] [Visibility] alias &lt;AliaseeTy&gt; @&lt;Aliasee&gt;
+  </pre>
+
+</div>
+
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="paramattrs">Parameter Attributes</a></div>

@@ -141,6 +141,10 @@ namespace {  // Anonymous namespace for class
            I != E; ++I)
         visitGlobalVariable(*I);
 
+      for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end(); 
+           I != E; ++I)
+        visitGlobalAlias(*I);
+
       // If the module is broken, abort at this time.
       return abortIfBroken();
     }
@@ -179,6 +183,7 @@ namespace {  // Anonymous namespace for class
     void verifyTypeSymbolTable(TypeSymbolTable &ST);
     void visitGlobalValue(GlobalValue &GV);
     void visitGlobalVariable(GlobalVariable &GV);
+    void visitGlobalAlias(GlobalAlias &GA);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
     void visitTruncInst(TruncInst &I);
@@ -277,7 +282,9 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
   Assert1(!GV.isDeclaration() ||
           GV.hasExternalLinkage() ||
           GV.hasDLLImportLinkage() ||
-          GV.hasExternalWeakLinkage(),
+          GV.hasExternalWeakLinkage() ||
+          (isa<GlobalAlias>(GV) &&
+           (GV.hasInternalLinkage() || GV.hasWeakLinkage())),
   "Global is external, but doesn't have external or dllimport or weak linkage!",
           &GV);
 
@@ -301,6 +308,16 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
             "variable type!", &GV);
 
   visitGlobalValue(GV);
+}
+
+void Verifier::visitGlobalAlias(GlobalAlias &GA) {
+  Assert1(!GA.getName().empty(),
+          "Alias name cannot be empty!", &GA);
+  Assert1(GA.hasExternalLinkage() || GA.hasInternalLinkage() ||
+          GA.hasWeakLinkage(),
+          "Alias should have external or external weak linkage!", &GA);
+
+  visitGlobalValue(GA);
 }
 
 void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {

@@ -222,6 +222,7 @@ datalayout      { return DATALAYOUT; }
 volatile        { return VOLATILE; }
 align           { return ALIGN;  }
 section         { return SECTION; }
+alias           { return ALIAS; }
 module          { return MODULE; }
 asm             { return ASM_TOK; }
 sideeffect      { return SIDEEFFECT; }

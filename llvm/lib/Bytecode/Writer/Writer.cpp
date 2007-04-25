@@ -1088,9 +1088,34 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   output_vbr((unsigned)SectionNames.size());
   for (unsigned i = 0, e = SectionNames.size(); i != e; ++i)
     output(SectionNames[i]);
-  
+
   // Output the inline asm string.
   output(M->getModuleInlineAsm());
+
+  // Output aliases
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I) {
+    unsigned Slot = Table.getTypeSlot(I->getType());
+    assert(((Slot << 2) >> 2) == Slot && "Slot # too big!");
+    unsigned aliasLinkage = 0;
+    switch (I->getLinkage()) {
+     case GlobalValue::ExternalLinkage:
+      aliasLinkage = 0;
+      break;
+     case GlobalValue::InternalLinkage:
+      aliasLinkage = 1;
+      break;
+     case GlobalValue::WeakLinkage:
+      aliasLinkage = 2;
+      break;
+     default:
+      assert(0 && "Invalid alias linkage");
+    }    
+    output_vbr((Slot << 2) | aliasLinkage);
+    output_vbr(Table.getTypeSlot(I->getAliasee()->getType()));
+    output_vbr(Table.getSlot(I->getAliasee()));
+  }
+  output_typeid(Table.getTypeSlot(Type::VoidTy));
 }
 
 void BytecodeWriter::outputInstructions(const Function *F) {

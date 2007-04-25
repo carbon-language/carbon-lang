@@ -16,12 +16,12 @@
 
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
 
 namespace llvm {
 
-class GlobalVariable;
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
 
@@ -40,6 +40,15 @@ template<> struct ilist_traits<GlobalVariable>
   static GlobalVariable *createSentinel();
   static void destroySentinel(GlobalVariable *GV) { delete GV; }
   static iplist<GlobalVariable> &getList(Module *M);
+  static inline ValueSymbolTable *getSymTab(Module *M);
+  static int getListOffset();
+};
+template<> struct ilist_traits<GlobalAlias>
+  : public SymbolTableListTraits<GlobalAlias, Module> {
+  // createSentinel is used to create a node that marks the end of the list.
+  static GlobalAlias *createSentinel();
+  static void destroySentinel(GlobalAlias *GA) { delete GA; }
+  static iplist<GlobalAlias> &getList(Module *M);
   static inline ValueSymbolTable *getSymTab(Module *M);
   static int getListOffset();
 };
@@ -63,6 +72,8 @@ public:
   typedef iplist<GlobalVariable> GlobalListType;
   /// The type for the list of functions.
   typedef iplist<Function> FunctionListType;
+  /// The type for the list of aliases.
+  typedef iplist<GlobalAlias> AliasListType;
 
   /// The type for the list of dependent libraries.
   typedef std::vector<std::string> LibraryListType;
@@ -76,6 +87,11 @@ public:
   typedef FunctionListType::iterator                          iterator;
   /// The Function constant iterator
   typedef FunctionListType::const_iterator              const_iterator;
+
+  /// The Global Alias iterators.
+  typedef AliasListType::iterator                       alias_iterator;
+  /// The Global Alias constant iterator
+  typedef AliasListType::const_iterator           const_alias_iterator;
 
   /// The Library list iterator.
   typedef LibraryListType::const_iterator lib_iterator;
@@ -92,6 +108,7 @@ public:
 private:
   GlobalListType GlobalList;     ///< The Global Variables in the module
   FunctionListType FunctionList; ///< The Functions in the module
+  AliasListType AliasList;       ///< The Aliases in the module  
   LibraryListType LibraryList;   ///< The Libraries needed by the module
   std::string GlobalScopeAsm;    ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;   ///< Symbol table for values
@@ -175,10 +192,10 @@ public:
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return
   /// it.  This function guarantees to return a constant of pointer to the
-  /// specified function type or a ConstantExpr BitCast of that type if the 
-  /// named /// function has a different type.  This version of the method 
-  /// takes a null terminated list of function arguments, which makes it 
-  /// easier for clients to use.
+  /// specified function type or a ConstantExpr BitCast of that type if the
+  /// named function has a different type.  This version of the method takes a
+  /// null terminated list of function arguments, which makes it easier for
+  /// clients to use.
   Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy,...)
     END_WITH_NULL;
 
@@ -205,6 +222,15 @@ public:
   GlobalVariable *getNamedGlobal(const std::string &Name) const {
     return getGlobalVariable(Name, true);
   }
+
+/// @}
+/// @name Global Variable Accessors 
+/// @{
+public:
+  /// getNamedGlobal - Return the first global alias in the module with the
+  /// specified name, of arbitrary type.  This method returns null if a global
+  /// with the specified name is not found.
+  GlobalAlias *getNamedAlias(const std::string &Name) const;
   
 /// @}
 /// @name Type Accessors
@@ -235,14 +261,18 @@ public:
   const FunctionListType &getFunctionList() const     { return FunctionList; }
   /// Get the Module's list of functions.
   FunctionListType       &getFunctionList()           { return FunctionList; }
+  /// Get the Module's list of aliases (constant).
+  const AliasListType    &getAliasList() const        { return AliasList; }
+  /// Get the Module's list of aliases.
+  AliasListType          &getAliasList()              { return AliasList; }
   /// Get the symbol table of global variable and function identifiers
   const ValueSymbolTable &getValueSymbolTable() const { return *ValSymTab; }
   /// Get the Module's symbol table of global variable and function identifiers.
   ValueSymbolTable       &getValueSymbolTable()       { return *ValSymTab; }
   /// Get the symbol table of types
-  const TypeSymbolTable   &getTypeSymbolTable() const { return *TypeSymTab; }
+  const TypeSymbolTable  &getTypeSymbolTable() const  { return *TypeSymTab; }
   /// Get the Module's symbol table of types
-  TypeSymbolTable         &getTypeSymbolTable()       { return *TypeSymTab; }
+  TypeSymbolTable        &getTypeSymbolTable()        { return *TypeSymTab; }
 
 /// @}
 /// @name Global Variable Iteration
@@ -272,7 +302,7 @@ public:
   /// Get a constant iterator to the last function.
   const_iterator          end  () const { return FunctionList.end();   }
   /// Determine how many functions are in the Module's list of functions.
-  size_t                   size() const { return FunctionList.size(); }
+  size_t                  size() const  { return FunctionList.size(); }
   /// Determine if the list of functions is empty.
   bool                    empty() const { return FunctionList.empty(); }
 
@@ -283,15 +313,32 @@ public:
   /// @brief Get a constant iterator to beginning of dependent library list.
   inline lib_iterator lib_begin() const { return LibraryList.begin(); }
   /// @brief Get a constant iterator to end of dependent library list.
-  inline lib_iterator lib_end() const { return LibraryList.end(); }
+  inline lib_iterator lib_end()   const { return LibraryList.end();   }
   /// @brief Returns the number of items in the list of libraries.
-  inline size_t lib_size() const { return LibraryList.size(); }
+  inline size_t       lib_size()  const { return LibraryList.size();  }
   /// @brief Add a library to the list of dependent libraries
   void addLibrary(const std::string& Lib);
   /// @brief Remove a library from the list of dependent libraries
   void removeLibrary(const std::string& Lib);
   /// @brief Get all the libraries
   inline const LibraryListType& getLibraries() const { return LibraryList; }
+
+/// @}
+/// @name Alias Iteration
+/// @{
+public:
+  /// Get an iterator to the first alias.
+  alias_iterator       alias_begin()            { return AliasList.begin(); }
+  /// Get a constant iterator to the first alias.
+  const_alias_iterator alias_begin() const      { return AliasList.begin(); }
+  /// Get an iterator to the last alias.
+  alias_iterator       alias_end  ()            { return AliasList.end();   }
+  /// Get a constant iterator to the last alias.
+  const_alias_iterator alias_end  () const      { return AliasList.end();   }
+  /// Determine how many functions are in the Module's list of aliases.
+  size_t               alias_size () const      { return AliasList.size();  }
+  /// Determine if the list of aliases is empty.
+  bool                 alias_empty() const      { return AliasList.empty(); }
 
 /// @}
 /// @name Utility functions for printing and dumping Module objects
@@ -324,6 +371,10 @@ public:
     Module *Obj = 0;
     return unsigned(reinterpret_cast<uintptr_t>(&Obj->GlobalList));
   }
+  static unsigned getAliasListOffset() {
+    Module *Obj = 0;
+    return unsigned(reinterpret_cast<uintptr_t>(&Obj->AliasList));
+  }
 };
 
 /// An iostream inserter for modules.
@@ -342,6 +393,11 @@ ilist_traits<GlobalVariable>::getSymTab(Module *M) {
   return M ? &M->getValueSymbolTable() : 0;
 }
 
+inline ValueSymbolTable *
+ilist_traits<GlobalAlias>::getSymTab(Module *M) {
+  return M ? &M->getValueSymbolTable() : 0;
+}
+
 inline int 
 ilist_traits<Function>::getListOffset() {
   return Module::getFunctionListOffset();
@@ -350,6 +406,11 @@ ilist_traits<Function>::getListOffset() {
 inline int 
 ilist_traits<GlobalVariable>::getListOffset() {
   return Module::getGlobalVariableListOffset();
+}
+
+inline int 
+ilist_traits<GlobalAlias>::getListOffset() {
+  return Module::getAliasListOffset();
 }
 
 } // End llvm namespace

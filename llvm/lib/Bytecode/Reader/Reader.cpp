@@ -348,7 +348,7 @@ Constant* BytecodeReader::getConstantValue(unsigned TypeSlot, unsigned Slot) {
 /// with this method. The ValueTable argument must be one of ModuleValues
 /// or FunctionValues data members of this class.
 unsigned BytecodeReader::insertValue(Value *Val, unsigned type,
-                                      ValueTable &ValueTab) {
+                                     ValueTable &ValueTab) {
   if (ValueTab.size() <= type)
     ValueTab.resize(type+1);
 
@@ -1855,7 +1855,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
        case 1: Func->setLinkage(Function::DLLImportLinkage); break;
        case 2: Func->setLinkage(Function::ExternalWeakLinkage); break;        
        default: assert(0 && "Unsupported external linkage");        
-      }      
+      }
     }
     
     Func->setCallingConv(CC-1);
@@ -1918,6 +1918,53 @@ void BytecodeReader::ParseModuleGlobalInfo() {
         error("SectionID out of range for global!");
       I->first->setSection(SectionNames[I->second-1]);
     }
+
+  if (At != BlockEnd) {
+    // Read aliases...
+    unsigned VarType = read_vbr_uint();
+    while (VarType != Type::VoidTyID) { // List is terminated by Void
+      unsigned TypeSlotNo = VarType >> 2;
+      unsigned EncodedLinkage = VarType & 3;
+      unsigned AliaseeTypeSlotNo, AliaseeSlotNo;
+
+      AliaseeTypeSlotNo = read_vbr_uint();
+      AliaseeSlotNo = read_vbr_uint();
+
+      const Type *Ty = getType(TypeSlotNo);
+      if (!Ty)
+        error("Alias has no type! SlotNo=" + utostr(TypeSlotNo));
+
+      if (!isa<PointerType>(Ty))
+        error("Alias not a pointer type! Ty= " + Ty->getDescription());
+      
+      Value* V = getValue(AliaseeTypeSlotNo, AliaseeSlotNo, false);
+      if (!V)
+        error("Invalid aliasee! TypeSlotNo=" + utostr(AliaseeTypeSlotNo) +
+              " SlotNo=" + utostr(AliaseeSlotNo));
+      if (!isa<GlobalValue>(V))
+        error("Aliasee is not global value! SlotNo=" + utostr(AliaseeSlotNo));
+
+      GlobalValue::LinkageTypes Linkage;
+      switch (EncodedLinkage) {
+      case 0:
+        Linkage = GlobalValue::ExternalLinkage;
+        break;
+      case 1:
+        Linkage = GlobalValue::InternalLinkage;
+        break;
+      case 2:
+        Linkage = GlobalValue::WeakLinkage;
+        break;
+      default:
+       assert(0 && "Unsupported encoded alias linkage");
+      }
+      
+      GlobalAlias *GA = new GlobalAlias(Ty, Linkage, "",
+                                        dyn_cast<GlobalValue>(V), TheModule);
+      insertValue(GA, TypeSlotNo, ModuleValues);
+      VarType = read_vbr_uint();
+    }
+  }  
 
   // This is for future proofing... in the future extra fields may be added that
   // we don't understand, so we transparently ignore them.

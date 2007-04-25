@@ -1004,6 +1004,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <BoolVal>       OptSideEffect               // 'sideeffect' or not.
 %type <Linkage>       GVInternalLinkage GVExternalLinkage
 %type <Linkage>       FunctionDefineLinkage FunctionDeclareLinkage
+%type <Linkage>       AliasLinkage
 %type <Visibility>    GVVisibilityStyle
 
 // ValueRef - Unresolved reference to a definition or BB
@@ -1035,12 +1036,12 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 %token<StrVal> LOCALVAR GLOBALVAR LABELSTR STRINGCONSTANT ATSTRINGCONSTANT
 %type <StrVal> LocalName OptLocalName OptLocalAssign
-%type <StrVal> GlobalName OptGlobalAssign
+%type <StrVal> GlobalName OptGlobalAssign GlobalAssign
 %type <UIntVal> OptAlign OptCAlign
 %type <StrVal> OptSection SectionString
 
 %token ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
-%token DECLARE DEFINE GLOBAL CONSTANT SECTION VOLATILE THREAD_LOCAL
+%token DECLARE DEFINE GLOBAL CONSTANT SECTION ALIAS VOLATILE THREAD_LOCAL
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
 %token OPAQUE EXTERNAL TARGET TRIPLE ALIGN
@@ -1136,14 +1137,16 @@ OptLocalAssign : LocalName '=' {
 
 GlobalName : GLOBALVAR | ATSTRINGCONSTANT;
 
-OptGlobalAssign : GlobalName '=' {
-    $$ = $1;
-    CHECK_FOR_ERROR
-  }
+OptGlobalAssign : GlobalAssign
   | /*empty*/ {
     $$ = 0;
     CHECK_FOR_ERROR
   };
+
+GlobalAssign : GlobalName '=' {
+    $$ = $1;
+    CHECK_FOR_ERROR
+  }
 
 GVInternalLinkage 
   : INTERNAL    { $$ = GlobalValue::InternalLinkage; } 
@@ -1161,6 +1164,7 @@ GVExternalLinkage
 
 GVVisibilityStyle
   : /*empty*/ { $$ = GlobalValue::DefaultVisibility; }
+  | DEFAULT   { $$ = GlobalValue::DefaultVisibility; }
   | HIDDEN    { $$ = GlobalValue::HiddenVisibility;  }
   ;
 
@@ -1170,13 +1174,19 @@ FunctionDeclareLinkage
   | EXTERN_WEAK { $$ = GlobalValue::ExternalWeakLinkage; }
   ;
   
-FunctionDefineLinkage 
+FunctionDefineLinkage
   : /*empty*/   { $$ = GlobalValue::ExternalLinkage; }
   | INTERNAL    { $$ = GlobalValue::InternalLinkage; }
   | LINKONCE    { $$ = GlobalValue::LinkOnceLinkage; }
   | WEAK        { $$ = GlobalValue::WeakLinkage; }
   | DLLEXPORT   { $$ = GlobalValue::DLLExportLinkage; } 
   ; 
+
+AliasLinkage
+  : /*empty*/   { $$ = GlobalValue::ExternalLinkage; }
+  | WEAK        { $$ = GlobalValue::WeakLinkage; }
+  | INTERNAL    { $$ = GlobalValue::InternalLinkage; }
+  ;
 
 OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                  CCC_TOK            { $$ = CallingConv::C; } |
@@ -2030,6 +2040,34 @@ Definition
   } GlobalVarAttributes {
     CurGV = 0;
     CHECK_FOR_ERROR
+  }
+  | OptGlobalAssign GVVisibilityStyle ALIAS AliasLinkage ResultTypes SymbolicValueRef {
+    std::string Name($1);
+    if (Name.empty())
+      GEN_ERROR("Alias name cannot be empty")
+    const PointerType *PFTy = 0;
+    const FunctionType *Ty = 0;
+    Value* V = 0;
+    const Type* VTy = 0;
+    if (!(PFTy = dyn_cast<PointerType>($5->get())) ||
+        !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
+      VTy = $5->get();
+      V = getExistingVal(VTy, $6);
+    } else {
+      VTy = PFTy;
+      V = getExistingVal(PFTy, $6);
+    }
+    if (V == 0)
+      GEN_ERROR(std::string("Invalid aliasee for alias: ") + $1);
+    GlobalValue* Aliasee;
+    if (Aliasee = dyn_cast<GlobalValue>(V)) {
+      GlobalAlias* GA = new GlobalAlias(VTy, $4, Name, Aliasee, CurModule.CurrentModule);
+      GA->setVisibility($2);
+      InsertValue(GA, CurModule.Values);
+    } else
+      GEN_ERROR("Aliases can be created only to global values");
+    CHECK_FOR_ERROR
+    delete $5;
   }
   | TARGET TargetDefinition { 
     CHECK_FOR_ERROR

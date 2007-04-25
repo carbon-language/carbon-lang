@@ -24,6 +24,7 @@ namespace llvm {
   class Constant;
   class ConstantArray;
   class GlobalVariable;
+  class GlobalAlias;
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
   class Mangler;

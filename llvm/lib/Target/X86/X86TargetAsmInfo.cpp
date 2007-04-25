@@ -108,6 +108,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     ReadOnlySection = "\t.section\t.rodata\n";
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
+    SetDirective = "\t.set\t";
     DwarfRequiresFrameSection = false;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
     DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
@@ -137,6 +138,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     AbsoluteSectionOffsets = true;
     PrivateGlobalPrefix = "L";  // Prefix for private global symbols
     WeakRefDirective = "\t.weak\t";
+    SetDirective = "\t.set\t";
     DwarfRequiresFrameSection = false;
     DwarfSectionOffsetDirective = "\t.secrel32\t";
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"dr\"";

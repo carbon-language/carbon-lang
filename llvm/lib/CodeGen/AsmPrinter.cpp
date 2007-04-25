@@ -111,7 +111,7 @@ bool AsmPrinter::doInitialization(Module &M) {
 
 bool AsmPrinter::doFinalization(Module &M) {
   if (TAI->getWeakRefDirective()) {
-    if (ExtWeakSymbols.begin() != ExtWeakSymbols.end())
+    if (!ExtWeakSymbols.empty())
       SwitchToDataSection("");
 
     for (std::set<const GlobalValue*>::iterator i = ExtWeakSymbols.begin(),
@@ -119,6 +119,30 @@ bool AsmPrinter::doFinalization(Module &M) {
       const GlobalValue *GV = *i;
       std::string Name = Mang->getValueName(GV);
       O << TAI->getWeakRefDirective() << Name << "\n";
+    }
+  }
+
+  if (TAI->getSetDirective()) {
+    if (M.alias_size())
+      SwitchToTextSection(TAI->getTextSection());
+
+    O << "\n";
+    for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
+         I!=E; ++I) {
+      const GlobalValue *Aliasee = I->getAliasee();
+      assert(Aliasee && "Aliasee cannot be null!");
+      std::string Target   = Mang->getValueName(Aliasee);
+      std::string Name     = Mang->getValueName(I);
+
+      // Aliases with external weak linkage was emitted already
+      if (I->hasExternalLinkage())
+        O << "\t.globl\t" << Name << "\n";
+      else if (I->hasWeakLinkage())
+        O << TAI->getWeakRefDirective() << Name << "\n";
+      else if (!I->hasInternalLinkage())
+        assert(0 && "Invalid alias linkage");
+      
+      O << TAI->getSetDirective() << Name << ", " << Target << "\n";
     }
   }
 

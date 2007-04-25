@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/GlobalVariable.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Support/LeakDetector.h"
@@ -76,6 +77,7 @@ void GlobalValue::destroyConstant() {
   assert(0 && "You can't GV->destroyConstant()!");
   abort();
 }
+  
 //===----------------------------------------------------------------------===//
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
@@ -120,7 +122,6 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
     Before->getParent()->getGlobalList().insert(Before, this);
 }
 
-
 void GlobalVariable::setParent(Module *parent) {
   if (getParent())
     LeakDetector::addGarbageObject(this);
@@ -156,3 +157,45 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
   // Okay, preconditions out of the way, replace the constant initializer.
   this->setOperand(0, cast<Constant>(To));
 }
+
+//===----------------------------------------------------------------------===//
+// GlobalAlias Implementation
+//===----------------------------------------------------------------------===//
+
+GlobalAlias::GlobalAlias(const Type *Ty, LinkageTypes Link,
+                         const std::string &Name, const GlobalValue* aliasee,
+                         Module *ParentModule)
+  : GlobalValue(Ty, Value::GlobalAliasVal, 0, 0,
+                Link, Name), Aliasee(aliasee) {
+  LeakDetector::addGarbageObject(this);
+
+  if (ParentModule)
+    ParentModule->getAliasList().push_back(this);
+}
+
+void GlobalAlias::setParent(Module *parent) {
+  if (getParent())
+    LeakDetector::addGarbageObject(this);
+  Parent = parent;
+  if (getParent())
+    LeakDetector::removeGarbageObject(this);
+}
+
+void GlobalAlias::removeFromParent() {
+  getParent()->getAliasList().remove(this);
+}
+
+void GlobalAlias::eraseFromParent() {
+  getParent()->getAliasList().erase(this);
+}
+
+bool GlobalAlias::isDeclaration() const {
+  return (Aliasee && Aliasee->isDeclaration());
+}
+
+void GlobalAlias::setAliasee(const GlobalValue *GV) 
+{
+  // FIXME: Some checks?
+  Aliasee = GV;
+}
+

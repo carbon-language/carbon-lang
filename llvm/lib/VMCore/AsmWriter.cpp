@@ -166,6 +166,8 @@ static SlotMachine *createSlotMachine(const Value *V) {
     return new SlotMachine(BB->getParent());
   } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)){
     return new SlotMachine(GV->getParent());
+  } else if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(V)){
+    return new SlotMachine(GA->getParent());    
   } else if (const Function *Func = dyn_cast<Function>(V)) {
     return new SlotMachine(Func);
   }
@@ -683,12 +685,13 @@ public:
     fillTypeNameTable(M, TypeNames);
   }
 
-  inline void write(const Module *M)         { printModule(M);      }
-  inline void write(const GlobalVariable *G) { printGlobal(G);      }
-  inline void write(const Function *F)       { printFunction(F);    }
-  inline void write(const BasicBlock *BB)    { printBasicBlock(BB); }
+  inline void write(const Module *M)         { printModule(M);       }
+  inline void write(const GlobalVariable *G) { printGlobal(G);       }
+  inline void write(const GlobalAlias *G)    { printAlias(G);        }
+  inline void write(const Function *F)       { printFunction(F);     }
+  inline void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
   inline void write(const Instruction *I)    { printInstruction(*I); }
-  inline void write(const Type *Ty)          { printType(Ty);       }
+  inline void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
 
@@ -698,6 +701,7 @@ private:
   void printModule(const Module *M);
   void printTypeSymbolTable(const TypeSymbolTable &ST);
   void printGlobal(const GlobalVariable *GV);
+  void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
   void printArgument(const Argument *FA, uint16_t ParamAttrs);
   void printBasicBlock(const BasicBlock *BB);
@@ -848,6 +852,11 @@ void AssemblyWriter::printModule(const Module *M) {
   // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
+
+  // Output all aliases
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I)
+    printAlias(I);
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
@@ -888,13 +897,52 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     assert(C &&  "GlobalVar initializer isn't constant?");
     writeOperand(GV->getInitializer(), false);
   }
-  
+
   if (GV->hasSection())
     Out << ", section \"" << GV->getSection() << '"';
   if (GV->getAlignment())
     Out << ", align " << GV->getAlignment();
-  
+
   printInfoComment(*GV);
+  Out << "\n";
+}
+
+void AssemblyWriter::printAlias(const GlobalAlias *GA) {
+  Out << getLLVMName(GA->getName(), GlobalPrefix) << " = ";
+  switch (GA->getVisibility()) {
+  default: assert(0 && "Invalid visibility style!");
+  case GlobalValue::DefaultVisibility: break;
+  case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+  }
+
+  Out << "alias ";
+
+  switch (GA->getLinkage()) {
+  case GlobalValue::WeakLinkage: Out << "weak "; break;
+  case GlobalValue::InternalLinkage: Out << "internal "; break;
+  case GlobalValue::ExternalLinkage: break;
+  default:
+   assert(0 && "Invalid alias linkage");
+  }
+  
+  const GlobalValue *Aliasee = GA->getAliasee();
+  assert(Aliasee && "Aliasee cannot be null");
+    
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
+    printType(GV->getType());
+    Out << " " << getLLVMName(GV->getName(), GlobalPrefix);
+  } else if (const Function *F = dyn_cast<Function>(Aliasee)) {
+    printType(F->getFunctionType());
+    Out << "* ";
+
+    if (!F->getName().empty())
+      Out << getLLVMName(F->getName(), GlobalPrefix);
+    else
+      Out << "@\"\"";
+  } else
+    assert(0 && "Unsupported aliasee");
+
+  printInfoComment(*GA);
   Out << "\n";
 }
 
@@ -1336,6 +1384,12 @@ void GlobalVariable::print(std::ostream &o) const {
   W.write(this);
 }
 
+void GlobalAlias::print(std::ostream &o) const {
+  SlotMachine SlotTable(getParent());
+  AssemblyWriter W(o, SlotTable, getParent(), 0);
+  W.write(this);
+}
+
 void Function::print(std::ostream &o, AssemblyAnnotationWriter *AAW) const {
   SlotMachine SlotTable(getParent());
   AssemblyWriter W(o, SlotTable, getParent(), AAW);
@@ -1538,8 +1592,10 @@ void SlotMachine::CreateModuleSlot(const GlobalValue *V) {
   
   SC_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [");
-  // G = Global, F = Function, o = other
-  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' : 'F') << "]\n");
+  // G = Global, F = Function, A = Alias, o = other
+  SC_DEBUG((isa<GlobalVariable>(V) ? 'G' :
+            (isa<Function> ? 'F' :
+             (isa<GlobalAlias> ? 'A' : 'o'))) << "]\n");
 }
 
 

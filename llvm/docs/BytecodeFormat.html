@@ -943,11 +943,11 @@ all functions. The format is shown in the table below:</p>
         target triple specified, i.e. a platform-independent module).</td>
     </tr>
     <tr>
-	  <td><a href="#string">string</a></td>
-          <td class="td_left">The data layout string describing the endianness,
-            pointer size, and type alignments for which the module was written 
-            (blank means no data layout specified, i.e. a platform-independent 
-            module).</td>
+      <td><a href="#string">string</a></td>
+      <td class="td_left">The data layout string describing the endianness,
+        pointer size, and type alignments for which the module was written 
+        (blank means no data layout specified, i.e. a platform-independent 
+        module).</td>
     </tr>
     <tr>
       <td><a href="#llist">llist</a>(<a href="#string">string</a>)</td>
@@ -958,6 +958,11 @@ all functions. The format is shown in the table below:</p>
     <tr>
       <td><a href="#string">string</a></td>
       <td class="td_left">The inline asm block for this module.</td>
+    </tr>
+    <tr>
+      <td><a href="#zlist">zlist</a>(<a href="#alias">alias</a>)</td>
+      <td class="td_left">A zero terminated list of aliases occurring in the
+      module.</td>
     </tr>
   </tbody>
 </table>
@@ -1123,7 +1128,7 @@ href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
       <td><a href="#bit">bit(5-30)</a></td>
       <td class="td_left">Type slot number of type for the function.</td>
     </tr>
-                                      <tr>
+    <tr>
       <td><a href="#bit">bit(31)</a></td>
       <td class="td_left">Indicates whether an extension word follows.</td>
     </tr>
@@ -1179,6 +1184,56 @@ follows with the following fields:</p>
         into the SectionID llist in the 
         <a href="#globalinfo">Module Global Info</a> block.  If this value is 
         0 or not present, the function has an empty section string.</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="alias">Alias Field</a>
+</div>
+<div class="doc_text">
+<p>Aliases are written using 3 <a href="#uint32_vbr">uint32_vbr</a>
+that encode information about alias itself and aliasee.</p>
+
+<p>The table below provides the bit layout of
+the first <a href="#uint32_vbr">uint32_vbr</a> which describes alias itself.</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(0-1)</a></td>
+      <td class="td_left">Alias linkage. 0 - External linkage, 1 - Internal
+      linkage, 2 - Weak linkage.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(2-31)</a></td>
+      <td class="td_left">Type slot number of type for the alias itself.</td>
+    </tr>
+  </tbody>
+</table>
+
+  <p>The next two <a href="#uint32_vbr">uint32_vbr's</a> describes the
+  aliasee. </p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Type slot number of type for the aliasee.</td>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a></td>
+      <td class="td_left">Slot number of the aliasee.</td>
     </tr>
   </tbody>
 </table>

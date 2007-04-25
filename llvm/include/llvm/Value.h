@@ -30,6 +30,7 @@ class BasicBlock;
 class GlobalValue;
 class Function;
 class GlobalVariable;
+class GlobalAlias;
 class InlineAsm;
 class ValueSymbolTable;
 class TypeSymbolTable;
@@ -160,6 +161,7 @@ public:
     ArgumentVal,              // This is an instance of Argument
     BasicBlockVal,            // This is an instance of BasicBlock
     FunctionVal,              // This is an instance of Function
+    GlobalAliasVal,           // This is an instance of GlobalAlias
     GlobalVariableVal,        // This is an instance of GlobalVariable
     UndefValueVal,            // This is an instance of UndefValue
     ConstantExprVal,          // This is an instance of ConstantExpr
@@ -248,8 +250,11 @@ template <> inline bool isa_impl<Function, Value>(const Value &Val) {
 template <> inline bool isa_impl<GlobalVariable, Value>(const Value &Val) {
   return Val.getValueID() == Value::GlobalVariableVal;
 }
+template <> inline bool isa_impl<GlobalAlias, Value>(const Value &Val) {
+  return Val.getValueID() == Value::GlobalAliasVal;
+}
 template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
-  return isa<GlobalVariable>(Val) || isa<Function>(Val);
+  return isa<GlobalVariable>(Val) || isa<Function>(Val) || isa<GlobalAlias>(Val);
 }
 
 } // End llvm namespace
