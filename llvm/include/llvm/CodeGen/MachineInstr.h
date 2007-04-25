@@ -517,13 +517,12 @@ private:
   MachineOperand &AddNewOperand(bool IsImp = false) {
     assert((IsImp || !OperandsComplete()) &&
            "Trying to add an operand to a machine instr that is already done!");
-    if (NumImplicitOps == 0) { // This is true most of the time.
+    if (IsImp || NumImplicitOps == 0) { // This is true most of the time.
       Operands.push_back(MachineOperand());
       return Operands.back();
-    } else {
-      return *Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps,
-                              MachineOperand());
     }
+    return *Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps,
+                            MachineOperand());
   }
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
