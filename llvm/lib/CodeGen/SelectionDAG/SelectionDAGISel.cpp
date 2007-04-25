@@ -315,6 +315,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
     while (NumElts > 1 && !TLI.isTypeLegal(VecTy)) {
       NumElts >>= 1;
       NumVectorRegs <<= 1;
+      VecTy = getVectorType(EltTy, NumElts);
     }
 
     // Check that VecTy isn't a 1-element vector.
