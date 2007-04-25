@@ -129,6 +129,18 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
       const Instruction *User = cast<Instruction>(*UI);
       if (User->getParent() != DestBB || !isa<PHINode>(User))
         return false;
+      // If User is inside DestBB block and it is a PHINode then check 
+      // incoming value. If incoming value is not from BB then this is 
+      // a complex condition (e.g. preheaders) we want to avoid here.
+      if (User->getParent() == DestBB) {
+        if (const PHINode *UPN = dyn_cast<PHINode>(User))
+          for (unsigned I = 0, E = UPN->getNumIncomingValues(); I != E; ++I) {
+            Instruction *Insn = dyn_cast<Instruction>(UPN->getIncomingValue(I));
+            if (Insn && Insn->getParent() == BB &&
+                Insn->getParent() != UPN->getIncomingBlock(I))
+              return false;
+          }
+      }
     }
   }
   
