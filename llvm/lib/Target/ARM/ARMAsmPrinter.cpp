@@ -639,8 +639,13 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
     
     if (MCPE.isMachineConstantPoolEntry())
       EmitMachineConstantPoolValue(MCPE.Val.MachineCPVal);
-    else
+    else {
       EmitGlobalConstant(MCPE.Val.ConstVal);
+      // remember to emit the weak reference
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(MCPE.Val.ConstVal))
+        if (GV->hasExternalWeakLinkage())
+          ExtWeakSymbols.insert(GV);
+    }
   }
 }
 
