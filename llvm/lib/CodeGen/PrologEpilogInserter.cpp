@@ -305,7 +305,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
   // of stack growth -- so it's always positive.
-  int Offset = TFI.getOffsetOfLocalArea();
+  int64_t Offset = TFI.getOffsetOfLocalArea();
   if (StackGrowsDown)
     Offset = -Offset;
   assert(Offset >= 0
@@ -317,7 +317,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // so we adjust 'Offset' to point to the end of last fixed sized
   // preallocated object.
   for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
-    int FixedOff;
+    int64_t FixedOff;
     if (StackGrowsDown) {
       // The maximum distance from the stack pointer is at lower address of
       // the object -- which is given by offset. For down growing stack

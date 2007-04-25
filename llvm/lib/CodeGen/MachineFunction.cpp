@@ -342,7 +342,7 @@ void MachineFrameInfo::print(const MachineFunction &MF, std::ostream &OS) const{
     if (i < NumFixedObjects)
       OS << " fixed";
     if (i < NumFixedObjects || SO.SPOffset != -1) {
-      int Off = SO.SPOffset - ValOffset;
+      int64_t Off = SO.SPOffset - ValOffset;
       OS << " at location [SP";
       if (Off > 0)
         OS << "+" << Off;

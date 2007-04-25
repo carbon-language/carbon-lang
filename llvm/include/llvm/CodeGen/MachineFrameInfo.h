@@ -84,9 +84,9 @@ class MachineFrameInfo {
 
     // SPOffset - The offset of this object from the stack pointer on entry to
     // the function.  This field has no meaning for a variable sized element.
-    int SPOffset;
+    int64_t SPOffset;
 
-    StackObject(uint64_t Sz, unsigned Al, int SP)
+    StackObject(uint64_t Sz, unsigned Al, int64_t SP)
       : Size(Sz), Alignment(Al), SPOffset(SP) {}
   };
 
@@ -184,7 +184,7 @@ public:
 
   /// getObjectSize - Return the size of the specified object
   ///
-  int getObjectSize(int ObjectIdx) const {
+  int64_t getObjectSize(int ObjectIdx) const {
     assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Size;
   }
@@ -198,7 +198,7 @@ public:
   /// getObjectOffset - Return the assigned stack offset of the specified object
   /// from the incoming stack pointer.
   ///
-  int getObjectOffset(int ObjectIdx) const {
+  int64_t getObjectOffset(int ObjectIdx) const {
     assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].SPOffset;
   }
@@ -206,7 +206,7 @@ public:
   /// setObjectOffset - Set the stack frame offset of the specified object.  The
   /// offset is relative to the stack pointer on entry to the function.
   ///
-  void setObjectOffset(int ObjectIdx, int SPOffset) {
+  void setObjectOffset(int ObjectIdx, int64_t SPOffset) {
     assert(ObjectIdx+NumFixedObjects < Objects.size() && "Invalid Object Idx!");
     Objects[ObjectIdx+NumFixedObjects].SPOffset = SPOffset;
   }
@@ -257,7 +257,7 @@ public:
   /// All fixed objects should be created before other objects are created for
   /// efficiency.  This returns an index with a negative value.
   ///
-  int CreateFixedObject(uint64_t Size, int SPOffset) {
+  int CreateFixedObject(uint64_t Size, int64_t SPOffset) {
     assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
     Objects.insert(Objects.begin(), StackObject(Size, 1, SPOffset));
     return -++NumFixedObjects;
