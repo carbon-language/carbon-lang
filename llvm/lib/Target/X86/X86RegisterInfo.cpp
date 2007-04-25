@@ -939,7 +939,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
     // <amt>'
     MachineInstr *Old = I;
-    unsigned Amount = Old->getOperand(0).getImmedValue();
+    uint64_t Amount = Old->getOperand(0).getImm();
     if (Amount != 0) {
       // We need to keep the stack aligned properly.  To do this, we round the
       // amount of space needed for the outgoing arguments up to the next
@@ -954,7 +954,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
         // factor out the amount the callee already popped.
-        unsigned CalleeAmt = Old->getOperand(1).getImmedValue();
+        uint64_t CalleeAmt = Old->getOperand(1).getImm();
         Amount -= CalleeAmt;
         if (Amount) {
           unsigned Opc = (Amount < 128) ?
@@ -972,7 +972,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // If we are performing frame pointer elimination and if the callee pops
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
-    if (unsigned CalleeAmt = I->getOperand(1).getImmedValue()) {
+    if (uint64_t CalleeAmt = I->getOperand(1).getImm()) {
       unsigned Opc = (CalleeAmt < 128) ?
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
@@ -1001,8 +1001,8 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i).ChangeToRegister(hasFP(MF) ? FramePtr : StackPtr, false);
 
   // Now add the frame object offset to the offset from EBP.
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(i+3).getImmedValue()+SlotSize;
+  int64_t Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
+                   MI.getOperand(i+3).getImm()+SlotSize;
 
   if (!hasFP(MF))
     Offset += MF.getFrameInfo()->getStackSize();
@@ -1182,8 +1182,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     // pop EBP
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
   } else {
-    // Get the number of bytes allocated from the FrameInfo...
-    unsigned NumBytes = MFI->getStackSize();
+    // Get the number of bytes allocated from the FrameInfo.
+    uint64_t NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
       // If there is an ADD32ri or SUB32ri of ESP immediately before this
@@ -1194,12 +1194,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
              Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
             PI->getOperand(0).getReg() == StackPtr) {
-          NumBytes += PI->getOperand(2).getImmedValue();
+          NumBytes += PI->getOperand(2).getImm();
           MBB.erase(PI);
         } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
                     Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
                    PI->getOperand(0).getReg() == StackPtr) {
-          NumBytes -= PI->getOperand(2).getImmedValue();
+          NumBytes -= PI->getOperand(2).getImm();
           MBB.erase(PI);
         }
       }
