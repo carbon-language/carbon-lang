@@ -1146,7 +1146,7 @@ OptGlobalAssign : GlobalAssign
 GlobalAssign : GlobalName '=' {
     $$ = $1;
     CHECK_FOR_ERROR
-  }
+  };
 
 GVInternalLinkage 
   : INTERNAL    { $$ = GlobalValue::InternalLinkage; } 
