@@ -1036,7 +1036,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   unsigned FrameLabelId = 0;
   
   // Get the number of bytes to allocate from the FrameInfo
-  unsigned NumBytes = MFI->getStackSize();
+  uint64_t NumBytes = MFI->getStackSize();
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
@@ -1091,7 +1091,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexBegin())+SlotSize;
+    int64_t EBPOffset =
+      MFI->getObjectOffset(MFI->getObjectIndexBegin())+SlotSize;
     // Update the frame offset adjustment.
     MFI->setOffsetAdjustment(SlotSize-NumBytes);
     
@@ -1128,7 +1129,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
     for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
-      int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
+      int64_t Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       unsigned Reg = CSI[I].getReg();
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);

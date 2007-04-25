@@ -455,7 +455,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       Offset += FFI->getMaxCallFrameSize();
 
     unsigned AlignMask = TFI.getStackAlignment() - 1;
-    Offset = (Offset + AlignMask) & ~AlignMask;
+    Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
   }
 
   // Update frame info to pretend that this is part of the stack...
