@@ -31,12 +31,12 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include <map>
 
 namespace llvm {
 
 class MRegisterInfo;
-class BitVector;
 
 class LiveVariables : public MachineFunctionPass {
 public:
@@ -127,28 +127,24 @@ private:   // Intermediate data structures
   // PhysRegInfo - Keep track of which instruction was the last def/use of a
   // physical register. This is a purely local property, because all physical
   // register references as presumed dead across basic blocks.
-  std::vector<MachineInstr*> PhysRegInfo;
+  MachineInstr **PhysRegInfo;
 
   // PhysRegUsed - Keep track whether the physical register has been used after
   // its last definition. This is local property.
-  BitVector                  PhysRegUsed;
+  bool          *PhysRegUsed;
+
+  // PhysRegPartUse - Keep track of which instruction was the last partial use
+  // of a physical register (e.g. on X86 a def of EAX followed by a use of AX).
+  // This is a purely local property.
+  MachineInstr **PhysRegPartUse;
 
   // PhysRegPartDef - Keep track of a list of instructions which "partially"
   // defined the physical register (e.g. on X86 AX partially defines EAX).
   // These are turned into use/mod/write if there is a use of the register
   // later in the same block. This is local property.
-  std::vector<std::vector<MachineInstr*> > PhysRegPartDef;
+  SmallVector<MachineInstr*, 4> *PhysRegPartDef;
 
-  // PhysRegPartUse - Keep track of which instruction was the last partial use
-  // of a physical register (e.g. on X86 a def of EAX followed by a use of AX).
-  // This is a purely local property.
-  std::vector<MachineInstr*> PhysRegPartUse;
-
-  typedef std::map<const MachineBasicBlock*,
-                   std::vector<unsigned> > PHIVarInfoMap;
-
-  PHIVarInfoMap PHIVarInfo;
-
+  SmallVector<unsigned, 4> *PHIVarInfo;
 
   /// addRegisterKilled - We have determined MI kills a register. Look for the
   /// operand that uses it and mark it as IsKill.

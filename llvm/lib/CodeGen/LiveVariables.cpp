@@ -321,10 +321,15 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
   ReservedRegisters = RegInfo->getReservedRegs(mf);
 
-  PhysRegInfo.resize(RegInfo->getNumRegs(), (MachineInstr*)NULL);
-  PhysRegUsed.resize(RegInfo->getNumRegs());
-  PhysRegPartDef.resize(RegInfo->getNumRegs());
-  PhysRegPartUse.resize(RegInfo->getNumRegs(), (MachineInstr*)NULL);
+  unsigned NumRegs = RegInfo->getNumRegs();
+  PhysRegInfo = new MachineInstr*[NumRegs];
+  PhysRegUsed = new bool[NumRegs];
+  PhysRegPartUse = new MachineInstr*[NumRegs];
+  PhysRegPartDef = new SmallVector<MachineInstr*,4>[NumRegs];
+  PHIVarInfo = new SmallVector<unsigned, 4>[MF->getNumBlockIDs()];
+  std::fill(PhysRegInfo, PhysRegInfo + NumRegs, (MachineInstr*)0);
+  std::fill(PhysRegUsed, PhysRegUsed + NumRegs, false);
+  std::fill(PhysRegPartUse, PhysRegPartUse + NumRegs, (MachineInstr*)0);
 
   /// Get some space for a respectable number of registers...
   VirtRegInfo.resize(64);
@@ -399,10 +404,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // bottom of this basic block.  We check all of our successor blocks to see
     // if they have PHI nodes, and if so, we simulate an assignment at the end
     // of the current block.
-    if (!PHIVarInfo[MBB].empty()) {
-      std::vector<unsigned>& VarInfoVec = PHIVarInfo[MBB];
+    if (!PHIVarInfo[MBB->getNumber()].empty()) {
+      SmallVector<unsigned, 4>& VarInfoVec = PHIVarInfo[MBB->getNumber()];
 
-      for (std::vector<unsigned>::iterator I = VarInfoVec.begin(),
+      for (SmallVector<unsigned, 4>::iterator I = VarInfoVec.begin(),
              E = VarInfoVec.end(); I != E; ++I) {
         VarInfo& VRInfo = getVarInfo(*I);
         assert(VRInfo.DefInst && "Register use before def (or no def)!");
@@ -428,15 +433,16 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
     // Loop over PhysRegInfo, killing any registers that are available at the
     // end of the basic block.  This also resets the PhysRegInfo map.
-    for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
+    for (unsigned i = 0; i != NumRegs; ++i)
       if (PhysRegInfo[i])
         HandlePhysRegDef(i, 0);
 
     // Clear some states between BB's. These are purely local information.
-    for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i) {
+    for (unsigned i = 0; i != NumRegs; ++i) {
       PhysRegPartDef[i].clear();
-      PhysRegPartUse[i] = NULL;
+      //PhysRegPartUse[i] = NULL;
     }
+    std::fill(PhysRegPartUse, PhysRegPartUse + NumRegs, (MachineInstr*)0);
   }
 
   // Convert and transfer the dead / killed information we have gathered into
@@ -460,7 +466,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     assert(Visited.count(&*i) != 0 && "unreachable basic block found");
 #endif
 
-  PHIVarInfo.clear();
+  delete[] PhysRegInfo;
+  delete[] PhysRegUsed;
+  delete[] PhysRegPartUse;
+  delete[] PhysRegPartDef;
+  delete[] PHIVarInfo;
+
   return false;
 }
 
@@ -543,6 +554,6 @@ void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
          BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
-        PHIVarInfo[BBI->getOperand(i + 1).getMachineBasicBlock()].
+        PHIVarInfo[BBI->getOperand(i + 1).getMachineBasicBlock()->getNumber()].
           push_back(BBI->getOperand(i).getReg());
 }
