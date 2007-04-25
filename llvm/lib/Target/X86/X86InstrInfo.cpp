@@ -39,7 +39,7 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
       oc == X86::MOVSS2PSrr || oc == X86::MOVSD2PDrr ||
       oc == X86::MOVPS2SSrr || oc == X86::MOVPD2SDrr ||
       oc == X86::MMX_MOVD64rr || oc == X86::MMX_MOVQ64rr) {
-      assert(MI.getNumOperands() == 2 &&
+      assert(MI.getNumOperands() >= 2 &&
              MI.getOperand(0).isRegister() &&
              MI.getOperand(1).isRegister() &&
              "invalid register-register move instruction");

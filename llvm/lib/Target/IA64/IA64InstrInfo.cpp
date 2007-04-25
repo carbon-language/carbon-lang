@@ -30,7 +30,7 @@ bool IA64InstrInfo::isMoveInstr(const MachineInstr& MI,
   MachineOpCode oc = MI.getOpcode();
   if (oc == IA64::MOV || oc == IA64::FMOV) {
   // TODO: this doesn't detect predicate moves
-     assert(MI.getNumOperands() == 2 &&
+     assert(MI.getNumOperands() >= 2 &&
              /* MI.getOperand(0).isRegister() &&
              MI.getOperand(1).isRegister() && */
              "invalid register-register move instruction");

@@ -38,7 +38,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
   MachineOpCode oc = MI.getOpcode();
   if (oc == PPC::OR || oc == PPC::OR8 || oc == PPC::VOR ||
       oc == PPC::OR4To8 || oc == PPC::OR8To4) {                // or r1, r2, r2
-    assert(MI.getNumOperands() == 3 &&
+    assert(MI.getNumOperands() >= 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isRegister() &&
@@ -49,7 +49,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
       return true;
     }
   } else if (oc == PPC::ADDI) {             // addi r1, r2, 0
-    assert(MI.getNumOperands() == 3 &&
+    assert(MI.getNumOperands() >= 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(2).isImmediate() &&
            "invalid PPC ADDI instruction!");
@@ -59,7 +59,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
       return true;
     }
   } else if (oc == PPC::ORI) {             // ori r1, r2, 0
-    assert(MI.getNumOperands() == 3 &&
+    assert(MI.getNumOperands() >= 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isImmediate() &&
@@ -71,7 +71,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
     }
   } else if (oc == PPC::FMRS || oc == PPC::FMRD ||
              oc == PPC::FMRSD) {      // fmr r1, r2
-    assert(MI.getNumOperands() == 2 &&
+    assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            "invalid PPC FMR instruction");
@@ -79,7 +79,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
     destReg = MI.getOperand(0).getReg();
     return true;
   } else if (oc == PPC::MCRF) {             // mcrf cr1, cr2
-    assert(MI.getNumOperands() == 2 &&
+    assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            "invalid PPC MCRF instruction");

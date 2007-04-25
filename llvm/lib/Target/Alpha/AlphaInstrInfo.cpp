@@ -33,7 +33,7 @@ bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
       oc == Alpha::CPYSTs) {
     // or r1, r2, r2 
     // cpys(s|t) r1 r2 r2
-    assert(MI.getNumOperands() == 3 &&
+    assert(MI.getNumOperands() >= 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isRegister() &&
