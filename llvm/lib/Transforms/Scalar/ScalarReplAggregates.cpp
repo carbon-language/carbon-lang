@@ -65,6 +65,8 @@ namespace {
     bool isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI);
     bool isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocationInst *AI);
     int isSafeAllocaToScalarRepl(AllocationInst *AI);
+    void DoScalarReplacement(AllocationInst *AI, 
+                             std::vector<AllocationInst*> &WorkList);
     void CanonicalizeAllocaUsers(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
     
@@ -166,116 +168,123 @@ bool SROA::performScalarRepl(Function &F) {
     // We cannot transform the allocation instruction if it is an array
     // allocation (allocations OF arrays are ok though), and an allocation of a
     // scalar value cannot be decomposed at all.
-    //
-    if (AI->isArrayAllocation() ||
-        (!isa<StructType>(AI->getAllocatedType()) &&
-         !isa<ArrayType>(AI->getAllocatedType()))) continue;
-
-    // Check that all of the users of the allocation are capable of being
-    // transformed.
-    switch (isSafeAllocaToScalarRepl(AI)) {
-    default: assert(0 && "Unexpected value!");
-    case 0:  // Not safe to scalar replace.
-      continue;
-    case 1:  // Safe, but requires cleanup/canonicalizations first
-      CanonicalizeAllocaUsers(AI);
-    case 3:  // Safe to scalar replace.
-      break;
-    }
-
-    DOUT << "Found inst to xform: " << *AI;
-    Changed = true;
-
-    SmallVector<AllocaInst*, 32> ElementAllocas;
-    if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
-      ElementAllocas.reserve(ST->getNumContainedTypes());
-      for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
-        AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0, 
-                                        AI->getAlignment(),
-                                        AI->getName() + "." + utostr(i), AI);
-        ElementAllocas.push_back(NA);
-        WorkList.push_back(NA);  // Add to worklist for recursive processing
-      }
-    } else {
-      const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
-      ElementAllocas.reserve(AT->getNumElements());
-      const Type *ElTy = AT->getElementType();
-      for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
-        AllocaInst *NA = new AllocaInst(ElTy, 0, AI->getAlignment(),
-                                        AI->getName() + "." + utostr(i), AI);
-        ElementAllocas.push_back(NA);
-        WorkList.push_back(NA);  // Add to worklist for recursive processing
-      }
-    }
-
-    // Now that we have created the alloca instructions that we want to use,
-    // expand the getelementptr instructions to use them.
-    //
-    while (!AI->use_empty()) {
-      Instruction *User = cast<Instruction>(AI->use_back());
-      if (BitCastInst *BCInst = dyn_cast<BitCastInst>(User)) {
-        RewriteBitCastUserOfAlloca(BCInst, AI, ElementAllocas);
-        BCInst->eraseFromParent();
+    if (!AI->isArrayAllocation() &&
+        (isa<StructType>(AI->getAllocatedType()) ||
+         isa<ArrayType>(AI->getAllocatedType()))) {
+      // Check that all of the users of the allocation are capable of being
+      // transformed.
+      switch (isSafeAllocaToScalarRepl(AI)) {
+      default: assert(0 && "Unexpected value!");
+      case 0:  // Not safe to scalar replace.
+        break;
+      case 1:  // Safe, but requires cleanup/canonicalizations first
+        CanonicalizeAllocaUsers(AI);
+        // FALL THROUGH.
+      case 3:  // Safe to scalar replace.
+        DoScalarReplacement(AI, WorkList);
+        Changed = true;
         continue;
       }
-      
-      GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
-      // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
-      unsigned Idx =
-         (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
-
-      assert(Idx < ElementAllocas.size() && "Index out of range?");
-      AllocaInst *AllocaToUse = ElementAllocas[Idx];
-
-      Value *RepValue;
-      if (GEPI->getNumOperands() == 3) {
-        // Do not insert a new getelementptr instruction with zero indices, only
-        // to have it optimized out later.
-        RepValue = AllocaToUse;
-      } else {
-        // We are indexing deeply into the structure, so we still need a
-        // getelement ptr instruction to finish the indexing.  This may be
-        // expanded itself once the worklist is rerun.
-        //
-        SmallVector<Value*, 8> NewArgs;
-        NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
-        NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
-        RepValue = new GetElementPtrInst(AllocaToUse, &NewArgs[0],
-                                         NewArgs.size(), "", GEPI);
-        RepValue->takeName(GEPI);
-      }
-      
-      // If this GEP is to the start of the aggregate, check for memcpys.
-      if (Idx == 0) {
-        bool IsStartOfAggregateGEP = true;
-        for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i) {
-          if (!isa<ConstantInt>(GEPI->getOperand(i))) {
-            IsStartOfAggregateGEP = false;
-            break;
-          }
-          if (!cast<ConstantInt>(GEPI->getOperand(i))->isZero()) {
-            IsStartOfAggregateGEP = false;
-            break;
-          }
-        }
-        
-        if (IsStartOfAggregateGEP)
-          RewriteBitCastUserOfAlloca(GEPI, AI, ElementAllocas);
-      }
-      
-
-      // Move all of the users over to the new GEP.
-      GEPI->replaceAllUsesWith(RepValue);
-      // Delete the old GEP
-      GEPI->eraseFromParent();
     }
-
-    // Finally, delete the Alloca instruction
-    AI->eraseFromParent();
-    NumReplaced++;
+        
+    // Otherwise, couldn't process this.
   }
 
   return Changed;
+}
+
+/// DoScalarReplacement - This alloca satisfied the isSafeAllocaToScalarRepl
+/// predicate, do SROA now.
+void SROA::DoScalarReplacement(AllocationInst *AI, 
+                               std::vector<AllocationInst*> &WorkList) {
+  DOUT << "Found inst to xform: " << *AI;
+  SmallVector<AllocaInst*, 32> ElementAllocas;
+  if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
+    ElementAllocas.reserve(ST->getNumContainedTypes());
+    for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
+      AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0, 
+                                      AI->getAlignment(),
+                                      AI->getName() + "." + utostr(i), AI);
+      ElementAllocas.push_back(NA);
+      WorkList.push_back(NA);  // Add to worklist for recursive processing
+    }
+  } else {
+    const ArrayType *AT = cast<ArrayType>(AI->getAllocatedType());
+    ElementAllocas.reserve(AT->getNumElements());
+    const Type *ElTy = AT->getElementType();
+    for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
+      AllocaInst *NA = new AllocaInst(ElTy, 0, AI->getAlignment(),
+                                      AI->getName() + "." + utostr(i), AI);
+      ElementAllocas.push_back(NA);
+      WorkList.push_back(NA);  // Add to worklist for recursive processing
+    }
+  }
+
+  // Now that we have created the alloca instructions that we want to use,
+  // expand the getelementptr instructions to use them.
+  //
+  while (!AI->use_empty()) {
+    Instruction *User = cast<Instruction>(AI->use_back());
+    if (BitCastInst *BCInst = dyn_cast<BitCastInst>(User)) {
+      RewriteBitCastUserOfAlloca(BCInst, AI, ElementAllocas);
+      BCInst->eraseFromParent();
+      continue;
+    }
+    
+    GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
+    // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
+    unsigned Idx =
+       (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
+
+    assert(Idx < ElementAllocas.size() && "Index out of range?");
+    AllocaInst *AllocaToUse = ElementAllocas[Idx];
+
+    Value *RepValue;
+    if (GEPI->getNumOperands() == 3) {
+      // Do not insert a new getelementptr instruction with zero indices, only
+      // to have it optimized out later.
+      RepValue = AllocaToUse;
+    } else {
+      // We are indexing deeply into the structure, so we still need a
+      // getelement ptr instruction to finish the indexing.  This may be
+      // expanded itself once the worklist is rerun.
+      //
+      SmallVector<Value*, 8> NewArgs;
+      NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
+      NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
+      RepValue = new GetElementPtrInst(AllocaToUse, &NewArgs[0],
+                                       NewArgs.size(), "", GEPI);
+      RepValue->takeName(GEPI);
+    }
+    
+    // If this GEP is to the start of the aggregate, check for memcpys.
+    if (Idx == 0) {
+      bool IsStartOfAggregateGEP = true;
+      for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i) {
+        if (!isa<ConstantInt>(GEPI->getOperand(i))) {
+          IsStartOfAggregateGEP = false;
+          break;
+        }
+        if (!cast<ConstantInt>(GEPI->getOperand(i))->isZero()) {
+          IsStartOfAggregateGEP = false;
+          break;
+        }
+      }
+      
+      if (IsStartOfAggregateGEP)
+        RewriteBitCastUserOfAlloca(GEPI, AI, ElementAllocas);
+    }
+    
+
+    // Move all of the users over to the new GEP.
+    GEPI->replaceAllUsesWith(RepValue);
+    // Delete the old GEP
+    GEPI->eraseFromParent();
+  }
+
+  // Finally, delete the Alloca instruction
+  AI->eraseFromParent();
+  NumReplaced++;
 }
 
 
