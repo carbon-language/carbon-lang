@@ -2059,8 +2059,7 @@ Definition
     }
     if (V == 0)
       GEN_ERROR(std::string("Invalid aliasee for alias: ") + $1);
-    GlobalValue* Aliasee;
-    if (Aliasee = dyn_cast<GlobalValue>(V)) {
+    if (GlobalValue* Aliasee = dyn_cast<GlobalValue>(V)) {
       GlobalAlias* GA = new GlobalAlias(VTy, $4, Name, Aliasee, CurModule.CurrentModule);
       GA->setVisibility($2);
       InsertValue(GA, CurModule.Values);
