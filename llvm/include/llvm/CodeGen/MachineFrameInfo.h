@@ -215,11 +215,11 @@ public:
   /// all of the fixed size frame objects.  This is only valid after
   /// Prolog/Epilog code insertion has finalized the stack frame layout.
   ///
-  unsigned getStackSize() const { return StackSize; }
+  uint64_t getStackSize() const { return StackSize; }
 
   /// setStackSize - Set the size of the stack...
   ///
-  void setStackSize(unsigned Size) { StackSize = Size; }
+  void setStackSize(uint64_t Size) { StackSize = Size; }
   
   /// getOffsetAdjustment - Return the correction for frame offsets.
   ///
