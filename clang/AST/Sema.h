@@ -248,13 +248,13 @@ private:
   /// type checking unary operators (subroutines of ParseUnaryOp).
   /// The unsigned arguments are really enums (UnaryOperator::Opcode)
   ExprResult CheckIncrementDecrementOperand( // C99 6.5.3.1 
-    Expr *op, SourceLocation loc, unsigned c);
+    Expr *op, SourceLocation loc, unsigned OpCode);
   ExprResult CheckAddressOfOperand( // C99 6.5.3.2
-    Expr *op, SourceLocation loc, unsigned c);
+    Expr *op, SourceLocation loc);
   ExprResult CheckIndirectionOperand( // C99 6.5.3.2
-    Expr *op, SourceLocation loc, unsigned c);
+    Expr *op, SourceLocation loc);
   ExprResult CheckArithmeticOperand( // C99 6.5.3.3
-    Expr *op, SourceLocation OpLoc, unsigned Opc);
+    Expr *op, SourceLocation OpLoc, unsigned OpCode);
 };
 
 

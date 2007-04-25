@@ -83,6 +83,9 @@ public:
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
   QualType getSizeType() const;
 private:
+  ASTContext(const ASTContext&); // DO NOT IMPLEMENT
+  void operator=(const ASTContext&); // DO NOT IMPLEMENT
+  
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
 };

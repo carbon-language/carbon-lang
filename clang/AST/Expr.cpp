@@ -135,7 +135,7 @@ bool Expr::isLvalue() {
     return true;
   case DeclRefExprClass:
     const DeclRefExpr *d = cast<DeclRefExpr>(this);
-	  if (isa<VarDecl>(d->getDecl()))
+    if (isa<VarDecl>(d->getDecl()))
       return true;
     return false;
   case MemberExprClass:
@@ -145,12 +145,9 @@ bool Expr::isLvalue() {
     return m->getBase()->isLvalue(); // make sure "." is an lvalue
   case UnaryOperatorClass:
     const UnaryOperator *u = cast<UnaryOperator>(this);
-    if (u->getOpcode() == UnaryOperator::Deref)
-      return true;
-    return false;
+    return u->getOpcode() == UnaryOperator::Deref;
   case ParenExprClass:
-    const ParenExpr *pref = cast<ParenExpr>(this);
-    return pref->getSubExpr()->isLvalue();
+    return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
   default: 
     return false;
   }

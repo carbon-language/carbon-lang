@@ -177,9 +177,9 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   if (Opc == UnaryOperator::PreInc || Opc == UnaryOperator::PreDec)
     return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
   else if (Opc == UnaryOperator::AddrOf)
-    return CheckAddressOfOperand((Expr *)Input, OpLoc, Opc);
+    return CheckAddressOfOperand((Expr *)Input, OpLoc);
   else if (Opc == UnaryOperator::Deref) 
-    return CheckIndirectionOperand((Expr *)Input, OpLoc, Opc);
+    return CheckIndirectionOperand((Expr *)Input, OpLoc);
   else if (UnaryOperator::isArithmeticOp(Opc))
     return CheckArithmeticOperand((Expr *)Input, OpLoc, Opc);
   
@@ -431,7 +431,7 @@ static inline int GetFloatingRank(QualType t) {
 
 /// ConvertFloatingRankToComplexType - Another helper for converting floats.
 static inline QualType ConvertFloatingRankToComplexType(int rank, 
-                                                        ASTContext C) {
+                                                        ASTContext &C) {
   switch (rank) {
   case 1:
     return C.FloatComplexTy;
@@ -455,10 +455,10 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
   // if either operand is not of arithmetic type, no conversion is possible.
   if (!lhs->isArithmeticType())
     return lhs;
-  else if (!rhs->isArithmeticType())
+  if (!rhs->isArithmeticType())
     return rhs;
     
-  // if both operands have the same type, no conversion is needed.
+  // if both arithmetic types are identical, no conversion is needed.
   if (lhs == rhs) 
     return lhs;
   
@@ -473,14 +473,22 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
       return rhs;
 
     // the following code handles three different combinations:
-    // complex/complex, complex/float, float/complex.
+    // complex/complex, complex/float, float/complex. When both operands 
+    // are complex, the shorter operand is converted to the type of the longer,
+    // and that is the type of the result. This corresponds to what is done
+    // when combining two real floating-point operands. The fun begins when 
+    // size promotion occur across type domains. GetFloatingRank &
+    // ConvertFloatingRankToComplexType handle this without enumerating all
+    // permutations. It also allows us to add new types without breakage.
     int lhsRank = GetFloatingRank(lhs);
     int rhsRank = GetFloatingRank(rhs);
     
-    if (lhsRank >= rhsRank)
-      return ConvertFloatingRankToComplexType(lhsRank, Context);
-    else
-      return ConvertFloatingRankToComplexType(rhsRank, Context);
+    // From H&S 6.3.4: When one operand is complex and the other is a real
+    // floating-point type, the less precise type is converted, within it's 
+    // real or complex domain, to the precision of the other type. For example,
+    // when combining a "long double" with a "double _Complex", the 
+    // "double _Complex" is promoted to "long double _Complex".
+    return ConvertFloatingRankToComplexType(std::max(lhsRank,rhsRank), Context);
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
@@ -491,10 +499,7 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
       return rhs;
 
     // we have two real floating types, float/complex combos were handled above.
-    if (GetFloatingRank(lhs) >= GetFloatingRank(rhs))
-      return lhs;
-    else
-      return rhs;
+    return GetFloatingRank(lhs) >= GetFloatingRank(rhs) ? lhs : rhs;
   }
   // Lastly, handle two integers.
   bool t1Unsigned = lhs->isUnsignedIntegerType();
@@ -650,7 +655,7 @@ static Decl *getPrimaryDeclaration(Expr *e) {
 /// Note: The usual conversions are *not* applied to the operand of the & 
 /// operator, and its result is never an lvalue.
 Action::ExprResult
-Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
+Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Decl *dcl = getPrimaryDeclaration(op);
   
   if (!op->isLvalue()) {
@@ -664,23 +669,25 @@ Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
     if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
       if (vd->getStorageClass() == VarDecl::Register)
         return Diag(OpLoc, diag::err_typecheck_address_of_register);
-    }
+    } else 
+      assert(0 && "Unknown/unexpected decl type");
+    
     // FIXME: add check for bitfields!
   }
   // If the operand has type "type", the result has type "pointer to type".
-  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, 
+  return new UnaryOperator(op, UnaryOperator::AddrOf, 
                            Context.getPointerType(op->getType()));
 }
 
 Action::ExprResult
-Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc, unsigned OpCode) {
+Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   QualType qType = op->getType();
 
   assert(!qType.isNull() && "no type for * expression");
 
   QualType canonType = qType.getCanonicalType();
   
-  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, QualType());
+  return new UnaryOperator(op, UnaryOperator::Deref, QualType());
 }
 
 /// CheckArithmeticOperand - Check the arithmetic unary operators (C99 6.5.3.3).
