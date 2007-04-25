@@ -438,10 +438,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         HandlePhysRegDef(i, 0);
 
     // Clear some states between BB's. These are purely local information.
-    for (unsigned i = 0; i != NumRegs; ++i) {
+    for (unsigned i = 0; i != NumRegs; ++i)
       PhysRegPartDef[i].clear();
-      //PhysRegPartUse[i] = NULL;
-    }
     std::fill(PhysRegPartUse, PhysRegPartUse + NumRegs, (MachineInstr*)0);
   }
 
