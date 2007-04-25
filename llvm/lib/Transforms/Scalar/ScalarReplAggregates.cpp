@@ -24,6 +24,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
@@ -42,6 +43,7 @@ using namespace llvm;
 STATISTIC(NumReplaced,  "Number of allocas broken up");
 STATISTIC(NumPromoted,  "Number of allocas promoted");
 STATISTIC(NumConverted, "Number of aggregates converted to scalar");
+STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
 namespace {
   struct VISIBILITY_HIDDEN SROA : public FunctionPass {
@@ -76,6 +78,7 @@ namespace {
     const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
     void ConvertToScalar(AllocationInst *AI, const Type *Ty);
     void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset);
+    static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 
   RegisterPass<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
@@ -165,9 +168,10 @@ bool SROA::performScalarRepl(Function &F) {
         continue;
       }
 
-    // We cannot transform the allocation instruction if it is an array
-    // allocation (allocations OF arrays are ok though), and an allocation of a
-    // scalar value cannot be decomposed at all.
+    // Check to see if we can perform the core SROA transformation.  We cannot
+    // transform the allocation instruction if it is an array allocation
+    // (allocations OF arrays are ok though), and an allocation of a scalar
+    // value cannot be decomposed at all.
     if (!AI->isArrayAllocation() &&
         (isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType()))) {
@@ -186,6 +190,23 @@ bool SROA::performScalarRepl(Function &F) {
         continue;
       }
     }
+    
+    // Check to see if this allocation is only modified by a memcpy/memmove from
+    // a constant global.  If this is the case, we can change all users to use
+    // the constant global instead.  This is commonly produced by the CFE by
+    // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
+    // is only subsequently read.
+    if (Instruction *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
+      DOUT << "Found alloca equal to global: " << *AI;
+      DOUT << "  memcpy = " << *TheCopy;
+      Constant *TheSrc = cast<Constant>(TheCopy->getOperand(2));
+      AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
+      TheCopy->eraseFromParent();  // Don't mutate the global.
+      AI->eraseFromParent();
+      ++NumGlobals;
+      Changed = true;
+      continue;
+    }
         
     // Otherwise, couldn't process this.
   }
@@ -197,7 +218,7 @@ bool SROA::performScalarRepl(Function &F) {
 /// predicate, do SROA now.
 void SROA::DoScalarReplacement(AllocationInst *AI, 
                                std::vector<AllocationInst*> &WorkList) {
-  DOUT << "Found inst to xform: " << *AI;
+  DOUT << "Found inst to SROA: " << *AI;
   SmallVector<AllocaInst*, 32> ElementAllocas;
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
@@ -1115,4 +1136,84 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
       abort();
     }
   }
+}
+
+
+/// PointsToConstantGlobal - Return true if V (possibly indirectly) points to
+/// some part of a constant global variable.  This intentionally only accepts
+/// constant expressions because we don't can't rewrite arbitrary instructions.
+static bool PointsToConstantGlobal(Value *V) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
+    return GV->isConstant();
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::BitCast || 
+        CE->getOpcode() == Instruction::GetElementPtr)
+      return PointsToConstantGlobal(CE->getOperand(0));
+  return false;
+}
+
+/// isOnlyCopiedFromConstantGlobal - Recursively walk the uses of a (derived)
+/// pointer to an alloca.  Ignore any reads of the pointer, return false if we
+/// see any stores or other unknown uses.  If we see pointer arithmetic, keep
+/// track of whether it moves the pointer (with isOffset) but otherwise traverse
+/// the uses.  If we see a memcpy/memmove that targets an unoffseted pointer to
+/// the alloca, and if the source pointer is a pointer to a constant  global, we
+/// can optimize this.
+static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
+                                           bool isOffset) {
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
+    if (isa<LoadInst>(*UI)) {
+      // Ignore loads, they are always ok.
+      continue;
+    }
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI)) {
+      // If uses of the bitcast are ok, we are ok.
+      if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset))
+        return false;
+      continue;
+    }
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
+      // If the GEP has all zero indices, it doesn't offset the pointer.  If it
+      // doesn't, it does.
+      if (!isOnlyCopiedFromConstantGlobal(GEP, TheCopy,
+                                         isOffset || !GEP->hasAllZeroIndices()))
+        return false;
+      continue;
+    }
+    
+    // If this is isn't our memcpy/memmove, reject it as something we can't
+    // handle.
+    if (!isa<MemCpyInst>(*UI) && !isa<MemMoveInst>(*UI))
+      return false;
+
+    // If we already have seen a copy, reject the second one.
+    if (TheCopy) return false;
+    
+    // If the pointer has been offset from the start of the alloca, we can't
+    // safely handle this.
+    if (isOffset) return false;
+
+    // If the memintrinsic isn't using the alloca as the dest, reject it.
+    if (UI.getOperandNo() != 1) return false;
+    
+    MemIntrinsic *MI = cast<MemIntrinsic>(*UI);
+    
+    // If the source of the memcpy/move is not a constant global, reject it.
+    if (!PointsToConstantGlobal(MI->getOperand(2)))
+      return false;
+    
+    // Otherwise, the transform is safe.  Remember the copy instruction.
+    TheCopy = MI;
+  }
+  return true;
+}
+
+/// isOnlyCopiedFromConstantGlobal - Return true if the specified alloca is only
+/// modified by a copy from a constant global.  If we can prove this, we can
+/// replace any uses of the alloca with uses of the global directly.
+Instruction *SROA::isOnlyCopiedFromConstantGlobal(AllocationInst *AI) {
+  Instruction *TheCopy = 0;
+  if (::isOnlyCopiedFromConstantGlobal(AI, TheCopy, false))
+    return TheCopy;
+  return 0;
 }
