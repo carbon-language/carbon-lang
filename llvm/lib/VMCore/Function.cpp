@@ -307,11 +307,8 @@ Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {
     if (isa<PointerType>(CI->getOperand(0)->getType()))
       return StripPointerCasts(CI->getOperand(0));
   } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
-    for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-      if (!isa<Constant>(GEP->getOperand(i)) ||
-          !cast<Constant>(GEP->getOperand(i))->isNullValue())
-        return Ptr;
-    return StripPointerCasts(GEP->getOperand(0));
+    if (GEP->hasAllZeroIndices())
+      return StripPointerCasts(GEP->getOperand(0));
   }
   return Ptr;
 }
