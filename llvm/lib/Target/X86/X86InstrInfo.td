@@ -458,6 +458,7 @@ def JNO : IBr<0x81, (ops brtarget:$dst), "jno $dst",
 let isCall = 1, noResults = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
+              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7] in {
     def CALLpcrel32 : I<0xE8, RawFrm, (ops i32imm:$dst, variable_ops),
                         "call ${dst:call}", []>;

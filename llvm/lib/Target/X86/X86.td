@@ -64,7 +64,7 @@ def : Proc<"prescott",        [FeatureMMX, FeatureSSE1, FeatureSSE2,
 def : Proc<"nocona",          [FeatureMMX, FeatureSSE1, FeatureSSE2,
                                FeatureSSE3, Feature64Bit]>;
 def : Proc<"core2",           [FeatureMMX, FeatureSSE1, FeatureSSE2,
-                               FeatureSSE3,  Feature64Bit]>;
+                               FeatureSSE3, FeatureSSSE3, Feature64Bit]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [FeatureMMX, Feature3DNow]>;
