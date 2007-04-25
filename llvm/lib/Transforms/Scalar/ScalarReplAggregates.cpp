@@ -119,7 +119,7 @@ bool SROA::performPromotion(Function &F) {
     // the entry node
     for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
       if (AllocaInst *AI = dyn_cast<AllocaInst>(I))       // Is it an alloca?
-        if (isAllocaPromotable(AI, TD))
+        if (isAllocaPromotable(AI))
           Allocas.push_back(AI);
 
     if (Allocas.empty()) break;

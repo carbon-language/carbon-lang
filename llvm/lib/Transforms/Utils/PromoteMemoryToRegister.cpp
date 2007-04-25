@@ -52,7 +52,7 @@ struct DenseMapKeyInfo<std::pair<BasicBlock*, unsigned> > {
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca.
 ///
-bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
+bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
   // assignments to subsections of the memory unit.
 
@@ -178,7 +178,7 @@ void PromoteMem2Reg::run() {
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
     AllocaInst *AI = Allocas[AllocaNum];
 
-    assert(isAllocaPromotable(AI, TD) &&
+    assert(isAllocaPromotable(AI) &&
            "Cannot promote non-promotable alloca!");
     assert(AI->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");

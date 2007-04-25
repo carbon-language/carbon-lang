@@ -28,7 +28,7 @@ class AliasSetTracker;
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
 ///
-bool isAllocaPromotable(const AllocaInst *AI, const TargetData &TD);
+bool isAllocaPromotable(const AllocaInst *AI);
 
 /// PromoteMemToReg - Promote the specified list of alloca instructions into
 /// scalar registers, inserting PHI nodes as appropriate.  This function makes
