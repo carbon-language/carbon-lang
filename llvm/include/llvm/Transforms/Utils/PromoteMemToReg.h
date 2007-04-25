@@ -22,7 +22,6 @@ namespace llvm {
 class AllocaInst;
 class ETForest;
 class DominanceFrontier;
-class TargetData;
 class AliasSetTracker;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
@@ -40,7 +39,7 @@ bool isAllocaPromotable(const AllocaInst *AI);
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      ETForest &ET, DominanceFrontier &DF,
-                     const TargetData &TD, AliasSetTracker *AST = 0);
+                     AliasSetTracker *AST = 0);
 
 } // End llvm namespace
 
