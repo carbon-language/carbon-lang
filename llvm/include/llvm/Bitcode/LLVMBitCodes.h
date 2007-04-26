@@ -52,7 +52,10 @@ namespace bitc {
 
     // FUNCTION:  [type, callingconv, isproto, linkage, alignment, section,
     //             visibility]
-    MODULE_CODE_FUNCTION    = 8
+    MODULE_CODE_FUNCTION    = 8,
+    
+    // ALIAS: [alias type, aliasee val#, linkage]
+    MODULE_CODE_ALIAS       = 9
   };
   
   /// TYPE blocks have codes for each type primitive they use.
