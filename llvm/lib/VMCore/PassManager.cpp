@@ -183,10 +183,10 @@ public:
 
   // Delete on the fly managers.
   virtual ~MPPassManager() {
-    for (std::map<Pass *, FPPassManager *>::iterator 
+    for (std::map<Pass *, FunctionPassManagerImpl *>::iterator 
            I = OnTheFlyManagers.begin(), E = OnTheFlyManagers.end();
          I != E; ++I) {
-      FPPassManager *FPP = I->second;
+      FunctionPassManagerImpl *FPP = I->second;
       delete FPP;
     }
   }
@@ -220,7 +220,7 @@ public:
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
-      if (FPPassManager *FPP = OnTheFlyManagers[MP])
+      if (FunctionPassManagerImpl *FPP = OnTheFlyManagers[MP])
         FPP->dumpPassStructure(Offset + 2);
       dumpLastUses(MP, Offset+1);
     }
@@ -239,7 +239,7 @@ public:
  private:
   /// Collection of on the fly FPPassManagers. These managers manage
   /// function passes that are required by module passes.
-  std::map<Pass *, FPPassManager *> OnTheFlyManagers;
+  std::map<Pass *, FunctionPassManagerImpl *> OnTheFlyManagers;
 };
 
 //===----------------------------------------------------------------------===//
@@ -1227,13 +1227,20 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
            RequiredPass->getPotentialPassManagerType())
           && "Unable to handle Pass that requires lower level Analysis pass");
 
-  FPPassManager *FPP = OnTheFlyManagers[P];
+  FunctionPassManagerImpl *FPP = OnTheFlyManagers[P];
   if (!FPP) {
-    FPP = new FPPassManager(getDepth() + 1);
+    FPP = new FunctionPassManagerImpl(0);
+    // FPP is the top level manager.
+    FPP->setTopLevelManager(FPP);
+
     OnTheFlyManagers[P] = FPP;
   }
+  FPP->add(RequiredPass);
 
-  FPP->add(RequiredPass, false);
+  // Register P as the last user of RequiredPass.
+  std::vector<Pass *> LU; 
+  LU.push_back(RequiredPass);
+  FPP->setLastUser(LU,  P);
 }
 
 /// Return function pass corresponding to PassInfo PI, that is 
@@ -1242,11 +1249,11 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 Pass* MPPassManager::getOnTheFlyPass(Pass *MP, const PassInfo *PI, 
                                      Function &F) {
    AnalysisID AID = PI;
-  FPPassManager *FPP =OnTheFlyManagers[MP];
+  FunctionPassManagerImpl *FPP = OnTheFlyManagers[MP];
   assert (FPP && "Unable to find on the fly pass");
   
-  FPP->runOnFunction(F);
-  return FPP->findAnalysisPass(AID, false);
+  FPP->run(F);
+  return (dynamic_cast<PMTopLevelManager *>(FPP))->findAnalysisPass(AID);
 }
 
 
