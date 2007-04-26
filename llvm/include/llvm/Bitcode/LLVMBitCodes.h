@@ -55,7 +55,10 @@ namespace bitc {
     MODULE_CODE_FUNCTION    = 8,
     
     // ALIAS: [alias type, aliasee val#, linkage]
-    MODULE_CODE_ALIAS       = 9
+    MODULE_CODE_ALIAS       = 9,
+    
+    /// MODULE_CODE_PURGEVALS: [numvals]
+    MODULE_CODE_PURGEVALS   = 10
   };
   
   /// TYPE blocks have codes for each type primitive they use.
