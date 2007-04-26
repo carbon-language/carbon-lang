@@ -214,7 +214,7 @@ public:
   bool isComplexType() const;      // C99 6.2.5p11 (complex)
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
-  bool isArithmeticType() const;   // C99 6.2.5p18 (integral + floating)
+  bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
   bool isVoidType() const;         // C99 6.2.5p19
 
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.

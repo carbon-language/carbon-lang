@@ -130,6 +130,9 @@ bool Type::isArithmeticType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    if (TT->getDecl()->getKind() == Decl::Enum)
+      return true;
   return false;
 }
 
@@ -137,6 +140,9 @@ bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    if (TT->getDecl()->getKind() == Decl::Enum)
+      return true;
   return CanonicalType->getTypeClass() == Pointer;
 }
 
