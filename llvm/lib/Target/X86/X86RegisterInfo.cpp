@@ -1023,6 +1023,30 @@ X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   }
 }
 
+/// emitSPUpdate - Emit a series of instructions to increment / decrement the
+/// stack pointer by a constant value.
+static
+void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+                  unsigned StackPtr, int64_t NumBytes, bool Is64Bit,
+                  const TargetInstrInfo &TII) {
+  bool isSub = NumBytes < 0;
+  uint64_t Offset = isSub ? -NumBytes : NumBytes;
+  unsigned Opc = isSub
+    ? ((Offset < 128) ?
+       (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
+       (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri))
+    : ((Offset < 128) ?
+       (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
+       (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri));
+  uint64_t Chunk = (1LL << 31) - 1;
+
+  while (Offset) {
+    uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
+    BuildMI(MBB, MBBI, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(ThisVal);
+    Offset -= ThisVal;
+  }
+}
+
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -1075,11 +1099,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         MBB.insert(MBBI, MI);
       }
     } else {
-      unsigned Opc = (NumBytes < 128) ?
-        (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
-        (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
-      MI= BuildMI(TII.get(Opc), StackPtr).addReg(StackPtr).addImm(NumBytes);
-      MBB.insert(MBBI, MI);
+      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
     }
   }
 
@@ -1206,19 +1226,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         }
       }
 
-      if (NumBytes > 0) {
-        unsigned Opc = (NumBytes < 128) ?
-          (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
-          (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr)
-                .addReg(StackPtr).addImm(NumBytes);
-      } else if ((int)NumBytes < 0) {
-        unsigned Opc = (-NumBytes < 128) ?
-          (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
-          (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
-        BuildMI(MBB, MBBI, TII.get(Opc), StackPtr)
-                .addReg(StackPtr).addImm(-NumBytes);
-      }
+      if (NumBytes)
+        emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
     }
   }
 }
