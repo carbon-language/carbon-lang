@@ -28,12 +28,22 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     EnumerateValue(I);
 
+  // Enumerate the aliases.
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I)
+    EnumerateValue(I);
+  
   // Enumerate the global variable initializers.
   for (Module::const_global_iterator I = M->global_begin(),
          E = M->global_end(); I != E; ++I)
     if (I->hasInitializer())
       EnumerateValue(I->getInitializer());
 
+  // Enumerate the aliasees.
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I)
+    EnumerateValue(I->getAliasee());
+  
   // FIXME: Implement the 'string constant' optimization.
 
   // Enumerate types used by the type symbol table.

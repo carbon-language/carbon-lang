@@ -398,6 +398,47 @@ static uint64_t DecodeSignRotatedValue(uint64_t V) {
   return 1ULL << 63;
 }
 
+/// ResolveGlobalAndAliasInits - Resolve all of the initializers for global
+/// values and aliases that we can.
+bool BitcodeReader::ResolveGlobalAndAliasInits() {
+  std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInitWorklist;
+  std::vector<std::pair<GlobalAlias*, unsigned> > AliasInitWorklist;
+  
+  GlobalInitWorklist.swap(GlobalInits);
+  AliasInitWorklist.swap(AliasInits);
+
+  while (!GlobalInitWorklist.empty()) {
+    unsigned ValID = GlobalInits.back().second;
+    if (ValID >= ValueList.size()) {
+      // Not ready to resolve this yet, it requires something later in the file.
+      GlobalInitWorklist.push_back(GlobalInits.back());
+    } else {
+      if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
+        GlobalInitWorklist.back().first->setInitializer(C);
+      else
+        return Error("Global variable initializer is not a constant!");
+    }
+    GlobalInitWorklist.pop_back(); 
+  }
+
+  while (!AliasInitWorklist.empty()) {
+    unsigned ValID = AliasInitWorklist.back().second;
+    if (ValID >= ValueList.size()) {
+      AliasInits.push_back(AliasInitWorklist.back());
+    } else {
+      if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
+        AliasInitWorklist.back().first->setAliasee(
+                                            // FIXME:
+                                            cast<GlobalValue>(C));
+      else
+        return Error("Alias initializer is not a constant!");
+    }
+    AliasInitWorklist.pop_back(); 
+  }
+  return false;
+}
+
+
 bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
@@ -410,20 +451,6 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
   while (1) {
     unsigned Code = Stream.ReadCode();
     if (Code == bitc::END_BLOCK) {
-      // If there are global var inits to process, do so now.
-      if (!GlobalInits.empty()) {
-        while (!GlobalInits.empty()) {
-          unsigned ValID = GlobalInits.back().second;
-          if (ValID >= ValueList.size())
-            return Error("Invalid value ID for global var init!");
-          if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
-            GlobalInits.back().first->setInitializer(C);
-          else
-            return Error("Global variable initializer is not a constant!");
-          GlobalInits.pop_back(); 
-        }
-      }
-      
       if (NextCstNo != ValueList.size())
         return Error("Invalid constant reference!");
       
@@ -646,7 +673,8 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == bitc::END_BLOCK) {
-      if (!GlobalInits.empty())
+      ResolveGlobalAndAliasInits();
+      if (!GlobalInits.empty() || !AliasInits.empty())
         return Error("Malformed global initializer set");
       if (Stream.ReadBlockEnd())
         return Error("Error at end of module block");
@@ -672,7 +700,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
           return true;
         break;
       case bitc::CONSTANTS_BLOCK_ID:
-        if (ParseConstants(Stream))
+        if (ParseConstants(Stream) || ResolveGlobalAndAliasInits())
           return true;
         break;
       }
@@ -795,9 +823,21 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       Func->setVisibility(GetDecodedVisibility(Record[6]));
       
       ValueList.push_back(Func);
-      // TODO: remember initializer/global pair for later substitution.
       break;
     }
+    // ALIAS: [alias type, aliasee val#, linkage]
+    case bitc::MODULE_CODE_ALIAS:
+      if (Record.size() < 3)
+        return Error("Invalid MODULE_ALIAS record");
+      const Type *Ty = getTypeByID(Record[0]);
+      if (!isa<PointerType>(Ty))
+        return Error("Function not a pointer type!");
+      
+      GlobalAlias *NewGA = new GlobalAlias(Ty, GetDecodedLinkage(Record[2]),
+                                           "", 0, TheModule);
+      ValueList.push_back(NewGA);
+      AliasInits.push_back(std::make_pair(NewGA, Record[1]));
+      break;
     }
     Record.clear();
   }

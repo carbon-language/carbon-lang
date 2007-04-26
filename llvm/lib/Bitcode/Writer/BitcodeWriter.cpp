@@ -309,6 +309,18 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Stream.EmitRecord(bitc::MODULE_CODE_FUNCTION, Vals, AbbrevToUse);
     Vals.clear();
   }
+  
+  
+  // Emit the alias information.
+  for (Module::const_alias_iterator AI = M->alias_begin(), E = M->alias_end();
+       AI != E; ++AI) {
+    Vals.push_back(VE.getTypeID(AI->getType()));
+    Vals.push_back(VE.getValueID(AI->getAliasee()));
+    Vals.push_back(getEncodedLinkage(AI));
+    unsigned AbbrevToUse = 0;
+    Stream.EmitRecord(bitc::MODULE_CODE_ALIAS, Vals, AbbrevToUse);
+    Vals.clear();
+  }
 }
 
 

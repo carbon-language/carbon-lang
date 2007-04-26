@@ -57,6 +57,7 @@ class BitcodeReader : public ModuleProvider {
   std::vector<PATypeHolder> TypeList;
   BitcodeReaderValueList ValueList;
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
+  std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
 public:
   BitcodeReader() : ErrorString(0) {}
   virtual ~BitcodeReader() {}
@@ -93,6 +94,7 @@ private:
   bool ParseTypeSymbolTable(BitstreamReader &Stream);
   bool ParseValueSymbolTable(BitstreamReader &Stream);
   bool ParseConstants(BitstreamReader &Stream);
+  bool ResolveGlobalAndAliasInits();
 };
   
 } // End llvm namespace
