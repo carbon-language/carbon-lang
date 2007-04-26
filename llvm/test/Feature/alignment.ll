@@ -15,5 +15,6 @@ int *%test2() {
 	%X = malloc int, align 4
 	%Y = malloc int, uint 42, align 16
 	%Z = malloc int, align 0
+	%T = malloc int, align 256
 	ret int *%X
 }
