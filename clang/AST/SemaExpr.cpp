@@ -97,6 +97,19 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
+Sema::ExprResult Sema::ParseCharacterConstant(const LexerToken &Tok) {
+  SmallString<16> CharBuffer;
+  CharBuffer.resize(Tok.getLength());
+  const char *ThisTokBegin = &CharBuffer[0];
+  unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
+  
+  CharLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength,
+                            Tok.getLocation(), PP);
+  if (Literal.hadError())
+    return ExprResult(true);
+  return new CharacterLiteral(Literal.getValue(), Context.IntTy);
+}
+
 Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   // fast path for a single digit (which is quite common). A single digit 
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
@@ -146,7 +159,9 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
                                         ExprTy *Val) {
-  return Val;
+  Expr *e = (Expr *)Val;
+  assert((e != 0) && "ParseParenExpr() missing expr");
+  return e;
 }
 
 
@@ -312,14 +327,24 @@ Action::ExprResult Sema::
 ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
               ExprTy **Args, unsigned NumArgs,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
-  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs);
+  QualType qType = ((Expr *)Fn)->getType();
+
+  assert(!qType.isNull() && "no type for function call expression");
+
+  QualType canonType = qType.getCanonicalType();
+  QualType resultType;
+  
+  if (const FunctionType *funcT = dyn_cast<FunctionType>(canonType)) {
+    resultType = funcT->getResultType();
+  }
+  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs, resultType);
 }
 
 Action::ExprResult Sema::
 ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
   // If error parsing type, ignore.
-  if (Ty == 0) return true;
+  assert((Ty != 0) && "ParseCastExpr(): missing type");
   return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op);
 }
 
@@ -364,7 +389,10 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   }
 
   Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
-  
+
+  assert((lhs != 0) && "ParseBinOp(): missing left expression");
+  assert((rhs != 0) && "ParseBinOp(): missing right expression");
+
   if (BinaryOperator::isMultiplicativeOp(Opc)) 
     return CheckMultiplicativeOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isAdditiveOp(Opc))
@@ -379,8 +407,12 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
     return CheckBitwiseOperands(lhs, rhs, TokLoc, Opc);
   else if (BinaryOperator::isLogicalOp(Opc))
     return CheckLogicalOperands(lhs, rhs, TokLoc, Opc);
+  else if (BinaryOperator::isAssignmentOp(Opc))
+    return CheckAssignmentOperands(lhs, rhs, TokLoc, Opc);
+  else if (Opc == BinaryOperator::Comma)
+    return CheckCommaOperands(lhs, rhs, TokLoc);
     
-  assert(0 && "ParseBinOp() not handling all binary ops properly");
+  assert(0 && "ParseBinOp(): illegal binary op");
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -389,7 +421,14 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
                                             SourceLocation ColonLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
-  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS);
+  QualType lhs = ((Expr *)LHS)->getType();
+  QualType rhs = ((Expr *)RHS)->getType();
+
+  assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
+  assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
+
+  QualType canonType = rhs.getCanonicalType(); // TEMPORARY
+  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, canonType);
 }
 
 /// UsualUnaryConversion - Performs various conversions that are common to most
@@ -570,6 +609,7 @@ Action::ExprResult Sema::CheckMultiplicativeOperands(
 Action::ExprResult Sema::CheckAdditiveOperands( // C99 6.5.6
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
+  // FIXME: add type checking and fix result type
   return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
 }
 
@@ -636,7 +676,22 @@ Action::ExprResult Sema::CheckBitwiseOperands(
 Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code);
+  // FIXME: add type checking and fix result type
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
+}
+
+Action::ExprResult Sema::CheckAssignmentOperands( // C99 6.5.16
+  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+{
+  // FIXME: add type checking and fix result type
+  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
+}
+
+Action::ExprResult Sema::CheckCommaOperands( // C99 6.5.17
+  Expr *lex, Expr *rex, SourceLocation loc) 
+{
+  // FIXME: add type checking and fix result type
+  return new BinaryOperator(lex, rex, BinaryOperator::Comma, Context.IntTy);
 }
 
 Action::ExprResult
@@ -725,8 +780,10 @@ Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   assert(!qType.isNull() && "no type for * expression");
 
   QualType canonType = qType.getCanonicalType();
+
+  // FIXME: add type checking and fix result type
   
-  return new UnaryOperator(op, UnaryOperator::Deref, QualType());
+  return new UnaryOperator(op, UnaryOperator::Deref, Context.IntTy);
 }
 
 /// CheckArithmeticOperand - Check the arithmetic unary operators (C99 6.5.3.3).

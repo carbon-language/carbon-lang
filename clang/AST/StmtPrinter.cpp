@@ -215,6 +215,11 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
+void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
+  // FIXME: print value.
+  OS << "x";
+}
+
 void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   // FIXME: print value.
   OS << "1";

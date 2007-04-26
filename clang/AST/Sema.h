@@ -166,6 +166,7 @@ public:
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
   virtual ExprResult ParseNumericConstant(const LexerToken &);
+  virtual ExprResult ParseCharacterConstant(const LexerToken &);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
 
@@ -244,6 +245,10 @@ private:
     Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode); 
   ExprResult CheckLogicalOperands( // C99 6.5.[13,14]
     Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode);
+  ExprResult CheckAssignmentOperands( // C99 6.5.16
+    Expr *lex, Expr *rex, SourceLocation OpLoc, unsigned OpCode);
+  ExprResult CheckCommaOperands( // C99 6.5.17
+    Expr *lex, Expr *rex, SourceLocation OpLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
   /// The unsigned arguments are really enums (UnaryOperator::Opcode)

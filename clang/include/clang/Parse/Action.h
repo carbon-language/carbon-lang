@@ -263,6 +263,7 @@ public:
                                             tok::TokenKind Kind) {
     return 0;
   }
+  virtual ExprResult ParseCharacterConstant(const LexerToken &) { return 0; }
   virtual ExprResult ParseNumericConstant(const LexerToken &) { return 0; }
   
   /// ParseStringLiteral - The specified tokens were lexed as pasted string

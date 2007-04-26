@@ -91,6 +91,21 @@ public:
   static bool classof(const IntegerLiteral *) { return true; }
 };
 
+class CharacterLiteral : public Expr {
+  unsigned Value;
+public:
+  // type should be IntTy
+  CharacterLiteral(unsigned value, QualType type)
+    : Expr(CharacterLiteralClass, type), Value(value) {
+  }
+
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CharacterLiteralClass; 
+  }
+  static bool classof(const CharacterLiteral *) { return true; }
+};
+
 class FloatingLiteral : public Expr {
   float Value; // FIXME
 public:
@@ -242,7 +257,7 @@ class CallExpr : public Expr {
   Expr **Args;
   unsigned NumArgs;
 public:
-  CallExpr(Expr *fn, Expr **args, unsigned numargs);
+  CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t);
   ~CallExpr() {
     delete [] Args;
   }
@@ -299,7 +314,7 @@ class CastExpr : public Expr {
   Expr *Op;
 public:
   CastExpr(QualType ty, Expr *op) : 
-    Expr(CastExprClass, QualType()), Ty(ty), Op(op) {}
+    Expr(CastExprClass, ty), Ty(ty), Op(op) {}
   CastExpr(StmtClass SC, QualType ty, Expr *op) : 
     Expr(SC, QualType()), Ty(ty), Op(op) {}
   
@@ -353,6 +368,7 @@ public:
   static bool isEqualityOp(Opcode Op) { return Op == EQ || Op == NE; }
   static bool isBitwiseOp(Opcode Op) { return Op >= And && Op <= Or; }
   static bool isLogicalOp(Opcode Op) { return Op == LAnd || Op == LOr; }
+  static bool isAssignmentOp(Opcode Op) { return Op >= Assign || Op<=OrAssign; }
   
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() { return LHS; }
@@ -374,8 +390,8 @@ private:
 class ConditionalOperator : public Expr {
   Expr *Cond, *LHS, *RHS;  // Left/Middle/Right hand sides.
 public:
-  ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs)
-    : Expr(ConditionalOperatorClass, QualType()), Cond(cond), LHS(lhs), RHS(rhs) {}
+  ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs, QualType t)
+    : Expr(ConditionalOperatorClass, t), Cond(cond), LHS(lhs), RHS(rhs) {}
 
   Expr *getCond() { return Cond; }
   Expr *getLHS() { return LHS; }

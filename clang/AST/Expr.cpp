@@ -73,8 +73,8 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
-CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs)
-  : Expr(CallExprClass, fn->getType()), Fn(fn), NumArgs(numargs) {
+CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t)
+  : Expr(CallExprClass, t), Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];
