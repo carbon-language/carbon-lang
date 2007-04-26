@@ -848,15 +848,16 @@ void AssemblyWriter::printModule(const Module *M) {
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     printGlobal(I);
+  
+  // Output all aliases.
+  if (!M->alias_empty()) Out << "\n";
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I)
+    printAlias(I);
 
   // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
-
-  // Output all aliases
-  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
-       I != E; ++I)
-    printAlias(I);
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
