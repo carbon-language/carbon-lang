@@ -1073,7 +1073,7 @@ GenericValue Interpreter::executeIntToPtrInst(Value *SrcVal, const Type *DstTy,
   if (PtrSize != Src.IntVal.getBitWidth())
     Src.IntVal = Src.IntVal.zextOrTrunc(PtrSize);
 
-  Dest.PointerVal = (PointerTy) Src.IntVal.getZExtValue();
+  Dest.PointerVal = PointerTy(intptr_t(Src.IntVal.getZExtValue()));
   return Dest;
 }
 
