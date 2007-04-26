@@ -1,32 +1,32 @@
 #!/bin/sh
 #
-#  TestRunner.sh - This script is used to run arbitrary unit tests.  Unit
-#  tests must contain the command used to run them in the input file, starting
-#  immediately after a "RUN:" string.
+#  TestRunner.sh - This script is used to run the deja-gnu tests exactly like
+#  deja-gnu does, by executing the Tcl script specified in the test case's 
+#  RUN: lines. This is made possible by a simple make target supported by the
+#  test/Makefile. All this script does is invoke that make target. 
 #
-#  This runner recognizes and replaces the following strings in the command:
+#  Usage:
+#     TestRunner.sh {script_names}
 #
-#     %s - Replaced with the input name of the program, or the program to
-#          execute, as appropriate.
-#     %llvmgcc - llvm-gcc command
-#     %llvmgxx - llvm-g++ command
-#     %prcontext - prcontext.tcl script
+#     This script is typically used by cd'ing to a test directory and then
+#     running TestRunner.sh with a list of test file names you want to run.
 #
-TESTFILE=$1
-if test `dirname $TESTFILE` == . ; then
-  TESTPATH=`pwd`
-  SUBDIR=""
-  while test `basename $TESTPATH` != "test" -a ! -z "$TESTPATH" ; do
-    tmp=`basename $TESTPATH`
-    SUBDIR="$tmp/$SUBDIR"
-    TESTPATH=`dirname $TESTPATH`
-  done
-  if test -d "$TESTPATH" ; then
-    cd $TESTPATH
-    make check-one TESTONE="$SUBDIR$TESTFILE"
+for TESTFILE in "$@" ; do 
+  if test `dirname $TESTFILE` == . ; then
+    TESTPATH=`pwd`
+    SUBDIR=""
+    while test `basename $TESTPATH` != "test" -a ! -z "$TESTPATH" ; do
+      tmp=`basename $TESTPATH`
+      SUBDIR="$tmp/$SUBDIR"
+      TESTPATH=`dirname $TESTPATH`
+    done
+    if test -d "$TESTPATH" ; then
+      cd $TESTPATH
+      make check-one TESTONE="$SUBDIR$TESTFILE"
+    else
+      echo "Can't find llvm/test directory in " `pwd`
+    fi
   else
-    echo "Can't find llvm/test directory in " `pwd`
+    make check-one TESTONE=$TESTFILE
   fi
-else
-  make check-one TESTONE=$TESTFILE
-fi
+done
