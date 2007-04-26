@@ -29,11 +29,10 @@ namespace bitc {
   
     // Module sub-block id's
     TYPE_BLOCK_ID            = 1,
-    MODULEINFO_BLOCK_ID      = 2,
-    CONSTANTS_BLOCK_ID       = 3,
-    FUNCTION_BLOCK_ID        = 4,
-    TYPE_SYMTAB_BLOCK_ID     = 5,
-    VALUE_SYMTAB_BLOCK_ID    = 6
+    CONSTANTS_BLOCK_ID       = 2,
+    FUNCTION_BLOCK_ID        = 3,
+    TYPE_SYMTAB_BLOCK_ID     = 4,
+    VALUE_SYMTAB_BLOCK_ID    = 5
   };
   
   
@@ -80,7 +79,6 @@ namespace bitc {
     TYPE_CODE_VECTOR   = 13    // VECTOR: [numelts, eltty]
     // Any other type code is assumed to be an unknown type.
   };
-  
   
   // The type symbol table only has one code (TST_ENTRY_CODE).
   enum TypeSymtabCodes {
@@ -151,6 +149,36 @@ namespace bitc {
     BINOP_XOR  = 12
   };
   
+  
+  // The function body block (FUNCTION_BLOCK_ID) describes function bodies.  It
+  // can contain a constant block (CONSTANTS_BLOCK_ID).
+  enum FunctionCodes {
+    FUNC_CODE_DECLAREBLOCKS    =  1, // DECLAREBLOCKS: [n]
+    
+    FUNC_CODE_INST_BINOP       =  2, // BINOP:      [opcode, ty, opval, opval]
+    FUNC_CODE_INST_CAST        =  3, // CAST:       [opcode, ty, opty, opval]
+    FUNC_CODE_INST_GEP         =  4, // GEP:        [n, n x operands]
+    FUNC_CODE_INST_SELECT      =  5, // SELECT:     [ty, opval, opval, opval]
+    FUNC_CODE_INST_EXTRACTELT  =  6, // EXTRACTELT: [opty, opval, opval]
+    FUNC_CODE_INST_INSERTELT   =  7, // INSERTELT:  [ty, opval, opval, opval]
+    FUNC_CODE_INST_SHUFFLEVEC  =  8, // SHUFFLEVEC: [ty, opval, opval, opval]
+    FUNC_CODE_INST_CMP         =  9, // CMP:        [opty, opval, opval, pred]
+    
+    FUNC_CODE_INST_RET         = 10, // RET:        [opval<optional>]
+    FUNC_CODE_INST_BR          = 11, // BR:         [opval, bb#, bb#] or [bb#]
+    FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, opval, n, n x ops]
+    FUNC_CODE_INST_INVOKE      = 13, // INVOKE:
+    FUNC_CODE_INST_UNWIND      = 14, // UNWIND
+    FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
+    
+    FUNC_CODE_INST_MALLOC      = 16, // MALLOC: ..
+    FUNC_CODE_INST_FREE        = 17, // FREE: ..
+    FUNC_CODE_INST_ALLOCA      = 18, // ALLOCA: ..
+    FUNC_CODE_INST_LOAD        = 19, // LOAD: ..
+    FUNC_CODE_INST_STORE       = 20, // STORE: ..
+    FUNC_CODE_INST_CALL        = 21, // CALL: ..
+    FUNC_CODE_INST_VAARG       = 22  // VAARG: ..
+  };
 } // End bitc namespace
 } // End llvm namespace
 
