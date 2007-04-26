@@ -49,7 +49,9 @@ private:
   
   /// When a function is incorporated, this is the size of the Values list
   /// before incorporation.
-  unsigned ModuleLevel;
+  unsigned NumModuleValues;
+  unsigned FirstFuncConstantID;
+  unsigned FirstInstID;
   
   ValueEnumerator(const ValueEnumerator &);  // DO NOT IMPLEMENT
   void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
@@ -68,6 +70,13 @@ public:
     return I->second-1;
   }
 
+  /// getFunctionConstantRange - Return the range of values that corresponds to
+  /// function-local constants.
+  void getFunctionConstantRange(unsigned &Start, unsigned &End) const {
+    Start = FirstFuncConstantID;
+    End = FirstInstID;
+  }
+  
   const ValueList &getValues() const { return Values; }
   const TypeList &getTypes() const { return Types; }
   const std::vector<const BasicBlock*> &getBasicBlocks() const {

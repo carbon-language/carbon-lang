@@ -162,13 +162,15 @@ int ValueEnumerator::PurgeAggregateValues() {
 }
 
 void ValueEnumerator::incorporateFunction(const Function &F) {
-  ModuleLevel = Values.size();
+  NumModuleValues = Values.size();
   
   // Adding function arguments to the value table.
   for(Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end();
       I != E; ++I)
     EnumerateValue(I);
 
+  FirstFuncConstantID = Values.size();
+  
   // Add all function-level constants to the value table.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
@@ -182,6 +184,8 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
     BasicBlocks.push_back(BB);
   }
   
+  FirstInstID = Values.size();
+  
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
@@ -193,12 +197,12 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
 
 void ValueEnumerator::purgeFunction() {
   /// Remove purged values from the ValueMap.
-  for (unsigned i = ModuleLevel, e = Values.size(); i != e; ++i)
+  for (unsigned i = NumModuleValues, e = Values.size(); i != e; ++i)
     ValueMap.erase(Values[i].first);
   for (unsigned i = 0, e = BasicBlocks.size(); i != e; ++i)
     ValueMap.erase(BasicBlocks[i]);
     
-  Values.resize(ModuleLevel);
+  Values.resize(NumModuleValues);
   BasicBlocks.clear();
 }
 

@@ -17,6 +17,7 @@
 #include "ValueEnumerator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
@@ -331,7 +332,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   
   Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 2);
 
-  // FIXME: Install and use abbrevs to reduce size.
+  // FIXME: Install and use abbrevs to reduce size.  Install them globally so
+  // they don't need to be reemitted for each function body.
   
   SmallVector<uint64_t, 64> Record;
 
@@ -478,12 +480,75 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
   }
 }
 
+/// WriteInstruction - Emit an instruction to the specified stream.
+static void WriteInstruction(const Instruction &I, ValueEnumerator &VE, 
+                             BitstreamWriter &Stream,
+                             SmallVector<unsigned, 64> &Vals) {
+  return; // FIXME: REMOVE
+  
+  
+  unsigned Code = 0;
+  unsigned AbbrevToUse = 0;
+  switch (I.getOpcode()) {
+  default:
+    if (Instruction::isCast(I.getOpcode())) {
+      Code = bitc::FUNC_CODE_INST_BINOP;
+      Vals.push_back(GetEncodedCastOpcode(I.getOpcode()));
+      Vals.push_back(VE.getTypeID(I.getType()));
+      Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+      Vals.push_back(VE.getValueID(I.getOperand(0)));
+    } else {
+      assert(isa<BinaryOperator>(I) && "Unknown instruction!");
+      Code = bitc::CST_CODE_CE_BINOP;
+      Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
+      Vals.push_back(VE.getTypeID(I.getType()));
+      Vals.push_back(VE.getValueID(I.getOperand(0)));
+      Vals.push_back(VE.getValueID(I.getOperand(1)));
+    }
+    break;
+    
+    
+  case Instruction::Unwind:
+    Code = bitc::FUNC_CODE_INST_UNWIND;
+    break;
+  case Instruction::Unreachable:
+    Code = bitc::FUNC_CODE_INST_UNREACHABLE;
+    break;
+    
+  }
+  
+  Stream.EmitRecord(Code, Vals, AbbrevToUse);
+  Vals.clear();
+}
+
 /// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE, 
                           BitstreamWriter &Stream) {
+  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
   VE.incorporateFunction(F);
+
+  SmallVector<unsigned, 64> Vals;
+  
+  // Emit the number of basic blocks, so the reader can create them ahead of
+  // time.
+  Vals.push_back(VE.getBasicBlocks().size());
+  Stream.EmitRecord(bitc::FUNC_CODE_DECLAREBLOCKS, Vals);
+  Vals.clear();
+  
+  // FIXME: Function attributes?
+  
+  // If there are function-local constants, emit them now.
+  unsigned CstStart, CstEnd;
+  VE.getFunctionConstantRange(CstStart, CstEnd);
+  WriteConstants(CstStart, CstEnd, VE, Stream);
+  
+  // Finally, emit all the instructions, in order.
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      WriteInstruction(*I, VE, Stream, Vals);
   
   VE.purgeFunction();
+  Stream.ExitBlock();
 }
 
 /// WriteTypeSymbolTable - Emit a block for the specified type symtab.
