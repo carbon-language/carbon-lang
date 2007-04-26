@@ -28,6 +28,11 @@ using namespace llvm;
 //
 
 // Force out-of-line virtual method.
+Pass::~Pass() { 
+  delete Resolver; 
+}
+
+// Force out-of-line virtual method.
 ModulePass::~ModulePass() { }
 
 bool Pass::mustPreserveAnalysisID(const PassInfo *AnalysisID) const {
