@@ -170,7 +170,8 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
     MarkVirtRegAliveInBlock(VRInfo, *PI);
 }
 
-void LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
+bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
+                                      bool AddIfNotFound) {
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -187,17 +188,21 @@ void LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
                  RegInfo->isSuperRegister(IncomingReg, Reg) &&
                  MO.isKill())
         // A super-register kill already exists.
-        return;
+        return true;
     }
   }
 
   // If not found, this means an alias of one of the operand is killed. Add a
-  // new implicit operand.
-  if (!Found)
+  // new implicit operand if required.
+  if (!Found && AddIfNotFound) {
     MI->addRegOperand(IncomingReg, false/*IsDef*/,true/*IsImp*/,true/*IsKill*/);
+    return true;
+  }
+  return Found;
 }
 
-void LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
+bool LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
+                                    bool AddIfNotFound) {
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -214,15 +219,18 @@ void LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
                  RegInfo->isSuperRegister(IncomingReg, Reg) &&
                  MO.isDead())
         // There exists a super-register that's marked dead.
-        return;
+        return true;
     }
   }
 
   // If not found, this means an alias of one of the operand is dead. Add a
   // new implicit operand.
-  if (!Found)
+  if (!Found && AddIfNotFound) {
     MI->addRegOperand(IncomingReg, true/*IsDef*/,true/*IsImp*/,false/*IsKill*/,
                       true/*IsDead*/);
+    return true;
+  }
+  return Found;
 }
 
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
@@ -271,9 +279,9 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
       addRegisterKilled(Reg, LastRef);
     else if (PhysRegPartUse[Reg])
       // Add implicit use / kill to last use of a sub-register.
-      addRegisterKilled(Reg, PhysRegPartUse[Reg]);
+      addRegisterKilled(Reg, PhysRegPartUse[Reg], true);
     else
-      addRegisterDead(Reg, LastRef);
+      addRegisterDead(Reg, LastRef, true);
   }
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = false;

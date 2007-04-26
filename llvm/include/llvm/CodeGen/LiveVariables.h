@@ -147,12 +147,18 @@ private:   // Intermediate data structures
   SmallVector<unsigned, 4> *PHIVarInfo;
 
   /// addRegisterKilled - We have determined MI kills a register. Look for the
-  /// operand that uses it and mark it as IsKill.
-  void addRegisterKilled(unsigned IncomingReg, MachineInstr *MI);
+  /// operand that uses it and mark it as IsKill. If AddIfNotFound is true,
+  /// add a implicit operand if it's not found. Returns true if the operand
+  /// exists / is added.
+  bool addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
+                         bool AddIfNotFound = false);
 
   /// addRegisterDead - We have determined MI defined a register without a use.
-  /// Look for the operand that defines it and mark it as IsDead. 
-  void addRegisterDead(unsigned IncomingReg, MachineInstr *MI);
+  /// Look for the operand that defines it and mark it as IsDead. If
+  /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
+  /// true if the operand exists / is added.
+  bool addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
+                       bool AddIfNotFound = false);
 
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
@@ -189,11 +195,12 @@ public:
 
   /// addVirtualRegisterKilled - Add information about the fact that the
   /// specified register is killed after being used by the specified
-  /// instruction.
-  ///
-  void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
-    addRegisterKilled(IncomingReg, MI);
-    getVarInfo(IncomingReg).Kills.push_back(MI); 
+  /// instruction. If AddIfNotFound is true, add a implicit operand if it's
+  /// not found.
+  void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
+                                bool AddIfNotFound = false) {
+    if (addRegisterKilled(IncomingReg, MI, AddIfNotFound))
+      getVarInfo(IncomingReg).Kills.push_back(MI); 
  }
 
   /// removeVirtualRegisterKilled - Remove the specified virtual
@@ -225,11 +232,12 @@ public:
   void removeVirtualRegistersKilled(MachineInstr *MI);
   
   /// addVirtualRegisterDead - Add information about the fact that the specified
-  /// register is dead after being used by the specified instruction.
-  ///
-  void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
-    addRegisterDead(IncomingReg, MI);
-    getVarInfo(IncomingReg).Kills.push_back(MI);
+  /// register is dead after being used by the specified instruction. If
+  /// AddIfNotFound is true, add a implicit operand if it's not found.
+  void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI,
+                              bool AddIfNotFound = false) {
+    if (addRegisterDead(IncomingReg, MI, AddIfNotFound))
+        getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
   /// removeVirtualRegisterDead - Remove the specified virtual
