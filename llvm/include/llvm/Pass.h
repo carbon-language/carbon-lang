@@ -88,7 +88,7 @@ class Pass {
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
   Pass() : Resolver(0), PassInfoCache(0) {}
-  virtual ~Pass() {} // Destructor is virtual so we can be subclassed
+  virtual ~Pass() { delete Resolver; } // Destructor is virtual so we can be subclassed
 
   /// getPassName - Return a nice clean name for a pass.  This usually
   /// implemented in terms of the name that is registered by one of the
