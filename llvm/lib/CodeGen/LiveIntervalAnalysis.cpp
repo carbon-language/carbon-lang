@@ -887,7 +887,7 @@ bool LiveIntervals::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
 
   // If the source instruction was killing the source register before the
   // merge, unset the isKill marker given the live range has been extended.
-  int UIdx = ValLREndInst->findRegisterUseOperand(IntB.reg, true);
+  int UIdx = ValLREndInst->findRegisterUseOperandIdx(IntB.reg, true);
   if (UIdx != -1)
     ValLREndInst->getOperand(UIdx).unsetIsKill();
   

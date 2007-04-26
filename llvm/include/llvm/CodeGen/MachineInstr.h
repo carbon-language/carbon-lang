@@ -390,10 +390,10 @@ public:
     delete removeFromParent();
   }
 
-  /// findRegisterUseOperand() - Returns the operand index that is a use of
+  /// findRegisterUseOperandIdx() - Returns the operand index that is a use of
   /// the specific register or -1 if it is not found. It further tightening
   /// the search criteria to a use that kills the register if isKill is true.
-  int findRegisterUseOperand(unsigned Reg, bool isKill = false);
+  int findRegisterUseOperandIdx(unsigned Reg, bool isKill = false);
   
   /// findRegisterDefOperand() - Returns the MachineOperand that is a def of
   /// the specific register or NULL if it is not found.

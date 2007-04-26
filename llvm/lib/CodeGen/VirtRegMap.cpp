@@ -764,7 +764,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // necessary.
           bool WasKill = false;
           if (SSMI) {
-            int UIdx = SSMI->findRegisterUseOperand(PhysReg, true);
+            int UIdx = SSMI->findRegisterUseOperandIdx(PhysReg, true);
             if (UIdx != -1) {
               MachineOperand &MOK = SSMI->getOperand(UIdx);
               WasKill = MOK.isKill();
@@ -849,7 +849,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         // necessary.
         bool WasKill = false;
         if (SSMI) {
-          int UIdx = SSMI->findRegisterUseOperand(PhysReg, true);
+          int UIdx = SSMI->findRegisterUseOperandIdx(PhysReg, true);
           if (UIdx != -1) {
             MachineOperand &MOK = SSMI->getOperand(UIdx);
             WasKill = MOK.isKill();
@@ -859,7 +859,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         MachineInstr *CopyMI = prior(MII);
         if (WasKill) {
           // Transfer kill to the next use.
-          int UIdx = CopyMI->findRegisterUseOperand(PhysReg);
+          int UIdx = CopyMI->findRegisterUseOperandIdx(PhysReg);
           assert(UIdx != -1);
           MachineOperand &MOU = CopyMI->getOperand(UIdx);
           MOU.setIsKill();
@@ -957,7 +957,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
               // extended. Remove its kill.
               bool WasKill = false;
               if (SSMI) {
-                int UIdx = SSMI->findRegisterUseOperand(InReg, true);
+                int UIdx = SSMI->findRegisterUseOperandIdx(InReg, true);
                 if (UIdx != -1) {
                   MachineOperand &MOK = SSMI->getOperand(UIdx);
                   WasKill = MOK.isKill();
@@ -967,7 +967,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
               if (NextMII != MBB.end()) {
                 // If NextMII uses InReg and the use is not a two address
                 // operand, mark it killed.
-                int UIdx = NextMII->findRegisterUseOperand(InReg);
+                int UIdx = NextMII->findRegisterUseOperandIdx(InReg);
                 if (UIdx != -1) {
                   MachineOperand &MOU = NextMII->getOperand(UIdx);
                   if (WasKill) {

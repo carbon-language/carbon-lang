@@ -435,7 +435,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
                "Cannot have a live-in virtual register!");
         HandlePhysRegUse(*I, Ret);
         // Add live-out registers as implicit uses.
-        Ret->addRegOperand(*I, false, true);
+        if (Ret->findRegisterUseOperandIdx(*I) == -1)
+          Ret->addRegOperand(*I, false, true);
       }
     }
 

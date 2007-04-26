@@ -221,7 +221,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
     }
   }
 
-  bool BaseKill = Loc->findRegisterUseOperand(Base, true) != -1;
+  bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
   if (mergeOps(MBB, ++Loc, SOffset, Base, BaseKill, Opcode,Scratch,Regs, TII)) {
     Merges.push_back(prior(Loc));
     for (unsigned i = SIndex, e = MemOps.size(); i != e; ++i) {
