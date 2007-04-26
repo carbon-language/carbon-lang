@@ -1608,7 +1608,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that Type is not packed
     if (STy->isPacked())
-      GEN_ERROR("Unpacked Initializer to vector type '" + STy->getDescription() + "'");
+      GEN_ERROR("Unpacked Initializer to vector type '" +
+                STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, *$3);
     delete $1; delete $3;
@@ -1627,7 +1628,8 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     // Check to ensure that Type is not packed
     if (STy->isPacked())
-      GEN_ERROR("Unpacked Initializer to vector type '" + STy->getDescription() + "'");
+      GEN_ERROR("Unpacked Initializer to vector type '" +
+                STy->getDescription() + "'");
 
     $$ = ConstantStruct::get(STy, std::vector<Constant*>());
     delete $1;
@@ -1746,11 +1748,11 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
         GlobalValue *GV;
         if (const FunctionType *FTy = 
                  dyn_cast<FunctionType>(PT->getElementType())) {
-          GV = new Function(FTy, GlobalValue::ExternalLinkage, Name,
+          GV = new Function(FTy, GlobalValue::ExternalWeakLinkage, Name,
                             CurModule.CurrentModule);
         } else {
           GV = new GlobalVariable(PT->getElementType(), false,
-                                  GlobalValue::ExternalLinkage, 0,
+                                  GlobalValue::ExternalWeakLinkage, 0,
                                   Name, CurModule.CurrentModule);
         }
 
@@ -2023,7 +2025,8 @@ Definition
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | OptGlobalAssign GVInternalLinkage GVVisibilityStyle ThreadLocal GlobalType ConstVal {
+  | OptGlobalAssign GVInternalLinkage GVVisibilityStyle ThreadLocal GlobalType
+    ConstVal {
     if ($6 == 0) 
       GEN_ERROR("Global value initializer is not a constant");
     CurGV = ParseGlobalVariable($1, $2, $3, $5, $6->getType(), $6, $4);
@@ -2031,7 +2034,8 @@ Definition
   } GlobalVarAttributes {
     CurGV = 0;
   }
-  | OptGlobalAssign GVExternalLinkage GVVisibilityStyle ThreadLocal GlobalType Types {
+  | OptGlobalAssign GVExternalLinkage GVVisibilityStyle ThreadLocal GlobalType
+    Types {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$6)->getDescription());
     CurGV = ParseGlobalVariable($1, $2, $3, $5, *$6, 0, $4);
@@ -2041,7 +2045,8 @@ Definition
     CurGV = 0;
     CHECK_FOR_ERROR
   }
-  | OptGlobalAssign GVVisibilityStyle ALIAS AliasLinkage ResultTypes SymbolicValueRef {
+  | OptGlobalAssign GVVisibilityStyle ALIAS AliasLinkage ResultTypes
+    SymbolicValueRef {
     std::string Name($1);
     if (Name.empty())
       GEN_ERROR("Alias name cannot be empty")
@@ -2060,7 +2065,8 @@ Definition
     if (V == 0)
       GEN_ERROR(std::string("Invalid aliasee for alias: ") + $1);
     if (GlobalValue* Aliasee = dyn_cast<GlobalValue>(V)) {
-      GlobalAlias* GA = new GlobalAlias(VTy, $4, Name, Aliasee, CurModule.CurrentModule);
+      GlobalAlias* GA = new GlobalAlias(VTy, $4, Name, Aliasee,
+                                        CurModule.CurrentModule);
       GA->setVisibility($2);
       InsertValue(GA, CurModule.Values);
     } else
@@ -2228,7 +2234,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     CurModule.CurrentModule->getFunctionList().push_back(Fn);
   } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
              (Fn = CurModule.CurrentModule->getFunction(FunctionName))) {
-    if (Fn->getFunctionType() != FT ) {
+    if (Fn->getFunctionType() != FT) {
       // The existing function doesn't have the same type. This is an overload
       // error.
       GEN_ERROR("Overload of function '" + FunctionName + "' not permitted.");
@@ -2243,7 +2249,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
         AI->setName("");
     }
   } else  {  // Not already defined?
-    Fn = new Function(FT, GlobalValue::ExternalLinkage, FunctionName,
+    Fn = new Function(FT, GlobalValue::ExternalWeakLinkage, FunctionName,
                       CurModule.CurrentModule);
 
     InsertValue(Fn, CurModule.Values);
