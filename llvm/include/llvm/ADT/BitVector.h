@@ -24,7 +24,7 @@ namespace llvm {
 class BitVector {
   typedef unsigned long BitWord;
 
-  enum { BITS_PER_WORD = sizeof(BitWord) * 8 };
+  enum { BITWORD_SIZE = sizeof(BitWord) * 8 };
 
   BitWord  *Bits;        // Actual bits. 
   unsigned Size;         // Size of bitvector in bits.
@@ -42,8 +42,8 @@ public:
 
   public:
     reference(BitVector &b, unsigned Idx) {
-      WordRef = &b.Bits[Idx / BITS_PER_WORD];
-      BitPos = Idx % BITS_PER_WORD;
+      WordRef = &b.Bits[Idx / BITWORD_SIZE];
+      BitPos = Idx % BITWORD_SIZE;
     }
 
     ~reference() {}
@@ -129,9 +129,9 @@ public:
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
-          return i * BITS_PER_WORD + CountTrailingZeros_32(Bits[i]);
+          return i * BITWORD_SIZE + CountTrailingZeros_32(Bits[i]);
         else if (sizeof(BitWord) == 8)
-          return i * BITS_PER_WORD + CountTrailingZeros_64(Bits[i]);
+          return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
         else
           assert(0 && "Unsupported!");
       }
@@ -145,17 +145,17 @@ public:
     if (Prev >= Size)
       return -1;
 
-    unsigned WordPos = Prev / BITS_PER_WORD;
-    unsigned BitPos = Prev % BITS_PER_WORD;
+    unsigned WordPos = Prev / BITWORD_SIZE;
+    unsigned BitPos = Prev % BITWORD_SIZE;
     BitWord Copy = Bits[WordPos];
     // Mask off previous bits.
     Copy &= ~0L << BitPos;
 
     if (Copy != 0) {
       if (sizeof(BitWord) == 4)
-        return WordPos * BITS_PER_WORD + CountTrailingZeros_32(Copy);
+        return WordPos * BITWORD_SIZE + CountTrailingZeros_32(Copy);
       else if (sizeof(BitWord) == 8)
-        return WordPos * BITS_PER_WORD + CountTrailingZeros_64(Copy);
+        return WordPos * BITWORD_SIZE + CountTrailingZeros_64(Copy);
       else
         assert(0 && "Unsupported!");
     }
@@ -164,9 +164,9 @@ public:
     for (unsigned i = WordPos+1; i < NumBitWords(size()); ++i)
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
-          return i * BITS_PER_WORD + CountTrailingZeros_32(Bits[i]);
+          return i * BITWORD_SIZE + CountTrailingZeros_32(Bits[i]);
         else if (sizeof(BitWord) == 8)
-          return i * BITS_PER_WORD + CountTrailingZeros_64(Bits[i]);
+          return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
         else
           assert(0 && "Unsupported!");
       }
@@ -180,7 +180,7 @@ public:
 
   /// resize - Grow or shrink the bitvector.
   void resize(unsigned N, bool t = false) {
-    if (N > Capacity * BITS_PER_WORD) {
+    if (N > Capacity * BITWORD_SIZE) {
       unsigned OldCapacity = Capacity;
       grow(N);
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
@@ -190,7 +190,7 @@ public:
   }
 
   void reserve(unsigned N) {
-    if (N > Capacity * BITS_PER_WORD)
+    if (N > Capacity * BITWORD_SIZE)
       grow(N);
   }
 
@@ -202,7 +202,7 @@ public:
   }
 
   BitVector &set(unsigned Idx) {
-    Bits[Idx / BITS_PER_WORD] |= 1L << (Idx % BITS_PER_WORD);
+    Bits[Idx / BITWORD_SIZE] |= 1L << (Idx % BITWORD_SIZE);
     return *this;
   }
 
@@ -212,7 +212,7 @@ public:
   }
 
   BitVector &reset(unsigned Idx) {
-    Bits[Idx / BITS_PER_WORD] &= ~(1L << (Idx % BITS_PER_WORD));
+    Bits[Idx / BITWORD_SIZE] &= ~(1L << (Idx % BITWORD_SIZE));
     return *this;
   }
 
@@ -224,7 +224,7 @@ public:
   }
 
   BitVector &flip(unsigned Idx) {
-    Bits[Idx / BITS_PER_WORD] ^= 1L << (Idx % BITS_PER_WORD);
+    Bits[Idx / BITWORD_SIZE] ^= 1L << (Idx % BITWORD_SIZE);
     return *this;
   }
 
@@ -239,8 +239,8 @@ public:
   }
 
   bool operator[](unsigned Idx) const {
-    BitWord Mask = 1L << (Idx % BITS_PER_WORD);
-    return (Bits[Idx / BITS_PER_WORD] & Mask) != 0;
+    BitWord Mask = 1L << (Idx % BITWORD_SIZE);
+    return (Bits[Idx / BITWORD_SIZE] & Mask) != 0;
   }
 
   bool test(unsigned Idx) const {
@@ -290,7 +290,7 @@ public:
 
     Size = RHS.size();
     unsigned RHSWords = NumBitWords(Size);
-    if (Size <= Capacity * BITS_PER_WORD) {
+    if (Size <= Capacity * BITWORD_SIZE) {
       std::copy(RHS.Bits, &RHS.Bits[RHSWords], Bits);
       clear_unused_bits();
       return *this;
@@ -310,14 +310,14 @@ public:
 
 private:
   unsigned NumBitWords(unsigned S) const {
-    return (S + BITS_PER_WORD-1) / BITS_PER_WORD;
+    return (S + BITWORD_SIZE-1) / BITWORD_SIZE;
   }
 
   // Clear the unused top bits in the high word.
   void clear_unused_bits() {
-    unsigned ExtraBits = Size % BITS_PER_WORD;
+    unsigned ExtraBits = Size % BITWORD_SIZE;
     if (ExtraBits) {
-      unsigned index = Size / BITS_PER_WORD;
+      unsigned index = Size / BITWORD_SIZE;
       Bits[index] &= ~(~0L << ExtraBits);
     }
   }
