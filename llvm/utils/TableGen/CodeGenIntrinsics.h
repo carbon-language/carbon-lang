@@ -31,7 +31,7 @@ namespace llvm {
     std::string TargetPrefix;  // Target prefix, e.g. "ppc" for t-s intrinsics.
     
     /// ArgTypes - The type primitive enum value for the return value and all
-    /// of the arguments.  These are things like Type::Int32TyID.
+    /// of the arguments.  These are things like Type::IntegerTyID.
     std::vector<std::string> ArgTypes;
     
     /// ArgVTs - The MVT::ValueType for each argument type.  Note that this list
