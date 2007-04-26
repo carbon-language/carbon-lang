@@ -272,16 +272,24 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    bool needCloseParen = false;
 
     GlobalValue *GV = MO.getGlobal();
     GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
     bool isThreadLocal = GVar && GVar->isThreadLocal();
 
-    if (!isMemOp && !isCallOp) O << '$';
-
     std::string Name = Mang->getValueName(GV);
     X86SharedAsmPrinter::decorateName(Name, GV);
     
+    if (!isMemOp && !isCallOp)
+      O << '$';
+    else if (Name[0] == '$') {
+      // The name begins with a dollar-sign. In order to avoid having it look
+      // like an integer immediate to the assembler, enclose it in parens.
+      O << '(';
+      needCloseParen = true;
+    }
+
     if (printStub(TM, Subtarget)) {
       // Link-once, External, or Weakly-linked global variables need
       // non-lazily-resolved stubs
@@ -352,6 +360,12 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
              GV->hasLinkOnceLinkage()) &&
             TM.getRelocationModel() != Reloc::Static)
           O << "@GOTPCREL";
+
+        if (needCloseParen) {
+          needCloseParen = false;
+          O << ')';
+        }
+
         // Use rip when possible to reduce code size, except when
         // index or base register are also part of the address. e.g.
         // foo(%rip)(%rcx,%rax,4) is not legal
@@ -359,10 +373,14 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       }
     }
 
+    if (needCloseParen)
+      O << ')';
+
     return;
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
+    bool needCloseParen = false;
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     if (isCallOp && printStub(TM, Subtarget)) {
@@ -370,7 +388,15 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
       return;
     }
-    if (!isCallOp) O << '$';
+    if (!isCallOp)
+      O << '$';
+    else if (Name[0] == '$') {
+      // The name begins with a dollar-sign. In order to avoid having it look
+      // like an integer immediate to the assembler, enclose it in parens.
+      O << '(';
+      needCloseParen = true;
+    }
+
     O << Name;
 
     if (printGOT(TM, Subtarget)) {
@@ -390,6 +416,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (isCallOp)
         O << "@PLT";
     }
+
+    if (needCloseParen)
+      O << ')';
 
     if (!isCallOp && Subtarget->isPICStyleRIPRel())
       O << "(%rip)";
