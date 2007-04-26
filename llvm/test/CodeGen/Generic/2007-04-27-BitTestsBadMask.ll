@@ -2,9 +2,6 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep 4297064449
 ; PR 1325+
 
-; FIXME: this is xfailed until we figure out ppc bootstrap
-; XFAIL: *
-
 define i32 @foo(i8 %bar) {
 entry:
 	switch i8 %bar, label %bb1203 [
