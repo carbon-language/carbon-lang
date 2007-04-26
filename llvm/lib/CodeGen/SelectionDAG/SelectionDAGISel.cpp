@@ -1722,7 +1722,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
        << "Low bound: " << cast<ConstantInt>(minValue)->getSExtValue() << "\n"
        << "High bound: " << cast<ConstantInt>(maxValue)->getSExtValue() << "\n";
   
-  if (range>IntPtrBits ||
+  if (range>=IntPtrBits ||
       (!(Dests.size() == 1 && numCmps >= 3) &&
        !(Dests.size() == 2 && numCmps >= 5) &&
        !(Dests.size() >= 3 && numCmps >= 6)))
