@@ -748,14 +748,13 @@ namespace {
           return ConstantRange(APInt::getSignedMinValue(W), CR.getSignedMax());
         case ICmpInst::ICMP_ULE: {
           APInt UMax(CR.getUnsignedMax());
-          if (UMax == APInt::getMaxValue(W))
+          if (UMax.isMaxValue())
             return ConstantRange(W);
           return ConstantRange(APInt::getMinValue(W), UMax + 1);
         }
         case ICmpInst::ICMP_SLE: {
           APInt SMax(CR.getSignedMax());
-          if (SMax     == APInt::getSignedMaxValue(W) ||
-              SMax + 1 == APInt::getSignedMaxValue(W))
+          if (SMax.isMaxSignedValue() || (SMax+1).isMaxSignedValue())
             return ConstantRange(W);
           return ConstantRange(APInt::getSignedMinValue(W), SMax + 1);
         }
@@ -766,13 +765,13 @@ namespace {
                                APInt::getSignedMinValue(W));
         case ICmpInst::ICMP_UGE: {
           APInt UMin(CR.getUnsignedMin());
-          if (UMin == APInt::getMinValue(W))
+          if (UMin.isMinValue())
             return ConstantRange(W);
           return ConstantRange(UMin, APInt::getNullValue(W));
         }
         case ICmpInst::ICMP_SGE: {
           APInt SMin(CR.getSignedMin());
-          if (SMin == APInt::getSignedMinValue(W))
+          if (SMin.isMinSignedValue())
             return ConstantRange(W);
           return ConstantRange(SMin, APInt::getSignedMinValue(W));
         }

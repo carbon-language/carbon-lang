@@ -44,22 +44,20 @@ ConstantRange::ConstantRange(const APInt &L, const APInt &U) :
   Lower(L), Upper(U) {
   assert(L.getBitWidth() == U.getBitWidth() && 
          "ConstantRange with unequal bit widths");
-  uint32_t BitWidth = L.getBitWidth();
-  assert((L != U || (L == APInt::getMaxValue(BitWidth) ||
-                     L == APInt::getMinValue(BitWidth))) &&
+  assert((L != U || (L.isMaxValue() || L.isMinValue())) &&
          "Lower == Upper, but they aren't min or max value!");
 }
 
 /// isFullSet - Return true if this set contains all of the elements possible
 /// for this data-type
 bool ConstantRange::isFullSet() const {
-  return Lower == Upper && Lower == APInt::getMaxValue(getBitWidth());
+  return Lower == Upper && Lower.isMaxValue();
 }
 
 /// isEmptySet - Return true if this set contains no members.
 ///
 bool ConstantRange::isEmptySet() const {
-  return Lower == Upper && Lower == APInt::getMinValue(getBitWidth());
+  return Lower == Upper && Lower.isMinValue();
 }
 
 /// isWrappedSet - Return true if this set wraps around the top of the range,
