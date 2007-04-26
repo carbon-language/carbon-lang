@@ -140,6 +140,22 @@ void ValueEnumerator::EnumerateType(const Type *Ty) {
     EnumerateType(*I);
 }
 
+/// PurgeAggregateValues - If there are any aggregate values at the end of the
+/// value list, remove them and return the count of the remaining values.  If
+/// there are none, return -1.
+int ValueEnumerator::PurgeAggregateValues() {
+  // If there are no aggregate values at the end of the list, return -1.
+  if (Values.empty() || Values.back().first->getType()->isFirstClassType())
+    return -1;
+  
+  // Otherwise, remove aggregate values...
+  while (!Values.empty() && !Values.back().first->getType()->isFirstClassType())
+    Values.pop_back();
+  
+  // ... and return the new size.
+  return Values.size();
+}
+
 
 
 #if 0

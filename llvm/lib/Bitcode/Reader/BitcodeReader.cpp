@@ -408,10 +408,10 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
   AliasInitWorklist.swap(AliasInits);
 
   while (!GlobalInitWorklist.empty()) {
-    unsigned ValID = GlobalInits.back().second;
+    unsigned ValID = GlobalInitWorklist.back().second;
     if (ValID >= ValueList.size()) {
       // Not ready to resolve this yet, it requires something later in the file.
-      GlobalInitWorklist.push_back(GlobalInits.back());
+      GlobalInits.push_back(GlobalInitWorklist.back());
     } else {
       if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
         GlobalInitWorklist.back().first->setInitializer(C);
@@ -826,7 +826,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       break;
     }
     // ALIAS: [alias type, aliasee val#, linkage]
-    case bitc::MODULE_CODE_ALIAS:
+    case bitc::MODULE_CODE_ALIAS: {
       if (Record.size() < 3)
         return Error("Invalid MODULE_ALIAS record");
       const Type *Ty = getTypeByID(Record[0]);
@@ -837,6 +837,14 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
                                            "", 0, TheModule);
       ValueList.push_back(NewGA);
       AliasInits.push_back(std::make_pair(NewGA, Record[1]));
+      break;
+    }
+    /// MODULE_CODE_PURGEVALS: [numvals]
+    case bitc::MODULE_CODE_PURGEVALS:
+      // Trim down the value list to the specified size.
+      if (Record.size() < 1 || Record[0] > ValueList.size())
+        return Error("Invalid MODULE_PURGEVALS record");
+      ValueList.shrinkTo(Record[0]);
       break;
     }
     Record.clear();

@@ -324,69 +324,6 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 }
 
 
-/// WriteTypeSymbolTable - Emit a block for the specified type symtab.
-static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
-                                 const ValueEnumerator &VE,
-                                 BitstreamWriter &Stream) {
-  if (TST.empty()) return;
-  
-  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
-  
-  // FIXME: Set up the abbrev, we know how many types there are!
-  // FIXME: We know if the type names can use 7-bit ascii.
-  
-  SmallVector<unsigned, 64> NameVals;
-  
-  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
-       TI != TE; ++TI) {
-    unsigned AbbrevToUse = 0;
-    
-    // TST_ENTRY: [typeid, namelen, namechar x N]
-    NameVals.push_back(VE.getTypeID(TI->second));
-    
-    const std::string &Str = TI->first;
-    NameVals.push_back(Str.size());
-    for (unsigned i = 0, e = Str.size(); i != e; ++i)
-      NameVals.push_back(Str[i]);
-    
-    // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
-    NameVals.clear();
-  }
-  
-  Stream.ExitBlock();
-}
-
-// Emit names for globals/functions etc.
-static void WriteValueSymbolTable(const ValueSymbolTable &VST,
-                                  const ValueEnumerator &VE,
-                                  BitstreamWriter &Stream) {
-  if (VST.empty()) return;
-  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
-
-  // FIXME: Set up the abbrev, we know how many values there are!
-  // FIXME: We know if the type names can use 7-bit ascii.
-  SmallVector<unsigned, 64> NameVals;
-
-  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
-       SI != SE; ++SI) {
-    unsigned AbbrevToUse = 0;
-
-    // VST_ENTRY: [valueid, namelen, namechar x N]
-    NameVals.push_back(VE.getValueID(SI->getValue()));
-  
-    NameVals.push_back(SI->getKeyLength());
-    for (const char *P = SI->getKeyData(),
-         *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
-      NameVals.push_back((unsigned char)*P);
-    
-    // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
-    NameVals.clear();
-  }
-  Stream.ExitBlock();
-}
-
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
                            const ValueEnumerator &VE,
                            BitstreamWriter &Stream) {
@@ -541,15 +478,85 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
   }
 }
 
+
+static void WriteFunction(const Function &F, ValueEnumerator &VE, 
+                          BitstreamWriter &Stream) {
+  
+}
+
+/// WriteTypeSymbolTable - Emit a block for the specified type symtab.
+static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
+                                 const ValueEnumerator &VE,
+                                 BitstreamWriter &Stream) {
+  if (TST.empty()) return;
+  
+  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
+  
+  // FIXME: Set up the abbrev, we know how many types there are!
+  // FIXME: We know if the type names can use 7-bit ascii.
+  
+  SmallVector<unsigned, 64> NameVals;
+  
+  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
+       TI != TE; ++TI) {
+    unsigned AbbrevToUse = 0;
+    
+    // TST_ENTRY: [typeid, namelen, namechar x N]
+    NameVals.push_back(VE.getTypeID(TI->second));
+    
+    const std::string &Str = TI->first;
+    NameVals.push_back(Str.size());
+    for (unsigned i = 0, e = Str.size(); i != e; ++i)
+      NameVals.push_back(Str[i]);
+    
+    // Emit the finished record.
+    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
+    NameVals.clear();
+  }
+  
+  Stream.ExitBlock();
+}
+
+// Emit names for globals/functions etc.
+static void WriteValueSymbolTable(const ValueSymbolTable &VST,
+                                  const ValueEnumerator &VE,
+                                  BitstreamWriter &Stream) {
+  if (VST.empty()) return;
+  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
+  
+  // FIXME: Set up the abbrev, we know how many values there are!
+  // FIXME: We know if the type names can use 7-bit ascii.
+  SmallVector<unsigned, 64> NameVals;
+  
+  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
+       SI != SE; ++SI) {
+    unsigned AbbrevToUse = 0;
+    
+    // VST_ENTRY: [valueid, namelen, namechar x N]
+    NameVals.push_back(VE.getValueID(SI->getValue()));
+    
+    NameVals.push_back(SI->getKeyLength());
+    for (const char *P = SI->getKeyData(),
+         *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
+      NameVals.push_back((unsigned char)*P);
+    
+    // Emit the finished record.
+    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
+    NameVals.clear();
+  }
+  Stream.ExitBlock();
+}
+
+
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
   
   // Emit the version number if it is non-zero.
   if (CurVersion) {
-    SmallVector<unsigned, 1> VersionVals;
-    VersionVals.push_back(CurVersion);
-    Stream.EmitRecord(bitc::MODULE_CODE_VERSION, VersionVals);
+    SmallVector<unsigned, 1> Vals;
+    Vals.push_back(CurVersion);
+    Stream.EmitRecord(bitc::MODULE_CODE_VERSION, Vals);
   }
   
   // Analyze the module, enumerating globals, functions, etc.
@@ -564,6 +571,19 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   
   // Emit constants.
   WriteModuleConstants(VE, Stream);
+  
+  // FIXME: Purge aggregate values from the VE, emit a record that indicates how
+  // many to purge.
+  int NumNonAggregates = VE.PurgeAggregateValues();
+  if (NumNonAggregates != -1) {
+    SmallVector<unsigned, 1> Vals;
+    Vals.push_back(NumNonAggregates);
+    Stream.EmitRecord(bitc::MODULE_CODE_PURGEVALS, Vals);
+  }
+  
+  // Emit function bodies.
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    WriteFunction(*I, VE, Stream);
   
   // Emit the type symbol table information.
   WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);

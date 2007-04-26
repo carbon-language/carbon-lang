@@ -41,6 +41,11 @@ public:
   Value *back() const { return Uses.back(); }
   void pop_back() { Uses.pop_back(); --NumOperands; }
   bool empty() const { return NumOperands == 0; }
+  void shrinkTo(unsigned N) {
+    assert(N < NumOperands && "Invalid shrinkTo request!");
+    Uses.resize(N);
+    NumOperands = N;
+  }
   virtual void print(std::ostream&) const {}
   
   Constant *getConstantFwdRef(unsigned Idx, const Type *Ty);
