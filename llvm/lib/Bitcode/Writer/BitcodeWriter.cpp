@@ -572,8 +572,9 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit constants.
   WriteModuleConstants(VE, Stream);
   
-  // FIXME: Purge aggregate values from the VE, emit a record that indicates how
-  // many to purge.
+  // If we have any aggregate values in the value table, purge them - these can
+  // only be used to initialize global variables.  Doing so makes the value
+  // namespace smaller for code in functions.
   int NumNonAggregates = VE.PurgeAggregateValues();
   if (NumNonAggregates != -1) {
     SmallVector<unsigned, 1> Vals;
@@ -583,7 +584,8 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   
   // Emit function bodies.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    WriteFunction(*I, VE, Stream);
+    if (!I->isDeclaration())
+      WriteFunction(*I, VE, Stream);
   
   // Emit the type symbol table information.
   WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);
