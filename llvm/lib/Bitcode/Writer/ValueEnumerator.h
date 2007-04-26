@@ -43,6 +43,9 @@ private:
   ValueMapType ValueMap;
   ValueList Values;
   
+  /// When a function is incorporated, this is the size of the Values list
+  /// before incorporation.
+  unsigned ModuleLevel;
   
   ValueEnumerator(const ValueEnumerator &);  // DO NOT IMPLEMENT
   void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
@@ -72,7 +75,7 @@ public:
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the ValueEnumerator!
   ///
-  void incorporateFunction(const Function *F);
+  void incorporateFunction(const Function &F);
   void purgeFunction();
 
 private:

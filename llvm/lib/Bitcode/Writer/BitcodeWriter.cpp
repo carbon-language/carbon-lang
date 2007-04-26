@@ -478,10 +478,12 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
   }
 }
 
-
+/// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE, 
                           BitstreamWriter &Stream) {
+  VE.incorporateFunction(F);
   
+  VE.purgeFunction();
 }
 
 /// WriteTypeSymbolTable - Emit a block for the specified type symtab.

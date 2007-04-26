@@ -53,8 +53,13 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // the module symbol table can refer to them...
   EnumerateValueSymbolTable(M->getValueSymbolTable());
   
-  // Enumerate types used by function bodies.
+  // Enumerate types used by function bodies and argument lists.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
+    
+    for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I)
+      EnumerateType(I->getType());
+    
     for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
@@ -156,109 +161,39 @@ int ValueEnumerator::PurgeAggregateValues() {
   return Values.size();
 }
 
-
-
-#if 0
-
-void SlotCalculator::incorporateFunction(const Function *F) {
-  SC_DEBUG("begin processFunction!\n");
+void ValueEnumerator::incorporateFunction(const Function &F) {
+  ModuleLevel = Values.size();
   
-  // Iterate over function arguments, adding them to the value table...
-  for(Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+  // Adding function arguments to the value table.
+  for(Function::const_arg_iterator I = F.arg_begin(), E = F.arg_end();
       I != E; ++I)
-    CreateFunctionValueSlot(I);
+    EnumerateValue(I);
+
+  // Add all function-level constants to the value table.
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I)
+      for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
+           OI != E; ++OI) {
+        if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
+            isa<InlineAsm>(*OI))
+          EnumerateValue(*OI);
+      }
+  }
   
-  SC_DEBUG("Inserting Instructions:\n");
-  
-  // Add all of the instructions to the type planes...
-  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-    CreateFunctionValueSlot(BB);
+  // Add all of the instructions.
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    EnumerateValue(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       if (I->getType() != Type::VoidTy)
-        CreateFunctionValueSlot(I);
+        EnumerateValue(I);
     }
   }
-  
-  SC_DEBUG("end processFunction!\n");
 }
 
-void SlotCalculator::purgeFunction() {
-  SC_DEBUG("begin purgeFunction!\n");
-  
-  // Next, remove values from existing type planes
-  for (DenseMap<unsigned,unsigned,
-          ModuleLevelDenseMapKeyInfo>::iterator I = ModuleLevel.begin(),
-       E = ModuleLevel.end(); I != E; ++I) {
-    unsigned PlaneNo = I->first;
-    unsigned ModuleLev = I->second;
-    
-    // Pop all function-local values in this type-plane off of Table.
-    TypePlane &Plane = getPlane(PlaneNo);
-    assert(ModuleLev < Plane.size() && "module levels higher than elements?");
-    for (unsigned i = ModuleLev, e = Plane.size(); i != e; ++i) {
-      NodeMap.erase(Plane.back());       // Erase from nodemap
-      Plane.pop_back();                  // Shrink plane
-    }
-  }
-
-  ModuleLevel.clear();
-
-  // Finally, remove any type planes defined by the function...
-  while (Table.size() > NumModuleTypes) {
-    TypePlane &Plane = Table.back();
-    SC_DEBUG("Removing Plane " << (Table.size()-1) << " of size "
-             << Plane.size() << "\n");
-    for (unsigned i = 0, e = Plane.size(); i != e; ++i)
-      NodeMap.erase(Plane[i]);   // Erase from nodemap
-    
-    Table.pop_back();                // Nuke the plane, we don't like it.
-  }
-  
-  SC_DEBUG("end purgeFunction!\n");
+void ValueEnumerator::purgeFunction() {
+  /// Remove purged values from the ValueMap.
+  for (unsigned i = ModuleLevel, e = Values.size(); i != e; ++i)
+    ValueMap.erase(Values[i].first);
+  Values.resize(ModuleLevel);
 }
 
-inline static bool hasImplicitNull(const Type* Ty) {
-  return Ty != Type::LabelTy && Ty != Type::VoidTy && !isa<OpaqueType>(Ty);
-}
-
-void SlotCalculator::CreateFunctionValueSlot(const Value *V) {
-  assert(!NodeMap.count(V) && "Function-local value can't be inserted!");
-  
-  const Type *Ty = V->getType();
-  assert(Ty != Type::VoidTy && "Can't insert void values!");
-  assert(!isa<Constant>(V) && "Not a function-local value!");
-  
-  unsigned TyPlane = getOrCreateTypeSlot(Ty);
-  if (Table.size() <= TyPlane)    // Make sure we have the type plane allocated.
-    Table.resize(TyPlane+1, TypePlane());
-  
-  // If this is the first value noticed of this type within this function,
-  // remember the module level for this type plane in ModuleLevel.  This reminds
-  // us to remove the values in purgeFunction and tells us how many to remove.
-  if (TyPlane < NumModuleTypes)
-    ModuleLevel.insert(std::make_pair(TyPlane, Table[TyPlane].size()));
-  
-  // If this is the first value to get inserted into the type plane, make sure
-  // to insert the implicit null value.
-  if (Table[TyPlane].empty()) {
-    // Label's and opaque types can't have a null value.
-    if (hasImplicitNull(Ty)) {
-      Value *ZeroInitializer = Constant::getNullValue(Ty);
-      
-      // If we are pushing zeroinit, it will be handled below.
-      if (V != ZeroInitializer) {
-        Table[TyPlane].push_back(ZeroInitializer);
-        NodeMap[ZeroInitializer] = 0;
-      }
-    }
-  }
-  
-  // Insert node into table and NodeMap...
-  NodeMap[V] = Table[TyPlane].size();
-  Table[TyPlane].push_back(V);
-  
-  SC_DEBUG("  Inserting value [" << TyPlane << "] = " << *V << " slot=" <<
-           NodeMap[V] << "\n");
-}
-
-#endif
