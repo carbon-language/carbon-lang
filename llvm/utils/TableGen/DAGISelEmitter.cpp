@@ -2851,9 +2851,10 @@ public:
           Code2 = "SDOperand " + NodeName + " = SDOperand(";
         } else {
           NodeName = "ResNode";
-          if (!ResNodeDecled)
+          if (!ResNodeDecled) {
             Code2 = "SDNode *" + NodeName + " = ";
-          else
+            ResNodeDecled = true;
+          } else
             Code2 = NodeName + " = ";
         }
 
