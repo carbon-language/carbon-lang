@@ -179,7 +179,7 @@ public:
   ///
   const Type *getIntPtrType() const;
 
-  /// getIndexOffset - return the offset from the beginning of the type for the
+  /// getIndexedOffset - return the offset from the beginning of the type for the
   /// specified indices.  This is used to implement getelementptr.
   ///
   uint64_t getIndexedOffset(const Type *Ty,

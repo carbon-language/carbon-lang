@@ -634,7 +634,7 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (LPriority > RPriority)
     return true;
   else if (LPriority == RPriority) {
-    // Try schedule def + use closer whne Sethi-Ullman numbers are the same.
+    // Try schedule def + use closer when Sethi-Ullman numbers are the same.
     // e.g.
     // t1 = op t2, c1
     // t3 = op t4, c2
