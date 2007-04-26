@@ -19,13 +19,13 @@
 
 namespace llvm {
 
-class Value;
 class Type;
-class Module;
+class Value;
+class BasicBlock;
 class Function;
+class Module;
 class TypeSymbolTable;
 class ValueSymbolTable;
-class ConstantArray;
 
 class ValueEnumerator {
 public:
@@ -42,6 +42,10 @@ private:
   typedef DenseMap<const Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
   ValueList Values;
+  
+  /// BasicBlocks - This contains all the basic blocks for the currently
+  /// incorporated function.  Their reverse mapping is stored in ValueMap.
+  std::vector<const BasicBlock*> BasicBlocks;
   
   /// When a function is incorporated, this is the size of the Values list
   /// before incorporation.
@@ -66,6 +70,9 @@ public:
 
   const ValueList &getValues() const { return Values; }
   const TypeList &getTypes() const { return Types; }
+  const std::vector<const BasicBlock*> &getBasicBlocks() const {
+    return BasicBlocks; 
+  }
 
   /// PurgeAggregateValues - If there are any aggregate values at the end of the
   /// value list, remove them and return the count of the remaining values.  If

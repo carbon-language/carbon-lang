@@ -178,11 +178,12 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
             isa<InlineAsm>(*OI))
           EnumerateValue(*OI);
       }
+    ValueMap[BB] = BasicBlocks.size();
+    BasicBlocks.push_back(BB);
   }
   
   // Add all of the instructions.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    EnumerateValue(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       if (I->getType() != Type::VoidTy)
         EnumerateValue(I);
@@ -194,6 +195,10 @@ void ValueEnumerator::purgeFunction() {
   /// Remove purged values from the ValueMap.
   for (unsigned i = ModuleLevel, e = Values.size(); i != e; ++i)
     ValueMap.erase(Values[i].first);
+  for (unsigned i = 0, e = BasicBlocks.size(); i != e; ++i)
+    ValueMap.erase(BasicBlocks[i]);
+    
   Values.resize(ModuleLevel);
+  BasicBlocks.clear();
 }
 
