@@ -1,6 +1,8 @@
 ; RUN: llvm-as < %s | llc -enable-eh
+; RUN: llvm-as < %s | llc -enable-eh -march=x86-64 
 
-; ModuleID = '2007-04-14-EHSelectorCrash.bc'
+; PR1326
+
 @__gnat_others_value = external constant i32		; <i32*> [#uses=1]
 
 define void @_ada_eh() {
