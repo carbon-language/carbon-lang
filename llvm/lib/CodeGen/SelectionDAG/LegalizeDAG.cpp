@@ -4270,11 +4270,10 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
 }
 
 
-/// ExpandIntToFP - Expand a [US]INT_TO_FP operation, assuming that the
-/// destination type is legal.
+/// ExpandIntToFP - Expand a [US]INT_TO_FP operation.
+///
 SDOperand SelectionDAGLegalize::
 ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
-  assert(isTypeLegal(DestTy) && "Destination type is not legal!");
   assert(getTypeAction(Source.getValueType()) == Expand &&
          "This is not an expansion!");
   assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
@@ -4310,8 +4309,20 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
     else {
       assert(DestTy == MVT::f64 && "Unexpected conversion");
+      // FIXME: Avoid the extend by construction the right constantpool?
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
                                   CPIdx, NULL, 0, MVT::f32);
+    }
+    MVT::ValueType SCVT = SignedConv.getValueType();
+    if (SCVT != DestTy) {
+      // Destination type needs to be expanded as well. The FADD now we are
+      // constructing will be expanded into a libcall.
+      if (MVT::getSizeInBits(SCVT) != MVT::getSizeInBits(DestTy)) {
+        assert(SCVT == MVT::i32 && DestTy == MVT::f64);
+        SignedConv = DAG.getNode(ISD::BUILD_PAIR, MVT::i64,
+                                 SignedConv, SignedConv.getValue(1));
+      }
+      SignedConv = DAG.getNode(ISD::BIT_CONVERT, DestTy, SignedConv);
     }
     return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
   }
@@ -4345,6 +4356,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     LC = RTLIB::SINTTOFP_I64_F64;
   }
   
+  assert(TLI.getLibcallName(LC) && "Don't know how to expand this SINT_TO_FP!");
   Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
   SDOperand UnusedHiPart;
   return ExpandLibCall(TLI.getLibcallName(LC), Source.Val, isSigned,
@@ -5370,7 +5382,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         : DAG.getZeroExtendInReg(Tmp, SrcVT);
       Node = DAG.UpdateNodeOperands(Op, Tmp).Val;
     }
-    Lo = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Hi);
+
+    const char *LibCall = TLI.getLibcallName(LC);
+    if (LibCall)
+      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Hi);
+    else  {
+      Lo = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, VT,
+                         Node->getOperand(0));
+      if (getTypeAction(Lo.getValueType()) == Expand)
+        ExpandOp(Lo, Lo, Hi);
+    }
     break;
   }
   }
