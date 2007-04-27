@@ -193,6 +193,7 @@ namespace {
                                      BinaryOperator &I);
     Instruction *commonCastTransforms(CastInst &CI);
     Instruction *commonIntCastTransforms(CastInst &CI);
+    Instruction *commonPointerCastTransforms(CastInst &CI);
     Instruction *visitTrunc(TruncInst &CI);
     Instruction *visitZExt(ZExtInst &CI);
     Instruction *visitSExt(SExtInst &CI);
@@ -204,7 +205,7 @@ namespace {
     Instruction *visitSIToFP(CastInst &CI);
     Instruction *visitPtrToInt(CastInst &CI);
     Instruction *visitIntToPtr(CastInst &CI);
-    Instruction *visitBitCast(CastInst &CI);
+    Instruction *visitBitCast(BitCastInst &CI);
     Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                 Instruction *FI);
     Instruction *visitSelectInst(SelectInst &CI);
@@ -350,7 +351,7 @@ namespace {
                               bool isSub, Instruction &I);
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                  bool isSigned, bool Inside, Instruction &IB);
-    Instruction *PromoteCastOfAllocation(CastInst &CI, AllocationInst &AI);
+    Instruction *PromoteCastOfAllocation(BitCastInst &CI, AllocationInst &AI);
     Instruction *MatchBSwap(BinaryOperator &I);
     bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
 
@@ -6085,10 +6086,9 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
 
 /// PromoteCastOfAllocation - If we find a cast of an allocation instruction,
 /// try to eliminate the cast by moving the type information into the alloc.
-Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
+Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
                                                    AllocationInst &AI) {
-  const PointerType *PTy = dyn_cast<PointerType>(CI.getType());
-  if (!PTy) return 0;   // Not casting the allocation to a pointer type.
+  const PointerType *PTy = cast<PointerType>(CI.getType());
   
   // Remove any uses of AI that are dead.
   assert(!CI.use_empty() && "Dead instructions should be removed earlier!");
@@ -6326,32 +6326,6 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
     }
   }
 
-  // If casting the result of a getelementptr instruction with no offset, turn
-  // this into a cast of the original pointer!
-  //
-  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
-    bool AllZeroOperands = true;
-    for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-      if (!isa<Constant>(GEP->getOperand(i)) ||
-          !cast<Constant>(GEP->getOperand(i))->isNullValue()) {
-        AllZeroOperands = false;
-        break;
-      }
-    if (AllZeroOperands) {
-      // Changing the cast operand is usually not a good idea but it is safe
-      // here because the pointer operand is being replaced with another 
-      // pointer operand so the opcode doesn't need to change.
-      CI.setOperand(0, GEP->getOperand(0));
-      return &CI;
-    }
-  }
-    
-  // If we are casting a malloc or alloca to a pointer to a type of the same
-  // size, rewrite the allocation instruction to allocate the "right" type.
-  if (AllocationInst *AI = dyn_cast<AllocationInst>(Src))
-    if (Instruction *V = PromoteCastOfAllocation(CI, *AI))
-      return V;
-
   // If we are casting a select then fold the cast into the select
   if (SelectInst *SI = dyn_cast<SelectInst>(Src))
     if (Instruction *NV = FoldOpIntoSelect(CI, SI, this))
@@ -6364,6 +6338,28 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   
   return 0;
 }
+
+/// @brief Implement the transforms for cast of pointer (bitcast/ptrtoint)
+Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
+  Value *Src = CI.getOperand(0);
+  
+  // If casting the result of a getelementptr instruction with no offset, turn
+  // this into a cast of the original pointer!
+  //
+  if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
+    if (GEP->hasAllZeroIndices()) {
+      // Changing the cast operand is usually not a good idea but it is safe
+      // here because the pointer operand is being replaced with another 
+      // pointer operand so the opcode doesn't need to change.
+      CI.setOperand(0, GEP->getOperand(0));
+      return &CI;
+    }
+  }
+    
+  return commonCastTransforms(CI);
+}
+
+
 
 /// Only the TRUNC, ZEXT, SEXT, and BITCAST can both operand and result as
 /// integer types. This function implements the common transforms for all those
@@ -6786,15 +6782,14 @@ Instruction *InstCombiner::visitSIToFP(CastInst &CI) {
 }
 
 Instruction *InstCombiner::visitPtrToInt(CastInst &CI) {
-  return commonCastTransforms(CI);
+  return commonPointerCastTransforms(CI);
 }
 
 Instruction *InstCombiner::visitIntToPtr(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
-Instruction *InstCombiner::visitBitCast(CastInst &CI) {
-
+Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   // If the operands are integer typed then apply the integer transforms,
   // otherwise just apply the common ones.
   Value *Src = CI.getOperand(0);
@@ -6804,6 +6799,9 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
   if (SrcTy->isInteger() && DestTy->isInteger()) {
     if (Instruction *Result = commonIntCastTransforms(CI))
       return Result;
+  } else if (isa<PointerType>(SrcTy)) {
+    if (Instruction *I = commonPointerCastTransforms(CI))
+      return I;
   } else {
     if (Instruction *Result = commonCastTransforms(CI))
       return Result;
@@ -6815,28 +6813,33 @@ Instruction *InstCombiner::visitBitCast(CastInst &CI) {
   if (DestTy == Src->getType())
     return ReplaceInstUsesWith(CI, Src);
 
-  // If the source and destination are pointers, and this cast is equivalent to
-  // a getelementptr X, 0, 0, 0...  turn it into the appropriate getelementptr.
-  // This can enhance SROA and other transforms that want type-safe pointers.
   if (const PointerType *DstPTy = dyn_cast<PointerType>(DestTy)) {
-    if (const PointerType *SrcPTy = dyn_cast<PointerType>(SrcTy)) {
-      const Type *DstElTy = DstPTy->getElementType();
-      const Type *SrcElTy = SrcPTy->getElementType();
-      
-      Constant *ZeroUInt = Constant::getNullValue(Type::Int32Ty);
-      unsigned NumZeros = 0;
-      while (SrcElTy != DstElTy && 
-             isa<CompositeType>(SrcElTy) && !isa<PointerType>(SrcElTy) &&
-             SrcElTy->getNumContainedTypes() /* not "{}" */) {
-        SrcElTy = cast<CompositeType>(SrcElTy)->getTypeAtIndex(ZeroUInt);
-        ++NumZeros;
-      }
+    const PointerType *SrcPTy = cast<PointerType>(SrcTy);
+    const Type *DstElTy = DstPTy->getElementType();
+    const Type *SrcElTy = SrcPTy->getElementType();
+    
+    // If we are casting a malloc or alloca to a pointer to a type of the same
+    // size, rewrite the allocation instruction to allocate the "right" type.
+    if (AllocationInst *AI = dyn_cast<AllocationInst>(Src))
+      if (Instruction *V = PromoteCastOfAllocation(CI, *AI))
+        return V;
+    
+    // If the source and destination are pointers, and this cast is equivalent to
+    // a getelementptr X, 0, 0, 0...  turn it into the appropriate getelementptr.
+    // This can enhance SROA and other transforms that want type-safe pointers.
+    Constant *ZeroUInt = Constant::getNullValue(Type::Int32Ty);
+    unsigned NumZeros = 0;
+    while (SrcElTy != DstElTy && 
+           isa<CompositeType>(SrcElTy) && !isa<PointerType>(SrcElTy) &&
+           SrcElTy->getNumContainedTypes() /* not "{}" */) {
+      SrcElTy = cast<CompositeType>(SrcElTy)->getTypeAtIndex(ZeroUInt);
+      ++NumZeros;
+    }
 
-      // If we found a path from the src to dest, create the getelementptr now.
-      if (SrcElTy == DstElTy) {
-        SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
-        return new GetElementPtrInst(Src, &Idxs[0], Idxs.size());
-      }
+    // If we found a path from the src to dest, create the getelementptr now.
+    if (SrcElTy == DstElTy) {
+      SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
+      return new GetElementPtrInst(Src, &Idxs[0], Idxs.size());
     }
   }
 
