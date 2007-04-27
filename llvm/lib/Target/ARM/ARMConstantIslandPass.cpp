@@ -377,6 +377,10 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
             // Constant pool entries can reach anything.
             if (I->getOpcode() == ARM::CONSTPOOL_ENTRY)
               continue;
+            if (I->getOpcode() == ARM::tLEApcrel) {
+              Bits = 8;  // Taking the address of a CP entry.
+              break;
+            }
             assert(0 && "Unknown addressing mode for CP reference!");
           case ARMII::AddrMode1: // AM1: 8 bits << 2
             Bits = 8;
@@ -869,6 +873,13 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   MachineBasicBlock *NewMBB;
   // Compute this only once, it's expensive
   unsigned UserOffset = GetOffsetOf(UserMI) + (isThumb ? 4 : 8);
+
+  // Special cases: LEApcrel and tLEApcrel are two instructions MI's. The
+  // actual user is the second instruction.
+  if (UserMI->getOpcode() == ARM::LEApcrel)
+    UserOffset += 4;
+  else if (UserMI->getOpcode() == ARM::tLEApcrel)
+    UserOffset += 2;
  
   // See if the current entry is within range, or there is a clone of it
   // in range.
