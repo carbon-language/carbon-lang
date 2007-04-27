@@ -85,7 +85,7 @@ ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii,
                                  const ARMSubtarget &sti)
   : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
-    FramePtr(STI.useThumbBacktraces() ? ARM::R7 : ARM::R11) {
+    FramePtr(STI.useThumbBacktraces() || STI.isThumb() ? ARM::R7 : ARM::R11) {
 }
 
 bool ARMRegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
@@ -1472,7 +1472,7 @@ unsigned ARMRegisterInfo::getRARegister() const {
 
 unsigned ARMRegisterInfo::getFrameRegister(MachineFunction &MF) const {
   if (STI.isTargetDarwin() || hasFP(MF))
-    return STI.useThumbBacktraces() ? ARM::R7 : ARM::R11;
+    return STI.useThumbBacktraces() || STI.isThumb() ? ARM::R7 : ARM::R11;
   else
     return ARM::SP;
 }
