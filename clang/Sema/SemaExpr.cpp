@@ -604,6 +604,9 @@ Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
 Action::ExprResult Sema::CheckAssignmentOperands( // C99 6.5.16
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
+  QualType lhsType = lex->getType();
+  QualType rhsType = rex->getType();
+  
   // FIXME: add type checking and fix result type
   return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
 }

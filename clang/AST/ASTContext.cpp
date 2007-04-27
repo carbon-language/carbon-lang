@@ -19,6 +19,10 @@
 using namespace llvm;
 using namespace clang;
 
+enum FloatingRank {
+  FloatRank, DoubleRank, LongDoubleRank
+};
+
 ASTContext::~ASTContext() {
   // Deallocate all the types.
   while (!Types.empty()) {
@@ -293,72 +297,55 @@ QualType ASTContext::getSizeType() const {
   return UnsignedLongTy; 
 }
 
-/// getIntegerRank - Helper function for UsualArithmeticConversions().
-int ASTContext::getIntegerRank(QualType t) {
+/// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
+/// routine will assert if passed a built-in type that isn't an integer or enum.
+static int getIntegerRank(QualType t) {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
     switch (BT->getKind()) {
+    default:
+      assert(0 && "GetIntegerRank(): not a built-in integer");
+    case BuiltinType::Bool:
+      return 1;
+    case BuiltinType::Char:
     case BuiltinType::SChar:
     case BuiltinType::UChar:
-      return 1;
+      return 2;
     case BuiltinType::Short:
     case BuiltinType::UShort:
-      return 2;
+      return 3;
     case BuiltinType::Int:
     case BuiltinType::UInt:
-      return 3;
+      return 4;
     case BuiltinType::Long:
     case BuiltinType::ULong:
-      return 4;
+      return 5;
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
-      return 5;
-    default:
-      assert(0 && "GetIntegerRank(): not an integer type");
+      return 6;
     }
   }
-  return 0;
+  if (const TagType *TT = cast<TagType>(t.getCanonicalType()))
+    if (TT->getDecl()->getKind() == Decl::Enum)
+      return 4;
+  assert(0 && "GetIntegerRank(): not a built-in integer or enum constant");
 }
 
-/// getFloatingRank - Helper function for UsualArithmeticConversions().
-int ASTContext::getFloatingRank(QualType t) {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
-    switch (BT->getKind()) {
-    case BuiltinType::Float:
-    case BuiltinType::FloatComplex:
-      return 1;
-    case BuiltinType::Double:
-    case BuiltinType::DoubleComplex:
-      return 2;
-    case BuiltinType::LongDouble:
-    case BuiltinType::LongDoubleComplex:
-      return 3;
-    default:
-      assert(0 && "getFloatingPointRank(): not a floating type");
-    }
-  }
-  return 0;
-}
-
-QualType ASTContext::convertSignedWithGreaterRankThanUnsigned(
-  QualType signedType, QualType unsignedType) {
-  // FIXME: Need to check if the signed type can represent all values of the 
-  // unsigned type. If it can, then the result is the signed type. If it can't, 
-  // then the result is the unsigned version of the signed type.
-  return signedType; 
-}
-
-
-/// ConvertFloatingRankToComplexType - Another helper for converting floats.
-QualType ASTContext::convertFloatingRankToComplexType(int rank) {
-  switch (rank) {
-  case 1:
-    return FloatComplexTy;
-  case 2:
-    return DoubleComplexTy;
-  case 3:
-    return LongDoubleComplexTy;
+/// getFloatingRank - Return a relative rank for floating point types.
+/// This routine will assert if passed a built-in type that isn't a float.
+static int getFloatingRank(QualType t) {
+  const BuiltinType *BT = cast<BuiltinType>(t.getCanonicalType());
+  switch (BT->getKind()) {
   default:
-    assert(0 && "convertRankToComplex(): illegal value for rank");
+    assert(0 && "getFloatingPointRank(): not a floating type");
+  case BuiltinType::Float:
+  case BuiltinType::FloatComplex:
+    return FloatRank;
+  case BuiltinType::Double:
+  case BuiltinType::DoubleComplex:
+    return DoubleRank;
+  case BuiltinType::LongDouble:
+  case BuiltinType::LongDoubleComplex:
+    return LongDoubleRank;
   }
 }
 
@@ -377,11 +364,17 @@ QualType ASTContext::convertFloatingRankToComplexType(int rank) {
 // when combining a "long double" with a "double _Complex", the 
 // "double _Complex" is promoted to "long double _Complex".
 
-QualType ASTContext::maxComplexType(QualType lt, QualType rt) {
-  int lhsRank = getFloatingRank(lt);
-  int rhsRank = getFloatingRank(rt);
-  
-  return convertFloatingRankToComplexType(std::max(lhsRank, rhsRank));
+QualType ASTContext::maxComplexType(QualType lt, QualType rt) const {
+  switch (std::max(getFloatingRank(lt), getFloatingRank(rt))) {
+  default:
+    assert(0 && "convertRankToComplex(): illegal value for rank");
+  case FloatRank:
+    return FloatComplexTy;
+  case DoubleRank:
+    return DoubleComplexTy;
+  case LongDoubleRank:
+    return LongDoubleComplexTy;
+  }
 }
 
 // maxFloatingType - handles the simple case, both operands are floats.
@@ -389,8 +382,9 @@ QualType ASTContext::maxFloatingType(QualType lt, QualType rt) {
   return getFloatingRank(lt) > getFloatingRank(rt) ? lt : rt;
 }
 
+// maxIntegerType - Returns the highest ranked integer type. Handles 3 case:
+// unsigned/unsigned, signed/signed, signed/unsigned. C99 6.3.1.8p1.
 QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
-  // Lastly, handle two integers (C99 6.3.1.8p1)
   bool t1Unsigned = lhs->isUnsignedIntegerType();
   bool t2Unsigned = rhs->isUnsignedIntegerType();
   
@@ -403,6 +397,12 @@ QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
   
   if (getIntegerRank(unsignedType) >= getIntegerRank(signedType))
     return unsignedType;
-  else 
-    return convertSignedWithGreaterRankThanUnsigned(signedType, unsignedType); 
+  else {
+    // FIXME: Need to check if the signed type can represent all values of the 
+    // unsigned type. If it can, then the result is the signed type. 
+    // If it can't, then the result is the unsigned version of the signed type.  
+    // Should probably add a helper that returns a signed integer type from 
+    // an unsigned (and vice versa). C99 6.3.1.8.
+    return signedType; 
+  }
 }

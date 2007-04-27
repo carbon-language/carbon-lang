@@ -85,15 +85,15 @@ public:
 
   // maxIntegerType - Returns the highest ranked integer type. Handles 3
   // different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
-  QualType maxIntegerType(QualType lhs, QualType rhs);
+  static QualType maxIntegerType(QualType lhs, QualType rhs);
   
   // maxFloatingType - Returns the highest ranked float type. Both input 
   // types are required to be floats.
-  QualType maxFloatingType(QualType lt, QualType rt);
+  static QualType maxFloatingType(QualType lt, QualType rt);
 
   // maxComplexType - Returns the highest ranked complex type. Handles 3
   // different type combos: complex/complex, complex/float, float/complex. 
-  QualType maxComplexType(QualType lt, QualType rt);
+  QualType maxComplexType(QualType lt, QualType rt) const;
   
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
@@ -101,20 +101,6 @@ private:
   
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
-
-  /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1).
-  /// This routine will assert if passed a built-in type that isn't an integer.
-  int getIntegerRank(QualType t);
-  
-  /// getFloatingRank - Return a relative rank for floating point types.
-  /// This routine will assert if passed a built-in type that isn't a float.
-  int getFloatingRank(QualType t);
-  
-  /// FIXME: comment
-  QualType convertSignedWithGreaterRankThanUnsigned(QualType signedT, 
-                                                    QualType unsignedT);
-  /// FIXME: comment                                                    
-  QualType convertFloatingRankToComplexType(int rank);
 };
   
 }  // end namespace clang
