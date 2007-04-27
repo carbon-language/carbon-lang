@@ -441,6 +441,12 @@ public:
   /// zeros.  If so, the result pointer and the first operand have the same
   /// value, just potentially different types.
   bool hasAllZeroIndices() const;
+  
+  /// hasAllConstantIndices - Return true if all of the indices of this GEP are
+  /// constant integers.  If so, the result pointer and the first operand have
+  /// a constant offset between them.
+  bool hasAllConstantIndices() const;
+  
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GetElementPtrInst *) { return true; }

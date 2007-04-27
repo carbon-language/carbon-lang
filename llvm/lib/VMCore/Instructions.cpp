@@ -1043,6 +1043,17 @@ bool GetElementPtrInst::hasAllZeroIndices() const {
   return true;
 }
 
+/// hasAllConstantIndices - Return true if all of the indices of this GEP are
+/// constant integers.  If so, the result pointer and the first operand have
+/// a constant offset between them.
+bool GetElementPtrInst::hasAllConstantIndices() const {
+  for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
+    if (!isa<ConstantInt>(getOperand(i)))
+      return false;
+  }
+  return true;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           ExtractElementInst Implementation
