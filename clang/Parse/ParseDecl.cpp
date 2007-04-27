@@ -646,7 +646,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
       EqualLoc = ConsumeToken();
       ExprResult Res = ParseConstantExpression();
       if (Res.isInvalid)
-        SkipUntil(tok::comma, true, false);
+        SkipUntil(tok::comma, tok::r_brace, true, true);
       else
         AssignedVal = Res.Val;
     }
