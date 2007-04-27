@@ -92,19 +92,22 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
 /// 
 /// If SkipUntil finds the specified token, it returns true, otherwise it
 /// returns false.  
-bool Parser::SkipUntil(tok::TokenKind T, bool StopAtSemi, bool DontConsume) {
+bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
+                       bool StopAtSemi, bool DontConsume) {
   // We always want this function to skip at least one token if the first token
   // isn't T and if not at EOF.
   bool isFirstTokenSkipped = true;
   while (1) {
-    // If we found the token, stop and return true.
-    if (Tok.getKind() == T) {
-      if (DontConsume) {
-        // Noop, don't consume the token.
-      } else {
-        ConsumeAnyToken();
+    // If we found one of the tokens, stop and return true.
+    for (unsigned i = 0; i != NumToks; ++i) {
+      if (Tok.getKind() == Toks[i]) {
+        if (DontConsume) {
+          // Noop, don't consume the token.
+        } else {
+          ConsumeAnyToken();
+        }
+        return true;
       }
-      return true;
     }
     
     switch (Tok.getKind()) {

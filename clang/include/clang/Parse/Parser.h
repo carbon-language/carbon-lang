@@ -228,8 +228,17 @@ private:
   /// If SkipUntil finds the specified token, it returns true, otherwise it
   /// returns false.  
   bool SkipUntil(tok::TokenKind T, bool StopAtSemi = true,
-                 bool DontConsume = false);
-    
+                 bool DontConsume = false) {
+    return SkipUntil(&T, 1, StopAtSemi, DontConsume);
+  }
+  bool SkipUntil(tok::TokenKind T1, tok::TokenKind T2, bool StopAtSemi = true,
+                 bool DontConsume = false) {
+    tok::TokenKind TokArray[] = {T1, T2};
+    return SkipUntil(TokArray, 2, StopAtSemi, DontConsume);
+  }
+  bool SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
+                 bool StopAtSemi = true, bool DontConsume = false);
+   
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   DeclTy *ParseExternalDeclaration();
