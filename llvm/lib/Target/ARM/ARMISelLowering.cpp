@@ -38,79 +38,85 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     : TargetLowering(TM), ARMPCLabelIndex(0) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
-  // Uses VFP for Thumb libfuncs if available.
-  if (!UseSoftFloat && Subtarget->isThumb() && Subtarget->hasVFP2()) {
-    // Single-precision floating-point arithmetic.
-    setLibcallName(RTLIB::ADD_F32, "__addsf3vfp");
-    setLibcallName(RTLIB::SUB_F32, "__subsf3vfp");
-    setLibcallName(RTLIB::MUL_F32, "__mulsf3vfp");
-    setLibcallName(RTLIB::DIV_F32, "__divsf3vfp");
+  if (Subtarget->isTargetDarwin()) {
+    // Don't have these.
+    setLibcallName(RTLIB::UINTTOFP_I64_F32, NULL);
+    setLibcallName(RTLIB::UINTTOFP_I64_F64, NULL);
 
-    // Double-precision floating-point arithmetic.
-    setLibcallName(RTLIB::ADD_F64, "__adddf3vfp");
-    setLibcallName(RTLIB::SUB_F64, "__subdf3vfp");
-    setLibcallName(RTLIB::MUL_F64, "__muldf3vfp");
-    setLibcallName(RTLIB::DIV_F64, "__divdf3vfp");
+    // Uses VFP for Thumb libfuncs if available.
+    if (Subtarget->isThumb() && Subtarget->hasVFP2()) {
+      // Single-precision floating-point arithmetic.
+      setLibcallName(RTLIB::ADD_F32, "__addsf3vfp");
+      setLibcallName(RTLIB::SUB_F32, "__subsf3vfp");
+      setLibcallName(RTLIB::MUL_F32, "__mulsf3vfp");
+      setLibcallName(RTLIB::DIV_F32, "__divsf3vfp");
 
-    // Single-precision comparisons.
-    setLibcallName(RTLIB::OEQ_F32, "__eqsf2vfp");
-    setLibcallName(RTLIB::UNE_F32, "__nesf2vfp");
-    setLibcallName(RTLIB::OLT_F32, "__ltsf2vfp");
-    setLibcallName(RTLIB::OLE_F32, "__lesf2vfp");
-    setLibcallName(RTLIB::OGE_F32, "__gesf2vfp");
-    setLibcallName(RTLIB::OGT_F32, "__gtsf2vfp");
-    setLibcallName(RTLIB::UO_F32,  "__unordsf2vfp");
-    setLibcallName(RTLIB::O_F32,   "__unordsf2vfp");
+      // Double-precision floating-point arithmetic.
+      setLibcallName(RTLIB::ADD_F64, "__adddf3vfp");
+      setLibcallName(RTLIB::SUB_F64, "__subdf3vfp");
+      setLibcallName(RTLIB::MUL_F64, "__muldf3vfp");
+      setLibcallName(RTLIB::DIV_F64, "__divdf3vfp");
 
-    setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::UO_F32,  ISD::SETNE);
-    setCmpLibcallCC(RTLIB::O_F32,   ISD::SETEQ);
+      // Single-precision comparisons.
+      setLibcallName(RTLIB::OEQ_F32, "__eqsf2vfp");
+      setLibcallName(RTLIB::UNE_F32, "__nesf2vfp");
+      setLibcallName(RTLIB::OLT_F32, "__ltsf2vfp");
+      setLibcallName(RTLIB::OLE_F32, "__lesf2vfp");
+      setLibcallName(RTLIB::OGE_F32, "__gesf2vfp");
+      setLibcallName(RTLIB::OGT_F32, "__gtsf2vfp");
+      setLibcallName(RTLIB::UO_F32,  "__unordsf2vfp");
+      setLibcallName(RTLIB::O_F32,   "__unordsf2vfp");
 
-    // Double-precision comparisons.
-    setLibcallName(RTLIB::OEQ_F64, "__eqdf2vfp");
-    setLibcallName(RTLIB::UNE_F64, "__nedf2vfp");
-    setLibcallName(RTLIB::OLT_F64, "__ltdf2vfp");
-    setLibcallName(RTLIB::OLE_F64, "__ledf2vfp");
-    setLibcallName(RTLIB::OGE_F64, "__gedf2vfp");
-    setLibcallName(RTLIB::OGT_F64, "__gtdf2vfp");
-    setLibcallName(RTLIB::UO_F64,  "__unorddf2vfp");
-    setLibcallName(RTLIB::O_F64,   "__unorddf2vfp");
+      setCmpLibcallCC(RTLIB::OEQ_F32, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::UNE_F32, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OLT_F32, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OLE_F32, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OGE_F32, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OGT_F32, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::UO_F32,  ISD::SETNE);
+      setCmpLibcallCC(RTLIB::O_F32,   ISD::SETEQ);
 
-    setCmpLibcallCC(RTLIB::OEQ_F64, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::UNE_F64, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OLT_F64, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OLE_F64, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OGE_F64, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::OGT_F64, ISD::SETNE);
-    setCmpLibcallCC(RTLIB::UO_F64,  ISD::SETNE);
-    setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
+      // Double-precision comparisons.
+      setLibcallName(RTLIB::OEQ_F64, "__eqdf2vfp");
+      setLibcallName(RTLIB::UNE_F64, "__nedf2vfp");
+      setLibcallName(RTLIB::OLT_F64, "__ltdf2vfp");
+      setLibcallName(RTLIB::OLE_F64, "__ledf2vfp");
+      setLibcallName(RTLIB::OGE_F64, "__gedf2vfp");
+      setLibcallName(RTLIB::OGT_F64, "__gtdf2vfp");
+      setLibcallName(RTLIB::UO_F64,  "__unorddf2vfp");
+      setLibcallName(RTLIB::O_F64,   "__unorddf2vfp");
 
-    // Floating-point to integer conversions.
-    // i64 conversions are done via library routines even when generating VFP
-    // instructions, so use the same ones.
-    setLibcallName(RTLIB::FPTOSINT_F64_I32, "__fixdfsivfp");
-    setLibcallName(RTLIB::FPTOUINT_F64_I32, "__fixunsdfsivfp");
-    setLibcallName(RTLIB::FPTOSINT_F32_I32, "__fixsfsivfp");
-    setLibcallName(RTLIB::FPTOUINT_F32_I32, "__fixunssfsivfp");
+      setCmpLibcallCC(RTLIB::OEQ_F64, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::UNE_F64, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OLT_F64, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OLE_F64, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OGE_F64, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::OGT_F64, ISD::SETNE);
+      setCmpLibcallCC(RTLIB::UO_F64,  ISD::SETNE);
+      setCmpLibcallCC(RTLIB::O_F64,   ISD::SETEQ);
 
-    // Conversions between floating types.
-    setLibcallName(RTLIB::FPROUND_F64_F32, "__truncdfsf2vfp");
-    setLibcallName(RTLIB::FPEXT_F32_F64,   "__extendsfdf2vfp");
+      // Floating-point to integer conversions.
+      // i64 conversions are done via library routines even when generating VFP
+      // instructions, so use the same ones.
+      setLibcallName(RTLIB::FPTOSINT_F64_I32, "__fixdfsivfp");
+      setLibcallName(RTLIB::FPTOUINT_F64_I32, "__fixunsdfsivfp");
+      setLibcallName(RTLIB::FPTOSINT_F32_I32, "__fixsfsivfp");
+      setLibcallName(RTLIB::FPTOUINT_F32_I32, "__fixunssfsivfp");
 
-    // Integer to floating-point conversions.
-    // i64 conversions are done via library routines even when generating VFP
-    // instructions, so use the same ones.
-    // FIXME: There appears to be some naming inconsistency in ARM libgcc: e.g.
-    // __floatunsidf vs. __floatunssidfvfp.
-    setLibcallName(RTLIB::SINTTOFP_I32_F64, "__floatsidfvfp");
-    setLibcallName(RTLIB::UINTTOFP_I32_F64, "__floatunssidfvfp");
-    setLibcallName(RTLIB::SINTTOFP_I32_F32, "__floatsisfvfp");
-    setLibcallName(RTLIB::UINTTOFP_I32_F32, "__floatunssisfvfp");
+      // Conversions between floating types.
+      setLibcallName(RTLIB::FPROUND_F64_F32, "__truncdfsf2vfp");
+      setLibcallName(RTLIB::FPEXT_F32_F64,   "__extendsfdf2vfp");
+
+      // Integer to floating-point conversions.
+      // i64 conversions are done via library routines even when generating VFP
+      // instructions, so use the same ones.
+      // FIXME: There appears to be some naming inconsistency in ARM libgcc: e.g.
+      // __floatunsidf vs. __floatunssidfvfp.
+      setLibcallName(RTLIB::SINTTOFP_I32_F64, "__floatsidfvfp");
+      setLibcallName(RTLIB::UINTTOFP_I32_F64, "__floatunssidfvfp");
+      setLibcallName(RTLIB::SINTTOFP_I32_F32, "__floatsisfvfp");
+      setLibcallName(RTLIB::UINTTOFP_I32_F32, "__floatunssisfvfp");
+    }
   }
 
   addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
