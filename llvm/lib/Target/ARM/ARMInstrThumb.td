@@ -56,6 +56,10 @@ class TIt<dag ops, string asm, list<dag> pattern>
 class TIx2<dag ops, string asm, list<dag> pattern>
   : ThumbI<ops, AddrModeNone, Size4Bytes, asm, "", pattern>;
 
+// tLEApcrel and tLEApcrelJT
+class TIsx2<dag ops, string asm, list<dag> pattern>
+  : ThumbI<ops, AddrModeTs, Size4Bytes, asm, "", pattern>;
+
 // BR_JT instructions
 class TJTI<dag ops, string asm, list<dag> pattern>
   : ThumbI<ops, AddrModeNone, SizeSpecial, asm, "", pattern>;
@@ -509,14 +513,14 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-def tLEApcrel : TIx2<(ops GPR:$dst, i32imm:$label),
+def tLEApcrel : TIsx2<(ops GPR:$dst, i32imm:$label),
                     !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
                                           "${:private}PCRELL${:uid}+6))\n"),
                                !strconcat("\tmov $dst, #PCRELV${:uid}\n",
                                   "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
                     []>;
 
-def tLEApcrelJT : TIx2<(ops GPR:$dst, i32imm:$label, i32imm:$id),
+def tLEApcrelJT : TIsx2<(ops GPR:$dst, i32imm:$label, i32imm:$id),
           !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
                                          "${:private}PCRELL${:uid}+4))\n"),
                      !strconcat("\tmov $dst, #PCRELV${:uid}\n",
