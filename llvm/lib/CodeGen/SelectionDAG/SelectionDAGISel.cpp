@@ -2610,14 +2610,18 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // MachineModuleInfo.
       std::vector<GlobalVariable *> TyInfo;
       for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-        ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(i));
-        if (CE && CE->getOpcode() == Instruction::BitCast &&
-            isa<GlobalVariable>(CE->getOperand(0))) {
+        Constant *C = cast<Constant>(I.getOperand(i));
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
+          TyInfo.push_back(GV);
+        } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+          assert(CE->getOpcode() == Instruction::BitCast &&
+                 isa<GlobalVariable>(CE->getOperand(0))
+                 && "TypeInfo must be a global variable or NULL");
           TyInfo.push_back(cast<GlobalVariable>(CE->getOperand(0)));
         } else {
-          ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i));
-          assert(CI && CI->getZExtValue() == 0 &&
-            "TypeInfo must be a global variable typeinfo or NULL");
+          ConstantInt *CI = dyn_cast<ConstantInt>(C);
+          assert(CI && CI->isNullValue() &&
+                 "TypeInfo must be a global variable or NULL");
           TyInfo.push_back(NULL);
         }
       }
