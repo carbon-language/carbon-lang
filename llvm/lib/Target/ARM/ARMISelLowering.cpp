@@ -186,6 +186,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32,   Custom);
   setOperationAction(ISD::GLOBAL_OFFSET_TABLE, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
 
   // Expand mem operations genericly.
   setOperationAction(ISD::MEMSET          , MVT::Other, Expand);
@@ -293,6 +294,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
       
   case ARMISD::FMRRD:         return "ARMISD::FMRRD";
   case ARMISD::FMDRR:         return "ARMISD::FMDRR";
+
+  case ARMISD::THREAD_POINTER:return "ARMISD::THREAD_POINTER";
   }
 }
 
@@ -699,6 +702,91 @@ static SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG) {
     Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
                                     CP->getAlignment());
   return DAG.getNode(ARMISD::Wrapper, MVT::i32, Res);
+}
+
+// Lower ISD::GlobalTLSAddress using the "general dynamic" model
+SDOperand
+ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
+                                                 SelectionDAG &DAG) {
+  MVT::ValueType PtrVT = getPointerTy();
+  unsigned char PCAdj = Subtarget->isThumb() ? 4 : 8;
+  ARMConstantPoolValue *CPV =
+    new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex, ARMCP::CPValue,
+                             PCAdj, "tlsgd", true);
+  SDOperand Argument = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+  Argument = DAG.getNode(ARMISD::Wrapper, MVT::i32, Argument);
+  Argument = DAG.getLoad(PtrVT, DAG.getEntryNode(), Argument, NULL, 0);
+  SDOperand Chain = Argument.getValue(1);
+
+  SDOperand PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
+  Argument = DAG.getNode(ARMISD::PIC_ADD, PtrVT, Argument, PICLabel);
+
+  // call __tls_get_addr.
+  ArgListTy Args;
+  ArgListEntry Entry;
+  Entry.Node = Argument;
+  Entry.Ty = (const Type *) Type::Int32Ty;
+  Args.push_back(Entry);
+  std::pair<SDOperand, SDOperand> CallResult =
+    LowerCallTo(Chain, (const Type *) Type::Int32Ty, false, false,
+                CallingConv::C, false,
+                DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG);
+  return CallResult.first;
+}
+
+// Lower ISD::GlobalTLSAddress using the "initial exec" or
+// "local exec" model.
+SDOperand
+ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
+                                            SelectionDAG &DAG) {
+  GlobalValue *GV = GA->getGlobal();
+  SDOperand Offset;
+  SDOperand Chain = DAG.getEntryNode();
+  MVT::ValueType PtrVT = getPointerTy();
+  // Get the Thread Pointer
+  SDOperand ThreadPointer = DAG.getNode(ARMISD::THREAD_POINTER, PtrVT);
+
+  if (GV->isDeclaration()){
+    // initial exec model
+    unsigned char PCAdj = Subtarget->isThumb() ? 4 : 8;
+    ARMConstantPoolValue *CPV =
+      new ARMConstantPoolValue(GA->getGlobal(), ARMPCLabelIndex, ARMCP::CPValue,
+                               PCAdj, "gottpoff", true);
+    Offset = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    Offset = DAG.getNode(ARMISD::Wrapper, MVT::i32, Offset);
+    Offset = DAG.getLoad(PtrVT, Chain, Offset, NULL, 0);
+    Chain = Offset.getValue(1);
+
+    SDOperand PICLabel = DAG.getConstant(ARMPCLabelIndex++, MVT::i32);
+    Offset = DAG.getNode(ARMISD::PIC_ADD, PtrVT, Offset, PICLabel);
+
+    Offset = DAG.getLoad(PtrVT, Chain, Offset, NULL, 0);
+  } else {
+    // local exec model
+    ARMConstantPoolValue *CPV =
+      new ARMConstantPoolValue(GV, ARMCP::CPValue, "tpoff");
+    Offset = DAG.getTargetConstantPool(CPV, PtrVT, 2);
+    Offset = DAG.getNode(ARMISD::Wrapper, MVT::i32, Offset);
+    Offset = DAG.getLoad(PtrVT, Chain, Offset, NULL, 0);
+  }
+
+  // The address of the thread local variable is the add of the thread
+  // pointer with the offset of the variable.
+  return DAG.getNode(ISD::ADD, PtrVT, ThreadPointer, Offset);
+}
+
+SDOperand
+ARMTargetLowering::LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG) {
+  // TODO: implement the "local dynamic" model
+  assert(Subtarget->isTargetELF() &&
+         "TLS not implemented for non-ELF targets");
+  GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
+  // If the relocation model is PIC, use the "General Dynamic" TLS Model,
+  // otherwise use the "Local Exec" TLS Model
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    return LowerToTLSGeneralDynamicModel(GA, DAG);
+  else
+    return LowerToTLSExecModels(GA, DAG);
 }
 
 SDOperand ARMTargetLowering::LowerGlobalAddressELF(SDOperand Op,
@@ -1249,6 +1337,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::GlobalAddress:
     return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
       LowerGlobalAddressELF(Op, DAG);
+  case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::CALL:          return LowerCALL(Op, DAG);
   case ISD::RET:           return LowerRET(Op, DAG);
   case ISD::SELECT_CC:     return LowerSELECT_CC(Op, DAG, Subtarget);

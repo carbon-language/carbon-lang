@@ -524,6 +524,18 @@ def tLEApcrelJT : TIx2<(ops GPR:$dst, i32imm:$label, i32imm:$id),
                     []>;
 
 //===----------------------------------------------------------------------===//
+// TLS Instructions
+//
+
+// __aeabi_read_tp preserves the registers r1-r3.
+let isCall = 1,
+  Defs = [R0, LR] in {
+  def tTPsoft  : TIx2<(ops),
+               "bl __aeabi_read_tp",
+               [(set R0, ARMthread_pointer)]>;
+}
+
+//===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
 

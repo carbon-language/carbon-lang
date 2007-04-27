@@ -20,18 +20,20 @@ using namespace llvm;
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv, unsigned id,
                                            ARMCP::ARMCPKind k,
                                            unsigned char PCAdj,
-                                           const char *Modif)
+                                           const char *Modif,
+                                           bool AddCA)
   : MachineConstantPoolValue((const Type*)gv->getType()),
     GV(gv), S(NULL), LabelId(id), Kind(k), PCAdjust(PCAdj),
-    Modifier(Modif) {}
+    Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(const char *s, unsigned id,
                                            ARMCP::ARMCPKind k,
                                            unsigned char PCAdj,
-                                           const char *Modif)
+                                           const char *Modif,
+                                           bool AddCA)
   : MachineConstantPoolValue((const Type*)Type::Int32Ty),
     GV(NULL), S(s), LabelId(id), Kind(k), PCAdjust(PCAdj),
-    Modifier(Modif) {}
+    Modifier(Modif), AddCurrentAddress(AddCA) {}
 
 ARMConstantPoolValue::ARMConstantPoolValue(GlobalValue *gv,
                                            ARMCP::ARMCPKind k,
@@ -78,6 +80,11 @@ void ARMConstantPoolValue::print(std::ostream &O) const {
   if (isNonLazyPointer()) O << "$non_lazy_ptr";
   else if (isStub()) O << "$stub";
   if (Modifier) O << "(" << Modifier << ")";
-  if (PCAdjust != 0) O << "-(LPIC" << LabelId << "+"
-                       << (unsigned)PCAdjust << ")";
+  if (PCAdjust != 0) {
+    O << "-(LPIC" << LabelId << "+"
+      << (unsigned)PCAdjust;
+    if (AddCurrentAddress)
+      O << "-.";
+    O << ")";
+  }
 }

@@ -37,14 +37,17 @@ class ARMConstantPoolValue : public MachineConstantPoolValue {
   unsigned char PCAdjust;  // Extra adjustment if constantpool is pc relative.
                            // 8 for ARM, 4 for Thumb.
   const char *Modifier;    // GV modifier i.e. (&GV(modifier)-(LPIC+8))
+  bool AddCurrentAddress;
 
 public:
   ARMConstantPoolValue(GlobalValue *gv, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
-                       unsigned char PCAdj = 0, const char *Modifier = NULL);
+                       unsigned char PCAdj = 0, const char *Modifier = NULL,
+                       bool AddCurrentAddress = false);
   ARMConstantPoolValue(const char *s, unsigned id,
                        ARMCP::ARMCPKind Kind = ARMCP::CPValue,
-                       unsigned char PCAdj = 0, const char *Modifier = NULL);
+                       unsigned char PCAdj = 0, const char *Modifier = NULL,
+                       bool AddCurrentAddress = false);
   ARMConstantPoolValue(GlobalValue *GV, ARMCP::ARMCPKind Kind,
                        const char *Modifier);
 
@@ -53,6 +56,7 @@ public:
   const char *getSymbol() const { return S; }
   const char *getModifier() const { return Modifier; }
   bool hasModifier() const { return Modifier != NULL; }
+  bool mustAddCurrentAddress() const { return AddCurrentAddress; }
   unsigned getLabelId() const { return LabelId; }
   bool isNonLazyPointer() const { return Kind == ARMCP::CPNonLazyPtr; }
   bool isStub() const { return Kind == ARMCP::CPStub; }

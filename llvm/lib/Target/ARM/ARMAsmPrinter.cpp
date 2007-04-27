@@ -134,10 +134,14 @@ namespace {
       } else
         O << Name;
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
-      if (ACPV->getPCAdjustment() != 0)
+      if (ACPV->getPCAdjustment() != 0) {
         O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
           << utostr(ACPV->getLabelId())
-          << "+" << (unsigned)ACPV->getPCAdjustment() << ")";
+          << "+" << (unsigned)ACPV->getPCAdjustment();
+         if (ACPV->mustAddCurrentAddress())
+           O << "-.";
+         O << ")";
+      }
       O << "\n";
 
       // If the constant pool value is a extern weak symbol, remember to emit
@@ -869,9 +873,13 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
         SwitchToDataSection(SectionName.c_str());
       } else {
         if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
-          SwitchToDataSection(TAI->getBSSSection(), I);
+          SwitchToDataSection(I->isThreadLocal() ? TAI->getTLSBSSSection() :
+                              TAI->getBSSSection(), I);
         else if (!I->isConstant())
-          SwitchToDataSection(TAI->getDataSection(), I);
+          SwitchToDataSection(I->isThreadLocal() ? TAI->getTLSDataSection() :
+                              TAI->getDataSection(), I);
+        else if (I->isThreadLocal())
+          SwitchToDataSection(TAI->getTLSDataSection());
         else {
           // Read-only data.
           bool HasReloc = C->ContainsRelocations();

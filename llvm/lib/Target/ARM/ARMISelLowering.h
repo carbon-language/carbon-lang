@@ -63,7 +63,9 @@ namespace llvm {
       RRX,          // V = RRX X, Flag     -> srl X, 1 + shift in carry flag.
       
       FMRRD,        // double to two gprs.
-      FMDRR         // Two gprs to double.
+      FMDRR,         // Two gprs to double.
+
+      THREAD_POINTER
     };
   }
 
@@ -125,6 +127,11 @@ namespace llvm {
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalAddressDarwin(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalAddressELF(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
+                                            SelectionDAG &DAG);
+    SDOperand LowerToTLSExecModels(GlobalAddressSDNode *GA,
+                                       SelectionDAG &DAG);
     SDOperand LowerGLOBAL_OFFSET_TABLE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBR_JT(SDOperand Op, SelectionDAG &DAG);

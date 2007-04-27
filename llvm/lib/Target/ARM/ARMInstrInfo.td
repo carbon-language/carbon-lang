@@ -39,6 +39,8 @@ def SDT_ARMCmp     : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_ARMPICAdd  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisPtrTy<1>, SDTCisVT<2, i32>]>;
 
+def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
+
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
@@ -78,6 +80,8 @@ def ARMpic_add       : SDNode<"ARMISD::PIC_ADD", SDT_ARMPICAdd>;
 def ARMsrl_flag      : SDNode<"ARMISD::SRL_FLAG", SDTIntUnaryOp, [SDNPOutFlag]>;
 def ARMsra_flag      : SDNode<"ARMISD::SRA_FLAG", SDTIntUnaryOp, [SDNPOutFlag]>;
 def ARMrrx           : SDNode<"ARMISD::RRX"     , SDTIntUnaryOp, [SDNPInFlag ]>;
+
+def ARMthread_pointer: SDNode<"ARMISD::THREAD_POINTER", SDT_ARMThreadPointer>;
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction Predicate Definitions.
@@ -1068,6 +1072,17 @@ def LEApcrelJT : AI1<(ops GPR:$dst, i32imm:$label, i32imm:$id),
                               !strconcat("${:private}PCRELL${:uid}:\n\t",
                                          "add $dst, pc, #PCRELV${:uid}")),
                    []>;
+//===----------------------------------------------------------------------===//
+// TLS Instructions
+//
+
+// __aeabi_read_tp preserves the registers r1-r3.
+let isCall = 1,
+  Defs = [R0, R12, LR] in {
+  def TPsoft  : AI<(ops),
+               "bl __aeabi_read_tp",
+               [(set R0, ARMthread_pointer)]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
