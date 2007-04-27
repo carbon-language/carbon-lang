@@ -156,7 +156,7 @@ class MachineFrameInfo {
   
 public:
   MachineFrameInfo() {
-    NumFixedObjects = StackSize = OffsetAdjustment = MaxAlignment = 0;
+    StackSize = NumFixedObjects = OffsetAdjustment = MaxAlignment = 0;
     HasVarSizedObjects = false;
     HasCalls = false;
     MaxCallFrameSize = 0;
