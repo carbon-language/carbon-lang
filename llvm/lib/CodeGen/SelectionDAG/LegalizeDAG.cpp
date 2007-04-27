@@ -692,10 +692,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = TLI.LowerOperation(Op, DAG);
       if (Result.Val) break;
       // Fall Thru
-    case TargetLowering::Legal:
-      Result = DAG.getNode(ISD::MERGE_VALUES, VT, DAG.getConstant(0, VT), Tmp1).
-                  getValue(Op.ResNo);
+    case TargetLowering::Legal: {
+      SDOperand Ops[] = { DAG.getConstant(0, VT), Tmp1 };
+      Result = DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
+                           Ops, 2).getValue(Op.ResNo);
       break;
+    }
     }
     }
     break;
@@ -714,10 +716,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = TLI.LowerOperation(Op, DAG);
       if (Result.Val) break;
       // Fall Thru
-    case TargetLowering::Legal:
-      Result = DAG.getNode(ISD::MERGE_VALUES, VT, DAG.getConstant(0, VT), Tmp2).
-                  getValue(Op.ResNo);
+    case TargetLowering::Legal: {
+      SDOperand Ops[] = { DAG.getConstant(0, VT), Tmp2 };
+      Result = DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
+                           Ops, 2).getValue(Op.ResNo);
       break;
+    }
     }
     }
     break;
