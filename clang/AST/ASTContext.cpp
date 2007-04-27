@@ -324,10 +324,9 @@ static int getIntegerRank(QualType t) {
       return 6;
     }
   }
-  if (const TagType *TT = cast<TagType>(t.getCanonicalType()))
-    if (TT->getDecl()->getKind() == Decl::Enum)
-      return 4;
-  assert(0 && "GetIntegerRank(): not a built-in integer or enum constant");
+  const TagType *TT = cast<TagType>(t.getCanonicalType());
+  assert(TT->getDecl()->getKind() == Decl::Enum && "not an int or enum");
+  return 4;
 }
 
 /// getFloatingRank - Return a relative rank for floating point types.
