@@ -299,7 +299,7 @@ static cl::opt<bool>
 WarningsAsErrors("Werror", cl::desc("Treat all warnings as errors"));
 
 static cl::opt<bool>
-WarnOnExtensions("pedantic",
+WarnOnExtensions("pedantic", cl::init(true),
                  cl::desc("Issue a warning on uses of GCC extensions"));
 
 static cl::opt<bool>

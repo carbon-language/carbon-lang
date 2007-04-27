@@ -25,6 +25,12 @@
 using namespace llvm;
 using namespace clang;
 
+// Sema.h avoids including Expr.h. As a result, all the Check* functions take 
+// an unsigned which is really an enum. These typedefs provide a short hand
+// notiation for casting (to keep the lines within 80 columns:-)
+typedef BinaryOperator::Opcode BOP;
+typedef UnaryOperator::Opcode UOP;
+
 /// ParseStringLiteral - The specified tokens were lexed as pasted string
 /// fragments (e.g. "foo" "bar" L"baz").  The result string has to handle string
 /// concatenation ([C99 5.1.1.2, translation phase #6]), so it may come from
@@ -88,8 +94,7 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   switch (Kind) {
   default:
     assert(0 && "Unknown simple primary expr!");
-  case tok::char_constant:     // constant: character-constant
-    // TODO: MOVE this to be some other callback.
+  // TODO: MOVE this to be some other callback.
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
@@ -411,7 +416,7 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
     return CheckAssignmentOperands(lhs, rhs, TokLoc, Opc);
   else if (Opc == BinaryOperator::Comma)
     return CheckCommaOperands(lhs, rhs, TokLoc);
-    
+
   assert(0 && "ParseBinOp(): illegal binary op");
 }
 
@@ -427,7 +432,7 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
   assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
 
-  QualType canonType = rhs.getCanonicalType(); // TEMPORARY
+  QualType canonType = rhs.getCanonicalType(); // FIXME
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, canonType);
 }
 
@@ -446,75 +451,6 @@ QualType Sema::UsualUnaryConversion(QualType t) {
   else if (t->isArrayType()) // C99 6.3.2.1p3
     return Context.getPointerType(cast<ArrayType>(t)->getElementType());
   return t;
-}
-
-/// GetIntegerRank - Helper function for UsualArithmeticConversions().
-static inline int GetIntegerRank(QualType t) {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
-    switch (BT->getKind()) {
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-      return 1;
-    case BuiltinType::Short:
-    case BuiltinType::UShort:
-      return 2;
-    case BuiltinType::Int:
-    case BuiltinType::UInt:
-      return 3;
-    case BuiltinType::Long:
-    case BuiltinType::ULong:
-      return 4;
-    case BuiltinType::LongLong:
-    case BuiltinType::ULongLong:
-      return 5;
-    default:
-      assert(0 && "getFloatingPointRank(): not a floating type");
-    }
-  }
-  return 0;
-}
-
-static inline QualType ConvertSignedWithGreaterRankThanUnsigned(
-  QualType signedType, QualType unsignedType) {
-  // FIXME: Need to check if the signed type can represent all values of the 
-  // unsigned type. If it can, then the result is the signed type. If it can't, 
-  // then the result is the unsigned version of the signed type.
-  return signedType; 
-}
-
-/// GetFloatingRank - Helper function for UsualArithmeticConversions().
-static inline int GetFloatingRank(QualType t) {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
-    switch (BT->getKind()) {
-    case BuiltinType::Float:
-    case BuiltinType::FloatComplex:
-      return 1;
-    case BuiltinType::Double:
-    case BuiltinType::DoubleComplex:
-      return 2;
-    case BuiltinType::LongDouble:
-    case BuiltinType::LongDoubleComplex:
-      return 3;
-    default:
-      assert(0 && "getFloatingPointRank(): not a floating type");
-    }
-  }
-  return 0;
-}
-
-/// ConvertFloatingRankToComplexType - Another helper for converting floats.
-static inline QualType ConvertFloatingRankToComplexType(int rank, 
-                                                        ASTContext &C) {
-  switch (rank) {
-  case 1:
-    return C.FloatComplexTy;
-  case 2:
-    return C.DoubleComplexTy;
-  case 3:
-    return C.LongDoubleComplexTy;
-  default:
-    assert(0 && "convertRankToComplex(): illegal value for rank");
-  }
 }
 
 /// UsualArithmeticConversions - Performs various conversions that are common to 
@@ -545,23 +481,7 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
     if (lhs->isIntegerType())
       return rhs;
 
-    // the following code handles three different combinations:
-    // complex/complex, complex/float, float/complex. When both operands 
-    // are complex, the shorter operand is converted to the type of the longer,
-    // and that is the type of the result. This corresponds to what is done
-    // when combining two real floating-point operands. The fun begins when 
-    // size promotion occur across type domains. GetFloatingRank &
-    // ConvertFloatingRankToComplexType handle this without enumerating all
-    // permutations. It also allows us to add new types without breakage.
-    int lhsRank = GetFloatingRank(lhs);
-    int rhsRank = GetFloatingRank(rhs);
-    
-    // From H&S 6.3.4: When one operand is complex and the other is a real
-    // floating-point type, the less precise type is converted, within it's 
-    // real or complex domain, to the precision of the other type. For example,
-    // when combining a "long double" with a "double _Complex", the 
-    // "double _Complex" is promoted to "long double _Complex".
-    return ConvertFloatingRankToComplexType(std::max(lhsRank,rhsRank), Context);
+    return Context.maxComplexType(lhs, rhs);
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
@@ -572,23 +492,9 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
       return rhs;
 
     // we have two real floating types, float/complex combos were handled above.
-    return GetFloatingRank(lhs) >= GetFloatingRank(rhs) ? lhs : rhs;
+    return Context.maxFloatingType(lhs, rhs);
   }
-  // Lastly, handle two integers (C99 6.3.1.8p1)
-  bool t1Unsigned = lhs->isUnsignedIntegerType();
-  bool t2Unsigned = rhs->isUnsignedIntegerType();
-  
-  if ((t1Unsigned && t2Unsigned) || (!t1Unsigned && !t2Unsigned))
-    return GetIntegerRank(lhs) >= GetIntegerRank(rhs) ? lhs : rhs; 
-  
-  // We have two integer types with differing signs
-  QualType unsignedType = t1Unsigned ? lhs : rhs;
-  QualType signedType = t1Unsigned ? rhs : lhs;
-  
-  if (GetIntegerRank(unsignedType) >= GetIntegerRank(signedType))
-    return unsignedType;
-  else 
-    return ConvertSignedWithGreaterRankThanUnsigned(signedType, unsignedType); 
+  return Context.maxIntegerType(lhs, rhs);
 }
 
 Action::ExprResult Sema::CheckMultiplicativeOperands(
@@ -596,21 +502,37 @@ Action::ExprResult Sema::CheckMultiplicativeOperands(
 {
   QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
   
-  if ((BinaryOperator::Opcode)code == BinaryOperator::Rem) {
+  if ((BOP)code == BinaryOperator::Rem) {
     if (!resType->isIntegerType())
       return Diag(loc, diag::err_typecheck_invalid_operands);
   } else { // *, /
     if (!resType->isArithmeticType())
       return Diag(loc, diag::err_typecheck_invalid_operands);
   }
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, resType);
+  return new BinaryOperator(lex, rex, (BOP)code, resType);
 }
 
 Action::ExprResult Sema::CheckAdditiveOperands( // C99 6.5.6
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
-  // FIXME: add type checking and fix result type
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  
+  // handle the common case first (both operands are arithmetic).
+  if (resType->isArithmeticType())
+    return new BinaryOperator(lex, rex, (BOP)code, resType);
+  else {
+    if ((BOP)code == BinaryOperator::Add) {
+      if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
+          (lhsType->isIntegerType() && rhsType->isPointerType()))
+        return new BinaryOperator(lex, rex, (BOP)code, resType);
+    } else { // -
+      if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
+          (lhsType->isPointerType() && rhsType->isPointerType()))
+        return new BinaryOperator(lex, rex, (BOP)code, resType);
+    }
+  }
+  return Diag(loc, diag::err_typecheck_invalid_operands);
 }
 
 Action::ExprResult Sema::CheckShiftOperands( // C99 6.5.7
@@ -621,7 +543,7 @@ Action::ExprResult Sema::CheckShiftOperands( // C99 6.5.7
   if (!resType->isIntegerType())
     return Diag(loc, diag::err_typecheck_invalid_operands);
 
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, resType);
+  return new BinaryOperator(lex, rex, (BOP)code, resType);
 }
 
 Action::ExprResult Sema::CheckRelationalOperands( // C99 6.5.8
@@ -630,17 +552,14 @@ Action::ExprResult Sema::CheckRelationalOperands( // C99 6.5.8
   QualType lType = lex->getType(), rType = rex->getType();
   
   if (lType->isRealType() && rType->isRealType())
-    ;
-  else if (lType->isPointerType() &&  rType->isPointerType())
-    ;
-  else {
-    // The following test is for GCC compatibility.
-    if (lType->isIntegerType() || rType->isIntegerType())
-      return Diag(loc, diag::err_typecheck_comparison_of_pointer_integer);
-    return Diag(loc, diag::err_typecheck_invalid_operands);
-  }
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, 
-                            Context.IntTy);
+    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+  
+  if (lType->isPointerType() &&  rType->isPointerType())
+    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+
+  if (lType->isIntegerType() || rType->isIntegerType()) // GCC extension.
+    return Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
+  return Diag(loc, diag::err_typecheck_invalid_operands);
 }
 
 Action::ExprResult Sema::CheckEqualityOperands( // C99 6.5.9
@@ -649,17 +568,14 @@ Action::ExprResult Sema::CheckEqualityOperands( // C99 6.5.9
   QualType lType = lex->getType(), rType = rex->getType();
   
   if (lType->isArithmeticType() && rType->isArithmeticType())
-    ;
-  else if (lType->isPointerType() &&  rType->isPointerType())
-    ;
-  else {
-    // The following test is for GCC compatibility.
-    if (lType->isIntegerType() || rType->isIntegerType())
-      return Diag(loc, diag::err_typecheck_comparison_of_pointer_integer);
-    return Diag(loc, diag::err_typecheck_invalid_operands);
-  }
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, 
-                            Context.IntTy);
+    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+  
+  if (lType->isPointerType() &&  rType->isPointerType())
+    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+
+  if (lType->isIntegerType() || rType->isIntegerType()) // GCC extension.
+    return Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
+  return Diag(loc, diag::err_typecheck_invalid_operands);
 }
 
 Action::ExprResult Sema::CheckBitwiseOperands(
@@ -670,28 +586,33 @@ Action::ExprResult Sema::CheckBitwiseOperands(
   if (!resType->isIntegerType())
     return Diag(loc, diag::err_typecheck_invalid_operands);
 
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, resType);
+  return new BinaryOperator(lex, rex, (BOP)code, resType);
 }
 
 Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
-  // FIXME: add type checking and fix result type
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
+  QualType lhsType = UsualUnaryConversion(lex->getType());
+  QualType rhsType = UsualUnaryConversion(rex->getType());
+  
+  if (!lhsType->isScalarType() || !rhsType->isScalarType())
+    return Diag(loc, diag::err_typecheck_invalid_operands);
+    
+  return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
 }
 
 Action::ExprResult Sema::CheckAssignmentOperands( // C99 6.5.16
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
   // FIXME: add type checking and fix result type
-  return new BinaryOperator(lex, rex, (BinaryOperator::Opcode)code, Context.IntTy);
+  return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
 }
 
 Action::ExprResult Sema::CheckCommaOperands( // C99 6.5.17
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
-  // FIXME: add type checking and fix result type
-  return new BinaryOperator(lex, rex, BinaryOperator::Comma, Context.IntTy);
+  QualType rhsType = UsualUnaryConversion(rex->getType());
+  return new BinaryOperator(lex, rex, BinaryOperator::Comma, rhsType);
 }
 
 Action::ExprResult
@@ -717,7 +638,7 @@ Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
   if (!canonType.isModifiableLvalue())
     return Diag(OpLoc, diag::err_typecheck_not_modifiable, qType);
 
-  return new UnaryOperator(op, (UnaryOperator::Opcode)OpCode, qType);
+  return new UnaryOperator(op, (UOP)OpCode, qType);
 }
 
 /// getPrimaryDeclaration - Helper function for CheckAddressOfOperand().
@@ -806,5 +727,5 @@ Sema::CheckArithmeticOperand(Expr *op, SourceLocation OpLoc, unsigned Opc) {
       return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
     break;
   }
-  return new UnaryOperator(op, (UnaryOperator::Opcode)Opc, resultType);
+  return new UnaryOperator(op, (UOP)Opc, resultType);
 }

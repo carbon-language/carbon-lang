@@ -293,3 +293,116 @@ QualType ASTContext::getSizeType() const {
   return UnsignedLongTy; 
 }
 
+/// getIntegerRank - Helper function for UsualArithmeticConversions().
+int ASTContext::getIntegerRank(QualType t) {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
+    switch (BT->getKind()) {
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+      return 1;
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+      return 2;
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+      return 3;
+    case BuiltinType::Long:
+    case BuiltinType::ULong:
+      return 4;
+    case BuiltinType::LongLong:
+    case BuiltinType::ULongLong:
+      return 5;
+    default:
+      assert(0 && "GetIntegerRank(): not an integer type");
+    }
+  }
+  return 0;
+}
+
+/// getFloatingRank - Helper function for UsualArithmeticConversions().
+int ASTContext::getFloatingRank(QualType t) {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
+    switch (BT->getKind()) {
+    case BuiltinType::Float:
+    case BuiltinType::FloatComplex:
+      return 1;
+    case BuiltinType::Double:
+    case BuiltinType::DoubleComplex:
+      return 2;
+    case BuiltinType::LongDouble:
+    case BuiltinType::LongDoubleComplex:
+      return 3;
+    default:
+      assert(0 && "getFloatingPointRank(): not a floating type");
+    }
+  }
+  return 0;
+}
+
+QualType ASTContext::convertSignedWithGreaterRankThanUnsigned(
+  QualType signedType, QualType unsignedType) {
+  // FIXME: Need to check if the signed type can represent all values of the 
+  // unsigned type. If it can, then the result is the signed type. If it can't, 
+  // then the result is the unsigned version of the signed type.
+  return signedType; 
+}
+
+
+/// ConvertFloatingRankToComplexType - Another helper for converting floats.
+QualType ASTContext::convertFloatingRankToComplexType(int rank) {
+  switch (rank) {
+  case 1:
+    return FloatComplexTy;
+  case 2:
+    return DoubleComplexTy;
+  case 3:
+    return LongDoubleComplexTy;
+  default:
+    assert(0 && "convertRankToComplex(): illegal value for rank");
+  }
+}
+
+// maxComplexType - the following code handles 3 different combinations:
+// complex/complex, complex/float, float/complex. 
+// When both operands are complex, the shorter operand is converted to the 
+// type of the longer, and that is the type of the result. This corresponds 
+// to what is done when combining two real floating-point operands. 
+// The fun begins when size promotion occur across type domains. g
+// getFloatingRank & convertFloatingRankToComplexType handle this without 
+// enumerating all permutations. 
+// It also allows us to add new types without breakage.
+// From H&S 6.3.4: When one operand is complex and the other is a real
+// floating-point type, the less precise type is converted, within it's 
+// real or complex domain, to the precision of the other type. For example,
+// when combining a "long double" with a "double _Complex", the 
+// "double _Complex" is promoted to "long double _Complex".
+
+QualType ASTContext::maxComplexType(QualType lt, QualType rt) {
+  int lhsRank = getFloatingRank(lt);
+  int rhsRank = getFloatingRank(rt);
+  
+  return convertFloatingRankToComplexType(std::max(lhsRank, rhsRank));
+}
+
+// maxFloatingType - handles the simple case, both operands are floats.
+QualType ASTContext::maxFloatingType(QualType lt, QualType rt) {
+  return getFloatingRank(lt) > getFloatingRank(rt) ? lt : rt;
+}
+
+QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
+  // Lastly, handle two integers (C99 6.3.1.8p1)
+  bool t1Unsigned = lhs->isUnsignedIntegerType();
+  bool t2Unsigned = rhs->isUnsignedIntegerType();
+  
+  if ((t1Unsigned && t2Unsigned) || (!t1Unsigned && !t2Unsigned))
+    return getIntegerRank(lhs) >= getIntegerRank(rhs) ? lhs : rhs; 
+  
+  // We have two integer types with differing signs
+  QualType unsignedType = t1Unsigned ? lhs : rhs;
+  QualType signedType = t1Unsigned ? rhs : lhs;
+  
+  if (getIntegerRank(unsignedType) >= getIntegerRank(signedType))
+    return unsignedType;
+  else 
+    return convertSignedWithGreaterRankThanUnsigned(signedType, unsignedType); 
+}

@@ -368,7 +368,7 @@ public:
   static bool isEqualityOp(Opcode Op) { return Op == EQ || Op == NE; }
   static bool isBitwiseOp(Opcode Op) { return Op >= And && Op <= Or; }
   static bool isLogicalOp(Opcode Op) { return Op == LAnd || Op == LOr; }
-  static bool isAssignmentOp(Opcode Op) { return Op >= Assign || Op<=OrAssign; }
+  static bool isAssignmentOp(Opcode Op) { return Op >= Assign && Op<=OrAssign; }
   
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() { return LHS; }

@@ -537,7 +537,7 @@ DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%s'")
 DIAG(err_typecheck_invalid_operands, ERROR,
      "invalid operands to binary expression")
-DIAG(err_typecheck_comparison_of_pointer_integer, WARNING,
+DIAG(ext_typecheck_comparison_of_pointer_integer, EXTENSION,
      "comparison between pointer and integer")
 
 // Statements.
