@@ -6408,8 +6408,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
           
           // Handle silly modulus not returning values values [0..TySize).
           if (Offset < 0) {
-            assert(FirstIdx == 0);
-            FirstIdx = -1;
+            --FirstIdx;
             Offset += TySize;
             assert(Offset >= 0);
           }
