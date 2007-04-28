@@ -427,9 +427,7 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
       AliasInits.push_back(AliasInitWorklist.back());
     } else {
       if (Constant *C = dyn_cast<Constant>(ValueList[ValID]))
-        AliasInitWorklist.back().first->setAliasee(
-                                            // FIXME:
-                                            cast<GlobalValue>(C));
+        AliasInitWorklist.back().first->setAliasee(C);
       else
         return Error("Alias initializer is not a constant!");
     }
