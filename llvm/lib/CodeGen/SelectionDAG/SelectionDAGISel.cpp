@@ -3265,6 +3265,45 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     // FIXME: merge this into GetMostGeneralConstraint.
     OpInfo.ConstraintType = TLI.getConstraintType(OpInfo.ConstraintCode);
 
+    
+    // If this is a memory input, and if the operand is not indirect, do what we
+    // need to to provide an address for the memory input.
+    if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
+        !OpInfo.isIndirect) {
+      assert(OpInfo.Type == InlineAsm::isInput &&
+             "Can only indirectify direct input operands!");
+      
+      // Memory operands really want the address of the value.  If we don't have
+      // an indirect input, put it in the constpool if we can, otherwise spill
+      // it to a stack slot.
+      
+      // If the operand is a float, integer, or vector constant, spill to a
+      // constant pool entry to get its address.
+      Value *OpVal = OpInfo.CallOperandVal;
+      if (isa<ConstantFP>(OpVal) || isa<ConstantInt>(OpVal) ||
+          isa<ConstantVector>(OpVal)) {
+        OpInfo.CallOperand = DAG.getConstantPool(cast<Constant>(OpVal),
+                                                 TLI.getPointerTy());
+      } else {
+        // Otherwise, create a stack slot and emit a store to it before the
+        // asm.
+        const Type *Ty = OpVal->getType();
+        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+        Chain = DAG.getStore(Chain, OpInfo.CallOperand, StackSlot, NULL, 0);
+        OpInfo.CallOperand = StackSlot;
+      }
+     
+      // There is no longer a Value* corresponding to this operand.
+      OpInfo.CallOperandVal = 0;
+      // It is now an indirect operand.
+      OpInfo.isIndirect = true;
+    }
+    
+    
     if (TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpVT).first ==0)
       continue;  // Not assigned a fixed reg.
     
@@ -3323,19 +3362,12 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       if (OpInfo.ConstraintType != TargetLowering::C_RegisterClass &&
           OpInfo.ConstraintType != TargetLowering::C_Register) {
         // Memory output, or 'other' output (e.g. 'X' constraint).
-        SDOperand InOperandVal = OpInfo.CallOperand;
-        
-        // Check that the operand (the address to store to) isn't a float.
-        if (!MVT::isInteger(InOperandVal.getValueType()))
-          assert(0 && "MATCH FAIL!");
-        
-        if (!OpInfo.isIndirect)
-          assert(0 && "MATCH FAIL!");
+        assert(OpInfo.isIndirect && "Memory output must be indirect operand");
 
         // Add information to the INLINEASM node to know about this output.
         unsigned ResOpType = 4/*MEM*/ | (1 << 3);
         AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
-        AsmNodeOperands.push_back(InOperandVal);
+        AsmNodeOperands.push_back(OpInfo.CallOperand);
         break;
       }
 
@@ -3440,32 +3472,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         AsmNodeOperands.push_back(InOperandVal);
         break;
       } else if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
-        // Memory input.  Memory operands really want the address of the value,
-        // so we want an indirect input.  If we don't have an indirect input,
-        // spill the value somewhere if we can, otherwise spill it to a stack
-        // slot.
-        if (!OpInfo.isIndirect) {
-          // If the operand is a float, integer, or vector constant, spill to a
-          // constant pool entry to get its address.
-          Value *OpVal = OpInfo.CallOperandVal;
-          if (isa<ConstantFP>(OpVal) || isa<ConstantInt>(OpVal) ||
-              isa<ConstantVector>(OpVal)) {
-            InOperandVal = DAG.getConstantPool(cast<Constant>(OpVal),
-                                               TLI.getPointerTy());
-          } else {
-            // Otherwise, create a stack slot and emit a store to it before the
-            // asm.
-            const Type *Ty = OpVal->getType();
-            uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
-            unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
-            MachineFunction &MF = DAG.getMachineFunction();
-            int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
-            SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-            Chain = DAG.getStore(Chain, InOperandVal, StackSlot, NULL, 0);
-            InOperandVal = StackSlot;
-          }
-        }
-        
+        assert(OpInfo.isIndirect && "Operand must be indirect to be a mem!");
         assert(InOperandVal.getValueType() == TLI.getPointerTy() &&
                "Memory operands expect pointer values");
                
