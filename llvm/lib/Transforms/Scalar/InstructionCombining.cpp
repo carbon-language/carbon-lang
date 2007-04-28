@@ -4358,15 +4358,27 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       }
     } else {
       // Convert to correct type.
-      Op = IC.InsertNewInstBefore(CastInst::createSExtOrBitCast(Op, IntPtrTy,
-                                               Op->getName()+".c"), I);
-      if (Size != 1)
-        // We'll let instcombine(mul) convert this to a shl if possible.
-        Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
+      if (Op->getType() != IntPtrTy) {
+        if (Constant *OpC = dyn_cast<Constant>(Op))
+          Op = ConstantExpr::getSExt(OpC, IntPtrTy);
+        else
+          Op = IC.InsertNewInstBefore(new SExtInst(Op, IntPtrTy,
+                                                   Op->getName()+".c"), I);
+      }
+      if (Size != 1) {
+        if (Constant *OpC = dyn_cast<Constant>(Op))
+          Op = ConstantExpr::getMul(OpC, Scale);
+        else    // We'll let instcombine(mul) convert this to a shl if possible.
+          Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
                                                     GEP->getName()+".idx"), I);
+      }
 
       // Emit an add instruction.
-      Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
+      if (isa<Constant>(Op) && isa<Constant>(Result))
+        Result = ConstantExpr::getAdd(cast<Constant>(Op),
+                                      cast<Constant>(Result));
+      else
+        Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
                                                     GEP->getName()+".offs"), I);
     }
   }
@@ -6343,16 +6355,95 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
 Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
   Value *Src = CI.getOperand(0);
   
-  // If casting the result of a getelementptr instruction with no offset, turn
-  // this into a cast of the original pointer!
-  //
   if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Src)) {
+    // If casting the result of a getelementptr instruction with no offset, turn
+    // this into a cast of the original pointer!
     if (GEP->hasAllZeroIndices()) {
       // Changing the cast operand is usually not a good idea but it is safe
       // here because the pointer operand is being replaced with another 
       // pointer operand so the opcode doesn't need to change.
+      AddToWorkList(GEP);
       CI.setOperand(0, GEP->getOperand(0));
       return &CI;
+    }
+    
+    // If the GEP has a single use, and the base pointer is a bitcast, and the
+    // GEP computes a constant offset, see if we can convert these three
+    // instructions into fewer.  This typically happens with unions and other
+    // non-type-safe code.
+    if (GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0))) {
+      if (GEP->hasAllConstantIndices()) {
+        // We are guaranteed to get a constant from EmitGEPOffset.
+        ConstantInt *OffsetV = cast<ConstantInt>(EmitGEPOffset(GEP, CI, *this));
+        int64_t Offset = OffsetV->getSExtValue();
+        
+        // Get the base pointer input of the bitcast, and the type it points to.
+        Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
+        const Type *GEPIdxTy =
+          cast<PointerType>(OrigBase->getType())->getElementType();
+        if (GEPIdxTy->isSized()) {
+          SmallVector<Value*, 8> NewIndices;
+          
+          // Start with the index over the outer type.
+          const Type *IntPtrTy = TD->getIntPtrType();
+          int64_t TySize = TD->getTypeSize(GEPIdxTy);
+          int64_t FirstIdx = Offset/TySize;
+          Offset %= TySize;
+          
+          // Handle silly modulus not returning values values [0..TySize).
+          if (Offset < 0) {
+            assert(FirstIdx == 0);
+            FirstIdx = -1;
+            Offset += TySize;
+            assert(Offset >= 0);
+          }
+          
+          NewIndices.push_back(ConstantInt::get(IntPtrTy, FirstIdx));
+          assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
+
+          // Index into the types.  If we fail, set OrigBase to null.
+          while (Offset) {
+            if (const StructType *STy = dyn_cast<StructType>(GEPIdxTy)) {
+              const StructLayout *SL = TD->getStructLayout(STy);
+              unsigned Elt = SL->getElementContainingOffset(Offset);
+              NewIndices.push_back(ConstantInt::get(Type::Int32Ty, Elt));
+              
+              Offset -= SL->getElementOffset(Elt);
+              GEPIdxTy = STy->getElementType(Elt);
+            } else if (isa<ArrayType>(GEPIdxTy) || isa<VectorType>(GEPIdxTy)) {
+              const SequentialType *STy = cast<SequentialType>(GEPIdxTy);
+              uint64_t EltSize = TD->getTypeSize(STy->getElementType());
+              NewIndices.push_back(ConstantInt::get(IntPtrTy, Offset/EltSize));
+              Offset %= EltSize;
+              GEPIdxTy = STy->getElementType();
+            } else {
+              // Otherwise, we can't index into this, bail out.
+              Offset = 0;
+              OrigBase = 0;
+            }
+          }
+          if (OrigBase) {
+            // If we were able to index down into an element, create the GEP
+            // and bitcast the result.  This eliminates one bitcast, potentially
+            // two.
+            Instruction *NGEP = new GetElementPtrInst(OrigBase, &NewIndices[0],
+                                                      NewIndices.size(), "");
+            InsertNewInstBefore(NGEP, CI);
+            NGEP->takeName(GEP);
+            
+            cerr << "\nZAP: " << *GEP->getOperand(0);
+            cerr << "ZAP: " << *GEP;
+            cerr << "ZAP: " << CI << "\n";
+
+            cerr << "NEW: " << *NGEP << "\n";
+
+            if (isa<BitCastInst>(CI))
+              return new BitCastInst(NGEP, CI.getType());
+            assert(isa<PtrToIntInst>(CI));
+            return new PtrToIntInst(NGEP, CI.getType());
+          }
+        }
+      }      
     }
   }
     
@@ -7306,10 +7397,7 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
     if (isa<PointerType>(CI->getOperand(0)->getType()))
       return GetKnownAlignment(CI->getOperand(0), TD);
     return 0;
-  } else if (isa<GetElementPtrInst>(V) ||
-             (isa<ConstantExpr>(V) && 
-              cast<ConstantExpr>(V)->getOpcode()==Instruction::GetElementPtr)) {
-    User *GEPI = cast<User>(V);
+  } else if (User *GEPI = dyn_castGetElementPtr(V)) {
     unsigned BaseAlignment = GetKnownAlignment(GEPI->getOperand(0), TD);
     if (BaseAlignment == 0) return 0;
     
@@ -8107,7 +8195,7 @@ static Value *InsertCastToIntPtrTy(Value *V, const Type *DTy,
 
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Value *PtrOp = GEP.getOperand(0);
-  // Is it 'getelementptr %P, long 0'  or 'getelementptr %P'
+  // Is it 'getelementptr %P, i32 0'  or 'getelementptr %P'
   // If so, eliminate the noop.
   if (GEP.getNumOperands() == 1)
     return ReplaceInstUsesWith(GEP, PtrOp);
@@ -8122,22 +8210,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   if (GEP.getNumOperands() == 2 && HasZeroPointerIndex)
     return ReplaceInstUsesWith(GEP, PtrOp);
 
-  // Keep track of whether all indices are zero constants integers.
-  bool AllZeroIndices = true;
-  
   // Eliminate unneeded casts for indices.
   bool MadeChange = false;
   
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i, ++GTI) {
-    // Track whether this GEP has all zero indices, if so, it doesn't move the
-    // input pointer, it just changes its type.
-    if (AllZeroIndices) {
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(i)))
-        AllZeroIndices = CI->isZero();
-      else
-        AllZeroIndices = false;
-    }
     if (isa<SequentialType>(*GTI)) {
       if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
         if (CI->getOpcode() == Instruction::ZExt ||
@@ -8173,7 +8250,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // If this GEP instruction doesn't move the pointer, and if the input operand
   // is a bitcast of another pointer, just replace the GEP with a bitcast of the
   // real input to the dest type.
-  if (AllZeroIndices && isa<BitCastInst>(GEP.getOperand(0)))
+  if (GEP.hasAllZeroIndices() && isa<BitCastInst>(GEP.getOperand(0)))
     return new BitCastInst(cast<BitCastInst>(GEP.getOperand(0))->getOperand(0),
                            GEP.getType());
     
@@ -8573,8 +8650,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   }
 
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op))
-    if (isa<ConstantPointerNull>(GEPI->getOperand(0)) ||
-        isa<UndefValue>(GEPI->getOperand(0))) {
+    if (isa<ConstantPointerNull>(GEPI->getOperand(0))) {
       // Insert a new store to null instruction before the load to indicate
       // that this code is not reachable.  We do this instead of inserting
       // an unreachable instruction directly because we cannot modify the
