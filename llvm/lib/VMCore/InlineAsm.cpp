@@ -55,21 +55,22 @@ bool InlineAsm::ConstraintInfo::Parse(const std::string &Str,
   // Initialize
   Type = isInput;
   isEarlyClobber = false;
-  isIndirectOutput = false;
   hasMatchingInput = false;
   isCommutative = false;
+  isIndirect = false;
   
-  // Parse the prefix.
+  // Parse prefixes.
   if (*I == '~') {
     Type = isClobber;
     ++I;
   } else if (*I == '=') {
     ++I;
     Type = isOutput;
-    if (I != E && *I == '=') {
-      isIndirectOutput = true;
-      ++I;
-    }
+  }
+  
+  if (*I == '*') {
+    isIndirect = true;
+    ++I;
   }
   
   if (I == E) return true;  // Just a prefix, like "==" or "~".
@@ -184,12 +185,12 @@ bool InlineAsm::Verify(const FunctionType *Ty, const std::string &ConstStr) {
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput:
-      if (!Constraints[i].isIndirectOutput) {
+      if (!Constraints[i].isIndirect) {
         if (NumInputs || NumClobbers) return false;  // outputs come first.
         ++NumOutputs;
         break;
       }
-      // FALLTHROUGH for IndirectOutputs.
+      // FALLTHROUGH for Indirect Outputs.
     case InlineAsm::isInput:
       if (NumClobbers) return false;               // inputs before clobbers.
       ++NumInputs;

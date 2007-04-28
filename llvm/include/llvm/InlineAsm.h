@@ -85,10 +85,6 @@ public:
     /// read.  This is only ever set for an output operand.
     bool isEarlyClobber; 
     
-    /// isIndirectOutput - If this is true for an output constraint, the address
-    /// to store the output result is passed as an operand to the call.
-    bool isIndirectOutput;
-    
     /// hasMatchingInput - This is set to true for an output constraint iff
     /// there is an input constraint that is required to match it (e.g. "0").
     bool hasMatchingInput;
@@ -97,11 +93,17 @@ public:
     /// with the next operand.
     bool isCommutative;
     
+    /// isIndirect - True if this operand is an indirect operand.  This means
+    /// that the address of the source or destination is present in the call
+    /// instruction, instead of it being returned or passed in explicitly.  This
+    /// is represented with a '*' in the asm string.
+    bool isIndirect;
+    
     /// Code - The constraint code, either the register name (in braces) or the
     /// constraint letter/number.
     std::vector<std::string> Codes;
     
-    /// Parse - Analyze the specified string (e.g. "==&{eax}") and fill in the
+    /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.
     bool Parse(const std::string &Str, 
