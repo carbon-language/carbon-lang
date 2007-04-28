@@ -3123,11 +3123,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
         const Type *Ty = MVT::getTypeForValueType(ExtraVT);
-        unsigned TySize = (unsigned)TLI.getTargetData()->getTypeSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
         unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI =
-          MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
+          MF.getFrameInfo()->CreateStackObject(TySize, Align);
         SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
                                    StackSlot, NULL, 0, ExtraVT);
