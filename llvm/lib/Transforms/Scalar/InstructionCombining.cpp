@@ -6431,12 +6431,6 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
             InsertNewInstBefore(NGEP, CI);
             NGEP->takeName(GEP);
             
-            cerr << "\nZAP: " << *GEP->getOperand(0);
-            cerr << "ZAP: " << *GEP;
-            cerr << "ZAP: " << CI << "\n";
-
-            cerr << "NEW: " << *NGEP << "\n";
-
             if (isa<BitCastInst>(CI))
               return new BitCastInst(NGEP, CI.getType());
             assert(isa<PtrToIntInst>(CI));
