@@ -319,6 +319,13 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
   Assert1(GA.getType() == GA.getAliasee()->getType(),
           "Alias and aliasee types should match!", &GA);
   
+  if (!isa<GlobalValue>(GA.getAliasee())) {
+    const ConstantExpr *CE = dyn_cast<ConstantExpr>(GA.getAliasee());
+    Assert1(CE && CE->getOpcode() == Instruction::BitCast,
+            "Aliasee should be either GlobalValue or bitcast of GlobalValue",
+            &GA);
+  }
+  
   visitGlobalValue(GA);
 }
 
