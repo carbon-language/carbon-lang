@@ -3320,12 +3320,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
     switch (OpInfo.Type) {
     case InlineAsm::isOutput: {
-      TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
-      if (OpInfo.ConstraintCode.size() == 1)   // not a physreg name.
-        CTy = TLI.getConstraintType(OpInfo.ConstraintCode);
-      
-      if (CTy != TargetLowering::C_RegisterClass &&
-          CTy != TargetLowering::C_Register) {
+      if (OpInfo.ConstraintType != TargetLowering::C_RegisterClass &&
+          OpInfo.ConstraintType != TargetLowering::C_Register) {
         // Memory output, or 'other' output (e.g. 'X' constraint).
         SDOperand InOperandVal = OpInfo.CallOperand;
         
