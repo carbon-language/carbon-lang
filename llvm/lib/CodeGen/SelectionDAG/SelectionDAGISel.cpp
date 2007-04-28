@@ -3210,16 +3210,22 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput:
       if (!Constraints[i].isIndirect) {
+        // The return value of the call is this value.
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
         OpVT = TLI.getValueType(I.getType());
       } else {
         const Type *OpTy = I.getOperand(OpNum)->getType();
-        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType());
+        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType(),true);
         OpNum++;  // Consumes a call operand.
       }
       break;
     case InlineAsm::isInput:
-      OpVT = TLI.getValueType(I.getOperand(OpNum)->getType());
+      if (!Constraints[i].isIndirect) {
+        OpVT = TLI.getValueType(I.getOperand(OpNum)->getType());
+      } else {
+        const Type *OpTy = I.getOperand(OpNum)->getType();
+        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType(),true);
+      }
       OpNum++;  // Consumes a call operand.
       break;
     case InlineAsm::isClobber:
@@ -3275,8 +3281,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       if (ConstraintCode.size() == 1)   // not a physreg name.
         CTy = TLI.getConstraintType(ConstraintCode);
       
-      if (CTy == TargetLowering::C_Memory) {
-        // Memory output.
+      if (CTy != TargetLowering::C_RegisterClass) {
+        // Memory output, or 'other' output (e.g. 'X' constraint).
         SDOperand InOperandVal = getValue(I.getOperand(OpNum));
         
         // Check that the operand (the address to store to) isn't a float.
