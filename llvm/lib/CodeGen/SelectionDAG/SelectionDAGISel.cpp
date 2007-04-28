@@ -3172,85 +3172,109 @@ static std::string GetMostGeneralConstraint(std::vector<std::string> &C,
   return *Current;
 }
 
+namespace {
+/// AsmOperandInfo - This contains information for each constraint that we are
+/// lowering.
+struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
+  /// ConstraintCode - This contains the actual string for the code, like "m".
+  std::string ConstraintCode;
+  
+  /// CallOperand/CallOperandval - If this is the result output operand or a
+  /// clobber, this is null, otherwise it is the incoming operand to the
+  /// CallInst.  This gets modified as the asm is processed.
+  SDOperand CallOperand;
+  Value *CallOperandVal;
+  
+  /// ConstraintVT - The ValueType for the operand value.
+  MVT::ValueType ConstraintVT;
+  
+  AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
+    : InlineAsm::ConstraintInfo(info),
+      CallOperand(0,0), CallOperandVal(0), ConstraintVT(MVT::Other) {
+  }
+};
+} // end anon namespace.
 
 /// visitInlineAsm - Handle a call to an InlineAsm object.
 ///
 void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   InlineAsm *IA = cast<InlineAsm>(I.getOperand(0));
-  
-  SDOperand AsmStr = DAG.getTargetExternalSymbol(IA->getAsmString().c_str(),
-                                                 MVT::Other);
 
-  std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
-  std::vector<MVT::ValueType> ConstraintVTs;
-  
-  /// AsmNodeOperands - A list of pairs.  The first element is a register, the
-  /// second is a bitfield where bit #0 is set if it is a use and bit #1 is set
-  /// if it is a def of that register.
-  std::vector<SDOperand> AsmNodeOperands;
-  AsmNodeOperands.push_back(SDOperand());  // reserve space for input chain
-  AsmNodeOperands.push_back(AsmStr);
+  /// ConstraintOperands - Information about all of the constraints.
+  std::vector<AsmOperandInfo> ConstraintOperands;
   
   SDOperand Chain = getRoot();
   SDOperand Flag;
   
-  // We fully assign registers here at isel time.  This is not optimal, but
-  // should work.  For register classes that correspond to LLVM classes, we
-  // could let the LLVM RA do its thing, but we currently don't.  Do a prepass
-  // over the constraints, collecting fixed registers that we know we can't use.
   std::set<unsigned> OutputRegs, InputRegs;
-  unsigned OpNum = 1;
-  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    std::string ConstraintCode =
-      GetMostGeneralConstraint(Constraints[i].Codes, TLI);
-    
-    MVT::ValueType OpVT;
 
-    // Compute the value type for each operand and add it to ConstraintVTs.
-    switch (Constraints[i].Type) {
+  // Do a prepass over the constraints, canonicalizing them, and building up the
+  // ConstraintOperands list.
+  std::vector<InlineAsm::ConstraintInfo>
+    ConstraintInfos = IA->ParseConstraints();
+  unsigned OpNo = 1;
+  for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
+    ConstraintOperands.push_back(AsmOperandInfo(ConstraintInfos[i]));
+    AsmOperandInfo &OpInfo = ConstraintOperands.back();
+    
+    // Compute the constraint code to use.
+    OpInfo.ConstraintCode = GetMostGeneralConstraint(OpInfo.Codes, TLI);
+    
+    MVT::ValueType OpVT = MVT::Other;
+
+    // Compute the value type for each operand.
+    switch (OpInfo.Type) {
     case InlineAsm::isOutput:
-      if (!Constraints[i].isIndirect) {
-        // The return value of the call is this value.
+      if (!OpInfo.isIndirect) {
+        // The return value of the call is this value.  As such, there is no
+        // corresponding argument.
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
         OpVT = TLI.getValueType(I.getType());
       } else {
-        const Type *OpTy = I.getOperand(OpNum)->getType();
-        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType(),true);
-        OpNum++;  // Consumes a call operand.
+        OpInfo.CallOperandVal = I.getOperand(OpNo++);
       }
       break;
     case InlineAsm::isInput:
-      if (!Constraints[i].isIndirect) {
-        OpVT = TLI.getValueType(I.getOperand(OpNum)->getType());
-      } else {
-        const Type *OpTy = I.getOperand(OpNum)->getType();
-        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType(),true);
-      }
-      OpNum++;  // Consumes a call operand.
+      OpInfo.CallOperandVal = I.getOperand(OpNo++);
       break;
     case InlineAsm::isClobber:
-      OpVT = MVT::Other;
+      // Nothing to do.
       break;
     }
-    
-    ConstraintVTs.push_back(OpVT);
 
-    if (TLI.getRegForInlineAsmConstraint(ConstraintCode, OpVT).first == 0)
+    // If this is an input or an indirect output, process the call argument.
+    if (OpInfo.CallOperandVal) {
+      OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
+      const Type *OpTy = OpInfo.CallOperandVal->getType();
+      if (!OpInfo.isIndirect) {
+        // Must be an input.
+        OpVT = TLI.getValueType(OpTy);
+      } else {
+        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType(),true);
+      }
+    }
+    
+    OpInfo.ConstraintVT = OpVT;
+
+    if (TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpVT).first ==0)
       continue;  // Not assigned a fixed reg.
+    
+    // For GCC register classes where we don't have a direct match, we fully
+    // assign registers at isel time.  This is not optimal, but works.
     
     // Build a list of regs that this operand uses.  This always has a single
     // element for promoted/expanded operands.
-    RegsForValue Regs = GetRegistersForValue(ConstraintCode, OpVT,
+    RegsForValue Regs = GetRegistersForValue(OpInfo.ConstraintCode, OpVT,
                                              false, false,
                                              OutputRegs, InputRegs);
     
-    switch (Constraints[i].Type) {
+    switch (OpInfo.Type) {
     case InlineAsm::isOutput:
       // We can't assign any other output to this register.
       OutputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       // If this is an early-clobber output, it cannot be assigned to the same
       // value as the input reg.
-      if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
+      if (OpInfo.isEarlyClobber || OpInfo.hasMatchingInput)
         InputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       break;
     case InlineAsm::isInput:
@@ -3263,44 +3287,45 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       OutputRegs.insert(Regs.Regs.begin(), Regs.Regs.end());
       break;
     }
-  }      
+  }
+  
+  ConstraintInfos.clear();
+  
+  
+  // AsmNodeOperands - The operands for the ISD::INLINEASM node.
+  std::vector<SDOperand> AsmNodeOperands;
+  AsmNodeOperands.push_back(SDOperand());  // reserve space for input chain
+  AsmNodeOperands.push_back(
+          DAG.getTargetExternalSymbol(IA->getAsmString().c_str(), MVT::Other));
+  
   
   // Loop over all of the inputs, copying the operand values into the
   // appropriate registers and processing the output regs.
   RegsForValue RetValRegs;
-  std::vector<std::pair<RegsForValue, Value*> > IndirectStoresToEmit;
-  OpNum = 1;
   
-  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    std::string ConstraintCode =
-      GetMostGeneralConstraint(Constraints[i].Codes, TLI);
+  // IndirectStoresToEmit - The set of stores to emit after the inline asm node.
+  std::vector<std::pair<RegsForValue, Value*> > IndirectStoresToEmit;
+  
+  for (unsigned i = 0, e = ConstraintOperands.size(); i != e; ++i) {
+    AsmOperandInfo &OpInfo = ConstraintOperands[i];
 
-    switch (Constraints[i].Type) {
+    switch (OpInfo.Type) {
     case InlineAsm::isOutput: {
       TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
-      if (ConstraintCode.size() == 1)   // not a physreg name.
-        CTy = TLI.getConstraintType(ConstraintCode);
+      if (OpInfo.ConstraintCode.size() == 1)   // not a physreg name.
+        CTy = TLI.getConstraintType(OpInfo.ConstraintCode);
       
       if (CTy != TargetLowering::C_RegisterClass) {
         // Memory output, or 'other' output (e.g. 'X' constraint).
-        SDOperand InOperandVal = getValue(I.getOperand(OpNum));
+        SDOperand InOperandVal = OpInfo.CallOperand;
         
         // Check that the operand (the address to store to) isn't a float.
         if (!MVT::isInteger(InOperandVal.getValueType()))
           assert(0 && "MATCH FAIL!");
         
-        if (!Constraints[i].isIndirect)
+        if (!OpInfo.isIndirect)
           assert(0 && "MATCH FAIL!");
 
-        OpNum++;  // Consumes a call operand.
-        
-        // Extend/truncate to the right pointer type if needed.
-        MVT::ValueType PtrType = TLI.getPointerTy();
-        if (InOperandVal.getValueType() < PtrType)
-          InOperandVal = DAG.getNode(ISD::ZERO_EXTEND, PtrType, InOperandVal);
-        else if (InOperandVal.getValueType() > PtrType)
-          InOperandVal = DAG.getNode(ISD::TRUNCATE, PtrType, InOperandVal);
-        
         // Add information to the INLINEASM node to know about this output.
         unsigned ResOpType = 4/*MEM*/ | (1 << 3);
         AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
@@ -3315,30 +3340,30 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       // constraint that matches this, we need to reserve the input register
       // so no other inputs allocate to it.
       bool UsesInputRegister = false;
-      if (Constraints[i].isEarlyClobber || Constraints[i].hasMatchingInput)
+      if (OpInfo.isEarlyClobber || OpInfo.hasMatchingInput)
         UsesInputRegister = true;
       
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       RegsForValue Regs =
-        GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
+        GetRegistersForValue(OpInfo.ConstraintCode, OpInfo.ConstraintVT,
                              true, UsesInputRegister, 
                              OutputRegs, InputRegs);
       if (Regs.Regs.empty()) {
         cerr << "Couldn't allocate output reg for contraint '"
-             << ConstraintCode << "'!\n";
+             << OpInfo.ConstraintCode << "'!\n";
         exit(1);
       }
 
-      if (!Constraints[i].isIndirect) {
+      if (!OpInfo.isIndirect) {
+        // This is the result value of the call.
         assert(RetValRegs.Regs.empty() &&
                "Cannot have multiple output constraints yet!");
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
         RetValRegs = Regs;
       } else {
-        IndirectStoresToEmit.push_back(std::make_pair(Regs, 
-                                                      I.getOperand(OpNum)));
-        OpNum++;  // Consumes a call operand.
+        IndirectStoresToEmit.push_back(std::make_pair(Regs,
+                                                      OpInfo.CallOperandVal));
       }
       
       // Add information to the INLINEASM node to know that this register is
@@ -3347,13 +3372,12 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       break;
     }
     case InlineAsm::isInput: {
-      SDOperand InOperandVal = getValue(I.getOperand(OpNum));
-      OpNum++;  // Consumes a call operand.
+      SDOperand InOperandVal = OpInfo.CallOperand;
       
-      if (isdigit(ConstraintCode[0])) {    // Matching constraint?
+      if (isdigit(OpInfo.ConstraintCode[0])) {    // Matching constraint?
         // If this is required to match an output register we have already set,
         // just use its register.
-        unsigned OperandNo = atoi(ConstraintCode.c_str());
+        unsigned OperandNo = atoi(OpInfo.ConstraintCode.c_str());
         
         // Scan until we find the definition we already emitted of this operand.
         // When we find it, create a RegsForValue operand.
@@ -3393,18 +3417,19 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       }
       
       TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
-      if (ConstraintCode.size() == 1)   // not a physreg name.
-        CTy = TLI.getConstraintType(ConstraintCode);
+      if (OpInfo.ConstraintCode.size() == 1)   // not a physreg name.
+        CTy = TLI.getConstraintType(OpInfo.ConstraintCode);
         
       if (CTy == TargetLowering::C_Other) {
-        assert(!Constraints[i].isIndirect && 
+        assert(!OpInfo.isIndirect && 
                "Don't know how to handle indirect other inputs yet!");
         
         InOperandVal = TLI.isOperandValidForConstraint(InOperandVal,
-                                                       ConstraintCode[0], DAG);
+                                                       OpInfo.ConstraintCode[0],
+                                                       DAG);
         if (!InOperandVal.Val) {
           cerr << "Invalid operand for inline asm constraint '"
-               << ConstraintCode << "'!\n";
+               << OpInfo.ConstraintCode << "'!\n";
           exit(1);
         }
         
@@ -3418,10 +3443,10 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         // so we want an indirect input.  If we don't have an indirect input,
         // spill the value somewhere if we can, otherwise spill it to a stack
         // slot.
-        if (!Constraints[i].isIndirect) {
+        if (!OpInfo.isIndirect) {
           // If the operand is a float, integer, or vector constant, spill to a
           // constant pool entry to get its address.
-          Value *OpVal = I.getOperand(OpNum-1);
+          Value *OpVal = OpInfo.CallOperandVal;
           if (isa<ConstantFP>(OpVal) || isa<ConstantInt>(OpVal) ||
               isa<ConstantVector>(OpVal)) {
             InOperandVal = DAG.getConstantPool(cast<Constant>(OpVal),
@@ -3451,12 +3476,12 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       }
         
       assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
-      assert(!Constraints[i].isIndirect && 
+      assert(!OpInfo.isIndirect && 
              "Don't know how to handle indirect register inputs yet!");
 
       // Copy the input into the appropriate registers.
       RegsForValue InRegs =
-        GetRegistersForValue(ConstraintCode, ConstraintVTs[i],
+        GetRegistersForValue(OpInfo.ConstraintCode, OpInfo.ConstraintVT,
                              false, true, OutputRegs, InputRegs);
       // FIXME: should be match fail.
       assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
@@ -3468,7 +3493,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     }
     case InlineAsm::isClobber: {
       RegsForValue ClobberedRegs =
-        GetRegistersForValue(ConstraintCode, MVT::Other, false, false,
+        GetRegistersForValue(OpInfo.ConstraintCode, MVT::Other, false, false,
                              OutputRegs, InputRegs);
       // Add the clobbered value to the operand list, so that the register
       // allocator is aware that the physreg got clobbered.
@@ -3523,7 +3548,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   // Emit the non-flagged stores from the physregs.
   SmallVector<SDOperand, 8> OutChains;
   for (unsigned i = 0, e = StoresToEmit.size(); i != e; ++i)
-    OutChains.push_back(DAG.getStore(Chain,  StoresToEmit[i].first,
+    OutChains.push_back(DAG.getStore(Chain, StoresToEmit[i].first,
                                     getValue(StoresToEmit[i].second),
                                     StoresToEmit[i].second, 0));
   if (!OutChains.empty())
