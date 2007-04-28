@@ -3178,6 +3178,10 @@ namespace {
 struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
   /// ConstraintCode - This contains the actual string for the code, like "m".
   std::string ConstraintCode;
+
+  /// ConstraintType - Information about the constraint code, e.g. Register,
+  /// RegisterClass, Memory, Other, Unknown.
+  TargetLowering::ConstraintType ConstraintType;
   
   /// CallOperand/CallOperandval - If this is the result output operand or a
   /// clobber, this is null, otherwise it is the incoming operand to the
@@ -3189,7 +3193,8 @@ struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
   MVT::ValueType ConstraintVT;
   
   AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
-    : InlineAsm::ConstraintInfo(info),
+    : InlineAsm::ConstraintInfo(info), 
+      ConstraintType(TargetLowering::C_Unknown),
       CallOperand(0,0), CallOperandVal(0), ConstraintVT(MVT::Other) {
   }
 };
@@ -3216,9 +3221,6 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
     ConstraintOperands.push_back(AsmOperandInfo(ConstraintInfos[i]));
     AsmOperandInfo &OpInfo = ConstraintOperands.back();
-    
-    // Compute the constraint code to use.
-    OpInfo.ConstraintCode = GetMostGeneralConstraint(OpInfo.Codes, TLI);
     
     MVT::ValueType OpVT = MVT::Other;
 
@@ -3255,6 +3257,13 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     }
     
     OpInfo.ConstraintVT = OpVT;
+    
+    // Compute the constraint code to use.
+    OpInfo.ConstraintCode = GetMostGeneralConstraint(OpInfo.Codes, TLI);
+    
+    // Compute the constraint type.
+    // FIXME: merge this into GetMostGeneralConstraint.
+    OpInfo.ConstraintType = TLI.getConstraintType(OpInfo.ConstraintCode);
 
     if (TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode, OpVT).first ==0)
       continue;  // Not assigned a fixed reg.
@@ -3315,7 +3324,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       if (OpInfo.ConstraintCode.size() == 1)   // not a physreg name.
         CTy = TLI.getConstraintType(OpInfo.ConstraintCode);
       
-      if (CTy != TargetLowering::C_RegisterClass) {
+      if (CTy != TargetLowering::C_RegisterClass &&
+          CTy != TargetLowering::C_Register) {
         // Memory output, or 'other' output (e.g. 'X' constraint).
         SDOperand InOperandVal = OpInfo.CallOperand;
         
@@ -3333,8 +3343,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         break;
       }
 
-      // Otherwise, this is a register output.
-      assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
+      // Otherwise, this is a register or register class output.
 
       // If this is an early-clobber output, or if there is an input
       // constraint that matches this, we need to reserve the input register
@@ -3416,11 +3425,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         }
       }
       
-      TargetLowering::ConstraintType CTy = TargetLowering::C_RegisterClass;
-      if (OpInfo.ConstraintCode.size() == 1)   // not a physreg name.
-        CTy = TLI.getConstraintType(OpInfo.ConstraintCode);
-        
-      if (CTy == TargetLowering::C_Other) {
+      if (OpInfo.ConstraintType == TargetLowering::C_Other) {
         assert(!OpInfo.isIndirect && 
                "Don't know how to handle indirect other inputs yet!");
         
@@ -3438,7 +3443,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         AsmNodeOperands.push_back(DAG.getConstant(ResOpType, MVT::i32));
         AsmNodeOperands.push_back(InOperandVal);
         break;
-      } else if (CTy == TargetLowering::C_Memory) {
+      } else if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
         // Memory input.  Memory operands really want the address of the value,
         // so we want an indirect input.  If we don't have an indirect input,
         // spill the value somewhere if we can, otherwise spill it to a stack
@@ -3475,7 +3480,9 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         break;
       }
         
-      assert(CTy == TargetLowering::C_RegisterClass && "Unknown op type!");
+      assert((OpInfo.ConstraintType == TargetLowering::C_RegisterClass ||
+              OpInfo.ConstraintType == TargetLowering::C_Register) &&
+             "Unknown constraint type!");
       assert(!OpInfo.isIndirect && 
              "Don't know how to handle indirect register inputs yet!");
 
