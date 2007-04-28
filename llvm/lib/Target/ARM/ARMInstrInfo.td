@@ -1125,11 +1125,11 @@ def : ARMPat<(extloadi16 addrmode3:$addr),  (LDRH addrmode3:$addr)>;
 
 // truncstore i1 -> truncstore i8
 def : ARMPat<(truncstorei1 GPR:$src, addrmode2:$dst), 
-          (STRB GPR:$src, addrmode2:$dst)>;
+             (STRB GPR:$src, addrmode2:$dst)>;
 def : ARMPat<(pre_truncsti1 GPR:$src, GPR:$base, am2offset:$offset), 
-          (STRB_PRE GPR:$src, GPR:$base, am2offset:$offset)>;
+             (STRB_PRE GPR:$src, GPR:$base, am2offset:$offset)>;
 def : ARMPat<(post_truncsti1 GPR:$src, GPR:$base, am2offset:$offset), 
-          (STRB_POST GPR:$src, GPR:$base, am2offset:$offset)>;
+             (STRB_POST GPR:$src, GPR:$base, am2offset:$offset)>;
 
 // smul* and smla*
 def : ARMV5TEPat<(mul (sra (shl GPR:$a, 16), 16), (sra (shl GPR:$b, 16), 16)),
