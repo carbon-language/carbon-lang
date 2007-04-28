@@ -339,9 +339,11 @@ public:
   }
 
   /// getValueType - Return the MVT::ValueType corresponding to this LLVM type.
-  /// This is fixed by the LLVM operations except for the pointer size.
-  MVT::ValueType getValueType(const Type *Ty) const {
-    MVT::ValueType VT = MVT::getValueType(Ty);
+  /// This is fixed by the LLVM operations except for the pointer size.  If
+  /// AllowUnknown is true, this will return MVT::Other for types with no MVT
+  /// counterpart (e.g. structs), otherwise it will assert.
+  MVT::ValueType getValueType(const Type *Ty, bool AllowUnknown = false) const {
+    MVT::ValueType VT = MVT::getValueType(Ty, AllowUnknown);
     return VT == MVT::iPTR ? PointerTy : VT;
   }
 
