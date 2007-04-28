@@ -4337,50 +4337,66 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // Build a mask for high order bits.
-  uint64_t PtrSizeMask = ~0ULL >> (64-TD.getPointerSize()*8);
+  unsigned IntPtrWidth = TD.getPointerSize()*8;
+  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
 
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     Value *Op = GEP->getOperand(i);
     uint64_t Size = TD.getTypeSize(GTI.getIndexedType()) & PtrSizeMask;
-    Constant *Scale = ConstantInt::get(IntPtrTy, Size);
-    if (Constant *OpC = dyn_cast<Constant>(Op)) {
-      if (!OpC->isNullValue()) {
-        OpC = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-        Scale = ConstantExpr::getMul(OpC, Scale);
-        if (Constant *RC = dyn_cast<Constant>(Result))
-          Result = ConstantExpr::getAdd(RC, Scale);
-        else {
-          // Emit an add instruction.
-          Result = IC.InsertNewInstBefore(
-             BinaryOperator::createAdd(Result, Scale,
-                                       GEP->getName()+".offs"), I);
-        }
-      }
-    } else {
-      // Convert to correct type.
-      if (Op->getType() != IntPtrTy) {
-        if (Constant *OpC = dyn_cast<Constant>(Op))
-          Op = ConstantExpr::getSExt(OpC, IntPtrTy);
+    if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
+      if (OpC->isZero()) continue;
+      
+      // Handle a struct index, which adds its field offset to the pointer.
+      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+        Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+        
+        if (ConstantInt *RC = dyn_cast<ConstantInt>(Result))
+          Result = ConstantInt::get(RC->getValue() + APInt(IntPtrWidth, Size));
         else
-          Op = IC.InsertNewInstBefore(new SExtInst(Op, IntPtrTy,
-                                                   Op->getName()+".c"), I);
+          Result = IC.InsertNewInstBefore(
+                   BinaryOperator::createAdd(Result,
+                                             ConstantInt::get(IntPtrTy, Size),
+                                             GEP->getName()+".offs"), I);
+        continue;
       }
-      if (Size != 1) {
-        if (Constant *OpC = dyn_cast<Constant>(Op))
-          Op = ConstantExpr::getMul(OpC, Scale);
-        else    // We'll let instcombine(mul) convert this to a shl if possible.
-          Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
-                                                    GEP->getName()+".idx"), I);
+      
+      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
+      Constant *OC = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
+      Scale = ConstantExpr::getMul(OC, Scale);
+      if (Constant *RC = dyn_cast<Constant>(Result))
+        Result = ConstantExpr::getAdd(RC, Scale);
+      else {
+        // Emit an add instruction.
+        Result = IC.InsertNewInstBefore(
+           BinaryOperator::createAdd(Result, Scale,
+                                     GEP->getName()+".offs"), I);
       }
-
-      // Emit an add instruction.
-      if (isa<Constant>(Op) && isa<Constant>(Result))
-        Result = ConstantExpr::getAdd(cast<Constant>(Op),
-                                      cast<Constant>(Result));
-      else
-        Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
-                                                    GEP->getName()+".offs"), I);
+      continue;
     }
+    // Convert to correct type.
+    if (Op->getType() != IntPtrTy) {
+      if (Constant *OpC = dyn_cast<Constant>(Op))
+        Op = ConstantExpr::getSExt(OpC, IntPtrTy);
+      else
+        Op = IC.InsertNewInstBefore(new SExtInst(Op, IntPtrTy,
+                                                 Op->getName()+".c"), I);
+    }
+    if (Size != 1) {
+      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
+      if (Constant *OpC = dyn_cast<Constant>(Op))
+        Op = ConstantExpr::getMul(OpC, Scale);
+      else    // We'll let instcombine(mul) convert this to a shl if possible.
+        Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
+                                                  GEP->getName()+".idx"), I);
+    }
+
+    // Emit an add instruction.
+    if (isa<Constant>(Op) && isa<Constant>(Result))
+      Result = ConstantExpr::getAdd(cast<Constant>(Op),
+                                    cast<Constant>(Result));
+    else
+      Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
+                                                  GEP->getName()+".offs"), I);
   }
   return Result;
 }
