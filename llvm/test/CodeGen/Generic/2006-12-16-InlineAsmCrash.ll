@@ -27,7 +27,7 @@ bool %_ZNK12QImageWriter8canWriteEv() {
 	%tmp62 = load %struct.QImageWriterPrivate** null		; <%struct.QImageWriterPrivate*> [#uses=1]
 	%tmp = getelementptr %struct.QImageWriterPrivate* %tmp62, int 0, uint 9		; <%struct.QString*> [#uses=1]
 	%tmp75 = call %struct.QString* %_ZN7QStringaSERKS_( %struct.QString* %tmp, %struct.QString* null )		; <%struct.QString*> [#uses=0]
-	call void asm sideeffect "lock\0Adecl $0\0Asetne 1", "==m"( int* null )
+	call void asm sideeffect "lock\0Adecl $0\0Asetne 1", "=*m"( int* null )
 	ret bool false
 }
 
