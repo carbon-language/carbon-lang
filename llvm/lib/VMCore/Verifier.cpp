@@ -316,7 +316,9 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
   Assert1(GA.hasExternalLinkage() || GA.hasInternalLinkage() ||
           GA.hasWeakLinkage(),
           "Alias should have external or external weak linkage!", &GA);
-
+  Assert1(GA.getType() == GA.getAliasee()->getType(),
+          "Alias and aliasee types should match!", &GA);
+  
   visitGlobalValue(GA);
 }
 

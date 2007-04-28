@@ -179,6 +179,27 @@ public:
 
   }
 
+  virtual void handleGlobalAlias(
+    const Type* ElemType,
+    GlobalValue::LinkageTypes Linkage,
+    unsigned TypeSlotNum,
+    unsigned AliaseeSlot) {
+    if (os) {
+      *os << "      GA: "
+          << " Linkage=" << Linkage
+          << " Type=";
+      //WriteTypeSymbolic(*os, ElemType, M);
+      *os << " Slot=" << TypeSlotNum << " AliaseeSlot=" << AliaseeSlot
+          << "\n";
+    }
+
+    bca.numValues++;
+    if (TypeSlotNum > bca.maxValueSlot)
+      bca.maxValueSlot = TypeSlotNum;
+    if (AliaseeSlot > bca.maxValueSlot)
+      bca.maxValueSlot = AliaseeSlot;
+  }
+
   virtual void handleTypeList(unsigned numEntries) {
     bca.maxTypeSlot = numEntries - 1;
   }

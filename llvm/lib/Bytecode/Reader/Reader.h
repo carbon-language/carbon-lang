@@ -129,6 +129,9 @@ public:
   /// them.
   typedef std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInitsList;
 
+  /// @brief A list of global aliases and the slot number for constant aliasees
+  typedef std::vector<std::pair<GlobalAlias*, unsigned> > AliaseeList;
+
   /// This type maps a typeslot/valueslot pair to the corresponding Value*.
   /// It is used for dealing with forward references as values are read in.
   /// @brief A map for dealing with forward references of values.
@@ -338,6 +341,12 @@ private:
   /// of what we must do.
   GlobalInitsList GlobalInits;
 
+  /// Constant values are read in after global aliases. Because of this, we must
+  /// defer setting the constant aliasees until after module level constants
+  /// have been read. In the mean time, this list keeps track of what we must
+  /// do.
+  AliaseeList Aliasees;
+  
   // For lazy reading-in of functions, we need to save away several pieces of
   // information about each function: its begin and end pointer in the buffer
   // and its FunctionSlot.

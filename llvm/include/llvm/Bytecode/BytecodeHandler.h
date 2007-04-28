@@ -116,6 +116,12 @@ public:
     bool isThreadLocal        ///< Whether the GV is thread local or not
   ) {}
 
+  virtual void handleGlobalAlias(
+    const Type* ElemType,
+    GlobalValue::LinkageTypes Linkage,
+    unsigned TypeSlotNum,
+    unsigned AliaseeSlot) { }
+  
   /// This method is called when a type list is recognized. It simply
   /// provides the number of types that the list contains. The handler
   /// should expect that number of calls to handleType.

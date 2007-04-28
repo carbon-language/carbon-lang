@@ -75,9 +75,8 @@ bool GlobalDCE::runOnModule(Module &M) {
 
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I) {
-    Changed |= RemoveUnusedGlobalValue(*I);
     // Aliases are always needed even if they are not used.
-    GlobalIsNeeded(I);
+    MarkUsedGlobalsAsNeeded(cast<Constant>(I->getAliasee()));
   }
 
   // Now that all globals which are needed are in the AliveGlobals set, we loop
@@ -143,10 +142,7 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
     // referenced by the initializer to the alive set.
     if (GV->hasInitializer())
       MarkUsedGlobalsAsNeeded(GV->getInitializer());
-  } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(G)) {
-    // If this is a global alias we also need it's aliasee
-    GlobalIsNeeded(const_cast<GlobalValue*>(GA->getAliasee()));
-  } else {
+  } else if (!isa<GlobalAlias>(G)) {
     // Otherwise this must be a function object.  We have to scan the body of
     // the function looking for constants and global values which are used as
     // operands.  Any operands of these types must be processed to ensure that

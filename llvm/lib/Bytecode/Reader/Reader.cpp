@@ -1923,12 +1923,10 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Read aliases...
     unsigned VarType = read_vbr_uint();
     while (VarType != Type::VoidTyID) { // List is terminated by Void
-      unsigned TypeSlotNo = VarType >> 2;
+      unsigned TypeSlotNo     = VarType >> 3;
       unsigned EncodedLinkage = VarType & 3;
-      unsigned AliaseeTypeSlotNo, AliaseeSlotNo;
-
-      AliaseeTypeSlotNo = read_vbr_uint();
-      AliaseeSlotNo = read_vbr_uint();
+      bool isConstantAliasee  = (VarType >> 2) & 1;
+      unsigned AliaseeSlotNo  = read_vbr_uint();
 
       const Type *Ty = getType(TypeSlotNo);
       if (!Ty)
@@ -1937,11 +1935,11 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       if (!isa<PointerType>(Ty))
         error("Alias not a pointer type! Ty= " + Ty->getDescription());
       
-      Value* V = getValue(AliaseeTypeSlotNo, AliaseeSlotNo, false);
-      if (!V)
-        error("Invalid aliasee! TypeSlotNo=" + utostr(AliaseeTypeSlotNo) +
+      Value* V = getValue(TypeSlotNo, AliaseeSlotNo, false);
+      if (!V && !isConstantAliasee)
+        error("Invalid aliasee! TypeSlotNo=" + utostr(TypeSlotNo) +
               " SlotNo=" + utostr(AliaseeSlotNo));
-      if (!isa<GlobalValue>(V))
+      if (!isConstantAliasee && !isa<GlobalValue>(V))
         error("Aliasee is not global value! SlotNo=" + utostr(AliaseeSlotNo));
 
       GlobalValue::LinkageTypes Linkage;
@@ -1960,8 +1958,14 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       }
       
       GlobalAlias *GA = new GlobalAlias(Ty, Linkage, "",
-                                        dyn_cast<GlobalValue>(V), TheModule);
+                                        dyn_cast_or_null<Constant>(V),
+                                        TheModule);
       insertValue(GA, TypeSlotNo, ModuleValues);
+      if (!V && isConstantAliasee)
+        Aliasees.push_back(std::make_pair(GA, AliaseeSlotNo));
+
+      if (Handler) Handler->handleGlobalAlias(Ty, Linkage,
+                                              TypeSlotNo, AliaseeSlotNo);
       VarType = read_vbr_uint();
     }
   }  
@@ -2066,6 +2070,23 @@ void BytecodeReader::ParseModule() {
       GV->setInitializer(CV);
     } else
       error("Cannot find initializer value.");
+  }
+
+  // And aliasees
+  while (!Aliasees.empty()) {
+    GlobalAlias *GA = Aliasees.back().first;
+    unsigned Slot = Aliasees.back().second;
+    Aliasees.pop_back();
+
+    // Look up the aliasee value...
+    const llvm::PointerType* GAType = GA->getType();
+    unsigned TypeSlot = getTypeSlot(GAType);
+    if (Constant *CV = getConstantValue(TypeSlot, Slot)) {
+      if (GA->getAliasee())
+        error("Aliasee was *already* set?!");
+      GA->setAliasee(CV);
+    } else
+      error("Cannot find aliasee value.");
   }
 
   if (!ConstantFwdRefs.empty())

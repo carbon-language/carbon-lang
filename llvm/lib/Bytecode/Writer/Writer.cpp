@@ -1095,9 +1095,11 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   // Output aliases
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I) {
-    unsigned Slot = Table.getTypeSlot(I->getType());
-    assert(((Slot << 2) >> 2) == Slot && "Slot # too big!");
+    unsigned TypeSlotNo    = Table.getTypeSlot(I->getType());
+    unsigned AliaseeSlotNo = Table.getSlot(I->getAliasee());
+    assert(((TypeSlotNo << 3) >> 3) == TypeSlotNo && "Slot # too big!");
     unsigned aliasLinkage = 0;
+    unsigned isConstantAliasee = ((!isa<GlobalValue>(I->getAliasee())) << 2);
     switch (I->getLinkage()) {
      case GlobalValue::ExternalLinkage:
       aliasLinkage = 0;
@@ -1111,9 +1113,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
      default:
       assert(0 && "Invalid alias linkage");
     }    
-    output_vbr((Slot << 2) | aliasLinkage);
-    output_vbr(Table.getTypeSlot(I->getAliasee()->getType()));
-    output_vbr(Table.getSlot(I->getAliasee()));
+    output_vbr((TypeSlotNo << 3) | isConstantAliasee | aliasLinkage);
+    output_vbr(AliaseeSlotNo);
   }
   output_typeid(Table.getTypeSlot(Type::VoidTy));
 }

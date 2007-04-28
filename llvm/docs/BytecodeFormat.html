@@ -1212,24 +1212,24 @@ the first <a href="#uint32_vbr">uint32_vbr</a> which describes alias itself.</p>
       linkage, 2 - Weak linkage.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(2-31)</a></td>
+      <td><a href="#bit">bit(2)</a></td>
+      <td class="td_left">0 - Aliasee is global value. 1 - Aliasee is constant
+      expression (bitcast of global value)</td>
+    </tr>    
+    <tr>
+      <td><a href="#bit">bit(3-31)</a></td>
       <td class="td_left">Type slot number of type for the alias itself.</td>
     </tr>
   </tbody>
 </table>
 
-  <p>The next two <a href="#uint32_vbr">uint32_vbr's</a> describes the
-  aliasee. </p>
+  <p>The next <a href="#uint32_vbr">uint32_vbr</a> describes the aliasee. </p>
 
 <table>
   <tbody>
     <tr>
       <th><b>Type</b></th>
       <th class="td_left"><b>Description</b></th>
-    </tr>
-    <tr>
-      <td><a href="#uint32_vbr">uint32_vbr</a></td>
-      <td class="td_left">Type slot number of type for the aliasee.</td>
     </tr>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a></td>

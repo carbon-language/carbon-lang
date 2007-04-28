@@ -81,6 +81,15 @@ private:
   void setNext(Function *N) { Next = N; }
   void setPrev(Function *N) { Prev = N; }
 
+  // getNext/Prev - Return the next or previous function in the list.  These
+  // methods should never be used directly, and are only used to implement the
+  // function list as part of the module.
+  //
+  Function *getNext()             { return Next; }
+  const Function *getNext() const { return Next; }
+  Function *getPrev()             { return Prev; }
+  const Function *getPrev() const { return Prev; }
+
 public:
   /// Function ctor - If the (optional) Module argument is specified, the
   /// function is automatically inserted into the end of the function list for
@@ -243,15 +252,6 @@ public:
     Function *Obj = 0;
     return unsigned(reinterpret_cast<uintptr_t>(&Obj->ArgumentList));
   }
-private:
-  // getNext/Prev - Return the next or previous function in the list.  These
-  // methods should never be used directly, and are only used to implement the
-  // function list as part of the module.
-  //
-  Function *getNext()             { return Next; }
-  const Function *getNext() const { return Next; }
-  Function *getPrev()             { return Prev; }
-  const Function *getPrev() const { return Prev; }
 };
 
 inline ValueSymbolTable *

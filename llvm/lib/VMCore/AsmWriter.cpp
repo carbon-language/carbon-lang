@@ -926,7 +926,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
    assert(0 && "Invalid alias linkage");
   }
   
-  const GlobalValue *Aliasee = GA->getAliasee();
+  const Constant *Aliasee = dyn_cast_or_null<Constant>(GA->getAliasee());
   assert(Aliasee && "Aliasee cannot be null");
     
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
@@ -940,9 +940,15 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
       Out << getLLVMName(F->getName(), GlobalPrefix);
     else
       Out << "@\"\"";
-  } else
-    assert(0 && "Unsupported aliasee");
-
+  } else {
+    const ConstantExpr *CE = 0;
+    if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
+        (CE->getOpcode() == Instruction::BitCast)) {
+      writeOperand(CE, false);    
+    } else
+      assert(0 && "Unsupported aliasee");
+  }
+  
   printInfoComment(*GA);
   Out << "\n";
 }

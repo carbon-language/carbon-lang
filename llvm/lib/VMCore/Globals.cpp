@@ -163,11 +163,14 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
 //===----------------------------------------------------------------------===//
 
 GlobalAlias::GlobalAlias(const Type *Ty, LinkageTypes Link,
-                         const std::string &Name, const GlobalValue* aliasee,
+                         const std::string &Name, Constant* aliasee,
                          Module *ParentModule)
-  : GlobalValue(Ty, Value::GlobalAliasVal, 0, 0,
-                Link, Name), Aliasee(aliasee) {
+  : GlobalValue(Ty, Value::GlobalAliasVal, &Aliasee, 1, Link, Name) {
   LeakDetector::addGarbageObject(this);
+
+  if (aliasee)
+    assert(aliasee->getType() == Ty && "Alias and aliasee types should match!");
+  Aliasee.init(aliasee, this);
 
   if (ParentModule)
     ParentModule->getAliasList().push_back(this);
@@ -190,12 +193,16 @@ void GlobalAlias::eraseFromParent() {
 }
 
 bool GlobalAlias::isDeclaration() const {
-  return (Aliasee && Aliasee->isDeclaration());
+  const GlobalValue* AV = dyn_cast_or_null<const GlobalValue>(getAliasee());
+  return (AV && AV->isDeclaration());
 }
 
-void GlobalAlias::setAliasee(const GlobalValue *GV) 
+void GlobalAlias::setAliasee(Constant *Aliasee) 
 {
-  // FIXME: Some checks?
-  Aliasee = GV;
+  if (Aliasee) {
+    assert(Aliasee->getType() == getType() && 
+           "Alias and aliasee types should match!");
+    setOperand(0, Aliasee);
+  }
 }
 

@@ -89,12 +89,25 @@ void SlotCalculator::processModule() {
        I != E; ++I)
     CreateSlotIfNeeded(I);
 
+  // Add all of the global aliases to the value table...
+  //
+  for (Module::const_alias_iterator I = TheModule->alias_begin(),
+         E = TheModule->alias_end(); I != E; ++I)
+    CreateSlotIfNeeded(I);
+
   // Add all of the module level constants used as initializers
   //
   for (Module::const_global_iterator I = TheModule->global_begin(),
          E = TheModule->global_end(); I != E; ++I)
     if (I->hasInitializer())
       CreateSlotIfNeeded(I->getInitializer());
+
+  // Add all of the module level constants used as aliasees
+  //
+  for (Module::const_alias_iterator I = TheModule->alias_begin(),
+         E = TheModule->alias_end(); I != E; ++I)
+    if (I->getAliasee())
+      CreateSlotIfNeeded(I->getAliasee());
 
   // Now that all global constants have been added, rearrange constant planes
   // that contain constant strings so that the strings occur at the start of the

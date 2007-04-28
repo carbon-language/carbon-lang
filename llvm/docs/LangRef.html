@@ -24,6 +24,7 @@
       <li><a href="#callingconv">Calling Conventions</a></li>
       <li><a href="#globalvars">Global Variables</a></li>
       <li><a href="#functionstructure">Functions</a></li>
+      <li><a href="aliasstructure">Aliases</a>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
       <li><a href="#datalayout">Data Layout</a></li>
@@ -705,7 +706,7 @@ a power of 2.</p>
 </div>
 <div class="doc_text">
   <p>Aliases act as "second name" for the aliasee value (which can be either
-  function or global variable). Aliases may have an
+  function or global variable or bitcast of global value). Aliases may have an
   optional <a href="#linkage">linkage type</a>, and an
   optional <a href="#visibility">visibility style</a>.</p>
 

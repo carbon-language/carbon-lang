@@ -123,18 +123,29 @@ bool AsmPrinter::doFinalization(Module &M) {
   }
 
   if (TAI->getSetDirective()) {
-    if (M.alias_size())
+    if (!M.alias_empty())
       SwitchToTextSection(TAI->getTextSection());
 
     O << "\n";
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I!=E; ++I) {
-      const GlobalValue *Aliasee = I->getAliasee();
-      assert(Aliasee && "Aliasee cannot be null!");
-      std::string Target   = Mang->getValueName(Aliasee);
-      std::string Name     = Mang->getValueName(I);
+      const Constant *Aliasee = dyn_cast_or_null<Constant>(I->getAliasee());
+      assert(Aliasee && "Aliasee cannot be null");
 
-      // Aliases with external weak linkage was emitted already
+      std::string Name = Mang->getValueName(I);
+      std::string Target;
+      
+      if (const GlobalValue *GV = dyn_cast<GlobalValue>(Aliasee))
+        Target = Mang->getValueName(GV);
+      else {
+        const ConstantExpr *CE = 0;
+        if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
+            (CE->getOpcode() == Instruction::BitCast))
+          Target = Mang->getValueName(CE->getOperand(0));
+        else
+          assert(0 && "Unsupported aliasee");
+      }
+      
       if (I->hasExternalLinkage())
         O << "\t.globl\t" << Name << "\n";
       else if (I->hasWeakLinkage())

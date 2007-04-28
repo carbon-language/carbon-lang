@@ -298,6 +298,9 @@ void Module::dropAllReferences() {
 
   for(Module::global_iterator I = global_begin(), E = global_end(); I != E; ++I)
     I->dropAllReferences();
+
+  for(Module::alias_iterator I = alias_begin(), E = alias_end(); I != E; ++I)
+    I->dropAllReferences();
 }
 
 void Module::addLibrary(const std::string& Lib) {

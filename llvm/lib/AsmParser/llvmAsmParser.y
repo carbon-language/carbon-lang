@@ -480,8 +480,24 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   // or an id number that hasn't been read yet.  We may be referencing something
   // forward, so just create an entry to be resolved later and get to it...
   //
-  V = new Argument(Ty);
-
+  switch (ID.Type) {
+  case ValID::GlobalName:
+  case ValID::GlobalID:
+   const PointerType *PTy = dyn_cast<PointerType>(Ty);
+   if (!PTy) {
+     GenerateError("Invalid type for reference to global" );
+     return 0;
+   }
+   const Type* ElTy = PTy->getElementType();
+   if (const FunctionType *FTy = dyn_cast<FunctionType>(ElTy))
+     V = new Function(FTy, GlobalValue::ExternalLinkage);
+   else
+     V = new GlobalVariable(ElTy, false, GlobalValue::ExternalLinkage);
+   break;
+  default:
+   V = new Argument(Ty);
+  }
+  
   // Remember where this forward reference came from.  FIXME, shouldn't we try
   // to recycle these things??
   CurModule.PlaceHolderInfo.insert(std::make_pair(V, std::make_pair(ID,
@@ -987,7 +1003,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <BasicBlockVal> BasicBlock InstructionList
 %type <TermInstVal>   BBTerminatorInst
 %type <InstVal>       Inst InstVal MemoryInst
-%type <ConstVal>      ConstVal ConstExpr
+%type <ConstVal>      ConstVal ConstExpr AliaseeRef
 %type <ConstVector>   ConstVector
 %type <ArgList>       ArgList ArgListH
 %type <PHIList>       PHIList
@@ -1943,6 +1959,30 @@ GlobalType : GLOBAL { $$ = false; } | CONSTANT { $$ = true; };
 // ThreadLocal 
 ThreadLocal : THREAD_LOCAL { $$ = true; } | { $$ = false; };
 
+// AliaseeRef - Match either GlobalValue or bitcast to GlobalValue.
+AliaseeRef : ResultTypes SymbolicValueRef {
+    const Type* VTy = $1->get();
+    Value *V = getVal(VTy, $2);
+    GlobalValue* Aliasee = dyn_cast<GlobalValue>(V);
+    if (!Aliasee)
+      GEN_ERROR("Aliases can be created only to global values");
+
+    $$ = Aliasee;
+    CHECK_FOR_ERROR
+    delete $1;
+   }
+   | BITCAST '(' AliaseeRef TO Types ')' {
+    Constant *Val = $3;
+    const Type *DestTy = $5->get();
+    if (!CastInst::castIsValid($1, $3, DestTy))
+      GEN_ERROR("invalid cast opcode for cast from '" +
+                Val->getType()->getDescription() + "' to '" +
+                DestTy->getDescription() + "'");
+    
+    $$ = ConstantExpr::getCast($1, $3, DestTy);
+    CHECK_FOR_ERROR
+    delete $5;
+   };
 
 //===----------------------------------------------------------------------===//
 //                             Rules to match Modules
@@ -2045,34 +2085,20 @@ Definition
     CurGV = 0;
     CHECK_FOR_ERROR
   }
-  | OptGlobalAssign GVVisibilityStyle ALIAS AliasLinkage ResultTypes
-    SymbolicValueRef {
+  | OptGlobalAssign GVVisibilityStyle ALIAS AliasLinkage AliaseeRef {
     std::string Name($1);
     if (Name.empty())
-      GEN_ERROR("Alias name cannot be empty")
-    const PointerType *PFTy = 0;
-    const FunctionType *Ty = 0;
-    Value* V = 0;
-    const Type* VTy = 0;
-    if (!(PFTy = dyn_cast<PointerType>($5->get())) ||
-        !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
-      VTy = $5->get();
-      V = getExistingVal(VTy, $6);
-    } else {
-      VTy = PFTy;
-      V = getExistingVal(PFTy, $6);
-    }
-    if (V == 0)
+      GEN_ERROR("Alias name cannot be empty");
+    
+    Constant* Aliasee = $5;
+    if (Aliasee == 0)
       GEN_ERROR(std::string("Invalid aliasee for alias: ") + $1);
-    if (GlobalValue* Aliasee = dyn_cast<GlobalValue>(V)) {
-      GlobalAlias* GA = new GlobalAlias(VTy, $4, Name, Aliasee,
-                                        CurModule.CurrentModule);
-      GA->setVisibility($2);
-      InsertValue(GA, CurModule.Values);
-    } else
-      GEN_ERROR("Aliases can be created only to global values");
+
+    GlobalAlias* GA = new GlobalAlias(Aliasee->getType(), $4, Name, Aliasee,
+                                      CurModule.CurrentModule);
+    GA->setVisibility($2);
+    InsertValue(GA, CurModule.Values);
     CHECK_FOR_ERROR
-    delete $5;
   }
   | TARGET TargetDefinition { 
     CHECK_FOR_ERROR

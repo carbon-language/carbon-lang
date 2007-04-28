@@ -2,8 +2,6 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-; XFAIL: *
-
 @bar = external global i32
 @foo1 = alias i32* @bar
 @foo2 = alias i32* @bar
@@ -14,6 +12,8 @@ declare i32 @foo_f()
 @bar_f = alias weak %FunTy* @foo_f
 
 @bar_i = alias internal i32* @bar
+
+@A = alias bitcast (i32* @bar to i64*)
 
 define i32 @test() {
 entry:
