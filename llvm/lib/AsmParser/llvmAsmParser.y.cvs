@@ -482,7 +482,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   //
   switch (ID.Type) {
   case ValID::GlobalName:
-  case ValID::GlobalID:
+  case ValID::GlobalID: {
    const PointerType *PTy = dyn_cast<PointerType>(Ty);
    if (!PTy) {
      GenerateError("Invalid type for reference to global" );
@@ -494,6 +494,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
    else
      V = new GlobalVariable(ElTy, false, GlobalValue::ExternalLinkage);
    break;
+  }
   default:
    V = new Argument(Ty);
   }
