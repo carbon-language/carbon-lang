@@ -139,14 +139,18 @@ static struct PerModuleInfo {
   // GetForwardRefForGlobal - Check to see if there is a forward reference
   // for this global.  If so, remove it from the GlobalRefs map and return it.
   // If not, just return null.
-  GlobalValue *GetForwardRefForGlobal(const PointerType *PTy, ValID ID) {
+  GlobalValue *GetForwardRefForGlobal(const PointerType *PTy, ParamAttrsList *PAL, 
+                                      ValID ID) {
     // Check to see if there is a forward reference to this global variable...
     // if there is, eliminate it and patch the reference to use the new def'n.
     GlobalRefsType::iterator I = GlobalRefs.find(std::make_pair(PTy, ID));
     GlobalValue *Ret = 0;
     if (I != GlobalRefs.end()) {
       Ret = I->second;
-      GlobalRefs.erase(I);
+      if (PAL && isa<Function>(Ret)) 
+        Ret = cast<Function>(Ret)->getParamAttrs() == PAL ? Ret : 0;
+      if (Ret)
+        GlobalRefs.erase(I);
     }
     return Ret;
   }
@@ -482,7 +486,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   //
   switch (ID.Type) {
   case ValID::GlobalName:
-  case ValID::GlobalID:
+  case ValID::GlobalID: {
    const PointerType *PTy = dyn_cast<PointerType>(Ty);
    if (!PTy) {
      GenerateError("Invalid type for reference to global" );
@@ -494,6 +498,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
    else
      V = new GlobalVariable(ElTy, false, GlobalValue::ExternalLinkage);
    break;
+  }
   default:
    V = new Argument(Ty);
   }
@@ -743,7 +748,7 @@ ParseGlobalVariable(char *NameStr,
     ID = ValID::createGlobalID(CurModule.Values.size());
   }
 
-  if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
+  if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, 0, ID)) {
     // Move the global to the end of the list, from whereever it was
     // previously inserted.
     GlobalVariable *GV = cast<GlobalVariable>(FWGV);
@@ -1323,62 +1328,35 @@ Types
     UR_OUT("New Upreference!\n");
     CHECK_FOR_ERROR
   }
-  | Types '(' ArgTypeListI ')' OptFuncAttrs {
+  | Types '(' ArgTypeListI ')' {
     std::vector<const Type*> Params;
-    ParamAttrsVector Attrs;
-    if ($5 != ParamAttr::None) {
-      ParamAttrsWithIndex X; X.index = 0; X.attrs = $5;
-      Attrs.push_back(X);
-    }
     unsigned index = 1;
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for (; I != E; ++I, ++index) {
       const Type *Ty = I->Ty->get();
       Params.push_back(Ty);
-      if (Ty != Type::VoidTy)
-        if (I->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex X; X.index = index; X.attrs = I->Attrs;
-          Attrs.push_back(X);
-        }
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    ParamAttrsList *ActualAttrs = 0;
-    if (!Attrs.empty())
-      ActualAttrs = ParamAttrsList::get(Attrs);
-    FunctionType *FT = FunctionType::get(*$1, Params, isVarArg, ActualAttrs);
+    FunctionType *FT = FunctionType::get(*$1, Params, isVarArg);
     delete $3;   // Delete the argument list
     delete $1;   // Delete the return type handle
     $$ = new PATypeHolder(HandleUpRefs(FT)); 
     CHECK_FOR_ERROR
   }
-  | VOID '(' ArgTypeListI ')' OptFuncAttrs {
+  | VOID '(' ArgTypeListI ')' {
     std::vector<const Type*> Params;
-    ParamAttrsVector Attrs;
-    if ($5 != ParamAttr::None) {
-      ParamAttrsWithIndex X; X.index = 0; X.attrs = $5;
-      Attrs.push_back(X);
-    }
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     unsigned index = 1;
     for ( ; I != E; ++I, ++index) {
       const Type* Ty = I->Ty->get();
       Params.push_back(Ty);
-      if (Ty != Type::VoidTy)
-        if (I->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex X; X.index = index; X.attrs = I->Attrs;
-          Attrs.push_back(X);
-        }
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    ParamAttrsList *ActualAttrs = 0;
-    if (!Attrs.empty())
-      ActualAttrs = ParamAttrsList::get(Attrs);
-
-    FunctionType *FT = FunctionType::get($1, Params, isVarArg, ActualAttrs);
+    FunctionType *FT = FunctionType::get($1, Params, isVarArg);
     delete $3;      // Delete the argument list
     $$ = new PATypeHolder(HandleUpRefs(FT)); 
     CHECK_FOR_ERROR
@@ -1432,9 +1410,9 @@ Types
   ;
 
 ArgType 
-  : Types OptParamAttrs { 
+  : Types { 
     $$.Ty = $1; 
-    $$.Attrs = $2; 
+    $$.Attrs = ParamAttr::None;
   }
   ;
 
@@ -2239,7 +2217,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if (!Attrs.empty())
     PAL = ParamAttrsList::get(Attrs);
 
-  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg, PAL);
+  FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::get(FT);
   delete $2;
 
@@ -2252,7 +2230,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
 
   Function *Fn = 0;
   // See if this function was forward referenced.  If so, recycle the object.
-  if (GlobalValue *FWRef = CurModule.GetForwardRefForGlobal(PFT, ID)) {
+  if (GlobalValue *FWRef = CurModule.GetForwardRefForGlobal(PFT, PAL, ID)) {
     // Move the function to the end of the list, from whereever it was 
     // previously inserted.
     Fn = cast<Function>(FWRef);
@@ -2260,7 +2238,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     CurModule.CurrentModule->getFunctionList().push_back(Fn);
   } else if (!FunctionName.empty() &&     // Merge with an earlier prototype?
              (Fn = CurModule.CurrentModule->getFunction(FunctionName))) {
-    if (Fn->getFunctionType() != FT) {
+    if (Fn->getFunctionType() != FT || PAL != Fn->getParamAttrs()) {
       // The existing function doesn't have the same type. This is an overload
       // error.
       GEN_ERROR("Overload of function '" + FunctionName + "' not permitted.");
@@ -2277,6 +2255,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   } else  {  // Not already defined?
     Fn = new Function(FT, GlobalValue::ExternalWeakLinkage, FunctionName,
                       CurModule.CurrentModule);
+    Fn->setParamAttrs(PAL);
 
     InsertValue(Fn, CurModule.Values);
   }
@@ -2570,28 +2549,14 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      ParamAttrsVector Attrs;
-      if ($8 != ParamAttr::None) {
-        ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = 8;
-        Attrs.push_back(PAWI);
-      }
       ValueRefList::iterator I = $6->begin(), E = $6->end();
-      unsigned index = 1;
-      for (; I != E; ++I, ++index) {
+      for (; I != E; ++I) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = I->Attrs;
-          Attrs.push_back(PAWI);
-        }
       }
-
-      ParamAttrsList *PAL = 0;
-      if (!Attrs.empty())
-        PAL = ParamAttrsList::get(Attrs);
-      Ty = FunctionType::get($3->get(), ParamTypes, false, PAL);
+      Ty = FunctionType::get($3->get(), ParamTypes, false);
       PFTy = PointerType::get(Ty);
     }
 
@@ -2603,6 +2568,12 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     CHECK_FOR_ERROR
     BasicBlock *Except = getBBVal($14);
     CHECK_FOR_ERROR
+
+    ParamAttrsVector Attrs;
+    if ($8 != ParamAttr::None) {
+      ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = 8;
+      Attrs.push_back(PAWI);
+    }
 
     // Check the arguments
     ValueList Args;
@@ -2617,12 +2588,16 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
       ValueRefList::iterator ArgI = $6->begin(), ArgE = $6->end();
-
+      unsigned index = 1;
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
         if (ArgI->Val->getType() != *I)
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
+        if (ArgI->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = ArgI->Attrs;
+          Attrs.push_back(PAWI);
+        }
       }
 
       if (Ty->isVarArg()) {
@@ -2633,9 +2608,17 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         GEN_ERROR("Invalid number of parameters detected");
     }
 
+    ParamAttrsList *PAL = 0;
+    if (!Attrs.empty())
+      PAL = ParamAttrsList::get(Attrs);
+    if (isa<Function>(V))
+      if (PAL != cast<Function>(V)->getParamAttrs())
+        GEN_ERROR("Invalid parameter attributes for function invoked");
+
     // Create the InvokeInst
     InvokeInst *II = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
     II->setCallingConv($2);
+    II->setParamAttrs(PAL);
     $$ = II;
     delete $6;
     CHECK_FOR_ERROR
@@ -2880,29 +2863,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      ParamAttrsVector Attrs;
-      if ($8 != ParamAttr::None) {
-        ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $8;
-        Attrs.push_back(PAWI);
-      }
-      unsigned index = 1;
       ValueRefList::iterator I = $6->begin(), E = $6->end();
-      for (; I != E; ++I, ++index) {
+      for (; I != E; ++I) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
-        if (I->Attrs != ParamAttr::None) {
-          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = I->Attrs;
-          Attrs.push_back(PAWI);
-        }
       }
-
-      ParamAttrsList *PAL = 0;
-      if (!Attrs.empty())
-        PAL = ParamAttrsList::get(Attrs);
-
-      Ty = FunctionType::get($3->get(), ParamTypes, false, PAL);
+      Ty = FunctionType::get($3->get(), ParamTypes, false);
       PFTy = PointerType::get(Ty);
     }
 
@@ -2918,6 +2886,12 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
                   theF->getName() + "'");
     }
 
+    // Set up the ParamAttrs for the function
+    ParamAttrsVector Attrs;
+    if ($8 != ParamAttr::None) {
+      ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $8;
+      Attrs.push_back(PAWI);
+    }
     // Check the arguments 
     ValueList Args;
     if ($6->empty()) {                                   // Has no arguments?
@@ -2927,17 +2901,20 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
                        "expects arguments");
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
-      // correctly!
-      //
+      // correctly. Also, gather any parameter attributes.
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
       ValueRefList::iterator ArgI = $6->begin(), ArgE = $6->end();
-
+      unsigned index = 1;
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
         if (ArgI->Val->getType() != *I)
           GEN_ERROR("Parameter " + ArgI->Val->getName()+ " is not of type '" +
                          (*I)->getDescription() + "'");
         Args.push_back(ArgI->Val);
+        if (ArgI->Attrs != ParamAttr::None) {
+          ParamAttrsWithIndex PAWI; PAWI.index = index; PAWI.attrs = ArgI->Attrs;
+          Attrs.push_back(PAWI);
+        }
       }
       if (Ty->isVarArg()) {
         if (I == E)
@@ -2946,10 +2923,20 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       } else if (I != E || ArgI != ArgE)
         GEN_ERROR("Invalid number of parameters detected");
     }
+
+    // Finish off the ParamAttrs and check them
+    ParamAttrsList *PAL = 0;
+    if (!Attrs.empty())
+      PAL = ParamAttrsList::get(Attrs);
+    if (isa<Function>(V))
+      if (PAL != cast<Function>(V)->getParamAttrs())
+        GEN_ERROR("Invalid parameter attributes for function called");
+
     // Create the call node
     CallInst *CI = new CallInst(V, &Args[0], Args.size());
     CI->setTailCall($1);
     CI->setCallingConv($2);
+    CI->setParamAttrs(PAL);
     $$ = CI;
     delete $6;
     delete $3;
