@@ -113,16 +113,20 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
 
 /// MVT::getValueType - Return the value type corresponding to the specified
 /// type.  This returns all vectors as MVT::Vector and all pointers as
-/// MVT::iPTR.
-MVT::ValueType MVT::getValueType(const Type *Ty) {
+/// MVT::iPTR.  If HandleUnknown is true, unknown types are returned as Other,
+/// otherwise they are invalid.
+MVT::ValueType MVT::getValueType(const Type *Ty, bool HandleUnknown) {
   switch (Ty->getTypeID()) {
-  default: assert(0 && "Unknown type!");
+  default:
+    if (HandleUnknown) return MVT::Other;
+    assert(0 && "Unknown type!");
   case Type::VoidTyID:
     return MVT::isVoid;
   case Type::IntegerTyID:
     switch (cast<IntegerType>(Ty)->getBitWidth()) {
     default:
       // FIXME: Return MVT::iANY.
+      if (HandleUnknown) return MVT::Other;
       assert(0 && "Invalid width for value type");
     case 1:    return MVT::i1;
     case 8:    return MVT::i8;

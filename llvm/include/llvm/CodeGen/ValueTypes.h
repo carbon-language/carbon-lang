@@ -205,8 +205,9 @@ namespace MVT {  // MVT = Machine Value Types
   
   /// MVT::getValueType - Return the value type corresponding to the specified
   /// type.  This returns all vectors as MVT::Vector and all pointers as
-  /// MVT::iPTR.
-  ValueType getValueType(const Type *Ty);
+  /// MVT::iPTR.  If HandleUnknown is true, unknown types are returned as Other,
+  /// otherwise they are invalid.
+  ValueType getValueType(const Type *Ty, bool HandleUnknown = false);
 }
 
 } // End llvm namespace
