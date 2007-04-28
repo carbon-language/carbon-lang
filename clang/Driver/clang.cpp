@@ -299,7 +299,7 @@ static cl::opt<bool>
 WarningsAsErrors("Werror", cl::desc("Treat all warnings as errors"));
 
 static cl::opt<bool>
-WarnOnExtensions("pedantic", cl::init(false),
+WarnOnExtensions("pedantic", cl::init(true),
                  cl::desc("Issue a warning on uses of GCC extensions"));
 
 static cl::opt<bool>
@@ -336,9 +336,12 @@ NoCaretDiagnostics("fno-caret-diagnostics",
 class DiagnosticPrinterSTDERR : public DiagnosticClient {
   SourceManager &SourceMgr;
   SourceLocation LastWarningLoc;
+  HeaderSearch *TheHeaderSearch;
 public:
   DiagnosticPrinterSTDERR(SourceManager &sourceMgr)
     : SourceMgr(sourceMgr) {}
+  
+  void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
   
   void PrintIncludeStack(SourceLocation Pos);
 
@@ -367,7 +370,6 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
                                                SourceLocation Pos,
                                                diag::kind ID, 
                                                const std::string &Extra) {
-  ++NumDiagnostics;
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
   const SourceBuffer *Buffer = 0;
@@ -375,6 +377,18 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
   if (Pos.isValid()) {
     LineNo = SourceMgr.getLineNumber(Pos);
     FileID  = SourceMgr.getLogicalLoc(Pos).getFileID();
+    
+    // If this is a warning or note, and if it a system header, suppress the
+    // diagnostic.
+    if (Level == Diagnostic::Warning ||
+        Level == Diagnostic::Note) {
+      SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
+      const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
+      DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
+      if (DirInfo == DirectoryLookup::SystemHeaderDir ||
+          DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
+        return;
+    }
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
@@ -446,6 +460,8 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
     // Print out the caret itself.
     std::cerr << Indent << "^\n";
   }
+  
+  ++NumDiagnostics;
 }
 
 
@@ -1057,6 +1073,7 @@ int main(int argc, char **argv) {
   
   // Process the -I options and set them in the HeaderInfo.
   HeaderSearch HeaderInfo(FileMgr);
+  OurDiagnosticClient.setHeaderSearch(HeaderInfo);
   InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i)
