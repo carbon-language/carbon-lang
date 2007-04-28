@@ -3209,7 +3209,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     // Compute the value type for each operand and add it to ConstraintVTs.
     switch (Constraints[i].Type) {
     case InlineAsm::isOutput:
-      if (!Constraints[i].isIndirectOutput) {
+      if (!Constraints[i].isIndirect) {
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
         OpVT = TLI.getValueType(I.getType());
       } else {
@@ -3283,7 +3283,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         if (!MVT::isInteger(InOperandVal.getValueType()))
           assert(0 && "MATCH FAIL!");
         
-        if (!Constraints[i].isIndirectOutput)
+        if (!Constraints[i].isIndirect)
           assert(0 && "MATCH FAIL!");
 
         OpNum++;  // Consumes a call operand.
@@ -3324,7 +3324,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         exit(1);
       }
 
-      if (!Constraints[i].isIndirectOutput) {
+      if (!Constraints[i].isIndirect) {
         assert(RetValRegs.Regs.empty() &&
                "Cannot have multiple output constraints yet!");
         assert(I.getType() != Type::VoidTy && "Bad inline asm!");
