@@ -339,7 +339,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
-  const SourceBuffer *Buffer = SourceMgr.getBuffer(FileID);
+  const MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
   Lexer *TheLexer = new Lexer(Buffer, FileID, *this);
   if (isMainFile) TheLexer->setIsMainFile();
   EnterSourceFileWithLexer(TheLexer, CurDir);

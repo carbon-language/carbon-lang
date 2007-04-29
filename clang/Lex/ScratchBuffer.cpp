@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/ScratchBuffer.h"
-#include "clang/Basic/SourceBuffer.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/MemoryBuffer.h"
 using namespace llvm;
 using namespace clang;
 
@@ -27,7 +27,7 @@ ScratchBuffer::ScratchBuffer(SourceManager &SM) : SourceMgr(SM), CurBuffer(0) {
   FileID = 0;
 }
 
-/// getToken - Splat the specified text into a temporary SourceBuffer and
+/// getToken - Splat the specified text into a temporary MemoryBuffer and
 /// return a SourceLocation that refers to the token.  This is just like the
 /// method below, but returns a location that indicates the physloc of the
 /// token.
@@ -48,7 +48,7 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len) {
 }
 
 
-/// getToken - Splat the specified text into a temporary SourceBuffer and
+/// getToken - Splat the specified text into a temporary MemoryBuffer and
 /// return a SourceLocation that refers to the token.  The SourceLoc value
 /// gives a virtual location that the token will appear to be from.
 SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
@@ -64,8 +64,8 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   if (RequestLen < ScratchBufSize)
     RequestLen = ScratchBufSize;
   
-  SourceBuffer *Buf = 
-    SourceBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
+  MemoryBuffer *Buf = 
+    MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
   FileID = SourceMgr.createFileIDForMemBuffer(Buf);
   CurBuffer = const_cast<char*>(Buf->getBufferStart());
   BytesUsed = 0;

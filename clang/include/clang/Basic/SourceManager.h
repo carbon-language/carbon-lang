@@ -20,9 +20,10 @@
 #include <list>
 
 namespace llvm {
+class MemoryBuffer;
+  
 namespace clang {
   
-class SourceBuffer;
 class SourceManager;
 class FileEntry;
 class IdentifierTokenInfo;
@@ -31,11 +32,11 @@ class IdentifierTokenInfo;
 ///
 namespace SrcMgr {
   /// FileInfo - Once instance of this struct is kept for every file loaded or
-  /// used.  This object owns the SourceBuffer object.
+  /// used.  This object owns the MemoryBuffer object.
   struct FileInfo {
     /// Buffer - The actual buffer containing the characters from the input
     /// file.
-    const SourceBuffer *Buffer;
+    const MemoryBuffer *Buffer;
     
     /// SourceLineCache - A new[]'d array of offsets for each source line.  This
     /// is lazily computed.
@@ -62,7 +63,7 @@ namespace SrcMgr {
   /// For the primary translation unit, it comes from SourceLocation() aka 0.
   ///
   /// There are three types of FileID's:
-  ///   1. Normal SourceBuffer (file).  These are represented by a "InfoRec *",
+  ///   1. Normal MemoryBuffer (file).  These are represented by a "InfoRec *",
   ///      describing the source file, and a Chunk number, which factors into
   ///      the SourceLocation's offset from the start of the buffer.
   ///   2. Macro Expansions.  These indicate that the logical location is
@@ -141,7 +142,7 @@ namespace SrcMgr {
 
 
 /// SourceManager - This file handles loading and caching of source files into
-/// memory.  This object owns the SourceBuffer objects for all of the loaded
+/// memory.  This object owns the MemoryBuffer objects for all of the loaded
 /// files and assigns unique FileID's for each unique #include chain.
 ///
 /// The SourceManager can be queried for information about SourceLocation
@@ -186,8 +187,8 @@ public:
   
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
-  /// ownership of the SourceBuffer, so only pass a SourceBuffer to this once.
-  unsigned createFileIDForMemBuffer(const SourceBuffer *Buffer) {
+  /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
+  unsigned createFileIDForMemBuffer(const MemoryBuffer *Buffer) {
     return createFileID(createMemBufferInfoRec(Buffer), SourceLocation());
   }
   
@@ -199,7 +200,7 @@ public:
   
   /// getBuffer - Return the buffer for the specified FileID.
   ///
-  const SourceBuffer *getBuffer(unsigned FileID) const {
+  const MemoryBuffer *getBuffer(unsigned FileID) const {
     return getFileInfo(FileID)->Buffer;
   }
   
@@ -224,7 +225,7 @@ public:
   }
   
   /// getCharacterData - Return a pointer to the start of the specified location
-  /// in the appropriate SourceBuffer.
+  /// in the appropriate MemoryBuffer.
   const char *getCharacterData(SourceLocation SL) const;
   
   /// getColumnNumber - Return the column # for the specified include position.
@@ -234,7 +235,7 @@ public:
   
   /// getLineNumber - Given a SourceLocation, return the physical line number
   /// for the position indicated.  This requires building and caching a table of
-  /// line offsets for the SourceBuffer, so this is not cheap: use only when
+  /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
   unsigned getLineNumber(SourceLocation Loc);
   
@@ -297,7 +298,7 @@ private:
   
   /// createMemBufferInfoRec - Create a new info record for the specified memory
   /// buffer.  This does no caching.
-  const SrcMgr::InfoRec *createMemBufferInfoRec(const SourceBuffer *Buffer);
+  const SrcMgr::InfoRec *createMemBufferInfoRec(const MemoryBuffer *Buffer);
 
   const SrcMgr::FileIDInfo *getFIDInfo(unsigned FileID) const {
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");

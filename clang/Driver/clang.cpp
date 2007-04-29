@@ -28,10 +28,10 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceBuffer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/MappedFile.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
@@ -360,7 +360,7 @@ PrintIncludeStack(SourceLocation Pos) {
   
   unsigned LineNo = SourceMgr.getLineNumber(Pos);
   
-  const SourceBuffer *Buffer = SourceMgr.getBuffer(FileID);
+  const MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
   std::cerr << "In file included from " << Buffer->getBufferIdentifier()
             << ":" << LineNo << ":\n";
 }
@@ -372,7 +372,7 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
                                                const std::string &Extra) {
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
-  const SourceBuffer *Buffer = 0;
+  const MemoryBuffer *Buffer = 0;
   
   if (Pos.isValid()) {
     LineNo = SourceMgr.getLineNumber(Pos);
@@ -944,7 +944,7 @@ static void ProcessInputFile(const std::string &InFile,
       return;
     }
   } else {
-    SourceBuffer *SB = SourceBuffer::getSTDIN();
+    MemoryBuffer *SB = MemoryBuffer::getSTDIN();
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
       std::cerr << "Error reading standard input!  Empty?\n";
@@ -959,7 +959,7 @@ static void ProcessInputFile(const std::string &InFile,
     // Memory buffer must end with a null byte!
     PrologMacros.push_back(0);
     
-    SourceBuffer *SB = SourceBuffer::getMemBuffer(&PrologMacros.front(),
+    MemoryBuffer *SB = MemoryBuffer::getMemBuffer(&PrologMacros.front(),
                                                   &PrologMacros.back(),
                                                   "<predefines>");
     assert(SB && "Cannot fail to create predefined source buffer");

@@ -19,7 +19,6 @@
 namespace llvm {
 namespace clang {
   class DiagnosticClient;
-  class SourceBuffer;
   class SourceLocation;
   
   // Import the diagnostic enums themselves.

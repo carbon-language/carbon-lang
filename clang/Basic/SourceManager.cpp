@@ -13,7 +13,7 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/SourceBuffer.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <iostream>
@@ -43,20 +43,20 @@ SourceManager::~SourceManager() {
 #include <sys/fcntl.h>
 #include <cerrno>
 
-static const SourceBuffer *ReadFileFast(const FileEntry *FileEnt) {
+static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
 #if 0
   // FIXME: Reintroduce this and zap this function once the common llvm stuff
   // is fast for the small case.
-  return SourceBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
+  return MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
                                FileEnt->getSize());
 #endif
   
   // If the file is larger than some threshold, use 'read', otherwise use mmap.
   if (FileEnt->getSize() >= 4096*4)
-    return SourceBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
+    return MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
                                  FileEnt->getSize());
   
-  SourceBuffer *SB = SourceBuffer::getNewUninitMemBuffer(FileEnt->getSize(),
+  MemoryBuffer *SB = MemoryBuffer::getNewUninitMemBuffer(FileEnt->getSize(),
                                                          FileEnt->getName());
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
   
@@ -99,7 +99,7 @@ SourceManager::getInfoRec(const FileEntry *FileEnt) {
     return &*I;
   
   // Nope, get information.
-  const SourceBuffer *File = ReadFileFast(FileEnt);
+  const MemoryBuffer *File = ReadFileFast(FileEnt);
   if (File == 0)
     return 0;
 
@@ -117,7 +117,7 @@ SourceManager::getInfoRec(const FileEntry *FileEnt) {
 /// createMemBufferInfoRec - Create a new info record for the specified memory
 /// buffer.  This does no caching.
 const InfoRec *
-SourceManager::createMemBufferInfoRec(const SourceBuffer *Buffer) {
+SourceManager::createMemBufferInfoRec(const MemoryBuffer *Buffer) {
   // Add a new info record to the MemBufferInfos list and return it.
   FileInfo FI;
   FI.Buffer = Buffer;
@@ -196,7 +196,7 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
 
 
 /// getCharacterData - Return a pointer to the start of the specified location
-/// in the appropriate SourceBuffer.
+/// in the appropriate MemoryBuffer.
 const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // Note that this is a hot function in the getSpelling() path, which is
   // heavily used by -E mode.
@@ -228,7 +228,7 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
   if (FileID == 0) return 0;
   
   unsigned FilePos = getFilePos(Loc);
-  const SourceBuffer *Buffer = getBuffer(FileID);
+  const MemoryBuffer *Buffer = getBuffer(FileID);
   const char *Buf = Buffer->getBufferStart();
 
   unsigned LineStart = FilePos;
@@ -250,7 +250,7 @@ std::string SourceManager::getSourceName(SourceLocation Loc) {
 
 /// getLineNumber - Given a SourceLocation, return the physical line number
 /// for the position indicated.  This requires building and caching a table of
-/// line offsets for the SourceBuffer, so this is not cheap: use only when
+/// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   Loc = getLogicalLoc(Loc);
@@ -261,7 +261,7 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand. 
   if (FileInfo->SourceLineCache == 0) {
-    const SourceBuffer *Buffer = FileInfo->Buffer;
+    const MemoryBuffer *Buffer = FileInfo->Buffer;
     
     // Find the file offsets of all of the *physical* source lines.  This does
     // not look at trigraphs, escaped newlines, or anything else tricky.

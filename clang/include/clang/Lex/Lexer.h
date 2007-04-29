@@ -21,10 +21,11 @@
 #include <vector>
 
 namespace llvm {
+class MemoryBuffer;
+  
 namespace clang {
 class Diagnostic;
 class Preprocessor;
-class SourceBuffer;
 
 /// Lexer - This provides a simple interface that turns a text buffer into a
 /// stream of tokens.  This provides no support for file reading or buffering,
@@ -34,7 +35,7 @@ class Lexer {
   //===--------------------------------------------------------------------===//
   // Constant configuration values for this lexer.
   const char * const BufferEnd;  // End of the buffer.
-  const SourceBuffer *InputFile; // The file we are reading from.
+  const MemoryBuffer *InputFile; // The file we are reading from.
   unsigned CurFileID;            // FileID for the current input file.
   Preprocessor &PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
@@ -95,9 +96,9 @@ public:
     
   /// Lexer constructor - Create a new lexer object for the specified buffer
   /// with the specified preprocessor managing the lexing process.  This lexer
-  /// assumes that the specified SourceBuffer and Preprocessor objects will
+  /// assumes that the specified MemoryBuffer and Preprocessor objects will
   /// outlive it, but doesn't take ownership of either pointer.
-  Lexer(const SourceBuffer *InBuffer, unsigned CurFileID, Preprocessor &PP,
+  Lexer(const MemoryBuffer *InBuffer, unsigned CurFileID, Preprocessor &PP,
         const char *BufStart = 0, const char *BufEnd = 0);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this

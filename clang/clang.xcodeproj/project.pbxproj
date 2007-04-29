@@ -68,7 +68,6 @@
 		DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7310A524295003AD0FB /* Diagnostic.h */; };
 		DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7320A524295003AD0FB /* DiagnosticKinds.def */; };
 		DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7330A524295003AD0FB /* FileManager.h */; };
-		DED7D7440A524295003AD0FB /* SourceBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7340A524295003AD0FB /* SourceBuffer.h */; };
 		DED7D7450A524295003AD0FB /* SourceLocation.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7350A524295003AD0FB /* SourceLocation.h */; };
 		DED7D7460A524295003AD0FB /* SourceManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7360A524295003AD0FB /* SourceManager.h */; };
 		DED7D7470A524295003AD0FB /* TokenKinds.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7370A524295003AD0FB /* TokenKinds.def */; };
@@ -82,7 +81,6 @@
 		DED7D74F0A524295003AD0FB /* Preprocessor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D7400A524295003AD0FB /* Preprocessor.h */; };
 		DED7D77A0A5242C7003AD0FB /* Diagnostic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */; };
 		DED7D77B0A5242C7003AD0FB /* FileManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D75E0A5242C7003AD0FB /* FileManager.cpp */; };
-		DED7D7880A5242C7003AD0FB /* SourceBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D76C0A5242C7003AD0FB /* SourceBuffer.cpp */; };
 		DED7D7890A5242C7003AD0FB /* SourceManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D76D0A5242C7003AD0FB /* SourceManager.cpp */; };
 		DED7D78A0A5242C7003AD0FB /* TokenKinds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */; };
 		DED7D7C20A5242E6003AD0FB /* IdentifierTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D79D0A5242E6003AD0FB /* IdentifierTable.cpp */; };
@@ -106,7 +104,6 @@
 				DED7D7410A524295003AD0FB /* Diagnostic.h in CopyFiles */,
 				DED7D7420A524295003AD0FB /* DiagnosticKinds.def in CopyFiles */,
 				DED7D7430A524295003AD0FB /* FileManager.h in CopyFiles */,
-				DED7D7440A524295003AD0FB /* SourceBuffer.h in CopyFiles */,
 				DED7D7450A524295003AD0FB /* SourceLocation.h in CopyFiles */,
 				DED7D7460A524295003AD0FB /* SourceManager.h in CopyFiles */,
 				DED7D7470A524295003AD0FB /* TokenKinds.def in CopyFiles */,
@@ -216,7 +213,6 @@
 		DED7D7310A524295003AD0FB /* Diagnostic.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Diagnostic.h; sourceTree = "<group>"; };
 		DED7D7320A524295003AD0FB /* DiagnosticKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DiagnosticKinds.def; sourceTree = "<group>"; };
 		DED7D7330A524295003AD0FB /* FileManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileManager.h; sourceTree = "<group>"; };
-		DED7D7340A524295003AD0FB /* SourceBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SourceBuffer.h; sourceTree = "<group>"; };
 		DED7D7350A524295003AD0FB /* SourceLocation.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SourceLocation.h; sourceTree = "<group>"; };
 		DED7D7360A524295003AD0FB /* SourceManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SourceManager.h; sourceTree = "<group>"; };
 		DED7D7370A524295003AD0FB /* TokenKinds.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TokenKinds.def; sourceTree = "<group>"; };
@@ -230,7 +226,6 @@
 		DED7D7400A524295003AD0FB /* Preprocessor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Preprocessor.h; sourceTree = "<group>"; };
 		DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Diagnostic.cpp; sourceTree = "<group>"; };
 		DED7D75E0A5242C7003AD0FB /* FileManager.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FileManager.cpp; sourceTree = "<group>"; };
-		DED7D76C0A5242C7003AD0FB /* SourceBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SourceBuffer.cpp; sourceTree = "<group>"; };
 		DED7D76D0A5242C7003AD0FB /* SourceManager.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SourceManager.cpp; sourceTree = "<group>"; };
 		DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TokenKinds.cpp; sourceTree = "<group>"; };
 		DED7D79D0A5242E6003AD0FB /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
@@ -394,7 +389,6 @@
 				DED7D7320A524295003AD0FB /* DiagnosticKinds.def */,
 				DED7D7330A524295003AD0FB /* FileManager.h */,
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
-				DED7D7340A524295003AD0FB /* SourceBuffer.h */,
 				DED7D7350A524295003AD0FB /* SourceLocation.h */,
 				DED7D7360A524295003AD0FB /* SourceManager.h */,
 				DE46BF270AE0A82D00CC047C /* TargetInfo.h */,
@@ -431,7 +425,6 @@
 			children = (
 				DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */,
 				DED7D75E0A5242C7003AD0FB /* FileManager.cpp */,
-				DED7D76C0A5242C7003AD0FB /* SourceBuffer.cpp */,
 				DED7D76D0A5242C7003AD0FB /* SourceManager.cpp */,
 				DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */,
 				DED626C80AE0C065001E80A4 /* TargetInfo.cpp */,
@@ -483,12 +476,10 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
 			projectRoot = "";
-			shouldCheckCompatibility = 1;
 			targets = (
 				8DD76F620486A84900D96B5E /* clang */,
 			);
@@ -502,7 +493,6 @@
 			files = (
 				DED7D77A0A5242C7003AD0FB /* Diagnostic.cpp in Sources */,
 				DED7D77B0A5242C7003AD0FB /* FileManager.cpp in Sources */,
-				DED7D7880A5242C7003AD0FB /* SourceBuffer.cpp in Sources */,
 				DED7D7890A5242C7003AD0FB /* SourceManager.cpp in Sources */,
 				DED7D78A0A5242C7003AD0FB /* TokenKinds.cpp in Sources */,
 				DED7D7C20A5242E6003AD0FB /* IdentifierTable.cpp in Sources */,

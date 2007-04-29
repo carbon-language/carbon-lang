@@ -27,9 +27,8 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/SourceBuffer.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/Config/alloca.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
 #include <iostream>
 using namespace llvm;
@@ -37,7 +36,7 @@ using namespace clang;
 
 static void InitCharacterInfo();
 
-Lexer::Lexer(const SourceBuffer *File, unsigned fileid, Preprocessor &pp,
+Lexer::Lexer(const MemoryBuffer *File, unsigned fileid, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
   : BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
     InputFile(File), CurFileID(fileid), PP(pp), Features(PP.getLangOptions()) {
