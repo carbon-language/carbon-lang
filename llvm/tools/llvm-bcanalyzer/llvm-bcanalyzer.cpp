@@ -51,6 +51,11 @@ static cl::opt<std::string>
 static cl::opt<bool> NoDetails("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump("dump", cl::desc("Dump low level bytecode trace"));
 static cl::opt<bool> Verify("verify", cl::desc("Progressively verify module"));
+
+//===----------------------------------------------------------------------===//
+// Bitcode specific analysis.
+//===----------------------------------------------------------------------===//
+
 static cl::opt<bool> Bitcode("bitcode", cl::desc("Read a bitcode file"));
 
 /// CurStreamType - If we can sniff the flavor of this stream, we can produce 
@@ -59,6 +64,54 @@ static enum {
   UnknownBitstream,
   LLVMIRBitstream
 } CurStreamType;
+
+/// Error - All bitcode analysis errors go through this function, making this a
+/// good place to breakpoint if debugging.
+static bool Error(const std::string &Err) {
+  std::cerr << Err << "\n";
+  return true;
+}
+
+/// ParseBlock - Read a block, updating statistics, etc.
+static bool ParseBlock(BitstreamReader &Stream) {
+  unsigned BlockID = Stream.ReadSubBlockID();
+  
+  // TODO: Compute per-block-id stats.
+  BlockID = BlockID;
+  
+  if (Stream.EnterSubBlock())
+    return Error("Malformed block record");
+
+  SmallVector<uint64_t, 64> Record;
+
+  // Read all the records for this block.
+  while (1) {
+    if (Stream.AtEndOfStream())
+      return Error("Premature end of bitstream");
+
+    // Read the code for this record.
+    unsigned AbbrevID = Stream.ReadCode();
+    switch (AbbrevID) {
+    case bitc::END_BLOCK:
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of block");
+      return false;
+    case bitc::ENTER_SUBBLOCK:
+      if (ParseBlock(Stream))
+        return true;
+      break;
+    case bitc::DEFINE_ABBREV:
+      Stream.ReadAbbrevRecord();
+      break;
+    default:
+      Record.clear();
+      unsigned Code = Stream.ReadRecord(AbbrevID, Record);
+      // TODO: Compute per-blockid/code stats.
+      Code = Code;
+      break;
+    }
+  }
+}
 
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
@@ -69,15 +122,11 @@ static int AnalyzeBitcode() {
   else
     Buffer = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size());
 
-  if (Buffer == 0) {
-    std::cerr << "Error reading '" << InputFilename << "'.\n";
-    return 1;
-  }
+  if (Buffer == 0)
+    return Error("Error reading '" + InputFilename + "'.");
   
-  if (Buffer->getBufferSize() & 3) {
-    std::cerr << "Bitcode stream should be a multiple of 4 bytes in length\n";
-    return 1;
-  }
+  if (Buffer->getBufferSize() & 3)
+    return Error("Bitcode stream should be a multiple of 4 bytes in length");
   
   unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
   BitstreamReader Stream(BufPtr, BufPtr+Buffer->getBufferSize());
@@ -92,12 +141,25 @@ static int AnalyzeBitcode() {
   Signature[4] = Stream.Read(4);
   Signature[5] = Stream.Read(4);
   
+  // Autodetect the file contents, if it is one we know.
   CurStreamType = UnknownBitstream;
   if (Signature[0] == 'B' && Signature[1] == 'C' &&
       Signature[2] == 0x0 && Signature[3] == 0xC &&
       Signature[4] == 0xE && Signature[5] == 0xD)
     CurStreamType = LLVMIRBitstream;
 
+  // Parse the top-level structure.  We only allow blocks at the top-level.
+  while (!Stream.AtEndOfStream()) {
+    unsigned Code = Stream.ReadCode();
+    if (Code != bitc::ENTER_SUBBLOCK)
+      return Error("Invalid record at top-level");
+    
+    if (ParseBlock(Stream))
+      return true;
+  }
+  
+  // Print a summary of the read file.
+  
   std::cerr << "Summary of " << InputFilename << ":\n";
   std::cerr << "  Stream type: ";
   switch (CurStreamType) {
@@ -105,9 +167,16 @@ static int AnalyzeBitcode() {
   case UnknownBitstream: std::cerr << "unknown\n"; break;
   case LLVMIRBitstream:  std::cerr << "LLVM IR\n"; break;
   }
-
+  
+  // TODO: Stats!
+  
   return 0;
 }
+
+
+//===----------------------------------------------------------------------===//
+// Bytecode specific analysis.
+//===----------------------------------------------------------------------===//
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
