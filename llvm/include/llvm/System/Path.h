@@ -174,6 +174,14 @@ namespace sys {
       /// @brief Construct a Path from a string.
       explicit Path(const std::string& p) : path(p) {}
 
+      /// This constructor will accept a character range as a path.  No checking
+      /// is done on this path to determine if it is valid.  To determine
+      /// validity of the path, use the isValid method. 
+      /// @param p The path to assign.
+      /// @brief Construct a Path from a string.
+      explicit Path(const char *StrStart, unsigned StrLen)
+        : path(StrStart, StrStart+StrLen) {}
+      
     /// @}
     /// @name Operators
     /// @{
