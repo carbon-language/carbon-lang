@@ -76,7 +76,7 @@ bool GlobalDCE::runOnModule(Module &M) {
   for (Module::alias_iterator I = M.alias_begin(), E = M.alias_end();
        I != E; ++I) {
     // Aliases are always needed even if they are not used.
-    MarkUsedGlobalsAsNeeded(cast<Constant>(I->getAliasee()));
+    MarkUsedGlobalsAsNeeded(I->getAliasee());
   }
 
   // Now that all globals which are needed are in the AliveGlobals set, we loop

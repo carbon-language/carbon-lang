@@ -75,7 +75,10 @@ public:
   Constant* getAliasee() {
     return cast_or_null<Constant>(getOperand(0));
   }
-
+  /// getAliasedGlobal() - Aliasee can be either global or bitcast of
+  /// global. This method retrives the global for both aliasee flavours.
+  const GlobalValue* getAliasedGlobal() const;
+    
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalAlias *) { return true; }
   static inline bool classof(const Value *V) {

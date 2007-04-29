@@ -926,8 +926,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
    assert(0 && "Invalid alias linkage");
   }
   
-  const Constant *Aliasee = dyn_cast_or_null<Constant>(GA->getAliasee());
-  assert(Aliasee && "Aliasee cannot be null");
+  const Constant *Aliasee = GA->getAliasee();
     
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
     printType(GV->getType());

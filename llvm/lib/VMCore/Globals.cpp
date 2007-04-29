@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/DerivedTypes.h"
@@ -193,16 +194,36 @@ void GlobalAlias::eraseFromParent() {
 }
 
 bool GlobalAlias::isDeclaration() const {
-  const GlobalValue* AV = dyn_cast_or_null<const GlobalValue>(getAliasee());
-  return (AV && AV->isDeclaration());
+  const GlobalValue* AV = getAliasedGlobal();
+  if (AV)
+    return AV->isDeclaration();
+  else
+    return false;
 }
 
 void GlobalAlias::setAliasee(Constant *Aliasee) 
 {
-  if (Aliasee) {
-    assert(Aliasee->getType() == getType() && 
+  if (Aliasee)
+    assert(Aliasee->getType() == getType() &&
            "Alias and aliasee types should match!");
-    setOperand(0, Aliasee);
-  }
+  
+  setOperand(0, Aliasee);
+}
+
+const GlobalValue *GlobalAlias::getAliasedGlobal() const  {
+  const Constant *C = getAliasee();
+  if (C) {
+    if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+      return GV;
+    else {
+      const ConstantExpr *CE = 0;
+      if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
+          (CE->getOpcode() == Instruction::BitCast))
+        return cast<GlobalValue>(CE->getOperand(0));
+      else
+        assert(0 && "Unsupported aliasee");
+    }
+  } else
+    return 0;
 }
 

@@ -129,22 +129,13 @@ bool AsmPrinter::doFinalization(Module &M) {
     O << "\n";
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I!=E; ++I) {
-      const Constant *Aliasee = dyn_cast_or_null<Constant>(I->getAliasee());
-      assert(Aliasee && "Aliasee cannot be null");
-
       std::string Name = Mang->getValueName(I);
       std::string Target;
       
-      if (const GlobalValue *GV = dyn_cast<GlobalValue>(Aliasee))
+      if (const GlobalValue *GV = I->getAliasedGlobal())
         Target = Mang->getValueName(GV);
-      else {
-        const ConstantExpr *CE = 0;
-        if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
-            (CE->getOpcode() == Instruction::BitCast))
-          Target = Mang->getValueName(CE->getOperand(0));
-        else
-          assert(0 && "Unsupported aliasee");
-      }
+      else
+        assert(0 && "Unsupported aliasee");
       
       if (I->hasExternalLinkage())
         O << "\t.globl\t" << Name << "\n";
