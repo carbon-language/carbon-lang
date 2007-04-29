@@ -14,6 +14,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/MappedFile.h"
 #include "llvm/System/Process.h"
+#include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
@@ -158,7 +159,7 @@ MemoryBufferMMapFile::~MemoryBufferMMapFile() {
 
 MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
                                     int64_t FileSize) {
-  sys::PathWithStatus P(FilenameStart, FnSize);
+  sys::PathWithStatus P(std::string(FilenameStart, FnSize));
 #if 1
   return new MemoryBufferMMapFile(P);
 #else
