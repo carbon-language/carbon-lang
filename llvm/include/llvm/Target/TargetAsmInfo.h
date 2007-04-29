@@ -353,7 +353,7 @@ namespace llvm {
 
     /// Measure the specified inline asm to determine an approximation of its
     /// length.
-    unsigned getInlineAsmLength(const char *Str) const;
+    virtual unsigned getInlineAsmLength(const char *Str) const;
 
     /// ExpandInlineAsm - This hook allows the target to expand an inline asm
     /// call to be explicit llvm code if it wants to.  This is useful for

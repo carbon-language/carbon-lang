@@ -25,6 +25,8 @@ namespace llvm {
     ARMTargetAsmInfo(const ARMTargetMachine &TM);
 
     bool isThumb;
+
+    virtual unsigned getInlineAsmLength(const char *Str) const;
   };
 
 

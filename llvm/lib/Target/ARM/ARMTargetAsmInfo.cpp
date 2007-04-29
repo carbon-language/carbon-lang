@@ -86,3 +86,54 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   LCOMMDirective = "\t.lcomm\t";
   isThumb = Subtarget->isThumb();
 }
+
+/// ARM-specific version of TargetAsmInfo::getInlineAsmLength.
+unsigned ARMTargetAsmInfo::getInlineAsmLength(const char *Str) const {
+  // Count the number of bytes in the asm.
+  bool atInsnStart = true;
+  unsigned Length = 0;
+  for (; *Str; ++Str) {
+    if (atInsnStart) {
+      // Skip whitespace
+      while (*Str && isspace(*Str) && *Str != '\n')
+        Str++;
+      // Skip label
+      for (const char* p = Str; *p && !isspace(*p); p++)
+        if (*p == ':') {
+          Str = p+1;
+          break;
+        }
+      // Ignore everything from comment char(s) to EOL
+      if (strncmp(Str, CommentString, strlen(CommentString))==-0)
+        atInsnStart = false;
+      else {
+        // An instruction
+        atInsnStart = false;
+        if (isThumb) {
+          // BL and BLX <non-reg> are 4 bytes, all others 2.
+          const char*p = Str;
+          if ((*Str=='b' || *Str=='B') &&
+              (*(Str+1)=='l' || *(Str+1)=='L')) {
+            if (*(Str+2)=='x' || *(Str+2)=='X') {
+              const char* p = Str+3;
+              while (*p && isspace(*p))
+                p++;
+              if (*p == 'r' || *p=='R')
+                Length += 2;    // BLX reg
+              else
+                Length += 4;    // BLX non-reg
+            }
+            else
+              Length += 4;    // BL
+          } else
+            Length += 2;    // Thumb anything else
+        }
+        else
+          Length += 4;    // ARM
+      }
+    }
+    if (*Str == '\n' || *Str == SeparatorChar)
+      atInsnStart = true;
+  }
+  return Length;
+}
