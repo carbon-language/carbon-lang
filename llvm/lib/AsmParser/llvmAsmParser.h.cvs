@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 2.1.  */
+/* A Bison parser, made from /usr/home/jeffc/llvm/lib/AsmParser/llvmAsmParser.y, by GNU bison 1.75.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,13 +15,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
+
+#ifndef BISON_LLVMASMPARSER_TAB_H
+# define BISON_LLVMASMPARSER_TAB_H
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -164,7 +167,6 @@
      HIDDEN = 390
    };
 #endif
-/* Tokens.  */
 #define ESINT64VAL 258
 #define EUINT64VAL 259
 #define ESAPINTVAL 260
@@ -302,9 +304,9 @@
 
 
 
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 955 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
-typedef union YYSTYPE {
+#ifndef YYSTYPE
+#line 955 "/usr/home/jeffc/llvm/lib/AsmParser/llvmAsmParser.y"
+typedef union {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
   llvm::BasicBlock                       *BasicBlockVal;
@@ -349,15 +351,14 @@ typedef union YYSTYPE {
   llvm::Instruction::OtherOps       OtherOpVal;
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
-} YYSTYPE;
-/* Line 1447 of yacc.c.  */
-#line 355 "llvmAsmParser.tab.h"
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
+} yystype;
+/* Line 1237 of /usr/local/share/bison/yacc.c.  */
+#line 357 "llvmAsmParser.tab.h"
+# define YYSTYPE yystype
 #endif
 
 extern YYSTYPE llvmAsmlval;
 
 
+#endif /* not BISON_LLVMASMPARSER_TAB_H */
 

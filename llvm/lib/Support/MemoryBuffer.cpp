@@ -159,7 +159,7 @@ MemoryBufferMMapFile::~MemoryBufferMMapFile() {
 
 MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
                                     int64_t FileSize) {
-  sys::PathWithStatus P(std::string(FilenameStart, FnSize));
+  sys::PathWithStatus P(FilenameStart, FnSize);
 #if 1
   return new MemoryBufferMMapFile(P);
 #else

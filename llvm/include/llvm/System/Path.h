@@ -559,6 +559,14 @@ namespace sys {
       explicit PathWithStatus(const std::string& p) 
         : Path(p), status(), fsIsValid(false) {}
 
+      /// This constructor will accept a character range as a path.  No checking
+      /// is done on this path to determine if it is valid.  To determine
+      /// validity of the path, use the isValid method. 
+      /// @param p The path to assign.
+      /// @brief Construct a Path from a string.
+      explicit PathWithStatus(const char *StrStart, unsigned StrLen)
+        : Path(StrStart, StrLen), status(), fsIsValid(false) {}
+
       /// Makes a copy of \p that to \p this.
       /// @returns \p this
       /// @brief Assignment Operator
