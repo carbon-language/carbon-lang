@@ -72,6 +72,12 @@ public:
   
   bool AtEndOfStream() const { return NextChar == LastChar; }
   
+  /// GetCurrentBitNo - Return the bit # of the bit we are reading.
+  uint64_t GetCurrentBitNo() const {
+    return CurWord * 32ULL + (32-CurCodeSize);
+  }
+  
+  
   uint32_t Read(unsigned NumBits) {
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {
