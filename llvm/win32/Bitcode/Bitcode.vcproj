@@ -117,21 +117,18 @@
 				<File
 					RelativePath="..\..\lib\Bitcode\Reader\BitcodeReader.h">
 				</File>
-				<File
-					RelativePath="..\..\lib\Bitcode\Reader\ReaderWrappers.cpp">
-				</File>
 			</Filter>
 			<Filter
 				Name="Writer"
 				Filter="">
 				<File
+					RelativePath="..\..\lib\Bitcode\Writer\BitcodeWriter.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Bitcode\Writer\ValueEnumerator.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Bitcode\Writer\ValueEnumerator.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bitcode\Writer\Writer.cpp">
 				</File>
 			</Filter>
 		</Filter>

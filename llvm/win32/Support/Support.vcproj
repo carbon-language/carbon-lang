@@ -158,6 +158,9 @@
 				RelativePath="..\..\lib\Support\ManagedStatic.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\MemoryBuffer.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\PluginLoader.cpp">
 			</File>
 			<File
@@ -309,6 +312,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\MathExtras.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\MemoryBuffer.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\OutputBuffer.h">
