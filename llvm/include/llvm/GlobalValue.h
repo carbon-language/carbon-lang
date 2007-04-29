@@ -43,7 +43,8 @@ public:
   /// @brief An enumeration for the kinds of visibility of global values.
   enum VisibilityTypes {
     DefaultVisibility = 0,  ///< The GV is visible
-    HiddenVisibility        ///< The GV is hidden
+    HiddenVisibility,       ///< The GV is hidden
+    ProtectedVisibility     ///< The GV is protected
   };
 
 protected:
@@ -58,7 +59,7 @@ protected:
   // Note: VC++ treats enums as signed, so an extra bit is required to prevent
   // Linkage and Visibility from turning into negative values.
   LinkageTypes Linkage : 5;   // The linkage of this global
-  unsigned Visibility : 1;    // The visibility style of this global
+  unsigned Visibility : 2;    // The visibility style of this global
   unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
   std::string Section;        // Section to emit this into, empty mean default
 public:
@@ -74,6 +75,9 @@ public:
 
   VisibilityTypes getVisibility() const { return (VisibilityTypes)Visibility; }
   bool hasHiddenVisibility() const { return Visibility == HiddenVisibility; }
+  bool hasProtectedVisibility() const {
+    return Visibility == ProtectedVisibility;
+  }
   void setVisibility(VisibilityTypes V) { Visibility = V; }
   
   bool hasSection() const { return !Section.empty(); }

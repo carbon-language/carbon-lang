@@ -1532,6 +1532,7 @@ void BytecodeReader::ParseFunctionBody(Function* F) {
   switch (VisibilityID) {
   case 0: Visibility = GlobalValue::DefaultVisibility; break;
   case 1: Visibility = GlobalValue::HiddenVisibility; break;
+  case 2: Visibility = GlobalValue::ProtectedVisibility; break;
   default:
    error("Unknown visibility type: " + utostr(VisibilityID));
    Visibility = GlobalValue::DefaultVisibility;
@@ -1767,6 +1768,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     switch (VisibilityID) {
     case 0: Visibility = GlobalValue::DefaultVisibility; break;
     case 1: Visibility = GlobalValue::HiddenVisibility; break;
+    case 2: Visibility = GlobalValue::ProtectedVisibility; break;
     default:
       error("Unknown visibility type: " + utostr(VisibilityID));
       Visibility = GlobalValue::DefaultVisibility;

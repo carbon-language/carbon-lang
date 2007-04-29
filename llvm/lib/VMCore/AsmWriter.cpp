@@ -886,6 +886,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     default: assert(0 && "Invalid visibility style!");
     case GlobalValue::DefaultVisibility: break;
     case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+    case GlobalValue::ProtectedVisibility: Out << "protected "; break;
     }
   }
 
@@ -914,6 +915,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   default: assert(0 && "Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
   case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+  case GlobalValue::ProtectedVisibility: Out << "protected "; break;
   }
 
   Out << "alias ";
@@ -998,6 +1000,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     default: assert(0 && "Invalid visibility style!");
     case GlobalValue::DefaultVisibility: break;
     case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+    case GlobalValue::ProtectedVisibility: Out << "protected "; break;
     }
   }
 

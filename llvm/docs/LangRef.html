@@ -591,6 +591,13 @@ All Global Variables and Functions have one of the following visibility styles:
     directly.
   </dd>
 
+  <dt><b>"<tt>protected</tt>" - Protected style</b>:</dt>
+
+  <dd>On ELF, protected visibility indicates that the symbol will be placed in
+  the dynamic symbol table, but that references within the defining module will
+  bind to the local symbol. That is, the symbol cannot be overridden by another
+  module.
+  </dd>
 </dl>
 
 </div>

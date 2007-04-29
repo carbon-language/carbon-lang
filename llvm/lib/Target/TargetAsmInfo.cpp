@@ -74,6 +74,7 @@ TargetAsmInfo::TargetAsmInfo() :
   UsedDirective(0),
   WeakRefDirective(0),
   HiddenDirective("\t.hidden\t"),
+  ProtectedDirective("\t.protected\t"),
   AbsoluteSectionOffsets(false),
   HasLEB128(false),
   HasDotLoc(false),

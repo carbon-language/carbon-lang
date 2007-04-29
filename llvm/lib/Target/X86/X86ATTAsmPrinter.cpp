@@ -125,9 +125,13 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
     break;
   }
-  if (F->hasHiddenVisibility())
+  if (F->hasHiddenVisibility()) {
     if (const char *Directive = TAI->getHiddenDirective())
       O << Directive << CurrentFnName << "\n";
+  } else if (F->hasProtectedVisibility()) {
+    if (const char *Directive = TAI->getProtectedDirective())
+      O << Directive << CurrentFnName << "\n";
+  }
 
   if (Subtarget->isTargetELF())
     O << "\t.type " << CurrentFnName << ",@function\n";
@@ -322,7 +326,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       if (isCallOp && isa<Function>(GV)) {
         if (printGOT(TM, Subtarget)) {
           // Assemble call via PLT for non-local symbols
-          if (!GV->hasHiddenVisibility() || GV->isDeclaration())
+          if (!(GV->hasHiddenVisibility() || GV->hasProtectedVisibility()) ||
+              GV->isDeclaration())
             O << "@PLT";
         }
         if (Subtarget->isTargetCygMing() && GV->isDeclaration())

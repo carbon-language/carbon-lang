@@ -256,7 +256,11 @@ namespace llvm {
     /// HiddenDirective - This directive, if non-null, is used to declare a
     /// global or function as having hidden visibility.
     const char *HiddenDirective;          // Defaults to "\t.hidden\t".
-    
+
+    /// ProtectedDirective - This directive, if non-null, is used to declare a
+    /// global or function as having protected visibility.
+    const char *ProtectedDirective;       // Defaults to "\t.protected\t".
+
     //===--- Dwarf Emission Directives -----------------------------------===//
 
     /// AbsoluteSectionOffsets - True if we should emit abolute section
@@ -522,6 +526,9 @@ namespace llvm {
     }
     const char *getHiddenDirective() const {
       return HiddenDirective;
+    }
+    const char *getProtectedDirective() const {
+      return ProtectedDirective;
     }
     bool isAbsoluteSectionOffsets() const {
       return AbsoluteSectionOffsets;

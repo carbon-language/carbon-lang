@@ -206,6 +206,7 @@ appending       { return APPENDING; }
 dllimport       { return DLLIMPORT; }
 dllexport       { return DLLEXPORT; }
 hidden          { return HIDDEN; }
+protected       { return PROTECTED; }
 extern_weak     { return EXTERN_WEAK; }
 external        { return EXTERNAL; }
 thread_local    { return THREAD_LOCAL; }

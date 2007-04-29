@@ -957,8 +957,9 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
 static unsigned getEncodedVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
   default: assert(0 && "Invalid visibility!");
-  case GlobalValue::DefaultVisibility: return 0;
-  case GlobalValue::HiddenVisibility:  return 1;
+  case GlobalValue::DefaultVisibility:   return 0;
+  case GlobalValue::HiddenVisibility:    return 1;
+  case GlobalValue::ProtectedVisibility: return 2;
   }
 }
 

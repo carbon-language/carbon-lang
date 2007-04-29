@@ -1099,7 +1099,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token NORETURN INREG SRET NOUNWIND
 
 // Visibility Styles
-%token DEFAULT HIDDEN
+%token DEFAULT HIDDEN PROTECTED
 
 %start Module
 %%
@@ -1180,9 +1180,10 @@ GVExternalLinkage
   ;
 
 GVVisibilityStyle
-  : /*empty*/ { $$ = GlobalValue::DefaultVisibility; }
-  | DEFAULT   { $$ = GlobalValue::DefaultVisibility; }
-  | HIDDEN    { $$ = GlobalValue::HiddenVisibility;  }
+  : /*empty*/ { $$ = GlobalValue::DefaultVisibility;   }
+  | DEFAULT   { $$ = GlobalValue::DefaultVisibility;   }
+  | HIDDEN    { $$ = GlobalValue::HiddenVisibility;    }
+  | PROTECTED { $$ = GlobalValue::ProtectedVisibility; }
   ;
 
 FunctionDeclareLinkage

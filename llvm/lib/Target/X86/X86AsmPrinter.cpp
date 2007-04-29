@@ -155,9 +155,14 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     unsigned Size = TD->getTypeSize(Type);
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
-    if (I->hasHiddenVisibility())
+    if (I->hasHiddenVisibility()) {
       if (const char *Directive = TAI->getHiddenDirective())
         O << Directive << name << "\n";
+    } else if (I->hasProtectedVisibility()) {
+      if (const char *Directive = TAI->getProtectedDirective())
+        O << Directive << name << "\n";
+    }
+    
     if (Subtarget->isTargetELF())
       O << "\t.type " << name << ",@object\n";
     
