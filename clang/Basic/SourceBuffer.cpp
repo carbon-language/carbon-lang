@@ -163,44 +163,39 @@ SourceBufferMMapFile::~SourceBufferMMapFile() {
 // SourceBufferReadFile implementation.
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
 SourceBuffer *SourceBuffer::getFile(const FileEntry *FileEnt) {
-  try {
-    // If the file is larger than some threshold, use 'read', otherwise use mmap.
-    if (FileEnt->getSize() >= 4096*4)
-      return new SourceBufferMMapFile(sys::Path(FileEnt->getName()));
+  // If the file is larger than some threshold, use 'read', otherwise use mmap.
+  if (FileEnt->getSize() >= 4096*4)
+    return new SourceBufferMMapFile(sys::Path(FileEnt->getName()));
 
-    SourceBuffer *SB = getNewUninitMemBuffer(FileEnt->getSize(),
-                                             FileEnt->getName());
-    char *BufPtr = const_cast<char*>(SB->getBufferStart());
+  SourceBuffer *SB = getNewUninitMemBuffer(FileEnt->getSize(),
+                                           FileEnt->getName());
+  char *BufPtr = const_cast<char*>(SB->getBufferStart());
+  
+  int FD = ::open(FileEnt->getName(), O_RDONLY);
+  if (FD == -1) {
+    delete SB;
+    return 0;
+  }
     
-    int FD = ::open(FileEnt->getName(), O_RDONLY);
-    if (FD == -1) {
+  unsigned BytesLeft = FileEnt->getSize();
+  while (BytesLeft) {
+    ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
+    if (NumRead != -1) {
+      BytesLeft -= NumRead;
+      BufPtr += NumRead;
+    } else if (errno == EINTR) {
+      // try again
+    } else {
+      // error reading.
+      close(FD);
       delete SB;
       return 0;
     }
-    
-    unsigned BytesLeft = FileEnt->getSize();
-    while (BytesLeft) {
-      ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
-      if (NumRead != -1) {
-        BytesLeft -= NumRead;
-        BufPtr += NumRead;
-      } else if (errno == EINTR) {
-        // try again
-      } else {
-        // error reading.
-        close(FD);
-        delete SB;
-        return 0;
-      }
-    }
-    close(FD);
-    
-    return SB;
-  } catch (...) {
-    return 0;
   }
+  close(FD);
+    
+  return SB;
 }
 
 //===----------------------------------------------------------------------===//

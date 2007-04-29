@@ -47,14 +47,9 @@ SourceManager::getInfoRec(const FileEntry *FileEnt) {
     return &*I;
   
   // Nope, get information.
-  const SourceBuffer *File;
-  try {
-    File = clang::SourceBuffer::getFile(FileEnt);
-    if (File == 0)
-      return 0;
-  } catch (...) {
+  const SourceBuffer *File = clang::SourceBuffer::getFile(FileEnt);
+  if (File == 0)
     return 0;
-  }
 
   const InfoRec &Entry =
     *FileInfos.insert(I, std::make_pair(FileEnt, FileInfo()));
