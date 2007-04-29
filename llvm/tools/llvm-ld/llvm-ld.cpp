@@ -120,6 +120,14 @@ static void PrintAndExit(const std::string &Message, int errcode = 1) {
   exit(errcode);
 }
 
+static void PrintCommand(const std::vector<const char*> &args) {
+  std::vector<const char*>::const_iterator I = args.begin(), E = args.end(); 
+  for (; I != E; ++I)
+    if (*I)
+      cout << "'" << *I << "'" << " ";
+  cout << "\n" << std::flush;
+}
+
 /// CopyEnv - This function takes an array of environment variables and makes a
 /// copy of it.  This copy can then be manipulated any way the caller likes
 /// without affecting the process's real environment.
@@ -201,6 +209,9 @@ static void RemoveEnv(const char * name, char ** const envp) {
 /// GenerateBytecode - generates a bytecode file from the module provided
 void GenerateBytecode(Module* M, const std::string& FileName) {
 
+  if (Verbose)
+    cout << "Generating Bytecode To " << FileName << '\n';
+
   // Create the output file.
   std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                std::ios::binary;
@@ -244,6 +255,11 @@ static int GenerateAssembly(const std::string &OutputFilename,
   args.push_back(InputFilename.c_str());
   args.push_back(0);
 
+  if (Verbose) {
+    cout << "Generating Assembly With: \n";
+    PrintCommand(args);
+  }
+
   return sys::Program::ExecuteAndWait(llc, &args[0], 0, 0, 0, 0, &ErrMsg);
 }
 
@@ -261,6 +277,12 @@ static int GenerateCFile(const std::string &OutputFile,
   args.push_back(OutputFile.c_str());
   args.push_back(InputFile.c_str());
   args.push_back(0);
+
+  if (Verbose) {
+    cout << "Generating C Source With: \n";
+    PrintCommand(args);
+  }
+
   return sys::Program::ExecuteAndWait(llc, &args[0], 0, 0, 0, 0, &ErrMsg);
 }
 
@@ -340,6 +362,11 @@ static int GenerateNative(const std::string &OutputFilename,
 
   args.push_back(0);
 
+  if (Verbose) {
+    cout << "Generating Native Executable With:\n";
+    PrintCommand(args);
+  }
+
   // Run the compiler to assembly and link together the program.
   int R = sys::Program::ExecuteAndWait(
     gcc, &args[0], (const char**)clean_env, 0, 0, 0, &ErrMsg);
@@ -350,6 +377,8 @@ static int GenerateNative(const std::string &OutputFilename,
 /// EmitShellScript - Output the wrapper file that invokes the JIT on the LLVM
 /// bytecode file for the program.
 static void EmitShellScript(char **argv) {
+  if (Verbose)
+    cout << "Emitting Shell Script\n";
 #if defined(_WIN32) || defined(__CYGWIN__)
   // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
   // support windows systems, we copy the llvm-stub.exe executable from the
@@ -554,15 +583,11 @@ int main(int argc, char **argv, char **envp) {
           PrintAndExit("Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
-        if (Verbose) 
-          cout << "Generating Assembly Code\n";
         std::string ErrMsg;
         if (0 != GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput,
             llc, ErrMsg))
           PrintAndExit(ErrMsg);
 
-        if (Verbose) 
-          cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, AssemblyFile.toString(),
                                 NativeLinkItems, gcc, envp, ErrMsg))
           PrintAndExit(ErrMsg);
@@ -587,15 +612,11 @@ int main(int argc, char **argv, char **envp) {
           PrintAndExit("Failed to find gcc");
 
         // Generate an assembly language file for the bytecode.
-        if (Verbose) 
-          cout << "Generating Assembly Code\n";
         std::string ErrMsg;
         if (0 != GenerateCFile(
             CFile.toString(), RealBytecodeOutput, llc, ErrMsg))
           PrintAndExit(ErrMsg);
 
-        if (Verbose) 
-          cout << "Generating Native Code\n";
         if (0 != GenerateNative(OutputFilename, CFile.toString(), 
                                 NativeLinkItems, gcc, envp, ErrMsg))
           PrintAndExit(ErrMsg);
