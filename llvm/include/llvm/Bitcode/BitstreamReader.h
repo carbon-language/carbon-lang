@@ -48,9 +48,11 @@ class BitstreamReader {
   /// BlockScope - This tracks the codesize of parent blocks.
   SmallVector<Block, 8> BlockScope;
 
+  /// FirstChar - This remembers the first byte of the stream.
+  const unsigned char *FirstChar;
 public:
   BitstreamReader(const unsigned char *Start, const unsigned char *End)
-    : NextChar(Start), LastChar(End) {
+    : NextChar(Start), LastChar(End), FirstChar(Start) {
     assert(((End-Start) & 3) == 0 &&"Bitcode stream not a multiple of 4 bytes");
     CurWord = 0;
     BitsInCurWord = 0;
@@ -74,7 +76,7 @@ public:
   
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
-    return CurWord * 32ULL + (32-CurCodeSize);
+    return (NextChar-FirstChar)*8 + (32-BitsInCurWord);
   }
   
   
