@@ -14,15 +14,15 @@
 #ifndef LLVM_CLANG_SOURCEBUFFER_H
 #define LLVM_CLANG_SOURCEBUFFER_H
 
-namespace llvm {
-namespace sys { class Path; }
-namespace clang {
-  class FileEntry;
+#include "llvm/Support/DataTypes.h"
 
-/// SourceFile - This interface provides simple read-only access to the raw bits
-/// in a source file in a memory efficient way.  In addition to basic access to
-/// the characters in the file, this interface guarantees you can read one
-/// character past the end of the file, and that this character will read as
+namespace llvm {
+namespace clang {
+
+/// SourceBuffer - This interface provides simple read-only access to the raw
+/// bits in a source file in a memory efficient way.  In addition to basic
+/// access to the characters in the file, this interface guarantees you can read
+/// one character past the end of the file, and that this character will read as
 /// '\0'.
 class SourceBuffer {
   const char *BufferStart; // Start of the buffer.
@@ -47,10 +47,13 @@ public:
   virtual const char *getBufferIdentifier() const {
     return "Unknown buffer";
   }
-    
+
   /// getFile - Open the specified file as a SourceBuffer, returning a new
-  /// SourceBuffer if successful, otherwise returning null.
-  static SourceBuffer *getFile(const FileEntry *FileEnt);
+  /// SourceBuffer if successful, otherwise returning null.  If FileSize is
+  /// specified, this means that the client knows that the file exists and that
+  /// it has the specified size.
+  static SourceBuffer *getFile(const char *FilenameStart, unsigned FnSize,
+                               int64_t FileSize = -1);
 
   /// getMemBuffer - Open the specified memory range as a SourceBuffer.  Note
   /// that EndPtr[0] must be a null byte and be accessible!

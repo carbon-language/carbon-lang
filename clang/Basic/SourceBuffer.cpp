@@ -17,12 +17,7 @@
 #include "llvm/System/Process.h"
 #include <cstdio>
 #include <cstring>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/uio.h>
 #include <cerrno>
-#include <sys/fcntl.h>
-
 using namespace llvm;
 using namespace clang;
 
@@ -83,8 +78,8 @@ SourceBuffer *SourceBuffer::getMemBuffer(const char *StartPtr,
   return new SourceBufferMem(StartPtr, EndPtr, BufferName);
 }
 
-/// getNewUninitMemBuffer - Allocate a new SourceBuffer of the specified size that
-/// is completely initialized to zeros.  Note that the caller should
+/// getNewUninitMemBuffer - Allocate a new SourceBuffer of the specified size
+/// that is completely initialized to zeros.  Note that the caller should
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the SourceBuffer object.
 SourceBuffer *SourceBuffer::getNewUninitMemBuffer(unsigned Size,
@@ -160,13 +155,70 @@ SourceBufferMMapFile::~SourceBufferMMapFile() {
 }
 
 //===----------------------------------------------------------------------===//
-// SourceBufferReadFile implementation.
+// SourceBuffer::getFile implementation.
 //===----------------------------------------------------------------------===//
 
+SourceBuffer *SourceBuffer::getFile(const char *FilenameStart, unsigned FnSize,
+                                    int64_t FileSize) {
+  sys::PathWithStatus P(FilenameStart, FnSize);
+#if 1
+  return new SourceBufferMMapFile(P);
+#else  
+  
+  // If the user didn't specify a filesize, do a stat to find it.
+  if (FileSize == -1) {
+    const sys::FileStatus *FS = P.getFileStatus();
+    if (FS == 0) return 0;  // Error stat'ing file.
+   
+    FileSize = FS->fileSize;
+  }
+  
+  // If the file is larger than some threshold, use mmap, otherwise use 'read'.
+  if (FileSize >= 4096*4)
+    return new SourceBufferMMapFile(P);
+  
+  SourceBuffer *SB = getNewUninitMemBuffer(FileSize, FilenameStart);
+  char *BufPtr = const_cast<char*>(SB->getBufferStart());
+  
+  int FD = ::open(FilenameStart, O_RDONLY);
+  if (FD == -1) {
+    delete SB;
+    return 0;
+  }
+  
+  unsigned BytesLeft = FileSize;
+  while (BytesLeft) {
+    ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
+    if (NumRead != -1) {
+      BytesLeft -= NumRead;
+      BufPtr += NumRead;
+    } else if (errno == EINTR) {
+      // try again
+    } else {
+      // error reading.
+      close(FD);
+      delete SB;
+      return 0;
+    }
+  }
+  close(FD);
+  
+  return SB;
+#endif
+}
+
+#if 0
 SourceBuffer *SourceBuffer::getFile(const FileEntry *FileEnt) {
+#if 0
+  // FIXME: 
+  return getFile(FileEnt->getName(), strlen(FileEnt->getName()),
+                 FileEnt->getSize());
+#endif
+  
   // If the file is larger than some threshold, use 'read', otherwise use mmap.
   if (FileEnt->getSize() >= 4096*4)
-    return new SourceBufferMMapFile(sys::Path(FileEnt->getName()));
+    return new SourceBufferMMapFile(sys::Path(FileEnt->getName(),
+                                              strlen(FileEnt->getName())));
 
   SourceBuffer *SB = getNewUninitMemBuffer(FileEnt->getSize(),
                                            FileEnt->getName());
@@ -197,9 +249,10 @@ SourceBuffer *SourceBuffer::getFile(const FileEntry *FileEnt) {
     
   return SB;
 }
+#endif
 
 //===----------------------------------------------------------------------===//
-// SourceBufferSTDIN implementation.
+// SourceBuffer::getSTDIN implementation.
 //===----------------------------------------------------------------------===//
 
 namespace {

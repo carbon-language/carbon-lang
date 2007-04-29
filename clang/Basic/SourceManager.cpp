@@ -35,6 +35,58 @@ SourceManager::~SourceManager() {
   }
 }
 
+
+// FIXME: REMOVE THESE
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <sys/fcntl.h>
+#include <cerrno>
+
+static const SourceBuffer *ReadFileFast(const FileEntry *FileEnt) {
+#if 0
+  // FIXME: Reintroduce this and zap this function once the common llvm stuff
+  // is fast for the small case.
+  return SourceBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
+                               FileEnt->getSize());
+#endif
+  
+  // If the file is larger than some threshold, use 'read', otherwise use mmap.
+  if (FileEnt->getSize() >= 4096*4)
+    return SourceBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
+                                 FileEnt->getSize());
+  
+  SourceBuffer *SB = SourceBuffer::getNewUninitMemBuffer(FileEnt->getSize(),
+                                                         FileEnt->getName());
+  char *BufPtr = const_cast<char*>(SB->getBufferStart());
+  
+  int FD = ::open(FileEnt->getName(), O_RDONLY);
+  if (FD == -1) {
+    delete SB;
+    return 0;
+  }
+  
+  unsigned BytesLeft = FileEnt->getSize();
+  while (BytesLeft) {
+    ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
+    if (NumRead != -1) {
+      BytesLeft -= NumRead;
+      BufPtr += NumRead;
+    } else if (errno == EINTR) {
+      // try again
+    } else {
+      // error reading.
+      close(FD);
+      delete SB;
+      return 0;
+    }
+  }
+  close(FD);
+  
+  return SB;
+}
+
+
 /// getFileInfo - Create or return a cached FileInfo for the specified file.
 ///
 const InfoRec *
@@ -47,7 +99,7 @@ SourceManager::getInfoRec(const FileEntry *FileEnt) {
     return &*I;
   
   // Nope, get information.
-  const SourceBuffer *File = clang::SourceBuffer::getFile(FileEnt);
+  const SourceBuffer *File = ReadFileFast(FileEnt);
   if (File == 0)
     return 0;
 
