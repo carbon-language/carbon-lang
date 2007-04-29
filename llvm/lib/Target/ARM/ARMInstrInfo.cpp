@@ -469,12 +469,13 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
       assert(JTI < JT.size());
       // Thumb instructions are 2 byte aligned, but JT entries are 4 byte
       // 4 aligned. The assembler / linker may add 2 byte padding just before
-      // the JT entries. Use + 4 even for tBR_JTr to purposely over-estimate
-      // the size the jumptable.
+      // the JT entries.  The size does not include this padding; the
+      // constant islands pass does separate bookkeeping for it.
       // FIXME: If we know the size of the function is less than (1 << 16) *2
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
-      return getNumJTEntries(JT, JTI) * 4 + 4;
+      return getNumJTEntries(JT, JTI) * 4 + 
+             (MI->getOpcode()==ARM::tBR_JTr ? 2 : 4);
     }
     default:
       // Otherwise, pseudo-instruction sizes are zero.

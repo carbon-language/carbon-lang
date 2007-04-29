@@ -51,10 +51,14 @@ namespace {
     unsigned NextUID;
 
     /// BBSizes - The size of each MachineBasicBlock in bytes of code, indexed
-    /// by MBB Number.
+    /// by MBB Number.  The two-byte pads required for Thumb alignment are
+    /// counted as part of the following block (i.e., the offset and size for
+    /// a padded block will both be ==2 mod 4).
     std::vector<unsigned> BBSizes;
     
     /// BBOffsets - the offset of each MBB in bytes, starting from 0.
+    /// The two-byte pads required for Thumb alignment are counted as part of
+    /// the following block.
     std::vector<unsigned> BBOffsets;
 
     /// WaterList - A sorted list of basic blocks where islands could be placed
@@ -121,6 +125,7 @@ namespace {
     bool HasFarJump;
 
     const TargetInstrInfo *TII;
+    ARMFunctionInfo *AFI;
     bool isThumb;
   public:
     virtual bool runOnMachineFunction(MachineFunction &Fn);
@@ -140,8 +145,10 @@ namespace {
     void AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta);
     bool DecrementOldEntry(unsigned CPI, MachineInstr* CPEMI);
     int LookForExistingCPEntry(CPUser& U, unsigned UserOffset);
-    bool LookForWater(CPUser&U, unsigned UserOffset, bool* PadNewWater,
+    bool LookForWater(CPUser&U, unsigned UserOffset, 
                       MachineBasicBlock** NewMBB);
+    MachineBasicBlock* AcceptWater(MachineBasicBlock *WaterBB, 
+                        std::vector<MachineBasicBlock*>::iterator IP);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
                       MachineBasicBlock** NewMBB);
     bool HandleConstantPoolUser(MachineFunction &Fn, unsigned CPUserIndex);
@@ -161,7 +168,36 @@ namespace {
     bool UndoLRSpillRestore();
 
     unsigned GetOffsetOf(MachineInstr *MI) const;
+    void dumpBBs();
+    void verify(MachineFunction &Fn);
   };
+}
+
+/// verify - check BBOffsets, BBSizes, alignment of islands
+void ARMConstantIslands::verify(MachineFunction &Fn) {
+  assert(BBOffsets.size() == BBSizes.size());
+  for (unsigned i = 1, e = BBOffsets.size(); i != e; ++i)
+    assert(BBOffsets[i-1]+BBSizes[i-1] == BBOffsets[i]);
+  if (isThumb) {
+    for (MachineFunction::iterator MBBI = Fn.begin(), E = Fn.end();
+         MBBI != E; ++MBBI) {
+      MachineBasicBlock *MBB = MBBI;
+      if (!MBB->empty() &&
+          MBB->begin()->getOpcode() == ARM::CONSTPOOL_ENTRY)
+        assert((BBOffsets[MBB->getNumber()]%4 == 0 &&
+                BBSizes[MBB->getNumber()]%4 == 0) ||
+               (BBOffsets[MBB->getNumber()]%4 != 0 &&
+                BBSizes[MBB->getNumber()]%4 != 0));
+    }
+  }
+}
+
+/// print block size and offset information - debugging
+void ARMConstantIslands::dumpBBs() {
+  for (unsigned J = 0, E = BBOffsets.size(); J !=E; ++J) {
+    DOUT << "block" << J << " offset" << BBOffsets[J] << 
+                            " size" << BBSizes[J] << "\n";
+  }
 }
 
 /// createARMConstantIslandPass - returns an instance of the constpool
@@ -172,9 +208,9 @@ FunctionPass *llvm::createARMConstantIslandPass() {
 
 bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   MachineConstantPool &MCP = *Fn.getConstantPool();
-  ARMFunctionInfo *AFI = Fn.getInfo<ARMFunctionInfo>();
   
   TII = Fn.getTarget().getInstrInfo();
+  AFI = Fn.getInfo<ARMFunctionInfo>();
   isThumb = AFI->isThumbFunction();
 
   HasFarJump = false;
@@ -215,12 +251,17 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
     bool Change = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       Change |= HandleConstantPoolUser(Fn, i);
+    DEBUG(dumpBBs());
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
       Change |= FixUpImmediateBr(Fn, ImmBranches[i]);
+    DEBUG(dumpBBs());
     if (!Change)
       break;
     MadeChange = true;
   }
+
+  // After a while, this might be made debug-only, but it is not expensive.
+  verify(Fn);
 
   // If LR has been forced spilled and no far jumps (i.e. BL) has been issued.
   // Undo the spill / restore of LR if possible.
@@ -332,8 +373,15 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         unsigned Scale = 1;
         int UOpc = Opc;
         switch (Opc) {
+        case ARM::tBR_JTr:
+          // A Thumb table jump may involve padding; for the offsets to
+          // be right, functions containing these must be 4-byte aligned.
+          AFI->setAlign(2U);
+          if ((Offset+MBBSize)%4 != 0)
+            MBBSize += 2;           // padding
+          continue;   // Does not get an entry in ImmBranches
         default:
-          continue;  // Ignore JT branches
+          continue;  // Ignore other JT branches
         case ARM::Bcc:
           isCond = true;
           UOpc = ARM::B;
@@ -431,12 +479,12 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
         }
     }
 
-    // In thumb mode, if this block is a constpool island, pessimistically 
-    // assume it needs to be padded by two byte so it's aligned on 4 byte 
-    // boundary.
+    // In thumb mode, if this block is a constpool island, we may need padding
+    // so it's aligned on 4 byte boundary.
     if (isThumb &&
         !MBB.empty() &&
-        MBB.begin()->getOpcode() == ARM::CONSTPOOL_ENTRY)
+        MBB.begin()->getOpcode() == ARM::CONSTPOOL_ENTRY &&
+        (Offset%4) != 0)
       MBBSize += 2;
 
     BBSizes.push_back(MBBSize);
@@ -455,6 +503,13 @@ unsigned ARMConstantIslands::GetOffsetOf(MachineInstr *MI) const {
   // before this instruction's block, and the offset from the start of the block
   // it is in.
   unsigned Offset = BBOffsets[MBB->getNumber()];
+
+  // If we're looking for a CONSTPOOL_ENTRY in Thumb, see if this block has
+  // alignment padding, and compensate if so.
+  if (isThumb && 
+      MI->getOpcode() == ARM::CONSTPOOL_ENTRY && 
+      Offset%4 != 0)
+    Offset += 2;
 
   // Sum instructions before MI in MBB.
   for (MachineBasicBlock::iterator I = MBB->begin(); ; ++I) {
@@ -553,7 +608,8 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   else
     WaterList.insert(IP, OrigBB);
 
-  // Figure out how large the first NewMBB is.
+  // Figure out how large the first NewMBB is.  (It cannot
+  // contain a constpool_entry or tablejump.)
   unsigned NewBBSize = 0;
   for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
        I != E; ++I)
@@ -578,10 +634,21 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   return NewBB;
 }
 
-/// OffsetIsInRange - Checks whether UserOffset is within MaxDisp of
-/// TrialOffset.
+/// OffsetIsInRange - Checks whether UserOffset (the location of a constant pool
+/// reference) is within MaxDisp of TrialOffset (a proposed location of a 
+/// constant pool entry).
 bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset, 
                       unsigned TrialOffset, unsigned MaxDisp, bool NegativeOK) {
+  // On Thumb offsets==2 mod 4 are rounded down by the hardware for 
+  // purposes of the displacement computation; compensate for that here.  
+  // Effectively, the valid range of displacements is 2 bytes smaller for such
+  // references.
+  if (isThumb && UserOffset%4 !=0)
+    UserOffset -= 2;
+  // CPEs will be rounded up to a multiple of 4.
+  if (isThumb && TrialOffset%4 != 0)
+    TrialOffset += 2;
+
   if (UserOffset <= TrialOffset) {
     // User before the Trial.
     if (TrialOffset-UserOffset <= MaxDisp)
@@ -599,19 +666,15 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
 bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
                          MachineBasicBlock* Water, unsigned MaxDisp)
 {
+  MachineFunction::iterator I = next(MachineFunction::iterator(Water));
   unsigned CPEOffset = BBOffsets[Water->getNumber()] + 
                        BBSizes[Water->getNumber()];
-  // If the Water is a constpool island, it has already been aligned.
-  // If not, align it.
-  if (isThumb &&
-      (Water->empty() ||
-       Water->begin()->getOpcode() != ARM::CONSTPOOL_ENTRY))
-    CPEOffset += 2;
 
   // If the CPE is to be inserted before the instruction, that will raise
-  // the offset of the instruction.
+  // the offset of the instruction.  (Currently applies only to ARM, so
+  // no alignment compensation attempted here.)
   if (CPEOffset < UserOffset)
-    UserOffset += isThumb ? 2 : 4;
+    UserOffset += 4;
 
   return OffsetIsInRange (UserOffset, CPEOffset, MaxDisp, !isThumb);
 }
@@ -621,10 +684,8 @@ bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
 bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
                                       MachineInstr *CPEMI,
                                       unsigned MaxDisp, bool DoDump) {
-  // In thumb mode, pessimistically assumes the .align 2 before the first CPE
-  // in the island adds two byte padding.
-  unsigned AlignAdj   = isThumb ? 2 : 0;
-  unsigned CPEOffset  = GetOffsetOf(CPEMI) + AlignAdj;
+  unsigned CPEOffset  = GetOffsetOf(CPEMI);
+  assert(CPEOffset%4 == 0 && "Misaligned CPE");
 
   if (DoDump) {
     DOUT << "User of CPE#" << CPEMI->getOperand(0).getImm()
@@ -651,11 +712,56 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
   return false;
 }
 
-void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta)
-{
-  MachineFunction::iterator MBBI = BB->getParent()->end();
-  for(unsigned i=BB->getNumber()+1; i<BB->getParent()->getNumBlockIDs(); i++)
+void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB, 
+                                              int delta) {
+  MachineFunction::iterator MBBI = BB; MBBI = next(MBBI);
+  for(unsigned i=BB->getNumber()+1; i<BB->getParent()->getNumBlockIDs(); i++) {
     BBOffsets[i] += delta;
+    // If some existing blocks have padding, adjust the padding as needed, a
+    // bit tricky.  delta can be negative so don't use % on that.
+    if (isThumb) {
+      MachineBasicBlock *MBB = MBBI;
+      if (!MBB->empty()) {
+        // Constant pool entries require padding.
+        if (MBB->begin()->getOpcode() == ARM::CONSTPOOL_ENTRY) {
+          unsigned oldOffset = BBOffsets[i] - delta;
+          if (oldOffset%4==0 && BBOffsets[i]%4!=0) {
+            // add new padding
+            BBSizes[i] += 2;
+            delta += 2;
+          } else if (oldOffset%4!=0 && BBOffsets[i]%4==0) {
+            // remove existing padding
+            BBSizes[i] -=2;
+            delta -= 2;
+          }
+        }
+        // Thumb jump tables require padding.  They can be at the end, or
+        // followed by an unconditional branch.
+        MachineInstr *ThumbJTMI = NULL;
+        if (prior(MBB->end())->getOpcode() == ARM::tBR_JTr)
+          ThumbJTMI = prior(MBB->end());
+        else if (prior(MBB->end()) != MBB->begin() &&
+                prior(prior(MBB->end()))->getOpcode() == ARM::tBR_JTr)
+          ThumbJTMI = prior(prior(MBB->end()));
+        if (ThumbJTMI) {
+          unsigned newMIOffset = GetOffsetOf(ThumbJTMI);
+          unsigned oldMIOffset = newMIOffset - delta;
+          if (oldMIOffset%4 == 0 && newMIOffset%4 != 0) {
+            // remove existing padding
+            BBSizes[i] -= 2;
+            delta -= 2;
+          } else if (oldMIOffset%4 != 0 && newMIOffset%4 == 0) {
+            // add new padding
+            BBSizes[i] += 2;
+            delta += 2;
+          }
+        }
+        if (delta==0)
+          return;
+      }
+      MBBI = next(MBBI);
+    }
+  }
 }
 
 /// DecrementOldEntry - find the constant pool entry with index CPI
@@ -729,43 +835,58 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
   return (Opc == ARM::tB) ? ((1<<10)-1)*2 : ((1<<23)-1)*4;
 }
 
+/// AcceptWater - Small amount of common code factored out of the following.
+
+MachineBasicBlock* ARMConstantIslands::AcceptWater(MachineBasicBlock *WaterBB, 
+                          std::vector<MachineBasicBlock*>::iterator IP) {
+  DOUT << "found water in range\n";
+  // Remove the original WaterList entry; we want subsequent
+  // insertions in this vicinity to go after the one we're
+  // about to insert.  This considerably reduces the number
+  // of times we have to move the same CPE more than once.
+  WaterList.erase(IP);
+  // CPE goes before following block (NewMBB).
+  return next(MachineFunction::iterator(WaterBB));
+}
+
 /// LookForWater - look for an existing entry in the WaterList in which
 /// we can place the CPE referenced from U so it's within range of U's MI.
 /// Returns true if found, false if not.  If it returns true, *NewMBB
-/// is set to the WaterList entry, and *PadNewWater is set to false if
-/// the WaterList entry is an island.
+/// is set to the WaterList entry.
+/// For ARM, we prefer the water that's farthest away.  For Thumb, prefer
+/// water that will not introduce padding to water that will; within each
+/// group, prefer the water that's farthest away.
 
 bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
-                            bool *PadNewWater, MachineBasicBlock** NewMBB) {
+                                      MachineBasicBlock** NewMBB) {
+  std::vector<MachineBasicBlock*>::iterator IPThatWouldPad;
+  MachineBasicBlock* WaterBBThatWouldPad = NULL;
   if (!WaterList.empty()) {
     for (std::vector<MachineBasicBlock*>::iterator IP = prior(WaterList.end()),
         B = WaterList.begin();; --IP) {
       MachineBasicBlock* WaterBB = *IP;
       if (WaterIsInRange(UserOffset, WaterBB, U.MaxDisp)) {
-        DOUT << "found water in range\n";
-        // CPE goes before following block (NewMBB).
-        *NewMBB = next(MachineFunction::iterator(WaterBB));
-        // If WaterBB is an island, don't pad the new island.
-        // If WaterBB is empty, go backwards until we find something that
-        // isn't.  WaterBB may become empty if it's an island whose
-        // contents were moved farther back.
-        if (isThumb) {
-          MachineBasicBlock* BB = WaterBB;
-          while (BB->empty())
-            BB = prior(MachineFunction::iterator(BB));
-          if (BB->begin()->getOpcode() == ARM::CONSTPOOL_ENTRY)
-            *PadNewWater = false;
+        if (isThumb &&
+            (BBOffsets[WaterBB->getNumber()] + 
+             BBSizes[WaterBB->getNumber()])%4 != 0) {
+          // This is valid Water, but would introduce padding.  Remember
+          // it in case we don't find any Water that doesn't do this.
+          if (!WaterBBThatWouldPad) {
+            WaterBBThatWouldPad = WaterBB;
+            IPThatWouldPad = IP;
+          }
+        } else {
+          *NewMBB = AcceptWater(WaterBB, IP);
+          return true;
         }
-        // Remove the original WaterList entry; we want subsequent
-        // insertions in this vicinity to go after the one we're
-        // about to insert.  This considerably reduces the number
-        // of times we have to move the same CPE more than once.
-        WaterList.erase(IP);
-        return true;
-      }
+    }
       if (IP == B)
         break;
     }
+  }
+  if (isThumb && WaterBBThatWouldPad) {
+    *NewMBB = AcceptWater(WaterBBThatWouldPad, IPThatWouldPad);
+    return true;
   }
   return false;
 }
@@ -786,16 +907,18 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
   MachineBasicBlock *UserMBB = UserMI->getParent();
   unsigned OffsetOfNextBlock = BBOffsets[UserMBB->getNumber()] + 
                                BBSizes[UserMBB->getNumber()];
-  assert(OffsetOfNextBlock = BBOffsets[UserMBB->getNumber()+1]);
+  assert(OffsetOfNextBlock== BBOffsets[UserMBB->getNumber()+1]);
 
   // If the use is at the end of the block, or the end of the block
-  // is within range, make new water there.  (The +2 or 4 below is
-  // for the unconditional branch we will be adding.  If the block ends in
-  // an unconditional branch already, it is water, and is known to
-  // be out of range, so we'll always be adding one.)
+  // is within range, make new water there.  (The addition below is
+  // for the unconditional branch we will be adding:  4 bytes on ARM,
+  // 2 on Thumb.  Possible Thumb alignment padding is allowed for
+  // inside OffsetIsInRange.
+  // If the block ends in an unconditional branch already, it is water, 
+  // and is known to be out of range, so we'll always be adding a branch.)
   if (&UserMBB->back() == UserMI ||
-      OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb ? 2 : 4),
-                      U.MaxDisp, !isThumb)) {
+      OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb ? 2: 4),
+           U.MaxDisp, !isThumb)) {
     DOUT << "Split at end of block\n";
     if (&UserMBB->back() == UserMI)
       assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
@@ -821,11 +944,16 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     // not work well to put CPE as far forward as possible, since then
     // CPE' cannot immediately follow it (that location is 2 bytes
     // farther away from I+1 than CPE was from I) and we'd need to create
-    // a new island.
+    // a new island.  So, we make a first guess, then walk through the
+    // instructions between the one currently being looked at and the
+    // possible insertion point, and make sure any other instructions
+    // that reference CPEs will be able to use the same island area;
+    // if not, we back up the insertion point.
+
     // The 4 in the following is for the unconditional branch we'll be
-    // inserting (allows for long branch on Thumb).  The 2 or 0 is for
-    // alignment of the island.
-    unsigned BaseInsertOffset = UserOffset + U.MaxDisp -4 + (isThumb ? 2 : 0);
+    // inserting (allows for long branch on Thumb).  Alignment of the
+    // island is handled inside OffsetIsInRange.
+    unsigned BaseInsertOffset = UserOffset + U.MaxDisp -4;
     // This could point off the end of the block if we've already got
     // constant pool entries following this block; only the last one is
     // in the water list.  Back past any possible branches (allow for a
@@ -871,7 +999,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   unsigned CPI = CPEMI->getOperand(1).getConstantPoolIndex();
   unsigned Size = CPEMI->getOperand(2).getImm();
   MachineBasicBlock *NewMBB;
-  // Compute this only once, it's expensive
+  // Compute this only once, it's expensive.  The 4 or 8 is the value the
+  //  hardware keeps in the PC (2 insns ahead of the reference).
   unsigned UserOffset = GetOffsetOf(UserMI) + (isThumb ? 4 : 8);
 
   // Special case: tLEApcrel are two instructions MI's. The actual user is the
@@ -892,9 +1021,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   // Look for water where we can place this CPE.  We look for the farthest one
   // away that will work.  Forward references only for now (although later
   // we might find some that are backwards).
-  bool PadNewWater = true;
 
-  if (!LookForWater(U, UserOffset, &PadNewWater, &NewMBB)) {
+  if (!LookForWater(U, UserOffset, &NewMBB)) {
     // No water found.
     DOUT << "No water found\n";
     CreateNewWater(CPUserIndex, UserOffset, &NewMBB);
@@ -917,11 +1045,12 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   CPEntries[CPI].push_back(CPEntry(U.CPEMI, ID, 1));
   NumCPEs++;
 
+  BBOffsets[NewIsland->getNumber()] = BBOffsets[NewMBB->getNumber()];
   // Compensate for .align 2 in thumb mode.
-  if (isThumb && PadNewWater) Size += 2;
+  if (isThumb && BBOffsets[NewIsland->getNumber()]%4 != 0) 
+    Size += 2;
   // Increase the size of the island block to account for the new entry.
   BBSizes[NewIsland->getNumber()] += Size;
-  BBOffsets[NewIsland->getNumber()] = BBOffsets[NewMBB->getNumber()];
   AdjustBBOffsetsAfter(NewIsland, Size);
   
   // Finally, change the CPI in the instruction operand to be ID.
@@ -940,28 +1069,26 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
 /// sizes and offsets of impacted basic blocks.
 void ARMConstantIslands::RemoveDeadCPEMI(MachineInstr *CPEMI) {
   MachineBasicBlock *CPEBB = CPEMI->getParent();
+  unsigned Size = CPEMI->getOperand(2).getImm();
+  CPEMI->eraseFromParent();
+  BBSizes[CPEBB->getNumber()] -= Size;
+  // All succeeding offsets have the current size value added in, fix this.
   if (CPEBB->empty()) {
-    // In thumb mode, the size of island is padded by two to compensate for
-    // the alignment requirement.  Thus it will now be 2 when the block is
+    // In thumb mode, the size of island may be  padded by two to compensate for
+    // the alignment requirement.  Then it will now be 2 when the block is
     // empty, so fix this.
     // All succeeding offsets have the current size value added in, fix this.
     if (BBSizes[CPEBB->getNumber()] != 0) {
-      AdjustBBOffsetsAfter(CPEBB, -BBSizes[CPEBB->getNumber()]);
+      Size += BBSizes[CPEBB->getNumber()];
       BBSizes[CPEBB->getNumber()] = 0;
     }
-    // An island has only one predecessor BB and one successor BB. Check if
-    // this BB's predecessor jumps directly to this BB's successor. This
-    // shouldn't happen currently.
-    assert(!BBIsJumpedOver(CPEBB) && "How did this happen?");
-    // FIXME: remove the empty blocks after all the work is done?
-  } else {
-    unsigned Size = CPEMI->getOperand(2).getImm();
-    BBSizes[CPEBB->getNumber()] -= Size;
-    // All succeeding offsets have the current size value added in, fix this.
-    AdjustBBOffsetsAfter(CPEBB, -Size);
   }
-
-  CPEMI->eraseFromParent();
+  AdjustBBOffsetsAfter(CPEBB, -Size);
+  // An island has only one predecessor BB and one successor BB. Check if
+  // this BB's predecessor jumps directly to this BB's successor. This
+  // shouldn't happen currently.
+  assert(!BBIsJumpedOver(CPEBB) && "How did this happen?");
+  // FIXME: remove the empty blocks after all the work is done?
 }
 
 /// RemoveUnusedCPEntries - Remove constant pool entries whose refcounts
@@ -992,9 +1119,18 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
   DOUT << "Branch of destination BB#" << DestBB->getNumber()
        << " from BB#" << MI->getParent()->getNumber()
        << " max delta=" << MaxDisp
-       << " at offset " << int(DestOffset-BrOffset) << "\t" << *MI;
+       << " from " << GetOffsetOf(MI) << " to " << DestOffset
+       << " offset " << int(DestOffset-BrOffset) << "\t" << *MI;
 
-  return OffsetIsInRange(BrOffset, DestOffset, MaxDisp, true);
+  if (BrOffset <= DestOffset) {
+    // Branch before the Dest.
+    if (DestOffset-BrOffset <= MaxDisp)
+      return true;
+  } else {
+    if (BrOffset-DestOffset <= MaxDisp)
+      return true;
+  }
+  return false;
 }
 
 /// FixUpImmediateBr - Fix up an immediate branch whose destination is too far
@@ -1088,8 +1224,10 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
     // branch to the destination.
     int delta = ARM::GetInstSize(&MBB->back());
     BBSizes[MBB->getNumber()] -= delta;
-    AdjustBBOffsetsAfter(MBB, -delta);
+    MachineBasicBlock* SplitBB = next(MachineFunction::iterator(MBB));
+    AdjustBBOffsetsAfter(SplitBB, -delta);
     MBB->back().eraseFromParent();
+    // BBOffsets[SplitBB] is wrong temporarily, fixed below
   }
   MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
  
