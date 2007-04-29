@@ -27,6 +27,7 @@
 // The tool is also able to print a bytecode file in a straight forward text
 // format that shows the containment and relationships of the information in
 // the bytecode file (-dump option).
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
@@ -46,9 +47,9 @@ static cl::opt<std::string>
 static cl::opt<std::string>
   OutputFilename("-o", cl::init("-"), cl::desc("<output file>"));
 
-static cl::opt<bool> NoDetails ("nodetails", cl::desc("Skip detailed output"));
-static cl::opt<bool> Dump      ("dump", cl::desc("Dump low level bytecode trace"));
-static cl::opt<bool> Verify    ("verify", cl::desc("Progressively verify module"));
+static cl::opt<bool> NoDetails("nodetails", cl::desc("Skip detailed output"));
+static cl::opt<bool> Dump("dump", cl::desc("Dump low level bytecode trace"));
+static cl::opt<bool> Verify("verify", cl::desc("Progressively verify module"));
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
@@ -58,7 +59,7 @@ int main(int argc, char **argv) {
 
     sys::PrintStackTraceOnErrorSignal();
 
-    std::ostream* Out = &std::cout;  // Default to printing to stdout...
+    std::ostream *Out = &std::cout;  // Default to printing to stdout...
     std::string ErrorMessage;
     BytecodeAnalysis bca;
 
@@ -92,5 +93,3 @@ int main(int argc, char **argv) {
   }
   return 1;
 }
-
-// vim: sw=2
