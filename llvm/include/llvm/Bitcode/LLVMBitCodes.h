@@ -92,7 +92,7 @@ namespace bitc {
   
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.
-  enum ConstantsSymtabCodes {
+  enum ConstantsCodes {
     CST_CODE_SETTYPE       =  1,  // SETTYPE:       [typeid]
     CST_CODE_NULL          =  2,  // NULL
     CST_CODE_UNDEF         =  3,  // UNDEF

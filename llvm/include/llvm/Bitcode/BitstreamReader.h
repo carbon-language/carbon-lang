@@ -79,6 +79,8 @@ public:
     return (NextChar-FirstChar)*8 + (32-BitsInCurWord);
   }
   
+  /// GetAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
+  unsigned GetAbbrevIDWidth() const { return CurCodeSize; }
   
   uint32_t Read(unsigned NumBits) {
     // If the field is fully contained by CurWord, return it quickly.
@@ -205,7 +207,7 @@ public:
   
   /// EnterSubBlock - Having read the ENTER_SUBBLOCK abbrevid, read and enter
   /// the block, returning the BlockID of the block we just entered.
-  bool EnterSubBlock() {
+  bool EnterSubBlock(unsigned *NumWordsP = 0) {
     BlockScope.push_back(Block(CurCodeSize));
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
     
@@ -213,6 +215,7 @@ public:
     CurCodeSize = ReadVBR(bitc::CodeLenWidth);
     SkipToWord();
     unsigned NumWords = Read(bitc::BlockSizeWidth);
+    if (NumWordsP) *NumWordsP = NumWords;
     
     // Validate that this block is sane.
     if (CurCodeSize == 0 || AtEndOfStream() || NextChar+NumWords*4 > LastChar)
