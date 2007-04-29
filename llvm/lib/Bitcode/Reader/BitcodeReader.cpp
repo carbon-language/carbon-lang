@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "BitcodeReader.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Constants.h"
@@ -18,7 +19,13 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/MemoryBuffer.h"
 using namespace llvm;
+
+BitcodeReader::~BitcodeReader() {
+  delete Buffer;
+}
+
 
 /// ConvertToString - Convert a string from a record into an std::string, return
 /// true on failure.
@@ -852,14 +859,14 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
 }
 
 
-bool BitcodeReader::ParseBitcode(unsigned char *Buf, unsigned Length,
-                                 const std::string &ModuleID) {
+bool BitcodeReader::ParseBitcode() {
   TheModule = 0;
   
-  if (Length & 3)
+  if (Buffer->getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");
   
-  BitstreamReader Stream(Buf, Buf+Length);
+  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
+  BitstreamReader Stream(BufPtr, BufPtr+Buffer->getBufferSize());
   
   // Sniff for the signature.
   if (Stream.Read(8) != 'B' ||
@@ -882,7 +889,7 @@ bool BitcodeReader::ParseBitcode(unsigned char *Buf, unsigned Length,
     
     // We only know the MODULE subblock ID.
     if (BlockID == bitc::MODULE_BLOCK_ID) {
-      if (ParseModule(Stream, ModuleID))
+      if (ParseModule(Stream, Buffer->getBufferIdentifier()))
         return true;
     } else if (Stream.SkipBlock()) {
       return Error("Malformed block record");
@@ -890,4 +897,42 @@ bool BitcodeReader::ParseBitcode(unsigned char *Buf, unsigned Length,
   }
   
   return false;
+}
+
+//===----------------------------------------------------------------------===//
+// External interface
+//===----------------------------------------------------------------------===//
+
+/// getBitcodeModuleProvider - lazy function-at-a-time loading from a file.
+///
+ModuleProvider *llvm::getBitcodeModuleProvider(MemoryBuffer *Buffer,
+                                               std::string *ErrMsg) {
+  BitcodeReader *R = new BitcodeReader(Buffer);
+  if (R->ParseBitcode()) {
+    if (ErrMsg)
+      *ErrMsg = R->getErrorString();
+    
+    // Don't let the BitcodeReader dtor delete 'Buffer'.
+    R->releaseMemoryBuffer();
+    delete R;
+    return 0;
+  }
+  return R;
+}
+
+/// ParseBitcodeFile - Read the specified bitcode file, returning the module.
+/// If an error occurs, return null and fill in *ErrMsg if non-null.
+Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, std::string *ErrMsg){
+  BitcodeReader *R;
+  R = static_cast<BitcodeReader*>(getBitcodeModuleProvider(Buffer, ErrMsg));
+  if (!R) return 0;
+  
+  // Read the whole module, get a pointer to it, tell ModuleProvider not to
+  // delete it when its dtor is run.
+  Module *M = R->releaseModule(ErrMsg);
+  
+  // Don't let the BitcodeReader dtor delete 'Buffer'.
+  R->releaseMemoryBuffer();
+  delete R;
+  return M;
 }

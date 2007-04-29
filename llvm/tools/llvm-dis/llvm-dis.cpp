@@ -24,6 +24,7 @@
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
@@ -44,6 +45,9 @@ Force("f", cl::desc("Overwrite output files"));
 static cl::opt<bool>
 DontPrint("disable-output", cl::desc("Don't output the .ll file"), cl::Hidden);
 
+static cl::opt<bool>
+Bitcode("bitcode", cl::desc("Read a bitcode file"));
+
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
@@ -55,12 +59,26 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> M;
    
-    if (InputFilename != "-") 
-      M.reset(ParseBitcodeFile(InputFilename, &ErrorMessage));
-    
-    if (M.get() == 0)
-      M.reset(ParseBytecodeFile(InputFilename,Compressor::decompressToNewBuffer,
+    if (Bitcode) {
+      MemoryBuffer *Buffer;
+      if (InputFilename == "-") {
+        Buffer = MemoryBuffer::getSTDIN();
+      } else {
+        Buffer = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size());
+      }
+
+      if (Buffer == 0)
+        ErrorMessage = "Error reading file '" + InputFilename + "'";
+      else
+        M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+      
+      delete Buffer;
+    } else {
+      M.reset(ParseBytecodeFile(InputFilename,
+                                Compressor::decompressToNewBuffer,
                                 &ErrorMessage));
+    }
+
     if (M.get() == 0) {
       cerr << argv[0] << ": ";
       if (ErrorMessage.size())
@@ -69,7 +87,7 @@ int main(int argc, char **argv) {
         cerr << "bytecode didn't read correctly.\n";
       return 1;
     }
-
+    
     if (DontPrint) {
       // Just use stdout.  We won't actually print anything on it.
     } else if (OutputFilename != "") {   // Specified an output filename?

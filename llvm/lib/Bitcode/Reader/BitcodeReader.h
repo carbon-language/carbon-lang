@@ -22,6 +22,7 @@
 
 namespace llvm {
   class BitstreamReader;
+  class MemoryBuffer;
   
 class BitcodeReaderValueList : public User {
   std::vector<Use> Uses;
@@ -57,6 +58,7 @@ public:
   
 
 class BitcodeReader : public ModuleProvider {
+  MemoryBuffer *Buffer;
   const char *ErrorString;
   
   std::vector<PATypeHolder> TypeList;
@@ -64,10 +66,16 @@ class BitcodeReader : public ModuleProvider {
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
 public:
-  BitcodeReader() : ErrorString(0) {}
-  virtual ~BitcodeReader() {}
+  BitcodeReader(MemoryBuffer *buffer) : Buffer(buffer), ErrorString(0) {}
+  ~BitcodeReader();
   
-  virtual void FreeState() {}
+  
+  /// releaseMemoryBuffer - This causes the reader to completely forget about
+  /// the memory buffer it contains, which prevents the buffer from being
+  /// destroyed when it is deleted.
+  void releaseMemoryBuffer() {
+    Buffer = 0;
+  }
   
   virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0) {
     // FIXME: TODO
@@ -89,8 +97,7 @@ public:
   
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.
-  bool ParseBitcode(unsigned char *Buf, unsigned Length,
-                    const std::string &ModuleID);
+  bool ParseBitcode();
 private:
   const Type *getTypeByID(unsigned ID, bool isTypeTable = false);
   

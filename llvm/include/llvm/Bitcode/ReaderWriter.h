@@ -20,15 +20,20 @@
 namespace llvm {
   class Module;
   class ModuleProvider;
+  class MemoryBuffer;
   
-  ModuleProvider *getBitcodeModuleProvider(const std::string &Filename,
+  /// getBitcodeModuleProvider - Read the header of the specified bitcode buffer
+  /// and prepare for lazy deserialization of function bodies.  If successful,
+  /// this takes ownership of 'buffer' and returns a non-null pointer.  On
+  /// error, this returns null, *does not* take ownership of Buffer, and fills
+  /// in *ErrMsg with an error description if ErrMsg is non-null.
+  ModuleProvider *getBitcodeModuleProvider(MemoryBuffer *Buffer,
                                            std::string *ErrMsg = 0);
 
-  
   /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
-  /// If an error occurs, return null and fill in *ErrMsg if non-null.
-  Module *ParseBitcodeFile(const std::string &Filename,
-                           std::string *ErrMsg = 0);
+  /// If an error occurs, this returns null and fills in *ErrMsg if it is
+  /// non-null.  This method *never* takes ownership of Buffer.
+  Module *ParseBitcodeFile(MemoryBuffer *Buffer, std::string *ErrMsg = 0);
   
   /// WriteBitcodeToFile - Write the specified module to the specified output
   /// stream.
