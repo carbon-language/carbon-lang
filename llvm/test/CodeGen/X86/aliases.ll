@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=i686-pc-linux-gnu -o %t -f
-; RUN: grep -c set %t   | grep 4
-; RUN: grep -c globl %t | grep 3
+; RUN: grep -c set %t   | grep 5
+; RUN: grep -c globl %t | grep 4
 ; RUN: grep -c weak %t  | grep 1
 
 @bar = external global i32
@@ -14,6 +14,8 @@ declare i32 @foo_f()
 @bar_f = alias weak %FunTy* @foo_f
 
 @bar_i = alias internal i32* @bar
+
+@A = alias bitcast (i32* @bar to i64*)
 
 define i32 @test() {
 entry:
