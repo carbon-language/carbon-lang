@@ -485,8 +485,6 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
                              BitstreamWriter &Stream,
                              SmallVector<unsigned, 64> &Vals) {
   return; // FIXME: REMOVE
-  
-  
   unsigned Code = 0;
   unsigned AbbrevToUse = 0;
   switch (I.getOpcode()) {
@@ -524,7 +522,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
 /// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE, 
                           BitstreamWriter &Stream) {
-  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
+  Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 3);
   VE.incorporateFunction(F);
 
   SmallVector<unsigned, 64> Vals;
