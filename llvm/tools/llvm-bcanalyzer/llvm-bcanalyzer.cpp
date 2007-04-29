@@ -32,6 +32,7 @@
 
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/BitstreamReader.h"
+#include "llvm/Bitcode/LLVMBitCodes.h"
 #include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
@@ -65,6 +66,50 @@ static enum {
   LLVMIRBitstream
 } CurStreamType;
 
+
+/// GetBlockName - Return a symbolic block name if known, otherwise return
+/// empty.
+static const char *GetBlockName(unsigned BlockID) {
+  if (CurStreamType != LLVMIRBitstream) return "";
+  
+  switch (BlockID) {
+  default:                          return "<unknown LLVM IR block ID>";
+  case bitc::MODULE_BLOCK_ID:       return "MODULE_BLOCK";
+  case bitc::TYPE_BLOCK_ID:         return "TYPE_BLOCK";
+  case bitc::CONSTANTS_BLOCK_ID:    return "CONSTANTS_BLOCK";
+  case bitc::FUNCTION_BLOCK_ID:     return "FUNCTION_BLOCK";
+  case bitc::TYPE_SYMTAB_BLOCK_ID:  return "TYPE_SYMTAB";
+  case bitc::VALUE_SYMTAB_BLOCK_ID: return "VALUE_SYMTAB";
+  }
+}
+
+
+struct PerBlockIDStats {
+  /// NumInstances - This the number of times this block ID has been seen.
+  unsigned NumInstances;
+  
+  /// NumBits - The total size in bits of all of these blocks.
+  uint64_t NumBits;
+  
+  /// NumSubBlocks - The total number of blocks these blocks contain.
+  unsigned NumSubBlocks;
+  
+  /// NumAbbrevs - The total number of abbreviations.
+  unsigned NumAbbrevs;
+  
+  /// NumRecords - The total number of records these blocks contain, and the 
+  /// number that are abbreviated.
+  unsigned NumRecords, NumAbbreviatedRecords;
+  
+  PerBlockIDStats()
+    : NumInstances(0), NumBits(0),
+      NumSubBlocks(0), NumAbbrevs(0), NumRecords(0), NumAbbreviatedRecords(0) {}
+};
+
+static std::map<unsigned, PerBlockIDStats> BlockIDStats;
+
+
+
 /// Error - All bitcode analysis errors go through this function, making this a
 /// good place to breakpoint if debugging.
 static bool Error(const std::string &Err) {
@@ -74,10 +119,14 @@ static bool Error(const std::string &Err) {
 
 /// ParseBlock - Read a block, updating statistics, etc.
 static bool ParseBlock(BitstreamReader &Stream) {
+  uint64_t BlockBitStart = Stream.GetCurrentBitNo();
+  
   unsigned BlockID = Stream.ReadSubBlockID();
   
-  // TODO: Compute per-block-id stats.
-  BlockID = BlockID;
+  // Get the statistics for this BlockID.
+  PerBlockIDStats &BlockStats = BlockIDStats[BlockID];
+  
+  BlockStats.NumInstances++;
   
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
@@ -92,18 +141,27 @@ static bool ParseBlock(BitstreamReader &Stream) {
     // Read the code for this record.
     unsigned AbbrevID = Stream.ReadCode();
     switch (AbbrevID) {
-    case bitc::END_BLOCK:
+    case bitc::END_BLOCK: {
       if (Stream.ReadBlockEnd())
         return Error("Error at end of block");
+      uint64_t BlockBitEnd = Stream.GetCurrentBitNo();
+      BlockStats.NumBits += BlockBitEnd-BlockBitStart;
       return false;
+    } 
     case bitc::ENTER_SUBBLOCK:
       if (ParseBlock(Stream))
         return true;
+      ++BlockStats.NumSubBlocks;
       break;
     case bitc::DEFINE_ABBREV:
       Stream.ReadAbbrevRecord();
+      ++BlockStats.NumAbbrevs;
       break;
     default:
+      ++BlockStats.NumRecords;
+      if (AbbrevID != bitc::UNABBREV_RECORD)
+        ++BlockStats.NumAbbreviatedRecords;
+      
       Record.clear();
       unsigned Code = Stream.ReadRecord(AbbrevID, Record);
       // TODO: Compute per-blockid/code stats.
@@ -112,6 +170,11 @@ static bool ParseBlock(BitstreamReader &Stream) {
     }
   }
 }
+
+static void PrintSize(double Bits) {
+  std::cerr << Bits << "b/" << Bits/8 << "B/" << Bits/32 << "W";
+}
+
 
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
@@ -148,6 +211,8 @@ static int AnalyzeBitcode() {
       Signature[4] == 0xE && Signature[5] == 0xD)
     CurStreamType = LLVMIRBitstream;
 
+  unsigned NumTopBlocks = 0;
+  
   // Parse the top-level structure.  We only allow blocks at the top-level.
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
@@ -156,20 +221,51 @@ static int AnalyzeBitcode() {
     
     if (ParseBlock(Stream))
       return true;
+    ++NumTopBlocks;
   }
   
   // Print a summary of the read file.
-  
   std::cerr << "Summary of " << InputFilename << ":\n";
-  std::cerr << "  Stream type: ";
+  std::cerr << "         Total size: ";
+  PrintSize(Buffer->getBufferSize()*8);
+  std::cerr << "\n";
+  std::cerr << "        Stream type: ";
   switch (CurStreamType) {
   default: assert(0 && "Unknown bitstream type");
   case UnknownBitstream: std::cerr << "unknown\n"; break;
   case LLVMIRBitstream:  std::cerr << "LLVM IR\n"; break;
   }
-  
-  // TODO: Stats!
-  
+  std::cerr << "  # Toplevel Blocks: " << NumTopBlocks << "\n";
+  std::cerr << "\n";
+
+  // Emit per-block stats.
+  std::cerr << "Per-block Summary:\n";
+  for (std::map<unsigned, PerBlockIDStats>::iterator I = BlockIDStats.begin(),
+       E = BlockIDStats.end(); I != E; ++I) {
+    std::cerr << "  Block ID #" << I->first;
+    const char *BlockName = GetBlockName(I->first);
+    if (BlockName[0])
+      std::cerr << " (" << BlockName << ")";
+    std::cerr << ":\n";
+    
+    const PerBlockIDStats &Stats = I->second;
+    std::cerr << "      Num Instances: " << Stats.NumInstances << "\n";
+    std::cerr << "         Total Size: ";
+    PrintSize(Stats.NumBits);
+    std::cerr << "\n";
+    std::cerr << "       Average Size: ";
+    PrintSize(Stats.NumBits/(double)Stats.NumInstances);
+    std::cerr << "\n";
+    std::cerr << "  Tot/Avg SubBlocks: " << Stats.NumSubBlocks << "/"
+              << Stats.NumSubBlocks/(double)Stats.NumInstances << "\n";
+    std::cerr << "    Tot/Avg Abbrevs: " << Stats.NumAbbrevs << "/"
+              << Stats.NumAbbrevs/(double)Stats.NumInstances << "\n";
+    std::cerr << "    Tot/Avg Records: " << Stats.NumRecords << "/"
+              << Stats.NumRecords/(double)Stats.NumInstances << "\n";
+    std::cerr << "      % Abbrev Recs: " << (Stats.NumAbbreviatedRecords/
+                 (double)Stats.NumRecords)*100 << "\n";
+    std::cerr << "\n";
+  }
   return 0;
 }
 
