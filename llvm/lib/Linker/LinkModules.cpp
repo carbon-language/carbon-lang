@@ -365,7 +365,9 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
 /// the result will look like in the destination module.  In particular, it
 /// computes the resultant linkage type, computes whether the global in the
 /// source should be copied over to the destination (replacing the existing
-/// one), and computes whether this linkage is an error or not.
+/// one), and computes whether this linkage is an error or not. It also performs
+/// visibility checks: we cannot link together two symbols with different
+/// visibilities.
 static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
                              GlobalValue::LinkageTypes &LT, bool &LinkFromSrc,
                              std::string *Err) {
@@ -435,6 +437,11 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
     return Error(Err, "Linking globals named '" + Src->getName() +
                  "': symbol multiply defined!");
   }
+
+  // Check visibility
+  if (Dest && Src->getVisibility() != Dest->getVisibility())
+    return Error(Err, "Linking globals named '" + Src->getName() +
+                 "': symbols have different visibilities!");
   return false;
 }
 
@@ -617,6 +624,12 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         RecursiveResolveTypes(SF->getType(), DF->getType(), 
                               &Dest->getTypeSymbolTable(), "");
     }
+
+    // Check visibility
+    if (DF && !DF->hasInternalLinkage() &&
+        SF->getVisibility() != DF->getVisibility())
+      return Error(Err, "Linking functions named '" + SF->getName() +
+                   "': symbols have different visibilities!");
     
     if (DF && DF->getType() != SF->getType()) {
       if (DF->isDeclaration() && !SF->isDeclaration()) {

@@ -59,6 +59,7 @@ static GlobalValue::VisibilityTypes GetDecodedVisibility(unsigned Val) {
   default: // Map unknown visibilities to default.
   case 0: return GlobalValue::DefaultVisibility;
   case 1: return GlobalValue::HiddenVisibility;
+  case 2: return GlobalValue::ProtectedVisibility;
   }
 }
 
