@@ -1,4 +1,4 @@
-//===--- Bitcode/Writer/Writer.cpp - Bitcode Writer -----------------------===//
+//===--- Bitcode/Writer/BitcodeWriter.cpp - Bitcode Writer ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
