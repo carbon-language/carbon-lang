@@ -3248,12 +3248,28 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     if (OpInfo.CallOperandVal) {
       OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
       const Type *OpTy = OpInfo.CallOperandVal->getType();
-      if (!OpInfo.isIndirect) {
-        // Must be an input.
-        OpVT = TLI.getValueType(OpTy);
-      } else {
-        OpVT = TLI.getValueType(cast<PointerType>(OpTy)->getElementType(),true);
+      // If this is an indirect operand, the operand is a pointer to the
+      // accessed type.
+      if (OpInfo.isIndirect)
+        OpTy = cast<PointerType>(OpTy)->getElementType();
+      
+      // If OpTy is not a first-class value, it may be a struct/union that we
+      // can tile with integers.
+      if (!OpTy->isFirstClassType() && OpTy->isSized()) {
+        unsigned BitSize = TD->getTypeSizeInBits(OpTy);
+        switch (BitSize) {
+        default: break;
+        case 1:
+        case 8:
+        case 16:
+        case 32:
+        case 64:
+          OpTy = IntegerType::get(BitSize);
+          break;
+        }
       }
+      
+      OpVT = TLI.getValueType(OpTy, true);
     }
     
     OpInfo.ConstraintVT = OpVT;
