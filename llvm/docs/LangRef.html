@@ -3097,7 +3097,7 @@ the value cannot fit in the floating point value, the results are undefined.</p>
 <h5>Example:</h5>
 <pre>
   %X = uitofp i32 257 to float         <i>; yields float:257.0</i>
-  %Y = uitofp i8  -1 to double       <i>; yields double:255.0</i>
+  %Y = uitofp i8  -1 to double         <i>; yields double:255.0</i>
 </pre>
 </div>
 
@@ -3129,7 +3129,7 @@ the value cannot fit in the floating point value, the results are undefined.</p>
 <h5>Example:</h5>
 <pre>
   %X = sitofp i32 257 to float         <i>; yields float:257.0</i>
-  %Y = sitofp i8  -1 to double       <i>; yields double:-1.0</i>
+  %Y = sitofp i8  -1 to double         <i>; yields double:-1.0</i>
 </pre>
 </div>
 
@@ -3159,12 +3159,13 @@ must be a <a href="#t_pointer">pointer</a> value, and a type to cast it to
 truncating or zero extending that value to the size of the integer type. If
 <tt>value</tt> is smaller than <tt>ty2</tt> then a zero extension is done. If
 <tt>value</tt> is larger than <tt>ty2</tt> then a truncation is done. If they
-are the same size, then nothing is done (<i>no-op cast</i>).</p>
+are the same size, then nothing is done (<i>no-op cast</i>) other than a type
+change.</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = ptrtoint i32* %X to i8           <i>; yields truncation on 32-bit</i>
-  %Y = ptrtoint i32* %x to i64          <i>; yields zero extend on 32-bit</i>
+  %X = ptrtoint i32* %X to i8           <i>; yields truncation on 32-bit architecture</i>
+  %Y = ptrtoint i32* %x to i64          <i>; yields zero extension on 32-bit architecture</i>
 </pre>
 </div>
 
@@ -3198,9 +3199,9 @@ nothing is done (<i>no-op cast</i>).</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = inttoptr i32 255 to i32*            <i>; yields zero extend on 64-bit</i>
-  %X = inttoptr i32 255 to i32*            <i>; yields no-op on 32-bit </i>
-  %Y = inttoptr i16 0 to i32*            <i>; yields zero extend on 32-bit</i>
+  %X = inttoptr i32 255 to i32*          <i>; yields zero extension on 64-bit architecture</i>
+  %X = inttoptr i32 255 to i32*          <i>; yields no-op on 32-bit architecture</i>
+  %Y = inttoptr i64 0 to i32*            <i>; yields truncation on 32-bit architecture</i>
 </pre>
 </div>
 
@@ -3237,7 +3238,7 @@ other types, use the <a href="#i_inttoptr">inttoptr</a> or
 
 <h5>Example:</h5>
 <pre>
-  %X = bitcast i8 255 to i8          <i>; yields i8 :-1</i>
+  %X = bitcast i8 255 to i8              <i>; yields i8 :-1</i>
   %Y = bitcast i32* %x to sint*          <i>; yields sint*:%x</i>
   %Z = bitcast <2xint> %V to i64;        <i>; yields i64: %V</i>   
 </pre>
@@ -3255,16 +3256,15 @@ instructions, which defy better classification.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;
-<i>; yields {i1}:result</i>
+<pre>  &lt;result&gt; = icmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {i1}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>icmp</tt>' instruction returns a boolean value based on comparison
 of its two integer operands.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>icmp</tt>' instruction takes three operands. The first operand is
-the condition code which indicates the kind of comparison to perform. It is not
-a value, just a keyword. The possibilities for the condition code are:
+the condition code indicating the kind of comparison to perform. It is not
+a value, just a keyword. The possible condition code are:
 <ol>
   <li><tt>eq</tt>: equal</li>
   <li><tt>ne</tt>: not equal </li>
@@ -3307,7 +3307,7 @@ yields a <a href="#t_primitive">i1</a> result, as follows:
   <tt>true</tt> if <tt>var1</tt> is less than or equal to <tt>var2</tt>.</li>
 </ol>
 <p>If the operands are <a href="#t_pointer">pointer</a> typed, the pointer
-values are treated as integers and then compared.</p>
+values are compared as if they were integers.</p>
 
 <h5>Example:</h5>
 <pre>  &lt;result&gt; = icmp eq i32 4, 5          <i>; yields: result=false</i>
@@ -3324,16 +3324,15 @@ values are treated as integers and then compared.</p>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;
-<i>; yields {i1}:result</i>
+<pre>  &lt;result&gt; = fcmp &lt;cond&gt; &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;     <i>; yields {i1}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>fcmp</tt>' instruction returns a boolean value based on comparison
 of its floating point operands.</p>
 <h5>Arguments:</h5>
 <p>The '<tt>fcmp</tt>' instruction takes three operands. The first operand is
-the condition code which indicates the kind of comparison to perform. It is not
-a value, just a keyword. The possibilities for the condition code are:
+the condition code indicating the kind of comparison to perform. It is not
+a value, just a keyword. The possible condition code are:
 <ol>
   <li><tt>false</tt>: no comparison, always returns false</li>
   <li><tt>oeq</tt>: ordered and equal</li>
@@ -3352,13 +3351,11 @@ a value, just a keyword. The possibilities for the condition code are:
   <li><tt>uno</tt>: unordered (either nans)</li>
   <li><tt>true</tt>: no comparison, always returns true</li>
 </ol>
-<p>In the preceding, <i>ordered</i> means that neither operand is a QNAN while
+<p><i>Ordered</i> means that neither operand is a QNAN while
 <i>unordered</i> means that either operand may be a QNAN.</p>
 <p>The <tt>val1</tt> and <tt>val2</tt> arguments must be
 <a href="#t_floating">floating point</a> typed.  They must have identical 
 types.</p>
-<p>In the foregoing, <i>ordered</i> means that neither operand is a QNAN and 
-<i>unordered</i> means that either operand is a QNAN.</p>
 <h5>Semantics:</h5>
 <p>The '<tt>fcmp</tt>' compares <tt>var1</tt> and <tt>var2</tt> according to 
 the condition code given as <tt>cond</tt>. The comparison performed always
@@ -3412,7 +3409,7 @@ Instruction</a> </div>
 <p>The '<tt>phi</tt>' instruction is used to implement the &#966; node in
 the SSA graph representing the function.</p>
 <h5>Arguments:</h5>
-<p>The type of the incoming values are specified with the first type
+<p>The type of the incoming values is specified with the first type
 field. After this, the '<tt>phi</tt>' instruction takes a list of pairs
 as arguments, with one pair for each predecessor basic block of the
 current block.  Only values of <a href="#t_firstclass">first class</a>
@@ -3422,9 +3419,9 @@ may be used as the label arguments.</p>
 block and the PHI instructions: i.e. PHI instructions must be first in
 a basic block.</p>
 <h5>Semantics:</h5>
-<p>At runtime, the '<tt>phi</tt>' instruction logically takes on the
-value specified by the parameter, depending on which basic block we
-came from in the last <a href="#terminators">terminator</a> instruction.</p>
+<p>At runtime, the '<tt>phi</tt>' instruction logically takes on the value
+specified by the pair corresponding to the predecessor basic block that executed
+just prior to the current block.</p>
 <h5>Example:</h5>
 <pre>Loop:       ; Infinite loop that counts from 0 on up...<br>  %indvar = phi i32 [ 0, %LoopHeader ], [ %nextindvar, %Loop ]<br>  %nextindvar = add i32 %indvar, 1<br>  br label %Loop<br></pre>
 </div>
@@ -3539,7 +3536,7 @@ the <a href="#i_invoke">invoke</a> instruction.</p>
 
 <pre>
   %retval = call i32 %test(i32 %argc)
-  call i32(i8 *, ...) *%printf(i8 * %msg, i32 12, i8  42);
+  call i32(i8 *, ...) *%printf(i8 * %msg, i32 12, i8 42);
   %X = tail call i32 %foo()
   %Y = tail call <a href="#callingconv">fastcc</a> i32 %foo()
 </pre>
@@ -3569,7 +3566,7 @@ the "variable argument" area of a function call.  It is used to implement the
 
 <p>This instruction takes a <tt>va_list*</tt> value and the type of
 the argument. It returns a value of the specified argument type and
-increments the <tt>va_list</tt> to point to the next argument.  Again, the
+increments the <tt>va_list</tt> to point to the next argument.  The
 actual type of <tt>va_list</tt> is target specific.</p>
 
 <h5>Semantics:</h5>
@@ -3603,24 +3600,24 @@ argument.</p>
 <p>LLVM supports the notion of an "intrinsic function".  These functions have
 well known names and semantics and are required to follow certain restrictions.
 Overall, these intrinsics represent an extension mechanism for the LLVM 
-language that does not require changing all of the transformations in LLVM to 
-add to the language (or the bytecode reader/writer, the parser,
-etc...).</p>
+language that does not require changing all of the transformations in LLVM when 
+adding to the language (or the bytecode reader/writer, the parser, etc...).</p>
 
 <p>Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix. This
-prefix is reserved in LLVM for intrinsic names; thus, functions may not be named
-this.  Intrinsic functions must always be external functions: you cannot define
-the body of intrinsic functions.  Intrinsic functions may only be used in call
-or invoke instructions: it is illegal to take the address of an intrinsic
-function.  Additionally, because intrinsic functions are part of the LLVM
-language, it is required that they all be documented here if any are added.</p>
+prefix is reserved in LLVM for intrinsic names; thus, function names may not
+begin with this prefix.  Intrinsic functions must always be external functions:
+you cannot define the body of intrinsic functions.  Intrinsic functions may
+only be used in call or invoke instructions: it is illegal to take the address
+of an intrinsic function.  Additionally, because intrinsic functions are part
+of the LLVM language, it is required if any are added that they be documented
+here.</p>
 
-<p>Some intrinsic functions can be overloaded. That is, the intrinsic represents
+<p>Some intrinsic functions can be overloaded, i.e., the intrinsic represents
 a family of functions that perform the same operation but on different data
 types. This is most frequent with the integer types. Since LLVM can represent
 over 8 million different integer types, there is a way to declare an intrinsic 
-that can be overloaded based on its arguments. Such intrinsics will have the
-names of the arbitrary types encoded into the intrinsic function name, each
+that can be overloaded based on its arguments. Such an intrinsic will have the
+names of its argument types encoded into its function name, each
 preceded by a period. For example, the <tt>llvm.ctpop</tt> function can take an
 integer of any width. This leads to a family of functions such as 
 <tt>i32 @llvm.ctpop.i8(i8 %val)</tt> and <tt>i32 @llvm.ctpop.i29(i29 %val)</tt>.
@@ -3648,8 +3645,8 @@ named macros defined in the <tt>&lt;stdarg.h&gt;</tt> header file.</p>
 <p>All of these functions operate on arguments that use a
 target-specific value type "<tt>va_list</tt>".  The LLVM assembly
 language reference manual does not define what this type is, so all
-transformations should be prepared to handle intrinsics with any type
-used.</p>
+transformations should be prepared to handle these functions regardless of
+the type used.</p>
 
 <p>This example shows how the <a href="#i_va_arg"><tt>va_arg</tt></a>
 instruction and the variable argument handling intrinsic functions are
@@ -3658,17 +3655,17 @@ used.</p>
 <pre>
 define i32 @test(i32 %X, ...) {
   ; Initialize variable argument processing
-  %ap = alloca i8 *
+  %ap = alloca i8*
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_start(i8* %ap2)
 
   ; Read a single integer argument
-  %tmp = va_arg i8 ** %ap, i32
+  %tmp = va_arg i8** %ap, i32
 
   ; Demonstrate usage of llvm.va_copy and llvm.va_end
-  %aq = alloca i8 *
+  %aq = alloca i8*
   %aq2 = bitcast i8** %aq to i8*
-  call void @llvm.va_copy(i8 *%aq2, i8* %ap2)
+  call void @llvm.va_copy(i8* %aq2, i8* %ap2)
   call void @llvm.va_end(i8* %aq2)
 
   ; Stop processing of arguments.
@@ -3704,10 +3701,10 @@ href="#i_va_arg">va_arg</a></tt>.</p>
 
 <P>The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
 macro available in C.  In a target-dependent way, it initializes the
-<tt>va_list</tt> element the argument points to, so that the next call to
+<tt>va_list</tt> element to which the argument points, so that the next call to
 <tt>va_arg</tt> will produce the first variable argument passed to the function.
 Unlike the C <tt>va_start</tt> macro, this intrinsic does not need to know the
-last argument of the function, the compiler can figure that out.</p>
+last argument of the function as the compiler can figure that out.</p>
 
 </div>
 
@@ -3721,21 +3718,22 @@ last argument of the function, the compiler can figure that out.</p>
 <pre>  declare void @llvm.va_end(i8* &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
 
-<p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt>
+<p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>*&lt;arglist&gt;</tt>,
 which has been initialized previously with <tt><a href="#int_va_start">llvm.va_start</a></tt>
 or <tt><a href="#i_va_copy">llvm.va_copy</a></tt>.</p>
 
 <h5>Arguments:</h5>
 
-<p>The argument is a <tt>va_list</tt> to destroy.</p>
+<p>The argument is a pointer to a <tt>va_list</tt> to destroy.</p>
 
 <h5>Semantics:</h5>
 
 <p>The '<tt>llvm.va_end</tt>' intrinsic works just like the <tt>va_end</tt>
-macro available in C.  In a target-dependent way, it destroys the <tt>va_list</tt>.
-Calls to <a href="#int_va_start"><tt>llvm.va_start</tt></a> and <a
- href="#int_va_copy"><tt>llvm.va_copy</tt></a> must be matched exactly
-with calls to <tt>llvm.va_end</tt>.</p>
+macro available in C.  In a target-dependent way, it destroys the
+<tt>va_list</tt> element to which the argument points.  Calls to <a
+href="#int_va_start"><tt>llvm.va_start</tt></a> and <a href="#int_va_copy">
+<tt>llvm.va_copy</tt></a> must be matched exactly with calls to
+<tt>llvm.va_end</tt>.</p>
 
 </div>
 
@@ -3754,8 +3752,8 @@ with calls to <tt>llvm.va_end</tt>.</p>
 
 <h5>Overview:</h5>
 
-<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position from
-the source argument list to the destination argument list.</p>
+<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position
+from the source argument list to the destination argument list.</p>
 
 <h5>Arguments:</h5>
 
@@ -3765,11 +3763,12 @@ The second argument is a pointer to a <tt>va_list</tt> element to copy from.</p>
 
 <h5>Semantics:</h5>
 
-<p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
-available in C.  In a target-dependent way, it copies the source
-<tt>va_list</tt> element into the destination list.  This intrinsic is necessary
-because the <tt><a href="#int_va_start">llvm.va_start</a></tt> intrinsic may be
-arbitrarily complex and require memory allocation, for example.</p>
+<p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt>
+macro available in C.  In a target-dependent way, it copies the source
+<tt>va_list</tt> element into the destination <tt>va_list</tt> element.  This
+intrinsic is necessary because the <tt><a href="#int_va_start">
+llvm.va_start</a></tt> intrinsic may be arbitrarily complex and require, for
+example, memory allocation.</p>
 
 </div>
 
