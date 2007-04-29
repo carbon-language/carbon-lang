@@ -31,14 +31,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
-
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -50,15 +51,74 @@ static cl::opt<std::string>
 static cl::opt<bool> NoDetails("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump("dump", cl::desc("Dump low level bytecode trace"));
 static cl::opt<bool> Verify("verify", cl::desc("Progressively verify module"));
+static cl::opt<bool> Bitcode("bitcode", cl::desc("Read a bitcode file"));
+
+/// CurStreamType - If we can sniff the flavor of this stream, we can produce 
+/// better dump info.
+static enum {
+  UnknownBitstream,
+  LLVMIRBitstream
+} CurStreamType;
+
+/// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
+static int AnalyzeBitcode() {
+  // Read the input file.
+  MemoryBuffer *Buffer;
+  if (InputFilename == "-")
+    Buffer = MemoryBuffer::getSTDIN();
+  else
+    Buffer = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size());
+
+  if (Buffer == 0) {
+    std::cerr << "Error reading '" << InputFilename << "'.\n";
+    return 1;
+  }
+  
+  if (Buffer->getBufferSize() & 3) {
+    std::cerr << "Bitcode stream should be a multiple of 4 bytes in length\n";
+    return 1;
+  }
+  
+  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
+  BitstreamReader Stream(BufPtr, BufPtr+Buffer->getBufferSize());
+
+  
+  // Read the stream signature.
+  char Signature[6];
+  Signature[0] = Stream.Read(8);
+  Signature[1] = Stream.Read(8);
+  Signature[2] = Stream.Read(4);
+  Signature[3] = Stream.Read(4);
+  Signature[4] = Stream.Read(4);
+  Signature[5] = Stream.Read(4);
+  
+  CurStreamType = UnknownBitstream;
+  if (Signature[0] == 'B' && Signature[1] == 'C' &&
+      Signature[2] == 0x0 && Signature[3] == 0xC &&
+      Signature[4] == 0xE && Signature[5] == 0xD)
+    CurStreamType = LLVMIRBitstream;
+
+  std::cerr << "Summary of " << InputFilename << ":\n";
+  std::cerr << "  Stream type: ";
+  switch (CurStreamType) {
+  default: assert(0 && "Unknown bitstream type");
+  case UnknownBitstream: std::cerr << "unknown\n"; break;
+  case LLVMIRBitstream:  std::cerr << "LLVM IR\n"; break;
+  }
+
+  return 0;
+}
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  cl::ParseCommandLineOptions(argc, argv, " llvm-bcanalyzer file analyzer\n");
+  
+  sys::PrintStackTraceOnErrorSignal();
+  
+  if (Bitcode)
+    return AnalyzeBitcode();
+    
   try {
-    cl::ParseCommandLineOptions(argc, argv,
-      " llvm-bcanalyzer Analysis of ByteCode Dumper\n");
-
-    sys::PrintStackTraceOnErrorSignal();
-
     std::ostream *Out = &std::cout;  // Default to printing to stdout...
     std::string ErrorMessage;
     BytecodeAnalysis bca;
@@ -75,7 +135,7 @@ int main(int argc, char **argv) {
     // All that bcanalyzer does is write the gathered statistics to the output
     PrintBytecodeAnalysis(bca,*Out);
 
-    if ( M && Verify ) {
+    if (M && Verify) {
       std::string verificationMsg;
       if (verifyModule(*M, ReturnStatusAction, &verificationMsg))
         std::cerr << "Final Verification Message: " << verificationMsg << "\n";
