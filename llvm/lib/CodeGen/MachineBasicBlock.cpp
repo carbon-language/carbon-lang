@@ -111,9 +111,11 @@ void MachineBasicBlock::print(std::ostream &OS) const {
 
   const BasicBlock *LBB = getBasicBlock();
   OS << "\n";
-  if (LBB) OS << LBB->getName();
-  OS << " (" << (const void*)this
-     << ", LLVM BB @" << (const void*) LBB << ", ID#" << getNumber()<< "):\n";
+  if (LBB) OS << LBB->getName() << ": ";
+  OS << (const void*)this
+     << ", LLVM BB @" << (const void*) LBB << ", ID#" << getNumber();
+  if (isLandingPad()) OS << ", EH LANDING PAD";
+  OS << ":\n";
 
   const MRegisterInfo *MRI = MF->getTarget().getRegisterInfo();  
   if (livein_begin() != livein_end()) {
