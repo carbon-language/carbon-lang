@@ -112,7 +112,6 @@ unsigned ARMTargetAsmInfo::getInlineAsmLength(const char *Str) const {
         atInsnStart = false;
         if (isThumb) {
           // BL and BLX <non-reg> are 4 bytes, all others 2.
-          const char*p = Str;
           if ((*Str=='b' || *Str=='B') &&
               (*(Str+1)=='l' || *(Str+1)=='L')) {
             if (*(Str+2)=='x' || *(Str+2)=='X') {
