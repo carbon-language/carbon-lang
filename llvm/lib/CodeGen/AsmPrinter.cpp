@@ -954,7 +954,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     case '\n':
       ++LastEmitted;   // Consume newline character.
-      O << "\n\t";     // Indent code with newline.
+      O << "\n";       // Indent code with newline.
       break;
     case '$': {
       ++LastEmitted;   // Consume '$' character.
