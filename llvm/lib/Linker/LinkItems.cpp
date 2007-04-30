@@ -54,9 +54,12 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
   // symbols.
   bool is_native;
   for (Module::lib_iterator I = Composite->lib_begin(),
-         E = Composite->lib_end(); I != E; ++I)
+         E = Composite->lib_end(); I != E; ++I) {
     if(LinkInLibrary(*I, is_native))
       return true;
+    if (is_native)
+      NativeItems.push_back(std::make_pair(*I, true));
+  }
 
   return false;
 }
