@@ -1,4 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep test:
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | not grep vperm
 
 void %test(<4 x float> *%tmp2.i) {
 	%tmp2.i = load <4x float>* %tmp2.i
