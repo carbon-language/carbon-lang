@@ -14,6 +14,8 @@
 #ifndef LLVM_CODEGEN_ELF_RELOCATION_H
 #define LLVM_CODEGEN_ELF_RELOCATION_H
 
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
 
   /// ELFRelocation - This class contains all the information necessary to
@@ -47,3 +49,4 @@ namespace llvm {
 } // end llvm namespace
 
 #endif // LLVM_CODEGEN_ELF_RELOCATION_H
+
