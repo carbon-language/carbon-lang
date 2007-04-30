@@ -85,4 +85,60 @@ scheduled after any node that reads %reg1039.
 
 //===---------------------------------------------------------------------===//
 
-Re-Materialize load from frame index.
+Use local info (i.e. register scavenger) to assign it a free register to allow
+reuse:
+	ldr r3, [sp, #+4]
+	add r3, r3, #3
+	ldr r2, [sp, #+8]
+	add r2, r2, #2
+	ldr r1, [sp, #+4]  <==
+	add r1, r1, #1
+	ldr r0, [sp, #+4]
+	add r0, r0, #2
+
+//===---------------------------------------------------------------------===//
+
+LLVM aggressively lift CSE out of loop. Sometimes this can be negative side-
+effects:
+
+R1 = X + 4
+R2 = X + 7
+R3 = X + 15
+
+loop:
+load [i + R1]
+...
+load [i + R2]
+...
+load [i + R3]
+
+Suppose there is high register pressure, R1, R2, R3, can be spilled. We need
+to implement proper re-materialization to handle this:
+
+R1 = X + 4
+R2 = X + 7
+R3 = X + 15
+
+loop:
+R1 = X + 4  @ re-materialized
+load [i + R1]
+...
+R2 = X + 7 @ re-materialized
+load [i + R2]
+...
+R3 = X + 15 @ re-materialized
+load [i + R3]
+
+Furthermore, with re-association, we can enable sharing:
+
+R1 = X + 4
+R2 = X + 7
+R3 = X + 15
+
+loop:
+T = i + X
+load [T + 4]
+...
+load [T + 7]
+...
+load [T + 15]
