@@ -35,14 +35,10 @@ but there is unlikely to be much improvement in the generated code.
 1.  There may be some advantage to trying to be smarter about the initial
 placement, rather than putting everything at the end.
 
-2.  The handling of 2-byte padding for Thumb is overly conservative.  There 
-would be a small gain to keeping accurate track of the padding (which would
-require aligning functions containing constant pools to 4-byte boundaries).
-
-3.  There might be some compile-time efficiency to be had by representing
+2.  There might be some compile-time efficiency to be had by representing
 consecutive islands as a single block rather than multiple blocks.
 
-4.  Use a priority queue to sort constant pool users in inverse order of
+3.  Use a priority queue to sort constant pool users in inverse order of
     position so we always process the one closed to the end of functions
     first. This may simply CreateNewWater.
 
