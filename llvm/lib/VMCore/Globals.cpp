@@ -217,7 +217,7 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const  {
       return GV;
     else {
       const ConstantExpr *CE = 0;
-      if ((CE = dyn_cast<ConstantExpr>(Aliasee)) &&
+      if ((CE = dyn_cast<ConstantExpr>(C)) &&
           (CE->getOpcode() == Instruction::BitCast))
         return cast<GlobalValue>(CE->getOperand(0));
       else
