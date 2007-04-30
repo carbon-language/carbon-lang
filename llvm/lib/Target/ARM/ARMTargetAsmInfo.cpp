@@ -27,6 +27,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     SetDirective = "\t.set";
     WeakRefDirective = "\t.weak_reference\t";
     HiddenDirective = "\t.private_extern\t";
+    ProtectedDirective = NULL;
     JumpTableDataSection = ".const";
     CStringSection = "\t.cstring";
     FourByteConstantSection = "\t.literal4\n";
