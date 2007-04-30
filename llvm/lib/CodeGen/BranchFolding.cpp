@@ -877,7 +877,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // Now we know that there was no fall-through into this block, check to
     // see if it has a fall-through into its successor.
     bool CurFallsThru = CanFallThrough(MBB, CurUnAnalyzable, CurTBB, CurFBB, 
-                                            CurCond);
+                                       CurCond);
 
     if (!MBB->isLandingPad()) {
       // Check all the predecessors of this block.  If one of them has no fall
@@ -914,7 +914,13 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
         MachineBasicBlock *SuccBB = *SI;
         MachineFunction::iterator SuccPrev = SuccBB; --SuccPrev;
         std::vector<MachineOperand> SuccPrevCond;
-        if (SuccBB != MBB && !CanFallThrough(SuccPrev)) {
+        
+        // If this block doesn't already fall-through to that successor, and if
+        // the succ doesn't already have a block that can fall through into it,
+        // and if the successor isn't an EH destination, we can arrange for the
+        // fallthrough to happen.
+        if (SuccBB != MBB && !CanFallThrough(SuccPrev) &&
+            !SuccBB->isLandingPad()) {
           MBB->moveBefore(SuccBB);
           MadeChange = true;
           return OptimizeBlock(MBB);
