@@ -229,7 +229,8 @@ class Linker {
     /// @returns true if an error occurs, otherwise false.
     /// @brief Link in one archive.
     bool LinkInArchive(
-      const sys::Path& Filename ///< Filename of the archive to link
+      const sys::Path& Filename, ///< Filename of the archive to link
+      bool& is_native            ///<  Indicates if archive is a native archive
     );
 
     /// This method links the \p Src module into the Linker's Composite module

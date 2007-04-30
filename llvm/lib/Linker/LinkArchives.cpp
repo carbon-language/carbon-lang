@@ -88,7 +88,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 ///  TRUE  - An error occurred.
 ///  FALSE - No errors.
 bool
-Linker::LinkInArchive(const sys::Path &Filename) {
+Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
 
   // Make sure this is an archive file we're dealing with
   if (!Filename.isArchive())
@@ -118,6 +118,11 @@ Linker::LinkInArchive(const sys::Path &Filename) {
   if (!arch)
     return error("Cannot read archive '" + Filename.toString() +
                  "': " + ErrMsg);
+  if (!arch->isBytecodeArchive()) {
+    is_native = true;
+    return false;
+  }
+  is_native = false;
 
   // Save a set of symbols that are not defined by the archive. Since we're
   // entering a loop, there's no point searching for these multiple times. This

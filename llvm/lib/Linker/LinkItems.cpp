@@ -90,7 +90,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
       break;
 
     case sys::Archive_FileType:
-      if (LinkInArchive(Pathname))
+      if (LinkInArchive(Pathname, is_native))
         return error("Cannot link archive '" + Pathname.toString() + "'");
       break;
 
@@ -171,7 +171,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
       // A user may specify an ar archive without -l, perhaps because it
       // is not installed as a library. Detect that and link the archive.
       verbose("Linking archive file '" + File.toString() + "'");
-      if (LinkInArchive(File))
+      if (LinkInArchive(File, is_native))
         return error("Cannot link archive '" + File.toString() + "'");
       break;
 
