@@ -3134,44 +3134,6 @@ GetRegistersForValue(const std::string &ConstrCode,
   return RegsForValue();
 }
 
-/// getConstraintGenerality - Return an integer indicating how general CT is.
-static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
-  switch (CT) {
-  default: assert(0 && "Unknown constraint type!");
-  case TargetLowering::C_Other:
-  case TargetLowering::C_Unknown:
-    return 0;
-  case TargetLowering::C_Register:
-    return 1;
-  case TargetLowering::C_RegisterClass:
-    return 2;
-  case TargetLowering::C_Memory:
-    return 3;
-  }
-}
-
-static std::string GetMostGeneralConstraint(std::vector<std::string> &C,
-                                            const TargetLowering &TLI) {
-  assert(!C.empty() && "Must have at least one constraint");
-  if (C.size() == 1) return C[0];
-    
-  std::string *Current = &C[0];
-  // If we have multiple constraints, try to pick the most general one ahead
-  // of time.  This isn't a wonderful solution, but handles common cases.
-  TargetLowering::ConstraintType Flavor = TLI.getConstraintType(Current[0]);
-  for (unsigned j = 1, e = C.size(); j != e; ++j) {
-    TargetLowering::ConstraintType ThisFlavor = TLI.getConstraintType(C[j]);
-    if (getConstraintGenerality(ThisFlavor) > 
-        getConstraintGenerality(Flavor)) {
-      // This constraint letter is more general than the previous one,
-      // use it.
-      Flavor = ThisFlavor;
-      Current = &C[j];
-    }
-  }
-  return *Current;
-}
-
 namespace {
 /// AsmOperandInfo - This contains information for each constraint that we are
 /// lowering.
@@ -3197,8 +3159,58 @@ struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
       ConstraintType(TargetLowering::C_Unknown),
       CallOperand(0,0), CallOperandVal(0), ConstraintVT(MVT::Other) {
   }
+  
+  void ComputeConstraintToUse(const TargetLowering &TLI);
 };
 } // end anon namespace.
+
+/// getConstraintGenerality - Return an integer indicating how general CT is.
+static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
+  switch (CT) {
+    default: assert(0 && "Unknown constraint type!");
+    case TargetLowering::C_Other:
+    case TargetLowering::C_Unknown:
+      return 0;
+    case TargetLowering::C_Register:
+      return 1;
+    case TargetLowering::C_RegisterClass:
+      return 2;
+    case TargetLowering::C_Memory:
+      return 3;
+  }
+}
+
+void AsmOperandInfo::ComputeConstraintToUse(const TargetLowering &TLI) {
+  assert(!Codes.empty() && "Must have at least one constraint");
+  
+  std::string *Current = &Codes[0];
+  TargetLowering::ConstraintType CurType = TLI.getConstraintType(*Current);
+  if (Codes.size() == 1) {   // Single-letter constraints ('r') are very common.
+    ConstraintCode = *Current;
+    ConstraintType = CurType;
+    return;
+  }
+  
+  unsigned CurGenerality = getConstraintGenerality(CurType);
+  
+  // If we have multiple constraints, try to pick the most general one ahead
+  // of time.  This isn't a wonderful solution, but handles common cases.
+  for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
+    TargetLowering::ConstraintType ThisType = TLI.getConstraintType(Codes[j]);
+    unsigned ThisGenerality = getConstraintGenerality(ThisType);
+    if (ThisGenerality > CurGenerality) {
+      // This constraint letter is more general than the previous one,
+      // use it.
+      CurType = ThisType;
+      Current = &Codes[j];
+      CurGenerality = ThisGenerality;
+    }
+  }
+  
+  ConstraintCode = *Current;
+  ConstraintType = CurType;
+}
+
 
 /// visitInlineAsm - Handle a call to an InlineAsm object.
 ///
@@ -3274,12 +3286,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     
     OpInfo.ConstraintVT = OpVT;
     
-    // Compute the constraint code to use.
-    OpInfo.ConstraintCode = GetMostGeneralConstraint(OpInfo.Codes, TLI);
-    
-    // Compute the constraint type.
-    // FIXME: merge this into GetMostGeneralConstraint.
-    OpInfo.ConstraintType = TLI.getConstraintType(OpInfo.ConstraintCode);
+    // Compute the constraint code and ConstraintType to use.
+    OpInfo.ComputeConstraintToUse(TLI);
 
     
     // If this is a memory input, and if the operand is not indirect, do what we
