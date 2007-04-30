@@ -82,6 +82,8 @@ namespace {
                           createDefaultScheduler);
 } // namespace
 
+namespace { struct AsmOperandInfo; }
+
 namespace {
   /// RegsForValue - This struct represents the physical registers that a
   /// particular value is assigned and the type information about the value.
@@ -516,8 +518,7 @@ public:
     N = NewN;
   }
   
-  RegsForValue GetRegistersForValue(const std::string &ConstrCode,
-                                    MVT::ValueType VT,
+  RegsForValue GetRegistersForValue(AsmOperandInfo &OpInfo,
                                     bool OutReg, bool InReg,
                                     std::set<unsigned> &OutputRegs, 
                                     std::set<unsigned> &InputRegs);
@@ -3013,126 +3014,6 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
   return FoundRC;
 }    
 
-RegsForValue SelectionDAGLowering::
-GetRegistersForValue(const std::string &ConstrCode,
-                     MVT::ValueType VT, bool isOutReg, bool isInReg,
-                     std::set<unsigned> &OutputRegs, 
-                     std::set<unsigned> &InputRegs) {
-  std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
-    TLI.getRegForInlineAsmConstraint(ConstrCode, VT);
-  std::vector<unsigned> Regs;
-
-  unsigned NumRegs = VT != MVT::Other ? TLI.getNumElements(VT) : 1;
-  MVT::ValueType RegVT;
-  MVT::ValueType ValueVT = VT;
-  
-  // If this is a constraint for a specific physical register, like {r17},
-  // assign it now.
-  if (PhysReg.first) {
-    if (VT == MVT::Other)
-      ValueVT = *PhysReg.second->vt_begin();
-    
-    // Get the actual register value type.  This is important, because the user
-    // may have asked for (e.g.) the AX register in i32 type.  We need to
-    // remember that AX is actually i16 to get the right extension.
-    RegVT = *PhysReg.second->vt_begin();
-    
-    // This is a explicit reference to a physical register.
-    Regs.push_back(PhysReg.first);
-
-    // If this is an expanded reference, add the rest of the regs to Regs.
-    if (NumRegs != 1) {
-      TargetRegisterClass::iterator I = PhysReg.second->begin();
-      TargetRegisterClass::iterator E = PhysReg.second->end();
-      for (; *I != PhysReg.first; ++I)
-        assert(I != E && "Didn't find reg!"); 
-      
-      // Already added the first reg.
-      --NumRegs; ++I;
-      for (; NumRegs; --NumRegs, ++I) {
-        assert(I != E && "Ran out of registers to allocate!");
-        Regs.push_back(*I);
-      }
-    }
-    return RegsForValue(Regs, RegVT, ValueVT);
-  }
-  
-  // Otherwise, if this was a reference to an LLVM register class, create vregs
-  // for this reference.
-  std::vector<unsigned> RegClassRegs;
-  if (PhysReg.second) {
-    // If this is an early clobber or tied register, our regalloc doesn't know
-    // how to maintain the constraint.  If it isn't, go ahead and create vreg
-    // and let the regalloc do the right thing.
-    if (!isOutReg || !isInReg) {
-      RegVT = *PhysReg.second->vt_begin();
-      
-      if (VT == MVT::Other)
-        ValueVT = RegVT;
-
-      // Create the appropriate number of virtual registers.
-      SSARegMap *RegMap = DAG.getMachineFunction().getSSARegMap();
-      for (; NumRegs; --NumRegs)
-        Regs.push_back(RegMap->createVirtualRegister(PhysReg.second));
-      
-      return RegsForValue(Regs, RegVT, ValueVT);
-    }
-    
-    // Otherwise, we can't allocate it.  Let the code below figure out how to
-    // maintain these constraints.
-    RegClassRegs.assign(PhysReg.second->begin(), PhysReg.second->end());
-    
-  } else {
-    // This is a reference to a register class that doesn't directly correspond
-    // to an LLVM register class.  Allocate NumRegs consecutive, available,
-    // registers from the class.
-    RegClassRegs = TLI.getRegClassForInlineAsmConstraint(ConstrCode, VT);
-  }
-
-  const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
-  MachineFunction &MF = *CurMBB->getParent();
-  unsigned NumAllocated = 0;
-  for (unsigned i = 0, e = RegClassRegs.size(); i != e; ++i) {
-    unsigned Reg = RegClassRegs[i];
-    // See if this register is available.
-    if ((isOutReg && OutputRegs.count(Reg)) ||   // Already used.
-        (isInReg  && InputRegs.count(Reg))) {    // Already used.
-      // Make sure we find consecutive registers.
-      NumAllocated = 0;
-      continue;
-    }
-    
-    // Check to see if this register is allocatable (i.e. don't give out the
-    // stack pointer).
-    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, TLI, MRI);
-    if (!RC) {
-      // Make sure we find consecutive registers.
-      NumAllocated = 0;
-      continue;
-    }
-    
-    // Okay, this register is good, we can use it.
-    ++NumAllocated;
-
-    // If we allocated enough consecutive registers, succeed.
-    if (NumAllocated == NumRegs) {
-      unsigned RegStart = (i-NumAllocated)+1;
-      unsigned RegEnd   = i+1;
-      // Mark all of the allocated registers used.
-      for (unsigned i = RegStart; i != RegEnd; ++i) {
-        unsigned Reg = RegClassRegs[i];
-        Regs.push_back(Reg);
-        if (isOutReg) OutputRegs.insert(Reg);    // Mark reg used.
-        if (isInReg)  InputRegs.insert(Reg);     // Mark reg used.
-      }
-      
-      return RegsForValue(Regs, *RC->vt_begin(), VT);
-    }
-  }
-  
-  // Otherwise, we couldn't allocate enough registers for this.
-  return RegsForValue();
-}
 
 namespace {
 /// AsmOperandInfo - This contains information for each constraint that we are
@@ -3209,6 +3090,131 @@ void AsmOperandInfo::ComputeConstraintToUse(const TargetLowering &TLI) {
   
   ConstraintCode = *Current;
   ConstraintType = CurType;
+}
+
+
+RegsForValue SelectionDAGLowering::
+GetRegistersForValue(AsmOperandInfo &OpInfo, bool isOutReg, bool isInReg,
+                     std::set<unsigned> &OutputRegs, 
+                     std::set<unsigned> &InputRegs) {
+  std::pair<unsigned, const TargetRegisterClass*> PhysReg = 
+    TLI.getRegForInlineAsmConstraint(OpInfo.ConstraintCode,OpInfo.ConstraintVT);
+  std::vector<unsigned> Regs;
+
+  unsigned NumRegs = 1;
+  if (OpInfo.ConstraintVT != MVT::Other)
+    NumRegs = TLI.getNumElements(OpInfo.ConstraintVT);
+  MVT::ValueType RegVT;
+  MVT::ValueType ValueVT = OpInfo.ConstraintVT;
+  
+  MachineFunction &MF = DAG.getMachineFunction();
+
+  // If this is a constraint for a specific physical register, like {r17},
+  // assign it now.
+  if (PhysReg.first) {
+    if (OpInfo.ConstraintVT == MVT::Other)
+      ValueVT = *PhysReg.second->vt_begin();
+    
+    // Get the actual register value type.  This is important, because the user
+    // may have asked for (e.g.) the AX register in i32 type.  We need to
+    // remember that AX is actually i16 to get the right extension.
+    RegVT = *PhysReg.second->vt_begin();
+    
+    // This is a explicit reference to a physical register.
+    Regs.push_back(PhysReg.first);
+
+    // If this is an expanded reference, add the rest of the regs to Regs.
+    if (NumRegs != 1) {
+      TargetRegisterClass::iterator I = PhysReg.second->begin();
+      TargetRegisterClass::iterator E = PhysReg.second->end();
+      for (; *I != PhysReg.first; ++I)
+        assert(I != E && "Didn't find reg!"); 
+      
+      // Already added the first reg.
+      --NumRegs; ++I;
+      for (; NumRegs; --NumRegs, ++I) {
+        assert(I != E && "Ran out of registers to allocate!");
+        Regs.push_back(*I);
+      }
+    }
+    return RegsForValue(Regs, RegVT, ValueVT);
+  }
+  
+  // Otherwise, if this was a reference to an LLVM register class, create vregs
+  // for this reference.
+  std::vector<unsigned> RegClassRegs;
+  if (PhysReg.second) {
+    // If this is an early clobber or tied register, our regalloc doesn't know
+    // how to maintain the constraint.  If it isn't, go ahead and create vreg
+    // and let the regalloc do the right thing.
+    if (!isOutReg || !isInReg) {
+      RegVT = *PhysReg.second->vt_begin();
+      
+      if (OpInfo.ConstraintVT == MVT::Other)
+        ValueVT = RegVT;
+
+      // Create the appropriate number of virtual registers.
+      SSARegMap *RegMap = MF.getSSARegMap();
+      for (; NumRegs; --NumRegs)
+        Regs.push_back(RegMap->createVirtualRegister(PhysReg.second));
+      
+      return RegsForValue(Regs, RegVT, ValueVT);
+    }
+    
+    // Otherwise, we can't allocate it.  Let the code below figure out how to
+    // maintain these constraints.
+    RegClassRegs.assign(PhysReg.second->begin(), PhysReg.second->end());
+    
+  } else {
+    // This is a reference to a register class that doesn't directly correspond
+    // to an LLVM register class.  Allocate NumRegs consecutive, available,
+    // registers from the class.
+    RegClassRegs = TLI.getRegClassForInlineAsmConstraint(OpInfo.ConstraintCode,
+                                                         OpInfo.ConstraintVT);
+  }
+
+  const MRegisterInfo *MRI = DAG.getTarget().getRegisterInfo();
+  unsigned NumAllocated = 0;
+  for (unsigned i = 0, e = RegClassRegs.size(); i != e; ++i) {
+    unsigned Reg = RegClassRegs[i];
+    // See if this register is available.
+    if ((isOutReg && OutputRegs.count(Reg)) ||   // Already used.
+        (isInReg  && InputRegs.count(Reg))) {    // Already used.
+      // Make sure we find consecutive registers.
+      NumAllocated = 0;
+      continue;
+    }
+    
+    // Check to see if this register is allocatable (i.e. don't give out the
+    // stack pointer).
+    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, TLI, MRI);
+    if (!RC) {
+      // Make sure we find consecutive registers.
+      NumAllocated = 0;
+      continue;
+    }
+    
+    // Okay, this register is good, we can use it.
+    ++NumAllocated;
+
+    // If we allocated enough consecutive registers, succeed.
+    if (NumAllocated == NumRegs) {
+      unsigned RegStart = (i-NumAllocated)+1;
+      unsigned RegEnd   = i+1;
+      // Mark all of the allocated registers used.
+      for (unsigned i = RegStart; i != RegEnd; ++i) {
+        unsigned Reg = RegClassRegs[i];
+        Regs.push_back(Reg);
+        if (isOutReg) OutputRegs.insert(Reg);    // Mark reg used.
+        if (isInReg)  InputRegs.insert(Reg);     // Mark reg used.
+      }
+      
+      return RegsForValue(Regs, *RC->vt_begin(), OpInfo.ConstraintVT);
+    }
+  }
+  
+  // Otherwise, we couldn't allocate enough registers for this.
+  return RegsForValue();
 }
 
 
@@ -3336,8 +3342,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     
     // Build a list of regs that this operand uses.  This always has a single
     // element for promoted/expanded operands.
-    RegsForValue Regs = GetRegistersForValue(OpInfo.ConstraintCode, OpVT,
-                                             false, false,
+    RegsForValue Regs = GetRegistersForValue(OpInfo, false, false,
                                              OutputRegs, InputRegs);
     
     switch (OpInfo.Type) {
@@ -3407,8 +3412,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       RegsForValue Regs =
-        GetRegistersForValue(OpInfo.ConstraintCode, OpInfo.ConstraintVT,
-                             true, UsesInputRegister, 
+        GetRegistersForValue(OpInfo, true, UsesInputRegister, 
                              OutputRegs, InputRegs);
       if (Regs.Regs.empty()) {
         cerr << "Couldn't allocate output reg for contraint '"
@@ -3515,8 +3519,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
 
       // Copy the input into the appropriate registers.
       RegsForValue InRegs =
-        GetRegistersForValue(OpInfo.ConstraintCode, OpInfo.ConstraintVT,
-                             false, true, OutputRegs, InputRegs);
+        GetRegistersForValue(OpInfo, false, true, OutputRegs, InputRegs);
       // FIXME: should be match fail.
       assert(!InRegs.Regs.empty() && "Couldn't allocate input reg!");
 
@@ -3527,8 +3530,8 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     }
     case InlineAsm::isClobber: {
       RegsForValue ClobberedRegs =
-        GetRegistersForValue(OpInfo.ConstraintCode, MVT::Other, false, false,
-                             OutputRegs, InputRegs);
+        GetRegistersForValue(OpInfo, false,
+                             false, OutputRegs, InputRegs);
       // Add the clobbered value to the operand list, so that the register
       // allocator is aware that the physreg got clobbered.
       if (!ClobberedRegs.Regs.empty())
