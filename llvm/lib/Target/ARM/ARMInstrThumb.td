@@ -511,7 +511,7 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 // assembler.
 def tLEApcrel : TIx2<(ops GPR:$dst, i32imm:$label),
                     !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
-                                          "${:private}PCRELL${:uid}+6))\n"),
+                                          "${:private}PCRELL${:uid}+4))\n"),
                                !strconcat("\tmov $dst, #PCRELV${:uid}\n",
                                   "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
                     []>;
