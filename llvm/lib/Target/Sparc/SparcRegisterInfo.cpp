@@ -165,7 +165,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 }
 
 void SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                            RegScavenger *RS) const {
+                                            int SPAdj, RegScavenger *RS) const {
+  assert(SPAdj == 0 && "Unexpected");
+
   unsigned i = 0;
   MachineInstr &MI = *II;
   while (!MI.getOperand(i).isFrameIndex()) {

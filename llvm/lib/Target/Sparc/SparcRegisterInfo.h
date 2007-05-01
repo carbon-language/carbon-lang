@@ -64,7 +64,7 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
                                      MachineBasicBlock::iterator I) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           RegScavenger *RS = NULL) const;
+                           int SPAdj, RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 

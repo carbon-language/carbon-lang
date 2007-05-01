@@ -80,7 +80,7 @@ public:
   
   void lowerDynamicAlloc(MachineBasicBlock::iterator II) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           RegScavenger *RS = NULL) const;
+                           int SPAdj, RegScavenger *RS = NULL) const;
 
   /// determineFrameLayout - Determine the size of the frame and maximum call
   /// frame size.

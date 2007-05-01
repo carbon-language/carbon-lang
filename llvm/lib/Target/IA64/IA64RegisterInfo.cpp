@@ -177,7 +177,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                           RegScavenger *RS)const{
+                                           int SPAdj, RegScavenger *RS)const{
+  assert(SPAdj == 0 && "Unexpected");
+
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();

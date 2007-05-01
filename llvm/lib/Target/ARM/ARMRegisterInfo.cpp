@@ -689,7 +689,7 @@ unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
 }
 
 void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                          RegScavenger *RS) const{
+                                          int SPAdj, RegScavenger *RS) const{
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -705,7 +705,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned FrameReg = ARM::SP;
   int FrameIndex = MI.getOperand(i).getFrameIndex();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) + 
-               MF.getFrameInfo()->getStackSize();
+               MF.getFrameInfo()->getStackSize() + SPAdj;
 
   if (AFI->isGPRCalleeSavedArea1Frame(FrameIndex))
     Offset -= AFI->getGPRCalleeSavedArea1Offset();
@@ -714,6 +714,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else if (AFI->isDPRCalleeSavedAreaFrame(FrameIndex))
     Offset -= AFI->getDPRCalleeSavedAreaOffset();
   else if (hasFP(MF)) {
+    assert(SPAdj == 0 && "Unexpected");
     // There is alloca()'s in this function, must reference off the frame
     // pointer instead.
     FrameReg = getFrameRegister(MF);
@@ -988,7 +989,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     unsigned ScratchReg = findScratchRegister(RS, &ARM::GPRRegClass, AFI);
     if (ScratchReg == 0)
       // No register is "free". Scavenge a register.
-      ScratchReg = RS->scavengeRegister(&ARM::GPRRegClass, II);
+      ScratchReg = RS->scavengeRegister(&ARM::GPRRegClass, II, SPAdj);
     emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg,
                             isSub ? -Offset : Offset, TII);
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);

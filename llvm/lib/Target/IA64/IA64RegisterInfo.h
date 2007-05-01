@@ -60,7 +60,7 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
                                      MachineBasicBlock::iterator MI) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                           RegScavenger *RS = NULL) const;
+                           int SPAdj, RegScavenger *RS = NULL) const;
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;

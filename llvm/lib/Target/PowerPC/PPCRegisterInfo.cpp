@@ -589,7 +589,9 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
 }
 
 void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                          RegScavenger *RS) const {
+                                          int SPAdj, RegScavenger *RS) const {
+  assert(SPAdj == 0 && "Unexpected");
+
   // Get the instruction.
   MachineInstr &MI = *II;
   // Get the instruction's basic block.

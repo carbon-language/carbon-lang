@@ -94,7 +94,7 @@ public:
                                      MachineBasicBlock::iterator MI) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                           RegScavenger *RS = NULL) const;
+                           int SPAdj, RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
