@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/STLExtras.h"
 #include <climits>
 using namespace llvm;
 
@@ -151,9 +152,14 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   MachineFrameInfo *FFI = Fn.getFrameInfo();
   FFI->setHasCalls(HasCalls);
   FFI->setMaxCallFrameSize(MaxCallFrameSize);
+
   for (unsigned i = 0, e = FrameSDOps.size(); i != e; ++i) {
     MachineBasicBlock::iterator I = FrameSDOps[i];
-    RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
+    // If call frames are not being included as part of the stack frame,
+    // and there is no dynamic allocation (therefore referencing frame slots
+    // off sp), leave the pseudo ops alone. We'll eliminate them later.
+    if (RegInfo->hasReservedCallFrame(Fn) || RegInfo->hasFP(Fn))
+      RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
   }
 
   // Now figure out which *callee saved* registers are modified by the current
@@ -491,25 +497,49 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const MRegisterInfo &MRI = *TM.getRegisterInfo();
+  const TargetFrameInfo *TFI = TM.getFrameInfo();
+  bool StackGrowsDown =
+    TFI->getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
+  int FrameSetupOpcode   = MRI.getCallFrameSetupOpcode();
+  int FrameDestroyOpcode = MRI.getCallFrameDestroyOpcode();
 
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    int SPAdj = 0;  // SP offset due to call frame setup / destroy.
     if (RS) RS->enterBasicBlock(BB);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
-      MachineInstr *MI = I++;
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
-        if (MI->getOperand(i).isFrameIndex()) {
-          // If this instruction has a FrameIndex operand, we need to use that
-          // target machine register info object to eliminate it.
-          MRI.eliminateFrameIndex(MI, RS);
+      MachineInstr *MI = I;
 
-          // Revisit the instruction in full.  Some instructions (e.g. inline
-          // asm instructions) can have multiple frame indices.
-          --I;
-          MI = 0;
-          break;
-        }
+      // Remember how much SP has been adjustment to create the call frame.
+      if (I->getOpcode() == FrameSetupOpcode ||
+          I->getOpcode() == FrameDestroyOpcode) {
+        int Size = I->getOperand(0).getImmedValue();
+        if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
+            (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
+          Size = -Size;
+        SPAdj += Size;
+        MachineBasicBlock::iterator PrevI = prior(I);
+        MRI.eliminateCallFramePseudoInstr(Fn, *BB, I);
+        // Visit the instructions created by eliminateCallFramePseudoInstr().
+        I = next(PrevI);
+        MI = NULL;
+      } else {
+        I++;
+        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+          if (MI->getOperand(i).isFrameIndex()) {
+            // If this instruction has a FrameIndex operand, we need to use that
+            // target machine register info object to eliminate it.
+            MRI.eliminateFrameIndex(MI, SPAdj, RS);
+
+            // Revisit the instruction in full.  Some instructions (e.g. inline
+            // asm instructions) can have multiple frame indices.
+            --I;
+            MI = 0;
+            break;
+          }
+      }
       // Update register states.
       if (RS && MI) RS->forward(MI);
     }
+    assert(SPAdj == 0 && "Unbalanced call frame setup / destroy pairs?");
   }
 }

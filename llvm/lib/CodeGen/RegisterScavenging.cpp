@@ -75,7 +75,7 @@ void RegScavenger::restoreScavengedReg() {
   RegInfo->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
                                 ScavengingFrameIndex, ScavengedRC);
   MachineBasicBlock::iterator II = prior(MBBI);
-  RegInfo->eliminateFrameIndex(II, this);
+  RegInfo->eliminateFrameIndex(II, 0, this);
   setUsed(ScavengedReg);
   ScavengedReg = 0;
   ScavengedRC = NULL;
@@ -243,7 +243,8 @@ static unsigned calcDistanceToUse(MachineBasicBlock *MBB,
 }
 
 unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
-                                        MachineBasicBlock::iterator I) {
+                                        MachineBasicBlock::iterator I,
+                                        int SPAdj) {
   assert(ScavengingFrameIndex >= 0 &&
          "Cannot scavenge a register without an emergency spill slot!");
 
@@ -277,12 +278,12 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     RegInfo->loadRegFromStackSlot(*MBB, I, ScavengedReg,
                                   ScavengingFrameIndex, ScavengedRC);
     MachineBasicBlock::iterator II = prior(I);
-    RegInfo->eliminateFrameIndex(II, this);
+    RegInfo->eliminateFrameIndex(II, SPAdj, this);
   }
 
   RegInfo->storeRegToStackSlot(*MBB, I, SReg, ScavengingFrameIndex, RC);
   MachineBasicBlock::iterator II = prior(I);
-  RegInfo->eliminateFrameIndex(II, this);
+  RegInfo->eliminateFrameIndex(II, SPAdj, this);
   ScavengedReg = SReg;
   ScavengedRC = RC;
 
