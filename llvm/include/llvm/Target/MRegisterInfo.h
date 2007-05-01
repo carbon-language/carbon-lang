@@ -512,11 +512,12 @@ public:
   /// referenced by the iterator contains an MO_FrameIndex operand which must be
   /// eliminated by this method.  This method may modify or replace the
   /// specified instruction, as long as it keeps the iterator pointing the the
-  /// finished product. The return value is the number of instructions
-  /// added to (negative if removed from) the basic block.
+  /// finished product. SPAdj is the SP adjustment due to call frame setup
+  /// instruction. The return value is the number of instructions added to
+  /// (negative if removed from) the basic block.
   ///
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                   RegScavenger *RS = NULL) const = 0;
+                                   int SPAdj, RegScavenger *RS=NULL) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function. The return value is the number of instructions
