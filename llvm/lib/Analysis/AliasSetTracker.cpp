@@ -555,6 +555,9 @@ namespace {
   class VISIBILITY_HIDDEN AliasSetPrinter : public FunctionPass {
     AliasSetTracker *Tracker;
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    AliasSetPrinter() : FunctionPass((intptr_t)&ID) {}
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<AliasAnalysis>();
@@ -570,5 +573,6 @@ namespace {
       return false;
     }
   };
+  const int AliasSetPrinter::ID = 0;
   RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer");
 }

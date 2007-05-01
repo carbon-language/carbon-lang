@@ -45,7 +45,9 @@ class IntervalPartition : public FunctionPass {
   std::vector<Interval*> Intervals;
 
 public:
-  IntervalPartition() : RootInterval(0) {}
+  static const int ID; // Pass identifcation, replacement for typeid
+
+  IntervalPartition() : FunctionPass((intptr_t)&ID), RootInterval(0) {}
 
   // run - Calculate the interval partition for this function
   virtual bool runOnFunction(Function &F);

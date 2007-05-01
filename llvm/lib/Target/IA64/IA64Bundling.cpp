@@ -36,12 +36,14 @@ STATISTIC(StopBitsAdded, "Number of stop bits added");
 
 namespace {
   struct IA64BundlingPass : public MachineFunctionPass {
+    static const int ID;
     /// Target machine description which we query for reg. names, data
     /// layout, etc.
     ///
     IA64TargetMachine &TM;
 
-    IA64BundlingPass(IA64TargetMachine &tm) : TM(tm) { }
+    IA64BundlingPass(IA64TargetMachine &tm) 
+      : MachineFunctionPass((intptr_t)&ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "IA64 (Itanium) Bundling Pass";
@@ -61,6 +63,7 @@ namespace {
     // 'fallthrough' code
     std::set<unsigned> PendingRegWrites;
   };
+  const int IA64BundlingPass::ID = 0;
 } // end of anonymous namespace
 
 /// createIA64BundlingPass - Returns a pass that adds STOP (;;) instructions

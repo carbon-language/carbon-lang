@@ -34,8 +34,8 @@
 #include <deque>
 #include <map>
 #include <iosfwd>
-#include <typeinfo>
 #include <cassert>
+#include <stdint.h>
 
 namespace llvm {
 
@@ -77,7 +77,7 @@ typedef enum PassManagerType PassManagerType;
 ///
 class Pass {
   AnalysisResolver *Resolver;  // Used to resolve analysis
-  const PassInfo *PassInfoCache;
+  intptr_t PassID;
 
   // AnalysisImpls - This keeps track of which passes implement the interfaces
   // that are required by the current pass (to implement getAnalysis()).
@@ -87,7 +87,7 @@ class Pass {
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
-  Pass() : Resolver(0), PassInfoCache(0) {}
+  Pass(intptr_t pid) : Resolver(0), PassID(pid) {}
   virtual ~Pass();
 
   /// getPassName - Return a nice clean name for a pass.  This usually
@@ -163,12 +163,12 @@ public:
 
   template<typename AnalysisClass>
   static const PassInfo *getClassPassInfo() {
-    return lookupPassInfo(typeid(AnalysisClass));
+    return lookupPassInfo((intptr_t)&AnalysisClass::ID);
   }
 
   // lookupPassInfo - Return the pass info object for the specified pass class,
   // or null if it is not known.
-  static const PassInfo *lookupPassInfo(const std::type_info &TI);
+  static const PassInfo *lookupPassInfo(intptr_t TI);
 
   /// getAnalysisToUpdate<AnalysisType>() - This function is used by subclasses
   /// to get to the analysis information that might be around that needs to be
@@ -232,6 +232,7 @@ public:
     return PMT_ModulePassManager;
   }
 
+  ModulePass(intptr_t pid) : Pass(pid) {}
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -256,6 +257,7 @@ public:
   ///
   virtual bool runOnModule(Module &M) { return false; }
 
+  ImmutablePass(intptr_t pid) : ModulePass(pid) {}
   // Force out-of-line virtual method.
   virtual ~ImmutablePass();
 };
@@ -271,6 +273,8 @@ public:
 ///
 class FunctionPass : public Pass {
 public:
+  FunctionPass(intptr_t pid) : Pass(pid) {}
+
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///
@@ -320,6 +324,8 @@ public:
 ///
 class BasicBlockPass : public Pass {
 public:
+  BasicBlockPass(intptr_t pid) : Pass(pid) {}
+
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///

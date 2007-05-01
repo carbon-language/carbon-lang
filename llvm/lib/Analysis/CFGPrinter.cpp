@@ -91,6 +91,9 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
 namespace {
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    CFGPrinter() : FunctionPass((intptr_t)&ID) {}
+
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
       cerr << "Writing '" << Filename << "'...";
@@ -111,10 +114,12 @@ namespace {
     }
   };
 
+  const int CFGPrinter::ID = 0;
   RegisterPass<CFGPrinter> P1("print-cfg",
                               "Print CFG of function to 'dot' file");
 
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
+    static const int ID; // Pass identifcation, replacement for typeid
     virtual bool runOnFunction(Function &F) {
       bool OldCFGOnly = CFGOnly;
       CFGOnly = true;
@@ -129,6 +134,7 @@ namespace {
     }
   };
 
+  const int CFGOnlyPrinter::ID = 0;
   RegisterPass<CFGOnlyPrinter>
   P2("print-cfg-only",
      "Print CFG of function to 'dot' file (with no function bodies)");

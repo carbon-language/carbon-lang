@@ -22,6 +22,7 @@
 #include "llvm/Type.h"
 using namespace llvm;
 
+const int UnifyFunctionExitNodes::ID = 0;
 static RegisterPass<UnifyFunctionExitNodes>
 X("mergereturn", "Unify function exit nodes");
 

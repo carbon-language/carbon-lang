@@ -152,6 +152,9 @@ public:
 /// @brief A ModulePass for optimizing well-known function calls.
 class VISIBILITY_HIDDEN SimplifyLibCalls : public ModulePass {
 public:
+  static const int ID; // Pass identifcation, replacement for typeid
+  SimplifyLibCalls() : ModulePass((intptr_t)&ID) {}
+
   /// We need some target data for accurate signature details that are
   /// target dependent. So we require target data in our AnalysisUsage.
   /// @brief Require TargetData from AnalysisUsage.
@@ -373,6 +376,7 @@ private:
   TargetData *TD;        ///< Cached TargetData
 };
 
+const int SimplifyLibCalls::ID = 0;
 // Register the pass
 RegisterPass<SimplifyLibCalls>
 X("simplify-libcalls", "Simplify well-known library calls");

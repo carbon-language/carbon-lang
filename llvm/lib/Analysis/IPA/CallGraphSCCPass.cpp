@@ -30,7 +30,9 @@ using namespace llvm;
 class CGPassManager : public ModulePass, public PMDataManager {
 
 public:
-  CGPassManager(int Depth) : PMDataManager(Depth) { }
+  static const int ID;
+  CGPassManager(int Depth) 
+    : ModulePass((intptr_t)&ID), PMDataManager(Depth) { }
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -71,6 +73,7 @@ public:
   }
 };
 
+const int CGPassManager::ID = 0;
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the module, and if so, return true.
 bool CGPassManager::runOnModule(Module &M) {

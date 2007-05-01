@@ -39,11 +39,14 @@ namespace {
     MachineCodeEmitter  &MCE;
     bool Is64BitMode;
   public:
+    static const int ID;
     explicit Emitter(TargetMachine &tm, MachineCodeEmitter &mce)
-      : II(0), TD(0), TM(tm), MCE(mce), Is64BitMode(false) {}
+      : MachineFunctionPass((intptr_t)&ID), II(0), TD(0), TM(tm), 
+      MCE(mce), Is64BitMode(false) {}
     Emitter(TargetMachine &tm, MachineCodeEmitter &mce,
             const X86InstrInfo &ii, const TargetData &td, bool is64)
-      : II(&ii), TD(&td), TM(tm), MCE(mce), Is64BitMode(is64) {}
+      : MachineFunctionPass((intptr_t)&ID), II(&ii), TD(&td), TM(tm), 
+      MCE(mce), Is64BitMode(is64) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
 
@@ -79,6 +82,7 @@ namespace {
     bool isX86_64ExtendedReg(const MachineOperand &MO);
     unsigned determineREX(const MachineInstr &MI);
   };
+  const int Emitter::ID = 0;
 }
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code

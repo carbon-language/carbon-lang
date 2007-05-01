@@ -32,8 +32,12 @@ STATISTIC(NumBounce     , "Number of bounce functions created");
 namespace {
   class VISIBILITY_HIDDEN IndMemRemPass : public ModulePass {
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    IndMemRemPass() : ModulePass((intptr_t)&ID) {}
+
     virtual bool runOnModule(Module &M);
   };
+  const int IndMemRemPass::ID = 0;
   RegisterPass<IndMemRemPass> X("indmemrem","Indirect Malloc and Free Removal");
 } // end anonymous namespace
 

@@ -47,6 +47,9 @@ STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 
 namespace {
   struct VISIBILITY_HIDDEN LCSSA : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    LCSSA() : FunctionPass((intptr_t)&ID) {}
+
     // Cached analysis information for the current function.
     LoopInfo *LI;
     DominatorTree *DT;
@@ -81,6 +84,7 @@ namespace {
     }
   };
   
+  const int LCSSA::ID = 0;
   RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 }
 

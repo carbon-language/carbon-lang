@@ -32,6 +32,9 @@ STATISTIC(NumExpanded, "Number of branches expanded to long format");
 
 namespace {
   struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
+    static const int ID;
+    PPCBSel() : MachineFunctionPass((intptr_t)&ID) {}
+
     /// BlockSizes - The sizes of the basic blocks in the function.
     std::vector<unsigned> BlockSizes;
 
@@ -41,6 +44,7 @@ namespace {
       return "PowerPC Branch Selector";
     }
   };
+  const int PPCBSel::ID = 0;
 }
 
 /// createPPCBranchSelectionPass - returns an instance of the Branch Selection

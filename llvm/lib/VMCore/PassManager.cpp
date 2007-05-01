@@ -63,7 +63,9 @@ class VISIBILITY_HIDDEN BBPassManager : public PMDataManager,
                                         public FunctionPass {
 
 public:
-  BBPassManager(int Depth) : PMDataManager(Depth) { }
+  static const int ID;
+  BBPassManager(int Depth) 
+    : PMDataManager(Depth), FunctionPass((intptr_t)&ID) {}
 
   /// Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the function, and if so, return true.
@@ -104,6 +106,7 @@ public:
   }
 };
 
+const int BBPassManager::ID = 0;
 }
 
 namespace llvm {
@@ -116,9 +119,10 @@ class FunctionPassManagerImpl : public Pass,
                                 public PMDataManager,
                                 public PMTopLevelManager {
 public:
-
-  FunctionPassManagerImpl(int Depth) : PMDataManager(Depth),
-                                       PMTopLevelManager(TLM_Function) { }
+  static const int ID;
+  FunctionPassManagerImpl(int Depth) : 
+    Pass((intptr_t)&ID), PMDataManager(Depth), 
+    PMTopLevelManager(TLM_Function) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
@@ -167,9 +171,9 @@ public:
     FPPassManager *FP = static_cast<FPPassManager *>(PassManagers[N]);
     return FP;
   }
-
 };
 
+const int FunctionPassManagerImpl::ID = 0;
 //===----------------------------------------------------------------------===//
 // MPPassManager
 //
@@ -179,7 +183,8 @@ public:
 class MPPassManager : public Pass, public PMDataManager {
  
 public:
-  MPPassManager(int Depth) : PMDataManager(Depth) { }
+  static const int ID;
+  MPPassManager(int Depth) : Pass((intptr_t)&ID), PMDataManager(Depth) { }
 
   // Delete on the fly managers.
   virtual ~MPPassManager() {
@@ -242,17 +247,19 @@ public:
   std::map<Pass *, FunctionPassManagerImpl *> OnTheFlyManagers;
 };
 
+const int MPPassManager::ID = 0;
 //===----------------------------------------------------------------------===//
 // PassManagerImpl
 //
+
 /// PassManagerImpl manages MPPassManagers
 class PassManagerImpl : public Pass,
                         public PMDataManager,
                         public PMTopLevelManager {
 
 public:
-
-  PassManagerImpl(int Depth) : PMDataManager(Depth),
+  static const int ID;
+  PassManagerImpl(int Depth) : Pass((intptr_t)&ID), PMDataManager(Depth),
                                PMTopLevelManager(TLM_Pass) { }
 
   /// add - Add a pass to the queue of passes to run.  This passes ownership of
@@ -297,6 +304,7 @@ public:
 
 };
 
+const int PassManagerImpl::ID = 0;
 } // End of llvm namespace
 
 namespace {
@@ -1100,6 +1108,7 @@ bool FunctionPassManagerImpl::run(Function &F) {
 //===----------------------------------------------------------------------===//
 // FPPassManager implementation
 
+const int FPPassManager::ID = 0;
 /// Print passes managed by this manager
 void FPPassManager::dumpPassStructure(unsigned Offset) {
   llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager\n";

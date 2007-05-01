@@ -28,6 +28,7 @@ using namespace llvm::dwarf;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
+  const int MachineModuleInfo::ID = 0;
   RegisterPass<MachineModuleInfo> X("machinemoduleinfo", "Module Information");
 }
 
@@ -1462,7 +1463,8 @@ DebugScope::~DebugScope() {
 //===----------------------------------------------------------------------===//
 
 MachineModuleInfo::MachineModuleInfo()
-: DR()
+: ImmutablePass((intptr_t)&ID)
+, DR()
 , VR()
 , CompileUnits()
 , Directories()
@@ -1749,9 +1751,14 @@ Function *MachineModuleInfo::getPersonality() const {
 namespace llvm {
 
 struct DebugLabelFolder : public MachineFunctionPass {
+  static const int ID;
+  DebugLabelFolder() : MachineFunctionPass((intptr_t)&ID) {}
+
   virtual bool runOnMachineFunction(MachineFunction &MF);
   virtual const char *getPassName() const { return "Label Folder"; }
 };
+
+const int  DebugLabelFolder::ID = 0;
 
 bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
   // Get machine module info.

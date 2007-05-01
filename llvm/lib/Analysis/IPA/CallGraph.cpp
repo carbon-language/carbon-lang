@@ -51,7 +51,9 @@ class VISIBILITY_HIDDEN BasicCallGraph : public CallGraph, public ModulePass {
   CallGraphNode *CallsExternalNode;
 
 public:
-  BasicCallGraph() : Root(0), ExternalCallingNode(0), CallsExternalNode(0) {}
+  static const int ID; // Class identification, replacement for typeinfo
+  BasicCallGraph() : ModulePass((intptr_t)&ID), Root(0), 
+    ExternalCallingNode(0), CallsExternalNode(0) {}
 
   // runOnModule - Compute the call graph for the specified module.
   virtual bool runOnModule(Module &M) {
@@ -188,7 +190,9 @@ private:
   }
 };
 
+const int CallGraph::ID = 0;
 RegisterAnalysisGroup<CallGraph> X("Call Graph");
+const int BasicCallGraph::ID = 0;
 RegisterPass<BasicCallGraph> Y("basiccg", "Basic CallGraph Construction");
 RegisterAnalysisGroup<CallGraph, true> Z(Y);
 

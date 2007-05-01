@@ -39,7 +39,9 @@ namespace {
     /// transformation profitability.
     const TargetLowering *TLI;
   public:
-    CodeGenPrepare(const TargetLowering *tli = 0) : TLI(tli) {}
+    static const int ID; // Pass identifcation, replacement for typeid
+    CodeGenPrepare(const TargetLowering *tli = 0) : FunctionPass((intptr_t)&ID),
+      TLI(tli) {}
     bool runOnFunction(Function &F);
     
   private:
@@ -52,6 +54,8 @@ namespace {
                                DenseMap<Value*,Value*> &SunkAddrs);
   };
 }
+
+const int CodeGenPrepare::ID = 0;
 static RegisterPass<CodeGenPrepare> X("codegenprepare",
                                       "Optimize for code generation");
 

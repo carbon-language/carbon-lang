@@ -336,7 +336,9 @@ private:
 class FPPassManager : public ModulePass, public PMDataManager {
  
 public:
-  explicit FPPassManager(int Depth) : PMDataManager(Depth) { }
+  static const int ID;
+  explicit FPPassManager(int Depth) 
+  : ModulePass((intptr_t)&ID), PMDataManager(Depth) { }
   
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.

@@ -47,6 +47,7 @@
 #include <list>
 using namespace llvm;
 
+const int ELFWriter::ID = 0;
 /// AddELFWriter - Concrete function to add the ELF writer to the function pass
 /// manager.
 MachineCodeEmitter *llvm::AddELFWriter(FunctionPassManager &FPM,
@@ -176,7 +177,8 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &F) {
 //                          ELFWriter Implementation
 //===----------------------------------------------------------------------===//
 
-ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
+ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) 
+  : MachineFunctionPass((intptr_t)&ID), O(o), TM(tm) {
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;

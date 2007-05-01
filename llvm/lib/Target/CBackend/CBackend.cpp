@@ -56,6 +56,10 @@ namespace {
   /// external functions with the same name.
   ///
   class CBackendNameAllUsedStructsAndMergeFunctions : public ModulePass {
+  public:
+    static const int ID;
+    CBackendNameAllUsedStructsAndMergeFunctions() 
+      : ModulePass((intptr_t)&ID) {}
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
     }
@@ -66,6 +70,8 @@ namespace {
 
     virtual bool runOnModule(Module &M);
   };
+
+  const int CBackendNameAllUsedStructsAndMergeFunctions::ID = 0;
 
   /// CWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C translation unit.
@@ -82,8 +88,10 @@ namespace {
     std::set<Function*> intrinsicPrototypesAlreadyGenerated;
 
   public:
-    CWriter(std::ostream &o) : Out(o), IL(0), Mang(0), LI(0), TheModule(0), 
-                               TAsm(0), TD(0) {}
+    static const int ID;
+    CWriter(std::ostream &o) 
+      : FunctionPass((intptr_t)&ID), Out(o), IL(0), Mang(0), LI(0), 
+        TheModule(0), TAsm(0), TD(0) {}
 
     virtual const char *getPassName() const { return "C backend"; }
 
@@ -255,6 +263,8 @@ namespace {
     std::string GetValueName(const Value *Operand);
   };
 }
+
+const int CWriter::ID = 0;
 
 /// This method inserts names for any unnamed structure types that are used by
 /// the program, and removes names from structure types that are not used by the

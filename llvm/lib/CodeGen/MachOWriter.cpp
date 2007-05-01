@@ -317,7 +317,9 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
 //                          MachOWriter Implementation
 //===----------------------------------------------------------------------===//
 
-MachOWriter::MachOWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
+const int MachOWriter::ID = 0;
+MachOWriter::MachOWriter(std::ostream &o, TargetMachine &tm) 
+  : MachineFunctionPass((intptr_t)&ID), O(o), TM(tm) {
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData()->isLittleEndian();
 

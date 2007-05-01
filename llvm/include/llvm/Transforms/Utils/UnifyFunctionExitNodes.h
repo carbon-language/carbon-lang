@@ -25,7 +25,9 @@ namespace llvm {
 struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ReturnBlock, *UnwindBlock, *UnreachableBlock;
 public:
-  UnifyFunctionExitNodes() : ReturnBlock(0), UnwindBlock(0) {}
+  static const int ID; // Pass identifcation, replacement for typeid
+  UnifyFunctionExitNodes() : FunctionPass((intptr_t)&ID),
+                             ReturnBlock(0), UnwindBlock(0) {}
 
   // We can preserve non-critical-edgeness when we unify function exit nodes
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;

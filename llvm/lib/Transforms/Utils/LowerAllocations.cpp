@@ -36,8 +36,10 @@ namespace {
     Constant *FreeFunc;     // Initialized by doInitialization
     bool LowerMallocArgToInteger;
   public:
+    static const int ID; // Pass ID, replacement for typeid
     LowerAllocations(bool LowerToInt = false)
-      : MallocFunc(0), FreeFunc(0), LowerMallocArgToInteger(LowerToInt) {}
+      : BasicBlockPass((intptr_t)&ID), MallocFunc(0), FreeFunc(0), 
+        LowerMallocArgToInteger(LowerToInt) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -66,6 +68,7 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
   };
 
+  const int LowerAllocations::ID = 0;
   RegisterPass<LowerAllocations>
   X("lowerallocs", "Lower allocations from instructions to calls");
 }

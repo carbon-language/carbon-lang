@@ -25,6 +25,10 @@ namespace {
   /// CrashOnCalls - This pass is used to test bugpoint.  It intentionally
   /// crashes on any call instructions.
   class CrashOnCalls : public BasicBlockPass {
+  public:
+    static const int ID; // Pass ID, replacement for typeid
+    CrashOnCalls() : BasicBlockPass((intptr_t)&ID) {}
+  private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
@@ -38,6 +42,7 @@ namespace {
     }
   };
 
+  const int CrashOnCalls::ID = 0;
   RegisterPass<CrashOnCalls>
   X("bugpoint-crashcalls",
     "BugPoint Test Pass - Intentionally crash on CallInsts");
@@ -47,6 +52,10 @@ namespace {
   /// DeleteCalls - This pass is used to test bugpoint.  It intentionally
   /// deletes some call instructions, "misoptimizing" the program.
   class DeleteCalls : public BasicBlockPass {
+  public:
+    static const int ID; // Pass ID, replacement for typeid
+    DeleteCalls() : BasicBlockPass((intptr_t)&ID) {}
+  private:
     bool runOnBasicBlock(BasicBlock &BB) {
       for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
@@ -58,7 +67,8 @@ namespace {
       return false;
     }
   };
-
+ 
+  const int DeleteCalls::ID = 0;
   RegisterPass<DeleteCalls>
   Y("bugpoint-deletecalls",
     "BugPoint Test Pass - Intentionally 'misoptimize' CallInsts");

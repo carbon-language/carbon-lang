@@ -69,6 +69,7 @@ namespace {
   /// measuring framework overhead
   class VISIBILITY_HIDDEN NullProfilerRS : public RSProfilers {
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
     bool isProfiling(Value* v) {
       return false;
     }
@@ -80,7 +81,9 @@ namespace {
     }
   };
 
+  const int RSProfilers::ID = 0;
   static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
+  const int NullProfilerRS::ID = 0;
   static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
                                          "Measure profiling framework overhead");
   static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
@@ -138,6 +141,9 @@ namespace {
 
   /// ProfilerRS - Insert the random sampling framework
   struct VISIBILITY_HIDDEN ProfilerRS : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    ProfilerRS() : FunctionPass((intptr_t)&ID) {}
+
     std::map<Value*, Value*> TransCache;
     std::set<BasicBlock*> ChoicePoints;
     Chooser* c;
@@ -154,6 +160,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   };
 
+  const int ProfilerRS::ID = 0;
   RegisterPass<ProfilerRS> X("insert-rs-profiling-framework",
                              "Insert random sampling instrumentation framework");
 }

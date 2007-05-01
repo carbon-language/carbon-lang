@@ -20,9 +20,12 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // LPPassManager
 //
+
+const int LPPassManager::ID = 0;
 /// LPPassManager manages FPPassManagers and CalLGraphSCCPasses.
 
-LPPassManager::LPPassManager(int Depth) : PMDataManager(Depth) { 
+LPPassManager::LPPassManager(int Depth) 
+  : FunctionPass((intptr_t)&ID), PMDataManager(Depth) { 
   skipThisLoop = false;
   redoThisLoop = false;
   LI = NULL;

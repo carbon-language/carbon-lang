@@ -44,7 +44,9 @@ namespace {
   class VISIBILITY_HIDDEN LoopRotate : public LoopPass {
 
   public:
-    
+    static const int ID; // Pass ID, replacement for typeid
+    LoopRotate() : LoopPass((intptr_t)&ID) {}
+
     // Rotate Loop L as many times as possible. Return true if
     // loop is rotated at least once.
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -92,6 +94,7 @@ namespace {
     SmallVector<RenameData, MAX_HEADER_SIZE> LoopHeaderInfo;
   };
   
+  const int LoopRotate::ID = 0;
   RegisterPass<LoopRotate> X ("loop-rotate", "Rotate Loops");
 }
 

@@ -1022,6 +1022,8 @@ private:
   std::vector<GlobalVariable *> TypeInfos;
 
 public:
+  static const int ID; // Pass identifcation, replacement for typeid
+
   MachineModuleInfo();
   ~MachineModuleInfo();
   

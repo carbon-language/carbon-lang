@@ -28,9 +28,10 @@ class PrintModulePass : public ModulePass {
   OStream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
-  PrintModulePass() : Out(&cerr), DeleteStream(false) {}
+  static const int ID;
+  PrintModulePass() : ModulePass((intptr_t)&ID), Out(&cerr), DeleteStream(false) {}
   PrintModulePass(OStream *o, bool DS = false)
-    : Out(o), DeleteStream(DS) {}
+    : ModulePass((intptr_t)&ID), Out(o), DeleteStream(DS) {}
 
   ~PrintModulePass() {
     if (DeleteStream) delete Out;
@@ -51,10 +52,12 @@ class PrintFunctionPass : public FunctionPass {
   OStream *Out;           // ostream to print on
   bool DeleteStream;      // Delete the ostream in our dtor?
 public:
-  PrintFunctionPass() : Banner(""), Out(&cerr), DeleteStream(false) {}
+  static const int ID;
+  PrintFunctionPass() : FunctionPass((intptr_t)&ID), Banner(""), Out(&cerr), 
+                        DeleteStream(false) {}
   PrintFunctionPass(const std::string &B, OStream *o = &cout,
                     bool DS = false)
-    : Banner(B), Out(o), DeleteStream(DS) {}
+    : FunctionPass((intptr_t)&ID), Banner(B), Out(o), DeleteStream(DS) {}
 
   inline ~PrintFunctionPass() {
     if (DeleteStream) delete Out;

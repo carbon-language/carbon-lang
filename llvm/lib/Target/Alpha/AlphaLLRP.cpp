@@ -37,7 +37,9 @@ namespace {
     ///
     AlphaTargetMachine &TM;
 
-    AlphaLLRPPass(AlphaTargetMachine &tm) : TM(tm) { }
+    static const int ID;
+    AlphaLLRPPass(AlphaTargetMachine &tm) 
+      : MachineFunctionPass((intptr_t)&ID), TM(tm) { }
 
     virtual const char *getPassName() const {
       return "Alpha NOP inserter";
@@ -152,6 +154,7 @@ namespace {
       return Changed;
     }
   };
+  const int AlphaLLRPPass::ID = 0;
 } // end of anonymous namespace
 
 FunctionPass *llvm::createAlphaLLRPPass(AlphaTargetMachine &tm) {

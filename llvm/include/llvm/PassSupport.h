@@ -37,19 +37,19 @@ class TargetMachine;
 class PassInfo {
   const char           *PassName;      // Nice name for Pass
   const char           *PassArgument;  // Command Line argument to run this pass
-  const std::type_info &TypeInfo;      // type_info object for this Pass class
+  intptr_t             PassID;      
   bool IsCFGOnlyPass;                  // Pass only looks at the CFG.
   bool IsAnalysisGroup;                // True if an analysis group.
   std::vector<const PassInfo*> ItfImpl;// Interfaces implemented by this pass
 
-  Pass *(*NormalCtor)();               // No argument ctor
+  Pass *(*NormalCtor)();
 
 public:
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
-  PassInfo(const char *name, const char *arg, const std::type_info &ti,
+  PassInfo(const char *name, const char *arg, intptr_t pi,
            Pass *(*normal)() = 0, bool isCFGOnly = false)
-    : PassName(name), PassArgument(arg), TypeInfo(ti), 
+    : PassName(name), PassArgument(arg), PassID(pi), 
       IsCFGOnlyPass(isCFGOnly), IsAnalysisGroup(false), NormalCtor(normal) {
   }
 
@@ -65,8 +65,8 @@ public:
   const char *getPassArgument() const { return PassArgument; }
 
   /// getTypeInfo - Return the type_info object for the pass...
-  ///
-  const std::type_info &getTypeInfo() const { return TypeInfo; }
+  /// TODO : Rename
+  intptr_t getTypeInfo() const { return PassID; }
 
   /// isAnalysisGroup - Return true if this is an analysis group, not a normal
   /// pass.
@@ -139,12 +139,12 @@ struct RegisterPassBase {
 
   typedef Pass* (*NormalCtor_t)();
   
-  RegisterPassBase(const char *Name, const char *Arg, const std::type_info &TI,
+  RegisterPassBase(const char *Name, const char *Arg, intptr_t TI,
                    NormalCtor_t NormalCtor = 0, bool CFGOnly = false)
     : PIObj(Name, Arg, TI, NormalCtor, CFGOnly) {
     registerPass();
   }
-  RegisterPassBase(const std::type_info &TI)
+  RegisterPassBase(intptr_t TI)
     : PIObj("", "", TI) {
     // This ctor may only be used for analysis groups: it does not auto-register
     // the pass.
@@ -165,7 +165,7 @@ struct RegisterPass : public RegisterPassBase {
 
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false)
-  : RegisterPassBase(Name, PassArg, typeid(PassName),
+    : RegisterPassBase(Name, PassArg, (intptr_t)&PassName::ID,
                      (RegisterPassBase::NormalCtor_t)callDefaultCtor<PassName>, CFGOnly) {
   }
 };
@@ -195,8 +195,8 @@ class RegisterAGBase : public RegisterPassBase {
   const PassInfo *ImplementationInfo;
   bool isDefaultImplementation;
 protected:
-  explicit RegisterAGBase(const std::type_info &Interface,
-                          const std::type_info *Pass = 0,
+  explicit RegisterAGBase(intptr_t InterfaceID,
+                          intptr_t PassID = 0,
                           bool isDefault = false);
   void setGroupName(const char *Name);
 };
@@ -204,12 +204,12 @@ protected:
 template<typename Interface, bool Default = false>
 struct RegisterAnalysisGroup : public RegisterAGBase {
   explicit RegisterAnalysisGroup(RegisterPassBase &RPB)
-    : RegisterAGBase(typeid(Interface), &RPB.getPassInfo()->getTypeInfo(), 
+    : RegisterAGBase((intptr_t) &Interface::ID, RPB.getPassInfo()->getTypeInfo(),
                      Default) {
   }
 
   explicit RegisterAnalysisGroup(const char *Name)
-  : RegisterAGBase(typeid(Interface)) {
+    : RegisterAGBase((intptr_t) &Interface::ID) {
     setGroupName(Name);
   }
 };

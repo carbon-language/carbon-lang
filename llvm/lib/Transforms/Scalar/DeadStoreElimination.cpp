@@ -34,6 +34,8 @@ STATISTIC(NumOther , "Number of other instrs removed");
 
 namespace {
   struct VISIBILITY_HIDDEN DSE : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    DSE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;
@@ -56,6 +58,7 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
     }
   };
+  const int DSE::ID = 0;
   RegisterPass<DSE> X("dse", "Dead Store Elimination");
 }
 

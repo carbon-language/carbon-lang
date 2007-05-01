@@ -40,6 +40,9 @@ class MRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
 public:
+  static const int ID; // Pass identifcation, replacement for typeid
+  LiveVariables() : MachineFunctionPass((intptr_t)&ID) {}
+
   /// VarInfo - This represents the regions where a virtual register is live in
   /// the program.  We represent this with three different pieces of
   /// information: the instruction that uniquely defines the value, the set of

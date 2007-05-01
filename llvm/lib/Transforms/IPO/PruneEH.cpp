@@ -35,6 +35,9 @@ STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 
 namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    PruneEH() : CallGraphSCCPass((intptr_t)&ID) {}
+
     /// DoesNotUnwind - This set contains all of the functions which we have
     /// determined cannot unwind.
     std::set<CallGraphNode*> DoesNotUnwind;
@@ -49,6 +52,8 @@ namespace {
     bool SimplifyFunction(Function *F);
     void DeleteBasicBlock(BasicBlock *BB);
   };
+
+  const int PruneEH::ID = 0;
   RegisterPass<PruneEH> X("prune-eh", "Remove unused exception handling info");
 }
 

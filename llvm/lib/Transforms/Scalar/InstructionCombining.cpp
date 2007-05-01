@@ -76,6 +76,9 @@ namespace {
     TargetData *TD;
     bool MustPreserveLCSSA;
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    InstCombiner() : FunctionPass((intptr_t)&ID) {}
+
     /// AddToWorkList - Add the specified instruction to the worklist if it
     /// isn't already in it.
     void AddToWorkList(Instruction *I) {
@@ -358,6 +361,7 @@ namespace {
     Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
   };
 
+  const int InstCombiner::ID = 0;
   RegisterPass<InstCombiner> X("instcombine", "Combine redundant instructions");
 }
 

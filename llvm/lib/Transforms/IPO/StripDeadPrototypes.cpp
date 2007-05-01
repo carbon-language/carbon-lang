@@ -27,9 +27,12 @@ namespace {
 /// @brief Pass to remove unused function declarations.
 class VISIBILITY_HIDDEN StripDeadPrototypesPass : public ModulePass {
 public:
-  StripDeadPrototypesPass() { }
+  static const int ID; // Pass identifcation, replacement for typeid
+  StripDeadPrototypesPass() : ModulePass((intptr_t)&ID) { }
   virtual bool runOnModule(Module &M);
 };
+
+const int StripDeadPrototypesPass::ID = 0;
 RegisterPass<StripDeadPrototypesPass> X("strip-dead-prototypes", 
                                         "Strip Unused Function Prototypes");
 

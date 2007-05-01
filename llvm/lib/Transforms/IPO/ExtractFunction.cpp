@@ -25,13 +25,16 @@ namespace {
     bool deleteFunc;
     bool reLink;
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+
     /// FunctionExtractorPass - If deleteFn is true, this pass deletes as the
     /// specified function. Otherwise, it deletes as much of the module as
     /// possible, except for the function specified.
     ///
     FunctionExtractorPass(Function *F = 0, bool deleteFn = true,
                           bool relinkCallees = false)
-      : Named(F), deleteFunc(deleteFn), reLink(relinkCallees) {}
+      : ModulePass((intptr_t)&ID), Named(F), deleteFunc(deleteFn), 
+      reLink(relinkCallees) {}
 
     bool runOnModule(Module &M) {
       if (Named == 0) {
@@ -131,6 +134,7 @@ namespace {
     }
   };
 
+  const int FunctionExtractorPass::ID = 0;
   RegisterPass<FunctionExtractorPass> X("extract", "Function Extractor");
 }
 

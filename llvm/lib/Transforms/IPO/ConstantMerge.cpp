@@ -29,12 +29,16 @@ STATISTIC(NumMerged, "Number of global constants merged");
 
 namespace {
   struct VISIBILITY_HIDDEN ConstantMerge : public ModulePass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    ConstantMerge() : ModulePass((intptr_t)&ID) {}
+
     // run - For this pass, process all of the globals in the module,
     // eliminating duplicate constants.
     //
     bool runOnModule(Module &M);
   };
 
+  const int ConstantMerge::ID = 0;
   RegisterPass<ConstantMerge>X("constmerge","Merge Duplicate Global Constants");
 }
 

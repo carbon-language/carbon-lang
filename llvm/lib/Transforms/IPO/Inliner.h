@@ -27,6 +27,7 @@ namespace llvm {
 /// perform the inlining operations that does not depend on the policy.
 ///
 struct Inliner : public CallGraphSCCPass {
+  static const int ID;
   Inliner();
 
   /// getAnalysisUsage - For this class, we declare that we require and preserve

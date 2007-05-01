@@ -65,6 +65,9 @@ namespace llvm {
     BitVector JoinedLIs;
 
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    LiveIntervals() : MachineFunctionPass((intptr_t)&ID) {}
+
     struct CopyRec {
       MachineInstr *MI;
       unsigned SrcReg, DstReg;

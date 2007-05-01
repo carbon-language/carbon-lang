@@ -35,6 +35,8 @@ using namespace llvm;
 
 namespace {
   struct CFGSCC : public FunctionPass {
+    static const int ID;  // Pass identification, replacement for typeid
+    CFGSCC() : FunctionPass((intptr_t)&ID) {}
     bool runOnFunction(Function& func);
 
     void print(std::ostream &O, const Module* = 0) const { }
@@ -45,6 +47,9 @@ namespace {
   };
 
   struct CallGraphSCC : public ModulePass {
+    static const int ID;  // Pass identification, replacement for typeid
+    CallGraphSCC() : ModulePass((intptr_t)&ID) {}
+
     // run - Print out SCCs in the call graph for the specified module.
     bool runOnModule(Module &M);
 
@@ -57,9 +62,11 @@ namespace {
     }
   };
 
+  const int CFGSCC::ID = 0;
   RegisterPass<CFGSCC>
   Y("cfgscc", "Print SCCs of each function CFG");
 
+  const int CallGraphSCC::ID = 0;
   RegisterPass<CallGraphSCC>
   Z("callscc", "Print SCCs of the Call Graph");
 }

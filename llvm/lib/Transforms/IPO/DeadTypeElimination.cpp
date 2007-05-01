@@ -26,6 +26,9 @@ STATISTIC(NumKilled, "Number of unused typenames removed from symtab");
 
 namespace {
   struct VISIBILITY_HIDDEN DTE : public ModulePass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    DTE() : ModulePass((intptr_t)&ID) {}
+
     // doPassInitialization - For this pass, it removes global symbol table
     // entries for primitive types.  These are never used for linking in GCC and
     // they make the output uglier to look at, so we nuke them.
@@ -40,6 +43,7 @@ namespace {
       AU.addRequired<FindUsedTypes>();
     }
   };
+  const int DTE::ID = 0;
   RegisterPass<DTE> X("deadtypeelim", "Dead Type Elimination");
 }
 

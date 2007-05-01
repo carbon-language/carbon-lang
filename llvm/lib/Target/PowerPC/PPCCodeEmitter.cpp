@@ -40,8 +40,9 @@ namespace {
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
+    static const int ID;
     PPCCodeEmitter(TargetMachine &T, MachineCodeEmitter &M)
-      : TM(T), MCE(M) {}
+      : MachineFunctionPass((intptr_t)&ID), TM(T), MCE(M) {}
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
@@ -63,6 +64,7 @@ namespace {
     ///
     unsigned getBinaryCodeForInstr(MachineInstr &MI);
   };
+  const int PPCCodeEmitter::ID = 0;
 }
 
 /// createPPCCodeEmitterPass - Return a pass that emits the collected PPC code

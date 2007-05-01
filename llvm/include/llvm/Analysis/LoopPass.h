@@ -29,6 +29,8 @@ class Function;
 class LoopPass : public Pass {
 
  public:
+ LoopPass(intptr_t pid) : Pass(pid) {}
+
   // runOnLoop - THis method should be implemented by the subclass to perform
   // whatever action is necessary for the specfied Loop. 
   virtual bool runOnLoop (Loop *L, LPPassManager &LPM) = 0;
@@ -66,6 +68,7 @@ class LoopPass : public Pass {
 class LPPassManager : public FunctionPass, public PMDataManager {
 
 public:
+  static const int ID;
   LPPassManager(int Depth);
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of

@@ -69,6 +69,9 @@ namespace {
     std::map<Value*, unsigned> ValueRankMap;
     bool MadeChange;
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    Reassociate() : FunctionPass((intptr_t)&ID) {}
+
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -89,6 +92,7 @@ namespace {
     void RemoveDeadBinaryOp(Value *V);
   };
 
+  const int Reassociate::ID = 0;
   RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
 }
 

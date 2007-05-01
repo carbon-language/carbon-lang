@@ -26,10 +26,12 @@ class WriteBytecodePass : public ModulePass {
   bool DeleteStream;
   bool CompressFile;
 public:
+  static const int ID; // Pass identifcation, replacement for typeid
   WriteBytecodePass()
-    : Out(&cout), DeleteStream(false), CompressFile(false) {}
+    : ModulePass((intptr_t) &ID), Out(&cout), DeleteStream(false), 
+      CompressFile(false) {}
   WriteBytecodePass(OStream *o, bool DS = false, bool CF = false)
-    : Out(o), DeleteStream(DS), CompressFile(CF) {}
+    : ModulePass((intptr_t) &ID), Out(o), DeleteStream(DS), CompressFile(CF) {}
 
   inline ~WriteBytecodePass() {
     if (DeleteStream) delete Out;

@@ -33,6 +33,7 @@ using namespace llvm;
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
   // Register the default SparcV9 implementation...
+  const int TargetData::ID = 0;
   RegisterPass<TargetData> X("targetdata", "Target Data Layout");
 }
 
@@ -221,7 +222,8 @@ void TargetData::init(const std::string &TargetDescription) {
   }
 }
 
-TargetData::TargetData(const Module *M) {
+TargetData::TargetData(const Module *M) 
+  : ImmutablePass((intptr_t)&ID) {
   init(M->getDataLayout());
 }
 

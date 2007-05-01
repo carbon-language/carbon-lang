@@ -15,6 +15,7 @@
 #include "llvm/Analysis/IntervalIterator.h"
 using namespace llvm;
 
+const int IntervalPartition::ID = 0;
 static RegisterPass<IntervalPartition>
 X("intervals", "Interval Partition Construction", true);
 
@@ -88,7 +89,8 @@ bool IntervalPartition::runOnFunction(Function &F) {
 // existing interval graph.  This takes an additional boolean parameter to
 // distinguish it from a copy constructor.  Always pass in false for now.
 //
-IntervalPartition::IntervalPartition(IntervalPartition &IP, bool) {
+IntervalPartition::IntervalPartition(IntervalPartition &IP, bool)
+  : FunctionPass((intptr_t) &ID) {
   Interval *FunctionStart = IP.getRootInterval();
   assert(FunctionStart && "Cannot operate on empty IntervalPartitions!");
 

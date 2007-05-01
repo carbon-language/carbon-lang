@@ -42,9 +42,10 @@ class DominatorBase : public FunctionPass {
 protected:
   std::vector<BasicBlock*> Roots;
   const bool IsPostDominators;
-
-  inline DominatorBase(bool isPostDom) : Roots(), IsPostDominators(isPostDom) {}
+  inline DominatorBase(intptr_t ID, bool isPostDom) : 
+    FunctionPass(ID), Roots(), IsPostDominators(isPostDom) {}
 public:
+
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
   /// dominators, this will always be a single block (the entry node).
@@ -135,7 +136,8 @@ public:
   };
 
 public:
-  DominatorTreeBase(bool isPostDom) : DominatorBase(isPostDom) {}
+  DominatorTreeBase(intptr_t ID, bool isPostDom) 
+    : DominatorBase(ID, isPostDom) {}
   ~DominatorTreeBase() { reset(); }
 
   virtual void releaseMemory() { reset(); }
@@ -206,7 +208,8 @@ public:
 ///
 class DominatorTree : public DominatorTreeBase {
 public:
-  DominatorTree() : DominatorTreeBase(false) {}
+  static const int ID; // Pass ID, replacement for typeid
+  DominatorTree() : DominatorTreeBase((intptr_t)&ID, false) {}
   
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");
@@ -264,8 +267,9 @@ template <> struct GraphTraits<DominatorTree*>
 ///
 class ETForestBase : public DominatorBase {
 public:
-  ETForestBase(bool isPostDom) : DominatorBase(isPostDom), Nodes(), 
-                                 DFSInfoValid(false), SlowQueries(0) {}
+  ETForestBase(intptr_t ID, bool isPostDom) 
+    : DominatorBase(ID, isPostDom), Nodes(), 
+      DFSInfoValid(false), SlowQueries(0) {}
   
   virtual void releaseMemory() { reset(); }
 
@@ -395,7 +399,9 @@ protected:
 
 class ETForest : public ETForestBase {
 public:
-  ETForest() : ETForestBase(false) {}
+  static const int ID; // Pass identifcation, replacement for typeid
+
+  ETForest() : ETForestBase((intptr_t)&ID, false) {}
 
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");
@@ -425,7 +431,8 @@ public:
 protected:
   DomSetMapType Frontiers;
 public:
-  DominanceFrontierBase(bool isPostDom) : DominatorBase(isPostDom) {}
+  DominanceFrontierBase(intptr_t ID, bool isPostDom) 
+    : DominatorBase(ID, isPostDom) {}
 
   virtual void releaseMemory() { Frontiers.clear(); }
 
@@ -470,7 +477,9 @@ public:
 ///
 class DominanceFrontier : public DominanceFrontierBase {
 public:
-  DominanceFrontier() : DominanceFrontierBase(false) {}
+  static const int ID; // Pass ID, replacement for typeid
+  DominanceFrontier() : 
+    DominanceFrontierBase((intptr_t)& ID, false) {}
 
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");

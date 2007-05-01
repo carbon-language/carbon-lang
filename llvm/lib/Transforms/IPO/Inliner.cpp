@@ -36,7 +36,9 @@ namespace {
         cl::desc("Control the amount of inlining to perform (default = 200)"));
 }
 
-Inliner::Inliner() : InlineThreshold(InlineLimit) {}
+const int Inliner::ID = 0;
+Inliner::Inliner() 
+  : CallGraphSCCPass((intptr_t)&ID), InlineThreshold(InlineLimit) {}
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should

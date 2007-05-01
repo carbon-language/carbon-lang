@@ -37,6 +37,9 @@ STATISTIC(NumArgsRepl   , "Number of function arguments replaced "
                           "with constant values");
 namespace {
   struct VISIBILITY_HIDDEN GCSE : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    GCSE() : FunctionPass((intptr_t)&ID) {}
+
     virtual bool runOnFunction(Function &F);
 
   private:
@@ -51,6 +54,7 @@ namespace {
     }
   };
 
+  const int GCSE::ID = 0;
   RegisterPass<GCSE> X("gcse", "Global Common Subexpression Elimination");
 }
 

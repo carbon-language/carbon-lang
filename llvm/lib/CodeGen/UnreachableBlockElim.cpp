@@ -34,7 +34,11 @@ using namespace llvm;
 namespace {
   class VISIBILITY_HIDDEN UnreachableBlockElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
+  public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    UnreachableBlockElim() : FunctionPass((intptr_t)&ID) {}
   };
+  const int UnreachableBlockElim::ID = 0;
   RegisterPass<UnreachableBlockElim>
   X("unreachableblockelim", "Remove unreachable blocks from the CFG");
 }

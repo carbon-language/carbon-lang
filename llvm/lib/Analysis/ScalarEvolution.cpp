@@ -102,6 +102,7 @@ MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
                         cl::init(100));
 
 namespace {
+  const int ScalarEvolution::ID = 0;
   RegisterPass<ScalarEvolution>
   R("scalar-evolution", "Scalar Evolution Analysis");
 }

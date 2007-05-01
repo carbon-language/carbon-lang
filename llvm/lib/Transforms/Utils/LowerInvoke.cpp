@@ -75,7 +75,9 @@ namespace {
     const TargetLowering *TLI;
     
   public:
-    LowerInvoke(const TargetLowering *tli = NULL) : TLI(tli) { }
+    static const int ID; // Pass identifcation, replacement for typeid
+    LowerInvoke(const TargetLowering *tli = NULL) : FunctionPass((intptr_t)&ID),
+      TLI(tli) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
  
@@ -97,6 +99,7 @@ namespace {
     bool insertExpensiveEHSupport(Function &F);
   };
 
+  const int LowerInvoke::ID = 0;
   RegisterPass<LowerInvoke>
   X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 }

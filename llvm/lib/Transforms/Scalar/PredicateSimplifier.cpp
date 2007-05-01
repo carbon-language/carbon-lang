@@ -1989,6 +1989,9 @@ namespace {
     std::vector<DominatorTree::Node *> WorkList;
 
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    PredicateSimplifier() : FunctionPass((intptr_t)&ID) {}
+
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -2374,6 +2377,7 @@ namespace {
     }
   }
 
+  const int PredicateSimplifier::ID = 0;
   RegisterPass<PredicateSimplifier> X("predsimplify",
                                       "Predicate Simplifier");
 }

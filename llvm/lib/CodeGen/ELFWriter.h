@@ -30,6 +30,8 @@ namespace llvm {
   class ELFWriter : public MachineFunctionPass {
     friend class ELFCodeEmitter;
   public:
+    static const int ID;
+
     MachineCodeEmitter &getMachineCodeEmitter() const {
       return *(MachineCodeEmitter*)MCE;
     }

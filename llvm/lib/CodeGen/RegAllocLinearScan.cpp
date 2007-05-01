@@ -48,6 +48,9 @@ namespace {
   static unsigned numIntervals = 0;
 
   struct VISIBILITY_HIDDEN RA : public MachineFunctionPass {
+    static const int ID;
+    RA() : MachineFunctionPass((intptr_t)&ID) {}
+
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
     typedef std::vector<IntervalPtr> IntervalPtrs;
   private:
@@ -146,6 +149,7 @@ namespace {
       }
     }
   };
+  const int RA::ID = 0;
 }
 
 void RA::ComputeRelatedRegClasses() {

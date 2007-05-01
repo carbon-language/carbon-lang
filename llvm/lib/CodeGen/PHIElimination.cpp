@@ -33,6 +33,9 @@ STATISTIC(NumAtomic, "Number of atomic phis lowered");
 
 namespace {
   struct VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    PNE() : MachineFunctionPass((intptr_t)&ID) {}
+
     bool runOnMachineFunction(MachineFunction &Fn) {
       analyzePHINodes(Fn);
 
@@ -73,6 +76,7 @@ namespace {
     VRegPHIUse VRegPHIUseCount;
   };
 
+  const int PNE::ID = 0;
   RegisterPass<PNE> X("phi-node-elimination",
                       "Eliminate PHI nodes for register allocation");
 }

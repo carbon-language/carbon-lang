@@ -25,6 +25,9 @@ STATISTIC(HelloCounter, "Counts number of functions greeted");
 namespace {
   // Hello - The first implementation, without getAnalysisUsage.
   struct Hello : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    Hello() : FunctionPass((intptr_t)&ID) {}
+
     virtual bool runOnFunction(Function &F) {
       HelloCounter++;
       std::string fname = F.getName();
@@ -33,10 +36,15 @@ namespace {
       return false;
     }
   };
+
+  const int Hello::ID = 0;
   RegisterPass<Hello> X("hello", "Hello World Pass");
 
   // Hello2 - The second implementation with getAnalysisUsage implemented.
   struct Hello2 : public FunctionPass {
+    static const int ID; // Pass identifcation, replacement for typeid
+    Hello2() : FunctionPass((intptr_t)&ID) {}
+
     virtual bool runOnFunction(Function &F) {
       HelloCounter++;
       std::string fname = F.getName();
@@ -50,6 +58,7 @@ namespace {
       AU.setPreservesAll();
     };
   };
+  const int Hello2::ID = 0;
   RegisterPass<Hello2> Y("hello2",
                         "Hello World Pass (with getAnalysisUsage implemented)");
 }

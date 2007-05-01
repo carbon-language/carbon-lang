@@ -30,7 +30,9 @@ namespace {
     TargetMachine &TM;
     const TargetInstrInfo *TII;
 
-    Filler(TargetMachine &tm) : TM(tm), TII(tm.getInstrInfo()) { }
+    static const int ID;
+    Filler(TargetMachine &tm) 
+      : MachineFunctionPass((intptr_t)&ID), TM(tm), TII(tm.getInstrInfo()) { }
 
     virtual const char *getPassName() const {
       return "SPARC Delay Slot Filler";
@@ -46,6 +48,7 @@ namespace {
     }
 
   };
+  const int Filler::ID = 0;
 } // end of anonymous namespace
 
 /// createSparcDelaySlotFillerPass - Returns a pass that fills in delay

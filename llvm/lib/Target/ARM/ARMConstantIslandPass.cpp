@@ -128,6 +128,9 @@ namespace {
     ARMFunctionInfo *AFI;
     bool isThumb;
   public:
+    static const int ID;
+    ARMConstantIslands() : MachineFunctionPass((intptr_t)&ID) {}
+
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
     virtual const char *getPassName() const {
@@ -171,6 +174,7 @@ namespace {
     void dumpBBs();
     void verify(MachineFunction &Fn);
   };
+  const int ARMConstantIslands::ID = 0;
 }
 
 /// verify - check BBOffsets, BBSizes, alignment of islands

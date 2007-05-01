@@ -33,7 +33,9 @@ namespace {
   class VISIBILITY_HIDDEN LowerSelect : public FunctionPass {
     bool OnlyFP;   // Only lower FP select instructions?
   public:
-    LowerSelect(bool onlyfp = false) : OnlyFP(onlyfp) {}
+    static const int ID; // Pass identifcation, replacement for typeid
+    LowerSelect(bool onlyfp = false) : FunctionPass((intptr_t)&ID), 
+      OnlyFP(onlyfp) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // This certainly destroys the CFG.
@@ -48,6 +50,7 @@ namespace {
     bool runOnFunction(Function &F);
   };
 
+  const int LowerSelect::ID = 0;
   RegisterPass<LowerSelect>
   X("lowerselect", "Lower select instructions to branches");
 }

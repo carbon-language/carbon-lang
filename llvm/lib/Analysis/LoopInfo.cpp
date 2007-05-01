@@ -27,6 +27,7 @@
 #include <ostream>
 using namespace llvm;
 
+const int LoopInfo::ID = 0;
 static RegisterPass<LoopInfo>
 X("loops", "Natural Loop Construction", true);
 

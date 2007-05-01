@@ -37,9 +37,10 @@ namespace {
     const TargetData*& TD;
 
   public:
+    static const int ID;
     MSILModule(const std::set<const Type *>*& _UsedTypes,
                const TargetData*& _TD)
-      : UsedTypes(_UsedTypes), TD(_TD) {}
+      : ModulePass((intptr_t)&ID), UsedTypes(_UsedTypes), TD(_TD) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<FindUsedTypes>();
@@ -82,8 +83,8 @@ namespace {
     std::map<const GlobalVariable*,std::vector<StaticInitializer> >
       StaticInitList;
     const std::set<const Type *>* UsedTypes;
-
-    MSILWriter(std::ostream &o) : Out(o) {
+    static const int ID;
+    MSILWriter(std::ostream &o) : FunctionPass((intptr_t)&ID), Out(o) {
       UniqID = 0;
     }
 

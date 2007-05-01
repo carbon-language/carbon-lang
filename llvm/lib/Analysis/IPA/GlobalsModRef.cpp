@@ -83,6 +83,9 @@ namespace {
     std::map<Function*, FunctionRecord> FunctionInfo;
 
   public:
+    static const int ID;
+    GlobalsModRef() : ModulePass((intptr_t)&ID) {}
+
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);                 // set up super class
       AnalyzeGlobals(M);                          // find non-addr taken globals
@@ -143,6 +146,7 @@ namespace {
     bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
   };
 
+  const int GlobalsModRef::ID = 0;
   RegisterPass<GlobalsModRef> X("globalsmodref-aa",
                                 "Simple mod/ref analysis for globals");
   RegisterAnalysisGroup<AliasAnalysis> Y(X);

@@ -68,7 +68,10 @@ namespace {
     ScalarEvolution *SE;
     bool Changed;
   public:
-    
+
+   static const int ID; // Pass identifcation, replacement for typeid
+   IndVarSimplify() : LoopPass((intptr_t)&ID) {}
+
    bool runOnLoop(Loop *L, LPPassManager &LPM);
    bool doInitialization(Loop *L, LPPassManager &LPM);
    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -91,6 +94,8 @@ namespace {
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
+
+  const int IndVarSimplify::ID = 0;
   RegisterPass<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
 

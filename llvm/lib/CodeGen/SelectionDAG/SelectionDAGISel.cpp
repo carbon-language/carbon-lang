@@ -5011,3 +5011,5 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
   if (e != InOps.size())
     Ops.push_back(InOps.back());
 }
+
+const int SelectionDAGISel::ID = 0;

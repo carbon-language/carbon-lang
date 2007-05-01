@@ -38,6 +38,10 @@ namespace {
                    createSimpleRegisterAllocator);
 
   class VISIBILITY_HIDDEN RegAllocSimple : public MachineFunctionPass {
+  public:
+    static const int ID;
+    RegAllocSimple() : MachineFunctionPass((intptr_t)&ID) {}
+  private:
     MachineFunction *MF;
     const TargetMachine *TM;
     const MRegisterInfo *RegInfo;
@@ -90,7 +94,7 @@ namespace {
     void spillVirtReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       unsigned VirtReg, unsigned PhysReg);
   };
-
+  const int RegAllocSimple::ID = 0;
 }
 
 /// getStackSpaceFor - This allocates space for the specified virtual

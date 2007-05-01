@@ -98,8 +98,10 @@ AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
 namespace {
 
 struct ModulePassPrinter : public ModulePass {
+  static const int ID;
   const PassInfo *PassToPrint;
-  ModulePassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+  ModulePassPrinter(const PassInfo *PI) : ModulePass((intptr_t)&ID),
+                                          PassToPrint(PI) {}
 
   virtual bool runOnModule(Module &M) {
     if (!Quiet) {
@@ -119,12 +121,15 @@ struct ModulePassPrinter : public ModulePass {
   }
 };
 
+const int ModulePassPrinter::ID = 0;
 struct FunctionPassPrinter : public FunctionPass {
   const PassInfo *PassToPrint;
-  FunctionPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+  static const int ID;
+  FunctionPassPrinter(const PassInfo *PI) : FunctionPass((intptr_t)&ID),
+                                            PassToPrint(PI) {}
 
   virtual bool runOnFunction(Function &F) {
-    if (!Quiet) {
+    if (!Quiet) { 
       cout << "Printing analysis '" << PassToPrint->getPassName()
            << "' for function '" << F.getName() << "':\n";
     }
@@ -141,9 +146,12 @@ struct FunctionPassPrinter : public FunctionPass {
   }
 };
 
+const int FunctionPassPrinter::ID = 0;
 struct BasicBlockPassPrinter : public BasicBlockPass {
   const PassInfo *PassToPrint;
-  BasicBlockPassPrinter(const PassInfo *PI) : PassToPrint(PI) {}
+  static const int ID;
+  BasicBlockPassPrinter(const PassInfo *PI) 
+    : BasicBlockPass((intptr_t)&ID), PassToPrint(PI) {}
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     if (!Quiet) {
@@ -164,6 +172,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
   }
 };
 
+const int BasicBlockPassPrinter::ID = 0;
 inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);

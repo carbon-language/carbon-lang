@@ -45,6 +45,7 @@ STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
 
 namespace {
+  const int LiveIntervals::ID = 0;
   RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
   static cl::opt<bool>

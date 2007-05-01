@@ -40,6 +40,8 @@ using namespace llvm;
 namespace {
   // FIXME: This should not be a FunctionPass.
   struct VISIBILITY_HIDDEN LoadVN : public FunctionPass, public ValueNumbering {
+    static const int ID; // Class identification, replacement for typeinfo
+    LoadVN() : FunctionPass((intptr_t)&ID) {}
 
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///
@@ -81,6 +83,7 @@ namespace {
                                  std::vector<Value*> &RetVals) const;
   };
 
+  const int LoadVN::ID = 0;
   // Register this pass...
   RegisterPass<LoadVN> X("load-vn", "Load Value Numbering");
 

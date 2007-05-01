@@ -69,6 +69,7 @@ namespace {  // Anonymous namespace for class
 
   struct VISIBILITY_HIDDEN
      Verifier : public FunctionPass, InstVisitor<Verifier> {
+    static const int ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
     VerifierFailureAction action;
@@ -84,18 +85,22 @@ namespace {  // Anonymous namespace for class
     SmallPtrSet<Instruction*, 16> InstsInThisBlock;
 
     Verifier()
-        : Broken(false), RealPass(true), action(AbortProcessAction),
-          EF(0), msgs( std::ios::app | std::ios::out ) {}
+      : FunctionPass((intptr_t)&ID), 
+      Broken(false), RealPass(true), action(AbortProcessAction),
+      EF(0), msgs( std::ios::app | std::ios::out ) {}
     Verifier( VerifierFailureAction ctn )
-        : Broken(false), RealPass(true), action(ctn), EF(0),
-          msgs( std::ios::app | std::ios::out ) {}
+      : FunctionPass((intptr_t)&ID), 
+      Broken(false), RealPass(true), action(ctn), EF(0),
+      msgs( std::ios::app | std::ios::out ) {}
     Verifier(bool AB )
-        : Broken(false), RealPass(true),
-          action( AB ? AbortProcessAction : PrintMessageAction), EF(0),
-          msgs( std::ios::app | std::ios::out ) {}
+      : FunctionPass((intptr_t)&ID), 
+      Broken(false), RealPass(true),
+      action( AB ? AbortProcessAction : PrintMessageAction), EF(0),
+      msgs( std::ios::app | std::ios::out ) {}
     Verifier(ETForest &ef)
-      : Broken(false), RealPass(false), action(PrintMessageAction),
-        EF(&ef), msgs( std::ios::app | std::ios::out ) {}
+      : FunctionPass((intptr_t)&ID), 
+      Broken(false), RealPass(false), action(PrintMessageAction),
+      EF(&ef), msgs( std::ios::app | std::ios::out ) {}
 
 
     bool doInitialization(Module &M) {
@@ -261,6 +266,7 @@ namespace {  // Anonymous namespace for class
     }
   };
 
+  const int Verifier::ID = 0;
   RegisterPass<Verifier> X("verify", "Module Verifier");
 } // End anonymous namespace
 

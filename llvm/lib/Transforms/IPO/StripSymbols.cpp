@@ -37,7 +37,9 @@ namespace {
   class VISIBILITY_HIDDEN StripSymbols : public ModulePass {
     bool OnlyDebugInfo;
   public:
-    StripSymbols(bool ODI = false) : OnlyDebugInfo(ODI) {}
+    static const int ID; // Pass identifcation, replacement for typeid
+    StripSymbols(bool ODI = false) 
+      : ModulePass((intptr_t)&ID), OnlyDebugInfo(ODI) {}
 
     virtual bool runOnModule(Module &M);
 
@@ -45,6 +47,8 @@ namespace {
       AU.setPreservesAll();
     }
   };
+
+  const int StripSymbols::ID = 0;
   RegisterPass<StripSymbols> X("strip", "Strip all symbols from a module");
 }
 

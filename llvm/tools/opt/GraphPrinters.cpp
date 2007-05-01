@@ -60,6 +60,9 @@ namespace llvm {
 
 namespace {
   struct CallGraphPrinter : public ModulePass {
+    static const int ID; // Pass ID, replacement for typeid
+    CallGraphPrinter() : ModulePass((intptr_t)&ID) {}
+
     virtual bool runOnModule(Module &M) {
       WriteGraphToFile(std::cerr, "callgraph", &getAnalysis<CallGraph>());
       return false;
@@ -74,6 +77,7 @@ namespace {
     }
   };
 
+  const int CallGraphPrinter::ID = 0;
   RegisterPass<CallGraphPrinter> P2("print-callgraph",
                                     "Print Call Graph to 'dot' file");
 }

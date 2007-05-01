@@ -22,6 +22,8 @@ using namespace llvm;
 
 namespace {
   struct VISIBILITY_HIDDEN AlphaBSel : public MachineFunctionPass {
+    static const int ID;
+    AlphaBSel() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -29,6 +31,7 @@ namespace {
       return "Alpha Branch Selection";
     }
   };
+  const int AlphaBSel::ID = 0;
 }
 
 /// createAlphaBranchSelectionPass - returns an instance of the Branch Selection

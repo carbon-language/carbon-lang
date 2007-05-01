@@ -47,6 +47,7 @@ using namespace llvm;
 /// @brief The bytecode version number
 const unsigned BCVersionNum = 7;
 
+const int WriteBytecodePass::ID = 0;
 static RegisterPass<WriteBytecodePass> X("emitbytecode", "Bytecode Writer");
 
 STATISTIC(BytesWritten, "Number of bytecode bytes written");

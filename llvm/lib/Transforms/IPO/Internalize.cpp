@@ -46,16 +46,18 @@ namespace {
     std::set<std::string> ExternalNames;
     bool DontInternalize;
   public:
+    static const int ID; // Pass identifcation, replacement for typeid
     InternalizePass(bool InternalizeEverything = true);
     InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
   };
+  const int InternalizePass::ID = 0;
   RegisterPass<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 
 InternalizePass::InternalizePass(bool InternalizeEverything) 
-  : DontInternalize(false){
+  : ModulePass((intptr_t)&ID), DontInternalize(false){
   if (!APIFile.empty())           // If a filename is specified, use it
     LoadFile(APIFile.c_str());
   else if (!APIList.empty())      // Else, if a list is specified, use it.
@@ -66,7 +68,7 @@ InternalizePass::InternalizePass(bool InternalizeEverything)
 }
 
 InternalizePass::InternalizePass(const std::vector<const char *>&exportList) 
-  : DontInternalize(false){
+  : ModulePass((intptr_t)&ID), DontInternalize(false){
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
         itr != exportList.end(); itr++) {
     ExternalNames.insert(*itr);

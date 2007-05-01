@@ -40,6 +40,9 @@ namespace {
 class VISIBILITY_HIDDEN LowerPacked 
   : public FunctionPass, public InstVisitor<LowerPacked> {
 public:
+    static const int ID; // Pass identifcation, replacement for typeid
+    LowerPacked() : FunctionPass((intptr_t)&ID) {}
+
    /// @brief Lowers packed operations to scalar operations.
    /// @param F The fuction to process
    virtual bool runOnFunction(Function &F);
@@ -104,6 +107,7 @@ private:
    std::vector<Instruction*> instrsToRemove;
 };
 
+const int LowerPacked::ID = 0;
 RegisterPass<LowerPacked>
 X("lower-packed",
   "lowers packed operations to operations on smaller packed datatypes");

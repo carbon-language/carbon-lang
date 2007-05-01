@@ -75,12 +75,17 @@ STATISTIC(NumIndirectCallees  , "Number of indirect callees found");
 namespace {
   class VISIBILITY_HIDDEN Andersens : public ModulePass, public AliasAnalysis,
                                       private InstVisitor<Andersens> {
+  public:
+    static const int ID; // Class identification, replacement for typeinfo
+    Andersens() : ModulePass((intptr_t)&ID) {}
+  private:
     /// Node class - This class is used to represent a memory object in the
     /// program, and is the primitive used to build the points-to graph.
     class Node {
       std::vector<Node*> Pointees;
       Value *Val;
     public:
+      static const unsigned ID; // Pass identifcation, replacement for typeid
       Node() : Val(0) {}
       Node *setValue(Value *V) {
         assert(Val == 0 && "Value already set for this node!");
@@ -334,6 +339,7 @@ namespace {
     void visitInstruction(Instruction &I);
   };
 
+  const int Andersens::ID = 0;
   RegisterPass<Andersens> X("anders-aa",
                             "Andersen's Interprocedural Alias Analysis");
   RegisterAnalysisGroup<AliasAnalysis> Y(X);

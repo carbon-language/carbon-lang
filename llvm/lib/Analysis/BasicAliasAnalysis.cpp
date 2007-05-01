@@ -36,6 +36,9 @@ namespace {
   /// such it doesn't follow many of the rules that other alias analyses must.
   ///
   struct VISIBILITY_HIDDEN NoAA : public ImmutablePass, public AliasAnalysis {
+    static const int ID; // Class identification, replacement for typeinfo
+    NoAA() : ImmutablePass((intptr_t)&ID) {}
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
@@ -74,6 +77,7 @@ namespace {
   };
 
   // Register this pass...
+  const int NoAA::ID = 0;
   RegisterPass<NoAA>
   U("no-aa", "No Alias Analysis (always returns 'may' alias)");
 
@@ -88,6 +92,7 @@ namespace {
   /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
   /// derives from the NoAA class.
   struct VISIBILITY_HIDDEN BasicAliasAnalysis : public NoAA {
+    static const int ID; // Class identification, replacement for typeinfo
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
@@ -119,6 +124,7 @@ namespace {
   };
 
   // Register this pass...
+  const int BasicAliasAnalysis::ID = 0;
   RegisterPass<BasicAliasAnalysis>
   X("basicaa", "Basic Alias Analysis (default AA impl)");
 

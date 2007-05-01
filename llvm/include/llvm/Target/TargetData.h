@@ -108,14 +108,15 @@ public:
   ///
   /// @note This has to exist, because this is a pass, but it should never be
   /// used.
-  TargetData() {
+  TargetData() : ImmutablePass((intptr_t)&ID) {
     assert(0 && "ERROR: Bad TargetData ctor used.  "
            "Tool did not specify a TargetData to use?");
     abort();
   }
     
   /// Constructs a TargetData from a specification string. See init().
-  TargetData(const std::string &TargetDescription) {
+  TargetData(const std::string &TargetDescription) 
+    : ImmutablePass((intptr_t)&ID) {
     init(TargetDescription);
   }
 
@@ -123,7 +124,7 @@ public:
   TargetData(const Module *M);
 
   TargetData(const TargetData &TD) : 
-    ImmutablePass(),
+    ImmutablePass((intptr_t)&ID),
     LittleEndian(TD.isLittleEndian()),
     PointerMemSize(TD.PointerMemSize),
     PointerABIAlign(TD.PointerABIAlign),
@@ -200,6 +201,8 @@ public:
   /// specified global, returned in log form.  This includes an explicitly
   /// requested alignment (if the global has one).
   unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
+
+  static const int ID; // Pass identifcation, replacement for typeid
 };
 
 /// StructLayout - used to lazily calculate structure layout information for a

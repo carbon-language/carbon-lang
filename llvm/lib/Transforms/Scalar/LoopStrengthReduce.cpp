@@ -143,7 +143,9 @@ namespace {
     const TargetLowering *TLI;
 
   public:
-    LoopStrengthReduce(const TargetLowering *tli = NULL) : TLI(tli) {
+    static const int ID; // Pass ID, replacement for typeid
+    LoopStrengthReduce(const TargetLowering *tli = NULL) : 
+      LoopPass((intptr_t)&ID), TLI(tli) {
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -186,6 +188,7 @@ private:
                                       Loop *L, bool isOnlyStride);
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
+  const int LoopStrengthReduce::ID = 0;
   RegisterPass<LoopStrengthReduce> X("loop-reduce", "Loop Strength Reduction");
 }
 

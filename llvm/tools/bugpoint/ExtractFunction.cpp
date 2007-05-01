@@ -305,7 +305,11 @@ namespace {
   /// BlocksToNotExtract list.
   class BlockExtractorPass : public ModulePass {
     bool runOnModule(Module &M);
+  public:
+    static const int ID; // Pass ID, replacement for typeid
+    BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
   };
+  const int BlockExtractorPass::ID = 0;
   RegisterPass<BlockExtractorPass>
   XX("extract-bbs", "Extract Basic Blocks From Module (for bugpoint use)");
 }
