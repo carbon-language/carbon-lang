@@ -109,6 +109,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
     SetDirective = "\t.set\t";
+    PCSymbol = ".";
+    
     DwarfRequiresFrameSection = false;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
     DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
