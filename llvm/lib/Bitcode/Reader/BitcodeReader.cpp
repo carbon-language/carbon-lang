@@ -152,7 +152,7 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
 }
 
 
-bool BitcodeReader::ParseTypeTable(BitstreamReader &Stream) {
+bool BitcodeReader::ParseTypeTable() {
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
   
@@ -298,7 +298,7 @@ bool BitcodeReader::ParseTypeTable(BitstreamReader &Stream) {
 }
 
 
-bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
+bool BitcodeReader::ParseTypeSymbolTable() {
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
   
@@ -346,7 +346,7 @@ bool BitcodeReader::ParseTypeSymbolTable(BitstreamReader &Stream) {
   }
 }
 
-bool BitcodeReader::ParseValueSymbolTable(BitstreamReader &Stream) {
+bool BitcodeReader::ParseValueSymbolTable() {
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
 
@@ -444,7 +444,7 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
 }
 
 
-bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
+bool BitcodeReader::ParseConstants() {
   if (Stream.EnterSubBlock())
     return Error("Malformed block record");
 
@@ -661,7 +661,7 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
 
 /// ParseFunction - When we see the block for a function body, remember where it
 /// is and then skip it.  This lets us lazily deserialize the functions.
-bool BitcodeReader::ParseFunction(BitstreamReader &Stream) {
+bool BitcodeReader::ParseFunction() {
   // Get the function we are talking about.
   if (FunctionsWithBodies.empty())
     return Error("Insufficient function protos");
@@ -683,8 +683,7 @@ bool BitcodeReader::ParseFunction(BitstreamReader &Stream) {
   return false;
 }
 
-bool BitcodeReader::ParseModule(BitstreamReader &Stream,
-                                const std::string &ModuleID) {
+bool BitcodeReader::ParseModule(const std::string &ModuleID) {
   // Reject multiple MODULE_BLOCK's in a single bitstream.
   if (TheModule)
     return Error("Multiple MODULE_BLOCKs in same stream");
@@ -719,19 +718,19 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
           return Error("Malformed block record");
         break;
       case bitc::TYPE_BLOCK_ID:
-        if (ParseTypeTable(Stream))
+        if (ParseTypeTable())
           return true;
         break;
       case bitc::TYPE_SYMTAB_BLOCK_ID:
-        if (ParseTypeSymbolTable(Stream))
+        if (ParseTypeSymbolTable())
           return true;
         break;
       case bitc::VALUE_SYMTAB_BLOCK_ID:
-        if (ParseValueSymbolTable(Stream))
+        if (ParseValueSymbolTable())
           return true;
         break;
       case bitc::CONSTANTS_BLOCK_ID:
-        if (ParseConstants(Stream) || ResolveGlobalAndAliasInits())
+        if (ParseConstants() || ResolveGlobalAndAliasInits())
           return true;
         break;
       case bitc::FUNCTION_BLOCK_ID:
@@ -742,7 +741,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
           HasReversedFunctionsWithBodies = true;
         }
         
-        if (ParseFunction(Stream))
+        if (ParseFunction())
           return true;
         break;
       }
@@ -932,7 +931,7 @@ bool BitcodeReader::ParseBitcode() {
     
     // We only know the MODULE subblock ID.
     if (BlockID == bitc::MODULE_BLOCK_ID) {
-      if (ParseModule(Stream, Buffer->getBufferIdentifier()))
+      if (ParseModule(Buffer->getBufferIdentifier()))
         return true;
     } else if (Stream.SkipBlock()) {
       return Error("Malformed block record");

@@ -23,7 +23,6 @@
 #include <vector>
 
 namespace llvm {
-  class BitstreamReader;
   class MemoryBuffer;
   
 class BitcodeReaderValueList : public User {
@@ -117,12 +116,12 @@ public:
 private:
   const Type *getTypeByID(unsigned ID, bool isTypeTable = false);
   
-  bool ParseModule(BitstreamReader &Stream, const std::string &ModuleID);
-  bool ParseTypeTable(BitstreamReader &Stream);
-  bool ParseTypeSymbolTable(BitstreamReader &Stream);
-  bool ParseValueSymbolTable(BitstreamReader &Stream);
-  bool ParseConstants(BitstreamReader &Stream);
-  bool ParseFunction(BitstreamReader &Stream);
+  bool ParseModule(const std::string &ModuleID);
+  bool ParseTypeTable();
+  bool ParseTypeSymbolTable();
+  bool ParseValueSymbolTable();
+  bool ParseConstants();
+  bool ParseFunction();
   bool ResolveGlobalAndAliasInits();
 };
   
