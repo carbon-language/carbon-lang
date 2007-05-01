@@ -263,10 +263,14 @@ namespace llvm {
 
     //===--- Dwarf Emission Directives -----------------------------------===//
 
-    /// AbsoluteSectionOffsets - True if we should emit abolute section
-    /// offsets. Defaults to false.
-    bool AbsoluteSectionOffsets;
-    
+    /// AbsoluteDebugSectionOffsets - True if we should emit abolute section
+    /// offsets for debug information. Defaults to false.
+    bool AbsoluteDebugSectionOffsets;
+
+    /// AbsoluteEHSectionOffsets - True if we should emit abolute section
+    /// offsets for EH information. Defaults to false.
+    bool AbsoluteEHSectionOffsets;
+
     /// HasLEB128 - True if target asm supports leb128 directives.
     ///
     bool HasLEB128; // Defaults to false.
@@ -530,8 +534,11 @@ namespace llvm {
     const char *getProtectedDirective() const {
       return ProtectedDirective;
     }
-    bool isAbsoluteSectionOffsets() const {
-      return AbsoluteSectionOffsets;
+    bool isAbsoluteDebugSectionOffsets() const {
+      return AbsoluteDebugSectionOffsets;
+    }
+    bool isAbsoluteEHSectionOffsets() const {
+      return AbsoluteEHSectionOffsets;
     }
     bool hasLEB128() const {
       return HasLEB128;

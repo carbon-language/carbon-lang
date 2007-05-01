@@ -914,13 +914,20 @@ public:
 
   void EmitSectionOffset(const char* Label, const char* Section,
                          unsigned LabelNumber, unsigned SectionNumber,
-                         bool IsSmall = false) {
+                         bool IsSmall = false, bool isEH = false) {
+    bool printAbsolute = false;
     if (TAI->needsSet()) {
       O << "\t.set\t";
       PrintLabelName("set", SetCounter);
       O << ",";
       PrintLabelName(Label, LabelNumber, true);
-      if (!TAI->isAbsoluteSectionOffsets()) {
+
+      if (isEH)
+        printAbsolute = TAI->isAbsoluteEHSectionOffsets();
+      else
+        printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
+      
+      if (!printAbsolute) {
         O << "-";
         PrintLabelName(Section, SectionNumber);
       }      
@@ -940,7 +947,13 @@ public:
         O << TAI->getData64bitsDirective();
         
       PrintLabelName(Label, LabelNumber, true);
-      if (!TAI->isAbsoluteSectionOffsets()) {
+
+      if (isEH)
+        printAbsolute = TAI->isAbsoluteEHSectionOffsets();
+      else
+        printAbsolute = TAI->isAbsoluteDebugSectionOffsets();
+
+      if (!printAbsolute) {
         O << "-";
         PrintLabelName(Section, SectionNumber);
       }
@@ -1688,7 +1701,7 @@ private:
   CompileUnit *NewCompileUnit(CompileUnitDesc *UnitDesc, unsigned ID) {
     // Construct debug information entry.
     DIE *Die = new DIE(DW_TAG_compile_unit);
-    if (TAI->isAbsoluteSectionOffsets())
+    if (TAI->isAbsoluteDebugSectionOffsets())
       AddLabel(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0));
     else
       AddDelta(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0),
@@ -2107,7 +2120,7 @@ private:
                            
     Asm->EmitInt32(ContentSize);  Asm->EOL("Length of Compilation Unit Info");
     Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
-    EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true);
+    EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true, false);
     Asm->EOL("Offset Into Abbrev. Section");
     Asm->EmitInt8(TAI->getAddressSize()); Asm->EOL("Address Size (in bytes)");
   
@@ -2366,7 +2379,7 @@ private:
     
     EmitLabel("frame_begin", SubprogramCount);
 
-    EmitSectionOffset("frame_common_begin", "section_frame", 0, 0, true);
+    EmitSectionOffset("frame_common_begin", "section_frame", 0, 0, true, false);
     Asm->EOL("FDE CIE offset");
 
     EmitReference("func_begin", SubprogramCount);
@@ -2401,7 +2414,8 @@ private:
     
     Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF Version");
 
-    EmitSectionOffset("info_begin", "section_info", Unit->getID(), 0, true);
+    EmitSectionOffset("info_begin", "section_info",
+                      Unit->getID(), 0, true, false);
     Asm->EOL("Offset of Compilation Unit Info");
 
     EmitDifference("info_end", Unit->getID(), "info_begin", Unit->getID(),true);
@@ -2769,10 +2783,8 @@ private:
     if (Personality) {
       Asm->EmitULEB128Bytes(7);
       Asm->EOL("Augmentation Size");
-      Asm->EmitInt8(DW_EH_PE_indirect |
-                            DW_EH_PE_pcrel |
-                            DW_EH_PE_sdata4);
-      Asm->EOL("Personality (indirect pcrel sdata4)");
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+      Asm->EOL("Personality (pcrel sdata4)");
       
       O << TAI->getData32bitsDirective();
       Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
@@ -2830,7 +2842,7 @@ private:
       EmitLabel("eh_frame_begin", SubprogramCount);
 
       EmitSectionOffset("eh_frame_begin", "section_eh_frame",
-                        SubprogramCount, 0, true);
+                        SubprogramCount, 0, true, true);
       Asm->EOL("FDE CIE offset");
 
       EmitReference("eh_func_begin", SubprogramCount, true);
@@ -2994,7 +3006,7 @@ private:
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo &LandingPad = LandingPads[i];
       EmitSectionOffset("label", "eh_func_begin",
-                        LandingPad.BeginLabel, SubprogramCount);
+                        LandingPad.BeginLabel, SubprogramCount, false, true);
       Asm->EOL("Region start");
       
       EmitDifference("label", LandingPad.EndLabel,
@@ -3007,8 +3019,8 @@ private:
         else
           Asm->EmitInt64(0);
       } else {
-        EmitSectionOffset("label", "eh_func_begin",
-                          LandingPad.LandingPadLabel, SubprogramCount);
+        EmitSectionOffset("label", "eh_func_begin", LandingPad.LandingPadLabel,
+                          SubprogramCount, false, true);
       }
       Asm->EOL("Landing pad");
 

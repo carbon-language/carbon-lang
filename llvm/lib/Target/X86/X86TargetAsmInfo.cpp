@@ -99,7 +99,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   case X86Subtarget::isELF:
     // Set up DWARF directives
     HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
-    AbsoluteSectionOffsets = true;
+    AbsoluteDebugSectionOffsets = true;
+    AbsoluteEHSectionOffsets = false;
     // bool HasLEB128; // Defaults to false.
     // hasDotLoc - True if target asm supports .loc directives.
     // bool HasDotLoc; // Defaults to false.
@@ -141,7 +142,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
 
     // Set up DWARF directives
     HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
-    AbsoluteSectionOffsets = true;
+    AbsoluteDebugSectionOffsets = true;
+    AbsoluteEHSectionOffsets = false;
     PrivateGlobalPrefix = "L";  // Prefix for private global symbols
     WeakRefDirective = "\t.weak\t";
     SetDirective = "\t.set\t";
