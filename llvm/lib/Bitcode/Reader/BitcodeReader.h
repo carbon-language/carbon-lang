@@ -44,7 +44,7 @@ public:
   void pop_back() { Uses.pop_back(); --NumOperands; }
   bool empty() const { return NumOperands == 0; }
   void shrinkTo(unsigned N) {
-    assert(N < NumOperands && "Invalid shrinkTo request!");
+    assert(N <= NumOperands && "Invalid shrinkTo request!");
     Uses.resize(N);
     NumOperands = N;
   }
@@ -68,6 +68,10 @@ class BitcodeReader : public ModuleProvider {
   BitcodeReaderValueList ValueList;
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
+  
+  /// FunctionBBs - While parsing a function body, this is a list of the basic
+  /// blocks for the function.
+  std::vector<BasicBlock*> FunctionBBs;
   
   // When reading the module header, this list is populated with functions that
   // have bodies later in the file.
@@ -96,13 +100,7 @@ public:
   }
   
   virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0);
-  
-  virtual Module *materializeModule(std::string *ErrInfo = 0) {
-    // FIXME: TODO
-    //if (ParseAllFunctionBodies(ErrMsg))
-    //  return 0;
-    return TheModule;
-  }
+  virtual Module *materializeModule(std::string *ErrInfo = 0);
   
   bool Error(const char *Str) {
     ErrorString = Str;
@@ -121,7 +119,8 @@ private:
   bool ParseTypeSymbolTable();
   bool ParseValueSymbolTable();
   bool ParseConstants();
-  bool ParseFunction();
+  bool RememberAndSkipFunctionBody();
+  bool ParseFunctionBody(Function *F);
   bool ResolveGlobalAndAliasInits();
 };
   

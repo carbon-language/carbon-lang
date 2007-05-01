@@ -659,9 +659,10 @@ bool BitcodeReader::ParseConstants() {
   }
 }
 
-/// ParseFunction - When we see the block for a function body, remember where it
-/// is and then skip it.  This lets us lazily deserialize the functions.
-bool BitcodeReader::ParseFunction() {
+/// RememberAndSkipFunctionBody - When we see the block for a function body,
+/// remember where it is and then skip it.  This lets us lazily deserialize the
+/// functions.
+bool BitcodeReader::RememberAndSkipFunctionBody() {
   // Get the function we are talking about.
   if (FunctionsWithBodies.empty())
     return Error("Insufficient function protos");
@@ -701,13 +702,21 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
     if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of module block");
+
+      // Patch the initializers for globals and aliases up.
       ResolveGlobalAndAliasInits();
       if (!GlobalInits.empty() || !AliasInits.empty())
         return Error("Malformed global initializer set");
       if (!FunctionsWithBodies.empty())
         return Error("Too few function bodies found");
-      if (Stream.ReadBlockEnd())
-        return Error("Error at end of module block");
+
+      // Force deallocation of memory for these vectors to favor the client that
+      // want lazy deserialization.
+      std::vector<std::pair<GlobalVariable*, unsigned> >().swap(GlobalInits);
+      std::vector<std::pair<GlobalAlias*, unsigned> >().swap(AliasInits);
+      std::vector<Function*>().swap(FunctionsWithBodies);
       return false;
     }
     
@@ -741,7 +750,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
           HasReversedFunctionsWithBodies = true;
         }
         
-        if (ParseFunction())
+        if (RememberAndSkipFunctionBody())
           return true;
         break;
       }
@@ -955,6 +964,90 @@ bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
   Stream.JumpToBit(DFII->second.first);
   F->setLinkage((GlobalValue::LinkageTypes)DFII->second.second);
   DeferredFunctionInfo.erase(DFII);
+  
+  if (ParseFunctionBody(F)) {
+    if (ErrInfo) *ErrInfo = ErrorString;
+    return true;
+  }
+  
+  return false;
+}
+
+Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
+  DenseMap<Function*, std::pair<uint64_t, unsigned> >::iterator I = 
+    DeferredFunctionInfo.begin();
+  while (!DeferredFunctionInfo.empty()) {
+    Function *F = (*I++).first;
+    assert(F->hasNotBeenReadFromBytecode() &&
+           "Deserialized function found in map!");
+    if (materializeFunction(F, ErrInfo))
+      return 0;
+  }
+  return TheModule;
+}
+
+
+/// ParseFunctionBody - Lazily parse the specified function body block.
+bool BitcodeReader::ParseFunctionBody(Function *F) {
+  if (Stream.EnterSubBlock())
+    return Error("Malformed block record");
+  
+  unsigned ModuleValueListSize = ValueList.size();
+  
+  // Add all the function arguments to the value table.
+  for(Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+    ValueList.push_back(I);
+  
+  // Read all the records.
+  SmallVector<uint64_t, 64> Record;
+  while (1) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of function block");
+      break;
+    }
+    
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      switch (Stream.ReadSubBlockID()) {
+      default:  // Skip unknown content.
+        if (Stream.SkipBlock())
+          return Error("Malformed block record");
+        break;
+      case bitc::CONSTANTS_BLOCK_ID:
+        if (ParseConstants()) return true;
+        break;
+      case bitc::VALUE_SYMTAB_BLOCK_ID:
+        if (ParseValueSymbolTable()) return true;
+        break;
+      }
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    Record.clear();
+    switch (Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: unknown constant
+    case bitc::FUNC_CODE_DECLAREBLOCKS:     // DECLAREBLOCKS: [nblocks]
+      if (Record.size() < 1)
+        return Error("Invalid FUNC_CODE_DECLAREBLOCKS record");
+      // Create all the basic blocks for the function.
+      FunctionBBs.resize(Record.size());
+      for (unsigned i = 0, e = FunctionBBs.size(); i != e; ++i)
+        FunctionBBs[i] = new BasicBlock("", F);
+      break;
+    }
+  }
+  
+  
+  // Trim the value list down to the size it was before we parsed this function.
+  ValueList.shrinkTo(ModuleValueListSize);
+  std::vector<BasicBlock*>().swap(FunctionBBs);
   
   return false;
 }
