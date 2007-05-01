@@ -683,6 +683,36 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
   Vals.clear();
 }
 
+// Emit names for globals/functions etc.
+static void WriteValueSymbolTable(const ValueSymbolTable &VST,
+                                  const ValueEnumerator &VE,
+                                  BitstreamWriter &Stream) {
+  if (VST.empty()) return;
+  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
+  
+  // FIXME: Set up the abbrev, we know how many values there are!
+  // FIXME: We know if the type names can use 7-bit ascii.
+  SmallVector<unsigned, 64> NameVals;
+  
+  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
+       SI != SE; ++SI) {
+    unsigned AbbrevToUse = 0;
+    
+    // VST_ENTRY: [valueid, namelen, namechar x N]
+    NameVals.push_back(VE.getValueID(SI->getValue()));
+    
+    NameVals.push_back(SI->getKeyLength());
+    for (const char *P = SI->getKeyData(),
+         *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
+      NameVals.push_back((unsigned char)*P);
+    
+    // Emit the finished record.
+    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
+    NameVals.clear();
+  }
+  Stream.ExitBlock();
+}
+
 /// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE, 
                           BitstreamWriter &Stream) {
@@ -709,6 +739,9 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       WriteInstruction(*I, VE, Stream, Vals);
   
+  // Emit names for all the instructions etc.
+  WriteValueSymbolTable(F.getValueSymbolTable(), VE, Stream);
+    
   VE.purgeFunction();
   Stream.ExitBlock();
 }
@@ -743,36 +776,6 @@ static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
     NameVals.clear();
   }
   
-  Stream.ExitBlock();
-}
-
-// Emit names for globals/functions etc.
-static void WriteValueSymbolTable(const ValueSymbolTable &VST,
-                                  const ValueEnumerator &VE,
-                                  BitstreamWriter &Stream) {
-  if (VST.empty()) return;
-  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
-  
-  // FIXME: Set up the abbrev, we know how many values there are!
-  // FIXME: We know if the type names can use 7-bit ascii.
-  SmallVector<unsigned, 64> NameVals;
-  
-  for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
-       SI != SE; ++SI) {
-    unsigned AbbrevToUse = 0;
-    
-    // VST_ENTRY: [valueid, namelen, namechar x N]
-    NameVals.push_back(VE.getValueID(SI->getValue()));
-    
-    NameVals.push_back(SI->getKeyLength());
-    for (const char *P = SI->getKeyData(),
-         *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
-      NameVals.push_back((unsigned char)*P);
-    
-    // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
-    NameVals.clear();
-  }
   Stream.ExitBlock();
 }
 
