@@ -3326,11 +3326,26 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   LoadSDNode *LD  = cast<LoadSDNode>(N);
   SDOperand Chain = LD->getChain();
   SDOperand Ptr   = LD->getBasePtr();
-  
-  // If there are no uses of the loaded value, change uses of the chain value
-  // into uses of the chain input (i.e. delete the dead load).
-  if (N->hasNUsesOfValue(0, 0))
-    return CombineTo(N, DAG.getNode(ISD::UNDEF, N->getValueType(0)), Chain);
+
+  // If load is not volatile and there are no uses of the loaded value (and
+  // the updated indexed value in case of indexed loads), change uses of the
+  // chain value into uses of the chain input (i.e. delete the dead load).
+  if (!LD->isVolatile()) {
+    bool HasUses = false;
+    SmallVector<MVT::ValueType, 2> VTs;
+    for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+      if (!N->hasNUsesOfValue(0, i)) {
+        HasUses = true;
+        break;
+      }
+      VTs.push_back(N->getValueType(i));
+    }
+    if (!HasUses) {
+      SmallVector<SDOperand, 1> Ops;
+      return CombineTo(N, DAG.getNode(ISD::UNDEF, &VTs[0], VTs.size(), 0, 0),
+                       Chain);
+    }
+  }
   
   // If this load is directly stored, replace the load value with the stored
   // value.
