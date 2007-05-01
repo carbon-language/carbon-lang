@@ -17,7 +17,9 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Type.h"
 #include "llvm/User.h"
+#include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
 
 namespace llvm {
@@ -59,14 +61,31 @@ public:
 
 class BitcodeReader : public ModuleProvider {
   MemoryBuffer *Buffer;
+  BitstreamReader Stream;
+  
   const char *ErrorString;
   
   std::vector<PATypeHolder> TypeList;
   BitcodeReaderValueList ValueList;
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
+  
+  // When reading the module header, this list is populated with functions that
+  // have bodies later in the file.
+  std::vector<Function*> FunctionsWithBodies;
+  
+  // After the module header has been read, the FunctionsWithBodies list is 
+  // reversed.  This keeps track of whether we've done this yet.
+  bool HasReversedFunctionsWithBodies;
+  
+  /// DeferredFunctionInfo - When function bodies are initially scanned, this
+  /// map contains info about where to find deferred function body (in the
+  /// stream) and what linkage the original function had.
+  DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
 public:
-  BitcodeReader(MemoryBuffer *buffer) : Buffer(buffer), ErrorString(0) {}
+  BitcodeReader(MemoryBuffer *buffer) : Buffer(buffer), ErrorString(0) {
+    HasReversedFunctionsWithBodies = false;
+  }
   ~BitcodeReader();
   
   
@@ -77,10 +96,7 @@ public:
     Buffer = 0;
   }
   
-  virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0) {
-    // FIXME: TODO
-    return false;
-  }
+  virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0);
   
   virtual Module *materializeModule(std::string *ErrInfo = 0) {
     // FIXME: TODO
@@ -106,6 +122,7 @@ private:
   bool ParseTypeSymbolTable(BitstreamReader &Stream);
   bool ParseValueSymbolTable(BitstreamReader &Stream);
   bool ParseConstants(BitstreamReader &Stream);
+  bool ParseFunction(BitstreamReader &Stream);
   bool ResolveGlobalAndAliasInits();
 };
   

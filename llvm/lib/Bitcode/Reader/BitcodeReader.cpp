@@ -13,7 +13,6 @@
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "BitcodeReader.h"
-#include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -660,6 +659,30 @@ bool BitcodeReader::ParseConstants(BitstreamReader &Stream) {
   }
 }
 
+/// ParseFunction - When we see the block for a function body, remember where it
+/// is and then skip it.  This lets us lazily deserialize the functions.
+bool BitcodeReader::ParseFunction(BitstreamReader &Stream) {
+  // Get the function we are talking about.
+  if (FunctionsWithBodies.empty())
+    return Error("Insufficient function protos");
+  
+  Function *Fn = FunctionsWithBodies.back();
+  FunctionsWithBodies.pop_back();
+  
+  // Save the current stream state.
+  uint64_t CurBit = Stream.GetCurrentBitNo();
+  DeferredFunctionInfo[Fn] = std::make_pair(CurBit, Fn->getLinkage());
+  
+  // Set the functions linkage to GhostLinkage so we know it is lazily
+  // deserialized.
+  Fn->setLinkage(GlobalValue::GhostLinkage);
+  
+  // Skip over the function block for now.
+  if (Stream.SkipBlock())
+    return Error("Malformed block record");
+  return false;
+}
+
 bool BitcodeReader::ParseModule(BitstreamReader &Stream,
                                 const std::string &ModuleID) {
   // Reject multiple MODULE_BLOCK's in a single bitstream.
@@ -682,6 +705,8 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       ResolveGlobalAndAliasInits();
       if (!GlobalInits.empty() || !AliasInits.empty())
         return Error("Malformed global initializer set");
+      if (!FunctionsWithBodies.empty())
+        return Error("Too few function bodies found");
       if (Stream.ReadBlockEnd())
         return Error("Error at end of module block");
       return false;
@@ -707,6 +732,17 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
         break;
       case bitc::CONSTANTS_BLOCK_ID:
         if (ParseConstants(Stream) || ResolveGlobalAndAliasInits())
+          return true;
+        break;
+      case bitc::FUNCTION_BLOCK_ID:
+        // If this is the first function body we've seen, reverse the
+        // FunctionsWithBodies list.
+        if (!HasReversedFunctionsWithBodies) {
+          std::reverse(FunctionsWithBodies.begin(), FunctionsWithBodies.end());
+          HasReversedFunctionsWithBodies = true;
+        }
+        
+        if (ParseFunction(Stream))
           return true;
         break;
       }
@@ -819,6 +855,7 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
                                     "", TheModule);
 
       Func->setCallingConv(Record[1]);
+      bool isProto = Record[2];
       Func->setLinkage(GetDecodedLinkage(Record[3]));
       Func->setAlignment((1 << Record[4]) >> 1);
       if (Record[5]) {
@@ -829,6 +866,11 @@ bool BitcodeReader::ParseModule(BitstreamReader &Stream,
       Func->setVisibility(GetDecodedVisibility(Record[6]));
       
       ValueList.push_back(Func);
+      
+      // If this is a function with a body, remember the prototype we are
+      // creating now, so that we can match up the body with them later.
+      if (!isProto)
+        FunctionsWithBodies.push_back(Func);
       break;
     }
     // ALIAS: [alias type, aliasee val#, linkage]
@@ -867,7 +909,7 @@ bool BitcodeReader::ParseBitcode() {
     return Error("Bitcode stream should be a multiple of 4 bytes in length");
   
   unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
-  BitstreamReader Stream(BufPtr, BufPtr+Buffer->getBufferSize());
+  Stream.init(BufPtr, BufPtr+Buffer->getBufferSize());
   
   // Sniff for the signature.
   if (Stream.Read(8) != 'B' ||
@@ -899,6 +941,25 @@ bool BitcodeReader::ParseBitcode() {
   
   return false;
 }
+
+
+bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
+  // If it already is material, ignore the request.
+  if (!F->hasNotBeenReadFromBytecode()) return false;
+
+  DenseMap<Function*, std::pair<uint64_t, unsigned> >::iterator DFII = 
+    DeferredFunctionInfo.find(F);
+  assert(DFII != DeferredFunctionInfo.end() && "Deferred function not found!");
+  
+  // Move the bit stream to the saved position of the deferred function body and
+  // restore the real linkage type for the function.
+  Stream.JumpToBit(DFII->second.first);
+  F->setLinkage((GlobalValue::LinkageTypes)DFII->second.second);
+  DeferredFunctionInfo.erase(DFII);
+  
+  return false;
+}
+
 
 //===----------------------------------------------------------------------===//
 // External interface
