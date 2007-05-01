@@ -3331,19 +3331,19 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   // the updated indexed value in case of indexed loads), change uses of the
   // chain value into uses of the chain input (i.e. delete the dead load).
   if (!LD->isVolatile()) {
-    bool HasUses = false;
-    SmallVector<MVT::ValueType, 2> VTs;
-    for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
-      if (!N->hasNUsesOfValue(0, i)) {
-        HasUses = true;
-        break;
+    if (N->getValueType(1) == MVT::Other) {
+      // Unindexed loads.
+      if (N->hasNUsesOfValue(0, 0))
+        return CombineTo(N, DAG.getNode(ISD::UNDEF, N->getValueType(0)), Chain);
+    } else {
+      // Indexed loads.
+      assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
+      if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
+        SDOperand Undef0 = DAG.getNode(ISD::UNDEF, N->getValueType(0));
+        SDOperand Undef1 = DAG.getNode(ISD::UNDEF, N->getValueType(1));
+        SDOperand To[] = { Undef0, Undef1, Chain };
+        return CombineTo(N, To, 3);
       }
-      VTs.push_back(N->getValueType(i));
-    }
-    if (!HasUses) {
-      SmallVector<SDOperand, 1> Ops;
-      return CombineTo(N, DAG.getNode(ISD::UNDEF, &VTs[0], VTs.size(), 0, 0),
-                       Chain);
     }
   }
   
