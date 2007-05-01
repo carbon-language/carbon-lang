@@ -164,20 +164,21 @@ namespace bitc {
     FUNC_CODE_INST_SHUFFLEVEC  =  8, // SHUFFLEVEC: [ty, opval, opval, opval]
     FUNC_CODE_INST_CMP         =  9, // CMP:        [opty, opval, opval, pred]
     
-    FUNC_CODE_INST_RET         = 10, // RET:        [opval<optional>]
+    FUNC_CODE_INST_RET         = 10, // RET:        [opty,opval<optional>]
     FUNC_CODE_INST_BR          = 11, // BR:         [opval, bb#, bb#] or [bb#]
     FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, opval, n, n x ops]
-    FUNC_CODE_INST_INVOKE      = 13, // INVOKE:
+    FUNC_CODE_INST_INVOKE      = 13, // INVOKE:     [fnty, op0,op1,op2, ...]
     FUNC_CODE_INST_UNWIND      = 14, // UNWIND
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
     
-    FUNC_CODE_INST_MALLOC      = 16, // MALLOC: ..
-    FUNC_CODE_INST_FREE        = 17, // FREE: ..
-    FUNC_CODE_INST_ALLOCA      = 18, // ALLOCA: ..
-    FUNC_CODE_INST_LOAD        = 19, // LOAD: ..
-    FUNC_CODE_INST_STORE       = 20, // STORE: ..
-    FUNC_CODE_INST_CALL        = 21, // CALL: ..
-    FUNC_CODE_INST_VAARG       = 22  // VAARG: ..
+    FUNC_CODE_INST_PHI         = 16, // PHI:        [ty, #ops, val0,bb0, ...]
+    FUNC_CODE_INST_MALLOC      = 17, // MALLOC:     [instty, op, align]
+    FUNC_CODE_INST_FREE        = 18, // FREE:       [opty, op]
+    FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
+    FUNC_CODE_INST_LOAD        = 20, // LOAD:       [opty, op, align, vol]
+    FUNC_CODE_INST_STORE       = 21, // STORE:      [ptrty,val,ptr, align, vol]
+    FUNC_CODE_INST_CALL        = 22, // CALL:       [fnty, fnid, arg0, arg1...]
+    FUNC_CODE_INST_VAARG       = 23  // VAARG:      [valistty, valist, instty]
   };
 } // End bitc namespace
 } // End llvm namespace
