@@ -93,16 +93,19 @@ public:
   
   /// JumpToBit - Reset the stream to the specified bit number.
   void JumpToBit(uint64_t BitNo) {
-    unsigned WordNo = BitNo/32;
+    unsigned ByteNo = (BitNo/8) & ~3;
     unsigned WordBitNo = BitNo & 31;
-    assert(WordNo < (unsigned)(LastChar-FirstChar) && "Invalid location");
+    assert(ByteNo < (unsigned)(LastChar-FirstChar) && "Invalid location");
     
     // Move the cursor to the right word.
-    NextChar = FirstChar+WordNo;
+    NextChar = FirstChar+ByteNo;
     BitsInCurWord = 0;
     
     // Skip over any bits that are already consumed.
-    if (WordBitNo) Read(WordBitNo);
+    if (WordBitNo) {
+      NextChar -= 4;
+      Read(WordBitNo);
+    }
   }
   
   /// GetAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
