@@ -451,6 +451,15 @@ public:
   /// variable sized allocas or if frame pointer elimination is disabled.
   virtual bool hasFP(const MachineFunction &MF) const = 0;
 
+  // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
+  // not required, we reserve argument space for call sites in the function
+  // immediately on entry to the current function. This eliminates the need for
+  // add/sub sp brackets around call sites. Returns true if the call frame is
+  // included as part of the stack frame.
+  virtual bool hasReservedCallFrame(MachineFunction &MF) const {
+    return !hasFP(MF);
+  }
+
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
   /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
   /// targets use pseudo instructions in order to abstract away the difference
