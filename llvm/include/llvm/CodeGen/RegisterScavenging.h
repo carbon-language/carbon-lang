@@ -117,12 +117,13 @@ public:
   int getScavengingFrameIndex() const { return ScavengingFrameIndex; }
 
   /// scavengeRegister - Make a register of the specific register class
-  /// available and do the appropriate bookkeeping. Returns the scavenged
-  /// register.
+  /// available and do the appropriate bookkeeping. SPAdj is the stack
+  /// adjustment due to call frame, it's passed along to eliminateFrameIndex().
+  /// Returns the scavenged register.
   unsigned scavengeRegister(const TargetRegisterClass *RegClass,
-                            MachineBasicBlock::iterator I);
-  unsigned scavengeRegister(const TargetRegisterClass *RegClass) {
-    return scavengeRegister(RegClass, MBBI);
+                            MachineBasicBlock::iterator I, int SPAdj);
+  unsigned scavengeRegister(const TargetRegisterClass *RegClass, int SPAdj) {
+    return scavengeRegister(RegClass, MBBI, SPAdj);
   }
 
 private:
