@@ -51,6 +51,22 @@ public:
   virtual void print(std::ostream&) const {}
   
   Constant *getConstantFwdRef(unsigned Idx, const Type *Ty);
+  Value *getValueFwdRef(unsigned Idx, const Type *Ty);
+  
+  void AssignValue(Value *V, unsigned Idx) {
+    if (Idx == size()) {
+      push_back(V);
+    } else if (Value *OldV = getOperand(Idx)) {
+      // If there was a forward reference to this value, replace it.
+      setOperand(Idx, V);
+      OldV->replaceAllUsesWith(V);
+      delete OldV;
+    } else {
+      initVal(Idx, V);
+    }
+  }
+  
+private:
   void initVal(unsigned Idx, Value *V) {
     assert(Uses[Idx] == 0 && "Cannot init an already init'd Use!");
     Uses[Idx].init(V, this);
@@ -113,6 +129,9 @@ public:
   bool ParseBitcode();
 private:
   const Type *getTypeByID(unsigned ID, bool isTypeTable = false);
+  Value *getFnValueByID(unsigned ID, const Type *Ty) {
+    return ValueList.getValueFwdRef(ID, Ty);
+  }
   
   bool ParseModule(const std::string &ModuleID);
   bool ParseTypeTable();

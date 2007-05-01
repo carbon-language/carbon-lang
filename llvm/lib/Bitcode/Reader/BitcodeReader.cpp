@@ -15,6 +15,7 @@
 #include "BitcodeReader.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MathExtras.h"
@@ -125,16 +126,34 @@ Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
     NumOperands = Idx+1;
   }
 
-  if (Uses[Idx]) {
-    assert(Ty == getOperand(Idx)->getType() &&
-           "Type mismatch in constant table!");
-    return cast<Constant>(getOperand(Idx));
+  if (Value *V = Uses[Idx]) {
+    assert(Ty == V->getType() && "Type mismatch in constant table!");
+    return cast<Constant>(V);
   }
 
   // Create and return a placeholder, which will later be RAUW'd.
   Constant *C = new ConstantPlaceHolder(Ty);
   Uses[Idx].init(C, this);
   return C;
+}
+
+Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
+  if (Idx >= size()) {
+    // Insert a bunch of null values.
+    Uses.resize(Idx+1);
+    OperandList = &Uses[0];
+    NumOperands = Idx+1;
+  }
+  
+  if (Value *V = Uses[Idx]) {
+    assert((Ty == 0 || Ty == V->getType()) && "Type mismatch in value table!");
+    return V;
+  }
+  
+  // Create and return a placeholder, which will later be RAUW'd.
+  Value *V = new Argument(Ty);
+  Uses[Idx].init(V, this);
+  return V;
 }
 
 
@@ -150,7 +169,6 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
     TypeList.push_back(OpaqueType::get());
   return TypeList.back().get();
 }
-
 
 bool BitcodeReader::ParseTypeTable() {
   if (Stream.EnterSubBlock())
@@ -643,18 +661,7 @@ bool BitcodeReader::ParseConstants() {
     }
     }
     
-    if (NextCstNo == ValueList.size())
-      ValueList.push_back(V);
-    else if (ValueList[NextCstNo] == 0)
-      ValueList.initVal(NextCstNo, V);
-    else {
-      // If there was a forward reference to this constant, 
-      Value *OldV = ValueList[NextCstNo];
-      ValueList.setOperand(NextCstNo, V);
-      OldV->replaceAllUsesWith(V);
-      delete OldV;
-    }
-    
+    ValueList.AssignValue(V, NextCstNo);
     ++NextCstNo;
   }
 }
@@ -998,6 +1005,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
   for(Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     ValueList.push_back(I);
   
+  unsigned NextValueNo = ValueList.size();
+  
   // Read all the records.
   SmallVector<uint64_t, 64> Record;
   while (1) {
@@ -1016,6 +1025,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         break;
       case bitc::CONSTANTS_BLOCK_ID:
         if (ParseConstants()) return true;
+        NextValueNo = ValueList.size();
         break;
       case bitc::VALUE_SYMTAB_BLOCK_ID:
         if (ParseValueSymbolTable()) return true;
@@ -1031,19 +1041,115 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     
     // Read a record.
     Record.clear();
+    Instruction *I = 0;
+    BasicBlock *CurBB = 0;
+    unsigned CurBBNo = 0;
     switch (Stream.ReadRecord(Code, Record)) {
-    default:  // Default behavior: unknown constant
+    default: // Default behavior: reject
+      return Error("Unknown instruction");
     case bitc::FUNC_CODE_DECLAREBLOCKS:     // DECLAREBLOCKS: [nblocks]
-      if (Record.size() < 1)
-        return Error("Invalid FUNC_CODE_DECLAREBLOCKS record");
+      if (Record.size() < 1 || Record[0] == 0)
+        return Error("Invalid DECLAREBLOCKS record");
       // Create all the basic blocks for the function.
       FunctionBBs.resize(Record.size());
       for (unsigned i = 0, e = FunctionBBs.size(); i != e; ++i)
         FunctionBBs[i] = new BasicBlock("", F);
+      CurBB = FunctionBBs[0];
+      continue;
+      
+    case bitc::FUNC_CODE_INST_BINOP: {
+      // BINOP:      [opcode, ty, opval, opval]
+      if (Record.size() < 4) return Error("Invalid BINOP record");
+      const Type *Ty = getTypeByID(Record[1]);
+      int Opc = GetDecodedBinaryOpcode(Record[0], Ty);
+      Value *LHS = getFnValueByID(Record[2], Ty);
+      Value *RHS = getFnValueByID(Record[3], Ty);
+      if (Opc == -1 || Ty == 0 || LHS == 0 || RHS == 0)
+         return Error("Invalid BINOP record");
+      I = BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS);
       break;
     }
+#if 0
+    case bitc::FUNC_CODE_INST_CAST:
+      // CAST:       [opcode, ty, opty, opval]
+    case bitc::FUNC_CODE_INST_GEP:
+      // GEP:        [n, n x operands]
+    case bitc::FUNC_CODE_INST_SELECT:
+      // SELECT:     [ty, opval, opval, opval]
+    case bitc::FUNC_CODE_INST_EXTRACTELT:
+      // EXTRACTELT: [opty, opval, opval]
+    case bitc::FUNC_CODE_INST_INSERTELT:
+      // INSERTELT:  [ty, opval, opval, opval]
+    case bitc::FUNC_CODE_INST_SHUFFLEVEC:
+      // SHUFFLEVEC: [ty, opval, opval, opval]
+    case bitc::FUNC_CODE_INST_CMP:
+      // CMP:        [opty, opval, opval, pred]
+        
+    case bitc::FUNC_CODE_INST_RET:
+      // RET:        [opty,opval<optional>]
+    case bitc::FUNC_CODE_INST_BR:
+      // BR:         [opval, bb#, bb#] or [bb#]
+    case bitc::FUNC_CODE_INST_SWITCH:
+      // SWITCH:     [opty, opval, n, n x ops]
+    case bitc::FUNC_CODE_INST_INVOKE:
+      // INVOKE:     [fnty, op0,op1,op2, ...]
+    case bitc::FUNC_CODE_INST_UNWIND:
+      // UNWIND
+    case bitc::FUNC_CODE_INST_UNREACHABLE:
+      // UNREACHABLE
+        
+    case bitc::FUNC_CODE_INST_PHI:
+      // PHI:        [ty, #ops, val0,bb0, ...]
+    case bitc::FUNC_CODE_INST_MALLOC:
+      // MALLOC:     [instty, op, align]
+    case bitc::FUNC_CODE_INST_FREE:
+      // FREE:       [opty, op]
+    case bitc::FUNC_CODE_INST_ALLOCA:
+      // ALLOCA:     [instty, op, align]
+    case bitc::FUNC_CODE_INST_LOAD:
+      // LOAD:       [opty, op, align, vol]
+    case bitc::FUNC_CODE_INST_STORE:
+      // STORE:      [ptrty,val,ptr, align, vol]
+    case bitc::FUNC_CODE_INST_CALL:
+      // CALL:       [fnty, fnid, arg0, arg1...]
+    case bitc::FUNC_CODE_INST_VAARG:
+      // VAARG:      [valistty, valist, instty]
+      break;
+#endif
+    }
+
+    // Add instruction to end of current BB.  If there is no current BB, reject
+    // this file.
+    if (CurBB == 0) {
+      delete I;
+      return Error("Invalid instruction with no BB");
+    }
+    CurBB->getInstList().push_back(I);
+    
+    // If this was a terminator instruction, move to the next block.
+    if (isa<TerminatorInst>(I)) {
+      ++CurBBNo;
+      CurBB = CurBBNo < FunctionBBs.size() ? FunctionBBs[CurBBNo] : 0;
+    }
+    
+    // Non-void values get registered in the value table for future use.
+    if (I && I->getType() != Type::VoidTy)
+      ValueList.AssignValue(I, NextValueNo++);
   }
   
+  // Check the function list for unresolved values.
+  if (Argument *A = dyn_cast<Argument>(ValueList.back())) {
+    if (A->getParent() == 0) {
+      // We found at least one unresolved value.  Nuke them all to avoid leaks.
+      for (unsigned i = ModuleValueListSize, e = ValueList.size(); i != e; ++i){
+        if ((A = dyn_cast<Argument>(ValueList.back())) && A->getParent() == 0) {
+          A->replaceAllUsesWith(UndefValue::get(A->getType()));
+          delete A;
+        }
+      }
+    }
+    return Error("Never resolved value found in function!");
+  }
   
   // Trim the value list down to the size it was before we parsed this function.
   ValueList.shrinkTo(ModuleValueListSize);
