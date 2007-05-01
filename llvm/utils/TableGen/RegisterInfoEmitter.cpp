@@ -450,8 +450,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     std::vector<Record*> From = SubRegs[i]->getValueAsListOfDefs("From");
     std::vector<Record*> To   = SubRegs[i]->getValueAsListOfDefs("To");
     
-    assert((From.size() == To.size()) && 
-           "SubRegSet has mismatched from/to size");
+    if (From.size() != To.size()) {
+      cerr << "Error: register list and sub-register list not of equal length"
+           << " in SubRegSet\n";
+      exit(1);
+    }
     
     // For each entry in from/to vectors, insert the to register at index 
     for (unsigned ii = 0, ee = From.size(); ii != ee; ++ii)
