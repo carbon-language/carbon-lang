@@ -167,6 +167,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     case bitc::FUNC_CODE_INST_UNWIND:      return "INST_UNWIND";
     case bitc::FUNC_CODE_INST_UNREACHABLE: return "INST_UNREACHABLE";
     
+    case bitc::FUNC_CODE_INST_PHI:         return "INST_PHI";
     case bitc::FUNC_CODE_INST_MALLOC:      return "INST_MALLOC";
     case bitc::FUNC_CODE_INST_FREE:        return "INST_FREE";
     case bitc::FUNC_CODE_INST_ALLOCA:      return "INST_ALLOCA";
@@ -371,10 +372,11 @@ static int AnalyzeBitcode() {
   
   if (Dump) std::cerr << "\n\n";
   
+  uint64_t BufferSizeBits = Buffer->getBufferSize()*8;
   // Print a summary of the read file.
   std::cerr << "Summary of " << InputFilename << ":\n";
   std::cerr << "         Total size: ";
-  PrintSize(Buffer->getBufferSize()*8);
+  PrintSize(BufferSizeBits);
   std::cerr << "\n";
   std::cerr << "        Stream type: ";
   switch (CurStreamType) {
@@ -402,6 +404,8 @@ static int AnalyzeBitcode() {
     std::cerr << "       Average Size: ";
     PrintSize(Stats.NumBits/(double)Stats.NumInstances);
     std::cerr << "\n";
+    std::cerr << "          % of file: "
+              << Stats.NumBits/(double)BufferSizeBits*100 << "\n";
     std::cerr << "  Tot/Avg SubBlocks: " << Stats.NumSubBlocks << "/"
               << Stats.NumSubBlocks/(double)Stats.NumInstances << "\n";
     std::cerr << "    Tot/Avg Abbrevs: " << Stats.NumAbbrevs << "/"
