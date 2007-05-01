@@ -51,8 +51,20 @@ class BitstreamReader {
   /// FirstChar - This remembers the first byte of the stream.
   const unsigned char *FirstChar;
 public:
-  BitstreamReader(const unsigned char *Start, const unsigned char *End)
-    : NextChar(Start), LastChar(End), FirstChar(Start) {
+  BitstreamReader() {
+    NextChar = FirstChar = LastChar = 0;
+    CurWord = 0;
+    BitsInCurWord = 0;
+    CurCodeSize = 0;
+  }
+
+  BitstreamReader(const unsigned char *Start, const unsigned char *End) {
+    init(Start, End);
+  }
+  
+  void init(const unsigned char *Start, const unsigned char *End) {
+    NextChar = FirstChar = Start;
+    LastChar = End;
     assert(((End-Start) & 3) == 0 &&"Bitcode stream not a multiple of 4 bytes");
     CurWord = 0;
     BitsInCurWord = 0;
@@ -77,6 +89,20 @@ public:
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
     return (NextChar-FirstChar)*8 + (32-BitsInCurWord);
+  }
+  
+  /// JumpToBit - Reset the stream to the specified bit number.
+  void JumpToBit(uint64_t BitNo) {
+    unsigned WordNo = BitNo/32;
+    unsigned WordBitNo = BitNo & 31;
+    assert(WordNo < (unsigned)(LastChar-FirstChar) && "Invalid location");
+    
+    // Move the cursor to the right word.
+    NextChar = FirstChar+WordNo;
+    BitsInCurWord = 0;
+    
+    // Skip over any bits that are already consumed.
+    if (WordBitNo) Read(WordBitNo);
   }
   
   /// GetAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
