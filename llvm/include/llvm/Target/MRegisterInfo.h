@@ -41,7 +41,7 @@ class Type;
 /// The SubRegs field is a zero terminated array of registers that are
 /// sub-registers of the specific register, e.g. AL, AH are sub-registers of AX.
 /// The SuperRegs field is a zero terminated array of registers that are
-/// super-registers of the specific register, e.g. RAX, EAX, are sub-registers
+/// super-registers of the specific register, e.g. RAX, EAX, are super-registers
 /// of AX.
 ///
 struct TargetRegisterDesc {
@@ -353,6 +353,10 @@ public:
   /// should be considered unavailable at all times, e.g. SP, RA. This is used by
   /// register scavenger to determine what registers are free.
   virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
+
+  /// getSubReg - Returns the physical register number of sub-register "Index"
+  /// for physical register RegNo.
+  virtual unsigned getSubReg(unsigned RegNo, unsigned Index) const = 0;
 
   //===--------------------------------------------------------------------===//
   // Register Class Information

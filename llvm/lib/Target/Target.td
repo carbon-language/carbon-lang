@@ -67,13 +67,15 @@ class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
   let SubRegs = subregs;
 }
 
-// RegisterGroup - This can be used to define instances of Register which
-// need to specify aliases.
-// List "aliases" specifies which registers are aliased to this one.  This
-// allows the code generator to be careful not to put two values with 
-// overlapping live ranges into registers which alias.
-class RegisterGroup<string n, list<Register> aliases> : Register<n> {
-  let Aliases = aliases;
+// SubRegSet - This can be used to define a specific mapping of registers to
+// indices, for use as named subregs of a particular physical register.  Each
+// register in 'subregs' becomes an addressable subregister at index 'n' of the
+// corresponding register in 'regs'.
+class SubRegSet<int n, list<Register> regs, list<Register> subregs> {
+  int index = n;
+  
+  list<Register> From = regs;
+  list<Register> To = subregs;
 }
 
 // RegisterClass - Now that all of the registers are defined, and aliases

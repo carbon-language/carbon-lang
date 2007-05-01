@@ -71,10 +71,17 @@ private:
                                // immediately after the write. i.e. A register
                                // that is defined but never used.
   
-  /// offset - Offset to address of global or external, only valid for
-  /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
-  int offset;
+  /// auxInfo - auxiliary information used by the MachineOperand
+  union {
+    /// offset - Offset to address of global or external, only valid for
+    /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
+    int offset;
 
+    /// subReg - SubRegister number, only valid for MO_Register.  A value of 0
+    /// indicates the MO_Register has no subReg.
+    unsigned subReg;
+  } auxInfo;
+  
   MachineOperand() {}
 
   void print(std::ostream &os) const;
@@ -95,7 +102,7 @@ public:
     Op.IsImp = false;
     Op.IsKill = false;
     Op.IsDead = false;
-    Op.offset = 0;
+    Op.auxInfo.offset = 0;
     return Op;
   }
   
@@ -106,7 +113,7 @@ public:
     IsKill   = MO.IsKill;
     IsDead   = MO.IsDead;
     opType   = MO.opType;
-    offset   = MO.offset;
+    auxInfo  = MO.auxInfo;
     return *this;
   }
 
@@ -169,7 +176,11 @@ public:
   int getOffset() const {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
         "Wrong MachineOperand accessor");
-    return offset;
+    return auxInfo.offset;
+  }
+  unsigned getSubReg() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return auxInfo.subReg;
   }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
@@ -254,7 +265,11 @@ public:
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex() ||
             isJumpTableIndex()) &&
         "Wrong MachineOperand accessor");
-    offset = Offset;
+    auxInfo.offset = Offset;
+  }
+  void setSubReg(unsigned subReg) {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    auxInfo.subReg = subReg;
   }
   void setConstantPoolIndex(unsigned Idx) {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
@@ -433,7 +448,7 @@ public:
     Op.IsKill = IsKill;
     Op.IsDead = IsDead;
     Op.contents.RegNo = Reg;
-    Op.offset = 0;
+    Op.auxInfo.subReg = 0;
   }
 
   /// addImmOperand - Add a zero extended constant argument to the
@@ -443,14 +458,14 @@ public:
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_Immediate;
     Op.contents.immedVal = Val;
-    Op.offset = 0;
+    Op.auxInfo.offset = 0;
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_MachineBasicBlock;
     Op.contents.MBB = MBB;
-    Op.offset = 0;
+    Op.auxInfo.offset = 0;
   }
 
   /// addFrameIndexOperand - Add an abstract frame index to the instruction
@@ -459,7 +474,7 @@ public:
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_FrameIndex;
     Op.contents.immedVal = Idx;
-    Op.offset = 0;
+    Op.auxInfo.offset = 0;
   }
 
   /// addConstantPoolndexOperand - Add a constant pool object index to the
@@ -469,7 +484,7 @@ public:
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_ConstantPoolIndex;
     Op.contents.immedVal = Idx;
-    Op.offset = Offset;
+    Op.auxInfo.offset = Offset;
   }
 
   /// addJumpTableIndexOperand - Add a jump table object index to the
@@ -479,14 +494,14 @@ public:
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_JumpTableIndex;
     Op.contents.immedVal = Idx;
-    Op.offset = 0;
+    Op.auxInfo.offset = 0;
   }
   
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_GlobalAddress;
     Op.contents.GV = GV;
-    Op.offset = Offset;
+    Op.auxInfo.offset = Offset;
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
@@ -495,7 +510,7 @@ public:
     MachineOperand &Op = AddNewOperand();
     Op.opType = MachineOperand::MO_ExternalSymbol;
     Op.contents.SymbolName = SymName;
-    Op.offset = 0;
+    Op.auxInfo.offset = 0;
   }
 
   //===--------------------------------------------------------------------===//

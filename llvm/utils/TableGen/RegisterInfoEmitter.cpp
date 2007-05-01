@@ -61,6 +61,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "  " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  int getDwarfRegNum(unsigned RegNum) const;\n"
+     << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "};\n\n";
 
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
@@ -322,6 +323,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   std::map<Record*, std::set<Record*> > RegisterSubRegs;
   std::map<Record*, std::set<Record*> > RegisterSuperRegs;
   std::map<Record*, std::set<Record*> > RegisterAliases;
+  std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -441,6 +443,40 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
 
+  // Calculate the mapping of subregister+index pairs to physical registers.
+  std::vector<Record*> SubRegs = Records.getAllDerivedDefinitions("SubRegSet");
+  for (unsigned i = 0, e = SubRegs.size(); i != e; ++i) {
+    int subRegIndex = SubRegs[i]->getValueAsInt("index");
+    std::vector<Record*> From = SubRegs[i]->getValueAsListOfDefs("From");
+    std::vector<Record*> To   = SubRegs[i]->getValueAsListOfDefs("To");
+    
+    assert((From.size() == To.size()) && 
+           "SubRegSet has mismatched from/to size");
+    
+    // For each entry in from/to vectors, insert the to register at index 
+    for (unsigned ii = 0, ee = From.size(); ii != ee; ++ii)
+      SubRegVectors[From[ii]].push_back(std::make_pair(subRegIndex, To[ii]));
+  }
+  
+  // Emit the subregister + index mapping function based on the information
+  // calculated above.
+  OS << "unsigned " << ClassName 
+     << "::getSubReg(unsigned RegNo, unsigned Index) const {\n"
+     << "  switch (RegNo) {\n"
+     << "  default: abort(); break;\n";
+  for (std::map<Record*, std::vector<std::pair<int, Record*> > >::iterator 
+        I = SubRegVectors.begin(), E = SubRegVectors.end(); I != E; ++I) {
+    OS << "  case " << getQualifiedName(I->first) << ":\n";
+    OS << "    switch (Index) {\n";
+    OS << "    default: abort(); break;\n";
+    for (unsigned i = 0, e = I->second.size(); i != e; ++i)
+      OS << "    case " << (I->second)[i].first << ": return "
+         << getQualifiedName((I->second)[i].second) << ";\n";
+    OS << "    }; break;\n";
+  }
+  OS << "  };\n";
+  OS << "}\n\n";
+  
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"

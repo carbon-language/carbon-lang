@@ -43,9 +43,15 @@ class VR<bits<5> num, string n> : PPCReg<n> {
 }
 
 // CR - One of the 8 4-bit condition registers
-class CR<bits<5> num, string n> : PPCReg<n> {
+class CR<bits<3> num, string n> : PPCReg<n> {
+  field bits<3> Num = num;
+}
+
+// CRBIT - One of the 32 1-bit condition register fields
+class CRBIT<bits<5> num, string n> : PPCReg<n> {
   field bits<5> Num = num;
 }
+
 
 // General-purpose registers
 def R0  : GPR< 0,  "r0">, DwarfRegNum<0>;
@@ -192,6 +198,49 @@ def CR4 : CR<4, "cr4">, DwarfRegNum<72>;
 def CR5 : CR<5, "cr5">, DwarfRegNum<73>;
 def CR6 : CR<6, "cr6">, DwarfRegNum<74>;
 def CR7 : CR<7, "cr7">, DwarfRegNum<75>;
+
+// Condition register bits
+def CR0LT : CRBIT< 0, "0">, DwarfRegNum<0>;
+def CR0GT : CRBIT< 1, "1">, DwarfRegNum<0>;
+def CR0EQ : CRBIT< 2, "2">, DwarfRegNum<0>;
+def CR0UN : CRBIT< 3, "3">, DwarfRegNum<0>;
+def CR1LT : CRBIT< 4, "4">, DwarfRegNum<0>;
+def CR1GT : CRBIT< 5, "5">, DwarfRegNum<0>;
+def CR1EQ : CRBIT< 6, "6">, DwarfRegNum<0>;
+def CR1UN : CRBIT< 7, "7">, DwarfRegNum<0>;
+def CR2LT : CRBIT< 8, "8">, DwarfRegNum<0>;
+def CR2GT : CRBIT< 9, "9">, DwarfRegNum<0>;
+def CR2EQ : CRBIT<10, "10">, DwarfRegNum<0>;
+def CR2UN : CRBIT<11, "11">, DwarfRegNum<0>;
+def CR3LT : CRBIT<12, "12">, DwarfRegNum<0>;
+def CR3GT : CRBIT<13, "13">, DwarfRegNum<0>;
+def CR3EQ : CRBIT<14, "14">, DwarfRegNum<0>;
+def CR3UN : CRBIT<15, "15">, DwarfRegNum<0>;
+def CR4LT : CRBIT<16, "16">, DwarfRegNum<0>;
+def CR4GT : CRBIT<17, "17">, DwarfRegNum<0>;
+def CR4EQ : CRBIT<18, "18">, DwarfRegNum<0>;
+def CR4UN : CRBIT<19, "19">, DwarfRegNum<0>;
+def CR5LT : CRBIT<20, "20">, DwarfRegNum<0>;
+def CR5GT : CRBIT<21, "21">, DwarfRegNum<0>;
+def CR5EQ : CRBIT<22, "22">, DwarfRegNum<0>;
+def CR5UN : CRBIT<23, "23">, DwarfRegNum<0>;
+def CR6LT : CRBIT<24, "24">, DwarfRegNum<0>;
+def CR6GT : CRBIT<25, "25">, DwarfRegNum<0>;
+def CR6EQ : CRBIT<26, "26">, DwarfRegNum<0>;
+def CR6UN : CRBIT<27, "27">, DwarfRegNum<0>;
+def CR7LT : CRBIT<28, "28">, DwarfRegNum<0>;
+def CR7GT : CRBIT<29, "29">, DwarfRegNum<0>;
+def CR7EQ : CRBIT<30, "30">, DwarfRegNum<0>;
+def CR7UN : CRBIT<31, "31">, DwarfRegNum<0>;
+
+def : SubRegSet<1, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                   [CR0LT, CR1LT, CR2LT, CR3LT, CR4LT, CR5LT, CR6LT, CR7LT]>;
+def : SubRegSet<2, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                   [CR0GT, CR1GT, CR2GT, CR3GT, CR4GT, CR5GT, CR6GT, CR7GT]>;
+def : SubRegSet<3, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                   [CR0EQ, CR1EQ, CR2EQ, CR3EQ, CR4EQ, CR5EQ, CR6EQ, CR7EQ]>;
+def : SubRegSet<4, [CR0, CR1, CR2, CR3, CR4, CR5, CR6, CR7],
+                   [CR0UN, CR1UN, CR2UN, CR3UN, CR4UN, CR5UN, CR6UN, CR7UN]>;
 
 // Link register
 def LR  : SPR<8, "lr">, DwarfRegNum<65>;
