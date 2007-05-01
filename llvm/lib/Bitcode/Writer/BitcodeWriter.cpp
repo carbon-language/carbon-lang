@@ -571,7 +571,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
-  case Instruction::Invoke:
+  case Instruction::Invoke: {
     Code = bitc::FUNC_CODE_INST_INVOKE;
     // FIXME: param attrs
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
@@ -596,6 +596,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
       }
     }
     break;
+  }
   case Instruction::Unwind:
     Code = bitc::FUNC_CODE_INST_UNWIND;
     break;
@@ -658,18 +659,18 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i+1)));  // fixed param.
       
-      // Emit type/value pairs for varargs params.
-      if (FTy->isVarArg()) {
-        unsigned NumVarargs = I.getNumOperands()-1-FTy->getNumParams();
-        Vals.push_back(NumVarargs);
-        for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
-             i != e; ++i) {
-          Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
-          Vals.push_back(VE.getValueID(I.getOperand(i)));
-        }
+    // Emit type/value pairs for varargs params.
+    if (FTy->isVarArg()) {
+      unsigned NumVarargs = I.getNumOperands()-1-FTy->getNumParams();
+      Vals.push_back(NumVarargs);
+      for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
+           i != e; ++i) {
+        Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
+        Vals.push_back(VE.getValueID(I.getOperand(i)));
       }
     }
     break;
+  }
     
   case Instruction::VAArg:
     Code = bitc::FUNC_CODE_INST_VAARG;
