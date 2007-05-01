@@ -78,6 +78,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  bool hasReservedCallFrame(MachineFunction &MF) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;

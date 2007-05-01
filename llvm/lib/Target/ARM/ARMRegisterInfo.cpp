@@ -386,6 +386,29 @@ bool ARMRegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
+// hasReservedCallFrame - Under normal circumstances, when a frame pointer is
+// not required, we reserve argument space for call sites in the function
+// immediately on entry to the current function. This eliminates the need for
+// add/sub sp brackets around call sites. Returns true if the call frame is
+// included as part of the stack frame.
+bool ARMRegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+  const MachineFrameInfo *FFI = MF.getFrameInfo();
+  unsigned CFSize = FFI->getMaxCallFrameSize();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  // It's not always a good idea to include the call frame as part of the
+  // stack frame. ARM (especially Thumb) has small immediate offset to
+  // address the stack frame. So a large call frame can cause poor codegen
+  // and may even makes it impossible to scavenge a register.
+  if (AFI->isThumbFunction()) {
+    if (CFSize >= ((1 << 8) - 1) * 4 / 2) // Half of imm8 * 4
+      return false;
+  } else {
+    if (CFSize >= ((1 << 12) - 1) / 2)  // Half of imm12
+      return false;
+  }
+  return !hasFP(MF);
+}
+
 /// emitARMRegPlusImmediate - Emits a series of instructions to materialize
 /// a destreg = basereg + immediate in ARM code.
 static
@@ -605,7 +628,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 void ARMRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (hasFP(MF)) {
+  if (!hasReservedCallFrame(MF)) {
     // If we have alloca, convert as follows:
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
     // ADJCALLSTACKUP   -> add, sp, sp, amount
@@ -1146,8 +1169,9 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                 Limit = (1 << 8) - 1;
                 goto DoneEstimating;
               } else if (AddrMode == ARMII::AddrMode5) {
-                Limit = ((1 << 8) - 1) * 4;
-                goto DoneEstimating;
+                unsigned ThisLimit = ((1 << 8) - 1) * 4;
+                if (ThisLimit < Limit)
+                  Limit = ThisLimit;
               }
             }
         }

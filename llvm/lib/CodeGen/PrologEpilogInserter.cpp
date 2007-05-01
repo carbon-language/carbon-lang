@@ -135,8 +135,9 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   unsigned MaxCallFrameSize = 0;
   bool HasCalls = false;
 
+  std::vector<MachineBasicBlock::iterator> FrameSDOps;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
-    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); )
+    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I)
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {
         assert(I->getNumOperands() >= 1 && "Call Frame Setup/Destroy Pseudo"
@@ -144,14 +145,16 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
         unsigned Size = I->getOperand(0).getImmedValue();
         if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
         HasCalls = true;
-        RegInfo->eliminateCallFramePseudoInstr(Fn, *BB, I++);
-      } else {
-        ++I;
+        FrameSDOps.push_back(I);
       }
 
   MachineFrameInfo *FFI = Fn.getFrameInfo();
   FFI->setHasCalls(HasCalls);
   FFI->setMaxCallFrameSize(MaxCallFrameSize);
+  for (unsigned i = 0, e = FrameSDOps.size(); i != e; ++i) {
+    MachineBasicBlock::iterator I = FrameSDOps[i];
+    RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
+  }
 
   // Now figure out which *callee saved* registers are modified by the current
   // function, thus needing to be saved and restored in the prolog/epilog.
@@ -333,10 +336,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // First assign frame offsets to stack objects that are used to spill
   // callee saved registers.
   if (StackGrowsDown) {
-    for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
-      if (i < MinCSFrameIndex || i > MaxCSFrameIndex)
-        continue;
-
+    for (unsigned i = MinCSFrameIndex; i <= MaxCSFrameIndex; ++i) {
       // If stack grows down, we need to add size of find the lowest
       // address of the object.
       Offset += FFI->getObjectSize(i);
@@ -351,10 +351,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       FFI->setObjectOffset(i, -Offset);        // Set the computed offset
     }
   } else {
-    for (int i = FFI->getObjectIndexEnd()-1; i >= 0; --i) {
-      if ((unsigned)i < MinCSFrameIndex || (unsigned)i > MaxCSFrameIndex)
-        continue;
-
+    for (unsigned i = MaxCSFrameIndex; i >= MinCSFrameIndex; --i) {
       unsigned Align = FFI->getObjectAlignment(i);
       // If the alignment of this object is greater than that of the stack, then
       // increase the stack alignment to match.
@@ -373,7 +370,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   if (RS && RegInfo->hasFP(Fn)) {
     int SFI = RS->getScavengingFrameIndex();
     if (SFI >= 0) {
-      // If stack grows down, we need to add size of find the lowest
+      // If stack grows down, we need to add size of the lowest
       // address of the object.
       if (StackGrowsDown)
         Offset += FFI->getObjectSize(SFI);
@@ -447,10 +444,10 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // subroutines have their stack frames suitable aligned.
   if (!RegInfo->targetHandlesStackFrameRounding() &&
       (FFI->hasCalls() || FFI->hasVarSizedObjects())) {
-    // When we have no frame pointer, we reserve argument space for call sites
-    // in the function immediately on entry to the current function. This
-    // eliminates the need for add/sub sp brackets around call sites.
-    if (!RegInfo->hasFP(Fn))
+    // If we have reserved argument space for call sites in the function
+    // immediately on entry to the current function, count it as part of the
+    // overall stack size.
+    if (RegInfo->hasReservedCallFrame(Fn))
       Offset += FFI->getMaxCallFrameSize();
 
     unsigned AlignMask = TFI.getStackAlignment() - 1;
