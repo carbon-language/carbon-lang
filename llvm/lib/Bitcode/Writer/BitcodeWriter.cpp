@@ -485,13 +485,12 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
 static void WriteInstruction(const Instruction &I, ValueEnumerator &VE, 
                              BitstreamWriter &Stream,
                              SmallVector<unsigned, 64> &Vals) {
-  return; // FIXME: REMOVE
   unsigned Code = 0;
   unsigned AbbrevToUse = 0;
   switch (I.getOpcode()) {
   default:
     if (Instruction::isCast(I.getOpcode())) {
-      Code = bitc::FUNC_CODE_INST_BINOP;
+      Code = bitc::FUNC_CODE_INST_CAST;
       Vals.push_back(GetEncodedCastOpcode(I.getOpcode()));
       Vals.push_back(VE.getTypeID(I.getType()));
       Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
@@ -505,15 +504,179 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
       Vals.push_back(VE.getValueID(I.getOperand(1)));
     }
     break;
+
+  case Instruction::GetElementPtr:
+    Code = bitc::FUNC_CODE_INST_GEP;
+    Vals.push_back(I.getNumOperands());
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+      Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
+      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    }
+    break;
+  case Instruction::Select:
+    Code = bitc::FUNC_CODE_INST_SELECT;
+    Vals.push_back(VE.getTypeID(I.getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    Vals.push_back(VE.getValueID(I.getOperand(2)));
+    break;
+  case Instruction::ExtractElement:
+    Code = bitc::FUNC_CODE_INST_EXTRACTELT;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    break;
+  case Instruction::InsertElement:
+    Code = bitc::FUNC_CODE_INST_INSERTELT;
+    Vals.push_back(VE.getTypeID(I.getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    Vals.push_back(VE.getValueID(I.getOperand(2)));
+    break;
+  case Instruction::ShuffleVector:
+    Code = bitc::FUNC_CODE_INST_SHUFFLEVEC;
+    Vals.push_back(VE.getTypeID(I.getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    Vals.push_back(VE.getValueID(I.getOperand(2)));
+    break;
+  case Instruction::ICmp:
+  case Instruction::FCmp:
+    Code = bitc::FUNC_CODE_INST_CMP;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    Vals.push_back(cast<CmpInst>(I).getPredicate());
+    break;
+
+  case Instruction::Ret:
+    Code = bitc::FUNC_CODE_INST_RET;
+    if (I.getNumOperands()) {
+      Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+      Vals.push_back(VE.getValueID(I.getOperand(0)));
+    }
+    break;
+  case Instruction::Br:
+    Code = bitc::FUNC_CODE_INST_BR;
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    if (cast<BranchInst>(I).isConditional()) {
+      Vals.push_back(VE.getValueID(I.getOperand(1)));
+      Vals.push_back(VE.getValueID(I.getOperand(2)));
+    }
+    break;
+  case Instruction::Switch:
+    Code = bitc::FUNC_CODE_INST_SWITCH;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(I.getNumOperands());
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    break;
+  case Instruction::Invoke:
+    Code = bitc::FUNC_CODE_INST_INVOKE;
+    // FIXME: param attrs
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));  // callee
+    Vals.push_back(VE.getValueID(I.getOperand(1)));  // normal
+    Vals.push_back(VE.getValueID(I.getOperand(2)));  // unwind
     
-    
+    // Emit value #'s for the fixed parameters.
+    const PointerType *PTy = cast<PointerType>(I.getOperand(0)->getType());
+    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+      Vals.push_back(VE.getValueID(I.getOperand(i+3)));  // fixed param.
+
+    // Emit type/value pairs for varargs params.
+    if (FTy->isVarArg()) {
+      unsigned NumVarargs = I.getNumOperands()-3-FTy->getNumParams();
+      Vals.push_back(NumVarargs);
+      for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
+           i != e; ++i) {
+        Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
+        Vals.push_back(VE.getValueID(I.getOperand(i)));
+      }
+    }
+    break;
   case Instruction::Unwind:
     Code = bitc::FUNC_CODE_INST_UNWIND;
     break;
   case Instruction::Unreachable:
     Code = bitc::FUNC_CODE_INST_UNREACHABLE;
     break;
+  
+  case Instruction::PHI:
+    Code = bitc::FUNC_CODE_INST_PHI;
+    Vals.push_back(VE.getTypeID(I.getType()));
+    Vals.push_back(I.getNumOperands());
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    break;
     
+  case Instruction::Malloc:
+    Code = bitc::FUNC_CODE_INST_MALLOC;
+    Vals.push_back(VE.getTypeID(I.getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0))); // size.
+    Vals.push_back(Log2_32(cast<MallocInst>(I).getAlignment())+1);
+    break;
+    
+  case Instruction::Free:
+    Code = bitc::FUNC_CODE_INST_FREE;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    break;
+    
+  case Instruction::Alloca:
+    Code = bitc::FUNC_CODE_INST_ALLOCA;
+    Vals.push_back(VE.getTypeID(I.getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0))); // size.
+    Vals.push_back(Log2_32(cast<AllocaInst>(I).getAlignment())+1);
+    break;
+    
+  case Instruction::Load:
+    Code = bitc::FUNC_CODE_INST_LOAD;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0))); // ptr.
+    Vals.push_back(Log2_32(cast<LoadInst>(I).getAlignment())+1);
+    Vals.push_back(cast<LoadInst>(I).isVolatile());
+    break;
+  case Instruction::Store:
+    Code = bitc::FUNC_CODE_INST_STORE;
+    Vals.push_back(VE.getTypeID(I.getOperand(1)->getType()));   // Pointer
+    Vals.push_back(VE.getValueID(I.getOperand(0))); // val.
+    Vals.push_back(VE.getValueID(I.getOperand(1))); // ptr.
+    Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
+    Vals.push_back(cast<StoreInst>(I).isVolatile());
+    break;
+  case Instruction::Call: {
+    Code = bitc::FUNC_CODE_INST_CALL;
+    // FIXME: param attrs
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));  // callee
+    
+    // Emit value #'s for the fixed parameters.
+    const PointerType *PTy = cast<PointerType>(I.getOperand(0)->getType());
+    const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
+    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
+      Vals.push_back(VE.getValueID(I.getOperand(i+1)));  // fixed param.
+      
+      // Emit type/value pairs for varargs params.
+      if (FTy->isVarArg()) {
+        unsigned NumVarargs = I.getNumOperands()-1-FTy->getNumParams();
+        Vals.push_back(NumVarargs);
+        for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
+             i != e; ++i) {
+          Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
+          Vals.push_back(VE.getValueID(I.getOperand(i)));
+        }
+      }
+    }
+    break;
+    
+  case Instruction::VAArg:
+    Code = bitc::FUNC_CODE_INST_VAARG;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));   // valistty
+    Vals.push_back(VE.getValueID(I.getOperand(0))); // valist.
+    Vals.push_back(VE.getTypeID(I.getType())); // restype.
+    break;
   }
   
   Stream.EmitRecord(Code, Vals, AbbrevToUse);
