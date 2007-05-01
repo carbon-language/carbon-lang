@@ -263,6 +263,14 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate a function at a
 time.</p>
 
 <div class="doc_code"><pre>
+     static const int ID;
+     Hello() : FunctionPass((intptr_t)&ID) {}
+</pre></div><p>
+
+<p> This declares pass identifier used by LLVM to identify pass. This allows LLVM to
+avoid using expensive C++ runtime information.</p>
+
+<div class="doc_code"><pre>
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
@@ -275,6 +283,13 @@ which overloads an abstract virtual method inherited from <a
 href="#FunctionPass"><tt>FunctionPass</tt></a>.  This is where we are supposed
 to do our thing, so we just print out our message with the name of each
 function.</p>
+
+<div class="doc_code"><pre>
+  const int Hello::ID = 0;
+</pre></div>
+
+<p> We initialize pass ID here. LLVM uses ID's address to identify pass so 
+initialization value is not important.</p>
 
 <div class="doc_code"><pre>
   RegisterPass&lt;Hello&gt; X("<i>hello</i>", "<i>Hello World Pass</i>");
@@ -295,6 +310,10 @@ argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".</p>
 
 <b>namespace</b> {
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
+    
+    static const int ID;
+    Hello() : FunctionPass((intptr_t)&ID) {}
+
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
