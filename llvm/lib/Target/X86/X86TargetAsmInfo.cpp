@@ -121,6 +121,10 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
     DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
     DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+    
+    SupportsExceptionHandling = true;
+    DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
+    DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
     break;
 
   case X86Subtarget::isCygwin:
