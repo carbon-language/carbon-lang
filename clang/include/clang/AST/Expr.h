@@ -83,7 +83,8 @@ public:
     : Expr(IntegerLiteralClass, type), Value(value) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
-
+  intmax_t getValue() const { return Value; }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IntegerLiteralClass; 

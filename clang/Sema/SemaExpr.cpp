@@ -601,13 +601,79 @@ Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
 }
 
-Action::ExprResult Sema::CheckAssignmentOperands( // C99 6.5.16
+/// CheckAssignmentOperands (C99 6.5.16) - This routine currently 
+/// has code to accommodate several GCC extensions when type checking 
+/// pointers. Here are some objectionable examples that GCC considers warnings:
+///
+///  int a, *pint;
+///  short *pshort;
+///  struct foo *pfoo;
+///
+///  pint = pshort; // warning: assignment from incompatible pointer type
+///  a = pint; // warning: assignment makes integer from pointer without a cast
+///  pint = a; // warning: assignment makes pointer from integer without a cast
+///  pint = pfoo; // warning: assignment from incompatible pointer type
+///
+/// As a result, the code for dealing with pointers is more complex than the
+/// C99 spec dictates. 
+/// Note: the warning above turn into errors when -pedantic-errors is enabled. 
+///
+Action::ExprResult Sema::CheckAssignmentOperands( 
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
   QualType lhsType = lex->getType();
   QualType rhsType = rex->getType();
   
-  // FIXME: add type checking and fix result type
+  if ((BOP)code == BinaryOperator::Assign) { // C99 6.5.16.1
+    if (lhsType.isConstQualified())
+      return Diag(loc, diag::err_typecheck_assign_const);
+      
+    if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
+      return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+    } else if (lhsType->isPointerType()) {
+      if (rhsType->isIntegerType()) {
+        // check for null pointer constant (C99 6.3.2.3p3)
+        const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(rex);
+        if (!constant || constant->getValue() != 0)
+          Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+      }
+      // FIXME: make sure the qualifier are matching
+      if (rhsType->isPointerType()) { 
+        if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
+          Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+      }
+    } else if (rhsType->isPointerType()) {
+      if (lhsType->isIntegerType()) {
+        Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+      }
+      // FIXME: make sure the qualifier are matching
+      if (lhsType->isPointerType()) {
+        if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
+          Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+      }
+    } else if (lhsType->isArrayType() && rhsType->isArrayType()) {
+      ///  int aryInt[3], aryInt2[3];
+      ///  aryInt = aryInt2; // gcc considers this an error (FIXME?)
+      if (Type::arrayTypesAreCompatible(lhsType, rhsType))
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+    } else if (lhsType->isStructureType() && rhsType->isStructureType()) {
+      if (Type::structureTypesAreCompatible(lhsType, rhsType))
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+    } else if (lhsType->isUnionType() && rhsType->isUnionType()) {
+      if (Type::unionTypesAreCompatible(lhsType, rhsType))
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+    } else if (lhsType->isFunctionType() && rhsType->isFunctionType()) {
+      if (Type::functionTypesAreCompatible(lhsType, rhsType))
+        return new BinaryOperator(lex, rex, (BOP)code, lhsType);
+    }
+    return Diag(loc, diag::err_typecheck_assign_incompatible);
+  }
+  
+  // FIXME: type check compound assignments...
   return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
 }
 

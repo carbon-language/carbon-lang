@@ -233,6 +233,14 @@ public:
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
   bool isSignedIntegerType() const;     // C99 6.2.5p4
   bool isUnsignedIntegerType() const;   // C99 6.2.5p6
+  
+  /// Compatibility predicates used to check assignment expressions.
+  static bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  static bool structureTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  static bool unionTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  static bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
+  static bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
+  static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
 private:
   // this forces clients to use isModifiableLvalue on QualType, the class that 
   // knows if the type is const. This predicate is a helper to QualType. 

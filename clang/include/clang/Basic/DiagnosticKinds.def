@@ -539,6 +539,16 @@ DIAG(err_typecheck_invalid_operands, ERROR,
      "invalid operands to binary expression")
 DIAG(ext_typecheck_comparison_of_pointer_integer, EXTENSION,
      "comparison between pointer and integer")
+DIAG(err_typecheck_assign_const, ERROR,
+     "assignment of read-only variable")
+DIAG(err_typecheck_assign_incompatible, ERROR,
+     "incompatible types in assignment")
+DIAG(ext_typecheck_assign_int_from_pointer, EXTENSION,
+     "assignment makes integer from pointer without a cast")
+DIAG(ext_typecheck_assign_pointer_from_int, EXTENSION,
+     "assignment makes pointer from integer without a cast")
+DIAG(ext_typecheck_assign_incompatible_pointer, EXTENSION,
+     "assignment from incompatible pointer type")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

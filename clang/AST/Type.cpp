@@ -71,6 +71,76 @@ bool Type::isUnionType() const {
   return false;
 }
 
+// C99 6.2.7p1: If both are complete types, then the following additional
+// requirements apply...FIXME (handle compatibility across source files).
+bool Type::structureTypesAreCompatible(QualType lhs, QualType rhs) {
+  TagDecl *ldecl = cast<TagType>(lhs.getCanonicalType())->getDecl();
+  TagDecl *rdecl = cast<TagType>(rhs.getCanonicalType())->getDecl();
+  
+  if (ldecl->getKind() == Decl::Struct && rdecl->getKind() == Decl::Struct) {
+    if (ldecl->getIdentifier() == rdecl->getIdentifier())
+      return true;
+  }
+  return false;
+}
+
+bool Type::unionTypesAreCompatible(QualType lhs, QualType rhs) {
+  TagDecl *ldecl = cast<TagType>(lhs.getCanonicalType())->getDecl();
+  TagDecl *rdecl = cast<TagType>(rhs.getCanonicalType())->getDecl();
+  
+  if (ldecl->getKind() == Decl::Union && rdecl->getKind() == Decl::Union) {
+    if (ldecl->getIdentifier() == rdecl->getIdentifier())
+      return true;
+  }
+  return false;
+}
+
+bool Type::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
+  QualType ltype = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
+  QualType rtype = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
+  
+  // handle void first (not sure this is the best place to check for this).
+  if (ltype->isVoidType() || rtype->isVoidType())
+    return true;
+  return typesAreCompatible(ltype, rtype);
+}
+
+bool Type::functionTypesAreCompatible(QualType lhs, QualType rhs) {
+  return true; // FIXME: add more checking
+}
+
+bool Type::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
+  QualType ltype = cast<ArrayType>(lhs.getCanonicalType())->getElementType();
+  QualType rtype = cast<ArrayType>(rhs.getCanonicalType())->getElementType();
+  
+  if (!typesAreCompatible(ltype, rtype))
+    return false;
+    
+  // FIXME: If both types specify constant sizes, then the sizes must also be 
+  // the same. Even if the sizes are the same, GCC produces an error.
+  return true;
+}
+
+bool Type::typesAreCompatible(QualType lcanon, QualType rcanon) {
+  // If two types are identical, they are are compatible
+  if (lcanon == rcanon)
+    return true;
+    
+  if (lcanon->isStructureType() && rcanon->isStructureType())
+    return structureTypesAreCompatible(lcanon, rcanon);
+    
+  if (lcanon->isPointerType() && rcanon->isPointerType())
+    return pointerTypesAreCompatible(lcanon, rcanon);
+
+  if (lcanon->isArrayType() && rcanon->isArrayType())
+    return arrayTypesAreCompatible(lcanon, rcanon);
+    
+  if (lcanon->isFunctionType() && rcanon->isFunctionType())
+    return functionTypesAreCompatible(lcanon, rcanon);
+      
+  return false;
+}
+
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
