@@ -1235,7 +1235,10 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned X86RegisterInfo::getRARegister() const {
-  return X86::ST0;  // use a non-register register
+  if (Is64Bit)
+    return X86::RIP;  // Should have dwarf #16
+  else
+    return X86::EIP;  // Should have dwarf #8
 }
 
 unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {

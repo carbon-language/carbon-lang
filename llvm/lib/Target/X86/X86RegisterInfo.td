@@ -60,6 +60,7 @@ let Namespace = "X86" in {
   def BP : RegisterWithSubRegs<"BP", [BPL]>, DwarfRegNum<5>;
   def SI : RegisterWithSubRegs<"SI", [SIL]>, DwarfRegNum<6>;
   def DI : RegisterWithSubRegs<"DI", [DIL]>, DwarfRegNum<7>;
+  def IP : Register<"IP">, DwarfRegNum<8>;  
   
   // X86-64 only
   def R8W  : RegisterWithSubRegs<"R8W", [R8B]>, DwarfRegNum<8>;
@@ -80,6 +81,7 @@ let Namespace = "X86" in {
   def EBP : RegisterWithSubRegs<"EBP", [BP]>, DwarfRegNum<5>;
   def ESI : RegisterWithSubRegs<"ESI", [SI]>, DwarfRegNum<6>;
   def EDI : RegisterWithSubRegs<"EDI", [DI]>, DwarfRegNum<7>;
+  def EIP : RegisterWithSubRegs<"EIP", [IP]>, DwarfRegNum<8>;  
   
   // X86-64 only
   def R8D  : RegisterWithSubRegs<"R8D", [R8W]>, DwarfRegNum<8>;
@@ -109,6 +111,7 @@ let Namespace = "X86" in {
   def R13 : RegisterWithSubRegs<"R13", [R13D]>, DwarfRegNum<13>;
   def R14 : RegisterWithSubRegs<"R14", [R14D]>, DwarfRegNum<14>;
   def R15 : RegisterWithSubRegs<"R15", [R15D]>, DwarfRegNum<15>;
+  def RIP : RegisterWithSubRegs<"RIP", [EIP]>,  DwarfRegNum<16>;
 
   // MMX Registers. These are actually aliased to ST0 .. ST7
   def MM0 : Register<"MM0">, DwarfRegNum<29>;
