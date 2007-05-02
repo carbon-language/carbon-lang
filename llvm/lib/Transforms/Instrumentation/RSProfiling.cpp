@@ -81,9 +81,7 @@ namespace {
     }
   };
 
-  const int RSProfilers::ID = 0;
   static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
-  const int NullProfilerRS::ID = 0;
   static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
                                          "Measure profiling framework overhead");
   static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
@@ -160,10 +158,13 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   };
 
-  const int ProfilerRS::ID = 0;
   RegisterPass<ProfilerRS> X("insert-rs-profiling-framework",
                              "Insert random sampling instrumentation framework");
 }
+
+const int RSProfilers::ID = 0;
+const int NullProfilerRS::ID = 0;
+const int ProfilerRS::ID = 0;
 
 //Local utilities
 static void ReplacePhiPred(BasicBlock* btarget, 

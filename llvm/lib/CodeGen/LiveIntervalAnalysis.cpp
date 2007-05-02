@@ -44,8 +44,8 @@ STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
 
+const int LiveIntervals::ID = 0;
 namespace {
-  const int LiveIntervals::ID = 0;
   RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
   static cl::opt<bool>

@@ -33,9 +33,9 @@ using namespace llvm;
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
   // Register the default SparcV9 implementation...
-  const int TargetData::ID = 0;
   RegisterPass<TargetData> X("targetdata", "Target Data Layout");
 }
+const int TargetData::ID = 0;
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout

@@ -190,13 +190,15 @@ private:
   }
 };
 
-const int CallGraph::ID = 0;
+
 RegisterAnalysisGroup<CallGraph> X("Call Graph");
-const int BasicCallGraph::ID = 0;
 RegisterPass<BasicCallGraph> Y("basiccg", "Basic CallGraph Construction");
 RegisterAnalysisGroup<CallGraph, true> Z(Y);
 
 } //End anonymous namespace
+
+const int CallGraph::ID = 0;
+const int BasicCallGraph::ID = 0;
 
 void CallGraph::initialize(Module &M) {
   Mod = &M;

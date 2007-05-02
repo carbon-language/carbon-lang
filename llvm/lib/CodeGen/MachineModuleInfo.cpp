@@ -28,9 +28,9 @@ using namespace llvm::dwarf;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
-  const int MachineModuleInfo::ID = 0;
   RegisterPass<MachineModuleInfo> X("machinemoduleinfo", "Module Information");
 }
+const int MachineModuleInfo::ID = 0;
 
 //===----------------------------------------------------------------------===//
 

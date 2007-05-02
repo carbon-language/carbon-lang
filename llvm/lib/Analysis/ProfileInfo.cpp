@@ -22,9 +22,9 @@ using namespace llvm;
 
 // Register the ProfileInfo interface, providing a nice name to refer to.
 namespace {
-  const int ProfileInfo::ID = 0;
   RegisterAnalysisGroup<ProfileInfo> Z("Profile Information");
 }
+const int ProfileInfo::ID = 0;
 
 ProfileInfo::~ProfileInfo() {}
 

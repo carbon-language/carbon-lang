@@ -34,9 +34,9 @@ using namespace llvm;
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.
 namespace {
-  const int AliasAnalysis::ID = 0;
   RegisterAnalysisGroup<AliasAnalysis> Z("Alias Analysis");
 }
+const int AliasAnalysis::ID = 0;
 
 //===----------------------------------------------------------------------===//
 // Default chaining methods
