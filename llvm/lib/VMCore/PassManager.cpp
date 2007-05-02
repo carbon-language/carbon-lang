@@ -63,7 +63,7 @@ class VISIBILITY_HIDDEN BBPassManager : public PMDataManager,
                                         public FunctionPass {
 
 public:
-  static const int ID;
+  static const char ID;
   BBPassManager(int Depth) 
     : PMDataManager(Depth), FunctionPass((intptr_t)&ID) {}
 
@@ -106,7 +106,7 @@ public:
   }
 };
 
-const int BBPassManager::ID = 0;
+const char BBPassManager::ID = 0;
 }
 
 namespace llvm {
@@ -119,7 +119,7 @@ class FunctionPassManagerImpl : public Pass,
                                 public PMDataManager,
                                 public PMTopLevelManager {
 public:
-  static const int ID;
+  static const char ID;
   FunctionPassManagerImpl(int Depth) : 
     Pass((intptr_t)&ID), PMDataManager(Depth), 
     PMTopLevelManager(TLM_Function) { }
@@ -173,7 +173,7 @@ public:
   }
 };
 
-const int FunctionPassManagerImpl::ID = 0;
+const char FunctionPassManagerImpl::ID = 0;
 //===----------------------------------------------------------------------===//
 // MPPassManager
 //
@@ -183,7 +183,7 @@ const int FunctionPassManagerImpl::ID = 0;
 class MPPassManager : public Pass, public PMDataManager {
  
 public:
-  static const int ID;
+  static const char ID;
   MPPassManager(int Depth) : Pass((intptr_t)&ID), PMDataManager(Depth) { }
 
   // Delete on the fly managers.
@@ -247,7 +247,7 @@ public:
   std::map<Pass *, FunctionPassManagerImpl *> OnTheFlyManagers;
 };
 
-const int MPPassManager::ID = 0;
+const char MPPassManager::ID = 0;
 //===----------------------------------------------------------------------===//
 // PassManagerImpl
 //
@@ -258,7 +258,7 @@ class PassManagerImpl : public Pass,
                         public PMTopLevelManager {
 
 public:
-  static const int ID;
+  static const char ID;
   PassManagerImpl(int Depth) : Pass((intptr_t)&ID), PMDataManager(Depth),
                                PMTopLevelManager(TLM_Pass) { }
 
@@ -304,7 +304,7 @@ public:
 
 };
 
-const int PassManagerImpl::ID = 0;
+const char PassManagerImpl::ID = 0;
 } // End of llvm namespace
 
 namespace {
@@ -1108,7 +1108,7 @@ bool FunctionPassManagerImpl::run(Function &F) {
 //===----------------------------------------------------------------------===//
 // FPPassManager implementation
 
-const int FPPassManager::ID = 0;
+const char FPPassManager::ID = 0;
 /// Print passes managed by this manager
 void FPPassManager::dumpPassStructure(unsigned Offset) {
   llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager\n";

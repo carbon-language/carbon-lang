@@ -208,7 +208,7 @@ public:
 ///
 class DominatorTree : public DominatorTreeBase {
 public:
-  static const int ID; // Pass ID, replacement for typeid
+  static const char ID; // Pass ID, replacement for typeid
   DominatorTree() : DominatorTreeBase((intptr_t)&ID, false) {}
   
   BasicBlock *getRoot() const {
@@ -399,7 +399,7 @@ protected:
 
 class ETForest : public ETForestBase {
 public:
-  static const int ID; // Pass identifcation, replacement for typeid
+  static const char ID; // Pass identifcation, replacement for typeid
 
   ETForest() : ETForestBase((intptr_t)&ID, false) {}
 
@@ -477,7 +477,7 @@ public:
 ///
 class DominanceFrontier : public DominanceFrontierBase {
 public:
-  static const int ID; // Pass ID, replacement for typeid
+  static const char ID; // Pass ID, replacement for typeid
   DominanceFrontier() : 
     DominanceFrontierBase((intptr_t)& ID, false) {}
 

@@ -15,7 +15,7 @@
 #include "llvm/Analysis/IntervalIterator.h"
 using namespace llvm;
 
-const int IntervalPartition::ID = 0;
+const char IntervalPartition::ID = 0;
 static RegisterPass<IntervalPartition>
 X("intervals", "Interval Partition Construction", true);
 

@@ -30,7 +30,7 @@ using namespace llvm::dwarf;
 namespace {
   RegisterPass<MachineModuleInfo> X("machinemoduleinfo", "Module Information");
 }
-const int MachineModuleInfo::ID = 0;
+const char MachineModuleInfo::ID = 0;
 
 //===----------------------------------------------------------------------===//
 
@@ -1751,14 +1751,14 @@ Function *MachineModuleInfo::getPersonality() const {
 namespace llvm {
 
 struct DebugLabelFolder : public MachineFunctionPass {
-  static const int ID;
+  static const char ID;
   DebugLabelFolder() : MachineFunctionPass((intptr_t)&ID) {}
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
   virtual const char *getPassName() const { return "Label Folder"; }
 };
 
-const int  DebugLabelFolder::ID = 0;
+const char DebugLabelFolder::ID = 0;
 
 bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
   // Get machine module info.

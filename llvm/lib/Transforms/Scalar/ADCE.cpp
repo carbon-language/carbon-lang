@@ -52,7 +52,7 @@ class VISIBILITY_HIDDEN ADCE : public FunctionPass {
   // The public interface for this class
   //
 public:
-  static const int ID; // Pass identifcation, replacement for typeid
+  static const char ID; // Pass identifcation, replacement for typeid
   ADCE() : FunctionPass((intptr_t)&ID) {}
 
   // Execute the Aggressive Dead Code Elimination Algorithm
@@ -107,7 +107,7 @@ private:
   }
 };
 
-  const int ADCE::ID = 0;
+  const char ADCE::ID = 0;
   RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
 

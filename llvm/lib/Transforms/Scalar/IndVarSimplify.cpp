@@ -69,7 +69,7 @@ namespace {
     bool Changed;
   public:
 
-   static const int ID; // Pass identifcation, replacement for typeid
+   static const char ID; // Pass identifcation, replacement for typeid
    IndVarSimplify() : LoopPass((intptr_t)&ID) {}
 
    bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -95,7 +95,7 @@ namespace {
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
 
-  const int IndVarSimplify::ID = 0;
+  const char IndVarSimplify::ID = 0;
   RegisterPass<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
 

@@ -38,7 +38,7 @@ namespace llvm {
     // entered.
     std::map<std::pair<BasicBlock*, BasicBlock*>, unsigned> EdgeCounts;
   public:
-    static const int ID; // Class identification, replacement for typeinfo
+    static const char ID; // Class identification, replacement for typeinfo
     virtual ~ProfileInfo();  // We want to be subclassed
 
     //===------------------------------------------------------------------===//

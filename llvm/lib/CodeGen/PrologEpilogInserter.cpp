@@ -32,7 +32,7 @@ using namespace llvm;
 
 namespace {
   struct VISIBILITY_HIDDEN PEI : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
     PEI() : MachineFunctionPass((intptr_t)&ID) {}
 
     const char *getPassName() const {
@@ -101,7 +101,7 @@ namespace {
     void replaceFrameIndices(MachineFunction &Fn);
     void insertPrologEpilogCode(MachineFunction &Fn);
   };
-  const int PEI::ID = 0;
+  const char PEI::ID = 0;
 }
 
 

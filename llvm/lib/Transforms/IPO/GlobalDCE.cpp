@@ -30,7 +30,7 @@ STATISTIC(NumVariables, "Number of global variables removed");
 
 namespace {
   struct VISIBILITY_HIDDEN GlobalDCE : public ModulePass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     GlobalDCE() : ModulePass((intptr_t)&ID) {}
  
     // run - Do the GlobalDCE pass on the specified module, optionally updating
@@ -49,7 +49,7 @@ namespace {
     bool SafeToDestroyConstant(Constant* C);
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
-  const int GlobalDCE::ID = 0;
+  const char GlobalDCE::ID = 0;
   RegisterPass<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
 

@@ -50,7 +50,7 @@ namespace {
     unsigned NoModRef, Mod, Ref, ModRef;
 
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     AAEval() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -73,7 +73,7 @@ namespace {
     bool doFinalization(Module &M);
   };
 
-  const int AAEval::ID = 0;
+  const char AAEval::ID = 0;
   RegisterPass<AAEval>
   X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator");
 }

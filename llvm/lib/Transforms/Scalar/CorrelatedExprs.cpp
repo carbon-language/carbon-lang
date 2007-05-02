@@ -225,7 +225,7 @@ namespace {
     std::map<BasicBlock*, RegionInfo> RegionInfoMap;
     ETForest *EF;
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     CEE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
@@ -288,7 +288,7 @@ namespace {
     bool SimplifyInstruction(Instruction *Inst, const RegionInfo &RI);
   };
   
-  const int CEE::ID = 0;
+  const char CEE::ID = 0;
   RegisterPass<CEE> X("cee", "Correlated Expression Elimination");
 }
 

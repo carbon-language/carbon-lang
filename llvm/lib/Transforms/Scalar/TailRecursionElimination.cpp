@@ -67,7 +67,7 @@ STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 
 namespace {
   struct VISIBILITY_HIDDEN TailCallElim : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     TailCallElim() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
@@ -80,7 +80,7 @@ namespace {
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
   };
-  const int TailCallElim::ID = 0;
+  const char TailCallElim::ID = 0;
   RegisterPass<TailCallElim> X("tailcallelim", "Tail Call Elimination");
 }
 

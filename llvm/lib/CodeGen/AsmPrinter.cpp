@@ -32,7 +32,7 @@ using namespace llvm;
 static cl::opt<bool>
 AsmVerbose("asm-verbose", cl::Hidden, cl::desc("Add comments to directives."));
 
-const int AsmPrinter::ID = 0;
+const char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
   : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o), TM(tm), TAI(T)

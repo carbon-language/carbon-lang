@@ -40,7 +40,7 @@ namespace {
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
-    static const int ID;
+    static const char ID;
     PPCCodeEmitter(TargetMachine &T, MachineCodeEmitter &M)
       : MachineFunctionPass((intptr_t)&ID), TM(T), MCE(M) {}
 
@@ -64,7 +64,7 @@ namespace {
     ///
     unsigned getBinaryCodeForInstr(MachineInstr &MI);
   };
-  const int PPCCodeEmitter::ID = 0;
+  const char PPCCodeEmitter::ID = 0;
 }
 
 /// createPPCCodeEmitterPass - Return a pass that emits the collected PPC code

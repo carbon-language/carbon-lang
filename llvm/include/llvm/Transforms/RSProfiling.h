@@ -23,7 +23,7 @@ namespace llvm {
   /// this interface are expected to chain to other implementations, such that
   /// multiple profilers can be support simultaniously.
   struct RSProfilers : public ModulePass {
-    static const int ID; // Pass identification, replacement for typeinfo
+    static const char ID; // Pass identification, replacement for typeinfo
     RSProfilers() : ModulePass((intptr_t)&ID) {}
 
     /// isProfiling - This method returns true if the value passed it was 

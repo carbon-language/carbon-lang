@@ -47,7 +47,7 @@ namespace {
     /// had zero roots.
     const Type *MainRootRecordType;
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     LowerGC() : FunctionPass((intptr_t)&ID), 
                 GCRootInt(0), GCReadInt(0), GCWriteInt(0),
                 GCRead(0), GCWrite(0), RootChain(0), MainRootRecordType(0) {}
@@ -58,7 +58,7 @@ namespace {
     const StructType *getRootRecordType(unsigned NumRoots);
   };
 
-  const int LowerGC::ID = 0;
+  const char LowerGC::ID = 0;
   RegisterPass<LowerGC>
   X("lowergc", "Lower GC intrinsics, for GCless code generators");
 }

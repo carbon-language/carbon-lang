@@ -41,7 +41,7 @@ public:
   MachineBasicBlock *BB;
   std::vector<SDNode*> TopOrder;
   unsigned DAGSize;
-  static const int ID;
+  static const char ID;
 
   explicit SelectionDAGISel(TargetLowering &tli) : 
     FunctionPass((intptr_t)&ID), TLI(tli), DAGSize(0) {}

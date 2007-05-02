@@ -135,10 +135,10 @@ public:
 
 }  // end namespace llvm
 
-const int PrintModulePass::ID = 0;
+const char PrintModulePass::ID = 0;
 static RegisterPass<PrintModulePass>
 X("printm", "Print module to stderr");
-const int PrintFunctionPass::ID = 0;
+const char PrintFunctionPass::ID = 0;
 static RegisterPass<PrintFunctionPass>
 Y("print","Print function to stderr");
 

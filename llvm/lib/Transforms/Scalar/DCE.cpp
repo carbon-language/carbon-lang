@@ -35,7 +35,7 @@ namespace {
   // DeadInstElimination pass implementation
   //
   struct VISIBILITY_HIDDEN DeadInstElimination : public BasicBlockPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     DeadInstElimination() : BasicBlockPass(intptr_t(&ID)) {}
     virtual bool runOnBasicBlock(BasicBlock &BB) {
       bool Changed = false;
@@ -53,7 +53,7 @@ namespace {
     }
   };
 
-  const int DeadInstElimination::ID = 0;
+  const char DeadInstElimination::ID = 0;
   RegisterPass<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
 
@@ -67,7 +67,7 @@ namespace {
   // DeadCodeElimination pass implementation
   //
   struct DCE : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     DCE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
@@ -77,7 +77,7 @@ namespace {
     }
  };
 
-  const int DCE::ID = 0;
+  const char DCE::ID = 0;
   RegisterPass<DCE> Y("dce", "Dead Code Elimination");
 }
 

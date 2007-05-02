@@ -32,7 +32,7 @@ namespace {
   class VISIBILITY_HIDDEN LoaderPass : public ModulePass, public ProfileInfo {
     std::string Filename;
   public:
-    static const int ID; // Class identification, replacement for typeinfo
+    static const char ID; // Class identification, replacement for typeinfo
     LoaderPass(const std::string &filename = "")
       : ModulePass((intptr_t)&ID), Filename(filename) {
       if (filename.empty()) Filename = ProfileInfoFilename;
@@ -50,7 +50,7 @@ namespace {
     virtual bool runOnModule(Module &M);
   };
 
-  const int LoaderPass::ID = 0;
+  const char LoaderPass::ID = 0;
   RegisterPass<LoaderPass>
   X("profile-loader", "Load profile information from llvmprof.out");
 

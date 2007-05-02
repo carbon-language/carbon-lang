@@ -68,7 +68,7 @@ class LoopPass : public Pass {
 class LPPassManager : public FunctionPass, public PMDataManager {
 
 public:
-  static const int ID;
+  static const char ID;
   LPPassManager(int Depth);
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of

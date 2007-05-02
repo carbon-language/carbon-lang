@@ -69,7 +69,7 @@ namespace {
     std::map<Value*, unsigned> ValueRankMap;
     bool MadeChange;
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     Reassociate() : FunctionPass((intptr_t)&ID) {}
 
     bool runOnFunction(Function &F);
@@ -92,7 +92,7 @@ namespace {
     void RemoveDeadBinaryOp(Value *V);
   };
 
-  const int Reassociate::ID = 0;
+  const char Reassociate::ID = 0;
   RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
 }
 

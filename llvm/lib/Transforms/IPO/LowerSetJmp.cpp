@@ -109,7 +109,7 @@ namespace {
 
     bool IsTransformableFunction(const std::string& Name);
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     LowerSetJmp() : ModulePass((intptr_t)&ID) {}
 
     void visitCallInst(CallInst& CI);
@@ -121,7 +121,7 @@ namespace {
     bool doInitialization(Module& M);
   };
 
-  const int LowerSetJmp::ID = 0;
+  const char LowerSetJmp::ID = 0;
   RegisterPass<LowerSetJmp> X("lowersetjmp", "Lower Set Jump");
 } // end anonymous namespace
 

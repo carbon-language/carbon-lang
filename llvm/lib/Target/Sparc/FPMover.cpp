@@ -32,7 +32,7 @@ namespace {
     ///
     TargetMachine &TM;
     
-    static const int ID;
+    static const char ID;
     FPMover(TargetMachine &tm) 
       : MachineFunctionPass((intptr_t)&ID), TM(tm) { }
 
@@ -43,7 +43,7 @@ namespace {
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     bool runOnMachineFunction(MachineFunction &F);
   };
-  const int FPMover::ID = 0;
+  const char FPMover::ID = 0;
 } // end of anonymous namespace
 
 /// createSparcFPMoverPass - Returns a pass that turns FpMOVD

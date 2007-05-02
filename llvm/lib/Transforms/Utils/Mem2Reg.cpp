@@ -27,7 +27,7 @@ STATISTIC(NumPromoted, "Number of alloca's promoted");
 
 namespace {
   struct VISIBILITY_HIDDEN PromotePass : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     PromotePass() : FunctionPass((intptr_t)&ID) {}
 
     // runOnFunction - To run this pass, first we calculate the alloca
@@ -50,7 +50,7 @@ namespace {
     }
   };
 
-  const int PromotePass::ID = 0;
+  const char PromotePass::ID = 0;
   RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
 }  // end of anonymous namespace
 

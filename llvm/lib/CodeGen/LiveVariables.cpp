@@ -37,7 +37,7 @@
 #include <algorithm>
 using namespace llvm;
 
-const int LiveVariables::ID = 0;
+const char LiveVariables::ID = 0;
 static RegisterPass<LiveVariables> X("livevars", "Live Variable Analysis");
 
 void LiveVariables::VarInfo::dump() const {

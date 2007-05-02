@@ -50,7 +50,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     GlobalOpt() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M);
@@ -63,7 +63,7 @@ namespace {
     bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
   };
 
-  const int GlobalOpt::ID = 0;
+  const char GlobalOpt::ID = 0;
   RegisterPass<GlobalOpt> X("globalopt", "Global Variable Optimizer");
 }
 

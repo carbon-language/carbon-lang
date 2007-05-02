@@ -24,7 +24,7 @@ using namespace llvm;
 namespace {
   RegisterAnalysisGroup<ProfileInfo> Z("Profile Information");
 }
-const int ProfileInfo::ID = 0;
+const char ProfileInfo::ID = 0;
 
 ProfileInfo::~ProfileInfo() {}
 
@@ -86,11 +86,11 @@ unsigned ProfileInfo::getExecutionCount(BasicBlock *BB) const {
 namespace {
   struct VISIBILITY_HIDDEN NoProfileInfo 
     : public ImmutablePass, public ProfileInfo {
-    static const int ID; // Class identification, replacement for typeinfo
+    static const char ID; // Class identification, replacement for typeinfo
     NoProfileInfo() : ImmutablePass((intptr_t)&ID) {}
   };
 
-  const int NoProfileInfo::ID = 0;
+  const char NoProfileInfo::ID = 0;
   // Register this pass...
   RegisterPass<NoProfileInfo>
   X("no-profile", "No Profile Information");

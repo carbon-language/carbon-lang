@@ -69,7 +69,7 @@ namespace {
     SmallPtrSet<Value *,8> UnswitchedVals;
 
   public:
-    static const int ID; // Pass ID, replacement for typeid
+    static const char ID; // Pass ID, replacement for typeid
     LoopUnswitch() : LoopPass((intptr_t)&ID) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -112,7 +112,7 @@ namespace {
                            std::vector<Instruction*> &Worklist);
     void RemoveLoopFromHierarchy(Loop *L);
   };
-  const int LoopUnswitch::ID = 0;
+  const char LoopUnswitch::ID = 0;
   RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
 

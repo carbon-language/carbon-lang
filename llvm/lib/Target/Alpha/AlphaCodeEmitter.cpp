@@ -36,7 +36,7 @@ namespace {
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
-    static const int ID;
+    static const char ID;
     explicit AlphaCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce)
       : MachineFunctionPass((intptr_t)&ID), II(0), TM(tm), MCE(mce) {}
     AlphaCodeEmitter(TargetMachine &tm, MachineCodeEmitter &mce,
@@ -61,7 +61,7 @@ namespace {
     void emitBasicBlock(MachineBasicBlock &MBB);
 
   };
-  const int AlphaCodeEmitter::ID = 0;
+  const char AlphaCodeEmitter::ID = 0;
 }
 
 /// createAlphaCodeEmitterPass - Return a pass that emits the collected Alpha code

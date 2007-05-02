@@ -46,13 +46,13 @@ namespace {
     std::set<std::string> ExternalNames;
     bool DontInternalize;
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     InternalizePass(bool InternalizeEverything = true);
     InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
   };
-  const int InternalizePass::ID = 0;
+  const char InternalizePass::ID = 0;
   RegisterPass<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 

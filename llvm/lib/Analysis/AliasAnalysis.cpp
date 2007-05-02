@@ -36,7 +36,7 @@ using namespace llvm;
 namespace {
   RegisterAnalysisGroup<AliasAnalysis> Z("Alias Analysis");
 }
-const int AliasAnalysis::ID = 0;
+const char AliasAnalysis::ID = 0;
 
 //===----------------------------------------------------------------------===//
 // Default chaining methods

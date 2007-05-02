@@ -52,7 +52,7 @@ STATISTIC(NumFP  , "Number of floating point instructions");
 
 namespace {
   struct VISIBILITY_HIDDEN FPS : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
     FPS() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -154,7 +154,7 @@ namespace {
     void handleCondMovFP(MachineBasicBlock::iterator &I);
     void handleSpecialFP(MachineBasicBlock::iterator &I);
   };
-  const int FPS::ID = 0;
+  const char FPS::ID = 0;
 }
 
 FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }

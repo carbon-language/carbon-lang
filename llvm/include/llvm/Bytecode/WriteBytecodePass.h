@@ -26,7 +26,7 @@ class WriteBytecodePass : public ModulePass {
   bool DeleteStream;
   bool CompressFile;
 public:
-  static const int ID; // Pass identifcation, replacement for typeid
+  static const char ID; // Pass identifcation, replacement for typeid
   WriteBytecodePass()
     : ModulePass((intptr_t) &ID), Out(&cout), DeleteStream(false), 
       CompressFile(false) {}

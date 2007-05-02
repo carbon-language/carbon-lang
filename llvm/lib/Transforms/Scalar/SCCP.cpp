@@ -1334,7 +1334,7 @@ namespace {
   /// Sparse Conditional Constant Propagator.
   ///
   struct VISIBILITY_HIDDEN SCCP : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     SCCP() : FunctionPass((intptr_t)&ID) {}
 
     // runOnFunction - Run the Sparse Conditional Constant Propagation
@@ -1347,7 +1347,7 @@ namespace {
     }
   };
 
-  const int SCCP::ID = 0;
+  const char SCCP::ID = 0;
   RegisterPass<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
 } // end anonymous namespace
 
@@ -1447,12 +1447,12 @@ namespace {
   /// Constant Propagation.
   ///
   struct VISIBILITY_HIDDEN IPSCCP : public ModulePass {
-    static const int ID;
+    static const char ID;
     IPSCCP() : ModulePass((intptr_t)&ID) {}
     bool runOnModule(Module &M);
   };
 
-  const int IPSCCP::ID = 0;
+  const char IPSCCP::ID = 0;
   RegisterPass<IPSCCP>
   Y("ipsccp", "Interprocedural Sparse Conditional Constant Propagation");
 } // end anonymous namespace

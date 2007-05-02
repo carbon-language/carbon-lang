@@ -47,7 +47,7 @@ STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 
 namespace {
   struct VISIBILITY_HIDDEN SROA : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     SROA() : FunctionPass((intptr_t)&ID) {}
 
     bool runOnFunction(Function &F);
@@ -84,7 +84,7 @@ namespace {
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
 
-  const int SROA::ID = 0;
+  const char SROA::ID = 0;
   RegisterPass<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
 }
 

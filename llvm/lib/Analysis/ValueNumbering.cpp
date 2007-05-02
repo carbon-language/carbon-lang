@@ -22,7 +22,7 @@
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
 
-const int ValueNumbering::ID = 0;
+const char ValueNumbering::ID = 0;
 // Register the ValueNumbering interface, providing a nice name to refer to.
 static RegisterAnalysisGroup<ValueNumbering> X("Value Numbering");
 
@@ -52,7 +52,7 @@ namespace {
   ///
   struct VISIBILITY_HIDDEN BasicVN 
       : public ImmutablePass, public ValueNumbering {
-    static const int ID; // Class identification, replacement for typeinfo
+    static const char ID; // Class identification, replacement for typeinfo
     BasicVN() : ImmutablePass((intptr_t)&ID) {}
 
     /// getEqualNumberNodes - Return nodes with the same value number as the
@@ -65,7 +65,7 @@ namespace {
                                      std::vector<Value*> &RetVals) const;
   };
 
-  const int BasicVN::ID = 0;
+  const char BasicVN::ID = 0;
   // Register this pass...
   RegisterPass<BasicVN>
   X("basicvn", "Basic Value Numbering (default GVN impl)");

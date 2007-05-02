@@ -49,7 +49,7 @@ namespace {
   class VISIBILITY_HIDDEN LoopUnroll : public LoopPass {
     LoopInfo *LI;  // The current loop information
   public:
-    static const int ID; // Pass ID, replacement for typeid
+    static const char ID; // Pass ID, replacement for typeid
     LoopUnroll()  : LoopPass((intptr_t)&ID) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -66,7 +66,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
     }
   };
-  const int LoopUnroll::ID = 0;
+  const char LoopUnroll::ID = 0;
   RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 }
 

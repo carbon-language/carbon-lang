@@ -32,7 +32,7 @@ STATISTIC(NumExpanded, "Number of branches expanded to long format");
 
 namespace {
   struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
     PPCBSel() : MachineFunctionPass((intptr_t)&ID) {}
 
     /// BlockSizes - The sizes of the basic blocks in the function.
@@ -44,7 +44,7 @@ namespace {
       return "PowerPC Branch Selector";
     }
   };
-  const int PPCBSel::ID = 0;
+  const char PPCBSel::ID = 0;
 }
 
 /// createPPCBranchSelectionPass - returns an instance of the Branch Selection

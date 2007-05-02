@@ -34,7 +34,7 @@ namespace {
   // Module passes to require FunctionPasses, so we can't get loop info if we're
   // not a function pass.
   struct VISIBILITY_HIDDEN LoopExtractor : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     unsigned NumLoops;
 
     LoopExtractor(unsigned numLoops = ~0) 
@@ -51,17 +51,17 @@ namespace {
     }
   };
 
-  const int LoopExtractor::ID = 0;
+  const char LoopExtractor::ID = 0;
   RegisterPass<LoopExtractor>
   X("loop-extract", "Extract loops into new functions");
 
   /// SingleLoopExtractor - For bugpoint.
   struct SingleLoopExtractor : public LoopExtractor {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     SingleLoopExtractor() : LoopExtractor(1) {}
   };
 
-  const int SingleLoopExtractor::ID = 0;
+  const char SingleLoopExtractor::ID = 0;
   RegisterPass<SingleLoopExtractor>
   Y("loop-extract-single", "Extract at most one loop into a new function");
 } // End anonymous namespace
@@ -152,7 +152,7 @@ namespace {
   class BlockExtractorPass : public ModulePass {
     std::vector<BasicBlock*> BlocksToNotExtract;
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     BlockExtractorPass(std::vector<BasicBlock*> &B) 
       : ModulePass((intptr_t)&ID), BlocksToNotExtract(B) {}
     BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
@@ -160,7 +160,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  const int BlockExtractorPass::ID = 0;
+  const char BlockExtractorPass::ID = 0;
   RegisterPass<BlockExtractorPass>
   XX("extract-blocks", "Extract Basic Blocks From Module (for bugpoint use)");
 }

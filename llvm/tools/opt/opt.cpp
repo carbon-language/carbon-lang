@@ -98,7 +98,7 @@ AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
 namespace {
 
 struct ModulePassPrinter : public ModulePass {
-  static const int ID;
+  static const char ID;
   const PassInfo *PassToPrint;
   ModulePassPrinter(const PassInfo *PI) : ModulePass((intptr_t)&ID),
                                           PassToPrint(PI) {}
@@ -121,10 +121,10 @@ struct ModulePassPrinter : public ModulePass {
   }
 };
 
-const int ModulePassPrinter::ID = 0;
+const char ModulePassPrinter::ID = 0;
 struct FunctionPassPrinter : public FunctionPass {
   const PassInfo *PassToPrint;
-  static const int ID;
+  static const char ID;
   FunctionPassPrinter(const PassInfo *PI) : FunctionPass((intptr_t)&ID),
                                             PassToPrint(PI) {}
 
@@ -146,10 +146,10 @@ struct FunctionPassPrinter : public FunctionPass {
   }
 };
 
-const int FunctionPassPrinter::ID = 0;
+const char FunctionPassPrinter::ID = 0;
 struct BasicBlockPassPrinter : public BasicBlockPass {
   const PassInfo *PassToPrint;
-  static const int ID;
+  static const char ID;
   BasicBlockPassPrinter(const PassInfo *PI) 
     : BasicBlockPass((intptr_t)&ID), PassToPrint(PI) {}
 
@@ -172,7 +172,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
   }
 };
 
-const int BasicBlockPassPrinter::ID = 0;
+const char BasicBlockPassPrinter::ID = 0;
 inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);

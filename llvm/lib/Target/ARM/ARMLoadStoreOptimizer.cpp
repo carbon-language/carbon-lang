@@ -38,7 +38,7 @@ STATISTIC(NumFSTMGened, "Number of fstm instructions generated");
 
 namespace {
   struct VISIBILITY_HIDDEN ARMLoadStoreOpt : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
     ARMLoadStoreOpt() : MachineFunctionPass((intptr_t)&ID) {}
 
     const TargetInstrInfo *TII;
@@ -73,7 +73,7 @@ namespace {
     bool LoadStoreMultipleOpti(MachineBasicBlock &MBB);
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
   };
-  const int ARMLoadStoreOpt::ID = 0;
+  const char ARMLoadStoreOpt::ID = 0;
 }
 
 /// createARMLoadStoreOptimizationPass - returns an instance of the load / store

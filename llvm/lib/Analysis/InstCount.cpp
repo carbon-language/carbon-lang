@@ -51,7 +51,7 @@ namespace {
       abort();
     }
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     InstCount() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
@@ -63,7 +63,7 @@ namespace {
 
   };
 
-  const int InstCount::ID = 0;
+  const char InstCount::ID = 0;
   RegisterPass<InstCount> X("instcount",
                             "Counts the various types of Instructions");
 }

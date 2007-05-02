@@ -43,14 +43,14 @@ namespace {
   class VISIBILITY_HIDDEN TailDup : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     TailDup() : FunctionPass((intptr_t)&ID) {}
 
   private:
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
   };
-  const int TailDup::ID = 0;
+  const char TailDup::ID = 0;
   RegisterPass<TailDup> X("tailduplicate", "Tail Duplication");
 }
 

@@ -30,7 +30,7 @@ namespace {
   /// useful when looking for standard library functions we should constant fold
   /// or handle in alias analyses.
   struct ExternalFunctionsPassedConstants : public ModulePass {
-    static const int ID; // Pass ID, replacement for typeid
+    static const char ID; // Pass ID, replacement for typeid
     ExternalFunctionsPassedConstants() : ModulePass((intptr_t)&ID) {}
     virtual bool runOnModule(Module &M) {
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
@@ -63,12 +63,12 @@ namespace {
     }
   };
 
-  const int ExternalFunctionsPassedConstants::ID = 0;
+  const char ExternalFunctionsPassedConstants::ID = 0;
   RegisterPass<ExternalFunctionsPassedConstants>
   P1("externalfnconstants", "Print external fn callsites passed constants");
   
   struct CallGraphPrinter : public ModulePass {
-    static const int ID; // Pass ID, replacement for typeid
+    static const char ID; // Pass ID, replacement for typeid
     CallGraphPrinter() : ModulePass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -82,7 +82,7 @@ namespace {
     }
   };
   
-  const int CallGraphPrinter::ID = 0;
+  const char CallGraphPrinter::ID = 0;
   RegisterPass<CallGraphPrinter>
     P2("callgraph", "Print a call graph");
 }

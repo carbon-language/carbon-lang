@@ -44,7 +44,7 @@ void MachineFunctionPass::virtfn() {}
 
 namespace {
   struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
 
     std::ostream *OS;
     const std::string Banner;
@@ -64,7 +64,7 @@ namespace {
       return false;
     }
   };
-  const int Printer::ID = 0;
+  const char Printer::ID = 0;
 }
 
 /// Returns a newly-created MachineFunction Printer pass. The default output
@@ -77,7 +77,7 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
 
 namespace {
   struct VISIBILITY_HIDDEN Deleter : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
     Deleter() : MachineFunctionPass((intptr_t)&ID) {}
 
     const char *getPassName() const { return "Machine Code Deleter"; }
@@ -88,7 +88,7 @@ namespace {
       return true;
     }
   };
-  const int Deleter::ID = 0;
+  const char Deleter::ID = 0;
 }
 
 /// MachineCodeDeletion Pass - This pass deletes all of the machine code for

@@ -83,7 +83,7 @@ namespace {
     std::map<Function*, FunctionRecord> FunctionInfo;
 
   public:
-    static const int ID;
+    static const char ID;
     GlobalsModRef() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M) {
@@ -146,7 +146,7 @@ namespace {
     bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
   };
 
-  const int GlobalsModRef::ID = 0;
+  const char GlobalsModRef::ID = 0;
   RegisterPass<GlobalsModRef> X("globalsmodref-aa",
                                 "Simple mod/ref analysis for globals");
   RegisterAnalysisGroup<AliasAnalysis> Y(X);

@@ -33,11 +33,11 @@ namespace {
   class VISIBILITY_HIDDEN EdgeProfiler : public ModulePass {
     bool runOnModule(Module &M);
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     EdgeProfiler() : ModulePass((intptr_t)&ID) {}
   };
 
-  const int EdgeProfiler::ID = 0;
+  const char EdgeProfiler::ID = 0;
   RegisterPass<EdgeProfiler> X("insert-edge-profiling",
                                "Insert instrumentation for edge profiling");
 }

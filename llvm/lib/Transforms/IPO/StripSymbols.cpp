@@ -37,7 +37,7 @@ namespace {
   class VISIBILITY_HIDDEN StripSymbols : public ModulePass {
     bool OnlyDebugInfo;
   public:
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     StripSymbols(bool ODI = false) 
       : ModulePass((intptr_t)&ID), OnlyDebugInfo(ODI) {}
 
@@ -48,7 +48,7 @@ namespace {
     }
   };
 
-  const int StripSymbols::ID = 0;
+  const char StripSymbols::ID = 0;
   RegisterPass<StripSymbols> X("strip", "Strip all symbols from a module");
 }
 

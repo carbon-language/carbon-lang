@@ -76,7 +76,7 @@ namespace {
   class VISIBILITY_HIDDEN Andersens : public ModulePass, public AliasAnalysis,
                                       private InstVisitor<Andersens> {
   public:
-    static const int ID; // Class identification, replacement for typeinfo
+    static const char ID; // Class identification, replacement for typeinfo
     Andersens() : ModulePass((intptr_t)&ID) {}
   private:
     /// Node class - This class is used to represent a memory object in the
@@ -339,7 +339,7 @@ namespace {
     void visitInstruction(Instruction &I);
   };
 
-  const int Andersens::ID = 0;
+  const char Andersens::ID = 0;
   RegisterPass<Andersens> X("anders-aa",
                             "Andersen's Interprocedural Alias Analysis");
   RegisterAnalysisGroup<AliasAnalysis> Y(X);

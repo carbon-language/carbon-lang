@@ -63,7 +63,7 @@ namespace {
     }
 
     virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     ArgPromotion() : CallGraphSCCPass((intptr_t)&ID) {}
 
   private:
@@ -72,7 +72,7 @@ namespace {
     Function *DoPromotion(Function *F, std::vector<Argument*> &ArgsToPromote);
   };
 
-  const int ArgPromotion::ID = 0;
+  const char ArgPromotion::ID = 0;
   RegisterPass<ArgPromotion> X("argpromotion",
                                "Promote 'by reference' arguments to scalars");
 }

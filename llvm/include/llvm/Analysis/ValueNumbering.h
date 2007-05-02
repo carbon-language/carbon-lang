@@ -29,7 +29,7 @@ class Value;
 class Instruction;
 
 struct ValueNumbering {
-  static const int ID; // Class identification, replacement for typeinfo
+  static const char ID; // Class identification, replacement for typeinfo
   virtual ~ValueNumbering();    // We want to be subclassed
 
   /// getEqualNumberNodes - Return nodes with the same value number as the

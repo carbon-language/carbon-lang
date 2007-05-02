@@ -34,7 +34,7 @@ STATISTIC(NumInstKilled, "Number of instructions killed");
 
 namespace {
   struct VISIBILITY_HIDDEN ConstantPropagation : public FunctionPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     ConstantPropagation() : FunctionPass((intptr_t)&ID) {}
 
     bool runOnFunction(Function &F);
@@ -44,7 +44,7 @@ namespace {
     }
   };
 
-  const int ConstantPropagation::ID = 0;
+  const char ConstantPropagation::ID = 0;
   RegisterPass<ConstantPropagation> X("constprop",
                                       "Simple constant propagation");
 }

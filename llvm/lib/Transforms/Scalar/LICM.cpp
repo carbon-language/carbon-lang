@@ -63,7 +63,7 @@ namespace {
                    cl::desc("Disable memory promotion in LICM pass"));
 
   struct VISIBILITY_HIDDEN LICM : public LoopPass {
-    static const int ID; // Pass identifcation, replacement for typeid
+    static const char ID; // Pass identifcation, replacement for typeid
     LICM() : LoopPass((intptr_t)&ID) {}
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -204,7 +204,7 @@ namespace {
                                     std::map<Value*, AllocaInst*> &Val2AlMap);
   };
 
-  const int LICM::ID = 0;
+  const char LICM::ID = 0;
   RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 }
 

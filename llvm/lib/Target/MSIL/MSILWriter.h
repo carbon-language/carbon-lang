@@ -37,7 +37,7 @@ namespace {
     const TargetData*& TD;
 
   public:
-    static const int ID;
+    static const char ID;
     MSILModule(const std::set<const Type *>*& _UsedTypes,
                const TargetData*& _TD)
       : ModulePass((intptr_t)&ID), UsedTypes(_UsedTypes), TD(_TD) {}
@@ -83,7 +83,7 @@ namespace {
     std::map<const GlobalVariable*,std::vector<StaticInitializer> >
       StaticInitList;
     const std::set<const Type *>* UsedTypes;
-    static const int ID;
+    static const char ID;
     MSILWriter(std::ostream &o) : FunctionPass((intptr_t)&ID), Out(o) {
       UniqID = 0;
     }

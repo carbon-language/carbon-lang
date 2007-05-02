@@ -17,7 +17,7 @@ namespace llvm {
   /// RSProfilers_std - a simple support class for profilers that handles most
   /// of the work of chaining and tracking inserted code.
   struct RSProfilers_std : public RSProfilers {
-    static const int ID;
+    static const char ID;
     std::set<Value*> profcode;
     // Lookup up values in profcode
     virtual bool isProfiling(Value* v);

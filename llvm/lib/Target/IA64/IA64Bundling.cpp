@@ -36,7 +36,7 @@ STATISTIC(StopBitsAdded, "Number of stop bits added");
 
 namespace {
   struct IA64BundlingPass : public MachineFunctionPass {
-    static const int ID;
+    static const char ID;
     /// Target machine description which we query for reg. names, data
     /// layout, etc.
     ///
@@ -63,7 +63,7 @@ namespace {
     // 'fallthrough' code
     std::set<unsigned> PendingRegWrites;
   };
-  const int IA64BundlingPass::ID = 0;
+  const char IA64BundlingPass::ID = 0;
 } // end of anonymous namespace
 
 /// createIA64BundlingPass - Returns a pass that adds STOP (;;) instructions
