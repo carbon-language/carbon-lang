@@ -1006,7 +1006,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     ValueList.push_back(I);
   
   unsigned NextValueNo = ValueList.size();
-  
+  BasicBlock *CurBB = 0;
+  unsigned CurBBNo = 0;
+
   // Read all the records.
   SmallVector<uint64_t, 64> Record;
   while (1) {
@@ -1042,8 +1044,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     // Read a record.
     Record.clear();
     Instruction *I = 0;
-    BasicBlock *CurBB = 0;
-    unsigned CurBBNo = 0;
     switch (Stream.ReadRecord(Code, Record)) {
     default: // Default behavior: reject
       return Error("Unknown instruction");
@@ -1057,8 +1057,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       CurBB = FunctionBBs[0];
       continue;
       
-    case bitc::FUNC_CODE_INST_BINOP: {
-      // BINOP:      [opcode, ty, opval, opval]
+    case bitc::FUNC_CODE_INST_BINOP: {    // BINOP: [opcode, ty, opval, opval]
       if (Record.size() < 4) return Error("Invalid BINOP record");
       const Type *Ty = getTypeByID(Record[1]);
       int Opc = GetDecodedBinaryOpcode(Record[0], Ty);
@@ -1069,9 +1068,18 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS);
       break;
     }
+    case bitc::FUNC_CODE_INST_CAST: {    // CAST: [opcode, ty, opty, opval]
+      if (Record.size() < 4) return Error("Invalid CAST record");
+      int Opc = GetDecodedCastOpcode(Record[0]);
+      const Type *ResTy = getTypeByID(Record[1]);
+      const Type *OpTy = getTypeByID(Record[2]);
+      Value *Op = getFnValueByID(Record[3], OpTy);
+      if (Opc == -1 || ResTy == 0 || OpTy == 0 || Op == 0)
+        return Error("Invalid CAST record");
+      I = CastInst::create((Instruction::CastOps)Opc, Op, ResTy);
+      break;
+    }
 #if 0
-    case bitc::FUNC_CODE_INST_CAST:
-      // CAST:       [opcode, ty, opty, opval]
     case bitc::FUNC_CODE_INST_GEP:
       // GEP:        [n, n x operands]
     case bitc::FUNC_CODE_INST_SELECT:
@@ -1084,20 +1092,35 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       // SHUFFLEVEC: [ty, opval, opval, opval]
     case bitc::FUNC_CODE_INST_CMP:
       // CMP:        [opty, opval, opval, pred]
-        
-    case bitc::FUNC_CODE_INST_RET:
-      // RET:        [opty,opval<optional>]
+#endif
+      
+    case bitc::FUNC_CODE_INST_RET: // RET: [opty,opval<optional>]
+      if (Record.size() == 0) {
+        I = new ReturnInst();
+        break;
+      }
+      if (Record.size() == 2) {
+        const Type *OpTy = getTypeByID(Record[0]);
+        Value *Op = getFnValueByID(Record[1], OpTy);
+        if (OpTy && Op);
+        I = new ReturnInst(Op);
+        break;
+      }
+      return Error("Invalid RET record");
+#if 0
     case bitc::FUNC_CODE_INST_BR:
       // BR:         [opval, bb#, bb#] or [bb#]
     case bitc::FUNC_CODE_INST_SWITCH:
       // SWITCH:     [opty, opval, n, n x ops]
     case bitc::FUNC_CODE_INST_INVOKE:
       // INVOKE:     [fnty, op0,op1,op2, ...]
-    case bitc::FUNC_CODE_INST_UNWIND:
-      // UNWIND
-    case bitc::FUNC_CODE_INST_UNREACHABLE:
-      // UNREACHABLE
-        
+    case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
+      I = new UnwindInst();
+      break;
+    case bitc::FUNC_CODE_INST_UNREACHABLE: // UNREACHABLE
+      I = new UnreachableInst();
+      break;
+
     case bitc::FUNC_CODE_INST_PHI:
       // PHI:        [ty, #ops, val0,bb0, ...]
     case bitc::FUNC_CODE_INST_MALLOC:
