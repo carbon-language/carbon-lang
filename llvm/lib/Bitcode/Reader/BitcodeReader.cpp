@@ -1090,7 +1090,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (OpTy == 0 || Op == 0)
         return Error("Invalid GEP record");
 
-      SmallVector<Value*, 8> GEPIdx;
+      SmallVector<Value*, 16> GEPIdx;
       for (unsigned i = 1, e = Record.size()/2; i != e; ++i) {
         const Type *IdxTy = getTypeByID(Record[i*2]);
         Value *Idx = getFnValueByID(Record[i*2+1], IdxTy);
@@ -1183,19 +1183,100 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         break;
       }
       return Error("Invalid RET record");
-#if 0
-    case bitc::FUNC_CODE_INST_BR:
-      // BR:         [opval, bb#, bb#] or [bb#]
-    case bitc::FUNC_CODE_INST_SWITCH:
-      // SWITCH:     [opty, opval, n, n x ops]
-    case bitc::FUNC_CODE_INST_INVOKE:
-      // INVOKE:     [fnty, op0,op1,op2, ...]
+    case bitc::FUNC_CODE_INST_BR: { // BR: [bb#, bb#, opval] or [bb#]
+      if (Record.size() != 1 || Record.size() != 3)
+        return Error("Invalid BR record");
+      BasicBlock *TrueDest = getBasicBlock(Record[0]);
+      if (TrueDest == 0)
+        return Error("Invalid BR record");
+
+      if (Record.size() == 1)
+        I = new BranchInst(TrueDest);
+      else {
+        BasicBlock *FalseDest = getBasicBlock(Record[1]);
+        Value *Cond = getFnValueByID(Record[2], Type::Int1Ty);
+        if (FalseDest == 0 || Cond == 0)
+          return Error("Invalid BR record");
+        I = new BranchInst(TrueDest, FalseDest, Cond);
+      }
+      break;
+    }
+    case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, opval, n, n x ops]
+      if (Record.size() < 3 || (Record.size() & 1) == 0)
+        return Error("Invalid SWITCH record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Cond = getFnValueByID(Record[1], OpTy);
+      BasicBlock *Default = getBasicBlock(Record[2]);
+      if (OpTy == 0 || Cond == 0 || Default == 0)
+        return Error("Invalid SWITCH record");
+      unsigned NumCases = (Record.size()-3)/2;
+      SwitchInst *SI = new SwitchInst(Cond, Default, NumCases);
+      for (unsigned i = 0, e = NumCases; i != e; ++i) {
+        ConstantInt *CaseVal = 
+          dyn_cast_or_null<ConstantInt>(getFnValueByID(Record[3+i*2], OpTy));
+        BasicBlock *DestBB = getBasicBlock(Record[1+3+i*2]);
+        if (CaseVal == 0 || DestBB == 0) {
+          delete SI;
+          return Error("Invalid SWITCH record!");
+        }
+        SI->addCase(CaseVal, DestBB);
+      }
+      I = SI;
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_INVOKE: { // INVOKE: [fnty, op0,op1,op2, ...]
+      if (Record.size() < 4)
+        return Error("Invalid INVOKE record");
+      const PointerType *CalleeTy =
+        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
+      Value *Callee = getFnValueByID(Record[1], CalleeTy);
+      BasicBlock *NormalBB = getBasicBlock(Record[2]);
+      BasicBlock *UnwindBB = getBasicBlock(Record[3]);
+      if (CalleeTy == 0 || Callee == 0 || NormalBB == 0 || UnwindBB == 0)
+        return Error("Invalid INVOKE record");
+      
+      const FunctionType *FTy =
+        dyn_cast<FunctionType>(CalleeTy->getElementType());
+
+      // Check that the right number of fixed parameters are here.
+      if (FTy == 0 || Record.size() < 4+FTy->getNumParams())
+        return Error("Invalid INVOKE record");
+
+      SmallVector<Value*, 16> Ops;
+      for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
+        Ops.push_back(getFnValueByID(Record[4+i], FTy->getParamType(4+i)));
+        if (Ops.back() == 0)
+          return Error("Invalid INVOKE record");
+      }
+      
+      unsigned FirstVarargParam = 4+FTy->getNumParams();
+      if (FTy->isVarArg()) {
+        // Read type/value pairs for varargs params.
+        if ((Record.size()-FirstVarargParam) & 1)
+          return Error("Invalid INVOKE record");
+        
+        for (unsigned i = FirstVarargParam, e = Record.size(); i != e; i += 2) {
+          const Type *ArgTy = getTypeByID(Record[i]);
+          Ops.push_back(getFnValueByID(Record[i+1], ArgTy));
+          if (Ops.back() == 0 || ArgTy == 0)
+            return Error("Invalid INVOKE record");
+        }
+      } else {
+        if (Record.size() != FirstVarargParam)
+          return Error("Invalid INVOKE record");
+      }
+      
+      I = new InvokeInst(Callee, NormalBB, UnwindBB, &Ops[0], Ops.size());
+      break;
+    }
     case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
       I = new UnwindInst();
       break;
     case bitc::FUNC_CODE_INST_UNREACHABLE: // UNREACHABLE
       I = new UnreachableInst();
       break;
+#if 0
 
     case bitc::FUNC_CODE_INST_PHI:
       // PHI:        [ty, #ops, val0,bb0, ...]

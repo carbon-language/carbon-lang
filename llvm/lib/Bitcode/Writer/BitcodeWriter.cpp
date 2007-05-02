@@ -507,7 +507,6 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
 
   case Instruction::GetElementPtr:
     Code = bitc::FUNC_CODE_INST_GEP;
-    Vals.push_back(I.getNumOperands());
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
       Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
       Vals.push_back(VE.getValueID(I.getOperand(i)));
@@ -567,7 +566,6 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
   case Instruction::Switch:
     Code = bitc::FUNC_CODE_INST_SWITCH;
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(I.getNumOperands());
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;

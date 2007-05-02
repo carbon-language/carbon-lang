@@ -132,6 +132,10 @@ private:
   Value *getFnValueByID(unsigned ID, const Type *Ty) {
     return ValueList.getValueFwdRef(ID, Ty);
   }
+  BasicBlock *getBasicBlock(unsigned ID) const {
+    if (ID >= FunctionBBs.size()) return 0; // Invalid ID
+    return FunctionBBs[ID];
+  }
   
   bool ParseModule(const std::string &ModuleID);
   bool ParseTypeTable();
