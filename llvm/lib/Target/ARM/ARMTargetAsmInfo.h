@@ -15,6 +15,7 @@
 #define ARMTARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "ARMSubtarget.h"
 
 namespace llvm {
 
@@ -24,9 +25,11 @@ namespace llvm {
   struct ARMTargetAsmInfo : public TargetAsmInfo {
     ARMTargetAsmInfo(const ARMTargetMachine &TM);
 
-    bool isThumb;
+    const ARMSubtarget *Subtarget;
 
     virtual unsigned getInlineAsmLength(const char *Str) const;
+    unsigned countArguments(const char *p) const;
+    unsigned countString(const char *p) const;
   };
 
 
