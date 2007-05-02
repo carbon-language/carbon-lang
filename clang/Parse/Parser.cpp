@@ -318,13 +318,24 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     // TODO: Invoke action for top-level asm.
     return 0;
   case tok::at:
+    // @ is not a legal token unless objc is enabled, no need to check.
     ParseObjCAtDirectives();
     return 0;
   case tok::minus:
-    ParseObjCInstanceMethodDeclaration();
+    if (getLang().ObjC1) {
+      ParseObjCInstanceMethodDeclaration();
+    } else {
+      Diag(Tok, diag::err_expected_external_declaration);
+      ConsumeToken();
+    }
     return 0;
   case tok::plus:
-    ParseObjCClassMethodDeclaration();
+    if (getLang().ObjC1) {
+      ParseObjCClassMethodDeclaration();
+    } else {
+      Diag(Tok, diag::err_expected_external_declaration);
+      ConsumeToken();
+    }
     return 0;
   case tok::kw_typedef:
     // A function definition cannot start with a 'typedef' keyword.

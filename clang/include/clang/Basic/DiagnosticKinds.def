@@ -312,6 +312,8 @@ DIAG(err_parse_error, ERROR,
      "parse error")
 DIAG(err_expected_expression, ERROR,
      "expected expression")
+DIAG(err_expected_external_declaration, ERROR,
+     "expected external declaration")
 DIAG(err_expected_ident, ERROR,
      "expected identifier")
 DIAG(err_expected_ident_lparen, ERROR,
