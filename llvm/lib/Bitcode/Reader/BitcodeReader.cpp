@@ -150,6 +150,9 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
     return V;
   }
   
+  // No type specified, must be invalid reference.
+  if (Ty == 0) return 0;
+  
   // Create and return a placeholder, which will later be RAUW'd.
   Value *V = new Argument(Ty);
   Uses[Idx].init(V, this);
@@ -1079,21 +1082,94 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = CastInst::create((Instruction::CastOps)Opc, Op, ResTy);
       break;
     }
-#if 0
-    case bitc::FUNC_CODE_INST_GEP:
-      // GEP:        [n, n x operands]
-    case bitc::FUNC_CODE_INST_SELECT:
-      // SELECT:     [ty, opval, opval, opval]
-    case bitc::FUNC_CODE_INST_EXTRACTELT:
-      // EXTRACTELT: [opty, opval, opval]
-    case bitc::FUNC_CODE_INST_INSERTELT:
-      // INSERTELT:  [ty, opval, opval, opval]
-    case bitc::FUNC_CODE_INST_SHUFFLEVEC:
-      // SHUFFLEVEC: [ty, opval, opval, opval]
-    case bitc::FUNC_CODE_INST_CMP:
-      // CMP:        [opty, opval, opval, pred]
-#endif
+    case bitc::FUNC_CODE_INST_GEP: { // GEP: [n, n x operands]
+      if (Record.size() < 2 || (Record.size() & 1))
+        return Error("Invalid GEP record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Op = getFnValueByID(Record[1], OpTy);
+      if (OpTy == 0 || Op == 0)
+        return Error("Invalid GEP record");
+
+      SmallVector<Value*, 8> GEPIdx;
+      for (unsigned i = 1, e = Record.size()/2; i != e; ++i) {
+        const Type *IdxTy = getTypeByID(Record[i*2]);
+        Value *Idx = getFnValueByID(Record[i*2+1], IdxTy);
+        if (IdxTy == 0 || Idx == 0)
+          return Error("Invalid GEP record");
+        GEPIdx.push_back(Idx);
+      }
+
+      I = new GetElementPtrInst(Op, &GEPIdx[0], GEPIdx.size());
+      break;
+    }
       
+    case bitc::FUNC_CODE_INST_SELECT: { // SELECT: [ty, opval, opval, opval]
+      if (Record.size() < 4) return Error("Invalid SELECT record");
+      const Type *Ty = getTypeByID(Record[0]);
+      Value *Cond = getFnValueByID(Record[1], Type::Int1Ty);
+      Value *LHS = getFnValueByID(Record[2], Ty);
+      Value *RHS = getFnValueByID(Record[3], Ty);
+      if (Ty == 0 || Cond == 0 || LHS == 0 || RHS == 0)
+        return Error("Invalid SELECT record");
+      I = new SelectInst(Cond, LHS, RHS);
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_EXTRACTELT: { // EXTRACTELT: [opty, opval, opval]
+      if (Record.size() < 3) return Error("Invalid EXTRACTELT record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Vec = getFnValueByID(Record[1], OpTy);
+      Value *Idx = getFnValueByID(Record[2], Type::Int32Ty);
+      if (OpTy == 0 || Vec == 0 || Idx == 0)
+        return Error("Invalid EXTRACTELT record");
+      I = new ExtractElementInst(Vec, Idx);
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_INSERTELT: { // INSERTELT: [ty, opval,opval,opval]
+      if (Record.size() < 4) return Error("Invalid INSERTELT record");
+      const VectorType *OpTy = 
+        dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
+      if (OpTy == 0) return Error("Invalid INSERTELT record");
+      Value *Vec = getFnValueByID(Record[1], OpTy);
+      Value *Elt = getFnValueByID(Record[2], OpTy->getElementType());
+      Value *Idx = getFnValueByID(Record[3], Type::Int32Ty);
+      if (Vec == 0 || Elt == 0 || Idx == 0)
+        return Error("Invalid INSERTELT record");
+      I = new InsertElementInst(Vec, Elt, Idx);
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_SHUFFLEVEC: {// SHUFFLEVEC: [ty,opval,opval,opval]
+      if (Record.size() < 4) return Error("Invalid SHUFFLEVEC record");
+      const VectorType *OpTy = 
+        dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
+      if (OpTy == 0) return Error("Invalid SHUFFLEVEC record");
+      Value *Vec1 = getFnValueByID(Record[1], OpTy);
+      Value *Vec2 = getFnValueByID(Record[2], OpTy);
+      Value *Mask = getFnValueByID(Record[3],
+                                   VectorType::get(Type::Int32Ty,
+                                                   OpTy->getNumElements()));
+      if (Vec1 == 0 || Vec2 == 0 || Mask == 0)
+        return Error("Invalid SHUFFLEVEC record");
+      I = new ShuffleVectorInst(Vec1, Vec2, Mask);
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_CMP: { // CMP: [opty, opval, opval, pred]
+      if (Record.size() < 4) return Error("Invalid CMP record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *LHS = getFnValueByID(Record[1], OpTy);
+      Value *RHS = getFnValueByID(Record[2], OpTy);
+      if (OpTy == 0 || LHS == 0 || RHS == 0)
+        return Error("Invalid CMP record");
+      if (OpTy->isFPOrFPVector())
+        I = new FCmpInst((FCmpInst::Predicate)Record[3], LHS, RHS);
+      else
+        I = new ICmpInst((ICmpInst::Predicate)Record[3], LHS, RHS);
+      break;
+    }
+    
     case bitc::FUNC_CODE_INST_RET: // RET: [opty,opval<optional>]
       if (Record.size() == 0) {
         I = new ReturnInst();
