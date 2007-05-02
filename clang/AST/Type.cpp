@@ -106,7 +106,45 @@ bool Type::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
 }
 
 bool Type::functionTypesAreCompatible(QualType lhs, QualType rhs) {
-  return true; // FIXME: add more checking
+  const FunctionType *lbase = cast<FunctionType>(lhs.getCanonicalType());
+  const FunctionType *rbase = cast<FunctionType>(rhs.getCanonicalType());
+  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
+  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+
+  // first check the return types (common between C99 and K&R).
+  if (!typesAreCompatible(lbase->getResultType(), rbase->getResultType()))
+    return false;
+
+  if (lproto && rproto) { // two C99 style function prototypes
+    unsigned lproto_nargs = lproto->getNumArgs();
+    unsigned rproto_nargs = rproto->getNumArgs();
+    
+    if (lproto_nargs != rproto_nargs)
+      return false;
+      
+    // both prototypes have the same number of arguments.
+    if ((lproto->isVariadic() && !rproto->isVariadic()) ||
+        (rproto->isVariadic() && !lproto->isVariadic()))
+      return false;
+      
+    // The use of ellipsis agree...now check the argument types.
+    for (unsigned i = 0; i < lproto_nargs; i++)
+      if (!typesAreCompatible(lproto->getArgType(i), rproto->getArgType(i)))
+        return false;
+    return true;
+  }
+  if (!lproto && !rproto) // two K&R style function decls, nothing to do.
+    return true;
+
+  // we have a mixture of K&R style with C99 prototypes
+  const FunctionTypeProto *proto = lproto ? lproto : rproto;
+  
+  if (proto->isVariadic())
+    return false;
+    
+  // FIXME: Each parameter type T in the prototype must be compatible with the
+  // type resulting from applying the usual argument conversions to T.
+  return true;
 }
 
 bool Type::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
@@ -123,6 +161,8 @@ bool Type::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
 
 bool Type::typesAreCompatible(QualType lcanon, QualType rcanon) {
   // If two types are identical, they are are compatible
+  // C99 6.7.3p9: For two qualified types to be compatible, both shall have
+  // the identically qualified version of a compatible type.
   if (lcanon == rcanon)
     return true;
     

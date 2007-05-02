@@ -646,10 +646,14 @@ Action::ExprResult Sema::CheckAssignmentOperands(
       }
     } else if (rhsType->isPointerType()) {
       if (lhsType->isIntegerType()) {
-        Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+        // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
+        if (lhsType != Context.BoolTy)
+          Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
         return new BinaryOperator(lex, rex, (BOP)code, lhsType);
       }
-      // FIXME: make sure the qualifier are matching
+      // - both operands are pointers to qualified or unqualified versions of
+      // compatible types, and the type pointed to by the left has *all* the
+      // qualifiers of the type pointed to by the right;
       if (lhsType->isPointerType()) {
         if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
           Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);

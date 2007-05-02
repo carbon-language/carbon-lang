@@ -215,8 +215,7 @@ public:
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
-  bool isVoidType() const;         // C99 6.2.5p19
-
+  
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
   bool isPointerType() const;
@@ -224,8 +223,9 @@ public:
   bool isStructureType() const;   
   bool isUnionType() const;
   
-  bool isScalarType() const;     // C99 6.2.5p21 (arithmetic + pointers)
-  bool isAggregateType() const;  // C99 6.2.5p21 (arrays, structures)
+  bool isVoidType() const;         // C99 6.2.5p19
+  bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
+  bool isAggregateType() const;    // C99 6.2.5p21 (arrays, structures)
   
   bool isLvalue() const;         // C99 6.3.2.1
   
