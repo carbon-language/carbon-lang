@@ -497,7 +497,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
       Vals.push_back(VE.getValueID(I.getOperand(0)));
     } else {
       assert(isa<BinaryOperator>(I) && "Unknown instruction!");
-      Code = bitc::CST_CODE_CE_BINOP;
+      Code = bitc::FUNC_CODE_INST_BINOP;
       Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
       Vals.push_back(VE.getTypeID(I.getType()));
       Vals.push_back(VE.getValueID(I.getOperand(0)));
