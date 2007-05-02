@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1060,10 +1061,16 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   
   // Prepare for frame info.
-  unsigned FrameLabelId = 0;
+  unsigned FrameLabelId = 0, StartLabelId = 0;
   
   // Get the number of bytes to allocate from the FrameInfo
   uint64_t NumBytes = MFI->getStackSize();
+
+  if (MMI && MMI->needsFrameInfo()) {
+    // Mark function start
+    StartLabelId = MMI->NextLabelID();
+    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(StartLabelId);
+  }
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
@@ -1138,17 +1145,38 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if (MMI && MMI->needsFrameInfo()) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-    
+    const TargetAsmInfo *TAI = MF.getTarget().getTargetAsmInfo();
+
+    // Calculate amount of bytes used for return address storing
+    int stackGrowth =
+      (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
+       TargetFrameInfo::StackGrowsUp ?
+       TAI->getAddressSize() : -TAI->getAddressSize());
+
+    // Add return address to move list
+    MachineLocation CSDst(StackPtr, stackGrowth);
+    MachineLocation CSSrc(getRARegister());
+    Moves.push_back(MachineMove(StartLabelId, CSDst, CSSrc));
+
     if (NumBytes) {
       // Show update of SP.
-      MachineLocation SPDst(MachineLocation::VirtualFP);
-      MachineLocation SPSrc(MachineLocation::VirtualFP, -NumBytes);
-      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+      if (hasFP(MF)) {
+        // Adjust SP
+        MachineLocation SPDst(MachineLocation::VirtualFP);
+        MachineLocation SPSrc(MachineLocation::VirtualFP, 2*stackGrowth);
+        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+      } else {
+        MachineLocation SPDst(MachineLocation::VirtualFP);
+        MachineLocation SPSrc(MachineLocation::VirtualFP, -NumBytes+stackGrowth);
+        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+      }
     } else {
-      MachineLocation SP(StackPtr);
-      Moves.push_back(MachineMove(FrameLabelId, SP, SP));
+      //FIXME: Verify & implement for FP
+      MachineLocation SPDst(StackPtr);
+      MachineLocation SPSrc(StackPtr, stackGrowth);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
     }
-
+            
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
     for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
@@ -1162,6 +1190,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Mark effective beginning of when frame pointer is ready.
     unsigned ReadyLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId);
+
+    if (hasFP(MF)) {
+      // Save FP
+      MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
+      MachineLocation FPSrc(FramePtr);
+      Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
+    }
     
     MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
     MachineLocation FPSrc(MachineLocation::VirtualFP);

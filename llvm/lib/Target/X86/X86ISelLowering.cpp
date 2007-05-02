@@ -226,6 +226,19 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
       !Subtarget->isTargetCygMing())
     setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
+  setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
+  setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
+  if (Subtarget->is64Bit()) {
+    // FIXME: Verify
+    setExceptionPointerRegister(X86::RAX);
+    setExceptionSelectorRegister(X86::RDX);
+  } else {
+    setExceptionPointerRegister(X86::EAX);
+    setExceptionSelectorRegister(X86::EDX);
+  }
+  
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   setOperationAction(ISD::VAARG             , MVT::Other, Expand);
