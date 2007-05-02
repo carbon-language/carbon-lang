@@ -342,6 +342,11 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
   if (const FunctionType *funcT = dyn_cast<FunctionType>(canonType)) {
     resultType = funcT->getResultType();
   }
+  // C99 6.5.2.2p7 - If we have a prototype, the arguments are implicitly
+  // converted, as if by assignment, to the types of the corresponding
+  // parameters, taking the type of each parameter to be the unqualified...
+  //
+  // QualType result = UsualAssignmentConversions(lhsType, rhsType, rex, loc);
   return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs, resultType);
 }
 
@@ -499,6 +504,13 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
 
 QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
                                           Expr *rex, SourceLocation loc) {
+  // this check seems unnatural, however it necessary to insure the proper
+  // conversion of functions/arrays. If the conversion where done for all
+  // DeclExpr's (created by ParseIdentifierExpr), it would mess up the
+  // unary expressions that surpress this implicit conversion (&, sizeof).
+  if (rhsType->isFunctionType() || rhsType->isArrayType())
+    rhsType = UsualUnaryConversion(rhsType);
+    
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
     return lhsType;
   else if (lhsType->isPointerType()) {
@@ -507,20 +519,20 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
       const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(rex);
       if (!constant || constant->getValue() != 0)
         Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
-      return lhsType;
+      return rhsType;
     }
     // FIXME: make sure the qualifier are matching
     if (rhsType->isPointerType()) { 
       if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
         Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
-      return lhsType;
+      return rhsType;
     }
   } else if (rhsType->isPointerType()) {
     if (lhsType->isIntegerType()) {
       // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
       if (lhsType != Context.BoolTy)
         Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
-      return lhsType;
+      return rhsType;
     }
     // - both operands are pointers to qualified or unqualified versions of
     // compatible types, and the type pointed to by the left has *all* the
@@ -528,22 +540,14 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
     if (lhsType->isPointerType()) {
       if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
         Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
-      return lhsType;
+      return rhsType;
     }
-  } else if (lhsType->isArrayType() && rhsType->isArrayType()) {
-    ///  int aryInt[3], aryInt2[3];
-    ///  aryInt = aryInt2; // gcc considers this an error (FIXME?)
-    if (Type::arrayTypesAreCompatible(lhsType, rhsType))
-      return lhsType;
   } else if (lhsType->isStructureType() && rhsType->isStructureType()) {
     if (Type::structureTypesAreCompatible(lhsType, rhsType))
-      return lhsType;
+      return rhsType;
   } else if (lhsType->isUnionType() && rhsType->isUnionType()) {
     if (Type::unionTypesAreCompatible(lhsType, rhsType))
-      return lhsType;
-  } else if (lhsType->isFunctionType() && rhsType->isFunctionType()) {
-    if (Type::functionTypesAreCompatible(lhsType, rhsType))
-      return lhsType;
+      return rhsType;
   }
   return QualType(); // incompatible
 }
@@ -676,6 +680,8 @@ Action::ExprResult Sema::CheckAssignmentOperands(
   QualType rhsType = rex->getType();
   
   if ((BOP)code == BinaryOperator::Assign) { // C99 6.5.16.1
+    if (!lex->isLvalue())
+      return Diag(loc, diag::ext_typecheck_assign_non_lvalue);
     if (lhsType.isConstQualified())
       return Diag(loc, diag::err_typecheck_assign_const);
       
