@@ -133,7 +133,7 @@ namespace {
 class PassRegistrar {
   /// PassInfoMap - Keep track of the passinfo object for each registered llvm
   /// pass.
-  std::map<intptr_t, PassInfo*> PassInfoMap;
+  std::map<TypeInfo, PassInfo*> PassInfoMap;
   
   /// AnalysisGroupInfo - Keep track of information for each analysis group.
   struct AnalysisGroupInfo {
@@ -147,19 +147,19 @@ class PassRegistrar {
 
 public:
   
-  const PassInfo *GetPassInfo(intptr_t TI) const {
-    std::map<intptr_t, PassInfo*>::const_iterator I = PassInfoMap.find(TI);
+  const PassInfo *GetPassInfo(const std::type_info &TI) const {
+    std::map<TypeInfo, PassInfo*>::const_iterator I = PassInfoMap.find(TI);
     return I != PassInfoMap.end() ? I->second : 0;
   }
   
   void RegisterPass(PassInfo &PI) {
     bool Inserted =
-      PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
-    //assert(Inserted && "Pass registered multiple times!");
+      PassInfoMap.insert(std::make_pair(TypeInfo(PI.getTypeInfo()),&PI)).second;
+    assert(Inserted && "Pass registered multiple times!");
   }
   
   void UnregisterPass(PassInfo &PI) {
-    std::map<intptr_t, PassInfo*>::iterator I =
+    std::map<TypeInfo, PassInfo*>::iterator I =
       PassInfoMap.find(PI.getTypeInfo());
     assert(I != PassInfoMap.end() && "Pass registered but not in map!");
     
@@ -168,7 +168,7 @@ public:
   }
   
   void EnumerateWith(PassRegistrationListener *L) {
-    for (std::map<intptr_t, PassInfo*>::const_iterator I = PassInfoMap.begin(),
+    for (std::map<TypeInfo, PassInfo*>::const_iterator I = PassInfoMap.begin(),
          E = PassInfoMap.end(); I != E; ++I)
       L->passEnumerate(I->second);
   }
@@ -210,10 +210,11 @@ static PassRegistrar *getPassRegistrar() {
 // getPassInfo - Return the PassInfo data structure that corresponds to this
 // pass...
 const PassInfo *Pass::getPassInfo() const {
-  return lookupPassInfo(PassID);
+  if (PassInfoCache) return PassInfoCache;
+  return lookupPassInfo(typeid(*this));
 }
 
-const PassInfo *Pass::lookupPassInfo(intptr_t TI) {
+const PassInfo *Pass::lookupPassInfo(const std::type_info &TI) {
   return getPassRegistrar()->GetPassInfo(TI);
 }
 
@@ -237,12 +238,12 @@ void RegisterPassBase::unregisterPass() {
 
 // RegisterAGBase implementation
 //
-RegisterAGBase::RegisterAGBase(intptr_t InterfaceID,
-                               intptr_t PassID, bool isDefault)
-  : RegisterPassBase(InterfaceID),
+RegisterAGBase::RegisterAGBase(const std::type_info &Interface,
+                               const std::type_info *Pass, bool isDefault)
+  : RegisterPassBase(Interface),
     ImplementationInfo(0), isDefaultImplementation(isDefault) {
 
-  InterfaceInfo = const_cast<PassInfo*>(Pass::lookupPassInfo(InterfaceID));
+  InterfaceInfo = const_cast<PassInfo*>(Pass::lookupPassInfo(Interface));
   if (InterfaceInfo == 0) {
     // First reference to Interface, register it now.
     registerPass();
@@ -251,8 +252,8 @@ RegisterAGBase::RegisterAGBase(intptr_t InterfaceID,
   assert(PIObj.isAnalysisGroup() &&
          "Trying to join an analysis group that is a normal pass!");
 
-  if (PassID) {
-    ImplementationInfo = Pass::lookupPassInfo(PassID);
+  if (Pass) {
+    ImplementationInfo = Pass::lookupPassInfo(*Pass);
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 
