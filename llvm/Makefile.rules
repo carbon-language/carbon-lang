@@ -244,6 +244,11 @@ ifndef REQUIRES_EH
   CXX.Flags += -fno-exceptions
 endif
 
+# IF REQUIRES_RTTI=1 is specified then don't disable run-time type id
+ifndef REQUIRES_RTTI
+  CXX.Flags += -fno-rtti
+endif
+
 # If DISABLE_ASSERTIONS=1 is specified (make command line or configured),
 # then disable assertions by defining the appropriate preprocessor symbols.
 ifdef DISABLE_ASSERTIONS
@@ -1730,6 +1735,15 @@ check-line-length:
 
 check-for-tabs:
 	@egrep -n '	' $(Sources)
+check-footprint:
+	@ls -l $(LibDir) | awk '\
+	  BEGIN { sum = 0; } \
+	        { sum += $$5; } \
+	  END   { printf("Libraries: %6.3f MBytes\n", sum/(1024.0*1024.0)); }'
+	@ls -l $(ToolDir) | awk '\
+	  BEGIN { sum = 0; } \
+	        { sum += $$5; } \
+	  END   { printf("Programs:  %6.3f MBytes\n", sum/(1024.0*1024.0)); }'
 #------------------------------------------------------------------------
 # Print out the directories used for building
 #------------------------------------------------------------------------
