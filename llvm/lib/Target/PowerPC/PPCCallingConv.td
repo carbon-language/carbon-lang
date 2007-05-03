@@ -35,7 +35,7 @@ def RetCC_PPC : CallingConv<[
 //===----------------------------------------------------------------------===//
 // PowerPC Argument Calling Conventions
 //===----------------------------------------------------------------------===//
-
+/*
 def CC_PPC : CallingConv<[
   // The first 8 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>,
@@ -60,4 +60,6 @@ def CC_PPC : CallingConv<[
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
               CCAssignToStack<16, 16>>*/
 ]>;
+
+*/
 
