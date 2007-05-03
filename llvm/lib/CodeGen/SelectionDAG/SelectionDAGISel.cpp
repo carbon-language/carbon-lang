@@ -5012,4 +5012,4 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
     Ops.push_back(InOps.back());
 }
 
-const char SelectionDAGISel::ID = 0;
+char SelectionDAGISel::ID = 0;

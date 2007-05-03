@@ -35,7 +35,7 @@ STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 
 namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     PruneEH() : CallGraphSCCPass((intptr_t)&ID) {}
 
     /// DoesNotUnwind - This set contains all of the functions which we have
@@ -53,7 +53,7 @@ namespace {
     void DeleteBasicBlock(BasicBlock *BB);
   };
 
-  const char PruneEH::ID = 0;
+  char PruneEH::ID = 0;
   RegisterPass<PruneEH> X("prune-eh", "Remove unused exception handling info");
 }
 

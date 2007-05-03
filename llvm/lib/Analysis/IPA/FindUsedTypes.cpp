@@ -21,7 +21,7 @@
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
 
-const char FindUsedTypes::ID = 0;
+char FindUsedTypes::ID = 0;
 static RegisterPass<FindUsedTypes>
 X("printusedtypes", "Find Used Types");
 

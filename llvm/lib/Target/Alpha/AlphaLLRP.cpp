@@ -37,7 +37,7 @@ namespace {
     ///
     AlphaTargetMachine &TM;
 
-    static const char ID;
+    static char ID;
     AlphaLLRPPass(AlphaTargetMachine &tm) 
       : MachineFunctionPass((intptr_t)&ID), TM(tm) { }
 
@@ -154,7 +154,7 @@ namespace {
       return Changed;
     }
   };
-  const char AlphaLLRPPass::ID = 0;
+  char AlphaLLRPPass::ID = 0;
 } // end of anonymous namespace
 
 FunctionPass *llvm::createAlphaLLRPPass(AlphaTargetMachine &tm) {

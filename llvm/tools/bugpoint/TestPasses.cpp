@@ -26,7 +26,7 @@ namespace {
   /// crashes on any call instructions.
   class CrashOnCalls : public BasicBlockPass {
   public:
-    static const char ID; // Pass ID, replacement for typeid
+    static char ID; // Pass ID, replacement for typeid
     CrashOnCalls() : BasicBlockPass((intptr_t)&ID) {}
   private:
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -42,7 +42,7 @@ namespace {
     }
   };
 
-  const char CrashOnCalls::ID = 0;
+  char CrashOnCalls::ID = 0;
   RegisterPass<CrashOnCalls>
   X("bugpoint-crashcalls",
     "BugPoint Test Pass - Intentionally crash on CallInsts");
@@ -53,7 +53,7 @@ namespace {
   /// deletes some call instructions, "misoptimizing" the program.
   class DeleteCalls : public BasicBlockPass {
   public:
-    static const char ID; // Pass ID, replacement for typeid
+    static char ID; // Pass ID, replacement for typeid
     DeleteCalls() : BasicBlockPass((intptr_t)&ID) {}
   private:
     bool runOnBasicBlock(BasicBlock &BB) {
@@ -68,7 +68,7 @@ namespace {
     }
   };
  
-  const char DeleteCalls::ID = 0;
+  char DeleteCalls::ID = 0;
   RegisterPass<DeleteCalls>
   Y("bugpoint-deletecalls",
     "BugPoint Test Pass - Intentionally 'misoptimize' CallInsts");

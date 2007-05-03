@@ -84,7 +84,7 @@ namespace llvm {
   class MachOWriter : public MachineFunctionPass {
     friend class MachOCodeEmitter;
   public:
-    static const char ID;
+    static char ID;
     MachineCodeEmitter &getMachineCodeEmitter() const {
       return *(MachineCodeEmitter*)MCE;
     }

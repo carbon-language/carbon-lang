@@ -40,7 +40,7 @@ class MRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
 public:
-  static const char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identifcation, replacement for typeid
   LiveVariables() : MachineFunctionPass((intptr_t)&ID) {}
 
   /// VarInfo - This represents the regions where a virtual register is live in

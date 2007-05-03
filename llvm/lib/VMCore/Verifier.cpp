@@ -69,7 +69,7 @@ namespace {  // Anonymous namespace for class
 
   struct VISIBILITY_HIDDEN
      Verifier : public FunctionPass, InstVisitor<Verifier> {
-    static const char ID; // Pass ID, replacement for typeid
+    static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
     VerifierFailureAction action;
@@ -266,7 +266,7 @@ namespace {  // Anonymous namespace for class
     }
   };
 
-  const char Verifier::ID = 0;
+  char Verifier::ID = 0;
   RegisterPass<Verifier> X("verify", "Module Verifier");
 } // End anonymous namespace
 

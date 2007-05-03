@@ -35,10 +35,10 @@ namespace {
   class VISIBILITY_HIDDEN UnreachableBlockElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   public:
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     UnreachableBlockElim() : FunctionPass((intptr_t)&ID) {}
   };
-  const char UnreachableBlockElim::ID = 0;
+  char UnreachableBlockElim::ID = 0;
   RegisterPass<UnreachableBlockElim>
   X("unreachableblockelim", "Remove unreachable blocks from the CFG");
 }

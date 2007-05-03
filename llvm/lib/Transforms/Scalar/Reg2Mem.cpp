@@ -33,7 +33,7 @@ STATISTIC(NumDemoted, "Number of registers demoted");
 
 namespace {
   struct VISIBILITY_HIDDEN RegToMem : public FunctionPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     RegToMem() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -78,7 +78,7 @@ namespace {
     }
   };
   
-  const char RegToMem::ID = 0;
+  char RegToMem::ID = 0;
   RegisterPass<RegToMem> X("reg2mem", "Demote all values to stack slots");
 }
 

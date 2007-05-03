@@ -50,7 +50,7 @@ STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 namespace {
   struct VISIBILITY_HIDDEN TwoAddressInstructionPass
    : public MachineFunctionPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -59,7 +59,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction&);
   };
 
-  const char TwoAddressInstructionPass::ID = 0;
+  char TwoAddressInstructionPass::ID = 0;
   RegisterPass<TwoAddressInstructionPass>
   X("twoaddressinstruction", "Two-Address instruction pass");
 }

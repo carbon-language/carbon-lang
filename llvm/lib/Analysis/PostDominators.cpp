@@ -22,9 +22,9 @@ using namespace llvm;
 //  PostDominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
-const char PostDominatorTree::ID = 0;
-const char PostDominanceFrontier::ID = 0;
-const char PostETForest::ID = 0;
+char PostDominatorTree::ID = 0;
+char PostDominanceFrontier::ID = 0;
+char PostETForest::ID = 0;
 static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 

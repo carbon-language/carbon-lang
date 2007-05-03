@@ -76,7 +76,7 @@ namespace {
     std::multimap<Function*, CallSite> CallSites;
 
   public:
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     DAE() : ModulePass((intptr_t)&ID) {}
     bool runOnModule(Module &M);
 
@@ -95,17 +95,17 @@ namespace {
 
     void RemoveDeadArgumentsFromFunction(Function *F);
   };
-  const char DAE::ID = 0;
+  char DAE::ID = 0;
   RegisterPass<DAE> X("deadargelim", "Dead Argument Elimination");
 
   /// DAH - DeadArgumentHacking pass - Same as dead argument elimination, but
   /// deletes arguments to functions which are external.  This is only for use
   /// by bugpoint.
   struct DAH : public DAE {
-    static const char ID;
+    static char ID;
     virtual bool ShouldHackArguments() const { return true; }
   };
-  const char DAH::ID = 0;
+  char DAH::ID = 0;
   RegisterPass<DAH> Y("deadarghaX0r",
                       "Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)");
 }

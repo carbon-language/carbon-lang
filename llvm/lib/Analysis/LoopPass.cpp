@@ -21,7 +21,7 @@ using namespace llvm;
 // LPPassManager
 //
 
-const char LPPassManager::ID = 0;
+char LPPassManager::ID = 0;
 /// LPPassManager manages FPPassManagers and CalLGraphSCCPasses.
 
 LPPassManager::LPPassManager(int Depth) 

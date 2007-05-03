@@ -35,12 +35,12 @@ STATISTIC(NumSimpl, "Number of blocks simplified");
 
 namespace {
   struct VISIBILITY_HIDDEN CFGSimplifyPass : public FunctionPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     CFGSimplifyPass() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
   };
-  const char CFGSimplifyPass::ID = 0;
+  char CFGSimplifyPass::ID = 0;
   RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
 }
 

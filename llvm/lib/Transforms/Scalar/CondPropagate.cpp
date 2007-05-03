@@ -31,7 +31,7 @@ STATISTIC(NumSwThread, "Number of CFG edges threaded through switches");
 
 namespace {
   struct VISIBILITY_HIDDEN CondProp : public FunctionPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     CondProp() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
@@ -49,7 +49,7 @@ namespace {
     void RevectorBlockTo(BasicBlock *FromBB, BasicBlock *ToBB);
   };
   
-  const char CondProp::ID = 0;
+  char CondProp::ID = 0;
   RegisterPass<CondProp> X("condprop", "Conditional Propagation");
 }
 

@@ -336,7 +336,7 @@ private:
 class FPPassManager : public ModulePass, public PMDataManager {
  
 public:
-  static const char ID;
+  static char ID;
   explicit FPPassManager(int Depth) 
   : ModulePass((intptr_t)&ID), PMDataManager(Depth) { }
   

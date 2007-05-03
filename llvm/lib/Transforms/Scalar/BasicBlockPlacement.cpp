@@ -41,7 +41,7 @@ STATISTIC(NumMoved, "Number of basic blocks moved");
 
 namespace {
   struct VISIBILITY_HIDDEN BlockPlacement : public FunctionPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     BlockPlacement() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);
@@ -73,7 +73,7 @@ namespace {
     void PlaceBlocks(BasicBlock *BB);
   };
 
-  const char BlockPlacement::ID = 0;
+  char BlockPlacement::ID = 0;
   RegisterPass<BlockPlacement> X("block-placement",
                                  "Profile Guided Basic Block Placement");
 }

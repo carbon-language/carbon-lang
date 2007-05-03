@@ -47,7 +47,7 @@
 #include <list>
 using namespace llvm;
 
-const char ELFWriter::ID = 0;
+char ELFWriter::ID = 0;
 /// AddELFWriter - Concrete function to add the ELF writer to the function pass
 /// manager.
 MachineCodeEmitter *llvm::AddELFWriter(FunctionPassManager &FPM,

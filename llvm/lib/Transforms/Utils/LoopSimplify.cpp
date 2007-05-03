@@ -54,7 +54,7 @@ STATISTIC(NumNested  , "Number of nested loops split out");
 
 namespace {
   struct VISIBILITY_HIDDEN LoopSimplify : public FunctionPass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     LoopSimplify() : FunctionPass((intptr_t)&ID) {}
 
     // AA - If we have an alias analysis object to update, this is it, otherwise
@@ -92,7 +92,7 @@ namespace {
                                          std::vector<BasicBlock*> &PredBlocks);
   };
 
-  const char LoopSimplify::ID = 0;
+  char LoopSimplify::ID = 0;
   RegisterPass<LoopSimplify>
   X("loopsimplify", "Canonicalize natural loops", true);
 }

@@ -33,7 +33,7 @@ namespace {
   /// IPCP - The interprocedural constant propagation pass
   ///
   struct VISIBILITY_HIDDEN IPCP : public ModulePass {
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     IPCP() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M);
@@ -41,7 +41,7 @@ namespace {
     bool PropagateConstantsIntoArguments(Function &F);
     bool PropagateConstantReturn(Function &F);
   };
-  const char IPCP::ID = 0;
+  char IPCP::ID = 0;
   RegisterPass<IPCP> X("ipconstprop", "Interprocedural constant propagation");
 }
 

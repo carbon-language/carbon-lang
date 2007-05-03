@@ -39,7 +39,7 @@ static cl::opt<bool> EnableTailMerge("enable-tail-merge", cl::Hidden);
 
 namespace {
   struct BranchFolder : public MachineFunctionPass {
-    static const char ID;
+    static char ID;
     BranchFolder() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
@@ -67,7 +67,7 @@ namespace {
                         MachineBasicBlock *TBB, MachineBasicBlock *FBB,
                         const std::vector<MachineOperand> &Cond);
   };
-  const char BranchFolder::ID = 0;
+  char BranchFolder::ID = 0;
 }
 
 FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }

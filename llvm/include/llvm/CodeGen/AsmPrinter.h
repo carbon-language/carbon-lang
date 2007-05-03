@@ -34,7 +34,7 @@ namespace llvm {
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.
   class AsmPrinter : public MachineFunctionPass {
-    static const char ID;
+    static char ID;
 
     /// FunctionNumber - This provides a unique ID for each function emitted in
     /// this translation unit.  It is autoincremented by SetupMachineFunction,

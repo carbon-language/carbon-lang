@@ -22,7 +22,7 @@ using namespace llvm;
 
 namespace {
   struct VISIBILITY_HIDDEN AlphaBSel : public MachineFunctionPass {
-    static const char ID;
+    static char ID;
     AlphaBSel() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
@@ -31,7 +31,7 @@ namespace {
       return "Alpha Branch Selection";
     }
   };
-  const char AlphaBSel::ID = 0;
+  char AlphaBSel::ID = 0;
 }
 
 /// createAlphaBranchSelectionPass - returns an instance of the Branch Selection

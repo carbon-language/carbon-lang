@@ -51,7 +51,7 @@ class VISIBILITY_HIDDEN BasicCallGraph : public CallGraph, public ModulePass {
   CallGraphNode *CallsExternalNode;
 
 public:
-  static const char ID; // Class identification, replacement for typeinfo
+  static char ID; // Class identification, replacement for typeinfo
   BasicCallGraph() : ModulePass((intptr_t)&ID), Root(0), 
     ExternalCallingNode(0), CallsExternalNode(0) {}
 
@@ -196,8 +196,8 @@ RegisterAnalysisGroup<CallGraph, true> Z(Y);
 
 } //End anonymous namespace
 
-const char CallGraph::ID = 0;
-const char BasicCallGraph::ID = 0;
+char CallGraph::ID = 0;
+char BasicCallGraph::ID = 0;
 
 void CallGraph::initialize(Module &M) {
   Mod = &M;

@@ -61,7 +61,7 @@ protected:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 public:
-  static const char ID; // Class identification, replacement for typeinfo
+  static char ID; // Class identification, replacement for typeinfo
   AliasAnalysis() : TD(0), AA(0) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 

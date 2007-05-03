@@ -40,7 +40,7 @@ namespace {
     std::set<const Value*> Vals;
     
   public:
-    static const char ID; // Class identification, replacement for typeinfo
+    static char ID; // Class identification, replacement for typeinfo
     AliasDebugger() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M) {
@@ -122,7 +122,7 @@ namespace {
 
   };
 
-  const char AliasDebugger::ID = 0;
+  char AliasDebugger::ID = 0;
   RegisterPass<AliasDebugger> X("debug-aa", "AA use debugger");
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }

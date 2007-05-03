@@ -44,7 +44,7 @@ namespace {
 
   class VISIBILITY_HIDDEN RA : public MachineFunctionPass {
   public:
-    static const char ID;
+    static char ID;
     RA() : MachineFunctionPass((intptr_t)&ID) {}
   private:
     const TargetMachine *TM;
@@ -228,7 +228,7 @@ namespace {
     void reloadPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                        unsigned PhysReg);
   };
-  const char RA::ID = 0;
+  char RA::ID = 0;
 }
 
 /// getStackSpaceFor - This allocates space for the specified virtual register

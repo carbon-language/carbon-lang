@@ -35,7 +35,7 @@ namespace {
     Function *MallocFunc;   // Functions in the module we are processing
     Function *FreeFunc;     // Initialized by doPassInitializationVirt
   public:
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     RaiseAllocations() 
       : ModulePass((intptr_t)&ID), MallocFunc(0), FreeFunc(0) {}
 
@@ -49,7 +49,7 @@ namespace {
     bool runOnModule(Module &M);
   };
 
-  const char RaiseAllocations::ID = 0;
+  char RaiseAllocations::ID = 0;
   RegisterPass<RaiseAllocations>
   X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace

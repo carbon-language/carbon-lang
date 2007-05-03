@@ -30,7 +30,7 @@ namespace {
   /// modifies the CFG!
   class VISIBILITY_HIDDEN LowerSwitch : public FunctionPass {
   public:
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     LowerSwitch() : FunctionPass((intptr_t) &ID) {} 
 
     virtual bool runOnFunction(Function &F);
@@ -78,7 +78,7 @@ namespace {
     }
   };
 
-  const char LowerSwitch::ID = 0;
+  char LowerSwitch::ID = 0;
   RegisterPass<LowerSwitch>
   X("lowerswitch", "Lower SwitchInst's to branches");
 }

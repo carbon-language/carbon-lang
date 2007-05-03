@@ -25,7 +25,7 @@ namespace llvm {
 struct UnifyFunctionExitNodes : public FunctionPass {
   BasicBlock *ReturnBlock, *UnwindBlock, *UnreachableBlock;
 public:
-  static const char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identifcation, replacement for typeid
   UnifyFunctionExitNodes() : FunctionPass((intptr_t)&ID),
                              ReturnBlock(0), UnwindBlock(0) {}
 

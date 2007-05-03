@@ -36,7 +36,7 @@ namespace {
         cl::desc("Control the amount of inlining to perform (default = 200)"));
 }
 
-const char Inliner::ID = 0;
+char Inliner::ID = 0;
 Inliner::Inliner() 
   : CallGraphSCCPass((intptr_t)&ID), InlineThreshold(InlineLimit) {}
 

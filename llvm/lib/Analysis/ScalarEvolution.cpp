@@ -105,7 +105,7 @@ namespace {
   RegisterPass<ScalarEvolution>
   R("scalar-evolution", "Scalar Evolution Analysis");
 }
-const char ScalarEvolution::ID = 0;
+char ScalarEvolution::ID = 0;
 
 //===----------------------------------------------------------------------===//
 //                           SCEV class definitions

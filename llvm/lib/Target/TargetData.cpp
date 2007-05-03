@@ -35,7 +35,7 @@ namespace {
   // Register the default SparcV9 implementation...
   RegisterPass<TargetData> X("targetdata", "Target Data Layout");
 }
-const char TargetData::ID = 0;
+char TargetData::ID = 0;
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout

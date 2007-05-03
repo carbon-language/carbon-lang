@@ -39,7 +39,7 @@ namespace {
     /// transformation profitability.
     const TargetLowering *TLI;
   public:
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     CodeGenPrepare(const TargetLowering *tli = 0) : FunctionPass((intptr_t)&ID),
       TLI(tli) {}
     bool runOnFunction(Function &F);
@@ -55,7 +55,7 @@ namespace {
   };
 }
 
-const char CodeGenPrepare::ID = 0;
+char CodeGenPrepare::ID = 0;
 static RegisterPass<CodeGenPrepare> X("codegenprepare",
                                       "Optimize for code generation");
 

@@ -33,7 +33,7 @@ namespace {
   class VISIBILITY_HIDDEN LowerSelect : public FunctionPass {
     bool OnlyFP;   // Only lower FP select instructions?
   public:
-    static const char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identifcation, replacement for typeid
     LowerSelect(bool onlyfp = false) : FunctionPass((intptr_t)&ID), 
       OnlyFP(onlyfp) {}
 
@@ -50,7 +50,7 @@ namespace {
     bool runOnFunction(Function &F);
   };
 
-  const char LowerSelect::ID = 0;
+  char LowerSelect::ID = 0;
   RegisterPass<LowerSelect>
   X("lowerselect", "Lower select instructions to branches");
 }

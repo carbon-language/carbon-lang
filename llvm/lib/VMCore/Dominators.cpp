@@ -58,7 +58,7 @@ static std::ostream &operator<<(std::ostream &o,
 //
 //===----------------------------------------------------------------------===//
 
-const char DominatorTree::ID = 0;
+char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
 
@@ -354,7 +354,7 @@ bool DominatorTree::runOnFunction(Function &F) {
 //  DominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
 
-const char DominanceFrontier::ID = 0;
+char DominanceFrontier::ID = 0;
 static RegisterPass<DominanceFrontier>
 G("domfrontier", "Dominance Frontier Construction", true);
 
@@ -835,7 +835,7 @@ void ETNode::assignDFSNumber(int num) {
 // ETForest implementation
 //===----------------------------------------------------------------------===//
 
-const char ETForest::ID = 0;
+char ETForest::ID = 0;
 static RegisterPass<ETForest>
 D("etforest", "ET Forest Construction", true);
 

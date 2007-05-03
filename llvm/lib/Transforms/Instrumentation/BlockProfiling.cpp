@@ -33,11 +33,11 @@ using namespace llvm;
 namespace {
   class VISIBILITY_HIDDEN FunctionProfiler : public RSProfilers_std {
   public:
-    static const char ID;
+    static char ID;
     bool runOnModule(Module &M);
   };
 
-  const char FunctionProfiler::ID = 0;
+  char FunctionProfiler::ID = 0;
 
   RegisterPass<FunctionProfiler> X("insert-function-profiling",
                                "Insert instrumentation for function profiling");
@@ -84,10 +84,10 @@ namespace {
   class BlockProfiler : public RSProfilers_std {
     bool runOnModule(Module &M);
   public:
-    static const char ID;
+    static char ID;
   };
 
-  const char BlockProfiler::ID = 0;
+  char BlockProfiler::ID = 0;
   RegisterPass<BlockProfiler> Y("insert-block-profiling",
                                 "Insert instrumentation for block profiling");
   RegisterAnalysisGroup<RSProfilers> YG(Y);

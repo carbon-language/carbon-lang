@@ -22,7 +22,7 @@ namespace llvm {
 /// compute the a post-dominator tree.
 ///
 struct PostDominatorTree : public DominatorTreeBase {
-  static const char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identifcation, replacement for typeid
 
   PostDominatorTree() : 
     DominatorTreeBase((intptr_t)&ID, true) {}
@@ -54,7 +54,7 @@ private:
 /// PostETForest Class - Concrete subclass of ETForestBase that is used to
 /// compute a forwards post-dominator ET-Forest.
 struct PostETForest : public ETForestBase {
-  static const char ID;
+  static char ID;
   PostETForest() : ETForestBase((intptr_t)&ID, true) {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -79,7 +79,7 @@ struct PostETForest : public ETForestBase {
 /// used to compute the a post-dominance frontier.
 ///
 struct PostDominanceFrontier : public DominanceFrontierBase {
-  static const char ID;
+  static char ID;
   PostDominanceFrontier() 
     : DominanceFrontierBase((intptr_t) &ID, true) {}
 

@@ -73,7 +73,7 @@ protected:
   FunctionMapTy FunctionMap;    // Map from a function to its node
 
 public:
-  static const char ID; // Class identification, replacement for typeinfo
+  static char ID; // Class identification, replacement for typeinfo
   //===---------------------------------------------------------------------
   // Accessors...
   //

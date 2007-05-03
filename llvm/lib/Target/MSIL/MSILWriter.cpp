@@ -80,8 +80,8 @@ bool MSILModule::runOnModule(Module &M) {
   return Changed;
 }
 
-const char MSILModule::ID = 0;
-const char MSILWriter::ID = 0;
+char MSILModule::ID = 0;
+char MSILWriter::ID = 0;
 
 bool MSILWriter::runOnFunction(Function &F) {
   if (F.isDeclaration()) return false;

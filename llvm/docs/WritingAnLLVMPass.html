@@ -263,7 +263,7 @@ href="#FunctionPass"><tt>FunctionPass</tt></a>'s operate a function at a
 time.</p>
 
 <div class="doc_code"><pre>
-     static const char ID;
+     static char ID;
      Hello() : FunctionPass((intptr_t)&ID) {}
 </pre></div><p>
 
@@ -285,7 +285,7 @@ to do our thing, so we just print out our message with the name of each
 function.</p>
 
 <div class="doc_code"><pre>
-  const char Hello::ID = 0;
+  char Hello::ID = 0;
 </pre></div>
 
 <p> We initialize pass ID here. LLVM uses ID's address to identify pass so 
@@ -311,7 +311,7 @@ argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".</p>
 <b>namespace</b> {
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
     
-    static const char ID;
+    static char ID;
     Hello() : FunctionPass((intptr_t)&ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {

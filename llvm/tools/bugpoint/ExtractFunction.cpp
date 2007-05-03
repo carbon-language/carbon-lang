@@ -306,10 +306,10 @@ namespace {
   class BlockExtractorPass : public ModulePass {
     bool runOnModule(Module &M);
   public:
-    static const char ID; // Pass ID, replacement for typeid
+    static char ID; // Pass ID, replacement for typeid
     BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
   };
-  const char BlockExtractorPass::ID = 0;
+  char BlockExtractorPass::ID = 0;
   RegisterPass<BlockExtractorPass>
   XX("extract-bbs", "Extract Basic Blocks From Module (for bugpoint use)");
 }
