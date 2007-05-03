@@ -1486,7 +1486,7 @@ static bool isLegalAddressImmediate(int64_t V, MVT::ValueType VT,
   case MVT::f64:
     if (!Subtarget->hasVFP2())
       return false;
-    if ((V % 3) != 0)
+    if ((V & 3) != 0)
       return false;
     V >>= 2;
     return V == V & ((1LL << 8) - 1);
