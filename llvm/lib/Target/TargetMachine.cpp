@@ -54,10 +54,17 @@ namespace {
                cl::location(UnsafeFPMath),
                cl::init(false));
   cl::opt<bool, true>
-  EnableFiniteOnltFPMath("enable-finite-only-fp-math",
+  EnableFiniteOnlyFPMath("enable-finite-only-fp-math",
                cl::desc("Enable optimizations that assumes non- NaNs / +-Infs"),
                cl::location(FiniteOnlyFPMathOption),
                cl::init(false));
+  cl::opt<bool, true>
+  EnableHonorSignDependentRoundingFPMath(cl::Hidden,
+               "enable-sign-dependent-rounding-fp-math",
+       cl::desc("Force codegen to assume rounding mode can change dynamically"),
+               cl::location(HonorSignDependentRoundingFPMathOption),
+               cl::init(false));
+
   cl::opt<bool, true>
   GenerateSoftFloatCalls("soft-float",
                cl::desc("Generate software floating point library calls"),
@@ -65,9 +72,9 @@ namespace {
                cl::init(false));
   cl::opt<bool, true>
   DontPlaceZerosInBSS("nozero-initialized-in-bss",
-               cl::desc("Don't place zero-initialized symbols into bss section"),
-               cl::location(NoZerosInBSS),
-               cl::init(false));
+              cl::desc("Don't place zero-initialized symbols into bss section"),
+              cl::location(NoZerosInBSS),
+              cl::init(false));
   cl::opt<bool, true>
   EnableExceptionHandling("enable-eh",
                cl::desc("Exception handling should be emitted."),
@@ -146,5 +153,11 @@ namespace llvm {
   /// the code generator is not allowed to assume that FP arithmetic arguments
   /// and results are never NaNs or +-Infs.
   bool FiniteOnlyFPMath() { return UnsafeFPMath || FiniteOnlyFPMathOption; }
+  
+  /// HonorSignDependentRoundingFPMath - Return true if the codegen must assume
+  /// that the rounding mode of the FPU can change from its default.
+  bool HonorSignDependentRoundingFPMath() {
+    return !UnsafeFPMath && HonorSignDependentRoundingFPMathOption;
+  }
 }
 

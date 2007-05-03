@@ -49,6 +49,22 @@ namespace llvm {
   extern bool FiniteOnlyFPMathOption;
   extern bool FiniteOnlyFPMath();
   
+  /// HonorSignDependentRoundingFPMath - This returns true when the
+  /// -enable-sign-dependent-rounding-fp-math is specified.  If this returns
+  /// false (the default), the code generator is allowed to assume that the
+  /// rounding behavior is the default (round-to-zero for all floating point to
+  /// integer conversions, and round-to-nearest for all other arithmetic
+  /// truncations).  If this is enabled (set to true), the code generator must
+  /// assume that the rounding mode may dynamically change.
+  extern bool HonorSignDependentRoundingFPMathOption;
+  extern bool HonorSignDependentRoundingFPMath();
+  
+  /// option is specified on the command line. If this returns false (default),
+  /// the code generator is not allowed to assume that FP arithmetic arguments
+  /// and results are never NaNs or +-Infs.
+  extern bool FiniteOnlyFPMathOption;
+  extern bool FiniteOnlyFPMath();
+  
   /// UseSoftFloat - This flag is enabled when the -soft-float flag is specified
   /// on the command line.  When this flag is on, the code generator will
   /// generate libcalls to the software floating point library instead of
