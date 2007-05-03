@@ -15,12 +15,23 @@
 #include "ToolRunner.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include "llvm/System/Program.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
 using namespace llvm;
+
+namespace {
+  cl::opt<std::string>
+  RSHHost("rsh-host",
+          cl::desc("Remote execution (rsh) host"));
+
+  cl::opt<std::string>
+  RSHUser("rsh-user",
+          cl::desc("Remote execution (rsh) user id"));
+}
 
 ToolExecutionError::~ToolExecutionError() throw() { }
 
@@ -482,7 +493,22 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   std::vector<const char*> ProgramArgs;
 
-  ProgramArgs.push_back(OutputBinary.c_str());
+  if (RSHPath.isEmpty())
+    ProgramArgs.push_back(OutputBinary.c_str());
+  else {
+    ProgramArgs.push_back(RSHPath.c_str());
+    ProgramArgs.push_back(RSHHost.c_str());
+    ProgramArgs.push_back("-l");
+    ProgramArgs.push_back(RSHUser.c_str());
+
+    char* env_pwd = getenv("PWD");
+    std::string Exec = "cd ";
+    Exec += env_pwd;
+    Exec += "; ./";
+    Exec += OutputBinary.c_str();
+    ProgramArgs.push_back(Exec.c_str());
+  }
+
   // Add optional parameters to the running program from Argv
   for (unsigned i=0, e = Args.size(); i != e; ++i)
     ProgramArgs.push_back(Args[i].c_str());
@@ -497,9 +523,15 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         );
 
   FileRemover OutputBinaryRemover(OutputBinary);
-  return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
-      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-      Timeout, MemoryLimit);
+
+  if (RSHPath.isEmpty())
+    return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
+        sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
+        Timeout, MemoryLimit);
+  else
+    return RunProgramWithTimeout(sys::Path(RSHPath), &ProgramArgs[0],
+        sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
+        Timeout, MemoryLimit);
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
@@ -583,6 +615,10 @@ GCC *GCC::create(const std::string &ProgramPath, std::string &Message) {
     return 0;
   }
 
+  sys::Path RSHPath;
+  if (!RSHHost.empty())
+    RSHPath = FindExecutable("rsh", ProgramPath);
+
   Message = "Found gcc: " + GCCPath.toString() + "\n";
-  return new GCC(GCCPath);
+  return new GCC(GCCPath, RSHPath);
 }

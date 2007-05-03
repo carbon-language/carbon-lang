@@ -44,7 +44,9 @@ public:
 //
 class GCC {
   sys::Path GCCPath;          // The path to the gcc executable
-  GCC(const sys::Path &gccPath) : GCCPath(gccPath) { }
+  sys::Path RSHPath;          // The path to the rsh executable
+  GCC(const sys::Path &gccPath, const sys::Path &rshPath)
+    : GCCPath(gccPath), RSHPath(rshPath) { }
 public:
   enum FileType { AsmFile, CFile };
 
