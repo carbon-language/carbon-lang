@@ -210,6 +210,11 @@ class Predicate<string cond> {
   string CondString = cond;
 }
 
+/// NoHonorSignDependentRounding - This predicate is true if support for
+/// sign-dependent-rounding is not enabled.
+def NoHonorSignDependentRounding
+ : Predicate<"!HonorSignDependentRoundingFPMath()">;
+
 class Requires<list<Predicate> preds> {
   list<Predicate> Predicates = preds;
 }

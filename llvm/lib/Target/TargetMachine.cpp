@@ -27,6 +27,7 @@ namespace llvm {
   bool NoExcessFPPrecision;
   bool UnsafeFPMath;
   bool FiniteOnlyFPMathOption;
+  bool HonorSignDependentRoundingFPMathOption;
   bool UseSoftFloat;
   bool NoZerosInBSS;
   bool ExceptionHandling;
