@@ -571,7 +571,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     break;
   case Instruction::Invoke: {
     Code = bitc::FUNC_CODE_INST_INVOKE;
-    // FIXME: param attrs
+    Vals.push_back(cast<InvokeInst>(I).getCallingConv());
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
     Vals.push_back(VE.getValueID(I.getOperand(0)));  // callee
     Vals.push_back(VE.getValueID(I.getOperand(1)));  // normal
@@ -647,7 +647,8 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     break;
   case Instruction::Call: {
     Code = bitc::FUNC_CODE_INST_CALL;
-    // FIXME: param attrs
+    Vals.push_back((cast<CallInst>(I).getCallingConv() << 1) |
+                   cast<CallInst>(I).isTailCall());
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
     Vals.push_back(VE.getValueID(I.getOperand(0)));  // callee
     
