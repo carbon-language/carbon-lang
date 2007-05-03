@@ -412,29 +412,6 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
   }
 }
 
-#define IMPL_SIGN_EXTENSION(OpTy, Func) { \
-      const IntegerType* IntTy = cast<IntegerType>(OpTy); \
-      unsigned BitWidth = IntTy->getBitWidth(); \
-      if (BitWidth != 8 && BitWidth != 16 && BitWidth != 32 && \
-          BitWidth != 64 && BitWidth != 128) { \
-        const char * Suffix; \
-        if (BitWidth <=32)\
-          Suffix = "U"; \
-        else \
-          Suffix = "ULL"; \
-        Out << "("; \
-        Func; \
-        Out << " & (1" << Suffix << " << " << BitWidth - 1 << " ) ? "; \
-        Func; \
-        Out << " | " << (~IntTy->getBitMask()) << Suffix << " : "; \
-        Func; \
-        Out << " & " << IntTy->getBitMask() << Suffix; \
-        Out << ")";\
-       } \
-      else \
-        Func; \
-      }
-
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
@@ -734,39 +711,23 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::BitCast:
       Out << "(";
       printCast(CE->getOpcode(), CE->getOperand(0)->getType(), CE->getType());
-       if (CE->getOpcode() == Instruction::Trunc ||
-           CE->getOpcode() == Instruction::FPToUI ||
-           CE->getOpcode() == Instruction::FPToSI ||
-           CE->getOpcode() == Instruction::PtrToInt) {
-        if (const IntegerType* IntTy = dyn_cast<IntegerType>(CE->getType())) {
-          uint64_t BitMask = IntTy->getBitMask();
-          printConstant(CE->getOperand(0));
-          Out << "&" << BitMask << (IntTy->getBitWidth() <=32 ? "U": "ULL");
-        }
-      }
-      else if (CE->getOpcode() == Instruction::SExt &&
-               CE->getOperand(0)->getType() == Type::Int1Ty) {
+      if (CE->getOpcode() == Instruction::SExt &&
+          CE->getOperand(0)->getType() == Type::Int1Ty) {
         // Make sure we really sext from bool here by subtracting from 0
         Out << "0-";
-        printConstant(CE->getOperand(0));
       }
-      else if (CE->getOpcode() == Instruction::SExt &&
-               CE->getOperand(0)->getType()->getTypeID() == Type::IntegerTyID) {
-         IMPL_SIGN_EXTENSION(CE->getOperand(0)->getType(),
-                             printConstant(CE->getOperand(0)));
-       }
-       else if (CE->getOpcode() == Instruction::ZExt &&
-                CE->getOperand(0)->getType()->getTypeID() == Type::IntegerTyID){
-         const IntegerType* IntTy = 
-           cast<IntegerType>(CE->getOperand(0)->getType());
-         uint64_t BitMask = IntTy->getBitMask();
-         writeOperand(CE->getOperand(0));
-         Out << "&" << BitMask << (IntTy->getBitWidth() <=32 ? "U": "ULL");
-       }
-       else
-         printConstant(CE->getOperand(0));
-      Out << ")";
+      printConstant(CE->getOperand(0));
+      if (CE->getType() == Type::Int1Ty &&
+          (CE->getOpcode() == Instruction::Trunc ||
+           CE->getOpcode() == Instruction::FPToUI ||
+           CE->getOpcode() == Instruction::FPToSI ||
+           CE->getOpcode() == Instruction::PtrToInt)) {
+        // Make sure we really truncate to bool here by anding with 1
+        Out << "&1u";
+      }
+      Out << ')';
       return;
+
     case Instruction::GetElementPtr:
       Out << "(&(";
       printIndexingExpression(CE->getOperand(0), gep_type_begin(CPV),
@@ -1267,11 +1228,7 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
     Out << "((";
     printSimpleType(Out, OpTy, castIsSigned);
     Out << ")";
-    if (castIsSigned && OpTy->getTypeID() == Type::IntegerTyID) {
-      IMPL_SIGN_EXTENSION(OpTy, writeOperand(Operand));
-    }
-    else
-      writeOperand(Operand);
+    writeOperand(Operand);
     Out << ")";
   } else 
     writeOperand(Operand);
@@ -1296,9 +1253,7 @@ void CWriter::writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate
   switch (predicate) {
     default:
       // for eq and ne, it doesn't matter
-      break;
-    case ICmpInst::ICMP_EQ:
-    case ICmpInst::ICMP_NE:
+      break; 
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_UGE:
     case ICmpInst::ICMP_ULT:
@@ -1323,25 +1278,10 @@ void CWriter::writeOperandWithCast(Value* Operand, ICmpInst::Predicate predicate
     else
       printType(Out, OpTy); // not integer, sign doesn't matter
     Out << ")";
-    if(castIsSigned && OpTy->getTypeID() == Type::IntegerTyID) {
-      IMPL_SIGN_EXTENSION(OpTy, writeOperand(Operand));
-    } else {
-      writeOperand(Operand);
-      if(OpTy->getTypeID() == Type::IntegerTyID){
-        const IntegerType * IntTy = cast<IntegerType>(OpTy);
-        uint64_t BitMask = IntTy->getBitMask();
-        Out << "&" << BitMask << (IntTy->getBitWidth() <=32 ? "U": "ULL");
-      }
-    }
-    Out << ")";
-  } else {
     writeOperand(Operand);
-    if(OpTy->getTypeID() == Type::IntegerTyID){
-      const IntegerType * IntTy = cast<IntegerType>(OpTy);
-      uint64_t BitMask = IntTy->getBitMask();
-      Out << "&" << BitMask << (IntTy->getBitWidth() <=32 ? "U": "ULL");
-    }
-  }
+    Out << ")";
+  } else 
+    writeOperand(Operand);
 }
 
 // generateCompilerSpecificCode - This is where we add conditional compilation
@@ -2406,33 +2346,21 @@ void CWriter::visitCastInst(CastInst &I) {
         << getFloatBitCastField(I.getType());
   } else {
     printCast(I.getOpcode(), SrcTy, DstTy);
-    if (I.getOpcode() == Instruction::Trunc ||
-        I.getOpcode() == Instruction::FPToUI ||
-        I.getOpcode() == Instruction::FPToSI ||
-        I.getOpcode() == Instruction::PtrToInt) {
-      if (const IntegerType* IntTy = dyn_cast<IntegerType>(DstTy)){
-        uint64_t BitMask = IntTy->getBitMask();
-        writeOperand(I.getOperand(0));
-        Out << "&" << BitMask << (IntTy->getBitWidth() <=32 ? "U": "ULL");
-      }
-    } else if (I.getOpcode() == Instruction::SExt && SrcTy == Type::Int1Ty) {
+    if (I.getOpcode() == Instruction::SExt && SrcTy == Type::Int1Ty) {
       // Make sure we really get a sext from bool by subtracing the bool from 0
       Out << "0-";
-      writeOperand(I.getOperand(0));
-    } else if (I.getOpcode() == Instruction::SExt &&
-               SrcTy->getTypeID() == Type::IntegerTyID) {
-      IMPL_SIGN_EXTENSION(SrcTy, writeOperand(I.getOperand(0)) );
-    } else if (I.getOpcode() == Instruction::ZExt &&
-               SrcTy->getTypeID() == Type::IntegerTyID) {
-      const IntegerType* IntTy = cast<IntegerType>(SrcTy);
-      uint64_t BitMask = IntTy->getBitMask();
-      writeOperand(I.getOperand(0));
-      Out << "&" << BitMask << (IntTy->getBitWidth() <=32 ? "U": "ULL");
     }
-    else
-      writeOperand(I.getOperand(0));
+    writeOperand(I.getOperand(0));
+    if (DstTy == Type::Int1Ty && 
+        (I.getOpcode() == Instruction::Trunc ||
+         I.getOpcode() == Instruction::FPToUI ||
+         I.getOpcode() == Instruction::FPToSI ||
+         I.getOpcode() == Instruction::PtrToInt)) {
+      // Make sure we really get a trunc to bool by anding the operand with 1 
+      Out << "&1u";
+    }
   }
-  Out << ")";
+  Out << ')';
 }
 
 void CWriter::visitSelectInst(SelectInst &I) {
