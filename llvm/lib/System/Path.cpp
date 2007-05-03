@@ -44,11 +44,12 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
   assert(length >=4 && "Invalid magic number length");
   switch (magic[0]) {
     case 'l':
-      if (magic[1] == 'l' && magic[2] == 'v')
+      if (magic[1] == 'l' && magic[2] == 'v') {
         if (magic[3] == 'c')
           return CompressedBytecode_FileType;
         else if (magic[3] == 'm')
           return Bytecode_FileType;
+      }
       break;
     case '!':
       if (length >= 8)
@@ -57,7 +58,7 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
       break;
       
     case '\177':
-      if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F')
+      if (magic[1] == 'E' && magic[2] == 'L' && magic[3] == 'F') {
         if (length >= 18 && magic[17] == 0)
           switch (magic[16]) {
             default: break;
@@ -66,6 +67,7 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
             case 3: return ELF_SharedObject_FileType;
             case 4: return ELF_Core_FileType;
           }
+      }
       break;
 
     case 0xCA:
