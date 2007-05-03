@@ -433,10 +433,11 @@ void ARMAsmPrinter::printAddrMode2OffsetOperand(const MachineInstr *MI, int Op){
   const MachineOperand &MO2 = MI->getOperand(Op+1);
 
   if (!MO1.getReg()) {
-    if (ARM_AM::getAM2Offset(MO2.getImm()))  // Don't print +0.
-      O << "#"
-        << (char)ARM_AM::getAM2Op(MO2.getImm())
-        << ARM_AM::getAM2Offset(MO2.getImm());
+    unsigned ImmOffs = ARM_AM::getAM2Offset(MO2.getImm());
+    assert(ImmOffs && "Malformed indexed load / store!");
+    O << "#"
+      << (char)ARM_AM::getAM2Op(MO2.getImm())
+      << ImmOffs;
     return;
   }
 
@@ -483,8 +484,9 @@ void ARMAsmPrinter::printAddrMode3OffsetOperand(const MachineInstr *MI, int Op){
   }
 
   unsigned ImmOffs = ARM_AM::getAM3Offset(MO2.getImm());
+  assert(ImmOffs && "Malformed indexed load / store!");
   O << "#"
-  << (char)ARM_AM::getAM3Op(MO2.getImm())
+    << (char)ARM_AM::getAM3Op(MO2.getImm())
     << ImmOffs;
 }
   
