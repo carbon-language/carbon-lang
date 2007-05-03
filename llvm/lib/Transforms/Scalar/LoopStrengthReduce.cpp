@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
@@ -1039,9 +1040,17 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // Addressing modes can be folded into loads and stores.  Be careful that
       // the store is through the expression, not of the expression though.
       bool isAddress = isa<LoadInst>(UsersToProcess[i].Inst);
-      if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
+      if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst)) {
         if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
           isAddress = true;
+      } else if (CallInst *CI = dyn_cast<CallInst>(UsersToProcess[i].Inst)) {
+        // Addressing modes can also be folded into prefetches.
+        Function *CalledFunc = CI->getCalledFunction();
+        if (CalledFunc != NULL &&
+            CalledFunc->getIntrinsicID() == Intrinsic::prefetch &&
+            CI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
+          isAddress = true;
+      }
       
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
                           UsersToProcess[i].Imm, isAddress, L);
