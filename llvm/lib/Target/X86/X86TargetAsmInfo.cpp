@@ -107,6 +107,11 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     // HasDotFile - True if target asm supports .file directives.
     // bool HasDotFile; // Defaults to false.
     ReadOnlySection = "\t.section\t.rodata\n";
+    FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
+    EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
+    SixteenByteConstantSection =
+                             "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
+    CStringSection = "\t.section\t.rodata.str1.1,\"aMS\",@progbits,1";
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
     SetDirective = "\t.set\t";
