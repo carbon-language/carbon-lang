@@ -1328,17 +1328,75 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = new AllocaInst(Ty->getElementType(), Size, (1 << Align) >> 1);
       break;
     }
-#if 0
-    case bitc::FUNC_CODE_INST_LOAD:
-      // LOAD:       [opty, op, align, vol]
-    case bitc::FUNC_CODE_INST_STORE:
-      // STORE:      [ptrty,val,ptr, align, vol]
-    case bitc::FUNC_CODE_INST_CALL:
-      // CALL:       [fnty, fnid, arg0, arg1...]
-    case bitc::FUNC_CODE_INST_VAARG:
-      // VAARG:      [valistty, valist, instty]
+    case bitc::FUNC_CODE_INST_LOAD: { // LOAD: [opty, op, align, vol]
+      if (Record.size() < 4)
+        return Error("Invalid LOAD record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Op = getFnValueByID(Record[1], OpTy);
+      if (!OpTy || !Op)
+        return Error("Invalid LOAD record");
+      I = new LoadInst(Op, "", Record[3], (1 << Record[2]) >> 1);
       break;
-#endif
+    }
+    case bitc::FUNC_CODE_INST_STORE: { // STORE:[ptrty,val,ptr, align, vol]
+      if (Record.size() < 5)
+        return Error("Invalid LOAD record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Op = getFnValueByID(Record[1], OpTy);
+      Value *Ptr = getFnValueByID(Record[2], PointerType::get(OpTy));
+      if (!OpTy || !Op || !Ptr)
+        return Error("Invalid STORE record");
+      I = new StoreInst(Op, Ptr, (1 << Record[3]) >> 1, Record[4]);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_CALL: { // CALL: [fnty, fnid, arg0, arg1...]
+      if (Record.size() < 2)
+        return Error("Invalid CALL record");
+      const PointerType *OpTy = 
+        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
+      const FunctionType *FTy = 0;
+      if (OpTy) FTy = dyn_cast<FunctionType>(OpTy->getElementType());
+      Value *Callee = getFnValueByID(Record[1], OpTy);
+      if (!FTy || !Callee || Record.size() < FTy->getNumParams()+2)
+        return Error("Invalid CALL record");
+      
+      SmallVector<Value*, 16> Args;
+      // Read the fixed params.
+      for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
+        Args.push_back(getFnValueByID(Record[i+2], FTy->getParamType(i)));
+        if (Args.back() == 0) return Error("Invalid CALL record");
+      }
+      
+      
+      // Read type/value pairs for varargs params.
+      unsigned NextArg = FTy->getNumParams()+2;
+      if (!FTy->isVarArg()) {
+        if (NextArg != Record.size())
+          return Error("Invalid CALL record");
+      } else {
+        if ((Record.size()-NextArg) & 1)
+          return Error("Invalid CALL record");
+        for (unsigned e = Record.size(); NextArg != e; NextArg += 2) {
+          Args.push_back(getFnValueByID(Record[NextArg+1], 
+                                        getTypeByID(Record[NextArg])));
+          if (Args.back() == 0) return Error("Invalid CALL record");
+        }
+      }
+      
+      I = new CallInst(Callee, &Args[0], Args.size());
+      break;
+    }
+    case bitc::FUNC_CODE_INST_VAARG: { // VAARG: [valistty, valist, instty]
+      if (Record.size() < 3)
+        return Error("Invalid VAARG record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Op = getFnValueByID(Record[1], OpTy);
+      const Type *ResTy = getTypeByID(Record[2]);
+      if (!OpTy || !Op || !ResTy)
+        return Error("Invalid VAARG record");
+      I = new VAArgInst(Op, ResTy);
+      break;
+    }
     }
 
     // Add instruction to end of current BB.  If there is no current BB, reject
