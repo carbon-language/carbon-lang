@@ -454,6 +454,7 @@ sub SendData{
     $length = length($content);
 
     my $send= "POST $file HTTP/1.0\n";
+    $send.= "Host: $host\n";
     $send.= "Content-Type: application/x-www-form-urlencoded\n";
     $send.= "Content-length: $length\n\n";
     $send.= "$content";
