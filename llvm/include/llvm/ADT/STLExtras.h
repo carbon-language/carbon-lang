@@ -71,7 +71,7 @@ public:
   typedef RootIt iterator_type;
   typedef mapped_iterator<RootIt, UnaryFunc> _Self;
 
-  inline RootIt &getCurrent() const { return current; }
+  inline const RootIt &getCurrent() const { return current; }
 
   inline explicit mapped_iterator(const RootIt &I, UnaryFunc F)
     : current(I), Fn(F) {}

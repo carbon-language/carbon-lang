@@ -70,6 +70,7 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   sys::Path dotty(LLVM_PATH_DOTTY);
 
   std::vector<const char*> args;
+  args.push_back(dotty.c_str());
   args.push_back(Filename.c_str());
   args.push_back(0);
   
