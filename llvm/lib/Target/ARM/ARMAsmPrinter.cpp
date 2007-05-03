@@ -294,6 +294,12 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       FnStubs.insert(Name);
     } else
       O << Name;
+    
+    if (MO.getOffset() > 0)
+      O << '+' << MO.getOffset();
+    else if (MO.getOffset() < 0)
+      O << MO.getOffset();
+    
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";
