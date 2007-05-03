@@ -175,9 +175,7 @@ FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
 bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
 
-  if (Subtarget->isTargetDarwin()) {
-    DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
-  }
+  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
 
   SetupMachineFunction(MF);
   O << "\n";
@@ -231,10 +229,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     EmitAlignment(2, F);
 
   O << CurrentFnName << ":\n";
-  if (Subtarget->isTargetDarwin()) {
-    // Emit pre-function debug information.
-    DW.BeginFunction(&MF);
-  }
+  // Emit pre-function debug information.
+  DW.BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -254,10 +250,8 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (Subtarget->isTargetDarwin()) {
-    // Emit post-function debug information.
-    DW.EndFunction();
-  }
+  // Emit post-function debug information.
+  DW.EndFunction();
 
   return false;
 }
@@ -769,10 +763,8 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
-  if (Subtarget->isTargetDarwin()) {
-    // Emit initial debug information.
-    DW.BeginModule(&M);
-  }
+  // Emit initial debug information.
+  DW.BeginModule(&M);
   
   return AsmPrinter::doInitialization(M);
 }
@@ -998,6 +990,9 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
+  } else {
+    // Emit final debug information for ELF.
+    DW.EndModule();
   }
 
   AsmPrinter::doFinalization(M);

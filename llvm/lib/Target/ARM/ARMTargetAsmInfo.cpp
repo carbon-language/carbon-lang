@@ -63,8 +63,25 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   } else {
+    NeedsSet = false;
+    HasLEB128 = true;
+    AbsoluteDebugSectionOffsets = true;
+    ReadOnlySection = "\t.section\t.rodata\n";
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
+    DwarfRequiresFrameSection = false;
+    DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",%progbits";
+    DwarfInfoSection =    "\t.section\t.debug_info,\"\",%progbits";
+    DwarfLineSection =    "\t.section\t.debug_line,\"\",%progbits";
+    DwarfFrameSection =   "\t.section\t.debug_frame,\"\",%progbits";
+    DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",%progbits";
+    DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",%progbits";
+    DwarfStrSection =     "\t.section\t.debug_str,\"\",%progbits";
+    DwarfLocSection =     "\t.section\t.debug_loc,\"\",%progbits";
+    DwarfARangesSection = "\t.section\t.debug_aranges,\"\",%progbits";
+    DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",%progbits";
+    DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",%progbits";
+
     if (Subtarget->isAAPCS_ABI()) {
       StaticCtorsSection = "\t.section .init_array,\"aw\",%init_array";
       StaticDtorsSection = "\t.section .fini_array,\"aw\",%fini_array";

@@ -178,9 +178,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   // Support label based line numbers.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  // FIXME - use subtarget debug flags
-  if (!Subtarget->isTargetDarwin())
-    setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
   setOperationAction(ISD::RET,           MVT::Other, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i32,   Custom);

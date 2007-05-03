@@ -1373,6 +1373,11 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, -NumBytes, isThumb, TII);
   }
 
+  if(STI.isTargetELF() && hasFP(MF)) {
+    MFI->setOffsetAdjustment(MFI->getOffsetAdjustment() -
+                             AFI->getFramePtrSpillOffset());
+  }
+
   AFI->setGPRCalleeSavedArea1Size(GPRCS1Size);
   AFI->setGPRCalleeSavedArea2Size(GPRCS2Size);
   AFI->setDPRCalleeSavedAreaSize(DPRCSSize);
