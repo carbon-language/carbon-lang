@@ -1066,11 +1066,12 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
   // If all the bits were shifted out, the result is, technically, undefined.
   // We return -1 if it was negative, 0 otherwise. We check this early to avoid
   // issues in the algorithm below.
-  if (shiftAmt == BitWidth)
+  if (shiftAmt == BitWidth) {
     if (isNegative())
       return APInt(BitWidth, -1ULL);
     else
       return APInt(BitWidth, 0);
+  }
 
   // Create some space for the result.
   uint64_t * val = new uint64_t[getNumWords()];
@@ -1108,7 +1109,7 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
 
     // Deal with sign extenstion in the break word, and possibly the word before
     // it.
-    if (isNegative())
+    if (isNegative()) {
       if (wordShift > bitsInWord) {
         if (breakWord > 0)
           val[breakWord-1] |= 
@@ -1116,6 +1117,7 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
         val[breakWord] |= ~0ULL;
       } else 
         val[breakWord] |= (~0ULL << (bitsInWord - wordShift));
+    }
   }
 
   // Remaining words are 0 or -1, just assign them.
@@ -1128,11 +1130,12 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
 APInt APInt::lshr(uint32_t shiftAmt) const {
-  if (isSingleWord())
+  if (isSingleWord()) {
     if (shiftAmt == BitWidth)
       return APInt(BitWidth, 0);
     else 
       return APInt(BitWidth, this->VAL >> shiftAmt);
+  }
 
   // If all the bits were shifted out, the result is 0. This avoids issues
   // with shifting by the size of the integer type, which produces undefined
@@ -1760,10 +1763,10 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
   bool isNeg = str[0] == '-';
   if (isNeg)
     str++, slen--;
-  assert(slen <= numbits || radix != 2 && "Insufficient bit width");
-  assert(slen*3 <= numbits || radix != 8 && "Insufficient bit width");
-  assert(slen*4 <= numbits || radix != 16 && "Insufficient bit width");
-  assert((slen*64)/22 <= numbits || radix != 10 && "Insufficient bit width");
+  assert((slen <= numbits || radix != 2) && "Insufficient bit width");
+  assert((slen*3 <= numbits || radix != 8) && "Insufficient bit width");
+  assert((slen*4 <= numbits || radix != 16) && "Insufficient bit width");
+  assert(((slen*64)/22 <= numbits || radix != 10) && "Insufficient bit width");
 
   // Allocate memory
   if (!isSingleWord())
