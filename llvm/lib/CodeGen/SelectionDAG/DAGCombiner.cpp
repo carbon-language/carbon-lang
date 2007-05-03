@@ -3110,6 +3110,10 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   ISD::MemIndexedMode AM = ISD::UNINDEXED;
   if (!TLI.getPreIndexedAddressParts(N, BasePtr, Offset, AM, DAG))
     return false;
+  // Don't create a indexed load / store with zero offset.
+  if (isa<ConstantSDNode>(Offset) &&
+      cast<ConstantSDNode>(Offset)->getValue() == 0)
+    return false;
   
   // Try turning it into a pre-indexed load / store except when:
   // 1) The base is a frame index.
@@ -3238,6 +3242,10 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
       if (Ptr == Offset)
         std::swap(BasePtr, Offset);
       if (Ptr != BasePtr)
+        continue;
+      // Don't create a indexed load / store with zero offset.
+      if (isa<ConstantSDNode>(Offset) &&
+          cast<ConstantSDNode>(Offset)->getValue() == 0)
         continue;
 
       // Try turning it into a post-indexed load / store except when
