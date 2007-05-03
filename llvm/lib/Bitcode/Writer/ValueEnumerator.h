@@ -24,6 +24,7 @@ class Value;
 class BasicBlock;
 class Function;
 class Module;
+class ParamAttrsList;
 class TypeSymbolTable;
 class ValueSymbolTable;
 
@@ -42,6 +43,10 @@ private:
   typedef DenseMap<const Value*, unsigned> ValueMapType;
   ValueMapType ValueMap;
   ValueList Values;
+  
+  typedef DenseMap<const ParamAttrsList*, unsigned> ParamAttrMapType;
+  ParamAttrMapType ParamAttrMap;
+  std::vector<const ParamAttrsList*> ParamAttrs;
   
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
@@ -69,6 +74,13 @@ public:
     assert(I != TypeMap.end() && "Type not in ValueEnumerator!");
     return I->second-1;
   }
+  
+  unsigned getParamAttrID(const ParamAttrsList *PAL) const {
+    if (PAL == 0) return 0;  // Null maps to zero.
+    ParamAttrMapType::const_iterator I = ParamAttrMap.find(PAL);
+    assert(I != ParamAttrMap.end() && "ParamAttr not in ValueEnumerator!");
+    return I->second;
+  }
 
   /// getFunctionConstantRange - Return the range of values that corresponds to
   /// function-local constants.
@@ -81,6 +93,9 @@ public:
   const TypeList &getTypes() const { return Types; }
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
+  }
+  const std::vector<const ParamAttrsList*> getParamAttrs() const {
+    return ParamAttrs;
   }
 
   /// PurgeAggregateValues - If there are any aggregate values at the end of the
@@ -97,6 +112,7 @@ public:
 private:
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
+  void EnumerateParamAttrs(const ParamAttrsList *PAL);
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);

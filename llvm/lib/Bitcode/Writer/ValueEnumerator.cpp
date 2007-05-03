@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValueEnumerator.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
@@ -143,7 +144,23 @@ void ValueEnumerator::EnumerateType(const Type *Ty) {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I)
     EnumerateType(*I);
+  
+  // If this is a function type, enumerate the param attrs.
+  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty))
+    EnumerateParamAttrs(FTy->getParamAttrs());
 }
+
+void ValueEnumerator::EnumerateParamAttrs(const ParamAttrsList *PAL) {
+  if (PAL == 0) return;  // null is always 0.
+  // Do a lookup.
+  unsigned &Entry = ParamAttrMap[PAL];
+  if (Entry == 0) {
+    // Never saw this before, add it.
+    ParamAttrs.push_back(PAL);
+    Entry = ParamAttrs.size();
+  }
+}
+
 
 /// PurgeAggregateValues - If there are any aggregate values at the end of the
 /// value list, remove them and return the count of the remaining values.  If
