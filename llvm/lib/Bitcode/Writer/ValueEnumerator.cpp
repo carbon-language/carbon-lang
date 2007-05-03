@@ -180,8 +180,8 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
             isa<InlineAsm>(*OI))
           EnumerateValue(*OI);
       }
-    ValueMap[BB] = BasicBlocks.size();
     BasicBlocks.push_back(BB);
+    ValueMap[BB] = BasicBlocks.size();
   }
   
   FirstInstID = Values.size();

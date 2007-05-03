@@ -669,7 +669,6 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     }
     break;
   }
-    
   case Instruction::VAArg:
     Code = bitc::FUNC_CODE_INST_VAARG;
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));   // valistty
@@ -697,16 +696,23 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
        SI != SE; ++SI) {
     unsigned AbbrevToUse = 0;
     
-    // VST_ENTRY: [valueid, namelen, namechar x N]
-    NameVals.push_back(VE.getValueID(SI->getValue()));
+    // VST_ENTRY:   [valueid, namelen, namechar x N]
+    // VST_BBENTRY: [bbid, namelen, namechar x N]
+    unsigned Code;
+    if (isa<BasicBlock>(SI->getValue())) {
+      Code = bitc::VST_CODE_BBENTRY;
+    } else {
+      Code = bitc::VST_CODE_ENTRY;
+    }
     
+    NameVals.push_back(VE.getValueID(SI->getValue()));
     NameVals.push_back(SI->getKeyLength());
     for (const char *P = SI->getKeyData(),
          *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
       NameVals.push_back((unsigned char)*P);
     
     // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
+    Stream.EmitRecord(Code, NameVals, AbbrevToUse);
     NameVals.clear();
   }
   Stream.ExitBlock();

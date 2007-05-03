@@ -411,6 +411,16 @@ bool BitcodeReader::ParseValueSymbolTable() {
       V->setName(&ValueName[0], ValueName.size());
       ValueName.clear();
       break;
+    case bitc::VST_CODE_BBENTRY:
+      if (ConvertToString(Record, 1, ValueName))
+        return Error("Invalid VST_BBENTRY record");
+      BasicBlock *BB = getBasicBlock(Record[0]);
+      if (BB == 0)
+        return Error("Invalid BB ID in VST_BBENTRY record");
+      
+      BB->setName(&ValueName[0], ValueName.size());
+      ValueName.clear();
+      break;
     }
   }
 }
