@@ -1351,9 +1351,10 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_STORE: { // STORE:[ptrty,val,ptr, align, vol]
       if (Record.size() < 5)
         return Error("Invalid LOAD record");
-      const Type *OpTy = getTypeByID(Record[0]);
-      Value *Op = getFnValueByID(Record[1], OpTy);
-      Value *Ptr = getFnValueByID(Record[2], PointerType::get(OpTy));
+      const PointerType *OpTy = 
+        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
+      Value *Op = getFnValueByID(Record[1], OpTy ? OpTy->getElementType() : 0);
+      Value *Ptr = getFnValueByID(Record[2], OpTy);
       if (!OpTy || !Op || !Ptr)
         return Error("Invalid STORE record");
       I = new StoreInst(Op, Ptr, (1 << Record[3]) >> 1, Record[4]);
