@@ -1915,21 +1915,42 @@ SDOperand TargetLowering::isOperandValidForConstraint(SDOperand Op,
   case 'i':    // Simple Integer or Relocatable Constant
   case 'n':    // Simple Integer
   case 's':    // Relocatable Constant
-  case 'X':    // Allows any operand.
-    // These are okay if the operand is either a global variable address or a
-    // simple immediate value.  If we have one of these, map to the TargetXXX
-    // version so that the value itself doesn't get selected.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+  case 'X': {  // Allows any operand.
+    // These operands are interested in values of the form (GV+C), where C may
+    // be folded in as an offset of GV, or it may be explicitly added.  Also, it
+    // is possible and fine if either GV or C are missing.
+    ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
+    GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
+    
+    // If we have "(add GV, C)", pull out GV/C
+    if (Op.getOpcode() == ISD::ADD) {
+      C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+      GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
+      if (C == 0 || GA == 0) {
+        C = dyn_cast<ConstantSDNode>(Op.getOperand(0));
+        GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(1));
+      }
+      if (C == 0 || GA == 0)
+        C = 0, GA = 0;
+    }
+    
+    // If we find a valid operand, map to the TargetXXX version so that the
+    // value itself doesn't get selected.
+    if (GA) {   // Either &GV   or   &GV+C
+      if (ConstraintLetter != 'n') {
+        int64_t Offs = GA->getOffset();
+        if (C) Offs += C->getValue();
+        return DAG.getTargetGlobalAddress(GA->getGlobal(), Op.getValueType(),
+                                          Offs);
+      }
+    }
+    if (C) {   // just C, no GV.
       // Simple constants are not allowed for 's'.
       if (ConstraintLetter != 's')
         return DAG.getTargetConstant(C->getValue(), Op.getValueType());
     }
-    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op)) {
-      if (ConstraintLetter != 'n')
-        return DAG.getTargetGlobalAddress(GA->getGlobal(), Op.getValueType(),
-                                          GA->getOffset());
-    }
     break;
+  }
   }
   return SDOperand(0,0);
 }
