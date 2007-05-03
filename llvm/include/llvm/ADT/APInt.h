@@ -1038,13 +1038,13 @@ inline bool isIntN(uint32_t N, const APInt& APIVal) {
 
 /// @returns true if the argument APInt value is a sequence of ones
 /// starting at the least significant bit with the remainder zero.
-inline const bool isMask(uint32_t numBits, const APInt& APIVal) {
+inline bool isMask(uint32_t numBits, const APInt& APIVal) {
   return APIVal.getBoolValue() && ((APIVal + APInt(numBits,1)) & APIVal) == 0;
 }
 
 /// @returns true if the argument APInt value contains a sequence of ones
 /// with the remainder zero.
-inline const bool isShiftedMask(uint32_t numBits, const APInt& APIVal) {
+inline bool isShiftedMask(uint32_t numBits, const APInt& APIVal) {
   return isMask(numBits, (APIVal - APInt(numBits,1)) | APIVal);
 }
 
