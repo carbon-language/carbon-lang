@@ -124,20 +124,40 @@ unsigned DominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
   return N;
 }
 
-void DominatorTree::Compress(BasicBlock *V, InfoRec &VInfo) {
-  BasicBlock *VAncestor = VInfo.Ancestor;
-  InfoRec &VAInfo = Info[VAncestor];
-  if (VAInfo.Ancestor == 0)
-    return;
+void DominatorTree::Compress(BasicBlock *VIn) {
 
-  Compress(VAncestor, VAInfo);
+  std::vector<BasicBlock *> Work;
+  std::set<BasicBlock *> Visited;
+  InfoRec &VInInfo = Info[VIn];
+  BasicBlock *VInAncestor = VInInfo.Ancestor;
+  InfoRec &VInVAInfo = Info[VInAncestor];
 
-  BasicBlock *VAncestorLabel = VAInfo.Label;
-  BasicBlock *VLabel = VInfo.Label;
-  if (Info[VAncestorLabel].Semi < Info[VLabel].Semi)
-    VInfo.Label = VAncestorLabel;
+  if (VInVAInfo.Ancestor != 0)
+    Work.push_back(VIn);
+  
+  while (!Work.empty()) {
+    BasicBlock *V = Work.back();
+    InfoRec &VInfo = Info[V];
+    BasicBlock *VAncestor = VInfo.Ancestor;
+    InfoRec &VAInfo = Info[VAncestor];
 
-  VInfo.Ancestor = VAInfo.Ancestor;
+    // Process Ancestor first
+    if (Visited.count(VAncestor) == 0 && VAInfo.Ancestor != 0) {
+      Work.push_back(VAncestor);
+      Visited.insert(VAncestor);
+      continue;
+    } 
+    Work.pop_back(); 
+
+    // Update VINfo based on Ancestor info
+    if (VAInfo.Ancestor == 0)
+      continue;
+    BasicBlock *VAncestorLabel = VAInfo.Label;
+    BasicBlock *VLabel = VInfo.Label;
+    if (Info[VAncestorLabel].Semi < Info[VLabel].Semi)
+      VInfo.Label = VAncestorLabel;
+    VInfo.Ancestor = VAInfo.Ancestor;
+  }
 }
 
 BasicBlock *DominatorTree::Eval(BasicBlock *V) {
@@ -146,13 +166,13 @@ BasicBlock *DominatorTree::Eval(BasicBlock *V) {
   // Higher-complexity but faster implementation
   if (VInfo.Ancestor == 0)
     return V;
-  Compress(V, VInfo);
+  Compress(V);
   return VInfo.Label;
 #else
   // Lower-complexity but slower implementation
   if (VInfo.Ancestor == 0)
     return VInfo.Label;
-  Compress(V, VInfo);
+  Compress(V);
   BasicBlock *VLabel = VInfo.Label;
 
   BasicBlock *VAncestorLabel = Info[VInfo.Ancestor].Label;

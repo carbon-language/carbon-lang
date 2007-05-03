@@ -225,7 +225,7 @@ private:
   void calculate(Function& F);
   Node *getNodeForBlock(BasicBlock *BB);
   unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
-  void Compress(BasicBlock *V, InfoRec &VInfo);
+  void Compress(BasicBlock *V);
   BasicBlock *Eval(BasicBlock *v);
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
   inline BasicBlock *getIDom(BasicBlock *BB) const {
