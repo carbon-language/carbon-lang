@@ -303,14 +303,14 @@ namespace sys {
     void microseconds ( int32_t micros ) {
       this->nanos_ = micros * NANOSECONDS_PER_MICROSECOND;
       this->normalize();
-    };
+    }
 
     /// The seconds component remains unchanged.
     /// @brief Set the nanoseconds component using a number of milliseconds.
     void milliseconds ( int32_t millis ) {
       this->nanos_ = millis * NANOSECONDS_PER_MILLISECOND;
       this->normalize();
-    };
+    }
 
     /// @brief Converts from microsecond format to TimeValue format
     void usec( int64_t microseconds ) {
