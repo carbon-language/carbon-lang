@@ -54,7 +54,7 @@ namespace llvm {
   protected:
     virtual ~SCEV();
   public:
-    SCEV(unsigned SCEVTy) : SCEVType(SCEVTy), RefCount(0) {}
+    explicit SCEV(unsigned SCEVTy) : SCEVType(SCEVTy), RefCount(0) {}
 
     /// getNegativeSCEV - Return the SCEV object corresponding to -V.
     ///
