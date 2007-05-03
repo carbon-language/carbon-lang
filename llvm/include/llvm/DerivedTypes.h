@@ -407,14 +407,6 @@ public:
     return new OpaqueType();           // All opaque types are distinct
   }
 
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    abort();   // FIXME: this is not really an AbstractTypeUser!
-  }
-  virtual void typeBecameConcrete(const DerivedType *AbsTy) {
-    abort();   // FIXME: this is not really an AbstractTypeUser!
-  }
-
   // Implement support for type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const OpaqueType *T) { return true; }
   static inline bool classof(const Type *T) {
