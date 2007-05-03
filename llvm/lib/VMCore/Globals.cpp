@@ -223,7 +223,7 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const  {
       else
         assert(0 && "Unsupported aliasee");
     }
-  } else
-    return 0;
+  }
+  return 0;
 }
 

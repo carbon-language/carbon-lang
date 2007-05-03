@@ -35,7 +35,6 @@
 #include <map>
 #include <iosfwd>
 #include <cassert>
-#include <stdint.h>
 
 namespace llvm {
 
