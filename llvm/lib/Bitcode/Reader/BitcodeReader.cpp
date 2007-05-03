@@ -1178,7 +1178,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (Record.size() == 2) {
         const Type *OpTy = getTypeByID(Record[0]);
         Value *Op = getFnValueByID(Record[1], OpTy);
-        if (OpTy && Op);
+        if (!OpTy || !Op)
+          return Error("Invalid RET record");
         I = new ReturnInst(Op);
         break;
       }
@@ -1276,16 +1277,58 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_UNREACHABLE: // UNREACHABLE
       I = new UnreachableInst();
       break;
+    case bitc::FUNC_CODE_INST_PHI: { // PHI: [ty, #ops, val0,bb0, ...]
+      if (Record.size() < 2 || Record.size() < 2+Record[1] || (Record[1]&1))
+        return Error("Invalid PHI record");
+      const Type *Ty = getTypeByID(Record[0]);
+      if (!Ty) return Error("Invalid PHI record");
+      
+      PHINode *PN = new PHINode(Ty);
+      PN->reserveOperandSpace(Record[1]);
+      
+      for (unsigned i = 0, e = Record[1]; i != e; i += 2) {
+        Value *V = getFnValueByID(Record[2+i], Ty);
+        BasicBlock *BB = getBasicBlock(Record[3+i]);
+        if (!V || !BB) return Error("Invalid PHI record");
+        PN->addIncoming(V, BB);
+      }
+      I = PN;
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_MALLOC: { // MALLOC: [instty, op, align]
+      if (Record.size() < 3)
+        return Error("Invalid MALLOC record");
+      const PointerType *Ty =
+        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
+      Value *Size = getFnValueByID(Record[1], Type::Int32Ty);
+      unsigned Align = Record[2];
+      if (!Ty || !Size) return Error("Invalid MALLOC record");
+      I = new MallocInst(Ty->getElementType(), Size, (1 << Align) >> 1);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_FREE: { // FREE: [opty, op]
+      if (Record.size() < 2)
+        return Error("Invalid FREE record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Op = getFnValueByID(Record[1], OpTy);
+      if (!OpTy || !Op)
+        return Error("Invalid FREE record");
+      I = new FreeInst(Op);
+      break;
+    }
+    case bitc::FUNC_CODE_INST_ALLOCA: { // ALLOCA: [instty, op, align]
+      if (Record.size() < 3)
+        return Error("Invalid ALLOCA record");
+      const PointerType *Ty =
+        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
+      Value *Size = getFnValueByID(Record[1], Type::Int32Ty);
+      unsigned Align = Record[2];
+      if (!Ty || !Size) return Error("Invalid ALLOCA record");
+      I = new AllocaInst(Ty->getElementType(), Size, (1 << Align) >> 1);
+      break;
+    }
 #if 0
-
-    case bitc::FUNC_CODE_INST_PHI:
-      // PHI:        [ty, #ops, val0,bb0, ...]
-    case bitc::FUNC_CODE_INST_MALLOC:
-      // MALLOC:     [instty, op, align]
-    case bitc::FUNC_CODE_INST_FREE:
-      // FREE:       [opty, op]
-    case bitc::FUNC_CODE_INST_ALLOCA:
-      // ALLOCA:     [instty, op, align]
     case bitc::FUNC_CODE_INST_LOAD:
       // LOAD:       [opty, op, align, vol]
     case bitc::FUNC_CODE_INST_STORE:
