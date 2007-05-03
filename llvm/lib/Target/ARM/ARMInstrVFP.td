@@ -139,8 +139,7 @@ def FMULD  : ADI<(ops DPR:$dst, DPR:$a, DPR:$b),
 def FMULS  : ASI<(ops SPR:$dst, SPR:$a, SPR:$b),
                  "fmuls $dst, $a, $b",
                  [(set SPR:$dst, (fmul SPR:$a, SPR:$b))]>;
-
-
+                 
 def FNMULD  : ADI<(ops DPR:$dst, DPR:$a, DPR:$b),
                   "fnmuld $dst, $a, $b",
                   [(set DPR:$dst, (fneg (fmul DPR:$a, DPR:$b)))]>;
@@ -148,6 +147,13 @@ def FNMULD  : ADI<(ops DPR:$dst, DPR:$a, DPR:$b),
 def FNMULS  : ASI<(ops SPR:$dst, SPR:$a, SPR:$b),
                   "fnmuls $dst, $a, $b",
                   [(set SPR:$dst, (fneg (fmul SPR:$a, SPR:$b)))]>;
+
+// Match reassociated forms only if not sign dependent rounding.
+def : Pat<(fmul (fneg DPR:$a), DPR:$b),
+          (FNMULD DPR:$a, DPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
+def : Pat<(fmul (fneg SPR:$a), SPR:$b),
+          (FNMULS SPR:$a, SPR:$b)>, Requires<[NoHonorSignDependentRounding]>;
+
 
 def FSUBD  : ADI<(ops DPR:$dst, DPR:$a, DPR:$b),
                  "fsubd $dst, $a, $b",
