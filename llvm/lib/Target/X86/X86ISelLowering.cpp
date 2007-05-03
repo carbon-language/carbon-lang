@@ -4734,24 +4734,48 @@ isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
         return Op;
     }
     return SDOperand(0,0);
-  case 'i':
+  case 'i': {
     // Literal immediates are always ok.
     if (isa<ConstantSDNode>(Op)) return Op;
 
-    // If we are in non-pic codegen mode, we allow the address of a global to
-    // be used with 'i'.
-    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op)) {
-      if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    // If we are in non-pic codegen mode, we allow the address of a global (with
+    // an optional displacement) to be used with 'i'.
+    GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
+    int64_t Offset = 0;
+    
+    // Match either (GA) or (GA+C)
+    if (GA) {
+      Offset = GA->getOffset();
+    } else if (Op.getOpcode() == ISD::ADD) {
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+      GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
+      if (C && GA) {
+        Offset = GA->getOffset()+C->getValue();
+      } else {
+        C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
+        GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
+        if (C && GA)
+          Offset = GA->getOffset()+C->getValue();
+        else
+          C = 0, GA = 0;
+      }
+    }
+    
+    if (GA) {
+      // If addressing this global requires a load (e.g. in PIC mode), we can't
+      // match.
+      if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine(),
+                                         false))
         return SDOperand(0, 0);
 
-      if (GA->getOpcode() != ISD::TargetGlobalAddress)
-        Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
-                                        GA->getOffset());
+      Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
+                                      Offset);
       return Op;
     }
 
     // Otherwise, not valid for this mode.
     return SDOperand(0, 0);
+  }
   }
   return TargetLowering::isOperandValidForConstraint(Op, Constraint, DAG);
 }
