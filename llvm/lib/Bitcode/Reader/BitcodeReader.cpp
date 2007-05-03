@@ -400,7 +400,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: unknown type.
       break;
-    case bitc::TST_CODE_ENTRY:    // VST_ENTRY: [valueid, namelen, namechar x N]
+    case bitc::VST_CODE_ENTRY:    // VST_ENTRY: [valueid, namelen, namechar x N]
       if (ConvertToString(Record, 1, ValueName))
         return Error("Invalid TST_ENTRY record");
       unsigned ValueID = Record[0];
@@ -1054,7 +1054,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (Record.size() < 1 || Record[0] == 0)
         return Error("Invalid DECLAREBLOCKS record");
       // Create all the basic blocks for the function.
-      FunctionBBs.resize(Record.size());
+      FunctionBBs.resize(Record[0]);
       for (unsigned i = 0, e = FunctionBBs.size(); i != e; ++i)
         FunctionBBs[i] = new BasicBlock("", F);
       CurBB = FunctionBBs[0];
@@ -1185,7 +1185,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       }
       return Error("Invalid RET record");
     case bitc::FUNC_CODE_INST_BR: { // BR: [bb#, bb#, opval] or [bb#]
-      if (Record.size() != 1 || Record.size() != 3)
+      if (Record.size() != 1 && Record.size() != 3)
         return Error("Invalid BR record");
       BasicBlock *TrueDest = getBasicBlock(Record[0]);
       if (TrueDest == 0)
