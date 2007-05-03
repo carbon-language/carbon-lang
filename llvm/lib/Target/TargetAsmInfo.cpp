@@ -19,9 +19,9 @@
 using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo() :
-  TextSection(".text"),
-  DataSection(".data"),
-  BSSSection(".bss"),
+  TextSection("\t.text"),
+  DataSection("\t.data"),
+  BSSSection("\t.bss"),
   TLSDataSection("\t.section .tdata,\"awT\",@progbits"),
   TLSBSSSection("\t.section .tbss,\"awT\",@nobits"),
   ZeroFillDirective(0),
