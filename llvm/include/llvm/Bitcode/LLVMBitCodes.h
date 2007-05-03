@@ -87,7 +87,8 @@ namespace bitc {
   
   // The value symbol table only has one code (VST_ENTRY_CODE).
   enum ValueSymtabCodes {
-    VST_CODE_ENTRY = 1     // VST_ENTRY: [valid, namelen, namechar x N]
+    VST_CODE_ENTRY   = 1,  // VST_ENTRY: [valid, namelen, namechar x N]
+    VST_CODE_BBENTRY = 2   // VST_BBENTRY: [bbid, namelen, namechar x N]
   };
   
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
