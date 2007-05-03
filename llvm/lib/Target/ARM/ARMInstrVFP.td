@@ -78,6 +78,11 @@ def FSTS  : ASI5<(ops SPR:$src, addrmode5:$addr),
                  [(store SPR:$src, addrmode5:$addr)]>;
 } // isStore
 
+// avoid copying result of FTOUIZ to int reg when we're just storing it
+let AddedComplexity = 1 in
+def : ARMPat<(store (i32 (bitconvert SPR:$src)), addrmode5:$addr),
+             (FSTS SPR:$src, addrmode5:$addr)>;
+
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
 //
