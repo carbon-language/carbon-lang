@@ -35,7 +35,7 @@ protected:
 public:  
   QualType getType() const { return TR; }
   
-  /// isLvalue - return true if the expression is one of the following:
+  /// isModifiableLvalue - return true if the expression is one of the following:
   ///  - name, where name must be a variable
   ///  - e[i]
   ///  - (e), where e must be an lvalue
@@ -44,7 +44,7 @@ public:
   ///  - *e
   ///  - string-constant
   ///
-  bool isLvalue();
+  bool isModifiableLvalue();
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

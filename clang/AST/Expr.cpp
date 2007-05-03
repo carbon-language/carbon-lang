@@ -118,7 +118,7 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   }
 }
 
-/// Expressions that can be lvalues:
+/// Nonarray expressions that can be lvalues:
 ///  - name, where name must be a variable
 ///  - e[i]
 ///  - (e), where e must be an lvalue
@@ -127,7 +127,7 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 ///  - *e
 ///  - string-constant
 ///
-bool Expr::isLvalue() {
+bool Expr::isModifiableLvalue() {
   switch (getStmtClass()) {
   case StringLiteralClass:
     return true;
@@ -135,19 +135,20 @@ bool Expr::isLvalue() {
     return true;
   case DeclRefExprClass:
     const DeclRefExpr *d = cast<DeclRefExpr>(this);
-    if (isa<VarDecl>(d->getDecl()))
-      return true;
+    if (const VarDecl *vd = dyn_cast<VarDecl>(d->getDecl()))
+      if (vd->getType().isModifiableLvalue())
+        return true;
     return false;
   case MemberExprClass:
     const MemberExpr *m = cast<MemberExpr>(this);
     if (m->isArrow())
       return true;
-    return m->getBase()->isLvalue(); // make sure "." is an lvalue
+    return m->getBase()->isModifiableLvalue(); // make sure "." is an lvalue
   case UnaryOperatorClass:
     const UnaryOperator *u = cast<UnaryOperator>(this);
     return u->getOpcode() == UnaryOperator::Deref;
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
+    return cast<ParenExpr>(this)->getSubExpr()->isModifiableLvalue();
   default: 
     return false;
   }

@@ -22,6 +22,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 using namespace clang;
 
@@ -336,17 +337,59 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
 
   assert(!qType.isNull() && "no type for function call expression");
 
-  QualType canonType = qType.getCanonicalType();
-  QualType resultType;
+  const FunctionType *funcT = dyn_cast<FunctionType>(qType.getCanonicalType());
   
-  if (const FunctionType *funcT = dyn_cast<FunctionType>(canonType)) {
-    resultType = funcT->getResultType();
+  assert(funcT && "ParseCallExpr(): not a function type");
+  
+  // If a prototype isn't declared, the parser implicitly defines a func decl
+  QualType resultType = funcT->getResultType();
+    
+  if (const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcT)) {
+    // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by 
+    // assignment, to the types of the corresponding parameter, ...
+    
+    unsigned NumArgsInProto = proto->getNumArgs();
+    unsigned n = NumArgs;
+    
+    if (NumArgs < NumArgsInProto)
+      Diag(LParenLoc, diag::ext_typecheck_call_too_few_args);
+    else if (NumArgs > NumArgsInProto) { // FIXME: check isVariadic()...
+      Diag(LParenLoc, diag::ext_typecheck_call_too_many_args);
+      n = NumArgsInProto;
+    }
+    // Continue to check argument types (even if we have too few/many args).
+    for (unsigned i = 0; i < n; i++) {
+      QualType lhsType = proto->getArgType(i);
+      QualType rhsType = ((Expr **)Args)[i]->getType();
+      
+      if (lhsType == rhsType) // common case, fast path...
+        continue;
+      AssignmentConversionResult result;
+      UsualAssignmentConversions(lhsType, ((Expr **)Args)[i], result);
+
+      SourceLocation l = (i == 0) ? LParenLoc : CommaLocs[i-1];
+
+      // decode the result (notice that AST's are still created for extensions).
+      // FIXME: consider fancier error diagnostics (since this is quite common).
+      // #1: emit the actual prototype arg...requires adding source loc info.
+      // #2: pass Diag the offending argument type...requires hacking Diag.
+      switch (result) {
+      case Compatible:
+        break;
+      case PointerFromInt:
+        Diag(l, diag::ext_typecheck_passing_pointer_from_int, utostr(i+1));
+        break;
+      case IntFromPointer:
+        Diag(l, diag::ext_typecheck_passing_int_from_pointer, utostr(i+1));
+        break;
+      case IncompatiblePointer:
+        Diag(l, diag::ext_typecheck_passing_incompatible_pointer, utostr(i+1));
+        break;
+      case Incompatible:
+        return Diag(l, diag::err_typecheck_passing_incompatible, utostr(i+1));
+      }
+    }
   }
-  // C99 6.5.2.2p7 - If we have a prototype, the arguments are implicitly
-  // converted, as if by assignment, to the types of the corresponding
-  // parameters, taking the type of each parameter to be the unqualified...
-  //
-  // QualType result = UsualAssignmentConversions(lhsType, rhsType, rex, loc);
   return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs, resultType);
 }
 
@@ -502,8 +545,27 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
   return Context.maxIntegerType(lhs, rhs);
 }
 
-QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
-                                          Expr *rex, SourceLocation loc) {
+/// UsualAssignmentConversions (C99 6.5.16) - This routine currently 
+/// has code to accommodate several GCC extensions when type checking 
+/// pointers. Here are some objectionable examples that GCC considers warnings:
+///
+///  int a, *pint;
+///  short *pshort;
+///  struct foo *pfoo;
+///
+///  pint = pshort; // warning: assignment from incompatible pointer type
+///  a = pint; // warning: assignment makes integer from pointer without a cast
+///  pint = a; // warning: assignment makes pointer from integer without a cast
+///  pint = pfoo; // warning: assignment from incompatible pointer type
+///
+/// As a result, the code for dealing with pointers is more complex than the
+/// C99 spec dictates. 
+/// Note: the warning above turn into errors when -pedantic-errors is enabled. 
+///
+QualType Sema::UsualAssignmentConversions(QualType lhsType, Expr *rex,
+                                          AssignmentConversionResult &r) {
+  QualType rhsType = rex->getType();
+  
   // this check seems unnatural, however it necessary to insure the proper
   // conversion of functions/arrays. If the conversion where done for all
   // DeclExpr's (created by ParseIdentifierExpr), it would mess up the
@@ -511,6 +573,7 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
   if (rhsType->isFunctionType() || rhsType->isArrayType())
     rhsType = UsualUnaryConversion(rhsType);
     
+  r = Compatible;
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
     return lhsType;
   else if (lhsType->isPointerType()) {
@@ -518,20 +581,20 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
       // check for null pointer constant (C99 6.3.2.3p3)
       const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(rex);
       if (!constant || constant->getValue() != 0)
-        Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
+        r = PointerFromInt;
       return rhsType;
     }
     // FIXME: make sure the qualifier are matching
     if (rhsType->isPointerType()) { 
       if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
-        Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+        r = IncompatiblePointer;
       return rhsType;
     }
   } else if (rhsType->isPointerType()) {
     if (lhsType->isIntegerType()) {
       // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
       if (lhsType != Context.BoolTy)
-        Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+        r = IntFromPointer;
       return rhsType;
     }
     // - both operands are pointers to qualified or unqualified versions of
@@ -539,7 +602,7 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
     // qualifiers of the type pointed to by the right;
     if (lhsType->isPointerType()) {
       if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
-        Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+        r = IncompatiblePointer;
       return rhsType;
     }
   } else if (lhsType->isStructureType() && rhsType->isStructureType()) {
@@ -549,7 +612,8 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
     if (Type::unionTypesAreCompatible(lhsType, rhsType))
       return rhsType;
   }
-  return QualType(); // incompatible
+  r = Incompatible;
+  return QualType();
 }
 
 Action::ExprResult Sema::CheckMultiplicativeOperands(
@@ -656,23 +720,6 @@ Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
 }
 
-/// CheckAssignmentOperands (C99 6.5.16) - This routine currently 
-/// has code to accommodate several GCC extensions when type checking 
-/// pointers. Here are some objectionable examples that GCC considers warnings:
-///
-///  int a, *pint;
-///  short *pshort;
-///  struct foo *pfoo;
-///
-///  pint = pshort; // warning: assignment from incompatible pointer type
-///  a = pint; // warning: assignment makes integer from pointer without a cast
-///  pint = a; // warning: assignment makes pointer from integer without a cast
-///  pint = pfoo; // warning: assignment from incompatible pointer type
-///
-/// As a result, the code for dealing with pointers is more complex than the
-/// C99 spec dictates. 
-/// Note: the warning above turn into errors when -pedantic-errors is enabled. 
-///
 Action::ExprResult Sema::CheckAssignmentOperands( 
   Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
 {
@@ -680,19 +727,39 @@ Action::ExprResult Sema::CheckAssignmentOperands(
   QualType rhsType = rex->getType();
   
   if ((BOP)code == BinaryOperator::Assign) { // C99 6.5.16.1
-    if (!lex->isLvalue())
-      return Diag(loc, diag::ext_typecheck_assign_non_lvalue);
-    if (lhsType.isConstQualified())
+    // FIXME: consider hacking isModifiableLvalue to return an enum that
+    // communicates why the expression/type wasn't a modifiableLvalue.
+    
+    // this check is done first to give a more precise diagnostic.
+    if (lhsType.isConstQualified()) 
       return Diag(loc, diag::err_typecheck_assign_const);
+
+    if (!lex->isModifiableLvalue()) // this includes checking for "const"
+      return Diag(loc, diag::ext_typecheck_assign_non_lvalue);
       
     if (lhsType == rhsType) // common case, fast path...
       return new BinaryOperator(lex, rex, (BOP)code, lhsType);
-      
-    QualType result = UsualAssignmentConversions(lhsType, rhsType, rex, loc);
-    if (result.isNull())
+    
+    AssignmentConversionResult result;
+    QualType resType = UsualAssignmentConversions(lhsType, rex, result);
+
+    // decode the result (notice that AST's are still created for extensions).
+    switch (result) {
+    case Compatible:
+      break;
+    case PointerFromInt:
+      Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
+      break;
+    case IntFromPointer:
+      Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+      break;
+    case IncompatiblePointer:
+      Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+      break;
+    case Incompatible:
       return Diag(loc, diag::err_typecheck_assign_incompatible);
-    else
-      return new BinaryOperator(lex, rex, (BOP)code, result);
+    }
+    return new BinaryOperator(lex, rex, (BOP)code, resType);
   }
   // FIXME: type check compound assignments...
   return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
@@ -763,7 +830,7 @@ Action::ExprResult
 Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Decl *dcl = getPrimaryDeclaration(op);
   
-  if (!op->isLvalue()) {
+  if (!op->isModifiableLvalue()) {
     if (dcl && isa<FunctionDecl>(dcl))
       ;  // C99 6.5.3.2p1: Allow function designators.
     else

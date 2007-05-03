@@ -226,9 +226,16 @@ private:
   QualType UsualUnaryConversion(QualType t); // C99 6.3
   QualType UsualArithmeticConversions(QualType t1, QualType t2); // C99 6.3.1.8
   
+  enum AssignmentConversionResult {
+    Compatible,
+    Incompatible,
+    PointerFromInt, 
+    IntFromPointer,
+    IncompatiblePointer
+  };
   // Conversions for assignment, argument passing, initialization, or return
-  QualType UsualAssignmentConversions(QualType lhs, QualType rhs, // C99 6.5.16
-                                      Expr *rex, SourceLocation loc); 
+  QualType UsualAssignmentConversions(QualType lhs, Expr *rex, // C99 6.5.16
+                                      AssignmentConversionResult &r); 
   
   /// the following "Check" methods will either return a well formed AST node
   /// or will return true if the expressions didn't type check properly.

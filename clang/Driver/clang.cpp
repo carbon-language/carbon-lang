@@ -251,7 +251,7 @@ static void InitializeLanguageStandard(LangOptions &Options) {
     case langkind_c_cpp:
     case langkind_objc:
     case langkind_objc_cpp:
-      LangStd = lang_gnu89;
+      LangStd = lang_gnu99;
       break;
     case langkind_cxx:
     case langkind_cxx_cpp:
