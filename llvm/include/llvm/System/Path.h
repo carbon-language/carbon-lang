@@ -264,7 +264,7 @@ namespace sys {
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.
-      const char *const c_str() const { return path.c_str(); }
+      const char *c_str() const { return path.c_str(); }
 
     /// @}
     /// @name Disk Accessors
