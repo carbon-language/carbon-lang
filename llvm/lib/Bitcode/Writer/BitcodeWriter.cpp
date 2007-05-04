@@ -858,6 +858,28 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
+// Emit blockinfo, which defines the standard abbreviations etc.
+static void WriteBlockInfo(BitstreamWriter &Stream) {
+  // We only want to emit block info records for blocks that have multiple
+  // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.  Other
+  // blocks can defined their abbrevs inline.
+  Stream.EnterSubblock(bitc::BLOCKINFO_BLOCK_ID, 2);
+
+#if 0
+  // Configure TYPE_SYMTAB_BLOCK's.
+
+  // Add an abbrev for VST_ENTRY where the characters each fit in 7 bits.
+  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8); // Value ID
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 3)); // Linkage.
+  
+  xxx = Stream.EmitAbbrev(Abbv);
+#endif
+  Stream.ExitBlock();
+}
+
+
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
 void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
@@ -874,6 +896,9 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
   Stream.Emit(0xE, 4);
   Stream.Emit(0xD, 4);
 
+  // Emit blockinfo, which defines the standard abbreviations etc.
+  WriteBlockInfo(Stream);
+  
   // Emit the module.
   WriteModule(M, Stream);
   
