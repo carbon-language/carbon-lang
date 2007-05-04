@@ -36,11 +36,11 @@ BitcodeReader::~BitcodeReader() {
 template<typename StrTy>
 static bool ConvertToString(SmallVector<uint64_t, 64> &Record, unsigned Idx,
                             StrTy &Result) {
-  if (Record.size() < Idx+1 || Record.size() < Record[Idx]+Idx+1)
+  if (Idx > Record.size())
     return true;
   
-  for (unsigned i = 0, e = Record[Idx]; i != e; ++i)
-    Result += (char)Record[Idx+i+1];
+  for (unsigned i = Idx, e = Record.size(); i != e; ++i)
+    Result += (char)Record[i];
   return false;
 }
 
@@ -313,23 +313,23 @@ bool BitcodeReader::ParseTypeTable() {
       ResultTy = PointerType::get(getTypeByID(Record[0], true));
       break;
     case bitc::TYPE_CODE_FUNCTION: {
-      // FUNCTION: [vararg, attrid, retty, #pararms, paramty N]
-      if (Record.size() < 4 || Record.size() < Record[3]+4)
+      // FUNCTION: [vararg, attrid, retty, paramty x N]
+      if (Record.size() < 3)
         return Error("Invalid FUNCTION type record");
       std::vector<const Type*> ArgTys;
-      for (unsigned i = 0, e = Record[3]; i != e; ++i)
-        ArgTys.push_back(getTypeByID(Record[4+i], true));
+      for (unsigned i = 3, e = Record.size(); i != e; ++i)
+        ArgTys.push_back(getTypeByID(Record[i], true));
       
       ResultTy = FunctionType::get(getTypeByID(Record[2], true), ArgTys,
                                    Record[0], getParamAttrs(Record[1]));
       break;
     }
-    case bitc::TYPE_CODE_STRUCT: {  // STRUCT: [ispacked, #elts, eltty x N]
-      if (Record.size() < 2 || Record.size() < Record[1]+2)
+    case bitc::TYPE_CODE_STRUCT: {  // STRUCT: [ispacked, eltty x N]
+      if (Record.size() < 2)
         return Error("Invalid STRUCT type record");
       std::vector<const Type*> EltTys;
-      for (unsigned i = 0, e = Record[1]; i != e; ++i)
-        EltTys.push_back(getTypeByID(Record[2+i], true));
+      for (unsigned i = 1, e = Record.size(); i != e; ++i)
+        EltTys.push_back(getTypeByID(Record[i], true));
       ResultTy = StructType::get(EltTys, Record[0]);
       break;
     }
@@ -411,7 +411,7 @@ bool BitcodeReader::ParseTypeSymbolTable() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: unknown type.
       break;
-    case bitc::TST_CODE_ENTRY:    // TST_ENTRY: [typeid, namelen, namechar x N]
+    case bitc::TST_CODE_ENTRY:    // TST_ENTRY: [typeid, namechar x N]
       if (ConvertToString(Record, 1, TypeName))
         return Error("Invalid TST_ENTRY record");
       unsigned TypeID = Record[0];
@@ -458,7 +458,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: unknown type.
       break;
-    case bitc::VST_CODE_ENTRY: {  // VST_ENTRY: [valueid, namelen, namechar x N]
+    case bitc::VST_CODE_ENTRY: {  // VST_ENTRY: [valueid, namechar x N]
       if (ConvertToString(Record, 1, ValueName))
         return Error("Invalid TST_ENTRY record");
       unsigned ValueID = Record[0];
@@ -591,16 +591,15 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid CST_INTEGER record");
       V = ConstantInt::get(CurTy, DecodeSignRotatedValue(Record[0]));
       break;
-    case bitc::CST_CODE_WIDE_INTEGER: {// WIDE_INTEGER: [n, n x intval]
-      if (!isa<IntegerType>(CurTy) || Record.empty() ||
-          Record.size() < Record[0]+1)
+    case bitc::CST_CODE_WIDE_INTEGER: {// WIDE_INTEGER: [n x intval]
+      if (!isa<IntegerType>(CurTy) || Record.empty())
         return Error("Invalid WIDE_INTEGER record");
       
-      unsigned NumWords = Record[0];
+      unsigned NumWords = Record.size();
       SmallVector<uint64_t, 8> Words;
       Words.resize(NumWords);
       for (unsigned i = 0; i != NumWords; ++i)
-        Words[i] = DecodeSignRotatedValue(Record[i+1]);
+        Words[i] = DecodeSignRotatedValue(Record[i]);
       V = ConstantInt::get(APInt(cast<IntegerType>(CurTy)->getBitWidth(),
                                  NumWords, &Words[0]));
       break;
@@ -616,27 +615,27 @@ bool BitcodeReader::ParseConstants() {
         V = UndefValue::get(CurTy);
       break;
       
-    case bitc::CST_CODE_AGGREGATE: {// AGGREGATE: [n, n x value number]
-      if (Record.empty() || Record.size() < Record[0]+1)
+    case bitc::CST_CODE_AGGREGATE: {// AGGREGATE: [n x value number]
+      if (Record.empty())
         return Error("Invalid CST_AGGREGATE record");
       
-      unsigned Size = Record[0];
+      unsigned Size = Record.size();
       std::vector<Constant*> Elts;
       
       if (const StructType *STy = dyn_cast<StructType>(CurTy)) {
         for (unsigned i = 0; i != Size; ++i)
-          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1],
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i],
                                                      STy->getElementType(i)));
         V = ConstantStruct::get(STy, Elts);
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(CurTy)) {
         const Type *EltTy = ATy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
-          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], EltTy));
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i], EltTy));
         V = ConstantArray::get(ATy, Elts);
       } else if (const VectorType *VTy = dyn_cast<VectorType>(CurTy)) {
         const Type *EltTy = VTy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
-          Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], EltTy));
+          Elts.push_back(ValueList.getConstantFwdRef(Record[i], EltTy));
         V = ConstantVector::get(Elts);
       } else {
         V = UndefValue::get(CurTy);
@@ -669,9 +668,9 @@ bool BitcodeReader::ParseConstants() {
       break;
     }  
     case bitc::CST_CODE_CE_GEP: {  // CE_GEP:        [n x operands]
-      if ((Record.size() & 1) == 0) return Error("Invalid CE_GEP record");
+      if (Record.size() & 1) return Error("Invalid CE_GEP record");
       SmallVector<Constant*, 16> Elts;
-      for (unsigned i = 1, e = Record.size(); i != e; i += 2) {
+      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         const Type *ElTy = getTypeByID(Record[i]);
         if (!ElTy) return Error("Invalid CE_GEP record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
@@ -856,35 +855,35 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       if (Record[0] != 0)
         return Error("Unknown bitstream version!");
       break;
-    case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strlen, strchr x N]
+    case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))
         return Error("Invalid MODULE_CODE_TRIPLE record");
       TheModule->setTargetTriple(S);
       break;
     }
-    case bitc::MODULE_CODE_DATALAYOUT: {  // DATALAYOUT: [strlen, strchr x N]
+    case bitc::MODULE_CODE_DATALAYOUT: {  // DATALAYOUT: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))
         return Error("Invalid MODULE_CODE_DATALAYOUT record");
       TheModule->setDataLayout(S);
       break;
     }
-    case bitc::MODULE_CODE_ASM: {  // ASM: [strlen, strchr x N]
+    case bitc::MODULE_CODE_ASM: {  // ASM: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))
         return Error("Invalid MODULE_CODE_ASM record");
       TheModule->setModuleInlineAsm(S);
       break;
     }
-    case bitc::MODULE_CODE_DEPLIB: {  // DEPLIB: [strlen, strchr x N]
+    case bitc::MODULE_CODE_DEPLIB: {  // DEPLIB: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))
         return Error("Invalid MODULE_CODE_DEPLIB record");
       TheModule->addLibrary(S);
       break;
     }
-    case bitc::MODULE_CODE_SECTIONNAME: {  // SECTIONNAME: [strlen, strchr x N]
+    case bitc::MODULE_CODE_SECTIONNAME: {  // SECTIONNAME: [strchr x N]
       std::string S;
       if (ConvertToString(Record, 0, S))
         return Error("Invalid MODULE_CODE_SECTIONNAME record");
@@ -1156,7 +1155,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = CastInst::create((Instruction::CastOps)Opc, Op, ResTy);
       break;
     }
-    case bitc::FUNC_CODE_INST_GEP: { // GEP: [n, n x operands]
+    case bitc::FUNC_CODE_INST_GEP: { // GEP: [n x operands]
       if (Record.size() < 2 || (Record.size() & 1))
         return Error("Invalid GEP record");
       const Type *OpTy = getTypeByID(Record[0]);
@@ -1354,17 +1353,17 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = new UnreachableInst();
       break;
     case bitc::FUNC_CODE_INST_PHI: { // PHI: [ty, #ops, val0,bb0, ...]
-      if (Record.size() < 2 || Record.size() < 2+Record[1] || (Record[1]&1))
+      if (Record.size() < 1 || ((Record.size()-1)&1))
         return Error("Invalid PHI record");
       const Type *Ty = getTypeByID(Record[0]);
       if (!Ty) return Error("Invalid PHI record");
       
       PHINode *PN = new PHINode(Ty);
-      PN->reserveOperandSpace(Record[1]);
+      PN->reserveOperandSpace(Record.size()-1);
       
-      for (unsigned i = 0, e = Record[1]; i != e; i += 2) {
-        Value *V = getFnValueByID(Record[2+i], Ty);
-        BasicBlock *BB = getBasicBlock(Record[3+i]);
+      for (unsigned i = 0, e = Record.size()-1; i != e; i += 2) {
+        Value *V = getFnValueByID(Record[1+i], Ty);
+        BasicBlock *BB = getBasicBlock(Record[2+i]);
         if (!V || !BB) return Error("Invalid PHI record");
         PN->addIncoming(V, BB);
       }

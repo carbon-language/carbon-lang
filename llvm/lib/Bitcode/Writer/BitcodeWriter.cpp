@@ -72,8 +72,7 @@ static void WriteStringRecord(unsigned Code, const std::string &Str,
                               unsigned AbbrevToUse, BitstreamWriter &Stream) {
   SmallVector<unsigned, 64> Vals;
   
-  // Code: [strlen, strchar x N]
-  Vals.push_back(Str.size());
+  // Code: [strchar x N]
   for (unsigned i = 0, e = Str.size(); i != e; ++i)
     Vals.push_back(Str[i]);
     
@@ -150,7 +149,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       TypeVals.push_back(FT->isVarArg());
       TypeVals.push_back(VE.getParamAttrID(FT->getParamAttrs()));
       TypeVals.push_back(VE.getTypeID(FT->getReturnType()));
-      TypeVals.push_back(FT->getNumParams());
       for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
         TypeVals.push_back(VE.getTypeID(FT->getParamType(i)));
       break;
@@ -160,8 +158,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       // STRUCT: [ispacked, #elts, eltty x N]
       Code = bitc::TYPE_CODE_STRUCT;
       TypeVals.push_back(ST->isPacked());
-      TypeVals.push_back(ST->getNumElements());
-      // Output all of the element types...
+      // Output all of the element types.
       for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
@@ -399,7 +396,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         // So, we only write the number of active words.
         unsigned NWords = IV->getValue().getActiveWords(); 
         const uint64_t *RawWords = IV->getValue().getRawData();
-        Record.push_back(NWords);
         for (unsigned i = 0; i != NWords; ++i) {
           int64_t V = RawWords[i];
           if (V >= 0)
@@ -420,7 +416,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
                isa<ConstantVector>(V)) {
       Code = bitc::CST_CODE_AGGREGATE;
-      Record.push_back(C->getNumOperands());
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
@@ -441,7 +436,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         break;
       case Instruction::GetElementPtr:
         Code = bitc::CST_CODE_CE_GEP;
-        Record.push_back(CE->getNumOperands());
         for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
           Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
           Record.push_back(VE.getValueID(C->getOperand(i)));
@@ -627,7 +621,6 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
   case Instruction::PHI:
     Code = bitc::FUNC_CODE_INST_PHI;
     Vals.push_back(VE.getTypeID(I.getType()));
-    Vals.push_back(I.getNumOperands());
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
@@ -710,6 +703,16 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   if (VST.empty()) return;
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
   
+#if 0
+  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::VST_ENTRY));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+                            Log2_32_Ceil(MaxGlobalType+1)));
+  // Don't bother emitting vis + thread local.
+  SimpleGVarAbbrev = Stream.EmitAbbrev(Abbv);
+#endif
+  
+  
   // FIXME: Set up the abbrev, we know how many values there are!
   // FIXME: We know if the type names can use 7-bit ascii.
   SmallVector<unsigned, 64> NameVals;
@@ -728,7 +731,6 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     }
     
     NameVals.push_back(VE.getValueID(SI->getValue()));
-    NameVals.push_back(SI->getKeyLength());
     for (const char *P = SI->getKeyData(),
          *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
       NameVals.push_back((unsigned char)*P);
@@ -794,7 +796,6 @@ static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
     NameVals.push_back(VE.getTypeID(TI->second));
     
     const std::string &Str = TI->first;
-    NameVals.push_back(Str.size());
     for (unsigned i = 0, e = Str.size(); i != e; ++i)
       NameVals.push_back(Str[i]);
     
