@@ -80,6 +80,15 @@ static void WriteStringRecord(unsigned Code, const std::string &Str,
   Stream.EmitRecord(Code, Vals, AbbrevToUse);
 }
 
+// Emit information about parameter attributes.
+static void WriteParamAttrTable(const ValueEnumerator &VE, 
+                                BitstreamWriter &Stream) {
+  const std::vector<const ParamAttrsList*> &Attrs = VE.getParamAttrs();
+  if (Attrs.empty()) return;
+  
+  
+  
+}
 
 /// WriteTypeTable - Write out the type table for a module.
 static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
@@ -798,6 +807,9 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   
   // Analyze the module, enumerating globals, functions, etc.
   ValueEnumerator VE(M);
+  
+  // Emit information about parameter attributes.
+  WriteParamAttrTable(VE, Stream);
   
   // Emit information describing all of the types in the module.
   WriteTypeTable(VE, Stream);
