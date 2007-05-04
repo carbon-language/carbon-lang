@@ -365,7 +365,7 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       if (lhsType == rhsType) // common case, fast path...
         continue;
       AssignmentConversionResult result;
-      UsualAssignmentConversions(lhsType, ((Expr **)Args)[i], result);
+      UsualAssignmentConversions(lhsType, rhsType, result);
 
       SourceLocation l = (i == 0) ? LParenLoc : CommaLocs[i-1];
 
@@ -377,7 +377,9 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       case Compatible:
         break;
       case PointerFromInt:
-        Diag(l, diag::ext_typecheck_passing_pointer_from_int, utostr(i+1));
+        // check for null pointer constant (C99 6.3.2.3p3)
+        if (!((Expr **)Args)[i]->isNullPointerConstant())
+          Diag(l, diag::ext_typecheck_passing_pointer_from_int, utostr(i+1));
         break;
       case IntFromPointer:
         Diag(l, diag::ext_typecheck_passing_int_from_pointer, utostr(i+1));
@@ -399,73 +401,6 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   // If error parsing type, ignore.
   assert((Ty != 0) && "ParseCastExpr(): missing type");
   return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op);
-}
-
-
-
-// Binary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
-                                    ExprTy *LHS, ExprTy *RHS) {
-  BinaryOperator::Opcode Opc;
-  switch (Kind) {
-  default: assert(0 && "Unknown binop!");
-  case tok::star:                 Opc = BinaryOperator::Mul; break;
-  case tok::slash:                Opc = BinaryOperator::Div; break;
-  case tok::percent:              Opc = BinaryOperator::Rem; break;
-  case tok::plus:                 Opc = BinaryOperator::Add; break;
-  case tok::minus:                Opc = BinaryOperator::Sub; break;
-  case tok::lessless:             Opc = BinaryOperator::Shl; break;
-  case tok::greatergreater:       Opc = BinaryOperator::Shr; break;
-  case tok::lessequal:            Opc = BinaryOperator::LE; break;
-  case tok::less:                 Opc = BinaryOperator::LT; break;
-  case tok::greaterequal:         Opc = BinaryOperator::GE; break;
-  case tok::greater:              Opc = BinaryOperator::GT; break;
-  case tok::exclaimequal:         Opc = BinaryOperator::NE; break;
-  case tok::equalequal:           Opc = BinaryOperator::EQ; break;
-  case tok::amp:                  Opc = BinaryOperator::And; break;
-  case tok::caret:                Opc = BinaryOperator::Xor; break;
-  case tok::pipe:                 Opc = BinaryOperator::Or; break;
-  case tok::ampamp:               Opc = BinaryOperator::LAnd; break;
-  case tok::pipepipe:             Opc = BinaryOperator::LOr; break;
-  case tok::equal:                Opc = BinaryOperator::Assign; break;
-  case tok::starequal:            Opc = BinaryOperator::MulAssign; break;
-  case tok::slashequal:           Opc = BinaryOperator::DivAssign; break;
-  case tok::percentequal:         Opc = BinaryOperator::RemAssign; break;
-  case tok::plusequal:            Opc = BinaryOperator::AddAssign; break;
-  case tok::minusequal:           Opc = BinaryOperator::SubAssign; break;
-  case tok::lesslessequal:        Opc = BinaryOperator::ShlAssign; break;
-  case tok::greatergreaterequal:  Opc = BinaryOperator::ShrAssign; break;
-  case tok::ampequal:             Opc = BinaryOperator::AndAssign; break;
-  case tok::caretequal:           Opc = BinaryOperator::XorAssign; break;
-  case tok::pipeequal:            Opc = BinaryOperator::OrAssign; break;
-  case tok::comma:                Opc = BinaryOperator::Comma; break;
-  }
-
-  Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
-
-  assert((lhs != 0) && "ParseBinOp(): missing left expression");
-  assert((rhs != 0) && "ParseBinOp(): missing right expression");
-
-  if (BinaryOperator::isMultiplicativeOp(Opc)) 
-    return CheckMultiplicativeOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isAdditiveOp(Opc))
-    return CheckAdditiveOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isShiftOp(Opc))
-    return CheckShiftOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isRelationalOp(Opc))
-    return CheckRelationalOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isEqualityOp(Opc))
-    return CheckEqualityOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isBitwiseOp(Opc))
-    return CheckBitwiseOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isLogicalOp(Opc))
-    return CheckLogicalOperands(lhs, rhs, TokLoc, Opc);
-  else if (BinaryOperator::isAssignmentOp(Opc))
-    return CheckAssignmentOperands(lhs, rhs, TokLoc, Opc);
-  else if (Opc == BinaryOperator::Comma)
-    return CheckCommaOperands(lhs, rhs, TokLoc);
-
-  assert(0 && "ParseBinOp(): illegal binary op");
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -562,10 +497,8 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
 /// C99 spec dictates. 
 /// Note: the warning above turn into errors when -pedantic-errors is enabled. 
 ///
-QualType Sema::UsualAssignmentConversions(QualType lhsType, Expr *rex,
+QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
                                           AssignmentConversionResult &r) {
-  QualType rhsType = rex->getType();
-  
   // this check seems unnatural, however it necessary to insure the proper
   // conversion of functions/arrays. If the conversion where done for all
   // DeclExpr's (created by ParseIdentifierExpr), it would mess up the
@@ -578,10 +511,7 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, Expr *rex,
     return lhsType;
   else if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType()) {
-      // check for null pointer constant (C99 6.3.2.3p3)
-      const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(rex);
-      if (!constant || constant->getValue() != 0)
-        r = PointerFromInt;
+      r = PointerFromInt;
       return rhsType;
     }
     // FIXME: make sure the qualifier are matching
@@ -616,160 +546,223 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, Expr *rex,
   return QualType();
 }
 
-Action::ExprResult Sema::CheckMultiplicativeOperands(
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+inline QualType Sema::CheckMultiplyDivideOperands(
+  Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
   
-  if ((BOP)code == BinaryOperator::Rem) {
-    if (!resType->isIntegerType())
-      return Diag(loc, diag::err_typecheck_invalid_operands);
-  } else { // *, /
-    if (!resType->isArithmeticType())
-      return Diag(loc, diag::err_typecheck_invalid_operands);
-  }
-  return new BinaryOperator(lex, rex, (BOP)code, resType);
+  if (resType->isArithmeticType())
+    return resType;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckAdditiveOperands( // C99 6.5.6
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+inline QualType Sema::CheckRemainderOperands(
+  Expr *lex, Expr *rex, SourceLocation loc) 
+{
+  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  
+  if (resType->isIntegerType())
+    return resType;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
+}
+
+inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
+  Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
   QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
-    return new BinaryOperator(lex, rex, (BOP)code, resType);
-  else {
-    if ((BOP)code == BinaryOperator::Add) {
-      if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
-          (lhsType->isIntegerType() && rhsType->isPointerType()))
-        return new BinaryOperator(lex, rex, (BOP)code, resType);
-    } else { // -
-      if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
-          (lhsType->isPointerType() && rhsType->isPointerType()))
-        return new BinaryOperator(lex, rex, (BOP)code, resType);
-    }
-  }
-  return Diag(loc, diag::err_typecheck_invalid_operands);
+    return resType;
+
+  if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
+      (lhsType->isIntegerType() && rhsType->isPointerType()))
+    return resType;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckShiftOperands( // C99 6.5.7
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code)
+inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
+  Expr *lex, Expr *rex, SourceLocation loc) 
+{
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  
+  // handle the common case first (both operands are arithmetic).
+  if (resType->isArithmeticType())
+    return resType;
+  if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
+      (lhsType->isPointerType() && rhsType->isPointerType()))
+    return resType;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
+}
+
+inline QualType Sema::CheckShiftOperands( // C99 6.5.7
+  Expr *lex, Expr *rex, SourceLocation loc)
 {
   QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
   
-  if (!resType->isIntegerType())
-    return Diag(loc, diag::err_typecheck_invalid_operands);
-
-  return new BinaryOperator(lex, rex, (BOP)code, resType);
+  if (resType->isIntegerType())
+    return resType;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckRelationalOperands( // C99 6.5.8
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code)
+inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
+  Expr *lex, Expr *rex, SourceLocation loc)
 {
   QualType lType = lex->getType(), rType = rex->getType();
   
   if (lType->isRealType() && rType->isRealType())
-    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+    return Context.IntTy;
   
   if (lType->isPointerType() &&  rType->isPointerType())
-    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+    return Context.IntTy;
 
   if (lType->isIntegerType() || rType->isIntegerType()) // GCC extension.
-    return Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
-  return Diag(loc, diag::err_typecheck_invalid_operands);
+    Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
+  else
+    Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckEqualityOperands( // C99 6.5.9
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code)
+inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
+  Expr *lex, Expr *rex, SourceLocation loc)
 {
   QualType lType = lex->getType(), rType = rex->getType();
   
   if (lType->isArithmeticType() && rType->isArithmeticType())
-    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
-  
+    return Context.IntTy;
   if (lType->isPointerType() &&  rType->isPointerType())
-    return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
-
+    return Context.IntTy;
+    
   if (lType->isIntegerType() || rType->isIntegerType()) // GCC extension.
-    return Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
-  return Diag(loc, diag::err_typecheck_invalid_operands);
+    Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
+  else
+    Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckBitwiseOperands(
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+inline QualType Sema::CheckBitwiseOperands(
+  Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
   
-  if (!resType->isIntegerType())
-    return Diag(loc, diag::err_typecheck_invalid_operands);
-
-  return new BinaryOperator(lex, rex, (BOP)code, resType);
+  if (resType->isIntegerType())
+    return resType;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckLogicalOperands( // C99 6.5.[13,14]
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
+  Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = UsualUnaryConversion(lex->getType());
   QualType rhsType = UsualUnaryConversion(rex->getType());
   
-  if (!lhsType->isScalarType() || !rhsType->isScalarType())
-    return Diag(loc, diag::err_typecheck_invalid_operands);
-    
-  return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+  if (lhsType->isScalarType() || rhsType->isScalarType())
+    return Context.IntTy;
+  Diag(loc, diag::err_typecheck_invalid_operands);
+  return QualType();
 }
 
-Action::ExprResult Sema::CheckAssignmentOperands( 
-  Expr *lex, Expr *rex, SourceLocation loc, unsigned code) 
+inline QualType Sema::CheckSimpleAssignmentOperands( // C99 6.5.16.1
+  Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType();
   QualType rhsType = rex->getType();
   
-  if ((BOP)code == BinaryOperator::Assign) { // C99 6.5.16.1
-    // FIXME: consider hacking isModifiableLvalue to return an enum that
-    // communicates why the expression/type wasn't a modifiableLvalue.
-    
-    // this check is done first to give a more precise diagnostic.
-    if (lhsType.isConstQualified()) 
-      return Diag(loc, diag::err_typecheck_assign_const);
-
-    if (!lex->isModifiableLvalue()) // this includes checking for "const"
-      return Diag(loc, diag::ext_typecheck_assign_non_lvalue);
-      
-    if (lhsType == rhsType) // common case, fast path...
-      return new BinaryOperator(lex, rex, (BOP)code, lhsType);
-    
-    AssignmentConversionResult result;
-    QualType resType = UsualAssignmentConversions(lhsType, rex, result);
-
-    // decode the result (notice that AST's are still created for extensions).
-    switch (result) {
-    case Compatible:
-      break;
-    case PointerFromInt:
-      Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
-      break;
-    case IntFromPointer:
-      Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
-      break;
-    case IncompatiblePointer:
-      Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
-      break;
-    case Incompatible:
-      return Diag(loc, diag::err_typecheck_assign_incompatible);
-    }
-    return new BinaryOperator(lex, rex, (BOP)code, resType);
+  // FIXME: consider hacking isModifiableLvalue to return an enum that
+  // communicates why the expression/type wasn't a modifiableLvalue.
+  
+  // this check is done first to give a more precise diagnostic.
+  if (lhsType.isConstQualified()) {
+    Diag(loc, diag::err_typecheck_assign_const);
+    return QualType();
   }
-  // FIXME: type check compound assignments...
-  return new BinaryOperator(lex, rex, (BOP)code, Context.IntTy);
+  if (!lex->isModifiableLvalue()) { // this includes checking for "const"
+    Diag(loc, diag::ext_typecheck_assign_non_lvalue);
+    return QualType();
+  }
+  if (lhsType == rhsType) // common case, fast path...
+    return lhsType;
+  
+  AssignmentConversionResult result;
+  QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
+
+  // decode the result (notice that extensions still return a type).
+  switch (result) {
+  case Compatible:
+    return resType;
+  case Incompatible:
+    Diag(loc, diag::err_typecheck_assign_incompatible);
+    return QualType();
+  case PointerFromInt:
+    // check for null pointer constant (C99 6.3.2.3p3)
+    if (!rex->isNullPointerConstant())
+      Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
+    return resType;
+  case IntFromPointer:
+    Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+    return resType;
+  case IncompatiblePointer:
+    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+    return resType;
+  }
+  assert(0 && "should never get here");
 }
 
-Action::ExprResult Sema::CheckCommaOperands( // C99 6.5.17
+inline QualType Sema::CheckCompoundAssignmentOperands( // C99 6.5.16.2
+  Expr *lex, QualType rhsType, SourceLocation loc) 
+{
+  QualType lhsType = lex->getType();
+  
+  // FIXME: consider hacking isModifiableLvalue to return an enum that
+  // communicates why the expression/type wasn't a modifiableLvalue.
+  
+  // this check is done first to give a more precise diagnostic.
+  if (lhsType.isConstQualified()) {
+    Diag(loc, diag::err_typecheck_assign_const);
+    return QualType();
+  }
+  if (!lex->isModifiableLvalue()) { // this includes checking for "const"
+    Diag(loc, diag::ext_typecheck_assign_non_lvalue);
+    return QualType();
+  }
+  if (lhsType == rhsType) // common case, fast path...
+    return lhsType;
+  
+  AssignmentConversionResult result;
+  QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
+
+  // decode the result (notice that extensions still return a type).
+  switch (result) {
+  case Compatible:
+    return resType;
+  case Incompatible:
+    Diag(loc, diag::err_typecheck_assign_incompatible);
+    return QualType();
+  case PointerFromInt:
+    Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
+    return resType;
+  case IntFromPointer:
+    Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+    return resType;
+  case IncompatiblePointer:
+    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+    return resType;
+  }
+  assert(0 && "should never get here");
+}
+
+inline QualType Sema::CheckCommaOperands( // C99 6.5.17
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
-  QualType rhsType = UsualUnaryConversion(rex->getType());
-  return new BinaryOperator(lex, rex, BinaryOperator::Comma, rhsType);
+  return UsualUnaryConversion(rex->getType());
 }
 
 Action::ExprResult
@@ -886,3 +879,145 @@ Sema::CheckArithmeticOperand(Expr *op, SourceLocation OpLoc, unsigned Opc) {
   }
   return new UnaryOperator(op, (UOP)Opc, resultType);
 }
+
+static inline BinaryOperator::Opcode ConvertTokenKindToBinaryOpcode(
+  tok::TokenKind Kind) {
+  BinaryOperator::Opcode Opc;
+  switch (Kind) {
+  default: assert(0 && "Unknown binop!");
+  case tok::star:                 Opc = BinaryOperator::Mul; break;
+  case tok::slash:                Opc = BinaryOperator::Div; break;
+  case tok::percent:              Opc = BinaryOperator::Rem; break;
+  case tok::plus:                 Opc = BinaryOperator::Add; break;
+  case tok::minus:                Opc = BinaryOperator::Sub; break;
+  case tok::lessless:             Opc = BinaryOperator::Shl; break;
+  case tok::greatergreater:       Opc = BinaryOperator::Shr; break;
+  case tok::lessequal:            Opc = BinaryOperator::LE; break;
+  case tok::less:                 Opc = BinaryOperator::LT; break;
+  case tok::greaterequal:         Opc = BinaryOperator::GE; break;
+  case tok::greater:              Opc = BinaryOperator::GT; break;
+  case tok::exclaimequal:         Opc = BinaryOperator::NE; break;
+  case tok::equalequal:           Opc = BinaryOperator::EQ; break;
+  case tok::amp:                  Opc = BinaryOperator::And; break;
+  case tok::caret:                Opc = BinaryOperator::Xor; break;
+  case tok::pipe:                 Opc = BinaryOperator::Or; break;
+  case tok::ampamp:               Opc = BinaryOperator::LAnd; break;
+  case tok::pipepipe:             Opc = BinaryOperator::LOr; break;
+  case tok::equal:                Opc = BinaryOperator::Assign; break;
+  case tok::starequal:            Opc = BinaryOperator::MulAssign; break;
+  case tok::slashequal:           Opc = BinaryOperator::DivAssign; break;
+  case tok::percentequal:         Opc = BinaryOperator::RemAssign; break;
+  case tok::plusequal:            Opc = BinaryOperator::AddAssign; break;
+  case tok::minusequal:           Opc = BinaryOperator::SubAssign; break;
+  case tok::lesslessequal:        Opc = BinaryOperator::ShlAssign; break;
+  case tok::greatergreaterequal:  Opc = BinaryOperator::ShrAssign; break;
+  case tok::ampequal:             Opc = BinaryOperator::AndAssign; break;
+  case tok::caretequal:           Opc = BinaryOperator::XorAssign; break;
+  case tok::pipeequal:            Opc = BinaryOperator::OrAssign; break;
+  case tok::comma:                Opc = BinaryOperator::Comma; break;
+  }
+  return Opc;
+}
+
+// Binary Operators.  'Tok' is the token for the operator.
+Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+                                    ExprTy *LHS, ExprTy *RHS) {
+  BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
+  Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
+
+  assert((lhs != 0) && "ParseBinOp(): missing left expression");
+  assert((rhs != 0) && "ParseBinOp(): missing right expression");
+
+  QualType result;
+  
+  switch (Opc) {
+  default:
+    assert(0 && "Unknown binary expr!");
+  case BinaryOperator::Assign:
+    result = CheckSimpleAssignmentOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::Mul: 
+  case BinaryOperator::Div:
+    result = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::Rem:
+    result = CheckRemainderOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::Add:
+    result = CheckAdditionOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::Sub:
+    result = CheckSubtractionOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::Shl: 
+  case BinaryOperator::Shr:
+    result = CheckShiftOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::LE:
+  case BinaryOperator::LT:
+  case BinaryOperator::GE:
+  case BinaryOperator::GT:
+    result = CheckRelationalOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::EQ:
+  case BinaryOperator::NE:
+    result = CheckEqualityOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::And:
+  case BinaryOperator::Xor:
+  case BinaryOperator::Or:
+    result = CheckBitwiseOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::LAnd:
+  case BinaryOperator::LOr:
+    result = CheckLogicalOperands(lhs, rhs, TokLoc);
+    break;
+  case BinaryOperator::MulAssign:
+  case BinaryOperator::DivAssign:
+    result = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
+    if (result.isNull())
+      return true;
+    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    break;
+  case BinaryOperator::RemAssign:
+    result = CheckRemainderOperands(lhs, rhs, TokLoc);
+    if (result.isNull())
+      return true;
+    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    break;
+  case BinaryOperator::AddAssign:
+    result = CheckAdditionOperands(lhs, rhs, TokLoc);
+    if (result.isNull())
+      return true;
+    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    break;
+  case BinaryOperator::SubAssign:
+    result = CheckSubtractionOperands(lhs, rhs, TokLoc);
+    if (result.isNull())
+      return true;
+    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    break;
+  case BinaryOperator::ShlAssign:
+  case BinaryOperator::ShrAssign:
+    result = CheckShiftOperands(lhs, rhs, TokLoc);
+    if (result.isNull())
+      return true;
+    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    break;
+  case BinaryOperator::AndAssign:
+  case BinaryOperator::XorAssign:
+  case BinaryOperator::OrAssign:
+    result = CheckBitwiseOperands(lhs, rhs, TokLoc);
+    if (result.isNull())
+      return true;
+    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    break;
+  case BinaryOperator::Comma:
+    result = CheckCommaOperands(lhs, rhs, TokLoc);
+    break;
+  }
+  if (result.isNull())
+    return true;
+  return new BinaryOperator(lhs, rhs, Opc, result);
+}
+

@@ -153,3 +153,10 @@ bool Expr::isModifiableLvalue() {
     return false;
   }
 }
+
+bool Expr::isNullPointerConstant() const {
+  const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(this);
+  if (!constant || constant->getValue() != 0)
+    return false;
+  return true;
+}

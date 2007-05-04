@@ -46,6 +46,8 @@ public:
   ///
   bool isModifiableLvalue();
   
+  bool isNullPointerConstant() const;
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
@@ -365,9 +367,9 @@ public:
   static bool isMultiplicativeOp(Opcode Op) { return Op >= Mul && Op <= Rem; }
   static bool isAdditiveOp(Opcode Op) { return Op == Add || Op == Sub; }
   static bool isShiftOp(Opcode Op) { return Op == Shl || Op == Shr; }
+  static bool isBitwiseOp(Opcode Op) { return Op >= And && Op <= Or; }
   static bool isRelationalOp(Opcode Op) { return Op >= LT && Op <= GE; }
   static bool isEqualityOp(Opcode Op) { return Op == EQ || Op == NE; }
-  static bool isBitwiseOp(Opcode Op) { return Op >= And && Op <= Or; }
   static bool isLogicalOp(Opcode Op) { return Op == LAnd || Op == LOr; }
   static bool isAssignmentOp(Opcode Op) { return Op >= Assign && Op<=OrAssign; }
   
