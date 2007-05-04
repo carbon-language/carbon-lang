@@ -714,9 +714,9 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   if (VST.empty()) return;
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
 
-  { // 8-bit fixed width VST_ENTRY strings.
+  { // 8-bit fixed-width VST_ENTRY/VST_BBENTRY strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
@@ -762,17 +762,17 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
       }
     
     
-    unsigned AbbrevToUse = 0;
+    unsigned AbbrevToUse = VST_ENTRY_8_ABBREV;
     
-    // VST_ENTRY:   [valueid, namelen, namechar x N]
-    // VST_BBENTRY: [bbid, namelen, namechar x N]
+    // VST_ENTRY:   [valueid, namechar x N]
+    // VST_BBENTRY: [bbid, namechar x N]
     unsigned Code;
     if (isa<BasicBlock>(SI->getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
       if (is7Bit) AbbrevToUse = VST_BBENTRY_7_ABBREV;
     } else {
       Code = bitc::VST_CODE_ENTRY;
-      AbbrevToUse = is7Bit ? VST_ENTRY_7_ABBREV : VST_ENTRY_8_ABBREV;
+      if (is7Bit) AbbrevToUse = VST_ENTRY_7_ABBREV;
     }
     
     NameVals.push_back(VE.getValueID(SI->getValue()));
