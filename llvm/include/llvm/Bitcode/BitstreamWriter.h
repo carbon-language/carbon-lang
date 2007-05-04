@@ -217,7 +217,8 @@ public:
     
   /// EmitRecord - Emit the specified record to the stream, using an abbrev if
   /// we have one to compress the output.
-  void EmitRecord(unsigned Code, SmallVectorImpl<uint64_t> &Vals,
+  template<typename uintty>
+  void EmitRecord(unsigned Code, SmallVectorImpl<uintty> &Vals,
                   unsigned Abbrev = 0) {
     if (Abbrev) {
       unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
@@ -258,52 +259,6 @@ public:
       EmitVBR(Vals.size(), 6);
       for (unsigned i = 0, e = Vals.size(); i != e; ++i)
         EmitVBR64(Vals[i], 6);
-    }
-  }
-  
-  /// EmitRecord - Emit the specified record to the stream, using an abbrev if
-  /// we have one to compress the output.
-  void EmitRecord(unsigned Code, SmallVectorImpl<unsigned> &Vals,
-                  unsigned Abbrev = 0) {
-    if (Abbrev) {
-      unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
-      assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
-      BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
-      
-      EmitCode(Abbrev);
-
-      // Insert the code into Vals to treat it uniformly.
-      Vals.insert(Vals.begin(), Code);
-      
-      unsigned RecordIdx = 0;
-      for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
-        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
-        const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-        
-        if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
-          EmitAbbreviatedField(Op, Vals[RecordIdx]);
-          ++RecordIdx;
-        } else {
-          assert(i+2 == e && "array op not second to last?");
-          const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
-          
-          // Emit a vbr6 to indicate the number of elements present.
-          EmitVBR(Vals.size()-RecordIdx, 6);
-          
-          // Emit each field.
-          for (; RecordIdx != Vals.size(); ++RecordIdx)
-            EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
-        }
-      }
-      assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
-    } else {
-      // If we don't have an abbrev to use, emit this in its fully unabbreviated
-      // form.
-      EmitCode(bitc::UNABBREV_RECORD);
-      EmitVBR(Code, 6);
-      EmitVBR(Vals.size(), 6);
-      for (unsigned i = 0, e = Vals.size(); i != e; ++i)
-        EmitVBR(Vals[i], 6);
     }
   }
   
