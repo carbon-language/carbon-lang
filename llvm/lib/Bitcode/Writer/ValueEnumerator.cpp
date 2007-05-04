@@ -16,7 +16,20 @@
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
+#include <algorithm>
 using namespace llvm;
+
+static bool isFirstClassType(const std::pair<const llvm::Type*,
+                             unsigned int> &P) {
+  return P.first->isFirstClassType();
+}
+
+static bool CompareByFrequency(const std::pair<const llvm::Type*,
+                               unsigned int> &P1,
+                               const std::pair<const llvm::Type*,
+                               unsigned int> &P2) {
+  return P1.second > P2.second;
+}
 
 /// ValueEnumerator - Enumerate module-level information.
 ValueEnumerator::ValueEnumerator(const Module *M) {
@@ -69,13 +82,24 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
         EnumerateType(I->getType());
       }
   }
+  
+  // Sort the type table by frequency so that most commonly used types are early
+  // in the table (have low bit-width).
+  std::stable_sort(Types.begin(), Types.end(), CompareByFrequency);
     
+  // Partition the Type ID's so that the first-class types occur before the
+  // aggregate types.  This allows the aggregate types to be dropped from the
+  // type table after parsing the global variable initializers.
+  std::partition(Types.begin(), Types.end(), isFirstClassType);
+
+  // Now that we rearranged the type table, rebuild TypeMap.
+  for (unsigned i = 0, e = Types.size(); i != e; ++i)
+    TypeMap[Types[i].first] = i+1;
+
+  // FIXME: Emit a marker into the module indicating which aggregates types can
+  // be dropped form the table.
   
-  // FIXME: std::partition the type and value tables so that first-class types
-  // come earlier than aggregates.  FIXME: Emit a marker into the module
-  // indicating which aggregates types AND values can be dropped form the table.
-  
-  // FIXME: Sort type/value tables by frequency.
+  // FIXME: Sort value tables by frequency.
     
   // FIXME: Sort constants by type to reduce size.
 }
