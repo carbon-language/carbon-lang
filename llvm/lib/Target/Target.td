@@ -338,7 +338,8 @@ class Target {
 //===----------------------------------------------------------------------===//
 // SubtargetFeature - A characteristic of the chip set.
 //
-class SubtargetFeature<string n, string a,  string v, string d> {
+class SubtargetFeature<string n, string a,  string v, string d,
+                       list<SubtargetFeature> i = []> {
   // Name - Feature name.  Used by command line (-mattr=) to determine the
   // appropriate target chip.
   //
@@ -356,6 +357,11 @@ class SubtargetFeature<string n, string a,  string v, string d> {
   // information.
   //
   string Desc = d;
+
+  // Implies - Features that this feature implies are present. If one of those
+  // features isn't set, then this one shouldn't be set either.
+  //
+  list<SubtargetFeature> Implies = i;
 }
 
 //===----------------------------------------------------------------------===//

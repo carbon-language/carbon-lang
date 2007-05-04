@@ -199,6 +199,43 @@ void SubtargetFeatures::setCPUIfNone(const std::string &String) {
   if (Features[0].empty()) setCPU(String);
 }
 
+/// SetImpliedBits - For each feature that is (transitively) implied by this
+/// feature, set it.
+/// 
+static
+void SetImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
+                    const SubtargetFeatureKV *FeatureTable,
+                    size_t FeatureTableSize) {
+  for (size_t i = 0; i < FeatureTableSize; ++i) {
+    const SubtargetFeatureKV &FE = FeatureTable[i];
+
+    if (FeatureEntry->Value == FE.Value) continue;
+
+    if (FeatureEntry->Implies & FE.Value) {
+      Bits |= FE.Value;
+      SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+    }
+  }
+}
+
+/// ClearImpliedBits - For each feature that (transitively) implies this
+/// feature, clear it.
+/// 
+static
+void ClearImpliedBits(uint32_t &Bits, const SubtargetFeatureKV *FeatureEntry,
+                      const SubtargetFeatureKV *FeatureTable,
+                      size_t FeatureTableSize) {
+  for (size_t i = 0; i < FeatureTableSize; ++i) {
+    const SubtargetFeatureKV &FE = FeatureTable[i];
+
+    if (FeatureEntry->Value == FE.Value) continue;
+
+    if (FE.Implies & FeatureEntry->Value) {
+      Bits &= ~FE.Value;
+      ClearImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+    }
+  }
+}
 
 /// getBits - Get feature bits.
 ///
@@ -251,8 +288,17 @@ uint32_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
     // If there is a match
     if (FeatureEntry) {
       // Enable/disable feature in bits
-      if (isEnabled(Feature)) Bits |=  FeatureEntry->Value;
-      else                    Bits &= ~FeatureEntry->Value;
+      if (isEnabled(Feature)) {
+        Bits |=  FeatureEntry->Value;
+
+        // For each feature that this implies, set it.
+        SetImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+      } else {
+        Bits &= ~FeatureEntry->Value;
+
+        // For each feature that implies this, clear it.
+        ClearImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+      }
     } else {
       cerr << "'" << Feature
            << "' is not a recognized feature for this target"
@@ -260,6 +306,7 @@ uint32_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
            << "\n";
     }
   }
+
   return Bits;
 }
 

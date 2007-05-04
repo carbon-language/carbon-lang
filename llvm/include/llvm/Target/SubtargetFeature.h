@@ -34,6 +34,7 @@ struct SubtargetFeatureKV {
   const char *Key;                      // K-V key string
   const char *Desc;                     // Help descriptor
   uint32_t Value;                       // K-V integer value
+  uint32_t Implies;                     // K-V bit mask
   
   // Compare routine for std binary search
   bool operator<(const SubtargetFeatureKV &S) const {
