@@ -67,6 +67,7 @@ def : Proc<"arm1020t",        [ArchV5T]>;
 
 // V5TE Processors.
 def : Proc<"arm9e",           [ArchV5TE]>;
+def : Proc<"arm926ej-s",      [ArchV5TE]>;
 def : Proc<"arm946e-s",       [ArchV5TE]>;
 def : Proc<"arm966e-s",       [ArchV5TE]>;
 def : Proc<"arm968e-s",       [ArchV5TE]>;
