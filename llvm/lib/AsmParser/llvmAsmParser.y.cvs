@@ -2574,7 +2574,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       std::vector<const Type*> ParamTypes;
       ParamAttrsVector Attrs;
       if ($8 != ParamAttr::None) {
-        ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = 8;
+        ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $8;
         Attrs.push_back(PAWI);
       }
       ValueRefList::iterator I = $6->begin(), E = $6->end();
