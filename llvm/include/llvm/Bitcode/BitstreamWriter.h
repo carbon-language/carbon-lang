@@ -189,6 +189,32 @@ public:
   // Record Emission
   //===--------------------------------------------------------------------===//
   
+private:
+  /// EmitAbbreviatedField - Emit a single scalar field value with the specified
+  /// encoding.
+  template<typename uintty>
+  void EmitAbbreviatedField(const BitCodeAbbrevOp &Op, uintty V) {
+    if (Op.isLiteral()) {
+      // If the abbrev specifies the literal value to use, don't emit
+      // anything.
+      assert(V == Op.getLiteralValue() &&
+             "Invalid abbrev for record!");
+      return;
+    }
+    
+    // Encode the value as we are commanded.
+    switch (Op.getEncoding()) {
+    default: assert(0 && "Unknown encoding!");
+    case BitCodeAbbrevOp::Fixed:
+      Emit(V, Op.getEncodingData());
+      break;
+    case BitCodeAbbrevOp::VBR:
+      EmitVBR(V, Op.getEncodingData());
+      break;
+    }        
+  }
+public:
+    
   /// EmitRecord - Emit the specified record to the stream, using an abbrev if
   /// we have one to compress the output.
   void EmitRecord(unsigned Code, SmallVectorImpl<uint64_t> &Vals,
@@ -207,27 +233,20 @@ public:
       for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
         assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
         const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-        uint64_t RecordVal = Vals[RecordIdx];
-        
-        if (Op.isLiteral()) {
-          // If the abbrev specifies the literal value to use, don't emit
-          // anything.
-          assert(RecordVal == Op.getLiteralValue() &&
-                 "Invalid abbrev for record!");
+        if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+          EmitAbbreviatedField(Op, Vals[RecordIdx]);
           ++RecordIdx;
         } else {
-          // Encode the value as we are commanded.
-          switch (Op.getEncoding()) {
-          default: assert(0 && "Unknown encoding!");
-          case BitCodeAbbrevOp::FixedWidth:
-            Emit64(RecordVal, Op.getEncodingData());
-            ++RecordIdx;
-            break;
-          case BitCodeAbbrevOp::VBR:
-            EmitVBR64(RecordVal, Op.getEncodingData());
-            ++RecordIdx;
-            break;
-          }
+          // Array case.
+          assert(i+2 == e && "array op not second to last?");
+          const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+          
+          // Emit a vbr6 to indicate the number of elements present.
+          EmitVBR(Vals.size()-RecordIdx, 6);
+          
+          // Emit each field.
+          for (; RecordIdx != Vals.size(); ++RecordIdx)
+            EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
         }
       }
       assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
@@ -260,27 +279,20 @@ public:
       for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
         assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
         const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-        unsigned RecordVal = Vals[RecordIdx];
         
-        if (Op.isLiteral()) {
-          // If the abbrev specifies the literal value to use, don't emit
-          // anything.
-          assert(RecordVal == Op.getLiteralValue() &&
-                 "Invalid abbrev for record!");
+        if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+          EmitAbbreviatedField(Op, Vals[RecordIdx]);
           ++RecordIdx;
         } else {
-          // Encode the value as we are commanded.
-          switch (Op.getEncoding()) {
-          default: assert(0 && "Unknown encoding!");
-          case BitCodeAbbrevOp::FixedWidth:
-            Emit(RecordVal, Op.getEncodingData());
-            ++RecordIdx;
-            break;
-          case BitCodeAbbrevOp::VBR:
-            EmitVBR(RecordVal, Op.getEncodingData());
-            ++RecordIdx;
-            break;
-          }
+          assert(i+2 == e && "array op not second to last?");
+          const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+          
+          // Emit a vbr6 to indicate the number of elements present.
+          EmitVBR(Vals.size()-RecordIdx, 6);
+          
+          // Emit each field.
+          for (; RecordIdx != Vals.size(); ++RecordIdx)
+            EmitAbbreviatedField(EltEnc, Vals[RecordIdx]);
         }
       }
       assert(RecordIdx == Vals.size() && "Not all record operands emitted!");

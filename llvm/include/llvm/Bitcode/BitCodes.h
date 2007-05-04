@@ -84,13 +84,15 @@ class BitCodeAbbrevOp {
   unsigned Enc   : 3;     // The encoding to use.
 public:
   enum Encoding {
-    FixedWidth = 1,  // A fixed with field, Val specifies number of bits.
-    VBR        = 2   // A VBR field where Val specifies the width of each chunk.
+    Fixed = 1,  // A fixed with field, Val specifies number of bits.
+    VBR   = 2,  // A VBR field where Val specifies the width of each chunk.
+    Array = 3   // A sequence of fields, next field species elt encoding.
   };
     
   BitCodeAbbrevOp(uint64_t V) :  Val(V), IsLiteral(true) {}
-  BitCodeAbbrevOp(Encoding E, uint64_t Data)
+  BitCodeAbbrevOp(Encoding E, uint64_t Data = 0)
     : Val(Data), IsLiteral(false), Enc(E) {}
+
   
   bool isLiteral() const { return IsLiteral; }
   bool isEncoding() const { return !IsLiteral; }
@@ -100,11 +102,21 @@ public:
   
   // Accessors for encoding info.
   Encoding getEncoding() const { assert(isEncoding()); return (Encoding)Enc; }
-  uint64_t getEncodingData() const { assert(isEncoding()); return Val; }
+  uint64_t getEncodingData() const {
+    assert(isEncoding() && hasEncodingData());
+    return Val;
+  }
   
   bool hasEncodingData() const { return hasEncodingData(getEncoding()); }
   static bool hasEncodingData(Encoding E) {
-    return true; 
+    switch (E) {
+    default: assert(0 && "Unknown encoding");
+    case Fixed:
+    case VBR:
+      return true;
+    case Array:
+      return false;
+    }
   }
 };
 

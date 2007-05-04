@@ -274,6 +274,26 @@ public:
   // Record Processing
   //===--------------------------------------------------------------------===//
   
+private:
+  void ReadAbbreviatedField(const BitCodeAbbrevOp &Op, 
+                            SmallVectorImpl<uint64_t> &Vals) {
+    if (Op.isLiteral()) {
+      // If the abbrev specifies the literal value to use, use it.
+      Vals.push_back(Op.getLiteralValue());
+    } else {
+      // Decode the value as we are commanded.
+      switch (Op.getEncoding()) {
+      default: assert(0 && "Unknown encoding!");
+      case BitCodeAbbrevOp::Fixed:
+        Vals.push_back(Read(Op.getEncodingData()));
+        break;
+      case BitCodeAbbrevOp::VBR:
+        Vals.push_back(ReadVBR64(Op.getEncodingData()));
+        break;
+      }
+    }
+  }
+public:
   unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals) {
     if (AbbrevID == bitc::UNABBREV_RECORD) {
       unsigned Code = ReadVBR(6);
@@ -289,20 +309,19 @@ public:
 
     for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
       const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
-      if (Op.isLiteral()) {
-        // If the abbrev specifies the literal value to use, use it.
-        Vals.push_back(Op.getLiteralValue());
+      if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+        ReadAbbreviatedField(Op, Vals);
       } else {
-        // Decode the value as we are commanded.
-        switch (Op.getEncoding()) {
-        default: assert(0 && "Unknown encoding!");
-        case BitCodeAbbrevOp::FixedWidth:
-          Vals.push_back(Read(Op.getEncodingData()));
-          break;
-        case BitCodeAbbrevOp::VBR:
-          Vals.push_back(ReadVBR64(Op.getEncodingData()));
-          break;
-        }
+        // Array case.  Read the number of elements as a vbr6.
+        unsigned NumElts = ReadVBR(6);
+
+        // Get the element encoding.
+        assert(i+2 == e && "array op not second to last?");
+        const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
+
+        // Read all the elements.
+        for (; NumElts; --NumElts)
+          ReadAbbreviatedField(EltEnc, Vals);
       }
     }
     
@@ -326,11 +345,10 @@ public:
       }
 
       BitCodeAbbrevOp::Encoding E = (BitCodeAbbrevOp::Encoding)Read(3);
-      if (BitCodeAbbrevOp::hasEncodingData(E)) {
+      if (BitCodeAbbrevOp::hasEncodingData(E))
         Abbv->Add(BitCodeAbbrevOp(E, ReadVBR64(5)));
-      } else {
-        assert(0 && "unimp");
-      }
+      else
+        Abbv->Add(BitCodeAbbrevOp(E));
     }
     CurAbbrevs.push_back(Abbv);
   }
