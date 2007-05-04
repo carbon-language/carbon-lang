@@ -313,16 +313,15 @@ bool BitcodeReader::ParseTypeTable() {
       ResultTy = PointerType::get(getTypeByID(Record[0], true));
       break;
     case bitc::TYPE_CODE_FUNCTION: {
-      // FUNCTION: [vararg, retty, #pararms, paramty N]
-      if (Record.size() < 3 || Record.size() < Record[2]+3)
+      // FUNCTION: [vararg, attrid, retty, #pararms, paramty N]
+      if (Record.size() < 4 || Record.size() < Record[3]+4)
         return Error("Invalid FUNCTION type record");
       std::vector<const Type*> ArgTys;
-      for (unsigned i = 0, e = Record[2]; i != e; ++i)
-        ArgTys.push_back(getTypeByID(Record[3+i], true));
+      for (unsigned i = 0, e = Record[3]; i != e; ++i)
+        ArgTys.push_back(getTypeByID(Record[4+i], true));
       
-      // FIXME: PARAM TYS.
-      ResultTy = FunctionType::get(getTypeByID(Record[1], true), ArgTys,
-                                   Record[0]);
+      ResultTy = FunctionType::get(getTypeByID(Record[2], true), ArgTys,
+                                   Record[0], getParamAttrs(Record[1]));
       break;
     }
     case bitc::TYPE_CODE_STRUCT: {  // STRUCT: [ispacked, #elts, eltty x N]

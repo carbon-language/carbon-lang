@@ -145,11 +145,11 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
     case Type::FunctionTyID: {
       const FunctionType *FT = cast<FunctionType>(T);
-      // FUNCTION: [isvararg, #pararms, paramty x N]
+      // FUNCTION: [isvararg, attrid, #pararms, paramty x N]
       Code = bitc::TYPE_CODE_FUNCTION;
       TypeVals.push_back(FT->isVarArg());
+      TypeVals.push_back(VE.getParamAttrID(FT->getParamAttrs()));
       TypeVals.push_back(VE.getTypeID(FT->getReturnType()));
-      // FIXME: PARAM ATTR ID!
       TypeVals.push_back(FT->getNumParams());
       for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
         TypeVals.push_back(VE.getTypeID(FT->getParamType(i)));
