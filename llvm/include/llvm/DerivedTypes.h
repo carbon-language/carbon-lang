@@ -140,12 +140,12 @@ public:
 class FunctionType : public DerivedType {
   friend class TypeMap<FunctionValType, FunctionType>;
   bool isVarArgs;
-  ParamAttrsList *ParamAttrs;
+  const ParamAttrsList *ParamAttrs;
 
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
   FunctionType(const Type *Result, const std::vector<const Type*> &Params,
-               bool IsVarArgs, ParamAttrsList *Attrs = 0);
+               bool IsVarArgs, const ParamAttrsList *Attrs = 0);
 
 public:
   /// FunctionType::get - This static method is the primary way of constructing
@@ -155,7 +155,7 @@ public:
     const Type *Result, ///< The result type
     const std::vector<const Type*> &Params, ///< The types of the parameters
     bool isVarArg, ///< Whether this is a variable argument length function
-    ParamAttrsList *Attrs = 0
+    const ParamAttrsList *Attrs = 0
       ///< Indicates the parameter attributes to use, if any. The 0th entry
       ///< in the list refers to the return type. Parameters are numbered
       ///< starting at 1. This argument must be on the heap and FunctionType

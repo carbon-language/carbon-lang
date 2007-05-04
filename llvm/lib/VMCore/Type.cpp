@@ -417,7 +417,7 @@ const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
-                           bool IsVarArgs, ParamAttrsList *Attrs) 
+                           bool IsVarArgs, const ParamAttrsList *Attrs) 
   : DerivedType(FunctionTyID), isVarArgs(IsVarArgs), ParamAttrs(Attrs) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
@@ -1084,7 +1084,7 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
 FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
                                 bool isVarArg,
-                                ParamAttrsList *Attrs) {
+                                const ParamAttrsList *Attrs) {
 
   FunctionValType VT(ReturnType, Params, isVarArg, Attrs);
   FunctionType *FT = FunctionTypes->get(VT);
