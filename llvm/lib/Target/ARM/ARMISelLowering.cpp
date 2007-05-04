@@ -812,10 +812,11 @@ SDOperand ARMTargetLowering::LowerGlobalAddressELF(SDOperand Op,
 }
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol
-/// even in dynamic-no-pic mode.
-static bool GVIsIndirectSymbol(GlobalValue *GV) {
-  return (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-          (GV->isDeclaration() && !GV->hasNotBeenReadFromBytecode()));
+/// even in non-static mode.
+static bool GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) {
+  return RelocM != Reloc::Static &&
+    (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+     (GV->isDeclaration() && !GV->hasNotBeenReadFromBytecode()));
 }
 
 SDOperand ARMTargetLowering::LowerGlobalAddressDarwin(SDOperand Op,
@@ -823,7 +824,7 @@ SDOperand ARMTargetLowering::LowerGlobalAddressDarwin(SDOperand Op,
   MVT::ValueType PtrVT = getPointerTy();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
-  bool IsIndirect = GVIsIndirectSymbol(GV);
+  bool IsIndirect = GVIsIndirectSymbol(GV, RelocM);
   SDOperand CPAddr;
   if (RelocM == Reloc::Static)
     CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
