@@ -1423,7 +1423,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Ptr = getFnValueByID(Record[2], OpTy);
       if (!OpTy || !Op || !Ptr)
         return Error("Invalid STORE record");
-      I = new StoreInst(Op, Ptr, (1 << Record[3]) >> 1, Record[4]);
+      I = new StoreInst(Op, Ptr, Record[4], (1 << Record[3]) >> 1);
       break;
     }
     case bitc::FUNC_CODE_INST_CALL: { // CALL: [cc, fnty, fnid, arg0, arg1...]
