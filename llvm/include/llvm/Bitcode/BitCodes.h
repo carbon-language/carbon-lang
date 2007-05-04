@@ -30,9 +30,9 @@ namespace bitc {
     BlockSizeWidth = 32  // BlockSize up to 2^32 32-bit words = 32GB per block.
   };
   
-  // The standard code namespace always has a way to exit a block, enter a
+  // The standard abbrev namespace always has a way to exit a block, enter a
   // nested block, define abbrevs, and define an unabbreviated record.
-  enum FixedCodes {
+  enum FixedAbbrevIDs {
     END_BLOCK = 0,  // Must be zero to guarantee termination for broken bitcode.
     ENTER_SUBBLOCK = 1,
 
@@ -48,8 +48,29 @@ namespace bitc {
     UNABBREV_RECORD = 3,
     
     // This is not a code, this is a marker for the first abbrev assignment.
-    FIRST_ABBREV = 4
+    FIRST_APPLICATION_ABBREV = 4
   };
+  
+  /// StandardBlockIDs - All bitcode files can optionally include a BLOCKINFO
+  /// block, which contains metadata about other blocks in the file.
+  enum StandardBlockIDs {
+    /// BLOCKINFO_BLOCK is used to define metadata about blocks, for example,
+    /// standard abbrevs that should be available to all blocks of a specified
+    /// ID.
+    BLOCKINFO_BLOCK_ID = 0,
+    
+    // Block IDs 1-7 are reserved for future expansion.
+    FIRST_APPLICATION_BLOCKID = 8
+  };
+  
+  /// BlockInfoCodes - The blockinfo block contains metadata about user-defined
+  /// blocks.
+  enum BlockInfoCodes {
+    BLOCKINFO_CODE_SETBID = 1,  // SETBID: [blockid#]
+    BLOCKINFO_CODE_ABBREV = 2   // ABBREV: [standard abbrev encoding]
+    // BLOCKNAME: give string name to block, if desired.
+  };
+  
 } // End bitc namespace
 
 /// BitCodeAbbrevOp - This describes one or more operands in an abbreviation.
@@ -63,7 +84,7 @@ class BitCodeAbbrevOp {
   unsigned Enc   : 3;     // The encoding to use.
 public:
   enum Encoding {
-    FixedWidth = 1,   // A fixed with field, Val specifies number of bits.
+    FixedWidth = 1,  // A fixed with field, Val specifies number of bits.
     VBR        = 2   // A VBR field where Val specifies the width of each chunk.
   };
     
@@ -87,6 +108,9 @@ public:
   }
 };
 
+/// BitCodeAbbrev - This class represents an abbreviation record.  An
+/// abbreviation allows a complex record that has redundancy to be stored in a
+/// specialized format instead of the fully-general, fully-vbr, format.
 class BitCodeAbbrev {
   SmallVector<BitCodeAbbrevOp, 8> OperandList;
   unsigned char RefCount; // Number of things using this.

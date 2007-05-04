@@ -194,7 +194,7 @@ public:
   void EmitRecord(unsigned Code, SmallVectorImpl<uint64_t> &Vals,
                   unsigned Abbrev = 0) {
     if (Abbrev) {
-      unsigned AbbrevNo = Abbrev-bitc::FIRST_ABBREV;
+      unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
       assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
       BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
       
@@ -247,7 +247,7 @@ public:
   void EmitRecord(unsigned Code, SmallVectorImpl<unsigned> &Vals,
                   unsigned Abbrev = 0) {
     if (Abbrev) {
-      unsigned AbbrevNo = Abbrev-bitc::FIRST_ABBREV;
+      unsigned AbbrevNo = Abbrev-bitc::FIRST_APPLICATION_ABBREV;
       assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
       BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
       
@@ -318,7 +318,7 @@ public:
     }
     
     CurAbbrevs.push_back(Abbv);
-    return CurAbbrevs.size()-1+bitc::FIRST_ABBREV;
+    return CurAbbrevs.size()-1+bitc::FIRST_APPLICATION_ABBREV;
   }
 };
 

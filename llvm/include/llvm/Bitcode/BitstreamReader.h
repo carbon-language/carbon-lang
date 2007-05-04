@@ -283,7 +283,7 @@ public:
       return Code;
     }
     
-    unsigned AbbrevNo = AbbrevID-bitc::FIRST_ABBREV;
+    unsigned AbbrevNo = AbbrevID-bitc::FIRST_APPLICATION_ABBREV;
     assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
     BitCodeAbbrev *Abbv = CurAbbrevs[AbbrevNo];
 

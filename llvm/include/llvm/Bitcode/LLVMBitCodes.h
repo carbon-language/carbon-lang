@@ -25,15 +25,15 @@ namespace bitc {
   // The only top-level block type defined is for a module.
   enum BlockIDs {
     // Blocks
-    MODULE_BLOCK_ID          = 0,
+    MODULE_BLOCK_ID          = FIRST_APPLICATION_BLOCKID,
   
-    // Module sub-block id's
-    PARAMATTR_BLOCK_ID       = 1,
-    TYPE_BLOCK_ID            = 2,
-    CONSTANTS_BLOCK_ID       = 3,
-    FUNCTION_BLOCK_ID        = 4,
-    TYPE_SYMTAB_BLOCK_ID     = 5,
-    VALUE_SYMTAB_BLOCK_ID    = 6
+    // Module sub-block id's.
+    PARAMATTR_BLOCK_ID,
+    TYPE_BLOCK_ID,
+    CONSTANTS_BLOCK_ID,
+    FUNCTION_BLOCK_ID,
+    TYPE_SYMTAB_BLOCK_ID,
+    VALUE_SYMTAB_BLOCK_ID
   };
   
   
@@ -68,7 +68,7 @@ namespace bitc {
   
   /// TYPE blocks have codes for each type primitive they use.
   enum TypeCodes {
-    TYPE_CODE_NUMENTRY =  1,   // TYPE_CODE_NUMENTRY: [numentries]
+    TYPE_CODE_NUMENTRY =  1,   // NUMENTRY: [numentries]
     
     // Type Codes
     TYPE_CODE_VOID     =  2,   // VOID
