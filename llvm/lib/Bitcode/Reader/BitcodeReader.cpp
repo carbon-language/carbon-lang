@@ -1508,8 +1508,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           delete A;
         }
       }
+      return Error("Never resolved value found in function!");
     }
-    return Error("Never resolved value found in function!");
   }
   
   // Trim the value list down to the size it was before we parsed this function.
