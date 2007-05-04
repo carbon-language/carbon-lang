@@ -58,9 +58,9 @@ namespace bitc {
 ///   2. It could be an encoding specification ("this operand encoded like so").
 ///
 class BitCodeAbbrevOp {
-  uint64_t Val;        // A literal value or data for an encoding.
-  bool IsLiteral : 1;  // Indicate whether this is a literal value or not.
-  unsigned Enc   : 3;  // The encoding to use.
+  uint64_t Val;           // A literal value or data for an encoding.
+  bool IsLiteral : 1;     // Indicate whether this is a literal value or not.
+  unsigned Enc   : 3;     // The encoding to use.
 public:
   enum Encoding {
     FixedWidth = 1,   // A fixed with field, Val specifies number of bits.
@@ -89,8 +89,14 @@ public:
 
 class BitCodeAbbrev {
   SmallVector<BitCodeAbbrevOp, 8> OperandList;
+  unsigned char RefCount; // Number of things using this.
+  ~BitCodeAbbrev() {}
 public:
+  BitCodeAbbrev() : RefCount(1) {}
   
+  void addRef() { ++RefCount; }
+  void dropRef() { if (--RefCount == 0) delete this; }
+
   unsigned getNumOperandInfos() const { return OperandList.size(); }
   const BitCodeAbbrevOp &getOperandInfo(unsigned N) const {
     return OperandList[N];

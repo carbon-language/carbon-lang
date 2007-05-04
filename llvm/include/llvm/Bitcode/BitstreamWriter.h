@@ -160,7 +160,7 @@ public:
     
     // Delete all abbrevs.
     for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
-      delete CurAbbrevs[i];
+      CurAbbrevs[i]->dropRef();
     
     const Block &B = BlockScope.back();
     

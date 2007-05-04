@@ -75,12 +75,12 @@ public:
     // Abbrevs could still exist if the stream was broken.  If so, don't leak
     // them.
     for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
-      delete CurAbbrevs[i];
+      CurAbbrevs[i]->dropRef();
 
     for (unsigned S = 0, e = BlockScope.size(); S != e; ++S) {
       std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
       for (unsigned i = 0, e = Abbrevs.size(); i != e; ++i)
-        delete Abbrevs[i];
+        Abbrevs[i]->dropRef();
     }
   }
   
@@ -263,7 +263,7 @@ public:
     
     // Delete abbrevs from popped scope.
     for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
-      delete CurAbbrevs[i];
+      CurAbbrevs[i]->dropRef();
     
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
     BlockScope.pop_back();
