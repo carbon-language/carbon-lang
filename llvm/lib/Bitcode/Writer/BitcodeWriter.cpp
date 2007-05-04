@@ -32,7 +32,8 @@ enum {
   
   // VALUE_SYMTAB_BLOCK abbrev id's.
   VST_ENTRY_8_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
-  VST_ENTRY_7_ABBREV
+  VST_ENTRY_7_ABBREV,
+  VST_BBENTRY_7_ABBREV
   
 };
 
@@ -732,6 +733,15 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     if (Stream.EmitAbbrev(Abbv) != VST_ENTRY_7_ABBREV)
       assert(0 && "Unexpected abbrev ordering!");
   }
+  { // 7-bit fixed width VST_BBENTRY strings.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_BBENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+    if (Stream.EmitAbbrev(Abbv) != VST_BBENTRY_7_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
   
   
   // FIXME: Set up the abbrev, we know how many values there are!
@@ -759,6 +769,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     unsigned Code;
     if (isa<BasicBlock>(SI->getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
+      if (is7Bit) AbbrevToUse = VST_BBENTRY_7_ABBREV;
     } else {
       Code = bitc::VST_CODE_ENTRY;
       AbbrevToUse = is7Bit ? VST_ENTRY_7_ABBREV : VST_ENTRY_8_ABBREV;
