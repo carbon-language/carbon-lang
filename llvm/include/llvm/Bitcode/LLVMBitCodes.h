@@ -40,11 +40,11 @@ namespace bitc {
   /// MODULE blocks have a number of optional fields and subblocks.
   enum ModuleCodes {
     MODULE_CODE_VERSION     = 1,    // VERSION:     [version#]
-    MODULE_CODE_TRIPLE      = 2,    // TRIPLE:      [strlen, strchr x N]
-    MODULE_CODE_DATALAYOUT  = 3,    // DATALAYOUT:  [strlen, strchr x N]
-    MODULE_CODE_ASM         = 4,    // ASM:         [strlen, strchr x N]
-    MODULE_CODE_SECTIONNAME = 5,    // SECTIONNAME: [strlen, strchr x N]
-    MODULE_CODE_DEPLIB      = 6,    // DEPLIB:      [strlen, strchr x N]
+    MODULE_CODE_TRIPLE      = 2,    // TRIPLE:      [strchr x N]
+    MODULE_CODE_DATALAYOUT  = 3,    // DATALAYOUT:  [strchr x N]
+    MODULE_CODE_ASM         = 4,    // ASM:         [strchr x N]
+    MODULE_CODE_SECTIONNAME = 5,    // SECTIONNAME: [strchr x N]
+    MODULE_CODE_DEPLIB      = 6,    // DEPLIB:      [strchr x N]
 
     // GLOBALVAR: [type, isconst, initid, 
     //             linkage, alignment, section, visibility, threadlocal]
@@ -78,8 +78,8 @@ namespace bitc {
     TYPE_CODE_OPAQUE   =  6,   // OPAQUE
     TYPE_CODE_INTEGER  =  7,   // INTEGER: [width]
     TYPE_CODE_POINTER  =  8,   // POINTER: [pointee type]
-    TYPE_CODE_FUNCTION =  9,   // FUNCTION: [vararg, retty, #pararms, paramty N]
-    TYPE_CODE_STRUCT   = 10,   // STRUCT: [ispacked, #elts, eltty x N]
+    TYPE_CODE_FUNCTION =  9,   // FUNCTION: [vararg, retty, paramty x N]
+    TYPE_CODE_STRUCT   = 10,   // STRUCT: [ispacked, eltty x N]
     TYPE_CODE_ARRAY    = 11,   // ARRAY: [numelts, eltty]
     TYPE_CODE_VECTOR   = 12    // VECTOR: [numelts, eltty]
     // Any other type code is assumed to be an unknown type.
@@ -87,13 +87,13 @@ namespace bitc {
   
   // The type symbol table only has one code (TST_ENTRY_CODE).
   enum TypeSymtabCodes {
-    TST_CODE_ENTRY = 1     // TST_ENTRY: [typeid, namelen, namechar x N]
+    TST_CODE_ENTRY = 1     // TST_ENTRY: [typeid, namechar x N]
   };
   
   // The value symbol table only has one code (VST_ENTRY_CODE).
   enum ValueSymtabCodes {
-    VST_CODE_ENTRY   = 1,  // VST_ENTRY: [valid, namelen, namechar x N]
-    VST_CODE_BBENTRY = 2   // VST_BBENTRY: [bbid, namelen, namechar x N]
+    VST_CODE_ENTRY   = 1,  // VST_ENTRY: [valid, namechar x N]
+    VST_CODE_BBENTRY = 2   // VST_BBENTRY: [bbid, namechar x N]
   };
   
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
@@ -103,12 +103,12 @@ namespace bitc {
     CST_CODE_NULL          =  2,  // NULL
     CST_CODE_UNDEF         =  3,  // UNDEF
     CST_CODE_INTEGER       =  4,  // INTEGER:       [intval]
-    CST_CODE_WIDE_INTEGER  =  5,  // WIDE_INTEGER:  [n, n x intval]
+    CST_CODE_WIDE_INTEGER  =  5,  // WIDE_INTEGER:  [n x intval]
     CST_CODE_FLOAT         =  6,  // FLOAT:         [fpval]
-    CST_CODE_AGGREGATE     =  7,  // AGGREGATE:     [n, n x value number]
+    CST_CODE_AGGREGATE     =  7,  // AGGREGATE:     [n x value number]
     CST_CODE_CE_BINOP      =  8,  // CE_BINOP:      [opcode, opval, opval]
     CST_CODE_CE_CAST       =  9,  // CE_CAST:       [opcode, opty, opval]
-    CST_CODE_CE_GEP        = 10,  // CE_GEP:        [n, n x operands]
+    CST_CODE_CE_GEP        = 10,  // CE_GEP:        [n x operands]
     CST_CODE_CE_SELECT     = 11,  // CE_SELECT:     [opval, opval, opval]
     CST_CODE_CE_EXTRACTELT = 12,  // CE_EXTRACTELT: [opty, opval, opval]
     CST_CODE_CE_INSERTELT  = 13,  // CE_INSERTELT:  [opval, opval, opval]
@@ -163,21 +163,21 @@ namespace bitc {
     
     FUNC_CODE_INST_BINOP       =  2, // BINOP:      [opcode, ty, opval, opval]
     FUNC_CODE_INST_CAST        =  3, // CAST:       [opcode, ty, opty, opval]
-    FUNC_CODE_INST_GEP         =  4, // GEP:        [n, n x operands]
+    FUNC_CODE_INST_GEP         =  4, // GEP:        [n x operands]
     FUNC_CODE_INST_SELECT      =  5, // SELECT:     [ty, opval, opval, opval]
     FUNC_CODE_INST_EXTRACTELT  =  6, // EXTRACTELT: [opty, opval, opval]
     FUNC_CODE_INST_INSERTELT   =  7, // INSERTELT:  [ty, opval, opval, opval]
     FUNC_CODE_INST_SHUFFLEVEC  =  8, // SHUFFLEVEC: [ty, opval, opval, opval]
     FUNC_CODE_INST_CMP         =  9, // CMP:        [opty, opval, opval, pred]
     
-    FUNC_CODE_INST_RET         = 10, // RET:        [opty,opval<optional>]
+    FUNC_CODE_INST_RET         = 10, // RET:        [opty,opval<both optional>]
     FUNC_CODE_INST_BR          = 11, // BR:         [bb#, bb#, cond] or [bb#]
     FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, opval, n, n x ops]
     FUNC_CODE_INST_INVOKE      = 13, // INVOKE:     [fnty, op0,op1,op2, ...]
     FUNC_CODE_INST_UNWIND      = 14, // UNWIND
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
     
-    FUNC_CODE_INST_PHI         = 16, // PHI:        [ty, #ops, val0,bb0, ...]
+    FUNC_CODE_INST_PHI         = 16, // PHI:        [ty, val0,bb0, ...]
     FUNC_CODE_INST_MALLOC      = 17, // MALLOC:     [instty, op, align]
     FUNC_CODE_INST_FREE        = 18, // FREE:       [opty, op]
     FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
