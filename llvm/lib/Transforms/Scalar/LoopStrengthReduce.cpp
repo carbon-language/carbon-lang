@@ -19,7 +19,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
@@ -1043,12 +1043,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst)) {
         if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
           isAddress = true;
-      } else if (CallInst *CI = dyn_cast<CallInst>(UsersToProcess[i].Inst)) {
+      } else if (IntrinsicInst *II =
+                   dyn_cast<IntrinsicInst>(UsersToProcess[i].Inst)) {
         // Addressing modes can also be folded into prefetches.
-        Function *CalledFunc = CI->getCalledFunction();
-        if (CalledFunc != NULL &&
-            CalledFunc->getIntrinsicID() == Intrinsic::prefetch &&
-            CI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
+        if (II->getIntrinsicID() == Intrinsic::prefetch &&
+            II->getOperand(1) == UsersToProcess[i].OperandValToReplace)
           isAddress = true;
       }
       
