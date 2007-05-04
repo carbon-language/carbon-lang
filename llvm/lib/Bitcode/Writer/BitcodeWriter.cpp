@@ -19,6 +19,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/MathExtras.h"
@@ -86,8 +87,21 @@ static void WriteParamAttrTable(const ValueEnumerator &VE,
   const std::vector<const ParamAttrsList*> &Attrs = VE.getParamAttrs();
   if (Attrs.empty()) return;
   
+  Stream.EnterSubblock(bitc::PARAMATTR_BLOCK_ID, 3);
+
+  SmallVector<uint64_t, 64> Record;
+  for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
+    const ParamAttrsList *A = Attrs[i];
+    for (unsigned op = 0, e = A->size(); op != e; ++op) {
+      Record.push_back(A->getParamIndex(op));
+      Record.push_back(A->getParamAttrs(op));
+    }
+    
+    Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
+    Record.clear();
+  }
   
-  
+  Stream.ExitBlock();
 }
 
 /// WriteTypeTable - Write out the type table for a module.
