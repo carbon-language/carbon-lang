@@ -24,6 +24,7 @@
 
 namespace llvm {
   class MemoryBuffer;
+  class ParamAttrsList;
   
 class BitcodeReaderValueList : public User {
   std::vector<Use> Uses;
@@ -85,6 +86,11 @@ class BitcodeReader : public ModuleProvider {
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
   
+  /// ParamAttrs - The set of parameter attributes by index.  Index zero in the
+  /// file is for null, and is thus not represented here.  As such all indices
+  /// are off by one.
+  std::vector<const ParamAttrsList*> ParamAttrs;
+  
   /// FunctionBBs - While parsing a function body, this is a list of the basic
   /// blocks for the function.
   std::vector<BasicBlock*> FunctionBBs;
@@ -136,8 +142,15 @@ private:
     if (ID >= FunctionBBs.size()) return 0; // Invalid ID
     return FunctionBBs[ID];
   }
+  const ParamAttrsList *getParamAttrs(unsigned i) const {
+    if (i-1 < ParamAttrs.size())
+      return ParamAttrs[i-1];
+    return 0;
+  }
+
   
   bool ParseModule(const std::string &ModuleID);
+  bool ParseParamAttrBlock();
   bool ParseTypeTable();
   bool ParseTypeSymbolTable();
   bool ParseValueSymbolTable();

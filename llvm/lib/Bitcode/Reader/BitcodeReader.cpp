@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -26,6 +27,9 @@ BitcodeReader::~BitcodeReader() {
   delete Buffer;
 }
 
+//===----------------------------------------------------------------------===//
+//  Helper functions to implement forward reference resolution, etc.
+//===----------------------------------------------------------------------===//
 
 /// ConvertToString - Convert a string from a record into an std::string, return
 /// true on failure.
@@ -172,6 +176,67 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
     TypeList.push_back(OpaqueType::get());
   return TypeList.back().get();
 }
+
+//===----------------------------------------------------------------------===//
+//  Functions for parsing blocks from the bitcode file
+//===----------------------------------------------------------------------===//
+
+bool BitcodeReader::ParseParamAttrBlock() {
+  if (Stream.EnterSubBlock())
+    return Error("Malformed block record");
+  
+  if (!ParamAttrs.empty())
+    return Error("Multiple PARAMATTR blocks found!");
+  
+  SmallVector<uint64_t, 64> Record;
+  
+  ParamAttrsVector Attrs;
+  
+  // Read all the records.
+  while (1) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of PARAMATTR block");
+      return false;
+    }
+    
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    Record.clear();
+    switch (Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: ignore.
+      break;
+    case bitc::PARAMATTR_CODE_ENTRY: { // ENTRY: [paramidx0, attr0, ...]
+      if (Record.size() & 1)
+        return Error("Invalid ENTRY record");
+
+      ParamAttrsWithIndex PAWI;
+      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
+        PAWI.index = Record[i];
+        PAWI.attrs = Record[i+1];
+        Attrs.push_back(PAWI);
+      }
+      ParamAttrs.push_back(ParamAttrsList::get(Attrs));
+      Attrs.clear();
+      break;
+    }
+    }    
+  }
+}
+
 
 bool BitcodeReader::ParseTypeTable() {
   if (Stream.EnterSubBlock())
@@ -741,6 +806,10 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       default:  // Skip unknown content.
         if (Stream.SkipBlock())
           return Error("Malformed block record");
+        break;
+      case bitc::PARAMATTR_BLOCK_ID:
+        if (ParseParamAttrBlock())
+          return true;
         break;
       case bitc::TYPE_BLOCK_ID:
         if (ParseTypeTable())
