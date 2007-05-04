@@ -69,20 +69,19 @@ namespace bitc {
   /// TYPE blocks have codes for each type primitive they use.
   enum TypeCodes {
     TYPE_CODE_NUMENTRY =  1,   // TYPE_CODE_NUMENTRY: [numentries]
-    TYPE_CODE_META     =  2,   // TYPE_CODE_META: [metacode]... - Future use
     
     // Type Codes
-    TYPE_CODE_VOID     =  3,   // VOID
-    TYPE_CODE_FLOAT    =  4,   // FLOAT
-    TYPE_CODE_DOUBLE   =  5,   // DOUBLE
-    TYPE_CODE_LABEL    =  6,   // LABEL
-    TYPE_CODE_OPAQUE   =  7,   // OPAQUE
-    TYPE_CODE_INTEGER  =  8,   // INTEGER: [width]
-    TYPE_CODE_POINTER  =  9,   // POINTER: [pointee type]
-    TYPE_CODE_FUNCTION = 10,   // FUNCTION: [vararg, retty, #pararms, paramty N]
-    TYPE_CODE_STRUCT   = 11,   // STRUCT: [ispacked, #elts, eltty x N]
-    TYPE_CODE_ARRAY    = 12,   // ARRAY: [numelts, eltty]
-    TYPE_CODE_VECTOR   = 13    // VECTOR: [numelts, eltty]
+    TYPE_CODE_VOID     =  2,   // VOID
+    TYPE_CODE_FLOAT    =  3,   // FLOAT
+    TYPE_CODE_DOUBLE   =  4,   // DOUBLE
+    TYPE_CODE_LABEL    =  5,   // LABEL
+    TYPE_CODE_OPAQUE   =  6,   // OPAQUE
+    TYPE_CODE_INTEGER  =  7,   // INTEGER: [width]
+    TYPE_CODE_POINTER  =  8,   // POINTER: [pointee type]
+    TYPE_CODE_FUNCTION =  9,   // FUNCTION: [vararg, retty, #pararms, paramty N]
+    TYPE_CODE_STRUCT   = 10,   // STRUCT: [ispacked, #elts, eltty x N]
+    TYPE_CODE_ARRAY    = 11,   // ARRAY: [numelts, eltty]
+    TYPE_CODE_VECTOR   = 12    // VECTOR: [numelts, eltty]
     // Any other type code is assumed to be an unknown type.
   };
   
