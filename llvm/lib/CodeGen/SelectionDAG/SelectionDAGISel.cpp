@@ -2457,6 +2457,24 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   }
 }
 
+/// ExtractGlobalVariable - If C is a global variable, or a bitcast of one
+/// (possibly constant folded), return it.  Otherwise return NULL.
+static GlobalVariable *ExtractGlobalVariable (Constant *C) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+    return GV;
+  else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    if (CE->getOpcode() == Instruction::BitCast)
+      return dyn_cast<GlobalVariable>(CE->getOperand(0));
+    else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        if (!CE->getOperand(i)->isNullValue())
+          return NULL;
+      return dyn_cast<GlobalVariable>(CE->getOperand(0));
+    }
+  }
+  return NULL;
+}
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -2610,20 +2628,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // MachineModuleInfo.
       std::vector<GlobalVariable *> TyInfo;
       for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-        Constant *C = cast<Constant>(I.getOperand(i));
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
-          TyInfo.push_back(GV);
-        } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-          assert(CE->getOpcode() == Instruction::BitCast &&
-                 isa<GlobalVariable>(CE->getOperand(0))
-                 && "TypeInfo must be a global variable or NULL");
-          TyInfo.push_back(cast<GlobalVariable>(CE->getOperand(0)));
-        } else {
-          ConstantInt *CI = dyn_cast<ConstantInt>(C);
-          assert(CI && CI->isNullValue() &&
-                 "TypeInfo must be a global variable or NULL");
-          TyInfo.push_back(NULL);
-        }
+	Constant *C = cast<Constant>(I.getOperand(i));
+        GlobalVariable *GV = ExtractGlobalVariable(C);
+        assert (GV || (isa<ConstantInt>(C) &&
+                       cast<ConstantInt>(C)->isNullValue()) &&
+                "TypeInfo must be a global variable or NULL");
+        TyInfo.push_back(GV);
       }
       MMI->addCatchTypeInfo(CurMBB, TyInfo);
       
@@ -2651,18 +2661,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     
     if (MMI) {
       // Find the type id for the given typeinfo.
-      GlobalVariable *GV = NULL;
-      ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(1));
-      if (CE && CE->getOpcode() == Instruction::BitCast &&
-          isa<GlobalVariable>(CE->getOperand(0))) {
-        GV = cast<GlobalVariable>(CE->getOperand(0));
-      } else {
-        ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(1));
-        assert(CI && CI->getZExtValue() == 0 &&
-          "TypeInfo must be a global variable typeinfo or NULL");
-        GV = NULL;
-      }
-      
+      Constant *C = cast<Constant>(I.getOperand(1));
+      GlobalVariable *GV = ExtractGlobalVariable(C);
+      assert (GV || (isa<ConstantInt>(C) &&
+                     cast<ConstantInt>(C)->isNullValue()) &&
+              "TypeInfo must be a global variable or NULL");
+
       unsigned TypeID = MMI->getTypeIDFor(GV);
       setValue(&I, DAG.getConstant(TypeID, MVT::i32));
     } else {
