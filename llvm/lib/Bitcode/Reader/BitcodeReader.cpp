@@ -221,12 +221,6 @@ bool BitcodeReader::ParseTypeTable() {
         return Error("Invalid TYPE_CODE_NUMENTRY record");
       TypeList.reserve(Record[0]);
       continue;
-    case bitc::TYPE_CODE_META:      // TYPE_CODE_META: [metacode]...
-      // No metadata supported yet.
-      if (Record.size() < 1)
-        return Error("Invalid TYPE_CODE_META record");
-      continue;
-      
     case bitc::TYPE_CODE_VOID:      // VOID
       ResultTy = Type::VoidTy;
       break;
