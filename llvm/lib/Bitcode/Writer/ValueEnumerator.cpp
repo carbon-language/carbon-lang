@@ -24,6 +24,10 @@ static bool isFirstClassType(const std::pair<const llvm::Type*,
   return P.first->isFirstClassType();
 }
 
+static bool isIntegerValue(const std::pair<const Value*, unsigned> &V) {
+  return isa<IntegerType>(V.first->getType());
+}
+
 static bool CompareByFrequency(const std::pair<const llvm::Type*,
                                unsigned int> &P1,
                                const std::pair<const llvm::Type*,
@@ -46,6 +50,9 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I)
     EnumerateValue(I);
+  
+  // Remember what is the cutoff between globalvalue's and other constants.
+  unsigned FirstConstant = Values.size();
   
   // Enumerate the global variable initializers.
   for (Module::const_global_iterator I = M->global_begin(),
@@ -83,6 +90,9 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
       }
   }
   
+  // Optimize constant ordering.
+  OptimizeConstants(FirstConstant, Values.size());
+    
   // Sort the type table by frequency so that most commonly used types are early
   // in the table (have low bit-width).
   std::stable_sort(Types.begin(), Types.end(), CompareByFrequency);
@@ -95,14 +105,42 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Now that we rearranged the type table, rebuild TypeMap.
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     TypeMap[Types[i].first] = i+1;
-
-  // FIXME: Emit a marker into the module indicating which aggregates types can
-  // be dropped form the table.
   
   // FIXME: Sort value tables by frequency.
-    
-  // FIXME: Sort constants by type to reduce size.
 }
+
+// Optimize constant ordering.
+struct CstSortPredicate {
+  ValueEnumerator &VE;
+  CstSortPredicate(ValueEnumerator &ve) : VE(ve) {}
+  bool operator()(const std::pair<const Value*, unsigned> &LHS,
+                  const std::pair<const Value*, unsigned> &RHS) {
+    // Sort by plane.
+    if (LHS.first->getType() != RHS.first->getType())
+      return VE.getTypeID(LHS.first->getType()) < 
+             VE.getTypeID(RHS.first->getType());
+    // Then by frequency.
+    return LHS.second > RHS.second;
+  }
+};
+
+/// OptimizeConstants - Reorder constant pool for denser encoding.
+void ValueEnumerator::OptimizeConstants(unsigned CstStart, unsigned CstEnd) {
+  if (CstStart == CstEnd || CstStart+1 == CstEnd) return;
+  
+  CstSortPredicate P(*this);
+  std::stable_sort(Values.begin()+CstStart, Values.begin()+CstEnd, P);
+  
+  // Ensure that integer constants are at the start of the constant pool.  This
+  // is important so that GEP structure indices come before gep constant exprs.
+  std::partition(Values.begin()+CstStart, Values.begin()+CstEnd,
+                 isIntegerValue);
+  
+  // Rebuild the modified portion of ValueMap.
+  for (; CstStart != CstEnd; ++CstStart)
+    ValueMap[Values[CstStart].first] = CstStart+1;
+}
+
 
 /// EnumerateTypeSymbolTable - Insert all of the types in the specified symbol
 /// table.
@@ -224,6 +262,9 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
     BasicBlocks.push_back(BB);
     ValueMap[BB] = BasicBlocks.size();
   }
+  
+  // Optimize the constant layout.
+  OptimizeConstants(FirstFuncConstantID, Values.size());
   
   FirstInstID = Values.size();
   

@@ -110,6 +110,8 @@ public:
   void purgeFunction();
 
 private:
+  void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
+    
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
   void EnumerateParamAttrs(const ParamAttrsList *PAL);
