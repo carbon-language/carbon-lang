@@ -25,7 +25,17 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
-static const unsigned CurVersion = 0;
+/// These are manifest constants used by the bitcode writer. They do not need to
+/// be kept in sync with the reader, but need to be consistent within this file.
+enum {
+  CurVersion = 0,
+  
+  // VALUE_SYMTAB_BLOCK abbrev id's.
+  VST_ENTRY_8_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
+  VST_ENTRY_7_ABBREV
+  
+};
+
 
 static unsigned GetEncodedCastOpcode(unsigned Opcode) {
   switch (Opcode) {
@@ -703,13 +713,25 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   if (VST.empty()) return;
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
 
-  // 8-bit fixed width VST_ENTRY strings.
-  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
-  unsigned AbbrevID = Stream.EmitAbbrev(Abbv);
+  { // 8-bit fixed width VST_ENTRY strings.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+    if (Stream.EmitAbbrev(Abbv) != VST_ENTRY_8_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  
+  { // 7-bit fixed width VST_ENTRY strings.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+    if (Stream.EmitAbbrev(Abbv) != VST_ENTRY_7_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
   
   
   // FIXME: Set up the abbrev, we know how many values there are!
@@ -718,6 +740,18 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   
   for (ValueSymbolTable::const_iterator SI = VST.begin(), SE = VST.end();
        SI != SE; ++SI) {
+    
+    const ValueName &Name = *SI;
+    
+    // Figure out the encoding to use for the name.
+    bool is7Bit = true;
+    for (unsigned i = 0, e = Name.getKeyLength(); i != e; ++i)
+      if ((unsigned char)Name.getKeyData()[i] & 128) {
+        is7Bit = false;
+        break;
+      }
+    
+    
     unsigned AbbrevToUse = 0;
     
     // VST_ENTRY:   [valueid, namelen, namechar x N]
@@ -727,12 +761,12 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
       Code = bitc::VST_CODE_BBENTRY;
     } else {
       Code = bitc::VST_CODE_ENTRY;
-      AbbrevToUse = AbbrevID;
+      AbbrevToUse = is7Bit ? VST_ENTRY_7_ABBREV : VST_ENTRY_8_ABBREV;
     }
     
     NameVals.push_back(VE.getValueID(SI->getValue()));
-    for (const char *P = SI->getKeyData(),
-         *E = SI->getKeyData()+SI->getKeyLength(); P != E; ++P)
+    for (const char *P = Name.getKeyData(),
+         *E = Name.getKeyData()+Name.getKeyLength(); P != E; ++P)
       NameVals.push_back((unsigned char)*P);
     
     // Emit the finished record.
