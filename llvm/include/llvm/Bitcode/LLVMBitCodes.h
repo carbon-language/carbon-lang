@@ -28,11 +28,12 @@ namespace bitc {
     MODULE_BLOCK_ID          = 0,
   
     // Module sub-block id's
-    TYPE_BLOCK_ID            = 1,
-    CONSTANTS_BLOCK_ID       = 2,
-    FUNCTION_BLOCK_ID        = 3,
-    TYPE_SYMTAB_BLOCK_ID     = 4,
-    VALUE_SYMTAB_BLOCK_ID    = 5
+    PARAMATTR_BLOCK_ID       = 1,
+    TYPE_BLOCK_ID            = 2,
+    CONSTANTS_BLOCK_ID       = 3,
+    FUNCTION_BLOCK_ID        = 4,
+    TYPE_SYMTAB_BLOCK_ID     = 5,
+    VALUE_SYMTAB_BLOCK_ID    = 6
   };
   
   
@@ -58,6 +59,11 @@ namespace bitc {
     
     /// MODULE_CODE_PURGEVALS: [numvals]
     MODULE_CODE_PURGEVALS   = 10
+  };
+  
+  /// PARAMATTR blocks have code for defining a parameter attribute set.
+  enum ParamAttrCodes {
+    PARAMATTR_CODE_ENTRY = 1   // ENTRY: [paramidx0, attr0, paramidx1, attr1...]
   };
   
   /// TYPE blocks have codes for each type primitive they use.
