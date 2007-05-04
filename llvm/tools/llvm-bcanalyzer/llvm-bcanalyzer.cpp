@@ -80,6 +80,7 @@ static const char *GetBlockName(unsigned BlockID) {
   switch (BlockID) {
   default:                          return 0;
   case bitc::MODULE_BLOCK_ID:       return "MODULE_BLOCK";
+  case bitc::PARAMATTR_BLOCK_ID:    return "PARAMATTR_BLOCK";
   case bitc::TYPE_BLOCK_ID:         return "TYPE_BLOCK";
   case bitc::CONSTANTS_BLOCK_ID:    return "CONSTANTS_BLOCK";
   case bitc::FUNCTION_BLOCK_ID:     return "FUNCTION_BLOCK";
@@ -109,11 +110,15 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     case bitc::MODULE_CODE_ALIAS:       return "ALIAS";
     case bitc::MODULE_CODE_PURGEVALS:   return "PURGEVALS";
     }
+  case bitc::PARAMATTR_BLOCK_ID:
+    switch (CodeID) {
+    default: return 0;
+    case bitc::PARAMATTR_CODE_ENTRY: return "ENTRY";
+    }
   case bitc::TYPE_BLOCK_ID:
     switch (CodeID) {
     default: return 0;
     case bitc::TYPE_CODE_NUMENTRY: return "NUMENTRY";
-    case bitc::TYPE_CODE_META:     return "META";
     case bitc::TYPE_CODE_VOID:     return "VOID";
     case bitc::TYPE_CODE_FLOAT:    return "FLOAT";
     case bitc::TYPE_CODE_DOUBLE:   return "DOUBLE";
@@ -185,6 +190,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     switch (CodeID) {
     default: return 0;
     case bitc::VST_CODE_ENTRY: return "ENTRY";
+    case bitc::VST_CODE_BBENTRY: return "BBENTRY";
     }
   }
 }
