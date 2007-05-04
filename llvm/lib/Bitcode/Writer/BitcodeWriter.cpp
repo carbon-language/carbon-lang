@@ -609,7 +609,6 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     // Emit type/value pairs for varargs params.
     if (FTy->isVarArg()) {
       unsigned NumVarargs = I.getNumOperands()-3-FTy->getNumParams();
-      Vals.push_back(NumVarargs);
       for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
            i != e; ++i) {
         Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
