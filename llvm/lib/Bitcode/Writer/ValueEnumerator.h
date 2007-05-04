@@ -94,7 +94,7 @@ public:
   const std::vector<const BasicBlock*> &getBasicBlocks() const {
     return BasicBlocks; 
   }
-  const std::vector<const ParamAttrsList*> getParamAttrs() const {
+  const std::vector<const ParamAttrsList*> &getParamAttrs() const {
     return ParamAttrs;
   }
 
