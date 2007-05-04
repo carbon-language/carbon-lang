@@ -161,6 +161,10 @@ class ParamAttrsList : public FoldingSetNode {
       return attrs[attr_index].index;
     }
 
+    uint16_t getParamAttrsAtIndex(unsigned attr_index) const {
+      return attrs[attr_index].attrs;
+    }
+    
     /// Determines how many parameter attributes are set in this ParamAttrsList.
     /// This says nothing about how many parameters the function has. It also
     /// says nothing about the highest parameter index that has attributes. 
