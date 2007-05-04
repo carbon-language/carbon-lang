@@ -94,7 +94,7 @@ static void WriteParamAttrTable(const ValueEnumerator &VE,
     const ParamAttrsList *A = Attrs[i];
     for (unsigned op = 0, e = A->size(); op != e; ++op) {
       Record.push_back(A->getParamIndex(op));
-      Record.push_back(A->getParamAttrs(op));
+      Record.push_back(A->getParamAttrsAtIndex(op));
     }
     
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
