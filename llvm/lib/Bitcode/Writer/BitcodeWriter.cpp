@@ -267,22 +267,22 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     // Add an abbrev for common globals with no visibility or thread localness.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::MODULE_CODE_GLOBALVAR));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
                               Log2_32_Ceil(MaxGlobalType+1)));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 1)); // Constant.
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));      // Constant.
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));        // Initializer.
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 3)); // Linkage.
-    if (MaxAlignment == 0)                                     // Alignment.
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));      // Linkage.
+    if (MaxAlignment == 0)                                      // Alignment.
       Abbv->Add(BitCodeAbbrevOp(0));
     else {
       unsigned MaxEncAlignment = Log2_32(MaxAlignment)+1;
-      Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+      Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
                                Log2_32_Ceil(MaxEncAlignment+1)));
     }
     if (SectionMap.empty())                                    // Section.
       Abbv->Add(BitCodeAbbrevOp(0));
     else
-      Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
+      Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
                                Log2_32_Ceil(SectionMap.size()+1)));
     // Don't bother emitting vis + thread local.
     SimpleGVarAbbrev = Stream.EmitAbbrev(Abbv);
@@ -702,15 +702,14 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
                                   BitstreamWriter &Stream) {
   if (VST.empty()) return;
   Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
-  
-#if 0
+
+  // 8-bit fixed width VST_ENTRY strings.
   BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::VST_ENTRY));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth,
-                            Log2_32_Ceil(MaxGlobalType+1)));
-  // Don't bother emitting vis + thread local.
-  SimpleGVarAbbrev = Stream.EmitAbbrev(Abbv);
-#endif
+  Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+  unsigned AbbrevID = Stream.EmitAbbrev(Abbv);
   
   
   // FIXME: Set up the abbrev, we know how many values there are!
@@ -728,6 +727,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
       Code = bitc::VST_CODE_BBENTRY;
     } else {
       Code = bitc::VST_CODE_ENTRY;
+      AbbrevToUse = AbbrevID;
     }
     
     NameVals.push_back(VE.getValueID(SI->getValue()));
@@ -873,7 +873,7 @@ static void WriteBlockInfo(BitstreamWriter &Stream) {
   BitCodeAbbrev *Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8); // Value ID
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::FixedWidth, 3)); // Linkage.
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3)); // Linkage.
   
   xxx = Stream.EmitAbbrev(Abbv);
 #endif
