@@ -75,6 +75,13 @@ static enum {
 /// GetBlockName - Return a symbolic block name if known, otherwise return
 /// null.
 static const char *GetBlockName(unsigned BlockID) {
+  // Standard blocks for all bitcode files.
+  if (BlockID < bitc::FIRST_APPLICATION_BLOCKID) {
+    if (BlockID == bitc::BLOCKINFO_BLOCK_ID)
+      return "BLOCKINFO_BLOCK";
+    return 0;
+  }
+  
   if (CurStreamType != LLVMIRBitstream) return 0;
   
   switch (BlockID) {
@@ -92,6 +99,18 @@ static const char *GetBlockName(unsigned BlockID) {
 /// GetCodeName - Return a symbolic code name if known, otherwise return
 /// null.
 static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
+  // Standard blocks for all bitcode files.
+  if (BlockID < bitc::FIRST_APPLICATION_BLOCKID) {
+    if (BlockID == bitc::BLOCKINFO_BLOCK_ID) {
+      switch (CodeID) {
+      default: return 0;
+      case bitc::MODULE_CODE_VERSION:     return "VERSION";
+      }
+    }
+    return 0;
+  }
+  
+  
   if (CurStreamType != LLVMIRBitstream) return 0;
   
   switch (BlockID) {
@@ -231,6 +250,7 @@ static bool Error(const std::string &Err) {
 
 /// ParseBlock - Read a block, updating statistics, etc.
 static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
+  std::string Indent(IndentLevel*2, ' ');
   uint64_t BlockBitStart = Stream.GetCurrentBitNo();
   unsigned BlockID = Stream.ReadSubBlockID();
 
@@ -239,11 +259,20 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
   
   BlockStats.NumInstances++;
   
+  // BLOCKINFO is a special part of the stream.
+  if (BlockID == bitc::BLOCKINFO_BLOCK_ID) {
+    if (Dump) std::cerr << Indent << "<BLOCKINFO_BLOCK/>\n";
+    if (Stream.ReadBlockInfoBlock())
+      return Error("Malformed BlockInfoBlock");
+    uint64_t BlockBitEnd = Stream.GetCurrentBitNo();
+    BlockStats.NumBits += BlockBitEnd-BlockBitStart;
+    return false;
+  }
+  
   unsigned NumWords = 0;
-  if (Stream.EnterSubBlock(&NumWords))
+  if (Stream.EnterSubBlock(BlockID, &NumWords))
     return Error("Malformed block record");
 
-  std::string Indent(IndentLevel*2, ' ');
   const char *BlockName = 0;
   if (Dump) {
     std::cerr << Indent << "<";
@@ -315,7 +344,7 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
         for (unsigned i = 0, e = Record.size(); i != e; ++i)
           std::cerr << " op" << i << "=" << (int64_t)Record[i];
         
-        std::cerr << ">\n";
+        std::cerr << "/>\n";
       }
       
       break;
@@ -418,8 +447,9 @@ static int AnalyzeBitcode() {
               << Stats.NumAbbrevs/(double)Stats.NumInstances << "\n";
     std::cerr << "    Tot/Avg Records: " << Stats.NumRecords << "/"
               << Stats.NumRecords/(double)Stats.NumInstances << "\n";
-    std::cerr << "      % Abbrev Recs: " << (Stats.NumAbbreviatedRecords/
-                 (double)Stats.NumRecords)*100 << "\n";
+    if (Stats.NumRecords)
+      std::cerr << "      % Abbrev Recs: " << (Stats.NumAbbreviatedRecords/
+                   (double)Stats.NumRecords)*100 << "\n";
     std::cerr << "\n";
   }
   return 0;
