@@ -2,8 +2,6 @@
 ; intrinsic is supported natively or IntrinsicLowering provides it.
 ; RUN: llvm-as < %s > %t.bc
 ; RUN: lli --force-interpreter=true %t.bc
-; RUN: llc %t.bc -o /dev/null -f
-; XFAIL: *
 
 declare i32 @llvm.part.set.i32.i32.i32(i32 %x, i32 %rep, i32 %hi, i32 %lo)
 declare i16 @llvm.part.set.i16.i16.i16(i16 %x, i16 %rep, i32 %hi, i32 %lo)
