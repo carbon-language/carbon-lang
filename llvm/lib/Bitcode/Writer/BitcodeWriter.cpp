@@ -33,8 +33,8 @@ enum {
   // VALUE_SYMTAB_BLOCK abbrev id's.
   VST_ENTRY_8_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
   VST_ENTRY_7_ABBREV,
-  VST_BBENTRY_7_ABBREV
-  
+  VST_ENTRY_6_ABBREV,
+  VST_BBENTRY_6_ABBREV
 };
 
 
@@ -712,7 +712,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
                                   const ValueEnumerator &VE,
                                   BitstreamWriter &Stream) {
   if (VST.empty()) return;
-  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 3);
+  Stream.EnterSubblock(bitc::VALUE_SYMTAB_BLOCK_ID, 4);
 
   // FIXME: Set up the abbrev, we know how many values there are!
   // FIXME: We know if the type names can use 7-bit ascii.
@@ -725,12 +725,16 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     
     // Figure out the encoding to use for the name.
     bool is7Bit = true;
-    for (unsigned i = 0, e = Name.getKeyLength(); i != e; ++i)
-      if ((unsigned char)Name.getKeyData()[i] & 128) {
+    bool isChar6 = true;
+    for (const char *C = Name.getKeyData(), *E = C+Name.getKeyLength();
+         C != E; ++C) {
+      if (isChar6) 
+        isChar6 = BitCodeAbbrevOp::isChar6(*C);
+      if ((unsigned char)*C & 128) {
         is7Bit = false;
-        break;
+        break;  // don't bother scanning the rest.
       }
-    
+    }
     
     unsigned AbbrevToUse = VST_ENTRY_8_ABBREV;
     
@@ -739,10 +743,14 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
     unsigned Code;
     if (isa<BasicBlock>(SI->getValue())) {
       Code = bitc::VST_CODE_BBENTRY;
-      if (is7Bit) AbbrevToUse = VST_BBENTRY_7_ABBREV;
+      if (isChar6)
+        AbbrevToUse = VST_BBENTRY_6_ABBREV;
     } else {
       Code = bitc::VST_CODE_ENTRY;
-      if (is7Bit) AbbrevToUse = VST_ENTRY_7_ABBREV;
+      if (isChar6)
+        AbbrevToUse = VST_ENTRY_6_ABBREV;
+      else if (is7Bit)
+        AbbrevToUse = VST_ENTRY_7_ABBREV;
     }
     
     NameVals.push_back(VE.getValueID(SI->getValue()));
@@ -910,14 +918,24 @@ static void WriteBlockInfo(BitstreamWriter &Stream) {
                                    Abbv) != VST_ENTRY_7_ABBREV)
       assert(0 && "Unexpected abbrev ordering!");
   }
-  { // 7-bit fixed width VST_BBENTRY strings.
+  { // 6-bit char6 VST_ENTRY strings.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+    if (Stream.EmitBlockInfoAbbrev(bitc::VALUE_SYMTAB_BLOCK_ID,
+                                   Abbv) != VST_ENTRY_6_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  { // 6-bit char6 VST_BBENTRY strings.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_BBENTRY));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
     if (Stream.EmitBlockInfoAbbrev(bitc::VALUE_SYMTAB_BLOCK_ID,
-                                   Abbv) != VST_BBENTRY_7_ABBREV)
+                                   Abbv) != VST_BBENTRY_6_ABBREV)
       assert(0 && "Unexpected abbrev ordering!");
   }
   
