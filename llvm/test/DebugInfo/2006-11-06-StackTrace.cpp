@@ -8,7 +8,9 @@
 // RUN:   grep {#0  DeepStack::deepest.*(this=.*,.*x=33)}
 // RUN: gdb -q -batch -n -x %t.in %t.exe | \
 // RUN:   grep {#7  0x.* in main.*(argc=\[12\],.*argv=.*)}
-// XFAIL: i[1-9]86|alpha|ia64|arm|x86_64
+
+// Only works on ppc.  Should generalize?
+// XFAIL: i[1-9]86|alpha|ia64|arm|x86_64|amd64
 
 #include <stdlib.h>
 
