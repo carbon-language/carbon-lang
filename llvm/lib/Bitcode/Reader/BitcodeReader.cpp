@@ -805,6 +805,10 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
         if (Stream.SkipBlock())
           return Error("Malformed block record");
         break;
+      case bitc::BLOCKINFO_BLOCK_ID:
+        if (Stream.ReadBlockInfoBlock())
+          return Error("Malformed BlockInfoBlock");
+        break;
       case bitc::PARAMATTR_BLOCK_ID:
         if (ParseParamAttrBlock())
           return true;
