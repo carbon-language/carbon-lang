@@ -34,7 +34,13 @@ enum {
   VST_ENTRY_8_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
   VST_ENTRY_7_ABBREV,
   VST_ENTRY_6_ABBREV,
-  VST_BBENTRY_6_ABBREV
+  VST_BBENTRY_6_ABBREV,
+  
+  // CONSTANTS_BLOCK abbrev id's.
+  CONSTANTS_SETTYPE_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
+  CONSTANTS_INTEGER_ABBREV,
+  CONSTANTS_CE_CAST_Abbrev,
+  CONSTANTS_NULL_Abbrev
 };
 
 
@@ -396,11 +402,23 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
                            const ValueEnumerator &VE,
-                           BitstreamWriter &Stream) {
+                           BitstreamWriter &Stream, bool isGlobal) {
   if (FirstVal == LastVal) return;
   
-  Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 2);
+  Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 4);
 
+  unsigned AggregateAbbrev = 0;
+  unsigned GEPAbbrev = 0;
+  // If this is a constant pool for the module, emit module-specific abbrevs.
+  if (isGlobal) {
+    // Abbrev for CST_CODE_AGGREGATE.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_AGGREGATE));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, Log2_32_Ceil(LastVal+1)));
+    AggregateAbbrev = Stream.EmitAbbrev(Abbv);
+  }  
+  
   // FIXME: Install and use abbrevs to reduce size.  Install them globally so
   // they don't need to be reemitted for each function body.
   
@@ -414,7 +432,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     if (V->getType() != LastTy) {
       LastTy = V->getType();
       Record.push_back(VE.getTypeID(LastTy));
-      Stream.EmitRecord(bitc::CST_CODE_SETTYPE, Record);
+      Stream.EmitRecord(bitc::CST_CODE_SETTYPE, Record,
+                        CONSTANTS_SETTYPE_ABBREV);
       Record.clear();
     }
     
@@ -437,6 +456,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         else
           Record.push_back((-V << 1) | 1);
         Code = bitc::CST_CODE_INTEGER;
+        AbbrevToUse = CONSTANTS_INTEGER_ABBREV;
       } else {                             // Wide integers, > 64 bits in size.
         // We have an arbitrary precision integer value to write whose 
         // bit width is > 64. However, in canonical unsigned integer 
@@ -466,6 +486,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Code = bitc::CST_CODE_AGGREGATE;
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
+      AbbrevToUse = AggregateAbbrev;
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       switch (CE->getOpcode()) {
       default:
@@ -474,6 +495,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
           Record.push_back(GetEncodedCastOpcode(CE->getOpcode()));
           Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
           Record.push_back(VE.getValueID(C->getOperand(0)));
+          AbbrevToUse = CONSTANTS_CE_CAST_Abbrev;
         } else {
           assert(CE->getNumOperands() == 2 && "Unknown constant expr!");
           Code = bitc::CST_CODE_CE_BINOP;
@@ -488,6 +510,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
           Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
           Record.push_back(VE.getValueID(C->getOperand(i)));
         }
+        AbbrevToUse = GEPAbbrev;
         break;
       case Instruction::Select:
         Code = bitc::CST_CODE_CE_SELECT;
@@ -540,7 +563,7 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
   // We know globalvalues have been emitted by WriteModuleInfo.
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
     if (!isa<GlobalValue>(Vals[i].first)) {
-      WriteConstants(i, Vals.size(), VE, Stream);
+      WriteConstants(i, Vals.size(), VE, Stream, true);
       return;
     }
   }
@@ -821,7 +844,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   // If there are function-local constants, emit them now.
   unsigned CstStart, CstEnd;
   VE.getFunctionConstantRange(CstStart, CstEnd);
-  WriteConstants(CstStart, CstEnd, VE, Stream);
+  WriteConstants(CstStart, CstEnd, VE, Stream, false);
   
   // Finally, emit all the instructions, in order.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
@@ -875,60 +898,8 @@ static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
   Stream.ExitBlock();
 }
 
-
-/// WriteModule - Emit the specified module to the bitstream.
-static void WriteModule(const Module *M, BitstreamWriter &Stream) {
-  Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
-  
-  // Emit the version number if it is non-zero.
-  if (CurVersion) {
-    SmallVector<unsigned, 1> Vals;
-    Vals.push_back(CurVersion);
-    Stream.EmitRecord(bitc::MODULE_CODE_VERSION, Vals);
-  }
-  
-  // Analyze the module, enumerating globals, functions, etc.
-  ValueEnumerator VE(M);
-  
-  // Emit information about parameter attributes.
-  WriteParamAttrTable(VE, Stream);
-  
-  // Emit information describing all of the types in the module.
-  WriteTypeTable(VE, Stream);
-  
-  // Emit top-level description of module, including target triple, inline asm,
-  // descriptors for global variables, and function prototype info.
-  WriteModuleInfo(M, VE, Stream);
-  
-  // Emit constants.
-  WriteModuleConstants(VE, Stream);
-  
-  // If we have any aggregate values in the value table, purge them - these can
-  // only be used to initialize global variables.  Doing so makes the value
-  // namespace smaller for code in functions.
-  int NumNonAggregates = VE.PurgeAggregateValues();
-  if (NumNonAggregates != -1) {
-    SmallVector<unsigned, 1> Vals;
-    Vals.push_back(NumNonAggregates);
-    Stream.EmitRecord(bitc::MODULE_CODE_PURGEVALS, Vals);
-  }
-  
-  // Emit function bodies.
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    if (!I->isDeclaration())
-      WriteFunction(*I, VE, Stream);
-  
-  // Emit the type symbol table information.
-  WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);
-  
-  // Emit names for globals/functions etc.
-  WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
-  
-  Stream.ExitBlock();
-}
-
 // Emit blockinfo, which defines the standard abbreviations etc.
-static void WriteBlockInfo(BitstreamWriter &Stream) {
+static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   // We only want to emit block info records for blocks that have multiple
   // instances: CONSTANTS_BLOCK, FUNCTION_BLOCK and VALUE_SYMTAB_BLOCK.  Other
   // blocks can defined their abbrevs inline.
@@ -976,6 +947,100 @@ static void WriteBlockInfo(BitstreamWriter &Stream) {
       assert(0 && "Unexpected abbrev ordering!");
   }
   
+  { // SETTYPE abbrev for CONSTANTS_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_SETTYPE));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                              Log2_32_Ceil(VE.getTypes().size()+1)));
+    if (Stream.EmitBlockInfoAbbrev(bitc::CONSTANTS_BLOCK_ID,
+                                   Abbv) != CONSTANTS_SETTYPE_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  
+  { // INTEGER abbrev for CONSTANTS_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_INTEGER));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
+    if (Stream.EmitBlockInfoAbbrev(bitc::CONSTANTS_BLOCK_ID,
+                                   Abbv) != CONSTANTS_INTEGER_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  
+  { // CE_CAST abbrev for CONSTANTS_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CE_CAST));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4));  // cast opc
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,       // typeid
+                              Log2_32_Ceil(VE.getTypes().size()+1)));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));    // value id
+
+    if (Stream.EmitBlockInfoAbbrev(bitc::CONSTANTS_BLOCK_ID,
+                                   Abbv) != CONSTANTS_CE_CAST_Abbrev)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  { // NULL abbrev for CONSTANTS_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_NULL));
+    if (Stream.EmitBlockInfoAbbrev(bitc::CONSTANTS_BLOCK_ID,
+                                   Abbv) != CONSTANTS_NULL_Abbrev)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  
+  Stream.ExitBlock();
+}
+
+
+/// WriteModule - Emit the specified module to the bitstream.
+static void WriteModule(const Module *M, BitstreamWriter &Stream) {
+  Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
+  
+  // Emit the version number if it is non-zero.
+  if (CurVersion) {
+    SmallVector<unsigned, 1> Vals;
+    Vals.push_back(CurVersion);
+    Stream.EmitRecord(bitc::MODULE_CODE_VERSION, Vals);
+  }
+  
+  // Analyze the module, enumerating globals, functions, etc.
+  ValueEnumerator VE(M);
+
+  // Emit blockinfo, which defines the standard abbreviations etc.
+  WriteBlockInfo(VE, Stream);
+  
+  // Emit information about parameter attributes.
+  WriteParamAttrTable(VE, Stream);
+  
+  // Emit information describing all of the types in the module.
+  WriteTypeTable(VE, Stream);
+  
+  // Emit top-level description of module, including target triple, inline asm,
+  // descriptors for global variables, and function prototype info.
+  WriteModuleInfo(M, VE, Stream);
+  
+  // Emit constants.
+  WriteModuleConstants(VE, Stream);
+  
+  // If we have any aggregate values in the value table, purge them - these can
+  // only be used to initialize global variables.  Doing so makes the value
+  // namespace smaller for code in functions.
+  int NumNonAggregates = VE.PurgeAggregateValues();
+  if (NumNonAggregates != -1) {
+    SmallVector<unsigned, 1> Vals;
+    Vals.push_back(NumNonAggregates);
+    Stream.EmitRecord(bitc::MODULE_CODE_PURGEVALS, Vals);
+  }
+  
+  // Emit function bodies.
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+    if (!I->isDeclaration())
+      WriteFunction(*I, VE, Stream);
+  
+  // Emit the type symbol table information.
+  WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);
+  
+  // Emit names for globals/functions etc.
+  WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
+  
   Stream.ExitBlock();
 }
 
@@ -996,9 +1061,6 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
   Stream.Emit(0xE, 4);
   Stream.Emit(0xD, 4);
 
-  // Emit blockinfo, which defines the standard abbreviations etc.
-  WriteBlockInfo(Stream);
-  
   // Emit the module.
   WriteModule(M, Stream);
   
