@@ -203,7 +203,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // For the first iteration of the loop, we should use the precloned values for
   // PHI nodes.  Insert associations now.
-  DenseMap<const Value*, Value*> LastValueMap;
+  typedef DenseMap<const Value*, Value*> ValueMapTy;
+  ValueMapTy LastValueMap;
   std::vector<PHINode*> OrigPHINode;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
@@ -231,7 +232,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     
     for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
          E = LoopBlocks.end(); BB != E; ++BB) {
-      DenseMap<const Value*, Value*> ValueMap;
+      ValueMapTy ValueMap;
       BasicBlock *New = CloneBasicBlock(*BB, ValueMap, SuffixBuffer);
       Header->getParent()->getBasicBlockList().push_back(New);
 
@@ -250,8 +251,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
       // Update our running map of newest clones
       LastValueMap[*BB] = New;
-      for (DenseMap<const Value*, Value*>::iterator VI = ValueMap.begin(),
-           VE = ValueMap.end(); VI != VE; ++VI)
+      for (ValueMapTy::iterator VI = ValueMap.begin(), VE = ValueMap.end();
+           VI != VE; ++VI)
         LastValueMap[VI->first] = VI->second;
 
       L->addBasicBlockToLoop(New, *LI);
@@ -291,30 +292,28 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   
- 
-  // Update PHI nodes that reference the final latch block
+  // The latch block exits the loop.  If there are any PHI nodes in the
+  // successor blocks, update them to use the appropriate values computed as the
+  // last iteration of the loop.
   if (TripCount > 1) {
     SmallPtrSet<PHINode*, 8> Users;
     for (Value::use_iterator UI = LatchBlock->use_begin(),
          UE = LatchBlock->use_end(); UI != UE; ++UI)
       if (PHINode* phi = dyn_cast<PHINode>(*UI))
         Users.insert(phi);
-        
+    
+    BasicBlock *LastIterationBB = cast<BasicBlock>(LastValueMap[LatchBlock]);
     for (SmallPtrSet<PHINode*,8>::iterator SI = Users.begin(), SE = Users.end();
          SI != SE; ++SI) {
       PHINode *PN = *SI;
-      Value* InVal = PN->getIncomingValueForBlock(LatchBlock);
-      if (isa<Instruction>(InVal))
-        InVal = LastValueMap[InVal];
-      PN->removeIncomingValue(LatchBlock, false);
-      if (InVal)
-        PN->addIncoming(InVal, cast<BasicBlock>(LastValueMap[LatchBlock]));
-      if (PN->getNumIncomingValues() == 0) {
-        // Remove this phi node.
-        // If anyone is using this PHI, make them use a dummy value instead...
-        PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-        PN->eraseFromParent();
+      Value *InVal = PN->removeIncomingValue(LatchBlock, false);
+      // If this value was defined in the loop, take the value defined by the
+      // last iteration of the loop.
+      if (Instruction *InValI = dyn_cast<Instruction>(InVal)) {
+        if (L->contains(InValI->getParent()))
+          InVal = LastValueMap[InVal];
       }
+      PN->addIncoming(InVal, LastIterationBB);
     }
   }
 
