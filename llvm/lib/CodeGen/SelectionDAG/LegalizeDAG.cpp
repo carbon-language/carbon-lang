@@ -1881,7 +1881,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
 
         Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
-                          ST->getSrcValueOffset());
+                          ST->getSrcValueOffset(), ST->isVolatile(),
+                          ST->getAlignment());
 
         if (Hi.Val == NULL) {
           // Must be int <-> float one-to-one expansion.
@@ -1896,7 +1897,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // FIXME: This sets the srcvalue of both halves to be the same, which is
         // wrong.
         Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(),
-                          ST->getSrcValueOffset());
+                          ST->getSrcValueOffset(), ST->isVolatile(),
+                          std::min(ST->getAlignment(), IncrementSize));
         Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
         break;
       }
@@ -5667,8 +5669,18 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
                              PackVectorOp(Node->getOperand(0), EVT));
         break;
       } else {
-        // FIXME: UNIMP!
-        assert(0 && "Cast from unsupported vector type not implemented yet!");
+        // If the input vector type isn't legal, then go through memory.
+        SDOperand Ptr = CreateStackTemporary(NewVT);
+        // Get the alignment for the store.
+        const TargetData &TD = *TLI.getTargetData();
+        unsigned Align = 
+          TD.getABITypeAlignment(MVT::getTypeForValueType(NewVT));
+        
+        SDOperand St = DAG.getStore(DAG.getEntryNode(),
+                                    Node->getOperand(0), Ptr, NULL, 0, false,
+                                    Align);
+        Result = DAG.getLoad(NewVT, St, Ptr, 0, 0);
+        break;
       }
     }
     break;
