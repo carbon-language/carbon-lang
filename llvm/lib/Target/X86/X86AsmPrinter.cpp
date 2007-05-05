@@ -115,9 +115,7 @@ void X86SharedAsmPrinter::decorateName(std::string &Name,
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module &M) {
-  if (Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygMing() ||
-      Subtarget->isTargetDarwin()) {
+  if (TAI->doesSupportDebugInformation()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
   }

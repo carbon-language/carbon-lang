@@ -81,7 +81,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
       // Emit a local label that is preserved until the linker runs.
       JumpTableSpecialLabelPrefix = "l";
     }
-    
+
+    SupportsDebugInformation = true;
     NeedsSet = true;
     DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
     DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
@@ -97,26 +98,21 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     break;
 
   case X86Subtarget::isELF:
-    // Set up DWARF directives
-    HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
-    AbsoluteDebugSectionOffsets = true;
-    AbsoluteEHSectionOffsets = false;
-    // bool HasLEB128; // Defaults to false.
-    // hasDotLoc - True if target asm supports .loc directives.
-    // bool HasDotLoc; // Defaults to false.
-    // HasDotFile - True if target asm supports .file directives.
-    // bool HasDotFile; // Defaults to false.
     ReadOnlySection = "\t.section\t.rodata\n";
     FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
     EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
-    SixteenByteConstantSection =
-                             "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
+    SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
     CStringSection = "\t.section\t.rodata.str1.1,\"aMS\",@progbits,1";
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
     SetDirective = "\t.set\t";
     PCSymbol = ".";
-    
+
+    // Set up DWARF directives
+    HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+    AbsoluteDebugSectionOffsets = true;
+    AbsoluteEHSectionOffsets = false;
+    SupportsDebugInformation = true;
     DwarfRequiresFrameSection = false;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
     DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
@@ -144,14 +140,15 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     StaticCtorsSection = "\t.section .ctors,\"aw\"";
     StaticDtorsSection = "\t.section .dtors,\"aw\"";
     HiddenDirective = NULL;
+    PrivateGlobalPrefix = "L";  // Prefix for private global symbols
+    WeakRefDirective = "\t.weak\t";
+    SetDirective = "\t.set\t";
 
     // Set up DWARF directives
     HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
     AbsoluteDebugSectionOffsets = true;
     AbsoluteEHSectionOffsets = false;
-    PrivateGlobalPrefix = "L";  // Prefix for private global symbols
-    WeakRefDirective = "\t.weak\t";
-    SetDirective = "\t.set\t";
+    SupportsDebugInformation = true;
     DwarfRequiresFrameSection = false;
     DwarfSectionOffsetDirective = "\t.secrel32\t";
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"dr\"";

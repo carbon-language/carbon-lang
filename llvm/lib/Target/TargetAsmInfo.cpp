@@ -80,6 +80,7 @@ TargetAsmInfo::TargetAsmInfo() :
   HasLEB128(false),
   HasDotLoc(false),
   HasDotFile(false),
+  SupportsDebugInformation(false),
   SupportsExceptionHandling(false),
   DwarfRequiresFrameSection(true),
   DwarfSectionOffsetDirective(0),

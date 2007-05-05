@@ -1955,7 +1955,7 @@ private:
     didInitial = true;
     
     // Dwarf sections base addresses.
-    if (TAI->getDwarfRequiresFrameSection()) {
+    if (TAI->doesDwarfRequireFrameSection()) {
       Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
       EmitLabel("section_frame", 0);
     }
@@ -2324,7 +2324,7 @@ private:
   /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
   ///
   void EmitInitialDebugFrame() {
-    if (!TAI->getDwarfRequiresFrameSection())
+    if (!TAI->doesDwarfRequireFrameSection())
       return;
 
     int stackGrowth =
@@ -2367,7 +2367,7 @@ private:
   /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
   /// section.
   void EmitFunctionDebugFrame() {
-    if (!TAI->getDwarfRequiresFrameSection())
+    if (!TAI->doesDwarfRequireFrameSection())
       return;
        
     // Start the dwarf frame section.
@@ -3124,7 +3124,7 @@ public:
     
     if (MMI &&
         ExceptionHandling &&
-        TAI->getSupportsExceptionHandling()) {
+        TAI->doesSupportExceptionHandling()) {
       shouldEmit = true;
       // Assumes in correct section after the entry point.
       EmitLabel("eh_func_begin", ++SubprogramCount);

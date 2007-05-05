@@ -282,8 +282,13 @@ namespace llvm {
     /// HasDotFile - True if target asm supports .file directives.
     ///
     bool HasDotFile; // Defaults to false.
-    
-    /// SupportsExceptionHandling - True if target supports exception handling.
+
+    /// SupportsDebugInformation - True if target supports emission of debugging
+    /// information.
+    bool SupportsDebugInformation;
+        
+    /// SupportsExceptionHandling - True if target supports
+    /// exception handling.
     ///
     bool SupportsExceptionHandling; // Defaults to false.
     
@@ -549,10 +554,13 @@ namespace llvm {
     bool hasDotFile() const {
       return HasDotFile;
     }
-    bool getSupportsExceptionHandling() const {
+    bool doesSupportDebugInformation() const {
+      return SupportsDebugInformation;
+    }
+    bool doesSupportExceptionHandling() const {
       return SupportsExceptionHandling;
     }
-    bool getDwarfRequiresFrameSection() const {
+    bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;
     }
     const char *getDwarfSectionOffsetDirective() const {

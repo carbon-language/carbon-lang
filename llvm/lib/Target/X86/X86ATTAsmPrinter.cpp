@@ -71,9 +71,7 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  if (Subtarget->isTargetDarwin() ||
-      Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygMing()) {
+  if (TAI->doesSupportDebugInformation()) {
     // Let PassManager know we need debug information and relay
     // the MachineModuleInfo address on to DwarfWriter.
     DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
@@ -150,9 +148,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        F->getLinkage() == Function::WeakLinkage))
     O << "Lllvm$workaround$fake$stub$" << CurrentFnName << ":\n";
 
-  if (Subtarget->isTargetDarwin() ||
-      Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygMing()) {
+  if (TAI->doesSupportDebugInformation()) {
     // Emit pre-function debug information.
     DW.BeginFunction(&MF);
   }
@@ -173,22 +169,17 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  // Print out jump tables referenced by the function.
-  
-  // Mac OS X requires that the jump table follow the function, so that the jump
-  // table is part of the same atom that the function is in.
-  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
-  
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (Subtarget->isTargetDarwin() ||
-      Subtarget->isTargetELF() ||
-      Subtarget->isTargetCygMing()) {
+  if (TAI->doesSupportDebugInformation()) {
     // Emit post-function debug information.
     DW.EndFunction();
   }
 
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+  
   // We didn't modify anything.
   return false;
 }
