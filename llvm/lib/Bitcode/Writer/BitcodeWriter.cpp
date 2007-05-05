@@ -798,24 +798,32 @@ static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
   
   Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
   
-  // FIXME: Set up the abbrev, we know how many types there are!
-  // FIXME: We know if the type names can use 7-bit ascii.
+  // 7-bit fixed width VST_CODE_ENTRY strings.
+  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+  unsigned V7Abbrev = Stream.EmitAbbrev(Abbv);
   
   SmallVector<unsigned, 64> NameVals;
   
   for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
        TI != TE; ++TI) {
-    unsigned AbbrevToUse = 0;
-    
-    // TST_ENTRY: [typeid, namelen, namechar x N]
+    // TST_ENTRY: [typeid, namechar x N]
     NameVals.push_back(VE.getTypeID(TI->second));
     
     const std::string &Str = TI->first;
-    for (unsigned i = 0, e = Str.size(); i != e; ++i)
-      NameVals.push_back(Str[i]);
+    bool is7Bit = true;
+    for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+      NameVals.push_back((unsigned char)Str[i]);
+      if (Str[i] & 128)
+        is7Bit = false;
+    }
     
     // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, AbbrevToUse);
+    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, is7Bit ? V7Abbrev : 0);
     NameVals.clear();
   }
   
