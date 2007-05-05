@@ -121,7 +121,40 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::TYPE_BLOCK_ID, 4 /*count from # abbrevs */);
   SmallVector<uint64_t, 64> TypeVals;
   
-  // FIXME: Set up abbrevs now that we know the width of the type fields, etc.
+  // Abbrev for TYPE_CODE_POINTER.
+  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_POINTER));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  unsigned PtrAbbrev = Stream.EmitAbbrev(Abbv);
+  
+  // Abbrev for TYPE_CODE_FUNCTION.
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_FUNCTION));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // isvararg
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getParamAttrs().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  unsigned FunctionAbbrev = Stream.EmitAbbrev(Abbv);
+  
+  // Abbrev for TYPE_CODE_STRUCT.
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // ispacked
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  unsigned StructAbbrev = Stream.EmitAbbrev(Abbv);
+ 
+  // Abbrev for TYPE_CODE_ARRAY.
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_ARRAY));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));   // size
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  unsigned ArrayAbbrev = Stream.EmitAbbrev(Abbv);
   
   // Emit an entry count so the reader can reserve space.
   TypeVals.push_back(TypeList.size());
@@ -151,28 +184,31 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       // POINTER: [pointee type]
       Code = bitc::TYPE_CODE_POINTER;
       TypeVals.push_back(VE.getTypeID(cast<PointerType>(T)->getElementType()));
+      AbbrevToUse = PtrAbbrev;
       break;
 
     case Type::FunctionTyID: {
       const FunctionType *FT = cast<FunctionType>(T);
-      // FUNCTION: [isvararg, attrid, #pararms, paramty x N]
+      // FUNCTION: [isvararg, attrid, retty, paramty x N]
       Code = bitc::TYPE_CODE_FUNCTION;
       TypeVals.push_back(FT->isVarArg());
       TypeVals.push_back(VE.getParamAttrID(FT->getParamAttrs()));
       TypeVals.push_back(VE.getTypeID(FT->getReturnType()));
       for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
         TypeVals.push_back(VE.getTypeID(FT->getParamType(i)));
+      AbbrevToUse = FunctionAbbrev;
       break;
     }
     case Type::StructTyID: {
       const StructType *ST = cast<StructType>(T);
-      // STRUCT: [ispacked, #elts, eltty x N]
+      // STRUCT: [ispacked, eltty x N]
       Code = bitc::TYPE_CODE_STRUCT;
       TypeVals.push_back(ST->isPacked());
       // Output all of the element types.
       for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
+      AbbrevToUse = StructAbbrev;
       break;
     }
     case Type::ArrayTyID: {
@@ -181,6 +217,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       Code = bitc::TYPE_CODE_ARRAY;
       TypeVals.push_back(AT->getNumElements());
       TypeVals.push_back(VE.getTypeID(AT->getElementType()));
+      AbbrevToUse = ArrayAbbrev;
       break;
     }
     case Type::VectorTyID: {
