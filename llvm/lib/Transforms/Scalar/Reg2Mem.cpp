@@ -55,7 +55,8 @@ namespace {
       if (!F.isDeclaration()) {
         //give us a clean block
         BasicBlock* bbold = &F.getEntryBlock();
-        BasicBlock* bbnew = new BasicBlock("allocablock", &F, &F.getEntryBlock());
+        BasicBlock* bbnew = new BasicBlock("allocablock", &F, 
+                                           &F.getEntryBlock());
         new BranchInst(bbold, bbnew);
 
         //find the instructions

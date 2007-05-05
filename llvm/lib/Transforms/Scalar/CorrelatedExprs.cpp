@@ -353,9 +353,9 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   //
   std::vector<BasicBlock*> children;
   EF->getChildren(BB, children);
-  if (!RI.empty()) {        // Time opt: only propagate if we can change something
-    for (std::vector<BasicBlock*>::iterator CI = children.begin(), E = children.end();
-         CI != E; ++CI) {
+  if (!RI.empty()) {     // Time opt: only propagate if we can change something
+    for (std::vector<BasicBlock*>::iterator CI = children.begin(), 
+         E = children.end(); CI != E; ++CI) {
       assert(RegionInfoMap.find(*CI) == RegionInfoMap.end() &&
              "RegionInfo should be calculated in dominanace order!");
       getRegionInfo(*CI) = RI;
@@ -383,8 +383,8 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
     }
 
   // Now that all of our successors have information, recursively process them.
-  for (std::vector<BasicBlock*>::iterator CI = children.begin(), E = children.end();
-       CI != E; ++CI)
+  for (std::vector<BasicBlock*>::iterator CI = children.begin(), 
+       E = children.end(); CI != E; ++CI)
     Changed |= TransformRegion(*CI, VisitedBlocks);
 
   return Changed;

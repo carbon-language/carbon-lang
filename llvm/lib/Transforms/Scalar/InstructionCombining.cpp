@@ -6419,7 +6419,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
               Offset += TySize;
               assert(Offset >= 0);
             }
-            assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
+            assert((uint64_t)Offset < (uint64_t)TySize &&"Out of range offset");
           }
           
           NewIndices.push_back(ConstantInt::get(IntPtrTy, FirstIdx));
@@ -6932,8 +6932,8 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       if (Instruction *V = PromoteCastOfAllocation(CI, *AI))
         return V;
     
-    // If the source and destination are pointers, and this cast is equivalent to
-    // a getelementptr X, 0, 0, 0...  turn it into the appropriate getelementptr.
+    // If the source and destination are pointers, and this cast is equivalent
+    // to a getelementptr X, 0, 0, 0...  turn it into the appropriate gep.
     // This can enhance SROA and other transforms that want type-safe pointers.
     Constant *ZeroUInt = Constant::getNullValue(Type::Int32Ty);
     unsigned NumZeros = 0;
@@ -8973,15 +8973,15 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
     if (!OtherStore || OtherStore->getOperand(1) != SI.getOperand(1))
       return false;
   } else {
-    // Otherwise, the other block ended with a conditional branch.  If one of the
+    // Otherwise, the other block ended with a conditional branch. If one of the
     // destinations is StoreBB, then we have the if/then case.
     if (OtherBr->getSuccessor(0) != StoreBB && 
         OtherBr->getSuccessor(1) != StoreBB)
       return false;
     
     // Okay, we know that OtherBr now goes to Dest and StoreBB, so this is an
-    // if/then triangle.  See if there is a store to the same ptr as SI that lives
-    // in OtherBB.
+    // if/then triangle.  See if there is a store to the same ptr as SI that
+    // lives in OtherBB.
     for (;; --BBI) {
       // Check to see if we find the matching store.
       if ((OtherStore = dyn_cast<StoreInst>(BBI))) {
@@ -8989,8 +8989,8 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
           return false;
         break;
       }
-      // If we find something that may be using the stored value, or if we run out
-      // of instructions, we can't do the xform.
+      // If we find something that may be using the stored value, or if we run
+      // out of instructions, we can't do the xform.
       if (isa<LoadInst>(BBI) || BBI->mayWriteToMemory() ||
           BBI == OtherBB->begin())
         return false;
