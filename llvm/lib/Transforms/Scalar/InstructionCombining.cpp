@@ -6404,21 +6404,25 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         if (GEPIdxTy->isSized()) {
           SmallVector<Value*, 8> NewIndices;
           
-          // Start with the index over the outer type.
+          // Start with the index over the outer type.  Note that the type size
+          // might be zero (even if the offset isn't zero) if the indexed type
+          // is something like [0 x {int, int}]
           const Type *IntPtrTy = TD->getIntPtrType();
-          int64_t TySize = TD->getTypeSize(GEPIdxTy);
-          int64_t FirstIdx = Offset/TySize;
-          Offset %= TySize;
+          int64_t FirstIdx = 0;
+          if (int64_t TySize = TD->getTypeSize(GEPIdxTy)) {
+            FirstIdx = Offset/TySize;
+            Offset %= TySize;
           
-          // Handle silly modulus not returning values values [0..TySize).
-          if (Offset < 0) {
-            --FirstIdx;
-            Offset += TySize;
-            assert(Offset >= 0);
+            // Handle silly modulus not returning values values [0..TySize).
+            if (Offset < 0) {
+              --FirstIdx;
+              Offset += TySize;
+              assert(Offset >= 0);
+            }
+            assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
           }
           
           NewIndices.push_back(ConstantInt::get(IntPtrTy, FirstIdx));
-          assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
 
           // Index into the types.  If we fail, set OrigBase to null.
           while (Offset) {
