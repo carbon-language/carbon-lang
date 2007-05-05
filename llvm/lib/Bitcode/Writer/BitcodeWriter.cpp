@@ -40,7 +40,10 @@ enum {
   CONSTANTS_SETTYPE_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
   CONSTANTS_INTEGER_ABBREV,
   CONSTANTS_CE_CAST_Abbrev,
-  CONSTANTS_NULL_Abbrev
+  CONSTANTS_NULL_Abbrev,
+  
+  // FUNCTION_BLOCK abbrev id's.
+  FUNCTION_INST_LOAD_ABBREV = bitc::FIRST_APPLICATION_ABBREV
 };
 
 
@@ -722,6 +725,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     Vals.push_back(VE.getValueID(I.getOperand(0))); // ptr.
     Vals.push_back(Log2_32(cast<LoadInst>(I).getAlignment())+1);
     Vals.push_back(cast<LoadInst>(I).isVolatile());
+    AbbrevToUse = FUNCTION_INST_LOAD_ABBREV;
     break;
   case Instruction::Store:
     Code = bitc::FUNC_CODE_INST_STORE;
@@ -947,6 +951,8 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       assert(0 && "Unexpected abbrev ordering!");
   }
   
+  
+  
   { // SETTYPE abbrev for CONSTANTS_BLOCK.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_SETTYPE));
@@ -983,6 +989,21 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_NULL));
     if (Stream.EmitBlockInfoAbbrev(bitc::CONSTANTS_BLOCK_ID,
                                    Abbv) != CONSTANTS_NULL_Abbrev)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  
+  // FIXME: This should only use space for first class types!
+ 
+  { // INST_LOAD abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_LOAD));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,       // typeid
+                              Log2_32_Ceil(VE.getTypes().size()+1)));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Ptr
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 4)); // Align
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // volatile
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_LOAD_ABBREV)
       assert(0 && "Unexpected abbrev ordering!");
   }
   
