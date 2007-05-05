@@ -2725,7 +2725,7 @@ private:
   ///
   bool shouldEmit;
   
-  /// FuncCPPPersonality - C++ persoanlity function.
+  /// FuncCPPPersonality - C++ personality function.
   ///
   Function *FuncCPPPersonality;
 
