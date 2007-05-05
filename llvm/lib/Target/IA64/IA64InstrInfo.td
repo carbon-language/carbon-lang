@@ -162,6 +162,8 @@ def TPCMPIMM8NE : AForm<0x03, 0x0b,
 // zero extend a bool (predicate reg) into an integer reg
 def ZXTb : Pat<(zext PR:$src),
           (TPCADDIMM22 (ADDS r0, 0), 1, PR:$src)>;
+def AXTb : Pat<(anyext PR:$src),
+          (TPCADDIMM22 (ADDS r0, 0), 1, PR:$src)>; 
 
 // normal sign/zero-extends
 def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src",
