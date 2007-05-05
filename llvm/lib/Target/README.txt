@@ -18,25 +18,6 @@ This has a number of uses:
 
 //===---------------------------------------------------------------------===//
 
-FreeBench/mason contains code like this:
-
-typedef struct { int a; int b; int c; } p_type;
-extern int m[];
-p_type m0u(p_type *p) {
-  int m[]={0, 8, 1, 2, 16, 5, 13, 7, 14, 9, 3, 4, 11, 12, 15, 10, 17, 6};
-  p_type pu;
-  pu.a = m[p->a];
-  pu.b = m[p->b];
-  pu.c = m[p->c];
-  return pu;
-}
-
-We currently compile this into a memcpy from a static array into 'm', then
-a bunch of loads from m.  It would be better to avoid the memcpy and just do
-loads from the static array.
-
-//===---------------------------------------------------------------------===//
-
 Make the PPC branch selector target independant
 
 //===---------------------------------------------------------------------===//
@@ -111,6 +92,8 @@ int bar(int x, int y) {
 int foo(int z, int n) {
   return bar(z, n) + bar(2*z, 2*n);
 }
+
+Reassociate should handle the example in GCC PR16157.
 
 //===---------------------------------------------------------------------===//
 
@@ -187,17 +170,18 @@ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17687
 
 Scalar Repl cannot currently promote this testcase to 'ret long cst':
 
-        %struct.X = type { int, int }
+        %struct.X = type { i32, i32 }
         %struct.Y = type { %struct.X }
-ulong %bar() {
-        %retval = alloca %struct.Y, align 8             
-        %tmp12 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 0
-        store int 0, int* %tmp12
-        %tmp15 = getelementptr %struct.Y* %retval, int 0, uint 0, uint 1
-        store int 1, int* %tmp15
-        %retval = bitcast %struct.Y* %retval to ulong*
-        %retval = load ulong* %retval
-        ret ulong %retval
+
+define i64 @bar() {
+        %retval = alloca %struct.Y, align 8
+        %tmp12 = getelementptr %struct.Y* %retval, i32 0, i32 0, i32 0
+        store i32 0, i32* %tmp12
+        %tmp15 = getelementptr %struct.Y* %retval, i32 0, i32 0, i32 1
+        store i32 1, i32* %tmp15
+        %retval.upgrd.1 = bitcast %struct.Y* %retval to i64*
+        %retval.upgrd.2 = load i64* %retval.upgrd.1
+        ret i64 %retval.upgrd.2
 }
 
 it should be extended to do so.
@@ -208,16 +192,14 @@ it should be extended to do so.
 
         %struct..0anon = type { <4 x float> }
 
-implementation   ; Functions:
-
-void %test1(<4 x float> %V, float* %P) {
+define void @test1(<4 x float> %V, float* %P) {
         %u = alloca %struct..0anon, align 16
-        %tmp = getelementptr %struct..0anon* %u, int 0, uint 0
+        %tmp = getelementptr %struct..0anon* %u, i32 0, i32 0
         store <4 x float> %V, <4 x float>* %tmp
         %tmp1 = bitcast %struct..0anon* %u to [4 x float]*
-        %tmp = getelementptr [4 x float]* %tmp1, int 0, int 1
-        %tmp = load float* %tmp
-        %tmp3 = mul float %tmp, 2.000000e+00
+        %tmp.upgrd.1 = getelementptr [4 x float]* %tmp1, i32 0, i32 1
+        %tmp.upgrd.2 = load float* %tmp.upgrd.1
+        %tmp3 = mul float %tmp.upgrd.2, 2.000000e+00
         store float %tmp3, float* %P
         ret void
 }
@@ -409,3 +391,36 @@ LBB1_2: @bb
 
 //===---------------------------------------------------------------------===//
 
+Tail call elim should be more aggressive, checking to see if the call is
+followed by an uncond branch to an exit block.
+
+; This testcase is due to tail-duplication not wanting to copy the return
+; instruction into the terminating blocks because there was other code
+; optimized out of the function after the taildup happened.
+;RUN: llvm-upgrade < %s | llvm-as | opt -tailcallelim | llvm-dis | not grep call
+
+int %t4(int %a) {
+entry:
+        %tmp.1 = and int %a, 1
+        %tmp.2 = cast int %tmp.1 to bool
+        br bool %tmp.2, label %then.0, label %else.0
+
+then.0:
+        %tmp.5 = add int %a, -1
+        %tmp.3 = call int %t4( int %tmp.5 )
+        br label %return
+
+else.0:
+        %tmp.7 = setne int %a, 0
+        br bool %tmp.7, label %then.1, label %return
+
+then.1:
+        %tmp.11 = add int %a, -2
+        %tmp.9 = call int %t4( int %tmp.11 )
+        br label %return
+
+return:
+        %result.0 = phi int [ 0, %else.0 ], [ %tmp.3, %then.0 ],
+                            [ %tmp.9, %then.1 ]
+        ret int %result.0
+}
