@@ -446,6 +446,7 @@ public:
       }
 
       // Read a record.
+      Record.clear();
       switch (ReadRecord(Code, Record)) {
       default: break;  // Default behavior, ignore unknown content.
       case bitc::BLOCKINFO_CODE_SETBID:
