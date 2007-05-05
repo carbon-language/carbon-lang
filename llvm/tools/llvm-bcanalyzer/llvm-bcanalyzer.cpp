@@ -312,11 +312,17 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
       }
       return false;
     } 
-    case bitc::ENTER_SUBBLOCK:
+    case bitc::ENTER_SUBBLOCK: {
+      uint64_t SubBlockBitStart = Stream.GetCurrentBitNo();
       if (ParseBlock(Stream, IndentLevel+1))
         return true;
       ++BlockStats.NumSubBlocks;
+      uint64_t SubBlockBitEnd = Stream.GetCurrentBitNo();
+      
+      // Don't include subblock sizes in the size of this block.
+      BlockBitStart += SubBlockBitEnd-SubBlockBitStart;
       break;
+    }
     case bitc::DEFINE_ABBREV:
       Stream.ReadAbbrevRecord();
       ++BlockStats.NumAbbrevs;
