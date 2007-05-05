@@ -258,7 +258,7 @@ private:
       Emit(V, Op.getEncodingData());
       break;
     case BitCodeAbbrevOp::VBR:
-      EmitVBR(V, Op.getEncodingData());
+      EmitVBR64(V, Op.getEncodingData());
       break;
     case BitCodeAbbrevOp::Char6:
       Emit(BitCodeAbbrevOp::EncodeChar6((char)V), 6);
