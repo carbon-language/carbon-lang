@@ -1131,26 +1131,6 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       NumGPRSpills++;
     }
 
-    // If stack and double are 8-byte aligned and we are spilling an odd number
-    // of GPRs. Spill one extra callee save GPR so we won't have to pad between
-    // the integer and double callee save areas.
-    unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
-    if (TargetAlign == 8 && (NumGPRSpills & 1)) {
-      if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
-        unsigned Reg = UnspilledCS1GPRs.front();
-        MF.setPhysRegUsed(Reg);
-        AFI->setCSRegisterIsSpilled(Reg);
-        if (!isReservedReg(MF, Reg))
-          ExtraCSSpill = true;
-      } else if (!UnspilledCS2GPRs.empty()) {
-        unsigned Reg = UnspilledCS2GPRs.front();
-        MF.setPhysRegUsed(Reg);
-        AFI->setCSRegisterIsSpilled(Reg);
-        if (!isReservedReg(MF, Reg))
-          ExtraCSSpill = true;
-      }
-    }
-
     // Estimate if we might need to scavenge a register at some point in order
     // to materialize a stack offset. If so, either spill one additiona
     // callee-saved register or reserve a special spill slot to facilitate
@@ -1180,29 +1160,26 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       if (Size >= Limit) {
         // If any non-reserved CS register isn't spilled, just spill one or two
         // extra. That should take care of it!
-        unsigned NumExtras = TargetAlign / 4;
-        SmallVector<unsigned, 2> Extras;
-        while (NumExtras && !UnspilledCS1GPRs.empty()) {
+        unsigned Extra;
+        while (!ExtraCSSpill && !UnspilledCS1GPRs.empty()) {
           unsigned Reg = UnspilledCS1GPRs.back();
           UnspilledCS1GPRs.pop_back();
           if (!isReservedReg(MF, Reg)) {
-            Extras.push_back(Reg);
-            NumExtras--;
+            Extra = Reg;
+            ExtraCSSpill = true;
           }
         }
-        while (NumExtras && !UnspilledCS2GPRs.empty()) {
+        while (!ExtraCSSpill && !UnspilledCS2GPRs.empty()) {
           unsigned Reg = UnspilledCS2GPRs.back();
           UnspilledCS2GPRs.pop_back();
           if (!isReservedReg(MF, Reg)) {
-            Extras.push_back(Reg);
-            NumExtras--;
+            Extra = Reg;
+            ExtraCSSpill = true;
           }
         }
-        if (Extras.size() && NumExtras == 0) {
-          for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
-            MF.setPhysRegUsed(Extras[i]);
-            AFI->setCSRegisterIsSpilled(Extras[i]);
-          }
+        if (ExtraCSSpill) {
+          MF.setPhysRegUsed(Extra);
+          AFI->setCSRegisterIsSpilled(Extra);
         } else {
           // Reserve a slot closest to SP or frame pointer.
           const TargetRegisterClass *RC = &ARM::GPRRegClass;
@@ -1263,7 +1240,6 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   bool isThumb = AFI->isThumbFunction();
   unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
-  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
@@ -1329,10 +1305,6 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
       DPRCSSize += 8;
     }
   }
-
-  if (Align == 8 && (GPRCS1Size & 7) != 0)
-    // Pad CS1 to ensure proper alignment.
-    GPRCS1Size += 4;
 
   if (!isThumb) {
     // Build the new SUBri to adjust SP for integer callee-save spill area 1.
