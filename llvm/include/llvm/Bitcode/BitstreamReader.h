@@ -332,6 +332,9 @@ private:
       case BitCodeAbbrevOp::VBR:
         Vals.push_back(ReadVBR64(Op.getEncodingData()));
         break;
+      case BitCodeAbbrevOp::Char6:
+        Vals.push_back(BitCodeAbbrevOp::DecodeChar6(Read(6)));
+        break;
       }
     }
   }

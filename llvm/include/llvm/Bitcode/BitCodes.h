@@ -85,15 +85,15 @@ class BitCodeAbbrevOp {
   unsigned Enc   : 3;     // The encoding to use.
 public:
   enum Encoding {
-    Fixed = 1,  // A fixed with field, Val specifies number of bits.
+    Fixed = 1,  // A fixed width field, Val specifies number of bits.
     VBR   = 2,  // A VBR field where Val specifies the width of each chunk.
-    Array = 3   // A sequence of fields, next field species elt encoding.
+    Array = 3,  // A sequence of fields, next field species elt encoding.
+    Char6 = 4   // A 6-bit fixed field which maps to [a-zA-Z0-9._].
   };
     
   BitCodeAbbrevOp(uint64_t V) :  Val(V), IsLiteral(true) {}
   BitCodeAbbrevOp(Encoding E, uint64_t Data = 0)
     : Val(Data), IsLiteral(false), Enc(E) {}
-
   
   bool isLiteral() const { return IsLiteral; }
   bool isEncoding() const { return !IsLiteral; }
@@ -116,9 +116,38 @@ public:
     case VBR:
       return true;
     case Array:
+    case Char6:
       return false;
     }
   }
+  
+  /// isChar6 - Return true if this character is legal in the Char6 encoding.
+  static bool isChar6(char C) {
+    if (C >= 'a' && C <= 'z') return true;
+    if (C >= 'A' && C <= 'Z') return true;
+    if (C >= '0' && C <= '9') return true;
+    if (C == '.' || C == '_') return true;
+    return false;
+  }
+  static unsigned EncodeChar6(char C) {
+    if (C >= 'a' && C <= 'z') return C-'a';
+    if (C >= 'A' && C <= 'Z') return C-'A'+26;
+    if (C >= '0' && C <= '9') return C-'0'+26+26;
+    if (C == '.') return 62;
+    if (C == '_') return 63;
+    assert(0 && "Not a value Char6 character!");
+  }
+  
+  static char DecodeChar6(unsigned V) {
+    assert((V & ~63) == 0 && "Not a Char6 encoded character!");
+    if (V < 26) return V+'a';
+    if (V < 26+26) return V-26+'A';
+    if (V < 26+26+10) return V-26-26+'0';
+    if (V == 62) return '.';
+    if (V == 63) return '_';
+    assert(0 && "Not a value Char6 character!");
+  }
+  
 };
 
 /// BitCodeAbbrev - This class represents an abbreviation record.  An
