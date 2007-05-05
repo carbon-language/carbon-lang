@@ -41,6 +41,7 @@
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -58,6 +59,8 @@ static cl::opt<bool> Verify("verify", cl::desc("Progressively verify module"));
 //===----------------------------------------------------------------------===//
 
 static cl::opt<bool> Bitcode("bitcode", cl::desc("Read a bitcode file"));
+static cl::opt<bool> NoHistogram("disable-histogram",
+                                 cl::desc("Do not print per-code histogram"));
 
 static cl::opt<bool>
 NonSymbolic("non-symbolic",
@@ -109,7 +112,6 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     }
     return 0;
   }
-  
   
   if (CurStreamType != LLVMIRBitstream) return 0;
   
@@ -232,6 +234,9 @@ struct PerBlockIDStats {
   /// number that are abbreviated.
   unsigned NumRecords, NumAbbreviatedRecords;
   
+  /// CodeFreq - Keep track of the number of times we see each code.
+  std::vector<unsigned> CodeFreq;
+  
   PerBlockIDStats()
     : NumInstances(0), NumBits(0),
       NumSubBlocks(0), NumAbbrevs(0), NumRecords(0), NumAbbreviatedRecords(0) {}
@@ -334,7 +339,11 @@ static bool ParseBlock(BitstreamReader &Stream, unsigned IndentLevel) {
       
       Record.clear();
       unsigned Code = Stream.ReadRecord(AbbrevID, Record);
-      // TODO: Compute per-blockid/code stats.
+
+      // Increment the # occurrences of this code.
+      if (BlockStats.CodeFreq.size() <= Code)
+        BlockStats.CodeFreq.resize(Code+1);
+      BlockStats.CodeFreq[Code]++;
       
       if (Dump) {
         std::cerr << Indent << "  <";
@@ -442,21 +451,48 @@ static int AnalyzeBitcode() {
     std::cerr << "         Total Size: ";
     PrintSize(Stats.NumBits);
     std::cerr << "\n";
-    std::cerr << "       Average Size: ";
-    PrintSize(Stats.NumBits/(double)Stats.NumInstances);
-    std::cerr << "\n";
     std::cerr << "          % of file: "
               << Stats.NumBits/(double)BufferSizeBits*100 << "\n";
-    std::cerr << "  Tot/Avg SubBlocks: " << Stats.NumSubBlocks << "/"
-              << Stats.NumSubBlocks/(double)Stats.NumInstances << "\n";
-    std::cerr << "    Tot/Avg Abbrevs: " << Stats.NumAbbrevs << "/"
-              << Stats.NumAbbrevs/(double)Stats.NumInstances << "\n";
-    std::cerr << "    Tot/Avg Records: " << Stats.NumRecords << "/"
-              << Stats.NumRecords/(double)Stats.NumInstances << "\n";
+    if (Stats.NumInstances > 1) {
+      std::cerr << "       Average Size: ";
+      PrintSize(Stats.NumBits/(double)Stats.NumInstances);
+      std::cerr << "\n";
+      std::cerr << "  Tot/Avg SubBlocks: " << Stats.NumSubBlocks << "/"
+                << Stats.NumSubBlocks/(double)Stats.NumInstances << "\n";
+      std::cerr << "    Tot/Avg Abbrevs: " << Stats.NumAbbrevs << "/"
+                << Stats.NumAbbrevs/(double)Stats.NumInstances << "\n";
+      std::cerr << "    Tot/Avg Records: " << Stats.NumRecords << "/"
+                << Stats.NumRecords/(double)Stats.NumInstances << "\n";
+    } else {
+      std::cerr << "      Num SubBlocks: " << Stats.NumSubBlocks << "\n";
+      std::cerr << "        Num Abbrevs: " << Stats.NumAbbrevs << "\n";
+      std::cerr << "        Num Records: " << Stats.NumRecords << "\n";
+    }
     if (Stats.NumRecords)
       std::cerr << "      % Abbrev Recs: " << (Stats.NumAbbreviatedRecords/
                    (double)Stats.NumRecords)*100 << "\n";
     std::cerr << "\n";
+    
+    // Print a histogram of the codes we see.
+    if (!NoHistogram && !Stats.CodeFreq.empty()) {
+      std::vector<std::pair<unsigned, unsigned> > FreqPairs;  // <freq,code>
+      for (unsigned i = 0, e = Stats.CodeFreq.size(); i != e; ++i)
+        if (unsigned Freq = Stats.CodeFreq[i])
+          FreqPairs.push_back(std::make_pair(Freq, i));
+      std::stable_sort(FreqPairs.begin(), FreqPairs.end());
+      std::reverse(FreqPairs.begin(), FreqPairs.end());
+      
+      std::cerr << "\tCode Histogram:\n";
+      for (unsigned i = 0, e = FreqPairs.size(); i != e; ++i) {
+        std::cerr << "\t\t" << FreqPairs[i].first << "\t";
+        if (const char *CodeName = GetCodeName(FreqPairs[i].second, I->first))
+          std::cerr << CodeName << "\n";
+        else
+          std::cerr << "UnknownCode" << FreqPairs[i].second << "\n";
+      }
+      std::cerr << "\n";
+      
+    }
   }
   return 0;
 }
