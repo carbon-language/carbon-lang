@@ -1,4 +1,3 @@
-// XFAIL: llvmgcc3
 // RUN: %llvmgxx -O0 -emit-llvm -S -g -o - %s | grep {i32 1,}
 // RUN: %llvmgxx -O0 -emit-llvm -S -g -o - %s | grep {i32 2,}
 
