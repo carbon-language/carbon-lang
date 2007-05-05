@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc
-; XFAIL: ia64|sparcv8
+; XFAIL: ia64
 
 
 declare bool %llvm.isunordered.f64(double, double)
