@@ -302,17 +302,18 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
         
     for (SmallPtrSet<PHINode*,8>::iterator SI = Users.begin(), SE = Users.end();
          SI != SE; ++SI) {
-      Value* InVal = (*SI)->getIncomingValueForBlock(LatchBlock);
+      PHINode *PN = *SI;
+      Value* InVal = PN->getIncomingValueForBlock(LatchBlock);
       if (isa<Instruction>(InVal))
         InVal = LastValueMap[InVal];
-      (*SI)->removeIncomingValue(LatchBlock, false);
+      PN->removeIncomingValue(LatchBlock, false);
       if (InVal)
-        (*SI)->addIncoming(InVal, cast<BasicBlock>(LastValueMap[LatchBlock]));
-      if ((*SI)->getNumIncomingValues() == 0) {
+        PN->addIncoming(InVal, cast<BasicBlock>(LastValueMap[LatchBlock]));
+      if (PN->getNumIncomingValues() == 0) {
         // Remove this phi node.
         // If anyone is using this PHI, make them use a dummy value instead...
-        (*SI)->replaceAllUsesWith(UndefValue::get((*SI)->getType()));
-        (*SI)->eraseFromParent();
+        PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+        PN->eraseFromParent();
       }
     }
   }
