@@ -29,10 +29,14 @@ class BitstreamWriter {
   /// CurValue - The current value.  Only bits < CurBit are valid.
   uint32_t CurValue;
   
-  // CurCodeSize - This is the declared size of code values used for the current
-  // block, in bits.
+  /// CurCodeSize - This is the declared size of code values used for the
+  /// current block, in bits.
   unsigned CurCodeSize;
 
+  /// BlockInfoCurBID - When emitting a BLOCKINFO_BLOCK, this is the currently
+  /// selected BLOCK ID.
+  unsigned BlockInfoCurBID;
+  
   /// CurAbbrevs - Abbrevs installed at in this block.
   std::vector<BitCodeAbbrev*> CurAbbrevs;
 
@@ -46,6 +50,14 @@ class BitstreamWriter {
   /// BlockScope - This tracks the current blocks that we have entered.
   std::vector<Block> BlockScope;
   
+  /// BlockInfo - This contains information emitted to BLOCKINFO_BLOCK blocks.
+  /// These describe abbreviations that all blocks of the specified ID inherit.
+  struct BlockInfo {
+    unsigned BlockID;
+    std::vector<BitCodeAbbrev*> Abbrevs;
+  };
+  std::vector<BlockInfo> BlockInfoRecords;
+  
 public:
   BitstreamWriter(std::vector<unsigned char> &O) 
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
@@ -53,6 +65,15 @@ public:
   ~BitstreamWriter() {
     assert(CurBit == 0 && "Unflused data remaining");
     assert(BlockScope.empty() && CurAbbrevs.empty() && "Block imbalance");
+    
+    // Free the BlockInfoRecords.
+    while (!BlockInfoRecords.empty()) {
+      BlockInfo &Info = BlockInfoRecords.back();
+      // Free blockinfo abbrev info.
+      for (unsigned i = 0, e = Info.Abbrevs.size(); i != e; ++i)
+        Info.Abbrevs[i]->dropRef();
+      BlockInfoRecords.pop_back();
+    }
   }
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
@@ -139,6 +160,19 @@ public:
   // Block Manipulation
   //===--------------------------------------------------------------------===//
   
+  /// getBlockInfo - If there is block info for the specified ID, return it,
+  /// otherwise return null.
+  BlockInfo *getBlockInfo(unsigned BlockID) {
+    // Common case, the most recent entry matches BlockID.
+    if (!BlockInfoRecords.empty() && BlockInfoRecords.back().BlockID == BlockID)
+      return &BlockInfoRecords.back();
+    
+    for (unsigned i = 0, e = BlockInfoRecords.size(); i != e; ++i)
+      if (BlockInfoRecords[i].BlockID == BlockID)
+        return &BlockInfoRecords[i];
+    return 0;
+  }
+  
   void EnterSubblock(unsigned BlockID, unsigned CodeLen) {
     // Block header:
     //    [ENTER_SUBBLOCK, blockid, newcodelen, <align4bytes>, blocklen]
@@ -146,13 +180,28 @@ public:
     EmitVBR(BlockID, bitc::BlockIDWidth);
     EmitVBR(CodeLen, bitc::CodeLenWidth);
     FlushToWord();
-    BlockScope.push_back(Block(CurCodeSize, Out.size()/4));
-    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
+    
+    unsigned BlockSizeWordLoc = Out.size();
+    unsigned OldCodeSize = CurCodeSize;
     
     // Emit a placeholder, which will be replaced when the block is popped.
     Emit(0, bitc::BlockSizeWidth);
     
     CurCodeSize = CodeLen;
+    
+    // Push the outer block's abbrev set onto the stack, start out with an
+    // empty abbrev set.
+    BlockScope.push_back(Block(OldCodeSize, BlockSizeWordLoc/4));
+    BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
+
+    // If there is a blockinfo for this BlockID, add all the predefined abbrevs
+    // to the abbrev list.
+    if (BlockInfo *Info = getBlockInfo(BlockID)) {
+      for (unsigned i = 0, e = Info->Abbrevs.size(); i != e; ++i) {
+        CurAbbrevs.push_back(Info->Abbrevs[i]);
+        Info->Abbrevs[i]->addRef();
+      }
+    }
   }
   
   void ExitBlock() {
@@ -261,15 +310,14 @@ public:
         EmitVBR64(Vals[i], 6);
     }
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Abbrev Emission
   //===--------------------------------------------------------------------===//
   
-  /// EmitAbbrev - This emits an abbreviation to the stream.  Note that this
-  /// method takes ownership of the specified abbrev.
-  unsigned EmitAbbrev(BitCodeAbbrev *Abbv) {
-    // Emit the abbreviation as a record.
+private:
+  // Emit the abbreviation as a DEFINE_ABBREV record.
+  void EncodeAbbrev(BitCodeAbbrev *Abbv) {
     EmitCode(bitc::DEFINE_ABBREV);
     EmitVBR(Abbv->getNumOperandInfos(), 5);
     for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
@@ -283,9 +331,61 @@ public:
           EmitVBR64(Op.getEncodingData(), 5);
       }
     }
+  }
+public:
     
+  /// EmitAbbrev - This emits an abbreviation to the stream.  Note that this
+  /// method takes ownership of the specified abbrev.
+  unsigned EmitAbbrev(BitCodeAbbrev *Abbv) {
+    // Emit the abbreviation as a record.
+    EncodeAbbrev(Abbv);
     CurAbbrevs.push_back(Abbv);
     return CurAbbrevs.size()-1+bitc::FIRST_APPLICATION_ABBREV;
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // BlockInfo Block Emission
+  //===--------------------------------------------------------------------===//
+  
+  /// EnterBlockInfoBlock - Start emitting the BLOCKINFO_BLOCK.
+  void EnterBlockInfoBlock(unsigned CodeWidth) {
+    EnterSubblock(bitc::BLOCKINFO_BLOCK_ID, CodeWidth);
+    BlockInfoCurBID = -1U;
+  }
+private:  
+  /// SwitchToBlockID - If we aren't already talking about the specified block
+  /// ID, emit a BLOCKINFO_CODE_SETBID record.
+  void SwitchToBlockID(unsigned BlockID) {
+    if (BlockInfoCurBID == BlockID) return;
+    SmallVector<unsigned, 2> V;
+    V.push_back(BlockID);
+    EmitRecord(bitc::BLOCKINFO_CODE_SETBID, V);
+    BlockInfoCurBID = BlockID;
+  }
+
+  BlockInfo &getOrCreateBlockInfo(unsigned BlockID) {
+    if (BlockInfo *BI = getBlockInfo(BlockID))
+      return *BI;
+    
+    // Otherwise, add a new record.
+    BlockInfoRecords.push_back(BlockInfo());
+    BlockInfoRecords.back().BlockID = BlockID;
+    return BlockInfoRecords.back();
+  }
+  
+public:
+  
+  /// EmitBlockInfoAbbrev - Emit a DEFINE_ABBREV record for the specified
+  /// BlockID.
+  unsigned EmitBlockInfoAbbrev(unsigned BlockID, BitCodeAbbrev *Abbv) {
+    SwitchToBlockID(BlockID);
+    EncodeAbbrev(Abbv);
+    
+    // Add the abbrev to the specified block record.
+    BlockInfo &Info = getOrCreateBlockInfo(BlockID);
+    Info.Abbrevs.push_back(Abbv);
+    
+    return Info.Abbrevs.size()-1+bitc::FIRST_APPLICATION_ABBREV;
   }
 };
 

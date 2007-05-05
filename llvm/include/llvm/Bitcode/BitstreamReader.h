@@ -48,6 +48,14 @@ class BitstreamReader {
   /// BlockScope - This tracks the codesize of parent blocks.
   SmallVector<Block, 8> BlockScope;
 
+  /// BlockInfo - This contains information emitted to BLOCKINFO_BLOCK blocks.
+  /// These describe abbreviations that all blocks of the specified ID inherit.
+  struct BlockInfo {
+    unsigned BlockID;
+    std::vector<BitCodeAbbrev*> Abbrevs;
+  };
+  std::vector<BlockInfo> BlockInfoRecords;
+  
   /// FirstChar - This remembers the first byte of the stream.
   const unsigned char *FirstChar;
 public:
@@ -81,6 +89,15 @@ public:
       std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
       for (unsigned i = 0, e = Abbrevs.size(); i != e; ++i)
         Abbrevs[i]->dropRef();
+    }
+    
+    // Free the BlockInfoRecords.
+    while (!BlockInfoRecords.empty()) {
+      BlockInfo &Info = BlockInfoRecords.back();
+      // Free blockinfo abbrev info.
+      for (unsigned i = 0, e = Info.Abbrevs.size(); i != e; ++i)
+        Info.Abbrevs[i]->dropRef();
+      BlockInfoRecords.pop_back();
     }
   }
   
@@ -206,6 +223,22 @@ public:
   // Block Manipulation
   //===--------------------------------------------------------------------===//
   
+private:
+  /// getBlockInfo - If there is block info for the specified ID, return it,
+  /// otherwise return null.
+  BlockInfo *getBlockInfo(unsigned BlockID) {
+    // Common case, the most recent entry matches BlockID.
+    if (!BlockInfoRecords.empty() && BlockInfoRecords.back().BlockID == BlockID)
+      return &BlockInfoRecords.back();
+    
+    for (unsigned i = 0, e = BlockInfoRecords.size(); i != e; ++i)
+      if (BlockInfoRecords[i].BlockID == BlockID)
+        return &BlockInfoRecords[i];
+    return 0;
+  }
+public:
+  
+  
   // Block header:
   //    [ENTER_SUBBLOCK, blockid, newcodelen, <align4bytes>, blocklen]
 
@@ -236,9 +269,18 @@ public:
   
   /// EnterSubBlock - Having read the ENTER_SUBBLOCK abbrevid, read and enter
   /// the block, returning the BlockID of the block we just entered.
-  bool EnterSubBlock(unsigned *NumWordsP = 0) {
+  bool EnterSubBlock(unsigned BlockID, unsigned *NumWordsP = 0) {
+    // Save the current block's state on BlockScope.
     BlockScope.push_back(Block(CurCodeSize));
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
+    
+    // Add the abbrevs specific to this block to the CurAbbrevs list.
+    if (BlockInfo *Info = getBlockInfo(BlockID)) {
+      for (unsigned i = 0, e = Info->Abbrevs.size(); i != e; ++i) {
+        CurAbbrevs.push_back(Info->Abbrevs[i]);
+        CurAbbrevs.back()->addRef();
+      }
+    }
     
     // Get the codesize of this block.
     CurCodeSize = ReadVBR(bitc::CodeLenWidth);
@@ -351,6 +393,64 @@ public:
         Abbv->Add(BitCodeAbbrevOp(E));
     }
     CurAbbrevs.push_back(Abbv);
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // BlockInfo Block Reading
+  //===--------------------------------------------------------------------===//
+  
+private:  
+  BlockInfo &getOrCreateBlockInfo(unsigned BlockID) {
+    if (BlockInfo *BI = getBlockInfo(BlockID))
+      return *BI;
+    
+    // Otherwise, add a new record.
+    BlockInfoRecords.push_back(BlockInfo());
+    BlockInfoRecords.back().BlockID = BlockID;
+    return BlockInfoRecords.back();
+  }
+  
+public:
+    
+  bool ReadBlockInfoBlock() {
+    if (EnterSubBlock(bitc::BLOCKINFO_BLOCK_ID)) return true;
+
+    SmallVector<uint64_t, 64> Record;
+    BlockInfo *CurBlockInfo = 0;
+    
+    // Read all the records for this module.
+    while (1) {
+      unsigned Code = ReadCode();
+      if (Code == bitc::END_BLOCK)
+        return ReadBlockEnd();
+      if (Code == bitc::ENTER_SUBBLOCK) {
+        ReadSubBlockID();
+        if (SkipBlock()) return true;
+        continue;
+      }
+
+      // Read abbrev records, associate them with CurBID.
+      if (Code == bitc::DEFINE_ABBREV) {
+        if (!CurBlockInfo) return true;
+        ReadAbbrevRecord();
+        
+        // ReadAbbrevRecord installs the abbrev in CurAbbrevs.  Move it to the
+        // appropriate BlockInfo.
+        BitCodeAbbrev *Abbv = CurAbbrevs.back();
+        CurAbbrevs.pop_back();
+        CurBlockInfo->Abbrevs.push_back(Abbv);
+        continue;
+      }
+
+      // Read a record.
+      switch (ReadRecord(Code, Record)) {
+      default: break;  // Default behavior, ignore unknown content.
+      case bitc::BLOCKINFO_CODE_SETBID:
+        if (Record.size() < 1) return true;
+        CurBlockInfo = &getOrCreateBlockInfo(Record[0]);
+        break;
+      }
+    }      
   }
 };
 

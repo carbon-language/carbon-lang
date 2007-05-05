@@ -182,7 +182,7 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
 //===----------------------------------------------------------------------===//
 
 bool BitcodeReader::ParseParamAttrBlock() {
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::PARAMATTR_BLOCK_ID))
     return Error("Malformed block record");
   
   if (!ParamAttrs.empty())
@@ -239,7 +239,7 @@ bool BitcodeReader::ParseParamAttrBlock() {
 
 
 bool BitcodeReader::ParseTypeTable() {
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::TYPE_BLOCK_ID))
     return Error("Malformed block record");
   
   if (!TypeList.empty())
@@ -378,7 +378,7 @@ bool BitcodeReader::ParseTypeTable() {
 
 
 bool BitcodeReader::ParseTypeSymbolTable() {
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::TYPE_SYMTAB_BLOCK_ID))
     return Error("Malformed block record");
   
   SmallVector<uint64_t, 64> Record;
@@ -426,7 +426,7 @@ bool BitcodeReader::ParseTypeSymbolTable() {
 }
 
 bool BitcodeReader::ParseValueSymbolTable() {
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::VALUE_SYMTAB_BLOCK_ID))
     return Error("Malformed block record");
 
   SmallVector<uint64_t, 64> Record;
@@ -536,7 +536,7 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
 
 
 bool BitcodeReader::ParseConstants() {
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::CONSTANTS_BLOCK_ID))
     return Error("Malformed block record");
 
   SmallVector<uint64_t, 64> Record;
@@ -768,7 +768,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
   if (TheModule)
     return Error("Multiple MODULE_BLOCKs in same stream");
   
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
     return Error("Malformed block record");
 
   // Otherwise, create the module.
@@ -1022,11 +1022,19 @@ bool BitcodeReader::ParseBitcode() {
     unsigned BlockID = Stream.ReadSubBlockID();
     
     // We only know the MODULE subblock ID.
-    if (BlockID == bitc::MODULE_BLOCK_ID) {
+    switch (BlockID) {
+    case bitc::BLOCKINFO_BLOCK_ID:
+      if (Stream.ReadBlockInfoBlock())
+        return Error("Malformed BlockInfoBlock");
+      break;
+    case bitc::MODULE_BLOCK_ID:
       if (ParseModule(Buffer->getBufferIdentifier()))
         return true;
-    } else if (Stream.SkipBlock()) {
-      return Error("Malformed block record");
+      break;
+    default:
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      break;
     }
   }
   
@@ -1072,7 +1080,7 @@ Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
 
 /// ParseFunctionBody - Lazily parse the specified function body block.
 bool BitcodeReader::ParseFunctionBody(Function *F) {
-  if (Stream.EnterSubBlock())
+  if (Stream.EnterSubBlock(bitc::FUNCTION_BLOCK_ID))
     return Error("Malformed block record");
   
   unsigned ModuleValueListSize = ValueList.size();
