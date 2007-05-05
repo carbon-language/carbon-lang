@@ -2725,10 +2725,6 @@ private:
   ///
   bool shouldEmit;
   
-  /// FuncCPPPersonality - C++ personality function.
-  ///
-  Function *FuncCPPPersonality;
-
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
   void EmitCommonEHFrame() {
@@ -2738,7 +2734,7 @@ private:
     
     // If there is a personality present then we need to indicate that
     // in the common eh frame.
-    Function *Personality = FuncCPPPersonality;
+    Function *Personality = MMI->getPersonality();
 
     // Size and sign of stack growth.
     int stackGrowth =
@@ -2818,8 +2814,7 @@ private:
   void EmitEHFrame() {
     // If there is a personality present then we need to indicate that
     // in the common eh frame.
-    Function *Personality = FuncCPPPersonality;
-//    Function *Personality = MMI->getPersonality();
+    Function *Personality = MMI->getPersonality();
     MachineFrameInfo *MFI = MF->getFrameInfo();
 
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
@@ -3094,7 +3089,6 @@ public:
   : Dwarf(OS, A, T)
   , didInitial(false)
   , shouldEmit(false)
-  , FuncCPPPersonality(NULL)
   {}
   
   virtual ~DwarfException() {}
@@ -3109,7 +3103,6 @@ public:
   /// content.
   void BeginModule(Module *M) {
     this->M = M;
-    FuncCPPPersonality = M->getFunction("__gxx_personality_v0");
   }
 
   /// EndModule - Emit all exception information that should come after the
