@@ -424,3 +424,28 @@ return:
                             [ %tmp.9, %then.1 ]
         ret int %result.0
 }
+
+//===---------------------------------------------------------------------===//
+
+Argument promotion should promote arguments for recursive functions, like 
+this:
+
+; RUN: llvm-upgrade < %s | llvm-as | opt -argpromotion | llvm-dis | grep x.val
+
+implementation   ; Functions:
+
+internal int %foo(int* %x) {
+entry:
+        %tmp = load int* %x
+        %tmp.foo = call int %foo(int *%x)
+        ret int %tmp.foo
+}
+
+int %bar(int* %x) {
+entry:
+        %tmp3 = call int %foo( int* %x)                ; <int>[#uses=1]
+        ret int %tmp3
+}
+
+
+
