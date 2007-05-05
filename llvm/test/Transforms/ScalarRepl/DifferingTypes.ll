@@ -1,8 +1,7 @@
 ; This is a feature test.  Hopefully one day this will be implemented.  The 
 ; generated code should perform the appropriate masking operations required 
 ; depending on the endianness of the target...
-; XFAIL: *
-; RUN: llvm-upgrade < %s | llvm-as | opt -mem2reg | llvm-dis | \
+; RUN: llvm-upgrade < %s | llvm-as | opt -scalarrepl | llvm-dis | \
 ; RUN:   not grep alloca
 
 implementation
