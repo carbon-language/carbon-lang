@@ -210,7 +210,7 @@ void GlobalAlias::setAliasee(Constant *Aliasee)
   setOperand(0, Aliasee);
 }
 
-const GlobalValue *GlobalAlias::getAliasedGlobal() const  {
+const GlobalValue *GlobalAlias::getAliasedGlobal() const {
   const Constant *C = getAliasee();
   if (C) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
@@ -218,8 +218,9 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const  {
     else {
       const ConstantExpr *CE = 0;
       if ((CE = dyn_cast<ConstantExpr>(C)) &&
-          (CE->getOpcode() == Instruction::BitCast))
-        return cast<GlobalValue>(CE->getOperand(0));
+          (CE->getOpcode() == Instruction::BitCast || 
+           CE->getOpcode() == Instruction::GetElementPtr))
+        return dyn_cast<GlobalValue>(CE->getOperand(0));
       else
         assert(0 && "Unsupported aliasee");
     }
