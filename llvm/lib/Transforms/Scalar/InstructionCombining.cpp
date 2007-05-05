@@ -5593,7 +5593,28 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
   const Type *DestTy    = LHSCI->getType();
   Value *RHSCIOp;
 
-  // We only handle extension cast instructions, so far. Enforce this.
+  // Turn icmp (ptrtoint x), (ptrtoint/c) into a compare of the input if the 
+  // integer type is the same size as the pointer type.
+  if (LHSCI->getOpcode() == Instruction::PtrToInt &&
+      getTargetData().getPointerSizeInBits() == 
+         cast<IntegerType>(DestTy)->getBitWidth()) {
+    Value *RHSOp = 0;
+    if (Constant *RHSC = dyn_cast<Constant>(ICI.getOperand(1))) {
+      RHSOp = ConstantExpr::getPtrToInt(RHSC, SrcTy);
+    } else if (PtrToIntInst *RHSC = dyn_cast<PtrToIntInst>(ICI.getOperand(1))) {
+      RHSOp = RHSC->getOperand(0);
+      // If the pointer types don't match, insert a bitcast.
+      if (LHSCIOp->getType() != RHSOp->getType())
+        RHSOp = InsertCastBefore(Instruction::BitCast, RHSOp,
+                                 LHSCIOp->getType(), ICI);
+    }
+
+    if (RHSOp)
+      return new ICmpInst(ICI.getPredicate(), LHSCIOp, RHSOp);
+  }
+  
+  // The code below only handles extension cast instructions, so far.
+  // Enforce this.
   if (LHSCI->getOpcode() != Instruction::ZExt &&
       LHSCI->getOpcode() != Instruction::SExt)
     return 0;
