@@ -1,6 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | notcast
-; XFAIL: *
 
 target pointersize = 32
 
