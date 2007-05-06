@@ -15,7 +15,9 @@
 #include "CompilerDriver.h"
 #include "ConfigLexer.h"
 #include "llvm/Module.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Signals.h"
 #include "llvm/ADT/SetVector.h"
@@ -23,6 +25,9 @@
 #include "llvm/Config/alloca.h"
 #include <iostream>
 using namespace llvm;
+
+
+static bool Bitcode = false;
 
 namespace {
 
@@ -66,14 +71,21 @@ static bool GetBytecodeDependentLibraries(const std::string &fname,
                                           Module::LibraryListType& deplibs,
                                           BCDecompressor_t *BCDC,
                                           std::string* ErrMsg) {
-  ModuleProvider* MP = getBytecodeModuleProvider(fname, BCDC, ErrMsg);
+  ModuleProvider *MP = 0;
+  if (Bitcode) {
+    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&fname[0],
+                                                            fname.size())) {
+      MP = getBitcodeModuleProvider(Buffer);
+      if (MP == 0) delete Buffer;
+    }
+  } else {
+    MP = getBytecodeModuleProvider(fname, BCDC, ErrMsg);
+  }
   if (!MP) {
     deplibs.clear();
     return true;
   }
-  Module* M = MP->releaseModule(ErrMsg);
-  deplibs = M->getLibraries();
-  delete M;
+  deplibs = MP->getModule()->getLibraries();
   delete MP;
   return false;
 }
