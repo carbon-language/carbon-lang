@@ -20,8 +20,6 @@ include "../Target.td"
 // X86 Subtarget features.
 //===----------------------------------------------------------------------===//
  
-def Feature64Bit   : SubtargetFeature<"64bit", "HasX86_64", "true",
-                                      "Support 64-bit instructions">;
 def FeatureMMX     : SubtargetFeature<"mmx","X86SSELevel", "MMX",
                                       "Enable MMX instructions">;
 def FeatureSSE1    : SubtargetFeature<"sse", "X86SSELevel", "SSE1",
@@ -39,7 +37,11 @@ def FeatureSSSE3   : SubtargetFeature<"ssse3", "X86SSELevel", "SSSE3",
 def Feature3DNow   : SubtargetFeature<"3dnow", "X863DNowLevel", "ThreeDNow",
                                       "Enable 3DNow! instructions">;
 def Feature3DNowA  : SubtargetFeature<"3dnowa", "X863DNowLevel", "ThreeDNowA",
-                                      "Enable 3DNow! Athlon instructions">;
+                                      "Enable 3DNow! Athlon instructions",
+                                      [Feature3DNow]>;
+def Feature64Bit   : SubtargetFeature<"64bit", "HasX86_64", "true",
+                                      "Support 64-bit instructions",
+                                      [FeatureMMX, FeatureSSE1, FeatureSSE2]>;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
