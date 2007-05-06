@@ -76,6 +76,17 @@ public:
   /// getSTDIN - Read all of stdin into a file buffer, and return it.  This
   /// fails if stdin is empty.
   static MemoryBuffer *getSTDIN();
+  
+  
+  /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
+  /// if the Filename is "-".
+  static MemoryBuffer *getFileOrSTDIN(const char *FilenameStart,unsigned FnSize,
+                                      int64_t FileSize = -1) {
+    if (FnSize == 1 && FilenameStart[0] == '-')
+      return getSTDIN();
+    return getFile(FilenameStart, FnSize, FileSize);
+  }
+  
 };
 
 } // end namespace llvm
