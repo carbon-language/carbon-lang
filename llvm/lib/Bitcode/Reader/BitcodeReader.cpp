@@ -691,6 +691,7 @@ bool BitcodeReader::ParseConstants() {
         V = UndefValue::get(CurTy);  // Unknown cast.
       } else {
         const Type *OpTy = getTypeByID(Record[1]);
+        if (!OpTy) return Error("Invalid CE_CAST record");
         Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
         V = ConstantExpr::getCast(Opc, Op, CurTy);
       }
