@@ -147,6 +147,34 @@ private:
       return ParamAttrs[i-1];
     return 0;
   }
+  
+  /// getValueTypePair - Read a value/type pair out of the specified record from
+  /// slot 'Slot'.  Increment Slot past the number of slots used in the record.
+  /// Return true on failure.
+  bool getValueTypePair(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
+                        unsigned InstNum, Value *&ResVal) {
+    if (Slot == Record.size()) return true;
+    unsigned ValNo = Record[Slot++];
+    if (ValNo < InstNum) {
+      // If this is not a forward reference, just return the value we already
+      // have.
+      ResVal = getFnValueByID(ValNo, 0);
+      return ResVal == 0;
+    } else if (Slot == Record.size()) {
+      return true;
+    }
+    
+    unsigned TypeNo = Record[Slot++];
+    ResVal = getFnValueByID(ValNo, getTypeByID(TypeNo));
+    return ResVal == 0;
+  }
+  bool getValue(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
+                const Type *Ty, Value *&ResVal) {
+    if (Slot == Record.size()) return true;
+    unsigned ValNo = Record[Slot++];
+    ResVal = getFnValueByID(ValNo, Ty);
+    return ResVal == 0;
+  }
 
   
   bool ParseModule(const std::string &ModuleID);

@@ -572,9 +572,29 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
   }
 }
 
+/// PushValueAndType - The file has to encode both the value and type id for
+/// many values, because we need to know what type to create for forward
+/// references.  However, most operands are not forward references, so this type
+/// field is not needed.
+///
+/// This function adds V's value ID to Vals.  If the value ID is higher than the
+/// instruction ID, then it is a forward reference, and it also includes the
+/// type ID.
+static bool PushValueAndType(Value *V, unsigned InstID,
+                             SmallVector<unsigned, 64> &Vals, 
+                             ValueEnumerator &VE) {
+  unsigned ValID = VE.getValueID(V);
+  Vals.push_back(ValID);
+  if (ValID >= InstID) {
+    Vals.push_back(VE.getTypeID(V->getType()));
+    return true;
+  }
+  return false;
+}
+
 /// WriteInstruction - Emit an instruction to the specified stream.
-static void WriteInstruction(const Instruction &I, ValueEnumerator &VE, 
-                             BitstreamWriter &Stream,
+static void WriteInstruction(const Instruction &I, unsigned InstID,
+                             ValueEnumerator &VE, BitstreamWriter &Stream,
                              SmallVector<unsigned, 64> &Vals) {
   unsigned Code = 0;
   unsigned AbbrevToUse = 0;
@@ -598,10 +618,8 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
 
   case Instruction::GetElementPtr:
     Code = bitc::FUNC_CODE_INST_GEP;
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-      Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
-      Vals.push_back(VE.getValueID(I.getOperand(i)));
-    }
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+      PushValueAndType(I.getOperand(i), InstID, Vals, VE);
     break;
   case Instruction::Select:
     Code = bitc::FUNC_CODE_INST_SELECT;
@@ -633,18 +651,15 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
   case Instruction::ICmp:
   case Instruction::FCmp:
     Code = bitc::FUNC_CODE_INST_CMP;
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(1)));
     Vals.push_back(cast<CmpInst>(I).getPredicate());
     break;
 
   case Instruction::Ret:
     Code = bitc::FUNC_CODE_INST_RET;
-    if (I.getNumOperands()) {
-      Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-      Vals.push_back(VE.getValueID(I.getOperand(0)));
-    }
+    if (I.getNumOperands())
+      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     break;
   case Instruction::Br:
     Code = bitc::FUNC_CODE_INST_BR;
@@ -663,10 +678,9 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
   case Instruction::Invoke: {
     Code = bitc::FUNC_CODE_INST_INVOKE;
     Vals.push_back(cast<InvokeInst>(I).getCallingConv());
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));  // callee
-    Vals.push_back(VE.getValueID(I.getOperand(1)));  // normal
-    Vals.push_back(VE.getValueID(I.getOperand(2)));  // unwind
+    Vals.push_back(VE.getValueID(I.getOperand(1)));      // normal dest
+    Vals.push_back(VE.getValueID(I.getOperand(2)));      // unwind dest
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE); // callee
     
     // Emit value #'s for the fixed parameters.
     const PointerType *PTy = cast<PointerType>(I.getOperand(0)->getType());
@@ -676,12 +690,9 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
 
     // Emit type/value pairs for varargs params.
     if (FTy->isVarArg()) {
-      unsigned NumVarargs = I.getNumOperands()-3-FTy->getNumParams();
-      for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
-           i != e; ++i) {
-        Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
-        Vals.push_back(VE.getValueID(I.getOperand(i)));
-      }
+      for (unsigned i = 3+FTy->getNumParams(), e = I.getNumOperands();
+           i != e; ++i)
+        PushValueAndType(I.getOperand(i), InstID, Vals, VE); // vararg
     }
     break;
   }
@@ -721,11 +732,11 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     
   case Instruction::Load:
     Code = bitc::FUNC_CODE_INST_LOAD;
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0))); // ptr.
+    if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))  // ptr
+      AbbrevToUse = FUNCTION_INST_LOAD_ABBREV;
+      
     Vals.push_back(Log2_32(cast<LoadInst>(I).getAlignment())+1);
     Vals.push_back(cast<LoadInst>(I).isVolatile());
-    AbbrevToUse = FUNCTION_INST_LOAD_ABBREV;
     break;
   case Instruction::Store:
     Code = bitc::FUNC_CODE_INST_STORE;
@@ -739,8 +750,7 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     Code = bitc::FUNC_CODE_INST_CALL;
     Vals.push_back((cast<CallInst>(I).getCallingConv() << 1) |
                    cast<CallInst>(I).isTailCall());
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));  // callee
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // Callee
     
     // Emit value #'s for the fixed parameters.
     const PointerType *PTy = cast<PointerType>(I.getOperand(0)->getType());
@@ -752,10 +762,8 @@ static void WriteInstruction(const Instruction &I, ValueEnumerator &VE,
     if (FTy->isVarArg()) {
       unsigned NumVarargs = I.getNumOperands()-1-FTy->getNumParams();
       for (unsigned i = I.getNumOperands()-NumVarargs, e = I.getNumOperands();
-           i != e; ++i) {
-        Vals.push_back(VE.getTypeID(I.getOperand(i)->getType()));
-        Vals.push_back(VE.getValueID(I.getOperand(i)));
-      }
+           i != e; ++i)
+        PushValueAndType(I.getOperand(i), InstID, Vals, VE);  // varargs
     }
     break;
   }
@@ -850,10 +858,17 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   VE.getFunctionConstantRange(CstStart, CstEnd);
   WriteConstants(CstStart, CstEnd, VE, Stream, false);
   
+  // Keep a running idea of what the instruction ID is. 
+  unsigned InstID = CstEnd;
+  
   // Finally, emit all the instructions, in order.
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-      WriteInstruction(*I, VE, Stream, Vals);
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
+      WriteInstruction(*I, InstID, VE, Stream, Vals);
+      if (I->getType() != Type::VoidTy)
+        ++InstID;
+    }
   
   // Emit names for all the instructions etc.
   WriteValueSymbolTable(F.getValueSymbolTable(), VE, Stream);
@@ -997,8 +1012,6 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   { // INST_LOAD abbrev for FUNCTION_BLOCK.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_LOAD));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,       // typeid
-                              Log2_32_Ceil(VE.getTypes().size()+1)));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Ptr
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 4)); // Align
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // volatile
