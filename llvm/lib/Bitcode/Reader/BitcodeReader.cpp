@@ -326,7 +326,7 @@ bool BitcodeReader::ParseTypeTable() {
       break;
     }
     case bitc::TYPE_CODE_STRUCT: {  // STRUCT: [ispacked, eltty x N]
-      if (Record.size() < 2)
+      if (Record.size() < 1)
         return Error("Invalid STRUCT type record");
       std::vector<const Type*> EltTys;
       for (unsigned i = 1, e = Record.size(); i != e; ++i)
