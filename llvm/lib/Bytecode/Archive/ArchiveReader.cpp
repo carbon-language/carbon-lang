@@ -13,9 +13,13 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/Compressor.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <memory>
 using namespace llvm;
+
+static bool Bitcode = false;
 
 /// Read a variable-bit-rate encoded unsigned integer
 inline unsigned readInteger(const char*&At, const char*End){
@@ -205,6 +209,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
 
   // Determine if this is a bytecode file
   switch (sys::IdentifyFileType(At, 4)) {
+    case sys::Bitcode_FileType:
     case sys::Bytecode_FileType:
       flags |= ArchiveMember::BytecodeFlag;
       break;
@@ -350,10 +355,21 @@ Archive::getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage) {
     if (I->isBytecode() || I->isCompressedBytecode()) {
       std::string FullMemberName = archPath.toString() +
         "(" + I->getPath().toString() + ")";
-      Module* M = ParseBytecodeBuffer((const unsigned char*)I->getData(),
-                                      I->getSize(), FullMemberName,
-                                      Compressor::decompressToNewBuffer,
-                                      ErrMessage);
+      Module *M;
+      
+      if (Bitcode) {
+        MemoryBuffer *Buffer =
+          MemoryBuffer::getNewMemBuffer(I->getSize(), FullMemberName.c_str());
+        memcpy((char*)Buffer->getBufferStart(), I->getData(), I->getSize());
+        
+        M = ParseBitcodeFile(Buffer, ErrMessage);
+        delete Buffer;
+      } else {
+        M = ParseBytecodeBuffer((const unsigned char*)I->getData(),
+                                I->getSize(), FullMemberName,
+                                Compressor::decompressToNewBuffer,
+                                ErrMessage);
+      }
       if (!M)
         return true;
 
@@ -486,7 +502,15 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
   // Now, load the bytecode module to get the ModuleProvider
   std::string FullMemberName = archPath.toString() + "(" +
     mbr->getPath().toString() + ")";
-  ModuleProvider* mp = getBytecodeBufferModuleProvider(
+  ModuleProvider* mp;
+  if (Bitcode) {
+    MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(mbr->getSize(),
+                                                        FullMemberName.c_str());
+    memcpy((char*)Buffer->getBufferStart(), mbr->getData(), mbr->getSize());
+    
+    mp = getBitcodeModuleProvider(Buffer, ErrMsg);
+  } else
+    mp = getBytecodeBufferModuleProvider(
       (const unsigned char*) mbr->getData(), mbr->getSize(),
       FullMemberName, Decompressor, ErrMsg, 0);
   if (!mp)
@@ -612,8 +636,18 @@ bool Archive::isBytecodeArchive() {
     
     std::string FullMemberName = 
       archPath.toString() + "(" + I->getPath().toString() + ")";
-    Module* M = ParseBytecodeBuffer((const unsigned char*)I->getData(),
-                                    I->getSize(), FullMemberName);
+    Module *M;
+    
+    if (Bitcode) {
+      MemoryBuffer *Buffer =
+        MemoryBuffer::getNewMemBuffer(I->getSize(), FullMemberName.c_str());
+      memcpy((char*)Buffer->getBufferStart(), I->getData(), I->getSize());
+      M = ParseBitcodeFile(Buffer);
+      delete Buffer;
+    } else {
+      M = ParseBytecodeBuffer((const unsigned char*)I->getData(),
+                              I->getSize(), FullMemberName);
+    }
     if (!M)
       return false;  // Couldn't parse bytecode, not a bytecode archive.
     delete M;

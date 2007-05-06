@@ -13,6 +13,7 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Process.h"
@@ -178,6 +179,7 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
   std::string magic;
   mbr->path.getMagicNumber(magic,4);
   switch (sys::IdentifyFileType(magic.c_str(),4)) {
+    case sys::Bitcode_FileType:
     case sys::Bytecode_FileType:
       flags |= ArchiveMember::BytecodeFlag;
       break;
@@ -261,40 +263,7 @@ Archive::writeMember(
     }
   }
 
-  // Determine if we actually should compress this member
-  bool willCompress =
-      (ShouldCompress &&
-      !member.isCompressed() &&
-      !member.isCompressedBytecode() &&
-      !member.isLLVMSymbolTable() &&
-      !member.isSVR4SymbolTable() &&
-      !member.isBSD4SymbolTable());
-
-  // Perform the compression. Note that if the file is uncompressed bytecode
-  // then we turn the file into compressed bytecode rather than treating it as
-  // compressed data. This is necessary since it allows us to determine that the
-  // file contains bytecode instead of looking like a regular compressed data
-  // member. A compressed bytecode file has its content compressed but has a
-  // magic number of "llvc". This acounts for the +/-4 arithmetic in the code
-  // below.
-  int hdrSize;
-  if (willCompress) {
-    char* output = 0;
-    if (member.isBytecode()) {
-      data +=4;
-      fSize -= 4;
-    }
-    fSize = Compressor::compressToNewBuffer(data,fSize,output,ErrMsg);
-    if (fSize == 0)
-      return true;
-    data = output;
-    if (member.isBytecode())
-      hdrSize = -fSize-4;
-    else
-      hdrSize = -fSize;
-  } else {
-    hdrSize = fSize;
-  }
+  int hdrSize = fSize;
 
   // Compute the fields of the header
   ArchiveMemberHeader Hdr;
@@ -309,21 +278,12 @@ Archive::writeMember(
                  member.getPath().toString().length());
   }
 
-  // Make sure we write the compressed bytecode magic number if we should.
-  if (willCompress && member.isBytecode())
-    ARFile.write("llvc",4);
-
   // Write the (possibly compressed) member's content to the file.
   ARFile.write(data,fSize);
 
   // Make sure the member is an even length
   if ((ARFile.tellp() & 1) == 1)
     ARFile << ARFILE_PAD;
-
-  // Free the compressed data, if necessary
-  if (willCompress) {
-    free((void*)data);
-  }
 
   // Close the mapped file if it was opened
   if (mFile != 0) {
