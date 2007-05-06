@@ -115,7 +115,8 @@ namespace bitc {
     CST_CODE_CE_EXTRACTELT = 14,  // CE_EXTRACTELT: [opty, opval, opval]
     CST_CODE_CE_INSERTELT  = 15,  // CE_INSERTELT:  [opval, opval, opval]
     CST_CODE_CE_SHUFFLEVEC = 16,  // CE_SHUFFLEVEC: [opval, opval, opval]
-    CST_CODE_CE_CMP        = 17   // CE_CMP:        [opty, opval, opval, pred]
+    CST_CODE_CE_CMP        = 17,  // CE_CMP:        [opty, opval, opval, pred]
+    CST_CODE_INLINEASM     = 18   // INLINEASM:     [sideeffect,asmstr,conststr]
   };
   
   /// CastOpcodes - These are values used in the bitcode files to encode which

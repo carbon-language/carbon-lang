@@ -173,6 +173,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     case bitc::CST_CODE_CE_INSERTELT:  return "CE_INSERTELT";
     case bitc::CST_CODE_CE_SHUFFLEVEC: return "CE_SHUFFLEVEC";
     case bitc::CST_CODE_CE_CMP:        return "CE_CMP";
+    case bitc::CST_CODE_INLINEASM:     return "INLINEASM";
     }        
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {
