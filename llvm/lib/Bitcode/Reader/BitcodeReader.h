@@ -154,7 +154,7 @@ private:
   bool getValueTypePair(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
                         unsigned InstNum, Value *&ResVal) {
     if (Slot == Record.size()) return true;
-    unsigned ValNo = Record[Slot++];
+    unsigned ValNo = (unsigned)Record[Slot++];
     if (ValNo < InstNum) {
       // If this is not a forward reference, just return the value we already
       // have.
@@ -164,14 +164,14 @@ private:
       return true;
     }
     
-    unsigned TypeNo = Record[Slot++];
+    unsigned TypeNo = (unsigned)Record[Slot++];
     ResVal = getFnValueByID(ValNo, getTypeByID(TypeNo));
     return ResVal == 0;
   }
   bool getValue(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
                 const Type *Ty, Value *&ResVal) {
     if (Slot == Record.size()) return true;
-    unsigned ValNo = Record[Slot++];
+    unsigned ValNo = (unsigned)Record[Slot++];
     ResVal = getFnValueByID(ValNo, Ty);
     return ResVal == 0;
   }
