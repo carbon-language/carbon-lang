@@ -14,6 +14,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
@@ -21,12 +22,15 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <memory>
 #include <fstream>
 using namespace llvm;
+
+cl::opt<bool> Bitcode("bitcode");
 
 // InputFilename - The filename to read from.
 static cl::opt<std::string>
@@ -54,65 +58,76 @@ ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  try {
-    cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
-    sys::PrintStackTraceOnErrorSignal();
+  cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
+  sys::PrintStackTraceOnErrorSignal();
 
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename,
-                                            Compressor::decompressToNewBuffer));
-    if (M.get() == 0) {
-      cerr << argv[0] << ": bytecode didn't read correctly.\n";
+  std::auto_ptr<Module> M;
+  
+  if (Bitcode) {
+    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFilename[0],
+                                                        InputFilename.size());
+    if (Buffer == 0) {
+      cerr << "Error reading file '" + InputFilename + "'";
       return 1;
+    } else {
+      M.reset(ParseBitcodeFile(Buffer));
     }
-
-    // Figure out which function we should extract
-    Function *F = M.get()->getFunction(ExtractFunc);
-    if (F == 0) {
-      cerr << argv[0] << ": program doesn't contain function named '"
-           << ExtractFunc << "'!\n";
-      return 1;
-    }
-
-    // In addition to deleting all other functions, we also want to spiff it
-    // up a little bit.  Do this now.
-    PassManager Passes;
-    Passes.add(new TargetData(M.get())); // Use correct TargetData
-    // Either isolate the function or delete it from the Module
-    Passes.add(createFunctionExtractionPass(F, DeleteFn, Relink));
-    if (!DeleteFn)
-      Passes.add(createGlobalDCEPass());           // Delete unreachable globals
-    Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
-    Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
-
-    std::ostream *Out = 0;
-
-    if (OutputFilename != "-") {  // Not stdout?
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        cerr << argv[0] << ": error opening '" << OutputFilename
-             << "': file exists!\n"
-             << "Use -f command line argument to force output\n";
-        return 1;
-      }
-      std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                                   std::ios::binary;
-      Out = new std::ofstream(OutputFilename.c_str(), io_mode);
-    } else {                      // Specified stdout
-      // FIXME: cout is not binary!
-      Out = &std::cout;
-    }
-
-    OStream L(*Out);
-    Passes.add(new WriteBytecodePass(&L));  // Write bytecode to file...
-    Passes.run(*M.get());
-
-    if (Out != &std::cout)
-      delete Out;
-    return 0;
-  } catch (const std::string& msg) {
-    cerr << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    delete Buffer;
+  } else {
+    M.reset(ParseBytecodeFile(InputFilename,
+                              Compressor::decompressToNewBuffer));
   }
-  return 1;
+  
+  if (M.get() == 0) {
+    cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    return 1;
+  }
+
+  // Figure out which function we should extract
+  Function *F = M.get()->getFunction(ExtractFunc);
+  if (F == 0) {
+    cerr << argv[0] << ": program doesn't contain function named '"
+         << ExtractFunc << "'!\n";
+    return 1;
+  }
+
+  // In addition to deleting all other functions, we also want to spiff it
+  // up a little bit.  Do this now.
+  PassManager Passes;
+  Passes.add(new TargetData(M.get())); // Use correct TargetData
+  // Either isolate the function or delete it from the Module
+  Passes.add(createFunctionExtractionPass(F, DeleteFn, Relink));
+  if (!DeleteFn)
+    Passes.add(createGlobalDCEPass());           // Delete unreachable globals
+  Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
+  Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
+
+  std::ostream *Out = 0;
+
+  if (OutputFilename != "-") {  // Not stdout?
+    if (!Force && std::ifstream(OutputFilename.c_str())) {
+      // If force is not specified, make sure not to overwrite a file!
+      cerr << argv[0] << ": error opening '" << OutputFilename
+           << "': file exists!\n"
+           << "Use -f command line argument to force output\n";
+      return 1;
+    }
+    std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                                 std::ios::binary;
+    Out = new std::ofstream(OutputFilename.c_str(), io_mode);
+  } else {                      // Specified stdout
+    // FIXME: cout is not binary!
+    Out = &std::cout;
+  }
+
+  OStream L(*Out);
+  if (Bitcode)
+    Passes.add(CreateBitcodeWriterPass(*Out));
+  else 
+    Passes.add(new WriteBytecodePass(&L));  // Write bytecode to file...
+  Passes.run(*M.get());
+
+  if (Out != &std::cout)
+    delete Out;
+  return 0;
 }

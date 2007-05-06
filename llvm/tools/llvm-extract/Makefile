@@ -6,10 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
 
 TOOLNAME = llvm-extract
-LINK_COMPONENTS := bcreader bcwriter ipo
-REQUIRES_EH := 1
+LINK_COMPONENTS := bcreader bcwriter ipo bitreader bitwriter
 
 include $(LEVEL)/Makefile.common
