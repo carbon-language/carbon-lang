@@ -105,7 +105,7 @@ public:
   
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
-    return (NextChar-FirstChar)*8 + (32-BitsInCurWord);
+    return (NextChar-FirstChar)*8 + ((32-BitsInCurWord) & 31);
   }
   
   /// JumpToBit - Reset the stream to the specified bit number.
