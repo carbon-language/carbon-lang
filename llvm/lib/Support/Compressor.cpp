@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if 0
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/ADT/StringExtras.h"
@@ -556,3 +557,5 @@ Compressor::decompressToStream(const char*in, size_t size, std::ostream& out,
   }
   return zipSize;
 }
+
+#endif
