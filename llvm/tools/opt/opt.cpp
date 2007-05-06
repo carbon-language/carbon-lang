@@ -365,6 +365,9 @@ int main(int argc, char **argv) {
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
 
+    // Delete the ofstream.
+    if (Out != &std::cout) 
+      delete Out;
     return 0;
 
   } catch (const std::string& msg) {
