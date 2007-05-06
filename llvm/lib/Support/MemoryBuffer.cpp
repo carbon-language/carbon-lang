@@ -111,7 +111,9 @@ namespace {
 class MemoryBufferMMapFile : public MemoryBuffer {
   sys::MappedFile File;
 public:
-  MemoryBufferMMapFile(const sys::Path &Filename);
+  MemoryBufferMMapFile() {}
+  
+  bool open(const sys::Path &Filename);
   
   virtual const char *getBufferIdentifier() const {
     return File.path().c_str();
@@ -121,12 +123,11 @@ public:
 };
 }
 
-MemoryBufferMMapFile::MemoryBufferMMapFile(const sys::Path &Filename) {
+bool MemoryBufferMMapFile::open(const sys::Path &Filename) {
   // FIXME: This does an extra stat syscall to figure out the size, but we
   // already know the size!
   bool Failure = File.open(Filename);
-  Failure = Failure;  // Silence warning in no-asserts mode.
-  assert(!Failure && "Can't open file??");
+  if (Failure) return true;
   
   File.map();
   
@@ -147,10 +148,12 @@ MemoryBufferMMapFile::MemoryBufferMMapFile(const sys::Path &Filename) {
     // No need to keep the file mapped any longer.
     File.unmap();
   }
+  return false;
 }
 
 MemoryBufferMMapFile::~MemoryBufferMMapFile() {
-  File.unmap();
+  if (File.isMapped())
+    File.unmap();
 }
 
 //===----------------------------------------------------------------------===//
@@ -161,7 +164,11 @@ MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
                                     int64_t FileSize) {
   sys::PathWithStatus P(FilenameStart, FnSize);
 #if 1
-  return new MemoryBufferMMapFile(P);
+  MemoryBufferMMapFile *M = new MemoryBufferMMapFile();
+  if (!M->open(P))
+    return M;
+  delete M;
+  return 0;
 #else
   // FIXME: We need an efficient and portable method to open a file and then use
   // 'read' to copy the bits out.  The unix implementation is below.  This is
@@ -177,8 +184,13 @@ MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
   }
   
   // If the file is larger than some threshold, use mmap, otherwise use 'read'.
-  if (FileSize >= 4096*4)
-    return new MemoryBufferMMapFile(P);
+  if (FileSize >= 4096*4) {
+    MemoryBufferMMapFile *M = new MemoryBufferMMapFile();
+    if (!M->open(P))
+      return M;
+    delete M;
+    return 0;
+  }
   
   MemoryBuffer *SB = getNewUninitMemBuffer(FileSize, FilenameStart);
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
