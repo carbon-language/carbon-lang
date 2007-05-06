@@ -57,7 +57,7 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
   std::ofstream Out(Filename.c_str(), io_mode);
   if (!Out.good()) return true;
   
-  WriteBitcodeToFile(M, Out);
+  WriteBitcodeToFile(M ? M : Program, Out);
   return false;
 }
 
