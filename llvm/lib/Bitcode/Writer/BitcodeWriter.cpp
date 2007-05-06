@@ -45,6 +45,8 @@ enum {
   
   // FUNCTION_BLOCK abbrev id's.
   FUNCTION_INST_LOAD_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
+  FUNCTION_INST_BINOP_ABBREV,
+  FUNCTION_INST_CAST_ABBREV,
   FUNCTION_INST_RET_VOID_ABBREV,
   FUNCTION_INST_RET_VAL_ABBREV,
   FUNCTION_INST_UNREACHABLE_ABBREV
@@ -662,13 +664,15 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   default:
     if (Instruction::isCast(I.getOpcode())) {
       Code = bitc::FUNC_CODE_INST_CAST;
-      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
+      if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))
+        AbbrevToUse = FUNCTION_INST_CAST_ABBREV;
       Vals.push_back(VE.getTypeID(I.getType()));
       Vals.push_back(GetEncodedCastOpcode(I.getOpcode()));
     } else {
       assert(isa<BinaryOperator>(I) && "Unknown instruction!");
       Code = bitc::FUNC_CODE_INST_BINOP;
-      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
+      if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))
+        AbbrevToUse = FUNCTION_INST_BINOP_ABBREV;
       Vals.push_back(VE.getValueID(I.getOperand(1)));
       Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
     }
@@ -895,7 +899,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
 /// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE, 
                           BitstreamWriter &Stream) {
-  Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 3);
+  Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 4);
   VE.incorporateFunction(F);
 
   SmallVector<unsigned, 64> Vals;
@@ -1072,6 +1076,28 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                                    Abbv) != FUNCTION_INST_LOAD_ABBREV)
       assert(0 && "Unexpected abbrev ordering!");
   }
+  { // INST_BINOP abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_BINOP));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LHS
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // RHS
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4)); // opc
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_BINOP_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  { // INST_CAST abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_CAST));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));    // OpVal
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,       // dest ty
+                              Log2_32_Ceil(VE.getTypes().size()+1)));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4));  // opc
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_CAST_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  
   { // INST_RET abbrev for FUNCTION_BLOCK.
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_RET));
