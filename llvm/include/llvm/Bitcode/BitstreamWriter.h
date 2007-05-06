@@ -255,10 +255,10 @@ private:
     switch (Op.getEncoding()) {
     default: assert(0 && "Unknown encoding!");
     case BitCodeAbbrevOp::Fixed:
-      Emit(V, Op.getEncodingData());
+      Emit((unsigned)V, (unsigned)Op.getEncodingData());
       break;
     case BitCodeAbbrevOp::VBR:
-      EmitVBR64(V, Op.getEncodingData());
+      EmitVBR64(V, (unsigned)Op.getEncodingData());
       break;
     case BitCodeAbbrevOp::Char6:
       Emit(BitCodeAbbrevOp::EncodeChar6((char)V), 6);

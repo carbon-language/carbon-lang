@@ -808,7 +808,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Call: {
     Code = bitc::FUNC_CODE_INST_CALL;
     Vals.push_back((cast<CallInst>(I).getCallingConv() << 1) |
-                   cast<CallInst>(I).isTailCall());
+                   unsigned(cast<CallInst>(I).isTailCall()));
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // Callee
     
     // Emit value #'s for the fixed parameters.

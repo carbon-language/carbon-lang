@@ -110,8 +110,8 @@ public:
   
   /// JumpToBit - Reset the stream to the specified bit number.
   void JumpToBit(uint64_t BitNo) {
-    unsigned ByteNo = (BitNo/8) & ~3;
-    unsigned WordBitNo = BitNo & 31;
+    unsigned ByteNo = unsigned(BitNo/8) & ~3;
+    unsigned WordBitNo = unsigned(BitNo) & 31;
     assert(ByteNo < (unsigned)(LastChar-FirstChar) && "Invalid location");
     
     // Move the cursor to the right word.
@@ -327,10 +327,10 @@ private:
       switch (Op.getEncoding()) {
       default: assert(0 && "Unknown encoding!");
       case BitCodeAbbrevOp::Fixed:
-        Vals.push_back(Read(Op.getEncodingData()));
+        Vals.push_back(Read((unsigned)Op.getEncodingData()));
         break;
       case BitCodeAbbrevOp::VBR:
-        Vals.push_back(ReadVBR64(Op.getEncodingData()));
+        Vals.push_back(ReadVBR64((unsigned)Op.getEncodingData()));
         break;
       case BitCodeAbbrevOp::Char6:
         Vals.push_back(BitCodeAbbrevOp::DecodeChar6(Read(6)));
@@ -370,7 +370,7 @@ public:
       }
     }
     
-    unsigned Code = Vals[0];
+    unsigned Code = (unsigned)Vals[0];
     Vals.erase(Vals.begin());
     return Code;
   }
@@ -451,7 +451,7 @@ public:
       default: break;  // Default behavior, ignore unknown content.
       case bitc::BLOCKINFO_CODE_SETBID:
         if (Record.size() < 1) return true;
-        CurBlockInfo = &getOrCreateBlockInfo(Record[0]);
+        CurBlockInfo = &getOrCreateBlockInfo((unsigned)Record[0]);
         break;
       }
     }      

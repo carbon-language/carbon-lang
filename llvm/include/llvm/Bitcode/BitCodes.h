@@ -136,6 +136,7 @@ public:
     if (C == '.') return 62;
     if (C == '_') return 63;
     assert(0 && "Not a value Char6 character!");
+    return 0;
   }
   
   static char DecodeChar6(unsigned V) {
@@ -146,6 +147,7 @@ public:
     if (V == 62) return '.';
     if (V == 63) return '_';
     assert(0 && "Not a value Char6 character!");
+    return ' ';
   }
   
 };
