@@ -268,12 +268,8 @@ int main(int argc, char **argv) {
     // Load the input module...
     std::auto_ptr<Module> M;
     if (Bitcode) {
-      MemoryBuffer *Buffer;
-      if (InputFilename == "-") {
-        Buffer = MemoryBuffer::getSTDIN();
-      } else {
-        Buffer = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size());
-      }
+      MemoryBuffer *Buffer
+        = MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size());
       
       if (Buffer == 0)
         ErrorMessage = "Error reading file '" + InputFilename + "'";

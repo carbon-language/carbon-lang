@@ -18,8 +18,10 @@
 #include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include <algorithm>
 #include <iostream>
@@ -30,6 +32,7 @@
 using namespace llvm;
 
 namespace {
+  cl::opt<bool> Bitcode("bitcode");
   cl::opt<std::string>
   BytecodeFile(cl::Positional, cl::desc("<program bytecode file>"),
                cl::Required);
@@ -116,9 +119,20 @@ int main(int argc, char **argv) {
 
     // Read in the bytecode file...
     std::string ErrorMessage;
-    Module *M = ParseBytecodeFile(BytecodeFile, 
-                                  Compressor::decompressToNewBuffer, 
-                                  &ErrorMessage);
+    Module *M;
+    if (Bitcode) {
+      MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&BytecodeFile[0],
+                                                          BytecodeFile.size());
+      if (Buffer == 0)
+        ErrorMessage = "Error reading file '" + BytecodeFile + "'";
+      else
+        M = ParseBitcodeFile(Buffer, &ErrorMessage);
+      delete Buffer;
+    } else {
+      M = ParseBytecodeFile(BytecodeFile, 
+                            Compressor::decompressToNewBuffer, 
+                            &ErrorMessage);
+    }
     if (M == 0) {
       std::cerr << argv[0] << ": " << BytecodeFile << ": " 
         << ErrorMessage << "\n";

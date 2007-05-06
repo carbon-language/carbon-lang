@@ -9,7 +9,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-prof
-LINK_COMPONENTS = bcreader analysis
+LINK_COMPONENTS = bcreader bitreader analysis
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
