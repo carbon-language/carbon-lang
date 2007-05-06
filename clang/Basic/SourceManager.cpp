@@ -54,7 +54,7 @@ static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
   // If the file is larger than some threshold, use 'read', otherwise use mmap.
   if (FileEnt->getSize() >= 4096*4)
     return MemoryBuffer::getFile(FileEnt->getName(), strlen(FileEnt->getName()),
-                                 FileEnt->getSize());
+                                 0, FileEnt->getSize());
   
   MemoryBuffer *SB = MemoryBuffer::getNewUninitMemBuffer(FileEnt->getSize(),
                                                          FileEnt->getName());
