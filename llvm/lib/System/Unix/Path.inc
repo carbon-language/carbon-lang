@@ -267,21 +267,6 @@ Path::getBasename() const {
     return path.substr(slash, dot - slash);
 }
 
-bool Path::hasMagicNumber(const std::string &Magic) const {
-  size_t len = Magic.size();
-  assert(len < 1024 && "Request for magic string too long");
-  char* buf = (char*) alloca(1 + len);
-  int fd = ::open(path.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  size_t read_len = ::read(fd, buf, len);
-  close(fd);
-  if (len != read_len)
-    return false;
-  buf[len] = '\0';
-  return Magic == buf;
-}
-
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
@@ -296,22 +281,6 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   }
   Magic.assign(buf,len);
   return true;
-}
-
-bool 
-Path::isBytecodeFile() const {
-  char buffer[4];
-  buffer[0] = 0;
-  int fd = ::open(path.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  ssize_t bytes_read = ::read(fd, buffer, 4);
-  ::close(fd);
-  if (4 != bytes_read) 
-    return false;
-
-  return (buffer[0] == 'l' && buffer[1] == 'l' && buffer[2] == 'v' &&
-         (buffer[3] == 'c' || buffer[3] == 'm'));
 }
 
 bool

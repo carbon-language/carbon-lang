@@ -43,6 +43,10 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
   assert(magic && "Invalid magic number string");
   assert(length >=4 && "Invalid magic number length");
   switch (magic[0]) {
+    case 'B':
+      if (magic[1] == 'C' && magic[2] == (char)0xC0 && magic[3] == (char)0xDE)
+        return Bitcode_FileType;
+      break;
     case 'l':
       if (magic[1] == 'l' && magic[2] == 'v') {
         if (magic[3] == 'c')
@@ -159,6 +163,31 @@ Path::FindLibrary(std::string& name) {
 std::string Path::GetDLLSuffix() {
   return LTDL_SHLIB_EXT;
 }
+
+bool
+Path::isBytecodeFile() const {
+  std::string actualMagic;
+  if (!getMagicNumber(actualMagic, 4))
+    return false;
+  return actualMagic == "llvc" || actualMagic == "llvm";
+}
+
+bool
+Path::isBitcodeFile() const {
+  std::string actualMagic;
+  if (!getMagicNumber(actualMagic, 4))
+    return false;
+  return actualMagic == "BC\xC0\xDE";
+}
+
+bool Path::hasMagicNumber(const std::string &Magic) const {
+  std::string actualMagic;
+  if (getMagicNumber(actualMagic, Magic.size()))
+    return Magic == actualMagic;
+  return false;
+}
+
+
 
 // Include the truly platform-specific parts of this class.
 #if defined(LLVM_ON_UNIX)

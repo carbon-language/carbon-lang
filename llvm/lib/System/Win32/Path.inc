@@ -247,21 +247,6 @@ Path::getBasename() const {
     return path.substr(slash, dot - slash);
 }
 
-bool Path::hasMagicNumber(const std::string &Magic) const {
-  std::string actualMagic;
-  if (getMagicNumber(actualMagic, Magic.size()))
-    return Magic == actualMagic;
-  return false;
-}
-
-bool
-Path::isBytecodeFile() const {
-  std::string actualMagic;
-  if (!getMagicNumber(actualMagic, 4))
-    return false;
-  return actualMagic == "llvc" || actualMagic == "llvm";
-}
-
 bool
 Path::exists() const {
   DWORD attr = GetFileAttributes(path.c_str());
