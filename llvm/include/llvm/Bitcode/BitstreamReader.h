@@ -101,7 +101,9 @@ public:
     }
   }
   
-  bool AtEndOfStream() const { return NextChar == LastChar; }
+  bool AtEndOfStream() const {
+    return NextChar == LastChar && BitsInCurWord == 0;
+  }
   
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
