@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-PARALLEL_DIRS = Reader Writer Archive
+PARALLEL_DIRS = Archive
 
 include $(LEVEL)/Makefile.common
 
