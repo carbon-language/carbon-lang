@@ -411,7 +411,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 4);
 
   unsigned AggregateAbbrev = 0;
-  unsigned GEPAbbrev = 0;
+  unsigned String7Abbrev = 0;
   // If this is a constant pool for the module, emit module-specific abbrevs.
   if (isGlobal) {
     // Abbrev for CST_CODE_AGGREGATE.
@@ -420,6 +420,13 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, Log2_32_Ceil(LastVal+1)));
     AggregateAbbrev = Stream.EmitAbbrev(Abbv);
+
+    // Abbrev for CST_CODE_STRING.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_STRING));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
+    String7Abbrev = Stream.EmitAbbrev(Abbv);
   }  
   
   // FIXME: Install and use abbrevs to reduce size.  Install them globally so
@@ -487,9 +494,14 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
       // Emit constant strings specially.
       Code = bitc::CST_CODE_STRING;
-      for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
-        Record.push_back(cast<ConstantInt>(C->getOperand(i))->getZExtValue());
-      
+      bool isStr7 = true;
+      for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
+        unsigned char V = cast<ConstantInt>(C->getOperand(i))->getZExtValue();
+        Record.push_back(V);
+        isStr7 &= (V & 128) == 0;
+      }
+      if (isStr7)
+        AbbrevToUse = String7Abbrev;
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
                isa<ConstantVector>(V)) {
       Code = bitc::CST_CODE_AGGREGATE;
@@ -519,7 +531,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
           Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
           Record.push_back(VE.getValueID(C->getOperand(i)));
         }
-        AbbrevToUse = GEPAbbrev;
         break;
       case Instruction::Select:
         Code = bitc::CST_CODE_CE_SELECT;
