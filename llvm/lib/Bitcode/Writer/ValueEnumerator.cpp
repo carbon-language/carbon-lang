@@ -84,7 +84,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
              OI != E; ++OI)
-          EnumerateType((*OI)->getType());
+          EnumerateOperandType(*OI);
         EnumerateType(I->getType());
       }
   }
@@ -224,6 +224,22 @@ void ValueEnumerator::EnumerateType(const Type *Ty) {
   // If this is a function type, enumerate the param attrs.
   if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty))
     EnumerateParamAttrs(FTy->getParamAttrs());
+}
+
+// Enumerate the types for the specified value.  If the value is a constant,
+// walk through it, enumerating the types of the constant.
+void ValueEnumerator::EnumerateOperandType(const Value *V) {
+  EnumerateType(V->getType());
+  if (const Constant *C = dyn_cast<Constant>(V)) {
+    // If this constant is already enumerated, ignore it, we know its type must
+    // be enumerated.
+    if (ValueMap.count(V)) return;
+
+    // This constant may have operands, make sure to enumerate the types in
+    // them.
+    for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
+      EnumerateOperandType(C->getOperand(i));
+  }
 }
 
 void ValueEnumerator::EnumerateParamAttrs(const ParamAttrsList *PAL) {

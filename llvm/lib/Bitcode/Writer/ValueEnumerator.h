@@ -114,6 +114,7 @@ private:
     
   void EnumerateValue(const Value *V);
   void EnumerateType(const Type *T);
+  void EnumerateOperandType(const Value *V);
   void EnumerateParamAttrs(const ParamAttrsList *PAL);
   
   void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
