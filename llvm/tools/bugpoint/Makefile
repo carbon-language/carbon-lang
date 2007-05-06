@@ -11,7 +11,7 @@ LEVEL = ../..
 TOOLNAME = bugpoint
 
 LINK_COMPONENTS := bcreader bcwriter asmparser instrumentation scalaropts ipo \
-                   linker
+                   linker bitreader bitwriter
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

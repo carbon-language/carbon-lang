@@ -22,7 +22,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"

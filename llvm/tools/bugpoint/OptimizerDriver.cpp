@@ -24,6 +24,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
@@ -37,6 +38,9 @@
 
 #include <fstream>
 using namespace llvm;
+
+static bool Bitcode = false;
+
 
 namespace {
   // ChildOutput - This option captures the name of the child output file that
@@ -110,7 +114,10 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
 
   // Write bytecode out to disk as the last step...
   OStream L(OutFile);
-  PM.add(new WriteBytecodePass(&L));
+  if (Bitcode)
+    PM.add(CreateBitcodeWriterPass(OutFile));
+  else
+    PM.add(new WriteBytecodePass(&L));
 
   // Run all queued passes.
   PM.run(*Program);

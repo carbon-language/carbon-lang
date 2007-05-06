@@ -19,13 +19,14 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Parser.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <iostream>
 #include <memory>
-
 using namespace llvm;
 
 // Anonymous namespace to define command line options for debugging.
@@ -77,6 +78,13 @@ Module *llvm::ParseInputFile(const std::string &InputFilename) {
   ParseError Err;
   Module *Result = ParseBytecodeFile(InputFilename,
                                      Compressor::decompressToNewBuffer);
+  if (!Result) {
+    std::auto_ptr<MemoryBuffer> Buffer(
+         MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+    if (Buffer.get())
+      Result = ParseBitcodeFile(Buffer.get());
+  }
+  
   if (!Result && !(Result = ParseAssemblyFile(InputFilename,&Err))) {
     std::cerr << "bugpoint: " << Err.getMessage() << "\n"; 
     Result = 0;
