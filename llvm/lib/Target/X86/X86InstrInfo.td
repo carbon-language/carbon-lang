@@ -267,7 +267,7 @@ class TA     { bits<4> Prefix = 14; }
 //
 
 // X86 specific condition code. These correspond to CondCode in
-// X86ISelLowering.h. They must be kept in synch.
+// X86InstrInfo.h. They must be kept in synch.
 def X86_COND_A   : PatLeaf<(i8 0)>;
 def X86_COND_AE  : PatLeaf<(i8 1)>;
 def X86_COND_B   : PatLeaf<(i8 2)>;
