@@ -411,7 +411,9 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   Stream.EnterSubblock(bitc::CONSTANTS_BLOCK_ID, 4);
 
   unsigned AggregateAbbrev = 0;
-  unsigned String7Abbrev = 0;
+  unsigned String8Abbrev = 0;
+  unsigned CString7Abbrev = 0;
+  unsigned CString6Abbrev = 0;
   // If this is a constant pool for the module, emit module-specific abbrevs.
   if (isGlobal) {
     // Abbrev for CST_CODE_AGGREGATE.
@@ -425,8 +427,20 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     Abbv = new BitCodeAbbrev();
     Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_STRING));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+    String8Abbrev = Stream.EmitAbbrev(Abbv);
+    // Abbrev for CST_CODE_CSTRING.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CSTRING));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
-    String7Abbrev = Stream.EmitAbbrev(Abbv);
+    CString7Abbrev = Stream.EmitAbbrev(Abbv);
+    // Abbrev for CST_CODE_CSTRING.
+    Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_CSTRING));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+    CString6Abbrev = Stream.EmitAbbrev(Abbv);
   }  
   
   // FIXME: Install and use abbrevs to reduce size.  Install them globally so
@@ -493,15 +507,29 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       }
     } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
       // Emit constant strings specially.
-      Code = bitc::CST_CODE_STRING;
-      bool isStr7 = true;
-      for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
+      unsigned NumOps = C->getNumOperands();
+      // If this is a null-terminated string, use the denser CSTRING encoding.
+      if (C->getOperand(NumOps-1)->isNullValue()) {
+        Code = bitc::CST_CODE_CSTRING;
+        --NumOps;  // Don't encode the null, which isn't allowed by char6.
+      } else {
+        Code = bitc::CST_CODE_STRING;
+        AbbrevToUse = String8Abbrev;
+      }
+      bool isCStr7 = Code == bitc::CST_CODE_CSTRING;
+      bool isCStrChar6 = Code == bitc::CST_CODE_CSTRING;
+      for (unsigned i = 0; i != NumOps; ++i) {
         unsigned char V = cast<ConstantInt>(C->getOperand(i))->getZExtValue();
         Record.push_back(V);
-        isStr7 &= (V & 128) == 0;
+        isCStr7 &= (V & 128) == 0;
+        if (isCStrChar6) 
+          isCStrChar6 = BitCodeAbbrevOp::isChar6(V);
       }
-      if (isStr7)
-        AbbrevToUse = String7Abbrev;
+      
+      if (isCStrChar6)
+        AbbrevToUse = CString6Abbrev;
+      else if (isCStr7)
+        AbbrevToUse = CString7Abbrev;
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
                isa<ConstantVector>(V)) {
       Code = bitc::CST_CODE_AGGREGATE;

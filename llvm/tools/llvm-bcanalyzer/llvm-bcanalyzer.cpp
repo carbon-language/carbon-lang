@@ -163,6 +163,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     case bitc::CST_CODE_WIDE_INTEGER:  return "WIDE_INTEGER";
     case bitc::CST_CODE_FLOAT:         return "FLOAT";
     case bitc::CST_CODE_AGGREGATE:     return "AGGREGATE";
+    case bitc::CST_CODE_STRING:        return "STRING";
+    case bitc::CST_CODE_CSTRING:       return "CSTRING";
     case bitc::CST_CODE_CE_BINOP:      return "CE_BINOP";
     case bitc::CST_CODE_CE_CAST:       return "CE_CAST";
     case bitc::CST_CODE_CE_GEP:        return "CE_GEP";
