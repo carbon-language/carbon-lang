@@ -1201,4 +1201,7 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
   
   // Write the generated bitstream to "Out".
   Out.write((char*)&Buffer.front(), Buffer.size());
+  
+  // Make sure it hits disk now.
+  Out.flush();
 }
