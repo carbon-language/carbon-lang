@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_MEMORYBUFFER_H
 
 #include "llvm/Support/DataTypes.h"
+#include <string>
 
 namespace llvm {
 
@@ -52,6 +53,7 @@ public:
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
   static MemoryBuffer *getFile(const char *FilenameStart, unsigned FnSize,
+                               std::string *ErrStr = 0,
                                int64_t FileSize = -1);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
@@ -79,14 +81,24 @@ public:
   
   
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
-  /// if the Filename is "-".
+  /// if the Filename is "-".  If an error occurs, this returns null and fills
+  /// in *ErrStr with a reason.
   static MemoryBuffer *getFileOrSTDIN(const char *FilenameStart,unsigned FnSize,
+                                      std::string *ErrStr = 0,
                                       int64_t FileSize = -1) {
     if (FnSize == 1 && FilenameStart[0] == '-')
       return getSTDIN();
-    return getFile(FilenameStart, FnSize, FileSize);
+    return getFile(FilenameStart, FnSize, ErrStr, FileSize);
   }
   
+  /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
+  /// if the Filename is "-".  If an error occurs, this returns null and fills
+  /// in *ErrStr with a reason.
+  static MemoryBuffer *getFileOrSTDIN(const std::string &FN,
+                                      std::string *ErrStr = 0,
+                                      int64_t FileSize = -1) {
+    return getFileOrSTDIN(&FN[0], FN.size(), ErrStr, FileSize);
+  }
 };
 
 } // end namespace llvm

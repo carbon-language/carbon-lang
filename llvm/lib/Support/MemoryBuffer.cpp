@@ -113,7 +113,7 @@ class MemoryBufferMMapFile : public MemoryBuffer {
 public:
   MemoryBufferMMapFile() {}
   
-  bool open(const sys::Path &Filename);
+  bool open(const sys::Path &Filename, std::string *ErrStr);
   
   virtual const char *getBufferIdentifier() const {
     return File.path().c_str();
@@ -123,13 +123,15 @@ public:
 };
 }
 
-bool MemoryBufferMMapFile::open(const sys::Path &Filename) {
+bool MemoryBufferMMapFile::open(const sys::Path &Filename,
+                                std::string *ErrStr) {
   // FIXME: This does an extra stat syscall to figure out the size, but we
   // already know the size!
-  bool Failure = File.open(Filename);
+  bool Failure = File.open(Filename, sys::MappedFile::READ_ACCESS, ErrStr);
   if (Failure) return true;
   
-  File.map();
+  if (!File.map(ErrStr))
+    return true;
   
   size_t Size = File.size();
   
@@ -161,11 +163,13 @@ MemoryBufferMMapFile::~MemoryBufferMMapFile() {
 //===----------------------------------------------------------------------===//
 
 MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
-                                    int64_t FileSize) {
+                                    std::string *ErrStr, int64_t FileSize){
+  // FIXME: it would be nice if PathWithStatus didn't copy the filename into a
+  // temporary string. :(
   sys::PathWithStatus P(FilenameStart, FnSize);
 #if 1
   MemoryBufferMMapFile *M = new MemoryBufferMMapFile();
-  if (!M->open(P))
+  if (!M->open(P, ErrStr))
     return M;
   delete M;
   return 0;
@@ -186,7 +190,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *FilenameStart, unsigned FnSize,
   // If the file is larger than some threshold, use mmap, otherwise use 'read'.
   if (FileSize >= 4096*4) {
     MemoryBufferMMapFile *M = new MemoryBufferMMapFile();
-    if (!M->open(P))
+    if (!M->open(P, ErrStr))
       return M;
     delete M;
     return 0;
