@@ -116,7 +116,9 @@ D: llvm-config script
 
 N: Anton Korobeynikov
 E: asl@math.spbu.ru
-D: Mingw32 fixes, cross-compiling support, minor changes here and there
+D: Mingw32 fixes, cross-compiling support, stdcall/fastcall calling conv.
+D: x86/linux PIC codegen, aliases, regparm/visibility attributes
+D: Switch lowering refactoring
 
 N: Sumant Kowshik
 E: kowshik@uiuc.edu
