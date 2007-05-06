@@ -77,11 +77,7 @@ int main(int argc, char **argv, char * const *envp) {
   // Load the bytecode...
   std::string ErrorMsg;
   ModuleProvider *MP = 0;
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFile[0],
-                                                      InputFile.size());
-  if (Buffer == 0)
-    ErrorMsg = "Error reading file '" + InputFile + "'";
-  else {
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
     MP = getBitcodeModuleProvider(Buffer, &ErrorMsg);
     if (!MP) delete Buffer;
   }

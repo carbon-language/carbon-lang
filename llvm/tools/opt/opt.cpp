@@ -260,15 +260,12 @@ int main(int argc, char **argv) {
 
     // Load the input module...
     std::auto_ptr<Module> M;
-    MemoryBuffer *Buffer
-      = MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size());
-    
-    if (Buffer == 0)
-      ErrorMessage = "Error reading file '" + InputFilename + "'";
-    else
+    if (MemoryBuffer *Buffer
+          = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
       M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+      delete Buffer;
+    }
     
-    delete Buffer;
     if (M.get() == 0) {
       cerr << argv[0] << ": ";
       if (ErrorMessage.size())

@@ -58,13 +58,11 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     Module* Result = 0;
     
     const std::string &FNStr = Filename.toString();
-    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&FNStr[0],
-                                                        FNStr.size());
-    if (Buffer == 0)
-      ErrorMessage = "Error reading file '" + FNStr + "'";
-    else
+    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(FNStr,
+                                                            &ErrorMessage)) {
       Result = ParseBitcodeFile(Buffer, &ErrorMessage);
-    delete Buffer;
+      delete Buffer;
+    }
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {

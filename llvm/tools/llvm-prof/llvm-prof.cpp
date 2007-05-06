@@ -118,13 +118,11 @@ int main(int argc, char **argv) {
     // Read in the bytecode file...
     std::string ErrorMessage;
     Module *M;
-    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&BytecodeFile[0],
-                                                        BytecodeFile.size());
-    if (Buffer == 0)
-      ErrorMessage = "Error reading file '" + BytecodeFile + "'";
-    else
+    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BytecodeFile,
+                                                            &ErrorMessage)) {
       M = ParseBitcodeFile(Buffer, &ErrorMessage);
-    delete Buffer;
+      delete Buffer;
+    }
     if (M == 0) {
       std::cerr << argv[0] << ": " << BytecodeFile << ": " 
         << ErrorMessage << "\n";

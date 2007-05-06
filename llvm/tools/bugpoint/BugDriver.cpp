@@ -72,18 +72,18 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
 /// return it, or return null if not possible.
 ///
-Module *llvm::ParseInputFile(const std::string &InputFilename) {
-  std::auto_ptr<MemoryBuffer> Buffer(
-       MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+Module *llvm::ParseInputFile(const std::string &Filename) {
+  std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(Filename));
   Module *Result = 0;
   if (Buffer.get())
     Result = ParseBitcodeFile(Buffer.get());
   
   ParseError Err;
-  if (!Result && !(Result = ParseAssemblyFile(InputFilename,&Err))) {
+  if (!Result && !(Result = ParseAssemblyFile(Filename, &Err))) {
     std::cerr << "bugpoint: " << Err.getMessage() << "\n"; 
     Result = 0;
   }
+  
   return Result;
 }
 
@@ -100,6 +100,7 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
     // Load the first input file.
     Program = ParseInputFile(Filenames[0]);
     if (Program == 0) return true;
+    
     if (!run_as_child)
       std::cout << "Read input file      : '" << Filenames[0] << "'\n";
 

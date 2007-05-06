@@ -57,8 +57,7 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<Module> M;
   
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFilename[0],
-                                                      InputFilename.size());
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename);
   if (Buffer == 0) {
     cerr << "Error reading file '" + InputFilename + "'";
     return 1;

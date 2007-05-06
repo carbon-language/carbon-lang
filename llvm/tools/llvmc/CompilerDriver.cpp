@@ -69,8 +69,7 @@ static bool GetBytecodeDependentLibraries(const std::string &fname,
                                           Module::LibraryListType& deplibs,
                                           std::string* ErrMsg) {
   ModuleProvider *MP = 0;
-  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&fname[0],
-                                                          fname.size())) {
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(fname)) {
     MP = getBitcodeModuleProvider(Buffer);
     if (MP == 0) delete Buffer;
   }

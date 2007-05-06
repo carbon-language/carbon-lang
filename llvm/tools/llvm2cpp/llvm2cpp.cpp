@@ -52,11 +52,9 @@ int main(int argc, char **argv) {
   
   std::auto_ptr<Module> M;
   std::auto_ptr<MemoryBuffer> Buffer(
-       MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+       MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage));
   if (Buffer.get())
     M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
-  else
-    ErrorMessage = "Error reading file '" + InputFilename + "'";
   if (M.get() == 0) {
     std::cerr << argv[0] << ": ";
     if (ErrorMessage.size())
