@@ -10,7 +10,7 @@ LEVEL = ../..
 
 TOOLNAME = bugpoint
 
-LINK_COMPONENTS := bcreader bcwriter asmparser instrumentation scalaropts ipo \
+LINK_COMPONENTS := asmparser instrumentation scalaropts ipo \
                    linker bitreader bitwriter
 REQUIRES_EH := 1
 

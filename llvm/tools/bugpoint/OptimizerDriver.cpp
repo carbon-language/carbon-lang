@@ -23,7 +23,6 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
@@ -38,8 +37,6 @@
 
 #include <fstream>
 using namespace llvm;
-
-static bool Bitcode = false;
 
 
 namespace {
@@ -59,12 +56,8 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
                                std::ios::binary;
   std::ofstream Out(Filename.c_str(), io_mode);
   if (!Out.good()) return true;
-  try {
-    OStream L(Out);
-    WriteBytecodeToFile(M ? M : Program, L, /*compression=*/false);
-  } catch (...) {
-    return true;
-  }
+  
+  WriteBitcodeToFile(M, Out);
   return false;
 }
 
@@ -113,11 +106,7 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
   PM.add(createVerifierPass());
 
   // Write bytecode out to disk as the last step...
-  OStream L(OutFile);
-  if (Bitcode)
-    PM.add(CreateBitcodeWriterPass(OutFile));
-  else
-    PM.add(new WriteBytecodePass(&L));
+  PM.add(CreateBitcodeWriterPass(OutFile));
 
   // Run all queued passes.
   PM.run(*Program);
@@ -161,8 +150,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     cerr << "Error opening bytecode file: " << inputFilename << "\n";
     return(1);
   }
-  OStream L(InFile);
-  WriteBytecodeToFile(Program,L,false);
+  WriteBitcodeToFile(Program, InFile);
   InFile.close();
 
   // setup the child process' arguments

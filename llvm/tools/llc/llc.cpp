@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/Target/SubtargetFeature.h"
@@ -23,10 +22,10 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
@@ -39,9 +38,6 @@
 #include <iostream>
 #include <memory>
 using namespace llvm;
-
-cl::opt<bool> Bitcode("bitcode");
-
 
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
@@ -183,17 +179,13 @@ int main(int argc, char **argv) {
   std::string ErrorMessage;
   std::auto_ptr<Module> M;
   
-  if (Bitcode) {
-    std::auto_ptr<MemoryBuffer> Buffer(
-        MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
-    if (Buffer.get())
-      M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
-    else
-      ErrorMessage = "Error reading file '" + InputFilename + "'";
-  } else {
-    M.reset(ParseBytecodeFile(InputFilename, 
-                              Compressor::decompressToNewBuffer,
-                              &ErrorMessage));
+  {
+  std::auto_ptr<MemoryBuffer> Buffer(
+       MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+  if (Buffer.get())
+    M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
+  else
+    ErrorMessage = "Error reading file '" + InputFilename + "'";
   }
   if (M.get() == 0) {
     std::cerr << argv[0] << ": bytecode didn't read correctly.\n";

@@ -9,7 +9,7 @@
 
 LEVEL    := ../..
 TOOLNAME := lli
-LINK_COMPONENTS := jit interpreter native bcreader bitreader selectiondag
+LINK_COMPONENTS := jit interpreter native bitreader selectiondag
 
 # Enable JIT support
 include $(LEVEL)/Makefile.common

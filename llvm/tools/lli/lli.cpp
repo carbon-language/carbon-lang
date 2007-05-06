@@ -17,13 +17,11 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Type.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
@@ -34,8 +32,6 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<bool> Bitcode("bitcode");
-
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
 
@@ -81,19 +77,13 @@ int main(int argc, char **argv, char * const *envp) {
   // Load the bytecode...
   std::string ErrorMsg;
   ModuleProvider *MP = 0;
-  if (Bitcode) {
-    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFile[0],
-                                                        InputFile.size());
-    if (Buffer == 0)
-      ErrorMsg = "Error reading file '" + InputFile + "'";
-    else {
-      MP = getBitcodeModuleProvider(Buffer, &ErrorMsg);
-      if (!MP) delete Buffer;
-    }
-  } else {
-    MP = getBytecodeModuleProvider(InputFile, 
-                                   Compressor::decompressToNewBuffer,
-                                   &ErrorMsg);
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFile[0],
+                                                      InputFile.size());
+  if (Buffer == 0)
+    ErrorMsg = "Error reading file '" + InputFile + "'";
+  else {
+    MP = getBitcodeModuleProvider(Buffer, &ErrorMsg);
+    if (!MP) delete Buffer;
   }
   
   if (!MP) {

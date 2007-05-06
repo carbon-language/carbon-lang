@@ -20,9 +20,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <iostream>
@@ -75,16 +73,13 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
 /// return it, or return null if not possible.
 ///
 Module *llvm::ParseInputFile(const std::string &InputFilename) {
-  ParseError Err;
-  Module *Result = ParseBytecodeFile(InputFilename,
-                                     Compressor::decompressToNewBuffer);
-  if (!Result) {
-    std::auto_ptr<MemoryBuffer> Buffer(
-         MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
-    if (Buffer.get())
-      Result = ParseBitcodeFile(Buffer.get());
-  }
+  std::auto_ptr<MemoryBuffer> Buffer(
+       MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+  Module *Result = 0;
+  if (Buffer.get())
+    Result = ParseBitcodeFile(Buffer.get());
   
+  ParseError Err;
   if (!Result && !(Result = ParseAssemblyFile(InputFilename,&Err))) {
     std::cerr << "bugpoint: " << Err.getMessage() << "\n"; 
     Result = 0;
