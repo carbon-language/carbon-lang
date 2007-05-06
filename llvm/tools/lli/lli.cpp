@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Type.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/JIT.h"
@@ -24,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
@@ -32,6 +34,8 @@
 using namespace llvm;
 
 namespace {
+  cl::opt<bool> Bitcode("bitcode");
+
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
 
@@ -66,99 +70,105 @@ static void do_shutdown() {
 //
 int main(int argc, char **argv, char * const *envp) {
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
-  try {
-    cl::ParseCommandLineOptions(argc, argv,
-                                " llvm interpreter & dynamic compiler\n");
-    sys::PrintStackTraceOnErrorSignal();
+  cl::ParseCommandLineOptions(argc, argv,
+                              " llvm interpreter & dynamic compiler\n");
+  sys::PrintStackTraceOnErrorSignal();
 
-    // If the user doesn't want core files, disable them.
-    if (DisableCoreFiles)
-      sys::Process::PreventCoreFiles();
-    
-    // Load the bytecode...
-    std::string ErrorMsg;
-    ModuleProvider *MP = getBytecodeModuleProvider(InputFile, 
-                                              Compressor::decompressToNewBuffer,
-                                              &ErrorMsg);
-    if (!MP) {
-      std::cerr << argv[0] << ": error loading program '" << InputFile << "': "
-                << ErrorMsg << "\n";
-      exit(1);
+  // If the user doesn't want core files, disable them.
+  if (DisableCoreFiles)
+    sys::Process::PreventCoreFiles();
+  
+  // Load the bytecode...
+  std::string ErrorMsg;
+  ModuleProvider *MP = 0;
+  if (Bitcode) {
+    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFile[0],
+                                                        InputFile.size());
+    if (Buffer == 0)
+      ErrorMsg = "Error reading file '" + InputFile + "'";
+    else {
+      MP = getBitcodeModuleProvider(Buffer, &ErrorMsg);
+      if (!MP) delete Buffer;
     }
-
-    // Get the module as the MP could go away once EE takes over.
-    Module *Mod = MP->getModule();
-
-    // If we are supposed to override the target triple, do so now.
-    if (!TargetTriple.empty())
-      Mod->setTargetTriple(TargetTriple);
-    
-    EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg);
-    if (!EE && !ErrorMsg.empty()) {
-      std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
-      exit(1);
-    }
-
-    // If the user specifically requested an argv[0] to pass into the program,
-    // do it now.
-    if (!FakeArgv0.empty()) {
-      InputFile = FakeArgv0;
-    } else {
-      // Otherwise, if there is a .bc suffix on the executable strip it off, it
-      // might confuse the program.
-      if (InputFile.rfind(".bc") == InputFile.length() - 3)
-        InputFile.erase(InputFile.length() - 3);
-    }
-
-    // Add the module's name to the start of the vector of arguments to main().
-    InputArgv.insert(InputArgv.begin(), InputFile);
-
-    // Call the main function from M as if its signature were:
-    //   int main (int argc, char **argv, const char **envp)
-    // using the contents of Args to determine argc & argv, and the contents of
-    // EnvVars to determine envp.
-    //
-    Function *Fn = Mod->getFunction("main");
-    if (!Fn) {
-      std::cerr << "'main' function not found in module.\n";
-      return -1;
-    }
-
-    // If the program doesn't explicitly call exit, we will need the Exit 
-    // function later on to make an explicit call, so get the function now. 
-    Constant *Exit = Mod->getOrInsertFunction("exit", Type::VoidTy,
-                                                          Type::Int32Ty, NULL);
-    
-    // Reset errno to zero on entry to main.
-    errno = 0;
-   
-    // Run static constructors.
-    EE->runStaticConstructorsDestructors(false);
-    
-    // Run main.
-    int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
-
-    // Run static destructors.
-    EE->runStaticConstructorsDestructors(true);
-    
-    // If the program didn't call exit explicitly, we should call it now. 
-    // This ensures that any atexit handlers get called correctly.
-    if (Function *ExitF = dyn_cast<Function>(Exit)) {
-      std::vector<GenericValue> Args;
-      GenericValue ResultGV;
-      ResultGV.IntVal = APInt(32, Result);
-      Args.push_back(ResultGV);
-      EE->runFunction(ExitF, Args);
-      std::cerr << "ERROR: exit(" << Result << ") returned!\n";
-      abort();
-    } else {
-      std::cerr << "ERROR: exit defined with wrong prototype!\n";
-      abort();
-    }
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+  } else {
+    MP = getBytecodeModuleProvider(InputFile, 
+                                   Compressor::decompressToNewBuffer,
+                                   &ErrorMsg);
   }
-  abort();
+  
+  if (!MP) {
+    std::cerr << argv[0] << ": error loading program '" << InputFile << "': "
+              << ErrorMsg << "\n";
+    exit(1);
+  }
+
+  // Get the module as the MP could go away once EE takes over.
+  Module *Mod = MP->getModule();
+
+  // If we are supposed to override the target triple, do so now.
+  if (!TargetTriple.empty())
+    Mod->setTargetTriple(TargetTriple);
+  
+  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg);
+  if (!EE && !ErrorMsg.empty()) {
+    std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
+    exit(1);
+  }
+
+  // If the user specifically requested an argv[0] to pass into the program,
+  // do it now.
+  if (!FakeArgv0.empty()) {
+    InputFile = FakeArgv0;
+  } else {
+    // Otherwise, if there is a .bc suffix on the executable strip it off, it
+    // might confuse the program.
+    if (InputFile.rfind(".bc") == InputFile.length() - 3)
+      InputFile.erase(InputFile.length() - 3);
+  }
+
+  // Add the module's name to the start of the vector of arguments to main().
+  InputArgv.insert(InputArgv.begin(), InputFile);
+
+  // Call the main function from M as if its signature were:
+  //   int main (int argc, char **argv, const char **envp)
+  // using the contents of Args to determine argc & argv, and the contents of
+  // EnvVars to determine envp.
+  //
+  Function *Fn = Mod->getFunction("main");
+  if (!Fn) {
+    std::cerr << "'main' function not found in module.\n";
+    return -1;
+  }
+
+  // If the program doesn't explicitly call exit, we will need the Exit 
+  // function later on to make an explicit call, so get the function now. 
+  Constant *Exit = Mod->getOrInsertFunction("exit", Type::VoidTy,
+                                                        Type::Int32Ty, NULL);
+  
+  // Reset errno to zero on entry to main.
+  errno = 0;
+ 
+  // Run static constructors.
+  EE->runStaticConstructorsDestructors(false);
+  
+  // Run main.
+  int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
+
+  // Run static destructors.
+  EE->runStaticConstructorsDestructors(true);
+  
+  // If the program didn't call exit explicitly, we should call it now. 
+  // This ensures that any atexit handlers get called correctly.
+  if (Function *ExitF = dyn_cast<Function>(Exit)) {
+    std::vector<GenericValue> Args;
+    GenericValue ResultGV;
+    ResultGV.IntVal = APInt(32, Result);
+    Args.push_back(ResultGV);
+    EE->runFunction(ExitF, Args);
+    std::cerr << "ERROR: exit(" << Result << ") returned!\n";
+    abort();
+  } else {
+    std::cerr << "ERROR: exit defined with wrong prototype!\n";
+    abort();
+  }
 }
