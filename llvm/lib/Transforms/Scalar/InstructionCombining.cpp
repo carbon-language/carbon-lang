@@ -5600,7 +5600,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
          cast<IntegerType>(DestTy)->getBitWidth()) {
     Value *RHSOp = 0;
     if (Constant *RHSC = dyn_cast<Constant>(ICI.getOperand(1))) {
-      RHSOp = ConstantExpr::getPtrToInt(RHSC, SrcTy);
+      RHSOp = ConstantExpr::getIntToPtr(RHSC, SrcTy);
     } else if (PtrToIntInst *RHSC = dyn_cast<PtrToIntInst>(ICI.getOperand(1))) {
       RHSOp = RHSC->getOperand(0);
       // If the pointer types don't match, insert a bitcast.
