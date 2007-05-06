@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-db
-LINK_COMPONENTS := debugger bcreader
+LINK_COMPONENTS := debugger
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
