@@ -184,14 +184,12 @@ int main(int argc, char **argv) {
   std::auto_ptr<Module> M;
   
   if (Bitcode) {
-    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFilename[0],
-                                                        InputFilename.size());
-    if (Buffer == 0)
-      ErrorMessage = "Error reading file '" + InputFilename + "'";
+    std::auto_ptr<MemoryBuffer> Buffer(
+        MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+    if (Buffer.get())
+      M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
     else
-      M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
-    delete Buffer;
-    
+      ErrorMessage = "Error reading file '" + InputFilename + "'";
   } else {
     M.reset(ParseBytecodeFile(InputFilename, 
                               Compressor::decompressToNewBuffer,
