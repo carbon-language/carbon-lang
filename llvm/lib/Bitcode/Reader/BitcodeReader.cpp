@@ -1145,24 +1145,29 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       CurBB = FunctionBBs[0];
       continue;
       
-    case bitc::FUNC_CODE_INST_BINOP: {    // BINOP: [opcode, ty, opval, opval]
-      if (Record.size() < 4) return Error("Invalid BINOP record");
-      const Type *Ty = getTypeByID(Record[1]);
-      int Opc = GetDecodedBinaryOpcode(Record[0], Ty);
-      Value *LHS = getFnValueByID(Record[2], Ty);
-      Value *RHS = getFnValueByID(Record[3], Ty);
-      if (Opc == -1 || Ty == 0 || LHS == 0 || RHS == 0)
-         return Error("Invalid BINOP record");
+    case bitc::FUNC_CODE_INST_BINOP: {    // BINOP: [opval, ty, opval, opcode]
+      unsigned OpNum = 0;
+      Value *LHS, *RHS;
+      if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
+          getValue(Record, OpNum, LHS->getType(), RHS) ||
+          OpNum+1 != Record.size())
+        return Error("Invalid BINOP record");
+      
+      int Opc = GetDecodedBinaryOpcode(Record[OpNum], LHS->getType());
+      if (Opc == -1) return Error("Invalid BINOP record");
       I = BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS);
       break;
     }
-    case bitc::FUNC_CODE_INST_CAST: {    // CAST: [opcode, ty, opty, opval]
-      if (Record.size() < 4) return Error("Invalid CAST record");
-      int Opc = GetDecodedCastOpcode(Record[0]);
-      const Type *ResTy = getTypeByID(Record[1]);
-      const Type *OpTy = getTypeByID(Record[2]);
-      Value *Op = getFnValueByID(Record[3], OpTy);
-      if (Opc == -1 || ResTy == 0 || OpTy == 0 || Op == 0)
+    case bitc::FUNC_CODE_INST_CAST: {    // CAST: [opval, opty, destty, castopc]
+      unsigned OpNum = 0;
+      Value *Op;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
+          OpNum+2 != Record.size())
+        return Error("Invalid CAST record");
+      
+      const Type *ResTy = getTypeByID(Record[OpNum]);
+      int Opc = GetDecodedCastOpcode(Record[OpNum+1]);
+      if (Opc == -1 || ResTy == 0)
         return Error("Invalid CAST record");
       I = CastInst::create((Instruction::CastOps)Opc, Op, ResTy);
       break;
@@ -1185,54 +1190,52 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
       
-    case bitc::FUNC_CODE_INST_SELECT: { // SELECT: [ty, opval, opval, opval]
-      if (Record.size() < 4) return Error("Invalid SELECT record");
-      const Type *Ty = getTypeByID(Record[0]);
-      Value *Cond = getFnValueByID(Record[1], Type::Int1Ty);
-      Value *LHS = getFnValueByID(Record[2], Ty);
-      Value *RHS = getFnValueByID(Record[3], Ty);
-      if (Ty == 0 || Cond == 0 || LHS == 0 || RHS == 0)
+    case bitc::FUNC_CODE_INST_SELECT: { // SELECT: [opval, ty, opval, opval]
+      unsigned OpNum = 0;
+      Value *TrueVal, *FalseVal, *Cond;
+      if (getValueTypePair(Record, OpNum, NextValueNo, TrueVal) ||
+          getValue(Record, OpNum, TrueVal->getType(), FalseVal) ||
+          getValue(Record, OpNum, Type::Int1Ty, Cond))
         return Error("Invalid SELECT record");
-      I = new SelectInst(Cond, LHS, RHS);
+      
+      I = new SelectInst(Cond, TrueVal, FalseVal);
       break;
     }
       
     case bitc::FUNC_CODE_INST_EXTRACTELT: { // EXTRACTELT: [opty, opval, opval]
-      if (Record.size() < 3) return Error("Invalid EXTRACTELT record");
-      const Type *OpTy = getTypeByID(Record[0]);
-      Value *Vec = getFnValueByID(Record[1], OpTy);
-      Value *Idx = getFnValueByID(Record[2], Type::Int32Ty);
-      if (OpTy == 0 || Vec == 0 || Idx == 0)
+      unsigned OpNum = 0;
+      Value *Vec, *Idx;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Vec) ||
+          getValue(Record, OpNum, Type::Int32Ty, Idx))
         return Error("Invalid EXTRACTELT record");
       I = new ExtractElementInst(Vec, Idx);
       break;
     }
       
     case bitc::FUNC_CODE_INST_INSERTELT: { // INSERTELT: [ty, opval,opval,opval]
-      if (Record.size() < 4) return Error("Invalid INSERTELT record");
-      const VectorType *OpTy = 
-        dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
-      if (OpTy == 0) return Error("Invalid INSERTELT record");
-      Value *Vec = getFnValueByID(Record[1], OpTy);
-      Value *Elt = getFnValueByID(Record[2], OpTy->getElementType());
-      Value *Idx = getFnValueByID(Record[3], Type::Int32Ty);
-      if (Vec == 0 || Elt == 0 || Idx == 0)
+      unsigned OpNum = 0;
+      Value *Vec, *Elt, *Idx;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Vec) ||
+          getValue(Record, OpNum, 
+                   cast<VectorType>(Vec->getType())->getElementType(), Elt) ||
+          getValue(Record, OpNum, Type::Int32Ty, Idx))
         return Error("Invalid INSERTELT record");
       I = new InsertElementInst(Vec, Elt, Idx);
       break;
     }
       
-    case bitc::FUNC_CODE_INST_SHUFFLEVEC: {// SHUFFLEVEC: [ty,opval,opval,opval]
-      if (Record.size() < 4) return Error("Invalid SHUFFLEVEC record");
-      const VectorType *OpTy = 
-        dyn_cast_or_null<VectorType>(getTypeByID(Record[0]));
-      if (OpTy == 0) return Error("Invalid SHUFFLEVEC record");
-      Value *Vec1 = getFnValueByID(Record[1], OpTy);
-      Value *Vec2 = getFnValueByID(Record[2], OpTy);
-      Value *Mask = getFnValueByID(Record[3],
-                                   VectorType::get(Type::Int32Ty,
-                                                   OpTy->getNumElements()));
-      if (Vec1 == 0 || Vec2 == 0 || Mask == 0)
+    case bitc::FUNC_CODE_INST_SHUFFLEVEC: {// SHUFFLEVEC: [opval,ty,opval,opval]
+      unsigned OpNum = 0;
+      Value *Vec1, *Vec2, *Mask;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Vec1) ||
+          getValue(Record, OpNum, Vec1->getType(), Vec2))
+        return Error("Invalid SHUFFLEVEC record");
+
+      const Type *MaskTy =
+        VectorType::get(Type::Int32Ty, 
+                        cast<VectorType>(Vec1->getType())->getNumElements());
+
+      if (getValue(Record, OpNum, MaskTy, Mask))
         return Error("Invalid SHUFFLEVEC record");
       I = new ShuffleVectorInst(Vec1, Vec2, Mask);
       break;
@@ -1357,7 +1360,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_INST_UNREACHABLE: // UNREACHABLE
       I = new UnreachableInst();
       break;
-    case bitc::FUNC_CODE_INST_PHI: { // PHI: [ty, #ops, val0,bb0, ...]
+    case bitc::FUNC_CODE_INST_PHI: { // PHI: [ty, val0,bb0, ...]
       if (Record.size() < 1 || ((Record.size()-1)&1))
         return Error("Invalid PHI record");
       const Type *Ty = getTypeByID(Record[0]);
@@ -1387,12 +1390,11 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = new MallocInst(Ty->getElementType(), Size, (1 << Align) >> 1);
       break;
     }
-    case bitc::FUNC_CODE_INST_FREE: { // FREE: [opty, op]
-      if (Record.size() < 2)
-        return Error("Invalid FREE record");
-      const Type *OpTy = getTypeByID(Record[0]);
-      Value *Op = getFnValueByID(Record[1], OpTy);
-      if (!OpTy || !Op)
+    case bitc::FUNC_CODE_INST_FREE: { // FREE: [op, opty]
+      unsigned OpNum = 0;
+      Value *Op;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
+          OpNum != Record.size())
         return Error("Invalid FREE record");
       I = new FreeInst(Op);
       break;
@@ -1413,21 +1415,20 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Op;
       if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
           OpNum+2 != Record.size())
-        return Error("Invalid RET record");
+        return Error("Invalid LOAD record");
       
       I = new LoadInst(Op, "", Record[OpNum+1], (1 << Record[OpNum]) >> 1);
       break;
     }
-    case bitc::FUNC_CODE_INST_STORE: { // STORE:[ptrty,val,ptr, align, vol]
-      if (Record.size() < 5)
-        return Error("Invalid LOAD record");
-      const PointerType *OpTy = 
-        dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
-      Value *Op = getFnValueByID(Record[1], OpTy ? OpTy->getElementType() : 0);
-      Value *Ptr = getFnValueByID(Record[2], OpTy);
-      if (!OpTy || !Op || !Ptr)
+    case bitc::FUNC_CODE_INST_STORE: { // STORE:[val, valty, ptr, align, vol]
+      unsigned OpNum = 0;
+      Value *Val, *Ptr;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Val) ||
+          getValue(Record, OpNum, PointerType::get(Val->getType()), Ptr) ||
+          OpNum+2 != Record.size())
         return Error("Invalid STORE record");
-      I = new StoreInst(Op, Ptr, Record[4], (1 << Record[3]) >> 1);
+      
+      I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1);
       break;
     }
     case bitc::FUNC_CODE_INST_CALL: { // CALL: [cc, fnty, fnid, arg0, arg1...]

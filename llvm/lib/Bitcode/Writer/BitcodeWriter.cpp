@@ -602,17 +602,15 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   default:
     if (Instruction::isCast(I.getOpcode())) {
       Code = bitc::FUNC_CODE_INST_CAST;
-      Vals.push_back(GetEncodedCastOpcode(I.getOpcode()));
+      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
       Vals.push_back(VE.getTypeID(I.getType()));
-      Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-      Vals.push_back(VE.getValueID(I.getOperand(0)));
+      Vals.push_back(GetEncodedCastOpcode(I.getOpcode()));
     } else {
       assert(isa<BinaryOperator>(I) && "Unknown instruction!");
       Code = bitc::FUNC_CODE_INST_BINOP;
-      Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
-      Vals.push_back(VE.getTypeID(I.getType()));
-      Vals.push_back(VE.getValueID(I.getOperand(0)));
+      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
       Vals.push_back(VE.getValueID(I.getOperand(1)));
+      Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
     }
     break;
 
@@ -623,28 +621,24 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Select:
     Code = bitc::FUNC_CODE_INST_SELECT;
-    Vals.push_back(VE.getTypeID(I.getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
-    Vals.push_back(VE.getValueID(I.getOperand(1)));
+    PushValueAndType(I.getOperand(1), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(2)));
+    Vals.push_back(VE.getValueID(I.getOperand(0)));
     break;
   case Instruction::ExtractElement:
     Code = bitc::FUNC_CODE_INST_EXTRACTELT;
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(1)));
     break;
   case Instruction::InsertElement:
     Code = bitc::FUNC_CODE_INST_INSERTELT;
-    Vals.push_back(VE.getTypeID(I.getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(1)));
     Vals.push_back(VE.getValueID(I.getOperand(2)));
     break;
   case Instruction::ShuffleVector:
     Code = bitc::FUNC_CODE_INST_SHUFFLEVEC;
-    Vals.push_back(VE.getTypeID(I.getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(1)));
     Vals.push_back(VE.getValueID(I.getOperand(2)));
     break;
@@ -719,8 +713,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     
   case Instruction::Free:
     Code = bitc::FUNC_CODE_INST_FREE;
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0)));
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     break;
     
   case Instruction::Alloca:
@@ -740,9 +733,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Store:
     Code = bitc::FUNC_CODE_INST_STORE;
-    Vals.push_back(VE.getTypeID(I.getOperand(1)->getType()));   // Pointer
-    Vals.push_back(VE.getValueID(I.getOperand(0))); // val.
-    Vals.push_back(VE.getValueID(I.getOperand(1))); // ptr.
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // val.
+    Vals.push_back(VE.getValueID(I.getOperand(1)));       // ptr.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
     break;
