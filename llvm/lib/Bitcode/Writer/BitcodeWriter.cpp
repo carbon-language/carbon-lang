@@ -43,7 +43,10 @@ enum {
   CONSTANTS_NULL_Abbrev,
   
   // FUNCTION_BLOCK abbrev id's.
-  FUNCTION_INST_LOAD_ABBREV = bitc::FIRST_APPLICATION_ABBREV
+  FUNCTION_INST_LOAD_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
+  FUNCTION_INST_RET_VOID_ABBREV,
+  FUNCTION_INST_RET_VAL_ABBREV,
+  FUNCTION_INST_UNREACHABLE_ABBREV
 };
 
 
@@ -697,8 +700,10 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
   case Instruction::Ret:
     Code = bitc::FUNC_CODE_INST_RET;
-    if (I.getNumOperands())
-      PushValueAndType(I.getOperand(0), InstID, Vals, VE);
+    if (!I.getNumOperands())
+      AbbrevToUse = FUNCTION_INST_RET_VOID_ABBREV;
+    else if (!PushValueAndType(I.getOperand(0), InstID, Vals, VE))
+      AbbrevToUse = FUNCTION_INST_RET_VAL_ABBREV;
     break;
   case Instruction::Br:
     Code = bitc::FUNC_CODE_INST_BR;
@@ -740,6 +745,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::Unreachable:
     Code = bitc::FUNC_CODE_INST_UNREACHABLE;
+    AbbrevToUse = FUNCTION_INST_UNREACHABLE_ABBREV;
     break;
   
   case Instruction::PHI:
@@ -1054,6 +1060,28 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // volatile
     if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
                                    Abbv) != FUNCTION_INST_LOAD_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  { // INST_RET abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_RET));
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_RET_VOID_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  { // INST_RET abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_RET));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // ValID
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_RET_VAL_ABBREV)
+      assert(0 && "Unexpected abbrev ordering!");
+  }
+  { // INST_UNREACHABLE abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_UNREACHABLE));
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_UNREACHABLE_ABBREV)
       assert(0 && "Unexpected abbrev ordering!");
   }
   
