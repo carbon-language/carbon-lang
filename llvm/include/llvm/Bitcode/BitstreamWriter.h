@@ -284,9 +284,9 @@ public:
       
       unsigned RecordIdx = 0;
       for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
-        assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
         const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
         if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
+          assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
           EmitAbbreviatedField(Op, Vals[RecordIdx]);
           ++RecordIdx;
         } else {
