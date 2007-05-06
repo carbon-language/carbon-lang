@@ -10,7 +10,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-ld
-LINK_COMPONENTS = ipo scalaropts linker archive bcreader bcwriter
+LINK_COMPONENTS = ipo scalaropts linker archive bcwriter bitwriter
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

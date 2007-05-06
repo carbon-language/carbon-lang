@@ -25,7 +25,7 @@
 #include "llvm/System/Program.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Bytecode/Reader.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -33,12 +33,15 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include <fstream>
 #include <memory>
 using namespace llvm;
+
+cl::opt<bool> Bitcode("bitcode");
 
 // Input/Output Options
 static cl::list<std::string> InputFilenames(cl::Positional, cl::OneOrMore,
@@ -224,8 +227,12 @@ void GenerateBytecode(Module* M, const std::string& FileName) {
   sys::RemoveFileOnSignal(sys::Path(FileName));
 
   // Write it out
-  OStream L(Out);
-  WriteBytecodeToFile(M, L, !DisableCompression);
+  if (Bitcode) {
+    WriteBitcodeToFile(M, Out);
+  } else {
+    OStream L(Out);
+    WriteBytecodeToFile(M, L, !DisableCompression);
+  }
 
   // Close the bytecode file.
   Out.close();
@@ -547,7 +554,7 @@ int main(int argc, char **argv, char **envp) {
           args[2] = tmp_output.c_str();
           args[3] = 0;
           if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0,0, &ErrMsg)) {
-            if (tmp_output.isBytecodeFile()) {
+            if (tmp_output.isBytecodeFile() || tmp_output.isBitcodeFile()) {
               sys::Path target(RealBytecodeOutput);
               target.eraseFromDisk();
               if (tmp_output.renamePathOnDisk(target, &ErrMsg))
