@@ -9,7 +9,6 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-nm
-LINK_COMPONENTS = archive bcreader
-REQUIRES_EH := 1
+LINK_COMPONENTS = archive bcreader bitreader
 
 include $(LEVEL)/Makefile.common

@@ -17,18 +17,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
 #include <cstring>
 #include <iostream>
-
 using namespace llvm;
+
+cl::opt<bool> Bitcode("bitcode");
 
 namespace {
   enum OutputFormatTy { bsd, sysv, posix };
@@ -132,6 +135,20 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
       return;
     }
+  } else if (aPath.isBitcodeFile()) {
+    std::auto_ptr<MemoryBuffer> Buffer(
+                   MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size()));
+    Module *Result = 0;
+    if (Buffer.get())
+      Result = ParseBitcodeFile(Buffer.get(), &ErrorMessage);
+    
+    if (Result)
+      DumpSymbolNamesFromModule(Result);
+    else {
+      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
+      return;
+    }
+    
   } else if (aPath.isArchive()) {
     std::string ErrMsg;
     Archive* archive = Archive::OpenAndLoad(sys::Path(Filename), &ErrorMessage);
@@ -153,27 +170,20 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  try {
-    cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
-    sys::PrintStackTraceOnErrorSignal();
+  cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
+  sys::PrintStackTraceOnErrorSignal();
 
-    ToolName = argv[0];
-    if (BSDFormat) OutputFormat = bsd;
-    if (POSIXFormat) OutputFormat = posix;
+  ToolName = argv[0];
+  if (BSDFormat) OutputFormat = bsd;
+  if (POSIXFormat) OutputFormat = posix;
 
-    switch (InputFilenames.size()) {
-    case 0: InputFilenames.push_back("-");
-    case 1: break;
-    default: MultipleFiles = true;
-    }
-
-    std::for_each (InputFilenames.begin (), InputFilenames.end (),
-                   DumpSymbolNamesFromFile);
-    return 0;
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+  switch (InputFilenames.size()) {
+  case 0: InputFilenames.push_back("-");
+  case 1: break;
+  default: MultipleFiles = true;
   }
-  return 1;
+
+  std::for_each(InputFilenames.begin(), InputFilenames.end(),
+                DumpSymbolNamesFromFile);
+  return 0;
 }
