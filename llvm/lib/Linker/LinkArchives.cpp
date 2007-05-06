@@ -16,7 +16,6 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/SetOperations.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Archive.h"
 #include "llvm/Config/config.h"
 #include <memory>
