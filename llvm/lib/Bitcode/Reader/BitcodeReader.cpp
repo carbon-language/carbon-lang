@@ -15,6 +15,7 @@
 #include "BitcodeReader.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ParameterAttributes.h"
@@ -757,6 +758,26 @@ bool BitcodeReader::ParseConstants() {
         V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
       else
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);
+      break;
+    }
+    case bitc::CST_CODE_INLINEASM: {
+      if (Record.size() < 2) return Error("Invalid INLINEASM record");
+      std::string AsmStr, ConstrStr;
+      bool HasSideEffects = Record[0];
+      unsigned AsmStrSize = Record[1];
+      if (2+AsmStrSize >= Record.size())
+        return Error("Invalid INLINEASM record");
+      unsigned ConstStrSize = Record[2+AsmStrSize];
+      if (3+AsmStrSize+ConstStrSize > Record.size())
+        return Error("Invalid INLINEASM record");
+      
+      for (unsigned i = 0; i != AsmStrSize; ++i)
+        AsmStr += (char)Record[2+i];
+      for (unsigned i = 0; i != ConstStrSize; ++i)
+        ConstrStr += (char)Record[3+AsmStrSize+i];
+      const PointerType *PTy = cast<PointerType>(CurTy);
+      V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
+                         AsmStr, ConstrStr, HasSideEffects);
       break;
     }
     }

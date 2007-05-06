@@ -17,6 +17,7 @@
 #include "ValueEnumerator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ParameterAttributes.h"
@@ -446,9 +447,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     CString6Abbrev = Stream.EmitAbbrev(Abbv);
   }  
   
-  // FIXME: Install and use abbrevs to reduce size.  Install them globally so
-  // they don't need to be reemitted for each function body.
-  
   SmallVector<uint64_t, 64> Record;
 
   const ValueEnumerator::ValueList &Vals = VE.getValues();
@@ -465,7 +463,21 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     }
     
     if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
-      assert(0 && IA && "FIXME: Inline asm writing unimp!");
+      Record.push_back(unsigned(IA->hasSideEffects()));
+      
+      // Add the asm string.
+      const std::string &AsmStr = IA->getAsmString();
+      Record.push_back(AsmStr.size());
+      for (unsigned i = 0, e = AsmStr.size(); i != e; ++i)
+        Record.push_back(AsmStr[i]);
+      
+      // Add the constraint string.
+      const std::string &ConstraintStr = IA->getConstraintString();
+      Record.push_back(ConstraintStr.size());
+      for (unsigned i = 0, e = ConstraintStr.size(); i != e; ++i)
+        Record.push_back(ConstraintStr[i]);
+      Stream.EmitRecord(bitc::CST_CODE_INLINEASM, Record);
+      Record.clear();
       continue;
     }
     const Constant *C = cast<Constant>(V);
@@ -893,8 +905,6 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   Vals.push_back(VE.getBasicBlocks().size());
   Stream.EmitRecord(bitc::FUNC_CODE_DECLAREBLOCKS, Vals);
   Vals.clear();
-  
-  // FIXME: Function attributes?
   
   // If there are function-local constants, emit them now.
   unsigned CstStart, CstEnd;
