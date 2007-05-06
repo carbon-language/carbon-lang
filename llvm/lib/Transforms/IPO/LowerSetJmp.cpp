@@ -109,7 +109,7 @@ namespace {
 
     bool IsTransformableFunction(const std::string& Name);
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LowerSetJmp() : ModulePass((intptr_t)&ID) {}
 
     void visitCallInst(CallInst& CI);

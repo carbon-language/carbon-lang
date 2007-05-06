@@ -69,7 +69,7 @@ namespace {
     bool Changed;
   public:
 
-   static char ID; // Pass identifcation, replacement for typeid
+   static char ID; // Pass identification, replacement for typeid
    IndVarSimplify() : LoopPass((intptr_t)&ID) {}
 
    bool runOnLoop(Loop *L, LPPassManager &LPM);

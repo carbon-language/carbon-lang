@@ -37,7 +37,7 @@ STATISTIC(NumArgsRepl   , "Number of function arguments replaced "
                           "with constant values");
 namespace {
   struct VISIBILITY_HIDDEN GCSE : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     GCSE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);

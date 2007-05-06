@@ -35,7 +35,7 @@ namespace {
     Function *MallocFunc;   // Functions in the module we are processing
     Function *FreeFunc;     // Initialized by doPassInitializationVirt
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     RaiseAllocations() 
       : ModulePass((intptr_t)&ID), MallocFunc(0), FreeFunc(0) {}
 

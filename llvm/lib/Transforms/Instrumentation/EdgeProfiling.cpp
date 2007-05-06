@@ -33,7 +33,7 @@ namespace {
   class VISIBILITY_HIDDEN EdgeProfiler : public ModulePass {
     bool runOnModule(Module &M);
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     EdgeProfiler() : ModulePass((intptr_t)&ID) {}
   };
 

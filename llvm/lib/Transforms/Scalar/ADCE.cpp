@@ -52,7 +52,7 @@ class VISIBILITY_HIDDEN ADCE : public FunctionPass {
   // The public interface for this class
   //
 public:
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
   ADCE() : FunctionPass((intptr_t)&ID) {}
 
   // Execute the Aggressive Dead Code Elimination Algorithm

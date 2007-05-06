@@ -25,7 +25,7 @@ namespace {
     bool deleteFunc;
     bool reLink;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
 
     /// FunctionExtractorPass - If deleteFn is true, this pass deletes as the
     /// specified function. Otherwise, it deletes as much of the module as

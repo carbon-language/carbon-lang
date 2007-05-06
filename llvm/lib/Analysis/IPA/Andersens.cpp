@@ -85,7 +85,7 @@ namespace {
       std::vector<Node*> Pointees;
       Value *Val;
     public:
-      static const unsigned ID; // Pass identifcation, replacement for typeid
+      static const unsigned ID; // Pass identification, replacement for typeid
       Node() : Val(0) {}
       Node *setValue(Value *V) {
         assert(Val == 0 && "Value already set for this node!");

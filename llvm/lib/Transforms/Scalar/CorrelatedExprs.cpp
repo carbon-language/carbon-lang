@@ -225,7 +225,7 @@ namespace {
     std::map<BasicBlock*, RegionInfo> RegionInfoMap;
     ETForest *EF;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     CEE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);

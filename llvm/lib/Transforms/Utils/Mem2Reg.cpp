@@ -27,7 +27,7 @@ STATISTIC(NumPromoted, "Number of alloca's promoted");
 
 namespace {
   struct VISIBILITY_HIDDEN PromotePass : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     PromotePass() : FunctionPass((intptr_t)&ID) {}
 
     // runOnFunction - To run this pass, first we calculate the alloca

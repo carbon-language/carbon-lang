@@ -399,7 +399,7 @@ protected:
 
 class ETForest : public ETForestBase {
 public:
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
 
   ETForest() : ETForestBase((intptr_t)&ID, false) {}
 

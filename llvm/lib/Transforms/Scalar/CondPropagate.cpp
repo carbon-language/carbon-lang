@@ -31,7 +31,7 @@ STATISTIC(NumSwThread, "Number of CFG edges threaded through switches");
 
 namespace {
   struct VISIBILITY_HIDDEN CondProp : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     CondProp() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F);

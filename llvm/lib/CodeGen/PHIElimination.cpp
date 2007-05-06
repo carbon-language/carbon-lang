@@ -33,7 +33,7 @@ STATISTIC(NumAtomic, "Number of atomic phis lowered");
 
 namespace {
   struct VISIBILITY_HIDDEN PNE : public MachineFunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     PNE() : MachineFunctionPass((intptr_t)&ID) {}
 
     bool runOnMachineFunction(MachineFunction &Fn) {

@@ -241,7 +241,7 @@ class LoopInfo : public FunctionPass {
   std::vector<Loop*> TopLevelLoops;
   friend class Loop;
 public:
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
 
   LoopInfo() : FunctionPass((intptr_t)&ID) {}
   ~LoopInfo() { releaseMemory(); }

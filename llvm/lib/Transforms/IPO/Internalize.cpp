@@ -46,7 +46,7 @@ namespace {
     std::set<std::string> ExternalNames;
     bool DontInternalize;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     InternalizePass(bool InternalizeEverything = true);
     InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);

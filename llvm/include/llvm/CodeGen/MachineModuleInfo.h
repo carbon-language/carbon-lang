@@ -1022,7 +1022,7 @@ private:
   std::vector<GlobalVariable *> TypeInfos;
 
 public:
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
 
   MachineModuleInfo();
   ~MachineModuleInfo();

@@ -47,7 +47,7 @@ namespace {
     /// had zero roots.
     const Type *MainRootRecordType;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LowerGC() : FunctionPass((intptr_t)&ID), 
                 GCRootInt(0), GCReadInt(0), GCWriteInt(0),
                 GCRead(0), GCWrite(0), RootChain(0), MainRootRecordType(0) {}

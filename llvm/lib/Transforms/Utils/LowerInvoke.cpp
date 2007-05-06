@@ -75,7 +75,7 @@ namespace {
     const TargetLowering *TLI;
     
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LowerInvoke(const TargetLowering *tli = NULL) : FunctionPass((intptr_t)&ID),
       TLI(tli) { }
     bool doInitialization(Module &M);

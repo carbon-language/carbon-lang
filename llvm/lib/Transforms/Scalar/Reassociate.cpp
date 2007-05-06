@@ -69,7 +69,7 @@ namespace {
     std::map<Value*, unsigned> ValueRankMap;
     bool MadeChange;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     Reassociate() : FunctionPass((intptr_t)&ID) {}
 
     bool runOnFunction(Function &F);

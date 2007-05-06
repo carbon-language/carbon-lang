@@ -37,7 +37,7 @@ namespace {
   class VISIBILITY_HIDDEN StripSymbols : public ModulePass {
     bool OnlyDebugInfo;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     StripSymbols(bool ODI = false) 
       : ModulePass((intptr_t)&ID), OnlyDebugInfo(ODI) {}
 

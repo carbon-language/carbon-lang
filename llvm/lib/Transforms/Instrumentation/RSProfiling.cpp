@@ -69,7 +69,7 @@ namespace {
   /// measuring framework overhead
   class VISIBILITY_HIDDEN NullProfilerRS : public RSProfilers {
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     bool isProfiling(Value* v) {
       return false;
     }
@@ -139,7 +139,7 @@ namespace {
 
   /// ProfilerRS - Insert the random sampling framework
   struct VISIBILITY_HIDDEN ProfilerRS : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     ProfilerRS() : FunctionPass((intptr_t)&ID) {}
 
     std::map<Value*, Value*> TransCache;

@@ -63,7 +63,7 @@ namespace {
                    cl::desc("Disable memory promotion in LICM pass"));
 
   struct VISIBILITY_HIDDEN LICM : public LoopPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LICM() : LoopPass((intptr_t)&ID) {}
 
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);

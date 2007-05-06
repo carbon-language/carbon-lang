@@ -50,7 +50,7 @@ STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 namespace {
   struct VISIBILITY_HIDDEN TwoAddressInstructionPass
    : public MachineFunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;

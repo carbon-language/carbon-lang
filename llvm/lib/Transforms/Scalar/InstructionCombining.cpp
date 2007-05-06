@@ -76,7 +76,7 @@ namespace {
     TargetData *TD;
     bool MustPreserveLCSSA;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     InstCombiner() : FunctionPass((intptr_t)&ID) {}
 
     /// AddToWorkList - Add the specified instruction to the worklist if it

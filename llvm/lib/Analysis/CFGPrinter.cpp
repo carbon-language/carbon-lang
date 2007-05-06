@@ -91,7 +91,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
 namespace {
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F) {
@@ -119,7 +119,7 @@ namespace {
                               "Print CFG of function to 'dot' file");
 
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     virtual bool runOnFunction(Function &F) {
       bool OldCFGOnly = CFGOnly;
       CFGOnly = true;

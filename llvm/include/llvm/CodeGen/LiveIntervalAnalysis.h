@@ -65,7 +65,7 @@ namespace llvm {
     BitVector JoinedLIs;
 
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass((intptr_t)&ID) {}
 
     struct CopyRec {

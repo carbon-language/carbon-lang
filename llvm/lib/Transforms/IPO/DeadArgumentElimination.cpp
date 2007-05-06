@@ -76,7 +76,7 @@ namespace {
     std::multimap<Function*, CallSite> CallSites;
 
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     DAE() : ModulePass((intptr_t)&ID) {}
     bool runOnModule(Module &M);
 

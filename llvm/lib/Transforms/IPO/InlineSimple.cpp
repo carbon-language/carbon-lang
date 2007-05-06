@@ -54,7 +54,7 @@ namespace {
   class VISIBILITY_HIDDEN SimpleInliner : public Inliner {
     std::map<const Function*, FunctionInfo> CachedFunctionInfo;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     int getInlineCost(CallSite CS);
   };
   char SimpleInliner::ID = 0;

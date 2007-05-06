@@ -1989,7 +1989,7 @@ namespace {
     std::vector<DominatorTree::Node *> WorkList;
 
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     PredicateSimplifier() : FunctionPass((intptr_t)&ID) {}
 
     bool runOnFunction(Function &F);

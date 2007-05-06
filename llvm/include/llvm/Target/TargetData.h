@@ -202,7 +202,7 @@ public:
   /// requested alignment (if the global has one).
   unsigned getPreferredAlignmentLog(const GlobalVariable *GV) const;
 
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
 };
 
 /// StructLayout - used to lazily calculate structure layout information for a

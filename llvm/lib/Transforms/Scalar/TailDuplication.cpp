@@ -43,7 +43,7 @@ namespace {
   class VISIBILITY_HIDDEN TailDup : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     TailDup() : FunctionPass((intptr_t)&ID) {}
 
   private:

@@ -1334,7 +1334,7 @@ namespace {
   /// Sparse Conditional Constant Propagator.
   ///
   struct VISIBILITY_HIDDEN SCCP : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     SCCP() : FunctionPass((intptr_t)&ID) {}
 
     // runOnFunction - Run the Sparse Conditional Constant Propagation

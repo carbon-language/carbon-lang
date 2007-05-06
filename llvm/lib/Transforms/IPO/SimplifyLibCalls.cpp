@@ -152,7 +152,7 @@ public:
 /// @brief A ModulePass for optimizing well-known function calls.
 class VISIBILITY_HIDDEN SimplifyLibCalls : public ModulePass {
 public:
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
   SimplifyLibCalls() : ModulePass((intptr_t)&ID) {}
 
   /// We need some target data for accurate signature details that are

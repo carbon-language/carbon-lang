@@ -50,7 +50,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     GlobalOpt() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M);

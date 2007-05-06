@@ -47,7 +47,7 @@ STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 
 namespace {
   struct VISIBILITY_HIDDEN LCSSA : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LCSSA() : FunctionPass((intptr_t)&ID) {}
 
     // Cached analysis information for the current function.

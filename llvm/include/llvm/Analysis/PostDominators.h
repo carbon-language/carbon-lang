@@ -22,7 +22,7 @@ namespace llvm {
 /// compute the a post-dominator tree.
 ///
 struct PostDominatorTree : public DominatorTreeBase {
-  static char ID; // Pass identifcation, replacement for typeid
+  static char ID; // Pass identification, replacement for typeid
 
   PostDominatorTree() : 
     DominatorTreeBase((intptr_t)&ID, true) {}

@@ -40,7 +40,7 @@ namespace {
 class VISIBILITY_HIDDEN LowerPacked 
   : public FunctionPass, public InstVisitor<LowerPacked> {
 public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LowerPacked() : FunctionPass((intptr_t)&ID) {}
 
    /// @brief Lowers packed operations to scalar operations.

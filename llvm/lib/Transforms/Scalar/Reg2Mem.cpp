@@ -33,7 +33,7 @@ STATISTIC(NumDemoted, "Number of registers demoted");
 
 namespace {
   struct VISIBILITY_HIDDEN RegToMem : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     RegToMem() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

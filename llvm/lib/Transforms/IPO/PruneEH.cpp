@@ -35,7 +35,7 @@ STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 
 namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     PruneEH() : CallGraphSCCPass((intptr_t)&ID) {}
 
     /// DoesNotUnwind - This set contains all of the functions which we have

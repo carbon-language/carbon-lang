@@ -54,7 +54,7 @@ STATISTIC(NumNested  , "Number of nested loops split out");
 
 namespace {
   struct VISIBILITY_HIDDEN LoopSimplify : public FunctionPass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     LoopSimplify() : FunctionPass((intptr_t)&ID) {}
 
     // AA - If we have an alias analysis object to update, this is it, otherwise

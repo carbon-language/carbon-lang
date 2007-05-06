@@ -35,7 +35,7 @@ namespace {
   class VISIBILITY_HIDDEN UnreachableBlockElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     UnreachableBlockElim() : FunctionPass((intptr_t)&ID) {}
   };
   char UnreachableBlockElim::ID = 0;

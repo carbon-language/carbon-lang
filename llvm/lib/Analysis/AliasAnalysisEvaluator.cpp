@@ -50,7 +50,7 @@ namespace {
     unsigned NoModRef, Mod, Ref, ModRef;
 
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     AAEval() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

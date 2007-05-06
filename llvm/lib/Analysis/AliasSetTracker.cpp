@@ -555,7 +555,7 @@ namespace {
   class VISIBILITY_HIDDEN AliasSetPrinter : public FunctionPass {
     AliasSetTracker *Tracker;
   public:
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     AliasSetPrinter() : FunctionPass((intptr_t)&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

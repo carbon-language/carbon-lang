@@ -26,7 +26,7 @@ STATISTIC(NumKilled, "Number of unused typenames removed from symtab");
 
 namespace {
   struct VISIBILITY_HIDDEN DTE : public ModulePass {
-    static char ID; // Pass identifcation, replacement for typeid
+    static char ID; // Pass identification, replacement for typeid
     DTE() : ModulePass((intptr_t)&ID) {}
 
     // doPassInitialization - For this pass, it removes global symbol table
