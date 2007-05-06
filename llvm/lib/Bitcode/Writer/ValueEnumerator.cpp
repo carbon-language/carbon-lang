@@ -165,11 +165,10 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
     Values[ValueID-1].second++;
     return;
   }
-  
-  // Add the value.
-  Values.push_back(std::make_pair(V, 1U));
-  ValueID = Values.size();
 
+  // Enumerate the type of this value.
+  EnumerateType(V->getType());
+  
   if (const Constant *C = dyn_cast<Constant>(V)) {
     if (isa<GlobalValue>(C)) {
       // Initializers for globals are handled explicitly elsewhere.
@@ -177,16 +176,30 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       // Do not enumerate the initializers for an array of simple characters.
       // The initializers just polute the value table, and we emit the strings
       // specially.
-    } else {
-      // This makes sure that if a constant has uses (for example an array of
-      // const ints), that they are inserted also.
+    } else if (C->getNumOperands()) {
+      // If a constant has operands, enumerate them.  This makes sure that if a
+      // constant has uses (for example an array of const ints), that they are
+      // inserted also.
+      
+      // We prefer to enumerate them with values before we enumerate the user
+      // itself.  This makes it more likely that we can avoid forward references
+      // in the reader.  We know that there can be no cycles in the constants
+      // graph that don't go through a global variable.
       for (User::const_op_iterator I = C->op_begin(), E = C->op_end();
            I != E; ++I)
         EnumerateValue(*I);
+      
+      // Finally, add the value.  Doing this could make the ValueID reference be
+      // dangling, don't reuse it.
+      Values.push_back(std::make_pair(V, 1U));
+      ValueMap[V] = Values.size();
+      return;
     }
   }
-
-  EnumerateType(V->getType());
+  
+  // Add the value.
+  Values.push_back(std::make_pair(V, 1U));
+  ValueID = Values.size();
 }
 
 
