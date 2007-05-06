@@ -2628,7 +2628,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // MachineModuleInfo.
       std::vector<GlobalVariable *> TyInfo;
       for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-	Constant *C = cast<Constant>(I.getOperand(i));
+        Constant *C = cast<Constant>(I.getOperand(i));
         GlobalVariable *GV = ExtractGlobalVariable(C);
         assert (GV || (isa<ConstantInt>(C) &&
                        cast<ConstantInt>(C)->isNullValue()) &&
