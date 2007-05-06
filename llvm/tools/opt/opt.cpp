@@ -16,6 +16,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -24,6 +25,7 @@
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
@@ -34,6 +36,8 @@
 #include <memory>
 #include <algorithm>
 using namespace llvm;
+
+static cl::opt<bool> Bitcode("bitcode");
 
 // The OptimizationList is automatically populated with registered Passes by the
 // PassNameParser.
@@ -262,8 +266,26 @@ int main(int argc, char **argv) {
     std::string ErrorMessage;
 
     // Load the input module...
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
-                            Compressor::decompressToNewBuffer, &ErrorMessage));
+    std::auto_ptr<Module> M;
+    if (Bitcode) {
+      MemoryBuffer *Buffer;
+      if (InputFilename == "-") {
+        Buffer = MemoryBuffer::getSTDIN();
+      } else {
+        Buffer = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size());
+      }
+      
+      if (Buffer == 0)
+        ErrorMessage = "Error reading file '" + InputFilename + "'";
+      else
+        M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+      
+      delete Buffer;
+    } else {
+      M.reset(ParseBytecodeFile(InputFilename, 
+                                Compressor::decompressToNewBuffer,
+                                &ErrorMessage));
+    }
     if (M.get() == 0) {
       cerr << argv[0] << ": ";
       if (ErrorMessage.size())
@@ -355,8 +377,12 @@ int main(int argc, char **argv) {
 
     // Write bytecode out to disk or cout as the last step...
     OStream L(*Out);
-    if (!NoOutput && !AnalyzeOnly)
-      Passes.add(new WriteBytecodePass(&L, false, !NoCompress));
+    if (!NoOutput && !AnalyzeOnly) {
+      if (Bitcode)
+        Passes.add(CreateBitcodeWriterPass(*Out));
+      else
+        Passes.add(new WriteBytecodePass(&L, false, !NoCompress));
+    }
 
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
