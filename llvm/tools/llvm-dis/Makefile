@@ -9,7 +9,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-dis
-LINK_COMPONENTS := bcreader bitreader
+LINK_COMPONENTS := bitreader
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

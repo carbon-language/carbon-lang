@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 TOOLNAME = llvm2cpp
-LINK_COMPONENTS = bcreader bitreader
+LINK_COMPONENTS = bitreader
 
 include $(LEVEL)/Makefile.common
 

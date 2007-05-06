@@ -26,7 +26,6 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Writer.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
@@ -40,8 +39,6 @@
 #include <fstream>
 #include <memory>
 using namespace llvm;
-
-cl::opt<bool> Bitcode("bitcode");
 
 // Input/Output Options
 static cl::list<std::string> InputFilenames(cl::Positional, cl::OneOrMore,
@@ -77,9 +74,6 @@ static cl::opt<bool> Native("native",
 
 static cl::opt<bool>NativeCBE("native-cbe",
   cl::desc("Generate a native binary with the C backend and GCC"));
-
-static cl::opt<bool>DisableCompression("disable-compression", cl::init(true),
-  cl::desc("Disable writing of compressed bytecode files"));
 
 static cl::list<std::string> PostLinkOpts("post-link-opts",
   cl::value_desc("path"),
@@ -227,12 +221,7 @@ void GenerateBytecode(Module* M, const std::string& FileName) {
   sys::RemoveFileOnSignal(sys::Path(FileName));
 
   // Write it out
-  if (Bitcode) {
-    WriteBitcodeToFile(M, Out);
-  } else {
-    OStream L(Out);
-    WriteBytecodeToFile(M, L, !DisableCompression);
-  }
+  WriteBitcodeToFile(M, Out);
 
   // Close the bytecode file.
   Out.close();

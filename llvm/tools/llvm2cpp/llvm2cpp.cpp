@@ -18,7 +18,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -30,8 +29,6 @@
 #include <iostream>
 #include <memory>
 using namespace llvm;
-
-cl::opt<bool> Bitcode("bitcode");
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input LLVM bytecode file>"), 
@@ -54,18 +51,12 @@ int main(int argc, char **argv) {
   std::string ErrorMessage;
   
   std::auto_ptr<Module> M;
-  if (Bitcode) {
-    std::auto_ptr<MemoryBuffer> Buffer(
-         MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
-    if (Buffer.get())
-      M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
-    else
-      ErrorMessage = "Error reading file '" + InputFilename + "'";
-  } else {
-    M.reset(ParseBytecodeFile(InputFilename, 
-                              Compressor::decompressToNewBuffer,
-                              &ErrorMessage));
-  }
+  std::auto_ptr<MemoryBuffer> Buffer(
+       MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size()));
+  if (Buffer.get())
+    M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
+  else
+    ErrorMessage = "Error reading file '" + InputFilename + "'";
   if (M.get() == 0) {
     std::cerr << argv[0] << ": ";
     if (ErrorMessage.size())

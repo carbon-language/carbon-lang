@@ -10,6 +10,6 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-extract
-LINK_COMPONENTS := bcreader bcwriter ipo bitreader bitwriter
+LINK_COMPONENTS := ipo bitreader bitwriter
 
 include $(LEVEL)/Makefile.common

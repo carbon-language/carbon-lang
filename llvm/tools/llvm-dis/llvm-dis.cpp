@@ -19,9 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -45,9 +43,6 @@ Force("f", cl::desc("Overwrite output files"));
 static cl::opt<bool>
 DontPrint("disable-output", cl::desc("Don't output the .ll file"), cl::Hidden);
 
-static cl::opt<bool>
-Bitcode("bitcode", cl::desc("Read a bitcode file"));
-
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
@@ -59,21 +54,14 @@ int main(int argc, char **argv) {
 
     std::auto_ptr<Module> M;
    
-    if (Bitcode) {
-      MemoryBuffer *Buffer
-        = MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size());
+    MemoryBuffer *Buffer
+      = MemoryBuffer::getFileOrSTDIN(&InputFilename[0], InputFilename.size());
 
-      if (Buffer == 0)
-        ErrorMessage = "Error reading file '" + InputFilename + "'";
-      else
-        M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
-      
-      delete Buffer;
-    } else {
-      M.reset(ParseBytecodeFile(InputFilename,
-                                Compressor::decompressToNewBuffer,
-                                &ErrorMessage));
-    }
+    if (Buffer == 0)
+      ErrorMessage = "Error reading file '" + InputFilename + "'";
+    else
+      M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+    delete Buffer;
 
     if (M.get() == 0) {
       cerr << argv[0] << ": ";

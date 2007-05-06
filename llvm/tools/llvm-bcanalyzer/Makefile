@@ -9,7 +9,7 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-bcanalyzer
-LINK_COMPONENTS := bcreader
+LINK_COMPONENTS := bitreader
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

@@ -13,9 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/Bytecode/Archive.h"
+#include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
@@ -364,14 +363,8 @@ bool doPrint(std::string* ErrMsg) {
         if (Verbose)
           std::cout << "Printing " << I->getPath().toString() << "\n";
 
-        if (I->isCompressedBytecode())
-          Compressor::decompressToStream(data+4,I->getSize()-4,std::cout);
-        else if (I->isCompressed()) {
-          Compressor::decompressToStream(data,I->getSize(),std::cout);
-        } else {
-          unsigned len = I->getSize();
-          std::cout.write(data, len);
-        }
+        unsigned len = I->getSize();
+        std::cout.write(data, len);
       } else {
         countDown--;
       }
@@ -469,12 +462,8 @@ doExtract(std::string* ErrMsg) {
       const char* data = reinterpret_cast<const char*>(I->getData());
       unsigned len = I->getSize();
 
-      // Write the data, making sure to uncompress things first
-      if (I->isCompressed()) {
-        Compressor::decompressToStream(data,len,file);
-      } else {
-        file.write(data,len);
-      }
+      // Write the data.
+      file.write(data,len);
       file.close();
 
       // If we're supposed to retain the original modification times, etc. do so

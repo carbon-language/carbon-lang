@@ -9,6 +9,6 @@
 LEVEL = ../..
 
 TOOLNAME = llvm-link
-LINK_COMPONENTS = linker bcreader bcwriter bitreader bitwriter
+LINK_COMPONENTS = linker bitreader bitwriter
 
 include $(LEVEL)/Makefile.common

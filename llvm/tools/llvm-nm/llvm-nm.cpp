@@ -18,8 +18,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/Bytecode/Archive.h"
+#include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -30,8 +29,6 @@
 #include <cstring>
 #include <iostream>
 using namespace llvm;
-
-cl::opt<bool> Bitcode("bitcode");
 
 namespace {
   enum OutputFormatTy { bsd, sysv, posix };
@@ -125,17 +122,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
   std::string ErrorMessage;
   sys::Path aPath(Filename);
   // Note: Currently we do not support reading an archive from stdin.
-  if (Filename == "-" || aPath.isBytecodeFile()) {
-    Module *Result = ParseBytecodeFile(Filename,
-                                       Compressor::decompressToNewBuffer,
-                                       &ErrorMessage);
-    if (Result) {
-      DumpSymbolNamesFromModule (Result);
-    } else {
-      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
-      return;
-    }
-  } else if (aPath.isBitcodeFile()) {
+  if (Filename == "-" || aPath.isBitcodeFile()) {
     std::auto_ptr<MemoryBuffer> Buffer(
                    MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size()));
     Module *Result = 0;

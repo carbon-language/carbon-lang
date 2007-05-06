@@ -13,8 +13,6 @@
 //
 //  Options:
 //      --help      - Output information about command line switches
-//      --nodetails - Don't print out detailed informaton about individual
-//                    blocks and functions
 //      --dump      - Dump low-level bytecode structure in readable format
 //
 // This tool provides analytical information about a bytecode file. It is
@@ -22,8 +20,7 @@
 // produces on std::out a summary of the bytecode file that shows various
 // statistics about the contents of the file. By default this information is
 // detailed and contains information about individual bytecode blocks and the
-// functions in the module. To avoid this more detailed output, use the
-// -nodetails option to limit the output to just module level information.
+// functions in the module. 
 // The tool is also able to print a bytecode file in a straight forward text
 // format that shows the containment and relationships of the information in
 // the bytecode file (-dump option).
@@ -33,12 +30,11 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
-#include "llvm/Bytecode/Analyzer.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
+#include <map>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
@@ -50,15 +46,12 @@ static cl::opt<std::string>
 static cl::opt<std::string>
   OutputFilename("-o", cl::init("-"), cl::desc("<output file>"));
 
-static cl::opt<bool> NoDetails("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump("dump", cl::desc("Dump low level bytecode trace"));
-static cl::opt<bool> Verify("verify", cl::desc("Progressively verify module"));
 
 //===----------------------------------------------------------------------===//
 // Bitcode specific analysis.
 //===----------------------------------------------------------------------===//
 
-static cl::opt<bool> Bitcode("bitcode", cl::desc("Read a bitcode file"));
 static cl::opt<bool> NoHistogram("disable-histogram",
                                  cl::desc("Do not print per-code histogram"));
 
@@ -501,51 +494,11 @@ static int AnalyzeBitcode() {
 }
 
 
-//===----------------------------------------------------------------------===//
-// Bytecode specific analysis.
-//===----------------------------------------------------------------------===//
-
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, " llvm-bcanalyzer file analyzer\n");
   
   sys::PrintStackTraceOnErrorSignal();
   
-  if (Bitcode)
-    return AnalyzeBitcode();
-    
-  try {
-    std::ostream *Out = &std::cout;  // Default to printing to stdout...
-    std::string ErrorMessage;
-    BytecodeAnalysis bca;
-
-    /// Determine what to generate
-    bca.detailedResults = !NoDetails;
-    bca.progressiveVerify = Verify;
-
-    /// Analyze the bytecode file
-    Module* M = AnalyzeBytecodeFile(InputFilename, bca, 
-                                    Compressor::decompressToNewBuffer,
-                                    &ErrorMessage, (Dump?Out:0));
-
-    // All that bcanalyzer does is write the gathered statistics to the output
-    PrintBytecodeAnalysis(bca,*Out);
-
-    if (M && Verify) {
-      std::string verificationMsg;
-      if (verifyModule(*M, ReturnStatusAction, &verificationMsg))
-        std::cerr << "Final Verification Message: " << verificationMsg << "\n";
-    }
-
-    if (Out != &std::cout) {
-      ((std::ofstream*)Out)->close();
-      delete Out;
-    }
-    return 0;
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
-  }
-  return 1;
+  return AnalyzeBitcode();
 }

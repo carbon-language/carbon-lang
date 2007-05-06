@@ -15,22 +15,16 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <memory>
 #include <fstream>
 using namespace llvm;
-
-cl::opt<bool> Bitcode("bitcode");
 
 // InputFilename - The filename to read from.
 static cl::opt<std::string>
@@ -63,20 +57,15 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<Module> M;
   
-  if (Bitcode) {
-    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFilename[0],
-                                                        InputFilename.size());
-    if (Buffer == 0) {
-      cerr << "Error reading file '" + InputFilename + "'";
-      return 1;
-    } else {
-      M.reset(ParseBitcodeFile(Buffer));
-    }
-    delete Buffer;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFilename[0],
+                                                      InputFilename.size());
+  if (Buffer == 0) {
+    cerr << "Error reading file '" + InputFilename + "'";
+    return 1;
   } else {
-    M.reset(ParseBytecodeFile(InputFilename,
-                              Compressor::decompressToNewBuffer));
+    M.reset(ParseBitcodeFile(Buffer));
   }
+  delete Buffer;
   
   if (M.get() == 0) {
     cerr << argv[0] << ": bytecode didn't read correctly.\n";
@@ -120,11 +109,7 @@ int main(int argc, char **argv) {
     Out = &std::cout;
   }
 
-  OStream L(*Out);
-  if (Bitcode)
-    Passes.add(CreateBitcodeWriterPass(*Out));
-  else 
-    Passes.add(new WriteBytecodePass(&L));  // Write bytecode to file...
+  Passes.add(CreateBitcodeWriterPass(*Out));
   Passes.run(*M.get());
 
   if (Out != &std::cout)

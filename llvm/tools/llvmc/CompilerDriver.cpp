@@ -15,8 +15,8 @@
 #include "CompilerDriver.h"
 #include "ConfigLexer.h"
 #include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Signals.h"
@@ -26,8 +26,6 @@
 #include <iostream>
 using namespace llvm;
 
-
-static bool Bitcode = false;
 
 namespace {
 
@@ -69,17 +67,12 @@ void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
 
 static bool GetBytecodeDependentLibraries(const std::string &fname,
                                           Module::LibraryListType& deplibs,
-                                          BCDecompressor_t *BCDC,
                                           std::string* ErrMsg) {
   ModuleProvider *MP = 0;
-  if (Bitcode) {
-    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&fname[0],
-                                                            fname.size())) {
-      MP = getBitcodeModuleProvider(Buffer);
-      if (MP == 0) delete Buffer;
-    }
-  } else {
-    MP = getBytecodeModuleProvider(fname, BCDC, ErrMsg);
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&fname[0],
+                                                          fname.size())) {
+    MP = getBitcodeModuleProvider(Buffer);
+    if (MP == 0) delete Buffer;
   }
   if (!MP) {
     deplibs.clear();
@@ -598,9 +591,7 @@ private:
     if (fullpath.isBytecodeFile()) {
       // Process the dependent libraries recursively
       Module::LibraryListType modlibs;
-      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs,
-                                        Compressor::decompressToNewBuffer,
-                                        &err)) {
+      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs, &err)) {
         // Traverse the dependent libraries list
         Module::lib_iterator LI = modlibs.begin();
         Module::lib_iterator LE = modlibs.end();

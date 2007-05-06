@@ -16,20 +16,15 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Bytecode/Reader.h"
-#include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
 #include <fstream>
 #include <iostream>
 #include <memory>
 using namespace llvm;
-
-cl::opt<bool> Bitcode("bitcode");
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
@@ -65,20 +60,14 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     if (Verbose) cerr << "Loading '" << Filename.c_str() << "'\n";
     Module* Result = 0;
     
-    if (Bitcode) {
-      const std::string &FNStr = Filename.toString();
-      MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&FNStr[0],
-                                                          FNStr.size());
-      if (Buffer == 0)
-        ErrorMessage = "Error reading file '" + FNStr + "'";
-      else
-        Result = ParseBitcodeFile(Buffer, &ErrorMessage);
-      delete Buffer;
-    } else {
-      Result = ParseBytecodeFile(Filename.toString(), 
-                                 Compressor::decompressToNewBuffer,
-                                 &ErrorMessage);
-    }
+    const std::string &FNStr = Filename.toString();
+    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&FNStr[0],
+                                                        FNStr.size());
+    if (Buffer == 0)
+      ErrorMessage = "Error reading file '" + FNStr + "'";
+    else
+      Result = ParseBitcodeFile(Buffer, &ErrorMessage);
+    delete Buffer;
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
@@ -159,12 +148,7 @@ int main(int argc, char **argv) {
   }
 
   if (Verbose) cerr << "Writing bytecode...\n";
-  if (Bitcode) {
-    WriteBitcodeToFile(Composite.get(), *Out);
-  } else {
-    OStream L(*Out);
-    WriteBytecodeToFile(Composite.get(), L, !NoCompress);
-  }
+  WriteBitcodeToFile(Composite.get(), *Out);
 
   if (Out != &std::cout) delete Out;
   return 0;
