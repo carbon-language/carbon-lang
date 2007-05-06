@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/FindUsedTypes.h"
@@ -67,7 +68,7 @@ namespace {
         : constant(_constant), offset(_offset) {} 
     };
 
-    uint64_t UniqID;    
+    uint64_t UniqID;
 
     uint64_t getUniqID() {
       return ++UniqID;
@@ -119,6 +120,8 @@ namespace {
 
     virtual bool doFinalization(Module &M);
 
+    void printModuleStartup();
+
     bool isZeroValue(const Value* V);
 
     std::string getValueName(const Value* V);
@@ -137,14 +140,19 @@ namespace {
 
     std::string getPointerTypeName(const Type* Ty);
 
-    std::string getTypeName(const Type* Ty, bool isSigned = false);
+    std::string getTypeName(const Type* Ty, bool isSigned = false,
+                            bool isNested = false);
 
     ValueType getValueLocation(const Value* V);
 
     std::string getTypePostfix(const Type* Ty, bool Expand,
                                bool isSigned = false);
 
+    void printConvToPtr();
+
     void printPtrLoad(uint64_t N);
+
+    void printValuePtrLoad(const Value* V);
 
     void printConstLoad(const Constant* C);
 
@@ -170,7 +178,9 @@ namespace {
 
     void printIndirectLoad(const Value* V);
 
-    void printStoreInstruction(const Instruction* Inst);
+    void printIndirectSave(const Value* Ptr, const Value* Val);
+
+    void printIndirectSave(const Type* Ty);
 
     void printCastInstruction(unsigned int Op, const Value* V,
                               const Type* Ty);
@@ -184,6 +194,8 @@ namespace {
 
     void printFunctionCall(const Value* FnVal, const Instruction* Inst);
 
+    void printIntrinsicCall(const IntrinsicInst* Inst);
+
     void printCallInstruction(const Instruction* Inst);
 
     void printICmpInstruction(unsigned Predicate, const Value* Left,
@@ -195,6 +207,10 @@ namespace {
     void printInvokeInstruction(const InvokeInst* Inst);
 
     void printSwitchInstruction(const SwitchInst* Inst);
+
+    void printVAArgInstruction(const VAArgInst* Inst);
+
+    void printAllocaInstruction(const AllocaInst* Inst);
 
     void printInstruction(const Instruction* Inst);
 
@@ -224,8 +240,16 @@ namespace {
 
     void printGlobalVariables();
 
+    const char* getLibraryName(const Function* F);
+
+    const char* getLibraryName(const GlobalVariable* GV); 
+    
+    const char* getLibraryForSymbol(const char* Name, bool isFunction,
+                                    unsigned CallingConv);
+
     void printExternals();
   };
 }
 
 #endif
+
