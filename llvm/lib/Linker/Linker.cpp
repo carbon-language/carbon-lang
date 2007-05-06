@@ -13,15 +13,11 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Support/Compressor.h"
 using namespace llvm;
-
-static const bool Bitcode = false;
 
 Linker::Linker(const std::string& progname, const std::string& modname, unsigned flags)
   : Composite(0)
@@ -107,18 +103,13 @@ Linker::LoadObject(const sys::Path &FN) {
   Module *Result = 0;
   
   const std::string &FNS = FN.toString();
-  if (Bitcode) {
-    std::auto_ptr<MemoryBuffer> Buffer(
+  std::auto_ptr<MemoryBuffer> Buffer(
                           MemoryBuffer::getFileOrSTDIN(&FNS[0], FNS.size()));
-    if (Buffer.get())
-      Result = ParseBitcodeFile(Buffer.get(), &ParseErrorMessage);
-    else
-      ParseErrorMessage = "Error reading file '" + FNS + "'";
+  if (Buffer.get())
+    Result = ParseBitcodeFile(Buffer.get(), &ParseErrorMessage);
+  else
+    ParseErrorMessage = "Error reading file '" + FNS + "'";
     
-  } else {
-    Result = ParseBytecodeFile(FNS, Compressor::decompressToNewBuffer,
-                               &ParseErrorMessage);
-  }
   if (Result)
     return std::auto_ptr<Module>(Result);
   Error = "Bytecode file '" + FN.toString() + "' could not be loaded";

@@ -14,15 +14,12 @@
 #include "llvm/Debugger/Debugger.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Debugger/InferiorProcess.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/StringExtras.h"
 #include <memory>
 using namespace llvm;
-
-static bool Bitcode = false;
 
 /// Debugger constructor - Initialize the debugger to its initial, empty, state.
 ///
@@ -49,15 +46,11 @@ std::string Debugger::getProgramPath() const {
 
 static Module *
 getMaterializedModuleProvider(const std::string &Filename) {
-  if (Bitcode) {
-    return ParseBytecodeFile(Filename);
-  } else {
-    std::auto_ptr<MemoryBuffer> Buffer;
-    Buffer.reset(MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size()));
-    if (Buffer.get())
-      return ParseBitcodeFile(Buffer.get());
-    return 0;
-  }
+  std::auto_ptr<MemoryBuffer> Buffer;
+  Buffer.reset(MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size()));
+  if (Buffer.get())
+    return ParseBitcodeFile(Buffer.get());
+  return 0;
 }
 
 /// loadProgram - If a program is currently loaded, unload it.  Then search

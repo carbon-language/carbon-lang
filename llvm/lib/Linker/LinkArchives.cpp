@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains routines to handle linking together LLVM bytecode files,
+// This file contains routines to handle linking together LLVM bitcode files,
 // and to handle annoying things like static libraries.
 //
 //===----------------------------------------------------------------------===//
@@ -16,7 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/SetOperations.h"
-#include "llvm/Bytecode/Archive.h"
+#include "llvm/Bitcode/Archive.h"
 #include "llvm/Config/config.h"
 #include <memory>
 #include <set>
@@ -96,7 +96,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
   // Open the archive file
   verbose("Linking archive file '" + Filename.toString() + "'");
 
-  // Find all of the symbols currently undefined in the bytecode program.
+  // Find all of the symbols currently undefined in the bitcode program.
   // If all the symbols are defined, the program is complete, and there is
   // no reason to link in any archive files.
   std::set<std::string> UndefinedSymbols;

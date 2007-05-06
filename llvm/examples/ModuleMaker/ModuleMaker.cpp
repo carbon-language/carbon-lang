@@ -17,8 +17,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/Bytecode/Writer.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include <iostream>
 using namespace llvm;
 
 int main() {
@@ -53,7 +53,7 @@ int main() {
   BB->getInstList().push_back(new ReturnInst(Add));
 
   // Output the bytecode file to stdout
-  WriteBytecodeToFile(M, cout);
+  WriteBitcodeToFile(M, std::cout);
 
   // Delete the module and all of its contents.
   delete M;
