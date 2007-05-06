@@ -24,7 +24,7 @@ else
   BUILD_ARCHIVE = 1
 endif
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bcreader bcwriter
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) ipo scalaropts linker bcreader bcwriter bitreader bitwriter
 
 include $(LEVEL)/Makefile.common
 

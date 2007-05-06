@@ -17,12 +17,14 @@
 #include "llvm/Linker.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Bytecode/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Program.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Analysis/Passes.h"
@@ -51,7 +53,7 @@ llvm::LinkTimeOptimizer *createLLVMOptimizer()
   return l;
 }
 
-
+static bool Bitcode = false;
 
 /// If symbol is not used then make it internal and let optimizer takes 
 /// care of it.
@@ -119,7 +121,14 @@ LTO::getModule(const std::string &InputFilename)
   NameToModuleMap::iterator pos = allModules.find(InputFilename.c_str());
   if (pos != allModules.end())
     m = allModules[InputFilename.c_str()];
-  else {
+  else if (Bitcode) {
+    if (MemoryBuffer *Buffer
+        = MemoryBuffer::getFile(&InputFilename[0], InputFilename.size())) {
+      m = ParseBitcodeFile(Buffer);
+      delete Buffer;
+    }
+    allModules[InputFilename.c_str()] = m;
+  } else {
     m = ParseBytecodeFile(InputFilename);
     allModules[InputFilename.c_str()] = m;
   }
@@ -376,8 +385,12 @@ LTO::optimizeModules(const std::string &OutputFilename,
     std::string tempFileName(FinalOutputPath.c_str());
     tempFileName += "0.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
-    OStream L(Out);
-    WriteBytecodeToFile(bigOne, L);
+    if (Bitcode) {
+      WriteBitcodeToFile(bigOne, Out);
+    } else {
+      OStream L(Out);
+      WriteBytecodeToFile(bigOne, L);
+    }
   }
 
   // Strip leading underscore because it was added to match names
@@ -430,8 +443,12 @@ LTO::optimizeModules(const std::string &OutputFilename,
     std::string tempFileName(FinalOutputPath.c_str());
     tempFileName += "1.bc";
     std::ofstream Out(tempFileName.c_str(), io_mode);
-    OStream L(Out);
-    WriteBytecodeToFile(bigOne, L);
+    if (Bitcode) {
+      WriteBitcodeToFile(bigOne, Out);
+    } else {
+      OStream L(Out);
+      WriteBytecodeToFile(bigOne, L);
+    }
   }
 
   targetTriple = bigOne->getTargetTriple();
