@@ -153,10 +153,6 @@ This option is identical to the B<-native> option, but uses the
 C backend to generate code for the program instead of an LLVM native
 code generator.
 
-=item B<-disable-compression>
-
-Do not compress bytecode files.
-
 =back
 
 =head2 Optimization Options
