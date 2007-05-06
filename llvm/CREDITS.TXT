@@ -211,6 +211,11 @@ N: Adam Treat
 E: manyoso@yahoo.com
 D: C++ bugs filed, and C++ front-end bug fixes.
 
+N: Lauro Ramos Venancio
+E: lauro.venancio@indt.org.br
+D: ARM backend improvements
+D: Thread Local Storage implementation
+
 N: Bill Wendling
 E: isanbard@gmail.com
 W: http://web.mac.com/bwendling/
