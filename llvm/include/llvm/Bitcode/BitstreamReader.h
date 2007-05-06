@@ -110,9 +110,9 @@ public:
   
   /// JumpToBit - Reset the stream to the specified bit number.
   void JumpToBit(uint64_t BitNo) {
-    unsigned ByteNo = unsigned(BitNo/8) & ~3;
-    unsigned WordBitNo = unsigned(BitNo) & 31;
-    assert(ByteNo < (unsigned)(LastChar-FirstChar) && "Invalid location");
+    uintptr_t ByteNo = uintptr_t(BitNo/8) & ~3;
+    uintptr_t WordBitNo = uintptr_t(BitNo) & 31;
+    assert(ByteNo < (uintptr_t)(LastChar-FirstChar) && "Invalid location");
     
     // Move the cursor to the right word.
     NextChar = FirstChar+ByteNo;
