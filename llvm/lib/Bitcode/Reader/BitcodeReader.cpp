@@ -964,9 +964,11 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
         Section = SectionTable[Record[5]-1];
       }
       GlobalValue::VisibilityTypes Visibility = GlobalValue::DefaultVisibility;
-      if (Record.size() >= 6) Visibility = GetDecodedVisibility(Record[6]);
+      if (Record.size() > 6)
+        Visibility = GetDecodedVisibility(Record[6]);
       bool isThreadLocal = false;
-      if (Record.size() >= 7) isThreadLocal = Record[7];
+      if (Record.size() > 7)
+        isThreadLocal = Record[7];
 
       GlobalVariable *NewGV =
         new GlobalVariable(Ty, isConstant, Linkage, 0, "", TheModule);
