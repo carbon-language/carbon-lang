@@ -13,9 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchiveInternals.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Module.h"
-#include "llvm/Bytecode/Reader.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Process.h"
 using namespace llvm;
 
@@ -142,10 +143,9 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
 // Archive constructor - this is the only constructor that gets used for the
 // Archive class. Everything else (default,copy) is deprecated. This just
 // initializes and maps the file into memory, if requested.
-Archive::Archive(const sys::Path& filename, BCDecompressor_t *BCDC)
+Archive::Archive(const sys::Path& filename)
   : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
-    symTabSize(0), firstFileOffset(0), modules(), foreignST(0), 
-    Decompressor(BCDC) {
+    symTabSize(0), firstFileOffset(0), modules(), foreignST(0) {
 }
 
 bool
@@ -213,9 +213,16 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
 // Get just the externally visible defined symbols from the bytecode
 bool llvm::GetBytecodeSymbols(const sys::Path& fName,
                               std::vector<std::string>& symbols,
-                              BCDecompressor_t *BCDC,
                               std::string* ErrMsg) {
-  ModuleProvider *MP = getBytecodeModuleProvider(fName.toString(), BCDC,ErrMsg);
+  std::auto_ptr<MemoryBuffer> Buffer(
+                       MemoryBuffer::getFileOrSTDIN(&fName.toString()[0],
+                                                    fName.toString().size()));
+  if (!Buffer.get()) {
+    if (ErrMsg) *ErrMsg = "Could not open file '" + fName.toString() + "'";
+    return true;
+  }
+  
+  ModuleProvider *MP = getBitcodeModuleProvider(Buffer.get(), ErrMsg);
   if (!MP)
     return true;
   
@@ -235,14 +242,15 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
 }
 
 ModuleProvider*
-llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
+llvm::GetBytecodeSymbols(const unsigned char *BufPtr, unsigned Length,
                          const std::string& ModuleID,
                          std::vector<std::string>& symbols,
-                         BCDecompressor_t *BCDC,
                          std::string* ErrMsg) {
   // Get the module provider
-  ModuleProvider* MP = 
-  getBytecodeBufferModuleProvider(Buffer, Length, ModuleID, BCDC, ErrMsg, 0);
+  MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str());
+  memcpy((char*)Buffer->getBufferStart(), BufPtr, Length);
+  
+  ModuleProvider *MP = getBitcodeModuleProvider(Buffer, ErrMsg);
   if (!MP)
     return 0;
   

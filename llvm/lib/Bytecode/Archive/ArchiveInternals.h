@@ -14,7 +14,7 @@
 #ifndef LIB_BYTECODE_ARCHIVEINTERNALS_H
 #define LIB_BYTECODE_ARCHIVEINTERNALS_H
 
-#include "llvm/Bytecode/Archive.h"
+#include "llvm/Bitcode/Archive.h"
 #include "llvm/System/TimeValue.h"
 #include "llvm/ADT/StringExtras.h"
 
@@ -70,12 +70,11 @@ namespace llvm {
   // Get just the externally visible defined symbols from the bytecode
   bool GetBytecodeSymbols(const sys::Path& fName,
                           std::vector<std::string>& symbols,
-                          BCDecompressor_t *BCDC, std::string* ErrMsg);
+                          std::string* ErrMsg);
   
   ModuleProvider* GetBytecodeSymbols(const unsigned char*Buffer,unsigned Length,
                                      const std::string& ModuleID,
                                      std::vector<std::string>& symbols,
-                                     BCDecompressor_t *BCDC,
                                      std::string* ErrMsg);
 }
 

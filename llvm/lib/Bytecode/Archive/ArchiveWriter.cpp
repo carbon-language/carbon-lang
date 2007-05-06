@@ -12,11 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchiveInternals.h"
-#include "llvm/Bytecode/Reader.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/Compressor.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Process.h"
+#include "llvm/ModuleProvider.h"
 #include <fstream>
 #include <ostream>
 #include <iomanip>
@@ -232,8 +231,7 @@ Archive::writeMember(
       + ")";
     ModuleProvider* MP = 
       GetBytecodeSymbols((const unsigned char*)data,fSize,
-                         FullMemberName, symbols,
-                         Compressor::decompressToNewBuffer, ErrMsg);
+                         FullMemberName, symbols, ErrMsg);
 
     // If the bytecode parsed successfully
     if ( MP ) {
