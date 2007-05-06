@@ -202,10 +202,7 @@ D: The `paths' pass
 N: Reid Spencer
 E: rspencer@reidspencer.com
 W: http://reidspencer.com/
-D: Stacker, llvmc, llvm-ld, llvm-ar, llvm2cpp, lib/Archive, lib/Linker, 
-D: lib/System, bytecode enhancements, symtab hacking, unoverloading of 
-D: intrinsics, makefile and configuration system, documentation, various bug 
-D: fixing.
+D: http://wiki.llvm.org/index.php/User:Reid
 
 N: Adam Treat
 E: manyoso@yahoo.com
