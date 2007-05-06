@@ -484,6 +484,12 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         assert (CFP->getType() == Type::DoubleTy && "Unknown FP type!");
         Record.push_back(DoubleToBits((double)CFP->getValue()));
       }
+    } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
+      // Emit constant strings specially.
+      Code = bitc::CST_CODE_STRING;
+      for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
+        Record.push_back(cast<ConstantInt>(C->getOperand(i))->getZExtValue());
+      
     } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
                isa<ConstantVector>(V)) {
       Code = bitc::CST_CODE_AGGREGATE;

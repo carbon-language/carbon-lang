@@ -642,7 +642,21 @@ bool BitcodeReader::ParseConstants() {
       }
       break;
     }
+    case bitc::CST_CODE_STRING: { // STRING: [values]
+      if (Record.empty())
+        return Error("Invalid CST_AGGREGATE record");
 
+      const ArrayType *ATy = cast<ArrayType>(CurTy);
+      const Type *EltTy = ATy->getElementType();
+      
+      unsigned Size = Record.size();
+      std::vector<Constant*> Elts;
+      
+      for (unsigned i = 0; i != Size; ++i)
+        Elts.push_back(ConstantInt::get(EltTy, Record[i]));
+      V = ConstantArray::get(ATy, Elts);
+      break;
+    }
     case bitc::CST_CODE_CE_BINOP: {  // CE_BINOP: [opcode, opval, opval]
       if (Record.size() < 3) return Error("Invalid CE_BINOP record");
       int Opc = GetDecodedBinaryOpcode(Record[0], CurTy);

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValueEnumerator.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
@@ -65,8 +66,6 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
        I != E; ++I)
     EnumerateValue(I->getAliasee());
   
-  // FIXME: Implement the 'string constant' optimization.
-
   // Enumerate types used by the type symbol table.
   EnumerateTypeSymbolTable(M->getTypeSymbolTable());
 
@@ -105,8 +104,6 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Now that we rearranged the type table, rebuild TypeMap.
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     TypeMap[Types[i].first] = i+1;
-  
-  // FIXME: Sort value tables by frequency.
 }
 
 // Optimize constant ordering.
@@ -176,6 +173,10 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
   if (const Constant *C = dyn_cast<Constant>(V)) {
     if (isa<GlobalValue>(C)) {
       // Initializers for globals are handled explicitly elsewhere.
+    } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
+      // Do not enumerate the initializers for an array of simple characters.
+      // The initializers just polute the value table, and we emit the strings
+      // specially.
     } else {
       // This makes sure that if a constant has uses (for example an array of
       // const ints), that they are inserted also.
