@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TOOLNAME = llvm-ranlib
-LINK_COMPONENTS = archive bcreader
+LINK_COMPONENTS = archive
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
