@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
@@ -27,6 +28,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Analysis/Verifier.h"
@@ -36,8 +38,10 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-
 using namespace llvm;
+
+cl::opt<bool> Bitcode("bitcode");
+
 
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
@@ -172,137 +176,143 @@ static std::ostream *GetOutputStream(const char *ProgName) {
 //
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  try {
-    cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
-    sys::PrintStackTraceOnErrorSignal();
+  cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
+  sys::PrintStackTraceOnErrorSignal();
 
-    // Load the module to be compiled...
-    std::string errmsg;
-    std::auto_ptr<Module> M(ParseBytecodeFile(InputFilename, 
-                                              Compressor::decompressToNewBuffer,
-                                              &errmsg));
-    if (M.get() == 0) {
-      std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
-      std::cerr << "Reason: " << errmsg << "\n";
+  // Load the module to be compiled...
+  std::string ErrorMessage;
+  std::auto_ptr<Module> M;
+  
+  if (Bitcode) {
+    MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(&InputFilename[0],
+                                                        InputFilename.size());
+    if (Buffer == 0)
+      ErrorMessage = "Error reading file '" + InputFilename + "'";
+    else
+      M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+    delete Buffer;
+    
+  } else {
+    M.reset(ParseBytecodeFile(InputFilename, 
+                              Compressor::decompressToNewBuffer,
+                              &ErrorMessage));
+  }
+  if (M.get() == 0) {
+    std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    std::cerr << "Reason: " << ErrorMessage << "\n";
+    return 1;
+  }
+  Module &mod = *M.get();
+  
+  // If we are supposed to override the target triple, do so now.
+  if (!TargetTriple.empty())
+    mod.setTargetTriple(TargetTriple);
+  
+  // Allocate target machine.  First, check whether the user has
+  // explicitly specified an architecture to compile for.
+  if (MArch == 0) {
+    std::string Err;
+    MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
+    if (MArch == 0) {
+      std::cerr << argv[0] << ": error auto-selecting target for module '"
+                << Err << "'.  Please use the -march option to explicitly "
+                << "pick a target.\n";
       return 1;
     }
-    Module &mod = *M.get();
-
-    // If we are supposed to override the target triple, do so now.
-    if (!TargetTriple.empty())
-      mod.setTargetTriple(TargetTriple);
-    
-    // Allocate target machine.  First, check whether the user has
-    // explicitly specified an architecture to compile for.
-    if (MArch == 0) {
-      std::string Err;
-      MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
-      if (MArch == 0) {
-        std::cerr << argv[0] << ": error auto-selecting target for module '"
-                  << Err << "'.  Please use the -march option to explicitly "
-                  << "pick a target.\n";
-        return 1;
-      }
-    }
-
-    // Package up features to be passed to target/subtarget
-    std::string FeaturesStr;
-    if (MCPU.size() || MAttrs.size()) {
-      SubtargetFeatures Features;
-      Features.setCPU(MCPU);
-      for (unsigned i = 0; i != MAttrs.size(); ++i)
-        Features.AddFeature(MAttrs[i]);
-      FeaturesStr = Features.getString();
-    }
-
-    std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, FeaturesStr));
-    assert(target.get() && "Could not allocate target machine!");
-    TargetMachine &Target = *target.get();
-
-    // Figure out where we are going to send the output...
-    std::ostream *Out = GetOutputStream(argv[0]);
-    if (Out == 0) return 1;
-    
-    // If this target requires addPassesToEmitWholeFile, do it now.  This is
-    // used by strange things like the C backend.
-    if (Target.WantsWholeFile()) {
-      PassManager PM;
-      PM.add(new TargetData(*Target.getTargetData()));
-      if (!NoVerify)
-        PM.add(createVerifierPass());
-      
-      // Ask the target to add backend passes as necessary.
-      if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, Fast)) {
-        std::cerr << argv[0] << ": target does not support generation of this"
-                  << " file type!\n";
-        if (Out != &std::cout) delete Out;
-        // And the Out file is empty and useless, so remove it now.
-        sys::Path(OutputFilename).eraseFromDisk();
-        return 1;
-      }
-      PM.run(mod);
-    } else {
-      // Build up all of the passes that we want to do to the module.
-      FunctionPassManager Passes(new ExistingModuleProvider(M.get()));
-      Passes.add(new TargetData(*Target.getTargetData()));
-      
-#ifndef NDEBUG
-      if (!NoVerify)
-        Passes.add(createVerifierPass());
-#endif
-    
-      // Ask the target to add backend passes as necessary.
-      MachineCodeEmitter *MCE = 0;
-
-      switch (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
-      default:
-        assert(0 && "Invalid file model!");
-        return 1;
-      case FileModel::Error:
-        std::cerr << argv[0] << ": target does not support generation of this"
-                  << " file type!\n";
-        if (Out != &std::cout) delete Out;
-        // And the Out file is empty and useless, so remove it now.
-        sys::Path(OutputFilename).eraseFromDisk();
-        return 1;
-      case FileModel::AsmFile:
-        break;
-      case FileModel::MachOFile:
-        MCE = AddMachOWriter(Passes, *Out, Target);
-        break;
-      case FileModel::ElfFile:
-        MCE = AddELFWriter(Passes, *Out, Target);
-        break;
-      }
-
-      if (Target.addPassesToEmitFileFinish(Passes, MCE, Fast)) {
-        std::cerr << argv[0] << ": target does not support generation of this"
-                  << " file type!\n";
-        if (Out != &std::cout) delete Out;
-        // And the Out file is empty and useless, so remove it now.
-        sys::Path(OutputFilename).eraseFromDisk();
-        return 1;
-      }
-    
-      Passes.doInitialization();
-    
-      // Run our queue of passes all at once now, efficiently.
-      // TODO: this could lazily stream functions out of the module.
-      for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
-        if (!I->isDeclaration())
-          Passes.run(*I);
-      
-      Passes.doFinalization();
-    }
-      
-    // Delete the ostream if it's not a stdout stream
-    if (Out != &std::cout) delete Out;
-
-    return 0;
-  } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
-  return 1;
+
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MCPU.size() || MAttrs.size()) {
+    SubtargetFeatures Features;
+    Features.setCPU(MCPU);
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
+  
+  std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, FeaturesStr));
+  assert(target.get() && "Could not allocate target machine!");
+  TargetMachine &Target = *target.get();
+
+  // Figure out where we are going to send the output...
+  std::ostream *Out = GetOutputStream(argv[0]);
+  if (Out == 0) return 1;
+  
+  // If this target requires addPassesToEmitWholeFile, do it now.  This is
+  // used by strange things like the C backend.
+  if (Target.WantsWholeFile()) {
+    PassManager PM;
+    PM.add(new TargetData(*Target.getTargetData()));
+    if (!NoVerify)
+      PM.add(createVerifierPass());
+    
+    // Ask the target to add backend passes as necessary.
+    if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, Fast)) {
+      std::cerr << argv[0] << ": target does not support generation of this"
+                << " file type!\n";
+      if (Out != &std::cout) delete Out;
+      // And the Out file is empty and useless, so remove it now.
+      sys::Path(OutputFilename).eraseFromDisk();
+      return 1;
+    }
+    PM.run(mod);
+  } else {
+    // Build up all of the passes that we want to do to the module.
+    FunctionPassManager Passes(new ExistingModuleProvider(M.get()));
+    Passes.add(new TargetData(*Target.getTargetData()));
+    
+#ifndef NDEBUG
+    if (!NoVerify)
+      Passes.add(createVerifierPass());
+#endif
+  
+    // Ask the target to add backend passes as necessary.
+    MachineCodeEmitter *MCE = 0;
+
+    switch (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
+    default:
+      assert(0 && "Invalid file model!");
+      return 1;
+    case FileModel::Error:
+      std::cerr << argv[0] << ": target does not support generation of this"
+                << " file type!\n";
+      if (Out != &std::cout) delete Out;
+      // And the Out file is empty and useless, so remove it now.
+      sys::Path(OutputFilename).eraseFromDisk();
+      return 1;
+    case FileModel::AsmFile:
+      break;
+    case FileModel::MachOFile:
+      MCE = AddMachOWriter(Passes, *Out, Target);
+      break;
+    case FileModel::ElfFile:
+      MCE = AddELFWriter(Passes, *Out, Target);
+      break;
+    }
+
+    if (Target.addPassesToEmitFileFinish(Passes, MCE, Fast)) {
+      std::cerr << argv[0] << ": target does not support generation of this"
+                << " file type!\n";
+      if (Out != &std::cout) delete Out;
+      // And the Out file is empty and useless, so remove it now.
+      sys::Path(OutputFilename).eraseFromDisk();
+      return 1;
+    }
+  
+    Passes.doInitialization();
+  
+    // Run our queue of passes all at once now, efficiently.
+    // TODO: this could lazily stream functions out of the module.
+    for (Module::iterator I = mod.begin(), E = mod.end(); I != E; ++I)
+      if (!I->isDeclaration())
+        Passes.run(*I);
+    
+    Passes.doFinalization();
+  }
+    
+  // Delete the ostream if it's not a stdout stream
+  if (Out != &std::cout) delete Out;
+
+  return 0;
 }
