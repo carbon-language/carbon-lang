@@ -34,7 +34,9 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
@@ -2569,17 +2571,22 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
 
   // fold (conv (load x)) -> (load (conv*)x)
-  // FIXME: These xforms need to know that the resultant load doesn't need a 
-  // higher alignment than the original!
-  if (0 && ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse()) {
+  // If the resultant load doesn't need a  higher alignment than the original!
+  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+      TLI.isOperationLegal(ISD::LOAD, VT)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDOperand Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
-                                 LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                                 LN0->isVolatile(), LN0->getAlignment());
-    AddToWorkList(N);
-    CombineTo(N0.Val, DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
-              Load.getValue(1));
-    return Load;
+    unsigned Align = TLI.getTargetMachine().getTargetData()->
+      getPrefTypeAlignment(getTypeForValueType(VT));
+    unsigned OrigAlign = LN0->getAlignment();
+    if (Align <= OrigAlign) {
+      SDOperand Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
+                                   LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                                   LN0->isVolatile(), LN0->getAlignment());
+      AddToWorkList(N);
+      CombineTo(N0.Val, DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
+                Load.getValue(1));
+      return Load;
+    }
   }
   
   return SDOperand();
@@ -3414,12 +3421,16 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   SDOperand Value = ST->getValue();
   SDOperand Ptr   = ST->getBasePtr();
   
-  // If this is a store of a bit convert, store the input value.
-  // FIXME: This needs to know that the resultant store does not need a 
-  // higher alignment than the original.
-  if (0 && Value.getOpcode() == ISD::BIT_CONVERT) {
-    return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
-                        ST->getSrcValueOffset());
+  // If this is a store of a bit convert, store the input value if the
+  // resultant store does not need a  higher alignment than the original.
+  if (Value.getOpcode() == ISD::BIT_CONVERT) {
+    unsigned Align = ST->getAlignment();
+    MVT::ValueType SVT = Value.getOperand(0).getValueType();
+    unsigned OrigAlign = TLI.getTargetMachine().getTargetData()->
+      getPrefTypeAlignment(getTypeForValueType(SVT));
+    if (Align <= OrigAlign)
+      return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
+                          ST->getSrcValueOffset());
   }
   
   // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
