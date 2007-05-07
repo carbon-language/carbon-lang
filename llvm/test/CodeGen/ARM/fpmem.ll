@@ -6,18 +6,17 @@
 ; RUN:   grep {fsts.*\\\[} | wc -l | grep 1
 
 float %f1(float %a) {
-entry:
 	ret float 0.000000e+00
 }
 
-float %f2(float* %v) {
-entry:
+float %f2(float* %v, float %u) {
         %tmp = load float* %v
-	ret float %tmp
+        %tmp1 = add float %tmp, %u
+	ret float %tmp1
 }
 
-void %f3(float %a, float* %v) {
-entry:
-	store float %a, float* %v
+void %f3(float %a, float %b, float* %v) {
+        %tmp = add float %a, %b
+	store float %tmp, float* %v
 	ret void
 }
