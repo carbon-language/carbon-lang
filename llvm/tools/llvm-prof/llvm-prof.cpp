@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 
     // Read in the bytecode file...
     std::string ErrorMessage;
-    Module *M;
+    Module *M = 0;
     if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BytecodeFile,
                                                             &ErrorMessage)) {
       M = ParseBitcodeFile(Buffer, &ErrorMessage);
