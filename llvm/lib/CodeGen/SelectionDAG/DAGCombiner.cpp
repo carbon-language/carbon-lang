@@ -3428,7 +3428,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     MVT::ValueType SVT = Value.getOperand(0).getValueType();
     unsigned OrigAlign = TLI.getTargetMachine().getTargetData()->
       getPrefTypeAlignment(getTypeForValueType(SVT));
-    if (Align <= OrigAlign)
+    if (Align <= OrigAlign && TLI.isOperationLegal(ISD::STORE, SVT))
       return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
                           ST->getSrcValueOffset());
   }
