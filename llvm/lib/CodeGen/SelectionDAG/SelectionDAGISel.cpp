@@ -2787,10 +2787,12 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Value *Arg = I.getOperand(i);
     SDOperand ArgNode = getValue(Arg);
     Entry.Node = ArgNode; Entry.Ty = Arg->getType();
-    Entry.isSExt   = Attrs && Attrs->paramHasAttr(i, ParamAttr::SExt);
-    Entry.isZExt   = Attrs && Attrs->paramHasAttr(i, ParamAttr::ZExt);
-    Entry.isInReg  = Attrs && Attrs->paramHasAttr(i, ParamAttr::InReg);
-    Entry.isSRet   = Attrs && Attrs->paramHasAttr(i, ParamAttr::StructRet);
+
+    unsigned attrInd = i - OpIdx + 1;
+    Entry.isSExt  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::SExt);
+    Entry.isZExt  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::ZExt);
+    Entry.isInReg = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::InReg);
+    Entry.isSRet  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::StructRet);
     Args.push_back(Entry);
   }
 
