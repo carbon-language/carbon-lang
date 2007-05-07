@@ -51,6 +51,7 @@ N: Evan Cheng
 E: evan.cheng@apple.com
 D: ARM and X86 backends
 D: Instruction scheduler improvements
+D: Register allocator improvements
 D: Loop optimizer improvements
 D: Target-independent code generator improvements
 
