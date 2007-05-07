@@ -32,6 +32,7 @@ namespace clang {
   class LangOptions;
   class DeclaratorChunk;
   class LexerToken;
+  class IntegerLiteral;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -48,6 +49,9 @@ class Sema : public Action {
   /// all but the last decl will be entered into this.  This is used by the
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
+  
+  /// Constant for "1"
+  IntegerLiteral *constantOne;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -261,20 +265,21 @@ private:
     Expr *lex, Expr *rex, SourceLocation OpLoc); 
   inline QualType CheckLogicalOperands( // C99 6.5.[13,14]
     Expr *lex, Expr *rex, SourceLocation OpLoc);
-  inline QualType CheckSimpleAssignmentOperands( // C99 6.5.16.1
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
-  inline QualType CheckCompoundAssignmentOperands( // C99 6.5.16.2
-    Expr *lex, QualType, SourceLocation OpLoc);
+  // CheckAssignmentOperands is used for both simple and compound assignment.
+  // For simple assignment, pass both expressions and a null converted type.
+  // For compound assignment, pass both expressions and the converted type.
+  inline QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
+    Expr *lex, Expr *rex, SourceLocation OpLoc, QualType convertedType);
   inline QualType CheckCommaOperands( // C99 6.5.17
     Expr *lex, Expr *rex, SourceLocation OpLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
   /// The unsigned arguments are really enums (UnaryOperator::Opcode)
-  ExprResult CheckIncrementDecrementOperand( // C99 6.5.3.1 
-    Expr *op, SourceLocation loc, unsigned OpCode);
-  ExprResult CheckAddressOfOperand( // C99 6.5.3.2
+  QualType CheckIncrementDecrementOperand( // C99 6.5.3.1 
     Expr *op, SourceLocation loc);
-  ExprResult CheckIndirectionOperand( // C99 6.5.3.2
+  QualType CheckAddressOfOperand( // C99 6.5.3.2
+    Expr *op, SourceLocation loc);
+  QualType CheckIndirectionOperand( // C99 6.5.3.2
     Expr *op, SourceLocation loc);
   ExprResult CheckArithmeticOperand( // C99 6.5.3.3
     Expr *op, SourceLocation OpLoc, unsigned OpCode);

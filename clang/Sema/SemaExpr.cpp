@@ -170,44 +170,6 @@ Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
   return e;
 }
 
-
-// Unary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
-                                      ExprTy *Input) {
-  UnaryOperator::Opcode Opc;
-  switch (Op) {
-  default: assert(0 && "Unknown unary op!");
-  case tok::plusplus:     Opc = UnaryOperator::PreInc; break;
-  case tok::minusminus:   Opc = UnaryOperator::PreDec; break;
-  case tok::amp:          Opc = UnaryOperator::AddrOf; break;
-  case tok::star:         Opc = UnaryOperator::Deref; break;
-  case tok::plus:         Opc = UnaryOperator::Plus; break;
-  case tok::minus:        Opc = UnaryOperator::Minus; break;
-  case tok::tilde:        Opc = UnaryOperator::Not; break;
-  case tok::exclaim:      Opc = UnaryOperator::LNot; break;
-  case tok::kw_sizeof:    Opc = UnaryOperator::SizeOf; break;
-  case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
-  case tok::kw___real:    Opc = UnaryOperator::Real; break;
-  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
-  case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
-  case tok::kw___extension__: 
-    return Input;
-    //Opc = UnaryOperator::Extension;
-    //break;
-  }
-  if (Opc == UnaryOperator::PreInc || Opc == UnaryOperator::PreDec)
-    return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
-  else if (Opc == UnaryOperator::AddrOf)
-    return CheckAddressOfOperand((Expr *)Input, OpLoc);
-  else if (Opc == UnaryOperator::Deref) 
-    return CheckIndirectionOperand((Expr *)Input, OpLoc);
-  else if (UnaryOperator::isArithmeticOp(Opc))
-    return CheckArithmeticOperand((Expr *)Input, OpLoc, Opc);
-  
-  // will go away when all cases are handled...
-  return new UnaryOperator((Expr *)Input, Opc, QualType());
-}
-
 Action::ExprResult Sema::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LParenLoc, TypeTy *Ty,
@@ -245,7 +207,10 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
   case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
-  return CheckIncrementDecrementOperand((Expr *)Input, OpLoc, Opc);
+  QualType result = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
+  if (result.isNull())
+    return true;
+  return new UnaryOperator((Expr *)Input, Opc, result);
 }
 
 Action::ExprResult Sema::
@@ -670,11 +635,11 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   return QualType();
 }
 
-inline QualType Sema::CheckSimpleAssignmentOperands( // C99 6.5.16.1
-  Expr *lex, Expr *rex, SourceLocation loc) 
+inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
+  Expr *lex, Expr *rex, SourceLocation loc, QualType compoundType) 
 {
   QualType lhsType = lex->getType();
-  QualType rhsType = rex->getType();
+  QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
   
   // FIXME: consider hacking isModifiableLvalue to return an enum that
   // communicates why the expression/type wasn't a modifiableLvalue.
@@ -703,51 +668,8 @@ inline QualType Sema::CheckSimpleAssignmentOperands( // C99 6.5.16.1
     return QualType();
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
-    if (!rex->isNullPointerConstant())
+    if (compoundType.isNull() && !rex->isNullPointerConstant())
       Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
-    return resType;
-  case IntFromPointer:
-    Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
-    return resType;
-  case IncompatiblePointer:
-    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
-    return resType;
-  }
-  assert(0 && "should never get here");
-}
-
-inline QualType Sema::CheckCompoundAssignmentOperands( // C99 6.5.16.2
-  Expr *lex, QualType rhsType, SourceLocation loc) 
-{
-  QualType lhsType = lex->getType();
-  
-  // FIXME: consider hacking isModifiableLvalue to return an enum that
-  // communicates why the expression/type wasn't a modifiableLvalue.
-  
-  // this check is done first to give a more precise diagnostic.
-  if (lhsType.isConstQualified()) {
-    Diag(loc, diag::err_typecheck_assign_const);
-    return QualType();
-  }
-  if (!lex->isModifiableLvalue()) { // this includes checking for "const"
-    Diag(loc, diag::ext_typecheck_assign_non_lvalue);
-    return QualType();
-  }
-  if (lhsType == rhsType) // common case, fast path...
-    return lhsType;
-  
-  AssignmentConversionResult result;
-  QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
-
-  // decode the result (notice that extensions still return a type).
-  switch (result) {
-  case Compatible:
-    return resType;
-  case Incompatible:
-    Diag(loc, diag::err_typecheck_assign_incompatible);
-    return QualType();
-  case PointerFromInt:
-    Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
     return resType;
   case IntFromPointer:
     Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
@@ -765,30 +687,30 @@ inline QualType Sema::CheckCommaOperands( // C99 6.5.17
   return UsualUnaryConversion(rex->getType());
 }
 
-Action::ExprResult
-Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc,
-                                               unsigned OpCode) {
-  QualType qType = op->getType();
-
-  assert(!qType.isNull() && "no type for increment/decrement expression");
-
-  QualType canonType = qType.getCanonicalType();
+QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
+  QualType resType = UsualArithmeticConversions(op->getType(), 
+                                                constantOne->getType());
+  assert(!resType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1
-  if (const PointerType *pt = dyn_cast<PointerType>(canonType)) {
-    if (!pt->getPointeeType()->isObjectType()) // C99 6.5.2.4p2, 6.5.6p2
-      return Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type, qType);    
-  } else if (!canonType->isRealType()) { 
+  if (const PointerType *pt = dyn_cast<PointerType>(resType)) {
+    if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
+      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type, resType);
+      return QualType();
+    }
+  } else if (!resType->isRealType()) { 
     // FIXME: Allow Complex as a GCC extension.
-    return Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, qType);    
+    Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, resType);
+    return QualType(); 
   }
   // At this point, we know we have a real or pointer type. As a result, the
   // following predicate is overkill (i.e. it will check for types we know we
   // don't have in this context). Nevertheless, we model the C99 spec closely.
-  if (!canonType.isModifiableLvalue())
-    return Diag(OpLoc, diag::err_typecheck_not_modifiable, qType);
-
-  return new UnaryOperator(op, (UOP)OpCode, qType);
+  if (!resType.isModifiableLvalue()) {
+    Diag(OpLoc, diag::err_typecheck_not_modifiable, resType);
+    return QualType();
+  }
+  return resType;
 }
 
 /// getPrimaryDeclaration - Helper function for CheckAddressOfOperand().
@@ -819,65 +741,42 @@ static Decl *getPrimaryDeclaration(Expr *e) {
 /// object cannot be declared with storage class register or be a bit field.
 /// Note: The usual conversions are *not* applied to the operand of the & 
 /// operator, and its result is never an lvalue.
-Action::ExprResult
-Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
+QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Decl *dcl = getPrimaryDeclaration(op);
   
   if (!op->isModifiableLvalue()) {
     if (dcl && isa<FunctionDecl>(dcl))
       ;  // C99 6.5.3.2p1: Allow function designators.
-    else
-      return Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof);      
+    else {
+      Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof);
+      return QualType();
+    }
   } else if (dcl) {
     // We have an lvalue with a decl. Make sure the decl is not declared 
     // with the register storage-class specifier.
     if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
-      if (vd->getStorageClass() == VarDecl::Register)
-        return Diag(OpLoc, diag::err_typecheck_address_of_register);
+      if (vd->getStorageClass() == VarDecl::Register) {
+        Diag(OpLoc, diag::err_typecheck_address_of_register);
+        return QualType();
+      }
     } else 
       assert(0 && "Unknown/unexpected decl type");
     
     // FIXME: add check for bitfields!
   }
   // If the operand has type "type", the result has type "pointer to type".
-  return new UnaryOperator(op, UnaryOperator::AddrOf, 
-                           Context.getPointerType(op->getType()));
+  return Context.getPointerType(op->getType());
 }
 
-Action::ExprResult
-Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
-  QualType qType = op->getType();
-
+QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
+  QualType qType = UsualUnaryConversion(op->getType());
+  
   assert(!qType.isNull() && "no type for * expression");
 
-  QualType canonType = qType.getCanonicalType();
-
-  // FIXME: add type checking and fix result type
-  
-  return new UnaryOperator(op, UnaryOperator::Deref, Context.IntTy);
-}
-
-/// CheckArithmeticOperand - Check the arithmetic unary operators (C99 6.5.3.3).
-Action::ExprResult
-Sema::CheckArithmeticOperand(Expr *op, SourceLocation OpLoc, unsigned Opc) {
-  QualType resultType = UsualUnaryConversion(op->getType());
-  
-  switch (Opc) {
-  case UnaryOperator::Plus:
-  case UnaryOperator::Minus:
-    if (!resultType->isArithmeticType()) // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
-    break;
-  case UnaryOperator::Not: // bitwise complement
-    if (!resultType->isIntegerType()) // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
-    break;
-  case UnaryOperator::LNot: // logical negation
-    if (!resultType->isScalarType()) // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
-    break;
-  }
-  return new UnaryOperator(op, (UOP)Opc, resultType);
+  if (PointerType *PT = dyn_cast<PointerType>(qType))
+    return PT->getPointeeType();
+  Diag(OpLoc, diag::err_typecheck_unary_expr, qType);
+  return QualType();
 }
 
 static inline BinaryOperator::Opcode ConvertTokenKindToBinaryOpcode(
@@ -919,6 +818,29 @@ static inline BinaryOperator::Opcode ConvertTokenKindToBinaryOpcode(
   return Opc;
 }
 
+static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
+  tok::TokenKind Kind) {
+  UnaryOperator::Opcode Opc;
+  switch (Kind) {
+  default: assert(0 && "Unknown unary op!");
+  case tok::plusplus:     Opc = UnaryOperator::PreInc; break;
+  case tok::minusminus:   Opc = UnaryOperator::PreDec; break;
+  case tok::amp:          Opc = UnaryOperator::AddrOf; break;
+  case tok::star:         Opc = UnaryOperator::Deref; break;
+  case tok::plus:         Opc = UnaryOperator::Plus; break;
+  case tok::minus:        Opc = UnaryOperator::Minus; break;
+  case tok::tilde:        Opc = UnaryOperator::Not; break;
+  case tok::exclaim:      Opc = UnaryOperator::LNot; break;
+  case tok::kw_sizeof:    Opc = UnaryOperator::SizeOf; break;
+  case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
+  case tok::kw___real:    Opc = UnaryOperator::Real; break;
+  case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
+  case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
+  // FIXME: case tok::kw___extension__: 
+  }
+  return Opc;
+}
+
 // Binary Operators.  'Tok' is the token for the operator.
 Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
                                     ExprTy *LHS, ExprTy *RHS) {
@@ -934,7 +856,7 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   default:
     assert(0 && "Unknown binary expr!");
   case BinaryOperator::Assign:
-    result = CheckSimpleAssignmentOperands(lhs, rhs, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, QualType());
     break;
   case BinaryOperator::Mul: 
   case BinaryOperator::Div:
@@ -977,32 +899,32 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
     result = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
     if (result.isNull())
       return true;
-    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
     break;
   case BinaryOperator::RemAssign:
     result = CheckRemainderOperands(lhs, rhs, TokLoc);
     if (result.isNull())
       return true;
-    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
     break;
   case BinaryOperator::AddAssign:
     result = CheckAdditionOperands(lhs, rhs, TokLoc);
     if (result.isNull())
       return true;
-    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
     break;
   case BinaryOperator::SubAssign:
     result = CheckSubtractionOperands(lhs, rhs, TokLoc);
     if (result.isNull())
       return true;
-    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
     break;
   case BinaryOperator::ShlAssign:
   case BinaryOperator::ShrAssign:
     result = CheckShiftOperands(lhs, rhs, TokLoc);
     if (result.isNull())
       return true;
-    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
     break;
   case BinaryOperator::AndAssign:
   case BinaryOperator::XorAssign:
@@ -1010,7 +932,7 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
     result = CheckBitwiseOperands(lhs, rhs, TokLoc);
     if (result.isNull())
       return true;
-    result = CheckCompoundAssignmentOperands(lhs, result, TokLoc);
+    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
     break;
   case BinaryOperator::Comma:
     result = CheckCommaOperands(lhs, rhs, TokLoc);
@@ -1021,3 +943,45 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   return new BinaryOperator(lhs, rhs, Opc, result);
 }
 
+// Unary Operators.  'Tok' is the token for the operator.
+Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+                                      ExprTy *Input) {
+  UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
+  QualType resultType;
+  switch (Opc) {
+  default:
+    assert(0 && "Unimplemented unary expr!");
+  case UnaryOperator::PreInc:
+  case UnaryOperator::PreDec:
+    resultType = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
+    break;
+  case UnaryOperator::AddrOf: 
+    resultType = CheckAddressOfOperand((Expr *)Input, OpLoc);
+    break;
+  case UnaryOperator::Deref: 
+    resultType = CheckIndirectionOperand((Expr *)Input, OpLoc);
+    break;
+  case UnaryOperator::Plus:
+  case UnaryOperator::Minus:
+    resultType = UsualUnaryConversion(((Expr *)Input)->getType());
+    if (!resultType->isArithmeticType())  // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+    break;
+  case UnaryOperator::Not: // bitwise complement
+    resultType = UsualUnaryConversion(((Expr *)Input)->getType());
+    if (!resultType->isIntegerType())  // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+    break;
+  case UnaryOperator::LNot: // logical negation
+    resultType = UsualUnaryConversion(((Expr *)Input)->getType());
+    if (!resultType->isScalarType()) // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+    break;
+  case UnaryOperator::SizeOf:
+  case UnaryOperator::AlignOf:
+    assert(0 && "need to implement type checking for sizeof/alignof");
+  }
+  if (resultType.isNull())
+    return true;
+  return new UnaryOperator((Expr *)Input, Opc, resultType);
+}

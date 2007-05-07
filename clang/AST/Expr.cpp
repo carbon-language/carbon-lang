@@ -124,7 +124,7 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 ///  - (e), where e must be an lvalue
 ///  - e.name, where e must be an lvalue
 ///  - e->name
-///  - *e
+///  - *e, the type of e cannot be a function type
 ///  - string-constant
 ///
 bool Expr::isModifiableLvalue() {
@@ -146,7 +146,8 @@ bool Expr::isModifiableLvalue() {
     return m->getBase()->isModifiableLvalue(); // make sure "." is an lvalue
   case UnaryOperatorClass:
     const UnaryOperator *u = cast<UnaryOperator>(this);
-    return u->getOpcode() == UnaryOperator::Deref;
+    return u->getOpcode() == UnaryOperator::Deref &&
+           u->getType().isModifiableLvalue(); // C99 6.5.3.2p4
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->isModifiableLvalue();
   default: 

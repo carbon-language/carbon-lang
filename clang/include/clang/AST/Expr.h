@@ -41,7 +41,7 @@ public:
   ///  - (e), where e must be an lvalue
   ///  - e.name, where e must be an lvalue
   ///  - e->name
-  ///  - *e
+  ///  - *e, where e must be an lvalue (pointer-to-function isn't an lvalue)
   ///  - string-constant
   ///
   bool isModifiableLvalue();

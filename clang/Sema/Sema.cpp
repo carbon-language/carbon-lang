@@ -20,6 +20,7 @@ using namespace clang;
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
+  constantOne = new IntegerLiteral(1, ctxt.IntTy);
 }
 
 //===----------------------------------------------------------------------===//
