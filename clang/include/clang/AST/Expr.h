@@ -48,6 +48,8 @@ public:
   
   bool isNullPointerConstant() const;
 
+  virtual bool isIntegerConstantExpr() const { return false; }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
@@ -68,6 +70,9 @@ public:
   DeclRefExpr(Decl *d, QualType t) : Expr(DeclRefExprClass, t), D(d) {}
   
   Decl *getDecl() const { return D; }
+
+  virtual bool isIntegerConstantExpr() const { 
+    return isa<EnumConstantDecl>(D); }
     
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -86,6 +91,8 @@ public:
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
   intmax_t getValue() const { return Value; }
+
+  virtual bool isIntegerConstantExpr() const { return true; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -102,6 +109,8 @@ public:
     : Expr(CharacterLiteralClass, type), Value(value) {
   }
 
+  virtual bool isIntegerConstantExpr() const { return true; }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CharacterLiteralClass; 
@@ -114,6 +123,8 @@ class FloatingLiteral : public Expr {
 public:
   FloatingLiteral(float value, QualType type) : 
     Expr(FloatingLiteralClass, type), Value(value) {} 
+
+  virtual bool isIntegerConstantExpr() const { return false; }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -133,6 +144,8 @@ public:
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
   bool isWide() const { return IsWide; }
+
+  virtual bool isIntegerConstantExpr() const { return false; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -151,6 +164,9 @@ public:
     : Expr(ParenExprClass, QualType()), L(l), R(r), Val(val) {}
   
   Expr *getSubExpr() const { return Val; }
+
+  virtual bool isIntegerConstantExpr() const { 
+    return Val->isIntegerConstantExpr(); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -199,6 +215,9 @@ public:
   /// the following complex expression "s.zz[2].bb.vv".
   static bool isAddressable(Expr *e);
 
+  virtual bool isIntegerConstantExpr() const { 
+    return Val->isIntegerConstantExpr(); }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == UnaryOperatorClass; 
@@ -223,6 +242,8 @@ public:
   bool isSizeOf() const { return isSizeof; }
   QualType getArgumentType() const { return Ty; }
 
+  virtual bool isIntegerConstantExpr() const { return true; }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == SizeOfAlignOfTypeExprClass; 
@@ -244,6 +265,8 @@ public:
   
   Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
+
+  virtual bool isIntegerConstantExpr() const { return false; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -281,6 +304,8 @@ public:
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
+  virtual bool isIntegerConstantExpr() const { return false; }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CallExprClass; 
@@ -302,6 +327,8 @@ public:
   Expr *getBase() const { return Base; }
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
+
+  virtual bool isIntegerConstantExpr() const { return false; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -325,6 +352,9 @@ public:
   
   Expr *getSubExpr() { return Op; }
   
+  virtual bool isIntegerConstantExpr() const { 
+    return Op->isIntegerConstantExpr(); }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CastExprClass; 
@@ -376,7 +406,10 @@ public:
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() { return LHS; }
   Expr *getRHS() { return RHS; }
-  
+
+  virtual bool isIntegerConstantExpr() const { 
+    return LHS->isIntegerConstantExpr() && RHS->isIntegerConstantExpr(); }
+    
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BinaryOperatorClass; 

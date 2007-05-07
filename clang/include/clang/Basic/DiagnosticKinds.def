@@ -461,6 +461,8 @@ DIAG(err_redefinition_of_enumerator, ERROR,
      "redefinition of enumerator '%s'")
 DIAG(err_duplicate_member, ERROR,
      "duplicate member '%s'")
+DIAG(err_enum_value_not_integer_constant_expr, ERROR,
+     "enumerator value for '%s' is not an integer constant expression")
 
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function '%s'")

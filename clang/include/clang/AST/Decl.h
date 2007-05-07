@@ -248,10 +248,10 @@ public:
 /// EnumConstantDecl's, X is an instance of EnumDecl, and the type of a/b is a
 /// TagType for the X EnumDecl.
 class EnumConstantDecl : public ValueDecl {
+  Expr *Init; // an integer constant expression
 public:
-  // FIXME: Capture value info.
-  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : ValueDecl(EnumConstant, L, Id, T) {}
+  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E)
+    : ValueDecl(EnumConstant, L, Id, T), Init(E) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

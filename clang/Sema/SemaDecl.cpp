@@ -728,9 +728,13 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
       return 0;
     }
   }
-  
+  // C99 6.7.2.2p2: Make sure we have an integer constant expression.
+  if (Val && !((Expr *)Val)->isIntegerConstantExpr()) {
+    Diag(IdLoc, diag::err_enum_value_not_integer_constant_expr, Id->getName());
+    return 0;
+  }
   QualType Ty = Context.getTagDeclType(TheEnumDecl);
-  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty);
+  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty, (Expr *)Val);
   
   // Register this decl in the current scope stack.
   New->setNext(Id->getFETokenInfo<Decl>());
