@@ -14,6 +14,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/MappedFile.h"
 #include "llvm/System/Process.h"
+#include "llvm/System/Program.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -246,6 +247,7 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
   std::vector<char> FileData;
   
   // Read in all of the data from stdin, we cannot mmap stdin.
+  sys::Program::ChangeStdinToBinary();
   while (size_t ReadBytes = fread(Buffer, 1, 4096*4, stdin))
     FileData.insert(FileData.end(), Buffer, Buffer+ReadBytes);
   

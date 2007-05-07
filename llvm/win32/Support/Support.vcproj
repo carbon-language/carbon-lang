@@ -122,15 +122,6 @@
 				RelativePath="..\..\lib\Support\CommandLine.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Compressor.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\lib\Support\ConstantRange.cpp">
 			</File>
 			<File
@@ -199,37 +190,6 @@
 			<File
 				RelativePath="..\..\lib\Support\Timer.cpp">
 			</File>
-			<Filter
-				Name="bzip2"
-				Filter="">
-				<File
-					RelativePath="..\..\lib\Support\bzip2\blocksort.c">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\bzlib.c">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\bzlib.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\bzlib_private.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\compress.c">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\crctable.c">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\decompress.c">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\huffman.c">
-				</File>
-				<File
-					RelativePath="..\..\lib\Support\bzip2\randtable.c">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -258,9 +218,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\Compiler.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Support\Compressor.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\ConstantRange.h">

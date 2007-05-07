@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="Bytecode"
+	Name="Archive"
 	ProjectGUID="{F1EFF064-8869-4DFF-8E1A-CD8F4A5F8D61}"
 	Keyword="Win32Proj">
 	<Platforms>
@@ -37,7 +37,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/Bytecode.lib"/>
+				OutputFile="$(OutDir)/Archive.lib"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -80,7 +80,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/Bytecode.lib"/>
+				OutputFile="$(OutDir)/Archive.lib"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -108,79 +108,25 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<Filter
-				Name="Reader"
-				Filter="">
-				<File
-					RelativePath="..\..\lib\Bytecode\Reader\Analyzer.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Reader\Reader.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Reader\Reader.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Reader\ReaderWrappers.cpp">
-				</File>
-			</Filter>
-			<Filter
-				Name="Writer"
-				Filter="">
-				<File
-					RelativePath="..\..\lib\Bytecode\Writer\SlotCalculator.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Writer\SlotCalculator.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Writer\Writer.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Writer\WriterInternals.h">
-				</File>
-			</Filter>
-			<Filter
-				Name="Archive"
-				Filter="">
-				<File
-					RelativePath="..\..\lib\Bytecode\Archive\Archive.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Archive\ArchiveInternals.h">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Archive\ArchiveReader.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Bytecode\Archive\ArchiveWriter.cpp">
-				</File>
-			</Filter>
-		</Filter>
+      <File
+        RelativePath="..\..\lib\Archive\Archive.cpp">
+      </File>
+      <File
+        RelativePath="..\..\lib\Archive\ArchiveInternals.h">
+      </File>
+      <File
+        RelativePath="..\..\lib\Archive\ArchiveReader.cpp">
+      </File>
+      <File
+        RelativePath="..\..\lib\Archive\ArchiveWriter.cpp">
+      </File>
+    </Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath="..\..\include\llvm\Bytecode\Analyzer.h">
-			</File>
-			<File
 				RelativePath="..\..\include\llvm\Bytecode\Archive.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Bytecode\BytecodeHandler.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Bytecode\Format.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Bytecode\Reader.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Bytecode\WriteBytecodePass.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Bytecode\Writer.h">
 			</File>
 		</Filter>
 	</Files>
