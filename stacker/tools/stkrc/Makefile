@@ -15,7 +15,7 @@ TOOLNAME = stkrc
 
 # Define the link components
 USEDLIBS=stkr_compiler 
-LINK_COMPONENTS = asmparser bcwriter ipo scalaropts \
+LINK_COMPONENTS = asmparser bitwriter ipo scalaropts \
 		  transformutils ipa analysis target $(TARGETS_TO_BUILD) core
 
 # Define our configuration files

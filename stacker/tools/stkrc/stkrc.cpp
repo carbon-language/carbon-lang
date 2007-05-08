@@ -19,7 +19,7 @@
 
 #include "../../lib/compiler/StackerCompiler.h"
 #include "llvm/Assembly/Parser.h"
-#include "llvm/Bytecode/Writer.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
@@ -163,8 +163,7 @@ int main(int argc, char **argv)
         throw std::string("error opening ") + OutputFilename + "!";
       }
 
-      OStream L(*Out);
-      WriteBytecodeToFile(M.get(), L);
+      WriteBitcodeToFile(M.get(), *Out);
     } catch (const ParseError &E) {
       cerr << argv[0] << ": " << E.getMessage() << "\n";
       return 1;
