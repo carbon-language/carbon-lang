@@ -123,17 +123,41 @@ public:
   typedef std::vector<MachineBasicBlock *>::const_iterator const_pred_iterator;
   typedef std::vector<MachineBasicBlock *>::iterator       succ_iterator;
   typedef std::vector<MachineBasicBlock *>::const_iterator const_succ_iterator;
+  typedef std::vector<MachineBasicBlock *>::reverse_iterator
+                                                         pred_reverse_iterator;
+  typedef std::vector<MachineBasicBlock *>::const_reverse_iterator
+                                                   const_pred_reverse_iterator;
+  typedef std::vector<MachineBasicBlock *>::reverse_iterator
+                                                         succ_reverse_iterator;
+  typedef std::vector<MachineBasicBlock *>::const_reverse_iterator
+                                                   const_succ_reverse_iterator;
 
   pred_iterator        pred_begin()       { return Predecessors.begin(); }
   const_pred_iterator  pred_begin() const { return Predecessors.begin(); }
   pred_iterator        pred_end()         { return Predecessors.end();   }
   const_pred_iterator  pred_end()   const { return Predecessors.end();   }
+  pred_reverse_iterator        pred_rbegin()
+                                          { return Predecessors.rbegin();}
+  const_pred_reverse_iterator  pred_rbegin() const
+                                          { return Predecessors.rbegin();}
+  pred_reverse_iterator        pred_rend()
+                                          { return Predecessors.rend();  }
+  const_pred_reverse_iterator  pred_rend()   const
+                                          { return Predecessors.rend();  }
   unsigned             pred_size()  const { return Predecessors.size();  }
   bool                 pred_empty() const { return Predecessors.empty(); }
   succ_iterator        succ_begin()       { return Successors.begin();   }
   const_succ_iterator  succ_begin() const { return Successors.begin();   }
   succ_iterator        succ_end()         { return Successors.end();     }
   const_succ_iterator  succ_end()   const { return Successors.end();     }
+  succ_reverse_iterator        succ_rbegin()
+                                          { return Successors.rbegin();  }
+  const_succ_reverse_iterator  succ_rbegin() const
+                                          { return Successors.rbegin();  }
+  succ_reverse_iterator        succ_rend()
+                                          { return Successors.rend();    }
+  const_succ_reverse_iterator  succ_rend()   const
+                                          { return Successors.rend();    }
   unsigned             succ_size()  const { return Successors.size();    }
   bool                 succ_empty() const { return Successors.empty();   }
 
