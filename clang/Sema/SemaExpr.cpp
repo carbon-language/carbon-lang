@@ -296,7 +296,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 /// locations.
 Action::ExprResult Sema::
 ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
-              ExprTy **Args, unsigned NumArgs,
+              ExprTy **Args, unsigned NumArgsInCall,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   QualType qType = ((Expr *)Fn)->getType();
 
@@ -305,7 +305,7 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
   const FunctionType *funcT = dyn_cast<FunctionType>(qType.getCanonicalType());
   
   assert(funcT && "ParseCallExpr(): not a function type");
-  
+    
   // If a prototype isn't declared, the parser implicitly defines a func decl
   QualType resultType = funcT->getResultType();
     
@@ -314,16 +314,17 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     // assignment, to the types of the corresponding parameter, ...
     
     unsigned NumArgsInProto = proto->getNumArgs();
-    unsigned n = NumArgs;
+    unsigned NumArgsToCheck = NumArgsInCall;
     
-    if (NumArgs < NumArgsInProto)
+    if (NumArgsInCall < NumArgsInProto)
       Diag(LParenLoc, diag::ext_typecheck_call_too_few_args);
-    else if (NumArgs > NumArgsInProto) { // FIXME: check isVariadic()...
-      Diag(LParenLoc, diag::ext_typecheck_call_too_many_args);
-      n = NumArgsInProto;
+    else if (NumArgsInCall > NumArgsInProto) {
+      if (!proto->isVariadic())
+        Diag(LParenLoc, diag::ext_typecheck_call_too_many_args);
+      NumArgsToCheck = NumArgsInProto;
     }
     // Continue to check argument types (even if we have too few/many args).
-    for (unsigned i = 0; i < n; i++) {
+    for (unsigned i = 0; i < NumArgsToCheck; i++) {
       QualType lhsType = proto->getArgType(i);
       QualType rhsType = ((Expr **)Args)[i]->getType();
       
@@ -356,8 +357,11 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
         return Diag(l, diag::err_typecheck_passing_incompatible, utostr(i+1));
       }
     }
+    // Even if the types checked, bail if we had the wrong number of arguments.
+    if ((NumArgsInCall != NumArgsInProto) && !proto->isVariadic())
+      return true;
   }
-  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgs, resultType);
+  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgsInCall, resultType);
 }
 
 Action::ExprResult Sema::
