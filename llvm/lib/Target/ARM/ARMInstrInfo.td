@@ -162,11 +162,6 @@ def sext_16_node : PatLeaf<(i32 GPR:$a), [{
 // Branch target.
 def brtarget : Operand<OtherVT>;
 
-// Operand for printing out a condition code.
-def CCOp : Operand<i32> {
-  let PrintMethod = "printCCOperand";
-}
-
 // A list of registers separated by comma. Used by load/store multiple.
 def reglist : Operand<i32> {
   let PrintMethod = "printRegisterList";
@@ -280,6 +275,16 @@ def addrmodepc : Operand<i32>,
                  ComplexPattern<i32, 2, "SelectAddrModePC", []> {
   let PrintMethod = "printAddrModePCOperand";
   let MIOperandInfo = (ops GPR, i32imm);
+}
+
+// ARM branch / cmov condition code operand.
+def ccop : PredicateOperand<i32, (ops i32imm), (ops)> {
+  let PrintMethod = "printPredicateOperand";
+}
+
+// ARM Predicate operand. Default to 14 = always (AL).
+def pred : PredicateOperand<i32, (ops i32imm), (ops (i32 14))> {
+  let PrintMethod = "printPredicateOperand";
 }
 
 //===----------------------------------------------------------------------===//
@@ -579,7 +584,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in
-  def Bcc : AI<(ops brtarget:$dst, CCOp:$cc), "b$cc $dst",
+  def Bcc : AI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
                 [(ARMbrcond bb:$dst, imm:$cc)]>;
 
 //===----------------------------------------------------------------------===//
@@ -1041,17 +1046,17 @@ def : ARMPat<(ARMcmpNZ GPR:$src, so_imm_neg:$imm),
 
 
 // Conditional moves
-def MOVCCr : AI<(ops GPR:$dst, GPR:$false, GPR:$true, CCOp:$cc),
+def MOVCCr : AI<(ops GPR:$dst, GPR:$false, GPR:$true, ccop:$cc),
                 "mov$cc $dst, $true",
                 [(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc))]>,
                 RegConstraint<"$false = $dst">;
 
-def MOVCCs : AI<(ops GPR:$dst, GPR:$false, so_reg:$true, CCOp:$cc),
+def MOVCCs : AI<(ops GPR:$dst, GPR:$false, so_reg:$true, ccop:$cc),
                 "mov$cc $dst, $true",
                 [(set GPR:$dst, (ARMcmov GPR:$false, so_reg:$true,imm:$cc))]>,
                 RegConstraint<"$false = $dst">;
 
-def MOVCCi : AI<(ops GPR:$dst, GPR:$false, so_imm:$true, CCOp:$cc),
+def MOVCCi : AI<(ops GPR:$dst, GPR:$false, so_imm:$true, ccop:$cc),
                 "mov$cc $dst, $true",
                 [(set GPR:$dst, (ARMcmov GPR:$false, so_imm:$true,imm:$cc))]>,
                 RegConstraint<"$false = $dst">;

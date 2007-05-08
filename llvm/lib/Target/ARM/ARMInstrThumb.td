@@ -207,7 +207,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in
-  def tBcc : TI<(ops brtarget:$dst, CCOp:$cc), "b$cc $dst",
+  def tBcc : TI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
                  [(ARMbrcond bb:$dst, imm:$cc)]>;
 
 //===----------------------------------------------------------------------===//
@@ -503,7 +503,7 @@ def tUXTH  : TI<(ops GPR:$dst, GPR:$src),
 // Expanded by the scheduler into a branch sequence.
 let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
   def tMOVCCr :
-  PseudoInst<(ops GPR:$dst, GPR:$false, GPR:$true, CCOp:$cc),
+  PseudoInst<(ops GPR:$dst, GPR:$false, GPR:$true, ccop:$cc),
               "@ tMOVCCr $cc",
               [(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc))]>;
 
