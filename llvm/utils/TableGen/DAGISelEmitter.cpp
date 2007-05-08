@@ -775,8 +775,10 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       Record *OperandNode = Inst.getOperand(i);
       
       // If the instruction expects a predicate operand, we codegen this by
-      // setting the predicate to it's "execute always" value.
-      if (OperandNode->isSubClassOf("PredicateOperand"))
+      // setting the predicate to it's "execute always" value if it has a
+      // non-empty ExecuteAlways field.
+      if (OperandNode->isSubClassOf("PredicateOperand") &&
+          !ISE.getPredicateOperand(OperandNode).AlwaysOps.empty())
         continue;
        
       // Verify that we didn't run out of provided operands.
@@ -2801,8 +2803,11 @@ public:
            InstOpNo != II.OperandList.size(); ++InstOpNo) {
         std::vector<std::string> Ops;
         
-        // If this is a normal operand, emit it.
-        if (!II.OperandList[InstOpNo].Rec->isSubClassOf("PredicateOperand")) {
+        // If this is a normal operand or a predicate operand without
+        // 'execute always', emit it.
+        Record *OperandNode = II.OperandList[InstOpNo].Rec;
+        if (!OperandNode->isSubClassOf("PredicateOperand") ||
+            ISE.getPredicateOperand(OperandNode).AlwaysOps.empty()) {
           Ops = EmitResultCode(N->getChild(ChildNo), RetSelected, 
                                InFlagDecled, ResNodeDecled);
           AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
