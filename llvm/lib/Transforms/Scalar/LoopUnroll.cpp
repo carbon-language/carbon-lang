@@ -50,10 +50,10 @@ namespace {
     LoopInfo *LI;  // The current loop information
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopUnroll()  : LoopPass((intptr_t)&ID) {}
+    LoopUnroll() : LoopPass((intptr_t)&ID) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
-    BasicBlock* FoldBlockIntoPredecessor(BasicBlock* BB);
+    BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB);
 
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
@@ -114,7 +114,7 @@ static inline void RemapInstruction(Instruction *I,
 // FoldBlockIntoPredecessor - Folds a basic block into its predecessor if it
 // only has one predecessor, and that predecessor only has one successor.
 // Returns the new combined block.
-BasicBlock* LoopUnroll::FoldBlockIntoPredecessor(BasicBlock* BB) {
+BasicBlock *LoopUnroll::FoldBlockIntoPredecessor(BasicBlock *BB) {
   // Merge basic blocks into their predecessor if there is only one distinct
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
@@ -165,8 +165,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   bool Changed = false;
   LI = &getAnalysis<LoopInfo>();
 
-  BasicBlock* Header = L->getHeader();
-  BasicBlock* LatchBlock = L->getLoopLatch();
+  BasicBlock *Header = L->getHeader();
+  BasicBlock *LatchBlock = L->getLoopLatch();
 
   BranchInst *BI = dyn_cast<BranchInst>(LatchBlock->getTerminator());
   if (BI == 0) return Changed;  // Must end in a conditional branch
@@ -262,10 +262,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (*BB != LatchBlock)
         for (Value::use_iterator UI = (*BB)->use_begin(), UE = (*BB)->use_end();
              UI != UE; ++UI) {
-          Instruction* UseInst = cast<Instruction>(*UI);
+          Instruction *UseInst = cast<Instruction>(*UI);
           if (isa<PHINode>(UseInst) && !L->contains(UseInst->getParent())) {
-            PHINode* phi = cast<PHINode>(UseInst);
-            Value* Incoming = phi->getIncomingValueForBlock(*BB);
+            PHINode *phi = cast<PHINode>(UseInst);
+            Value *Incoming = phi->getIncomingValueForBlock(*BB);
             if (isa<Instruction>(Incoming))
               Incoming = LastValueMap[Incoming];
           
@@ -298,7 +298,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     SmallPtrSet<PHINode*, 8> Users;
     for (Value::use_iterator UI = LatchBlock->use_begin(),
          UE = LatchBlock->use_end(); UI != UE; ++UI)
-      if (PHINode* phi = dyn_cast<PHINode>(*UI))
+      if (PHINode *phi = dyn_cast<PHINode>(*UI))
         Users.insert(phi);
     
     BasicBlock *LastIterationBB = cast<BasicBlock>(LastValueMap[LatchBlock]);
@@ -328,7 +328,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   //  Insert the branches that link the different iterations together
   for (unsigned i = 0; i < Latches.size()-1; ++i) {
     new BranchInst(Headers[i+1], Latches[i]);
-    if(BasicBlock* Fold = FoldBlockIntoPredecessor(Headers[i+1])) {
+    if (BasicBlock *Fold = FoldBlockIntoPredecessor(Headers[i+1])) {
       std::replace(Latches.begin(), Latches.end(), Headers[i+1], Fold);
       std::replace(Headers.begin(), Headers.end(), Headers[i+1], Fold);
     }
