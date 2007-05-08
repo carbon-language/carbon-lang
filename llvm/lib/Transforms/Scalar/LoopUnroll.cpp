@@ -72,8 +72,7 @@ namespace {
 
 LoopPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 
-/// ApproximateLoopSize - Approximate the size of the loop after it has been
-/// unrolled.
+/// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L) {
   unsigned Size = 0;
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
