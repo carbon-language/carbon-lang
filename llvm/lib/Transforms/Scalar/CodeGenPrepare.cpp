@@ -280,7 +280,9 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     BranchInst *PredBr = dyn_cast<BranchInst>(Pred->getTerminator());
     if (!PredBr || !PredBr->isUnconditional() ||
         // Must be empty other than the branch.
-        &Pred->front() != PredBr)
+        &Pred->front() != PredBr ||
+        // Cannot be the entry block; its label does not get emitted.
+        Pred == &(Dest->getParent()->getEntryBlock()))
       continue;
     
     // Finally, since we know that Dest has phi nodes in it, we have to make
