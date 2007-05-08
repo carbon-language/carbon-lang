@@ -112,7 +112,8 @@ bool LiveVariables::ModifiesRegister(MachineInstr *MI, unsigned Reg) const {
 }
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
-                                            MachineBasicBlock *MBB) {
+                                            MachineBasicBlock *MBB,
+                                    std::vector<MachineBasicBlock*> &WorkList) {
   unsigned BBNum = MBB->getNumber();
 
   // Check to see if this basic block is one of the killing blocks.  If so,
@@ -131,10 +132,22 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
   // Mark the variable known alive in this bb
   VRInfo.AliveBlocks[BBNum] = true;
 
-  for (MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(),
-         E = MBB->pred_end(); PI != E; ++PI)
-    MarkVirtRegAliveInBlock(VRInfo, *PI);
+  for (MachineBasicBlock::const_pred_reverse_iterator PI = MBB->pred_rbegin(),
+         E = MBB->pred_rend(); PI != E; ++PI)
+    WorkList.push_back(*PI);
 }
+
+void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
+                                            MachineBasicBlock *MBB) {
+  std::vector<MachineBasicBlock*> WorkList;
+  MarkVirtRegAliveInBlock(VRInfo, MBB, WorkList);
+  while (!WorkList.empty()) {
+    MachineBasicBlock *Pred = WorkList.back();
+    WorkList.pop_back();
+    MarkVirtRegAliveInBlock(VRInfo, Pred, WorkList);
+  }
+}
+
 
 void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                                      MachineInstr *MI) {

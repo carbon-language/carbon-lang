@@ -283,6 +283,8 @@ public:
   VarInfo &getVarInfo(unsigned RegIdx);
 
   void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB);
+  void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB,
+                               std::vector<MachineBasicBlock*> &WorkList);
   void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
                         MachineInstr *MI);
 };
