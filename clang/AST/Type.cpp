@@ -14,6 +14,7 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/Expr.h"
 
 #include <iostream>
 
@@ -263,6 +264,18 @@ bool Type::isAggregateType() const {
   return CanonicalType->getTypeClass() == Array;
 }
 
+// The only variable size types are auto arrays within a function. Structures 
+// cannot contain a VLA member. They can have a flexible array member, however
+// the structure is still constant size (C99 6.7.2.1p16).
+bool Type::isConstantSizeType() const {
+  if (const ArrayType *ary = dyn_cast<ArrayType>(CanonicalType)) {
+    if (Expr *size = ary->getSize()) {
+      if (!size->isConstantExpr())
+        return false; // Variable Length Array
+    }
+  }
+  return true;
+}
 
 /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
 /// - a type that can describe objects, but which lacks information needed to

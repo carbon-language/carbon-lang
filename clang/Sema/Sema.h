@@ -33,6 +33,7 @@ namespace clang {
   class DeclaratorChunk;
   class LexerToken;
   class IntegerLiteral;
+  class ArrayType;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -243,9 +244,9 @@ private:
   QualType UsualAssignmentConversions(QualType lhs, QualType rhs, // C99 6.5.16
                                       AssignmentConversionResult &r); 
   
-  /// the following "Check" methods will either return a well formed AST node
-  /// or will return true if the expressions didn't type check properly.
-  
+  /// the following "Check" methods will return a valid/converted QualType
+  /// or a null QualType (indicating an error diagnostic was issued).
+    
   /// type checking binary operators (subroutines of ParseBinOp).
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *lex, Expr *rex, SourceLocation OpLoc); 
@@ -274,15 +275,16 @@ private:
     Expr *lex, Expr *rex, SourceLocation OpLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
-  /// The unsigned arguments are really enums (UnaryOperator::Opcode)
   QualType CheckIncrementDecrementOperand( // C99 6.5.3.1 
     Expr *op, SourceLocation loc);
   QualType CheckAddressOfOperand( // C99 6.5.3.2
     Expr *op, SourceLocation loc);
   QualType CheckIndirectionOperand( // C99 6.5.3.2
     Expr *op, SourceLocation loc);
-  ExprResult CheckArithmeticOperand( // C99 6.5.3.3
-    Expr *op, SourceLocation OpLoc, unsigned OpCode);
+    
+  // C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
+  // a constant expression of type int with a value greater than zero.
+  bool isConstantArrayType(ArrayType *ary, SourceLocation loc); 
 };
 
 

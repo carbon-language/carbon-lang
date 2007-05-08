@@ -234,6 +234,8 @@ public:
   bool isSignedIntegerType() const;     // C99 6.2.5p4
   bool isUnsignedIntegerType() const;   // C99 6.2.5p6
   
+  bool isConstantSizeType() const; // C99 6.7.5p3: VLA if false
+
   /// Compatibility predicates used to check assignment expressions.
   static bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
   static bool structureTypesAreCompatible(QualType, QualType); // C99 6.2.7p1

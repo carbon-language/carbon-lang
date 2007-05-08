@@ -27,6 +27,24 @@
 using namespace llvm;
 using namespace clang;
 
+// C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
+// a constant expression of type int with a value greater than zero.
+bool Sema::isConstantArrayType(ArrayType *ary, SourceLocation loc) { 
+  if (Expr *size = ary->getSize()) {
+    if (!size->isConstantExpr()) {
+      Diag(loc, diag::err_typecheck_illegal_vla);
+      return false;
+    }
+    if (!size->getType()->isIntegerType()) {
+      Diag(loc, diag::err_array_size_non_int, size->getType());
+      return false;
+    }
+    // We have a constant expression with an integer type, now make sure 
+    // value greater than zero (C99 6.7.5.2p1).
+    // FIXME: evaluate constant expression.
+  }
+  return true;
+}
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   return dyn_cast_or_null<TypedefDecl>(II.getFETokenInfo<Decl>());
@@ -247,6 +265,14 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       if (NewTD == 0) return 0;
     }
     New = NewTD;
+    if (S->getParent() == 0) {
+      // C99 6.7.7p2: If a typedef name specifies a variably modified type
+      // then it shall have block scope.
+      if (ArrayType *ary = dyn_cast<ArrayType>(NewTD->getUnderlyingType())) {
+        if (!isConstantArrayType(ary, D.getIdentifierLoc()))
+          return 0;
+      }
+    }
   } else if (D.isFunctionDeclarator()) {
     QualType R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0; // FIXME: "auto func();" passes through...
@@ -305,6 +331,12 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope, R);
         return 0;
       }
+      // C99 6.7.5.2p2: If an identifier is declared to be an object with 
+      // static storage duration, it shall not have a variable length array.
+      if (ArrayType *ary = dyn_cast<ArrayType>(R)) {
+        if (!isConstantArrayType(ary, D.getIdentifierLoc()))
+          return 0;
+      }
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC);
     } else { 
       // Block scope. C99 6.7p7: If an identifier for an object is declared with
@@ -313,6 +345,14 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
         if (R->isIncompleteType()) {
           Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
           return 0;
+        }
+      }
+      if (SC == VarDecl::Static) {
+        // C99 6.7.5.2p2: If an identifier is declared to be an object with 
+        // static storage duration, it shall not have a variable length array.
+        if (ArrayType *ary = dyn_cast<ArrayType>(R)) {
+          if (!isConstantArrayType(ary, D.getIdentifierLoc()))
+            return 0;
         }
       }
       NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC);
@@ -595,7 +635,13 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   
   QualType T = GetTypeForDeclarator(D, S);
   if (T.isNull()) return 0;
-
+  
+  // C99 6.7.2.1p8: A member of a structure or union may have any type other
+  // than a variably modified type.
+  if (ArrayType *ary = dyn_cast<ArrayType>(T)) {
+    if (!isConstantArrayType(ary, Loc))
+      return 0;
+  }
   return new FieldDecl(Loc, II, T);
 }
 

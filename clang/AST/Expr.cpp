@@ -155,6 +155,56 @@ bool Expr::isModifiableLvalue() {
   }
 }
 
+bool Expr::isConstantExpr() const {
+  switch (getStmtClass()) {
+  case IntegerLiteralClass:
+  case FloatingLiteralClass:
+  case CharacterLiteralClass:
+  case StringLiteralClass:
+    return true;
+  case DeclRefExprClass:
+    return isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl());
+  case UnaryOperatorClass:
+    return cast<UnaryOperator>(this)->getSubExpr()->isConstantExpr();
+  case BinaryOperatorClass:
+    return cast<BinaryOperator>(this)->getLHS()->isConstantExpr() &&
+           cast<BinaryOperator>(this)->getRHS()->isConstantExpr();
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr();
+  case CastExprClass:
+    return cast<CastExpr>(this)->getSubExpr()->isConstantExpr();
+  case SizeOfAlignOfTypeExprClass:
+    return cast<SizeOfAlignOfTypeExpr>(this)->getArgumentType()
+                                            ->isConstantSizeType();
+  default: 
+    return false;
+  }
+}
+
+bool Expr::isIntegerConstantExpr() const {
+  switch (getStmtClass()) {
+  case IntegerLiteralClass:
+  case CharacterLiteralClass:
+    return true;
+  case DeclRefExprClass:
+    return isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl());
+  case UnaryOperatorClass:
+    return cast<UnaryOperator>(this)->getSubExpr()->isIntegerConstantExpr();
+  case BinaryOperatorClass:
+    return cast<BinaryOperator>(this)->getLHS()->isIntegerConstantExpr() &&
+           cast<BinaryOperator>(this)->getRHS()->isIntegerConstantExpr();
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->isIntegerConstantExpr();
+  case CastExprClass:
+    return cast<CastExpr>(this)->getSubExpr()->isIntegerConstantExpr();
+  case SizeOfAlignOfTypeExprClass:
+    return cast<SizeOfAlignOfTypeExpr>(this)->getArgumentType()
+                                            ->isConstantSizeType();
+  default: 
+    return false;
+  }
+}
+
 bool Expr::isNullPointerConstant() const {
   const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(this);
   if (!constant || constant->getValue() != 0)

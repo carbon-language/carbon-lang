@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/Expr.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace llvm;
@@ -34,6 +35,12 @@ Action::StmtResult
 Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
                     SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                     SourceLocation ColonLoc, StmtTy *SubStmt) {
+  assert((LHSVal != 0) && "missing expression in case statement");
+    
+  // C99 6.8.4.2p3: The expression shall be an integer constant.
+  if (!((Expr *)LHSVal)->isIntegerConstantExpr())
+    return Diag(CaseLoc, diag::err_case_label_not_integer_constant_expr);
+
   return new CaseStmt((Expr*)LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
 }
 

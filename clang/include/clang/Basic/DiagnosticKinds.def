@@ -462,7 +462,13 @@ DIAG(err_redefinition_of_enumerator, ERROR,
 DIAG(err_duplicate_member, ERROR,
      "duplicate member '%s'")
 DIAG(err_enum_value_not_integer_constant_expr, ERROR,
-     "enumerator value for '%s' is not an integer constant expression")
+     "enumerator value for '%s' is not an integer constant")
+DIAG(err_case_label_not_integer_constant_expr, ERROR,
+     "case label does not reduce to an integer constant")
+DIAG(err_typecheck_illegal_vla, ERROR,
+     "variable length array declared outside of any function")
+DIAG(err_array_size_non_int, ERROR,
+     "size of array has non-integer type '%s'")
 
 DIAG(warn_implicit_function_decl, WARNING,
      "implicit declaration of function '%s'")
