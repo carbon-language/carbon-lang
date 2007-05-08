@@ -254,7 +254,7 @@ def i64imm : Operand<i64>;
 /// instruction.  OpTypes specifies the MIOperandInfo for the operand, and
 /// AlwaysVal specifies the value of this predicate when set to "always
 /// execute".
-class PredicateOperand<dag OpTypes, dag AlwaysVal> : Operand<OtherVT> {
+class PredicateOperand<ValueType ty, dag OpTypes, dag AlwaysVal> : Operand<ty> {
   let MIOperandInfo = OpTypes;
   dag ExecuteAlways = AlwaysVal;
 }
