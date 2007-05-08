@@ -50,8 +50,8 @@ namespace bitc {
     //             linkage, alignment, section, visibility, threadlocal]
     MODULE_CODE_GLOBALVAR   = 7,
 
-    // FUNCTION:  [type, callingconv, isproto, linkage, alignment, section,
-    //             visibility]
+    // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
+    //             section, visibility]
     MODULE_CODE_FUNCTION    = 8,
     
     // ALIAS: [alias type, aliasee val#, linkage]
@@ -176,7 +176,7 @@ namespace bitc {
     FUNC_CODE_INST_RET         = 10, // RET:        [opty,opval<both optional>]
     FUNC_CODE_INST_BR          = 11, // BR:         [bb#, bb#, cond] or [bb#]
     FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, opval, n, n x ops]
-    FUNC_CODE_INST_INVOKE      = 13, // INVOKE:     [fnty, op0,op1,op2, ...]
+    FUNC_CODE_INST_INVOKE      = 13, // INVOKE:     [attr, fnty, op0,op1, ...]
     FUNC_CODE_INST_UNWIND      = 14, // UNWIND
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
     
@@ -186,7 +186,7 @@ namespace bitc {
     FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
     FUNC_CODE_INST_LOAD        = 20, // LOAD:       [opty, op, align, vol]
     FUNC_CODE_INST_STORE       = 21, // STORE:      [ptrty,val,ptr, align, vol]
-    FUNC_CODE_INST_CALL        = 22, // CALL:       [fnty, fnid, arg0, arg1...]
+    FUNC_CODE_INST_CALL        = 22, // CALL:       [attr, fnty, fnid, args...]
     FUNC_CODE_INST_VAARG       = 23  // VAARG:      [valistty, valist, instty]
   };
 } // End bitc namespace
