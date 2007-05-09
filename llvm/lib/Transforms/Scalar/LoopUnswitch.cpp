@@ -396,7 +396,7 @@ BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *Old, Instruction *SplitPt) {
   // The new block lives in whichever loop the old one did.
   if (Loop *L = LI->getLoopFor(Old))
     L->addBasicBlockToLoop(New, *LI);
-  
+
   return New;
 }
 
@@ -413,8 +413,30 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
   }
   
   // If this is a critical edge, let SplitCriticalEdge do it.
-  if (SplitCriticalEdge(BB->getTerminator(), SuccNum, this))
-    return LatchTerm->getSuccessor(SuccNum);
+  Loop *OrigDestBBL = LI->getLoopFor(BB->getTerminator()->getSuccessor(SuccNum));
+  if (SplitCriticalEdge(BB->getTerminator(), SuccNum)) {
+    BasicBlock *NewBB = LatchTerm->getSuccessor(SuccNum);
+
+    Loop *BBL = LI->getLoopFor(BB);
+    if (!BBL || !OrigDestBBL)
+      return NewBB;
+
+    // If edge is inside a loop then NewBB is part of same loop.
+    if (BBL == OrigDestBBL)
+      BBL->addBasicBlockToLoop(NewBB, *LI);
+    // If edge is entering loop then NewBB is part of outer loop.
+    else if (BBL->contains(OrigDestBBL->getHeader()))
+      BBL->addBasicBlockToLoop(NewBB, *LI);
+    // If edge is from an inner loop to outer loop then NewBB is part
+    // of outer loop.
+    else if (OrigDestBBL->contains(BBL->getHeader()))
+      OrigDestBBL->addBasicBlockToLoop(NewBB, *LI);
+    // Else edge is connecting two loops and NewBB is part of their parent loop
+    else if (Loop *PL = OrigDestBBL->getParentLoop())
+      PL->addBasicBlockToLoop(NewBB, *LI);
+
+    return NewBB;
+  }
 
   // If the edge isn't critical, then BB has a single successor or Succ has a
   // single pred.  Split the block.
@@ -571,8 +593,6 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
 
     for (unsigned j = 0, e = Preds.size(); j != e; ++j) {
-      assert(L->contains(Preds[j]) &&
-             "All preds of loop exit blocks must be the same loop!");
       BasicBlock* MiddleBlock = SplitEdge(Preds[j], ExitBlock);
       BasicBlock* StartBlock = Preds[j];
       BasicBlock* EndBlock;
