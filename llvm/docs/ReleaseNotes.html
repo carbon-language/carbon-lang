@@ -59,19 +59,28 @@ href="http://llvm.org/releases/">releases page</a>.</p>
 <div class="doc_text">
 
 <p>This is the eleventh public release of the LLVM Compiler Infrastructure. 
-Being the first major release since 1.0, we took this as an opportunity to
+Being the first major release since 1.0, this release is different in several
+ways from our previous releases:</p>
+
+<ol>
+<li>We took this as an opportunity to
 break backwards compatibility with the LLVM 1.x bytecode and .ll file format.
 If you have LLVM 1.9 .ll files that you would like to upgrade to LLVM 2.x, we 
 recommend the use of the stand alone <a href=#llvm-upgrade">llvm-upgrade</a>
 tool.  We intend to keep compatibility with .ll and .bc formats within the 2.x
-release series.</p>
+release series, like we did within the 1.x series.</li>
+<li>There are several significant change to the LLVM IR and internal APIs, such
+    as a major overhaul of the type system, the completely new bitcode file
+    format, etc.</li>
+<li>We designed the release around a 6 month release cycle instead of the usual
+    3-month cycle.  This gave us extra time to develop and test some of the
+    more invasive features in this release.</li>
+<li>LLVM 2.0 no longer supports the llvm-gcc3 front-end.</li>
+</ol>
 
-<p>Note that while 
- This
-release 
-incorporates a large number of enhancements, new features, and bug
-fixes.  We recommend that all users of previous LLVM versions upgrade.
-</p>
+<p>Note that while this is a major version bump, this release has been
+   extensively tested on a wide range of software.  It is easy to say that this
+   is our best release yet, in terms of both features and correctness.</p>
 
 </div>
 
