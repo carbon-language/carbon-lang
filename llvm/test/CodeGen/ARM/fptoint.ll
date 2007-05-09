@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | not grep fmrs
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | grep fmrs | wc -l | grep 1
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | not grep fmrrd
 
 @i = weak global i32 0		; <i32*> [#uses=2]
@@ -37,5 +37,11 @@ define void @foo7(double %x) {
 define void @foo8(double %x) {
 	%tmp1 = fptoui double %x to i32
 	store i32 %tmp1, i32* @u
+	ret void
+}
+
+define void @foo9(double %x) {
+	%tmp = fptoui double %x to i16
+	store i16 %tmp, i16* null
 	ret void
 }
