@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 1.9 Release Notes</title>
+  <title>LLVM 2.0 Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">LLVM 1.9 Release Notes</div>
+<div class="doc_title">LLVM 2.0 Release Notes</div>
  
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -32,13 +32,10 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM compiler
-infrastructure, release 1.9.  Here we describe the status of LLVM, including any
-known problems and major improvements from the previous release.  The most
-up-to-date version of this document (corresponding to LLVM CVS) can be found
-on the <a
-href="http://llvm.org/releases/">LLVM releases web site</a>.  If you are
-not reading this on the LLVM web pages, you should probably go there because
-this document may be updated after the release.</p>
+infrastructure, release 2.0.  Here we describe the status of LLVM, including any
+known problems and major improvements from the previous release.  All LLVM
+releases may be downloaded from the <a href="http://llvm.org/releases/">LLVM
+releases web site</a>.
 
 <p>For more information about LLVM, including information about the latest
 release, please check out the <a href="http://llvm.org/">main LLVM
@@ -61,8 +58,18 @@ href="http://llvm.org/releases/">releases page</a>.</p>
 
 <div class="doc_text">
 
-<p>This is the tenth public release of the LLVM Compiler Infrastructure. This
-release incorporates a large number of enhancements, new features, and bug
+<p>This is the eleventh public release of the LLVM Compiler Infrastructure. 
+Being the first major release since 1.0, we took this as an opportunity to
+break backwards compatibility with the LLVM 1.x bytecode and .ll file format.
+If you have LLVM 1.9 .ll files that you would like to upgrade to LLVM 2.x, we 
+recommend the use of the stand alone <a href=#llvm-upgrade">llvm-upgrade</a>
+tool.  We intend to keep compatibility with .ll and .bc formats within the 2.x
+release series.</p>
+
+<p>Note that while 
+ This
+release 
+incorporates a large number of enhancements, new features, and bug
 fixes.  We recommend that all users of previous LLVM versions upgrade.
 </p>
 
@@ -70,37 +77,7 @@ fixes.  We recommend that all users of previous LLVM versions upgrade.
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="newfeatures">New Features in LLVM 1.9</a>
-</div>
-
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="x86-64">New X86-64 Backend</a></div>
-<div class="doc_text">
-<p>LLVM 1.9 now fully supports the x86-64 instruction set on Mac OS/X, and
-supports it on Linux (and other operating systems) when compiling in -static
-mode. LLVM includes JIT support for X86-64, and supports both Intel EMT-64T
-and AMD-64 architectures.  The X86-64 instruction set permits addressing a
-64-bit addressing space and provides the compiler with twice the
-number of integer registers to use.</p>
-</div>
-
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="lto">Link-Time Optimization integration
-with native linkers</a></div>
-<div class="doc_text">
-<p>LLVM now includes <a href="LinkTimeOptimization.html">liblto</a> which can
-be used to integrate LLVM Link-Time Optimization support into a native linker.
-This allows LLVM .bc to transparently participate with linking an application,
-even when some .o files are in LLVM form and some are not.</p>
-</div>
-
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="dwarf">DWARF debugging 
-support for Linux, Cygwin and MinGW on X86</a></div>
-<div class="doc_text">
-<p>llvm-gcc4 now supports generating debugging info for Linux, Cygwin and MinGW.
-This extends the PPC/Darwin and X86/Darwin debugging support available in the
-1.8 release. DWARF is a standard debugging format used on many platforms.</p>
+<a name="newfeatures">New Features in LLVM 2.0</a>
 </div>
 
 <!--_________________________________________________________________________-->
@@ -111,17 +88,7 @@ Improvements</a></div>
   Significant changes include:</p>
 
 <ul>
-<li>LLVM includes a new 'predicate simplifier' pass, which
-    currently performs dominator tree-based optimizations.</li>
-<li>The complete loop unroll pass now supports unrolling of
-     multiple basic block loops.</li>
-<li>The 'globalopt' pass can now perform the scalar replacement of
-    aggregates transformation on some heap allocations.</li>
-<li>The globalsmodref-aa alias analysis can now track 'indirect pointer
-     globals' more accurately.</li>
-<li>The instruction combiner can now perform element propagation  
-analysis of vector expressions, eliminating computation of vector elements
-that are not used.</li>
+<li></li>
 </ul>
   
 </div>
@@ -137,41 +104,21 @@ optimizes many cases more aggressively.  New features include:
 </p>
 
 <ul>
-<li>LLVM now includes a late branch folding pass which optimizes code
-    layout, performs several branch optzns, and deletes unreachable code.</li>
-<li>The code generator now support targets that have pre/post-increment
-    addressing modes.</li>
-<li>LLVM now supports dynamically-loadable register allocators and
-     schedulers.</li>
-<li>LLVM 1.9 includes several improvements to inline asm support,
-    including support for new constraints and modifiers.</li>
-<li>The register coalescer is now more aggressive than before,  
-     allowing it to eliminate more copies.</li>
+<li></li>
 </ul>
 
 <p>In addition, the LLVM target description format has itself been extended in
  several ways:</p>
  
 <ul>
-<li>tblgen now allows definition of '<a 
-     href="TableGenFundamentals.html#multiclass">multiclasses</a>' which can be
-     used to factor instruction patterns more aggressively in .td files.</li>
-<li>LLVM has a new TargetAsmInfo class which captures a variety of
-     information about the target assembly language format.</li>
-<li>.td files now support "<tt>${:foo}</tt>" syntax for encoding 
-     subtarget-specific assembler syntax into instruction descriptions.</li>
+<li></li>
 </ul>
 
 <p>Further, several significant target-specific enhancements are included in
-LLVM 1.9:</p>
+LLVM 2.0:</p>
 
 <ul>
-<li>The LLVM ARM backend now supports more instructions
-    and the use of a frame pointer.  It is now possible to build  
-   libgcc and a simple cross compiler, but it is not considered "complete" yet.
-   </li>
-<li>LLVM supports the Win32 dllimport/dllexport linkage and
-     stdcall/fastcall calling conventions.</li>
+<li></li>
 </ul>
 
 </div>
@@ -179,51 +126,15 @@ LLVM 1.9:</p>
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="other">Other Improvements</a></div>
 <div class="doc_text">
-<p>This release includes many other improvements, including improvements to
-   the optimizers and code generators (improving the generated code) changes to
-   speed up the compiler in many ways (improving algorithms and fine tuning 
-   code), and changes to reduce the code size of the compiler itself.</p>
+<p></p>
 
 <p>More specific changes include:</p>
 
 <ul>
-<li>The llvm-test framework now supports SPEC2006.</li>
-<li>LLVM now includes a <a href="GetElementPtr.html">FAQ about the
-<tt>getelementptr</tt> instruction</a>.</li>
-<li>Bugpoint now supports a new "<tt>-find-bugs</tt>" mode.  This mode makes
-    bugpoint permute pass sequences to try to expose bugs due to pass
-    sequencing.</li>
-<li>The JIT now supports lazily streaming code from multiple modules at a
-     time, implicitly linking the code as it goes.</li>
+<li></li>
 </ul>
 </div>
 
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="apichanges">Significant API Changes in LLVM 1.9</a>
-</div>
-
-<div class="doc_text">
-
-<p>Several significant API changes have been made.  If you are maintaining
-out-of-tree code, please be aware that:</p>
-
-<ul>
-<li>The ConstantSInt and ConstantUInt classes have been merged into the
- ConstantInt class.</li>
-<li><p>As a step towards making LLVM's integer types signless, several new
-instructions have been added to LLVM. The <tt>Div</tt> instruction is now 
-<tt>UDiv</tt>, <tt>SDiv</tt>, and <tt>FDiv</tt>.  The <tt>Rem</tt> instruction
-is now <tt>URem</tt>, <tt>SRem</tt> and <tt>FRem</tt>. See the
-<a href="LangRef.html">Language Reference</a> for details on these new
-instructions.</p>
-<li><p><tt>ConstantBool::True</tt> and <tt>ConstantBool::False</tt> have been
-      renamed to <tt>ConstantBool::getTrue()</tt> and
-      <tt>ConstantBool::getFalse()</tt>.</p></li>
-<li>The 'analyze' tool has been merged into the 'opt' tool.</li>
-
-</ul>
-</div>
 
 
 <!-- *********************************************************************** -->
@@ -307,9 +218,7 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 
 <ul>
 <li>The X86 backend does not yet support <a href="http://llvm.org/PR879">inline
-    assembly that uses the X86 floating point stack</a>.  See the <a 
-    href="http://llvm.org/PR879">bug</a> for details on workarounds on
-    Linux.</li>
+    assembly that uses the X86 floating point stack</a>.</li>
 </ul>
 
 </div>
@@ -324,8 +233,6 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <ul>
 <li><a href="http://llvm.org/PR642">PowerPC backend does not correctly
 implement ordered FP comparisons</a>.</li>
-<li>The 64-bit PowerPC backend is not fully stable. If you desire PPC64 support,
-    please use mainline CVS LLVM, which has several important bug fixes.</li>
 </ul>
 
 </div>
@@ -415,6 +322,7 @@ programs.</li>
 
 <li>Defining vararg functions is not supported (but calling them is ok).</li>
 
+<li>The Itanium backend has bitrotted somewhat.</li>
 </ul>
 
 </div>
