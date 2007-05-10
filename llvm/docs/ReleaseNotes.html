@@ -427,9 +427,9 @@ bits.</li>
       Declaring that functions have no side effects or that they can never
       return.<br>
 
-      <b>Supported:</b> <tt>constructor</tt>, <tt>destructor</tt>,
+      <b>Supported:</b> <tt>alias</tt>, <tt>constructor</tt>, <tt>destructor</tt>,
       <tt>deprecated</tt>, <tt>fastcall</tt>, <tt>format</tt>, 
-      <tt>format_arg</tt>, <tt>non_null</tt>, <tt>noreturn</tt>, 
+      <tt>format_arg</tt>, <tt>non_null</tt>, <tt>noreturn</tt>, <tt>regparm</tt>
       <tt>section</tt>, <tt>stdcall</tt>, <tt>unused</tt>, <tt>used</tt>, 
       <tt>visibility</tt>, <tt>warn_unused_result</tt>, <tt>weak</tt><br>
 
@@ -437,15 +437,14 @@ bits.</li>
       <tt>always_inline</tt>, <tt>pure</tt>, <tt>const</tt>, <tt>nothrow</tt>,
       <tt>malloc</tt>, <tt>no_instrument_function</tt>, <tt>cdecl</tt><br>
 
-      <b>Unsupported:</b> <tt>alias</tt>, <tt>regparm</tt>, all other target specific 
-      attributes</li>
+      <b>Unsupported:</b> All other target specific attributes</li>
    
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html#Variable%20Attributes">Variable Attributes</a>:
       Specifying attributes of variables.<br>
-      <b>Supported:</b> <tt>cleanup</tt>, <tt>common</tt>, <tt>nocommon</tt>,
-      <tt>deprecated</tt>, <tt>dllimport</tt>, <tt>dllexport</tt>, 
-      <tt>section</tt>, <tt>transparent_union</tt>, <tt>unused</tt>, 
-      <tt>used</tt>, <tt>weak</tt><br>
+      <b>Supported:</b> <tt>alias</tt>, <tt>cleanup</tt>, <tt>common</tt>,
+      <tt>nocommon</tt>, <tt>deprecated</tt>, <tt>dllimport</tt>, 
+      <tt>dllexport</tt>, <tt>section</tt>, <tt>transparent_union</tt>,
+      <tt>unused</tt>, <tt>used</tt>, <tt>weak</tt><br>
 
       <b>Unsupported:</b> <tt>aligned</tt>, <tt>mode</tt>, <tt>packed</tt>,
                           <tt>shared</tt>, <tt>tls_model</tt>,
