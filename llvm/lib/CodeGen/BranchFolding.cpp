@@ -110,7 +110,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   RS = RegInfo->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
 
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
-  
+
   bool EverMadeChange = false;
   bool MadeChangeThisIteration = true;
   while (MadeChangeThisIteration) {
@@ -336,7 +336,16 @@ static bool ShouldSplitFirstBlock(MachineBasicBlock *MBB1,
                                   MachineBasicBlock::iterator MBB1I,
                                   MachineBasicBlock *MBB2,
                                   MachineBasicBlock::iterator MBB2I,
-                                  const TargetInstrInfo *TII) {
+                                  const TargetInstrInfo *TII,
+                                  MachineBasicBlock *PredBB) {
+  // If one block falls through into the common successor, choose that
+  // one to split; it is one instruction less to do that.
+  if (PredBB) {
+    if (MBB1 == PredBB)
+      return true;
+    else if (MBB2 == PredBB)
+      return false;
+  }
   // TODO: if we had some notion of which block was hotter, we could split
   // the hot block, so it is the fall-through.  Since we don't have profile info
   // make a decision based on which will hurt most to split.
@@ -347,6 +356,31 @@ static bool ShouldSplitFirstBlock(MachineBasicBlock *MBB1,
   // MBB1 block so it falls through.  This will penalize the MBB2 path, but will
   // have a lower overall impact on the program execution.
   return MBB1Time < MBB2Time;
+}
+
+// CurMBB needs to add an unconditional branch to SuccMBB (we removed these
+// branches temporarily for tail merging).  In the case where CurMBB ends
+// with a conditional branch to the next block, optimize by reversing the
+// test and conditionally branching to SuccMBB instead.
+
+static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
+                    const TargetInstrInfo *TII) {
+  MachineFunction *MF = CurMBB->getParent();
+  MachineFunction::iterator I = next(MachineFunction::iterator(CurMBB));
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  std::vector<MachineOperand> Cond;
+  if (I != MF->end() &&
+      !TII->AnalyzeBranch(*CurMBB, TBB, FBB, Cond)) {
+    MachineBasicBlock *NextBB = I;
+    if (TBB == NextBB && Cond.size() && !FBB) {
+      if (!TII->ReverseBranchCondition(Cond)) {
+        TII->RemoveBranch(*CurMBB);
+        TII->InsertBranch(*CurMBB, SuccBB, NULL, Cond);
+        return;
+      }
+    }
+  }
+  TII->InsertBranch(*CurMBB, SuccBB, NULL, std::vector<MachineOperand>());
 }
 
 // See if any of the blocks in MergePotentials (which all have a common single
@@ -375,7 +409,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
     // give up.
     if (CurHash != PrevHash) {
       if (SuccBB && CurMBB != PredBB)
-        TII->InsertBranch(*CurMBB, SuccBB, NULL, std::vector<MachineOperand>());
+        FixTail(CurMBB, SuccBB, TII);
       MergePotentials.pop_back();
       continue;
     }
@@ -390,6 +424,8 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
     
     // If the tails don't have at least two instructions in common, see if there
     // is anything else in the equivalence class that does match.
+    // Since instructions may get combined later (e.g. single stores into
+    // store multiple) this measure is not particularly accurate.
     if (CommonTailLen < 2) {
       unsigned FoundMatch = ~0U;
       for (int i = MergePotentials.size()-2;
@@ -408,7 +444,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
       if (FoundMatch == ~0U) {
         // Put the unconditional branch back, if we need one.
         if (SuccBB && CurMBB != PredBB)
-          TII->InsertBranch(*CurMBB, SuccBB, NULL, std::vector<MachineOperand>());
+          FixTail(CurMBB, SuccBB, TII);
         MergePotentials.pop_back();
         continue;
       }
@@ -428,7 +464,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
       }
       
       // Decide whether we want to split CurMBB or MBB2.
-      if (ShouldSplitFirstBlock(CurMBB, BBI1, MBB2, BBI2, TII)) {
+      if (ShouldSplitFirstBlock(CurMBB, BBI1, MBB2, BBI2, TII, PredBB)) {
         CurMBB = SplitMBBAt(*CurMBB, BBI1);
         BBI1 = CurMBB->begin();
         MergePotentials.back().second = CurMBB;
@@ -457,49 +493,69 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
 }
 
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
-  MadeChange = false;
-  
+
   if (!EnableTailMerge) return false;
-  
+ 
+  MadeChange = false;
+
   // First find blocks with no successors.
+  MergePotentials.clear();
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     if (I->succ_empty())
       MergePotentials.push_back(std::make_pair(HashEndOfMBB(I), I));
   }
-  // See if we can do any crossjumping on those.
+  // See if we can do any tail merging on those.
   MadeChange |= TryMergeBlocks(NULL, NULL);
 
-  MergePotentials.clear();
-  // Look at blocks with two predecessors, where each predecessor has either:
-  // - a single successor, or
-  // - two successors, where successor I is reached either by ubr or fallthrough.
-  // The two-successor case where successor I is reached by cbr
-  // from both blocks is handled by the preceding case (when we consider the
-  // other, fallthough block).
-  // FIXME:  The two-successor case where I is reached by cbr
-  // from one block, and by fallthrough/ubr from the other, is not handled yet.
-  // Beware that sometimes blocks are in the predecessor list, but can't really 
-  // jump to the "successor" we're looking at.  Tolerate this.
+  // Look at blocks (IBB) with multiple predecessors (PBB).
+  // We change each predecessor to a canonical form, by
+  // (1) temporarily removing any unconditional branch from the predecessor
+  // to IBB, and
+  // (2) alter conditional branches so they branch to the other block
+  // not IBB; this may require adding back an unconditional branch to IBB 
+  // later, where there wasn't one coming in.  E.g.
+  //   Bcc IBB
+  //   fallthrough to QBB
+  // here becomes
+  //   Bncc QBB
+  // with a conceptual B to IBB after that, which never actually exists.
+  // With those changes, we see whether the predecessors' tails match,
+  // and merge them if so.  We change things out of canonical form and
+  // back to the way they were later in the process.  (OptimizeBranches
+  // would undo some of this, but we can't use it, because we'd get into
+  // a compile-time infinite loop repeatedly doing and undoing the same
+  // transformations.)
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     if (!I->succ_empty() && I->pred_size() >= 2) {
       MachineBasicBlock *IBB = I;
       MachineBasicBlock *PredBB = prior(I);
+      MergePotentials.clear();
       for (MachineBasicBlock::pred_iterator P = I->pred_begin(), E2 = I->pred_end(); 
            P != E2; ++P) {
         MachineBasicBlock* PBB = *P;
+        // Skip blocks that loop to themselves, can't tail merge these.
+        if (PBB==IBB)
+          continue;
         MachineBasicBlock *TBB = 0, *FBB = 0;
         std::vector<MachineOperand> Cond;
-        // Remove the unconditional branch at the end, if any.
-        if (!TII->AnalyzeBranch(*PBB, TBB, FBB, Cond) &&
-            ((!FBB && Cond.size()==0) ||    // single successor
-             (!FBB && TBB!=IBB) ||          // cbr elsewhere, fallthrough to I
-             (FBB && FBB==IBB))) {          // cbr then branch to I
-          if (TBB) {
+        if (!TII->AnalyzeBranch(*PBB, TBB, FBB, Cond)) {
+          // Failing case:  IBB is the target of a cbr, and
+          // we cannot reverse the branch.
+          std::vector<MachineOperand> NewCond(Cond);
+          if (Cond.size() && TBB==IBB) {
+            if (TII->ReverseBranchCondition(NewCond))
+              continue;
+            // This is the QBB case described above
+            if (!FBB)
+              FBB = next(MachineFunction::iterator(PBB));
+          }
+          // Remove the unconditional branch at the end, if any.
+          if (TBB && (Cond.size()==0 || FBB)) {
             TII->RemoveBranch(*PBB);
-            if (TBB!=IBB)
+            if (Cond.size())
               // reinsert conditional branch only, for now
-              TII->InsertBranch(*PBB, TBB, 0, Cond);
+              TII->InsertBranch(*PBB, (TBB==IBB) ? FBB : TBB, 0, NewCond);
           }
           MergePotentials.push_back(std::make_pair(HashEndOfMBB(PBB), *P));
         }
@@ -511,12 +567,9 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
     // of removing blocks in TryMergeBlocks.
     if (MergePotentials.size()==1 && 
         (MergePotentials.begin())->second != PredBB)
-      TII->InsertBranch(*((MergePotentials.begin())->second), I, NULL, 
-                        std::vector<MachineOperand>());
-    MergePotentials.clear();
+      FixTail((MergePotentials.begin())->second, I, TII);
     }
   }
-
   return MadeChange;
 }
 
@@ -962,12 +1015,18 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
         MachineBasicBlock *PredBB = *PI;
         MachineFunction::iterator PredFallthrough = PredBB; ++PredFallthrough;
         if (PredBB != MBB && !CanFallThrough(PredBB)
+            && (!CurFallsThru || !CurTBB || !CurFBB)
             && (!CurFallsThru || MBB->getNumber() >= PredBB->getNumber())) {
           // If the current block doesn't fall through, just move it.
           // If the current block can fall through and does not end with a
           // conditional branch, we need to append an unconditional jump to 
           // the (current) next block.  To avoid a possible compile-time
           // infinite loop, move blocks only backward in this case.
+          // Also, if there are already 2 branches here, we cannot add a third;
+          // this means we have the case
+          // Bcc next
+          // B elsewhere
+          // next:
           if (CurFallsThru) {
             MachineBasicBlock *NextBB = next(MachineFunction::iterator(MBB));
             CurCond.clear();
