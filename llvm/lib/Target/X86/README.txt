@@ -1094,5 +1094,33 @@ it should compile to a move from the stack slot directly into eax.  DAGCombine
 has this xform, but it is currently disabled until the alignment fields of 
 the load/store nodes are trustworthy.
 
+//===---------------------------------------------------------------------===//
 
+Sometimes it is better to codegen subtractions from a constant (e.g. 7-x) with
+a neg instead of a sub instruction.  Consider:
+
+int test(char X) { return 7-X; }
+
+we currently produce:
+_test:
+        movl $7, %eax
+        movsbl 4(%esp), %ecx
+        subl %ecx, %eax
+        ret
+
+We would use one fewer register if codegen'd as:
+
+        movsbl 4(%esp), %eax
+	neg %eax
+        add $7, %eax
+        ret
+
+Note that this isn't beneficial if the load can be folded into the sub.  In
+this case, we want a sub:
+
+int test(int X) { return 7-X; }
+_test:
+        movl $7, %eax
+        subl 4(%esp), %eax
+        ret
 
