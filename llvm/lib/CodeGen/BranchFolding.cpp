@@ -338,6 +338,14 @@ static bool ShouldSplitFirstBlock(MachineBasicBlock *MBB1,
                                   MachineBasicBlock::iterator MBB2I,
                                   const TargetInstrInfo *TII,
                                   MachineBasicBlock *PredBB) {
+  // If one block is the entry block, split the other one; we can't generate
+  // a branch to the entry block, as its label is not emitted.
+  MachineBasicBlock *Entry = MBB1->getParent()->begin();
+  if (MBB1 == Entry)
+    return false;
+  if (MBB2 == Entry)
+    return true;
+
   // If one block falls through into the common successor, choose that
   // one to split; it is one instruction less to do that.
   if (PredBB) {
@@ -456,8 +464,14 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
     MachineBasicBlock *MBB2 = (MergePotentials.end()-2)->second;
 
     // If neither block is the entire common tail, split the tail of one block
-    // to make it redundant with the other tail.
-    if (CurMBB->begin() != BBI1 && MBB2->begin() != BBI2) {
+    // to make it redundant with the other tail.  Also, we cannot jump to the
+    // entry block, so if one block is the entry block, split the other one.
+    MachineBasicBlock *Entry = CurMBB->getParent()->begin();
+    if (CurMBB->begin() == BBI1 && CurMBB != Entry)
+      ;   // CurMBB is common tail
+    else if (MBB2->begin() == BBI2 && MBB2 != Entry)
+      ;   // MBB2 is common tail
+    else {
       if (0) { // Enable this to disable partial tail merges.
         MergePotentials.pop_back();
         continue;
@@ -475,13 +489,14 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
       }
     }
     
-    if (MBB2->begin() == BBI2) {
+    if (MBB2->begin() == BBI2 && MBB2 != Entry) {
       // Hack the end off CurMBB, making it jump to MBBI@ instead.
       ReplaceTailWithBranchTo(BBI1, MBB2);
       // This modifies CurMBB, so remove it from the worklist.
       MergePotentials.pop_back();
     } else {
-      assert(CurMBB->begin() == BBI1 && "Didn't split block correctly?");
+      assert(CurMBB->begin() == BBI1 && CurMBB != Entry && 
+             "Didn't split block correctly?");
       // Hack the end off MBB2, making it jump to CurMBB instead.
       ReplaceTailWithBranchTo(BBI2, CurMBB);
       // This modifies MBB2, so remove it from the worklist.
