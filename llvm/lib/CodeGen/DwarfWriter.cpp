@@ -2948,7 +2948,7 @@ private:
       } else {
         // Gather the action sizes
         for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
-          unsigned TypeID = TypeIds[i];
+          unsigned TypeID = TypeIds[j];
           unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
           signed Action = j ? -(SizeAction + SizeTypeID) : 0;
           SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
