@@ -2979,12 +2979,13 @@ private:
                           sizeof(int8_t) - // LPStart format
                           sizeof(int8_t) - // TType format
                           sizeof(int8_t);  // TType base offset (NEED ULEB128)
-    
+
     // Begin the exception table.
     Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
     O << "GCC_except_table" << SubprogramCount << ":\n";
+    Asm->EmitAlignment(2);
     EmitLabel("exception", SubprogramCount);
-    
+
     // Emit the header.
     Asm->EmitInt8(DW_EH_PE_omit);
     Asm->EOL("LPStart format (DW_EH_PE_omit)");
