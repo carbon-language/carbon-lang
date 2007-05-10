@@ -1669,8 +1669,8 @@ LandingPadInfo &MachineModuleInfo::getOrCreateLandingPadInfo
 void MachineModuleInfo::addInvoke(MachineBasicBlock *LandingPad,
                                   unsigned BeginLabel, unsigned EndLabel) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  if (!LP.BeginLabel) LP.BeginLabel = BeginLabel;  
-  LP.EndLabel = EndLabel;  
+  LP.BeginLabels.push_back(BeginLabel);
+  LP.EndLabels.push_back(EndLabel);
 }
 
 /// addLandingPad - Provide the label of a try LandingPad block.
@@ -1711,15 +1711,28 @@ void MachineModuleInfo::setIsFilterLandingPad(MachineBasicBlock *LandingPad) {
 void MachineModuleInfo::TidyLandingPads() {
   for (unsigned i = 0; i != LandingPads.size(); ) {
     LandingPadInfo &LandingPad = LandingPads[i];
-    LandingPad.BeginLabel = MappedLabel(LandingPad.BeginLabel);
-    LandingPad.EndLabel = MappedLabel(LandingPad.EndLabel);
     LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
-    
-    if (!LandingPad.BeginLabel ||
-        !LandingPad.EndLabel ||
-        !LandingPad.LandingPadLabel) {
+
+    if (!LandingPad.LandingPadLabel) {
       LandingPads.erase(LandingPads.begin() + i);
       continue;
+    }
+          
+    for (unsigned j=0; j != LandingPads[i].BeginLabels.size(); ) {
+      unsigned BeginLabel = MappedLabel(LandingPad.BeginLabels[j]);
+      unsigned EndLabel = MappedLabel(LandingPad.EndLabels[j]);
+            
+          
+      if (!BeginLabel || !EndLabel) {
+        printf("Tidy: %d, %d, %d\n", BeginLabel, EndLabel, LandingPad.LandingPadLabel);
+        LandingPad.BeginLabels.erase(LandingPad.BeginLabels.begin() + j);
+        LandingPad.EndLabels.erase(LandingPad.EndLabels.begin() + j);
+        continue;
+      }
+
+      LandingPad.BeginLabels[j] = BeginLabel;
+      LandingPad.EndLabels[j] = EndLabel;
+      ++j;
     }
     
     ++i;

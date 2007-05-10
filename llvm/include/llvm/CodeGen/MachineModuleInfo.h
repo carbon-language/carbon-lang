@@ -33,6 +33,7 @@
 
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
@@ -955,8 +956,8 @@ public:
 ///
 struct LandingPadInfo {
   MachineBasicBlock *LandingPadBlock;   // Landing pad block.
-  unsigned BeginLabel;                  // Label prior to invoke.
-  unsigned EndLabel;                    // Label after invoke.
+  SmallVector<unsigned, 1> BeginLabels; // Labels prior to invoke.
+  SmallVector<unsigned, 1> EndLabels;   // Labels after invoke.
   unsigned LandingPadLabel;             // Label at beginning of landing pad.
   Function *Personality;                // Personality function.
   std::vector<unsigned> TypeIds;        // List of type ids.
@@ -965,8 +966,6 @@ struct LandingPadInfo {
   
   LandingPadInfo(MachineBasicBlock *MBB)
   : LandingPadBlock(MBB)
-  , BeginLabel(0)
-  , EndLabel(0)
   , LandingPadLabel(0)
   , TypeIds()
   , IsFilter(false)
