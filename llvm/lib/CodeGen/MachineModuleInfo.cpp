@@ -1724,7 +1724,6 @@ void MachineModuleInfo::TidyLandingPads() {
             
           
       if (!BeginLabel || !EndLabel) {
-        printf("Tidy: %d, %d, %d\n", BeginLabel, EndLabel, LandingPad.LandingPadLabel);
         LandingPad.BeginLabels.erase(LandingPad.BeginLabels.begin() + j);
         LandingPad.EndLabels.erase(LandingPad.EndLabels.begin() + j);
         continue;
