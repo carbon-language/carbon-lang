@@ -525,6 +525,9 @@ the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
    possibly others) does not compile LLVM correctly (it appears that exception 
    handling is broken in some cases).  Please download the FSF 3.3.3 or upgrade
    to a newer version of GCC.</p>
+<p><b>GCC 3.4.0</b> on linux/x86 (32-bit)</b>: GCC miscompiles portions of the 
+   code generator, causing an infinite loop in the llvm-gcc build.  Please
+   upgrade to GCC 3.4.2.</p>
 <p><b>GCC 3.4.x</b> on X86-64/amd64</b>: GCC <a href="http://llvm.org/PR1056">
    miscompiles portions of LLVM</a>.</p>
 <p><b>IA-64 GCC 4.0.0</b>: The IA-64 version of GCC 4.0.0 is known to
