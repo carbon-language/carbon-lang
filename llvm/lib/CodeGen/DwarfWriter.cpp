@@ -2958,13 +2958,11 @@ private:
         // Record the first action of the landing pad site.
         FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
       }
-
-      unsigned M = LandingPad.BeginLabels.size();
-      for (unsigned j = 0; j!=M; ++j)
-        Actions.push_back(FirstAction);
+      Actions.push_back(FirstAction);
         
       // Compute this sites contribution to size.
-      SizeActions += SizeSiteActions*M;
+      SizeActions += SizeSiteActions;
+      unsigned M = LandingPad.BeginLabels.size();
       SizeSites += M*(sizeof(int32_t) +               // Site start.
                       sizeof(int32_t) +               // Site length.
                       sizeof(int32_t) +               // Landing pad.
