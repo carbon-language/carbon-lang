@@ -592,11 +592,12 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
         while (isa<PHINode>(InsertPt)) ++InsertPt;
       }
     }
-    
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
-    DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
+    DOUT << "    CHANGED: IMM =" << *Imm;
+    DOUT << "  \tNEWBASE =" << *NewBase;
+    DOUT << "  \tInst = " << *Inst;
     return;
   }
   
@@ -1078,7 +1079,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // Now that we know what we need to do, insert the PHI node itself.
   //
   DOUT << "INSERTING IV of TYPE " << *ReplacedTy << " of STRIDE "
-       << *Stride << " and BASE " << *CommonExprs << " :\n";
+       << *Stride << " and BASE " << *CommonExprs << ": ";
 
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
@@ -1120,6 +1121,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
     // Remember this in case a later stride is multiple of this.
     IVsByStride[Stride].addIV(Stride, CommonExprs, NewPHI, IncV);
+    
+    DOUT << " IV=%" << NewPHI->getNameStr() << " INC=%" << IncV->getNameStr();
   } else {
     Constant *C = dyn_cast<Constant>(CommonBaseV);
     if (!C ||
@@ -1130,6 +1133,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
                                     "commonbase", PreInsertPt);
   }
+  DOUT << "\n";
 
   // We want to emit code for users inside the loop first.  To do this, we
   // rearrange BasedUser so that the entries at the end have
@@ -1166,12 +1170,15 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   while (!UsersToProcess.empty()) {
     SCEVHandle Base = UsersToProcess.back().Base;
 
-    DOUT << "  INSERTING code for BASE = " << *Base << ":\n";
-   
     // Emit the code for Base into the preheader.
     Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt,
                                                    ReplacedTy);
-    
+
+    DOUT << "  INSERTING code for BASE = " << *Base << ":";
+    if (BaseV->hasName())
+      DOUT << " Result value name = %" << BaseV->getNameStr();
+    DOUT << "\n";
+
     // If BaseV is a constant other than 0, make sure that it gets inserted into
     // the preheader, instead of being forward substituted into the uses.  We do
     // this by forcing a BitCast (noop cast) to be inserted into the preheader 
