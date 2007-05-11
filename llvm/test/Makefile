@@ -82,9 +82,9 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo 'set objdir "$(LLVM_OBJ_ROOT)/test"' >>site.tmp
 	@echo 'set gccpath "$(CC)"' >>site.tmp
 	@echo 'set gxxpath "$(CXX)"' >>site.tmp
-	@echo 'set compile_c {$(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c } ' >>site.tmp
-	@echo 'set compile_cxx {$(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) - c}' >> site.tmp
-	@echo 'set link {$(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) $(LD.Flags)}' >>site.tmp
+	@echo 'set compile_c "$(CC) $(CPP.Flags) $(C.Flags) $(CompileCommonOpts) -c "' >>site.tmp
+	@echo 'set compile_cxx "$(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) - c"' >> site.tmp
+	@echo 'set link "$(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) $(LD.Flags)"' >>site.tmp
 	@echo 'set llvmgcc "$(LLVMGCC)"' >> site.tmp
 	@echo 'set llvmgxx "$(LLVMGCC)"' >> site.tmp
 	@echo 'set llvmgccmajvers "$(LLVMGCC_MAJVERS)"' >> site.tmp
