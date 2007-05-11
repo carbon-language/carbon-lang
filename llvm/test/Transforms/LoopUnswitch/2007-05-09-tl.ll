@@ -1,5 +1,5 @@
+; PR1333
 ; RUN: llvm-as < %s |  opt -loop-unswitch -disable-output
-; ModuleID = 'PR1333-2.bc'
 
 define void @pp_cxx_expression() {
 entry:
