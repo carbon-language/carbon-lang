@@ -26,7 +26,6 @@ class ModulePass;
 class Module;
 class ModuleProvider;
 
-class ModulePassManager;
 class PassManagerImpl;
 class FunctionPassManagerImpl;
 

@@ -45,8 +45,6 @@ class Module;
 class AnalysisUsage;
 class PassInfo;
 class ImmutablePass;
-class BasicBlockPassManager;
-class ModulePassManager;
 class PMStack;
 class AnalysisResolver;
 class PMDataManager;
