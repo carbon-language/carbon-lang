@@ -2934,41 +2934,41 @@ private:
       unsigned SizeAction = 0;
       signed FirstAction;
 
-      for (unsigned j = 0, E = LandingPad.BeginLabels.size(); j != E; ++j) {
-        if (IsFilter) {
-          // FIXME - Assume there is only one filter typeinfo list per function
-          // time being.  I.E., Each call to eh_filter will have the same list.
-          // This can change if a function is inlined. 
-          Filter = &LandingPad;
-          SizeAction =  Asm->SizeSLEB128(-1) + Asm->SizeSLEB128(0);
+      if (IsFilter) {
+        // FIXME - Assume there is only one filter typeinfo list per function
+        // time being.  I.E., Each call to eh_filter will have the same list.
+        // This can change if a function is inlined. 
+        Filter = &LandingPad;
+        SizeAction =  Asm->SizeSLEB128(-1) + Asm->SizeSLEB128(0);
+        SizeSiteActions += SizeAction;
+        // Record the first action of the landing pad site.
+        FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
+      } else if (TypeIds.empty()) {
+        FirstAction = 0;
+      } else {
+        // Gather the action sizes
+        for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
+          unsigned TypeID = TypeIds[j];
+          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
+          signed Action = j ? -(SizeAction + SizeTypeID) : 0;
+          SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
           SizeSiteActions += SizeAction;
-          // Record the first action of the landing pad site.
-          FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
-        } else if (TypeIds.empty()) {
-          FirstAction = 0;
-        } else {
-          // Gather the action sizes
-          for (unsigned k = 0, M = TypeIds.size(); k != M; ++k) {
-            unsigned TypeID = TypeIds[k];
-            unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
-            signed Action = k ? -(SizeAction + SizeTypeID) : 0;
-            SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
-            SizeSiteActions += SizeAction;
-          }
-        
-          // Record the first action of the landing pad site.
-          FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
         }
-      
+        
+        // Record the first action of the landing pad site.
+        FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
+      }
+
+      unsigned M = LandingPad.BeginLabels.size();
+      for (unsigned j = 0; j!=M; ++j)
         Actions.push_back(FirstAction);
         
-        // Compute this sites contribution to size.
-        SizeActions += SizeSiteActions;
-        SizeSites += sizeof(int32_t) + // Site start.
-                     sizeof(int32_t) + // Site length.
-                     sizeof(int32_t) + // Landing pad.
-                     Asm->SizeSLEB128(FirstAction); // Action.
-      }
+      // Compute this sites contribution to size.
+      SizeActions += SizeSiteActions*M;
+      SizeSites += M*(sizeof(int32_t) +               // Site start.
+                      sizeof(int32_t) +               // Site length.
+                      sizeof(int32_t) +               // Landing pad.
+                      Asm->SizeSLEB128(FirstAction)); // Action.
     }
     
     // Final tallies.
