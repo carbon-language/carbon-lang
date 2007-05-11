@@ -3926,9 +3926,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           ICmpInst *LHS = cast<ICmpInst>(Op0);
           bool NeedsSwap;
           if (ICmpInst::isSignedPredicate(LHSCC))
-            NeedsSwap = LHSCst->getValue().sgt(LHSCst->getValue());
+            NeedsSwap = LHSCst->getValue().sgt(RHSCst->getValue());
           else
-            NeedsSwap = LHSCst->getValue().ugt(LHSCst->getValue());
+            NeedsSwap = LHSCst->getValue().ugt(RHSCst->getValue());
             
           if (NeedsSwap) {
             std::swap(LHS, RHS);
