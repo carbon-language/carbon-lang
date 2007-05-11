@@ -116,7 +116,7 @@ bool LoopRotate::runOnLoop(Loop *Lp, LPPassManager &LPM) {
   return RotatedOneLoop;
 }
 
-/// Rotate loop LP. Return true if it loop is rotated.
+/// Rotate loop LP. Return true if the loop is rotated.
 bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
 
   L = Lp;
@@ -130,7 +130,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     return false;
 
   assert (OrigHeader && OrigLatch && OrigPreHeader &&
-          "Loop is not in cannocial form");
+          "Loop is not in canonical form");
 
   // If loop header is not one of the loop exit block then
   // either this loop is already rotated or it is not 

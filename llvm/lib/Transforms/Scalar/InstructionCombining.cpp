@@ -6373,7 +6373,7 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   if (isa<UndefValue>(Src))   // cast undef -> undef
     return ReplaceInstUsesWith(CI, UndefValue::get(CI.getType()));
 
-  // Many cases of "cast of a cast" are eliminable. If its eliminable we just
+  // Many cases of "cast of a cast" are eliminable. If it's eliminable we just
   // eliminate it now.
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
     if (Instruction::CastOps opc = 

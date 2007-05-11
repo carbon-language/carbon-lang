@@ -12,7 +12,7 @@
 // the left into the right code:
 // 
 // for (...)                for (...)
-//   if (c)                   if(c)
+//   if (c)                   if (c)
 //     X1 = ...                 X1 = ...
 //   else                     else
 //     X2 = ...                 X2 = ...
