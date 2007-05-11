@@ -39,7 +39,7 @@ void MemoryBuffer::initCopyOf(const char *BufStart, const char *BufEnd) {
   BufferEnd = BufferStart+Size;
   memcpy(const_cast<char*>(BufferStart), BufStart, Size);
   *const_cast<char*>(BufferEnd) = 0;   // Null terminate buffer.
-  MustDeleteBuffer = false;
+  MustDeleteBuffer = true;
 }
 
 /// init - Initialize this MemoryBuffer as a reference to externally allocated
