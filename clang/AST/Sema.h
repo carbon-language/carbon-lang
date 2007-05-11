@@ -244,8 +244,9 @@ private:
   // CheckSimpleAssignment, CheckCompoundAssignment and ParseCallExpr. 
   QualType UsualAssignmentConversions(QualType lhs, QualType rhs, // C99 6.5.16
                                       AssignmentConversionResult &r);
-  // Helper function for UsualAssignmentConversions
-  bool pointerTypeQualifiersAlign(QualType lhsType, QualType rhsType);
+  // Helper function for UsualAssignmentConversions (C99 6.5.16.1p1)
+  QualType CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType,
+                                          AssignmentConversionResult &r);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

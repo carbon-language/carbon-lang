@@ -452,37 +452,46 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
   return Context.maxIntegerType(lhs, rhs);
 }
 
-// C99 6.5.16.1p1: both operands are pointers to qualified or 
-// unqualified versions of compatible types, and the type *pointed to* by
-// the left has all the qualifiers of the type *pointed to* by the right;
-bool Sema::pointerTypeQualifiersAlign(QualType lhsType, QualType rhsType) {
-  QualType lPointee, rPointee;
+// CheckPointerTypesForAssignment - This is a very tricky routine (despite
+// being closely modeled after the C99 spec:-). The odd characteristic of this 
+// routine is it effectively iqnores the qualifiers on the top level pointee.
+// This circumvents the usual type rules specified in 6.2.7p1 & 6.7.5.[1-3].
+// FIXME: add a couple examples in this comment.
+QualType Sema::CheckPointerTypesForAssignment(QualType lhsType, 
+                                              QualType rhsType,
+                                              AssignmentConversionResult &r) {
+  QualType lhptee, rhptee;
   
   // get the "pointed to" type (ignoring qualifiers at the top level)
-  lPointee = cast<PointerType>(lhsType.getCanonicalType())->getPointeeType();
-  rPointee = cast<PointerType>(rhsType.getCanonicalType())->getPointeeType();
+  lhptee = cast<PointerType>(lhsType.getCanonicalType())->getPointeeType();
+  rhptee = cast<PointerType>(rhsType.getCanonicalType())->getPointeeType();
   
   // make sure we operate on the canonical type
-  lPointee = lPointee.getCanonicalType();
-  rPointee = rPointee.getCanonicalType();
-    
-  while (!rPointee.isNull() && !lPointee.isNull()) {
-    unsigned rightQuals = rPointee.getQualifiers();
-    if (rightQuals && (rightQuals != lPointee.getQualifiers()))
-      return false; 
+  lhptee = lhptee.getCanonicalType();
+  rhptee = rhptee.getCanonicalType();
 
-    // if necessary, continue checking pointees...
-    if (const PointerType *rPtr = dyn_cast<PointerType>(rPointee))
-      rPointee = rPtr->getPointeeType().getCanonicalType();
-    else
-      rPointee = QualType();
-      
-    if (const PointerType *lPtr = dyn_cast<PointerType>(lPointee))
-      lPointee = lPtr->getPointeeType().getCanonicalType();
-    else
-      rPointee = QualType();
-  }
-  return true;
+  // C99 6.5.16.1p1: This following citation is common to constraints 
+  // 3 & 4 (below). ...and the type *pointed to* by the left has all the 
+  // qualifiers of the type *pointed to* by the right; 
+  if ((lhptee.getQualifiers() & rhptee.getQualifiers()) != 
+       rhptee.getQualifiers())
+    r = CompatiblePointerDiscardsQualifiers;
+
+  // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or 
+  // incomplete type and the other is a pointer to a qualified or unqualified 
+  // version of void...
+  if (lhptee.getUnqualifiedType()->isVoidType() &&
+      (rhptee->isObjectType() || rhptee->isIncompleteType()))
+    ;
+  else if (rhptee.getUnqualifiedType()->isVoidType() &&
+      (lhptee->isObjectType() || lhptee->isIncompleteType()))
+    ;
+  // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or 
+  // unqualified versions of compatible types, ...
+  else if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                     rhptee.getUnqualifiedType()))
+    r = IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
+  return rhsType;
 }
 
 /// UsualAssignmentConversions (C99 6.5.16) - This routine currently 
@@ -519,14 +528,8 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
       r = PointerFromInt;
       return rhsType;
     }
-    if (rhsType->isPointerType()) { 
-      if (Type::pointerTypesAreCompatible(lhsType, rhsType)) {
-        if (!pointerTypeQualifiersAlign(lhsType, rhsType))
-          r = CompatiblePointerDiscardsQualifiers;
-      } else
-        r = IncompatiblePointer;
-      return rhsType;
-    }
+    if (rhsType->isPointerType())
+      return CheckPointerTypesForAssignment(lhsType, rhsType, r);
   } else if (rhsType->isPointerType()) {
     if (lhsType->isIntegerType()) {
       // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
@@ -534,14 +537,8 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
         r = IntFromPointer;
       return rhsType;
     }
-    if (lhsType->isPointerType()) {
-      if (Type::pointerTypesAreCompatible(lhsType, rhsType)) {
-        if (!pointerTypeQualifiersAlign(lhsType, rhsType))
-          r = CompatiblePointerDiscardsQualifiers;
-      } else
-        r = IncompatiblePointer;
-      return rhsType;
-    }
+    if (lhsType->isPointerType()) 
+      return CheckPointerTypesForAssignment(lhsType, rhsType, r);
   } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Type::tagTypesAreCompatible(lhsType, rhsType))
       return rhsType;
@@ -789,6 +786,14 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     if (dcl && isa<FunctionDecl>(dcl))
       ;  // C99 6.5.3.2p1: Allow function designators.
     else {
+      /* FIXME: The following produces an (incorrect) error. The 
+         Type::isModifiableLvalue() predicate is causing problems.
+      
+        const char **cpp;
+        const char c = 'A';
+
+        int main() { *cpp = &c;  // valid }
+     */
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof);
       return QualType();
     }

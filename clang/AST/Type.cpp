@@ -90,12 +90,14 @@ bool Type::tagTypesAreCompatible(QualType lhs, QualType rhs) {
 }
 
 bool Type::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
+  // C99 6.7.5.1p2: For two pointer types to be compatible, both shall be 
+  // identically qualified and both shall be pointers to compatible types.
+  if (lhs.getQualifiers() != rhs.getQualifiers())
+    return false;
+    
   QualType ltype = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
   QualType rtype = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
-
-  // handle void first (not sure this is the best place to check for this).
-  if (ltype->isVoidType() || rtype->isVoidType())
-    return true;
+  
   return typesAreCompatible(ltype, rtype);
 }
 
@@ -167,8 +169,6 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
 
   switch (lcanon->getTypeClass()) {
     case Type::Pointer:
-      // C99 6.7.3p9: For two qualified types to be compatible, both shall have
-      // the identically qualified version of a compatible type. ??
       return pointerTypesAreCompatible(lcanon, rcanon);
     case Type::Array:
       return arrayTypesAreCompatible(lcanon, rcanon);
@@ -178,10 +178,16 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
     case Type::Tagged: // handle structures, unions
       return tagTypesAreCompatible(lcanon, rcanon);
     case Type::Builtin:
-      // exclude type qualifiers...
+      // C99 6.7.3p9: For two qualified types to be compatible, both shall 
+      // have the identically qualified version of a compatible type.
+      if (lhs.getQualifiers() != rhs.getQualifiers())
+        return false;
+        
+      // C99 6.2.7p1: Two types have compatible types if their types are the 
+      // same. See 6.7.[2,3,5] for additional rules.
       if (lcanon.getTypePtr() == rcanon.getTypePtr())
         return true;
-      return false; // C99 6.2.7p1
+      return false; 
     default:
       assert(0 && "unexpected type");
   }
