@@ -317,10 +317,10 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     unsigned NumArgsToCheck = NumArgsInCall;
     
     if (NumArgsInCall < NumArgsInProto)
-      Diag(LParenLoc, diag::ext_typecheck_call_too_few_args);
+      Diag(LParenLoc, diag::err_typecheck_call_too_few_args);
     else if (NumArgsInCall > NumArgsInProto) {
       if (!proto->isVariadic())
-        Diag(LParenLoc, diag::ext_typecheck_call_too_many_args);
+        Diag(LParenLoc, diag::err_typecheck_call_too_many_args);
       NumArgsToCheck = NumArgsInProto;
     }
     // Continue to check argument types (even if we have too few/many args).
@@ -352,6 +352,9 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
         break;
       case IncompatiblePointer:
         Diag(l, diag::ext_typecheck_passing_incompatible_pointer, utostr(i+1));
+        break;
+      case CompatiblePointerDiscardsQualifiers:
+        Diag(l, diag::ext_typecheck_passing_discards_qualifiers, utostr(i+1));
         break;
       case Incompatible:
         return Diag(l, diag::err_typecheck_passing_incompatible, utostr(i+1));
@@ -449,6 +452,39 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
   return Context.maxIntegerType(lhs, rhs);
 }
 
+// C99 6.5.16.1p1: both operands are pointers to qualified or 
+// unqualified versions of compatible types, and the type *pointed to* by
+// the left has all the qualifiers of the type *pointed to* by the right;
+bool Sema::pointerTypeQualifiersAlign(QualType lhsType, QualType rhsType) {
+  QualType lPointee, rPointee;
+  
+  // get the "pointed to" type (ignoring qualifiers at the top level)
+  lPointee = cast<PointerType>(lhsType.getCanonicalType())->getPointeeType();
+  rPointee = cast<PointerType>(rhsType.getCanonicalType())->getPointeeType();
+  
+  // make sure we operate on the canonical type
+  lPointee = lPointee.getCanonicalType();
+  rPointee = rPointee.getCanonicalType();
+    
+  while (!rPointee.isNull() && !lPointee.isNull()) {
+    unsigned rightQuals = rPointee.getQualifiers();
+    if (rightQuals && (rightQuals != lPointee.getQualifiers()))
+      return false; 
+
+    // if necessary, continue checking pointees...
+    if (const PointerType *rPtr = dyn_cast<PointerType>(rPointee))
+      rPointee = rPtr->getPointeeType().getCanonicalType();
+    else
+      rPointee = QualType();
+      
+    if (const PointerType *lPtr = dyn_cast<PointerType>(lPointee))
+      lPointee = lPtr->getPointeeType().getCanonicalType();
+    else
+      rPointee = QualType();
+  }
+  return true;
+}
+
 /// UsualAssignmentConversions (C99 6.5.16) - This routine currently 
 /// has code to accommodate several GCC extensions when type checking 
 /// pointers. Here are some objectionable examples that GCC considers warnings:
@@ -483,9 +519,11 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
       r = PointerFromInt;
       return rhsType;
     }
-    // FIXME: make sure the qualifier are matching
     if (rhsType->isPointerType()) { 
-      if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
+      if (Type::pointerTypesAreCompatible(lhsType, rhsType)) {
+        if (!pointerTypeQualifiersAlign(lhsType, rhsType))
+          r = CompatiblePointerDiscardsQualifiers;
+      } else
         r = IncompatiblePointer;
       return rhsType;
     }
@@ -496,21 +534,18 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
         r = IntFromPointer;
       return rhsType;
     }
-    // - both operands are pointers to qualified or unqualified versions of
-    // compatible types, and the type pointed to by the left has *all* the
-    // qualifiers of the type pointed to by the right;
     if (lhsType->isPointerType()) {
-      if (!Type::pointerTypesAreCompatible(lhsType, rhsType))
+      if (Type::pointerTypesAreCompatible(lhsType, rhsType)) {
+        if (!pointerTypeQualifiersAlign(lhsType, rhsType))
+          r = CompatiblePointerDiscardsQualifiers;
+      } else
         r = IncompatiblePointer;
       return rhsType;
     }
-  } else if (lhsType->isStructureType() && rhsType->isStructureType()) {
-    if (Type::structureTypesAreCompatible(lhsType, rhsType))
+  } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
+    if (Type::tagTypesAreCompatible(lhsType, rhsType))
       return rhsType;
-  } else if (lhsType->isUnionType() && rhsType->isUnionType()) {
-    if (Type::unionTypesAreCompatible(lhsType, rhsType))
-      return rhsType;
-  }
+  } 
   r = Incompatible;
   return QualType();
 }
@@ -644,18 +679,16 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 {
   QualType lhsType = lex->getType();
   QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
-  
-  // FIXME: consider hacking isModifiableLvalue to return an enum that
-  // communicates why the expression/type wasn't a modifiableLvalue.
+  bool hadError = false;
   
   // this check is done first to give a more precise diagnostic.
+  // isModifiableLvalue() will also check for "const".
   if (lhsType.isConstQualified()) {
     Diag(loc, diag::err_typecheck_assign_const);
-    return QualType();
-  }
-  if (!lex->isModifiableLvalue()) { // this includes checking for "const"
-    Diag(loc, diag::ext_typecheck_assign_non_lvalue);
-    return QualType();
+    hadError = true;
+  } else if (!lex->isModifiableLvalue()) { // C99 6.5.16p2
+    Diag(loc, diag::err_typecheck_assign_non_lvalue);
+    return QualType(); // no need to continue checking...
   }
   if (lhsType == rhsType) // common case, fast path...
     return lhsType;
@@ -666,23 +699,27 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   // decode the result (notice that extensions still return a type).
   switch (result) {
   case Compatible:
-    return resType;
+    break;
   case Incompatible:
     Diag(loc, diag::err_typecheck_assign_incompatible);
-    return QualType();
+    hadError = true;
+    break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
     if (compoundType.isNull() && !rex->isNullPointerConstant())
       Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
-    return resType;
+    break;
   case IntFromPointer:
     Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
-    return resType;
+    break;
   case IncompatiblePointer:
     Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
-    return resType;
+    break;
+  case CompatiblePointerDiscardsQualifiers:
+    Diag(loc, diag::ext_typecheck_assign_discards_qualifiers);
+    break;
   }
-  assert(0 && "should never get here");
+  return hadError ? QualType() : resType;
 }
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17

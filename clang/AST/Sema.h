@@ -236,13 +236,16 @@ private:
     Incompatible,
     PointerFromInt, 
     IntFromPointer,
-    IncompatiblePointer
+    IncompatiblePointer,
+    CompatiblePointerDiscardsQualifiers
   };
   // Conversions for assignment, argument passing, initialization, and
   // function return values. UsualAssignmentConversions is currently used by 
   // CheckSimpleAssignment, CheckCompoundAssignment and ParseCallExpr. 
   QualType UsualAssignmentConversions(QualType lhs, QualType rhs, // C99 6.5.16
-                                      AssignmentConversionResult &r); 
+                                      AssignmentConversionResult &r);
+  // Helper function for UsualAssignmentConversions
+  bool pointerTypeQualifiersAlign(QualType lhsType, QualType rhsType);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

@@ -559,11 +559,13 @@ DIAG(ext_typecheck_assign_pointer_from_int, EXTENSION,
      "assignment makes pointer from integer without a cast")
 DIAG(ext_typecheck_assign_incompatible_pointer, EXTENSION,
      "assignment from incompatible pointer type")
-DIAG(ext_typecheck_assign_non_lvalue, ERROR,
+DIAG(ext_typecheck_assign_discards_qualifiers, EXTENSION,
+     "assignment discards qualifiers from pointer target type")
+DIAG(err_typecheck_assign_non_lvalue, ERROR,
      "invalid lvalue in assignment")
-DIAG(ext_typecheck_call_too_few_args, ERROR,
+DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to function")
-DIAG(ext_typecheck_call_too_many_args, ERROR,
+DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to function")
 DIAG(err_typecheck_passing_incompatible, ERROR,
      "incompatible type for argument %s")
@@ -573,6 +575,8 @@ DIAG(ext_typecheck_passing_pointer_from_int, EXTENSION,
      "passing argument %s makes pointer from integer without a cast")
 DIAG(ext_typecheck_passing_incompatible_pointer, EXTENSION,
      "passing argument %s from incompatible pointer type")
+DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
+     "passing argument %s discards qualifiers from pointer target type")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

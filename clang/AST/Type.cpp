@@ -74,7 +74,7 @@ bool Type::isUnionType() const {
 
 // C99 6.2.7p1: If both are complete types, then the following additional
 // requirements apply...FIXME (handle compatibility across source files).
-bool Type::structureTypesAreCompatible(QualType lhs, QualType rhs) {
+bool Type::tagTypesAreCompatible(QualType lhs, QualType rhs) {
   TagDecl *ldecl = cast<TagType>(lhs.getCanonicalType())->getDecl();
   TagDecl *rdecl = cast<TagType>(rhs.getCanonicalType())->getDecl();
   
@@ -82,13 +82,6 @@ bool Type::structureTypesAreCompatible(QualType lhs, QualType rhs) {
     if (ldecl->getIdentifier() == rdecl->getIdentifier())
       return true;
   }
-  return false;
-}
-
-bool Type::unionTypesAreCompatible(QualType lhs, QualType rhs) {
-  TagDecl *ldecl = cast<TagType>(lhs.getCanonicalType())->getDecl();
-  TagDecl *rdecl = cast<TagType>(rhs.getCanonicalType())->getDecl();
-  
   if (ldecl->getKind() == Decl::Union && rdecl->getKind() == Decl::Union) {
     if (ldecl->getIdentifier() == rdecl->getIdentifier())
       return true;
@@ -99,7 +92,7 @@ bool Type::unionTypesAreCompatible(QualType lhs, QualType rhs) {
 bool Type::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
   QualType ltype = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
   QualType rtype = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
-  
+
   // handle void first (not sure this is the best place to check for this).
   if (ltype->isVoidType() || rtype->isVoidType())
     return true;
@@ -160,26 +153,39 @@ bool Type::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
   return true;
 }
 
-bool Type::typesAreCompatible(QualType lcanon, QualType rcanon) {
+bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
+  QualType lcanon = lhs.getCanonicalType();
+  QualType rcanon = rhs.getCanonicalType();
+
   // If two types are identical, they are are compatible
-  // C99 6.7.3p9: For two qualified types to be compatible, both shall have
-  // the identically qualified version of a compatible type.
   if (lcanon == rcanon)
     return true;
-    
-  if (lcanon->isStructureType() && rcanon->isStructureType())
-    return structureTypesAreCompatible(lcanon, rcanon);
-    
-  if (lcanon->isPointerType() && rcanon->isPointerType())
-    return pointerTypesAreCompatible(lcanon, rcanon);
+  
+  // If the canonical type classes don't match, they can't be compatible
+  if (lcanon->getTypeClass() != rcanon->getTypeClass())
+    return false;
 
-  if (lcanon->isArrayType() && rcanon->isArrayType())
-    return arrayTypesAreCompatible(lcanon, rcanon);
-    
-  if (lcanon->isFunctionType() && rcanon->isFunctionType())
-    return functionTypesAreCompatible(lcanon, rcanon);
-      
-  return false;
+  switch (lcanon->getTypeClass()) {
+    case Type::Pointer:
+      // C99 6.7.3p9: For two qualified types to be compatible, both shall have
+      // the identically qualified version of a compatible type. ??
+      return pointerTypesAreCompatible(lcanon, rcanon);
+    case Type::Array:
+      return arrayTypesAreCompatible(lcanon, rcanon);
+    case Type::FunctionNoProto:
+    case Type::FunctionProto:
+      return functionTypesAreCompatible(lcanon, rcanon);
+    case Type::Tagged: // handle structures, unions
+      return tagTypesAreCompatible(lcanon, rcanon);
+    case Type::Builtin:
+      // exclude type qualifiers...
+      if (lcanon.getTypePtr() == rcanon.getTypePtr())
+        return true;
+      return false; // C99 6.2.7p1
+    default:
+      assert(0 && "unexpected type");
+  }
+  return true; // should never get here...
 }
 
 bool Type::isIntegerType() const {
@@ -401,10 +407,13 @@ bool RecordType::classof(const Type *T) {
 // Type Printing
 //===----------------------------------------------------------------------===//
 
-void QualType::dump() const {
+void QualType::dump(const char *msg) const {
   std::string R = "foo";
   getAsString(R);
-  std::cerr << R << "\n";
+  if (msg)
+    std::cerr << msg << ": " << R << "\n";
+  else
+    std::cerr << R << "\n";
 }
 
 static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {

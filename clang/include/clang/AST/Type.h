@@ -120,7 +120,7 @@ public:
   bool isModifiableLvalue() const;
     
   void getAsString(std::string &S) const;
-  void dump() const;
+  void dump(const char *s = 0) const;
 
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
@@ -238,8 +238,7 @@ public:
 
   /// Compatibility predicates used to check assignment expressions.
   static bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
-  static bool structureTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
-  static bool unionTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  static bool tagTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
   static bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
   static bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
@@ -248,7 +247,7 @@ private:
   // knows if the type is const. This predicate is a helper to QualType. 
   bool isModifiableLvalue() const; // C99 6.3.2.1p1
   
-  QualType getCanonicalType() const { return CanonicalType; }
+  QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;
 public:
   virtual void getAsString(std::string &InnerString) const = 0;
@@ -515,9 +514,9 @@ public:
 /// getCanonicalType - Return the canonical version of this type, with the
 /// appropriate type qualifiers on it.
 inline QualType QualType::getCanonicalType() const {
-  return QualType(getTypePtr()->getCanonicalType().getTypePtr(),
+  return QualType(getTypePtr()->getCanonicalTypeInternal().getTypePtr(),
                   getQualifiers() |
-                  getTypePtr()->getCanonicalType().getQualifiers());
+                  getTypePtr()->getCanonicalTypeInternal().getQualifiers());
 }
   
 }  // end namespace clang
