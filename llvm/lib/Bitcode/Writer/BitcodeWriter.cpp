@@ -256,6 +256,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
   switch (GV->getLinkage()) {
   default: assert(0 && "Invalid linkage!");
+  case GlobalValue::GhostLinkage:  // Map ghost linkage onto external.
   case GlobalValue::ExternalLinkage:     return 0;
   case GlobalValue::WeakLinkage:         return 1;
   case GlobalValue::AppendingLinkage:    return 2;
