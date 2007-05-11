@@ -1323,7 +1323,7 @@ Constant *DISerializer::getString(const std::string &String) {
     // Otherwise create and return a new string global.
     GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
                                                GlobalVariable::InternalLinkage,
-                                               ConstStr, "str", M);
+                                               ConstStr, ".str", M);
     StrGV->setSection("llvm.metadata");
     // Convert to generic string pointer.
     Slot = ConstantExpr::getBitCast(StrGV, getStrPtrType());
