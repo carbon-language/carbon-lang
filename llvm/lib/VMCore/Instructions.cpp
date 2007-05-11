@@ -1189,7 +1189,7 @@ bool InsertElementInst::isValidOperands(const Value *Vec, const Value *Elt,
     return false;   // First operand of insertelement must be vector type.
   
   if (Elt->getType() != cast<VectorType>(Vec->getType())->getElementType())
-    return false;// Second operand of insertelement must be packed element type.
+    return false;// Second operand of insertelement must be vector element type.
     
   if (Index->getType() != Type::Int32Ty)
     return false;  // Third operand of insertelement must be uint.
@@ -1500,7 +1500,7 @@ bool CastInst::isLosslessCast() const {
 /// example, the following are all no-op casts:
 /// # bitcast uint %X, int
 /// # bitcast uint* %x, sbyte*
-/// # bitcast packed< 2 x int > %x, packed< 4 x short> 
+/// # bitcast vector< 2 x int > %x, vector< 4 x short> 
 /// # ptrtoint uint* %x, uint     ; on 32-bit plaforms only
 /// @brief Determine if a cast is a no-op.
 bool CastInst::isNoopCast(const Type *IntPtrTy) const {
@@ -1867,8 +1867,8 @@ CastInst::getCastOpcode(
   const Value *Src, bool SrcIsSigned, const Type *DestTy, bool DestIsSigned) {
   // Get the bit sizes, we'll need these
   const Type *SrcTy = Src->getType();
-  unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr/packed
-  unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr/packed
+  unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr/vector
+  unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr/vector
 
   // Run through the possibilities ...
   if (DestTy->isInteger()) {                       // Casting to integral
@@ -1890,7 +1890,7 @@ CastInst::getCastOpcode(
         return FPToUI;                              // FP -> uint 
     } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestBits == PTy->getBitWidth() &&
-               "Casting packed to integer of different width");
+               "Casting vector to integer of different width");
       return BitCast;                             // Same size, no-op cast
     } else {
       assert(isa<PointerType>(SrcTy) &&
@@ -1913,7 +1913,7 @@ CastInst::getCastOpcode(
       }
     } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestBits == PTy->getBitWidth() &&
-             "Casting packed to floating point of different width");
+             "Casting vector to floating point of different width");
         return BitCast;                             // same size, no-op cast
     } else {
       assert(0 && "Casting pointer or non-first class to float");
@@ -1921,12 +1921,12 @@ CastInst::getCastOpcode(
   } else if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
     if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
       assert(DestPTy->getBitWidth() == SrcPTy->getBitWidth() &&
-             "Casting packed to packed of different widths");
-      return BitCast;                             // packed -> packed
+             "Casting vector to vector of different widths");
+      return BitCast;                             // vector -> vector
     } else if (DestPTy->getBitWidth() == SrcBits) {
-      return BitCast;                               // float/int -> packed
+      return BitCast;                               // float/int -> vector
     } else {
-      assert(!"Illegal cast to packed (wrong type or size)");
+      assert(!"Illegal cast to vector (wrong type or size)");
     }
   } else if (isa<PointerType>(DestTy)) {
     if (isa<PointerType>(SrcTy)) {
