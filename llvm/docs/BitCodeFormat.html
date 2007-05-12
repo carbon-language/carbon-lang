@@ -1,4 +1,5 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -13,6 +14,10 @@
   <li><a href="#bitstream">Bitstream Format</a>
     <ol>
     <li><a href="#magic">Magic Numbers</a></li>
+    <li><a href="#primitives">Primitives</a></li>
+    <li><a href="#abbrevid">Abbreviation IDs</a></li>
+    <li><a href="#blocks">Blocks</a></li>
+    <li><a href="#datarecord">Data Records</a></li>
     </ol>
   </li>
   <li><a href="#llvmir">LLVM IR Encoding</a></li>
@@ -71,10 +76,13 @@ structure.  This structure consists of the following concepts:
 </p>
 
 <ul>
-<li>A magic number that identifies the stream.</li>
-<li>Encoding primitives like variable bit-rate integers.</li> 
-<li>Blocks, which define nested content.</li> 
-<li>Data Records, which describe entities within the file.</li> 
+<li>A "<a href="#magic">magic number</a>" that identifies the contents of
+    the stream.</li>
+<li>Encoding <a href="#primitives">primitives</a> like variable bit-rate
+    integers.</li> 
+<li><a href="#blocks">Blocks</a>, which define nested content.</li> 
+<li><a href="#datarecord">Data Records</a>, which describe entities within the
+    file.</li> 
 <li>Abbreviations, which specify compression optimizations for the file.</li> 
 </ul>
 
@@ -91,20 +99,217 @@ understanding the encoding.</p>
 
 <div class="doc_text">
 
-<p>LLVM </p>
+<p>The first four bytes of the stream identify the encoding of the file.  This
+is used by a reader to know what is contained in the file.</p>
 
 </div>
 
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="wellformed">Well-Formedness</a> </div>
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="primitives">Primitives</a>
+</div>
 
 <div class="doc_text">
 
-<p>blah
+<p>
+A bitstream literally consists of a stream of bits.  This stream is made up of a
+number of primitive values that encode a stream of integer values.  These
+integers are are encoded in two ways: either as <a href="#fixedwidth">Fixed
+Width Integers</a> or as <a href="#variablewidth">Variable Width
+Integers</a>.
 </p>
 
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="fixedwidth">Fixed Width Integers</a>
+</div>
+
+<div class="doc_text">
+
+<p>Fixed-width integer values have their low bits emitted directly to the file.
+   For example, a 3-bit integer value encodes 1 as 001.  Fixed width integers
+   are used when there are a well-known number of options for a field.  For
+   example, boolean values are usually encoded with a 1-bit wide integer. 
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="variablewidth">Variable Width
+Integers</a></div>
+
+<div class="doc_text">
+
+<p>Variable-width integer (VBR) values encode values of arbitrary size,
+optimizing for the case where the values are small.  Given a 4-bit VBR field,
+any 3-bit value (0 through 7) is encoded directly, with the high bit set to
+zero.  Values larger than N-1 bits emit their bits in a series of N-1 bit
+chunks, where all but the last set the high bit.</p>
+
+<p>For example, the value 27 (0x1B) is encoded as 1011 0011 when emitted as a
+vbr4 value.  The first set of four bits indicates the value 3 (011) with a
+continuation piece (indicated by a high bit of 1).  The next word indicates a
+value of 24 (011 << 3) with no continuation.  The sum (3+24) yields the value
+27.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="char6">6-bit characters</a></div>
+
+<div class="doc_text">
+
+<p>6-bit characters encode common characters into a fixed 6-bit field.  They
+represent the following characters with the following 6-bit values:<s/p>
+
+<ul>
+<li>'a' .. 'z' - 0 .. 25</li>
+<li>'A' .. 'Z' - 26 .. 52</li>
+<li>'0' .. '9' - 53 .. 61</li>
+<li>'.' - 62</li>
+<li>'_' - 63</li>
+</ul>
+
+<p>This encoding is only suitable for encoding characters and strings that
+consist only of the above characters.  It is completely incapable of encoding
+characters not in the set.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="wordalign">Word Alignment</a></div>
+
+<div class="doc_text">
+
+<p>Occasionally, it is useful to emit zero bits until the bitstream is a
+multiple of 32 bits.  This ensures that the bit position in the stream can be
+represented as a multiple of 32-bit words.</p>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="abbrevid">Abbreviation IDs</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+A bitstream is a sequential series of <a href="#blocks">Blocks</a> and
+<a href="#datarecord">Data Records</a>.  Both of these start with an
+abbreviation ID encoded as a fixed-bitwidth field.  The width is specified by
+the current block, as described below.  The value of the abbreviation ID
+specifies either a builtin ID (which have special meanings, defined below) or
+one of the abbreviation IDs defined by the stream itself.
+</p>
+
+<p>
+The set of builtin abbrev IDs is:
+</p>
+
+<ul>
+<li>0 - <a href="#END_BLOCK">END_BLOCK</a> - This abbrev ID marks the end of the
+    current block.</li>
+<li>1 - <a href="#ENTER_SUBBLOCK">ENTER_SUBBLOCK</a> - This abbrev ID marks the
+    beginning of a new block.</li>
+<li>2 - DEFINE_ABBREV - This defines a new abbreviation.</li>
+<li>3 - UNABBREV_RECORD - This ID specifies the definition of an unabbreviated
+    record.</li>
+</ul>
+
+<p>Abbreviation IDs 4 and above are defined by the stream itself.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="blocks">Blocks</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+Blocks in a bitstream denote nested regions of the stream, and are identified by
+a content-specific id number (for example, LLVM IR uses an ID of 12 to represent
+function bodies).  Nested blocks capture the hierachical structure of the data
+encoded in it, and various properties are associated with blocks as the file is
+parsed.  Block definitions allow the reader to efficiently skip blocks
+in constant time if the reader wants a summary of blocks, or if it wants to
+efficiently skip data they do not understand.  The LLVM IR reader uses this
+mechanism to skip function bodies, lazily reading them on demand.
+</p>
+
+<p>
+When reading and encoding the stream, several properties are maintained for the
+block.  In particular, each block maintains:
+</p>
+
+<ol>
+<li>A current abbrev id width.  This value starts at 2, and is set every time a
+    block record is entered.  The block entry specifies the abbrev id width for
+    the body of the block.</li>
+
+<li>A set of abbreviations.  Abbreviations may be defined within a block, or
+    they may be associated with all blocks of a particular ID.
+</li>
+</ol>
+
+<p>As sub blocks are entered, these properties are saved and the new sub-block
+has its own set of abbreviations, and its own abbrev id width.  When a sub-block
+is popped, the saved values are restored.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="ENTER_SUBBLOCK">ENTER_SUBBLOCK
+Encoding</a></div>
+
+<div class="doc_text">
+
+<p><tt>[ENTER_SUBBLOCK, blockid<sub>vbr8</sub>, newabbrevlen<sub>vbr4</sub>,
+     &lt;align32bits&gt;, blocklen<sub>32</sub>]</tt></p>
+
+<p>
+The ENTER_SUBBLOCK abbreviation ID specifies the start of a new block record.
+The <tt>blockid</tt> value is encoded as a 8-bit VBR identifier, and indicates
+the type of block being entered (which is application specific).  The
+<tt>newabbrevlen</tt> value is a 4-bit VBR which specifies the
+abbrev id width for the sub-block.  The <tt>blocklen</tt> is a 32-bit aligned
+value that specifies the size of the subblock, in 32-bit words.  This value
+allows the reader to skip over the entire block in one jump.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="END_BLOCK">END_BLOCK
+Encoding</a></div>
+
+<div class="doc_text">
+
+<p><tt>[END_BLOCK, &lt;align32bits&gt;]</tt></p>
+
+<p>
+The END_BLOCK abbreviation ID specifies the end of the current block record.
+Its end is aligned to 32-bits to ensure that the size of the block is an even
+multiple of 32-bits.</p>
+
+</div>
+
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="datarecord">Data Records</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+blah
+</p>
+
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="llvmir">LLVM IR Encoding</a></div>
