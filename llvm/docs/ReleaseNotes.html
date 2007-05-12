@@ -66,7 +66,7 @@ ways from our previous releases:</p>
 <li>We took this as an opportunity to
 break backwards compatibility with the LLVM 1.x bytecode and .ll file format.
 If you have LLVM 1.9 .ll files that you would like to upgrade to LLVM 2.x, we 
-recommend the use of the stand alone <a href=#llvm-upgrade>llvm-upgrade</a>
+recommend the use of the stand alone <a href="#llvm-upgrade">llvm-upgrade</a>
 tool.  We intend to keep compatibility with .ll and .bc formats within the 2.x
 release series, like we did within the 1.x series.</li>
 <li>There are several significant change to the LLVM IR and internal APIs, such
@@ -349,6 +349,9 @@ processors, any thumb program compiled with LLVM crashes or produces wrong
 results. (<a href="http://llvm.org/PR1388">PR1388</a>)</li>
 <li>Compilation for ARM Linux OABI (old ABI) is supported, but not fully tested.
 </li>
+<li>QEMU-ARM (<= 0.9.0) wrongly executes programs compiled with LLVM. A non-affected QEMU version must be used or this
+<a href="http://cvs.savannah.nongnu.org/viewcvs/qemu/target-arm/translate.c?root=qemu&r1=1.46&r2=1.47&makepatch=1&diff_format=h">
+patch</a> must be applied on QEMU.</li>
 </ul>
 
 </div>
