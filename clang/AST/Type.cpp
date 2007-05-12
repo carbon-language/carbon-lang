@@ -155,6 +155,10 @@ bool Type::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
   return true;
 }
 
+/// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible, 
+/// both shall have the identically qualified version of a compatible type.
+/// C99 6.2.7p1: Two types have compatible types if their types are the 
+/// same. See 6.7.[2,3,5] for additional rules.
 bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
   QualType lcanon = lhs.getCanonicalType();
   QualType rcanon = rhs.getCanonicalType();
@@ -178,15 +182,6 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
     case Type::Tagged: // handle structures, unions
       return tagTypesAreCompatible(lcanon, rcanon);
     case Type::Builtin:
-      // C99 6.7.3p9: For two qualified types to be compatible, both shall 
-      // have the identically qualified version of a compatible type.
-      if (lhs.getQualifiers() != rhs.getQualifiers())
-        return false;
-        
-      // C99 6.2.7p1: Two types have compatible types if their types are the 
-      // same. See 6.7.[2,3,5] for additional rules.
-      if (lcanon.getTypePtr() == rcanon.getTypePtr())
-        return true;
       return false; 
     default:
       assert(0 && "unexpected type");
