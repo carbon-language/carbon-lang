@@ -403,11 +403,12 @@ static Instruction *LowerPartSelect(CallInst *CI) {
   }
 
   // Return a call to the implementation function
-  Value *Args[3];
-  Args[0] = CI->getOperand(1);
-  Args[1] = CI->getOperand(2);
-  Args[2] = CI->getOperand(3);
-  return new CallInst(F, Args, 3, CI->getName(), CI);
+  Value *Args[] = {
+    CI->getOperand(1),
+    CI->getOperand(2),
+    CI->getOperand(3)
+  };
+  return new CallInst(F, Args, sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
 }
 
 /// Convert the llvm.part.set.iX.iY.iZ intrinsic. This intrinsic takes 
@@ -591,12 +592,13 @@ static Instruction *LowerPartSet(CallInst *CI) {
   }
 
   // Return a call to the implementation function
-  Value *Args[3];
-  Args[0] = CI->getOperand(1);
-  Args[1] = CI->getOperand(2);
-  Args[2] = CI->getOperand(3);
-  Args[3] = CI->getOperand(4);
-  return new CallInst(F, Args, 4, CI->getName(), CI);
+  Value *Args[] = {
+    CI->getOperand(1),
+    CI->getOperand(2),
+    CI->getOperand(3),
+    CI->getOperand(4)
+  };
+  return new CallInst(F, Args, sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
 }
 
 
