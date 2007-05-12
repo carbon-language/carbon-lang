@@ -4,56 +4,126 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>LLVM Bitcode File Format</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <style type="text/css">
-    TR, TD { border: 2px solid gray; padding-left: 4pt; padding-right: 4pt; 
-             padding-top: 2pt; padding-bottom: 2pt; }
-    TH { border: 2px solid gray; font-weight: bold; font-size: 105%; }
-    TABLE { text-align: center; border: 2px solid black; 
-      border-collapse: collapse; margin-top: 1em; margin-left: 1em; 
-      margin-right: 1em; margin-bottom: 1em; }
-    .td_left { border: 2px solid gray; text-align: left; }
-  </style>
 </head>
 <body>
 <div class="doc_title"> LLVM Bitcode File Format </div>
 <ol>
   <li><a href="#abstract">Abstract</a></li>
-  <li><a href="#concepts">Concepts</a></li>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#bitstream">Bitstream Format</a>
+    <ol>
+    <li><a href="#magic">Magic Numbers</a></li>
+    </ol>
+  </li>
+  <li><a href="#llvmir">LLVM IR Encoding</a></li>
 </ol>
 <div class="doc_author">
-  <p>Written by <a href="mailto:rspencer@x10sys.com">Reid Spencer</a> and
-  <a href="mailto:sabre@nondot.org">Chris Lattner</a>.
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>.
 </p>
 </div>
+
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="abstract">Abstract </a></div>
+<div class="doc_section"> <a name="abstract">Abstract</a></div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
-<p>This document describes the LLVM bitcode file format. It specifies
-the binary encoding rules of the bitcode file format so that
-equivalent systems can encode bitcode files correctly. The LLVM
-bitcode representation is used to store the intermediate
-representation on disk in a compacted form.</p>
-<p>This document supercedes the LLVM bytecode file format for the 2.0
-release.</p>
+
+<p>This document describes the LLVM bitstream file format and the encoding of
+the LLVM IR into it.</p>
+
 </div>
+
 <!-- *********************************************************************** -->
-<div class="doc_section"> <a name="concepts">Concepts</a> </div>
+<div class="doc_section"> <a name="overview">Overview</a></div>
 <!-- *********************************************************************** -->
+
 <div class="doc_text">
-<p>This section describes the general concepts of the bitcode file
-format without getting into specific layout details. It is recommended
-that you read this section thoroughly before interpreting the detailed
-descriptions.</p>
+
+<p>
+What is commonly known as the LLVM bitcode file format (also, sometimes
+anachronistically known as bytecode) is actually two things: a <a 
+href="#bitstream">bitstream container format</a>
+and an <a href="#llvmir">encoding of LLVM IR</a> into the container format.</p>
+
+<p>
+The bitstream format is an abstract encoding of structured data, like very
+similar to XML in some ways.  Like XML, bitstream files contain tags, and nested
+structures, and you can parse the file without having to understand the tags.
+Unlike XML, the bitstream format is a binary encoding, and unlike XML it
+provides a mechanism for the file to self-describe "abbreviations", which are
+effectively size optimizations for the content.</p>
+
+<p>This document first describes the LLVM bitstream format, then describes the
+record structure used by LLVM IR files.
+</p>
+
 </div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"> <a name="bitstream">Bitstream Format</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+The bitstream format is literally a stream of bits, with a very simple
+structure.  This structure consists of the following concepts:
+</p>
+
+<ul>
+<li>A magic number that identifies the stream.</li>
+<li>Encoding primitives like variable bit-rate integers.</li> 
+<li>Blocks, which define nested content.</li> 
+<li>Data Records, which describe entities within the file.</li> 
+<li>Abbreviations, which specify compression optimizations for the file.</li> 
+</ul>
+
+<p>Note that the <a 
+href="CommandGuide/html/llvm-bcanalyzer.html">llvm-bcanalyzer</a> tool can be
+used to dump and inspect arbitrary bitstreams, which is very useful for
+understanding the encoding.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="magic">Magic Numbers</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM </p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="wellformed">Well-Formedness</a> </div>
+
+<div class="doc_text">
+
+<p>blah
+</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"> <a name="llvmir">LLVM IR Encoding</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p></p>
+
+</div>
+
+
 <!-- *********************************************************************** -->
 <hr>
 <address> <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
 <a href="http://validator.w3.org/check/referer"><img
  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
-<a href="mailto:rspencer@x10sys.com">Reid Spencer</a> and <a
- href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+ <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
 <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
 Last modified: $Date$
 </address>
