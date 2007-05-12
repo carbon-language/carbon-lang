@@ -18,6 +18,7 @@
     <li><a href="#abbrevid">Abbreviation IDs</a></li>
     <li><a href="#blocks">Blocks</a></li>
     <li><a href="#datarecord">Data Records</a></li>
+    <li><a href="#abbreviations">Abbreviations</a></li>
     </ol>
   </li>
   <li><a href="#llvmir">LLVM IR Encoding</a></li>
@@ -213,12 +214,14 @@ The set of builtin abbrev IDs is:
     current block.</li>
 <li>1 - <a href="#ENTER_SUBBLOCK">ENTER_SUBBLOCK</a> - This abbrev ID marks the
     beginning of a new block.</li>
-<li>2 - DEFINE_ABBREV - This defines a new abbreviation.</li>
-<li>3 - UNABBREV_RECORD - This ID specifies the definition of an unabbreviated
-    record.</li>
+<li>2 - <a href="#DEFINE_ABBREV">DEFINE_ABBREV</a> - This defines a new
+    abbreviation.</li>
+<li>3 - <a href="#UNABBREV_RECORD">UNABBREV_RECORD</a> - This ID specifies the
+    definition of an unabbreviated record.</li>
 </ul>
 
-<p>Abbreviation IDs 4 and above are defined by the stream itself.</p>
+<p>Abbreviation IDs 4 and above are defined by the stream itself, and specify
+an <a href="#abbrev_records">abbreviated record encoding</a>.</p>
 
 </div>
 
@@ -303,10 +306,110 @@ multiple of 32-bits.</p>
 </div>
 
 <div class="doc_text">
+<p>
+Data records consist of a record code and a number of (up to) 64-bit integer
+values.  The interpretation of the code and values is application specific and
+there are multiple different ways to encode a record (with an unabbrev record
+or with an abbreviation).  In the LLVM IR format, for example, there is a record
+which encodes the target triple of a module.  The code is MODULE_CODE_TRIPLE,
+and the values of the record are the ascii codes for the characters in the
+string.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="UNABBREV_RECORD">UNABBREV_RECORD
+Encoding</a></div>
+
+<div class="doc_text">
+
+<p><tt>[UNABBREV_RECORD, code<sub>vbr6</sub>, numops<sub>vbr6</sub>,
+       op0<sub>vbr6</sub>, op1<sub>vbr6</sub>, ...]</tt></p>
+
+<p>An UNABBREV_RECORD provides a default fallback encoding, which is both
+completely general and also extremely inefficient.  It can describe an arbitrary
+record, by emitting the code and operands as vbrs.</p>
+
+<p>For example, emitting an LLVM IR target triple as an unabbreviated record
+requires emitting the UNABBREV_RECORD abbrevid, a vbr6 for the
+MODULE_CODE_TRIPLE code, a vbr6 for the length of the string (which is equal to
+the number of operands), and a vbr6 for each character.  Since there are no
+letters with value less than 32, each letter would need to be emitted as at
+least a two-part VBR, which means that each letter would require at least 12
+bits.  This is not an efficient encoding, but it is fully general.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="abbrev_records">Abbreviated Record
+Encoding</a></div>
+
+<div class="doc_text">
+
+<p><tt>[&lt;abbrevid&gt;, fields...]</tt></p>
+
+<p>An abbreviated record is a abbreviation id followed by a set of fields that
+are encoded according to the <a href="#abbreviations">abbreviation 
+definition</a>.  This allows records to be encoded significantly more densely
+than records encoded with the <a href="#UNABBREV_RECORD">UNABBREV_RECORD</a>
+type, and allows the abbreviation types to be specified in the stream itself,
+which allows the files to be completely self describing.  The actual encoding
+of abbreviations is defined below.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="abbreviations">Abbreviations</a>
+</div>
+
+<div class="doc_text">
+<p>
+Abbreviations are an important form of compression for bitstreams.  The idea is
+to specify a dense encoding for a class of records once, then use that encoding
+to emit many records.  It takes space to emit the encoding into the file, but
+the space is recouped (hopefully plus some) when the records that use it are
+emitted.
+</p>
 
 <p>
-blah
+Abbreviations can be determined dynamically per client, per file.  Since the
+abbreviations are stored in the bitstream itself, different streams of the same
+format can contain different sets of abbreviations if the specific stream does
+not need it.  As a concrete example, LLVM IR files usually emit an abbreviation
+for binary operators.  If a specific LLVM module contained no or few binary
+operators, the abbreviation does not need to be emitted.
 </p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="DEFINE_ABBREV">DEFINE_ABBREV
+ Encoding</a></div>
+
+<div class="doc_text">
+
+<p><tt>[DEFINE_ABBREV, numabbrevops<sub>vbr5</sub>, abbrevop0, abbrevop1,
+ ...]</tt></p>
+
+<p>An abbreviation definition consists of the DEFINE_ABBREV abbrevid followed
+by a VBR that specifies the number of abbrev operands, then the abbrev
+operands themselves.  Abbreviation operands come in three forms.  They all start
+with a single bit that indicates whether the abbrev operand is a literal operand
+(when the bit is 1) or an encoding operand (when the bit is 0).</p>
+
+<ol>
+<li>Literal operands - <tt>[1<sub>1</sub>, litvalue<sub>vbr8</sub>]</tt> -
+Literal operands specify that the value in the result
+is always a single specific value.  This specific value is emitted as a vbr8
+after the bit indicating that it is a literal operand.</li>
+<li>Encoding info without data - <tt>[0<sub>1</sub>, encoding<sub>3</sub>]</tt>
+ - blah
+</li>
+<li>Encoding info with data - <tt>[0<sub>1</sub>, encoding<sub>3</sub>, 
+value<sub>vbr5</sub>]</tt> -
+
+</li>
+</ol>
 
 </div>
 
