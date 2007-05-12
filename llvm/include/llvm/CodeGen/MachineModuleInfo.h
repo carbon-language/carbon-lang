@@ -1020,6 +1020,7 @@ private:
   //
   std::vector<GlobalVariable *> TypeInfos;
 
+  Function *Personality;
 public:
   static char ID; // Pass identification, replacement for typeid
 

@@ -963,7 +963,7 @@ public:
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.
   void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
-                                   std::vector<MachineMove> &Moves) {
+                      const std::vector<MachineMove> &Moves) {
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
@@ -971,7 +971,7 @@ public:
     bool IsLocal = BaseLabel && strcmp(BaseLabel, "label") == 0;
 
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
-      MachineMove &Move = Moves[i];
+      const MachineMove &Move = Moves[i];
       unsigned LabelID = Move.getLabelID();
       
       if (LabelID) {
@@ -2356,6 +2356,7 @@ private:
     
     std::vector<MachineMove> Moves;
     RI->getInitialFrameState(Moves);
+
     EmitFrameMoves(NULL, 0, Moves);
 
     Asm->EmitAlignment(2);
@@ -2379,7 +2380,7 @@ private:
     
     EmitLabel("frame_begin", SubprogramCount);
 
-    EmitSectionOffset("frame_common_begin", "section_frame", 0, 0, true, false);
+    EmitSectionOffset("frame_common", "section_frame", 0, 0, true, false);
     Asm->EOL("FDE CIE offset");
 
     EmitReference("func_begin", SubprogramCount);
@@ -2716,11 +2717,20 @@ public:
 class DwarfException : public Dwarf  {
 
 private:
+  struct FunctionEHFrameInfo {
+    std::string FnName;
+    unsigned Number;
+    bool hasCalls;
+    bool hasLandingPads;
+    std::vector<MachineMove> Moves;
 
-  /// didInitial - Flag to indicate if initial emission has been done.
-  ///
-  bool didInitial;
-  
+    FunctionEHFrameInfo(const std::string &FN, unsigned Num, bool hC, bool hL,
+                        const std::vector<MachineMove> &M):
+      FnName(FN), Number(Num), hasCalls(hC), hasLandingPads(hL), Moves(M) { };
+  };
+
+  std::vector<FunctionEHFrameInfo> EHFrames;
+    
   /// shouldEmit - Flag to indicate if debug information should be emitted.
   ///
   bool shouldEmit;
@@ -2728,10 +2738,6 @@ private:
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
   void EmitCommonEHFrame() {
-    // Only do it once.
-    if (didInitial) return;
-    didInitial = true;
-    
     // If there is a personality present then we need to indicate that
     // in the common eh frame.
     Function *Personality = MMI->getPersonality();
@@ -2809,41 +2815,40 @@ private:
     Asm->EOL();
   }
   
-  /// EmitEHFrame - Emit initial exception information.
+  /// EmitEHFrame - Emit function exception frame information.
   ///
-  void EmitEHFrame() {
+  void EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
     // If there is a personality present then we need to indicate that
     // in the common eh frame.
     Function *Personality = MMI->getPersonality();
-    MachineFrameInfo *MFI = MF->getFrameInfo();
 
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 
     // Externally visible entry into the functions eh frame info.
     if (const char *GlobalDirective = TAI->getGlobalDirective())
-      O << GlobalDirective << getAsm()->CurrentFnName << ".eh\n";
+      O << GlobalDirective << EHFrameInfo.FnName << ".eh\n";
     
     // If there are no calls then you can't unwind.
-    if (!MFI->hasCalls()) { 
-      O << getAsm()->CurrentFnName << ".eh = 0\n";
+    if (!EHFrameInfo.hasCalls) { 
+      O << EHFrameInfo.FnName << ".eh = 0\n";
     } else {
-      O << getAsm()->CurrentFnName << ".eh:\n";
+      O << EHFrameInfo.FnName << ".eh:\n";
       
       // EH frame header.
-      EmitDifference("eh_frame_end", SubprogramCount,
-                     "eh_frame_begin", SubprogramCount, true);
+      EmitDifference("eh_frame_end", EHFrameInfo.Number,
+                     "eh_frame_begin", EHFrameInfo.Number, true);
       Asm->EOL("Length of Frame Information Entry");
       
-      EmitLabel("eh_frame_begin", SubprogramCount);
+      EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
       EmitSectionOffset("eh_frame_begin", "section_eh_frame",
-                        SubprogramCount, 0, true, true);
+                        EHFrameInfo.Number, 0, true, true);
       Asm->EOL("FDE CIE offset");
 
-      EmitReference("eh_func_begin", SubprogramCount, true);
+      EmitReference("eh_func_begin", EHFrameInfo.Number, true);
       Asm->EOL("FDE initial location");
-      EmitDifference("eh_func_end", SubprogramCount,
-                     "eh_func_begin", SubprogramCount);
+      EmitDifference("eh_func_end", EHFrameInfo.Number,
+                     "eh_func_begin", EHFrameInfo.Number);
       Asm->EOL("FDE address range");
       
       // If there is a personality and landing pads then point to the language
@@ -2852,8 +2857,8 @@ private:
         Asm->EmitULEB128Bytes(4);
         Asm->EOL("Augmentation size");
         
-        if (!MMI->getLandingPads().empty()) {
-          EmitReference("exception", SubprogramCount, true);
+        if (EHFrameInfo.hasLandingPads) {
+          EmitReference("exception", EHFrameInfo.Number, true);
         } else if(TAI->getAddressSize() == 8) {
           Asm->EmitInt64((int)0);
         } else {
@@ -2867,15 +2872,14 @@ private:
       
       // Indicate locations of function specific  callee saved registers in
       // frame.
-      std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-      EmitFrameMoves("eh_func_begin", SubprogramCount, Moves);
+      EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves);
       
       Asm->EmitAlignment(2);
-      EmitLabel("eh_frame_end", SubprogramCount);
+      EmitLabel("eh_frame_end", EHFrameInfo.Number);
     }
     
     if (const char *UsedDirective = TAI->getUsedDirective())
-      O << UsedDirective << getAsm()->CurrentFnName << ".eh\n\n";
+      O << UsedDirective << EHFrameInfo.FnName << ".eh\n\n";
   }
   
   /// EmitExceptionTable - Emit landpads and actions.
@@ -2916,11 +2920,6 @@ private:
     const LandingPadInfo *Filter = 0;
 
     // Compute sizes for exception table.
-    unsigned SizeHeader = sizeof(int8_t) + // LPStart format
-                          sizeof(int8_t) + // TType format
-                          sizeof(int8_t) + // TType base offset (NEED ULEB128)
-                          sizeof(int8_t) + // Call site format
-                          sizeof(int8_t);  // Call-site table length
     unsigned SizeSites = 0;
     unsigned SizeActions = 0;
 
@@ -2971,19 +2970,26 @@ private:
     
     // Final tallies.
     unsigned SizeTypes = TypeInfos.size() * TAI->getAddressSize();
-    unsigned SizePreType = SizeHeader + SizeSites + SizeActions;
-    unsigned SizeAlign =  (4 - SizePreType) & 3;
-    unsigned TypeOffset = SizePreType +
-                          SizeTypes +
-                          SizeAlign - 
-                          sizeof(int8_t) - // LPStart format
-                          sizeof(int8_t) - // TType format
-                          sizeof(int8_t);  // TType base offset (NEED ULEB128)
+
+    unsigned TypeOffset = sizeof(int8_t) + // Call site format
+                          Asm->SizeULEB128(SizeSites) + // Call-site table length
+                          SizeSites + SizeActions + SizeTypes;
+
+    unsigned TotalSize = sizeof(int8_t) + // LPStart format
+                         sizeof(int8_t) + // TType format
+                         Asm->SizeULEB128(TypeOffset) + // TType base offset
+                         TypeOffset;
+
+    unsigned SizeAlign = (4 - TotalSize) & 3;
 
     // Begin the exception table.
     Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
     O << "GCC_except_table" << SubprogramCount << ":\n";
     Asm->EmitAlignment(2);
+    for (unsigned i = 0; i != SizeAlign; ++i) {
+      Asm->EmitInt8(0);
+      Asm->EOL("Padding");
+    }
     EmitLabel("exception", SubprogramCount);
 
     // Emit the header.
@@ -3053,7 +3059,6 @@ private:
     }
 
     // Emit the type ids.
-    Asm->EmitAlignment(2);
     for (unsigned M = TypeInfos.size(); M; --M) {
       GlobalVariable *GV = TypeInfos[M - 1];
       
@@ -3091,7 +3096,6 @@ public:
   //
   DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T)
-  , didInitial(false)
   , shouldEmit(false)
   {}
   
@@ -3112,6 +3116,12 @@ public:
   /// EndModule - Emit all exception information that should come after the
   /// content.
   void EndModule() {
+    if (!shouldEmit) return;
+    
+    EmitCommonEHFrame();
+    for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
+           E = EHFrames.end(); I != E; ++I)
+      EmitEHFrame(*I);
   }
 
   /// BeginFunction - Gather pre-function exception information.  Assumes being 
@@ -3135,8 +3145,13 @@ public:
 
     EmitLabel("eh_func_end", SubprogramCount);
     EmitExceptionTable();
-    EmitCommonEHFrame();
-    EmitEHFrame();
+
+    // Save EH frame information
+    EHFrames.push_back(FunctionEHFrameInfo(getAsm()->CurrentFnName,
+                                           SubprogramCount,
+                                           MF->getFrameInfo()->hasCalls(),
+                                           !MMI->getLandingPads().empty(),
+                                           MMI->getFrameMoves()));
   }
 };
 

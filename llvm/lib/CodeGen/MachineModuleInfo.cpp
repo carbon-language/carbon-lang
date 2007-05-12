@@ -1475,6 +1475,7 @@ MachineModuleInfo::MachineModuleInfo()
 , RootScope(NULL)
 , FrameMoves()
 , LandingPads()
+, Personality(NULL)
 {}
 MachineModuleInfo::~MachineModuleInfo() {
 
@@ -1685,9 +1686,13 @@ unsigned MachineModuleInfo::addLandingPad(MachineBasicBlock *LandingPad) {
 /// addPersonality - Provide the personality function for the exception
 /// information.
 void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
-                                       Function *Personality) {
+                                       Function *PersFn) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  LP.Personality = Personality;
+  LP.Personality = PersFn;
+
+  // FIXME: Until PR1414 will be fixed, we're using 1 personality function per
+  // module
+  Personality = PersFn;
 }
 
 /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
@@ -1751,7 +1756,11 @@ unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
 /// getLandingPadInfos - Return a reference to the landing pad info for the
 /// current function.
 Function *MachineModuleInfo::getPersonality() const {
-  return !LandingPads.empty() ? LandingPads[0].Personality : NULL;
+  // FIXME: Until PR1414 will be fixed, we're using 1 personality function per
+  // module
+
+  //return !LandingPads.empty() ? LandingPads[0].Personality : NULL;
+  return Personality;
 }
 
 
