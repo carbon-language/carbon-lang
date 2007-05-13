@@ -82,17 +82,23 @@ APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
 APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen, 
              uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
+  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   fromString(numbits, StrStart, slen, radix);
 }
 
 APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix)
   : BitWidth(numbits), VAL(0) {
+  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   assert(!Val.empty() && "String empty?");
   fromString(numbits, Val.c_str(), Val.size(), radix);
 }
 
 APInt::APInt(const APInt& that)
   : BitWidth(that.BitWidth), VAL(0) {
+  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord()) 
     VAL = that.VAL;
   else {
@@ -1242,6 +1248,23 @@ APInt APInt::shl(uint32_t shiftAmt) const {
   return APInt(val, BitWidth).clearUnusedBits();
 }
 
+APInt APInt::rotl(uint32_t rotateAmt) const {
+  // Don't get too fancy, just use existing shift/or facilities
+  APInt hi(*this);
+  APInt lo(*this);
+  hi.shl(rotateAmt);
+  lo.lshr(BitWidth - rotateAmt);
+  return hi | lo;
+}
+
+APInt APInt::rotr(uint32_t rotateAmt) const {
+  // Don't get too fancy, just use existing shift/or facilities
+  APInt hi(*this);
+  APInt lo(*this);
+  lo.lshr(rotateAmt);
+  hi.shl(BitWidth - rotateAmt);
+  return hi | lo;
+}
 
 // Square Root - this method computes and returns the square root of "this".
 // Three mechanisms are used for computation. For small values (<= 5 bits),
@@ -1754,10 +1777,53 @@ APInt APInt::urem(const APInt& RHS) const {
     return APInt(BitWidth, pVal[0] % RHS.pVal[0]);
   }
 
-  // We have to compute it the hard way. Invoke the Knute divide algorithm.
+  // We have to compute it the hard way. Invoke the Knuth divide algorithm.
   APInt Remainder(1,0);
   divide(*this, lhsWords, RHS, rhsWords, 0, &Remainder);
   return Remainder;
+}
+
+void APInt::udivrem(const APInt &LHS, const APInt &RHS, 
+                    APInt &Quotient, APInt &Remainder) {
+  // Get some size facts about the dividend and divisor
+  uint32_t lhsBits  = LHS.getActiveBits();
+  uint32_t lhsWords = !lhsBits ? 0 : (APInt::whichWord(lhsBits - 1) + 1);
+  uint32_t rhsBits  = RHS.getActiveBits();
+  uint32_t rhsWords = !rhsBits ? 0 : (APInt::whichWord(rhsBits - 1) + 1);
+
+  // Check the degenerate cases
+  if (lhsWords == 0) {              
+    Quotient = 0;                // 0 / Y ===> 0
+    Remainder = 0;               // 0 % Y ===> 0
+    return;
+  } 
+  
+  if (lhsWords < rhsWords || LHS.ult(RHS)) { 
+    Quotient = 0;               // X / Y ===> 0, iff X < Y
+    Remainder = LHS;            // X % Y ===> X, iff X < Y
+    return;
+  } 
+  
+  if (LHS == RHS) {
+    Quotient  = 1;              // X / X ===> 1
+    Remainder = 0;              // X % X ===> 0;
+    return;
+  } 
+  
+  if (lhsWords == 1 && rhsWords == 1) {
+    // There is only one word to consider so use the native versions.
+    if (LHS.isSingleWord()) {
+      Quotient = APInt(LHS.getBitWidth(), LHS.VAL / RHS.VAL);
+      Remainder = APInt(LHS.getBitWidth(), LHS.VAL % RHS.VAL);
+    } else {
+      Quotient = APInt(LHS.getBitWidth(), LHS.pVal[0] / RHS.pVal[0]);
+      Remainder = APInt(LHS.getBitWidth(), LHS.pVal[0] % RHS.pVal[0]);
+    }
+    return;
+  }
+
+  // Okay, lets do it the long way
+  divide(LHS, lhsWords, RHS, rhsWords, &Quotient, &Remainder);
 }
 
 void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen, 

@@ -567,6 +567,12 @@ public:
   /// @brief Left-shift function.
   APInt shl(uint32_t shiftAmt) const;
 
+  /// @brief Rotate left by rotateAmt.
+  APInt rotl(uint32_t rotateAmt) const;
+
+  /// @brief Rotate right by rotateAmt.
+  APInt rotr(uint32_t rotateAmt) const;
+
   /// Perform an unsigned divide operation on this APInt by RHS. Both this and
   /// RHS are treated as unsigned quantities for purposes of this division.
   /// @returns a new APInt value containing the division result
@@ -606,6 +612,31 @@ public:
     else if (RHS.isNegative())
       return this->urem(-RHS);
     return this->urem(RHS);
+  }
+
+  /// Sometimes it is convenient to divide two APInt values and obtain both
+  /// the quotient and remainder. This function does both operations in the
+  /// same computation making it a little more efficient.
+  /// @brief Dual division/remainder interface.
+  static void udivrem(const APInt &LHS, const APInt &RHS, 
+                      APInt &Quotient, APInt &Remainder);
+
+  static void sdivrem(const APInt &LHS, const APInt &RHS,
+                      APInt &Quotient, APInt &Remainder)
+  {
+    if (LHS.isNegative()) {
+      if (RHS.isNegative())
+        APInt::udivrem(-LHS, -RHS, Quotient, Remainder);
+      else
+        APInt::udivrem(-LHS, RHS, Quotient, Remainder);
+      Quotient = -Quotient;
+      Remainder = -Remainder;
+    } else if (RHS.isNegative()) {
+      APInt::udivrem(LHS, -RHS, Quotient, Remainder);
+      Quotient = -Quotient;
+    } else {
+      APInt::udivrem(LHS, RHS, Quotient, Remainder);
+    }
   }
 
   /// @returns the bit value at bitPosition
@@ -986,6 +1017,14 @@ public:
   /// @returns the floor log base 2 of this APInt.
   inline uint32_t logBase2() const {
     return BitWidth - 1 - countLeadingZeros();
+  }
+
+  /// @returns the log base 2 of this APInt if its an exact power of two, -1
+  /// otherwise
+  inline int32_t exactLogBase2() const {
+    if (!isPowerOf2())
+      return -1;
+    return logBase2();
   }
 
   /// @brief Compute the square root
