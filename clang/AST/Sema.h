@@ -50,9 +50,6 @@ class Sema : public Action {
   /// all but the last decl will be entered into this.  This is used by the
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
-  
-  /// Constant for "1"
-  IntegerLiteral *constantOne;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   

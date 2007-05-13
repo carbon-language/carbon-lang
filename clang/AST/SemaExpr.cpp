@@ -726,8 +726,7 @@ inline QualType Sema::CheckCommaOperands( // C99 6.5.17
 }
 
 QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
-  QualType resType = UsualArithmeticConversions(op->getType(), 
-                                                constantOne->getType());
+  QualType resType = UsualArithmeticConversions(op->getType(), Context.IntTy);
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1
@@ -741,11 +740,10 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
     Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, resType);
     return QualType(); 
   }
-  // At this point, we know we have a real or pointer type. As a result, the
-  // following predicate is overkill (i.e. it will check for types we know we
-  // don't have in this context). Nevertheless, we model the C99 spec closely.
-  if (!resType.isModifiableLvalue()) {
-    Diag(OpLoc, diag::err_typecheck_not_modifiable, resType);
+  // At this point, we know we have a real or pointer type. Now make sure
+  // the operand is a modifiable lvalue.
+  if (!op->isModifiableLvalue()) {
+    Diag(OpLoc, diag::err_typecheck_invalid_lvalue_incr_decr);
     return QualType();
   }
   return resType;
