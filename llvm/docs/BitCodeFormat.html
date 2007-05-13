@@ -22,7 +22,11 @@
     <li><a href="#stdblocks">Standard Blocks</a></li>
     </ol>
   </li>
-  <li><a href="#llvmir">LLVM IR Encoding</a></li>
+  <li><a href="#llvmir">LLVM IR Encoding</a>
+    <ol>
+    <li><a href="#basics">Basics</a></li>
+    </ol>
+  </li>
 </ol>
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>.
@@ -114,7 +118,8 @@ is used by a reader to know what is contained in the file.</p>
 
 <p>
 A bitstream literally consists of a stream of bits.  This stream is made up of a
-number of primitive values that encode a stream of integer values.  These
+number of primitive values that encode a stream of unsigned integer values.
+These
 integers are are encoded in two ways: either as <a href="#fixedwidth">Fixed
 Width Integers</a> or as <a href="#variablewidth">Variable Width
 Integers</a>.
@@ -505,7 +510,92 @@ abbreviation.
 
 <div class="doc_text">
 
-<p></p>
+<p>LLVM IR is encoded into a bitstream by defining blocks and records.  It uses
+blocks for things like constant pools, functions, symbol tables, etc.  It uses
+records for things like instructions, global variable descriptors, type
+descriptions, etc.  This document does not describe the set of abbreviations
+that the writer uses, as these are fully self-described in the file, and the
+reader is not allowed to build in any knowledge of this.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="basics">Basics</a>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="ir_magic">LLVM IR Magic Number</a></div>
+
+<div class="doc_text">
+
+<p>
+The magic number for LLVM IR files is:
+</p>
+
+<p><tt>['B'<sub>8</sub>, 'C'<sub>8</sub>, 0x0<sub>4</sub>, 0xC<sub>4</sub>,
+0xE<sub>4</sub>, 0xD<sub>4</sub>]</tt></p>
+
+<p>When viewed as bytes, this is "BC 0xC0DE".</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="ir_signed_vbr">Signed VBRs</a></div>
+
+<div class="doc_text">
+
+<p>
+<a href="#variablewidth">Variable Width Integers</a> are an efficient way to
+encode arbitrary sized unsigned values, but is an extremely inefficient way to
+encode signed values (as signed values are otherwise treated as maximally large
+unsigned values).</p>
+
+<p>As such, signed vbr values of a specific width are emitted as follows:</p>
+
+<ul>
+<li>Positive values are emitted as vbrs of the specified width, but with their
+    value shifted left by one.</li>
+<li>Negative values are emitted as vbrs of the specified width, but the negated
+    value is shifted left by one, and the low bit is set.</li>
+</ul>
+
+<p>With this encoding, small positive and small negative values can both be
+emitted efficiently.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="ir_blocks">LLVM IR Blocks</a></div>
+
+<div class="doc_text">
+
+<p>
+LLVM IR is defined with the following blocks:
+</p>
+
+<ul>
+<li>8  - MODULE_BLOCK - This is the top-level block that contains the
+    entire module, and describes a variety of per-module information.</li>
+<li>9  - PARAMATTR_BLOCK - This enumerates the parameter attributes.</li>
+<li>10 - TYPE_BLOCK - This describes all of the types in the module.</li>
+<li>11 - CONSTANTS_BLOCK - This describes constants for a module or
+    function.</li>
+<li>12 - FUNCTION_BLOCK - This describes a function body.</li>
+<li>13 - TYPE_SYMTAB_BLOCK - This describes the type symbol table.</li>
+<li>14 - VALUE_SYMTAB_BLOCK - This describes a value symbol table.</li>
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="MODULE_BLOCK">MODULE_BLOCK Contents</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+</p>
 
 </div>
 
