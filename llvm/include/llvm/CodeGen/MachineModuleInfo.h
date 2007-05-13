@@ -1020,7 +1020,9 @@ private:
   //
   std::vector<GlobalVariable *> TypeInfos;
 
-  Function *Personality;
+  // Personalities - Vector of all personality functions ever seen. Used to emit
+  // common EH frames.
+  std::vector<Function *> Personalities;
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -1201,7 +1203,16 @@ public:
   /// addPersonality - Provide the personality function for the exception
   /// information.
   void addPersonality(MachineBasicBlock *LandingPad, Function *Personality);
-  
+
+  /// getPersonalityIndex - Get index of the current personality function inside
+  /// Personalitites array
+  unsigned getPersonalityIndex() const;
+
+  /// getPersonalities - Return array of personality functions ever seen.
+  const std::vector<Function *>& getPersonalities() const {
+    return Personalities;
+  }
+    
   /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
   ///
   void addCatchTypeInfo(MachineBasicBlock *LandingPad,
@@ -1219,7 +1230,7 @@ public:
   /// pads.
   void TidyLandingPads();
                         
-  /// getLandingPadInfos - Return a reference to the landing pad info for the
+  /// getLandingPads - Return a reference to the landing pad info for the
   /// current function.
   const std::vector<LandingPadInfo> &getLandingPads() const {
     return LandingPads;

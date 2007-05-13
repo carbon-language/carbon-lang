@@ -2720,13 +2720,16 @@ private:
   struct FunctionEHFrameInfo {
     std::string FnName;
     unsigned Number;
+    unsigned PersonalityIndex;
     bool hasCalls;
     bool hasLandingPads;
     std::vector<MachineMove> Moves;
 
-    FunctionEHFrameInfo(const std::string &FN, unsigned Num, bool hC, bool hL,
+    FunctionEHFrameInfo(const std::string &FN, unsigned Num, unsigned P,
+                        bool hC, bool hL,
                         const std::vector<MachineMove> &M):
-      FnName(FN), Number(Num), hasCalls(hC), hasLandingPads(hL), Moves(M) { };
+      FnName(FN), Number(Num), PersonalityIndex(P),
+      hasCalls(hC), hasLandingPads(hL), Moves(M) { };
   };
 
   std::vector<FunctionEHFrameInfo> EHFrames;
@@ -2737,11 +2740,7 @@ private:
   
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
-  void EmitCommonEHFrame() {
-    // If there is a personality present then we need to indicate that
-    // in the common eh frame.
-    Function *Personality = MMI->getPersonality();
-
+  void EmitCommonEHFrame(const Function *Personality, unsigned Index) {
     // Size and sign of stack growth.
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
@@ -2750,19 +2749,19 @@ private:
 
     // Begin eh frame section.
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
-    O << "EH_frame:\n";
-    EmitLabel("section_eh_frame", 0);
+    O << "EH_frame" << Index << ":\n";
+    EmitLabel("section_eh_frame", Index);
 
     // Define base labels.
-    EmitLabel("eh_frame_common", 0);
+    EmitLabel("eh_frame_common", Index);
     
     // Define the eh frame length.
-    EmitDifference("eh_frame_common_end", 0,
-                   "eh_frame_common_begin", 0, true);
+    EmitDifference("eh_frame_common_end", Index,
+                   "eh_frame_common_begin", Index, true);
     Asm->EOL("Length of Common Information Entry");
 
     // EH frame header.
-    EmitLabel("eh_frame_common_begin", 0);
+    EmitLabel("eh_frame_common_begin", Index);
     Asm->EmitInt32((int)0);
     Asm->EOL("CIE Identifier Tag");
     Asm->EmitInt8(DW_CIE_VERSION);
@@ -2810,7 +2809,7 @@ private:
     EmitFrameMoves(NULL, 0, Moves);
 
     Asm->EmitAlignment(2);
-    EmitLabel("eh_frame_common_end", 0);
+    EmitLabel("eh_frame_common_end", Index);
     
     Asm->EOL();
   }
@@ -2818,10 +2817,6 @@ private:
   /// EmitEHFrame - Emit function exception frame information.
   ///
   void EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
-    // If there is a personality present then we need to indicate that
-    // in the common eh frame.
-    Function *Personality = MMI->getPersonality();
-
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 
     // Externally visible entry into the functions eh frame info.
@@ -2842,7 +2837,8 @@ private:
       EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
       EmitSectionOffset("eh_frame_begin", "section_eh_frame",
-                        EHFrameInfo.Number, 0, true, true);
+                        EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
+                        true, true);
       Asm->EOL("FDE CIE offset");
 
       EmitReference("eh_func_begin", EHFrameInfo.Number, true);
@@ -2853,7 +2849,7 @@ private:
       
       // If there is a personality and landing pads then point to the language
       // specific data area in the exception table.
-      if (Personality) {
+      if (EHFrameInfo.PersonalityIndex) {
         Asm->EmitULEB128Bytes(4);
         Asm->EOL("Augmentation size");
         
@@ -3117,8 +3113,11 @@ public:
   /// content.
   void EndModule() {
     if (!shouldEmit) return;
+
+    const std::vector<Function *> Personalities = MMI->getPersonalities();
+    for (unsigned i =0; i < Personalities.size(); ++i)
+      EmitCommonEHFrame(Personalities[i], i);
     
-    EmitCommonEHFrame();
     for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
            E = EHFrames.end(); I != E; ++I)
       EmitEHFrame(*I);
@@ -3149,6 +3148,7 @@ public:
     // Save EH frame information
     EHFrames.push_back(FunctionEHFrameInfo(getAsm()->CurrentFnName,
                                            SubprogramCount,
+                                           MMI->getPersonalityIndex(),
                                            MF->getFrameInfo()->hasCalls(),
                                            !MMI->getLandingPads().empty(),
                                            MMI->getFrameMoves()));
