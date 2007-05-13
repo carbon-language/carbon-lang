@@ -1110,6 +1110,16 @@ private:
   ///
   bool shouldEmit;
 
+  struct FunctionDebugFrameInfo {
+    unsigned Number;
+    std::vector<MachineMove> Moves;
+
+    FunctionDebugFrameInfo(unsigned Num, const std::vector<MachineMove> &M):
+      Number(Num), Moves(M) { };
+  };
+
+  std::vector<FunctionDebugFrameInfo> DebugFrames;
+  
 public:
   
   /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
@@ -1957,7 +1967,7 @@ private:
     // Dwarf sections base addresses.
     if (TAI->doesDwarfRequireFrameSection()) {
       Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
-      EmitLabel("section_frame", 0);
+      EmitLabel("section_debug_frame", 0);
     }
     Asm->SwitchToDataSection(TAI->getDwarfInfoSection());
     EmitLabel("section_info", 0);
@@ -1982,9 +1992,6 @@ private:
     EmitLabel("text_begin", 0);
     Asm->SwitchToDataSection(TAI->getDataSection());
     EmitLabel("data_begin", 0);
-
-    // Emit common frame information.
-    EmitInitialDebugFrame();
   }
 
   /// EmitDIE - Recusively Emits a debug information entry.
@@ -2321,9 +2328,9 @@ private:
     Asm->EOL();
   }
     
-  /// EmitInitialDebugFrame - Emit common frame info into a debug frame section.
+  /// EmitCommonDebugFrame - Emit common frame info into a debug frame section.
   ///
-  void EmitInitialDebugFrame() {
+  void EmitCommonDebugFrame() {
     if (!TAI->doesDwarfRequireFrameSection())
       return;
 
@@ -2335,12 +2342,12 @@ private:
     // Start the dwarf frame section.
     Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
 
-    EmitLabel("frame_common", 0);
-    EmitDifference("frame_common_end", 0,
-                   "frame_common_begin", 0, true);
+    EmitLabel("debug_frame_common", 0);
+    EmitDifference("debug_frame_common_end", 0,
+                   "debug_frame_common_begin", 0, true);
     Asm->EOL("Length of Common Information Entry");
 
-    EmitLabel("frame_common_begin", 0);
+    EmitLabel("debug_frame_common_begin", 0);
     Asm->EmitInt32((int)DW_CIE_ID);
     Asm->EOL("CIE Identifier Tag");
     Asm->EmitInt8(DW_CIE_VERSION);
@@ -2360,41 +2367,40 @@ private:
     EmitFrameMoves(NULL, 0, Moves);
 
     Asm->EmitAlignment(2);
-    EmitLabel("frame_common_end", 0);
+    EmitLabel("debug_frame_common_end", 0);
     
     Asm->EOL();
   }
 
   /// EmitFunctionDebugFrame - Emit per function frame info into a debug frame
   /// section.
-  void EmitFunctionDebugFrame() {
+  void EmitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
     if (!TAI->doesDwarfRequireFrameSection())
       return;
        
     // Start the dwarf frame section.
     Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
     
-    EmitDifference("frame_end", SubprogramCount,
-                   "frame_begin", SubprogramCount, true);
+    EmitDifference("debug_frame_end", DebugFrameInfo.Number,
+                   "debug_frame_begin", DebugFrameInfo.Number, true);
     Asm->EOL("Length of Frame Information Entry");
     
-    EmitLabel("frame_begin", SubprogramCount);
+    EmitLabel("debug_frame_begin", DebugFrameInfo.Number);
 
-    EmitSectionOffset("frame_common", "section_frame", 0, 0, true, false);
+    EmitSectionOffset("debug_frame_common", "section_debug_frame",
+                      0, 0, true, false);
     Asm->EOL("FDE CIE offset");
 
-    EmitReference("func_begin", SubprogramCount);
+    EmitReference("func_begin", DebugFrameInfo.Number);
     Asm->EOL("FDE initial location");
-    EmitDifference("func_end", SubprogramCount,
-                   "func_begin", SubprogramCount);
+    EmitDifference("func_end", DebugFrameInfo.Number,
+                   "func_begin", DebugFrameInfo.Number);
     Asm->EOL("FDE address range");
     
-    std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-    
-    EmitFrameMoves("func_begin", SubprogramCount, Moves);
+    EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves);
     
     Asm->EmitAlignment(2);
-    EmitLabel("frame_end", SubprogramCount);
+    EmitLabel("debug_frame_end", DebugFrameInfo.Number);
 
     Asm->EOL();
   }
@@ -2636,7 +2642,15 @@ public:
       Asm->SwitchToTextSection(SectionMap[i].c_str());
       EmitLabel("section_end", i);
     }
-    
+
+    // Emit common frame information.
+    EmitCommonDebugFrame();
+
+    // Emit function debug frame information
+    for (std::vector<FunctionDebugFrameInfo>::iterator I = DebugFrames.begin(),
+           E = DebugFrames.end(); I != E; ++I)
+      EmitFunctionDebugFrame(*I);
+
     // Compute DIE offsets and sizes.
     SizeAndOffsets();
     
@@ -2705,9 +2719,9 @@ public:
     
     // Construct scopes for subprogram.
     ConstructRootScope(MMI->getRootScope());
-    
-    // Emit function frame information.
-    EmitFunctionDebugFrame();
+
+    DebugFrames.push_back(FunctionDebugFrameInfo(SubprogramCount,
+                                                 MMI->getFrameMoves()));
   }
 };
 
