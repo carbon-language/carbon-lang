@@ -19,6 +19,7 @@
     <li><a href="#blocks">Blocks</a></li>
     <li><a href="#datarecord">Data Records</a></li>
     <li><a href="#abbreviations">Abbreviations</a></li>
+    <li><a href="#stdblocks">Standard Blocks</a></li>
     </ol>
   </li>
   <li><a href="#llvmir">LLVM IR Encoding</a></li>
@@ -403,16 +404,100 @@ Literal operands specify that the value in the result
 is always a single specific value.  This specific value is emitted as a vbr8
 after the bit indicating that it is a literal operand.</li>
 <li>Encoding info without data - <tt>[0<sub>1</sub>, encoding<sub>3</sub>]</tt>
- - blah
+ - Operand encodings that do not have extra data are just emitted as their code.
 </li>
 <li>Encoding info with data - <tt>[0<sub>1</sub>, encoding<sub>3</sub>, 
-value<sub>vbr5</sub>]</tt> -
-
+value<sub>vbr5</sub>]</tt> - Operand encodings that do have extra data are
+emitted as their code, followed by the extra data.
 </li>
 </ol>
 
+<p>The possible operand encodings are:</p>
+
+<ul>
+<li>1 - Fixed - The field should be emitted as a <a 
+    href="#fixedwidth">fixed-width value</a>, whose width
+    is specified by the encoding operand.</li>
+<li>2 - VBR - The field should be emitted as a <a 
+    href="#variablewidth">variable-width value</a>, whose width
+    is specified by the encoding operand.</li>
+<li>3 - Array - This field is an array of values.  The element type of the array
+    is specified by the next encoding operand.</li>
+<li>4 - Char6 - This field should be emitted as a <a href="#char6">char6-encoded
+    value</a>.</li>
+</ul>
+
+<p>For example, target triples in LLVM modules are encoded as a record of the
+form <tt>[TRIPLE, 'a', 'b', 'c', 'd']</tt>.  Consider if the bitstream emitted
+the following abbrev entry:</p>
+
+<ul>
+<li><tt>[0, Fixed, 4]</tt></li>
+<li><tt>[0, Array]</tt></li>
+<li><tt>[0, Char6]</tt></li>
+</ul>
+
+<p>When emitting a record with this abbreviation, the above entry would be
+emitted as:</p>
+
+<p><tt>[4<sub>abbrevwidth</sub>, 2<sub>4</sub>, 4<sub>vbr6</sub>,
+   0<sub>6</sub>, 1<sub>6</sub>, 2<sub>6</sub>, 3<sub>6</sub>]</tt></p>
+
+<p>These values are:</p>
+
+<ol>
+<li>The first value, 4, is the abbreviation ID for this abbreviation.</li>
+<li>The second value, 2, is the code for TRIPLE in LLVM IR files.</li>
+<li>The third value, 4, is the length of the array.</li>
+<li>The rest of the values are the char6 encoded values for "abcd".</li>
+</ol>
+
+<p>With this abbreviation, the triple is emitted with only 37 bits (assuming a
+abbrev id width of 3).  Without the abbreviation, significantly more space would
+be required to emit the target triple.  Also, since the TRIPLE value is not
+emitted as a literal in the abbreviation, the abbreviation can also be used for
+any other string value.
+</p>
+
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection"><a name="stdblocks">Standard Blocks</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+In addition to the basic block structure and record encodings, the bitstream
+also defines specific builtin block types.  These block types specify how the
+stream is to be decoded or other metadata.  In the future, new standard blocks
+may be added.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="BLOCKINFO">#0 - BLOCKINFO
+Block</a></div>
+
+<div class="doc_text">
+
+<p>The BLOCKINFO block allows the description of metadata for other blocks.  The
+  currently specified records are:</p>
+ 
+<ul>
+<li><tt>[SETBID (#1), blockid]</tt></li>
+<li><tt>[DEFINE_ABBREV, ...]</tt></li>
+</ul>
+
+<p>
+The SETBID record indicates which block ID is being described.  The standard
+DEFINE_ABBREV record specifies an abbreviation.  The abbreviation is associated
+with the record ID, and any records with matching ID automatically get the
+abbreviation. 
+</p>
+
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="llvmir">LLVM IR Encoding</a></div>
