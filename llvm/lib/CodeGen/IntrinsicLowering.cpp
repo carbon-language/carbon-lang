@@ -568,7 +568,7 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Value* nott2 = BinaryOperator::createXor(t2, ValMask, "", forward);
     Value* t3    = BinaryOperator::createShl(Rep4, Lo, "", forward);
     Value* t4    = BinaryOperator::createAnd(nott2, Val, "", forward);
-    Value* FRslt = BinaryOperator::createOr(t3, t4, "", forward);
+    Value* FRslt = BinaryOperator::createOr(t3, t4, "part_set_fwd", forward);
     new ReturnInst(FRslt, forward);
 
     // Block "reverse"
@@ -587,7 +587,7 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Value* t11   = BinaryOperator::createSub(RepBitWidth, Hi, "", reverse);
     Value* t13   = BinaryOperator::createLShr(Rep4, t11, "",reverse);
     Value* t14   = BinaryOperator::createOr(t10, t9, "", reverse);
-    Value* RRslt = BinaryOperator::createOr(t14, t13, "", reverse);
+    Value* RRslt = BinaryOperator::createOr(t14, t13, "part_set_rvrs", reverse);
     new ReturnInst(RRslt, reverse);
   }
 
