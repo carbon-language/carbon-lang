@@ -8,8 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the following classes:
-//  1. DominatorTree: Represent the ImmediateDominator as an explicit tree
-//     structure.
+//  1. DominatorTree: Represent dominators as an explicit tree structure.
 //  2. ETForest: Efficient data structure for dominance comparisons and 
 //     nearest-common-ancestor queries.
 //  3. DominanceFrontier: Calculate and hold the dominance frontier for a
@@ -17,7 +16,7 @@
 //
 //  These data structures are listed in increasing order of complexity.  It
 //  takes longer to calculate the dominator frontier, for example, than the
-//  ImmediateDominator mapping.
+//  DominatorTree mapping.
 //
 //===----------------------------------------------------------------------===//
 
