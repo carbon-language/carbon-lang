@@ -118,7 +118,8 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   }
 }
 
-/// Nonarray expressions that can be lvalues:
+/// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or an
+/// incomplete type other than void. Nonarray expressions that can be lvalues:
 ///  - name, where name must be a variable
 ///  - e[i]
 ///  - (e), where e must be an lvalue
@@ -127,32 +128,55 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 ///  - *e, the type of e cannot be a function type
 ///  - string-constant
 ///
-bool Expr::isModifiableLvalue() {
+bool Expr::isLvalue() {
+  // first, check the type (C99 6.3.2.1)
+  if (!TR->isObjectType())
+    return false;
+  if (TR->isIncompleteType() && TR->isVoidType())
+    return false;
+  
+  // now, check the expression
   switch (getStmtClass()) {
-  case StringLiteralClass:
+  case StringLiteralClass: // C99 6.5.1p4
     return true;
   case ArraySubscriptExprClass:
     return true;
-  case DeclRefExprClass:
+  case DeclRefExprClass: // C99 6.5.1p2
     const DeclRefExpr *d = cast<DeclRefExpr>(this);
-    if (const VarDecl *vd = dyn_cast<VarDecl>(d->getDecl()))
-      if (vd->getType().isModifiableLvalue())
-        return true;
-    return false;
-  case MemberExprClass:
+    return isa<VarDecl>(d->getDecl());
+  case MemberExprClass: // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
     if (m->isArrow())
       return true;
-    return m->getBase()->isModifiableLvalue(); // make sure "." is an lvalue
-  case UnaryOperatorClass:
+    return m->getBase()->isLvalue();
+  case UnaryOperatorClass: // C99 6.5.3p4
     const UnaryOperator *u = cast<UnaryOperator>(this);
-    return u->getOpcode() == UnaryOperator::Deref &&
-           u->getType().isModifiableLvalue(); // C99 6.5.3.2p4
-  case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isModifiableLvalue();
+    return u->getOpcode() == UnaryOperator::Deref;
+  case ParenExprClass: // C99 6.5.1p5
+    return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
   default: 
     return false;
   }
+}
+
+/// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
+/// does not have an incomplete type, does not have a const-qualified type, and
+/// if it is a structure or union, does not have any member (including, 
+/// recursively, any member or element of all contained aggregates or unions)
+/// with a const-qualified type.
+bool Expr::isModifiableLvalue() {
+  if (!isLvalue())
+    return false;
+  
+  if (TR.isConstQualified())
+    return false;
+  if (TR->isArrayType())
+    return false;
+  if (TR->isIncompleteType())
+    return false;
+  if (const RecordType *r = dyn_cast<RecordType>(TR.getCanonicalType()))
+    return r->isModifiableLvalue();
+  return true;    
 }
 
 bool Expr::isConstantExpr() const {

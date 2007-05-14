@@ -780,18 +780,10 @@ static Decl *getPrimaryDeclaration(Expr *e) {
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Decl *dcl = getPrimaryDeclaration(op);
   
-  if (!op->isModifiableLvalue()) {
+  if (!op->isLvalue()) { // 
     if (dcl && isa<FunctionDecl>(dcl))
       ;  // C99 6.5.3.2p1: Allow function designators.
     else {
-      /* FIXME: The following produces an (incorrect) error. The 
-         Type::isModifiableLvalue() predicate is causing problems.
-      
-        const char **cpp;
-        const char c = 'A';
-
-        int main() { *cpp = &c;  // valid }
-     */
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof);
       return QualType();
     }

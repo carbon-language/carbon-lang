@@ -304,17 +304,6 @@ bool Type::isIncompleteType() const {
   }
 }
 
-/// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
-/// an incomplete type other than void.
-bool Type::isLvalue() const {
-  if (isObjectType())
-    return true;
-  else if (isIncompleteType())
-    return isVoidType() ? false : true;
-  else 
-    return false;    
-}
-
 bool Type::isPromotableIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     switch (BT->getKind()) {
@@ -330,32 +319,6 @@ bool Type::isPromotableIntegerType() const {
     }
   }
   return false;
-}
-
-/// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
-/// does not have an incomplete type, does not have a const-qualified type, and
-/// if it is a structure or union, does not have any member (including, 
-/// recursively, any member or element of all contained aggregates or unions)
-/// with a const-qualified type.
-
-bool QualType::isModifiableLvalue() const {
-  if (isConstQualified())
-    return false;
-  else
-    return getTypePtr()->isModifiableLvalue();
-}
-
-bool Type::isModifiableLvalue() const {
-  if (!isLvalue())
-    return false;
-    
-  if (isArrayType())
-    return false;
-  if (isIncompleteType())
-    return false;
-  if (const RecordType *r = dyn_cast<RecordType>(this))
-    return r->isModifiableLvalue();
-  return true;    
 }
 
 const char *BuiltinType::getName() const {

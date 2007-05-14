@@ -112,13 +112,6 @@ public:
   bool operator!=(const QualType &RHS) const {
     return ThePtr != RHS.ThePtr;
   }
-  /// isModifiableLvalue - C99 6.3.2.1p1: returns true if the type is an lvalue
-  /// that does not have array type, does not have an incomplete type, does
-  /// not have a const-qualified type, and if it is a struct/union, does not 
-  /// have any member (including, recursively, any member or element of all
-  /// contained aggregates or unions) with a const-qualified type.
-  bool isModifiableLvalue() const;
-    
   void getAsString(std::string &S) const;
   void dump(const char *s = 0) const;
 
@@ -227,8 +220,6 @@ public:
   bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
   bool isAggregateType() const;    // C99 6.2.5p21 (arrays, structures)
   
-  bool isLvalue() const;         // C99 6.3.2.1
-  
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
   bool isSignedIntegerType() const;     // C99 6.2.5p4
@@ -242,11 +233,7 @@ public:
   static bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
   static bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
-private:
-  // this forces clients to use isModifiableLvalue on QualType, the class that 
-  // knows if the type is const. This predicate is a helper to QualType. 
-  bool isModifiableLvalue() const; // C99 6.3.2.1p1
-  
+private:  
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;
 public:

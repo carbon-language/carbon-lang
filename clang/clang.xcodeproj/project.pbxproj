@@ -171,7 +171,7 @@
 		1A30A9E80B93A4C800201A91 /* ExprCXX.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ExprCXX.h; path = clang/AST/ExprCXX.h; sourceTree = "<group>"; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
-		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; };
 		DE06BECA0A854E4B0050E87E /* Scope.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Scope.h; path = clang/Parse/Scope.h; sourceTree = "<group>"; };

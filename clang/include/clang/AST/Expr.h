@@ -35,15 +35,23 @@ protected:
 public:  
   QualType getType() const { return TR; }
   
-  /// isModifiableLvalue - return true if the expression is one of the following:
+  /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
+  /// incomplete type other than void. Nonarray expressions that can be lvalues:
   ///  - name, where name must be a variable
   ///  - e[i]
   ///  - (e), where e must be an lvalue
   ///  - e.name, where e must be an lvalue
   ///  - e->name
-  ///  - *e, where e must be an lvalue (pointer-to-function isn't an lvalue)
+  ///  - *e, the type of e cannot be a function type
   ///  - string-constant
   ///
+  bool isLvalue();
+  
+  /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
+  /// does not have an incomplete type, does not have a const-qualified type,
+  /// and if it is a structure or union, does not have any member (including, 
+  /// recursively, any member or element of all contained aggregates or unions)
+  /// with a const-qualified type.
   bool isModifiableLvalue();
   
   bool isNullPointerConstant() const;
