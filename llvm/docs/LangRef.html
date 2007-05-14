@@ -4700,15 +4700,15 @@ up to that size.</p>
 are replaced with corresponding bits from <tt>%repl</tt>. That is the 0th bit
 in <tt>%repl</tt> replaces the <tt>%lo</tt>th bit in <tt>%val</tt> and etc. up
 to the <tt>%hi</tt>th bit. 
-<p>In reverse mode, a similar computation is made except that the bits replaced
-wrap around to include both the highest and lowest bits. For example, if a
-16 bit value is being replaced then <tt>%lo=8</tt> and <tt>%hi=4</tt> would
-cause these bits to be set: <tt>0xFF1F</tt>.</p>
+<p>In reverse mode, a similar computation is made except that the bits are
+reversed.  That is, the <tt>0</tt>th bit in <tt>%repl</tt> replaces the 
+<tt>%hi</tt> bit in <tt>%val</tt> and etc. down to the <tt>%lo</tt>th bit.
 <h5>Examples:</h5>
 <pre>
   llvm.part.set(0xFFFF, 0, 4, 7) -&gt; 0xFF0F
-  llvm.part.set(0xFFFF, 0, 7, 4) -&gt; 0x0060
-  llvm.part.set(0xFFFF, 0, 8, 3) -&gt; 0x00F0
+  llvm.part.set(0xFFFF, 0, 7, 4) -&gt; 0xFF0F
+  llvm.part.set(0xFFFF, 1, 7, 4) -&gt; 0xFF8F
+  llvm.part.set(0xFFFF, F, 8, 3) -&gt; 0xFFE7
   llvm.part.set(0xFFFF, 0, 3, 8) -&gt; 0xFE07
 </pre>
 </div>
