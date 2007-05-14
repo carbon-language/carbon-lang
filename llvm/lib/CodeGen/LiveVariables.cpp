@@ -314,6 +314,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
     }
     PhysRegInfo[SubReg] = MI;
     PhysRegUsed[SubReg] = false;
+    PhysRegPartUse[SubReg] = NULL;
   }
 
   if (MI)
@@ -328,6 +329,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
         MI->addRegOperand(SuperReg, true/*IsDef*/,true/*IsImp*/);
         PhysRegInfo[SuperReg] = MI;
         PhysRegUsed[SuperReg] = false;
+        PhysRegPartUse[SuperReg] = NULL;
       } else {
         // Remember this partial def.
         PhysRegPartDef[SuperReg].push_back(MI);
