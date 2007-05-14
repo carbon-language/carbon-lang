@@ -1,7 +1,6 @@
 ; For PR1099
 ; RUN: llvm-as < %s | llc -march=c | \
-; RUN:   grep {return ((((((unsigned short )llvm_cbe_tmp2&65535U) == ((unsigned
-short )llvm_cbe_b_0_0_val&65535U))) ? (1) : (0)))}
+; RUN:   grep {return ((((llvm_cbe_tmp2 == llvm_cbe_b_0_0_val)) ? (1) : (0)))}
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8"
