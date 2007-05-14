@@ -1249,6 +1249,8 @@ APInt APInt::shl(uint32_t shiftAmt) const {
 }
 
 APInt APInt::rotl(uint32_t rotateAmt) const {
+  if (rotateAmt == 0)
+    return *this;
   // Don't get too fancy, just use existing shift/or facilities
   APInt hi(*this);
   APInt lo(*this);
@@ -1258,6 +1260,8 @@ APInt APInt::rotl(uint32_t rotateAmt) const {
 }
 
 APInt APInt::rotr(uint32_t rotateAmt) const {
+  if (rotateAmt == 0)
+    return *this;
   // Don't get too fancy, just use existing shift/or facilities
   APInt hi(*this);
   APInt lo(*this);
