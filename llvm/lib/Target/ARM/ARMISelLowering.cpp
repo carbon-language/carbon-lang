@@ -792,7 +792,7 @@ SDOperand ARMTargetLowering::LowerGlobalAddressELF(SDOperand Op,
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
   if (RelocM == Reloc::PIC_) {
-    bool UseGOTOFF = GV->hasInternalLinkage();
+    bool UseGOTOFF = !GV->isDeclaration();
     ARMConstantPoolValue *CPV =
       new ARMConstantPoolValue(GV, ARMCP::CPValue, UseGOTOFF ? "GOTOFF":"GOT");
     SDOperand CPAddr = DAG.getTargetConstantPool(CPV, PtrVT, 2);
