@@ -4655,16 +4655,11 @@ only the <tt>%hiBit - %loBit</tt> bits set, as follows:</p>
   <li>A mask of the retained bits is created by shifting a -1 value.</li>
   <li>The mask is ANDed with <tt>%val</tt> to produce the result.
 </ol>
-<p>In reverse mode, a similar computation is made except that:</p>
-<ol>
-  <li>The bits selected wrap around to include both the highest and lowest bits.
-  For example, part.select(i16 X, 4, 7) selects bits from X with a mask of 
-  0x00F0 (forwards case) while part.select(i16 X, 8, 3) selects bits from X 
-  with a mask of 0xFF0F.</li>
-  <li>The bits returned in the reverse case are reversed. So, if X has the value
-  0x6ACF and we apply part.select(i16 X, 8, 3) to it, we get back the value
-  0x0A6F.</li>
-</ol>
+<p>In reverse mode, a similar computation is made except that the bits are
+returned in the reverse order. So, for example, if <tt>X</tt> has the value
+<tt>i16 0x0ACF (101011001111)</tt> and we apply 
+<tt>part.select(i16 X, 8, 3)</tt> to it, we get back the value 
+<tt>i16 0x0026 (000000100110)</tt>.</p>
 </div>
 
 <div class="doc_subsubsection">
