@@ -90,11 +90,39 @@ release series, like we did within the 1.x series.</li>
 </div>
 
 <!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="majorchanges">Major Changes</a></div>
+<div class="doc_text">
+<p>blah
+</p>
+
+<ul>
+<li>ding dong llvm-gcc3 is dead</li>
+<li>bytecode -> bitcode</li>
+</ul>
+  
+</div>
+
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="llvmgccfeatures">llvm-gcc
+Improvements</a></div>
+<div class="doc_text">
+<p>New features include:
+</p>
+
+<ul>
+<li>many new supported things</li>
+<li>easier to configure on linux</li>
+</ul>
+  
+</div>
+
+<!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="optimizer">Optimizer
 Improvements</a></div>
 <div class="doc_text">
-<p>The mid-level optimizer is now faster and produces better code in many cases.
-  Significant changes include:</p>
+<p>New features include:
+</p>
 
 <ul>
 <li></li>
@@ -108,8 +136,7 @@ Generator Enhancements</a></div>
 
 <div class="doc_text">
 <p>
-The LLVM Target-Independent code generator now supports more target features and
-optimizes many cases more aggressively.  New features include:
+New features include:
 </p>
 
 <ul>
@@ -131,6 +158,22 @@ LLVM 2.0:</p>
 </ul>
 
 </div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="specifictargets">Target-Specific
+Improvements</a></div>
+
+<div class="doc_text">
+
+<p>New features include:
+</p>
+
+<ul>
+<li></li>
+</ul>
+  
+</div>
+
 
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="other">Other Improvements</a></div>
@@ -248,6 +291,26 @@ implement ordered FP comparisons</a>.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
+  <a name="arm-be">Known problems with the ARM back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>The Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
+processors, any thumb program compiled with LLVM crashes or produces wrong
+results. (<a href="http://llvm.org/PR1388">PR1388</a>)</li>
+<li>Compilation for ARM Linux OABI (old ABI) is supported, but not fully tested.
+</li>
+<li>QEMU-ARM (<= 0.9.0) wrongly executes programs compiled with LLVM. A non-affected QEMU version must be used or this
+<a href="http://cvs.savannah.nongnu.org/viewcvs/qemu/target-arm/translate.c?root=qemu&r1=1.46&r2=1.47&makepatch=1&diff_format=h">
+patch</a> must be applied on QEMU.</li>
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
   <a name="sparc-be">Known problems with the SPARC back-end</a>
 </div>
 
@@ -256,36 +319,6 @@ implement ordered FP comparisons</a>.</li>
 <ul>
 <li>The SPARC backend only supports the 32-bit SPARC ABI (-m32), it does not
     support the 64-bit SPARC ABI (-m64).</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="c-be">Known problems with the C back-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-
-<li>The C back-end produces code that violates the ANSI C Type-Based Alias
-Analysis rules.  As such, special options may be necessary to compile the code
-(for example, GCC requires the <tt>-fno-strict-aliasing</tt> option).  This
-problem probably cannot be fixed.</li>
-
-<li><a href="http://llvm.org/PR56">Zero arg vararg functions are not 
-supported</a>.  This should not affect LLVM produced by the C or C++ 
-frontends.</li>
-
-<li>The C backend does not correctly implement the <a 
-href="LangRef.html#int_stacksave"><tt>llvm.stacksave</tt></a> or
-<a href="LangRef.html#int_stackrestore"><tt>llvm.stackrestore</tt></a> 
-intrinsics.  This means that some code compiled by it can run out of stack
-space if they depend on these (e.g. C99 varargs).</li>
-
-<li><a href="http://llvm.org/PR802">The C backend does not support inline
-    assembly code</a>.</li>
 </ul>
 
 </div>
@@ -338,36 +371,18 @@ programs.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="arm-be">Known problems with the ARM back-end</a>
+  <a name="c-be">Known problems with the C back-end</a>
 </div>
 
 <div class="doc_text">
 
 <ul>
-<li>The Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
-processors, any thumb program compiled with LLVM crashes or produces wrong
-results. (<a href="http://llvm.org/PR1388">PR1388</a>)</li>
-<li>Compilation for ARM Linux OABI (old ABI) is supported, but not fully tested.
-</li>
-<li>QEMU-ARM (<= 0.9.0) wrongly executes programs compiled with LLVM. A non-affected QEMU version must be used or this
-<a href="http://cvs.savannah.nongnu.org/viewcvs/qemu/target-arm/translate.c?root=qemu&r1=1.46&r2=1.47&makepatch=1&diff_format=h">
-patch</a> must be applied on QEMU.</li>
+<li><a href="http://llvm.org/PR802">The C backend does not support inline
+    assembly code</a>.</li>
 </ul>
 
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="core">Known problems with the LLVM Core</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-  <li>In the JIT, <tt>dlsym()</tt> on a symbol compiled by the JIT will not
-  work.</li>
-</ul>
-</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -379,16 +394,12 @@ patch</a> must be applied on QEMU.</li>
 
 <div class="doc_text">
 
-<p>
+<p>llvm-gcc4 does not currently support <a href="http://llvm.org/PR869">Link-Time 
+Optimization</a> on most platforms "out-of-the-box".  Please inquire on the 
+llvmdev mailing list if you are interested.</p>
 
-<p>llvm-gcc4 is far more stable and produces better code than llvm-gcc3, but
-does not currently support <a href="http://llvm.org/PR869">Link-Time 
-Optimization</a> or <a href="http://llvm.org/PR870">C++ Exception Handling</a>,
-which llvm-gcc3 does.</p>
-
-<p>llvm-gcc4 does not support the <a href="http://llvm.org/PR947">GCC indirect
-goto extension</a>, but llvm-gcc3 does.</p>
-
+<p>FIXME: the list of supported stuff below needs to be updated.  We do support
+tls now, what else??</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -531,20 +542,15 @@ lists, please let us know (also including whether or not they work).</p>
 
 <div class="doc_text">
 
-<p>For this release, the C++ front-end is considered to be fully
+<p>The C++ front-end is considered to be fully
 tested and works for a number of non-trivial programs, including LLVM
-itself.</p>
+itself, Qt, Mozilla, etc.</p>
 
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  Notes
-</div>
-
-<div class="doc_text">
 <ul>
-<li>llvm-gcc4 does not support C++ exception handling at all yet.</li>
+<li>llvm-gcc4 only has partial support for <a href="http://llvm.org/PR870">C++ 
+Exception Handling</a>, and it is not enabled by default.</li>
+
+<!-- NO EH Support!
 
 <li>Destructors for local objects are not always run when a <tt>longjmp</tt> is
     performed. In particular, destructors for objects in the <tt>longjmp</tt>ing
@@ -562,7 +568,7 @@ itself.</p>
     <i>However</i>, the exception handling mechanism used by llvm-gcc3 is very
     different from the model used in the Itanium ABI, so <b>exceptions will not
     interact correctly</b>. </li>
-
+-->
 </ul>
 
 </div>
