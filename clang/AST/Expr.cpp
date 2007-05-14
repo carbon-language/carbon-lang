@@ -135,23 +135,19 @@ bool Expr::isLvalue() {
   if (TR->isIncompleteType() && TR->isVoidType())
     return false;
   
-  // now, check the expression
+  // the type looks fine, now check the expression
   switch (getStmtClass()) {
   case StringLiteralClass: // C99 6.5.1p4
     return true;
-  case ArraySubscriptExprClass:
+  case ArraySubscriptExprClass: // C99 6.5.3p4 (e1[e2] == (*((e1)+(e2))))
     return true;
   case DeclRefExprClass: // C99 6.5.1p2
-    const DeclRefExpr *d = cast<DeclRefExpr>(this);
-    return isa<VarDecl>(d->getDecl());
+    return isa<VarDecl>(cast<DeclRefExpr>(this)->getDecl());
   case MemberExprClass: // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
-    if (m->isArrow())
-      return true;
-    return m->getBase()->isLvalue();
+    return m->isArrow() ? true : m->getBase()->isLvalue();
   case UnaryOperatorClass: // C99 6.5.3p4
-    const UnaryOperator *u = cast<UnaryOperator>(this);
-    return u->getOpcode() == UnaryOperator::Deref;
+    return cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
   default: 
