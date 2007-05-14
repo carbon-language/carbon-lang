@@ -168,7 +168,7 @@ BasicBlock *LoopUnroll::FoldBlockIntoPredecessor(BasicBlock *BB) {
   LI->removeBlock(BB);
   BB->eraseFromParent();
 
-  // Inherit predecessors name if it exists...
+  // Inherit predecessor's name if it exists...
   if (!OldName.empty() && !OnlyPred->hasName())
     OnlyPred->setName(OldName);
 
@@ -191,10 +191,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 }
 
 /// Unroll the given loop by UnrollCount, or by a heuristically-determined
-/// value if Count is zero. If Threshold is non-NULL, it points to
-/// a Threshold value to limit code size expansion. If the loop size would
-/// expand beyond the threshold value, unrolling is suppressed. The return
-/// value is false if no transformations are performed.
+/// value if Count is zero. If Threshold is not NoThreshold, it is a value
+/// to limit code size expansion. If the loop size would expand beyond the
+/// threshold value, unrolling is suppressed. The return value is true if
+/// any transformations are performed.
 ///
 bool LoopUnroll::unrollLoop(Loop *L, unsigned Count, unsigned Threshold) {
   assert(L->isLCSSAForm());
