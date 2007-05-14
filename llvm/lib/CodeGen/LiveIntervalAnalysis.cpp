@@ -977,7 +977,7 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
       isDead = false;
     } else {
       MachineOperand *MOU;
-      MachineInstr *LastUse= lastRegisterUse(repSrcReg, SrcStart, CopyIdx, MOU);
+      MachineInstr *LastUse= lastRegisterUse(SrcStart, CopyIdx, repSrcReg, MOU);
       if (LastUse) {
         // Shorten the liveinterval to the end of last use.
         MOU->setIsKill();
@@ -1072,6 +1072,11 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // we have to update any aliased register's live ranges to indicate that they
   // have clobbered values for this range.
   if (MRegisterInfo::isPhysicalRegister(repDstReg)) {
+    // Unset unnecessary kills.
+    for (LiveInterval::Ranges::const_iterator I = SrcInt.begin(),
+           E = SrcInt.end(); I != E; ++I)
+      unsetRegisterKills(I->start, I->end, repDstReg);
+
     // Update the liveintervals of sub-registers.
     for (const unsigned *AS = mri_->getSubRegisters(repDstReg); *AS; ++AS)
         getInterval(*AS).MergeInClobberRanges(SrcInt);
@@ -1632,7 +1637,7 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
 /// cycles Start and End. It also returns the use operand by reference. It
 /// returns NULL if there are no uses.
 MachineInstr *
-LiveIntervals::lastRegisterUse(unsigned Reg, unsigned Start, unsigned End,
+LiveIntervals::lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
                                MachineOperand *&MOU) {
   int e = (End-1) / InstrSlots::NUM * InstrSlots::NUM;
   int s = Start;
@@ -1682,6 +1687,34 @@ void LiveIntervals::unsetRegisterKill(MachineInstr *MI, unsigned Reg) {
     if (MO.isReg() && MO.isUse() && MO.isKill() && MO.getReg() &&
         mri_->regsOverlap(rep(MO.getReg()), Reg))
       MO.unsetIsKill();
+  }
+}
+
+/// unsetRegisterKills - Unset IsKill property of all uses of specific register
+/// between cycles Start and End.
+void LiveIntervals::unsetRegisterKills(unsigned Start, unsigned End,
+                                       unsigned Reg) {
+  int e = (End-1) / InstrSlots::NUM * InstrSlots::NUM;
+  int s = Start;
+  while (e >= s) {
+    // Skip deleted instructions
+    MachineInstr *MI = getInstructionFromIndex(e);
+    while ((e - InstrSlots::NUM) >= s && !MI) {
+      e -= InstrSlots::NUM;
+      MI = getInstructionFromIndex(e);
+    }
+    if (e < s || MI == NULL)
+      return;
+
+    for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg() && MO.isUse() && MO.isKill() && MO.getReg() &&
+          mri_->regsOverlap(rep(MO.getReg()), Reg)) {
+        MO.unsetIsKill();
+      }
+    }
+
+    e -= InstrSlots::NUM;
   }
 }
 
