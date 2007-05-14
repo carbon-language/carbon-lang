@@ -44,23 +44,25 @@ public:
   // for a pass.
   //
   AnalysisUsage &addRequiredID(AnalysisID ID) {
+    assert(ID && "Pass class not registered!");
     Required.push_back(ID);
     return *this;
   }
   template<class PassClass>
   AnalysisUsage &addRequired() {
-    assert(Pass::getClassPassInfo<PassClass>() && "Pass class not registered!");
-    Required.push_back(Pass::getClassPassInfo<PassClass>());
-    return *this;
+    return addRequiredID(Pass::getClassPassInfo<PassClass>());
   }
 
-  template<class PassClass>
-  AnalysisUsage &addRequiredTransitive() {
-    AnalysisID ID = Pass::getClassPassInfo<PassClass>();
+  AnalysisUsage &addRequiredTransitiveID(AnalysisID ID) {
     assert(ID && "Pass class not registered!");
     Required.push_back(ID);
     RequiredTransitive.push_back(ID);
     return *this;
+  }
+  template<class PassClass>
+  AnalysisUsage &addRequiredTransitive() {
+    AnalysisID ID = Pass::getClassPassInfo<PassClass>();
+    return addRequiredTransitiveID(ID);
   }
 
   // addPreserved - Add the specified ID to the set of analyses preserved by
