@@ -90,6 +90,48 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 }
 
 namespace {
+  struct VISIBILITY_HIDDEN CFGViewer : public FunctionPass {
+    static char ID; // Pass identifcation, replacement for typeid
+    CFGViewer() : FunctionPass((intptr_t)&ID) {}
+
+    virtual bool runOnFunction(Function &F) {
+      F.viewCFG();
+      return false;
+    }
+
+    void print(std::ostream &OS, const Module* = 0) const {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
+
+  char CFGViewer::ID = 0;
+  RegisterPass<CFGViewer> V0("view-cfg",
+                             "View CFG of function");
+
+  struct VISIBILITY_HIDDEN CFGOnlyViewer : public FunctionPass {
+    static char ID; // Pass identifcation, replacement for typeid
+    CFGOnlyViewer() : FunctionPass((intptr_t)&ID) {}
+
+    virtual bool runOnFunction(Function &F) {
+      CFGOnly = true;
+      F.viewCFG();
+      CFGOnly = false;
+      return false;
+    }
+
+    void print(std::ostream &OS, const Module* = 0) const {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    }
+  };
+
+  char CFGOnlyViewer::ID = 0;
+  RegisterPass<CFGOnlyViewer> V1("view-cfg-only",
+                                 "View CFG of function (with no function bodies)");
+
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass((intptr_t)&ID) {}
