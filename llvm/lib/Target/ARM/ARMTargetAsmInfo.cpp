@@ -69,6 +69,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     ReadOnlySection = "\t.section\t.rodata\n";
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
+    SetDirective = "\t.set\t";
     DwarfRequiresFrameSection = false;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",%progbits";
     DwarfInfoSection =    "\t.section\t.debug_info,\"\",%progbits";
