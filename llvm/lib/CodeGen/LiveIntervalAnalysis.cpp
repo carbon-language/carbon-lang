@@ -1073,9 +1073,11 @@ bool LiveIntervals::JoinCopy(MachineInstr *CopyMI,
   // have clobbered values for this range.
   if (MRegisterInfo::isPhysicalRegister(repDstReg)) {
     // Unset unnecessary kills.
-    for (LiveInterval::Ranges::const_iterator I = SrcInt.begin(),
-           E = SrcInt.end(); I != E; ++I)
-      unsetRegisterKills(I->start, I->end, repDstReg);
+    if (!DstInt.containsOneValue()) {
+      for (LiveInterval::Ranges::const_iterator I = SrcInt.begin(),
+             E = SrcInt.end(); I != E; ++I)
+        unsetRegisterKills(I->start, I->end, repDstReg);
+    }
 
     // Update the liveintervals of sub-registers.
     for (const unsigned *AS = mri_->getSubRegisters(repDstReg); *AS; ++AS)
