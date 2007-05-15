@@ -384,20 +384,31 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op);
 }
 
+inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
+  Expr *Cond, Expr *LHS, Expr *RHS, SourceLocation questionLoc) {
+  QualType cond = Cond->getType().getCanonicalType();
+  QualType lhs = LHS->getType().getCanonicalType();
+  QualType rhs = RHS->getType().getCanonicalType();
+
+  assert(!cond.isNull() && "ParseConditionalOp(): no conditional type");
+  assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
+  assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
+
+  // C99 6.5.15p2,3
+  return rhs;
+}
+
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
 Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc, 
                                             SourceLocation ColonLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
-  QualType lhs = ((Expr *)LHS)->getType();
-  QualType rhs = ((Expr *)RHS)->getType();
-
-  assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
-  assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
-
-  QualType canonType = rhs.getCanonicalType(); // FIXME
-  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, canonType);
+  QualType result = CheckConditionalOperands((Expr *)Cond, (Expr *)LHS, 
+                                             (Expr *)RHS, QuestionLoc);
+  if (result.isNull())
+    return true;
+  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
 }
 
 /// UsualUnaryConversion - Performs various conversions that are common to most

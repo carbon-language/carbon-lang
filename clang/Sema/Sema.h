@@ -274,6 +274,8 @@ private:
     Expr *lex, Expr *rex, SourceLocation OpLoc, QualType convertedType);
   inline QualType CheckCommaOperands( // C99 6.5.17
     Expr *lex, Expr *rex, SourceLocation OpLoc);
+  inline QualType CheckConditionalOperands( // C99 6.5.15
+    Expr *cond, Expr *lhs, Expr *rhs, SourceLocation questionLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
   QualType CheckIncrementDecrementOperand( // C99 6.5.3.1 

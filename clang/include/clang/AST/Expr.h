@@ -56,8 +56,8 @@ public:
   
   bool isNullPointerConstant() const;
 
-  bool isConstantExpr() const;
-  bool isIntegerConstantExpr() const;
+  bool isConstantExpr() const { return isConstantExpr(false); }
+  bool isIntegerConstantExpr() const { return isConstantExpr(true); }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -65,6 +65,8 @@ public:
            T->getStmtClass() <= lastExprConstant; 
   }
   static bool classof(const Expr *) { return true; }
+private:
+  bool isConstantExpr(bool isIntegerConstant) const;
 };
 
 //===----------------------------------------------------------------------===//
