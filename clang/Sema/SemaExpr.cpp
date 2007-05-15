@@ -170,6 +170,25 @@ Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
   return e;
 }
 
+QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
+                                         SourceLocation OpLoc, bool isSizeof) {
+  // C99 6.5.3.4p1:
+  if (isa<FunctionType>(exprType) && isSizeof)
+    // alignof(function) is allowed.
+    Diag(OpLoc, diag::ext_sizeof_function_type);
+  else if (exprType->isVoidType())
+    Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
+  else if (exprType->isIncompleteType()) {
+    std::string TypeName;
+    exprType->getAsString(TypeName);
+    Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
+                           diag::err_alignof_incomplete_type, TypeName);
+    return QualType(); // error
+  }
+  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
+  return Context.getSizeType();
+}
+
 Action::ExprResult Sema::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LParenLoc, TypeTy *Ty,
@@ -180,21 +199,11 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   // Verify that this is a valid expression.
   QualType ArgTy = QualType::getFromOpaquePtr(Ty);
   
-  if (isa<FunctionType>(ArgTy) && isSizeof) {
-    // alignof(function) is allowed.
-    Diag(OpLoc, diag::ext_sizeof_function_type);
-    return new IntegerLiteral(1, Context.IntTy);
-  } else if (ArgTy->isVoidType()) {
-    Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
-  } else if (ArgTy->isIncompleteType()) {
-    std::string TypeName;
-    ArgTy->getAsString(TypeName);
-    Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
-         diag::err_alignof_incomplete_type, TypeName);
-    return new IntegerLiteral(0, Context.IntTy);
-  }
-  // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, Context.getSizeType());
+  QualType resultType = CheckSizeOfAlignOfOperand(ArgTy, OpLoc, isSizeof);
+
+  if (resultType.isNull())
+    return true;
+  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, resultType);
 }
 
 
@@ -624,10 +633,11 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
   if (lType->isPointerType() &&  rType->isPointerType())
     return Context.IntTy;
 
-  if (lType->isIntegerType() || rType->isIntegerType()) // GCC extension.
+  if (lType->isIntegerType() || rType->isIntegerType()) { // GCC extension.
     Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
-  else
-    Diag(loc, diag::err_typecheck_invalid_operands);
+    return Context.IntTy;
+  }
+  Diag(loc, diag::err_typecheck_invalid_operands);
   return QualType();
 }
 
@@ -641,10 +651,11 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
   if (lType->isPointerType() &&  rType->isPointerType())
     return Context.IntTy;
     
-  if (lType->isIntegerType() || rType->isIntegerType()) // GCC extension.
+  if (lType->isIntegerType() || rType->isIntegerType()) { // GCC extension.
     Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
-  else
-    Diag(loc, diag::err_typecheck_invalid_operands);
+    return Context.IntTy;
+  }
+  Diag(loc, diag::err_typecheck_invalid_operands);
   return QualType();
 }
 
@@ -1014,8 +1025,13 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
       return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
     break;
   case UnaryOperator::SizeOf:
+    resultType = CheckSizeOfAlignOfOperand(((Expr *)Input)->getType(), OpLoc,
+                                           true);
+    break;
   case UnaryOperator::AlignOf:
-    assert(0 && "need to implement type checking for sizeof/alignof");
+    resultType = CheckSizeOfAlignOfOperand(((Expr *)Input)->getType(), OpLoc,
+                                           false);
+    break;
   }
   if (resultType.isNull())
     return true;

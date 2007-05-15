@@ -282,6 +282,8 @@ private:
     Expr *op, SourceLocation loc);
   QualType CheckIndirectionOperand( // C99 6.5.3.2
     Expr *op, SourceLocation loc);
+  QualType CheckSizeOfAlignOfOperand( // C99 6.5.3.4
+    QualType type, SourceLocation loc, bool isSizeof);
     
   // C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
   // a constant expression of type int with a value greater than zero.

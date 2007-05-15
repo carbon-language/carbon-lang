@@ -185,17 +185,51 @@ bool Expr::isConstantExpr() const {
   case DeclRefExprClass:
     return isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl());
   case UnaryOperatorClass:
-    return cast<UnaryOperator>(this)->getSubExpr()->isConstantExpr();
+    const UnaryOperator *uop = cast<UnaryOperator>(this);
+    if (uop->isIncrementDecrementOp()) // C99 6.6p3
+      return false;
+    // C99 6.5.3.4p2: otherwise, the operand is *not* evaluated and the result
+    // is an integer constant. This effective ignores any subexpression that
+    // isn't actually a constant expression (what an odd language:-)
+    if (uop->isSizeOfAlignOfOp())
+      return true;
+    return uop->getSubExpr()->isConstantExpr();
   case BinaryOperatorClass:
-    return cast<BinaryOperator>(this)->getLHS()->isConstantExpr() &&
-           cast<BinaryOperator>(this)->getRHS()->isConstantExpr();
+    const BinaryOperator *bop = cast<BinaryOperator>(this);
+    // C99 6.6p3: shall not contain assignment, increment/decrement,
+    // function call, or comma operators, *except* when they are contained
+    // within a subexpression that is not evaluated. 
+    if (bop->isAssignmentOp() || bop->getOpcode() == BinaryOperator::Comma)
+      return false;
+    return bop->getLHS()->isConstantExpr() && bop->getRHS()->isConstantExpr();
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr();
-  case CastExprClass:
-    return cast<CastExpr>(this)->getSubExpr()->isConstantExpr();
+  case CastExprClass: 
+    const CastExpr *castExpr = cast<CastExpr>(this);    
+    // C99 6.6p6: shall only convert arithmetic types to integer types.
+    if (!castExpr->getSubExpr()->getType()->isArithmeticType())
+      return false;
+    if (!castExpr->getDestType()->isIntegerType())
+      return false;      
+    // allow floating constants that are the immediate operands of casts.
+    if (castExpr->getSubExpr()->isConstantExpr() ||
+        isa<FloatingLiteral>(castExpr->getSubExpr()))
+      return true;
+    return false;
   case SizeOfAlignOfTypeExprClass:
-    return cast<SizeOfAlignOfTypeExpr>(this)->getArgumentType()
-                                            ->isConstantSizeType();
+    const SizeOfAlignOfTypeExpr *sizeExpr = cast<SizeOfAlignOfTypeExpr>(this);
+    if (sizeExpr->isSizeOf())
+      return sizeExpr->getArgumentType()->isConstantSizeType();
+    return true; // alignof will always evaluate to a constant
+  case ConditionalOperatorClass:
+    // GCC currently ignores any subexpression that isn't evaluated.
+    // GCC currently considers the following legal: "1 ? 7 : printf("xx")"
+    // EDG still flags this as an error (which is great, since this predicate
+    // can do it's job *without* evaluating the expression).
+    const ConditionalOperator *condExpr = cast<ConditionalOperator>(this);
+    return condExpr->getCond()->isConstantExpr() &&
+           condExpr->getLHS()->isConstantExpr() &&
+           condExpr->getRHS()->isConstantExpr();
   default: 
     return false;
   }
@@ -209,17 +243,52 @@ bool Expr::isIntegerConstantExpr() const {
   case DeclRefExprClass:
     return isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl());
   case UnaryOperatorClass:
-    return cast<UnaryOperator>(this)->getSubExpr()->isIntegerConstantExpr();
+    const UnaryOperator *uop = cast<UnaryOperator>(this);
+    if (uop->isIncrementDecrementOp()) // C99 6.6p3
+      return false;
+    // C99 6.5.3.4p2: otherwise, the operand is *not* evaluated and the result
+    // is an integer constant. This effective ignores any subexpression that
+    // isn't actually a constant expression (what an odd language:-)
+    if (uop->isSizeOfAlignOfOp())
+      return true;
+    return uop->getSubExpr()->isIntegerConstantExpr();
   case BinaryOperatorClass:
-    return cast<BinaryOperator>(this)->getLHS()->isIntegerConstantExpr() &&
-           cast<BinaryOperator>(this)->getRHS()->isIntegerConstantExpr();
+    const BinaryOperator *bop = cast<BinaryOperator>(this);
+    // C99 6.6p3: shall not contain assignment, increment/decrement,
+    // function call, or comma operators, *except* when they are contained
+    // within a subexpression that is not evaluated. 
+    if (bop->isAssignmentOp() || bop->getOpcode() == BinaryOperator::Comma)
+      return false;
+    return bop->getLHS()->isIntegerConstantExpr() &&
+           bop->getRHS()->isIntegerConstantExpr();
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->isIntegerConstantExpr();
-  case CastExprClass:
-    return cast<CastExpr>(this)->getSubExpr()->isIntegerConstantExpr();
+  case CastExprClass: 
+    const CastExpr *castExpr = cast<CastExpr>(this);    
+    // C99 6.6p6: shall only convert arithmetic types to integer types.
+    if (!castExpr->getSubExpr()->getType()->isArithmeticType())
+      return false;
+    if (!castExpr->getDestType()->isIntegerType())
+      return false;      
+    // allow floating constants that are the immediate operands of casts.
+    if (castExpr->getSubExpr()->isIntegerConstantExpr() ||
+        isa<FloatingLiteral>(castExpr->getSubExpr()))
+      return true;
+    return false;
   case SizeOfAlignOfTypeExprClass:
-    return cast<SizeOfAlignOfTypeExpr>(this)->getArgumentType()
-                                            ->isConstantSizeType();
+    const SizeOfAlignOfTypeExpr *sizeExpr = cast<SizeOfAlignOfTypeExpr>(this);
+    if (sizeExpr->isSizeOf())
+      return sizeExpr->getArgumentType()->isConstantSizeType();
+    return true; // alignof will always evaluate to a constant
+  case ConditionalOperatorClass:
+    // GCC currently ignores any subexpression that isn't evaluated.
+    // GCC currently considers the following legal: "1 ? 7 : printf("xx")"
+    // EDG still flags this as an error (which is great, since this predicate
+    // can do it's job *without* evaluating the expression).
+    const ConditionalOperator *condExpr = cast<ConditionalOperator>(this);
+    return condExpr->getCond()->isIntegerConstantExpr() &&
+           condExpr->getLHS()->isIntegerConstantExpr() &&
+           condExpr->getRHS()->isIntegerConstantExpr();
   default: 
     return false;
   }

@@ -203,6 +203,8 @@ public:
   Expr *getSubExpr() const { return Val; }
   
   bool isPostfix() const { return isPostfix(Opc); }
+  bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
+  bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
   
   /// getDecl - a recursive routine that derives the base decl for an
   /// expression. For example, it will return the declaration for "s" from
@@ -374,14 +376,14 @@ public:
   static const char *getOpcodeStr(Opcode Op);
 
   /// predicates to categorize the respective opcodes.
-  static bool isMultiplicativeOp(Opcode Op) { return Op >= Mul && Op <= Rem; }
-  static bool isAdditiveOp(Opcode Op) { return Op == Add || Op == Sub; }
-  static bool isShiftOp(Opcode Op) { return Op == Shl || Op == Shr; }
-  static bool isBitwiseOp(Opcode Op) { return Op >= And && Op <= Or; }
-  static bool isRelationalOp(Opcode Op) { return Op >= LT && Op <= GE; }
-  static bool isEqualityOp(Opcode Op) { return Op == EQ || Op == NE; }
-  static bool isLogicalOp(Opcode Op) { return Op == LAnd || Op == LOr; }
-  static bool isAssignmentOp(Opcode Op) { return Op >= Assign && Op<=OrAssign; }
+  bool isMultiplicativeOp() const { return Opc >= Mul && Opc <= Rem; }
+  bool isAdditiveOp() const { return Opc == Add || Opc == Sub; }
+  bool isShiftOp() const { return Opc == Shl || Opc == Shr; }
+  bool isBitwiseOp() const { return Opc >= And && Opc <= Or; }
+  bool isRelationalOp() const { return Opc >= LT && Opc <= GE; }
+  bool isEqualityOp() const { return Opc == EQ || Opc == NE; }
+  bool isLogicalOp() const { return Opc == LAnd || Opc == LOr; }
+  bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
   
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() const { return LHS; }
@@ -406,9 +408,9 @@ public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs, QualType t)
     : Expr(ConditionalOperatorClass, t), Cond(cond), LHS(lhs), RHS(rhs) {}
 
-  Expr *getCond() { return Cond; }
-  Expr *getLHS() { return LHS; }
-  Expr *getRHS() { return RHS; }
+  Expr *getCond() const { return Cond; }
+  Expr *getLHS() const { return LHS; }
+  Expr *getRHS() const { return RHS; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
