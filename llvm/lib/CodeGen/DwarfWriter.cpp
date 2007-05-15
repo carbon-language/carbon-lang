@@ -2975,7 +2975,7 @@ private:
       SizeSites += M*(sizeof(int32_t) +               // Site start.
                       sizeof(int32_t) +               // Site length.
                       sizeof(int32_t) +               // Landing pad.
-                      Asm->SizeSLEB128(FirstAction)); // Action.
+                      Asm->SizeULEB128(FirstAction)); // Action.
     }
     
     // Final tallies.
