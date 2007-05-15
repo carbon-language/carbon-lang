@@ -2799,6 +2799,7 @@ public:
       // in the 'execute always' values.  Match up the node operands to the
       // instruction operands to do this.
       std::vector<std::string> AllOps;
+      unsigned NumEAInputs = 0; // # of synthesized 'execute always' inputs.
       for (unsigned ChildNo = 0, InstOpNo = NumResults;
            InstOpNo != II.OperandList.size(); ++InstOpNo) {
         std::vector<std::string> Ops;
@@ -2821,6 +2822,7 @@ public:
             Ops = EmitResultCode(Pred.AlwaysOps[i], RetSelected, 
                                  InFlagDecled, ResNodeDecled);
             AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+            NumEAInputs += Ops.size();
           }
         }
       }
@@ -2899,7 +2901,7 @@ public:
           else if (NodeHasOptInFlag)
             EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
 
-          emitCode("for (unsigned i = " + utostr(NumInputs) +
+          emitCode("for (unsigned i = " + utostr(NumInputs - NumEAInputs) +
                    ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
 
           emitCode("  AddToISelQueue(N.getOperand(i));");
