@@ -614,8 +614,9 @@ void ARMAsmPrinter::printThumbAddrModeSPOperand(const MachineInstr *MI,int Op) {
 }
 
 void ARMAsmPrinter::printPredicateOperand(const MachineInstr *MI, int opNum) {
-  int CC = (int)MI->getOperand(opNum).getImmedValue();
-  O << ARMCondCodeToString((ARMCC::CondCodes)CC);
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(opNum).getImmedValue();
+  if (CC != ARMCC::AL)
+    O << ARMCondCodeToString(CC);
 }
 
 void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int opNum) {

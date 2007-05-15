@@ -52,7 +52,8 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
     return true;
   case ARM::MOVr:
   case ARM::tMOVr:
-    assert(MI.getNumOperands() >= 2 && MI.getOperand(0).isRegister() &&
+    assert(MI.getInstrDescriptor()->numOperands >= 2 &&
+           MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            "Invalid ARM MOV instruction");
     SrcReg = MI.getOperand(1).getReg();
@@ -188,15 +189,17 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   MachineInstr *UpdateMI = NULL;
   MachineInstr *MemMI = NULL;
   unsigned AddrMode = (TSFlags & ARMII::AddrModeMask);
-  unsigned NumOps = MI->getNumOperands();
-  bool isLoad = (MI->getInstrDescriptor()->Flags & M_LOAD_FLAG) != 0;
+  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  unsigned NumOps = TID->numOperands;
+  bool isLoad = (TID->Flags & M_LOAD_FLAG) != 0;
   const MachineOperand &WB = isLoad ? MI->getOperand(1) : MI->getOperand(0);
   const MachineOperand &Base = MI->getOperand(2);
-  const MachineOperand &Offset = MI->getOperand(NumOps-2);
+  const MachineOperand &Offset = MI->getOperand(NumOps-3);
   unsigned WBReg = WB.getReg();
   unsigned BaseReg = Base.getReg();
   unsigned OffReg = Offset.getReg();
-  unsigned OffImm = MI->getOperand(NumOps-1).getImm();
+  unsigned OffImm = MI->getOperand(NumOps-2).getImm();
+  ARMCC::CondCodes Pred = (ARMCC::CondCodes)MI->getOperand(NumOps-1).getImm();
   switch (AddrMode) {
   default:
     assert(false && "Unknown indexed op!");
@@ -211,15 +214,15 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         // add more than 1 instruction. Abandon!
         return NULL;
       UpdateMI = BuildMI(get(isSub ? ARM::SUBri : ARM::ADDri), WBReg)
-        .addReg(BaseReg).addImm(SOImmVal);
+        .addReg(BaseReg).addImm(SOImmVal).addImm(Pred);
     } else if (Amt != 0) {
       ARM_AM::ShiftOpc ShOpc = ARM_AM::getAM2ShiftOpc(OffImm);
       unsigned SOOpc = ARM_AM::getSORegOpc(ShOpc, Amt);
       UpdateMI = BuildMI(get(isSub ? ARM::SUBrs : ARM::ADDrs), WBReg)
-        .addReg(BaseReg).addReg(OffReg).addReg(0).addImm(SOOpc);
+        .addReg(BaseReg).addReg(OffReg).addReg(0).addImm(SOOpc).addImm(Pred);
     } else 
       UpdateMI = BuildMI(get(isSub ? ARM::SUBrr : ARM::ADDrr), WBReg)
-        .addReg(BaseReg).addReg(OffReg);
+        .addReg(BaseReg).addReg(OffReg).addImm(Pred);
     break;
   }
   case ARMII::AddrMode3 : {
@@ -228,10 +231,10 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (OffReg == 0)
       // Immediate is 8-bits. It's guaranteed to fit in a so_imm operand.
       UpdateMI = BuildMI(get(isSub ? ARM::SUBri : ARM::ADDri), WBReg)
-        .addReg(BaseReg).addImm(Amt);
+        .addReg(BaseReg).addImm(Amt).addImm(Pred);
     else
       UpdateMI = BuildMI(get(isSub ? ARM::SUBrr : ARM::ADDrr), WBReg)
-        .addReg(BaseReg).addReg(OffReg);
+        .addReg(BaseReg).addReg(OffReg).addImm(Pred);
     break;
   }
   }
@@ -240,19 +243,19 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   if (isPre) {
     if (isLoad)
       MemMI = BuildMI(get(MemOpc), MI->getOperand(0).getReg())
-        .addReg(WBReg).addReg(0).addImm(0);
+        .addReg(WBReg).addReg(0).addImm(0).addImm(Pred);
     else
       MemMI = BuildMI(get(MemOpc)).addReg(MI->getOperand(1).getReg())
-        .addReg(WBReg).addReg(0).addImm(0);
+        .addReg(WBReg).addReg(0).addImm(0).addImm(Pred);
     NewMIs.push_back(MemMI);
     NewMIs.push_back(UpdateMI);
   } else {
     if (isLoad)
       MemMI = BuildMI(get(MemOpc), MI->getOperand(0).getReg())
-        .addReg(BaseReg).addReg(0).addImm(0);
+        .addReg(BaseReg).addReg(0).addImm(0).addImm(Pred);
     else
       MemMI = BuildMI(get(MemOpc)).addReg(MI->getOperand(1).getReg())
-        .addReg(BaseReg).addReg(0).addImm(0);
+        .addReg(BaseReg).addReg(0).addImm(0).addImm(Pred);
     if (WB.isDead())
       UpdateMI->getOperand(0).setIsDead();
     NewMIs.push_back(UpdateMI);
@@ -437,7 +440,8 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
   const TargetAsmInfo *TAI = MF->getTarget().getTargetAsmInfo();
 
   // Basic size info comes from the TSFlags field.
-  unsigned TSFlags = MI->getInstrDescriptor()->TSFlags;
+  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  unsigned TSFlags = TID->TSFlags;
   
   switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
   default:
@@ -463,7 +467,8 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
     case ARM::tBR_JTr: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
-      unsigned JTI = MI->getOperand(MI->getNumOperands()-2).getJumpTableIndex();
+      unsigned NumOps = TID->numOperands;
+      unsigned JTI = MI->getOperand(NumOps-3).getJumpTableIndex();
       MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
       const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
       assert(JTI < JT.size());

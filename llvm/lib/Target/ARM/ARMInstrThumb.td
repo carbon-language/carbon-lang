@@ -32,7 +32,9 @@ class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
 class ThumbI<dag ops, AddrMode am, SizeFlagVal sz,
              string asm, string cstr, list<dag> pattern>
   // FIXME: Set all opcodes to 0 for now.
-  : InstARM<0, am, sz, IndexModeNone, ops, asm, cstr> {
+  : InstARM<0, am, sz, IndexModeNone, cstr> {
+  let OperandList = ops;
+  let AsmString   = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb];
 }
@@ -156,6 +158,16 @@ def t_addrmode_sp : Operand<i32>,
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions.
 //
+
+def tADJCALLSTACKUP :
+PseudoInst<(ops i32imm:$amt),
+           "@ tADJCALLSTACKUP $amt",
+           [(ARMcallseq_end imm:$amt)]>, Imp<[SP],[SP]>, Requires<[IsThumb]>;
+
+def tADJCALLSTACKDOWN : 
+PseudoInst<(ops i32imm:$amt),
+           "@ tADJCALLSTACKDOWN $amt",
+           [(ARMcallseq_start imm:$amt)]>, Imp<[SP],[SP]>, Requires<[IsThumb]>;
 
 def tPICADD : TIt<(ops GPR:$dst, GPR:$lhs, pclabel:$cp),
                   "$cp:\n\tadd $dst, pc",
