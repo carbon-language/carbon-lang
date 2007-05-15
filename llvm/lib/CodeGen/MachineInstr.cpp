@@ -141,6 +141,21 @@ bool MachineInstr::OperandsComplete() const {
   return false;
 }
 
+/// getNumExplicitOperands - Returns the number of non-implicit operands.
+///
+unsigned MachineInstr::getNumExplicitOperands() const {
+  unsigned NumOperands = TID->numOperands;
+  if ((TID->Flags & M_VARIABLE_OPS) == 0)
+    return NumOperands;
+
+  for (unsigned e = getNumOperands(); NumOperands != e; ++NumOperands) {
+    const MachineOperand &MO = getOperand(NumOperands);
+    if (!MO.isRegister() || !MO.isImplicit())
+      NumOperands++;
+  }
+  return NumOperands;
+}
+
 /// isIdenticalTo - Return true if this operand is identical to the specified
 /// operand.
 bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
@@ -192,6 +207,19 @@ MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
   }
   return NULL;
 }
+
+/// findFirstPredOperand() - Find the first operand in the operand list that
+// is used to represent the predicate.
+MachineOperand *MachineInstr::findFirstPredOperand() {
+  const TargetInstrDescriptor *TID = getInstrDescriptor();
+  if (TID->Flags & M_PREDICATED) {
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND))
+        return &getOperand(i);
+  }
+
+  return NULL;
+}
   
 /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
 ///
@@ -209,6 +237,24 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
       else
         MOp.setIsDead();
       break;
+    }
+  }
+}
+
+/// copyPredicates - Copies predicate operand(s) from MI.
+void MachineInstr::copyPredicates(const MachineInstr *MI) {
+  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  if (TID->Flags & M_PREDICATED) {
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
+        const MachineOperand &MO = MI->getOperand(i);
+        // Predicated operands must be last operands.
+        if (MO.isReg())
+          addRegOperand(MO.getReg(), false);
+        else {
+          addImmOperand(MO.getImm());
+        }
+      }
     }
   }
 }

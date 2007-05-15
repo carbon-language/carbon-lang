@@ -378,6 +378,9 @@ public:
     return Operands[i];
   }
 
+  /// getNumExplicitOperands - Returns the number of non-implicit operands.
+  ///
+  unsigned getNumExplicitOperands() const;
   
   /// isIdenticalTo - Return true if this instruction is identical to (same
   /// opcode and same operands as) the specified instruction.
@@ -413,10 +416,17 @@ public:
   /// findRegisterDefOperand() - Returns the MachineOperand that is a def of
   /// the specific register or NULL if it is not found.
   MachineOperand *findRegisterDefOperand(unsigned Reg);
+
+  /// findFirstPredOperand() - Find the first operand in the operand list that
+  // is used to represent the predicate.
+  MachineOperand *findFirstPredOperand();
   
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///
   void copyKillDeadInfo(const MachineInstr *MI);
+
+  /// copyPredicates - Copies predicate operand(s) from MI.
+  void copyPredicates(const MachineInstr *MI);
 
   //
   // Debugging support
