@@ -222,7 +222,7 @@ using namespace llvm;
 };
 
 %token INT BIT STRING BITS LIST CODE DAG CLASS DEF MULTICLASS DEFM FIELD LET IN
-%token SHLTOK SRATOK SRLTOK STRCONCATTOK
+%token CONCATTOK SHLTOK SRATOK SRLTOK STRCONCATTOK
 %token <IntVal>      INTVAL
 %token <StrVal>      ID VARNAME STRVAL CODEFRAGMENT
 
@@ -391,6 +391,8 @@ Value : IDValue {
       exit(1);
     }
     delete $3;
+  } | CONCATTOK '(' Value ',' Value ')' {
+    $$ = (new BinOpInit(BinOpInit::CONCAT, $3, $5))->Fold();
   } | SHLTOK '(' Value ',' Value ')' {
     $$ = (new BinOpInit(BinOpInit::SHL, $3, $5))->Fold();
   } | SRATOK '(' Value ',' Value ')' {

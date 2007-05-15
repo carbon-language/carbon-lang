@@ -184,6 +184,18 @@ Init *DagRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
+Init *DagRecTy::convertValue(BinOpInit *BO) {
+  if (BO->getOpcode() == BinOpInit::CONCAT) {
+    Init *L = BO->getLHS()->convertInitializerTo(this);
+    Init *R = BO->getRHS()->convertInitializerTo(this);
+    if (L == 0 || R == 0) return 0;
+    if (L != BO->getLHS() || R != BO->getRHS())
+      return new BinOpInit(BinOpInit::CONCAT, L, R);
+    return BO;
+  }
+  return 0;
+}
+
 
 void RecordRecTy::print(std::ostream &OS) const {
   OS << Rec->getName();
@@ -378,6 +390,28 @@ void ListInit::print(std::ostream &OS) const {
 Init *BinOpInit::Fold() {
   switch (getOpcode()) {
   default: assert(0 && "Unknown binop");
+  case CONCAT: {
+    DagInit *LHSs = dynamic_cast<DagInit*>(LHS);
+    DagInit *RHSs = dynamic_cast<DagInit*>(RHS);
+    if (LHSs && RHSs) {
+      DefInit *LOp = dynamic_cast<DefInit*>(LHSs->getOperator());
+      DefInit *ROp = dynamic_cast<DefInit*>(RHSs->getOperator());
+      if (LOp->getDef() != ROp->getDef())
+        throw "Concated Dag operators do not match!";
+      std::vector<Init*> Args;
+      std::vector<std::string> ArgNames;
+      for (unsigned i = 0, e = LHSs->getNumArgs(); i != e; ++i) {
+        Args.push_back(LHSs->getArg(i));
+        ArgNames.push_back(LHSs->getArgName(i));
+      }
+      for (unsigned i = 0, e = RHSs->getNumArgs(); i != e; ++i) {
+        Args.push_back(RHSs->getArg(i));
+        ArgNames.push_back(RHSs->getArgName(i));
+      }
+      return new DagInit(LHSs->getOperator(), Args, ArgNames);
+    }
+    break;
+  }
   case STRCONCAT: {
     StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
     StringInit *RHSs = dynamic_cast<StringInit*>(RHS);
@@ -418,6 +452,7 @@ Init *BinOpInit::resolveReferences(Record &R, const RecordVal *RV) {
 
 void BinOpInit::print(std::ostream &OS) const {
   switch (Opc) {
+  case CONCAT: OS << "!con"; break;
   case SHL: OS << "!shl"; break;
   case SRA: OS << "!sra"; break;
   case SRL: OS << "!srl"; break;

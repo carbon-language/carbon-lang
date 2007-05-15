@@ -206,6 +206,7 @@ field          { return FIELD; }
 let            { return LET; }
 in             { return IN; }
 
+!con           { return CONCATTOK; }
 !sra           { return SRATOK; }
 !srl           { return SRLTOK; }
 !shl           { return SHLTOK; }

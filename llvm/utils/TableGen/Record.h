@@ -354,7 +354,7 @@ public:
   virtual Init *convertValue(  CodeInit *CI) { return 0; }
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI) { return 0; }
-  virtual Init *convertValue( BinOpInit *UI) { return 0; }
+  virtual Init *convertValue( BinOpInit *BO);
   virtual Init *convertValue(   DagInit *CI) { return (Init*)CI; }
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
@@ -648,7 +648,7 @@ public:
 ///
 class BinOpInit : public Init {
 public:
-  enum BinaryOp { SHL, SRA, SRL, STRCONCAT };
+  enum BinaryOp { SHL, SRA, SRL, STRCONCAT, CONCAT };
 private:
   BinaryOp Opc;
   Init *LHS, *RHS;
