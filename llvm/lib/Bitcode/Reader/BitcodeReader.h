@@ -123,7 +123,8 @@ public:
   
   virtual bool materializeFunction(Function *F, std::string *ErrInfo = 0);
   virtual Module *materializeModule(std::string *ErrInfo = 0);
-  
+  virtual void dematerializeFunction(Function *F);
+
   bool Error(const char *Str) {
     ErrorString = Str;
     return true;

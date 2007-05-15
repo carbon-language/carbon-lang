@@ -1114,7 +1114,6 @@ bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
   // restore the real linkage type for the function.
   Stream.JumpToBit(DFII->second.first);
   F->setLinkage((GlobalValue::LinkageTypes)DFII->second.second);
-  DeferredFunctionInfo.erase(DFII);
   
   if (ParseFunctionBody(F)) {
     if (ErrInfo) *ErrInfo = ErrorString;
@@ -1124,14 +1123,26 @@ bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
   return false;
 }
 
+void BitcodeReader::dematerializeFunction(Function *F) {
+  // If this function isn't materialized, or if it is a proto, this is a noop.
+  if (F->hasNotBeenReadFromBytecode() || F->isDeclaration())
+    return;
+  
+  assert(DeferredFunctionInfo.count(F) && "No info to read function later?");
+  
+  // Just forget the function body, we can remat it later.
+  F->deleteBody();
+  F->setLinkage(GlobalValue::GhostLinkage);
+}
+
+
 Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
-  DenseMap<Function*, std::pair<uint64_t, unsigned> >::iterator I = 
-    DeferredFunctionInfo.begin();
-  while (!DeferredFunctionInfo.empty()) {
-    Function *F = (*I++).first;
-    assert(F->hasNotBeenReadFromBytecode() &&
-           "Deserialized function found in map!");
-    if (materializeFunction(F, ErrInfo))
+  for (DenseMap<Function*, std::pair<uint64_t, unsigned> >::iterator I = 
+       DeferredFunctionInfo.begin(), E = DeferredFunctionInfo.end(); I != E;
+       ++I) {
+    Function *F = I->first;
+    if (F->hasNotBeenReadFromBytecode() &&
+        materializeFunction(F, ErrInfo))
       return 0;
   }
   return TheModule;
