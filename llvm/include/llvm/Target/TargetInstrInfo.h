@@ -88,8 +88,8 @@ const unsigned M_REMATERIALIZIBLE = 1 << 13;
 // requires a callback to look up its register class.
 const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
 
-/// M_PREDICATE_OPERAND - Set if this is the first operand of a predicate
-/// operand that controls an M_PREDICATED instruction.
+/// M_PREDICATE_OPERAND - Set if this is one of the operands that made up of the
+/// predicate operand that controls an M_PREDICATED instruction.
 const unsigned M_PREDICATE_OPERAND = 1 << 1;
 
 namespace TOI {
