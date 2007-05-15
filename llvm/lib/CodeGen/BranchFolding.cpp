@@ -73,6 +73,12 @@ namespace {
   char BranchFolder::ID = 0;
 }
 
+static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB, 
+                                 MachineBasicBlock *DestA,
+                                 MachineBasicBlock *DestB,
+                                 bool isCond, 
+                                 MachineFunction::iterator FallThru);
+
 FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
 
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
@@ -106,12 +112,21 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
+  // Fix CFG.  The later algorithms expect it to be right.
+  bool EverMadeChange = false;
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; I++) {
+    MachineBasicBlock *MBB = I, *TBB = 0, *FBB = 0;
+    std::vector<MachineOperand> Cond;
+    if (!TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
+      EverMadeChange |= CorrectExtraCFGEdges(*MBB, TBB, FBB, 
+                        !Cond.empty(), next(I));
+  }
+
   RegInfo = MF.getTarget().getRegisterInfo();
   RS = RegInfo->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
 
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
 
-  bool EverMadeChange = false;
   bool MadeChangeThisIteration = true;
   while (MadeChangeThisIteration) {
     MadeChangeThisIteration = false;
