@@ -449,7 +449,7 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_ROUND:
   case ISD::FSIN:
     return DAG.getNode(Op.getOpcode(), Op.getValueType(),
-                       GetNegatedExpression(Op, DAG));
+                       GetNegatedExpression(Op.getOperand(0), DAG));
   }
 }
 
