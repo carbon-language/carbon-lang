@@ -302,7 +302,7 @@ namespace ISD {
     /// Simple abstract vector operators.  Unlike the integer and floating point
     /// binary operators, these nodes also take two additional operands:
     /// a constant element count, and a value type node indicating the type of
-    /// the elements.  The order is count, type, op0, op1.  All vector opcodes,
+    /// the elements.  The order is op0, op1, count, type.  All vector opcodes,
     /// including VLOAD and VConstant must currently have count and type as
     /// their last two operands.
     VADD, VSUB, VMUL, VSDIV, VUDIV,
