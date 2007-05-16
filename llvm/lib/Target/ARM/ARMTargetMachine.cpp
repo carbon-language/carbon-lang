@@ -88,19 +88,14 @@ bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   return false;
 }
 
-bool ARMTargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
-  if (Fast || !EnableIfConversion || Subtarget.isThumb())
-    return false;
-
-  PM.add(createIfConverterPass());
-  return true;
-}
-
 bool ARMTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
   if (!Fast && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass());
   
+  if (!Fast && EnableIfConversion && !Subtarget.isThumb())
+    PM.add(createIfConverterPass());
+
   PM.add(createARMConstantIslandPass());
   return true;
 }
