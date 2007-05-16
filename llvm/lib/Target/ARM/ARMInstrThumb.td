@@ -207,8 +207,10 @@ let isCall = 1, noResults = 1,
                   [(ARMcall_nolink GPR:$dst)]>;
 }
 
-let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
-  def tB   : TI<(ops brtarget:$dst), "b $dst", [(br bb:$dst)]>;
+let isBranch = 1, isTerminator = 1, noResults = 1 in {
+  let isBarrier = 1 in {
+    let isPredicable = 1 in
+    def tB   : TI<(ops brtarget:$dst), "b $dst", [(br bb:$dst)]>;
 
   // Far jump
   def tBfar  : TIx2<(ops brtarget:$dst), "bl $dst\t@ far jump", []>;
@@ -216,6 +218,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   def tBR_JTr : TJTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
                      "cpy pc, $dst \n\t.align\t2\n$jt",
                      [(ARMbrjt GPR:$dst, tjumptable:$jt, imm:$id)]>;
+  }
 }
 
 let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in
