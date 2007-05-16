@@ -112,7 +112,7 @@ namespace {
         : MI(mi), MaxDisp(maxdisp), isCond(cond), UncondBr(ubr) {}
     };
 
-    /// Branches - Keep track of all the immediate branch instructions.
+    /// ImmBranches - Keep track of all the immediate branch instructions.
     ///
     std::vector<ImmBranch> ImmBranches;
 
