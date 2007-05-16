@@ -184,6 +184,10 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   }
 }
 
+bool MachineInstr::isPredicable() const {
+  return TID->Flags & M_PREDICABLE;
+}
+
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightening
 /// the search criteria to a use that kills the register if isKill is true.
@@ -212,7 +216,7 @@ MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
 // is used to represent the predicate.
 MachineOperand *MachineInstr::findFirstPredOperand() {
   const TargetInstrDescriptor *TID = getInstrDescriptor();
-  if (TID->Flags & M_PREDICATED) {
+  if (TID->Flags & M_PREDICABLE) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND))
         return &getOperand(i);
@@ -244,7 +248,7 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 /// copyPredicates - Copies predicate operand(s) from MI.
 void MachineInstr::copyPredicates(const MachineInstr *MI) {
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
-  if (TID->Flags & M_PREDICATED) {
+  if (TID->Flags & M_PREDICABLE) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
         const MachineOperand &MO = MI->getOperand(i);

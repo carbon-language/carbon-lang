@@ -68,7 +68,7 @@ namespace {
                                  std::vector<int> &Candidates);
     bool IfConvertDiamond(BBInfo &BBI);
     bool IfConvertTriangle(BBInfo &BBI);
-    bool isBlockPredicatable(MachineBasicBlock *BB,
+    bool isBlockPredicable(MachineBasicBlock *BB,
                              bool IgnoreTerm = false) const;
     void PredicateBlock(MachineBasicBlock *BB,
                         std::vector<MachineOperand> &Cond,
@@ -190,7 +190,7 @@ void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
 }
 
 bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
-  if (isBlockPredicatable(BBI.TBB, true)) {
+  if (isBlockPredicable(BBI.TBB, true)) {
     // Predicate the 'true' block after removing its branch.
     TII->RemoveBranch(*BBI.TBB);
     PredicateBlock(BBI.TBB, BBI.Cond);
@@ -214,28 +214,28 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
 }
 
 bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
-  if (isBlockPredicatable(BBI.TBB, true) &&
-      isBlockPredicatable(BBI.FBB, true)) {
+  if (isBlockPredicable(BBI.TBB, true) &&
+      isBlockPredicable(BBI.FBB, true)) {
     std::vector<MachineInstr*> Dups;
     if (!BBI.CMBB) {
       // No common merge block. Check if the terminators (e.g. return) are
-      // the same or predicatable.
+      // the same or predicable.
       MachineBasicBlock::iterator TT = BBI.TBB->getFirstTerminator();
       MachineBasicBlock::iterator FT = BBI.FBB->getFirstTerminator();
       while (TT != BBI.TBB->end() && FT != BBI.FBB->end()) {
         if (TT->isIdenticalTo(FT))
           Dups.push_back(TT);  // Will erase these later.
-        else if (!TII->isPredicatable(TT) && !TII->isPredicatable(FT))
+        else if (!TT->isPredicable() && !FT->isPredicable())
           return false; // Can't if-convert. Abort!
         ++TT;
         ++FT;
       }
 
       while (TT != BBI.TBB->end())
-        if (!TII->isPredicatable(TT))
+        if (!TT->isPredicable())
           return false; // Can't if-convert. Abort!
       while (FT != BBI.FBB->end())
-        if (!TII->isPredicatable(FT))
+        if (!FT->isPredicable())
           return false; // Can't if-convert. Abort!
     }
 
@@ -270,17 +270,17 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   return false;
 }
 
-/// isBlockPredicatable - Returns true if the block is predicatable. In most
-/// cases, that means all the instructions in the block has M_PREDICATED flag.
+/// isBlockPredicable - Returns true if the block is predicable. In most
+/// cases, that means all the instructions in the block has M_PREDICABLE flag.
 /// If IgnoreTerm is true, assume all the terminator instructions can be 
 /// converted or deleted.
-bool IfConverter::isBlockPredicatable(MachineBasicBlock *BB,
+bool IfConverter::isBlockPredicable(MachineBasicBlock *BB,
                                       bool IgnoreTerm) const {
   for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
        I != E; ++I) {
     if (IgnoreTerm && TII->isTerminatorInstr(I->getOpcode()))
       continue;
-    if (!TII->isPredicatable(I))
+    if (!I->isPredicable())
       return false;
   }
   return true;
