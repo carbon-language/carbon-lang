@@ -157,6 +157,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   SchedPreferenceInfo = SchedulingForLatency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
+  IfCvtBlockSizeLimit = 2;
 
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);
