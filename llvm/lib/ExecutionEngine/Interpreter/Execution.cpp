@@ -1344,7 +1344,7 @@ static void PrintGenericValue(const GenericValue &Val, const Type* Ty) {
     case Type::VoidTyID:    DOUT << "void"; break;
     case Type::FloatTyID:   DOUT << "float " << Val.FloatVal; break;
     case Type::DoubleTyID:  DOUT << "double " << Val.DoubleVal; break;
-    case Type::PointerTyID: DOUT << "void* " << unsigned(Val.PointerVal); break;
+    case Type::PointerTyID: DOUT << "void* " << intptr_t(Val.PointerVal); break;
     case Type::IntegerTyID: 
       DOUT << "i" << Val.IntVal.getBitWidth() << " " << Val.IntVal.toString(10)
            << "\n";
