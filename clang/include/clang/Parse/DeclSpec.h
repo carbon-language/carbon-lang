@@ -222,6 +222,15 @@ public:
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
   void Finish(Diagnostic &D, const LangOptions &Lang);
+  
+private:
+  void Diag(Diagnostic &D, SourceLocation Loc, unsigned DiagID) {
+    D.Report(Loc, DiagID);
+  }
+  void Diag(Diagnostic &D, SourceLocation Loc, unsigned DiagID,
+            const std::string &info) {
+    D.Report(Loc, DiagID, &info, 1);
+  }
 };
 
 

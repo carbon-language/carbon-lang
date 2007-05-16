@@ -118,7 +118,7 @@ public:
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
   void Report(SourceLocation Pos, unsigned DiagID,
-              const std::string &Extra = std::string());
+              const std::string *Strs = 0, unsigned NumStrs = 0);
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
@@ -131,7 +131,8 @@ public:
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or 
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
-                                diag::kind ID, const std::string &Msg) = 0;
+                                diag::kind ID, const std::string *Strs,
+                                unsigned NumStrs) = 0;
 };
 
 }  // end namespace clang

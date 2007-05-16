@@ -117,7 +117,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 /// compilation, return true, otherwise return false.  DiagID is a member of
 /// the diag::kind enum.  
 void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
-                        const std::string &Extra) {
+                        const std::string *Strs, unsigned NumStrs) {
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel = getDiagnosticLevel(DiagID);
   
@@ -126,7 +126,7 @@ void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
     return;
   
   // Finally, report it.
-  Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Extra);
+  Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Strs, NumStrs);
 }
 
 DiagnosticClient::~DiagnosticClient() {}

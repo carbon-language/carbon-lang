@@ -102,9 +102,13 @@ PPCallbacks::~PPCallbacks() {
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
 /// the specified LexerToken's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.
+void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
+  Diags.Report(Loc, DiagID);
+}
+
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {
-  Diags.Report(Loc, DiagID, Msg);
+  Diags.Report(Loc, DiagID, &Msg, 1);
 }
 
 void Preprocessor::DumpToken(const LexerToken &Tok, bool DumpFlags) const {

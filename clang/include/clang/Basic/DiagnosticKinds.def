@@ -57,7 +57,7 @@ DIAG(trigraph_ignored_block_comment, WARNING,
 DIAG(trigraph_ends_block_comment, WARNING,
      "trigraph ends block comment")
 DIAG(trigraph_converted, WARNING,
-     "trigraph converted to '%s' character")
+     "trigraph converted to '%0' character")
 
 DIAG(ext_multi_line_bcpl_comment, EXTENSION,
      "multi-line // comment")
@@ -91,7 +91,7 @@ DIAG(err_invalid_character_to_charify, ERROR,
 //===----------------------------------------------------------------------===//
 
 DIAG(pp_hash_warning, WARNING,
-     "#warning%s")
+     "#warning%0")
 DIAG(pp_include_next_in_primary, WARNING,
      "#include_next in primary source file")
 DIAG(pp_include_next_absolute_path, WARNING,
@@ -105,7 +105,7 @@ DIAG(pp_pragma_sysheader_in_main_file, WARNING,
 DIAG(pp_poisoning_existing_macro, WARNING,
      "poisoning existing macro")
 DIAG(pp_out_of_date_dependency, WARNING,
-     "current file is older than dependency %s")
+     "current file is older than dependency %0")
 DIAG(pp_undef_builtin_macro, WARNING,
      "undefining builtin macro")
 DIAG(pp_redef_builtin_macro, WARNING,
@@ -117,9 +117,9 @@ DIAG(pp_invalid_string_literal, WARNING,
 DIAG(warn_pp_expr_overflow, WARNING,
      "integer overflow in preprocessor expression")
 DIAG(warn_pp_convert_lhs_to_positive, WARNING,
-     "left side of operator converted from negative value to unsigned: %s")
+     "left side of operator converted from negative value to unsigned: %0")
 DIAG(warn_pp_convert_rhs_to_positive, WARNING,
-     "right side of operator converted from negative value to unsigned: %s")
+     "right side of operator converted from negative value to unsigned: %0")
 
 DIAG(ext_pp_import_directive, EXTENSION,
      "#import is a language extension")
@@ -130,13 +130,13 @@ DIAG(ext_pp_include_next_directive, EXTENSION,
 DIAG(ext_pp_warning_directive, EXTENSION,
      "#warning is a language extension")
 DIAG(ext_pp_extra_tokens_at_eol, EXTENSION,
-     "extra tokens at end of %s directive")
+     "extra tokens at end of %0 directive")
 DIAG(ext_pp_comma_expr, EXTENSION,
      "comma operator in operand of #if")
 DIAG(ext_pp_bad_vaargs_use, EXTENSION,
      "__VA_ARGS__ can only appear in the expansion of a C99 variadic macro")
 DIAG(ext_pp_macro_redef, EXTENSION,
-     "\"%s\" macro redefined")
+     "\"%0\" macro redefined")
 DIAG(ext_pp_macro_redef2, EXTENSION,
      "this is previous definition")
 DIAG(ext_variadic_macro, EXTENSION,
@@ -160,9 +160,9 @@ DIAG(ext_pp_timestamp, EXTENSION,
 DIAG(err_pp_invalid_directive, ERROR,
      "invalid preprocessing directive")
 DIAG(err_pp_hash_error, ERROR,
-     "#error%s")
+     "#error%0")
 DIAG(err_pp_file_not_found, ERROR,
-     "'%s' file not found")
+     "'%0' file not found")
 DIAG(err_pp_empty_filename, ERROR,
      "empty filename")
 DIAG(err_pp_include_too_deep, ERROR,
@@ -182,7 +182,7 @@ DIAG(err_pp_expected_ident_in_arg_list, ERROR,
 DIAG(err_pp_expected_comma_in_arg_list, ERROR,
      "expected comma in macro parameter list")
 DIAG(err_pp_duplicate_name_in_arg_list, ERROR,
-     "duplicate macro parameter name \"%s\"")
+     "duplicate macro parameter name \"%0\"")
 DIAG(err_pp_stringize_not_parameter, ERROR,
      "'#' is not followed by a macro parameter")
 DIAG(err_pp_malformed_ident, ERROR,
@@ -240,9 +240,9 @@ DIAG(err_too_many_args_in_macro_invoc, ERROR,
 DIAG(err_too_few_args_in_macro_invoc, ERROR,
      "too few arguments provided to function-like macro invocation")
 DIAG(err_pp_bad_paste, ERROR,
-     "pasting formed \"%s\", an invalid preprocessing token")
+     "pasting formed \"%0\", an invalid preprocessing token")
 DIAG(err_pp_operator_used_as_macro_name, ERROR,
-     "C++ operator \"%s\" cannot be used as a macro name")
+     "C++ operator \"%0\" cannot be used as a macro name")
 DIAG(err_pp_illegal_floating_literal, ERROR,
      "floating point literal in preprocessor expression")
 
@@ -259,14 +259,14 @@ DIAG(w_type_defaults_to_int, WARNING,
 DIAG(w_no_declarators, WARNING,
      "declaration does not declare anything")
 DIAG(w_asm_qualifier_ignored, WARNING,
-     "ignored %s qualifier on asm")
+     "ignored %0 qualifier on asm")
 
 DIAG(ext_empty_source_file, EXTENSION,
      "ISO C forbids an empty source file")
 DIAG(ext_top_level_semi, EXTENSION,
      "ISO C does not allow extra ';' outside of a function")
 DIAG(ext_duplicate_declspec, EXTENSION,
-     "duplicate '%s' declaration specifier")
+     "duplicate '%0' declaration specifier")
 DIAG(ext_plain_complex, EXTENSION,
      "ISO C does not support plain '_Complex' meaning '_Complex double'")
 DIAG(ext_integer_complex, EXTENSION,
@@ -275,7 +275,7 @@ DIAG(ext_thread_before, EXTENSION,
      "'__thread' before 'static'")
 
 DIAG(ext_empty_struct_union_enum, EXTENSION,
-     "use of empty %s extension")
+     "use of empty %0 extension")
 
 DIAG(ext_ident_list_in_param, EXTENSION,
      "type-less parameter names in function declaration")
@@ -337,9 +337,9 @@ DIAG(err_expected_after_declarator, ERROR,
 DIAG(err_expected_statement, ERROR,
      "expected statement")
 DIAG(err_expected_lparen_after, ERROR,
-     "expected '(' after '%s'")
+     "expected '(' after '%0'")
 DIAG(err_expected_less_after, ERROR,
-     "expected '<' after '%s'")
+     "expected '<' after '%0'")
 DIAG(err_expected_comma, ERROR,
      "expected ','")
 DIAG(err_expected_lbrace_in_compound_literal, ERROR,
@@ -347,11 +347,11 @@ DIAG(err_expected_lbrace_in_compound_literal, ERROR,
 DIAG(err_expected_while, ERROR,
      "expected 'while' in do/while loop")
 DIAG(err_expected_semi_after, ERROR,
-     "expected ';' after %s")
+     "expected ';' after %0")
 DIAG(err_expected_semi_for, ERROR,
      "expected ';' in 'for' statement specifier")
 DIAG(err_expected_colon_after, ERROR,
-     "expected ':' after %s")
+     "expected ':' after %0")
 DIAG(err_label_end_of_compound_statement, ERROR,
      "label at end of compound statement: expected statement")
 DIAG(err_expected_colon, ERROR,
@@ -369,7 +369,7 @@ DIAG(err_unexpected_at, ERROR,
 /// special sort of diagnostic kind to indicate that it is the second half of
 /// the previous diagnostic.
 DIAG(err_matching, ERROR,
-     "to match this '%s'")
+     "to match this '%0'")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
@@ -377,9 +377,9 @@ DIAG(err_matching, ERROR,
 
 // Semantic analysis of string and character constant literals.
 DIAG(ext_nonstandard_escape, EXTENSION,
-     "use of non-standard escape character '\\%s'")
+     "use of non-standard escape character '\\%0'")
 DIAG(ext_unknown_escape, EXTENSION,
-     "unknown escape sequence '\\%s'")
+     "unknown escape sequence '\\%0'")
 DIAG(warn_extraneous_wide_char_constant, WARNING,
      "extraneous characters in wide character constant ignored")
 DIAG(warn_char_constant_too_large, WARNING,
@@ -400,19 +400,19 @@ DIAG(err_typename_invalid_storageclass, ERROR,
 DIAG(err_typename_invalid_functionspec, ERROR,
      "type name does not allow function specifier to be specified")
 DIAG(err_invalid_decl_spec_combination, ERROR,
-     "cannot combine with previous '%s' declaration specifier")
+     "cannot combine with previous '%0' declaration specifier")
 DIAG(err_invalid_sign_spec, ERROR,
-     "'%s' cannot be signed or unsigned")
+     "'%0' cannot be signed or unsigned")
 DIAG(err_invalid_short_spec, ERROR,
-     "'short %s' is invalid")
+     "'short %0' is invalid")
 DIAG(err_invalid_long_spec, ERROR,
-     "'long %s' is invalid")
+     "'long %0' is invalid")
 DIAG(err_invalid_longlong_spec, ERROR,
-     "'long long %s' is invalid")
+     "'long long %0' is invalid")
 DIAG(err_invalid_complex_spec, ERROR,
-     "'_Complex %s' is invalid")
+     "'_Complex %0' is invalid")
 DIAG(err_invalid_thread_spec, ERROR,
-     "'__thread %s' is invalid")
+     "'__thread %0' is invalid")
 DIAG(err_ellipsis_first_arg, ERROR,
      "ISO C requires a named argument before '...'")
 DIAG(err_unspecified_vla_size_with_static, ERROR,
@@ -428,15 +428,15 @@ DIAG(err_void_only_param, ERROR,
 DIAG(err_void_param_qualified, ERROR,
      "'void' as parameter must not have type qualifiers")
 DIAG(err_param_redefinition, ERROR,
-     "redefinition of parameter '%s'")
+     "redefinition of parameter '%0'")
 DIAG(err_ident_list_in_fn_declaration, ERROR,
      "a parameter list without types is only allowed in a function definition")
 DIAG(err_declaration_does_not_declare_param, ERROR,
      "declaration does not declare a parameter")
 DIAG(err_no_matching_param, ERROR,
-     "parameter named '%s' is missing")
+     "parameter named '%0' is missing")
 DIAG(err_param_not_declared, ERROR,
-     "parameter '%s' was not declared")
+     "parameter '%0' was not declared")
 
 DIAG(err_previous_definition, ERROR,
      "previous definition is here")
@@ -444,67 +444,67 @@ DIAG(err_previous_use, ERROR,
      "previous use is here")
 
 DIAG(err_unexpected_typedef, ERROR,
-     "unexpected type name '%s': expected expression")
+     "unexpected type name '%0': expected expression")
 DIAG(err_undeclared_var_use, ERROR,
-     "use of undeclared identifier '%s'")
+     "use of undeclared identifier '%0'")
 DIAG(err_redefinition, ERROR,
-     "redefinition of '%s'")
+     "redefinition of '%0'")
 DIAG(err_redefinition_different_kind, ERROR,
-     "redefinition of '%s' as different kind of symbol")
+     "redefinition of '%0' as different kind of symbol")
 DIAG(err_nested_redefinition, ERROR,
-     "nested redefinition of '%s'")
+     "nested redefinition of '%0'")
 DIAG(err_use_with_wrong_tag, ERROR,
-     "use of '%s' with tag type that does not match previous declaration")
+     "use of '%0' with tag type that does not match previous declaration")
 DIAG(ext_forward_ref_enum, EXTENSION,
      "ISO C forbids forward references to 'enum' types")
 DIAG(err_redefinition_of_enumerator, ERROR,
-     "redefinition of enumerator '%s'")
+     "redefinition of enumerator '%0'")
 DIAG(err_duplicate_member, ERROR,
-     "duplicate member '%s'")
+     "duplicate member '%0'")
 DIAG(err_enum_value_not_integer_constant_expr, ERROR,
-     "enumerator value for '%s' is not an integer constant")
+     "enumerator value for '%0' is not an integer constant")
 DIAG(err_case_label_not_integer_constant_expr, ERROR,
      "case label does not reduce to an integer constant")
 DIAG(err_typecheck_illegal_vla, ERROR,
      "variable length array declared outside of any function")
 DIAG(err_array_size_non_int, ERROR,
-     "size of array has non-integer type '%s'")
+     "size of array has non-integer type '%0'")
 
 DIAG(warn_implicit_function_decl, WARNING,
-     "implicit declaration of function '%s'")
+     "implicit declaration of function '%0'")
 DIAG(ext_implicit_function_decl, EXTENSION,
-     "implicit declaration of function '%s' is invalid in C99")
+     "implicit declaration of function '%0' is invalid in C99")
 
 DIAG(err_field_declared_as_function, ERROR,
-     "field '%s' declared as a function")
+     "field '%0' declared as a function")
 DIAG(err_field_incomplete, ERROR,
-     "field '%s' has incomplete type")
+     "field '%0' has incomplete type")
 DIAG(err_variable_sized_type_in_struct, EXTENSION,
-     "variable sized type '%s' must be at end of struct or class")
+     "variable sized type '%0' must be at end of struct or class")
 DIAG(err_flexible_array_empty_struct, ERROR,
-     "flexible array '%s' not allowed in otherwise empty struct")
+     "flexible array '%0' not allowed in otherwise empty struct")
 DIAG(ext_flexible_array_in_struct, EXTENSION,
-     "'%s' may not be nested in a struct due to flexible array member")
+     "'%0' may not be nested in a struct due to flexible array member")
 DIAG(err_flexible_array_in_array, ERROR,
-     "'%s' may not be used as an array element due to flexible array member")
+     "'%0' may not be used as an array element due to flexible array member")
 DIAG(err_illegal_decl_array_of_functions, ERROR,
-     "'%s' declared as array of functions")
+     "'%0' declared as array of functions")
 DIAG(err_illegal_decl_array_incomplete_type, ERROR,
-     "array has incomplete element type '%s'")
+     "array has incomplete element type '%0'")
      
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
      "invalid application of 'sizeof' to a function type")
 DIAG(ext_sizeof_void_type, EXTENSION,
-     "invalid application of '%s' to a void type")
+     "invalid application of '%0' to a void type")
 DIAG(err_sizeof_incomplete_type, ERROR,
-     "invalid application of 'sizeof' to an incomplete type '%s'")
+     "invalid application of 'sizeof' to an incomplete type '%0'")
 DIAG(err_alignof_incomplete_type, ERROR,
-     "invalid application of '__alignof' to an incomplete type '%s'")
+     "invalid application of '__alignof' to an incomplete type '%0'")
 DIAG(err_invalid_suffix_integer_constant, ERROR,
-     "invalid suffix '%s' on integer constant")
+     "invalid suffix '%0' on integer constant")
 DIAG(err_invalid_suffix_float_constant, ERROR,
-     "invalid suffix '%s' on floating constant")
+     "invalid suffix '%0' on floating constant")
 DIAG(warn_integer_too_large, WARNING,
      "integer constant is too large for its type")
 DIAG(warn_integer_too_large_for_signed, WARNING,
@@ -518,23 +518,23 @@ DIAG(err_typecheck_subscript_value, ERROR,
 DIAG(err_typecheck_subscript, ERROR,
      "array subscript is not an integer")
 DIAG(err_typecheck_subscript_not_object, ERROR,
-     "illegal subscript of non-object type '%s'")
+     "illegal subscript of non-object type '%0'")
 DIAG(err_typecheck_member_reference_structUnion, ERROR,
      "member reference is not to a structure or union")
 DIAG(err_typecheck_member_reference_arrow, ERROR,
      "member reference is not a pointer")
 DIAG(err_typecheck_incomplete_tag, ERROR,
-     "incomplete definition of type '%s'")
+     "incomplete definition of type '%0'")
 DIAG(err_typecheck_no_member, ERROR,
-     "no member named '%s'")
+     "no member named '%0'")
 DIAG(err_typecheck_illegal_increment_decrement, ERROR,
-     "cannot modify value of type '%s'")
+     "cannot modify value of type '%0'")
 DIAG(err_typecheck_invalid_lvalue_incr_decr, ERROR,
      "invalid lvalue in increment/decrement expression")
 DIAG(err_typecheck_arithmetic_incomplete_type, ERROR,
-     "arithmetic on pointer to incomplete type '%s'")
+     "arithmetic on pointer to incomplete type '%0'")
 DIAG(err_typecheck_decl_incomplete_type, ERROR,
-     "variable has incomplete type '%s'")
+     "variable has incomplete type '%0'")
 DIAG(err_typecheck_sclass_fscope, ERROR,
      "illegal storage class on file-scoped variable")
 DIAG(err_typecheck_sclass_func, ERROR,
@@ -544,7 +544,7 @@ DIAG(err_typecheck_address_of_register, ERROR,
 DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
      "invalid lvalue in address expression")
 DIAG(err_typecheck_unary_expr, ERROR,
-     "invalid argument type to unary expression '%s'")
+     "invalid argument type to unary expression '%0'")
 DIAG(err_typecheck_invalid_operands, ERROR,
      "invalid operands to binary expression")
 DIAG(ext_typecheck_comparison_of_pointer_integer, EXTENSION,
@@ -568,15 +568,15 @@ DIAG(err_typecheck_call_too_few_args, ERROR,
 DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to function")
 DIAG(err_typecheck_passing_incompatible, ERROR,
-     "incompatible type for argument %s")
+     "incompatible type for argument %0")
 DIAG(ext_typecheck_passing_int_from_pointer, EXTENSION,
-     "passing argument %s makes integer from pointer without a cast")
+     "passing argument %0 makes integer from pointer without a cast")
 DIAG(ext_typecheck_passing_pointer_from_int, EXTENSION,
-     "passing argument %s makes pointer from integer without a cast")
+     "passing argument %0 makes pointer from integer without a cast")
 DIAG(ext_typecheck_passing_incompatible_pointer, EXTENSION,
-     "passing argument %s from incompatible pointer type")
+     "passing argument %0 from incompatible pointer type")
 DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
-     "passing argument %s discards qualifiers from pointer target type")
+     "passing argument %0 discards qualifiers from pointer target type")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

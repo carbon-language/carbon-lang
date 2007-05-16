@@ -347,7 +347,8 @@ public:
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
-                                diag::kind ID, const std::string &Msg);
+                                diag::kind ID, const std::string *Strs,
+                                unsigned NumStrs);
 };
 
 void DiagnosticPrinterSTDERR::
@@ -368,8 +369,9 @@ PrintIncludeStack(SourceLocation Pos) {
 
 void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level, 
                                                SourceLocation Pos,
-                                               diag::kind ID, 
-                                               const std::string &Extra) {
+                                               diag::kind ID,
+                                               const std::string *Strs,
+                                               unsigned NumStrs) {
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
   const MemoryBuffer *Buffer = 0;
@@ -432,14 +434,13 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
   
   std::string Msg = Diagnostic::getDescription(ID);
   
-  // Replace all instances of %s in Msg with 'Extra'.
-  if (Msg.size() > 1) {
-    for (unsigned i = 0; i < Msg.size()-1; ++i) {
-      if (Msg[i] == '%' && Msg[i+1] == 's') {
-        Msg = std::string(Msg.begin(), Msg.begin()+i) +
-              Extra +
-              std::string(Msg.begin()+i+2, Msg.end());
-      }
+  // Replace all instances of %0 in Msg with 'Extra'.
+  for (unsigned i = 0; i < Msg.size()-1; ++i) {
+    if (Msg[i] == '%' && isdigit(Msg[i+1])) {
+      unsigned StrNo = Msg[i+1]-'0';
+      Msg = std::string(Msg.begin(), Msg.begin()+i) +
+            (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
+            std::string(Msg.begin()+i+2, Msg.end());
     }
   }
   std::cerr << Msg << "\n";
