@@ -390,8 +390,8 @@ public:
   }
 
   /// PredicateInstruction - Convert the instruction into a predicated
-  /// instruction.
-  virtual void PredicateInstruction(MachineInstr *MI,
+  /// instruction. It returns true if the operation was successful.
+  virtual bool PredicateInstruction(MachineInstr *MI,
                                     std::vector<MachineOperand> &Cond) const;
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer

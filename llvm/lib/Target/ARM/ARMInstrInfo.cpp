@@ -423,17 +423,21 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   return false;
 }
 
-void ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
+bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
                                       std::vector<MachineOperand> &Cond) const {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setInstrDescriptor(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
     MI->addImmOperand(Cond[0].getImmedValue());
-    return;
+    return true;
   }
 
   MachineOperand *PMO = MI->findFirstPredOperand();
-  PMO->setImm(Cond[0].getImmedValue());
+  if (PMO) {
+    PMO->setImm(Cond[0].getImmedValue());
+    return true;
+  }
+  return false;
 }
 
 
