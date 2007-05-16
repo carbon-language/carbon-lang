@@ -102,6 +102,11 @@ public:
                             const std::vector<MachineOperand> &Cond) const;
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
+
+  // Predication support.
+  virtual bool isPredicatable(MachineInstr *MI) const;
+  virtual void PredicateInstruction(MachineInstr *MI,
+                                    std::vector<MachineOperand> &Cond) const;
 };
 
   // Utility routines

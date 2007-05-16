@@ -53,6 +53,7 @@ public:
   
   // Pass Pipeline Configuration
   virtual bool addInstSelector(FunctionPassManager &PM, bool Fast);
+  virtual bool addPostRegAlloc(FunctionPassManager &PM, bool Fast);
   virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);

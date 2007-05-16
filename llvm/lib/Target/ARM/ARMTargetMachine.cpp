@@ -17,6 +17,7 @@
 #include "ARM.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetOptions.h"
@@ -24,6 +25,8 @@ using namespace llvm;
 
 static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
                               cl::desc("Disable load store optimization pass"));
+static cl::opt<bool> EnableIfConversion("enable-arm-if-conversion", cl::Hidden,
+                              cl::desc("Enable if-conversion pass"));
 
 namespace {
   // Register the target.
@@ -83,6 +86,14 @@ const TargetAsmInfo *ARMTargetMachine::createTargetAsmInfo() const {
 bool ARMTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
   PM.add(createARMISelDag(*this));
   return false;
+}
+
+bool ARMTargetMachine::addPostRegAlloc(FunctionPassManager &PM, bool Fast) {
+  if (Fast || !EnableIfConversion || Subtarget.isThumb())
+    return false;
+
+  PM.add(createIfConverterPass());
+  return true;
 }
 
 bool ARMTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
