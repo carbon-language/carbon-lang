@@ -141,6 +141,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
   
   if (!BBI.FBB)
     BBI.FBB = findFalseBlock(BB, BBI.TBB);  
+  assert(BBI.FBB && "Expected to find the fallthrough block!");
+
   AnalyzeBlock(BBI.FBB);
   BBInfo &FBBI = BBAnalysis[BBI.FBB->getNumber()];
   if (FBBI.Kind != ICNotClassfied)
