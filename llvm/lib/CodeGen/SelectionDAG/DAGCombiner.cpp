@@ -2685,6 +2685,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   // fold (conv (load x)) -> (load (conv*)x)
   // If the resultant load doesn't need a  higher alignment than the original!
   if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+      ISD::isUNINDEXEDLoad(N0.Val) &&
       TLI.isOperationLegal(ISD::LOAD, VT)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     unsigned Align = TLI.getTargetMachine().getTargetData()->
@@ -3563,7 +3564,8 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   
   // If this is a store of a bit convert, store the input value if the
   // resultant store does not need a higher alignment than the original.
-  if (Value.getOpcode() == ISD::BIT_CONVERT && !ST->isTruncatingStore()) {
+  if (Value.getOpcode() == ISD::BIT_CONVERT && !ST->isTruncatingStore() &&
+      ST->getAddressingMode() == ISD::UNINDEXED) {
     unsigned Align = ST->getAlignment();
     MVT::ValueType SVT = Value.getOperand(0).getValueType();
     unsigned OrigAlign = TLI.getTargetMachine().getTargetData()->
