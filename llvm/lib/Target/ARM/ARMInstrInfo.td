@@ -278,7 +278,7 @@ def addrmodepc : Operand<i32>,
 }
 
 // ARM branch / cmov condition code operand.
-def ccop : PredicateOperand<i32, (ops i32imm), (ops)> {
+def ccop : Operand<i32> {
   let PrintMethod = "printPredicateOperand";
 }
 
@@ -364,7 +364,7 @@ class PseudoInst<dag ops, string asm, list<dag> pattern>
   let Pattern = pattern;
 }
 
-// Almost all ARM instructions are predicatable.
+// Almost all ARM instructions are predicable.
 class I<dag oprnds, AddrMode am, SizeFlagVal sz, IndexMode im,
         string opc, string asm, string cstr, list<dag> pattern>
   // FIXME: Set all opcodes to 0 for now.
@@ -591,10 +591,11 @@ let isCall = 1, noResults = 1,
 }
 
 let isBranch = 1, isTerminator = 1, noResults = 1 in {
-  // B can changed into a Bcc, but it is not "predicated".
+  // B is "predicable" since it can be xformed into a Bcc.
   let isBarrier = 1 in {
-  def B : AXI<(ops brtarget:$dst), "b $dst",
-              [(br bb:$dst)]>;
+    let isPredicable = 1 in
+    def B : AXI<(ops brtarget:$dst), "b $dst",
+                [(br bb:$dst)]>;
 
   def BR_JTr : JTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
                     "mov", " pc, $dst \n$jt",
