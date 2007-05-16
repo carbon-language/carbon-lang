@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/DwarfWriter.h"
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/UniqueVector.h"
@@ -31,6 +32,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include <ostream>
@@ -2911,6 +2913,21 @@ private:
   ///     found the the frame is unwound and handling continues.
   ///  3. Type id table contains references to all the C++ typeinfo for all
   ///     catches in the function.  This tables is reversed indexed base 1.
+
+  struct KeyInfo {
+    static inline unsigned getEmptyKey() { return -1U; }
+    static inline unsigned getTombstoneKey() { return -2U; }
+    static unsigned getHashValue(const unsigned &Key) { return Key; }
+    static bool isPod() { return true; }
+  };
+
+  struct PadSite {
+    unsigned PadIndex;
+    unsigned SiteIndex;
+  };
+
+  typedef DenseMap<unsigned, PadSite, KeyInfo> PadMapType;
+
   void EmitExceptionTable() {
     // Map all labels and get rid of any dead landing pads.
     MMI->TidyLandingPads();
@@ -3013,20 +3030,47 @@ private:
     Asm->EOL("Call site format (DW_EH_PE_udata4)");
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call-site table length");
-    
-    // Emit the landing pad site information.
+
+    // Emit the landing pad site information in order of address.
+    PadMapType PadMap;
+
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo &LandingPad = LandingPads[i];
       for (unsigned j=0, E = LandingPad.BeginLabels.size(); j != E; ++j) {
-        EmitSectionOffset("label", "eh_func_begin",
-                          LandingPad.BeginLabels[j], SubprogramCount,
+        unsigned BeginLabel = LandingPad.BeginLabels[j];
+        assert(!PadMap.count(BeginLabel) && "duplicate landing pad labels!");
+        PadSite P = { i, j };
+        PadMap[BeginLabel] = P;
+      }
+    }
+
+    for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+         I != E; ++I) {
+      for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
+           MI != E; ++MI) {
+        if (MI->getOpcode() != TargetInstrInfo::LABEL)
+          continue;
+
+        unsigned BeginLabel = MI->getOperand(0).getImmedValue();
+        PadMapType::iterator L = PadMap.find(BeginLabel);
+
+        if (L == PadMap.end())
+          continue;
+
+        PadSite P = L->second;
+        const LandingPadInfo &LandingPad = LandingPads[P.PadIndex];
+
+        assert(BeginLabel == LandingPad.BeginLabels[P.SiteIndex] &&
+               "Inconsistent landing pad map!");
+
+        EmitSectionOffset("label", "eh_func_begin", BeginLabel, SubprogramCount,
                           false, true);
         Asm->EOL("Region start");
-      
-        EmitDifference("label", LandingPad.EndLabels[j],
-                       "label", LandingPad.BeginLabels[j]);
+
+        EmitDifference("label", LandingPad.EndLabels[P.SiteIndex],
+                       "label", BeginLabel);
         Asm->EOL("Region length");
-      
+
         if (LandingPad.TypeIds.empty()) {
           if (TAI->getAddressSize() == sizeof(int32_t))
             Asm->EmitInt32(0);
@@ -3038,11 +3082,11 @@ private:
         }
         Asm->EOL("Landing pad");
 
-        Asm->EmitULEB128Bytes(Actions[i]);
+        Asm->EmitULEB128Bytes(Actions[P.PadIndex]);
         Asm->EOL("Action");
       }
     }
-    
+
     // Emit the actions.
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo &LandingPad = LandingPads[i];
