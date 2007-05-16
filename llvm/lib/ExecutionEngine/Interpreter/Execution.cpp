@@ -1338,6 +1338,20 @@ void Interpreter::callFunction(Function *F,
   StackFrame.VarArgs.assign(ArgVals.begin()+i, ArgVals.end());
 }
 
+static void PrintGenericValue(const GenericValue &Val, const Type* Ty) {
+  switch (Ty->getTypeID()) {
+    default: assert(0 && "Invalid GenericValue Type");
+    case Type::VoidTyID:    DOUT << "void"; break;
+    case Type::FloatTyID:   DOUT << "float " << Val.FloatVal; break;
+    case Type::DoubleTyID:  DOUT << "double " << Val.DoubleVal; break;
+    case Type::PointerTyID: DOUT << "void* " << unsigned(Val.PointerVal); break;
+    case Type::IntegerTyID: 
+      DOUT << "i" << Val.IntVal.getBitWidth() << " " << Val.IntVal.toString(10)
+           << "\n";
+      break;
+  }
+}
+
 void Interpreter::run() {
   while (!ECStack.empty()) {
     // Interpret a single instruction & increment the "PC".
@@ -1349,5 +1363,12 @@ void Interpreter::run() {
 
     DOUT << "About to interpret: " << I;
     visit(I);   // Dispatch to one of the visit* methods...
+#ifndef NDEBUG
+    if (!isa<CallInst>(I) && !isa<InvokeInst>(I) && 
+        I.getType() != Type::VoidTy) {
+      DOUT << "  --> ";
+      PrintGenericValue(SF.Values[&I], I.getType());
+    }
+#endif
   }
 }
