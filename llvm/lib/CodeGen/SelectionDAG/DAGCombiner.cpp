@@ -29,17 +29,18 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dagcombine"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -713,10 +714,10 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
       return N->getOperand(1);
   }
   
-  
-  SmallVector<SDNode *, 8> TFs;   // List of token factors to visit.
-  SmallVector<SDOperand, 8> Ops;  // Ops for replacing token factor.
-  bool Changed = false;           // If we should replace this token factor.
+  SmallVector<SDNode *, 8> TFs;     // List of token factors to visit.
+  SmallVector<SDOperand, 8> Ops;    // Ops for replacing token factor.
+  SmallPtrSet<SDNode*, 16> SeenOps; 
+  bool Changed = false;             // If we should replace this token factor.
   
   // Start out with this token factor.
   TFs.push_back(N);
@@ -750,9 +751,11 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
         // Fall thru
         
       default:
-        // Only add if not there prior.
-        if (std::find(Ops.begin(), Ops.end(), Op) == Ops.end())
+        // Only add if it isn't already in the list.
+        if (SeenOps.insert(Op.Val))
           Ops.push_back(Op);
+        else
+          Changed = true;
         break;
       }
     }
