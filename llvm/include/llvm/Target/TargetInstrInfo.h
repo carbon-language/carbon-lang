@@ -74,9 +74,9 @@ const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 10;
 // operands in addition to the minimum number operands specified.
 const unsigned M_VARIABLE_OPS = 1 << 11;
 
-// M_PREDICATED - Set if this instruction has a predicate that controls its
-// execution.
-const unsigned M_PREDICATED = 1 << 12;
+// M_PREDICABLE - Set if this instruction has a predicate operand that
+// controls execution. It may be set to 'always'.
+const unsigned M_PREDICABLE = 1 << 12;
 
 // M_REMATERIALIZIBLE - Set if this instruction can be trivally re-materialized
 // at any time, e.g. constant generation, load from constant pool.
@@ -208,8 +208,8 @@ public:
     return get(Opcode).Flags & M_RET_FLAG;
   }
 
-  bool isPredicated(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_PREDICATED;
+  bool isPredicable(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_PREDICABLE;
   }
   bool isReMaterializable(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_REMATERIALIZIBLE;
@@ -389,19 +389,10 @@ public:
     abort();
   }
 
-  /// isPredicatable - True if the instruction can be converted into a
-  /// predicated instruction.
-  virtual bool isPredicatable(MachineInstr *MI) const {
-    return false;
-  }
-
   /// PredicateInstruction - Convert the instruction into a predicated
   /// instruction.
   virtual void PredicateInstruction(MachineInstr *MI,
-                                    std::vector<MachineOperand> &Cond) const {
-    assert(0 && "Target didn't implement PredicateInstruction!");
-    abort();
-  }
+                                    std::vector<MachineOperand> &Cond) const;
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.

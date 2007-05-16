@@ -394,6 +394,10 @@ public:
     return true;
   }
 
+  /// isPredicable - True if the instruction can be converted into a
+  /// predicated instruction.
+  bool isPredicable() const;
+
   /// clone - Create a copy of 'this' instruction that is identical in
   /// all ways except the the instruction has no parent, prev, or next.
   MachineInstr* clone() const { return new MachineInstr(*this); }
