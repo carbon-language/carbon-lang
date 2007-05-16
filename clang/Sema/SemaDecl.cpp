@@ -36,7 +36,7 @@ bool Sema::isConstantArrayType(ArrayType *ary, SourceLocation loc) {
       return false;
     }
     if (!size->getType()->isIntegerType()) {
-      Diag(loc, diag::err_array_size_non_int, size->getType());
+      Diag(loc, diag::err_array_size_non_int, size->getType().getAsString());
       return false;
     }
     // We have a constant expression with an integer type, now make sure 
@@ -282,7 +282,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       default: assert(0 && "Unknown storage class!");
       case DeclSpec::SCS_auto:        
       case DeclSpec::SCS_register:
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func, R);
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func,
+             R.getAsString());
         return 0;
       case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
       case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
@@ -322,13 +323,15 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
         // a tentative definition and has internal linkage (C99 6.2.2p3), the  
         // declared type shall not be an incomplete type.
         if (R->isIncompleteType()) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type,
+               R.getAsString());
           return 0;
         }
       }
       // FIXME: Find C99 spec reference
       if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope, R);
+        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope,
+             R.getAsString());
         return 0;
       }
       // C99 6.7.5.2p2: If an identifier is declared to be an object with 
@@ -343,7 +346,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       // no linkage (C99 6.2.2p6), the type for the object shall be complete...
       if (SC != VarDecl::Extern) {
         if (R->isIncompleteType()) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type, R);
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type,
+               R.getAsString());
           return 0;
         }
       }

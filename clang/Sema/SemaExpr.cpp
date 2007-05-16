@@ -261,7 +261,8 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     // in practice, the following check catches trying to index a pointer
     // to a function (e.g. void (*)(int)). Functions are not objects in c99.
     if (!resultType->isObjectType())
-      return Diag(LLoc, diag::err_typecheck_subscript_not_object, baseType);    
+      return Diag(LLoc, diag::err_typecheck_subscript_not_object,
+                  baseType.getAsString());
   } 
   return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType);
 }
@@ -753,12 +754,14 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   // C99 6.5.2.4p1
   if (const PointerType *pt = dyn_cast<PointerType>(resType)) {
     if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
-      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type, resType);
+      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
+           resType.getAsString());
       return QualType();
     }
   } else if (!resType->isRealType()) { 
     // FIXME: Allow Complex as a GCC extension.
-    Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement, resType);
+    Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
+         resType.getAsString());
     return QualType(); 
   }
   // At this point, we know we have a real or pointer type. Now make sure
@@ -832,7 +835,7 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
 
   if (PointerType *PT = dyn_cast<PointerType>(qType))
     return PT->getPointeeType();
-  Diag(OpLoc, diag::err_typecheck_unary_expr, qType);
+  Diag(OpLoc, diag::err_typecheck_unary_expr, qType.getAsString());
   return QualType();
 }
 
@@ -1022,17 +1025,20 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   case UnaryOperator::Minus:
     resultType = UsualUnaryConversion(((Expr *)Input)->getType());
     if (!resultType->isArithmeticType())  // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+      return Diag(OpLoc, diag::err_typecheck_unary_expr, 
+                  resultType.getAsString());
     break;
   case UnaryOperator::Not: // bitwise complement
     resultType = UsualUnaryConversion(((Expr *)Input)->getType());
     if (!resultType->isIntegerType())  // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+      return Diag(OpLoc, diag::err_typecheck_unary_expr,
+                  resultType.getAsString());
     break;
   case UnaryOperator::LNot: // logical negation
     resultType = UsualUnaryConversion(((Expr *)Input)->getType());
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr, resultType);
+      return Diag(OpLoc, diag::err_typecheck_unary_expr,
+                  resultType.getAsString());
     break;
   case UnaryOperator::SizeOf:
     resultType = CheckSizeOfAlignOfOperand(((Expr *)Input)->getType(), OpLoc,

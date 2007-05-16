@@ -44,12 +44,6 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
   return true;
 }
 
-bool Sema::Diag(SourceLocation Loc, unsigned DiagID, QualType t) {
-  std::string Name = t.getAsString();
-  PP.getDiagnostics().Report(Loc, DiagID, &Name, 1);
-  return true;
-}
-
 bool Sema::Diag(const LexerToken &Tok, unsigned DiagID) {
   PP.getDiagnostics().Report(Tok.getLocation(), DiagID);
   return true;
