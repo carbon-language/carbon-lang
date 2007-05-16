@@ -423,15 +423,6 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   return false;
 }
 
-bool ARMInstrInfo::isPredicatable(MachineInstr *MI) const {
-  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
-  if (TID->Flags & M_PREDICATED)
-    return true;
-
-  unsigned Opc = MI->getOpcode();
-  return Opc == ARM::B || Opc == ARM::tB;
-}
-
 void ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
                                       std::vector<MachineOperand> &Cond) const {
   unsigned Opc = MI->getOpcode();
