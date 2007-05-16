@@ -1861,21 +1861,26 @@ void APInt::fromString(uint32_t numbits, const char *str, uint32_t slen,
     // Get a digit
     uint32_t digit = 0;
     char cdigit = str[i];
-    if (isdigit(cdigit))
-      digit = cdigit - '0';
-    else if (isxdigit(cdigit))
-      if (cdigit >= 'a')
+    if (radix == 16) {
+      if (!isxdigit(cdigit))
+        assert(0 && "Invalid hex digit in string");
+      if (isdigit(cdigit))
+        digit = cdigit - '0';
+      else if (cdigit >= 'a')
         digit = cdigit - 'a' + 10;
       else if (cdigit >= 'A')
         digit = cdigit - 'A' + 10;
       else
-        assert(0 && "huh?");
-    else
+        assert(0 && "huh? we shouldn't get here");
+    } else if (isdigit(cdigit)) {
+      digit = cdigit - '0';
+    } else {
       assert(0 && "Invalid character in digit string");
+    }
 
-    // Shift or multiple the value by the radix
+    // Shift or multiply the value by the radix
     if (shift)
-      this->shl(shift);
+      *this <<= shift;
     else
       *this *= apradix;
 
