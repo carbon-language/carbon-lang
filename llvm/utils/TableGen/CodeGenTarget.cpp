@@ -356,7 +356,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isLoad       = R->getValueAsBit("isLoad");
   isStore      = R->getValueAsBit("isStore");
   bool isTwoAddress = R->getValueAsBit("isTwoAddress");
-  isPredicated = false;   // set below.
+  isPredicable = R->getValueAsBit("isPredicable");
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
   isCommutable = R->getValueAsBit("isCommutable");
   isTerminator = R->getValueAsBit("isTerminator");
@@ -404,7 +404,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       if (unsigned NumArgs = MIOpInfo->getNumArgs())
         NumOps = NumArgs;
 
-      isPredicated |= Rec->isSubClassOf("PredicateOperand");
+      isPredicable |= Rec->isSubClassOf("PredicateOperand");
     } else if (Rec->getName() == "variable_ops") {
       hasVariableNumberOfOperands = true;
       continue;
