@@ -170,6 +170,8 @@ Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
   return e;
 }
 
+/// The UsualUnaryConversion() function is *not* called by this routine.
+/// See C99 6.3.2.1p[2-4] for more details.
 QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
                                          SourceLocation OpLoc, bool isSizeof) {
   // C99 6.5.3.4p1:
@@ -386,16 +388,78 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   Expr *Cond, Expr *LHS, Expr *RHS, SourceLocation questionLoc) {
-  QualType cond = Cond->getType().getCanonicalType();
-  QualType lhs = LHS->getType().getCanonicalType();
-  QualType rhs = RHS->getType().getCanonicalType();
-
+  QualType cond = Cond->getType();
+  QualType lhs = LHS->getType();
+  QualType rhs = RHS->getType();
+  
   assert(!cond.isNull() && "ParseConditionalOp(): no conditional type");
   assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
   assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
 
-  // C99 6.5.15p2,3
-  return rhs;
+  cond = UsualUnaryConversion(cond);
+  lhs = UsualUnaryConversion(lhs);
+  rhs = UsualUnaryConversion(rhs);
+  
+  // first, check the condition.
+  if (!cond->isScalarType()) { // C99 6.5.15p2
+    // FIXME: need to compute the location from the Cond expr node...
+    Diag(questionLoc, diag::err_typecheck_cond_expect_scalar, 
+                      cond.getAsString());
+    return QualType();
+  }
+  // now check the two expressions.
+  if (lhs->isArithmeticType() && rhs->isArithmeticType()) // C99 6.5.15p3,5
+    return UsualArithmeticConversions(lhs, rhs);
+    
+  if ((lhs->isStructureType() && rhs->isStructureType()) || // C99 6.5.15p3
+      (lhs->isUnionType() && rhs->isUnionType())) {
+    TagType *lTag = cast<TagType>(lhs.getCanonicalType());
+    TagType *rTag = cast<TagType>(rhs.getCanonicalType());
+    
+    if (lTag->getDecl()->getIdentifier() == rTag->getDecl()->getIdentifier()) 
+      return lhs;
+    else {
+      Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
+           lhs.getAsString(), rhs.getAsString());
+      return QualType();
+    }
+  }
+  if (lhs->isPointerType() && rhs->isPointerType()) { // C99 6.5.15p3,6
+    QualType lhptee, rhptee;
+    
+    // get the "pointed to" type
+    lhptee = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
+    rhptee = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
+
+    // ignore qualifiers on void (C99 6.5.15p3, clause 6)
+    if (lhptee.getUnqualifiedType()->isVoidType() &&
+        (rhptee->isObjectType() || rhptee->isIncompleteType()))
+      return lhs;
+    if (rhptee.getUnqualifiedType()->isVoidType() &&
+        (lhptee->isObjectType() || lhptee->isIncompleteType()))
+      return rhs;
+
+    // FIXME: C99 6.5.15p6: If both operands are pointers to compatible types
+    // *or* to differently qualified versions of compatible types, the result
+    // type is a pointer to an appropriately qualified version of the 
+    // *composite* type.
+    if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                  rhptee.getUnqualifiedType())) {
+      Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
+                        lhs.getAsString(), rhs.getAsString());
+      return lhs; // FIXME: this is an _ext - is this return o.k?
+    }
+  }
+  if (lhs->isVoidType() && rhs->isVoidType()) // C99 6.5.15p3
+    return lhs;
+  if (lhs->isPointerType() && RHS->isNullPointerConstant()) // C99 6.5.15p3
+    return lhs;
+  if (rhs->isPointerType() && LHS->isNullPointerConstant()) // C99 6.5.15p3
+    return rhs;
+    
+  Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
+      lhs.getAsString(), rhs.getAsString());
+  return QualType();
 }
 
 /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -421,10 +485,10 @@ QualType Sema::UsualUnaryConversion(QualType t) {
   
   if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
     return Context.IntTy;
-  else if (t->isFunctionType()) // C99 6.3.2.1p4
-    return Context.getPointerType(t);
-  else if (t->isArrayType()) // C99 6.3.2.1p3
-    return Context.getPointerType(cast<ArrayType>(t)->getElementType());
+  if (t->isFunctionType()) // C99 6.3.2.1p4
+    return Context.getPointerType(t.getCanonicalType());
+  if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
+    return Context.getPointerType(ary->getElementType()); // C99 6.3.2.1p3
   return t;
 }
 
@@ -800,7 +864,7 @@ static Decl *getPrimaryDeclaration(Expr *e) {
 /// designator or an lvalue designating an object. If it is an lvalue, the 
 /// object cannot be declared with storage class register or be a bit field.
 /// Note: The usual conversions are *not* applied to the operand of the & 
-/// operator, and its result is never an lvalue.
+/// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Decl *dcl = getPrimaryDeclaration(op);
   

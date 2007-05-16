@@ -258,16 +258,20 @@ bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDoubleComplex;
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
+    return false;
+  }
   return CanonicalType->getTypeClass() == Pointer;
 }
 
 bool Type::isAggregateType() const {
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Struct)
       return true;
+    return false;
+  }
   return CanonicalType->getTypeClass() == Array;
 }
 
