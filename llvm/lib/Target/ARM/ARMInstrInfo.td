@@ -590,13 +590,11 @@ let isCall = 1, noResults = 1,
   }
 }
 
-let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
+let isBranch = 1, isTerminator = 1, noResults = 1 in {
   // B can changed into a Bcc, but it is not "predicated".
+  let isBarrier = 1 in {
   def B : AXI<(ops brtarget:$dst), "b $dst",
               [(br bb:$dst)]>;
-
-  def Bcc : AXI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
-                 [(ARMbrcond bb:$dst, imm:$cc)]>;
 
   def BR_JTr : JTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
                     "mov", " pc, $dst \n$jt",
@@ -609,6 +607,10 @@ let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
                        "add", " pc, $dst, $idx \n$jt",
                        [(ARMbrjt (add GPR:$dst, GPR:$idx), tjumptable:$jt,
                          imm:$id)]>;
+  }
+
+  def Bcc : AXI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
+                 [(ARMbrcond bb:$dst, imm:$cc)]>;
 }
 
 //===----------------------------------------------------------------------===//
