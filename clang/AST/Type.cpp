@@ -373,7 +373,7 @@ bool RecordType::classof(const Type *T) {
 
 void QualType::dump(const char *msg) const {
   std::string R = "foo";
-  getAsString(R);
+  getAsStringInternal(R);
   if (msg)
     std::cerr << msg << ": " << R << "\n";
   else
@@ -391,7 +391,7 @@ static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
     S += (NonePrinted+" restrict"), NonePrinted = false;
 }
 
-void QualType::getAsString(std::string &S) const {
+void QualType::getAsStringInternal(std::string &S) const {
   if (isNull()) {
     S += "NULL TYPE\n";
     return;
@@ -404,10 +404,10 @@ void QualType::getAsString(std::string &S) const {
     S = TQS + ' ' + S;
   }
 
-  getTypePtr()->getAsString(S);
+  getTypePtr()->getAsStringInternal(S);
 }
 
-void BuiltinType::getAsString(std::string &S) const {
+void BuiltinType::getAsStringInternal(std::string &S) const {
   if (S.empty()) {
     S = getName();
   } else {
@@ -417,7 +417,7 @@ void BuiltinType::getAsString(std::string &S) const {
   }
 }
 
-void PointerType::getAsString(std::string &S) const {
+void PointerType::getAsStringInternal(std::string &S) const {
   S = '*' + S;
   
   // Handle things like 'int (*A)[4];' correctly.
@@ -425,10 +425,10 @@ void PointerType::getAsString(std::string &S) const {
   if (isa<ArrayType>(PointeeType.getTypePtr()))
     S = '(' + S + ')';
   
-  PointeeType.getAsString(S);
+  PointeeType.getAsStringInternal(S);
 }
 
-void ArrayType::getAsString(std::string &S) const {
+void ArrayType::getAsStringInternal(std::string &S) const {
   S += '[';
   
   if (IndexTypeQuals) {
@@ -443,19 +443,19 @@ void ArrayType::getAsString(std::string &S) const {
   
   S += ']';
   
-  ElementType.getAsString(S);
+  ElementType.getAsStringInternal(S);
 }
 
-void FunctionTypeNoProto::getAsString(std::string &S) const {
+void FunctionTypeNoProto::getAsStringInternal(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())
     S = "(" + S + ")";
   
   S += "()";
-  getResultType().getAsString(S);
+  getResultType().getAsStringInternal(S);
 }
 
-void FunctionTypeProto::getAsString(std::string &S) const {
+void FunctionTypeProto::getAsStringInternal(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())
     S = "(" + S + ")";
@@ -464,7 +464,7 @@ void FunctionTypeProto::getAsString(std::string &S) const {
   std::string Tmp;
   for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
     if (i) S += ", ";
-    getArgType(i).getAsString(Tmp);
+    getArgType(i).getAsStringInternal(Tmp);
     S += Tmp;
     Tmp.clear();
   }
@@ -479,17 +479,17 @@ void FunctionTypeProto::getAsString(std::string &S) const {
   }
   
   S += ")";
-  getResultType().getAsString(S);
+  getResultType().getAsStringInternal(S);
 }
 
 
-void TypedefType::getAsString(std::string &InnerString) const {
+void TypedefType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
-void TagType::getAsString(std::string &InnerString) const {
+void TagType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   

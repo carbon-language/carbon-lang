@@ -263,10 +263,7 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
 }
 void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   OS << (Node->isSizeOf() ? "sizeof(" : "__alignof(");
-  
-  std::string TypeStr;
-  Node->getArgumentType().getAsString(TypeStr);
-  OS << TypeStr << ")";
+  OS << Node->getArgumentType().getAsString() << ")";
 }
 void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   PrintExpr(Node->getBase());
@@ -293,10 +290,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   OS << "member";
 }
 void StmtPrinter::VisitCastExpr(CastExpr *Node) {
-  OS << "(";
-  std::string TypeStr;
-  Node->getDestType().getAsString(TypeStr);
-  OS << TypeStr << ")";
+  OS << "(" << Node->getDestType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
@@ -310,9 +304,7 @@ void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
   case CXXCastExpr::StaticCast:      OS << "static_cast<";      break;
   }
 
-  std::string TypeStr;
-  Node->getDestType().getAsString(TypeStr);
-  OS << TypeStr << ">(";
+  OS << Node->getDestType().getAsString() << ">(";
   PrintExpr(Node->getSubExpr());
   OS << ")";
 }

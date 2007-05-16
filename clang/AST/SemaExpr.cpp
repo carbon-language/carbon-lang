@@ -179,10 +179,9 @@ QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType,
   else if (exprType->isVoidType())
     Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
   else if (exprType->isIncompleteType()) {
-    std::string TypeName;
-    exprType->getAsString(TypeName);
     Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
-                           diag::err_alignof_incomplete_type, TypeName);
+                           diag::err_alignof_incomplete_type,
+         exprType.getAsString());
     return QualType(); // error
   }
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.

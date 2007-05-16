@@ -857,7 +857,7 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
       std::string ParamStr;
       if (HasBody) ParamStr = FD->getParamDecl(i)->getName();
       
-      FT->getArgType(i).getAsString(ParamStr);
+      FT->getArgType(i).getAsStringInternal(ParamStr);
       Proto += ParamStr;
     }
     
@@ -870,7 +870,7 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
     assert(isa<FunctionTypeNoProto>(AFT));
     Proto += "()";
   }
-  AFT->getResultType().getAsString(Proto);
+  AFT->getResultType().getAsStringInternal(Proto);
 
   std::cerr << "\n" << Proto;
   
@@ -885,7 +885,7 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
 
 static void PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getName();
-  TD->getUnderlyingType().getAsString(S);
+  TD->getUnderlyingType().getAsStringInternal(S);
   std::cerr << "typedef " << S << ";\n";
 }
 

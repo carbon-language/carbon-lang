@@ -136,10 +136,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
       if (T->isIncompleteType()) { 
-        std::string Name;
-        T->getAsString(Name);
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
-             Name);
+             T.getAsString());
         return QualType();
       } else if (isa<FunctionType>(CanonicalT)) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
@@ -149,9 +147,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
-          std::string Name;
-          T->getAsString(Name);
-          Diag(DeclType.Loc, diag::err_flexible_array_in_array, Name);
+          Diag(DeclType.Loc, diag::err_flexible_array_in_array,
+               T.getAsString());
           return QualType();
         }
       }

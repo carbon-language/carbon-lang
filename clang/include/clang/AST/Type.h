@@ -112,12 +112,20 @@ public:
   bool operator!=(const QualType &RHS) const {
     return ThePtr != RHS.ThePtr;
   }
-  void getAsString(std::string &S) const;
+  std::string getAsString() const {
+    std::string S;
+    getAsStringInternal(S);
+    return S;
+  }
+  void getAsStringInternal(std::string &Str) const;
+  
   void dump(const char *s = 0) const;
 
   /// getCanonicalType - Return the canonical version of this type, with the
   /// appropriate type qualifiers on it.
   inline QualType getCanonicalType() const;
+  
+private:
 };
 
 } // end clang.
@@ -237,7 +245,7 @@ private:
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;
 public:
-  virtual void getAsString(std::string &InnerString) const = 0;
+  virtual void getAsStringInternal(std::string &InnerString) const = 0;
   
   static bool classof(const Type *) { return true; }
 };
@@ -261,7 +269,7 @@ public:
   Kind getKind() const { return TypeKind; }
   const char *getName() const;
   
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
@@ -279,7 +287,7 @@ public:
     
   QualType getPointeeType() const { return PointeeType; }
   
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
   
   
   void Profile(FoldingSetNodeID &ID) {
@@ -329,7 +337,7 @@ public:
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   Expr *getSize() const { return SizeExpr; }
   
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(FoldingSetNodeID &ID) {
     Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType(),
@@ -383,7 +391,7 @@ class FunctionTypeNoProto : public FunctionType, public FoldingSetNode {
 public:
   // No additional state past what FunctionType provides.
   
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
 
   void Profile(FoldingSetNodeID &ID) {
     Profile(ID, getResultType());
@@ -427,7 +435,7 @@ public:
     
   bool isVariadic() const { return getSubClassData(); }
   
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
@@ -450,7 +458,7 @@ public:
   
   TypedefDecl *getDecl() const { return Decl; }
     
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeName; }
   static bool classof(const TypedefType *) { return true; }
@@ -465,7 +473,7 @@ public:
     
   TagDecl *getDecl() const { return Decl; }
   
-  virtual void getAsString(std::string &InnerString) const;
+  virtual void getAsStringInternal(std::string &InnerString) const;
   
   static bool classof(const Type *T) { return T->getTypeClass() == Tagged; }
   static bool classof(const TagType *) { return true; }

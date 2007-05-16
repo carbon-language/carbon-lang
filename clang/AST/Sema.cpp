@@ -45,8 +45,7 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, QualType t) {
-  std::string Name;
-  t.getAsString(Name);
+  std::string Name = t.getAsString();
   PP.getDiagnostics().Report(Loc, DiagID, &Name, 1);
   return true;
 }
