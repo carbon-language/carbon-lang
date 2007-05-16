@@ -68,8 +68,7 @@ namespace {
                                  std::vector<int> &Candidates);
     bool IfConvertDiamond(BBInfo &BBI);
     bool IfConvertTriangle(BBInfo &BBI);
-    bool isBlockPredicable(MachineBasicBlock *BB,
-                             bool IgnoreTerm = false) const;
+    bool isBlockPredicable(MachineBasicBlock *BB) const;
     void PredicateBlock(MachineBasicBlock *BB,
                         std::vector<MachineOperand> &Cond,
                         bool IgnoreTerm = false);
@@ -134,15 +133,19 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
   if (TII->AnalyzeBranch(*BB, BBI.TBB, BBI.FBB, BBI.Cond)
       || !BBI.TBB || BBI.Cond.size() == 0)
     return;
+  // Can't do it if 'true' block is already marked as to be if-converted.
   AnalyzeBlock(BBI.TBB);
   BBInfo &TBBI = BBAnalysis[BBI.TBB->getNumber()];
   if (TBBI.Kind != ICNotClassfied)
     return;
-  
+
+  // No false branch. This BB must end with a conditional branch and a
+  // fallthrough.
   if (!BBI.FBB)
     BBI.FBB = findFalseBlock(BB, BBI.TBB);  
   assert(BBI.FBB && "Expected to find the fallthrough block!");
 
+  // Can't do it if 'false' block is already marked as to be if-converted.
   AnalyzeBlock(BBI.FBB);
   BBInfo &FBBI = BBAnalysis[BBI.FBB->getNumber()];
   if (FBBI.Kind != ICNotClassfied)
@@ -178,6 +181,8 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
   return;
 }
 
+/// InitialFunctionAnalysis - Analyze all blocks and find entries for all
+/// if-conversion candidates.
 void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
                                           std::vector<int> &Candidates) {
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
@@ -189,8 +194,10 @@ void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
   }
 }
 
+/// IfConvertTriangle - If convert a triangle sub-CFG.
+///
 bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
-  if (isBlockPredicable(BBI.TBB, true)) {
+  if (isBlockPredicable(BBI.TBB)) {
     // Predicate the 'true' block after removing its branch.
     TII->RemoveBranch(*BBI.TBB);
     PredicateBlock(BBI.TBB, BBI.Cond);
@@ -213,9 +220,10 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   return false;
 }
 
+/// IfConvertDiamond - If convert a diamond sub-CFG.
+///
 bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
-  if (isBlockPredicable(BBI.TBB, true) &&
-      isBlockPredicable(BBI.FBB, true)) {
+  if (isBlockPredicable(BBI.TBB) && isBlockPredicable(BBI.FBB)) {
     std::vector<MachineInstr*> Dups;
     if (!BBI.CMBB) {
       // No common merge block. Check if the terminators (e.g. return) are
@@ -230,7 +238,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
         ++TT;
         ++FT;
       }
-
+      // One of the two pathes have more terminators, make sure they are all
+      // predicable.
       while (TT != BBI.TBB->end())
         if (!TT->isPredicable())
           return false; // Can't if-convert. Abort!
@@ -272,13 +281,11 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
 
 /// isBlockPredicable - Returns true if the block is predicable. In most
 /// cases, that means all the instructions in the block has M_PREDICABLE flag.
-/// If IgnoreTerm is true, assume all the terminator instructions can be 
-/// converted or deleted.
-bool IfConverter::isBlockPredicable(MachineBasicBlock *BB,
-                                      bool IgnoreTerm) const {
+/// It assume all the terminator instructions can be converted or deleted.
+bool IfConverter::isBlockPredicable(MachineBasicBlock *BB) const {
   for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
        I != E; ++I) {
-    if (IgnoreTerm && TII->isTerminatorInstr(I->getOpcode()))
+    if (TII->isTerminatorInstr(I->getOpcode()))
       continue;
     if (!I->isPredicable())
       return false;
@@ -295,7 +302,10 @@ void IfConverter::PredicateBlock(MachineBasicBlock *BB,
        I != E; ++I) {
     if (IgnoreTerm && TII->isTerminatorInstr(I->getOpcode()))
       continue;
-    TII->PredicateInstruction(&*I, Cond);
+    if (!TII->PredicateInstruction(&*I, Cond)) {
+      cerr << "Unable to predication " << *I << "!\n";
+      abort();
+    }
   }
 }
 
