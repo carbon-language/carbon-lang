@@ -15,6 +15,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/Diagnostic.h"
 using namespace llvm;
 using namespace clang;
 
@@ -26,20 +27,37 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
 // Helper functions.
 //===----------------------------------------------------------------------===//
 
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID) {
+  PP.getDiagnostics().Report(Loc, DiagID);
+  return true;
+}
+
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
-  PP.Diag(Loc, DiagID, Msg);
+  PP.getDiagnostics().Report(Loc, DiagID, &Msg, 1);
+  return true;
+}
+
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
+                const std::string &Msg2) {
+  std::string MsgArr[] = { Msg1, Msg2 };
+  PP.getDiagnostics().Report(Loc, DiagID, MsgArr, 2);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, QualType t) {
   std::string Name;
   t.getAsString(Name);
-  PP.Diag(Loc, DiagID, Name);
+  PP.getDiagnostics().Report(Loc, DiagID, &Name, 1);
+  return true;
+}
+
+bool Sema::Diag(const LexerToken &Tok, unsigned DiagID) {
+  PP.getDiagnostics().Report(Tok.getLocation(), DiagID);
   return true;
 }
 
 bool Sema::Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M) {
-  Diag(Tok.getLocation(), DiagID, M);
+  PP.getDiagnostics().Report(Tok.getLocation(), DiagID, &M, 1);
   return true;
 }
 

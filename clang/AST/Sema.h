@@ -56,10 +56,12 @@ public:
   const LangOptions &getLangOptions() const;
   
   /// always returns true, which simplifies error handling (i.e. less code).
-  bool Diag(SourceLocation Loc, unsigned DiagID,
-            const std::string &Msg = std::string());
-  bool Diag(const LexerToken &Tok, unsigned DiagID,
-            const std::string &M = std::string());
+  bool Diag(SourceLocation Loc, unsigned DiagID);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
+            const std::string &Msg2);
+  bool Diag(const LexerToken &Tok, unsigned DiagID);
+  bool Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M);
   bool Diag(SourceLocation Loc, unsigned DiagID, QualType t);
   
   //===--------------------------------------------------------------------===//
