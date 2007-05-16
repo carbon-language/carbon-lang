@@ -383,6 +383,20 @@ public:
     abort();
   }
 
+  /// isPredicatable - True if the instruction can be converted into a
+  /// predicated instruction.
+  virtual bool isPredicatable(MachineInstr *MI) const {
+    return false;
+  }
+
+  /// PredicateInstruction - Convert the instruction into a predicated
+  /// instruction.
+  virtual void PredicateInstruction(MachineInstr *MI,
+                                    std::vector<MachineOperand> &Cond) const {
+    assert(0 && "Target didn't implement PredicateInstruction!");
+    abort();
+  }
+
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.
   virtual const TargetRegisterClass *getPointerRegClass() const {
