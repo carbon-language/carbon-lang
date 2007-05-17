@@ -212,6 +212,15 @@ def XORIS8  : DForm_4<27, (ops G8RC:$dst, G8RC:$src1, u16imm:$src2),
 def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
+                     
+def ADDC8 : XOForm_1<31, 10, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                     "addc $rT, $rA, $rB", IntGeneral,
+                     [(set G8RC:$rT, (addc G8RC:$rA, G8RC:$rB))]>,
+                     PPC970_DGroup_Cracked;
+def ADDE8 : XOForm_1<31, 138, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                     "adde $rT, $rA, $rB", IntGeneral,
+                     [(set G8RC:$rT, (adde G8RC:$rA, G8RC:$rB))]>;
+                     
 def ADDI8  : DForm_2<14, (ops G8RC:$rD, G8RC:$rA, s16imm64:$imm),
                      "addi $rD, $rA, $imm", IntGeneral,
                      [(set G8RC:$rD, (add G8RC:$rA, immSExt16:$imm))]>;
@@ -225,6 +234,31 @@ def SUBFIC8: DForm_2< 8, (ops G8RC:$rD, G8RC:$rA, s16imm64:$imm),
 def SUBF8 : XOForm_1<31, 40, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "subf $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (sub G8RC:$rB, G8RC:$rA))]>;
+
+def SUBFC8 : XOForm_1<31, 8, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                      "subfc $rT, $rA, $rB", IntGeneral,
+                      [(set G8RC:$rT, (subc G8RC:$rB, G8RC:$rA))]>,
+                      PPC970_DGroup_Cracked;
+
+def SUBFE8 : XOForm_1<31, 136, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                      "subfe $rT, $rA, $rB", IntGeneral,
+                      [(set G8RC:$rT, (sube G8RC:$rB, G8RC:$rA))]>;
+def ADDME8  : XOForm_3<31, 234, 0, (ops G8RC:$rT, G8RC:$rA),
+                       "addme $rT, $rA", IntGeneral,
+                       [(set G8RC:$rT, (adde G8RC:$rA, immAllOnes))]>;
+def ADDZE8  : XOForm_3<31, 202, 0, (ops G8RC:$rT, G8RC:$rA),
+                       "addze $rT, $rA", IntGeneral,
+                       [(set G8RC:$rT, (adde G8RC:$rA, 0))]>;
+def NEG8    : XOForm_3<31, 104, 0, (ops G8RC:$rT, G8RC:$rA),
+                       "neg $rT, $rA", IntGeneral,
+                       [(set G8RC:$rT, (ineg G8RC:$rA))]>;
+def SUBFME8 : XOForm_3<31, 232, 0, (ops G8RC:$rT, G8RC:$rA),
+                       "subfme $rT, $rA", IntGeneral,
+                       [(set G8RC:$rT, (sube immAllOnes, G8RC:$rA))]>;
+def SUBFZE8 : XOForm_3<31, 200, 0, (ops G8RC:$rT, G8RC:$rA),
+                       "subfze $rT, $rA", IntGeneral,
+                       [(set G8RC:$rT, (sube 0, G8RC:$rA))]>;
+
 
 
 def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
