@@ -94,6 +94,7 @@ class SourceRange {
   SourceLocation B;
   SourceLocation E;
 public:
+  SourceRange(SourceLocation loc) : B(loc), E(loc) {}
   SourceRange(SourceLocation begin, SourceLocation end) : B(begin), E(end) {}
     
   SourceLocation Begin() const { return B; }

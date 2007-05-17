@@ -39,7 +39,8 @@ public:
   /// value objects created/interpreted by SourceManager. We assume AST
   /// clients will have a pointer to the respective SourceManager.
   virtual SourceRange getSourceRange() const = 0;
-  SourceLocation getSourceLocation() const { return getSourceRange().Begin(); }
+  SourceLocation getLocStart() const { return getSourceRange().Begin(); }
+  SourceLocation getLocEnd() const { return getSourceRange().End(); }
 
   /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
   /// incomplete type other than void. Nonarray expressions that can be lvalues:
@@ -89,8 +90,7 @@ public:
     Expr(DeclRefExprClass, t), D(d), Loc(l) {}
   
   Decl *getDecl() const { return D; }
-  SourceLocation getSourceLocation() const { return Loc; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -110,8 +110,7 @@ public:
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
   intmax_t getValue() const { return Value; }
-  SourceLocation getSourceLocation() const { return Loc; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -128,8 +127,7 @@ public:
   CharacterLiteral(unsigned value, QualType type, SourceLocation l)
     : Expr(CharacterLiteralClass, type), Value(value), Loc(l) {
   }
-  SourceLocation getSourceLocation() const { return Loc; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -145,8 +143,7 @@ public:
   FloatingLiteral(float value, QualType type, SourceLocation l)
     : Expr(FloatingLiteralClass, type), Value(value), Loc(l) {} 
 
-  SourceLocation getSourceLocation() const { return Loc; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -159,19 +156,22 @@ class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
   bool IsWide;
-  SourceLocation Loc;
+  // if the StringLiteral was composed using token pasting, both locations
+  // are needed. If not (the common case), firstTokLoc == lastTokLoc.
+  // FIXME: if space becomes an issue, we should create a sub-class.
+  SourceLocation firstTokLoc, lastTokLoc;
 public:
   StringLiteral(const char *strData, unsigned byteLength, bool Wide, 
-                QualType t, SourceLocation l);
+                QualType t, SourceLocation b, SourceLocation e);
   virtual ~StringLiteral();
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
   bool isWide() const { return IsWide; }
 
-  SourceLocation getSourceLocation() const { return Loc; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
-
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(firstTokLoc,lastTokLoc); 
+  }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == StringLiteralClass; 
@@ -186,7 +186,7 @@ class ParenExpr : public Expr {
   Expr *Val;
 public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
-    : Expr(ParenExprClass, QualType()), L(l), R(r), Val(val) {}
+    : Expr(ParenExprClass, val->getType()), L(l), R(r), Val(val) {}
   
   Expr *getSubExpr() const { return Val; }
   SourceRange getSourceRange() const { return SourceRange(L, R); }
@@ -230,12 +230,11 @@ public:
 
   Opcode getOpcode() const { return Opc; }
   Expr *getSubExpr() const { return Val; }
-  SourceLocation getSourceLocation() const { return Loc; }
   virtual SourceRange getSourceRange() const {
     if (isPostfix())
-      return SourceRange(getSubExpr()->getSourceRange().Begin(), Loc);
+      return SourceRange(getSubExpr()->getLocStart(), Loc);
     else
-      return SourceRange(Loc, getSubExpr()->getSourceRange().End());
+      return SourceRange(Loc, getSubExpr()->getLocEnd());
   }
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
@@ -297,7 +296,7 @@ public:
   Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
   SourceRange getSourceRange() const { 
-    return SourceRange(Base->getSourceRange().Begin(), Loc);
+    return SourceRange(Base->getLocStart(), Loc);
   }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -323,7 +322,7 @@ public:
   
   Expr *getCallee() const { return Fn; }
   SourceRange getSourceRange() const { 
-    return SourceRange(Fn->getSourceRange().Begin(), Loc);
+    return SourceRange(Fn->getLocStart(), Loc);
   }
   
   /// getNumArgs - Return the number of actual arguments to this call.
@@ -362,7 +361,7 @@ public:
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getBase()->getSourceRange().Begin(),
+    return SourceRange(getBase()->getLocStart(),
                        getMemberDecl()->getLocation());
   }
   virtual void visit(StmtVisitor &Visitor);
@@ -386,7 +385,6 @@ public:
   
   QualType getDestType() const { return Ty; }
   Expr *getSubExpr() const { return Op; }
-  SourceLocation getSourceLocation() const { return Loc; }
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, getSubExpr()->getSourceRange().End());
   }
@@ -442,8 +440,7 @@ public:
   Expr *getLHS() const { return LHS; }
   Expr *getRHS() const { return RHS; }
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getLHS()->getSourceRange().Begin(),
-                       getRHS()->getSourceRange().End());
+    return SourceRange(getLHS()->getLocStart(), getRHS()->getLocEnd());
   }
 
   virtual void visit(StmtVisitor &Visitor);
@@ -470,8 +467,7 @@ public:
   Expr *getRHS() const { return RHS; }
 
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getCond()->getSourceRange().Begin(),
-                       getRHS()->getSourceRange().End());
+    return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());
   }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

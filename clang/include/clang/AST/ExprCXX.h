@@ -47,12 +47,12 @@ namespace clang {
   /// 
   class CXXBoolLiteralExpr : public Expr {
     bool Value;
+    SourceLocation Loc;
   public:
-    CXXBoolLiteralExpr(bool val) : 
-      Expr(CXXBoolLiteralExprClass, QualType()), Value(val) {}
+    CXXBoolLiteralExpr(bool val, SourceLocation l) : 
+      Expr(CXXBoolLiteralExprClass, QualType()), Value(val), Loc(l) {}
 
-    virtual SourceRange getSourceRange() const { // FIXME
-      return SourceRange(SourceLocation(),SourceLocation()); }
+    virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
       
     virtual void visit(StmtVisitor &Visitor);
   };

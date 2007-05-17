@@ -22,7 +22,8 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
-                             bool Wide, QualType t, SourceLocation l) : 
+                             bool Wide, QualType t, SourceLocation firstLoc,
+                             SourceLocation lastLoc) : 
   Expr(StringLiteralClass, t) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new char[byteLength];
@@ -30,7 +31,8 @@ StringLiteral::StringLiteral(const char *strData, unsigned byteLength,
   StrData = AStrData;
   ByteLength = byteLength;
   IsWide = Wide;
-  Loc = l;
+  firstTokLoc = firstLoc;
+  lastTokLoc = lastLoc;
 }
 
 StringLiteral::~StringLiteral() {

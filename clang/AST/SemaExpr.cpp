@@ -56,7 +56,8 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
   // FIXME: use factory.
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
-                           Literal.AnyWide, t, SourceLocation()/*FIXME*/);
+                           Literal.AnyWide, t, StringToks[0].getLocation(),
+                           StringToks[NumStringToks-1].getLocation());
 }
 
 
@@ -169,7 +170,7 @@ Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
                                         ExprTy *Val) {
   Expr *e = (Expr *)Val;
   assert((e != 0) && "ParseParenExpr() missing expr");
-  return e;
+  return new ParenExpr(L, R, e);
 }
 
 /// The UsualUnaryConversion() function is *not* called by this routine.
@@ -405,7 +406,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   
   // first, check the condition.
   if (!cond->isScalarType()) { // C99 6.5.15p2
-    Diag(Cond->getSourceLocation(), diag::err_typecheck_cond_expect_scalar, 
+    Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar, 
          cond.getAsString());
     return QualType();
   }
