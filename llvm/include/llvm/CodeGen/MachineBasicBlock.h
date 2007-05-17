@@ -217,12 +217,7 @@ public:
   
   /// isSuccessor - Return true if the specified MBB is a successor of this
   /// block.
-  bool isSuccessor(MachineBasicBlock *MBB) const {
-    for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
-      if (*I == MBB)
-        return true;
-    return false;
-  }
+  bool isSuccessor(MachineBasicBlock *MBB) const;
 
   /// getFirstTerminator - returns an iterator to the first terminator
   /// instruction of this basic block. If a terminator does not exist,

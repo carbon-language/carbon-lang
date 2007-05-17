@@ -192,3 +192,9 @@ void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
   assert(I != Predecessors.end() && "Pred is not a predecessor of this block!");
   Predecessors.erase(I);
 }
+
+bool MachineBasicBlock::isSuccessor(MachineBasicBlock *MBB) const {
+  std::vector<MachineBasicBlock *>::const_iterator I =
+    std::find(Successors.begin(), Successors.end(), MBB);
+  return I != Successors.end();
+}
