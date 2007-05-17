@@ -1104,6 +1104,26 @@ def : Pat<(store (or (shl (loadi64 addr:$dst), CL:$amt),
                      (srl GR64:$src2, (sub 64, CL:$amt))), addr:$dst),
           (SHLD64mrCL addr:$dst, GR64:$src2)>;
 
+// X86 specific add which produces a flag.
+def : Pat<(addc GR64:$src1, GR64:$src2),
+          (ADD64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(addc GR64:$src1, (load addr:$src2)),
+          (ADD64rm GR64:$src1, addr:$src2)>;
+def : Pat<(addc GR64:$src1, i64immSExt32:$src2),
+          (ADD64ri32 GR64:$src1, imm:$src2)>;
+def : Pat<(addc GR64:$src1, i64immSExt8:$src2),
+          (ADD64ri8 GR64:$src1, i64immSExt8:$src2)>;
+
+def : Pat<(subc GR64:$src1, GR64:$src2),
+          (SUB64rr GR64:$src1, GR64:$src2)>;
+def : Pat<(subc GR64:$src1, (load addr:$src2)),
+          (SUB64rm GR64:$src1, addr:$src2)>;
+def : Pat<(subc GR64:$src1, imm:$src2),
+          (SUB64ri32 GR64:$src1, i64immSExt32:$src2)>;
+def : Pat<(subc GR64:$src1, i64immSExt8:$src2),
+          (SUB64ri8 GR64:$src1, i64immSExt8:$src2)>;
+
+
 //===----------------------------------------------------------------------===//
 // X86-64 SSE Instructions
 //===----------------------------------------------------------------------===//
