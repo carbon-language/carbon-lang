@@ -679,8 +679,6 @@ programs.</li>
 Optimization</a> on most platforms "out-of-the-box".  Please inquire on the 
 llvmdev mailing list if you are interested.</p>
 
-<p>FIXME: the list of supported stuff below needs to be updated.  We do support
-tls now, what else??</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -689,85 +687,52 @@ tls now, what else??</p>
 </div>
 
 <div class="doc_text">
-
 <ul>
 
-<li>"long double" is transformed by the front-end into "double".  There is no
-support for floating point data types of any size other than 32 and 64
-bits.</li>
+<li><p>"long double" is silently transformed by the front-end into "double".  There
+is no support for floating point data types of any size other than 32 and 64
+bits.</p></li>
     
-<li>Although many GCC extensions are supported, some are not.  In particular,
-    the following extensions are known to <b>not be</b> supported:
-  <ol>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Local-Labels.html#Local%20Labels">Local Labels</a>: Labels local to a block.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>: As in Algol and Pascal, lexical scoping of functions.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#Constructing%20Calls">Constructing Calls</a>: Dispatching a call to another function.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Thread_002dLocal.html">Thread-Local</a>: Per-thread variables.</li>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Pragmas.html#Pragmas">Pragmas</a>: Pragmas accepted by GCC.</li>
-  </ol>
+<li><p>llvm-gcc does <b>not</b> support <tt>__builtin_apply</tt> yet.
+  See <a href="http://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#Constructing%20Calls">Constructing Calls</a>: Dispatching a call to another function.</p>
+</li>
 
-  <p>The following GCC extensions are <b>partially</b> supported.  An ignored
-  attribute means that the LLVM compiler ignores the presence of the attribute,
-  but the code should still work.  An unsupported attribute is one which is
-  ignored by the LLVM compiler and will cause a different interpretation of
-  the program.</p>
-
+<li><p>llvm-gcc <b>partially</b> supports tthese GCC extensions:</p>
   <ol>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Length.html#Variable%20Length">Variable Length</a>:
-      Arrays whose length is computed at run time.<br>
-      Supported, but allocated stack space is not freed until the function returns (noted above).</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>: As in Algol and Pascal, lexical scoping of functions.<br>
+      Nested functions are supported, but llvm-gcc does not support non-local
+      gotos or taking the address of a nested function.</li>
 
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#Function%20Attributes">Function Attributes</a>:
 
       Declaring that functions have no side effects or that they can never
       return.<br>
 
-      <b>Supported:</b> <tt>alias</tt>, <tt>constructor</tt>, <tt>destructor</tt>,
+      <b>Supported:</b> <tt>alias</tt>, <tt>always_inline</tt>, <tt>cdecl</tt>,
+      <tt>constructor</tt>, <tt>destructor</tt>,
       <tt>deprecated</tt>, <tt>fastcall</tt>, <tt>format</tt>, 
       <tt>format_arg</tt>, <tt>non_null</tt>, <tt>noreturn</tt>, <tt>regparm</tt>
       <tt>section</tt>, <tt>stdcall</tt>, <tt>unused</tt>, <tt>used</tt>, 
       <tt>visibility</tt>, <tt>warn_unused_result</tt>, <tt>weak</tt><br>
 
-      <b>Ignored:</b> <tt>noinline</tt>,
-      <tt>always_inline</tt>, <tt>pure</tt>, <tt>const</tt>, <tt>nothrow</tt>,
-      <tt>malloc</tt>, <tt>no_instrument_function</tt>, <tt>cdecl</tt><br>
-
-      <b>Unsupported:</b> All other target specific attributes</li>
-   
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html#Variable%20Attributes">Variable Attributes</a>:
-      Specifying attributes of variables.<br>
-      <b>Supported:</b> <tt>alias</tt>, <tt>cleanup</tt>, <tt>common</tt>,
-      <tt>nocommon</tt>, <tt>deprecated</tt>, <tt>dllimport</tt>, 
-      <tt>dllexport</tt>, <tt>section</tt>, <tt>transparent_union</tt>,
-      <tt>unused</tt>, <tt>used</tt>, <tt>weak</tt><br>
-
-      <b>Unsupported:</b> <tt>aligned</tt>, <tt>mode</tt>, <tt>packed</tt>,
-                          <tt>shared</tt>, <tt>tls_model</tt>,
-                          <tt>vector_size</tt>, all target specific attributes.
-  </li>
-
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html#Type%20Attributes">Type Attributes</a>:	Specifying attributes of types.<br>
-      <b>Supported:</b> <tt>transparent_union</tt>, <tt>unused</tt>,
-                        <tt>deprecated</tt>, <tt>may_alias</tt><br>
-
-      <b>Unsupported:</b> <tt>aligned</tt>, <tt>packed</tt>, 
-                        all target specific attributes.</li>
-
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#Other%20Builtins">Other Builtins</a>:
-      Other built-in functions.<br>
-      We support all builtins which have a C language equivalent (e.g., 
-         <tt>__builtin_cos</tt>),  <tt>__builtin_alloca</tt>, 
-         <tt>__builtin_types_compatible_p</tt>, <tt>__builtin_choose_expr</tt>,
-         <tt>__builtin_constant_p</tt>, and <tt>__builtin_expect</tt>
-         (currently ignored).  We also support builtins for ISO C99 floating
-         point comparison macros (e.g., <tt>__builtin_islessequal</tt>), 
-         <tt>__builtin_prefetch</tt>, <tt>__builtin_popcount[ll]</tt>,
-         <tt>__builtin_clz[ll]</tt>, and <tt>__builtin_ctz[ll]</tt>.</li>
+      <b>Ignored:</b> <tt>noinline</tt>, <tt>pure</tt>, <tt>const</tt>, <tt>nothrow</tt>,
+      <tt>malloc</tt>, <tt>no_instrument_function</tt></li>
   </ol>
+</li>
 
-  <p>The following extensions <b>are</b> known to be supported:</p>
+<li><p>llvm-gcc supports the vast majority of GCC extensions, including:</p>
 
   <ol>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Pragmas.html#Pragmas">Pragmas</a>: Pragmas accepted by GCC.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Local-Labels.html#Local%20Labels">Local Labels</a>: Labels local to a block.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#Other%20Builtins">Other Builtins</a>:
+      Other built-in functions.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html#Variable%20Attributes">Variable Attributes</a>:
+      Specifying attributes of variables.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html#Type%20Attributes">Type Attributes</a>:	Specifying attributes of types.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Thread_002dLocal.html">Thread-Local</a>: Per-thread variables.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Variable-Length.html#Variable%20Length">Variable Length</a>:
+      Arrays whose length is computed at run time.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html#Labels%20as%20Values">Labels as Values</a>: Getting pointers to labels and computed gotos.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement%20Exprs">Statement Exprs</a>:   Putting statements and declarations inside expressions.</li>
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof">Typeof</a>: <code>typeof</code>: referring to the type of an expression.</li>
