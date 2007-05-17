@@ -5222,6 +5222,48 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
     break;
   }
+    
+  case ISD::ADDC:
+  case ISD::SUBC: {
+    // Expand the subcomponents.
+    SDOperand LHSL, LHSH, RHSL, RHSH;
+    ExpandOp(Node->getOperand(0), LHSL, LHSH);
+    ExpandOp(Node->getOperand(1), RHSL, RHSH);
+    SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+    SDOperand LoOps[2] = { LHSL, RHSL };
+    SDOperand HiOps[3] = { LHSH, RHSH };
+    
+    if (Node->getOpcode() == ISD::ADDC) {
+      Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
+      HiOps[2] = Lo.getValue(1);
+      Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+    } else {
+      Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
+      HiOps[2] = Lo.getValue(1);
+      Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
+    }
+    // Remember that we legalized the flag.
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Hi.getValue(1)));
+    break;
+  }
+  case ISD::ADDE:
+  case ISD::SUBE: {
+    // Expand the subcomponents.
+    SDOperand LHSL, LHSH, RHSL, RHSH;
+    ExpandOp(Node->getOperand(0), LHSL, LHSH);
+    ExpandOp(Node->getOperand(1), RHSL, RHSH);
+    SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+    SDOperand LoOps[3] = { LHSL, RHSL, Node->getOperand(2) };
+    SDOperand HiOps[3] = { LHSH, RHSH };
+    
+    Lo = DAG.getNode(Node->getOpcode(), VTList, LoOps, 3);
+    HiOps[2] = Lo.getValue(1);
+    Hi = DAG.getNode(Node->getOpcode(), VTList, HiOps, 3);
+    
+    // Remember that we legalized the flag.
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Hi.getValue(1)));
+    break;
+  }
   case ISD::MUL: {
     // If the target wants to custom expand this, let them.
     if (TLI.getOperationAction(ISD::MUL, VT) == TargetLowering::Custom) {
