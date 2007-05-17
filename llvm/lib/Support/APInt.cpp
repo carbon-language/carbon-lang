@@ -1149,6 +1149,12 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
   if (shiftAmt == BitWidth)
     return APInt(BitWidth, 0);
 
+  // If none of the bits are shifted out, the result is *this. This avoids
+  // issues with shifting byt he size of the integer type, which produces 
+  // undefined results in the code below. This is also an optimization.
+  if (shiftAmt == 0)
+    return *this;
+
   // Create some space for the result.
   uint64_t * val = new uint64_t[getNumWords()];
 
