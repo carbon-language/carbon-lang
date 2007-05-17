@@ -365,6 +365,11 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
                                           TargetLoweringOpt &TLO,
                                           unsigned Depth) const {
   KnownZero = KnownOne = 0;   // Don't know anything.
+
+  // The masks are not wide enough to represent this type!  Should use APInt.
+  if (Op.getValueType() == MVT::i128)
+    return false;
+  
   // Other users may use these bits.
   if (!Op.Val->hasOneUse()) { 
     if (Depth != 0) {
@@ -874,6 +879,10 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
 /// for bits that V cannot have.
 bool TargetLowering::MaskedValueIsZero(SDOperand Op, uint64_t Mask, 
                                        unsigned Depth) const {
+  // The masks are not wide enough to represent this type!  Should use APInt.
+  if (Op.getValueType() == MVT::i128)
+    return false;
+  
   uint64_t KnownZero, KnownOne;
   ComputeMaskedBits(Op, Mask, KnownZero, KnownOne, Depth);
   assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
@@ -890,6 +899,10 @@ void TargetLowering::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
   KnownZero = KnownOne = 0;   // Don't know anything.
   if (Depth == 6 || Mask == 0)
     return;  // Limit search depth.
+  
+  // The masks are not wide enough to represent this type!  Should use APInt.
+  if (Op.getValueType() == MVT::i128)
+    return;
   
   uint64_t KnownZero2, KnownOne2;
 
