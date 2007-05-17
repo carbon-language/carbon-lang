@@ -295,13 +295,6 @@ New features include:
 
 </ul>
 
-<p>Further, several significant target-specific enhancements are included in
-LLVM 2.0:</p>
-
-<ul>
-<li></li>
-</ul>
-
 </div>
 
 <!--_________________________________________________________________________-->
@@ -389,9 +382,6 @@ usage. This makes several critical components faster.</p>
 <p>More specific changes include:</p>
 
 <ul>
-<li>ConstantBool, ConstantIntegral and ConstantInt classes have been merged 
-    together, we now just have ConstantInt</li>
-
 <li>LLVM no longer relies on static destructors to shut itself down.  Instead,
     it lazily initializes itself and shuts down when llvm_shutdown() is 
     explicitly called.</li>
@@ -417,6 +407,65 @@ usage. This makes several critical components faster.</p>
 </ul>
 </div>
 
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection"><a name="apichanges">API Changes</a></div>
+<div class="doc_text">
+
+<p>LLVM 2.0 contains a revamp of the type system and several other significant
+internal changes.  If you are programming to the C++ API, be aware of the
+following major changes:</p>
+
+<ul>
+<li>Pass registration is slightly different in LLVM 2.0 (you now needs an
+   intptr_t in your constructor), as explained in the <a 
+   href="WritingAnLLVMPass.html#basiccode">Writing an LLVM Pass</a>
+   document.</li>
+   
+<li><tt>ConstantBool</tt>, <tt>ConstantIntegral</tt> and <tt>ConstantInt</tt>
+    classes have been merged together, we now just have
+    <tt>ConstantInt</tt>.</li>
+
+<li><tt>Type::IntTy</tt>, <tt>Type::UIntTy</tt>, <tt>Type::SByteTy</tt>, ... are
+    replaced by <tt>Type::Int8Ty</tt>, <tt>Type::Int16Ty</tt>, etc.  LLVM types
+    have always corresponded to fixed size types
+    (e.g. long was always 64-bits), but the type system no longer includes
+    information about the sign of the type.</li>
+
+<li>Several classes (<tt>CallInst</tt>, <tt>GetElementPtrInst</tt>,
+    <tt>ConstantArray</tt>, etc), that once took <tt>std::vector</tt> as
+     arguments now take ranges instead.   For example, you can create a
+    <tt>GetElementPtrInst</tt> with code like:
+    
+    <pre>
+      Value *Ops[] = { Op1, Op2, Op3 };
+      GEP = new GetElementPtrInst(BasePtr, Ops, 3);
+    </pre>
+    
+    This avoids creation of a temporary vector (and a call to malloc/free).  If
+    you have an std::vector, use code like this:
+    <pre>
+      std::vector&lt;Value*&gt; Ops = ...;
+      GEP = new GetElementPtrInst(BasePtr, &amp;Ops[0], Ops.size());
+    </pre>
+
+    </li>
+    
+<li>CastInst is now abstract and its functionality is split into several parts,
+    one for each of the <a href="LangRef.html#convertops">new cast
+    instructions</a>.</li>
+
+<li><tt>Instruction::getNext()/getPrev()</tt> are now private (along with
+    <tt>BasicBlock::getNext</tt>, etc), for efficiency reasons (they are now no
+    longer just simple pointers).  Please use BasicBlock::iterator, etc instead.
+</li>
+
+<li><tt>Module::getNamedFunction()</tt> is now called
+    <tt>Module::getFunction()</tt>.</li>
+
+<li><tt>SymbolTable.h</tt> has been split into <tt>ValueSymbolTable.h</tt> and 
+<tt>TypeSymbolTable.h</tt>.</li>
+</ul>
+</div>
 
 
 <!-- *********************************************************************** -->
