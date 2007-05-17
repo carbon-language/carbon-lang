@@ -67,8 +67,9 @@ ways from our previous releases:</p>
 break backwards compatibility with the LLVM 1.x bytecode and .ll file format.
 If you have LLVM 1.9 .ll files that you would like to upgrade to LLVM 2.x, we 
 recommend the use of the stand alone <a href="#llvm-upgrade">llvm-upgrade</a>
-tool.  We intend to keep compatibility with .ll and .bc formats within the 2.x
-release series, like we did within the 1.x series.</li>
+tool (which is included with 2.0).  We intend to keep compatibility with .ll 
+and .bc formats within the 2.x release series, like we did within the 1.x 
+series.</li>
 <li>There are several significant change to the LLVM IR and internal APIs, such
     as a major overhaul of the type system, the completely new bitcode file
     format, etc.</li>
@@ -356,7 +357,7 @@ Improvements</a></div>
 
 <li>Improved support for the Linux/ppc ABI and the linux/ppc JIT is fully 
     functional now.  llvm-gcc and static compilation are not fully supported 
-    yet though.<</li>
+    yet though.</li>
 
 <li>Many bugs fixed for PowerPC 64.</li>
 
