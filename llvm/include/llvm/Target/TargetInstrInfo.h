@@ -394,11 +394,6 @@ public:
   virtual bool PredicateInstruction(MachineInstr *MI,
                                     std::vector<MachineOperand> &Cond) const;
 
-  /// getBlockSize - Calculate the size of the specified MachineBasicBlock.
-  /// Note the result may not be 100% accurate especially if there are inline
-  /// asm's in the block.
-  virtual unsigned getBlockSize(MachineBasicBlock *MBB) const;
-
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.
   virtual const TargetRegisterClass *getPointerRegClass() const {

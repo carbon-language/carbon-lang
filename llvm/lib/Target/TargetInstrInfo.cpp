@@ -84,7 +84,3 @@ bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
   }
   return MadeChange;
 }
-
-unsigned TargetInstrInfo::getBlockSize(MachineBasicBlock *MBB) const {
-  return (unsigned)std::distance(MBB->begin(), MBB->end());
-}
