@@ -147,7 +147,7 @@ public:
       destroy_range(Begin+N, End);
       End = Begin+N;
     } else if (N > size()) {
-      if (Begin+N > Capacity)
+      if (Capacity-Begin < N)
         grow(N);
       construct_range(End, Begin+N, T());
       End = Begin+N;
@@ -159,7 +159,7 @@ public:
       destroy_range(Begin+N, End);
       End = Begin+N;
     } else if (N > size()) {
-      if (Begin+N > Capacity)
+      if (Capacity-Begin < N)
         grow(N);
       construct_range(End, Begin+N, NV);
       End = Begin+N;
@@ -189,7 +189,7 @@ public:
   
   void assign(unsigned NumElts, const T &Elt) {
     clear();
-    if (Begin+NumElts > Capacity)
+    if (Capacity-Begin < NumElts)
       grow(NumElts);
     End = Begin+NumElts;
     construct_range(Begin, End, Elt);
