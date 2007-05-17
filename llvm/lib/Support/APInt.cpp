@@ -1938,14 +1938,33 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
   }
 
   if (radix != 10) {
-    uint64_t mask = radix - 1;
-    uint32_t shift = (radix == 16 ? 4 : radix  == 8 ? 3 : 1);
-    uint32_t nibbles = APINT_BITS_PER_WORD / shift;
-    for (uint32_t i = 0; i < getNumWords(); ++i) {
-      uint64_t value = pVal[i];
-      for (uint32_t j = 0; j < nibbles; ++j) {
-        result.insert(0, digits[ value & mask ]);
-        value >>= shift;
+    // For the 2, 8 and 16 bit cases, we can just shift instead of divide 
+    // because the number of bits per digit (1,3 and 4 respectively) divides 
+    // equaly. We just shift until there value is zero.
+
+    // First, check for a zero value and just short circuit the logic below.
+    if (*this == 0)
+      result = "0";
+    else {
+      APInt tmp(*this);
+      size_t insert_at = 0;
+      if (wantSigned && this->isNegative()) {
+        // They want to print the signed version and it is a negative value
+        // Flip the bits and add one to turn it into the equivalent positive
+        // value and put a '-' in the result.
+        tmp.flip();
+        tmp++;
+        result = "-";
+        insert_at = 1;
+      }
+      // Just shift tmp right for each digit width until it becomes zero
+      uint32_t shift = (radix == 16 ? 4 : (radix == 8 ? 3 : 1));
+      uint64_t mask = radix - 1;
+      APInt zero(tmp.getBitWidth(), 0);
+      while (tmp.ne(zero)) {
+        unsigned digit = tmp.getZExtValue() & mask;
+        tmp = tmp.lshr(shift);
+        result.insert(insert_at, digits[digit]);
       }
     }
     return result;
