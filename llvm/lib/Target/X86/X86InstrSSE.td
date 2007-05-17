@@ -170,6 +170,10 @@ def UNPCKL_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isUNPCKL_v_undef_Mask(N);
 }]>;
 
+def UNPCKH_v_undef_shuffle_mask : PatLeaf<(build_vector), [{
+  return X86::isUNPCKH_v_undef_Mask(N);
+}]>;
+
 def PSHUFD_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isPSHUFDMask(N);
 }], SHUFFLE_get_shuf_imm>;
@@ -2264,6 +2268,22 @@ def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
 def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
                   UNPCKL_v_undef_shuffle_mask)),
           (PUNPCKLDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
+}
+
+// vector_shuffle v1, <undef>, <2, 2, 3, 3, ...>
+let AddedComplexity = 10 in {
+def : Pat<(v4f32 (vector_shuffle VR128:$src, (undef),
+                  UNPCKH_v_undef_shuffle_mask)),
+          (UNPCKHPSrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v16i8 (vector_shuffle VR128:$src, (undef),
+                  UNPCKH_v_undef_shuffle_mask)),
+          (PUNPCKHBWrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v8i16 (vector_shuffle VR128:$src, (undef),
+                  UNPCKH_v_undef_shuffle_mask)),
+          (PUNPCKHWDrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (vector_shuffle VR128:$src, (undef),
+                  UNPCKH_v_undef_shuffle_mask)),
+          (PUNPCKHDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE1]>;
 }
 
 let AddedComplexity = 15 in {
