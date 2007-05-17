@@ -1630,7 +1630,7 @@ bool X86::isSHUFPMask(SDNode *N) {
   return ::isSHUFPMask(N->op_begin(), N->getNumOperands());
 }
 
-/// isCommutedSHUFP - Returns true if the shuffle mask is except
+/// isCommutedSHUFP - Returns true if the shuffle mask is exactly
 /// the reverse of what x86 shuffles want. x86 shuffles requires the lower
 /// half elements to come from vector 1 (which would equal the dest.) and
 /// the upper half to come from vector 2.
@@ -2188,7 +2188,7 @@ static bool isSplatVector(SDNode *N) {
 /// isUndefShuffle - Returns true if N is a VECTOR_SHUFFLE that can be resolved
 /// to an undef.
 static bool isUndefShuffle(SDNode *N) {
-  if (N->getOpcode() != ISD::BUILD_VECTOR)
+  if (N->getOpcode() != ISD::VECTOR_SHUFFLE)
     return false;
 
   SDOperand V1 = N->getOperand(0);
@@ -2206,6 +2206,61 @@ static bool isUndefShuffle(SDNode *N) {
     }
   }
   return true;
+}
+
+/// isZeroNode - Returns true if Elt is a constant zero or a floating point
+/// constant +0.0.
+static inline bool isZeroNode(SDOperand Elt) {
+  return ((isa<ConstantSDNode>(Elt) &&
+           cast<ConstantSDNode>(Elt)->getValue() == 0) ||
+          (isa<ConstantFPSDNode>(Elt) &&
+           cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0)));
+}
+
+/// isZeroShuffle - Returns true if N is a VECTOR_SHUFFLE that can be resolved
+/// to an zero vector.
+static bool isZeroShuffle(SDNode *N) {
+  if (N->getOpcode() != ISD::VECTOR_SHUFFLE)
+    return false;
+
+  SDOperand V1 = N->getOperand(0);
+  SDOperand V2 = N->getOperand(1);
+  SDOperand Mask = N->getOperand(2);
+  unsigned NumElems = Mask.getNumOperands();
+  for (unsigned i = 0; i != NumElems; ++i) {
+    SDOperand Arg = Mask.getOperand(i);
+    if (Arg.getOpcode() != ISD::UNDEF) {
+      unsigned Idx = cast<ConstantSDNode>(Arg)->getValue();
+      if (Idx < NumElems) {
+        unsigned Opc = V1.Val->getOpcode();
+        if (Opc == ISD::UNDEF)
+          continue;
+        if (Opc != ISD::BUILD_VECTOR ||
+            !isZeroNode(V1.Val->getOperand(Idx)))
+          return false;
+      } else if (Idx >= NumElems) {
+        unsigned Opc = V2.Val->getOpcode();
+        if (Opc == ISD::UNDEF)
+          continue;
+        if (Opc != ISD::BUILD_VECTOR ||
+            !isZeroNode(V2.Val->getOperand(Idx - NumElems)))
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
+/// getZeroVector - Returns a vector of specified type with all zero elements.
+///
+static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
+  assert(MVT::isVector(VT) && "Expected a vector type");
+  unsigned NumElems = getVectorNumElements(VT);
+  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+  bool isFP = MVT::isFloatingPoint(EVT);
+  SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
+  SmallVector<SDOperand, 8> ZeroVec(NumElems, Zero);
+  return DAG.getNode(ISD::BUILD_VECTOR, VT, &ZeroVec[0], ZeroVec.size());
 }
 
 /// NormalizeMask - V2 is a splat, modify the mask (if needed) so all elements
@@ -2274,18 +2329,6 @@ static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &MaskVec[0], MaskVec.size());
 }
 
-/// getZeroVector - Returns a vector of specified type with all zero elements.
-///
-static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
-  assert(MVT::isVector(VT) && "Expected a vector type");
-  unsigned NumElems = getVectorNumElements(VT);
-  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
-  bool isFP = MVT::isFloatingPoint(EVT);
-  SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
-  SmallVector<SDOperand, 8> ZeroVec(NumElems, Zero);
-  return DAG.getNode(ISD::BUILD_VECTOR, VT, &ZeroVec[0], ZeroVec.size());
-}
-
 /// PromoteSplat - Promote a splat of v8i16 or v16i8 to v4i32.
 ///
 static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
@@ -2307,17 +2350,8 @@ static SDOperand PromoteSplat(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BIT_CONVERT, VT, Shuffle);
 }
 
-/// isZeroNode - Returns true if Elt is a constant zero or a floating point
-/// constant +0.0.
-static inline bool isZeroNode(SDOperand Elt) {
-  return ((isa<ConstantSDNode>(Elt) &&
-           cast<ConstantSDNode>(Elt)->getValue() == 0) ||
-          (isa<ConstantFPSDNode>(Elt) &&
-           cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0)));
-}
-
 /// getShuffleVectorZeroOrUndef - Return a vector_shuffle of the specified
-/// vector and zero or undef vector.
+/// vector of zero or undef vector.
 static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
                                              unsigned NumElems, unsigned Idx,
                                              bool isZero, SelectionDAG &DAG) {
@@ -2583,6 +2617,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 
   if (isUndefShuffle(Op.Val))
     return DAG.getNode(ISD::UNDEF, VT);
+
+  if (isZeroShuffle(Op.Val))
+    return getZeroVector(VT, DAG);
 
   if (isSplatMask(PermMask.Val)) {
     if (NumElems <= 4) return Op;
