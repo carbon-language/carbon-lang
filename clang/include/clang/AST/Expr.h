@@ -35,6 +35,12 @@ protected:
 public:  
   QualType getType() const { return TR; }
   
+  /// SourceLocation tokens are not useful in isolation - they are low level
+  /// value objects created/interpreted by SourceManager. We assume AST
+  /// clients will have a pointer to the respective SourceManager.
+  virtual SourceRange getSourceRange() const = 0;
+  SourceLocation getSourceLocation() const { return getSourceRange().Begin(); }
+
   /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
   /// incomplete type other than void. Nonarray expressions that can be lvalues:
   ///  - name, where name must be a variable
@@ -77,11 +83,15 @@ private:
 /// enum, etc.
 class DeclRefExpr : public Expr {
   Decl *D; // a ValueDecl or EnumConstantDecl
+  SourceLocation Loc;
 public:
-  DeclRefExpr(Decl *d, QualType t) : Expr(DeclRefExprClass, t), D(d) {}
+  DeclRefExpr(Decl *d, QualType t, SourceLocation l) : 
+    Expr(DeclRefExprClass, t), D(d), Loc(l) {}
   
   Decl *getDecl() const { return D; }
-
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclRefExprClass; 
@@ -91,14 +101,17 @@ public:
 
 class IntegerLiteral : public Expr {
   intmax_t Value;
+  SourceLocation Loc;
 public:
   // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy, 
   // or UnsignedLongLongTy
-  IntegerLiteral(intmax_t value, QualType type)
-    : Expr(IntegerLiteralClass, type), Value(value) {
+  IntegerLiteral(intmax_t value, QualType type, SourceLocation l)
+    : Expr(IntegerLiteralClass, type), Value(value), Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
   intmax_t getValue() const { return Value; }
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -109,11 +122,15 @@ public:
 
 class CharacterLiteral : public Expr {
   unsigned Value;
+  SourceLocation Loc;
 public:
   // type should be IntTy
-  CharacterLiteral(unsigned value, QualType type)
-    : Expr(CharacterLiteralClass, type), Value(value) {
+  CharacterLiteral(unsigned value, QualType type, SourceLocation l)
+    : Expr(CharacterLiteralClass, type), Value(value), Loc(l) {
   }
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CharacterLiteralClass; 
@@ -123,9 +140,13 @@ public:
 
 class FloatingLiteral : public Expr {
   float Value; // FIXME
+  SourceLocation Loc;
 public:
-  FloatingLiteral(float value, QualType type) : 
-    Expr(FloatingLiteralClass, type), Value(value) {} 
+  FloatingLiteral(float value, QualType type, SourceLocation l)
+    : Expr(FloatingLiteralClass, type), Value(value), Loc(l) {} 
+
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -138,13 +159,18 @@ class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
   bool IsWide;
+  SourceLocation Loc;
 public:
-  StringLiteral(const char *strData, unsigned byteLength, bool Wide, QualType t);
+  StringLiteral(const char *strData, unsigned byteLength, bool Wide, 
+                QualType t, SourceLocation l);
   virtual ~StringLiteral();
   
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
   bool isWide() const { return IsWide; }
+
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc,Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -163,6 +189,7 @@ public:
     : Expr(ParenExprClass, QualType()), L(l), R(r), Val(val) {}
   
   Expr *getSubExpr() const { return Val; }
+  SourceRange getSourceRange() const { return SourceRange(L, R); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -189,8 +216,8 @@ public:
     Extension         // __extension__ marker.
   };
 
-  UnaryOperator(Expr *input, Opcode opc, QualType type)
-    : Expr(UnaryOperatorClass, type), Val(input), Opc(opc) {}
+  UnaryOperator(Expr *input, Opcode opc, QualType type, SourceLocation l)
+    : Expr(UnaryOperatorClass, type), Val(input), Opc(opc), Loc(l) {}
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
@@ -203,7 +230,13 @@ public:
 
   Opcode getOpcode() const { return Opc; }
   Expr *getSubExpr() const { return Val; }
-  
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const {
+    if (isPostfix())
+      return SourceRange(getSubExpr()->getSourceRange().Begin(), Loc);
+    else
+      return SourceRange(Loc, getSubExpr()->getSourceRange().End());
+  }
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
   bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
@@ -222,6 +255,7 @@ public:
 private:
   Expr *Val;
   Opcode Opc;
+  SourceLocation Loc;
 };
 
 /// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of
@@ -229,13 +263,16 @@ private:
 class SizeOfAlignOfTypeExpr : public Expr {
   bool isSizeof;  // true if sizeof, false if alignof.
   QualType Ty;
+  SourceLocation OpLoc, RParenLoc;
 public:
-  SizeOfAlignOfTypeExpr(bool issizeof, QualType argType, QualType resultType) : 
+  SizeOfAlignOfTypeExpr(bool issizeof, QualType argType, QualType resultType,
+                        SourceLocation op, SourceLocation rp) : 
     Expr(SizeOfAlignOfTypeExprClass, resultType),
-    isSizeof(issizeof), Ty(argType) {}
+    isSizeof(issizeof), Ty(argType), OpLoc(op), RParenLoc(rp) {}
   
   bool isSizeOf() const { return isSizeof; }
   QualType getArgumentType() const { return Ty; }
+  SourceRange getSourceRange() const { return SourceRange(OpLoc, RParenLoc); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -251,14 +288,17 @@ public:
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {
   Expr *Base, *Idx;
+  SourceLocation Loc; // the location of the right bracket
 public:
-  ArraySubscriptExpr(Expr *base, Expr *idx, QualType t) : 
+  ArraySubscriptExpr(Expr *base, Expr *idx, QualType t, SourceLocation l) : 
     Expr(ArraySubscriptExprClass, t),
-    Base(base), Idx(idx) {}
+    Base(base), Idx(idx), Loc(l) {}
   
   Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
-
+  SourceRange getSourceRange() const { 
+    return SourceRange(Base->getSourceRange().Begin(), Loc);
+  }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ArraySubscriptExprClass; 
@@ -273,13 +313,18 @@ class CallExpr : public Expr {
   Expr *Fn;
   Expr **Args;
   unsigned NumArgs;
+  SourceLocation Loc; // the location of the right paren
 public:
-  CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t);
+  CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
+           SourceLocation l);
   ~CallExpr() {
     delete [] Args;
   }
   
   Expr *getCallee() const { return Fn; }
+  SourceRange getSourceRange() const { 
+    return SourceRange(Fn->getSourceRange().Begin(), Loc);
+  }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
@@ -316,7 +361,10 @@ public:
   Expr *getBase() const { return Base; }
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
-
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getBase()->getSourceRange().Begin(),
+                       getMemberDecl()->getLocation());
+  }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == MemberExprClass; 
@@ -329,16 +377,19 @@ public:
 class CastExpr : public Expr {
   QualType Ty;
   Expr *Op;
+  SourceLocation Loc; // the location of the left paren
 public:
-  CastExpr(QualType ty, Expr *op) : 
-    Expr(CastExprClass, ty), Ty(ty), Op(op) {}
+  CastExpr(QualType ty, Expr *op, SourceLocation l) : 
+    Expr(CastExprClass, ty), Ty(ty), Op(op), Loc(l) {}
   CastExpr(StmtClass SC, QualType ty, Expr *op) : 
-    Expr(SC, QualType()), Ty(ty), Op(op) {}
+    Expr(SC, QualType()), Ty(ty), Op(op), Loc(SourceLocation()) {}
   
   QualType getDestType() const { return Ty; }
-  
   Expr *getSubExpr() const { return Op; }
-  
+  SourceLocation getSourceLocation() const { return Loc; }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(Loc, getSubExpr()->getSourceRange().End());
+  }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CastExprClass; 
@@ -390,6 +441,10 @@ public:
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() const { return LHS; }
   Expr *getRHS() const { return RHS; }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLHS()->getSourceRange().Begin(),
+                       getRHS()->getSourceRange().End());
+  }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -413,7 +468,11 @@ public:
   Expr *getCond() const { return Cond; }
   Expr *getLHS() const { return LHS; }
   Expr *getRHS() const { return RHS; }
-  
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getCond()->getSourceRange().Begin(),
+                       getRHS()->getSourceRange().End());
+  }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ConditionalOperatorClass; 

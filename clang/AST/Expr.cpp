@@ -22,7 +22,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
-                             bool Wide, QualType t) : 
+                             bool Wide, QualType t, SourceLocation l) : 
   Expr(StringLiteralClass, t) {
   // OPTIMIZE: could allocate this appended to the StringLiteral.
   char *AStrData = new char[byteLength];
@@ -30,6 +30,7 @@ StringLiteral::StringLiteral(const char *strData, unsigned byteLength,
   StrData = AStrData;
   ByteLength = byteLength;
   IsWide = Wide;
+  Loc = l;
 }
 
 StringLiteral::~StringLiteral() {
@@ -73,11 +74,13 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 // Postfix Operators.
 //===----------------------------------------------------------------------===//
 
-CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t)
+CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
+                   SourceLocation l)
   : Expr(CallExprClass, t), Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];
+  Loc = l;
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it

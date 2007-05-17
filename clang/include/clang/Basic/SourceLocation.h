@@ -88,7 +88,18 @@ inline bool operator==(const SourceLocation &LHS, const SourceLocation &RHS) {
 inline bool operator!=(const SourceLocation &LHS, const SourceLocation &RHS) {
   return !(LHS == RHS);
 }
+
+/// SourceRange - a trival tuple used to represent a source range.
+class SourceRange {
+  SourceLocation B;
+  SourceLocation E;
+public:
+  SourceRange(SourceLocation begin, SourceLocation end) : B(begin), E(end) {}
     
+  SourceLocation Begin() const { return B; }
+  SourceLocation End() const { return E; }
+};
+  
 }  // end namespace clang
 }  // end namespace llvm
 

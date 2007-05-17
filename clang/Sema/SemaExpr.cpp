@@ -56,7 +56,7 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
   // FIXME: use factory.
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
-                           Literal.AnyWide, t);
+                           Literal.AnyWide, t, SourceLocation()/*FIXME*/);
 }
 
 
@@ -83,7 +83,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
-    return new DeclRefExpr(VD, VD->getType());
+    return new DeclRefExpr(VD, VD->getType(), Loc);
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
 
@@ -113,7 +113,8 @@ Sema::ExprResult Sema::ParseCharacterConstant(const LexerToken &Tok) {
                             Tok.getLocation(), PP);
   if (Literal.hadError())
     return ExprResult(true);
-  return new CharacterLiteral(Literal.getValue(), Context.IntTy);
+  return new CharacterLiteral(Literal.getValue(), Context.IntTy, 
+                              Tok.getLocation());
 }
 
 Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
@@ -121,7 +122,8 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
     const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
-    return ExprResult(new IntegerLiteral(*t-'0', Context.IntTy));
+    return ExprResult(new IntegerLiteral(*t-'0', Context.IntTy, 
+                                         Tok.getLocation()));
   }
   SmallString<512> IntegerBuffer;
   IntegerBuffer.resize(Tok.getLength());
@@ -154,11 +156,11 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     }
     uintmax_t val;
     if (Literal.GetIntegerValue(val)) {
-      return new IntegerLiteral(val, t);
+      return new IntegerLiteral(val, t, Tok.getLocation());
     } 
   } else if (Literal.isFloatingLiteral()) {
     // FIXME: fill in the value and compute the real type...
-    return new FloatingLiteral(7.7, Context.FloatTy);
+    return new FloatingLiteral(7.7, Context.FloatTy, Tok.getLocation());
   }
   return ExprResult(true);
 }
@@ -192,8 +194,8 @@ QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType,
 
 Action::ExprResult Sema::
 ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
-                           SourceLocation LParenLoc, TypeTy *Ty,
-                           SourceLocation RParenLoc) {
+                           SourceLocation LPLoc, TypeTy *Ty,
+                           SourceLocation RPLoc) {
   // If error parsing type, ignore.
   if (Ty == 0) return true;
   
@@ -204,7 +206,7 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
 
   if (resultType.isNull())
     return true;
-  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, resultType);
+  return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, resultType, OpLoc, RPLoc);
 }
 
 
@@ -220,7 +222,7 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
   QualType result = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
   if (result.isNull())
     return true;
-  return new UnaryOperator((Expr *)Input, Opc, result);
+  return new UnaryOperator((Expr *)Input, Opc, result, OpLoc);
 }
 
 Action::ExprResult Sema::
@@ -266,7 +268,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
       return Diag(LLoc, diag::err_typecheck_subscript_not_object,
                   baseType.getAsString());
   } 
-  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType);
+  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType, RLoc);
 }
 
 Action::ExprResult Sema::
@@ -375,7 +377,8 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     if ((NumArgsInCall != NumArgsInProto) && !proto->isVariadic())
       return true;
   }
-  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgsInCall, resultType);
+  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgsInCall, resultType,
+                      RParenLoc);
 }
 
 Action::ExprResult Sema::
@@ -383,7 +386,7 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
   // If error parsing type, ignore.
   assert((Ty != 0) && "ParseCastExpr(): missing type");
-  return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op);
+  return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op, LParenLoc);
 }
 
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
@@ -402,9 +405,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   
   // first, check the condition.
   if (!cond->isScalarType()) { // C99 6.5.15p2
-    // FIXME: need to compute the location from the Cond expr node...
-    Diag(questionLoc, diag::err_typecheck_cond_expect_scalar, 
-                      cond.getAsString());
+    Diag(Cond->getSourceLocation(), diag::err_typecheck_cond_expect_scalar, 
+         cond.getAsString());
     return QualType();
   }
   // now check the two expressions.
@@ -1115,5 +1117,5 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   }
   if (resultType.isNull())
     return true;
-  return new UnaryOperator((Expr *)Input, Opc, resultType);
+  return new UnaryOperator((Expr *)Input, Opc, resultType, OpLoc);
 }

@@ -50,6 +50,9 @@ namespace clang {
   public:
     CXXBoolLiteralExpr(bool val) : 
       Expr(CXXBoolLiteralExprClass, QualType()), Value(val) {}
+
+    virtual SourceRange getSourceRange() const { // FIXME
+      return SourceRange(SourceLocation(),SourceLocation()); }
       
     virtual void visit(StmtVisitor &Visitor);
   };
