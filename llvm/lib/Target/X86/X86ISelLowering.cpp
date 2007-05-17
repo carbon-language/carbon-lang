@@ -1614,13 +1614,6 @@ bool X86::isPSHUFLWMask(SDNode *N) {
 static bool isSHUFPMask(const SDOperand *Elems, unsigned NumElems) {
   if (NumElems != 2 && NumElems != 4) return false;
 
-  // Ensure this is not an mmx shuffle.
-  if (NumElems == 4 && Elems[0].getValueType() == MVT::i16)
-    return false;
-  if (NumElems == 2 && Elems[0].getValueType() == MVT::i32)
-    return false;
-  
-  
   unsigned Half = NumElems / 2;
   for (unsigned i = 0; i < Half; ++i)
     if (!isUndefOrInRange(Elems[i], 0, NumElems))
@@ -2719,9 +2712,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     }
   }
 
-  if (NumElems == 4 && 
-      // Don't do this for MMX.
-      MVT::getSizeInBits(VT) != 64) {
+  if (NumElems == 4) {
     MVT::ValueType MaskVT = PermMask.getValueType();
     MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
     SmallVector<std::pair<int, int>, 8> Locs;
