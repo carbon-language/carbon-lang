@@ -345,10 +345,10 @@ public:
   
   void PrintIncludeStack(SourceLocation Pos);
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
-                                SourceLocation Pos,
+  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
-                                unsigned NumStrs);
+                                unsigned NumStrs, SourceRange *Ranges, 
+                                unsigned NumRanges);
 };
 
 void DiagnosticPrinterSTDERR::
@@ -371,7 +371,9 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
                                                SourceLocation Pos,
                                                diag::kind ID,
                                                const std::string *Strs,
-                                               unsigned NumStrs) {
+                                               unsigned NumStrs,
+                                               SourceRange *Ranges,
+                                               unsigned NumRanges) {
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
   const MemoryBuffer *Buffer = 0;
@@ -457,14 +459,14 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
     for (unsigned i = LineStart; i != FilePos; ++i)
       if (Buf[i] == '\t')
         Indent[i-LineStart] = '\t';
-    
+
+    // FIXME: if (NumRanges) use Ranges to output fancy highlighting
     // Print out the caret itself.
     std::cerr << Indent << "^\n";
   }
   
   ++NumDiagnostics;
 }
-
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Initialization

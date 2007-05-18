@@ -44,13 +44,43 @@ bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
   return true;
 }
 
-bool Sema::Diag(const LexerToken &Tok, unsigned DiagID) {
-  PP.getDiagnostics().Report(Tok.getLocation(), DiagID);
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, SourceRange Range) {
+  PP.getDiagnostics().Report(Loc, DiagID, 0, 0, &Range, 1);
   return true;
 }
 
-bool Sema::Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M) {
-  PP.getDiagnostics().Report(Tok.getLocation(), DiagID, &M, 1);
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+                SourceRange Range) {
+  PP.getDiagnostics().Report(Loc, DiagID, &Msg, 1, &Range, 1);
+  return true;
+}
+
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
+                const std::string &Msg2, SourceRange Range) {
+  std::string MsgArr[] = { Msg1, Msg2 };
+  PP.getDiagnostics().Report(Loc, DiagID, MsgArr, 2, &Range, 1);
+  return true;
+}
+
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID,
+                SourceRange R1, SourceRange R2) {
+  SourceRange RangeArr[] = { R1, R2 };
+  PP.getDiagnostics().Report(Loc, DiagID, 0, 0, RangeArr, 2);
+  return true;
+}
+
+bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+                SourceRange R1, SourceRange R2) {
+  SourceRange RangeArr[] = { R1, R2 };
+  PP.getDiagnostics().Report(Loc, DiagID, &Msg, 1, RangeArr, 2);
+  return true;
+}
+
+bool Sema::Diag(SourceLocation Range, unsigned DiagID, const std::string &Msg1,
+                const std::string &Msg2, SourceRange R1, SourceRange R2) {
+  std::string MsgArr[] = { Msg1, Msg2 };
+  SourceRange RangeArr[] = { R1, R2 };
+  PP.getDiagnostics().Report(Range, DiagID, MsgArr, 2, RangeArr, 2);
   return true;
 }
 

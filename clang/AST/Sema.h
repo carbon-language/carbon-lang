@@ -55,14 +55,27 @@ public:
   
   const LangOptions &getLangOptions() const;
   
-  /// always returns true, which simplifies error handling (i.e. less code).
+  /// The primitive diagnostic helpers - always returns true, which simplifies 
+  /// error handling (i.e. less code).
   bool Diag(SourceLocation Loc, unsigned DiagID);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
   bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
             const std::string &Msg2);
-  bool Diag(const LexerToken &Tok, unsigned DiagID);
-  bool Diag(const LexerToken &Tok, unsigned DiagID, const std::string &M);
-  
+
+  /// More expressive diagnostic helpers for expressions (say that 6 times:-)
+  bool Diag(SourceLocation Loc, unsigned DiagID, SourceRange R1);
+  bool Diag(SourceLocation Loc, unsigned DiagID, 
+            SourceRange R1, SourceRange R2);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+            SourceRange R1);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+            SourceRange R1, SourceRange R2);
+  bool Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1, 
+            const std::string &Msg2, SourceRange R1);
+  bool Diag(SourceLocation Loc, unsigned DiagID, 
+            const std::string &Msg1, const std::string &Msg2, 
+            SourceRange R1, SourceRange R2);
+
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
@@ -279,13 +292,12 @@ private:
     Expr *cond, Expr *lhs, Expr *rhs, SourceLocation questionLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
-  QualType CheckIncrementDecrementOperand(Expr *op);  // C99 6.5.3.1 
-  QualType CheckAddressOfOperand( // C99 6.5.3.2
-    Expr *op, SourceLocation loc);
-  QualType CheckIndirectionOperand( // C99 6.5.3.2
-    Expr *op, SourceLocation loc);
-  QualType CheckSizeOfAlignOfOperand( // C99 6.5.3.4
-    QualType type, SourceLocation loc, bool isSizeof);
+  // C99 6.5.3.1, 6.5.3.2, 6.5.3.4
+  QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc);   
+  QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);
+  QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
+  QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation loc, 
+                                     bool isSizeof);
     
   // C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
   // a constant expression of type int with a value greater than zero.
