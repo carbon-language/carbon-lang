@@ -39,7 +39,7 @@ proc execOneLine { test PRS outcome lineno line } {
   return $resultmsg
 }
 
-# This prcoedure performs variable substitutions on the RUN: lines of a test
+# This procedure performs variable substitutions on the RUN: lines of a test
 # cases.
 proc substitute { line test tmpFile } {
   global srcroot objroot srcdir objdir subdir target_triplet prcontext 
