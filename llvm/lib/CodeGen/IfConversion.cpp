@@ -74,7 +74,7 @@ namespace {
     void StructuralAnalysis(MachineBasicBlock *BB);
     void FeasibilityAnalysis(BBInfo &BBI);
     void InitialFunctionAnalysis(MachineFunction &MF,
-                                 std::vector<int> &Candidates);
+                                 std::vector<BBInfo*> &Candidates);
     bool IfConvertTriangle(BBInfo &BBI);
     bool IfConvertDiamond(BBInfo &BBI);
     void PredicateBlock(MachineBasicBlock *BB,
@@ -96,14 +96,14 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   unsigned NumBBs = MF.getNumBlockIDs();
   BBAnalysis.resize(NumBBs);
 
-  std::vector<int> Candidates;
+  std::vector<BBInfo*> Candidates;
   // Do an intial analysis for each basic block and finding all the potential
   // candidates to perform if-convesion.
   InitialFunctionAnalysis(MF, Candidates);
 
   MadeChange = false;
   for (unsigned i = 0, e = Candidates.size(); i != e; ++i) {
-    BBInfo &BBI = BBAnalysis[Candidates[i]];
+    BBInfo &BBI = *Candidates[i];
     switch (BBI.Kind) {
     default: assert(false && "Unexpected!");
       break;
@@ -237,7 +237,7 @@ void IfConverter::FeasibilityAnalysis(BBInfo &BBI) {
 /// InitialFunctionAnalysis - Analyze all blocks and find entries for all
 /// if-conversion candidates.
 void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
-                                          std::vector<int> &Candidates) {
+                                          std::vector<BBInfo*> &Candidates) {
   std::set<MachineBasicBlock*> Visited;
   MachineBasicBlock *Entry = MF.begin();
   for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
@@ -246,7 +246,7 @@ void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
     StructuralAnalysis(BB);
     BBInfo &BBI = BBAnalysis[BB->getNumber()];
     if (BBI.Kind == ICTriangleEntry || BBI.Kind == ICDiamondEntry)
-      Candidates.push_back(BB->getNumber());
+      Candidates.push_back(&BBI);
   }
 }
 
