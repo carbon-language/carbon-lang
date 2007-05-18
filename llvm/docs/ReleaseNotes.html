@@ -72,16 +72,23 @@ and .bc formats within the 2.x release series, like we did within the 1.x
 series.</li>
 <li>There are several significant change to the LLVM IR and internal APIs, such
     as a major overhaul of the type system, the completely new bitcode file
-    format, etc.</li>
+    format, etc (described below).</li>
 <li>We designed the release around a 6 month release cycle instead of the usual
     3-month cycle.  This gave us extra time to develop and test some of the
     more invasive features in this release.</li>
-<li>LLVM 2.0 no longer supports the llvm-gcc3 front-end.</li>
+<li>LLVM 2.0 no longer supports the llvm-gcc3 front-end.  Users are required to
+    upgrade to llvm-gcc4.  llvm-gcc4 includes many features over
+    llvm-gcc3, is faster, and is <a href="CFEBuildInstrs.html">much easier to
+    build from source</a>.</li>
 </ol>
 
 <p>Note that while this is a major version bump, this release has been
    extensively tested on a wide range of software.  It is easy to say that this
-   is our best release yet, in terms of both features and correctness.</p>
+   is our best release yet, in terms of both features and correctness.  This is
+   the first LLVM release to correctly compile and optimize major software like
+   LLVM itself, Mozilla/Seamonkey, Qt 4.3rc1, kOffice, etc out of the box on
+   linux/x86.
+   </p>
 
 </div>
 
@@ -93,26 +100,27 @@ series.</li>
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="majorchanges">Major Changes</a></div>
 <div class="doc_text">
-<p>blah
-</p>
+
+<p>Changes to the LLVM IR itself:</p>
 
 <ul>
-
-<li>llvm-gcc3 is now officially unsupported.  Users are required to
-    upgrade to llvm-gcc4.  llvm-gcc4 includes many features over
-    llvm-gcc3, is faster, and is much easier to build.</li>
 
 <li>Integer types are now completely signless. This means that we
     have types like i8/i16/i32 instead of ubyte/sbyte/short/ushort/int
     etc. LLVM operations that depend on sign have been split up into 
-    separate instructions (<a href="http://llvm.org/PR950">PR950</a>).</li>
+    separate instructions (<a href="http://llvm.org/PR950">PR950</a>).  This
+    eliminates cast instructions that just change the sign of the operands (e.g.
+    int -> uint), which reduces the size of the IR and makes optimizers
+    simpler to write.</li>
 
-<li>Arbitrary bitwidth integers (e.g. i13, i36, i42, etc) are now
-    supported in the LLVM IR and optimizations. However, neither llvm-gcc nor
-    the native code generators support non-standard width integers 
-    (<a href="http://llvm.org/PR1043">PR1043</a>).</li>
+<li>Integer types with arbitrary bitwidths (e.g. i13, i36, i42, i1057, etc) are
+    now supported in the LLVM IR and optimizations (<a 
+    href="http://llvm.org/PR1043">PR1043</a>).  However, neither llvm-gcc
+    (<a href="http://llvm.org/PR1284">PR1284</a>) nor the native code generators
+    (<a href="http://llvm.org/PR1270">PR1270</a>) support non-standard width
+    integers yet.</li>
 
-<li>'type planes' have been removed (<a href="http://llvm.org/PR411">PR411</a>).
+<li>'Type planes' have been removed (<a href="http://llvm.org/PR411">PR411</a>).
     It is no longer possible to have two values with the same name in the 
     same symbol table.  This simplifies LLVM internals, allowing significant 
     speedups.</li>
@@ -121,36 +129,36 @@ series.</li>
     @ instead of % (<a href="http://llvm.org/PR645">PR645</a>).</li>
 
 <li>The LLVM 1.x "bytecode" format has been replaced with a  
-    completely new binary representation, named 'bitcode'.  Because we  
-    plan to maintain binary compatibility between LLVM 2.x ".bc" files,  
-    this is an important change to get right.  Bitcode brings a number of  
-    advantages to the LLVM over the old bytecode format.  It is denser  
+    completely new binary representation, named 'bitcode'. The <a
+    href="BitCodeFormat.html">Bitcode Format</a> brings a
+    number of advantages to the LLVM over the old bytecode format: it is denser  
     (files are smaller), more extensible, requires less memory to read,  
     is easier to keep backwards compatible (so LLVM 2.5 will read 2.0 .bc  
     files), and has many other nice features.</li>
 
-<li>Support was added for alignment values on load and store
-    instructions (<a href="http://www.llvm.org/PR400">PR400</a>).  This 
-    allows the IR to express loads that are not
-    sufficiently aligned (e.g. due to pragma packed) or to capture extra
-    alignment information. </li>
+<li>Load and store instructions now track the alignment of their pointer
+    (<a href="http://www.llvm.org/PR400">PR400</a>).  This allows the IR to
+    express loads that are not sufficiently aligned (e.g. due to '<tt>#pragma
+    packed</tt>') or to capture extra alignment information.</li>
+</ul>
 
-<li>LLVM now has a new MSIL backend. llc - march=msil will now turn LLVM 
+<p>Major new features:</p>
+
+<ul>
+
+<li>A number of ELF features are now supported by LLVM, including 'visibility',
+    extern weak linkage, Thread Local Storage (TLS) with the <tt>__thread</tt>
+    keyword, and symbol aliases.
+    Among other things, this means that many of the special options needed to
+    configure llvm-gcc on linux are no longer needed, and special hacks to build
+    large C++ libraries like Qt are not needed.</li>
+
+<li>LLVM now has a new MSIL backend. llc -march=msil will now turn LLVM 
     into MSIL (".net") bytecode.  This is still fairly early development 
     with a number of limitations.</li>
 
-<li>Support has been added for 'protected visibility' in ELF.</li>
-
-<li>Thread Local Storage with the __thread keyword was implemented along 
-    with added codegen support for Linux on X86 and ARM.</li>
-
-<li>ELF symbol aliases supported has been added.</li>
-
-<li>Added support for 'polymorphic intrinsics', allowing things like 
-    llvm.ctpop to work on arbitrary width integers.</li>
-
 </ul>
-  
+
 </div>
 
 
@@ -162,29 +170,20 @@ Improvements</a></div>
 </p>
 
 <ul>
-<li>Precompiled Headers (PCH) support has been implemented.</li>
+<li>Precompiled Headers (PCH) are now supported.</li>
 
-<li>Support for external weak linkage and hidden visibility has been added.</li>
-
-<li>Packed structure types are now supported , which allows LLVM to express 
-    unaligned data more naturally.</li>
-
-<li>Inline assembly support has been improved and many bugs were fixed.
-    The two large missing features are support for 80-bit floating point stack 
-    registers on X86 (<a href="http://llvm.org/PR879">PR879</a>), and support for inline asm in the C backend (<a href="http://llvm.org/PR802">PR802</a>).</li>
-
-<li>Ada support, such as nested functions, has been improved.</li>
+<li>"<tt>#pragma packed</tt>" is now supported, as are the various features
+    described above (visibility, extern weak linkage, __thread, aliases,
+    etc).</li>
 
 <li>Tracking function parameter/result attributes is now possible.</li>
 
-<li>Its is now easier to configure llvm-gcc for linux.</li>
+<li>Many internal enhancements have been added, such as improvements to
+    NON_LVALUE_EXPR, arrays with non-zero base, structs with variable sized
+    fields, VIEW_CONVERT_EXPR, CEIL_DIV_EXPR, nested functions, and many other
+    things.  This is primarily to supports non-C GCC front-ends, like Ada.</li>
 
-<li>Many enhancements have been added, such as improvements to NON_LVALUE_EXPR,
-    arrays with non-zero base, structs with variable sized fields,  
-    VIEW_CONVERT_EXPR, CEIL_DIV_EXPR, and many other things.</li>
-
-<li>Improved "attribute packed" support in the CFE, and handle many
-    other obscure struct layout cases correctly.</li>
+<li>It is simpler to configure llvm-gcc for linux.</li>
 
 </ul>
   
@@ -193,33 +192,38 @@ Improvements</a></div>
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="optimizer">Optimizer
 Improvements</a></div>
+
 <div class="doc_text">
 <p>New features include:
 </p>
 
 <ul>
-<li>The pass manager has been entirely rewritten, making it significantly 
-    smaller, simpler, and more extensible. Support has been added to run 
-    FunctionPasses interlaced with CallGraphSCCPasses.</li>
+<li>The <a href="WritingAnLLVMPass.html">pass manager</a> has been entirely
+    rewritten, making it significantly smaller, simpler, and more extensible.
+    Support has been added to run FunctionPasses interlaced with
+    CallGraphSCCPasses, and we now support loop transformations explicitly with
+    LoopPass.</li>
 
-<li>The -scalarrepl pass can now promote unions containing FP values into
-    a register, it can also handle unions of vectors of the same size.</li>
+<li>The <tt>-scalarrepl</tt> pass can now promote unions containing FP values
+    into a register, it can also handle unions of vectors of the same
+    size.</li>
 
-<li>The predicate simplifier pass has been improved, making it able to do 
-    simple value range propagation and eliminate more conditionals.</li>
-
-<li>There is a new new LoopPass class. The passmanager has been
-    modified to support it, and all existing loop xforms have been
-    converted to use it. </li>
-
-<li>There is a new loop rotation pass, which converts "for loops" into 
+<li>LLVM 2.0 includes a new loop rotation pass, which converts "for loops" into 
     "do/while loops", where the condition is at the bottom of the loop.</li>
+
+<li>The Loop Strength Reduction pass has been improved, and support added 
+    for sinking expressions across blocks to reduce register pressure.</li>
 
 <li>ModulePasses may now use the result of FunctionPasses.</li>
 
-<li>The [Post]DominatorSet classes have been removed from LLVM and clients switched to use the far-more-efficient ETForest class instead.  </li>
+<li>The [Post]DominatorSet classes have been removed from LLVM and clients
+    switched to use the far-more-efficient ETForest class instead.</li>
 
-<li>The ImmediateDominator class has also been removed, and clients have been switched to use DominatorTree instead.</li>
+<li>The ImmediateDominator class has also been removed, and clients have been
+    switched to use DominatorTree instead.</li>
+
+<li>The predicate simplifier pass has been improved, making it able to do 
+    simple value range propagation and eliminate more conditionals.</li>
 
 </ul>
   
@@ -235,39 +239,26 @@ New features include:
 </p>
 
 <ul>
-<li>Support for Zero-cost DWARF exception handling has been added. It is mostly
-    complete and just in need of continued bug fixes and optimizations at 
-    this point.</li>
 
-<li>Progress has been made on a direct Mach-o .o file writer. Many small 
-    apps work, but it is not quite complete yet.</li>
-
-<li>Support was added for software floating point routines.</li>
-
-<li>DWARF debug information generation has been improved.  LLVM now passes 
-    most of the GDB testsuite on MacOS and debug info is more dense.</li>
+<li>Support was added for software floating point, which allows LLVM to target
+    chips that don't have hardware FPUs (e.g. ARM thumb mode).</li>
 
 <li>A new register scavenger has been implemented, which is useful for
     finding free registers after register allocation.  This is useful when
     rewriting frame references on RISC targets, for example.</li>
 
 <li>Heuristics have been added to avoid coalescing vregs with very large live 
-    ranges to physregs.</li>
+    ranges to physregs.  This was bad because it effectively pinned the physical
+    register for the entire lifetime of the virtual register (<a 
+    href="http://llvm.org/PR711">PR711</a>).</li>
 
 <li>Support now exists for very simple (but still very useful) 
     rematerialization the register allocator, enough to move  
     instructions like "load immediate" and constant pool loads.</li>
 
-<li>Significantly improved 'switch' lowering, improving codegen for 
+<li>Switch statement lowering is significantly better, improving codegen for 
     sparse switches that have dense subregions, and implemented support 
     for the shift/and trick.</li>
-
-<li>The code generator now has more accurate and general hooks for  
-    describing addressing modes ("isLegalAddressingMode") to  
-    optimizations like loop strength reduction and code sinking.</li>
-
-<li>The Loop Strength Reduction pass has been improved, and support added 
-    for sinking expressions across blocks to reduce register pressure.</li>
 
 <li>Added support for tracking physreg sub-registers and super-registers 
     in the code generator, as well as extensive register  
@@ -275,6 +266,37 @@ New features include:
 
 <li>There is initial support for virtreg sub-registers 
     (<a href="http://llvm.org/PR1350">PR1350</a>).</li>
+
+</ul>
+
+<p>
+Other improvements include:
+</p>
+
+<ul>
+
+<li>Inline assembly support is much more solid that before.
+    The two primary features still missing are support for 80-bit floating point
+    stack registers on X86 (<a href="http://llvm.org/PR879">PR879</a>), and
+    support for inline asm in the C backend (<a 
+    href="http://llvm.org/PR802">PR802</a>).</li>
+
+<li>DWARF debug information generation has been improved.  LLVM now passes 
+    most of the GDB testsuite on MacOS and debug info is more dense.</li>
+
+<li>Codegen support for Zero-cost DWARF exception handling has been added (<a 
+    href="http://llvm.org/PR592">PR592</a>).  It is mostly
+    complete and just in need of continued bug fixes and optimizations at 
+    this point.  However, support in llvm-g++ is disabled with an
+    #ifdef for the 2.0 release  (<a 
+    href="http://llvm.org/PR870">PR870</a>).</li>
+
+<li>The code generator now has more accurate and general hooks for  
+    describing addressing modes ("isLegalAddressingMode") to  
+    optimizations like loop strength reduction and code sinking.</li>
+
+<li>Progress has been made on a direct Mach-o .o file writer. Many small 
+    apps work, but it is still not quite complete.</li>
 
 </ul>
 
@@ -303,44 +325,39 @@ Improvements</a></div>
 
 <div class="doc_text">
 
-<p>X86-Specific Code Generator Enhancements:
+<p>X86-specific Code Generator Enhancements:
 </p>
 
 <ul>
+<li>The MMX instruction set is now supported through intrinsics.</li>
 <li>The scheduler was improved to better reduce register pressure on  
-    X86 and other targets that are register pressure sensitive</li>
-<li>Linux/x86-64 support has been improved.</li>
+    X86 and other targets that are register pressure sensitive.</li>
+<li>Linux/x86-64 support is much better.</li>
 <li>PIC support for linux/x86 has been added.</li>
-<li>Support now exists for the GCC regparm attribute, and code in the X86 
-    backend to respect it.</li>
-<li>Various improvements have been made for the X86-64 JIT, allowing it to
-    generate code in the large code model</li>
+<li>The X86 backend now supports the GCC regparm attribute.</li>
 <li>LLVM now supports inline asm with multiple constraint letters per operand 
     (like "ri") which is common in X86 inline asms.</li>
-<li>Early support has been added for X86 inline asm in the C backend.</li>
-<li>Added support for the X86 MMX instruction set.</li>
-
 </ul>
 
-<p>ARM-Specific Code Generator Enhancements:
-</p>
+<p>ARM-specific Code Generator Enhancements:</p>
 
 <ul>
-<li>Several improvements have been made to the ARM backend, including basic 
-    inline asm support, weak linkage support, static ctor/dtor support and 
-    many bug fixes.</li>
-<li>There are major enhancements to the ARM backend, including support for ARM 
-    v4-v6, vfp support, soft float, pre/postinc support, load/store multiple 
-    generation, constant pool entry motion (to support large functions),
-    and enhancements to ARM constant island pass.
-    </li>
-<li>Added support for Thumb code generation (an ARM subtarget).</li>
-<li>More aggressive size analysis for ARM inline asm strings was 
-    implemented.</li>
+<li>The ARM code generator is now stable and fully supported.</li>
+
+<li>There are major new features, including support for ARM 
+    v4-v6 chips, vfp support, soft float point support, pre/postinc support,
+    load/store multiple generation, constant pool entry motion (to support
+    large functions), and inline asm support, weak linkage support, static
+    ctor/dtor support and many bug fixes.</li>
+<li>Added support for Thumb code generation (<tt>llc -march=thumb</tt>).</li>
+
+<li>The ARM backend now supports the ARM AAPCS/EABI ABI and PIC codegen on 
+    arm/linux.</li>
+
+<li>Several bugs were fixed for DWARF debug info generation on arm/linux.</li>
 </ul>
 
-<p>Other Target-Specific Code Generator Enhancements:
-</p>
+<p>PowerPC-specific Code Generator Enhancements:</p>
 
 <ul>
 <li>The PowerPC 64 JIT now supports addressing code loaded above the 2G
@@ -350,19 +367,7 @@ Improvements</a></div>
     functional now.  llvm-gcc and static compilation are not fully supported 
     yet though.</li>
 
-<li>Many bugs fixed for PowerPC 64.</li>
-
-<li>Support was added for the ARM AAPCS and EABI ABIs and PIC codegen on 
-    arm/linux.</li>
-
-<li>Several bugs in DWARF debug emission on linux and cygwin/mingw were fixed.
-    Debugging basically works on these targets now.</li>
-
-<li>Support has been added for the X86-64 large code model to the JIT,  
-    which is useful if JIT'd function bodies are more than 2G away from  
-    library functions.</li>
-
-<li>Several bugs were fixed for DWARF debug info generation on arm/linux.</li>
+<li>Many PowerPC 64 bug fixes.</li>
 
 </ul>
 
@@ -414,7 +419,7 @@ internal changes.  If you are programming to the C++ API, be aware of the
 following major changes:</p>
 
 <ul>
-<li>Pass registration is slightly different in LLVM 2.0 (you now needs an
+<li>Pass registration is slightly different in LLVM 2.0 (you now need an
    intptr_t in your constructor), as explained in the <a 
    href="WritingAnLLVMPass.html#basiccode">Writing an LLVM Pass</a>
    document.</li>
