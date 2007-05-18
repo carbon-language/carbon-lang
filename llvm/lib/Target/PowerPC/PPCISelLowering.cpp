@@ -222,7 +222,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     // First set operation action for all vector types to expand. Then we
     // will selectively turn on ones that can be effectively codegen'd.
     for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
+         VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
       // add/sub are legal for all supported vector VT's.
       setOperationAction(ISD::ADD , (MVT::ValueType)VT, Legal);
       setOperationAction(ISD::SUB , (MVT::ValueType)VT, Legal);
