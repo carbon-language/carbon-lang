@@ -39,16 +39,20 @@ namespace {
     /// if-conversion feasibility analysis. This includes results from
     /// TargetInstrInfo::AnalyzeBranch() (i.e. TBB, FBB, and Cond), and its
     /// classification, and common tail block of its successors (if it's a
-    /// diamond shape).
+    /// diamond shape), its size, whether it's predicable, and whether any
+    /// instruction can clobber the 'would-be' predicate.
     struct BBInfo {
       BBICKind Kind;
+      unsigned Size;
+      bool isPredicable;
+      bool ClobbersPred;
       MachineBasicBlock *BB;
       MachineBasicBlock *TrueBB;
       MachineBasicBlock *FalseBB;
       MachineBasicBlock *TailBB;
       std::vector<MachineOperand> Cond;
-      unsigned Size;
-      BBInfo() : Kind(ICInvalid), BB(0), TrueBB(0), FalseBB(0), TailBB(0), Size(0) {}
+      BBInfo() : Kind(ICInvalid), Size(0), isPredicable(false),
+                 ClobbersPred(false), BB(0), TrueBB(0), FalseBB(0), TailBB(0) {}
     };
 
     /// BBAnalysis - Results of if-conversion feasibility analysis indexed by
@@ -66,12 +70,12 @@ namespace {
     virtual const char *getPassName() const { return "If converter"; }
 
   private:
-    void AnalyzeBlock(MachineBasicBlock *BB);
+    void StructuralAnalysis(MachineBasicBlock *BB);
+    void FeasibilityAnalysis(BBInfo &BBI);
     void InitialFunctionAnalysis(MachineFunction &MF,
                                  std::vector<int> &Candidates);
-    bool IfConvertDiamond(BBInfo &BBI);
     bool IfConvertTriangle(BBInfo &BBI);
-    bool isBlockPredicable(MachineBasicBlock *BB) const;
+    bool IfConvertDiamond(BBInfo &BBI);
     void PredicateBlock(MachineBasicBlock *BB,
                         std::vector<MachineOperand> &Cond,
                         bool IgnoreTerm = false);
@@ -127,7 +131,10 @@ static MachineBasicBlock *findFalseBlock(MachineBasicBlock *BB,
   return NULL;
 }
 
-void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
+/// StructuralAnalysis - Analyze the structure of the sub-CFG starting from
+/// the specified block. Record its successors and whether it looks like an
+/// if-conversion candidate.
+void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   BBInfo &BBI = BBAnalysis[BB->getNumber()];
 
   if (BBI.Kind != ICInvalid)
@@ -147,7 +154,7 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
     return;
 
   // Not a candidate if 'true' block is going to be if-converted.
-  AnalyzeBlock(BBI.TrueBB);
+  StructuralAnalysis(BBI.TrueBB);
   BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
   if (TrueBBI.Kind != ICNotClassfied)
     return;
@@ -168,7 +175,7 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
     return;
 
   // Not a candidate if 'false' block is going to be if-converted.
-  AnalyzeBlock(BBI.FalseBB);
+  StructuralAnalysis(BBI.FalseBB);
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   if (FalseBBI.Kind != ICNotClassfied)
     return;
@@ -203,13 +210,36 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
   return;
 }
 
+/// FeasibilityAnalysis - Determine if the block is predicable. In most
+/// cases, that means all the instructions in the block has M_PREDICABLE flag.
+/// Also checks if the block contains any instruction which can clobber a
+/// predicate (e.g. condition code register). If so, the block is not
+/// predicable unless it's the last instruction. Note, this function assumes
+/// all the terminator instructions can be converted or deleted so it ignore
+/// them.
+void IfConverter::FeasibilityAnalysis(BBInfo &BBI) {
+  if (BBI.Size == 0 || BBI.Size > TLI->getIfCvtBlockSizeLimit())
+    return;
+
+  for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
+       I != E; ++I) {
+    // TODO: check if instruction clobbers predicate.
+    if (TII->isTerminatorInstr(I->getOpcode()))
+      break;
+    if (!I->isPredicable())
+      return;
+  }
+
+  BBI.isPredicable = true;
+}
+
 /// InitialFunctionAnalysis - Analyze all blocks and find entries for all
 /// if-conversion candidates.
 void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
                                           std::vector<int> &Candidates) {
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *BB = I;
-    AnalyzeBlock(BB);
+    StructuralAnalysis(BB);
     BBInfo &BBI = BBAnalysis[BB->getNumber()];
     if (BBI.Kind == ICTriangleEntry || BBI.Kind == ICDiamondEntry)
       Candidates.push_back(BB->getNumber());
@@ -245,8 +275,10 @@ static void TransferSuccs(MachineBasicBlock *ToBB, MachineBasicBlock *FromBB) {
 /// IfConvertTriangle - If convert a triangle sub-CFG.
 ///
 bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
-  if (isBlockPredicable(BBI.TrueBB)) {
-    BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
+  BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
+  FeasibilityAnalysis(TrueBBI);
+
+  if (TrueBBI.isPredicable) {
     BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
 
     // Predicate the 'true' block after removing its branch.
@@ -276,7 +308,29 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
 /// IfConvertDiamond - If convert a diamond sub-CFG.
 ///
 bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
-  if (isBlockPredicable(BBI.TrueBB) && isBlockPredicable(BBI.FalseBB)) {
+  BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
+  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
+  FeasibilityAnalysis(TrueBBI);
+  FeasibilityAnalysis(FalseBBI);
+
+  if (TrueBBI.isPredicable && FalseBBI.isPredicable) {
+    // Check the 'true' and 'false' blocks if either isn't ended with a branch.
+    // Either the block fallthrough to another block or it ends with a
+    // return. If it's the former, add a conditional branch to its successor.
+    bool Proceed = true;
+    bool TrueNeedCBr  = !TrueBBI.TrueBB && BBI.TrueBB->succ_size();
+    bool FalseNeedCBr = !FalseBBI.TrueBB && BBI.FalseBB->succ_size();
+    if (TrueNeedCBr && TrueBBI.ClobbersPred) {
+      TrueBBI.isPredicable = false;
+      Proceed = false;
+    }
+    if (FalseNeedCBr && FalseBBI.ClobbersPred) {
+      FalseBBI.isPredicable = false;
+      Proceed = false;
+    }
+    if (!Proceed)
+      return false;
+
     std::vector<MachineInstr*> Dups;
     if (!BBI.TailBB) {
       // No common merge block. Check if the terminators (e.g. return) are
@@ -301,9 +355,6 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
           return false; // Can't if-convert. Abort!
     }
 
-    BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
-    BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-
     // Remove the duplicated instructions from the 'true' block.
     for (unsigned i = 0, e = Dups.size(); i != e; ++i) {
       Dups[i]->eraseFromParent();
@@ -314,9 +365,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     TrueBBI.Size -= TII->RemoveBranch(*BBI.TrueBB);
     PredicateBlock(BBI.TrueBB, BBI.Cond);
 
-    // Either the 'true' block fallthrough to another block or it ends with a
-    // return. If it's the former, add a conditional branch to its successor.
-    if (!TrueBBI.TrueBB && BBI.TrueBB->succ_size())
+    // Add a conditional branch to 'true' successor if needed.
+    if (TrueNeedCBr)
       TII->InsertBranch(*BBI.TrueBB, *BBI.TrueBB->succ_begin(), NULL, BBI.Cond);
 
     // Predicate the 'false' block.
@@ -324,9 +374,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     TII->ReverseBranchCondition(NewCond);
     PredicateBlock(BBI.FalseBB, NewCond, true);
 
-    // Either the 'false' block fallthrough to another block or it ends with a
-    // return. If it's the former, add a conditional branch to its successor.
-    if (!FalseBBI.TrueBB && BBI.FalseBB->succ_size())
+    // Add a conditional branch to 'false' successor if needed.
+    if (FalseNeedCBr)
       TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,NewCond);
 
     // Merge the 'true' and 'false' blocks by copying the instructions
@@ -368,24 +417,6 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     return true;
   }
   return false;
-}
-
-/// isBlockPredicable - Returns true if the block is predicable. In most
-/// cases, that means all the instructions in the block has M_PREDICABLE flag.
-/// It assume all the terminator instructions can be converted or deleted.
-bool IfConverter::isBlockPredicable(MachineBasicBlock *BB) const {
-  const BBInfo &BBI = BBAnalysis[BB->getNumber()];
-  if (BBI.Size == 0 || BBI.Size > TLI->getIfCvtBlockSizeLimit())
-    return false;
-
-  for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
-       I != E; ++I) {
-    if (TII->isTerminatorInstr(I->getOpcode()))
-      continue;
-    if (!I->isPredicable())
-      return false;
-  }
-  return true;
 }
 
 /// PredicateBlock - Predicate every instruction in the block with the specified
