@@ -1369,7 +1369,7 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   unsigned SrcOff = 0, DstOff = 0;
   MVT::ValueType VT = MVT::i32;
   unsigned VTSize = 4;
-  const int MAX_LOADS_IN_LDM = 6;
+  const unsigned MAX_LOADS_IN_LDM = 6;
   SDOperand LoadChains[MAX_LOADS_IN_LDM];
   SDOperand Loads[MAX_LOADS_IN_LDM];
 
@@ -1377,7 +1377,7 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   // number of stores.  The loads and stores will get combined into
   // ldm/stm later on.
   while(EmittedNumMemOps < NumMemOps) {
-    unsigned int i;
+    unsigned i;
     for (i=0; i<MAX_LOADS_IN_LDM && EmittedNumMemOps+i < NumMemOps; i++) {
       Loads[i] = DAG.getLoad(VT, Chain,
                              DAG.getNode(ISD::ADD, VT, Src, 
