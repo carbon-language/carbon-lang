@@ -757,8 +757,8 @@ protected:
     JumpBufAlignment = Align;
   }
 
-  /// setIfCvtBlockSizeLimit - Set the target's if-conversion block size limit;
-  /// default is 2.
+  /// setIfCvtBlockSizeLimit - Set the target's if-conversion block size
+  /// (in number of instructions); default is 2.
   void setIfCvtBlockSizeLimit(unsigned Limit) {
     IfCvtBlockSizeLimit = Limit;
   }
