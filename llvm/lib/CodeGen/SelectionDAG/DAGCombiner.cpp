@@ -2689,7 +2689,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
       TLI.isOperationLegal(ISD::LOAD, VT)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     unsigned Align = TLI.getTargetMachine().getTargetData()->
-      getABITypeAlignment(getTypeForValueType(VT));
+      getABITypeAlignment(MVT::getTypeForValueType(VT));
     unsigned OrigAlign = LN0->getAlignment();
     if (Align <= OrigAlign) {
       SDOperand Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
@@ -3569,7 +3569,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     unsigned Align = ST->getAlignment();
     MVT::ValueType SVT = Value.getOperand(0).getValueType();
     unsigned OrigAlign = TLI.getTargetMachine().getTargetData()->
-      getABITypeAlignment(getTypeForValueType(SVT));
+      getABITypeAlignment(MVT::getTypeForValueType(SVT));
     if (Align <= OrigAlign && TLI.isOperationLegal(ISD::STORE, SVT))
       return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
                           ST->getSrcValueOffset());
@@ -3765,7 +3765,7 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
     if (VecIn2.Val) {
       Ops[1] = VecIn2;
     } else {
-       // Use an undef vbuild_vector as input for the second operand.
+      // Use an undef vbuild_vector as input for the second operand.
       std::vector<SDOperand> UnOps(NumInScalars,
                                    DAG.getNode(ISD::UNDEF, 
                                            cast<VTSDNode>(EltType)->getVT()));
