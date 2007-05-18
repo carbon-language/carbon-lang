@@ -575,17 +575,17 @@ let isLoad = 1, isReturn = 1, isTerminator = 1 in
 let isCall = 1, noResults = 1, 
   Defs = [R0, R1, R2, R3, R12, LR,
           D0, D1, D2, D3, D4, D5, D6, D7] in {
-  def BL  : AXI<(ops i32imm:$func, pred:$p, variable_ops),
-                "bl$p ${func:call}",
+  def BL  : AXI<(ops i32imm:$func, variable_ops),
+                "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>;
   // ARMv5T and above
-  def BLX : AXI<(ops GPR:$dst, pred:$p, variable_ops),
-                "blx$p $dst",
+  def BLX : AXI<(ops GPR:$dst, variable_ops),
+                "blx $dst",
                 [(ARMcall GPR:$dst)]>, Requires<[IsARM, HasV5T]>;
   let Uses = [LR] in {
     // ARMv4T
-    def BX : AXIx2<(ops GPR:$dst, pred:$p, variable_ops),
-                  "mov$p lr, pc\n\tbx$p $dst",
+    def BX : AXIx2<(ops GPR:$dst, variable_ops),
+                  "mov lr, pc\n\tbx $dst",
                   [(ARMcall_nolink GPR:$dst)]>;
   }
 }
@@ -1110,8 +1110,8 @@ def LEApcrelJT : AXI1<(ops GPR:$dst, i32imm:$label, i32imm:$id, pred:$p),
 // __aeabi_read_tp preserves the registers r1-r3.
 let isCall = 1,
   Defs = [R0, R12, LR] in {
-  def TPsoft : AI<(ops),
-               "bl", " __aeabi_read_tp",
+  def TPsoft : AXI<(ops),
+               "bl __aeabi_read_tp",
                [(set R0, ARMthread_pointer)]>;
 }
 
