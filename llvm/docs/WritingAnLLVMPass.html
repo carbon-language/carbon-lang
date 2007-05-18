@@ -312,7 +312,7 @@ argument "<tt>hello</tt>", and a name "<tt>Hello World Pass</tt>".</p>
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
     
     static char ID;
-    Hello() : FunctionPass((intptr_t)&ID) {}
+    Hello() : FunctionPass((intptr_t)&amp;ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
