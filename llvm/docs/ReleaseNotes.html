@@ -157,6 +157,8 @@ series.</li>
     into MSIL (".net") bytecode.  This is still fairly early development 
     with a number of limitations.</li>
 
+<li>A new <a href="CommandGuide/html/llvm-upgrade.html">llvm-upgrade</a> tool 
+    exists to migrates LLVM 1.9 .ll files to LLVM 2.0 syntax.</li>
 </ul>
 
 </div>
@@ -378,15 +380,11 @@ Improvements</a></div>
 <div class="doc_subsubsection"><a name="other">Other Improvements</a></div>
 <div class="doc_text">
 
-<p>This release includes many other improvements, including
-performance work, specifically designed to tune datastructure
-usage. This makes several critical components faster.</p>
-
 <p>More specific changes include:</p>
 
 <ul>
 <li>LLVM no longer relies on static destructors to shut itself down.  Instead,
-    it lazily initializes itself and shuts down when llvm_shutdown() is 
+    it lazily initializes itself and shuts down when <tt>llvm_shutdown()</tt> is 
     explicitly called.</li>
 
 <li>LLVM now has significantly fewer static constructors, reducing startup time.
@@ -397,15 +395,10 @@ usage. This makes several critical components faster.</p>
 
 <li>Construction of intrinsic function declarations has been simplified.</li>
 
-<li>The llvm-upgrade tool now exists. This migrates LLVM 1.9 .ll files to 
-    LLVM 2.0 syntax.</li>
-
-<li>The gccas/gccld tools have been removed.</li>
+<li>The gccas/gccld tools have been replaced with small shell scripts.</li>
 
 <li>Support has been added to llvm-test for running on low-memory  
     or slow machines (make SMALL_PROBLEM_SIZE=1).</li>
-
-<li>llvm-test is now more portable and should build with MS Visual Studio.</li>
 
 </ul>
 </div>
