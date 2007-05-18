@@ -595,6 +595,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
     // Reinsert an unconditional branch if needed.
     // The 1 below can be either an original single predecessor, or a result
     // of removing blocks in TryMergeBlocks.
+    PredBB = prior(I);      // this may have been changed in TryMergeBlocks
     if (MergePotentials.size()==1 && 
         (MergePotentials.begin())->second != PredBB)
       FixTail((MergePotentials.begin())->second, I, TII);
