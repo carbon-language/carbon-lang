@@ -431,31 +431,33 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   return true;
 }
 
-void X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned X86InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 0;
   --I;
   if (I->getOpcode() != X86::JMP && 
       GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
-    return;
+    return 0;
   
   // Remove the branch.
   I->eraseFromParent();
   
   I = MBB.end();
   
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 1;
   --I;
   if (GetCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
-    return;
+    return 1;
   
   // Remove the branch.
   I->eraseFromParent();
+  return 2;
 }
 
-void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const std::vector<MachineOperand> &Cond) const {
+unsigned
+X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                           MachineBasicBlock *FBB,
+                           const std::vector<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&
@@ -470,13 +472,14 @@ void X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
       unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
       BuildMI(&MBB, get(Opc)).addMBB(TBB);
     }
-    return;
+    return 1;
   }
   
   // Two-way Conditional branch.
   unsigned Opc = GetCondBranchFromCond((X86::CondCode)Cond[0].getImm());
   BuildMI(&MBB, get(Opc)).addMBB(TBB);
   BuildMI(&MBB, get(X86::JMP)).addMBB(FBB);
+  return 2;
 }
 
 bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

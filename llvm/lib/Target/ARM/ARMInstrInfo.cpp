@@ -349,33 +349,34 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
 }
 
 
-void ARMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned ARMInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int BOpc   = AFI->isThumbFunction() ? ARM::tB : ARM::B;
   int BccOpc = AFI->isThumbFunction() ? ARM::tBcc : ARM::Bcc;
 
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 0;
   --I;
   if (I->getOpcode() != BOpc && I->getOpcode() != BccOpc)
-    return;
+    return 0;
   
   // Remove the branch.
   I->eraseFromParent();
   
   I = MBB.end();
   
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 1;
   --I;
   if (I->getOpcode() != BccOpc)
-    return;
+    return 1;
   
   // Remove the branch.
   I->eraseFromParent();
+  return 2;
 }
 
-void ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 const std::vector<MachineOperand> &Cond) const {
   MachineFunction &MF = *MBB.getParent();
@@ -393,12 +394,13 @@ void ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
       BuildMI(&MBB, get(BOpc)).addMBB(TBB);
     else
       BuildMI(&MBB, get(BccOpc)).addMBB(TBB).addImm(Cond[0].getImm());
-    return;
+    return 1;
   }
   
   // Two-way conditional branch.
   BuildMI(&MBB, get(BccOpc)).addMBB(TBB).addImm(Cond[0].getImm());
   BuildMI(&MBB, get(BOpc)).addMBB(FBB);
+  return 2;
 }
 
 bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

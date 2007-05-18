@@ -63,9 +63,9 @@ public:
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
   
   
-  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                            MachineBasicBlock *FBB,
-                            const std::vector<MachineOperand> &Cond) const;
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const std::vector<MachineOperand> &Cond) const;
 };
 
 }
