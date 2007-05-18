@@ -316,7 +316,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
 
     // Either the 'true' block fallthrough to another block or it ends with a
     // return. If it's the former, add a conditional branch to its successor.
-    if (!TrueBBI.TrueBB)
+    if (!TrueBBI.TrueBB && BBI.TrueBB->succ_size())
       TII->InsertBranch(*BBI.TrueBB, *BBI.TrueBB->succ_begin(), NULL, BBI.Cond);
 
     // Predicate the 'false' block.
@@ -326,7 +326,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
 
     // Either the 'false' block fallthrough to another block or it ends with a
     // return. If it's the former, add a conditional branch to its successor.
-    if (!FalseBBI.TrueBB)
+    if (!FalseBBI.TrueBB && BBI.FalseBB->succ_size())
       TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,NewCond);
 
     // Merge the 'true' and 'false' blocks by copying the instructions
