@@ -87,8 +87,6 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  MadeChange = false;
-
   MF.RenumberBlocks();
   unsigned NumBBs = MF.getNumBlockIDs();
   BBAnalysis.resize(NumBBs);
@@ -98,6 +96,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   // candidates to perform if-convesion.
   InitialFunctionAnalysis(MF, Candidates);
 
+  MadeChange = false;
   for (unsigned i = 0, e = Candidates.size(); i != e; ++i) {
     BBInfo &BBI = BBAnalysis[Candidates[i]];
     switch (BBI.Kind) {
@@ -111,6 +110,9 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       break;
     }
   }
+
+  BBAnalysis.clear();
+
   return MadeChange;
 }
 
@@ -150,6 +152,10 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
   if (TrueBBI.Kind != ICNotClassfied)
     return;
 
+  // TODO: Only handle very simple cases for now.
+  if (TrueBBI.FalseBB || TrueBBI.Cond.size())
+    return;
+
   // No false branch. This BB must end with a conditional branch and a
   // fallthrough.
   if (!BBI.FalseBB)
@@ -168,8 +174,7 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
     return;
 
   // TODO: Only handle very simple cases for now.
-  if (TrueBBI.FalseBB || FalseBBI.FalseBB ||
-      TrueBBI.Cond.size() || FalseBBI.Cond.size())
+  if (FalseBBI.FalseBB || FalseBBI.Cond.size())
     return;
 
   if (TrueBBI.TrueBB && TrueBBI.TrueBB == BBI.FalseBB) {
@@ -309,10 +314,20 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     TrueBBI.Size -= TII->RemoveBranch(*BBI.TrueBB);
     PredicateBlock(BBI.TrueBB, BBI.Cond);
 
+    // Either the 'true' block fallthrough to another block or it ends with a
+    // return. If it's the former, add a conditional branch to its successor.
+    if (!TrueBBI.TrueBB)
+      TII->InsertBranch(*BBI.TrueBB, *BBI.TrueBB->succ_begin(), NULL, BBI.Cond);
+
     // Predicate the 'false' block.
     std::vector<MachineOperand> NewCond(BBI.Cond);
     TII->ReverseBranchCondition(NewCond);
     PredicateBlock(BBI.FalseBB, NewCond, true);
+
+    // Either the 'false' block fallthrough to another block or it ends with a
+    // return. If it's the former, add a conditional branch to its successor.
+    if (!FalseBBI.TrueBB)
+      TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,NewCond);
 
     // Merge the 'true' and 'false' blocks by copying the instructions
     // from the 'false' block to the 'true' block.
