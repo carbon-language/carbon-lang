@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -237,8 +238,11 @@ void IfConverter::FeasibilityAnalysis(BBInfo &BBI) {
 /// if-conversion candidates.
 void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
                                           std::vector<int> &Candidates) {
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *BB = I;
+  std::set<MachineBasicBlock*> Visited;
+  MachineBasicBlock *Entry = MF.begin();
+  for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
+         E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
+    MachineBasicBlock *BB = *DFI;
     StructuralAnalysis(BB);
     BBInfo &BBI = BBAnalysis[BB->getNumber()];
     if (BBI.Kind == ICTriangleEntry || BBI.Kind == ICDiamondEntry)
@@ -379,23 +383,30 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
       TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,NewCond);
 
     // Merge the 'true' and 'false' blocks by copying the instructions
-    // from the 'false' block to the 'true' block.
-    MergeBlocks(TrueBBI, FalseBBI);
+    // from the 'false' block to the 'true' block. That is, unless the true
+    // block would clobber the predicate, in that case, do the opposite.
+    BBInfo *CvtBBI;
+    if (!TrueBBI.ClobbersPred) {
+      MergeBlocks(TrueBBI, FalseBBI);
+      CvtBBI = &TrueBBI;
+    } else {
+      MergeBlocks(FalseBBI, TrueBBI);
+      CvtBBI = &FalseBBI;
+    }
 
     // Remove the conditional branch from entry to the blocks.
     BBI.Size -= TII->RemoveBranch(*BBI.BB);
 
     // Merge the combined block into the entry of the diamond if the entry
-    // block is the only predecessor. Otherwise, insert an unconditional
-    // branch.
-    BBInfo *CvtBBI = &TrueBBI;
-    if (BBI.TrueBB->pred_size() == 1) {
-      BBI.BB->removeSuccessor(BBI.TrueBB);
-      MergeBlocks(BBI, TrueBBI);
+    // block is its only predecessor. Otherwise, insert an unconditional
+    // branch from entry to the if-converted block.
+    if (CvtBBI->BB->pred_size() == 1) {
+      BBI.BB->removeSuccessor(CvtBBI->BB);
+      MergeBlocks(BBI, *CvtBBI);
       CvtBBI = &BBI;
     } else {
       std::vector<MachineOperand> NoCond;
-      TII->InsertBranch(*BBI.BB, BBI.TrueBB, NULL, NoCond);
+      TII->InsertBranch(*BBI.BB, CvtBBI->BB, NULL, NoCond);
     }
 
     // If the if-converted block fallthrough into the tail block, then
