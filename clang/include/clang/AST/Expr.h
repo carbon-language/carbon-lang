@@ -63,8 +63,10 @@ public:
   
   bool isNullPointerConstant() const;
 
-  bool isConstantExpr() const { return isConstantExpr(false); }
-  bool isIntegerConstantExpr() const { return isConstantExpr(true); }
+  bool isConstantExpr(SourceLocation &loc) const 
+    { return isConstantExpr(false, loc); }
+  bool isIntegerConstantExpr(SourceLocation &loc) const 
+    { return isConstantExpr(true, loc); }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -73,7 +75,7 @@ public:
   }
   static bool classof(const Expr *) { return true; }
 private:
-  bool isConstantExpr(bool isIntegerConstant) const;
+  bool isConstantExpr(bool isIntegerConstant, SourceLocation &loc) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -232,9 +234,9 @@ public:
   Expr *getSubExpr() const { return Val; }
   virtual SourceRange getSourceRange() const {
     if (isPostfix())
-      return SourceRange(getSubExpr()->getLocStart(), Loc);
+      return SourceRange(Val->getLocStart(), Loc);
     else
-      return SourceRange(Loc, getSubExpr()->getLocEnd());
+      return SourceRange(Loc, Val->getLocEnd());
   }
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }

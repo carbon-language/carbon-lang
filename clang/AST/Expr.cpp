@@ -192,60 +192,76 @@ bool Expr::isModifiableLvalue() {
 /// violation. FIXME: This routine currently implements C90 semantics.
 /// To properly implement C99 semantics this routine will need to evaluate
 /// expressions involving operators previously mentioned.
-bool Expr::isConstantExpr(bool isIntConst) const {
+bool Expr::isConstantExpr(bool isIntConst, SourceLocation &loc) const {
   switch (getStmtClass()) {
   case IntegerLiteralClass:
   case CharacterLiteralClass:
     return true;
   case FloatingLiteralClass:
   case StringLiteralClass:
-    return isIntConst ? false : true;
+    if (!isIntConst)
+      return true;
+    loc = getLocStart();
+    return false;
   case DeclRefExprClass:
-    return isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl());
+    if (isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl()))
+      return true;
+    loc = getLocStart();
+    return false;
   case UnaryOperatorClass:
     const UnaryOperator *uop = cast<UnaryOperator>(this);
-    if (uop->isIncrementDecrementOp()) // C99 6.6p3
+    if (uop->isIncrementDecrementOp()) { // C99 6.6p3
+      loc = getLocStart();
       return false;
+    }
     // C99 6.5.3.4p2: otherwise, the operand is *not* evaluated and the result
     // is an integer constant. This effective ignores any subexpression that
     // isn't actually a constant expression (what an odd language:-)
     if (uop->isSizeOfAlignOfOp())
-      return uop->getSubExpr()->getType()->isConstantSizeType();
-    return uop->getSubExpr()->isConstantExpr(isIntConst);
+      return uop->getSubExpr()->getType()->isConstantSizeType(loc);
+    return uop->getSubExpr()->isConstantExpr(isIntConst, loc);
   case BinaryOperatorClass:
     const BinaryOperator *bop = cast<BinaryOperator>(this);
     // C99 6.6p3: shall not contain assignment, increment/decrement,
     // function call, or comma operators, *except* when they are contained
     // within a subexpression that is not evaluated. 
-    if (bop->isAssignmentOp() || bop->getOpcode() == BinaryOperator::Comma)
+    if (bop->isAssignmentOp() || bop->getOpcode() == BinaryOperator::Comma) {
+      loc = getLocStart();
       return false;
-    return bop->getLHS()->isConstantExpr(isIntConst) &&
-           bop->getRHS()->isConstantExpr(isIntConst);
+    }
+    return bop->getLHS()->isConstantExpr(isIntConst, loc) &&
+           bop->getRHS()->isConstantExpr(isIntConst, loc);
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr();
+    return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr(isIntConst, loc);
   case CastExprClass: 
     const CastExpr *castExpr = cast<CastExpr>(this);    
     // C99 6.6p6: shall only convert arithmetic types to integer types.
-    if (!castExpr->getSubExpr()->getType()->isArithmeticType())
+    if (!castExpr->getSubExpr()->getType()->isArithmeticType()) {
+      loc = castExpr->getSubExpr()->getLocStart();
       return false;
-    if (!castExpr->getDestType()->isIntegerType())
-      return false;      
+    }
+    if (!castExpr->getDestType()->isIntegerType()) {
+      loc = getLocStart();
+      return false;
+    }
     // allow floating constants that are the immediate operands of casts.
-    if (castExpr->getSubExpr()->isConstantExpr() ||
+    if (castExpr->getSubExpr()->isConstantExpr(isIntConst, loc) ||
         isa<FloatingLiteral>(castExpr->getSubExpr()))
       return true;
+    loc = getLocStart();
     return false;
   case SizeOfAlignOfTypeExprClass:
     const SizeOfAlignOfTypeExpr *sizeExpr = cast<SizeOfAlignOfTypeExpr>(this);
     if (sizeExpr->isSizeOf())
-      return sizeExpr->getArgumentType()->isConstantSizeType();
+      return sizeExpr->getArgumentType()->isConstantSizeType(loc);
     return true; // alignof will always evaluate to a constant
   case ConditionalOperatorClass:
     const ConditionalOperator *condExpr = cast<ConditionalOperator>(this);
-    return condExpr->getCond()->isConstantExpr(isIntConst) &&
-           condExpr->getLHS()->isConstantExpr(isIntConst) &&
-           condExpr->getRHS()->isConstantExpr(isIntConst);
-  default: 
+    return condExpr->getCond()->isConstantExpr(isIntConst, loc) &&
+           condExpr->getLHS()->isConstantExpr(isIntConst, loc) &&
+           condExpr->getRHS()->isConstantExpr(isIntConst, loc);
+  default:
+    loc = getLocStart();
     return false;
   }
 }

@@ -31,12 +31,14 @@ using namespace clang;
 // a constant expression of type int with a value greater than zero.
 bool Sema::isConstantArrayType(ArrayType *ary, SourceLocation loc) { 
   if (Expr *size = ary->getSize()) {
-    if (!size->isConstantExpr()) {
-      Diag(loc, diag::err_typecheck_illegal_vla);
+    SourceLocation expLoc;
+    if (!size->isConstantExpr(expLoc)) {
+      Diag(expLoc, diag::err_typecheck_illegal_vla);
       return false;
     }
     if (!size->getType()->isIntegerType()) {
-      Diag(loc, diag::err_array_size_non_int, size->getType().getAsString());
+      Diag(size->getLocStart(), diag::err_array_size_non_int, 
+           size->getType().getAsString());
       return false;
     }
     // We have a constant expression with an integer type, now make sure 
@@ -778,9 +780,10 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
       return 0;
     }
   }
+  SourceLocation expLoc;
   // C99 6.7.2.2p2: Make sure we have an integer constant expression.
-  if (Val && !((Expr *)Val)->isIntegerConstantExpr()) {
-    Diag(IdLoc, diag::err_enum_value_not_integer_constant_expr, Id->getName());
+  if (Val && !((Expr *)Val)->isIntegerConstantExpr(expLoc)) {
+    Diag(expLoc, diag::err_enum_value_not_integer_constant_expr, Id->getName());
     return 0;
   }
   QualType Ty = Context.getTagDeclType(TheEnumDecl);

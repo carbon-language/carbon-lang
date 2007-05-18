@@ -26,6 +26,7 @@ namespace clang {
   class RecordDecl;
   class EnumDecl;
   class Expr;
+  class SourceLocation;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -233,7 +234,7 @@ public:
   bool isSignedIntegerType() const;     // C99 6.2.5p4
   bool isUnsignedIntegerType() const;   // C99 6.2.5p6
   
-  bool isConstantSizeType() const; // C99 6.7.5p3: VLA if false
+  bool isConstantSizeType(SourceLocation &) const; // C99 6.7.5p3: VLA if false
 
   /// Compatibility predicates used to check assignment expressions.
   static bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
