@@ -220,7 +220,7 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
   case tok::plusplus:   Opc = UnaryOperator::PostInc; break;
   case tok::minusminus: Opc = UnaryOperator::PostDec; break;
   }
-  QualType result = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
+  QualType result = CheckIncrementDecrementOperand((Expr *)Input);
   if (result.isNull())
     return true;
   return new UnaryOperator((Expr *)Input, Opc, result, OpLoc);
@@ -641,7 +641,8 @@ inline QualType Sema::CheckMultiplyDivideOperands(
   
   if (resType->isArithmeticType())
     return resType;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lex->getType().getAsString(), rex->getType().getAsString());
   return QualType();
 }
 
@@ -652,7 +653,8 @@ inline QualType Sema::CheckRemainderOperands(
   
   if (resType->isIntegerType())
     return resType;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lex->getType().getAsString(), rex->getType().getAsString());
   return QualType();
 }
 
@@ -669,7 +671,8 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
   if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
       (lhsType->isIntegerType() && rhsType->isPointerType()))
     return resType;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lhsType.getAsString(), rhsType.getAsString());
   return QualType();
 }
 
@@ -685,7 +688,8 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
       (lhsType->isPointerType() && rhsType->isPointerType()))
     return resType;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lhsType.getAsString(), rhsType.getAsString());
   return QualType();
 }
 
@@ -696,7 +700,8 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   
   if (resType->isIntegerType())
     return resType;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lex->getType().getAsString(), rex->getType().getAsString());
   return QualType();
 }
 
@@ -715,7 +720,8 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
     Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
     return Context.IntTy;
   }
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lType.getAsString(), rType.getAsString());
   return QualType();
 }
 
@@ -733,7 +739,8 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
     Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
     return Context.IntTy;
   }
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lType.getAsString(), rType.getAsString());
   return QualType();
 }
 
@@ -744,7 +751,8 @@ inline QualType Sema::CheckBitwiseOperands(
   
   if (resType->isIntegerType())
     return resType;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lex->getType().getAsString(), rex->getType().getAsString());
   return QualType();
 }
 
@@ -756,7 +764,8 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   
   if (lhsType->isScalarType() || rhsType->isScalarType())
     return Context.IntTy;
-  Diag(loc, diag::err_typecheck_invalid_operands);
+  Diag(loc, diag::err_typecheck_invalid_operands, 
+            lex->getType().getAsString(), rex->getType().getAsString());
   return QualType();
 }
 
@@ -770,10 +779,10 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   // this check is done first to give a more precise diagnostic.
   // isModifiableLvalue() will also check for "const".
   if (lhsType.isConstQualified()) {
-    Diag(loc, diag::err_typecheck_assign_const);
+    Diag(lex->getLocStart(), diag::err_typecheck_assign_const);
     hadError = true;
   } else if (!lex->isModifiableLvalue()) { // C99 6.5.16p2
-    Diag(loc, diag::err_typecheck_assign_non_lvalue);
+    Diag(lex->getLocStart(), diag::err_typecheck_assign_non_lvalue);
     return QualType(); // no need to continue checking...
   }
   if (lhsType == rhsType) // common case, fast path...
@@ -787,7 +796,8 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   case Compatible:
     break;
   case Incompatible:
-    Diag(loc, diag::err_typecheck_assign_incompatible);
+    Diag(loc, diag::err_typecheck_assign_incompatible, 
+              lhsType.getAsString(), rhsType.getAsString());
     hadError = true;
     break;
   case PointerFromInt:
@@ -814,27 +824,27 @@ inline QualType Sema::CheckCommaOperands( // C99 6.5.17
   return UsualUnaryConversion(rex->getType());
 }
 
-QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
+QualType Sema::CheckIncrementDecrementOperand(Expr *op) {
   QualType resType = UsualArithmeticConversions(op->getType(), Context.IntTy);
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1
   if (const PointerType *pt = dyn_cast<PointerType>(resType)) {
     if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
-      Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
+      Diag(op->getLocStart(), diag::err_typecheck_arithmetic_incomplete_type,
            resType.getAsString());
       return QualType();
     }
   } else if (!resType->isRealType()) { 
     // FIXME: Allow Complex as a GCC extension.
-    Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
+    Diag(op->getLocStart(), diag::err_typecheck_illegal_increment_decrement,
          resType.getAsString());
     return QualType(); 
   }
   // At this point, we know we have a real or pointer type. Now make sure
   // the operand is a modifiable lvalue.
   if (!op->isModifiableLvalue()) {
-    Diag(OpLoc, diag::err_typecheck_invalid_lvalue_incr_decr);
+    Diag(op->getLocStart(), diag::err_typecheck_invalid_lvalue_incr_decr);
     return QualType();
   }
   return resType;
@@ -1080,7 +1090,7 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     assert(0 && "Unimplemented unary expr!");
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
-    resultType = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
+    resultType = CheckIncrementDecrementOperand((Expr *)Input);
     break;
   case UnaryOperator::AddrOf: 
     resultType = CheckAddressOfOperand((Expr *)Input, OpLoc);

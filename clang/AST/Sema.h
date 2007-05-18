@@ -279,8 +279,7 @@ private:
     Expr *cond, Expr *lhs, Expr *rhs, SourceLocation questionLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
-  QualType CheckIncrementDecrementOperand( // C99 6.5.3.1 
-    Expr *op, SourceLocation loc);
+  QualType CheckIncrementDecrementOperand(Expr *op);  // C99 6.5.3.1 
   QualType CheckAddressOfOperand( // C99 6.5.3.2
     Expr *op, SourceLocation loc);
   QualType CheckIndirectionOperand( // C99 6.5.3.2

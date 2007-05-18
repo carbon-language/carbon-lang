@@ -546,13 +546,13 @@ DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%0'")
 DIAG(err_typecheck_invalid_operands, ERROR,
-     "invalid operands to binary expression")
+     "invalid operands to binary expression ('%0' and '%1')")
 DIAG(ext_typecheck_comparison_of_pointer_integer, EXTENSION,
      "comparison between pointer and integer")
 DIAG(err_typecheck_assign_const, ERROR,
      "assignment of read-only variable")
 DIAG(err_typecheck_assign_incompatible, ERROR,
-     "incompatible types in assignment")
+     "incompatible types in assignment ('%0' and '%1')")
 DIAG(ext_typecheck_assign_int_from_pointer, EXTENSION,
      "assignment makes integer from pointer without a cast")
 DIAG(ext_typecheck_assign_pointer_from_int, EXTENSION,
