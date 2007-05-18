@@ -124,6 +124,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
     addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
   }
+  computeRegisterProperties();
 
   // ARM does not have f32 extending load.
   setLoadXAction(ISD::EXTLOAD, MVT::f32, Expand);
@@ -252,9 +253,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
-
   setSchedulingPreference(SchedulingForRegPressure);
-  computeRegisterProperties();
+  setIfCvtBlockSizeLimit(Subtarget->isThumb() ? 0 : 10);
 
   maxStoresPerMemcpy = 1;   //// temporary - rewrite interface to use type
 }
