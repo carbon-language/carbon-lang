@@ -99,7 +99,7 @@ static bool isAlphaIntCondCode(unsigned Opcode) {
   }
 }
 
-void AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
+unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                                   MachineBasicBlock *FBB,
                                   const std::vector<MachineOperand> &Cond)const{
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
@@ -117,7 +117,7 @@ void AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
       else
         BuildMI(&MBB, get(Alpha::COND_BRANCH_F))
           .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-    return;
+    return 1;
   }
   
   // Two-way Conditional Branch.
@@ -128,6 +128,7 @@ void AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
     BuildMI(&MBB, get(Alpha::COND_BRANCH_F))
       .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
   BuildMI(&MBB, get(Alpha::BR)).addMBB(FBB);
+  return 2;
 }
 
 static unsigned AlphaRevCondCode(unsigned Opcode) {
@@ -203,28 +204,29 @@ bool AlphaInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TB
   return true;
 }
 
-void AlphaInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned AlphaInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 0;
   --I;
   if (I->getOpcode() != Alpha::BR && 
       I->getOpcode() != Alpha::COND_BRANCH_I &&
       I->getOpcode() != Alpha::COND_BRANCH_F)
-    return;
+    return 0;
   
   // Remove the branch.
   I->eraseFromParent();
   
   I = MBB.end();
 
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 1;
   --I;
   if (I->getOpcode() != Alpha::COND_BRANCH_I && 
       I->getOpcode() != Alpha::COND_BRANCH_F)
-    return;
+    return 1;
   
   // Remove the branch.
   I->eraseFromParent();
+  return 2;
 }
 
 void AlphaInstrInfo::insertNoop(MachineBasicBlock &MBB, 

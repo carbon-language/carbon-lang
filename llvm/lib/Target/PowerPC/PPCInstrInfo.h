@@ -99,10 +99,10 @@ public:
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
                              std::vector<MachineOperand> &Cond) const;
-  virtual void RemoveBranch(MachineBasicBlock &MBB) const;
-  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                            MachineBasicBlock *FBB,
-                            const std::vector<MachineOperand> &Cond) const;
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const std::vector<MachineOperand> &Cond) const;
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 };

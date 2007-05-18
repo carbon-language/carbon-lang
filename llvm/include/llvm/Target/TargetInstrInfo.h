@@ -350,20 +350,24 @@ public:
   }
   
   /// RemoveBranch - Remove the branching code at the end of the specific MBB.
-  /// this is only invoked in cases where AnalyzeBranch returns success.
-  virtual void RemoveBranch(MachineBasicBlock &MBB) const {
+  /// this is only invoked in cases where AnalyzeBranch returns success. It
+  /// returns the number of instructions that were removed.
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const {
     assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!"); 
+    return 0;
   }
   
   /// InsertBranch - Insert a branch into the end of the specified
   /// MachineBasicBlock.  This operands to this method are the same as those
   /// returned by AnalyzeBranch.  This is invoked in cases where AnalyzeBranch
   /// returns success and when an unconditional branch (TBB is non-null, FBB is
-  /// null, Cond is empty) needs to be inserted.
-  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+  /// null, Cond is empty) needs to be inserted. It returns the number of
+  /// instructions inserted.
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const {
     assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!"); 
+    return 0;
   }
   
   /// BlockHasNoFallThrough - Return true if the specified block does not

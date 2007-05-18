@@ -37,9 +37,9 @@ public:
   virtual bool isMoveInstr(const MachineInstr& MI,
                            unsigned& sourceReg,
                            unsigned& destReg) const;
-  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                            MachineBasicBlock *FBB,
-                            const std::vector<MachineOperand> &Cond) const;
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                MachineBasicBlock *FBB,
+                                const std::vector<MachineOperand> &Cond) const;
 
 };
 

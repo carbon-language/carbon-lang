@@ -39,13 +39,13 @@ public:
   virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
   
-  virtual void InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const;
   bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
                      std::vector<MachineOperand> &Cond) const;
-  void RemoveBranch(MachineBasicBlock &MBB) const;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const;
   void insertNoop(MachineBasicBlock &MBB, 
                   MachineBasicBlock::iterator MI) const;
   bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;

@@ -224,30 +224,32 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   return true;
 }
 
-void PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+unsigned PPCInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 0;
   --I;
   if (I->getOpcode() != PPC::B && I->getOpcode() != PPC::BCC)
-    return;
+    return 0;
   
   // Remove the branch.
   I->eraseFromParent();
   
   I = MBB.end();
 
-  if (I == MBB.begin()) return;
+  if (I == MBB.begin()) return 1;
   --I;
   if (I->getOpcode() != PPC::BCC)
-    return;
+    return 1;
   
   // Remove the branch.
   I->eraseFromParent();
+  return 2;
 }
 
-void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const std::vector<MachineOperand> &Cond) const {
+unsigned
+PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                           MachineBasicBlock *FBB,
+                           const std::vector<MachineOperand> &Cond) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 2 || Cond.size() == 0) && 
@@ -260,13 +262,14 @@ void PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     else                // Conditional branch
       BuildMI(&MBB, get(PPC::BCC))
         .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
-    return;
+    return 1;
   }
   
   // Two-way Conditional Branch.
   BuildMI(&MBB, get(PPC::BCC))
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg()).addMBB(TBB);
   BuildMI(&MBB, get(PPC::B)).addMBB(FBB);
+  return 2;
 }
 
 bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
