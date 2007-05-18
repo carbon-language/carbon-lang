@@ -13,11 +13,13 @@
 #
 TESTPATH=`pwd`
 SUBDIR=""
-while test `basename $TESTPATH` != "test" -a ! -z "$TESTPATH" ; do
-  tmp=`basename $TESTPATH`
-  SUBDIR="$tmp/$SUBDIR"
-  TESTPATH=`dirname $TESTPATH`
-done
+if test `dirname $1` == "." ; then
+  while test `basename $TESTPATH` != "test" -a ! -z "$TESTPATH" ; do
+    tmp=`basename $TESTPATH`
+    SUBDIR="$tmp/$SUBDIR"
+    TESTPATH=`dirname $TESTPATH`
+  done
+fi
 
 for TESTFILE in "$@" ; do 
   if test `dirname $TESTFILE` == . ; then
