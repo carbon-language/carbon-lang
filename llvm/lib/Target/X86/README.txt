@@ -26,6 +26,15 @@ long long test(int X, int Y) { return (long long)X*Y; }
 
 ... which should only be one imul instruction.
 
+or:
+
+unsigned long long int t2(unsigned int a, unsigned int b) {
+       return (unsigned long long)a * b;
+}
+
+... which should be one mul instruction.
+
+
 This can be done with a custom expander, but it would be nice to move this to
 generic code.
 
