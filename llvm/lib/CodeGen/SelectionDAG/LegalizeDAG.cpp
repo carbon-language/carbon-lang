@@ -2722,7 +2722,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote: {
       MVT::ValueType OVT = Tmp1.getValueType();
       MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
-      unsigned DiffBits = getSizeInBits(NVT) - getSizeInBits(OVT);
+      unsigned DiffBits = MVT::getSizeInBits(NVT) - MVT::getSizeInBits(OVT);
 
       Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
       Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
@@ -2760,16 +2760,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case ISD::CTTZ:
         //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
         Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
-                            DAG.getConstant(getSizeInBits(NVT), NVT),
+                            DAG.getConstant(MVT::getSizeInBits(NVT), NVT),
                             ISD::SETEQ);
         Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
-                           DAG.getConstant(getSizeInBits(OVT),NVT), Tmp1);
+                           DAG.getConstant(MVT::getSizeInBits(OVT),NVT), Tmp1);
         break;
       case ISD::CTLZ:
         // Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
         Result = DAG.getNode(ISD::SUB, NVT, Tmp1,
-                             DAG.getConstant(getSizeInBits(NVT) -
-                                             getSizeInBits(OVT), NVT));
+                             DAG.getConstant(MVT::getSizeInBits(NVT) -
+                                             MVT::getSizeInBits(OVT), NVT));
         break;
       }
       break;
@@ -3527,7 +3527,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
     Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
     Result = DAG.getNode(ISD::SRL, NVT, Tmp1,
-                         DAG.getConstant(getSizeInBits(NVT) - getSizeInBits(VT),
+                         DAG.getConstant(MVT::getSizeInBits(NVT) -
+                                         MVT::getSizeInBits(VT),
                                          TLI.getShiftAmountTy()));
     break;
   case ISD::CTPOP:
@@ -3544,15 +3545,16 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case ISD::CTTZ:
       // if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
       Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
-                          DAG.getConstant(getSizeInBits(NVT), NVT), ISD::SETEQ);
+                          DAG.getConstant(MVT::getSizeInBits(NVT), NVT),
+                          ISD::SETEQ);
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
-                           DAG.getConstant(getSizeInBits(VT), NVT), Tmp1);
+                           DAG.getConstant(MVT::getSizeInBits(VT), NVT), Tmp1);
       break;
     case ISD::CTLZ:
       //Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
       Result = DAG.getNode(ISD::SUB, NVT, Tmp1,
-                           DAG.getConstant(getSizeInBits(NVT) -
-                                           getSizeInBits(VT), NVT));
+                           DAG.getConstant(MVT::getSizeInBits(NVT) -
+                                           MVT::getSizeInBits(VT), NVT));
       break;
     }
     break;
@@ -4639,7 +4641,7 @@ SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
     };
     MVT::ValueType VT = Op.getValueType();
     MVT::ValueType ShVT = TLI.getShiftAmountTy();
-    unsigned len = getSizeInBits(VT);
+    unsigned len = MVT::getSizeInBits(VT);
     for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
       //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
       SDOperand Tmp2 = DAG.getConstant(mask[i], VT);
@@ -4662,7 +4664,7 @@ SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
     // but see also: http://www.hackersdelight.org/HDcode/nlz.cc
     MVT::ValueType VT = Op.getValueType();
     MVT::ValueType ShVT = TLI.getShiftAmountTy();
-    unsigned len = getSizeInBits(VT);
+    unsigned len = MVT::getSizeInBits(VT);
     for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
       SDOperand Tmp3 = DAG.getConstant(1ULL << i, ShVT);
       Op = DAG.getNode(ISD::OR, VT, Op, DAG.getNode(ISD::SRL, VT, Op, Tmp3));
@@ -4684,7 +4686,7 @@ SDOperand SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDOperand Op) {
     if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
         TLI.isOperationLegal(ISD::CTLZ, VT))
       return DAG.getNode(ISD::SUB, VT,
-                         DAG.getConstant(getSizeInBits(VT), VT),
+                         DAG.getConstant(MVT::getSizeInBits(VT), VT),
                          DAG.getNode(ISD::CTLZ, VT, Tmp3));
     return DAG.getNode(ISD::CTPOP, VT, Tmp3);
   }

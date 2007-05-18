@@ -145,7 +145,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     else
       Op += "<null:" + itostr(M->getOffset()) + ">";
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(Node)) {
-    Op = Op + " VT=" + getValueTypeString(N->getVT());
+    Op = Op + " VT=" + MVT::getValueTypeString(N->getVT());
   } else if (const StringSDNode *N = dyn_cast<StringSDNode>(Node)) {
     Op = Op + "\"" + N->getValue() + "\"";
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(Node)) {

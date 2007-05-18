@@ -310,14 +310,14 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
     const VectorType *PTy = cast<VectorType>(V->getType());
     unsigned NumElts = PTy->getNumElements();
     MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
-    MVT::ValueType VecTy = getVectorType(EltTy, NumElts);
+    MVT::ValueType VecTy = MVT::getVectorType(EltTy, NumElts);
     
     // Divide the input until we get to a supported size.  This will always
     // end with a scalar if the target doesn't support vectors.
     while (NumElts > 1 && !TLI.isTypeLegal(VecTy)) {
       NumElts >>= 1;
       NumVectorRegs <<= 1;
-      VecTy = getVectorType(EltTy, NumElts);
+      VecTy = MVT::getVectorType(EltTy, NumElts);
     }
 
     // Check that VecTy isn't a 1-element vector.
@@ -1689,7 +1689,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                                                     CaseRecVector& WorkList,
                                                     Value* SV,
                                                     MachineBasicBlock* Default){
-  unsigned IntPtrBits = getSizeInBits(TLI.getPointerTy());
+  unsigned IntPtrBits = MVT::getSizeInBits(TLI.getPointerTy());
 
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
@@ -4187,7 +4187,7 @@ static SDOperand getMemsetStringVal(MVT::ValueType VT,
                                     SelectionDAG &DAG, TargetLowering &TLI,
                                     std::string &Str, unsigned Offset) {
   uint64_t Val = 0;
-  unsigned MSB = getSizeInBits(VT) / 8;
+  unsigned MSB = MVT::getSizeInBits(VT) / 8;
   if (TLI.isLittleEndian())
     Offset = Offset + MSB - 1;
   for (unsigned i = 0; i != MSB; ++i) {
@@ -4241,7 +4241,7 @@ static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
 
   unsigned NumMemOps = 0;
   while (Size != 0) {
-    unsigned VTSize = getSizeInBits(VT) / 8;
+    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
     while (VTSize > Size) {
       VT = (MVT::ValueType)((unsigned)VT - 1);
       VTSize >>= 1;
@@ -4280,7 +4280,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
         unsigned Offset = 0;
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
-          unsigned VTSize = getSizeInBits(VT) / 8;
+          unsigned VTSize = MVT::getSizeInBits(VT) / 8;
           SDOperand Value = getMemsetValue(Op2, VT, DAG);
           SDOperand Store = DAG.getStore(getRoot(), Value,
                                     getMemBasePlusOffset(Op1, Offset, DAG, TLI),
@@ -4321,7 +4321,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
 
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
-          unsigned VTSize = getSizeInBits(VT) / 8;
+          unsigned VTSize = MVT::getSizeInBits(VT) / 8;
           SDOperand Value, Chain, Store;
 
           if (CopyFromStr) {

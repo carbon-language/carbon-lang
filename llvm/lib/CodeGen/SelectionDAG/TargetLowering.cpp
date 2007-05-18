@@ -299,12 +299,12 @@ unsigned TargetLowering::getVectorTypeBreakdown(const VectorType *PTy,
   
   // Divide the input until we get to a supported size.  This will always
   // end with a scalar if the target doesn't support vectors.
-  while (NumElts > 1 && !isTypeLegal(getVectorType(EltTy, NumElts))) {
+  while (NumElts > 1 && !isTypeLegal(MVT::getVectorType(EltTy, NumElts))) {
     NumElts >>= 1;
     NumVectorRegs <<= 1;
   }
   
-  MVT::ValueType VT = getVectorType(EltTy, NumElts);
+  MVT::ValueType VT = MVT::getVectorType(EltTy, NumElts);
   if (!isTypeLegal(VT))
     VT = EltTy;
   PTyElementVT = VT;
