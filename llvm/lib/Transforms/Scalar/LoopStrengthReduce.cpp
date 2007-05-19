@@ -987,6 +987,20 @@ static bool PartitionByIsUseOfPostIncrementedValue(const BasedUser &Val) {
   return Val.isUseOfPostIncrementedValue;
 }
 
+/// isNonConstantNegative - REturn true if the specified scev is negated, but
+/// not a constant.
+static bool isNonConstantNegative(const SCEVHandle &Expr) {
+  SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Expr);
+  if (!Mul) return false;
+  
+  // If there is a constant factor, it will be first.
+  SCEVConstant *SC = dyn_cast<SCEVConstant>(Mul->getOperand(0));
+  if (!SC) return false;
+  
+  // Return true if the value is negative, this matches things like (-42 * V).
+  return SC->getValue()->getValue().isNegative();
+}
+
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride (we know it is if isOnlyStride is true).
@@ -1104,15 +1118,24 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // Add common base to the new Phi node.
     NewPHI->addIncoming(CommonBaseV, Preheader);
 
+    // If the stride is negative, insert a sub instead of an add for the
+    // increment.
+    bool isNegative = isNonConstantNegative(Stride);
+    SCEVHandle IncAmount = Stride;
+    if (isNegative)
+      IncAmount = SCEV::getNegativeSCEV(Stride);
+    
     // Insert the stride into the preheader.
-    Value *StrideV = PreheaderRewriter.expandCodeFor(Stride, PreInsertPt,
+    Value *StrideV = PreheaderRewriter.expandCodeFor(IncAmount, PreInsertPt,
                                                      ReplacedTy);
     if (!isa<ConstantInt>(StrideV)) ++NumVariable;
 
     // Emit the increment of the base value before the terminator of the loop
     // latch block, and add it to the Phi node.
-    SCEVHandle IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
-                                         SCEVUnknown::get(StrideV));
+    SCEVHandle IncExp = SCEVUnknown::get(StrideV);
+    if (isNegative)
+      IncExp = SCEV::getNegativeSCEV(IncExp);
+    IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI), IncExp);
   
     IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator(),
                                   ReplacedTy);
