@@ -1785,7 +1785,7 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
         if (DAG.isCommutativeBinOp(N0.getOpcode()))
           return DAG.getSetCC(VT, N0.getOperand(0),
                           DAG.getConstant(0, N0.getValueType()), Cond);
-        else {
+        else if (N0.Val->hasOneUse()) {
           assert(N0.getOpcode() == ISD::SUB && "Unexpected operation!");
           // (Z-X) == X  --> Z == X<<1
           SDOperand SH = DAG.getNode(ISD::SHL, N1.getValueType(),
