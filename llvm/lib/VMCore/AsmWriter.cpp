@@ -33,6 +33,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <cctype>
 using namespace llvm;
 
 namespace llvm {
@@ -178,17 +179,39 @@ static SlotMachine *createSlotMachine(const Value *V) {
 
 /// NameNeedsQuotes - Return true if the specified llvm name should be wrapped
 /// with ""'s.
-static bool NameNeedsQuotes(const std::string &Name) {
-  if (Name[0] >= '0' && Name[0] <= '9') return true;
-  // Scan to see if we have any characters that are not on the "white list"
+static std::string QuoteNameIfNeeded(const std::string &Name) {
+  std::string result;
+  bool needsQuotes = Name[0] >= '0' && Name[0] <= '9';
+  // Scan the name to see if it needs quotes and to replace funky chars with
+  // their octal equivalent.
   for (unsigned i = 0, e = Name.size(); i != e; ++i) {
     char C = Name[i];
     assert(C != '"' && "Illegal character in LLVM value name!");
-    if ((C < 'a' || C > 'z') && (C < 'A' || C > 'Z') && (C < '0' || C > '9') &&
-        C != '-' && C != '.' && C != '_')
-      return true;
+    if (isalnum(C) || C == '-' || C == '.' || C == '_')
+      result += C;
+    else if (isprint(C)) {
+      needsQuotes = true;
+      result += C;
+    } else {
+      needsQuotes = true;
+      result += "\\";
+      char hex1 = C & 0x0F;
+      if (hex1 < 10)
+        result += hex1 + '0';
+      else 
+        result += hex1 - 10 + 'A';
+      char hex2 = (C >> 4) & 0x0F;
+      if (hex2 < 10)
+        result += hex2 + '0';
+      else 
+        result += hex2 - 10 + 'A';
+    }
   }
-  return false;
+  if (needsQuotes) {
+    result.insert(0,"\"");
+    result += '"';
+  }
+  return result;
 }
 
 enum PrefixType {
@@ -202,20 +225,11 @@ enum PrefixType {
 /// surrounded with ""'s (if it has special chars in it).
 static std::string getLLVMName(const std::string &Name, PrefixType Prefix) {
   assert(!Name.empty() && "Cannot get empty name!");
-
-  // First character cannot start with a number...
-  if (NameNeedsQuotes(Name)) {
-    if (Prefix == GlobalPrefix)
-      return "@\"" + Name + "\"";
-    return "\"" + Name + "\"";
-  }
-
-  // If we get here, then the identifier is legal to use as a "VarID".
   switch (Prefix) {
   default: assert(0 && "Bad prefix!");
-  case GlobalPrefix: return '@' + Name;
-  case LabelPrefix:  return Name;
-  case LocalPrefix:  return '%' + Name;
+  case GlobalPrefix: return '@' + QuoteNameIfNeeded(Name);
+  case LabelPrefix:  return QuoteNameIfNeeded(Name);
+  case LocalPrefix:  return '%' + QuoteNameIfNeeded(Name);
   }      
 }
 
