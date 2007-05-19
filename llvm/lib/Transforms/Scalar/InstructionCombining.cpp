@@ -7773,6 +7773,14 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   const FunctionType *FT = Callee->getFunctionType();
   const Type *OldRetTy = Caller->getType();
 
+  const FunctionType *ActualFT =
+    cast<FunctionType>(cast<PointerType>(CE->getType())->getElementType());
+  
+  // If the parameter attributes don't match up, don't do the xform.  We don't
+  // want to lose an sret attribute or something.
+  if (FT->getParamAttrs() != ActualFT->getParamAttrs())
+    return false;
+  
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
     if (Callee->isDeclaration() && !Caller->use_empty() && 
