@@ -72,13 +72,13 @@ static ExFunc lookupFunction(const Function *F) {
 
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
-    FnPtr = 
-      (ExFunc)(intptr_t)sys::DynamicLibrary::SearchForAddressOfSymbol(ExtName);
-  if (FnPtr == 0)
     FnPtr = FuncNames["lle_X_"+F->getName()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
     FnPtr = (ExFunc)(intptr_t)sys::DynamicLibrary::SearchForAddressOfSymbol(
             ("lle_X_"+F->getName()).c_str());
+  if (FnPtr == 0)
+    FnPtr = (ExFunc)(intptr_t)
+      sys::DynamicLibrary::SearchForAddressOfSymbol(F->getName());
   if (FnPtr != 0)
     Functions.insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;
@@ -115,6 +115,16 @@ extern "C" {  // Don't add C++ manglings to llvm mangling :)
 // void putchar(ubyte)
 GenericValue lle_X_putchar(FunctionType *FT, const vector<GenericValue> &Args){
   cout << ((char)Args[0].IntVal.getZExtValue()) << std::flush;
+  return Args[0];
+}
+
+// void _IO_putc(int c, FILE* fp)
+GenericValue lle_X__IO_putc(FunctionType *FT, const vector<GenericValue> &Args){
+#ifdef __linux__
+  _IO_putc((char)Args[0].IntVal.getZExtValue(), (FILE*) Args[1].PointerVal);
+#else
+  assert(0 && "Can't call _IO_putc on this platform");
+#endif
   return Args[0];
 }
 
@@ -694,6 +704,7 @@ GenericValue lle_X_fprintf(FunctionType *FT, const vector<GenericValue> &Args) {
 
 void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_putchar"]      = lle_X_putchar;
+  FuncNames["lle_X__IO_putc"]     = lle_X__IO_putc;
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_abort"]        = lle_X_abort;
   FuncNames["lle_X_malloc"]       = lle_X_malloc;
