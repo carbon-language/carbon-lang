@@ -195,12 +195,12 @@ static std::string QuoteNameIfNeeded(const std::string &Name) {
     } else {
       needsQuotes = true;
       result += "\\";
-      char hex1 = C & 0x0F;
+      char hex1 = (C >> 4) & 0x0F;
       if (hex1 < 10)
         result += hex1 + '0';
       else 
         result += hex1 - 10 + 'A';
-      char hex2 = (C >> 4) & 0x0F;
+      char hex2 = C & 0x0F;
       if (hex2 < 10)
         result += hex2 + '0';
       else 
