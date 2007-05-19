@@ -337,14 +337,19 @@ class DiagnosticPrinterSTDERR : public DiagnosticClient {
   SourceManager &SourceMgr;
   SourceLocation LastWarningLoc;
   HeaderSearch *TheHeaderSearch;
+  Preprocessor *ThePreprocessor;
 public:
   DiagnosticPrinterSTDERR(SourceManager &sourceMgr)
     : SourceMgr(sourceMgr) {}
   
   void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
+  void setPreprocessor(Preprocessor &P) { ThePreprocessor = &P; }
   
   void PrintIncludeStack(SourceLocation Pos);
-
+  void HighlightRange(const SourceRange &R, unsigned LineNo,
+                      std::string &CaratLine, const std::string &SourceLine);
+  unsigned GetTokenLength(SourceLocation Loc);
+    
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
                                 unsigned NumStrs, SourceRange *Ranges, 
@@ -364,6 +369,81 @@ PrintIncludeStack(SourceLocation Pos) {
   const MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
   std::cerr << "In file included from " << Buffer->getBufferIdentifier()
             << ":" << LineNo << ":\n";
+}
+
+
+/// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
+/// any characters in LineNo that intersect the SourceRange.
+void DiagnosticPrinterSTDERR::HighlightRange(const SourceRange &R, 
+                                             unsigned LineNo,
+                                             std::string &CaratLine,
+                                             const std::string &SourceLine) {
+  assert(CaratLine.size() == SourceLine.size() &&
+         "Expect a correspondence between source and carat line!");
+  if (!R.isValid()) return;
+
+  unsigned StartLineNo = SourceMgr.getLineNumber(R.Begin());
+  if (StartLineNo > LineNo) return;  // No intersection.
+  
+  unsigned EndLineNo = SourceMgr.getLineNumber(R.End());
+  if (EndLineNo < LineNo) return;  // No intersection.
+  
+  // Compute the column number of the start.
+  unsigned StartColNo = 0;
+  if (StartLineNo == LineNo) {
+    StartColNo = SourceMgr.getColumnNumber(R.Begin());
+    if (StartColNo) --StartColNo;  // Zero base the col #.
+  }
+
+  // Pick the first non-whitespace column.
+  while (StartColNo < SourceLine.size() &&
+         (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
+    ++StartColNo;
+  
+  // Compute the column number of the end.
+  unsigned EndColNo = CaratLine.size();
+  if (EndLineNo == LineNo) {
+    EndColNo = SourceMgr.getColumnNumber(R.End());
+    if (EndColNo) {
+      --EndColNo;  // Zero base the col #.
+      
+      // Add in the length of the token, so that we cover multi-char tokens.
+      EndColNo += GetTokenLength(R.End());
+    } else {
+      EndColNo = CaratLine.size();
+    }
+  }
+  
+  // Pick the last non-whitespace column.
+  while (EndColNo-1 &&
+         (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
+    --EndColNo;
+  
+  // Fill the range with ~'s.
+  assert(StartColNo <= EndColNo && "Invalid range!");
+  for (unsigned i = StartColNo; i != EndColNo; ++i)
+    CaratLine[i] = '~';
+}
+
+
+/// GetTokenLength - Given the source location of a token, determine its length.
+/// This is a fully general function that uses a lexer to relex the token.
+unsigned DiagnosticPrinterSTDERR::GetTokenLength(SourceLocation Loc) {
+  const char *StrData = SourceMgr.getCharacterData(Loc);
+  
+  // Note, this could be special cased for common tokens like identifiers, ')',
+  // etc to make this faster, if it mattered.
+
+  unsigned FileID = Loc.getFileID();
+  
+  // Create a lexer starting at the beginning of this token.
+  Lexer TheLexer(SourceMgr.getBuffer(FileID), FileID,
+                 *ThePreprocessor,  StrData);
+  
+  LexerToken TheTok;
+  TheLexer.LexRawToken(TheTok);
+
+  return TheTok.getLength();
 }
 
 
@@ -456,8 +536,9 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
     // length as the line of source code.
     std::string CaratLine(LineEnd-LineStart, ' ');
     
-    // FIXME: if (NumRanges) use Ranges to output fancy highlighting
-    // Print out the caret itself.
+    // Highlight all of the characters covered by Ranges with ~ characters.
+    for (unsigned i = 0; i != NumRanges; ++i)
+      HighlightRange(Ranges[i], LineNo, CaratLine, SourceLine);
     
     // Next, insert the carat itself.
     if (ColNo < CaratLine.size())
@@ -481,7 +562,7 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
       SourceLine.insert(i+1, NumSpaces, ' ');
       
       // Insert spaces or ~'s into CaratLine.
-      CaratLine.insert(i+1, NumSpaces, CaratLine[0] == '~' ? '~' : ' ');
+      CaratLine.insert(i+1, NumSpaces, CaratLine[i] == '~' ? '~' : ' ');
     }
     
     // Finally, remove any blank spaces from the end of CaratLine.
@@ -950,12 +1031,15 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
 ///
 static void ProcessInputFile(const std::string &InFile, 
                              SourceManager &SourceMgr, Diagnostic &Diags,
+                             DiagnosticPrinterSTDERR &OurDiagnosticClient,
                              HeaderSearch &HeaderInfo, TargetInfo &Target,
                              const LangOptions &LangInfo) {
   FileManager &FileMgr = HeaderInfo.getFileMgr();
   
   // Set up the preprocessor with these options.
   Preprocessor PP(Diags, LangInfo, Target, SourceMgr, HeaderInfo);
+  
+  OurDiagnosticClient.setPreprocessor(PP);
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   std::vector<char> PrologMacros;
@@ -1108,7 +1192,7 @@ int main(int argc, char **argv) {
   InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i)
-    ProcessInputFile(InputFilenames[i], SourceMgr, Diags,
+    ProcessInputFile(InputFilenames[i], SourceMgr, Diags, OurDiagnosticClient,
                      HeaderInfo, *Target, LangInfo);
   
   if (NumDiagnostics)
