@@ -118,7 +118,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 /// the diag::kind enum.  
 void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
                         const std::string *Strs, unsigned NumStrs,
-                        SourceRange *Ranges, unsigned NumRanges) {
+                        const SourceRange *Ranges, unsigned NumRanges) {
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel = getDiagnosticLevel(DiagID);
   

@@ -120,7 +120,7 @@ public:
   /// diag::kind enum.  
   void Report(SourceLocation Pos, unsigned DiagID,
               const std::string *Strs = 0, unsigned NumStrs = 0,
-              SourceRange *Ranges = 0, unsigned NumRanges = 0);
+              const SourceRange *Ranges = 0, unsigned NumRanges = 0);
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
@@ -134,7 +134,7 @@ public:
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
-                                unsigned NumStrs, SourceRange *Ranges, 
+                                unsigned NumStrs, const SourceRange *Ranges, 
                                 unsigned NumRanges) = 0;
 };
 

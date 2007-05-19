@@ -352,7 +352,7 @@ public:
     
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
-                                unsigned NumStrs, SourceRange *Ranges, 
+                                unsigned NumStrs, const SourceRange *Ranges, 
                                 unsigned NumRanges);
 };
 
@@ -452,7 +452,7 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
                                                diag::kind ID,
                                                const std::string *Strs,
                                                unsigned NumStrs,
-                                               SourceRange *Ranges,
+                                               const SourceRange *Ranges,
                                                unsigned NumRanges) {
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
