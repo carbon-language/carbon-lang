@@ -2,6 +2,18 @@
 ; RUN: llvm-as < %s | llc -march=x86 | not grep sub.*esp
 ; RUN: llvm-as < %s | llc -march=x86 | not grep esi
 
+; This corresponds to:
+;int t(int a, int b) {
+;  while (a != b) {
+;    if (a > b)
+;      a -= b;
+;    else
+;      b -= a;
+;  }
+;  return a;
+;}
+
+
 define i32 @t(i32 %a, i32 %b) {
 entry:
 	%tmp1434 = icmp eq i32 %a, %b		; <i1> [#uses=1]
