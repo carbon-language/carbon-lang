@@ -448,21 +448,49 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
   std::cerr << Msg << "\n";
   
   if (!NoCaretDiagnostics && Pos.isValid()) {
-    // Print out a line of the source file.
+    // Get the line of the source file.
     const char *Buf = Buffer->getBufferStart();
-    std::cerr << std::string(Buf+LineStart, Buf+LineEnd) << "\n";
+    std::string SourceLine(Buf+LineStart, Buf+LineEnd);
     
-    // If the source line contained any tab characters between the start of the
-    // line and the diagnostic, replace the space we inserted with a tab, so
-    // that the carat will be indented exactly like the source line.
-    std::string Indent(ColNo-1, ' ');
-    for (unsigned i = LineStart; i != FilePos; ++i)
-      if (Buf[i] == '\t')
-        Indent[i-LineStart] = '\t';
-
+    // Create a line for the carat that is filled with spaces that is the same
+    // length as the line of source code.
+    std::string CaratLine(LineEnd-LineStart, ' ');
+    
     // FIXME: if (NumRanges) use Ranges to output fancy highlighting
     // Print out the caret itself.
-    std::cerr << Indent << "^\n";
+    
+    // Next, insert the carat itself.
+    if (ColNo < CaratLine.size())
+      CaratLine[ColNo-1] = '^';
+    else
+      CaratLine.push_back(ColNo);
+    
+    // Scan the source line, looking for tabs.  If we find any, manually expand
+    // them to 8 characters and update the CaratLine to match.
+    for (unsigned i = 0; i != SourceLine.size(); ++i) {
+      if (SourceLine[i] != '\t') continue;
+      
+      // Replace this tab with at least one space.
+      SourceLine[i] = ' ';
+      
+      // Compute the number of spaces we need to insert.
+      unsigned NumSpaces = ((i+8)&~7) - (i+1);
+      assert(NumSpaces < 8 && "Invalid computation of space amt");
+      
+      // Insert spaces into the SourceLine.
+      SourceLine.insert(i+1, NumSpaces, ' ');
+      
+      // Insert spaces or ~'s into CaratLine.
+      CaratLine.insert(i+1, NumSpaces, CaratLine[0] == '~' ? '~' : ' ');
+    }
+    
+    // Finally, remove any blank spaces from the end of CaratLine.
+    while (CaratLine[CaratLine.size()-1] == ' ')
+      CaratLine.erase(CaratLine.end()-1);
+    
+    // Emit what we have computed.
+    std::cerr << SourceLine << "\n";
+    std::cerr << CaratLine << "\n";
   }
   
   ++NumDiagnostics;
