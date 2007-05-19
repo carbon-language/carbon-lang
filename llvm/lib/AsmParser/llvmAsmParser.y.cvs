@@ -1051,7 +1051,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <PrimType> FLOAT DOUBLE LABEL
 %token TYPE
 
-%token<StrVal> LOCALVAR GLOBALVAR LABELSTR STRINGCONSTANT ATSTRINGCONSTANT
+%token<StrVal> LOCALVAR GLOBALVAR LABELSTR 
+%token<StrVal> STRINGCONSTANT ATSTRINGCONSTANT PCTSTRINGCONSTANT
 %type <StrVal> LocalName OptLocalName OptLocalAssign
 %type <StrVal> GlobalName OptGlobalAssign GlobalAssign
 %type <UIntVal> OptAlign OptCAlign
@@ -1138,7 +1139,7 @@ FPredicates
 IntType :  INTTYPE;
 FPType   : FLOAT | DOUBLE;
 
-LocalName : LOCALVAR | STRINGCONSTANT;
+LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT
 OptLocalName : LocalName | /*empty*/ { $$ = 0; };
 
 /// OptLocalAssign - Value producing statements have an optional assignment
