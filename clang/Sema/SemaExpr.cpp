@@ -636,8 +636,8 @@ inline QualType Sema::CheckMultiplyDivideOperands(
   if (resType->isArithmeticType())
     return resType;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lex->getType().getAsString(), rex->getType().getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lex->getType().getAsString(), rex->getType().getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -649,8 +649,8 @@ inline QualType Sema::CheckRemainderOperands(
   if (resType->isIntegerType())
     return resType;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lex->getType().getAsString(), rex->getType().getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lex->getType().getAsString(), rex->getType().getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -668,8 +668,8 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
       (lhsType->isIntegerType() && rhsType->isPointerType()))
     return resType;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lhsType.getAsString(), rhsType.getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lhsType.getAsString(), rhsType.getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -686,8 +686,8 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
       (lhsType->isPointerType() && rhsType->isPointerType()))
     return resType;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lhsType.getAsString(), rhsType.getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lhsType.getAsString(), rhsType.getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -699,8 +699,8 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   if (resType->isIntegerType())
     return resType;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lex->getType().getAsString(), rex->getType().getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lex->getType().getAsString(), rex->getType().getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -720,8 +720,8 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
     return Context.IntTy;
   }
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lType.getAsString(), rType.getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lType.getAsString(), rType.getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -740,8 +740,8 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
     return Context.IntTy;
   }
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lType.getAsString(), rType.getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lType.getAsString(), rType.getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -753,8 +753,8 @@ inline QualType Sema::CheckBitwiseOperands(
   if (resType->isIntegerType())
     return resType;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lex->getType().getAsString(), rex->getType().getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lex->getType().getAsString(), rex->getType().getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -767,8 +767,8 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   if (lhsType->isScalarType() || rhsType->isScalarType())
     return Context.IntTy;
   Diag(loc, diag::err_typecheck_invalid_operands, 
-            lex->getType().getAsString(), rex->getType().getAsString(),
-            lex->getSourceRange(), rex->getSourceRange());
+       lex->getType().getAsString(), rex->getType().getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -800,8 +800,8 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     break;
   case Incompatible:
     Diag(loc, diag::err_typecheck_assign_incompatible, 
-              lhsType.getAsString(), rhsType.getAsString(),
-              lex->getSourceRange(), rex->getSourceRange());
+         lhsType.getAsString(), rhsType.getAsString(),
+         lex->getSourceRange(), rex->getSourceRange());
     hadError = true;
     break;
   case PointerFromInt:
@@ -823,8 +823,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 }
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17
-  Expr *lex, Expr *rex, SourceLocation loc) 
-{
+  Expr *lex, Expr *rex, SourceLocation loc) {
   return UsualUnaryConversion(rex->getType());
 }
 
@@ -849,7 +848,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   // the operand is a modifiable lvalue.
   if (!op->isModifiableLvalue()) {
     Diag(OpLoc, diag::err_typecheck_invalid_lvalue_incr_decr,
-                op->getSourceRange());
+         op->getSourceRange());
     return QualType();
   }
   return resType;
@@ -900,7 +899,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     if (const VarDecl *vd = dyn_cast<VarDecl>(dcl)) {
       if (vd->getStorageClass() == VarDecl::Register) {
         Diag(OpLoc, diag::err_typecheck_address_of_register, 
-                    op->getSourceRange());
+             op->getSourceRange());
         return QualType();
       }
     } else 
@@ -920,7 +919,7 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   if (PointerType *PT = dyn_cast<PointerType>(qType))
     return PT->getPointeeType();
   Diag(OpLoc, diag::err_typecheck_unary_expr, qType.getAsString(),
-              op->getSourceRange());
+       op->getSourceRange());
   return QualType();
 }
 
