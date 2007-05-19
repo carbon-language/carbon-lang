@@ -1962,9 +1962,9 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
       uint64_t mask = radix - 1;
       APInt zero(tmp.getBitWidth(), 0);
       while (tmp.ne(zero)) {
-        unsigned digit = tmp.getZExtValue() & mask;
-        tmp = tmp.lshr(shift);
+        unsigned digit = (tmp.isSingleWord() ? tmp.VAL : tmp.pVal[0]) & mask;
         result.insert(insert_at, digits[digit]);
+        tmp = tmp.lshr(shift);
       }
     }
     return result;
