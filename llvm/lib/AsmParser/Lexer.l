@@ -161,6 +161,7 @@ QuoteLabel \"[^\"]+\":
 /* Quoted names can contain any character except " and \ */
 StringConstant \"[^\"]*\"
 AtStringConstant @\"[^\"]*\"
+PctStringConstant %\"[^\"]*\"
   
 /* LocalVarID/GlobalVarID: match an unnamed local variable slot ID. */
 LocalVarID     %[0-9]+
@@ -366,6 +367,11 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                      return ATSTRINGCONSTANT;
                    }
 
+{PctStringConstant} {
+                     yytext[strlen(yytext)-1] = 0;           // nuke end quote
+                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke @, quote
+                     return PCTSTRINGCONSTANT;
+                   }
 {PInteger}      { int len = strlen(yytext); 
                   uint32_t numBits = ((len * 64) / 19) + 1;
                   APInt Tmp(numBits, yytext, len, 10);
