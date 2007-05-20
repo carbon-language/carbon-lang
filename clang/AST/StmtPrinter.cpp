@@ -63,6 +63,8 @@ namespace  {
       }
       IndentLevel -= SubIndent;
     }
+    
+    void PrintRawCompoundStmt(CompoundStmt *S);
 
     void PrintExpr(Expr *E) {
       if (E)
@@ -92,14 +94,20 @@ void StmtPrinter::VisitStmt(Stmt *Node) {
   Indent() << "<<unknown stmt type>>\n";
 }
 
-void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
-  Indent() << "{\n";
-  
+/// PrintRawCompoundStmt - Print a compound stmt without indenting the {, and
+/// with no newline after the }.
+void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
+  OS << "{\n";
   for (CompoundStmt::body_iterator I = Node->body_begin(), E = Node->body_end();
        I != E; ++I)
     PrintStmt(*I);
   
-  Indent() << "}\n";
+  Indent() << "}";
+}
+
+void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
+  Indent();
+  PrintRawCompoundStmt(Node);
 }
 
 void StmtPrinter::VisitCaseStmt(CaseStmt *Node) {
@@ -127,20 +135,46 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
 void StmtPrinter::VisitIfStmt(IfStmt *If) {
   Indent() << "if (";
   PrintExpr(If->getCond());
+  OS << ')';
+  
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(If->getThen())) {
+    OS << ' ';
+    PrintRawCompoundStmt(CS);
+    OS << (If->getElse() ? ' ' : '\n');
+  } else {
+    OS << '\n';
+    PrintStmt(If->getThen());
+    if (If->getElse()) Indent();
+  }
 
-  OS << ")\n";
-  PrintStmt(If->getThen());
-  if (If->getElse()) {
-    Indent() << "else\n";
-    PrintStmt(If->getElse());
+  if (Stmt *Else = If->getElse()) {
+    OS << "else";
+    
+    if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Else)) {
+      OS << ' ';
+      PrintRawCompoundStmt(CS);
+      OS << '\n';
+    } else {
+      OS << '\n';
+      PrintStmt(If->getElse());
+    }
   }
 }
 
 void StmtPrinter::VisitSwitchStmt(SwitchStmt *Node) {
   Indent() << "switch (";
   PrintExpr(Node->getCond());
-  OS << ")\n";
-  PrintStmt(Node->getBody());
+  OS << ")";
+  
+  // Pretty print compoundstmt bodies (very common).
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Node->getBody())) {
+    OS << " ";
+    PrintRawCompoundStmt(CS);
+    OS << "\n";
+  } else {
+    OS << "\n";
+    PrintStmt(Node->getBody());
+  }
 }
 
 void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {
