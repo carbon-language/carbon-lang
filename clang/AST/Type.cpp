@@ -405,7 +405,10 @@ void QualType::getAsStringInternal(std::string &S) const {
   if (unsigned TQ = getQualifiers()) {
     std::string TQS;
     AppendTypeQualList(TQS, TQ);
-    S = TQS + ' ' + S;
+    if (!S.empty())
+      S = TQS + ' ' + S;
+    else
+      S = TQS;
   }
 
   getTypePtr()->getAsStringInternal(S);
