@@ -23,12 +23,7 @@ using namespace clang;
 Action::StmtResult 
 Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
                         StmtTy **Elts, unsigned NumElts) {
-  if (NumElts > 1)
-    return new CompoundStmt((Stmt**)Elts, NumElts);
-  else if (NumElts == 1)
-    return Elts[0];        // {stmt} -> stmt
-  else
-    return 0;              // {}  -> ;
+  return new CompoundStmt((Stmt**)Elts, NumElts);
 }
 
 Action::StmtResult
