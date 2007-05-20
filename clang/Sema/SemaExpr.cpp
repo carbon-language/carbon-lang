@@ -428,6 +428,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     lhptee = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
     rhptee = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
 
+    if (RHS->isNullPointerConstant()) // C99 6.5.15p3
+      return lhs;
+    if (LHS->isNullPointerConstant())
+      return rhs;
+      
     // ignore qualifiers on void (C99 6.5.15p3, clause 6)
     if (lhptee.getUnqualifiedType()->isVoidType() &&
         (rhptee->isObjectType() || rhptee->isIncompleteType()))
@@ -449,10 +454,6 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   }
   if (lhs->isVoidType() && rhs->isVoidType()) // C99 6.5.15p3
     return lhs;
-  if (lhs->isPointerType() && RHS->isNullPointerConstant()) // C99 6.5.15p3
-    return lhs;
-  if (rhs->isPointerType() && LHS->isNullPointerConstant()) // C99 6.5.15p3
-    return rhs;
     
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
       lhs.getAsString(), rhs.getAsString());

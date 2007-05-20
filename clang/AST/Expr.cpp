@@ -266,8 +266,32 @@ bool Expr::isConstantExpr(bool isIntConst, SourceLocation &loc) const {
   }
 }
 
+// C99 6.3.2.3p3: FIXME: If we have an integer constant expression, we need
+// to *evaluate* it and test for the value 0. The current code is too 
+// simplistic...it only allows for the integer literal "0". 
+// For example, the following is valid code:
+//
+//  void test1() { *(n ? p : (void *)(7-7)) = 1; }
+//
 bool Expr::isNullPointerConstant() const {
-  const IntegerLiteral *constant = dyn_cast<IntegerLiteral>(this);
+  const IntegerLiteral *constant = 0;
+  
+  switch (getStmtClass()) {
+  case IntegerLiteralClass:
+    constant = cast<IntegerLiteral>(this);
+    break;
+  case CastExprClass: 
+    const CastExpr *cExpr = cast<CastExpr>(this);
+    if (const PointerType *p = dyn_cast<PointerType>(cExpr->getDestType())) {
+      QualType t = p->getPointeeType();
+      // the type needs to be "void *" (no qualifiers are permitted)
+      if (!t.getQualifiers() && t->isVoidType())
+        constant = dyn_cast<IntegerLiteral>(cExpr->getSubExpr());  
+    }
+    break;
+  default: 
+    break;
+  }
   if (!constant || constant->getValue() != 0)
     return false;
   return true;
