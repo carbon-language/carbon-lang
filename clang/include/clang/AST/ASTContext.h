@@ -82,6 +82,11 @@ public:
   /// getSizeType - Return the unique type for "size_t" (C99 7.17), defined
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
   QualType getSizeType() const;
+  
+  /// getIntegerBitwidth - Return the bitwidth of the specified integer type
+  /// according to the target.  'Loc' specifies the source location that
+  /// requires evaluation of this property.
+  unsigned getIntegerBitwidth(QualType T, SourceLocation Loc);
 
   // maxIntegerType - Returns the highest ranked integer type. Handles 3
   // different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
