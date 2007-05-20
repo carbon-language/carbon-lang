@@ -49,8 +49,8 @@ namespace  {
   public:
     StmtPrinter(std::ostream &os) : OS(os), IndentLevel(0) {}
     
-    void PrintStmt(Stmt *S) {
-      ++IndentLevel;
+    void PrintStmt(Stmt *S, int SubIndent = 1) {
+      IndentLevel += SubIndent;
       if (S && isExpr(S)) {
         // If this is an expr used in a stmt context, indent and newline it.
         Indent();
@@ -61,7 +61,7 @@ namespace  {
       } else {
         Indent() << ";\n";
       }
-      --IndentLevel;
+      IndentLevel -= SubIndent;
     }
 
     void PrintExpr(Expr *E) {
@@ -71,8 +71,8 @@ namespace  {
         OS << "<null expr>";
     }
     
-    std::ostream &Indent() const {
-      for (unsigned i = 0, e = IndentLevel; i != e; ++i)
+    std::ostream &Indent(int Delta = 0) const {
+      for (unsigned i = 0, e = IndentLevel+Delta; i != e; ++i)
         OS << "  ";
       return OS;
     }
@@ -103,7 +103,7 @@ void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
 }
 
 void StmtPrinter::VisitCaseStmt(CaseStmt *Node) {
-  Indent() << "case ";
+  Indent(-1) << "case ";
   PrintExpr(Node->getLHS());
   if (Node->getRHS()) {
     OS << " ... ";
@@ -111,20 +111,17 @@ void StmtPrinter::VisitCaseStmt(CaseStmt *Node) {
   }
   OS << ":\n";
   
-  // FIXME: This recursively indents consequtive cases.
-  PrintStmt(Node->getSubStmt());
+  PrintStmt(Node->getSubStmt(), 0);
 }
 
 void StmtPrinter::VisitDefaultStmt(DefaultStmt *Node) {
-  Indent() << "default:\n";
-  // FIXME: This recursively indents consequtive cases.
-  PrintStmt(Node->getSubStmt());
+  Indent(-1) << "default:\n";
+  PrintStmt(Node->getSubStmt(), 0);
 }
 
 void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
-  Indent() << Node->getLabel()->getName() << ":\n";
-  // FIXME: This recursively indents consequtive cases.
-  PrintStmt(Node->getSubStmt());
+  Indent(-1) << Node->getLabel()->getName() << ":\n";
+  PrintStmt(Node->getSubStmt(), 0);
 }
 
 void StmtPrinter::VisitIfStmt(IfStmt *If) {
