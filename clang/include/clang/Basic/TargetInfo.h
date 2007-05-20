@@ -104,18 +104,40 @@ public:
     return true;
   }
   
+  /// getBoolWidth - Return the size of '_Bool' and C++ 'bool' for this target,
+  /// in bits.  
+  unsigned getBoolWidth(SourceLocation Loc) {
+    return 8;    // FIXME: implement correctly: wrong for ppc32.
+  }
+  
   /// getCharWidth - Return the size of 'char', 'signed char' and
   /// 'unsigned char' for this target, in bits.  
   unsigned getCharWidth(SourceLocation Loc) {
-    // FIXME: implement correctly.
-    return 8;
+    return 8; // FIXME: implement correctly.
+  }
+  
+  /// getShortWidth - Return the size of 'signed short' and 'unsigned short' for
+  /// this target, in bits.  
+  unsigned getShortWidth(SourceLocation Loc) {
+    return 16; // FIXME: implement correctly.
   }
   
   /// getIntWidth - Return the size of 'signed int' and 'unsigned int' for this
   /// target, in bits.  
   unsigned getIntWidth(SourceLocation Loc) {
-    // FIXME: implement correctly.
-    return 32;
+    return 32; // FIXME: implement correctly.
+  }
+  
+  /// getLongWidth - Return the size of 'signed long' and 'unsigned long' for
+  /// this target, in bits.  
+  unsigned getLongWidth(SourceLocation Loc) {
+    return 32;  // FIXME: implement correctly: wrong for ppc64/x86-64
+  }
+
+  /// getLongLongWidth - Return the size of 'signed long long' and
+  /// 'unsigned long long' for this target, in bits.  
+  unsigned getLongLongWidth(SourceLocation Loc) {
+    return 64; // FIXME: implement correctly.
   }
   
   /// getWCharWidth - Return the size of wchar_t in bits.
