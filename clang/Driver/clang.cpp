@@ -429,7 +429,8 @@ void DiagnosticPrinterSTDERR::HighlightRange(const SourceRange &R,
 /// GetTokenLength - Given the source location of a token, determine its length.
 /// This is a fully general function that uses a lexer to relex the token.
 unsigned DiagnosticPrinterSTDERR::GetTokenLength(SourceLocation Loc) {
-  const char *StrData = SourceMgr.getCharacterData(Loc);
+  const char *StrData = 
+    SourceMgr.getCharacterData(SourceMgr.getLogicalLoc(Loc));
   
   // Note, this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.
