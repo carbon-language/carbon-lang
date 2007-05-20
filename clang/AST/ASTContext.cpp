@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
@@ -297,43 +298,70 @@ QualType ASTContext::getSizeType() const {
   return UnsignedLongTy; 
 }
 
+/// getIntegerBitwidth - Return the bitwidth of the specified integer type
+/// according to the target.  'Loc' specifies the source location that
+/// requires evaluation of this property.
+unsigned ASTContext::getIntegerBitwidth(QualType T, SourceLocation Loc) {
+  if (const TagType *TT = dyn_cast<TagType>(T.getCanonicalType())) {
+    assert(TT->getDecl()->getKind() == Decl::Enum && "not an int or enum");
+    assert(0 && "FIXME: getIntegerBitwidth(enum) unimplemented!");
+  }
+  
+  const BuiltinType *BT = cast<BuiltinType>(T.getCanonicalType());
+  switch (BT->getKind()) {
+  default: assert(0 && "getIntegerBitwidth(): not a built-in integer");
+  case BuiltinType::Bool:      return Target.getBoolWidth(Loc);
+  case BuiltinType::Char:
+  case BuiltinType::SChar:
+  case BuiltinType::UChar:     return Target.getCharWidth(Loc);
+  case BuiltinType::Short:
+  case BuiltinType::UShort:    return Target.getShortWidth(Loc);
+  case BuiltinType::Int:
+  case BuiltinType::UInt:      return Target.getIntWidth(Loc);
+  case BuiltinType::Long:
+  case BuiltinType::ULong:     return Target.getLongWidth(Loc);
+  case BuiltinType::LongLong:
+  case BuiltinType::ULongLong: return Target.getLongLongWidth(Loc);
+  }
+}
+
 /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This
 /// routine will assert if passed a built-in type that isn't an integer or enum.
 static int getIntegerRank(QualType t) {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(t.getCanonicalType())) {
-    switch (BT->getKind()) {
-    default:
-      assert(0 && "GetIntegerRank(): not a built-in integer");
-    case BuiltinType::Bool:
-      return 1;
-    case BuiltinType::Char:
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-      return 2;
-    case BuiltinType::Short:
-    case BuiltinType::UShort:
-      return 3;
-    case BuiltinType::Int:
-    case BuiltinType::UInt:
-      return 4;
-    case BuiltinType::Long:
-    case BuiltinType::ULong:
-      return 5;
-    case BuiltinType::LongLong:
-    case BuiltinType::ULongLong:
-      return 6;
-    }
+  if (const TagType *TT = dyn_cast<TagType>(t.getCanonicalType())) {
+    assert(TT->getDecl()->getKind() == Decl::Enum && "not an int or enum");
+    return 4;
   }
-  const TagType *TT = cast<TagType>(t.getCanonicalType());
-  assert(TT->getDecl()->getKind() == Decl::Enum && "not an int or enum");
-  return 4;
+  
+  const BuiltinType *BT = cast<BuiltinType>(t.getCanonicalType());
+  switch (BT->getKind()) {
+  default:
+    assert(0 && "getIntegerRank(): not a built-in integer");
+  case BuiltinType::Bool:
+    return 1;
+  case BuiltinType::Char:
+  case BuiltinType::SChar:
+  case BuiltinType::UChar:
+    return 2;
+  case BuiltinType::Short:
+  case BuiltinType::UShort:
+    return 3;
+  case BuiltinType::Int:
+  case BuiltinType::UInt:
+    return 4;
+  case BuiltinType::Long:
+  case BuiltinType::ULong:
+    return 5;
+  case BuiltinType::LongLong:
+  case BuiltinType::ULongLong:
+    return 6;
+  }
 }
 
 /// getFloatingRank - Return a relative rank for floating point types.
 /// This routine will assert if passed a built-in type that isn't a float.
 static int getFloatingRank(QualType t) {
-  const BuiltinType *BT = cast<BuiltinType>(t.getCanonicalType());
-  switch (BT->getKind()) {
+  switch (cast<BuiltinType>(t.getCanonicalType())->getKind()) {
   default:
     assert(0 && "getFloatingPointRank(): not a floating type");
   case BuiltinType::Float:
