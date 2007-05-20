@@ -83,6 +83,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
       break;
     }
     
+    // Hex escapes are a maximal series of hex digits.
     bool Overflow = false;
     for (; ThisTokBuf != ThisTokEnd; ++ThisTokBuf) {
       int CharVal = HexDigitValue(ThisTokBuf[0]);
@@ -106,11 +107,29 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     break;
   }
   case '0': case '1': case '2': case '3':
-  case '4': case '5': case '6': case '7':
+  case '4': case '5': case '6': case '7': {
     // Octal escapes.
-    // FIXME: warn_octal_escape_too_large. '\012345'
-    assert(0 && "octal escape: unimp!");
+    ResultChar = 0;
+
+    // Octal escapes are a series of octal digits with maximum length 3.
+    // "\0123" is a two digit sequence equal to "\012" "3".
+    unsigned NumDigits = 0;
+    do {
+      ResultChar <<= 3;
+      ResultChar |= *ThisTokBuf++ - '0';
+      ++NumDigits;
+    } while (ThisTokBuf != ThisTokEnd && NumDigits < 3 &&
+             ThisTokBuf[0] >= '0' && ThisTokBuf[0] <= '7');
+    
+    // Check for overflow.  Reject '\777', but not L'\777'.
+    unsigned CharWidth = IsWide ? PP.getTargetInfo().getWCharWidth(Loc)
+                                : PP.getTargetInfo().getCharWidth(Loc);
+    if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
+      PP.Diag(Loc, diag::warn_octal_escape_too_large);
+      ResultChar &= ~0U >> (32-CharWidth);
+    }
     break;
+  }
     
     // Otherwise, these are not valid escapes.
   case '(': case '{': case '[': case '%':
