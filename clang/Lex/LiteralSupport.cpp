@@ -34,7 +34,8 @@ static int HexDigitValue(char C) {
 /// either a character or a string literal.
 static unsigned ProcessCharEscape(const char *&ThisTokBuf,
                                   const char *ThisTokEnd, bool &HadError,
-                                  SourceLocation Loc, Preprocessor &PP) {
+                                  SourceLocation Loc, bool IsWide,
+                                  Preprocessor &PP) {
   // Skip the '\' char.
   ++ThisTokBuf;
 
@@ -74,19 +75,36 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     break;
     
     //case 'u': case 'U':  // FIXME: UCNs.
-  case 'x': // Hex escape.
-    if (ThisTokBuf == ThisTokEnd ||
-        (ResultChar = HexDigitValue(*ThisTokBuf)) == ~0U) {
+  case 'x': { // Hex escape.
+    ResultChar = 0;
+    if (ThisTokBuf == ThisTokEnd || !isxdigit(*ThisTokBuf)) {
       PP.Diag(Loc, diag::err_hex_escape_no_digits);
       HadError = 1;
-      ResultChar = 0;
       break;
     }
-    ++ThisTokBuf; // Consumed one hex digit.
     
-    // FIXME: warn_hex_escape_too_large. '\x12345'
-    assert(0 && "hex escape: unimp!");
+    bool Overflow = false;
+    for (; ThisTokBuf != ThisTokEnd; ++ThisTokBuf) {
+      int CharVal = HexDigitValue(ThisTokBuf[0]);
+      if (CharVal == -1) break;
+      Overflow |= ResultChar & 0xF0000000;  // About to shift out a digit?
+      ResultChar <<= 4;
+      ResultChar |= CharVal;
+    }
+
+    // See if any bits will be truncated when evaluated as a character.
+    unsigned CharWidth = IsWide ? PP.getTargetInfo().getWCharWidth(Loc)
+                                : PP.getTargetInfo().getCharWidth(Loc);
+    if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
+      Overflow = true;
+      ResultChar &= ~0U >> (32-CharWidth);
+    }
+    
+    // Check for overflow.
+    if (Overflow)   // Too many digits to fit in
+      PP.Diag(Loc, diag::warn_hex_escape_too_large);
     break;
+  }
   case '0': case '1': case '2': case '3':
   case '4': case '5': case '6': case '7':
     // Octal escapes.
@@ -429,7 +447,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     if (begin[0] != '\\')     // If this is a normal character, consume it.
       ResultChar = *begin++;
     else                      // Otherwise, this is an escape character.
-      ResultChar = ProcessCharEscape(begin, end, HadError, Loc, PP);
+      ResultChar = ProcessCharEscape(begin, end, HadError, Loc, IsWide, PP);
 
     // If this is a multi-character constant (e.g. 'abc'), handle it.  These are
     // implementation defined (C99 6.4.4.4p10).
@@ -575,7 +593,11 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
     // TODO: Input character set mapping support.
     
     // Skip L marker for wide strings.
-    if (ThisTokBuf[0] == 'L') ++ThisTokBuf;
+    bool ThisIsWide = false;
+    if (ThisTokBuf[0] == 'L') {
+      ++ThisTokBuf;
+      ThisIsWide = true;
+    }
     
     assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
     ++ThisTokBuf;
@@ -607,7 +629,8 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
       
       // Otherwise, this is an escape character.  Process it.
       unsigned ResultChar = ProcessCharEscape(ThisTokBuf, ThisTokEnd, hadError,
-                                              StringToks[i].getLocation(), PP);
+                                              StringToks[i].getLocation(),
+                                              ThisIsWide, PP);
       
       // Note: our internal rep of wide char tokens is always little-endian.
       *ResultPtr++ = ResultChar & 0xFF;
