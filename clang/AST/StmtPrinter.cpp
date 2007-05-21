@@ -252,12 +252,23 @@ void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
 }
 
 void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
-  // FIXME: print value.
-  OS << "1";
+  bool isSigned = Node->getType()->isSignedIntegerType();
+  OS << Node->getValue().toString(10, isSigned);
+  
+  // Emit suffixes.  Integer literals are always a builtin integer type.
+  switch (cast<BuiltinType>(Node->getType().getCanonicalType())->getKind()) {
+  default: assert(0 && "Unexpected type for integer literal!");
+  case BuiltinType::Int:       break; // no suffix.
+  case BuiltinType::UInt:      OS << 'U'; break;
+  case BuiltinType::Long:      OS << 'L'; break;
+  case BuiltinType::ULong:     OS << "UL"; break;
+  case BuiltinType::LongLong:  OS << "LL"; break;
+  case BuiltinType::ULongLong: OS << "ULL"; break;
+  }
 }
 void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
   // FIXME: print value.
-  OS << "1.0";
+  OS << "~1.0~";
 }
 void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   if (Str->isWide()) OS << 'L';
