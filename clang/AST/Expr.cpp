@@ -290,9 +290,8 @@ bool Expr::isNullPointerConstant() const {
     }
     break;
   default: 
-    break;
-  }
-  if (!constant || constant->getValue() != 0)
     return false;
-  return true;
+  }
+  
+  return constant && constant->getValue() == 0;
 }
