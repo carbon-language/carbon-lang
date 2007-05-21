@@ -30,10 +30,11 @@ namespace {
     enum BBICKind {
       ICInvalid,       // BB data invalid.
       ICNotClassfied,  // BB data valid, but not classified.
-      ICTriangle,      // BB is part of a triangle sub-CFG.
-      ICDiamond,       // BB is part of a diamond sub-CFG.
-      ICTriangleEntry, // BB is entry of a triangle sub-CFG.
-      ICDiamondEntry   // BB is entry of a diamond sub-CFG.
+      ICEarlyExit,     // BB is entry of an early-exit sub-CFG.
+      ICTriangle,      // BB is entry of a triangle sub-CFG.
+      ICDiamond,       // BB is entry of a diamond sub-CFG.
+      ICChild,         // BB is part of the sub-CFG that'll be predicated.
+      ICDead           // BB has been converted and merged, it's now dead.
     };
 
     /// BBInfo - One per MachineBasicBlock, this is used to cache the result
@@ -47,13 +48,15 @@ namespace {
       unsigned Size;
       bool isPredicable;
       bool ClobbersPred;
+      bool hasEarlyExit;
       MachineBasicBlock *BB;
       MachineBasicBlock *TrueBB;
       MachineBasicBlock *FalseBB;
       MachineBasicBlock *TailBB;
       std::vector<MachineOperand> Cond;
       BBInfo() : Kind(ICInvalid), Size(0), isPredicable(false),
-                 ClobbersPred(false), BB(0), TrueBB(0), FalseBB(0), TailBB(0) {}
+                 ClobbersPred(false), hasEarlyExit(false),
+                 BB(0), TrueBB(0), FalseBB(0), TailBB(0) {}
     };
 
     /// BBAnalysis - Results of if-conversion feasibility analysis indexed by
@@ -75,6 +78,7 @@ namespace {
     void FeasibilityAnalysis(BBInfo &BBI);
     void InitialFunctionAnalysis(MachineFunction &MF,
                                  std::vector<BBInfo*> &Candidates);
+    bool IfConvertEarlyExit(BBInfo &BBI);
     bool IfConvertTriangle(BBInfo &BBI);
     bool IfConvertDiamond(BBInfo &BBI);
     void PredicateBlock(MachineBasicBlock *BB,
@@ -107,10 +111,13 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
     switch (BBI.Kind) {
     default: assert(false && "Unexpected!");
       break;
-    case ICTriangleEntry:
+    case ICEarlyExit:
+      MadeChange |= IfConvertEarlyExit(BBI);
+      break;
+    case ICTriangle:
       MadeChange |= IfConvertTriangle(BBI);
       break;
-    case ICDiamondEntry:
+    case ICDiamond:
       MadeChange |= IfConvertDiamond(BBI);
       break;
     }
@@ -139,19 +146,16 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   BBInfo &BBI = BBAnalysis[BB->getNumber()];
 
   if (BBI.Kind != ICInvalid)
-    return;  // Always analyzed.
+    return;  // Already analyzed.
   BBI.BB = BB;
   BBI.Size = std::distance(BB->begin(), BB->end());
 
   // Look for 'root' of a simple (non-nested) triangle or diamond.
   BBI.Kind = ICNotClassfied;
-  if (TII->AnalyzeBranch(*BB, BBI.TrueBB, BBI.FalseBB, BBI.Cond)
-      || !BBI.TrueBB || BBI.Cond.size() == 0)
-    return;
-
-  // Not a candidate if 'true' block has another predecessor.
-  // FIXME: Use or'd predicate or predicated cmp.
-  if (BBI.TrueBB->pred_size() > 1)
+  bool CanAnalyze = !TII->AnalyzeBranch(*BB, BBI.TrueBB, BBI.FalseBB, BBI.Cond);
+  // Does it end with a return, indirect jump, or jumptable branch?
+  BBI.hasEarlyExit = TII->BlockHasNoFallThrough(*BB) && !BBI.TrueBB;
+  if (!CanAnalyze || !BBI.TrueBB || BBI.Cond.size() == 0)
     return;
 
   // Not a candidate if 'true' block is going to be if-converted.
@@ -170,11 +174,6 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     BBI.FalseBB = findFalseBlock(BB, BBI.TrueBB);  
   assert(BBI.FalseBB && "Expected to find the fallthrough block!");
 
-  // Not a candidate if 'false' block has another predecessor.
-  // FIXME: Invert condition and swap 'true' / 'false' blocks?
-  if (BBI.FalseBB->pred_size() > 1)
-    return;
-
   // Not a candidate if 'false' block is going to be if-converted.
   StructuralAnalysis(BBI.FalseBB);
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
@@ -185,7 +184,17 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   if (FalseBBI.FalseBB || FalseBBI.Cond.size())
     return;
 
-  if (TrueBBI.TrueBB && TrueBBI.TrueBB == BBI.FalseBB) {
+  unsigned TrueNumPreds  = BBI.TrueBB->pred_size();
+  unsigned FalseNumPreds = BBI.FalseBB->pred_size();
+  if ((TrueBBI.hasEarlyExit && TrueNumPreds <= 1) &&
+      !(FalseBBI.hasEarlyExit && FalseNumPreds <=1)) {
+    BBI.Kind = ICEarlyExit;
+    TrueBBI.Kind = ICChild;
+  } else if (!(TrueBBI.hasEarlyExit && TrueNumPreds <= 1) &&
+             (FalseBBI.hasEarlyExit && FalseNumPreds <=1)) {
+    BBI.Kind = ICEarlyExit;
+    FalseBBI.Kind = ICChild;
+  } else if (TrueBBI.TrueBB && TrueBBI.TrueBB == BBI.FalseBB) {
     // Triangle:
     //   EBB
     //   | \_
@@ -193,9 +202,10 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     //   | TBB
     //   |  /
     //   FBB
-    BBI.Kind = ICTriangleEntry;
-    TrueBBI.Kind = FalseBBI.Kind = ICTriangle;
-  } else if (TrueBBI.TrueBB == FalseBBI.TrueBB) {
+    BBI.Kind = ICTriangle;
+    TrueBBI.Kind = FalseBBI.Kind = ICChild;
+  } else if (TrueBBI.TrueBB == FalseBBI.TrueBB &&
+             TrueNumPreds <= 1 && FalseNumPreds <= 1) {
     // Diamond:
     //   EBB
     //   / \_
@@ -204,8 +214,8 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     //   \ /
     //  TailBB
     // Note MBB can be empty in case both TBB and FBB are return blocks.
-    BBI.Kind = ICDiamondEntry;
-    TrueBBI.Kind = FalseBBI.Kind = ICDiamond;
+    BBI.Kind = ICDiamond;
+    TrueBBI.Kind = FalseBBI.Kind = ICChild;
     BBI.TailBB = TrueBBI.TrueBB;
   }
   return;
@@ -245,8 +255,14 @@ void IfConverter::InitialFunctionAnalysis(MachineFunction &MF,
     MachineBasicBlock *BB = *DFI;
     StructuralAnalysis(BB);
     BBInfo &BBI = BBAnalysis[BB->getNumber()];
-    if (BBI.Kind == ICTriangleEntry || BBI.Kind == ICDiamondEntry)
+    switch (BBI.Kind) {
+    default: break;
+    case ICEarlyExit:
+    case ICTriangle:
+    case ICDiamond:
       Candidates.push_back(&BBI);
+      break;
+    }
   }
 }
 
@@ -276,54 +292,107 @@ static void TransferSuccs(MachineBasicBlock *ToBB, MachineBasicBlock *FromBB) {
     }
 }
 
+/// isNextBlock - Returns true if ToBB the next basic block after BB.
+///
+static bool isNextBlock(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
+  MachineFunction::iterator Fallthrough = BB;
+  return MachineFunction::iterator(ToBB) == ++Fallthrough;
+}
+
+/// IfConvertEarlyExit - If convert a early exit sub-CFG.
+///
+bool IfConverter::IfConvertEarlyExit(BBInfo &BBI) {
+  BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
+  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
+  BBInfo *CvtBBI = &TrueBBI;
+  BBInfo *NextBBI = &FalseBBI;
+  bool ReserveCond = false;
+  if (TrueBBI.Kind != ICChild) {
+    std::swap(CvtBBI, NextBBI);
+    ReserveCond = true;
+  }
+
+  FeasibilityAnalysis(*CvtBBI);
+  if (!CvtBBI->isPredicable) {
+    BBI.Kind = ICNotClassfied;
+    return false;
+  }
+
+  std::vector<MachineOperand> NewCond(BBI.Cond);
+  if (ReserveCond)
+    TII->ReverseBranchCondition(NewCond);
+  PredicateBlock(CvtBBI->BB, NewCond);
+
+  // Merge converted block into entry block. Also convert the end of the
+  // block conditional branch (to the non-converted block) into an
+  // unconditional one.
+  BBI.Size -= TII->RemoveBranch(*BBI.BB);
+  BBI.BB->removeSuccessor(CvtBBI->BB);
+  MergeBlocks(BBI, *CvtBBI);
+  if (!isNextBlock(BBI.BB, NextBBI->BB)) {
+    std::vector<MachineOperand> NoCond;
+    TII->InsertBranch(*BBI.BB, NextBBI->BB, NULL, NoCond);
+  }
+
+  // Update block info.
+  CvtBBI->Kind = ICDead;
+
+  // FIXME: Must maintain LiveIns.
+  NumIfConvBBs++;
+  return true;
+}
+
 /// IfConvertTriangle - If convert a triangle sub-CFG.
 ///
 bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
   FeasibilityAnalysis(TrueBBI);
 
-  if (TrueBBI.isPredicable) {
-    BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-
-    // Predicate the 'true' block after removing its branch.
-    TrueBBI.Size -= TII->RemoveBranch(*BBI.TrueBB);
-    PredicateBlock(BBI.TrueBB, BBI.Cond);
-
-    // Join the 'true' and 'false' blocks by copying the instructions
-    // from the 'false' block to the 'true' block.
-    BBI.TrueBB->removeSuccessor(BBI.FalseBB);
-    MergeBlocks(TrueBBI, FalseBBI);
-
-    // Now merge the entry of the triangle with the true block.
-    BBI.Size -= TII->RemoveBranch(*BBI.BB);
-    MergeBlocks(BBI, TrueBBI);
-
-    // Update block info.
-    TrueBBI.Kind = ICInvalid;
-    FalseBBI.Kind = ICInvalid;
-
-    // FIXME: Must maintain LiveIns.
-    NumIfConvBBs++;
-    return true;
+  if (!TrueBBI.isPredicable) {
+    BBI.Kind = ICNotClassfied;
+    return false;
   }
-  return false;
+
+  // Predicate the 'true' block after removing its branch.
+  TrueBBI.Size -= TII->RemoveBranch(*BBI.TrueBB);
+  PredicateBlock(BBI.TrueBB, BBI.Cond);
+
+  // Join the 'true' and 'false' blocks by copying the instructions
+  // from the 'false' block to the 'true' block.
+  BBI.TrueBB->removeSuccessor(BBI.FalseBB);
+  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
+  MergeBlocks(TrueBBI, FalseBBI);
+
+  // Now merge the entry of the triangle with the true block.
+  BBI.Size -= TII->RemoveBranch(*BBI.BB);
+  MergeBlocks(BBI, TrueBBI);
+
+  // Update block info.
+  TrueBBI.Kind = ICDead;
+
+  // FIXME: Must maintain LiveIns.
+  NumIfConvBBs++;
+  return true;
 }
 
 /// IfConvertDiamond - If convert a diamond sub-CFG.
 ///
 bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
+  bool TrueNeedCBr;
+  bool FalseNeedCBr;
   BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   FeasibilityAnalysis(TrueBBI);
   FeasibilityAnalysis(FalseBBI);
 
-  if (TrueBBI.isPredicable && FalseBBI.isPredicable) {
+  SmallVector<MachineInstr*, 2> Dups;
+  bool Proceed = TrueBBI.isPredicable && FalseBBI.isPredicable;
+  if (Proceed) {
     // Check the 'true' and 'false' blocks if either isn't ended with a branch.
     // Either the block fallthrough to another block or it ends with a
     // return. If it's the former, add a conditional branch to its successor.
-    bool Proceed = true;
-    bool TrueNeedCBr  = !TrueBBI.TrueBB && BBI.TrueBB->succ_size();
-    bool FalseNeedCBr = !FalseBBI.TrueBB && BBI.FalseBB->succ_size();
+    TrueNeedCBr  = !TrueBBI.TrueBB && BBI.TrueBB->succ_size();
+    FalseNeedCBr = !FalseBBI.TrueBB && BBI.FalseBB->succ_size();
     if (TrueNeedCBr && TrueBBI.ClobbersPred) {
       TrueBBI.isPredicable = false;
       Proceed = false;
@@ -332,102 +401,118 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
       FalseBBI.isPredicable = false;
       Proceed = false;
     }
-    if (!Proceed)
-      return false;
 
-    std::vector<MachineInstr*> Dups;
-    if (!BBI.TailBB) {
-      // No common merge block. Check if the terminators (e.g. return) are
-      // the same or predicable.
-      MachineBasicBlock::iterator TT = BBI.TrueBB->getFirstTerminator();
-      MachineBasicBlock::iterator FT = BBI.FalseBB->getFirstTerminator();
-      while (TT != BBI.TrueBB->end() && FT != BBI.FalseBB->end()) {
-        if (TT->isIdenticalTo(FT))
-          Dups.push_back(TT);  // Will erase these later.
-        else if (!TT->isPredicable() && !FT->isPredicable())
-          return false; // Can't if-convert. Abort!
-        ++TT;
-        ++FT;
+    if (Proceed) {
+      if (!BBI.TailBB) {
+        // No common merge block. Check if the terminators (e.g. return) are
+        // the same or predicable.
+        MachineBasicBlock::iterator TT = BBI.TrueBB->getFirstTerminator();
+        MachineBasicBlock::iterator FT = BBI.FalseBB->getFirstTerminator();
+        while (TT != BBI.TrueBB->end() && FT != BBI.FalseBB->end()) {
+          if (TT->isIdenticalTo(FT))
+            Dups.push_back(TT);  // Will erase these later.
+          else if (!TT->isPredicable() && !FT->isPredicable()) {
+            Proceed = false;
+            break; // Can't if-convert. Abort!
+          }
+          ++TT;
+          ++FT;
+        }
+
+        // One of the two pathes have more terminators, make sure they are
+        // all predicable.
+        while (Proceed && TT != BBI.TrueBB->end())
+          if (!TT->isPredicable()) {
+            Proceed = false;
+            break; // Can't if-convert. Abort!
+          }
+        while (Proceed && FT != BBI.FalseBB->end())
+          if (!FT->isPredicable()) {
+            Proceed = false;
+            break; // Can't if-convert. Abort!
+          }
       }
-      // One of the two pathes have more terminators, make sure they are all
-      // predicable.
-      while (TT != BBI.TrueBB->end())
-        if (!TT->isPredicable())
-          return false; // Can't if-convert. Abort!
-      while (FT != BBI.FalseBB->end())
-        if (!FT->isPredicable())
-          return false; // Can't if-convert. Abort!
     }
-
-    // Remove the duplicated instructions from the 'true' block.
-    for (unsigned i = 0, e = Dups.size(); i != e; ++i) {
-      Dups[i]->eraseFromParent();
-      --TrueBBI.Size;
-    }
-    
-    // Predicate the 'true' block after removing its branch.
-    TrueBBI.Size -= TII->RemoveBranch(*BBI.TrueBB);
-    PredicateBlock(BBI.TrueBB, BBI.Cond);
-
-    // Add a conditional branch to 'true' successor if needed.
-    if (TrueNeedCBr)
-      TII->InsertBranch(*BBI.TrueBB, *BBI.TrueBB->succ_begin(), NULL, BBI.Cond);
-
-    // Predicate the 'false' block.
-    std::vector<MachineOperand> NewCond(BBI.Cond);
-    TII->ReverseBranchCondition(NewCond);
-    PredicateBlock(BBI.FalseBB, NewCond, true);
-
-    // Add a conditional branch to 'false' successor if needed.
-    if (FalseNeedCBr)
-      TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,NewCond);
-
-    // Merge the 'true' and 'false' blocks by copying the instructions
-    // from the 'false' block to the 'true' block. That is, unless the true
-    // block would clobber the predicate, in that case, do the opposite.
-    BBInfo *CvtBBI;
-    if (!TrueBBI.ClobbersPred) {
-      MergeBlocks(TrueBBI, FalseBBI);
-      CvtBBI = &TrueBBI;
-    } else {
-      MergeBlocks(FalseBBI, TrueBBI);
-      CvtBBI = &FalseBBI;
-    }
-
-    // Remove the conditional branch from entry to the blocks.
-    BBI.Size -= TII->RemoveBranch(*BBI.BB);
-
-    // Merge the combined block into the entry of the diamond if the entry
-    // block is its only predecessor. Otherwise, insert an unconditional
-    // branch from entry to the if-converted block.
-    if (CvtBBI->BB->pred_size() == 1) {
-      BBI.BB->removeSuccessor(CvtBBI->BB);
-      MergeBlocks(BBI, *CvtBBI);
-      CvtBBI = &BBI;
-    } else {
-      std::vector<MachineOperand> NoCond;
-      TII->InsertBranch(*BBI.BB, CvtBBI->BB, NULL, NoCond);
-    }
-
-    // If the if-converted block fallthrough into the tail block, then
-    // fold the tail block in as well.
-    if (BBI.TailBB && CvtBBI->BB->succ_size() == 1) {
-      CvtBBI->Size -= TII->RemoveBranch(*CvtBBI->BB);
-      CvtBBI->BB->removeSuccessor(BBI.TailBB);
-      BBInfo TailBBI = BBAnalysis[BBI.TailBB->getNumber()];
-      MergeBlocks(*CvtBBI, TailBBI);
-      TailBBI.Kind = ICInvalid;
-    }
-
-    // Update block info.
-    TrueBBI.Kind = ICInvalid;
-    FalseBBI.Kind = ICInvalid;
-
-    // FIXME: Must maintain LiveIns.
-    NumIfConvBBs += 2;
-    return true;
   }
-  return false;
+
+  if (!Proceed) {
+    BBI.Kind = ICNotClassfied;
+    return false;
+  }
+
+  // Remove the duplicated instructions from the 'true' block.
+  for (unsigned i = 0, e = Dups.size(); i != e; ++i) {
+    Dups[i]->eraseFromParent();
+    --TrueBBI.Size;
+  }
+    
+  // Predicate the 'true' block after removing its branch.
+  TrueBBI.Size -= TII->RemoveBranch(*BBI.TrueBB);
+  PredicateBlock(BBI.TrueBB, BBI.Cond);
+
+  // Add a conditional branch to 'true' successor if needed.
+  if (TrueNeedCBr && TrueBBI.ClobbersPred &&
+      isNextBlock(BBI.TrueBB, *BBI.TrueBB->succ_begin()))
+    TrueNeedCBr = false;
+  if (TrueNeedCBr)
+    TII->InsertBranch(*BBI.TrueBB, *BBI.TrueBB->succ_begin(), NULL, BBI.Cond);
+
+  // Predicate the 'false' block.
+  std::vector<MachineOperand> NewCond(BBI.Cond);
+  TII->ReverseBranchCondition(NewCond);
+  PredicateBlock(BBI.FalseBB, NewCond, true);
+
+  // Add a conditional branch to 'false' successor if needed.
+  if (FalseNeedCBr && !TrueBBI.ClobbersPred &&
+      isNextBlock(BBI.FalseBB, *BBI.FalseBB->succ_begin()))
+    FalseNeedCBr = false;
+  if (FalseNeedCBr)
+    TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,NewCond);
+
+  // Merge the 'true' and 'false' blocks by copying the instructions
+  // from the 'false' block to the 'true' block. That is, unless the true
+  // block would clobber the predicate, in that case, do the opposite.
+  BBInfo *CvtBBI;
+  if (!TrueBBI.ClobbersPred) {
+    MergeBlocks(TrueBBI, FalseBBI);
+    CvtBBI = &TrueBBI;
+  } else {
+    MergeBlocks(FalseBBI, TrueBBI);
+    CvtBBI = &FalseBBI;
+  }
+
+  // Remove the conditional branch from entry to the blocks.
+  BBI.Size -= TII->RemoveBranch(*BBI.BB);
+
+  // Merge the combined block into the entry of the diamond if the entry
+  // block is its only predecessor. Otherwise, insert an unconditional
+  // branch from entry to the if-converted block.
+  if (CvtBBI->BB->pred_size() == 1) {
+    BBI.BB->removeSuccessor(CvtBBI->BB);
+    MergeBlocks(BBI, *CvtBBI);
+    CvtBBI = &BBI;
+  } else {
+    std::vector<MachineOperand> NoCond;
+    TII->InsertBranch(*BBI.BB, CvtBBI->BB, NULL, NoCond);
+  }
+
+  // If the if-converted block fallthrough into the tail block, then
+  // fold the tail block in as well.
+  if (BBI.TailBB && CvtBBI->BB->succ_size() == 1) {
+    CvtBBI->Size -= TII->RemoveBranch(*CvtBBI->BB);
+    CvtBBI->BB->removeSuccessor(BBI.TailBB);
+    BBInfo TailBBI = BBAnalysis[BBI.TailBB->getNumber()];
+    MergeBlocks(*CvtBBI, TailBBI);
+    TailBBI.Kind = ICDead;
+  }
+
+  // Update block info.
+  TrueBBI.Kind = ICDead;
+  FalseBBI.Kind = ICDead;
+
+  // FIXME: Must maintain LiveIns.
+  NumIfConvBBs += 2;
+  return true;
 }
 
 /// PredicateBlock - Predicate every instruction in the block with the specified
