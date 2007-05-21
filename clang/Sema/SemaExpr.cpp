@@ -117,42 +117,98 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
     const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
-    return ExprResult(new IntegerLiteral(*t-'0', Context.IntTy, 
+    
+    unsigned IntSize = Context.Target.getIntWidth(Tok.getLocation());
+    return ExprResult(new IntegerLiteral(APInt(IntSize, *t-'0'), Context.IntTy, 
                                          Tok.getLocation()));
   }
   SmallString<512> IntegerBuffer;
   IntegerBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &IntegerBuffer[0];
   
-  // Get the spelling of the token, which eliminates trigraphs, etc.  Notes:
-  // - We know that ThisTokBuf points to a buffer that is big enough for the 
-  //   whole token and 'spelled' tokens can only shrink.
-  // - In practice, the local buffer is only used when the spelling doesn't
-  //   match the original token (which is rare). The common case simply returns
-  //   a pointer to a *constant* buffer (avoiding a copy). 
-  
+  // Get the spelling of the token, which eliminates trigraphs, etc.
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
   NumericLiteralParser Literal(ThisTokBegin, ThisTokBegin+ActualLength, 
                                Tok.getLocation(), PP);
   if (Literal.hadError)
     return ExprResult(true);
-
+  
   if (Literal.isIntegerLiteral()) {
     QualType t;
-    if (Literal.hasSuffix()) {
-      if (Literal.isLong) 
-        t = Literal.isUnsigned ? Context.UnsignedLongTy : Context.LongTy;
-      else if (Literal.isLongLong) 
-        t = Literal.isUnsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
-      else 
-        t = Context.UnsignedIntTy;
+
+    // Get the value in the widest-possible width.
+    APInt ResultVal(Context.Target.getIntMaxTWidth(Tok.getLocation()), 0);
+   
+    if (Literal.GetIntegerValue(ResultVal)) {
+      // If this value didn't fit into uintmax_t, warn and force to ull.
+      Diag(Tok.getLocation(), diag::warn_integer_too_large);
+      t = Context.UnsignedLongLongTy;
+      assert(Context.getIntegerBitwidth(t, Tok.getLocation()) == 
+             ResultVal.getBitWidth() && "long long is not intmax_t?");
     } else {
-      t = Context.IntTy; // implicit type is "int"
+      // If this value fits into a ULL, try to figure out what else it fits into
+      // according to the rules of C99 6.4.4.1p5.
+      
+      // Octal, Hexadecimal, and integers with a U suffix are allowed to
+      // be an unsigned int.
+      bool AllowUnsigned = Literal.isUnsigned || Literal.getRadix() != 10;
+
+      // Check from smallest to largest, picking the smallest type we can.
+      if (!Literal.isLong) {  // Are int/unsigned possibilities?
+        unsigned IntSize = Context.Target.getIntWidth(Tok.getLocation());
+        // Does it fit in a unsigned int?
+        if (ResultVal.isIntN(IntSize)) {
+          // Does it fit in a signed int?
+          if (!Literal.isUnsigned && ResultVal[IntSize-1] == 0)
+            t = Context.IntTy;
+          else if (AllowUnsigned)
+            t = Context.UnsignedIntTy;
+        }
+        
+        if (!t.isNull())
+          ResultVal.trunc(IntSize);
+      }
+      
+      // Are long/unsigned long possibilities?
+      if (t.isNull() && !Literal.isLongLong) {
+        unsigned LongSize = Context.Target.getLongWidth(Tok.getLocation());
+     
+        // Does it fit in a unsigned long?
+        if (ResultVal.isIntN(LongSize)) {
+          // Does it fit in a signed long?
+          if (!Literal.isUnsigned && ResultVal[LongSize-1] == 0)
+            t = Context.LongTy;
+          else if (AllowUnsigned)
+            t = Context.UnsignedLongTy;
+        }
+        if (!t.isNull())
+          ResultVal.trunc(LongSize);
+      }      
+      
+      // Finally, check long long if needed.
+      if (t.isNull()) {
+        unsigned LongLongSize =
+          Context.Target.getLongLongWidth(Tok.getLocation());
+        
+        // Does it fit in a unsigned long long?
+        if (ResultVal.isIntN(LongLongSize)) {
+          // Does it fit in a signed long long?
+          if (!Literal.isUnsigned && ResultVal[LongLongSize-1] == 0)
+            t = Context.LongLongTy;
+          else if (AllowUnsigned)
+            t = Context.UnsignedLongLongTy;
+        }
+      }
+      
+      // If we still couldn't decide a type, we probably have something that
+      // does not fit in a signed long long, but has no U suffix.
+      if (t.isNull()) {
+        Diag(Tok.getLocation(), diag::warn_integer_too_large_for_signed);
+        t = Context.UnsignedLongLongTy;
+      }
     }
-    uintmax_t val;
-    if (Literal.GetIntegerValue(val)) {
-      return new IntegerLiteral(val, t, Tok.getLocation());
-    } 
+
+    return new IntegerLiteral(ResultVal, t, Tok.getLocation());
   } else if (Literal.isFloatingLiteral()) {
     // FIXME: fill in the value and compute the real type...
     return new FloatingLiteral(7.7, Context.FloatTy, Tok.getLocation());

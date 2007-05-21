@@ -17,6 +17,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+#include "llvm/ADT/APInt.h"
 
 namespace llvm {
 namespace clang {
@@ -102,16 +103,16 @@ public:
 };
 
 class IntegerLiteral : public Expr {
-  intmax_t Value;
+  APInt Value;
   SourceLocation Loc;
 public:
   // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy, 
   // or UnsignedLongLongTy
-  IntegerLiteral(intmax_t value, QualType type, SourceLocation l)
-    : Expr(IntegerLiteralClass, type), Value(value), Loc(l) {
+  IntegerLiteral(const APInt &V, QualType type, SourceLocation l)
+    : Expr(IntegerLiteralClass, type), Value(V), Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
-  intmax_t getValue() const { return Value; }
+  const APInt &getValue() const { return Value; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   virtual void visit(StmtVisitor &Visitor);

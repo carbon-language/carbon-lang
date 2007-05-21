@@ -39,7 +39,7 @@ class NumericLiteralParser {
   const char *DigitsBegin, *SuffixBegin; // markers
   const char *s; // cursor
   
-  unsigned int radix;
+  unsigned radix;
   
   bool saw_exponent, saw_period;
   bool saw_float_suffix;
@@ -49,7 +49,7 @@ public:
                        SourceLocation Loc, Preprocessor &PP);
   bool hadError;
   bool isUnsigned;
-  bool isLong;
+  bool isLong;       // This is also set for long long.
   bool isLongLong;
   
   bool isIntegerLiteral() const { 
@@ -61,19 +61,12 @@ public:
   bool hasSuffix() const {
     return SuffixBegin != ThisTokEnd;
   }
-  /// getIntegerValue - Convert the string into a number. At this point, we 
-  /// know the digit characters are valid (0...9, a...f, A...F). We don't know
-  /// how many bits are needed to store the number. Sizing of the integer
-  /// type (int, unsigned, long, unsigned long, long long, unsigned long long) 
-  /// will be done elsewhere - the size computation is target dependent. We  
-  /// return true if the value fit into "val", false otherwise. 
-  /// NOTE: The api of these returns an inverted value for 'overflow' than the
-  /// version below does.
-  bool GetIntegerValue(uintmax_t &val);
-  bool GetIntegerValue(int &val);
+  
+  unsigned getRadix() const { return radix; }
   
   /// GetIntegerValue - Convert this numeric literal value to an APInt that
-  /// matches Val's input width.  If there is an overflow, set Val to the low
+  /// matches Val's input width.  If there is an overflow (i.e., if the unsigned
+  /// value read is larger than the APInt's bits will hold), set Val to the low
   /// bits of the result and return true.  Otherwise, return false.
   bool GetIntegerValue(APInt &Val);
 

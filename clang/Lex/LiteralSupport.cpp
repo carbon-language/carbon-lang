@@ -351,44 +351,6 @@ NumericLiteralParser(const char *begin, const char *end,
   }
 }
 
-bool NumericLiteralParser::GetIntegerValue(uintmax_t &val) {
-  uintmax_t max_value = UINTMAX_MAX / radix;
-  unsigned max_digit = UINTMAX_MAX % radix;
-  
-  val = 0;
-  s = DigitsBegin;
-  while (s < SuffixBegin) {
-    unsigned C = HexDigitValue(*s++);
-    
-    if (val > max_value || (val == max_value && C > max_digit)) {
-      return false; // Overflow!
-    } else {
-      val *= radix;
-      val += C;
-    }
-  }
-  return true;
-}
-
-bool NumericLiteralParser::GetIntegerValue(int &val) {
-  intmax_t max_value = INT_MAX / radix;
-  unsigned max_digit = INT_MAX % radix;
-  
-  val = 0;
-  s = DigitsBegin;
-  while (s < SuffixBegin) {
-    unsigned C = HexDigitValue(*s++);
-    
-    if (val > max_value || (val == max_value && C > max_digit)) {
-      return false; // Overflow!
-    } else {
-      val *= radix;
-      val += C;
-    }
-  }
-  return true;
-}
-
 /// GetIntegerValue - Convert this numeric literal value to an APInt that
 /// matches Val's input width.  If there is an overflow, set Val to the low bits
 /// of the result and return true.  Otherwise, return false.
