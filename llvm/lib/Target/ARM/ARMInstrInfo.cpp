@@ -298,6 +298,11 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   return NewMIs[0];
 }
 
+static bool isPredicated(MachineInstr *MI) {
+  MachineOperand *PMO = MI->findFirstPredOperand();
+  return PMO && PMO->getImmedValue() != ARMCC::AL;
+}
+
 // Branch analysis.
 bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
@@ -312,7 +317,8 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
-  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode())) {
+  if (I == MBB.begin() ||
+      isPredicated(--I) || !isTerminatorInstr(I->getOpcode())) {
     if (LastOpc == ARM::B || LastOpc == ARM::tB) {
       TBB = LastInst->getOperand(0).getMachineBasicBlock();
       return false;
@@ -331,7 +337,7 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   
   // If there are three terminators, we don't know what sort of block this is.
   if (SecondLastInst && I != MBB.begin() &&
-      isTerminatorInstr((--I)->getOpcode()))
+      !isPredicated(--I) && isTerminatorInstr(I->getOpcode()))
     return true;
   
   // If the block ends with ARM::B/ARM::tB and a ARM::Bcc/ARM::tBcc, handle it.
@@ -407,6 +413,11 @@ bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {
+  case ARM::BX_RET:   // Return.
+  case ARM::LDM_RET:
+  case ARM::tBX_RET:
+  case ARM::tBX_RET_vararg:
+  case ARM::tPOP_RET:
   case ARM::B:
   case ARM::tB:       // Uncond branch.
   case ARM::tBR_JTr:
