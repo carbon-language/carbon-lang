@@ -25,23 +25,29 @@ I. Introduction:
  
    libsupport  - Basic support library, reused from LLVM.
    libsystem   - System abstraction library, reused from LLVM.
+   
    libbasic    - Diagnostics, SourceLocations, SourceBuffer abstraction,
-                 file system caching for input source files.
+                 file system caching for input source files.  This depends on
+                 libsupport and libsystem.
+   libast      - Provides classes to represent the C AST, the C type system,
+                 builtin functions, and various helpers for analyzing and
+                 manipulating the AST (visitors, pretty printers, etc).  This
+                 library depends on libbasic.
+                 
    liblex      - C/C++/ObjC lexing and preprocessing, identifier hash table,
-                 pragma handling, tokens, and macros.
+                 pragma handling, tokens, and macros.  This depends on libbasic.
    libparse    - C99 (for now) parsing and local semantic analysis. This library
                  invokes coarse-grained 'Actions' provided by the client to do
                  stuff (great idea shamelessly stolen from Devkit).  ObjC/C90
                  need to be added soon, K&R C and C++ can be added in the
-                 future, but are not a high priority.
-   libast      - Provides a set of parser actions to build a standardized AST
-                 for programs.  AST can be built in two forms: streamlined and
-                 'complete' mode, which captures *full* location info for every
-                 token in the AST.  AST's are 'streamed' out a top-level
-                 declaration at a time, allowing clients to use decl-at-a-time
-                 processing, build up entire translation units, or even build
-                 'whole program' ASTs depending on how they use the APIs.
-                 Includes a pretty-printer for the ASTs.
+                 future, but are not a high priority.  This depends on liblex.
+   libsema     - Provides a set of parser actions to build a standardized AST
+                 for programs.  AST's are 'streamed' out a top-level declaration
+                 at a time, allowing clients to use decl-at-a-time processing,
+                 build up entire translation units, or even build 'whole
+                 program' ASTs depending on how they use the APIs.  This depends
+                 on libast and libparse.
+                 
    libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
    clang       - An example driver, client of the libraries at various levels.
 
@@ -50,9 +56,9 @@ I. Introduction:
  a preprocessor, you take the Basic and Lexer libraries. If you want an indexer,
  you take those plus the Parser library and provide some actions for indexing.
  If you want a refactoring, static analysis, or source-to-source compiler tool,
- it makes sense to take those plus the AST building library.  Finally, if you
- want to use this with the LLVM backend, you'd take these components plus the
- AST to LLVM lowering code.
+ it makes sense to take those plus the AST building and semantic analyzer
+ library.  Finally, if you want to use this with the LLVM backend, you'd take
+ these components plus the AST to LLVM lowering code.
  
  In the future I hope this toolkit will grow to include new and interesting
  components, including a C++ front-end, ObjC support, and a whole lot of other
@@ -91,7 +97,8 @@ II. Usage of clang driver:
 III. Current advantages over GCC:
 
  * Column numbers are fully tracked (no 256 col limit, no GCC-style pruning).
- * All diagnostics have column numbers, includes 'caret diagnostics'.
+ * All diagnostics have column numbers, includes 'caret diagnostics', highlights
+   regions of interesting code in diagnostics.
  * Full diagnostic customization by client (can format diagnostics however they
    like, e.g. in an IDE or refactoring tool) through DiagnosticClient interface.
  * Built as a framework, can be reused by multiple tools.
