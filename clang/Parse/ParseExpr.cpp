@@ -630,9 +630,11 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (Tok.getKind() != tok::r_paren) {
         while (1) {
           ExprResult ArgExpr = ParseAssignmentExpression();
-          if (ArgExpr.isInvalid)
+          if (ArgExpr.isInvalid) {
             ArgExprsOk = false;
-          else
+            SkipUntil(tok::r_paren);
+            break;
+          } else
             ArgExprs.push_back(ArgExpr.Val);
           
           if (Tok.getKind() != tok::comma)
@@ -650,7 +652,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
                                     &CommaLocs[0], Tok.getLocation());
       }
       
-      MatchRHSPunctuation(tok::r_paren, Loc);
+      if (ArgExprsOk)
+        MatchRHSPunctuation(tok::r_paren, Loc);
       break;
     }
     case tok::arrow:       // postfix-expression: p-e '->' identifier
