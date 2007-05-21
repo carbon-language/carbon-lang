@@ -508,6 +508,8 @@ class AXI1<dag ops, string asm, list<dag> pattern>
   : XI<ops, AddrMode1, Size4Bytes, IndexModeNone, asm, "", pattern>;
 class AXI2<dag ops, string asm, list<dag> pattern>
   : XI<ops, AddrMode2, Size4Bytes, IndexModeNone, asm, "", pattern>;
+class AXI3<dag ops, string asm, list<dag> pattern>
+  : XI<ops, AddrMode3, Size4Bytes, IndexModeNone, asm, "", pattern>;
 class AXI4<dag ops, string asm, list<dag> pattern>
   : XI<ops, AddrMode4, Size4Bytes, IndexModeNone, asm, "", pattern>;
 
@@ -560,7 +562,7 @@ def PICLD   : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr$p $dst, $addr",
                   [(set GPR:$dst, (load addrmodepc:$addr))]>;
 
-def PICLDZH : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
+def PICLDZH : AXI3<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr${p}h $dst, $addr",
                   [(set GPR:$dst, (zextloadi16 addrmodepc:$addr))]>;
 
@@ -568,7 +570,7 @@ def PICLDZB : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr${p}b $dst, $addr",
                   [(set GPR:$dst, (zextloadi8 addrmodepc:$addr))]>;
 
-def PICLDH  : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
+def PICLDH  : AXI3<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr${p}h $dst, $addr",
                   [(set GPR:$dst, (extloadi16 addrmodepc:$addr))]>;
 
@@ -576,11 +578,11 @@ def PICLDB  : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr${p}b $dst, $addr",
                   [(set GPR:$dst, (extloadi8 addrmodepc:$addr))]>;
 
-def PICLDSH : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
+def PICLDSH : AXI3<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr${p}sh $dst, $addr",
                   [(set GPR:$dst, (sextloadi16 addrmodepc:$addr))]>;
 
-def PICLDSB : AXI2<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
+def PICLDSB : AXI3<(ops GPR:$dst, addrmodepc:$addr, pred:$p),
                   "${addr:label}:\n\tldr${p}sb $dst, $addr",
                   [(set GPR:$dst, (sextloadi8 addrmodepc:$addr))]>;
 }
@@ -589,7 +591,7 @@ def PICSTR  : AXI2<(ops GPR:$src, addrmodepc:$addr, pred:$p),
                "${addr:label}:\n\tstr$p $src, $addr",
                [(store GPR:$src, addrmodepc:$addr)]>;
 
-def PICSTRH : AXI2<(ops GPR:$src, addrmodepc:$addr, pred:$p),
+def PICSTRH : AXI3<(ops GPR:$src, addrmodepc:$addr, pred:$p),
                "${addr:label}:\n\tstr${p}h $src, $addr",
                [(truncstorei16 GPR:$src, addrmodepc:$addr)]>;
 
