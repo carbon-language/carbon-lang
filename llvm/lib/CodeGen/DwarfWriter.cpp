@@ -2893,7 +2893,46 @@ private:
     if (const char *UsedDirective = TAI->getUsedDirective())
       O << UsedDirective << EHFrameInfo.FnName << ".eh\n\n";
   }
-  
+
+  /// EquivPads - Whether two landing pads have equivalent actions.
+  static bool EquivPads(const LandingPadInfo *L, const LandingPadInfo *R) {
+    const std::vector<unsigned> &LIds = L->TypeIds;
+    const std::vector<unsigned> &RIds = R->TypeIds;
+    unsigned LSize = LIds.size(), RSize = RIds.size();
+
+    if (L->IsFilter != R->IsFilter)
+      return false;
+
+    if (LSize != RSize)
+      return false;
+
+    for (unsigned i = 0; i != LSize; ++i)
+      if (LIds[i] != RIds[i])
+        return false;
+
+    return true;
+  }
+
+  /// PadLT - An order on landing pads, with EquivPads as order equivalence.
+  static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
+    const std::vector<unsigned> &LIds = L->TypeIds;
+    const std::vector<unsigned> &RIds = R->TypeIds;
+    unsigned LSize = LIds.size(), RSize = RIds.size();
+
+    if (L->IsFilter != R->IsFilter)
+      // Make filters come last
+      return L->IsFilter < R->IsFilter;
+
+    if (LSize != RSize)
+      return LSize < RSize;
+
+    for (unsigned i = 0; i != LSize; ++i)
+      if (LIds[i] != RIds[i])
+        return LIds[i] < RIds[i];
+
+    return false; // Equivalent
+  }
+
   /// EmitExceptionTable - Emit landpads and actions.
   ///
   /// The general organization of the table is complex, but the basic concepts
@@ -2931,16 +2970,21 @@ private:
   void EmitExceptionTable() {
     // Map all labels and get rid of any dead landing pads.
     MMI->TidyLandingPads();
-    
+
     const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
-    const std::vector<LandingPadInfo> &LandingPads = MMI->getLandingPads();
-    if (LandingPads.empty()) return;
-    
-    // FIXME - Should fold actions for multiple landing pads.
-    
+    const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
+    if (PadInfos.empty()) return;
+
+    // Sort the landing pads in order of their type ids.  This is used to fold
+    // duplicate actions.
+    SmallVector<const LandingPadInfo *, 32> LandingPads(PadInfos.size(), NULL);
+    for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
+      LandingPads[i] = &PadInfos[i];
+    std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
+
     // Gather first action index for each landing pad site.
-    SmallVector<unsigned, 8> Actions;
-    
+    SmallVector<unsigned, 32> Actions;
+
     // FIXME - Assume there is only one filter typeinfo list per function
     // time being.  I.E., Each call to eh_filter will have the same list.
     // This can change if a function is inlined. 
@@ -2952,43 +2996,47 @@ private:
 
     // Look at each landing pad site to compute size.  We need the size of each
     // landing pad site info and the size of the landing pad's actions.
-    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-      const LandingPadInfo &LandingPad = LandingPads[i];
-      bool IsFilter = LandingPad.IsFilter;
-      unsigned SizeSiteActions = 0;
-      const std::vector<unsigned> &TypeIds = LandingPad.TypeIds;
-      unsigned SizeAction = 0;
-      signed FirstAction;
+    signed FirstAction;
 
-      if (IsFilter) {
-        // FIXME - Assume there is only one filter typeinfo list per function
-        // time being.  I.E., Each call to eh_filter will have the same list.
-        // This can change if a function is inlined. 
-        Filter = &LandingPad;
-        SizeAction =  Asm->SizeSLEB128(-1) + Asm->SizeSLEB128(0);
-        SizeSiteActions += SizeAction;
-        // Record the first action of the landing pad site.
-        FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
-      } else if (TypeIds.empty()) {
-        FirstAction = 0;
-      } else {
-        // Gather the action sizes
-        for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
-          unsigned TypeID = TypeIds[j];
-          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
-          signed Action = j ? -(SizeAction + SizeTypeID) : 0;
-          SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
+    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+      const LandingPadInfo *LandingPad = LandingPads[i];
+      unsigned SizeSiteActions = 0;
+
+      if (!i || !EquivPads(LandingPad, LandingPads[i-1])) {
+        const std::vector<unsigned> &TypeIds = LandingPad->TypeIds;
+        unsigned SizeAction = 0;
+
+        if (LandingPad->IsFilter) {
+          // FIXME - Assume there is only one filter typeinfo list per function
+          // time being.  I.E., Each call to eh_filter will have the same list.
+          // This can change if a function is inlined.
+          Filter = LandingPad;
+          SizeAction =  Asm->SizeSLEB128(-1) + Asm->SizeSLEB128(0);
           SizeSiteActions += SizeAction;
+          // Record the first action of the landing pad site.
+          FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
+        } else if (TypeIds.empty()) {
+          FirstAction = 0;
+        } else {
+          // Gather the action sizes
+          for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
+            unsigned TypeID = TypeIds[j];
+            unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
+            signed Action = j ? -(SizeAction + SizeTypeID) : 0;
+            SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
+            SizeSiteActions += SizeAction;
+          }
+
+          // Record the first action of the landing pad site.
+          FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
         }
-        
-        // Record the first action of the landing pad site.
-        FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
-      }
+      } // else re-use previous FirstAction
+
       Actions.push_back(FirstAction);
-        
+
       // Compute this sites contribution to size.
       SizeActions += SizeSiteActions;
-      unsigned M = LandingPad.BeginLabels.size();
+      unsigned M = LandingPad->BeginLabels.size();
       SizeSites += M*(sizeof(int32_t) +               // Site start.
                       sizeof(int32_t) +               // Site length.
                       sizeof(int32_t) +               // Landing pad.
@@ -3035,9 +3083,9 @@ private:
     PadMapType PadMap;
 
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-      const LandingPadInfo &LandingPad = LandingPads[i];
-      for (unsigned j=0, E = LandingPad.BeginLabels.size(); j != E; ++j) {
-        unsigned BeginLabel = LandingPad.BeginLabels[j];
+      const LandingPadInfo *LandingPad = LandingPads[i];
+      for (unsigned j=0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
+        unsigned BeginLabel = LandingPad->BeginLabels[j];
         assert(!PadMap.count(BeginLabel) && "duplicate landing pad labels!");
         PadSite P = { i, j };
         PadMap[BeginLabel] = P;
@@ -3058,27 +3106,28 @@ private:
           continue;
 
         PadSite P = L->second;
-        const LandingPadInfo &LandingPad = LandingPads[P.PadIndex];
+        const LandingPadInfo *LandingPad = LandingPads[P.PadIndex];
 
-        assert(BeginLabel == LandingPad.BeginLabels[P.SiteIndex] &&
+        assert(BeginLabel == LandingPad->BeginLabels[P.SiteIndex] &&
                "Inconsistent landing pad map!");
 
         EmitSectionOffset("label", "eh_func_begin", BeginLabel, SubprogramCount,
                           false, true);
         Asm->EOL("Region start");
 
-        EmitDifference("label", LandingPad.EndLabels[P.SiteIndex],
+        EmitDifference("label", LandingPad->EndLabels[P.SiteIndex],
                        "label", BeginLabel);
         Asm->EOL("Region length");
 
-        if (LandingPad.TypeIds.empty()) {
+        if (LandingPad->TypeIds.empty()) {
           if (TAI->getAddressSize() == sizeof(int32_t))
             Asm->EmitInt32(0);
           else
             Asm->EmitInt64(0);
         } else {
-          EmitSectionOffset("label", "eh_func_begin", LandingPad.LandingPadLabel,
-                            SubprogramCount, false, true);
+          EmitSectionOffset("label", "eh_func_begin",
+                            LandingPad->LandingPadLabel, SubprogramCount,
+                            false, true);
         }
         Asm->EOL("Landing pad");
 
@@ -3089,25 +3138,27 @@ private:
 
     // Emit the actions.
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-      const LandingPadInfo &LandingPad = LandingPads[i];
-      const std::vector<unsigned> &TypeIds = LandingPad.TypeIds;
-      unsigned SizeAction = 0;
-      
-      if (LandingPad.IsFilter) {
-        Asm->EmitSLEB128Bytes(-1);
-        Asm->EOL("TypeInfo index");
-        Asm->EmitSLEB128Bytes(0);
-        Asm->EOL("Next action");
-      } else {
-        for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
-          unsigned TypeID = TypeIds[j];
-          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
-          Asm->EmitSLEB128Bytes(TypeID);
+      if (!i || Actions[i] != Actions[i-1]) {
+        const LandingPadInfo *LandingPad = LandingPads[i];
+        const std::vector<unsigned> &TypeIds = LandingPad->TypeIds;
+        unsigned SizeAction = 0;
+
+        if (LandingPad->IsFilter) {
+          Asm->EmitSLEB128Bytes(-1);
           Asm->EOL("TypeInfo index");
-          signed Action = j ? -(SizeAction + SizeTypeID) : 0;
-          SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
-          Asm->EmitSLEB128Bytes(Action);
+          Asm->EmitSLEB128Bytes(0);
           Asm->EOL("Next action");
+        } else {
+          for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
+            unsigned TypeID = TypeIds[j];
+            unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
+            Asm->EmitSLEB128Bytes(TypeID);
+            Asm->EOL("TypeInfo index");
+            signed Action = j ? -(SizeAction + SizeTypeID) : 0;
+            SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
+            Asm->EmitSLEB128Bytes(Action);
+            Asm->EOL("Next action");
+          }
         }
       }
     }
