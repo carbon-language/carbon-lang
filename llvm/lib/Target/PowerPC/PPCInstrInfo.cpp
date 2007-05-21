@@ -276,6 +276,7 @@ bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {
+  case PPC::BLR:   // Return.
   case PPC::B:     // Uncond branch.
   case PPC::BCTR:  // Indirect branch.
     return true;

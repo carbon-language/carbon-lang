@@ -239,6 +239,8 @@ bool AlphaInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {
+  case Alpha::RETDAG: // Return.
+  case Alpha::RETDAGp:
   case Alpha::BR:     // Uncond branch.
   case Alpha::JMP:  // Indirect branch.
     return true;

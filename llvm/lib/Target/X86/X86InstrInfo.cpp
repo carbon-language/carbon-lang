@@ -486,6 +486,11 @@ bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {
+  case X86::RET:     // Return.
+  case X86::RETI:
+  case X86::TAILJMPd:
+  case X86::TAILJMPr:
+  case X86::TAILJMPm:
   case X86::JMP:     // Uncond branch.
   case X86::JMP32r:  // Indirect branch.
   case X86::JMP32m:  // Indirect branch through mem.
