@@ -498,7 +498,9 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
       unsigned NumOps = TID->numOperands;
-      unsigned JTI = MI->getOperand(NumOps-3).getJumpTableIndex();
+      MachineOperand JTOP =
+        MI->getOperand(NumOps - ((TID->Flags & M_PREDICABLE) ? 3 : 2));
+      unsigned JTI = JTOP.getJumpTableIndex();
       MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
       const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
       assert(JTI < JT.size());
