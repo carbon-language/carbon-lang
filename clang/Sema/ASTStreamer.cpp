@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ASTStreamer.h"
+#include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/ASTContext.h"
 #include "Sema.h"
 #include "clang/Parse/Action.h"

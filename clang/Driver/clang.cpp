@@ -23,6 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
+#include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/AST.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"

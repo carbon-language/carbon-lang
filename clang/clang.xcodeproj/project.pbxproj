@@ -51,13 +51,13 @@
 		DE67E7150C020EDF00F66BC5 /* Sema.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE67E7140C020EDF00F66BC5 /* Sema.h */; };
 		DE67E7170C020EE400F66BC5 /* Sema.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7160C020EE400F66BC5 /* Sema.cpp */; };
 		DE67E71A0C020F4F00F66BC5 /* ASTStreamer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */; };
+		DE67E7280C02109800F66BC5 /* ASTStreamer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE67E7270C02109800F66BC5 /* ASTStreamer.h */; };
 		DE75ED290B044DC90020CF81 /* ASTContext.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE75ED280B044DC90020CF81 /* ASTContext.h */; };
 		DE75EDF10B06880E0020CF81 /* Type.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE75EDF00B06880E0020CF81 /* Type.cpp */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
 		DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEED4A0A5AF89A0045101B /* NOTES.txt */; };
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
-		DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8DABF0A94402500353FCA /* ASTStreamer.h */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED627020AE0C51D001E80A4 /* Targets.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
@@ -126,7 +126,6 @@
 				DE06E8140A8FF9330050E87E /* Action.h in CopyFiles */,
 				DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */,
 				DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */,
-				DEC8DAC00A94402500353FCA /* ASTStreamer.h in CopyFiles */,
 				DE0FCA630A95859D00248FD5 /* Expr.h in CopyFiles */,
 				DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */,
 				DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */,
@@ -146,6 +145,7 @@
 				1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */,
 				1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */,
 				DE67E7150C020EDF00F66BC5 /* Sema.h in CopyFiles */,
+				DE67E7280C02109800F66BC5 /* ASTStreamer.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -197,13 +197,13 @@
 		DE67E7140C020EDF00F66BC5 /* Sema.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Sema.h; path = Sema/Sema.h; sourceTree = "<group>"; };
 		DE67E7160C020EE400F66BC5 /* Sema.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Sema.cpp; path = Sema/Sema.cpp; sourceTree = "<group>"; };
 		DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamer.cpp; path = Sema/ASTStreamer.cpp; sourceTree = "<group>"; };
+		DE67E7270C02109800F66BC5 /* ASTStreamer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamer.h; path = clang/Sema/ASTStreamer.h; sourceTree = "<group>"; };
 		DE75ED280B044DC90020CF81 /* ASTContext.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTContext.h; path = clang/AST/ASTContext.h; sourceTree = "<group>"; };
 		DE75EDF00B06880E0020CF81 /* Type.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Type.cpp; path = AST/Type.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
-		DEC8DABF0A94402500353FCA /* ASTStreamer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamer.h; path = clang/AST/ASTStreamer.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
 		DED627020AE0C51D001E80A4 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Targets.cpp; path = Driver/Targets.cpp; sourceTree = "<group>"; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = AST/Decl.cpp; sourceTree = "<group>"; usesTabs = 1; };
@@ -334,6 +334,14 @@
 			name = Sema;
 			sourceTree = "<group>";
 		};
+		DE67E7260C02108300F66BC5 /* Sema */ = {
+			isa = PBXGroup;
+			children = (
+				DE67E7270C02109800F66BC5 /* ASTStreamer.h */,
+			);
+			name = Sema;
+			sourceTree = "<group>";
+		};
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
@@ -354,7 +362,6 @@
 				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
-				DEC8DABF0A94402500353FCA /* ASTStreamer.h */,
 				DED676D00B6C786700AAD4A3 /* Builtins.def */,
 				DED676F90B6C797B00AAD4A3 /* Builtins.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
@@ -389,6 +396,7 @@
 				DED7D7390A524295003AD0FB /* Lex */,
 				DE1F21F20A7D84E800FBF588 /* Parse */,
 				DEC8D98B0A9433BC00353FCA /* AST */,
+				DE67E7260C02108300F66BC5 /* Sema */,
 			);
 			path = include;
 			sourceTree = "<group>";

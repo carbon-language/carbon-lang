@@ -16,7 +16,6 @@
 
 // This header exports all AST interfaces.
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTStreamer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
