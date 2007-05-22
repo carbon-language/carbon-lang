@@ -217,7 +217,7 @@ public:
   bool isCommutableInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_COMMUTABLE;
   }
-  bool isTerminatorInstr(unsigned Opcode) const {
+  bool isTerminatorInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_TERMINATOR_FLAG;
   }
   
@@ -244,14 +244,14 @@ public:
   
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
-  bool hasDelaySlot(unsigned Opcode) const {
+  bool hasDelaySlot(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
   }
   
   /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
   /// custom insertion support when the DAG scheduler is inserting it into a
   /// machine basic block.
-  bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
+  bool usesCustomDAGSchedInsertionHook(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
   }
 
