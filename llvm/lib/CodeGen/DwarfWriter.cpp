@@ -2996,7 +2996,7 @@ private:
 
     // Look at each landing pad site to compute size.  We need the size of each
     // landing pad site info and the size of the landing pad's actions.
-    signed FirstAction;
+    signed FirstAction = 0;
 
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo *LandingPad = LandingPads[i];
