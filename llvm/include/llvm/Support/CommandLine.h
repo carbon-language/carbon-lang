@@ -544,6 +544,28 @@ public:
 
 EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
+//--------------------------------------------------
+// parser<boolOrDefault>
+enum boolOrDefault { BOU_UNSET, BOU_TRUE, BOU_FALSE };
+template<>
+class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
+public:
+  // parse - Return true on error.
+  bool parse(Option &O, const char *ArgName, const std::string &Arg, 
+             boolOrDefault &Val);
+
+  enum ValueExpected getValueExpectedFlagDefault() const {
+    return ValueOptional;
+  }
+
+  // getValueName - Do not print =<value> at all.
+  virtual const char *getValueName() const { return 0; }
+  
+  // An out-of-line virtual method to provide a 'home' for this class.
+  virtual void anchor();
+};
+
+EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
 
 //--------------------------------------------------
 // parser<int>

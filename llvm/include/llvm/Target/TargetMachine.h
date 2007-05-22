@@ -185,6 +185,10 @@ public:
     AssemblyFile, ObjectFile, DynamicLibrary
   };
 
+  /// DoTailMergeDefault - Whether it is generally a good idea to do this
+  /// on this target.  User flag overrides.
+  virtual const bool DoTailMergeDefault() const { return true; }
+
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.  If Fast is set to true, the code generator should emit code
@@ -315,6 +319,10 @@ public:
                                     MachineCodeEmitter &MCE) {
     return true;
   }
+
+  /// DoTailMergeDefault - Whether it is generally a good idea to do this
+  /// on this target.  User flag overrides.
+  virtual const bool DoTailMergeDefault() const { return true; }
 };
 
 } // End llvm namespace

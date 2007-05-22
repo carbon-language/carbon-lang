@@ -35,12 +35,19 @@ using namespace llvm;
 STATISTIC(NumDeadBlocks, "Number of dead blocks removed");
 STATISTIC(NumBranchOpts, "Number of branches optimized");
 STATISTIC(NumTailMerge , "Number of block tails merged");
-static cl::opt<bool> EnableTailMerge("enable-tail-merge", cl::Hidden);
-
+static cl::opt<cl::boolOrDefault> FlagEnableTailMerge("enable-tail-merge", 
+                              cl::init(cl::BOU_UNSET), cl::Hidden);
 namespace {
   struct BranchFolder : public MachineFunctionPass {
     static char ID;
-    BranchFolder() : MachineFunctionPass((intptr_t)&ID) {}
+    BranchFolder(bool defaultEnableTailMerge) : 
+        MachineFunctionPass((intptr_t)&ID) {
+          switch (FlagEnableTailMerge) {
+          case cl::BOU_UNSET: EnableTailMerge = defaultEnableTailMerge; break;
+          case cl::BOU_TRUE: EnableTailMerge = true; break;
+          case cl::BOU_FALSE: EnableTailMerge = false; break;
+          }
+    }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Control Flow Optimizer"; }
@@ -49,6 +56,7 @@ namespace {
     bool MadeChange;
   private:
     // Tail Merging.
+    bool EnableTailMerge;
     bool TailMergeBlocks(MachineFunction &MF);
     bool TryMergeBlocks(MachineBasicBlock* SuccBB,
                         MachineBasicBlock* PredBB);
@@ -79,7 +87,8 @@ static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB,
                                  bool isCond, 
                                  MachineFunction::iterator FallThru);
 
-FunctionPass *llvm::createBranchFoldingPass() { return new BranchFolder(); }
+FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) { 
+      return new BranchFolder(DefaultEnableTailMerge); }
 
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
 /// function, updating the CFG.
