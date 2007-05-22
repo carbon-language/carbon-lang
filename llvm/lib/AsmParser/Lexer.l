@@ -102,15 +102,22 @@ static double HexToFP(const char *Buffer) {
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
 // appropriate character.
-char *UnEscapeLexed(char *Buffer) {
+char *UnEscapeLexed(char *Buffer, char* EndBuffer) {
   char *BOut = Buffer;
   for (char *BIn = Buffer; *BIn; ) {
-    if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
-      char Tmp = BIn[3]; BIn[3] = 0;      // Terminate string
-      *BOut = (char)strtol(BIn+1, 0, 16); // Convert to number
-      BIn[3] = Tmp;                       // Restore character
-      BIn += 3;                           // Skip over handled chars
-      ++BOut;
+    if (BIn[0] == '\\') {
+      if (BIn < EndBuffer-1 && BIn[1] == '\\') {
+        *BOut++ = '\\'; // Two \ becomes one
+        BIn += 2;
+      } else if (BIn < EndBuffer-2 && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
+        char Tmp = BIn[3]; BIn[3] = 0;      // Terminate string
+        *BOut = (char)strtol(BIn+1, 0, 16); // Convert to number
+        BIn[3] = Tmp;                       // Restore character
+        BIn += 3;                           // Skip over handled chars
+        ++BOut;
+      } else {
+        *BOut++ = *BIn++;
+      }
     } else {
       *BOut++ = *BIn++;
     }
@@ -326,28 +333,30 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                 }
 {QuoteLabel}    {
                   yytext[yyleng-2] = 0;  // nuke colon, end quote
-                  const char* EndChar = UnEscapeLexed(yytext+1);
+                  const char* EndChar = UnEscapeLexed(yytext+1, yytext+yyleng);
                   llvmAsmlval.StrVal = 
                     new std::string(yytext+1, EndChar - yytext - 1);
                   return LABELSTR;
                 }
 
 {StringConstant} { yytext[yyleng-1] = 0;           // nuke end quote
-                   const char* EndChar = UnEscapeLexed(yytext+1);
+                   const char* EndChar = UnEscapeLexed(yytext+1, yytext+yyleng);
                    llvmAsmlval.StrVal = 
                      new std::string(yytext+1, EndChar - yytext - 1);
                    return STRINGCONSTANT;
                  }
 {AtStringConstant} {
                      yytext[yyleng-1] = 0;         // nuke end quote
-                     const char* EndChar = UnEscapeLexed(yytext+2);
+                     const char* EndChar = 
+                       UnEscapeLexed(yytext+2, yytext+yyleng);
                      llvmAsmlval.StrVal = 
                        new std::string(yytext+2, EndChar - yytext - 2);
                      return ATSTRINGCONSTANT;
                    }
 {PctStringConstant} {
                      yytext[yyleng-1] = 0;           // nuke end quote
-                     const char* EndChar = UnEscapeLexed(yytext+2);
+                     const char* EndChar = 
+                       UnEscapeLexed(yytext+2, yytext+yyleng);
                      llvmAsmlval.StrVal = 
                        new std::string(yytext+2, EndChar - yytext - 2);
                      return PCTSTRINGCONSTANT;
