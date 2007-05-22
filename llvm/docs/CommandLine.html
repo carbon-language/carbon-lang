@@ -75,6 +75,8 @@
             parser</a></li>
         <li><a href="#boolparser">The <tt>parser&lt;bool&gt;</tt>
             specialization</a></li>
+        <li><a href="#boolOrDefaultparser">The <tt>parser&lt;boolOrDefault&gt;</tt>
+            specialization</a></li>
         <li><a href="#stringparser">The <tt>parser&lt;string&gt;</tt>
             specialization</a></li>
         <li><a href="#intparser">The <tt>parser&lt;int&gt;</tt>
@@ -1701,6 +1703,12 @@ for any data type.</li>
 is used to convert boolean strings to a boolean value.  Currently accepted
 strings are "<tt>true</tt>", "<tt>TRUE</tt>", "<tt>True</tt>", "<tt>1</tt>",
 "<tt>false</tt>", "<tt>FALSE</tt>", "<tt>False</tt>", and "<tt>0</tt>".</li>
+
+<li><a name="boolOrDefaultparser">The <b><tt>parser&lt;boolOrDefault&gt;</tt>
+ specialization</b></a> is used for cases where the value is boolean,
+but we also need to know whether the option was specified at all.  boolOrDefault
+is an enum with 3 values, BOU_UNSET, BOU_TRUE and BOU_FALSE.  This parser accepts
+the same strings as <b><tt>parser&lt;bool&gt;</tt></b>.</li>
 
 <li><a name="stringparser">The <b><tt>parser&lt;string&gt;</tt>
 specialization</b></a> simply stores the parsed string into the string value
