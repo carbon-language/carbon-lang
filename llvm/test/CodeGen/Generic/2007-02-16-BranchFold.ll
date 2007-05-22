@@ -1,5 +1,5 @@
 ; PR 1200
-; RUN: llvm-as < %s | llc | not grep jmp 
+; RUN: llvm-as < %s | llc -enable-tail-merge=0 | not grep jmp 
 
 ; ModuleID = '<stdin>'
 target datalayout = "e-p:32:32"
