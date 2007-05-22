@@ -134,11 +134,18 @@ static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
   return false;
 }
 
-static void EmitTypeGenerate(std::ostream &OS, Record *ArgType, unsigned ArgNo){
+static void EmitTypeGenerate(std::ostream &OS, Record *ArgType, 
+                             unsigned &ArgNo) {
   if (ArgType->isSubClassOf("LLVMIntegerType")) {
     unsigned BitWidth = ArgType->getValueAsInt("Width");
+    // NOTE: The ArgNo variable here is not the absolute argument number, it is
+    // the index of the "arbitrary" type in the Tys array passed to the
+    // Intrinsic::getDeclaration function. Consequently, we only want to
+    // increment it when we actually hit an arbitray integer type which is
+    // identified by BitWidth == 0. Getting this wrong leads to very subtle
+    // bugs!
     if (BitWidth == 0)
-      OS << "Tys[" << ArgNo << "]";
+      OS << "Tys[" << ArgNo++ << "]";
     else
       OS << "IntegerType::get(" << BitWidth << ")";
   } else if (ArgType->isSubClassOf("LLVMVectorType")) {
@@ -253,16 +260,16 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
       --N;
     }
     
+    unsigned ArgNo = 0;
     OS << "    ResultTy = ";
-    EmitTypeGenerate(OS, ArgTypes[0], 0);
+    EmitTypeGenerate(OS, ArgTypes[0], ArgNo);
     OS << ";\n";
     
     for (unsigned j = 1; j != N; ++j) {
       OS << "    ArgTys.push_back(";
-      EmitTypeGenerate(OS, ArgTypes[j], j);
+      EmitTypeGenerate(OS, ArgTypes[j], ArgNo);
       OS << ");\n";
     }
-    
     OS << "    break;\n";
   }
   OS << "  }\n";
