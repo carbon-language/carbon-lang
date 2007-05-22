@@ -1946,7 +1946,7 @@ YY_RULE_SETUP
 #line 361 "/Users/sabre/cvs/llvm/lib/AsmParser/Lexer.l"
 {
                      yytext[strlen(yytext)-1] = 0;           // nuke end quote
-                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke @, quote
+                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke %, quote
                      return PCTSTRINGCONSTANT;
                    }
 	YY_BREAK

@@ -360,7 +360,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
 
 {PctStringConstant} {
                      yytext[strlen(yytext)-1] = 0;           // nuke end quote
-                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke @, quote
+                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke %, quote
                      return PCTSTRINGCONSTANT;
                    }
 {PInteger}      { int len = strlen(yytext); 
