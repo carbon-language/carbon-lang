@@ -101,29 +101,20 @@ static double HexToFP(const char *Buffer) {
 
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
-// appropriate character.  If AllowNull is set to false, a \00 value will cause
-// an exception to be thrown.
-//
-// If AllowNull is set to true, the return value of the function points to the
-// last character of the string in memory.
-//
-char *UnEscapeLexed(char *Buffer, bool AllowNull) {
+// appropriate character.
+char *UnEscapeLexed(char *Buffer) {
   char *BOut = Buffer;
   for (char *BIn = Buffer; *BIn; ) {
     if (BIn[0] == '\\' && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
-      char Tmp = BIn[3]; BIn[3] = 0;     // Terminate string
-      *BOut = (char)strtol(BIn+1, 0, 16);  // Convert to number
-      if (!AllowNull && !*BOut)
-        GenerateError("String literal cannot accept \\00 escape!");
-
-      BIn[3] = Tmp;                  // Restore character
-      BIn += 3;                      // Skip over handled chars
+      char Tmp = BIn[3]; BIn[3] = 0;      // Terminate string
+      *BOut = (char)strtol(BIn+1, 0, 16); // Convert to number
+      BIn[3] = Tmp;                       // Restore character
+      BIn += 3;                           // Skip over handled chars
       ++BOut;
     } else {
       *BOut++ = *BIn++;
     }
   }
-
   return BOut;
 }
 
@@ -321,51 +312,49 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
 
 
 {LocalVarName}  {
-                  UnEscapeLexed(yytext+1);
-                  llvmAsmlval.StrVal = strdup(yytext+1);             // Skip %
+                  llvmAsmlval.StrVal = new std::string(yytext+1);   // Skip %
                   return LOCALVAR;
                 }
 {GlobalVarName} {
-                  UnEscapeLexed(yytext+1);
-                  llvmAsmlval.StrVal = strdup(yytext+1);             // Skip @
+                  llvmAsmlval.StrVal = new std::string(yytext+1);   // Skip @
                   return GLOBALVAR;
                 }
 {Label}         {
-                  yytext[strlen(yytext)-1] = 0;  // nuke colon
-                  UnEscapeLexed(yytext);
-                  llvmAsmlval.StrVal = strdup(yytext);
+                  yytext[yyleng-1] = 0;            // nuke colon
+                  llvmAsmlval.StrVal = new std::string(yytext);
                   return LABELSTR;
                 }
 {QuoteLabel}    {
-                  yytext[strlen(yytext)-2] = 0;  // nuke colon, end quote
-                  UnEscapeLexed(yytext+1);
-                  llvmAsmlval.StrVal = strdup(yytext+1);
+                  yytext[yyleng-2] = 0;  // nuke colon, end quote
+                  const char* EndChar = UnEscapeLexed(yytext+1);
+                  llvmAsmlval.StrVal = 
+                    new std::string(yytext+1, EndChar - yytext - 1);
                   return LABELSTR;
                 }
 
-{StringConstant} { // Note that we cannot unescape a string constant here!  The
-                   // string constant might contain a \00 which would not be
-                   // understood by the string stuff.  It is valid to make a
-                   // [sbyte] c"Hello World\00" constant, for example.
-                   //
-                   yytext[strlen(yytext)-1] = 0;           // nuke end quote
-                   llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote
+{StringConstant} { yytext[yyleng-1] = 0;           // nuke end quote
+                   const char* EndChar = UnEscapeLexed(yytext+1);
+                   llvmAsmlval.StrVal = 
+                     new std::string(yytext+1, EndChar - yytext - 1);
                    return STRINGCONSTANT;
                  }
 {AtStringConstant} {
-                     yytext[strlen(yytext)-1] = 0;           // nuke end quote
-                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke @, quote
+                     yytext[yyleng-1] = 0;         // nuke end quote
+                     const char* EndChar = UnEscapeLexed(yytext+2);
+                     llvmAsmlval.StrVal = 
+                       new std::string(yytext+2, EndChar - yytext - 2);
                      return ATSTRINGCONSTANT;
                    }
-
 {PctStringConstant} {
-                     yytext[strlen(yytext)-1] = 0;           // nuke end quote
-                     llvmAsmlval.StrVal = strdup(yytext+2);  // Nuke %, quote
+                     yytext[yyleng-1] = 0;           // nuke end quote
+                     const char* EndChar = UnEscapeLexed(yytext+2);
+                     llvmAsmlval.StrVal = 
+                       new std::string(yytext+2, EndChar - yytext - 2);
                      return PCTSTRINGCONSTANT;
                    }
-{PInteger}      { int len = strlen(yytext); 
-                  uint32_t numBits = ((len * 64) / 19) + 1;
-                  APInt Tmp(numBits, yytext, len, 10);
+{PInteger}      { 
+                  uint32_t numBits = ((yyleng * 64) / 19) + 1;
+                  APInt Tmp(numBits, yytext, yyleng, 10);
                   uint32_t activeBits = Tmp.getActiveBits();
                   if (activeBits > 0 && activeBits < numBits)
                     Tmp.trunc(activeBits);
@@ -377,9 +366,9 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                     return EUINT64VAL;
                   }
                 }
-{NInteger}      { int len = strlen(yytext); 
-                  uint32_t numBits = (((len-1) * 64) / 19) + 2;
-                  APInt Tmp(numBits, yytext, len, 10);
+{NInteger}      {
+                  uint32_t numBits = (((yyleng-1) * 64) / 19) + 2;
+                  APInt Tmp(numBits, yytext, yyleng, 10);
                   uint32_t minBits = Tmp.getMinSignedBits();
                   if (minBits > 0 && minBits < numBits)
                     Tmp.trunc(minBits);
@@ -392,7 +381,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                   }
                 }
 
-{HexIntConstant} { int len = strlen(yytext+3) - 3;
+{HexIntConstant} { int len = yyleng - 3;
                    uint32_t bits = len * 4;
                    APInt Tmp(bits, yytext+3, len, 16);
                    uint32_t activeBits = Tmp.getActiveBits();

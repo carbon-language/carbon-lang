@@ -282,7 +282,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
       return CurModule.Types[D.Num];
     break;
   case ValID::LocalName:                 // Is it a named definition?
-    if (const Type *N = CurModule.CurrentModule->getTypeByName(D.Name)) {
+    if (const Type *N = CurModule.CurrentModule->getTypeByName(D.getName())) {
       D.destroy();  // Free old strdup'd memory...
       return N;
     }
@@ -360,7 +360,7 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
     if (!inFunctionScope()) 
       return 0;
     ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
-    Value *N = SymTab.lookup(D.Name);
+    Value *N = SymTab.lookup(D.getName());
     if (N == 0) 
       return 0;
     if (N->getType() != Ty)
@@ -371,7 +371,7 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
   }
   case ValID::GlobalName: {                // Is it a named definition?
     ValueSymbolTable &SymTab = CurModule.CurrentModule->getValueSymbolTable();
-    Value *N = SymTab.lookup(D.Name);
+    Value *N = SymTab.lookup(D.getName());
     if (N == 0) 
       return 0;
     if (N->getType() != Ty)
@@ -550,7 +550,7 @@ static BasicBlock *defineBBVal(const ValID &ID) {
   
   // We haven't seen this BB before and its first mention is a definition. 
   // Just create it and return it.
-  std::string Name (ID.Type == ValID::LocalName ? ID.Name : "");
+  std::string Name (ID.Type == ValID::LocalName ? ID.getName() : "");
   BB = new BasicBlock(Name, CurFun.CurrentFunction);
   if (ID.Type == ValID::LocalID) {
     assert(ID.Num == CurFun.NextValNum && "Invalid new block number");
@@ -572,7 +572,7 @@ static BasicBlock *getBBVal(const ValID &ID) {
   if (BBI != CurFun.BBForwardRefs.end()) {
     BB = BBI->second;
   } if (ID.Type == ValID::LocalName) {
-    std::string Name = ID.Name;
+    std::string Name = ID.getName();
     Value *N = CurFun.CurrentFunction->getValueSymbolTable().lookup(Name);
     if (N)
       if (N->getType()->getTypeID() == Type::LabelTyID)
@@ -603,7 +603,7 @@ static BasicBlock *getBBVal(const ValID &ID) {
   // Otherwise, this block has not been seen before, create it.
   std::string Name;
   if (ID.Type == ValID::LocalName)
-    Name = ID.Name;
+    Name = ID.getName();
   BB = new BasicBlock(Name, CurFun.CurrentFunction);
 
   // Insert it in the forward refs map.
@@ -675,10 +675,12 @@ ResolveDefinitions(ValueList &LateResolvers, ValueList *FutureLateResolvers) {
 // name is not null) things referencing Name can be resolved.  Otherwise, things
 // refering to the number can be resolved.  Do this now.
 //
-static void ResolveTypeTo(char *Name, const Type *ToTy) {
+static void ResolveTypeTo(std::string *Name, const Type *ToTy) {
   ValID D;
-  if (Name) D = ValID::createLocalName(Name);
-  else      D = ValID::createLocalID(CurModule.Types.size());
+  if (Name)
+    D = ValID::createLocalName(*Name);
+  else      
+    D = ValID::createLocalID(CurModule.Types.size());
 
   std::map<ValID, PATypeHolder>::iterator I =
     CurModule.LateResolveTypes.find(D);
@@ -692,10 +694,10 @@ static void ResolveTypeTo(char *Name, const Type *ToTy) {
 // null potentially, in which case this is a noop.  The string passed in is
 // assumed to be a malloc'd string buffer, and is free'd by this function.
 //
-static void setValueName(Value *V, char *NameStr) {
+static void setValueName(Value *V, std::string *NameStr) {
   if (!NameStr) return;
-  std::string Name(NameStr);      // Copy string
-  free(NameStr);                  // Free old string
+  std::string Name(*NameStr);      // Copy string
+  delete NameStr;                  // Free old string
 
   if (V->getType() == Type::VoidTy) {
     GenerateError("Can't assign name '" + Name+"' to value with void type");
@@ -717,7 +719,7 @@ static void setValueName(Value *V, char *NameStr) {
 /// ParseGlobalVariable - Handle parsing of a global.  If Initializer is null,
 /// this is a declaration, otherwise it is a definition.
 static GlobalVariable *
-ParseGlobalVariable(char *NameStr,
+ParseGlobalVariable(std::string *NameStr,
                     GlobalValue::LinkageTypes Linkage,
                     GlobalValue::VisibilityTypes Visibility,
                     bool isConstantGlobal, const Type *Ty,
@@ -731,15 +733,15 @@ ParseGlobalVariable(char *NameStr,
 
   std::string Name;
   if (NameStr) {
-    Name = NameStr;      // Copy string
-    free(NameStr);       // Free old string
+    Name = *NameStr;      // Copy string
+    delete NameStr;       // Free old string
   }
 
   // See if this global value was forward referenced.  If so, recycle the
   // object.
   ValID ID;
   if (!Name.empty()) {
-    ID = ValID::createGlobalName((char*)Name.c_str());
+    ID = ValID::createGlobalName(Name);
   } else {
     ID = ValID::createGlobalID(CurModule.Values.size());
   }
@@ -792,12 +794,12 @@ ParseGlobalVariable(char *NameStr,
 // This function returns true if the type has already been defined, but is
 // allowed to be redefined in the specified context.  If the name is a new name
 // for the type plane, it is inserted and false is returned.
-static bool setTypeName(const Type *T, char *NameStr) {
+static bool setTypeName(const Type *T, std::string *NameStr) {
   assert(!inFunctionScope() && "Can't give types function-local names!");
   if (NameStr == 0) return false;
  
-  std::string Name(NameStr);      // Copy string
-  free(NameStr);                  // Free old string
+  std::string Name(*NameStr);      // Copy string
+  delete NameStr;                  // Free old string
 
   // We don't allow assigning names to void type
   if (T == Type::VoidTy) {
@@ -987,8 +989,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   double                            FPVal;
   bool                              BoolVal;
 
-  char                             *StrVal;   // This memory is strdup'd!
-  llvm::ValID                       ValIDVal; // strdup'd memory maybe!
+  std::string                      *StrVal;   // This memory must be deleted
+  llvm::ValID                       ValIDVal;
 
   llvm::Instruction::BinaryOps      BinaryOpVal;
   llvm::Instruction::TermOps        TermOpVal;
@@ -1051,12 +1053,14 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <PrimType> FLOAT DOUBLE LABEL
 %token TYPE
 
+
 %token<StrVal> LOCALVAR GLOBALVAR LABELSTR 
 %token<StrVal> STRINGCONSTANT ATSTRINGCONSTANT PCTSTRINGCONSTANT
 %type <StrVal> LocalName OptLocalName OptLocalAssign
 %type <StrVal> GlobalName OptGlobalAssign GlobalAssign
-%type <UIntVal> OptAlign OptCAlign
 %type <StrVal> OptSection SectionString
+
+%type <UIntVal> OptAlign OptCAlign
 
 %token ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION ALIAS VOLATILE THREAD_LOCAL
@@ -1139,7 +1143,7 @@ FPredicates
 IntType :  INTTYPE;
 FPType   : FLOAT | DOUBLE;
 
-LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT
+LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT ;
 OptLocalName : LocalName | /*empty*/ { $$ = 0; };
 
 /// OptLocalAssign - Value producing statements have an optional assignment
@@ -1153,7 +1157,7 @@ OptLocalAssign : LocalName '=' {
     CHECK_FOR_ERROR
   };
 
-GlobalName : GLOBALVAR | ATSTRINGCONSTANT;
+GlobalName : GLOBALVAR | ATSTRINGCONSTANT ;
 
 OptGlobalAssign : GlobalAssign
   | /*empty*/ {
@@ -1262,8 +1266,8 @@ OptCAlign : /*empty*/            { $$ = 0; } |
 
 
 SectionString : SECTION STRINGCONSTANT {
-  for (unsigned i = 0, e = strlen($2); i != e; ++i)
-    if ($2[i] == '"' || $2[i] == '\\')
+  for (unsigned i = 0, e = $2->length(); i != e; ++i)
+    if ((*$2)[i] == '"' || (*$2)[i] == '\\')
       GEN_ERROR("Invalid character in section name");
   $$ = $2;
   CHECK_FOR_ERROR
@@ -1278,8 +1282,8 @@ OptSection : /*empty*/ { $$ = 0; } |
 GlobalVarAttributes : /* empty */ {} |
                      ',' GlobalVarAttribute GlobalVarAttributes {};
 GlobalVarAttribute : SectionString {
-    CurGV->setSection($1);
-    free($1);
+    CurGV->setSection(*$1);
+    delete $1;
     CHECK_FOR_ERROR
   } 
   | ALIGN EUINT64VAL {
@@ -1561,21 +1565,19 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     int NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
-    char *EndStr = UnEscapeLexed($3, true);
-    if (NumElements != -1 && NumElements != (EndStr-$3))
+    if (NumElements != -1 && NumElements != int($3->length()))
       GEN_ERROR("Can't build string constant of size " + 
-                     itostr((int)(EndStr-$3)) +
+                     itostr((int)($3->length())) +
                      " when array has size " + itostr(NumElements) + "");
     std::vector<Constant*> Vals;
     if (ETy == Type::Int8Ty) {
-      for (unsigned char *C = (unsigned char *)$3; 
-        C != (unsigned char*)EndStr; ++C)
-      Vals.push_back(ConstantInt::get(ETy, *C));
+      for (unsigned i = 0; i < $3->length(); ++i)
+        Vals.push_back(ConstantInt::get(ETy, (*$3)[i]));
     } else {
-      free($3);
+      delete $3;
       GEN_ERROR("Cannot build string arrays of non byte sized elements");
     }
-    free($3);
+    delete $3;
     $$ = ConstantArray::get(ATy, Vals);
     delete $1;
     CHECK_FOR_ERROR
@@ -1759,7 +1761,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       } else {
         std::string Name;
         if ($2.Type == ValID::GlobalName)
-          Name = $2.Name;
+          Name = $2.getName();
         else if ($2.Type != ValID::GlobalID)
           GEN_ERROR("Invalid reference to global");
 
@@ -2089,13 +2091,17 @@ Definition
     CHECK_FOR_ERROR
   }
   | OptGlobalAssign GVVisibilityStyle ALIAS AliasLinkage AliaseeRef {
-    std::string Name($1);
+    std::string Name;
+    if ($1) {
+      Name = *$1;
+      delete $1;
+    }
     if (Name.empty())
       GEN_ERROR("Alias name cannot be empty");
     
     Constant* Aliasee = $5;
     if (Aliasee == 0)
-      GEN_ERROR(std::string("Invalid aliasee for alias: ") + $1);
+      GEN_ERROR(std::string("Invalid aliasee for alias: ") + Name);
 
     GlobalAlias* GA = new GlobalAlias(Aliasee->getType(), $4, Name, Aliasee,
                                       CurModule.CurrentModule);
@@ -2114,36 +2120,33 @@ Definition
 
 AsmBlock : STRINGCONSTANT {
   const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
-  char *EndStr = UnEscapeLexed($1, true);
-  std::string NewAsm($1, EndStr);
-  free($1);
-
   if (AsmSoFar.empty())
-    CurModule.CurrentModule->setModuleInlineAsm(NewAsm);
+    CurModule.CurrentModule->setModuleInlineAsm(*$1);
   else
-    CurModule.CurrentModule->setModuleInlineAsm(AsmSoFar+"\n"+NewAsm);
+    CurModule.CurrentModule->setModuleInlineAsm(AsmSoFar+"\n"+*$1);
+  delete $1;
   CHECK_FOR_ERROR
 };
 
 TargetDefinition : TRIPLE '=' STRINGCONSTANT {
-    CurModule.CurrentModule->setTargetTriple($3);
-    free($3);
+    CurModule.CurrentModule->setTargetTriple(*$3);
+    delete $3;
   }
   | DATALAYOUT '=' STRINGCONSTANT {
-    CurModule.CurrentModule->setDataLayout($3);
-    free($3);
+    CurModule.CurrentModule->setDataLayout(*$3);
+    delete $3;
   };
 
 LibrariesDefinition : '[' LibList ']';
 
 LibList : LibList ',' STRINGCONSTANT {
-          CurModule.CurrentModule->addLibrary($3);
-          free($3);
+          CurModule.CurrentModule->addLibrary(*$3);
+          delete $3;
           CHECK_FOR_ERROR
         }
         | STRINGCONSTANT {
-          CurModule.CurrentModule->addLibrary($1);
-          free($1);
+          CurModule.CurrentModule->addLibrary(*$1);
+          delete $1;
           CHECK_FOR_ERROR
         }
         | /* empty: end of list */ {
@@ -2205,9 +2208,8 @@ ArgList : ArgListH {
 
 FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')' 
                   OptFuncAttrs OptSection OptAlign {
-  UnEscapeLexed($3);
-  std::string FunctionName($3);
-  free($3);  // Free strdup'd memory!
+  std::string FunctionName(*$3);
+  delete $3;  // Free strdup'd memory!
   
   // Check the function result for abstractness if this is a define. We should
   // have no abstract types at this point
@@ -2296,8 +2298,8 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   Fn->setCallingConv($1);
   Fn->setAlignment($9);
   if ($8) {
-    Fn->setSection($8);
-    free($8);
+    Fn->setSection(*$8);
+    delete $8;
   }
 
   // Add all of the arguments we parsed to the function...
@@ -2314,7 +2316,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     for (ArgListType::iterator I = $5->begin(); 
          I != $5->end() && ArgIt != ArgEnd; ++I, ++ArgIt) {
       delete I->Ty;                          // Delete the typeholder...
-      setValueName(ArgIt, I->Name);          // Insert arg into symtab...
+      setValueName(ArgIt, I->Name);       // Insert arg into symtab...
       CHECK_FOR_ERROR
       InsertValue(ArgIt);
       Idx++;
@@ -2426,13 +2428,9 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     CHECK_FOR_ERROR
   }
   | ASM_TOK OptSideEffect STRINGCONSTANT ',' STRINGCONSTANT {
-    char *End = UnEscapeLexed($3, true);
-    std::string AsmStr = std::string($3, End);
-    End = UnEscapeLexed($5, true);
-    std::string Constraints = std::string($5, End);
-    $$ = ValID::createInlineAsm(AsmStr, Constraints, $2);
-    free($3);
-    free($5);
+    $$ = ValID::createInlineAsm(*$3, *$5, $2);
+    delete $3;
+    delete $5;
     CHECK_FOR_ERROR
   };
 
@@ -2448,11 +2446,13 @@ SymbolicValueRef : LOCALVAL_ID {  // Is it an integer reference...?
     CHECK_FOR_ERROR
   }
   | LocalName {                   // Is it a named reference...?
-    $$ = ValID::createLocalName($1);
+    $$ = ValID::createLocalName(*$1);
+    delete $1;
     CHECK_FOR_ERROR
   }
   | GlobalName {                   // Is it a named reference...?
-    $$ = ValID::createGlobalName($1);
+    $$ = ValID::createGlobalName(*$1);
+    delete $1;
     CHECK_FOR_ERROR
   };
 
@@ -2508,8 +2508,10 @@ InstructionList : InstructionList Inst {
     CHECK_FOR_ERROR
   }
   | LABELSTR {             // Labelled (named) basic block
-    $$ = defineBBVal(ValID::createLocalName($1));
+    $$ = defineBBVal(ValID::createLocalName(*$1));
+    delete $1;
     CHECK_FOR_ERROR
+
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...

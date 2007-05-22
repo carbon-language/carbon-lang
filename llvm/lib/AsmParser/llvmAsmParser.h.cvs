@@ -307,7 +307,7 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 955 "/proj/llvm/llvm-2/lib/AsmParser/llvmAsmParser.y"
+#line 957 "/proj/llvm/llvm-4/lib/AsmParser/llvmAsmParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -343,8 +343,8 @@ typedef union YYSTYPE {
   double                            FPVal;
   bool                              BoolVal;
 
-  char                             *StrVal;   // This memory is strdup'd!
-  llvm::ValID                       ValIDVal; // strdup'd memory maybe!
+  std::string                      *StrVal;   // This memory must be deleted
+  llvm::ValID                       ValIDVal;
 
   llvm::Instruction::BinaryOps      BinaryOpVal;
   llvm::Instruction::TermOps        TermOpVal;
