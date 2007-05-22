@@ -27,6 +27,7 @@
 %{
 #include "ParserInternals.h"
 #include "llvm/Module.h"
+#include "llvm/Support/MathExtras.h"
 #include <list>
 #include "llvmAsmParser.h"
 #include <cctype>
@@ -95,17 +96,7 @@ static uint64_t HexIntToVal(const char *Buffer) {
 // point representation of it.
 //
 static double HexToFP(const char *Buffer) {
-  // Behave nicely in the face of C TBAA rules... see:
-  // http://www.nullstone.com/htmls/category/aliastyp.htm
-  union {
-    uint64_t UI;
-    double FP;
-  } UIntToFP;
-  UIntToFP.UI = HexIntToVal(Buffer);
-
-  assert(sizeof(double) == sizeof(uint64_t) &&
-         "Data sizes incompatible on this target!");
-  return UIntToFP.FP;   // Cast Hex constant to double
+  return BitsToDouble(HexIntToVal(Buffer));   // Cast Hex constant to double
 }
 
 
