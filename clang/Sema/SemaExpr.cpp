@@ -973,9 +973,9 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   
   assert(!qType.isNull() && "no type for * expression");
 
-  if (PointerType *PT = dyn_cast<PointerType>(qType))
+  if (PointerType *PT = dyn_cast<PointerType>(qType.getCanonicalType()))
     return PT->getPointeeType();
-  Diag(OpLoc, diag::err_typecheck_unary_expr, qType.getAsString(),
+  Diag(OpLoc, diag::err_typecheck_indirection_expr, qType.getAsString(),
        op->getSourceRange());
   return QualType();
 }
