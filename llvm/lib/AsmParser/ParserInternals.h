@@ -40,28 +40,22 @@ extern char* llvmAsmtext;
 extern int   llvmAsmleng;
 
 namespace llvm {
+class Module;
 
 // Globals exported by the parser...
 extern std::string CurFilename;   /// FIXME: Not threading friendly
 
-class Module;
+// RunVMAsmParser - Parse a file and return Module
 Module *RunVMAsmParser(const std::string &Filename, FILE *F);
 
 // Parse a string directly
 Module *RunVMAsmParser(const char * AsmString, Module * M);
 
-
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
-// appropriate character.  If AllowNull is set to false, a \00 value will cause
-// an error.
-//
-// If AllowNull is set to true, the return value of the function points to the
-// last character of the string in memory.
-//
-char *UnEscapeLexed(char *Buffer, bool AllowNull = false);
+// appropriate character.  
+char *UnEscapeLexed(char *Buffer);
 
-
-// ThrowException - Wrapper around the ParseException class that automatically
+// GenerateError - Wrapper around the ParseException class that automatically
 // fills in file line number and column number and options info.
 //
 // This also helps me because I keep typing 'throw new ParseException' instead
@@ -96,7 +90,7 @@ struct ValID {
 
   union {
     unsigned Num;         // If it's a numeric reference like %1234
-    char    *Name;        // If it's a named reference.  Memory must be free'd.
+    std::string *Name;    // If it's a named reference.  Memory must be deleted.
     int64_t  ConstPool64; // Constant pool reference.  This is the value
     uint64_t UConstPool64;// Unsigned constant pool reference.
     double   ConstPoolFP; // Floating point constant pool reference
@@ -110,11 +104,11 @@ struct ValID {
   static ValID createGlobalID(unsigned Num) {
     ValID D; D.Type = GlobalID; D.Num = Num; return D;
   }
-  static ValID createLocalName(char *Name) {
-    ValID D; D.Type = LocalName; D.Name = Name; return D;
+  static ValID createLocalName(const std::string &Name) {
+    ValID D; D.Type = LocalName; D.Name = new std::string(Name); return D;
   }
-  static ValID createGlobalName(char *Name) {
-    ValID D; D.Type = GlobalName; D.Name = Name; return D;
+  static ValID createGlobalName(const std::string &Name) {
+    ValID D; D.Type = GlobalName; D.Name = new std::string(Name); return D;
   }
   
   static ValID create(int64_t Val) {
@@ -156,7 +150,7 @@ struct ValID {
 
   inline void destroy() const {
     if (Type == LocalName || Type == GlobalName)
-      free(Name);    // Free this strdup'd memory.
+      delete Name;    // Free this strdup'd memory.
     else if (Type == InlineAsmVal)
       delete IAD;
   }
@@ -164,7 +158,7 @@ struct ValID {
   inline ValID copy() const {
     if (Type != LocalName && Type != GlobalName) return *this;
     ValID Result = *this;
-    Result.Name = strdup(Name);
+    Result.Name = new std::string(*Name);
     return Result;
   }
 
@@ -172,8 +166,8 @@ struct ValID {
     switch (Type) {
     case LocalID       : return '%' + utostr(Num);
     case GlobalID      : return '@' + utostr(Num);
-    case LocalName     : return Name;
-    case GlobalName    : return Name;
+    case LocalName     : return *Name;
+    case GlobalName    : return *Name;
     case ConstFPVal    : return ftostr(ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUndefVal : return "undef";
@@ -197,7 +191,7 @@ struct ValID {
     case LocalID:
     case GlobalID:      return Num < V.Num;
     case LocalName:
-    case GlobalName:    return strcmp(Name, V.Name) < 0;
+    case GlobalName:    return *Name < *V.Name;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
     case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;
@@ -215,7 +209,7 @@ struct ValID {
         case LocalID:
         case GlobalID: return Num == V.Num;
         case LocalName:
-        case GlobalName: return strcmp(Name, V.Name) == 0;
+        case GlobalName: return *Name == *(V.Name);
         case ConstSIntVal:  return ConstPool64  == V.ConstPool64;
         case ConstUIntVal:  return UConstPool64 == V.UConstPool64;
         case ConstFPVal:    return ConstPoolFP  == V.ConstPoolFP;
@@ -240,7 +234,7 @@ typedef std::vector<TypeWithAttrs> TypeWithAttrsList;
 struct ArgListEntry {
   uint16_t Attrs;
   llvm::PATypeHolder *Ty;
-  char *Name;
+  std::string *Name;
 };
 
 typedef std::vector<struct ArgListEntry> ArgListType;
