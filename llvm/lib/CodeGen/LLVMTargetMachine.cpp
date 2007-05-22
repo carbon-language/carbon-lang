@@ -78,7 +78,7 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
-    PM.add(createBranchFoldingPass(DoTailMergeDefault()));
+    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
     
   // Fold redundant debug labels.
   PM.add(createDebugLabelFoldingPass());
@@ -181,7 +181,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
-    PM.add(createBranchFoldingPass(DoTailMergeDefault()));
+    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
   
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));

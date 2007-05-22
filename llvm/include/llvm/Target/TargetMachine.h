@@ -185,9 +185,9 @@ public:
     AssemblyFile, ObjectFile, DynamicLibrary
   };
 
-  /// DoTailMergeDefault - Whether it is generally a good idea to do this
+  /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
   /// on this target.  User flag overrides.
-  virtual const bool DoTailMergeDefault() const { return true; }
+  virtual const bool getEnableTailMergeDefault() const { return true; }
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
@@ -320,9 +320,9 @@ public:
     return true;
   }
 
-  /// DoTailMergeDefault - Whether it is generally a good idea to do this
+  /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
   /// on this target.  User flag overrides.
-  virtual const bool DoTailMergeDefault() const { return true; }
+  virtual const bool getEnableTailMergeDefault() const { return true; }
 };
 
 } // End llvm namespace
