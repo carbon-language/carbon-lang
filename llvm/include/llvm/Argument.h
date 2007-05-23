@@ -46,12 +46,6 @@ public:
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
 
-  // getNext/Prev - Return the next or previous argument in the list.
-        Argument *getNext()       { return Next; }
-  const Argument *getNext() const { return Next; }
-        Argument *getPrev()       { return Prev; }
-  const Argument *getPrev() const { return Prev; }
-
   virtual void print(std::ostream &OS) const;
   void print(std::ostream *OS) const {
     if (OS) print(*OS);
@@ -64,6 +58,13 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueID() == ArgumentVal;
   }
+  
+private:
+  // getNext/Prev - Return the next or previous argument in the list.
+  Argument *getNext()       { return Next; }
+  const Argument *getNext() const { return Next; }
+  Argument *getPrev()       { return Prev; }
+  const Argument *getPrev() const { return Prev; }
 };
 
 } // End llvm namespace
