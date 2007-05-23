@@ -7,7 +7,8 @@
 # 
 ##===----------------------------------------------------------------------===##
 #
-#  This implements the AST library for the C-Language front-end.
+#  This implements the semantic analyzer and AST builder library for the 
+#  C-Language front-end.
 #
 ##===----------------------------------------------------------------------===##
 
