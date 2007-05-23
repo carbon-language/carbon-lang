@@ -627,7 +627,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   
   if (BitWidth) {
     // TODO: Validate.
-    printf("WARNING: BITFIELDS IGNORED!\n");
+    //printf("WARNING: BITFIELDS IGNORED!\n");
     
     // 6.7.2.1p3
     // 6.7.2.1p4

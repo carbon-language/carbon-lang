@@ -23,7 +23,8 @@ class IdentifierInfo;
 class Expr;
 class Stmt;
 class FunctionDecl;
-  
+
+
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
 ///
@@ -62,10 +63,12 @@ private:
   /// Decls are relinked onto a containing decl object.
   ///
   Decl *Next;
-  
+
 protected:
   Decl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-    : DeclKind(DK), Loc(L), Identifier(Id), Next(0) {}
+    : DeclKind(DK), Loc(L), Identifier(Id), Next(0) {
+    if (Decl::CollectingStats()) addDeclKind(DK);
+  }
   virtual ~Decl();
   
 public:
@@ -95,7 +98,11 @@ public:
       return IDNS_Tag;
     }
   }
-  
+  // global temp stats (until we have a per-module visitor)
+  static void addDeclKind(const Kind k);
+  static bool CollectingStats(bool enable=false);
+  static void PrintStats();
+    
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
 };

@@ -944,6 +944,11 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 //===----------------------------------------------------------------------===//
 
 static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
+  // collect global stats on Decls/Stmts (until we have a module streamer)
+  if (Stats) {
+    Decl::CollectingStats(true);
+    Stmt::CollectingStats(true);
+  }
   ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   while (ASTStreamer_ReadTopLevelDecl(Streamer))
@@ -953,6 +958,8 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
     std::cerr << "\nSTATISTICS:\n";
     ASTStreamer_PrintStats(Streamer);
     Context.PrintStats();
+    Decl::PrintStats();
+    Stmt::PrintStats();
   }
   
   ASTStreamer_Terminate(Streamer);

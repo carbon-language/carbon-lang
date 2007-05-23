@@ -39,12 +39,19 @@ public:
 private:
   const StmtClass sClass;
 public:
-  Stmt(StmtClass SC) : sClass(SC) {}
+  Stmt(StmtClass SC) : sClass(SC) { 
+    if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
+  }
   virtual ~Stmt() {}
 
   StmtClass getStmtClass() const { return sClass; }
   const char *getStmtClassName() const;
 
+  // global temp stats (until we have a per-module visitor)
+  static void addStmtClass(const StmtClass s);
+  static bool CollectingStats(bool enable=false);
+  static void PrintStats();
+  
   void dump() const;
   void print(std::ostream &OS) const;
   

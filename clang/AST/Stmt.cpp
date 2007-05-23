@@ -24,13 +24,15 @@ void CLASS::visit(StmtVisitor &V) { return V.Visit##CLASS(this); }
 STMT(0, Stmt, )
 #include "clang/AST/StmtNodes.def"
 
-static const struct StmtClassNameTable {
+static struct StmtClassNameTable {
   int enumValue;
   const char *className;
+  unsigned counter;
+  unsigned size;
 } sNames[] = {
-#define STMT(N, CLASS, PARENT) { N, #CLASS },
+#define STMT(N, CLASS, PARENT) { N, #CLASS, 0, sizeof(CLASS) },
 #include "clang/AST/StmtNodes.def"
-  { 0, 0 }
+  { 0, 0, 0, 0 }
 };
   
 const char *Stmt::getStmtClassName() const {
@@ -40,4 +42,35 @@ const char *Stmt::getStmtClassName() const {
   }
   return 0; // should never happen....
 }
-  
+
+void Stmt::PrintStats() {
+  unsigned sum = 0;
+  fprintf(stderr, "*** Stmt/Expr Stats:\n");
+  for (int i = 0; sNames[i].className; i++) {
+    sum += sNames[i].counter;
+  }
+  fprintf(stderr, "  %d stmts/exprs total.\n", sum);
+  sum = 0;
+  for (int i = 0; sNames[i].className; i++) {
+    fprintf(stderr, "    %d %s, %d each (%d bytes)\n", 
+      sNames[i].counter, sNames[i].className, sNames[i].size, sNames[i].counter*sNames[i].size);
+    sum += sNames[i].counter*sNames[i].size;
+  }
+  fprintf(stderr, "Total bytes = %d\n", sum);
+}
+
+void Stmt::addStmtClass(StmtClass s) {
+  for (int i = 0; sNames[i].className; i++) {
+    if (s == sNames[i].enumValue)
+      sNames[i].counter++;
+  }
+}
+
+static bool StatSwitch = false;
+
+bool Stmt::CollectingStats(bool enable) {
+  if (enable) StatSwitch = true;
+	return StatSwitch;
+}
+
+
