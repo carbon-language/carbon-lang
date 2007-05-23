@@ -2852,7 +2852,7 @@ private:
       
       EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
-      EmitSectionOffset("eh_frame_begin", "section_eh_frame",
+      EmitSectionOffset("eh_frame_begin", "eh_frame_common",
                         EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
                         true, true);
       Asm->EOL("FDE CIE offset");

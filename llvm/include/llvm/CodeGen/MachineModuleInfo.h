@@ -967,6 +967,7 @@ struct LandingPadInfo {
   LandingPadInfo(MachineBasicBlock *MBB)
   : LandingPadBlock(MBB)
   , LandingPadLabel(0)
+  , Personality(NULL)  
   , TypeIds()
   , IsFilter(false)
   {}

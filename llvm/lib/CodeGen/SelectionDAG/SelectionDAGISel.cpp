@@ -529,8 +529,9 @@ public:
   void ExportFromCurrentBlock(Value *V);
   void LowerCallTo(Instruction &I,
                    const Type *CalledValueTy, unsigned CallingConv,
-                   bool IsTailCall, SDOperand Callee, unsigned OpIdx);
-                                         
+                   bool IsTailCall, SDOperand Callee, unsigned OpIdx,
+                   MachineBasicBlock *LandingPad = NULL);
+  
   // Terminator instructions.
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
@@ -1341,31 +1342,13 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I, bool AsTerminator) {
   if (!AsTerminator) {
     // Mark landing pad so that it doesn't get deleted in branch folding.
     LandingPad->setIsLandingPad();
-    
-    // Insert a label before the invoke call to mark the try range.
-    // This can be used to detect deletion of the invoke via the
-    // MachineModuleInfo.
-    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    unsigned BeginLabel = MMI->NextLabelID();
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                            DAG.getConstant(BeginLabel, MVT::i32)));
-
+        
     LowerCallTo(I, I.getCalledValue()->getType(),
-                   I.getCallingConv(),
-                   false,
-                   getValue(I.getOperand(0)),
-                   3);
+                I.getCallingConv(),
+                false,
+                getValue(I.getOperand(0)),
+                3, LandingPad);
 
-    // Insert a label before the invoke call to mark the try range.
-    // This can be used to detect deletion of the invoke via the
-    // MachineModuleInfo.
-    unsigned EndLabel = MMI->NextLabelID();
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                            DAG.getConstant(EndLabel, MVT::i32)));
-                            
-    // Inform MachineModuleInfo of range.    
-    MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
-                            
     // Update successor info
     CurMBB->addSuccessor(Return);
     CurMBB->addSuccessor(LandingPad);
@@ -2782,11 +2765,14 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
                                        const Type *CalledValueTy,
                                        unsigned CallingConv,
                                        bool IsTailCall,
-                                       SDOperand Callee, unsigned OpIdx) {
+                                       SDOperand Callee, unsigned OpIdx,
+                                       MachineBasicBlock *LandingPad) {
   const PointerType *PT = cast<PointerType>(CalledValueTy);
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
   const ParamAttrsList *Attrs = FTy->getParamAttrs();
-
+  MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+  unsigned BeginLabel = 0, EndLabel = 0;
+    
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
   Args.reserve(I.getNumOperands());
@@ -2803,6 +2789,14 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Args.push_back(Entry);
   }
 
+  if (ExceptionHandling) {
+    // Insert a label before the invoke call to mark the try range.  This can be
+    // used to detect deletion of the invoke via the MachineModuleInfo.
+    BeginLabel = MMI->NextLabelID();
+    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
+                            DAG.getConstant(BeginLabel, MVT::i32)));
+  }
+  
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), 
                     Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt),
@@ -2811,6 +2805,17 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
   if (I.getType() != Type::VoidTy)
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
+
+  if (ExceptionHandling) {
+    // Insert a label at the end of the invoke call to mark the try range.  This
+    // can be used to detect deletion of the invoke via the MachineModuleInfo.
+    EndLabel = MMI->NextLabelID();
+    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
+                            DAG.getConstant(EndLabel, MVT::i32)));
+
+    // Inform MachineModuleInfo of range.    
+    MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
+  }
 }
 
 
@@ -2871,12 +2876,12 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     Callee = getValue(I.getOperand(0));
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
-    
+
   LowerCallTo(I, I.getCalledValue()->getType(),
-                 I.getCallingConv(),
-                 I.isTailCall(),
-                 Callee,
-                 1);
+              I.getCallingConv(),
+              I.isTailCall(),
+              Callee,
+              1);
 }
 
 

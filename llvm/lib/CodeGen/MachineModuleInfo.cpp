@@ -1723,7 +1723,9 @@ void MachineModuleInfo::TidyLandingPads() {
     LandingPadInfo &LandingPad = LandingPads[i];
     LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
 
-    if (!LandingPad.LandingPadLabel) {
+    // Special case: we *should* emit LPs with null LP MBB. This indicates
+    // "rethrow" case.
+    if (!LandingPad.LandingPadLabel && LandingPad.LandingPadBlock) {
       LandingPads.erase(LandingPads.begin() + i);
       continue;
     }
@@ -1768,9 +1770,15 @@ Function *MachineModuleInfo::getPersonality() const {
 /// getPersonalityIndex - Return unique index for current personality
 /// function. NULL personality function should always get zero index.
 unsigned MachineModuleInfo::getPersonalityIndex() const {
-  const Function* Personality = (!LandingPads.empty() ?
-                                 LandingPads[0].Personality : NULL);
-
+  const Function* Personality = NULL;
+  
+  // Scan landing pads. If there is at least one non-NULL personality - use it.
+  for (unsigned i = 0; i != LandingPads.size(); ++i)
+    if (LandingPads[i].Personality) {
+      Personality = LandingPads[i].Personality;
+      break;
+    }
+  
   for (unsigned i = 0; i < Personalities.size(); ++i) {
     if (Personalities[i] == Personality)
       return i;
