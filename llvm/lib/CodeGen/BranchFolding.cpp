@@ -234,10 +234,15 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
   return Hash;
 }
 
-/// HashEndOfMBB - Hash the last two instructions in the MBB.  We hash two
-/// instructions, because cross-jumping only saves code when at least two
-/// instructions are removed (since a branch must be inserted).
-static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
+/// HashEndOfMBB - Hash the last few instructions in the MBB.  For blocks
+/// with no successors, we hash two instructions, because cross-jumping 
+/// only saves code when at least two instructions are removed (since a 
+/// branch must be inserted).  For blocks with a successor, one of the
+/// two blocks to be tail-merged will end with a branch already, so
+/// it gains to cross-jump even for one instruction.
+
+static unsigned HashEndOfMBB(const MachineBasicBlock *MBB,
+                             unsigned minCommonTailLength) {
   MachineBasicBlock::const_iterator I = MBB->end();
   if (I == MBB->begin())
     return 0;   // Empty MBB.
@@ -245,7 +250,7 @@ static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
   --I;
   unsigned Hash = HashMachineInstr(I);
     
-  if (I == MBB->begin())
+  if (I == MBB->begin() || minCommonTailLength == 1)
     return Hash;   // Single instr MBB.
   
   --I;
@@ -425,6 +430,7 @@ static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
 
 bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
                                   MachineBasicBlock* PredBB) {
+  unsigned minCommonTailLength = (SuccBB ? 1 : 2);
   MadeChange = false;
   
   // Sort by hash value so that blocks with identical end sequences sort
@@ -446,44 +452,42 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
       continue;
     }
     
-    // Determine the actual length of the shared tail between these two basic
-    // blocks.  Because the hash can have collisions, it's possible that this is
-    // less than 2.
-    MachineBasicBlock::iterator BBI1, BBI2;
-    unsigned CommonTailLen = 
-      ComputeCommonTailLength(CurMBB, (MergePotentials.end()-2)->second, 
-                              BBI1, BBI2);
-    
-    // If the tails don't have at least two instructions in common, see if there
-    // is anything else in the equivalence class that does match.
+    // Look through all the blocks that have the same hash as this one, and
+    // find the one that has the largest number of instructions in common.  
     // Since instructions may get combined later (e.g. single stores into
     // store multiple) this measure is not particularly accurate.
-    if (CommonTailLen < 2) {
-      unsigned FoundMatch = ~0U;
-      for (int i = MergePotentials.size()-2;
-           i != -1 && MergePotentials[i].first == CurHash; --i) {
-        CommonTailLen = ComputeCommonTailLength(CurMBB, 
-                                                MergePotentials[i].second,
-                                                BBI1, BBI2);
-        if (CommonTailLen >= 2) {
-          FoundMatch = i;
-          break;
-        }
+    MachineBasicBlock::iterator BBI1, BBI2;
+    
+    unsigned FoundMatch = ~0U;
+    unsigned maxCommonTailLength = 0U;
+    for (int i = MergePotentials.size()-2;
+         i != -1 && MergePotentials[i].first == CurHash; --i) {
+      MachineBasicBlock::iterator TrialBBI1, TrialBBI2;
+      unsigned CommonTailLen = ComputeCommonTailLength(CurMBB, 
+                                              MergePotentials[i].second,
+                                              TrialBBI1, TrialBBI2);
+      if (CommonTailLen >= minCommonTailLength &&
+          CommonTailLen >= maxCommonTailLength) {
+        FoundMatch = i;
+        maxCommonTailLength = CommonTailLen;
+        BBI1 = TrialBBI1;
+        BBI2 = TrialBBI2;
       }
-      
-      // If we didn't find anything that has at least two instructions matching
-      // this one, bail out.
-      if (FoundMatch == ~0U) {
-        // Put the unconditional branch back, if we need one.
-        if (SuccBB && CurMBB != PredBB)
-          FixTail(CurMBB, SuccBB, TII);
-        MergePotentials.pop_back();
-        continue;
-      }
-      
-      // Otherwise, move the matching block to the right position.
-      std::swap(MergePotentials[FoundMatch], *(MergePotentials.end()-2));
+    }      
+
+    // If we didn't find anything that has at least minCommonTailLength 
+    // instructions matching this one, bail out.
+    if (FoundMatch == ~0U) {
+      // Put the unconditional branch back, if we need one.
+      if (SuccBB && CurMBB != PredBB)
+        FixTail(CurMBB, SuccBB, TII);
+      MergePotentials.pop_back();
+      continue;
     }
+      
+    // Otherwise, move the matching block to the right position.
+    if (FoundMatch != MergePotentials.size()-2)
+      std::swap(MergePotentials[FoundMatch], *(MergePotentials.end()-2));
 
     MachineBasicBlock *MBB2 = (MergePotentials.end()-2)->second;
 
@@ -541,7 +545,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   MergePotentials.clear();
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     if (I->succ_empty())
-      MergePotentials.push_back(std::make_pair(HashEndOfMBB(I), I));
+      MergePotentials.push_back(std::make_pair(HashEndOfMBB(I, 2U), I));
   }
   // See if we can do any tail merging on those.
   MadeChange |= TryMergeBlocks(NULL, NULL);
@@ -596,7 +600,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
               // reinsert conditional branch only, for now
               TII->InsertBranch(*PBB, (TBB==IBB) ? FBB : TBB, 0, NewCond);
           }
-          MergePotentials.push_back(std::make_pair(HashEndOfMBB(PBB), *P));
+          MergePotentials.push_back(std::make_pair(HashEndOfMBB(PBB, 1U), *P));
         }
       }
     if (MergePotentials.size() >= 2)
