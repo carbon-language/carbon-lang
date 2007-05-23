@@ -364,7 +364,7 @@ void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
   PrintExpr(Node->getCond());
   OS << " ? ";
   PrintExpr(Node->getLHS());
-  std::cerr << " : ";
+  OS << " : ";
   PrintExpr(Node->getRHS());
 }
 
