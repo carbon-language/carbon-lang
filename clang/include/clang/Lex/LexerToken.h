@@ -23,7 +23,7 @@ namespace clang {
 class IdentifierInfo;
 
 /// LexerToken - This structure provides full information about a lexed token.
-/// it is not intended to be space efficient, it is intended to return as much
+/// It is not intended to be space efficient, it is intended to return as much
 /// information as possible about each returned token.  This is expected to be
 /// compressed into a smaller form if memory footprint is important.
 class LexerToken {
