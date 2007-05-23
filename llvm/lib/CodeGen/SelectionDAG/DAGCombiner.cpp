@@ -352,7 +352,10 @@ CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
 /// isNegatibleForFree - Return 1 if we can compute the negated form of the
 /// specified expression for the same cost as the expression itself, or 2 if we
 /// can compute the negated form more cheaply than the expression itself.
-static char isNegatibleForFree(SDOperand Op) {
+static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
+  // Don't recurse exponentially.
+  if (Depth > 6) return false;
+  
   // fneg is removable even if it has multiple uses.
   if (Op.getOpcode() == ISD::FNEG) return 2;
   
@@ -368,10 +371,10 @@ static char isNegatibleForFree(SDOperand Op) {
     if (!UnsafeFPMath) return 0;
     
     // -(A+B) -> -A - B
-    if (char V = isNegatibleForFree(Op.getOperand(0)))
+    if (char V = isNegatibleForFree(Op.getOperand(0), Depth+1))
       return V;
     // -(A+B) -> -B - A
-    return isNegatibleForFree(Op.getOperand(1));
+    return isNegatibleForFree(Op.getOperand(1), Depth+1);
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
     if (!UnsafeFPMath) return 0;
@@ -384,15 +387,15 @@ static char isNegatibleForFree(SDOperand Op) {
     if (HonorSignDependentRoundingFPMath()) return 0;
     
     // -(X*Y) -> (-X * Y) or (X*-Y)
-    if (char V = isNegatibleForFree(Op.getOperand(0)))
+    if (char V = isNegatibleForFree(Op.getOperand(0), Depth+1))
       return V;
       
-    return isNegatibleForFree(Op.getOperand(1));
+    return isNegatibleForFree(Op.getOperand(1), Depth+1);
     
   case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
   case ISD::FSIN:
-    return isNegatibleForFree(Op.getOperand(0));
+    return isNegatibleForFree(Op.getOperand(0), Depth+1);
   }
 }
 
