@@ -351,9 +351,11 @@ void AliasSetTracker::add(const AliasSetTracker &AST) {
       // Loop over all of the pointers in this alias set...
       AliasSet::iterator I = AS.begin(), E = AS.end();
       bool X;
-      for (; I != E; ++I)
-        addPointer(I.getPointer(), I.getSize(),
-                   (AliasSet::AccessType)AS.AccessTy, X);
+      for (; I != E; ++I) {
+        AliasSet &NewAS = addPointer(I.getPointer(), I.getSize(),
+                                     (AliasSet::AccessType)AS.AccessTy, X);
+        if (AS.isVolatile()) NewAS.setVolatile();
+      }
     }
 }
 
