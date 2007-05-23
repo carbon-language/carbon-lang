@@ -298,11 +298,6 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   return NewMIs[0];
 }
 
-static bool isPredicated(MachineInstr *MI) {
-  MachineOperand *PMO = MI->findFirstPredOperand();
-  return PMO && PMO->getImmedValue() != ARMCC::AL;
-}
-
 // Branch analysis.
 bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
@@ -436,23 +431,53 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   return false;
 }
 
+bool ARMInstrInfo::isPredicated(MachineInstr *MI) const {
+  MachineOperand *PMO = MI->findFirstPredOperand();
+  return PMO && PMO->getImmedValue() != ARMCC::AL;
+}
+
 bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
-                                      std::vector<MachineOperand> &Cond) const {
+                                      std::vector<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setInstrDescriptor(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
-    MI->addImmOperand(Cond[0].getImmedValue());
+    MI->addImmOperand(Pred[0].getImmedValue());
     return true;
   }
 
   MachineOperand *PMO = MI->findFirstPredOperand();
   if (PMO) {
-    PMO->setImm(Cond[0].getImmedValue());
+    PMO->setImm(Pred[0].getImmedValue());
     return true;
   }
   return false;
 }
 
+bool ARMInstrInfo::SubsumesPredicate(std::vector<MachineOperand> &Pred1,
+                                     std::vector<MachineOperand> &Pred2) const{
+  if (Pred1.size() > 1 || Pred2.size() > 1)
+    return false;
+
+  ARMCC::CondCodes CC1 = (ARMCC::CondCodes)Pred1[0].getImmedValue();
+  ARMCC::CondCodes CC2 = (ARMCC::CondCodes)Pred2[0].getImmedValue();
+  if (CC1 == CC2)
+    return true;
+
+  switch (CC1) {
+  default:
+    return false;
+  case ARMCC::AL:
+    return true;
+  case ARMCC::HS:
+    return CC2 == ARMCC::HI || CC2 == ARMCC::EQ;
+  case ARMCC::LS:
+    return CC2 == ARMCC::LO || CC2 == ARMCC::EQ;
+  case ARMCC::GE:
+    return CC2 == ARMCC::GT || CC2 == ARMCC::EQ;
+  case ARMCC::LE:  return "le";
+    return CC2 == ARMCC::LT || CC2 == ARMCC::EQ;
+  }
+}
 
 /// FIXME: Works around a gcc miscompilation with -fstrict-aliasing
 static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
