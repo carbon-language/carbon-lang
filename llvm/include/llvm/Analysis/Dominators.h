@@ -199,6 +199,7 @@ public:
   void print(std::ostream *OS, const Module* M = 0) const {
     if (OS) print(*OS, M);
   }
+  virtual void dump();
 };
 
 //===-------------------------------------
@@ -372,6 +373,7 @@ public:
   void print(std::ostream *OS, const Module* M = 0) const {
     if (OS) print(*OS, M);
   }
+  virtual void dump();
 protected:
   /// getNode - return the (Post)DominatorTree node for the specified basic
   /// block.  This is the same as using operator[] on this class.
@@ -467,6 +469,7 @@ public:
   void print(std::ostream *OS, const Module* M = 0) const {
     if (OS) print(*OS, M);
   }
+  virtual void dump();
 };
 
 

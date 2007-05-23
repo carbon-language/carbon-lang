@@ -21,6 +21,7 @@
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/Streams.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -363,6 +364,10 @@ void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
   PrintDomTree(getRootNode(), o, 1);
 }
 
+void DominatorTreeBase::dump() {
+  print (llvm::cerr);
+}
+
 bool DominatorTree::runOnFunction(Function &F) {
   reset();     // Reset from the last time we were run...
   Roots.push_back(&F.getEntryBlock());
@@ -475,6 +480,11 @@ void DominanceFrontierBase::print(std::ostream &o, const Module* ) const {
     o << " is:\t" << I->second << "\n";
   }
 }
+
+void DominanceFrontierBase::dump() {
+  print (llvm::cerr);
+}
+
 
 //===----------------------------------------------------------------------===//
 // ETOccurrence Implementation
@@ -1018,4 +1028,8 @@ void ETForestBase::print(std::ostream &o, const Module *) const {
     o << "\n";
   }
   o << "\n";
+}
+
+void ETForestBase::dump() {
+  print (llvm::cerr);
 }
