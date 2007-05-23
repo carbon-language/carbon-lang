@@ -30,7 +30,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
-#include <iostream>
 using namespace llvm;
 using namespace clang;
 

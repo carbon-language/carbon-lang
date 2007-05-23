@@ -13,7 +13,6 @@
 
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
-#include <iostream>
 using namespace llvm;
 using namespace clang;
 
