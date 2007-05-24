@@ -717,12 +717,20 @@ static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
         I->getOperand(i).setMachineBasicBlock(New);
   }
 
-  // Update the successor information.
+  // Update the successor information.  If New was already a successor, just
+  // remove the link to Old instead of creating another one.  PR 1444.
+  bool HadSuccessorNew = false;
   std::vector<MachineBasicBlock*> Succs(BB->succ_begin(), BB->succ_end());
+  for (int i = Succs.size()-1; i >= 0; --i)
+    if (Succs[i] == New) {
+      HadSuccessorNew = true;
+      break;
+    }
   for (int i = Succs.size()-1; i >= 0; --i)
     if (Succs[i] == Old) {
       BB->removeSuccessor(Old);
-      BB->addSuccessor(New);
+      if (!HadSuccessorNew)
+        BB->addSuccessor(New);
     }
 }
 
