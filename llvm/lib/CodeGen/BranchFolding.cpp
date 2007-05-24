@@ -672,7 +672,10 @@ static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB,
   
   MachineBasicBlock::pred_iterator SI = MBB.succ_begin();
   while (SI != MBB.succ_end()) {
-    if (*SI == DestA) {
+    if (*SI == DestA && DestA == DestB) {
+      DestA = DestB = 0;
+      ++SI;
+    } else if (*SI == DestA) {
       DestA = 0;
       ++SI;
     } else if (*SI == DestB) {
