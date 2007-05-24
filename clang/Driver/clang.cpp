@@ -52,6 +52,7 @@ static cl::opt<bool>
 Stats("stats", cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
+  EmitLLVM,                     // Emit a .ll file.
   ParseASTPrint,                // Parse ASTs and print them.
   ParseAST,                     // Parse ASTs.
   ParsePrintCallbacks,          // Parse and print each callback.
@@ -82,6 +83,8 @@ ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
                         "Run parser and build ASTs"),
              clEnumValN(ParseASTPrint, "parse-ast-print",
                         "Run parser, build ASTs, then print ASTs"),
+             clEnumValN(EmitLLVM, "emit-llvm",
+                        "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
@@ -1140,6 +1143,9 @@ static void ProcessInputFile(const std::string &InFile,
     break;
   case ParseASTPrint:
     PrintASTs(PP, MainFileID);
+    break;
+  case EmitLLVM:
+    EmitLLVMFromASTs(PP, MainFileID, Stats);
     break;
   }
   

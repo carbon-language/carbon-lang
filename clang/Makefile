@@ -1,5 +1,5 @@
 LEVEL = ../..
-DIRS := Basic Lex Parse AST Sema Driver
+DIRS := Basic Lex Parse AST Sema CodeGen Driver
 
 include $(LEVEL)/Makefile.common
 

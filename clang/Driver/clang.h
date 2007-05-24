@@ -34,6 +34,10 @@ MinimalAction *CreatePrintParserActionsAction();
 /// the -arch command line option.
 TargetInfo *CreateTargetInfo(Diagnostic &Diags);
 
+
+void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
+                      bool PrintStats);
+  
 }  // end namespace clang
 }  // end namespace llvm
 
