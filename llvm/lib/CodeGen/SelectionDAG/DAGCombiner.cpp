@@ -3267,12 +3267,12 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     return false;
   
   // Try turning it into a pre-indexed load / store except when:
-  // 1) The base is a frame index.
-  // 2) If N is a store and the ptr is either the same as or is a
+  // 1) The new base ptr is a frame index.
+  // 2) If N is a store and the new base ptr is either the same as or is a
   //    predecessor of the value being stored.
-  // 3) Another use of base ptr is a predecessor of N. If ptr is folded
+  // 3) Another use of old base ptr is a predecessor of N. If ptr is folded
   //    that would create a cycle.
-  // 4) All uses are load / store ops that use it as base ptr.
+  // 4) All uses are load / store ops that use it as old base ptr.
 
   // Check #1.  Preinc'ing a frame index would require copying the stack pointer
   // (plus the implicit offset) to a register to preinc anyway.
@@ -3282,11 +3282,11 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   // Check #2.
   if (!isLoad) {
     SDOperand Val = cast<StoreSDNode>(N)->getValue();
-    if (Val == Ptr || Ptr.Val->isPredecessor(Val.Val))
+    if (Val == BasePtr || BasePtr.Val->isPredecessor(Val.Val))
       return false;
   }
 
-  // Now check for #2 and #3.
+  // Now check for #3 and #4.
   bool RealUse = false;
   for (SDNode::use_iterator I = Ptr.Val->use_begin(),
          E = Ptr.Val->use_end(); I != E; ++I) {
