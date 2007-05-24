@@ -266,32 +266,37 @@ bool Expr::isConstantExpr(bool isIntConst, SourceLocation &loc) const {
   }
 }
 
-// C99 6.3.2.3p3: FIXME: If we have an integer constant expression, we need
-// to *evaluate* it and test for the value 0. The current code is too 
-// simplistic...it only allows for the integer literal "0". 
-// For example, the following is valid code:
-//
-//  void test1() { *(n ? p : (void *)(7-7)) = 1; }
-//
+/// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
+/// integer constant expression with the value zero, or if this is one that is
+/// cast to void*.
 bool Expr::isNullPointerConstant() const {
-  const IntegerLiteral *constant = 0;
-  
-  switch (getStmtClass()) {
-  case IntegerLiteralClass:
-    constant = cast<IntegerLiteral>(this);
-    break;
-  case CastExprClass: 
-    const CastExpr *cExpr = cast<CastExpr>(this);
-    if (const PointerType *p = dyn_cast<PointerType>(cExpr->getDestType())) {
-      QualType t = p->getPointeeType();
-      // the type needs to be "void *" (no qualifiers are permitted)
-      if (!t.getQualifiers() && t->isVoidType())
-        constant = dyn_cast<IntegerLiteral>(cExpr->getSubExpr());  
+  // Strip off a cast to void*, if it exists.
+  if (const CastExpr *CE = dyn_cast<CastExpr>(this)) {
+    // Check that it is a cast to void*.
+    if (const PointerType *PT = dyn_cast<PointerType>(CE->getType())) {
+      QualType Pointee = PT->getPointeeType();
+      if (Pointee.getQualifiers() == 0 && Pointee->isVoidType() && // to void*
+          CE->getSubExpr()->getType()->isIntegerType())            // from int.
+        return CE->getSubExpr()->isNullPointerConstant();
     }
-    break;
-  default: 
-    return false;
+  } else if (const ParenExpr *PE = dyn_cast<ParenExpr>(this)) {
+    // Accept ((void*)0) as a null pointer constant, as many other
+    // implementations do.
+    return PE->getSubExpr()->isNullPointerConstant();
   }
   
-  return constant && constant->getValue() == 0;
+  // This expression must be an integer type.
+  if (!getType()->isIntegerType())
+    return false;
+  
+  // FIXME: If we have an integer constant expression, we need
+  // to *evaluate* it and test for the value 0. The current code is too 
+  // simplistic...it only allows for the integer literal "0". 
+  // For example, the following is valid code:
+  //
+  //  void test1() { *(n ? p : (void *)(7-7)) = 1; }
+  //
+  if (const IntegerLiteral *C = dyn_cast<IntegerLiteral>(this))
+    return C->getValue() == 0;
+  return false;
 }
