@@ -131,8 +131,8 @@ private:
 
 } // end clang.
 
-/// Implement simplify_type for QualType, so that we can dyn_cast from QualType to
-/// a specific Type class.
+/// Implement simplify_type for QualType, so that we can dyn_cast from QualType
+/// to a specific Type class.
 template<> struct simplify_type<const clang::QualType> {
   typedef clang::Type* SimpleType;
   static SimpleType getSimplifiedValue(const clang::QualType &Val) {
@@ -183,7 +183,7 @@ private:
   TypeClass TC : 3;
 protected:
   Type(TypeClass tc, QualType Canonical)
-    : CanonicalType(Canonical.isNull() ? QualType(this,0) : Canonical), TC(tc) {}
+    : CanonicalType(Canonical.isNull() ? QualType(this,0) : Canonical), TC(tc){}
   virtual ~Type();
   friend class ASTContext;
 public:  
@@ -327,7 +327,8 @@ private:
   /// Variable Length Arrays). VLA's are only permitted within a function block. 
   Expr *SizeExpr;
   
-  ArrayType(QualType et, ArraySizeModifier sm, unsigned tq, QualType can, Expr *e)
+  ArrayType(QualType et, ArraySizeModifier sm, unsigned tq, QualType can,
+            Expr *e)
     : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et),
       SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
@@ -368,7 +369,7 @@ class FunctionType : public Type {
   // The type returned by the function.
   QualType ResultType;
 protected:
-  FunctionType(TypeClass tc, QualType res, bool SubclassInfo, QualType Canonical)
+  FunctionType(TypeClass tc, QualType res, bool SubclassInfo,QualType Canonical)
     : Type(tc, Canonical), SubClassData(SubclassInfo), ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
 public:
