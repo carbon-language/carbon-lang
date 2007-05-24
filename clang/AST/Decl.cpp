@@ -21,7 +21,7 @@ static unsigned nFuncs = 0;
 static unsigned nBlockVars = 0;
 static unsigned nFileVars = 0;
 static unsigned nParmVars = 0;
-static unsigned nSUE = 0;
+static unsigned nSUC = 0;
 static unsigned nEnumConst = 0;
 static unsigned nEnumDecls = 0;
 static unsigned nTypedef = 0;
@@ -36,7 +36,7 @@ bool Decl::CollectingStats(bool enable) {
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
-	  int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUE+
+	  int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUC+
 	      nEnumDecls+nEnumConst+nTypedef));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
 	  nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
@@ -52,9 +52,9 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
 	  nFieldDecls, (int)sizeof(FieldDecl),
 	  int(nFieldDecls*sizeof(FieldDecl)));
-  fprintf(stderr, "    %d struct/union/enum decls, %d each (%d bytes)\n", 
-	  nSUE, (int)sizeof(RecordDecl),
-	  int(nSUE*sizeof(RecordDecl)));
+  fprintf(stderr, "    %d struct/union/class decls, %d each (%d bytes)\n", 
+	  nSUC, (int)sizeof(RecordDecl),
+	  int(nSUC*sizeof(RecordDecl)));
   fprintf(stderr, "    %d enum decls, %d each (%d bytes)\n", 
 	  nEnumDecls, (int)sizeof(EnumDecl), 
 	  int(nEnumDecls*sizeof(EnumDecl)));
@@ -66,7 +66,7 @@ void Decl::PrintStats() {
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
-	      nFieldDecls*sizeof(FieldDecl)+nSUE*sizeof(RecordDecl)+
+	      nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
 	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
 	      nTypedef*sizeof(TypedefDecl)));
 }
@@ -97,7 +97,7 @@ void Decl::addDeclKind(const Kind k) {
     case Struct:
     case Union:
     case Class:
-      nSUE++;
+      nSUC++;
       break;
     case Enum:
       nEnumDecls++;
