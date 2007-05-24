@@ -34,67 +34,75 @@ bool Decl::CollectingStats(bool enable) {
 }
 
 void Decl::PrintStats() {
-    fprintf(stderr, "*** Decl Stats:\n");
-		fprintf(stderr, "  %d decls total.\n", 
-		  nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUE+nEnumDecls+nEnumConst+nTypedef);
-    fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
-		  nFuncs, sizeof(FunctionDecl), nFuncs*sizeof(FunctionDecl));
-    fprintf(stderr, "    %d block variable decls, %d each (%d bytes)\n", 
-		  nBlockVars, sizeof(BlockVarDecl), nBlockVars*sizeof(BlockVarDecl));
-    fprintf(stderr, "    %d file variable decls, %d each (%d bytes)\n", 
-		  nFileVars, sizeof(FileVarDecl), nFileVars*sizeof(FileVarDecl));
-    fprintf(stderr, "    %d parameter variable decls, %d each (%d bytes)\n", 
-		  nParmVars, sizeof(ParmVarDecl), nParmVars*sizeof(ParmVarDecl));
-    fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
-		  nFieldDecls, sizeof(FieldDecl), nFieldDecls*sizeof(FieldDecl));
-    fprintf(stderr, "    %d struct/union/enum decls, %d each (%d bytes)\n", 
-		  nSUE, sizeof(RecordDecl), nSUE*sizeof(RecordDecl));
-    fprintf(stderr, "    %d enum decls, %d each (%d bytes)\n", 
-		  nEnumDecls, sizeof(EnumDecl), nEnumDecls*sizeof(EnumDecl));
-    fprintf(stderr, "    %d enum constant decls, %d each (%d bytes)\n", 
-		  nEnumConst, sizeof(EnumConstantDecl), nEnumConst*sizeof(EnumConstantDecl));
-    fprintf(stderr, "    %d typedef decls, %d each (%d bytes)\n", 
-		  nTypedef, sizeof(TypedefDecl), nTypedef*sizeof(TypedefDecl));
-		fprintf(stderr, "Total bytes = %d\n", 
-		  nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
-      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
-      nFieldDecls*sizeof(FieldDecl)+nSUE*sizeof(RecordDecl)+
-      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
-			nTypedef*sizeof(TypedefDecl));
+  fprintf(stderr, "*** Decl Stats:\n");
+  fprintf(stderr, "  %d decls total.\n", 
+	  int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUE+
+	      nEnumDecls+nEnumConst+nTypedef));
+  fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
+	  nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
+  fprintf(stderr, "    %d block variable decls, %d each (%d bytes)\n", 
+	  nBlockVars, (int)sizeof(BlockVarDecl), 
+	  int(nBlockVars*sizeof(BlockVarDecl)));
+  fprintf(stderr, "    %d file variable decls, %d each (%d bytes)\n", 
+	  nFileVars, (int)sizeof(FileVarDecl), 
+	  int(nFileVars*sizeof(FileVarDecl)));
+  fprintf(stderr, "    %d parameter variable decls, %d each (%d bytes)\n", 
+	  nParmVars, (int)sizeof(ParmVarDecl),
+	  int(nParmVars*sizeof(ParmVarDecl)));
+  fprintf(stderr, "    %d field decls, %d each (%d bytes)\n", 
+	  nFieldDecls, (int)sizeof(FieldDecl),
+	  int(nFieldDecls*sizeof(FieldDecl)));
+  fprintf(stderr, "    %d struct/union/enum decls, %d each (%d bytes)\n", 
+	  nSUE, (int)sizeof(RecordDecl),
+	  int(nSUE*sizeof(RecordDecl)));
+  fprintf(stderr, "    %d enum decls, %d each (%d bytes)\n", 
+	  nEnumDecls, (int)sizeof(EnumDecl), 
+	  int(nEnumDecls*sizeof(EnumDecl)));
+  fprintf(stderr, "    %d enum constant decls, %d each (%d bytes)\n", 
+	  nEnumConst, (int)sizeof(EnumConstantDecl),
+	  int(nEnumConst*sizeof(EnumConstantDecl)));
+  fprintf(stderr, "    %d typedef decls, %d each (%d bytes)\n", 
+	  nTypedef, (int)sizeof(TypedefDecl),int(nTypedef*sizeof(TypedefDecl)));
+  fprintf(stderr, "Total bytes = %d\n", 
+	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
+	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
+	      nFieldDecls*sizeof(FieldDecl)+nSUE*sizeof(RecordDecl)+
+	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
+	      nTypedef*sizeof(TypedefDecl)));
 }
 
 void Decl::addDeclKind(const Kind k) {
-	switch (k) {
-	case Typedef:
-		nTypedef++;
-		break;
-	case Function:
-		nFuncs++;
-		break;
-	case BlockVariable:
-		nBlockVars++;
-		break;
-	case FileVariable:
-		nFileVars++;
-		break;
-	case ParmVariable:
-		nParmVars++;
-		break;
-	case EnumConstant:
-		nEnumConst++;
-		break;
-	case Field:
-		nFieldDecls++;
-		break;
-	case Struct:
-	case Union:
-	case Class:
-		nSUE++;
-		break;
-	case Enum:
-		nEnumDecls++;
-		break;
-	}
+  switch (k) {
+    case Typedef:
+      nTypedef++;
+      break;
+    case Function:
+      nFuncs++;
+      break;
+    case BlockVariable:
+      nBlockVars++;
+      break;
+    case FileVariable:
+      nFileVars++;
+      break;
+    case ParmVariable:
+      nParmVars++;
+      break;
+    case EnumConstant:
+      nEnumConst++;
+      break;
+    case Field:
+      nFieldDecls++;
+      break;
+    case Struct:
+    case Union:
+    case Class:
+      nSUE++;
+      break;
+    case Enum:
+      nEnumDecls++;
+      break;
+  }
 }
 
 // Out-of-line virtual method providing a home for Decl.

@@ -85,10 +85,11 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "      %d union types\n", NumTagUnion);
   fprintf(stderr, "      %d class types\n", NumTagClass);
   fprintf(stderr, "      %d enum types\n", NumTagEnum);
-  fprintf(stderr, "Total bytes = %d\n", NumBuiltin*sizeof(BuiltinType)+
+  fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
-    NumFunctionP*sizeof(FunctionTypeProto)+NumFunctionNP*sizeof(FunctionTypeNoProto)+
-    NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType));
+    NumFunctionP*sizeof(FunctionTypeProto)+
+    NumFunctionNP*sizeof(FunctionTypeNoProto)+
+    NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)));
 }
 
 
