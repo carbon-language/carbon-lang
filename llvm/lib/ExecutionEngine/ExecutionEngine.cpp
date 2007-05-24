@@ -573,7 +573,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     } else if (BitWidth <= 64) {
       Result.IntVal = APInt(BitWidth, *((uint64_t*)Ptr));
     } else
-      Result.IntVal = APInt(BitWidth, BitWidth/64, (uint64_t*)Ptr);
+      Result.IntVal = APInt(BitWidth, (BitWidth+63)/64, (uint64_t*)Ptr);
     break;
   }
   case Type::FloatTyID:
