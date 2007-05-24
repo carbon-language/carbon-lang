@@ -148,6 +148,8 @@ bool SROA::performScalarRepl(Function &F) {
     if (AllocationInst *A = dyn_cast<AllocationInst>(I))
       WorkList.push_back(A);
 
+  const TargetData &TD = getAnalysis<TargetData>();
+  
   // Process the worklist
   bool Changed = false;
   while (!WorkList.empty()) {
@@ -177,7 +179,9 @@ bool SROA::performScalarRepl(Function &F) {
     // value cannot be decomposed at all.
     if (!AI->isArrayAllocation() &&
         (isa<StructType>(AI->getAllocatedType()) ||
-         isa<ArrayType>(AI->getAllocatedType()))) {
+         isa<ArrayType>(AI->getAllocatedType())) &&
+        AI->getAllocatedType()->isSized() &&
+        TD.getTypeSize(AI->getAllocatedType()) < 128) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
       switch (isSafeAllocaToScalarRepl(AI)) {
