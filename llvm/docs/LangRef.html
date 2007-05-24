@@ -2909,10 +2909,7 @@ also be of <a href="#t_integer">integer</a> type. The bit size of the
 
 <h5>Semantics:</h5>
 <p>The <tt>zext</tt> fills the high order bits of the <tt>value</tt> with zero
-bits until it reaches the size of the destination type, <tt>ty2</tt>. When the
-the operand and the type are the same size, no bit filling is done and the 
-cast is considered a <i>no-op cast</i> because no bits change (only the type 
-changes).</p>
+bits until it reaches the size of the destination type, <tt>ty2</tt>.</p>
 
 <p>When zero extending from i1, the result will always be either 0 or 1.</p>
 
@@ -2949,9 +2946,7 @@ also be of <a href="#t_integer">integer</a> type.  The bit size of the
 <p>
 The '<tt>sext</tt>' instruction performs a sign extension by copying the sign
 bit (highest order bit) of the <tt>value</tt> until it reaches the bit size of
-the type <tt>ty2</tt>.  When the the operand and the type are the same size, 
-no bit filling is done and the cast is considered a <i>no-op cast</i> because 
-no bits change (only the type changes).</p>
+the type <tt>ty2</tt>.</p>
 
 <p>When sign extending from i1, the extension always results in -1 or 0.</p>
 
