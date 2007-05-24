@@ -359,13 +359,13 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
-				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
 				DED676D00B6C786700AAD4A3 /* Builtins.def */,
 				DED676F90B6C797B00AAD4A3 /* Builtins.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
+				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
 				DE3452800AEF1B1800DBC861 /* Stmt.h */,
 				DE345F210AFD347900DBC861 /* StmtNodes.def */,
 				DE345C190AFC658B00DBC861 /* StmtVisitor.h */,
@@ -495,12 +495,10 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
 			projectRoot = "";
-			shouldCheckCompatibility = 1;
 			targets = (
 				8DD76F620486A84900D96B5E /* clang */,
 			);

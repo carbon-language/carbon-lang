@@ -51,6 +51,8 @@ namespace clang {
   public:
     CXXBoolLiteralExpr(bool val, SourceLocation l) : 
       Expr(CXXBoolLiteralExprClass, QualType()), Value(val), Loc(l) {}
+    
+    bool getValue() const { return Value; }
 
     virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
       

@@ -352,7 +352,7 @@ void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
-  assert(0 && "TODO: should print CXXBoolLiteralExpr!");
+  OS << (Node->getValue() ? "true" : "false");
 }
 
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
