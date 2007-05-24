@@ -327,9 +327,9 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   PrintExpr(Node->getBase());
   OS << (Node->isArrow() ? "->" : ".");
   
-  if (Node->getMemberDecl())
-    assert(0 && "TODO: should print member decl!");
-  OS << "member";
+  FieldDecl *Field = Node->getMemberDecl();
+  assert(Field && "MemberExpr should alway reference a field!");
+  OS << Field->getName();
 }
 void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   OS << "(" << Node->getDestType().getAsString() << ")";

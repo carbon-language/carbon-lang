@@ -266,7 +266,6 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
                                (NumArgs-1)*sizeof(QualType));
   new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
                               Canonical);
-  
   Types.push_back(FTP);
   FunctionTypeProtos.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);
