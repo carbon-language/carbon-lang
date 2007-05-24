@@ -532,7 +532,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 }
 
 
-// EliminateBlockCases - Given an vector of bb/value pairs, remove any entries
+// EliminateBlockCases - Given a vector of bb/value pairs, remove any entries
 // in the list that match the specified block.
 static void EliminateBlockCases(BasicBlock *BB,
                std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases) {

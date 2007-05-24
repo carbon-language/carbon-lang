@@ -130,14 +130,14 @@ ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
   return 0;
 }
 
-/// @returns the value for an packed integer constant of the given type that
+/// @returns the value for a vector integer constant of the given type that
 /// has all its bits set to true.
 /// @brief Get the all ones value
 ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
   std::vector<Constant*> Elts;
   Elts.resize(Ty->getNumElements(),
               ConstantInt::getAllOnesValue(Ty->getElementType()));
-  assert(Elts[0] && "Not a packed integer type!");
+  assert(Elts[0] && "Not a vector integer type!");
   return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
@@ -353,7 +353,7 @@ ConstantVector::ConstantVector(const VectorType *T,
       assert((C->getType() == T->getElementType() ||
             (T->isAbstract() &&
              C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
-           "Initializer for packed element doesn't match packed element type!");
+           "Initializer for vector element doesn't match vector element type!");
     OL->init(C, this);
   }
 }
@@ -1185,7 +1185,7 @@ static ManagedStatic<ValueMap<std::vector<Constant*>, VectorType,
 
 Constant *ConstantVector::get(const VectorType *Ty,
                               const std::vector<Constant*> &V) {
-  // If this is an all-zero packed, return a ConstantAggregateZero object
+  // If this is an all-zero vector, return a ConstantAggregateZero object
   if (!V.empty()) {
     Constant *C = V[0];
     if (!C->isNullValue())
@@ -1209,7 +1209,7 @@ void ConstantVector::destroyConstant() {
   destroyConstantImpl();
 }
 
-/// This function will return true iff every element in this packed constant
+/// This function will return true iff every element in this vector constant
 /// is set to all ones.
 /// @returns true iff this constant's emements are all set to all ones.
 /// @brief Determine if the value is all ones.

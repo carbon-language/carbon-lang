@@ -249,7 +249,7 @@ namespace ISD {
     
     /// VINSERT_VECTOR_ELT(VECTOR, VAL, IDX,  COUNT,TYPE) - Given a vector
     /// VECTOR, an element ELEMENT, and a (potentially variable) index IDX,
-    /// return an vector with the specified element of VECTOR replaced with VAL.
+    /// return a vector with the specified element of VECTOR replaced with VAL.
     /// COUNT and TYPE specify the type of vector, as is standard for V* nodes.
     VINSERT_VECTOR_ELT,
     

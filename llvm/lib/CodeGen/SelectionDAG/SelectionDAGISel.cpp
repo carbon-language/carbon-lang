@@ -770,7 +770,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         Ops.push_back(DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
                                          PTyElementVT));
     } else if (PTyElementVT < PTyLegalElementVT) {
-      // If the register was promoted, use TRUNCATE of FP_ROUND as appropriate.
+      // If the register was promoted, use TRUNCATE or FP_ROUND as appropriate.
       for (unsigned i = 0; i != NE; ++i) {
         SDOperand Op = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
                                           PTyElementVT);

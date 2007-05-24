@@ -399,14 +399,14 @@ public:
     return get(std::vector<Constant*>(Vals, Vals+NumVals));
   }
   
-  /// getType - Specialize the getType() method to always return an VectorType,
+  /// getType - Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
   inline const VectorType *getType() const {
     return reinterpret_cast<const VectorType*>(Value::getType());
   }
 
-  /// @returns the value for an packed integer constant of the given type that
+  /// @returns the value for a vector integer constant of the given type that
   /// has all its bits set to true.
   /// @brief Get the all ones value
   static ConstantVector *getAllOnesValue(const VectorType *Ty);
@@ -416,7 +416,7 @@ public:
   /// created as ConstantAggregateZero objects.
   virtual bool isNullValue() const { return false; }
 
-  /// This function will return true iff every element in this packed constant
+  /// This function will return true iff every element in this vector constant
   /// is set to all ones.
   /// @returns true iff this constant's emements are all set to all ones.
   /// @brief Determine if the value is all ones.
@@ -631,7 +631,7 @@ public:
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
 
   /// Floating point negation must be implemented with f(x) = -0.0 - x. This
-  /// method returns the negative zero constant for floating point or packed
+  /// method returns the negative zero constant for floating point or vector
   /// floating point types; for all other types, it returns the null value.
   static Constant *getZeroValueForNegationExpr(const Type *Ty);
 
