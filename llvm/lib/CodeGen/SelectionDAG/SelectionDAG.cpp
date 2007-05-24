@@ -3048,7 +3048,7 @@ void SDNode::dump(const SelectionDAG *G) const {
     else
       cerr << "<null:" << M->getOffset() << ">";
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
-    cerr << ":" << getValueTypeString(N->getVT());
+    cerr << ":" << MVT::getValueTypeString(N->getVT());
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
     bool doExt = true;
     switch (LD->getExtensionType()) {

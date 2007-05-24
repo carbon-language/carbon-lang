@@ -2255,7 +2255,7 @@ static bool isZeroShuffle(SDNode *N) {
 ///
 static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
   assert(MVT::isVector(VT) && "Expected a vector type");
-  unsigned NumElems = getVectorNumElements(VT);
+  unsigned NumElems = MVT::getVectorNumElements(VT);
   MVT::ValueType EVT = MVT::getVectorBaseType(VT);
   bool isFP = MVT::isFloatingPoint(EVT);
   SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
