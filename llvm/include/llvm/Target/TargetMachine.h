@@ -187,7 +187,7 @@ public:
 
   /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
   /// on this target.  User flag overrides.
-  virtual const bool getEnableTailMergeDefault() const { return true; }
+  virtual const bool getEnableTailMergeDefault() const { return false; }
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
@@ -322,7 +322,7 @@ public:
 
   /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
   /// on this target.  User flag overrides.
-  virtual const bool getEnableTailMergeDefault() const { return true; }
+  virtual const bool getEnableTailMergeDefault() const { return false; }
 };
 
 } // End llvm namespace
