@@ -353,14 +353,14 @@ CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
 /// specified expression for the same cost as the expression itself, or 2 if we
 /// can compute the negated form more cheaply than the expression itself.
 static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
-  // Don't recurse exponentially.
-  if (Depth > 6) return false;
-  
   // fneg is removable even if it has multiple uses.
   if (Op.getOpcode() == ISD::FNEG) return 2;
   
   // Don't allow anything with multiple uses.
   if (!Op.hasOneUse()) return 0;
+  
+  // Don't recurse exponentially.
+  if (Depth > 6) return 0;
   
   switch (Op.getOpcode()) {
   default: return false;
@@ -401,13 +401,15 @@ static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
 
 /// GetNegatedExpression - If isNegatibleForFree returns true, this function
 /// returns the newly negated expression.
-static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG) {
+static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
+                                      unsigned Depth = 0) {
   // fneg is removable even if it has multiple uses.
   if (Op.getOpcode() == ISD::FNEG) return Op.getOperand(0);
   
   // Don't allow anything with multiple uses.
   assert(Op.hasOneUse() && "Unknown reuse!");
   
+  assert(Depth <= 6 && "GetNegatedExpression doesn't match isNegatibleForFree");
   switch (Op.getOpcode()) {
   default: assert(0 && "Unknown code");
   case ISD::ConstantFP:
@@ -418,13 +420,13 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG) {
     assert(UnsafeFPMath);
     
     // -(A+B) -> -A - B
-    if (isNegatibleForFree(Op.getOperand(0)))
+    if (isNegatibleForFree(Op.getOperand(0), Depth+1))
       return DAG.getNode(ISD::FSUB, Op.getValueType(),
-                         GetNegatedExpression(Op.getOperand(0), DAG),
+                         GetNegatedExpression(Op.getOperand(0), DAG, Depth+1),
                          Op.getOperand(1));
     // -(A+B) -> -B - A
     return DAG.getNode(ISD::FSUB, Op.getValueType(),
-                       GetNegatedExpression(Op.getOperand(1), DAG),
+                       GetNegatedExpression(Op.getOperand(1), DAG, Depth+1),
                        Op.getOperand(0));
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
@@ -439,21 +441,21 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG) {
     assert(!HonorSignDependentRoundingFPMath());
     
     // -(X*Y) -> -X * Y
-    if (isNegatibleForFree(Op.getOperand(0)))
+    if (isNegatibleForFree(Op.getOperand(0), Depth+1))
       return DAG.getNode(Op.getOpcode(), Op.getValueType(),
-                         GetNegatedExpression(Op.getOperand(0), DAG),
+                         GetNegatedExpression(Op.getOperand(0), DAG, Depth+1),
                          Op.getOperand(1));
       
     // -(X*Y) -> X * -Y
     return DAG.getNode(Op.getOpcode(), Op.getValueType(),
                        Op.getOperand(0),
-                       GetNegatedExpression(Op.getOperand(1), DAG));
+                       GetNegatedExpression(Op.getOperand(1), DAG, Depth+1));
     
   case ISD::FP_EXTEND:
   case ISD::FP_ROUND:
   case ISD::FSIN:
     return DAG.getNode(Op.getOpcode(), Op.getValueType(),
-                       GetNegatedExpression(Op.getOperand(0), DAG));
+                       GetNegatedExpression(Op.getOperand(0), DAG, Depth+1));
   }
 }
 
