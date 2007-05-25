@@ -173,16 +173,16 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
       return;  // Already analyzed.
     BBI.BB = BB;
     BBI.NonPredSize = std::distance(BB->begin(), BB->end());
-
-    // Look for 'root' of a simple (non-nested) triangle or diamond.
-    BBI.Kind = ICNotClassfied;
-    bool CanAnalyze = !TII->AnalyzeBranch(*BB, BBI.TrueBB, BBI.FalseBB,
-                                          BBI.BrCond);
-    // Does it end with a return, indirect jump, or jumptable branch?
-    BBI.hasEarlyExit = TII->BlockHasNoFallThrough(*BB) && !BBI.TrueBB;
-    if (!CanAnalyze || !BBI.TrueBB || BBI.BrCond.size() == 0)
-      return;
   }
+
+  // Look for 'root' of a simple (non-nested) triangle or diamond.
+  BBI.Kind = ICNotClassfied;
+  bool CanAnalyze = !TII->AnalyzeBranch(*BB, BBI.TrueBB, BBI.FalseBB,
+                                        BBI.BrCond);
+  // Does it end with a return, indirect jump, or jumptable branch?
+  BBI.hasEarlyExit = TII->BlockHasNoFallThrough(*BB) && !BBI.TrueBB;
+  if (!CanAnalyze || !BBI.TrueBB || BBI.BrCond.size() == 0)
+    return;
 
   // Not a candidate if 'true' block is going to be if-converted.
   StructuralAnalysis(BBI.TrueBB);
