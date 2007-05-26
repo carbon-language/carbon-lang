@@ -557,11 +557,13 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Rplcmnt->addIncoming(NewRes, reverse);
     Rplcmnt->addIncoming(Rep4, small);
     Value* t0   = CastInst::createIntegerCast(NumBits,ValTy,false,"",result);
-    Value* t1   = BinaryOperator::createShl(ValMask, t0, "", result);
-    Value* t2   = BinaryOperator::createShl(t1, Lo, "", result);
-    Value* t3   = BinaryOperator::createAnd(t2, Val, "", result);
-    Value* t4   = BinaryOperator::createShl(Rplcmnt, Lo, "", result);
-    Value* Rslt = BinaryOperator::createOr(t3, t4, "part_set", result);
+    Value* t1   = BinaryOperator::createShl(ValMask, Lo, "", result);
+    Value* t2   = BinaryOperator::createNot(t1, "", result);
+    Value* t3   = BinaryOperator::createShl(t1, t0, "", result);
+    Value* t4   = BinaryOperator::createOr(t2, t3, "", result);
+    Value* t5   = BinaryOperator::createAnd(t4, Val, "", result);
+    Value* t6   = BinaryOperator::createShl(Rplcmnt, Lo, "", result);
+    Value* Rslt = BinaryOperator::createOr(t5, t6, "part_set", result);
     new ReturnInst(Rslt, result);
   }
 
