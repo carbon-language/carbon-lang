@@ -133,31 +133,35 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
 ///  - *e, the type of e cannot be a function type
 ///  - string-constant
 ///
-bool Expr::isLvalue() {
+Expr::isLvalueResult Expr::isLvalue() {
   // first, check the type (C99 6.3.2.1)
-  if (!TR->isObjectType())
-    return false;
+  if (isa<FunctionType>(TR.getCanonicalType())) // from isObjectType()
+    return LV_NotObjectType;
   if (TR->isIncompleteType() && TR->isVoidType())
-    return false;
+    return LV_IncompleteVoidType;
   
   // the type looks fine, now check the expression
   switch (getStmtClass()) {
   case StringLiteralClass: // C99 6.5.1p4
-    return true;
   case ArraySubscriptExprClass: // C99 6.5.3p4 (e1[e2] == (*((e1)+(e2))))
-    return true;
+    return LV_Valid;
   case DeclRefExprClass: // C99 6.5.1p2
-    return isa<VarDecl>(cast<DeclRefExpr>(this)->getDecl());
+    if (isa<VarDecl>(cast<DeclRefExpr>(this)->getDecl()))
+      return LV_Valid;
+    break;
   case MemberExprClass: // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
-    return m->isArrow() ? true : m->getBase()->isLvalue();
+    return m->isArrow() ? LV_Valid : m->getBase()->isLvalue();
   case UnaryOperatorClass: // C99 6.5.3p4
-    return cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref;
+    if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
+      return LV_Valid;
+    break;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
-  default: 
-    return false;
+  default:
+    break;
   }
+  return LV_InvalidExpression;
 }
 
 /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
@@ -165,19 +169,27 @@ bool Expr::isLvalue() {
 /// if it is a structure or union, does not have any member (including, 
 /// recursively, any member or element of all contained aggregates or unions)
 /// with a const-qualified type.
-bool Expr::isModifiableLvalue() {
-  if (!isLvalue())
-    return false;
-  
+Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
+  isLvalueResult lvalResult = isLvalue();
+    
+  switch (lvalResult) {
+    case LV_Valid: break;
+    case LV_NotObjectType: return MLV_NotObjectType;
+    case LV_IncompleteVoidType: return MLV_IncompleteVoidType;
+    case LV_InvalidExpression: return MLV_InvalidExpression;
+  }
   if (TR.isConstQualified())
-    return false;
+    return MLV_ConstQualified;
   if (TR->isArrayType())
-    return false;
+    return MLV_ArrayType;
   if (TR->isIncompleteType())
-    return false;
-  if (const RecordType *r = dyn_cast<RecordType>(TR.getCanonicalType()))
-    return r->isModifiableLvalue();
-  return true;    
+    return MLV_IncompleteType;
+    
+  if (const RecordType *r = dyn_cast<RecordType>(TR.getCanonicalType())) {
+    if (r->hasConstFields()) 
+      return MLV_ConstQualified;
+  }
+  return MLV_Valid;    
 }
 
 /// isConstantExpr - this recursive routine will test if an expression is

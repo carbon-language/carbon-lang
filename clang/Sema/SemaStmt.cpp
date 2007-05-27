@@ -122,6 +122,54 @@ Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 
 Action::StmtResult
 Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
+  // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
+  // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
+  // function return.
+  QualType lhsType = CurFunctionDecl->getResultType();
+
+  if (!RetValExp)
+    return new ReturnStmt((Expr*)RetValExp);
+    
+  // C99 6.8.6.4p1
+  if (lhsType->isVoidType()) {
+    // a void function may not return a value
+    // non-void function "voidFunc" should return a value
+  }
+
+  QualType rhsType = ((Expr *)RetValExp)->getType();
+
+  if (lhsType == rhsType) // common case, fast path...
+    return new ReturnStmt((Expr*)RetValExp);
+  
+  AssignmentConversionResult result;
+  QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
+  bool hadError = false;
+  
+  // decode the result (notice that extensions still return a type).
+  switch (result) {
+  case Compatible:
+    break;
+  case Incompatible:
+    Diag(ReturnLoc, diag::err_typecheck_return_incompatible, 
+         lhsType.getAsString(), rhsType.getAsString(),
+         ((Expr *)RetValExp)->getSourceRange());
+    hadError = true;
+    break;
+  case PointerFromInt:
+    // check for null pointer constant (C99 6.3.2.3p3)
+    if (!((Expr *)RetValExp)->isNullPointerConstant())
+      Diag(ReturnLoc, diag::ext_typecheck_return_pointer_from_int);
+    break;
+  case IntFromPointer:
+    Diag(ReturnLoc, diag::ext_typecheck_return_int_from_pointer);
+    break;
+  case IncompatiblePointer:
+    Diag(ReturnLoc, diag::ext_typecheck_return_incompatible_pointer);
+    break;
+  case CompatiblePointerDiscardsQualifiers:
+    Diag(ReturnLoc, diag::ext_typecheck_return_discards_qualifiers);
+    break;
+  }
   return new ReturnStmt((Expr*)RetValExp);
 }
 

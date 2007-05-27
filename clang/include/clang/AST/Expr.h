@@ -53,14 +53,29 @@ public:
   ///  - *e, the type of e cannot be a function type
   ///  - string-constant
   ///
-  bool isLvalue();
+  enum isLvalueResult {
+    LV_Valid,
+    LV_NotObjectType,
+    LV_IncompleteVoidType,
+    LV_InvalidExpression
+  };
+  isLvalueResult isLvalue();
   
   /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
   /// does not have an incomplete type, does not have a const-qualified type,
   /// and if it is a structure or union, does not have any member (including, 
   /// recursively, any member or element of all contained aggregates or unions)
   /// with a const-qualified type.
-  bool isModifiableLvalue();
+  enum isModifiableLvalueResult {
+    MLV_Valid,
+    MLV_NotObjectType,
+    MLV_IncompleteVoidType,
+    MLV_InvalidExpression,
+    MLV_IncompleteType,
+    MLV_ConstQualified,
+    MLV_ArrayType
+  };
+  isModifiableLvalueResult isModifiableLvalue();
   
   bool isNullPointerConstant() const;
 
@@ -354,18 +369,18 @@ public:
 class MemberExpr : public Expr {
   Expr *Base;
   FieldDecl *MemberDecl;
+  SourceLocation MemberLoc;
   bool IsArrow;      // True if this is "X->F", false if this is "X.F".
 public:
-  MemberExpr(Expr *base, bool isarrow, FieldDecl *memberdecl) 
+  MemberExpr(Expr *base, bool isarrow, FieldDecl *memberdecl, SourceLocation l) 
     : Expr(MemberExprClass, memberdecl->getType()),
-      Base(base), MemberDecl(memberdecl), IsArrow(isarrow) {}
+      Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
   
   Expr *getBase() const { return Base; }
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
   virtual SourceRange getSourceRange() const {
-    return SourceRange(getBase()->getLocStart(),
-                       getMemberDecl()->getLocation());
+    return SourceRange(getBase()->getLocStart(), MemberLoc);
   }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

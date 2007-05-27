@@ -519,7 +519,7 @@ public:
   // FIXME: This predicate is a helper to QualType/Type. It needs to 
   // recursively check all fields for const-ness. If any field is declared
   // const, it needs to return false. 
-  bool isModifiableLvalue() const { return true; } 
+  bool hasConstFields() const { return false; } 
   
   static bool classof(const Type *T);
   static bool classof(const RecordType *) { return true; }

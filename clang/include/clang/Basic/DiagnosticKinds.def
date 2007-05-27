@@ -546,13 +546,13 @@ DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%0'")
 DIAG(err_typecheck_indirection_expr, ERROR,
-     "indirection requires a pointer ('%0' operand invalid)")
+     "indirection requires a pointer operand ('%0' invalid)")
 DIAG(err_typecheck_invalid_operands, ERROR,
      "invalid operands to binary expression ('%0' and '%1')")
 DIAG(ext_typecheck_comparison_of_pointer_integer, EXTENSION,
      "comparison between pointer and integer")
 DIAG(err_typecheck_assign_const, ERROR,
-     "assignment of read-only variable")
+     "read-only variable is not assignable")
 DIAG(err_typecheck_assign_incompatible, ERROR,
      "incompatible types in assignment ('%0' and '%1')")
 DIAG(ext_typecheck_assign_int_from_pointer, EXTENSION,
@@ -560,11 +560,17 @@ DIAG(ext_typecheck_assign_int_from_pointer, EXTENSION,
 DIAG(ext_typecheck_assign_pointer_from_int, EXTENSION,
      "assignment makes pointer from integer without a cast")
 DIAG(ext_typecheck_assign_incompatible_pointer, EXTENSION,
-     "assignment from incompatible pointer type")
+     "assignment from incompatible pointer type ('%0' and '%1')")
 DIAG(ext_typecheck_assign_discards_qualifiers, EXTENSION,
-     "assignment discards qualifiers from pointer target type")
-DIAG(err_typecheck_assign_non_lvalue, ERROR,
-     "invalid lvalue in assignment")
+     "assignment discards qualifiers from pointer target type ('%0' and '%1')")
+DIAG(err_typecheck_array_not_modifiable_lvalue, ERROR,
+     "array type '%0' is not assignable")
+DIAG(err_typecheck_non_object_not_modifiable_lvalue, ERROR,
+     "non-object type '%0' is not assignable")
+DIAG(err_typecheck_expression_not_modifiable_lvalue, ERROR,
+     "expression is not assignable")
+DIAG(err_typecheck_incomplete_type_not_modifiable_lvalue, ERROR,
+     "incomplete type '%0' is not assignable")
 DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to function")
 DIAG(err_typecheck_call_too_many_args, ERROR,
@@ -579,6 +585,16 @@ DIAG(ext_typecheck_passing_incompatible_pointer, EXTENSION,
      "passing argument %0 from incompatible pointer type")
 DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
      "passing argument %0 discards qualifiers from pointer target type")
+DIAG(err_typecheck_return_incompatible, ERROR,
+     "incompatible types in return ('%0' and '%1')")
+DIAG(ext_typecheck_return_int_from_pointer, EXTENSION,
+     "return makes integer from pointer without a cast")
+DIAG(ext_typecheck_return_pointer_from_int, EXTENSION,
+     "return makes pointer from integer without a cast")
+DIAG(ext_typecheck_return_incompatible_pointer, EXTENSION,
+     "return from incompatible pointer type")
+DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
+     "return discards qualifiers from pointer target type")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
 DIAG(err_typecheck_cond_incompatible_operands, ERROR,

@@ -352,7 +352,8 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   if (!MemberDecl)
     return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName());
     
-  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, MemberDecl);
+  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, 
+                        MemberDecl, MemberLoc);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
@@ -835,15 +836,32 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   QualType lhsType = lex->getType();
   QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
   bool hadError = false;
-  
-  // this check is done first to give a more precise diagnostic.
-  // isModifiableLvalue() will also check for "const".
-  if (lhsType.isConstQualified()) {
-    Diag(loc, diag::err_typecheck_assign_const, lex->getSourceRange());
-    hadError = true;
-  } else if (!lex->isModifiableLvalue()) { // C99 6.5.16p2
-    Diag(loc, diag::err_typecheck_assign_non_lvalue, lex->getSourceRange());
-    return QualType(); // no need to continue checking...
+  Expr::isModifiableLvalueResult mlval = lex->isModifiableLvalue(); 
+
+  switch (mlval) { // C99 6.5.16p2
+    case Expr::MLV_Valid: 
+      break;
+    case Expr::MLV_ConstQualified:
+      Diag(loc, diag::err_typecheck_assign_const, lex->getSourceRange());
+      hadError = true;
+      break;
+    case Expr::MLV_ArrayType: 
+      Diag(loc, diag::err_typecheck_array_not_modifiable_lvalue,
+           lhsType.getAsString(), lex->getSourceRange());
+      return QualType(); 
+    case Expr::MLV_NotObjectType: 
+      Diag(loc, diag::err_typecheck_non_object_not_modifiable_lvalue,
+           lhsType.getAsString(), lex->getSourceRange());
+      return QualType();
+    case Expr::MLV_InvalidExpression:
+      Diag(loc, diag::err_typecheck_expression_not_modifiable_lvalue,
+           lex->getSourceRange());
+      return QualType();
+    case Expr::MLV_IncompleteType:
+    case Expr::MLV_IncompleteVoidType:
+      Diag(loc, diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
+           lhsType.getAsString(), lex->getSourceRange());
+      return QualType();
   }
   if (lhsType == rhsType) // common case, fast path...
     return lhsType;
@@ -864,16 +882,22 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
     if (compoundType.isNull() && !rex->isNullPointerConstant())
-      Diag(loc, diag::ext_typecheck_assign_pointer_from_int);
+      Diag(loc, diag::ext_typecheck_assign_pointer_from_int,
+           lex->getSourceRange(), rex->getSourceRange());
     break;
   case IntFromPointer:
-    Diag(loc, diag::ext_typecheck_assign_int_from_pointer);
+    Diag(loc, diag::ext_typecheck_assign_int_from_pointer,
+         lex->getSourceRange(), rex->getSourceRange());
     break;
   case IncompatiblePointer:
-    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer);
+    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer,
+         lhsType.getAsString(), rhsType.getAsString(),
+         lex->getSourceRange(), rex->getSourceRange());
     break;
   case CompatiblePointerDiscardsQualifiers:
-    Diag(loc, diag::ext_typecheck_assign_discards_qualifiers);
+    Diag(loc, diag::ext_typecheck_assign_discards_qualifiers,
+         lhsType.getAsString(), rhsType.getAsString(),
+         lex->getSourceRange(), rex->getSourceRange());
     break;
   }
   return hadError ? QualType() : resType;
@@ -903,7 +927,9 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   }
   // At this point, we know we have a real or pointer type. Now make sure
   // the operand is a modifiable lvalue.
-  if (!op->isModifiableLvalue()) {
+  Expr::isModifiableLvalueResult mlval = op->isModifiableLvalue();
+  if (mlval != Expr::MLV_Valid) {
+    // FIXME: emit a more precise diagnostic...
     Diag(OpLoc, diag::err_typecheck_invalid_lvalue_incr_decr,
          op->getSourceRange());
     return QualType();
@@ -941,11 +967,12 @@ static Decl *getPrimaryDeclaration(Expr *e) {
 /// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
 QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Decl *dcl = getPrimaryDeclaration(op);
+  Expr::isLvalueResult lval = op->isLvalue();
   
-  if (!op->isLvalue()) { // C99 6.5.3.2p1
+  if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
     if (dcl && isa<FunctionDecl>(dcl)) // allow function designators
       ;  
-    else {
+    else { // FIXME: emit more specific diag...
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof, 
            op->getSourceRange());
       return QualType();
@@ -973,6 +1000,7 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   
   assert(!qType.isNull() && "no type for * expression");
 
+  // FIXME: need to check if the pointee is an incomplete type. Find spec ref.
   if (PointerType *PT = dyn_cast<PointerType>(qType.getCanonicalType()))
     return PT->getPointeeType();
   Diag(OpLoc, diag::err_typecheck_indirection_expr, qType.getAsString(),
