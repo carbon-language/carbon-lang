@@ -39,8 +39,21 @@ bool Type::isObjectType() const {
 }
 
 bool Type::isDerivedType() const {
-  return isPointerType() || isReferenceType() || isArrayType() ||
-         isFunctionType() || isStructureType() || isUnionType();
+  switch (CanonicalType->getTypeClass()) {
+  default:
+    if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
+      const Decl::Kind Kind = TT->getDecl()->getKind();
+      if (Kind == Decl::Struct || Kind == Decl::Union)
+        return true;
+    }
+    return false;
+  case Pointer:
+  case Array:
+  case FunctionProto:
+  case FunctionNoProto:
+  case Reference:
+    return true;
+  }
 }
 
 bool Type::isFunctionType() const {
