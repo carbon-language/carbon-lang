@@ -46,13 +46,11 @@ bool Type::isDerivedType() const {
   case FunctionNoProto:
   case Reference:
     return true;
-  case Tagged:
-    if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-      const Decl::Kind Kind = TT->getDecl()->getKind();
-      if (Kind == Decl::Struct || Kind == Decl::Union)
-        return true;
-    }
-    // Fall through
+  case Tagged: {
+    const TagType *TT = cast<TagType>(CanonicalType);
+    const Decl::Kind Kind = TT->getDecl()->getKind();
+    return Kind == Decl::Struct || Kind == Decl::Union;
+  }
   default:
     return false;
   }
