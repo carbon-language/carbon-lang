@@ -240,7 +240,7 @@ private:
 /// This is intended to be a small value object.
 struct DeclaratorChunk {
   enum {
-    Pointer, Array, Function
+    Pointer, Reference, Array, Function
   } Kind;
   
   /// Loc - The place where this type was defined.
@@ -251,6 +251,11 @@ struct DeclaratorChunk {
     unsigned TypeQuals : 3;
     void destroy() {}
   };
+
+  struct ReferenceTypeInfo {
+    void destroy() {}
+  };
+
   struct ArrayTypeInfo {
     /// The type qualifiers for the array: const/volatile/restrict.
     unsigned TypeQuals : 3;
@@ -310,9 +315,10 @@ struct DeclaratorChunk {
   };
   
   union {
-    PointerTypeInfo Ptr;
-    ArrayTypeInfo Arr;
-    FunctionTypeInfo Fun;
+    PointerTypeInfo   Ptr;
+    ReferenceTypeInfo Ref;
+    ArrayTypeInfo     Arr;
+    FunctionTypeInfo  Fun;
   };
   
   
@@ -323,6 +329,15 @@ struct DeclaratorChunk {
     I.Kind          = Pointer;
     I.Loc           = Loc;
     I.Ptr.TypeQuals = TypeQuals;
+    return I;
+  }
+  
+  /// getReference - Return a DeclaratorChunk for a reference.
+  ///
+  static DeclaratorChunk getReference(SourceLocation Loc) {
+    DeclaratorChunk I;
+    I.Kind          = Reference;
+    I.Loc           = Loc;
     return I;
   }
   
@@ -424,6 +439,8 @@ public:
         DeclTypeInfo[i].Fun.destroy();
       else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Pointer)
         DeclTypeInfo[i].Ptr.destroy();
+      else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Reference)
+        DeclTypeInfo[i].Ref.destroy();
       else if (DeclTypeInfo[i].Kind == DeclaratorChunk::Array)
         DeclTypeInfo[i].Arr.destroy();
       else

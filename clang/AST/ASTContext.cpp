@@ -42,7 +42,7 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "*** AST Context Stats:\n");
   fprintf(stderr, "  %d types total.\n", (int)Types.size());
   unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
-  unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0;
+  unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
   
@@ -52,6 +52,8 @@ void ASTContext::PrintStats() const {
       ++NumBuiltin;
     else if (isa<PointerType>(T))
       ++NumPointer;
+    else if (isa<ReferenceType>(T))
+      ++NumReference;
     else if (isa<ArrayType>(T))
       ++NumArray;
     else if (isa<FunctionTypeNoProto>(T))
@@ -76,6 +78,7 @@ void ASTContext::PrintStats() const {
 
   fprintf(stderr, "    %d builtin types\n", NumBuiltin);
   fprintf(stderr, "    %d pointer types\n", NumPointer);
+  fprintf(stderr, "    %d reference types\n", NumReference);
   fprintf(stderr, "    %d array types\n", NumArray);
   fprintf(stderr, "    %d function types with proto\n", NumFunctionP);
   fprintf(stderr, "    %d function types with no proto\n", NumFunctionNP);
@@ -158,6 +161,35 @@ QualType ASTContext::getPointerType(QualType T) {
   PointerType *New = new PointerType(T, Canonical);
   Types.push_back(New);
   PointerTypes.InsertNode(New, InsertPos);
+  return QualType(New, 0);
+}
+
+/// getReferenceType - Return the uniqued reference to the type for a reference
+/// to the specified type.
+QualType ASTContext::getReferenceType(QualType T) {
+  // Unique pointers, to guarantee there is only one pointer of a particular
+  // structure.
+  FoldingSetNodeID ID;
+  ReferenceType::Profile(ID, T);
+
+  void *InsertPos = 0;
+  if (ReferenceType *RT = ReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(RT, 0);
+  
+  // If the referencee type isn't canonical, this won't be a canonical type
+  // either, so fill in the canonical type field.
+  QualType Canonical;
+  if (!T->isCanonical()) {
+    Canonical = getReferenceType(T.getCanonicalType());
+   
+    // Get the new insert position for the node we care about.
+    ReferenceType *NewIP = ReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
+
+  ReferenceType *New = new ReferenceType(T, Canonical);
+  Types.push_back(New);
+  ReferenceTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
 }
 

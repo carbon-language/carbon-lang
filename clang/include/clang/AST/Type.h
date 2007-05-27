@@ -96,7 +96,7 @@ public:
   bool isRestrictQualified() const {
     return ThePtr & Restrict;
   }
-  
+
   QualType getQualifiedType(unsigned TQs) const {
     return QualType(getTypePtr(), TQs);
   }
@@ -172,7 +172,8 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Pointer, Array, FunctionNoProto, FunctionProto, TypeName, Tagged
+    Builtin, Pointer, Reference, Array, FunctionNoProto, FunctionProto,
+    TypeName, Tagged
   };
 private:
   QualType CanonicalType;
@@ -221,6 +222,7 @@ public:
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
   bool isPointerType() const;
+  bool isReferenceType() const;
   bool isArrayType() const;
   bool isStructureType() const;   
   bool isUnionType() const;
@@ -302,7 +304,31 @@ public:
   static bool classof(const PointerType *) { return true; }
 };
 
-/// PointerType - C99 6.7.5.2 - Array Declarators.
+/// ReferenceType - C++ 8.3.2 - Reference Declarators.
+///
+class ReferenceType : public Type, public FoldingSetNode {
+  QualType ReferenceeType;
+  ReferenceType(QualType Referencee, QualType CanonicalRef) :
+    Type(Reference, CanonicalRef), ReferenceeType(Referencee) {
+  }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  QualType getReferenceeType() const { return ReferenceeType; }
+
+  void Profile(FoldingSetNodeID &ID) {
+    Profile(ID, getReferenceeType());
+  }
+  static void Profile(FoldingSetNodeID &ID, QualType Referencee) {
+    ID.AddPointer(Referencee.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) { return T->getTypeClass() == Reference; }
+  static bool classof(const ReferenceType *) { return true; }
+};
+
+/// ArrayType - C99 6.7.5.2 - Array Declarators.
 ///
 class ArrayType : public Type, public FoldingSetNode {
 public:

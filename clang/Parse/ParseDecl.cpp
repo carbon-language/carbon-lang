@@ -837,27 +837,45 @@ void Parser::ParseDeclarator(Declarator &D) {
 /// ParseDeclaratorInternal
 ///       declarator: [C99 6.7.5]
 ///         pointer[opt] direct-declarator
+/// [C++]   reference direct-declarator [C++ 8p4, dcl.decl]
 ///
 ///       pointer: [C99 6.7.5]
 ///         '*' type-qualifier-list[opt]
 ///         '*' type-qualifier-list[opt] pointer
 ///
+///       reference: [C++ 8p4, dcl.decl]
+/// [C++]   '&' declarator
+///
 void Parser::ParseDeclaratorInternal(Declarator &D) {
-  if (Tok.getKind() != tok::star)
+  tok::TokenKind Kind = Tok.getKind();
+
+  // Not a pointer or C++ reference.
+  if (Kind != tok::star && !(Kind == tok::amp && getLang().CPlusPlus))
     return ParseDirectDeclarator(D);
   
-  // Otherwise, '*' -> pointer.
-  SourceLocation Loc = ConsumeToken();  // Eat the *.
-  DeclSpec DS;
-  ParseTypeQualifierListOpt(DS);
+  // Otherwise, '*' -> pointer or '&' -> reference.
+  SourceLocation Loc = ConsumeToken();  // Eat the * or &.
+
+  if (Kind == tok::star) {
+    // Is a pointer
+    DeclSpec DS;
+    ParseTypeQualifierListOpt(DS);
   
-  // Recursively parse the declarator.
-  ParseDeclaratorInternal(D);
+    // Recursively parse the declarator.
+    ParseDeclaratorInternal(D);
 
-  // Remember that we parsed a pointer type, and remember the type-quals.
-  D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc));
+    // Remember that we parsed a pointer type, and remember the type-quals.
+    D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc));
+  } else {
+    // Is a reference
+
+    // Recursively parse the declarator.
+    ParseDeclaratorInternal(D);
+
+    // Remember that we parsed a reference type. It doesn't have type-quals.
+    D.AddTypeInfo(DeclaratorChunk::getReference(Loc));
+  }
 }
-
 
 /// ParseDirectDeclarator
 ///       direct-declarator: [C99 6.7.5]

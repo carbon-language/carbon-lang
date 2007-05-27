@@ -15,8 +15,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
-
-#include <iostream>
+#include "llvm/Support/Streams.h"
 
 using namespace llvm;
 using namespace clang;
@@ -40,8 +39,8 @@ bool Type::isObjectType() const {
 }
 
 bool Type::isDerivedType() const {
-  return isPointerType() || isArrayType() || isFunctionType() ||
-         isStructureType() || isUnionType();
+  return isPointerType() || isReferenceType() || isArrayType() ||
+         isFunctionType() || isStructureType() || isUnionType();
 }
 
 bool Type::isFunctionType() const {
@@ -50,6 +49,10 @@ bool Type::isFunctionType() const {
 
 bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType);
+}
+
+bool Type::isReferenceType() const {
+  return isa<ReferenceType>(CanonicalType);
 }
 
 bool Type::isArrayType() const {
@@ -379,9 +382,9 @@ void QualType::dump(const char *msg) const {
   std::string R = "foo";
   getAsStringInternal(R);
   if (msg)
-    std::cerr << msg << ": " << R << "\n";
+    cerr << msg << ": " << R << "\n";
   else
-    std::cerr << R << "\n";
+    cerr << R << "\n";
 }
 
 static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
@@ -433,6 +436,17 @@ void PointerType::getAsStringInternal(std::string &S) const {
     S = '(' + S + ')';
   
   PointeeType.getAsStringInternal(S);
+}
+
+void ReferenceType::getAsStringInternal(std::string &S) const {
+  S = '&' + S;
+  
+  // Handle things like 'int (&A)[4];' correctly.
+  // FIXME: this should include vectors, but vectors use attributes I guess.
+  if (isa<ArrayType>(ReferenceeType.getTypePtr()))
+    S = '(' + S + ')';
+  
+  ReferenceeType.getAsStringInternal(S);
 }
 
 void ArrayType::getAsStringInternal(std::string &S) const {

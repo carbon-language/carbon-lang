@@ -121,6 +121,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // Apply the pointer typequals to the pointer object.
       T = T.getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
+    case DeclaratorChunk::Reference:
+      T = Context.getReferenceType(T);
+      break;
     case DeclaratorChunk::Array: {
       const DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
       ArrayType::ArraySizeModifier ASM;

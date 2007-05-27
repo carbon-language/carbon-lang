@@ -28,6 +28,7 @@ namespace clang {
 class ASTContext {
   std::vector<Type*> Types;
   FoldingSet<PointerType> PointerTypes;
+  FoldingSet<ReferenceType> ReferenceTypes;
   FoldingSet<ArrayType> ArrayTypes;
   FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   FoldingSet<FunctionTypeProto> FunctionTypeProtos;
@@ -56,6 +57,10 @@ public:
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.
   QualType getPointerType(QualType T);
+  
+  /// getReferenceType - Return the uniqued reference to the type for a
+  /// reference to the specified type.
+  QualType getReferenceType(QualType T);
   
   /// getArrayType - Return the unique reference to the type for an array of the
   /// specified element type.
