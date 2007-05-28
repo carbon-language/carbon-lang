@@ -113,10 +113,8 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
     
   case tok::l_brace:                // C99 6.8.2: compound-statement
     return ParseCompoundStatement();
-  case tok::semi:                   // C99 6.8.3: expression[opt] ';'
-    // TODO: Could return a NullStmt action result if we cared to.
-    ConsumeToken();
-    return 0;
+  case tok::semi:                   // C99 6.8.3p3: expression[opt] ';'
+    return Actions.ParseNullStmt(ConsumeToken());
     
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement();

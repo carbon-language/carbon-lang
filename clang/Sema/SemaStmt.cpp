@@ -19,6 +19,10 @@
 using namespace llvm;
 using namespace clang;
 
+Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {
+  return new NullStmt(SemiLoc);
+}
+
 
 Action::StmtResult 
 Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,

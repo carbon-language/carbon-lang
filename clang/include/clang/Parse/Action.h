@@ -172,6 +172,10 @@ public:
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
   
+  virtual StmtResult ParseNullStmt(SourceLocation SemiLoc) {
+    return 0;
+  }
+  
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts) {
     return 0;

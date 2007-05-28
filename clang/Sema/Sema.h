@@ -133,6 +133,7 @@ private:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
+  virtual StmtResult ParseNullStmt(SourceLocation SemiLoc);
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts);
   virtual StmtResult ParseExprStmt(ExprTy *Expr) {
