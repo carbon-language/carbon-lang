@@ -492,7 +492,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       return lhs;
     else {
       Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-           lhs.getAsString(), rhs.getAsString());
+           lhs.getAsString(), rhs.getAsString(),
+           LHS->getSourceRange(), RHS->getSourceRange());
       return QualType();
     }
   }
@@ -523,7 +524,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
                                   rhptee.getUnqualifiedType())) {
       Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
-                        lhs.getAsString(), rhs.getAsString());
+                        lhs.getAsString(), rhs.getAsString(),
+                        LHS->getSourceRange(), RHS->getSourceRange());
       return lhs; // FIXME: this is an _ext - is this return o.k?
     }
   }
@@ -531,7 +533,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     return lhs;
     
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-      lhs.getAsString(), rhs.getAsString());
+      lhs.getAsString(), rhs.getAsString(),
+      LHS->getSourceRange(), RHS->getSourceRange());
   return QualType();
 }
 
