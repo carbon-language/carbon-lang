@@ -16,6 +16,7 @@
 #include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/AST.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/Module.h"
 #include <iostream>
 using namespace llvm;
@@ -38,7 +39,10 @@ void llvm::clang::EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
   CodeGen::BuilderTy *Builder = CodeGen::Init(Context, M);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    // FIXME:  if (Diags.error ever occurred) continue;
+    // If an error occurred, stop code generation, but continue parsing and
+    // semantic analysis (to ensure all warnings and errors are emitted).
+    if (Diags.hasErrorOccurred())
+      continue;
     
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       CodeGen::CodeGenFunction(Builder, FD);
