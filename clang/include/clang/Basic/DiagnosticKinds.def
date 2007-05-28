@@ -550,8 +550,12 @@ DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
      "invalid lvalue in address expression")
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%0'")
-DIAG(err_typecheck_indirection_expr, ERROR,
+DIAG(err_typecheck_indirection_requires_pointer, ERROR,
      "indirection requires a pointer operand ('%0' invalid)")
+DIAG(err_typecheck_deref_incomplete_type, ERROR,
+     "dereferencing pointer to incomplete type '%0'")
+DIAG(ext_typecheck_deref_ptr_to_void, EXTENSION,
+     "dereferencing '%0' pointer")
 DIAG(err_typecheck_invalid_operands, ERROR,
      "invalid operands to binary expression ('%0' and '%1')")
 DIAG(ext_typecheck_comparison_of_pointer_integer, EXTENSION,

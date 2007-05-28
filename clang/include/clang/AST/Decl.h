@@ -210,7 +210,7 @@ public:
   }
   void setParams(VarDecl **NewParamInfo, unsigned NumParams);
 
-  QualType getResultType() { 
+  QualType getResultType() const { 
     return cast<FunctionType>(getType())->getResultType();
   }
   StorageClass getStorageClass() const { return SClass; }

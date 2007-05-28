@@ -1000,11 +1000,24 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   
   assert(!qType.isNull() && "no type for * expression");
 
-  // FIXME: need to check if the pointee is an incomplete type. Find spec ref.
-  if (PointerType *PT = dyn_cast<PointerType>(qType.getCanonicalType()))
-    return PT->getPointeeType();
-  Diag(OpLoc, diag::err_typecheck_indirection_expr, qType.getAsString(),
-       op->getSourceRange());
+  if (PointerType *PT = dyn_cast<PointerType>(qType.getCanonicalType())) {
+    QualType ptype = PT->getPointeeType();
+    // C99 6.5.3.2p4. "if it points to an object,...".
+    if (ptype->isIncompleteType()) { // An incomplete type is not an object
+      // GCC compat: special case 'void *' (treat as warning).
+      if (ptype->isVoidType()) {
+        Diag(OpLoc, diag::ext_typecheck_deref_ptr_to_void, 
+          qType.getAsString(), op->getSourceRange());
+      } else {
+        Diag(OpLoc, diag::err_typecheck_deref_incomplete_type, 
+          ptype.getAsString(), op->getSourceRange());
+        return QualType();
+      }
+    }
+    return ptype;
+  }
+  Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer, 
+    qType.getAsString(), op->getSourceRange());
   return QualType();
 }
 
