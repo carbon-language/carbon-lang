@@ -247,7 +247,6 @@ public:
     return 0;
   }
   
-  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//
@@ -337,6 +336,12 @@ public:
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS){
     return 0;
   }
+  
+  virtual ExprResult ParseAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
+                                    IdentifierInfo *LabelII) { // "&&foo"
+    return 0;
+  }
+  
   
   /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,

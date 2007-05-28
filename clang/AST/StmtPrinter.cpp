@@ -132,7 +132,7 @@ void StmtPrinter::VisitDefaultStmt(DefaultStmt *Node) {
 }
 
 void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
-  Indent(-1) << Node->getLabel()->getName() << ":\n";
+  Indent(-1) << Node->getName() << ":\n";
   PrintStmt(Node->getSubStmt(), 0);
 }
 
@@ -211,7 +211,7 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
 }
 
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
-  Indent() << "goto " << Node->getLabel()->getLabel()->getName() << ";\n";
+  Indent() << "goto " << Node->getLabel()->getName() << ";\n";
 }
 
 void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
@@ -339,26 +339,6 @@ void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   OS << "(" << Node->getDestType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }
-void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
-  switch (Node->getOpcode()) {
-  default:
-    assert(0 && "Not a C++ cast expression");
-    abort();
-  case CXXCastExpr::ConstCast:       OS << "const_cast<";       break;
-  case CXXCastExpr::DynamicCast:     OS << "dynamic_cast<";     break;
-  case CXXCastExpr::ReinterpretCast: OS << "reinterpret_cast<"; break;
-  case CXXCastExpr::StaticCast:      OS << "static_cast<";      break;
-  }
-
-  OS << Node->getDestType().getAsString() << ">(";
-  PrintExpr(Node->getSubExpr());
-  OS << ")";
-}
-
-void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
-  OS << (Node->getValue() ? "true" : "false");
-}
-
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
   PrintExpr(Node->getLHS());
   OS << " " << BinaryOperator::getOpcodeStr(Node->getOpcode()) << " ";
@@ -371,6 +351,36 @@ void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
   OS << " : ";
   PrintExpr(Node->getRHS());
 }
+
+// GNU extensions.
+
+void StmtPrinter::VisitAddrLabel(AddrLabel *Node) {
+  OS << "&&" << Node->getLabel()->getName();
+  
+}
+
+// C++
+
+void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
+  switch (Node->getOpcode()) {
+    default:
+      assert(0 && "Not a C++ cast expression");
+      abort();
+    case CXXCastExpr::ConstCast:       OS << "const_cast<";       break;
+    case CXXCastExpr::DynamicCast:     OS << "dynamic_cast<";     break;
+    case CXXCastExpr::ReinterpretCast: OS << "reinterpret_cast<"; break;
+    case CXXCastExpr::StaticCast:      OS << "static_cast<";      break;
+  }
+  
+  OS << Node->getDestType().getAsString() << ">(";
+  PrintExpr(Node->getSubExpr());
+  OS << ")";
+}
+
+void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
+  OS << (Node->getValue() ? "true" : "false");
+}
+
 
 //===----------------------------------------------------------------------===//
 // Stmt method implementations

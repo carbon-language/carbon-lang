@@ -14,6 +14,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Lex/IdentifierTable.h"
 using namespace llvm;
 using namespace clang;
 
@@ -73,4 +74,9 @@ bool Stmt::CollectingStats(bool enable) {
 	return StatSwitch;
 }
 
+
+
+const char *LabelStmt::getName() const {
+  return getID()->getName();
+}
 

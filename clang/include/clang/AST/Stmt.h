@@ -141,7 +141,8 @@ public:
     : Stmt(LabelStmtClass), IdentLoc(IL), Label(label), SubStmt(substmt) {}
   
   SourceLocation getIdentLoc() const { return IdentLoc; }
-  IdentifierInfo *getLabel() { return Label; }
+  IdentifierInfo *getID() const { return Label; }
+  const char *getName() const;
   Stmt *getSubStmt() { return SubStmt; }
 
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }

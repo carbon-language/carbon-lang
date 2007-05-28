@@ -484,8 +484,7 @@ Sema::DeclTy *Sema::ParseFunctionDefBody(DeclTy *D, StmtTy *Body) {
     if (I->second->getSubStmt() == 0) {
       LabelStmt *L = I->second;
       // Emit error.
-      Diag(L->getIdentLoc(), diag::err_undeclared_label_use,
-           L->getLabel()->getName());
+      Diag(L->getIdentLoc(), diag::err_undeclared_label_use, L->getName());
       
       // At this point, we have gotos that use the bogus label.  Stitch it into
       // the function body so that they aren't leaked and that the AST is well

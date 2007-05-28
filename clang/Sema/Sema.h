@@ -236,6 +236,10 @@ public:
                                         SourceLocation ColonLoc,
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
 
+  /// ParseAddrLabel - Parse the GNU address of label extension: "&&foo".
+  virtual ExprResult ParseAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
+                                    IdentifierInfo *LabelII);
+  
   /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,

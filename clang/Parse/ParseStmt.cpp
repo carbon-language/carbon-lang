@@ -197,7 +197,6 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     if (SubStmt.isInvalid)
       SubStmt = Actions.ParseNullStmt(ColonLoc);
     
-    // FIXME: Enter this label into the symbol table for the function.
     return Actions.ParseLabelStmt(IdentTok.getLocation(), 
                                   IdentTok.getIdentifierInfo(),
                                   ColonLoc, SubStmt.Val);

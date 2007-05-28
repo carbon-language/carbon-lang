@@ -549,17 +549,16 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
                            // unary-expression: '__alignof' '(' type-name ')'
     return ParseSizeofAlignofExpression();
   case tok::ampamp: {      // unary-expression: '&&' identifier
-    Diag(Tok, diag::ext_gnu_address_of_label);
-    SourceLocation SavedLoc = ConsumeToken();
-    
+    SourceLocation AmpAmpLoc = ConsumeToken();
     if (Tok.getKind() != tok::identifier) {
       Diag(Tok, diag::err_expected_ident);
       return ExprResult(true);
     }
-    // FIXME: Create a label ref for Tok.Ident.
-    Res = Actions.ParseUnaryOp(SavedLoc, SavedKind, 0);
+    
+    Diag(AmpAmpLoc, diag::ext_gnu_address_of_label);
+    Res = Actions.ParseAddrLabel(AmpAmpLoc, Tok.getLocation(),
+                                 Tok.getIdentifierInfo());
     ConsumeToken();
-      
     return Res;
   }
   case tok::kw_const_cast:

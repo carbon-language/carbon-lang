@@ -15,7 +15,6 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Scope.h"
-#include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace llvm;
 using namespace clang;
@@ -61,12 +60,12 @@ Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   if (LabelDecl == 0)
     return LabelDecl = new LabelStmt(IdentLoc, II, (Stmt*)SubStmt);
   
-  assert(LabelDecl->getLabel() == II && "Label mismatch!");
+  assert(LabelDecl->getID() == II && "Label mismatch!");
   
   // Otherwise, this label was either forward reference or multiply defined.  If
   // multiply defined, reject it now.
   if (LabelDecl->getSubStmt()) {
-    Diag(IdentLoc, diag::err_redefinition_of_label, II->getName());
+    Diag(IdentLoc, diag::err_redefinition_of_label, LabelDecl->getName());
     Diag(LabelDecl->getIdentLoc(), diag::err_previous_definition);
     return (Stmt*)SubStmt;
   }

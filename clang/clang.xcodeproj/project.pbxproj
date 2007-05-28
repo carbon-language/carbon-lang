@@ -346,11 +346,11 @@
 				DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
-				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
-				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
-				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
 				DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */,
+				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
 				DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */,
+				DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */,
+				DE67E70A0C020EC500F66BC5 /* SemaType.cpp */,
 			);
 			name = Sema;
 			sourceTree = "<group>";

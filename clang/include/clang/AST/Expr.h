@@ -230,7 +230,6 @@ public:
     Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
     SizeOf, AlignOf,  // [C99 6.5.3.4] Sizeof (expr, not type) operator.
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
-    AddrLabel,        // && label Extension.
     Extension         // __extension__ marker.
   };
 
@@ -494,6 +493,26 @@ public:
   static bool classof(const ConditionalOperator *) { return true; }
 };
 
+/// AddrLabel - The GNU address of label extension, representing &&label.
+class AddrLabel : public Expr {
+  SourceLocation AmpAmpLoc, LabelLoc;
+  LabelStmt *Label;
+public:
+  AddrLabel(SourceLocation AALoc, SourceLocation LLoc, LabelStmt *L, QualType t)
+    : Expr(AddrLabelClass, t), AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AmpAmpLoc, LabelLoc);
+  }
+  
+  LabelStmt *getLabel() const { return Label; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == AddrLabelClass; 
+  }
+  static bool classof(const AddrLabel *) { return true; }
+};
   
 }  // end namespace clang
 }  // end namespace llvm

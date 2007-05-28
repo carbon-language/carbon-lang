@@ -1064,7 +1064,6 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
   case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
   case tok::kw___real:    Opc = UnaryOperator::Real; break;
   case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
-  case tok::ampamp:       Opc = UnaryOperator::AddrLabel; break;
   // FIXME: case tok::kw___extension__: 
   }
   return Opc;
@@ -1222,3 +1221,20 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     return true;
   return new UnaryOperator((Expr *)Input, Opc, resultType, OpLoc);
 }
+
+/// ParseAddrLabel - Parse the GNU address of label extension: "&&foo".
+Sema::ExprResult Sema::ParseAddrLabel(SourceLocation OpLoc, 
+                                      SourceLocation LabLoc,
+                                      IdentifierInfo *LabelII) {
+  // Look up the record for this label identifier.
+  LabelStmt *&LabelDecl = LabelMap[LabelII];
+  
+  // If we haven't seen this label yet, create a forward reference.
+  if (LabelDecl == 0)
+    LabelDecl = new LabelStmt(LabLoc, LabelII, 0);
+  
+  // Create the AST node.  The address of a label always has type 'void*'.
+  return new AddrLabel(OpLoc, LabLoc, LabelDecl,
+                       Context.getPointerType(Context.VoidTy));
+}
+
