@@ -391,6 +391,9 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
 Parser::StmtResult Parser::ParseCompoundStatementBody() {
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
+  // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
+  // only allowed at the start of a compound stmt.
+  
   SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
     StmtResult R = ParseStatementOrDeclaration(false);
