@@ -90,6 +90,8 @@ public:
   body_iterator body_begin() { return Body.begin(); }
   body_iterator body_end() { return Body.end(); }
   
+  void push_back(Stmt *S) { Body.push_back(S); }
+    
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundStmtClass; 
@@ -131,15 +133,20 @@ public:
 };
 
 class LabelStmt : public Stmt {
+  SourceLocation IdentLoc;
   IdentifierInfo *Label;
   Stmt *SubStmt;
 public:
-  LabelStmt(IdentifierInfo *label, Stmt *substmt)
-    : Stmt(LabelStmtClass), Label(label), SubStmt(substmt) {}
+  LabelStmt(SourceLocation IL, IdentifierInfo *label, Stmt *substmt)
+    : Stmt(LabelStmtClass), IdentLoc(IL), Label(label), SubStmt(substmt) {}
   
+  SourceLocation getIdentLoc() const { return IdentLoc; }
   IdentifierInfo *getLabel() { return Label; }
   Stmt *getSubStmt() { return SubStmt; }
 
+  void setIdentLoc(SourceLocation L) { IdentLoc = L; }
+  void setSubStmt(Stmt *SS) { SubStmt = SS; }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == LabelStmtClass; 
@@ -257,11 +264,11 @@ public:
 /// GotoStmt - This represents a direct goto.
 ///
 class GotoStmt : public Stmt {
-  IdentifierInfo *Label;
+  LabelStmt *Label;
 public:
-  GotoStmt(IdentifierInfo *label) : Stmt(GotoStmtClass), Label(label) {}
+  GotoStmt(LabelStmt *label) : Stmt(GotoStmtClass), Label(label) {}
   
-  IdentifierInfo *getLabel() { return Label; }
+  LabelStmt *getLabel() { return Label; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

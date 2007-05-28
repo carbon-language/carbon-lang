@@ -211,7 +211,7 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
 }
 
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
-  Indent() << "goto " << Node->getLabel()->getName() << "\n";
+  Indent() << "goto " << Node->getLabel()->getLabel()->getName() << ";\n";
 }
 
 void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {

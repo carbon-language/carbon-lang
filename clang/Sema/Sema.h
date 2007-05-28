@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Parse/Action.h"
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
 #include <string>
 
@@ -34,6 +35,7 @@ namespace clang {
   class LexerToken;
   class IntegerLiteral;
   class ArrayType;
+  class LabelStmt;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -50,6 +52,11 @@ class Sema : public Action {
   /// all but the last decl will be entered into this.  This is used by the
   /// ASTStreamer.
   std::vector<Decl*> &LastInGroupList;
+  
+  /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
+  /// it (which acts like the label decl in some ways).  Forward referenced
+  /// labels have a LabelStmt created for them with a null location & SubStmt.
+  DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   

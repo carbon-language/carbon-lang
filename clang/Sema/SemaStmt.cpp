@@ -15,6 +15,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
 using namespace llvm;
 using namespace clang;
@@ -53,7 +54,28 @@ Sema::ParseDefaultStmt(SourceLocation DefaultLoc,
 Action::StmtResult
 Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                      SourceLocation ColonLoc, StmtTy *SubStmt) {
-  return new LabelStmt(II, (Stmt*)SubStmt);
+  // Look up the record for this label identifier.
+  LabelStmt *&LabelDecl = LabelMap[II];
+  
+  // If not forward referenced or defined already, just create a new LabelStmt.
+  if (LabelDecl == 0)
+    return LabelDecl = new LabelStmt(IdentLoc, II, (Stmt*)SubStmt);
+  
+  assert(LabelDecl->getLabel() == II && "Label mismatch!");
+  
+  // Otherwise, this label was either forward reference or multiply defined.  If
+  // multiply defined, reject it now.
+  if (LabelDecl->getSubStmt()) {
+    Diag(IdentLoc, diag::err_redefinition_of_label, II->getName());
+    Diag(LabelDecl->getIdentLoc(), diag::err_previous_definition);
+    return (Stmt*)SubStmt;
+  }
+  
+  // Otherwise, this label was forward declared, and we just found its real
+  // definition.  Fill in the forward definition and return it.
+  LabelDecl->setIdentLoc(IdentLoc);
+  LabelDecl->setSubStmt((Stmt*)SubStmt);
+  return LabelDecl;
 }
 
 Action::StmtResult 
@@ -89,7 +111,14 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 Action::StmtResult 
 Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                     IdentifierInfo *LabelII) {
-  return new GotoStmt(LabelII);
+  // Look up the record for this label identifier.
+  LabelStmt *&LabelDecl = LabelMap[LabelII];
+
+  // If we haven't seen this label yet, create a forward reference.
+  if (LabelDecl == 0)
+    LabelDecl = new LabelStmt(LabelLoc, LabelII, 0);
+  
+  return new GotoStmt(LabelDecl);
 }
 Action::StmtResult 
 Sema::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
