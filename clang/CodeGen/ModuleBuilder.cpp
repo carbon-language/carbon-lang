@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/CodeGen/ModuleBuilder.h"
-#include "Builder.h"
+#include "CodeGenModule.h"
 using namespace llvm;
 using namespace clang;
 
@@ -20,21 +20,21 @@ using namespace clang;
 /// Init - Create an ModuleBuilder with the specified ASTContext.
 llvm::clang::CodeGen::BuilderTy *
 llvm::clang::CodeGen::Init(ASTContext &Context, Module &M) {
-  return new Builder(Context, M);
+  return new CodeGenModule(Context, M);
 }
 
 void llvm::clang::CodeGen::Terminate(BuilderTy *B) {
-  delete static_cast<Builder*>(B);
+  delete static_cast<CodeGenModule*>(B);
 }
 
 /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
 ///
 void llvm::clang::CodeGen::CodeGenFunction(BuilderTy *B, FunctionDecl *D) {
-  static_cast<Builder*>(B)->CodeGenFunction(D);
+  static_cast<CodeGenModule*>(B)->EmitFunction(D);
 }
 
 /// PrintStats - Emit statistic information to stderr.
 ///
 void llvm::clang::CodeGen::PrintStats(BuilderTy *B) {
-  static_cast<Builder*>(B)->PrintStats();
+  static_cast<CodeGenModule*>(B)->PrintStats();
 }

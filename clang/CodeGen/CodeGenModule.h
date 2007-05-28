@@ -1,4 +1,4 @@
-//===--- Builder.h - Internal interface for LLVM Builder ------------------===//
+//===--- CodeGenModule.h - Per-Module state for LLVM CodeGen --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_BUILDER_H
-#define CODEGEN_BUILDER_H
+#ifndef CODEGEN_CODEGENMODULE_H
+#define CODEGEN_CODEGENMODULE_H
 
 namespace llvm {
   class Module;
@@ -22,16 +22,17 @@ namespace clang {
     
 namespace CodeGen {
 
-class Builder {
+/// CodeGenModule - This class organizes the cross-module state that is used
+/// while generating LLVM code.
+class CodeGenModule {
   ASTContext &Context;
   Module &TheModule;
 public:
-  Builder(ASTContext &C, Module &M) : Context(C), TheModule(M) {}
+  CodeGenModule(ASTContext &C, Module &M) : Context(C), TheModule(M) {}
   
-  void CodeGenFunction(FunctionDecl *FD) {}
+  void EmitFunction(FunctionDecl *FD);
   
   void PrintStats() {}
-    
 };
 }  // end namespace CodeGen
 }  // end namespace clang
