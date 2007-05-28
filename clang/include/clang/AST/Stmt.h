@@ -62,6 +62,22 @@ public:
   static bool classof(const Stmt *) { return true; }
 };
 
+/// NullStmt - This is the null statement ";": C99 6.8.3p3.
+///
+class NullStmt : public Stmt {
+  SourceLocation SemiLoc;
+public:
+  NullStmt(SourceLocation L) : Stmt(NullStmtClass), SemiLoc(L) {}
+
+  SourceLocation getSemiLoc() const { return SemiLoc; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == NullStmtClass; 
+  }
+  static bool classof(const NullStmt *) { return true; }
+};
+
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
 ///
 class CompoundStmt : public Stmt {

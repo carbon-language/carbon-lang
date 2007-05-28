@@ -105,6 +105,10 @@ void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
   Indent() << "}";
 }
 
+void StmtPrinter::VisitNullStmt(NullStmt *Node) {
+  Indent() << ";\n";
+}
+
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
   Indent();
   PrintRawCompoundStmt(Node);
