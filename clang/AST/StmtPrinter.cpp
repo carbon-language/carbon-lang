@@ -59,7 +59,7 @@ namespace  {
       } else if (S) {
         S->visit(*this);
       } else {
-        Indent() << ";\n";
+        Indent() << "<<<NULL STATEMENT>>>\n";
       }
       IndentLevel -= SubIndent;
     }
