@@ -57,6 +57,8 @@ Diagnostic::Diagnostic(DiagnosticClient &client) : Client(client) {
   ErrorOnExtensions = false;
   // Clear all mappings, setting them to MAP_DEFAULT.
   memset(DiagMappings, 0, sizeof(DiagMappings));
+  
+  ErrorOccurred = false;
 }
 
 /// isNoteWarningOrExtension - Return true if the unmapped diagnostic level of
@@ -125,6 +127,9 @@ void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
   // If the client doesn't care about this message, don't issue it.
   if (DiagLevel == Diagnostic::Ignored)
     return;
+  
+  if (DiagLevel >= Diagnostic::Error)
+    ErrorOccurred = true;
   
   // Finally, report it.
   Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Strs, NumStrs,

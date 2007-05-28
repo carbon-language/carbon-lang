@@ -55,6 +55,10 @@ class Diagnostic {
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into two bits per diagnostic.
   unsigned char DiagMappings[(diag::NUM_DIAGNOSTICS+3)/4];
+  
+  /// ErrorOccurred - This is set to true when an error is emitted, and is
+  /// sticky.
+  bool ErrorOccurred;
 public:
   explicit Diagnostic(DiagnosticClient &client);
   
@@ -93,6 +97,7 @@ public:
     return (diag::Mapping)((DiagMappings[Diag/4] >> (Diag & 3)*2) & 3);
   }
   
+  bool hasErrorOccurred() const { return ErrorOccurred; }
   
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
