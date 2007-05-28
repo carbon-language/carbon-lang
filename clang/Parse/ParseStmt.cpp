@@ -192,7 +192,10 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
       ParseAttributes();
 
     StmtResult SubStmt = ParseStatement();
-    if (SubStmt.isInvalid) return true;
+    
+    // Broken substmt shouldn't prevent the label from being added to the AST.
+    if (SubStmt.isInvalid)
+      SubStmt = Actions.ParseNullStmt(ColonLoc);
     
     // FIXME: Enter this label into the symbol table for the function.
     return Actions.ParseLabelStmt(IdentTok.getLocation(), 
@@ -299,8 +302,10 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   }
   
   StmtResult SubStmt = ParseStatement();
+
+  // Broken substmt shouldn't prevent the case from being added to the AST.
   if (SubStmt.isInvalid)
-    return true;
+    SubStmt = Actions.ParseNullStmt(ColonLoc);
   
   // TODO: look up enclosing switch stmt.
   return Actions.ParseCaseStmt(CaseLoc, LHS.Val, DotDotDotLoc, RHSVal, ColonLoc,
@@ -429,6 +434,11 @@ Parser::StmtResult Parser::ParseIfStatement() {
   
   // Read the if condition.
   StmtResult CondStmt = ParseStatement();
+
+  // Broken substmt shouldn't prevent the label from being added to the AST.
+  if (CondStmt.isInvalid)
+    CondStmt = Actions.ParseNullStmt(Tok.getLocation());
+  
   
   // If it has an else, parse it.
   SourceLocation ElseLoc;
@@ -436,10 +446,10 @@ Parser::StmtResult Parser::ParseIfStatement() {
   if (Tok.getKind() == tok::kw_else) {
     ElseLoc = ConsumeToken();
     ElseStmt = ParseStatement();
+    
+    if (ElseStmt.isInvalid)
+      ElseStmt = Actions.ParseNullStmt(ElseLoc);
   }
-  
-  if (CondStmt.isInvalid || ElseStmt.isInvalid)
-    return true;
   
   return Actions.ParseIfStmt(IfLoc, CondExp.Val, CondStmt.Val,
                              ElseLoc, ElseStmt.Val);
