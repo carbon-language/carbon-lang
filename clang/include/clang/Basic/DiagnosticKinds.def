@@ -585,13 +585,13 @@ DIAG(err_typecheck_call_too_few_args, ERROR,
 DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to function")
 DIAG(err_typecheck_passing_incompatible, ERROR,
-     "incompatible type for argument %0")
+     "passing incompatible type '%0' to function expecting '%1'")
+DIAG(ext_typecheck_passing_incompatible_pointer, EXTENSION,
+     "passing incompatible pointer '%0' to function expecting '%1'")
 DIAG(ext_typecheck_passing_int_from_pointer, EXTENSION,
      "passing argument %0 makes integer from pointer without a cast")
 DIAG(ext_typecheck_passing_pointer_from_int, EXTENSION,
      "passing argument %0 makes pointer from integer without a cast")
-DIAG(ext_typecheck_passing_incompatible_pointer, EXTENSION,
-     "passing argument %0 from incompatible pointer type")
 DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
      "passing argument %0 discards qualifiers from pointer target type")
 DIAG(err_typecheck_return_incompatible, ERROR,

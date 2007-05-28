@@ -363,7 +363,11 @@ Action::ExprResult Sema::
 ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
               ExprTy **Args, unsigned NumArgsInCall,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
-  QualType qType = ((Expr *)Fn)->getType();
+  Expr *funcExpr = (Expr *)Fn;
+
+  assert(funcExpr && "no function call expression");
+  
+  QualType qType = funcExpr->getType();
 
   assert(!qType.isNull() && "no type for function call expression");
 
@@ -382,16 +386,24 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     unsigned NumArgsToCheck = NumArgsInCall;
     
     if (NumArgsInCall < NumArgsInProto)
-      Diag(LParenLoc, diag::err_typecheck_call_too_few_args);
+      Diag(LParenLoc, diag::err_typecheck_call_too_few_args,
+        funcExpr->getSourceRange());
     else if (NumArgsInCall > NumArgsInProto) {
-      if (!proto->isVariadic())
-        Diag(LParenLoc, diag::err_typecheck_call_too_many_args);
+      if (!proto->isVariadic()) {
+        Diag(LParenLoc, diag::err_typecheck_call_too_many_args,
+          funcExpr->getSourceRange(),
+          ((Expr **)Args)[NumArgsInProto]->getSourceRange());
+      }
       NumArgsToCheck = NumArgsInProto;
     }
     // Continue to check argument types (even if we have too few/many args).
     for (unsigned i = 0; i < NumArgsToCheck; i++) {
+      Expr *argExpr = ((Expr **)Args)[i];
+      
+      assert(argExpr && "ParseCallExpr(): missing argument expression");
+      
       QualType lhsType = proto->getArgType(i);
-      QualType rhsType = ((Expr **)Args)[i]->getType();
+      QualType rhsType = argExpr->getType();
       
       if (lhsType == rhsType) // common case, fast path...
         continue;
@@ -401,28 +413,34 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       SourceLocation l = (i == 0) ? LParenLoc : CommaLocs[i-1];
 
       // decode the result (notice that AST's are still created for extensions).
-      // FIXME: consider fancier error diagnostics (since this is quite common).
-      // #1: emit the actual prototype arg...requires adding source loc info.
-      // #2: pass Diag the offending argument type...requires hacking Diag.
+      // FIXME: decide to include/exclude the argument # (decided to remove
+      // it for the incompatible diags below). The range should be sufficient.
       switch (result) {
       case Compatible:
         break;
       case PointerFromInt:
         // check for null pointer constant (C99 6.3.2.3p3)
-        if (!((Expr **)Args)[i]->isNullPointerConstant())
-          Diag(l, diag::ext_typecheck_passing_pointer_from_int, utostr(i+1));
+        if (!argExpr->isNullPointerConstant())
+          Diag(l, diag::ext_typecheck_passing_pointer_from_int, utostr(i+1),
+            funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case IntFromPointer:
-        Diag(l, diag::ext_typecheck_passing_int_from_pointer, utostr(i+1));
+        Diag(l, diag::ext_typecheck_passing_int_from_pointer, utostr(i+1),
+          funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case IncompatiblePointer:
-        Diag(l, diag::ext_typecheck_passing_incompatible_pointer, utostr(i+1));
+        Diag(l, diag::ext_typecheck_passing_incompatible_pointer, 
+          rhsType.getAsString(), lhsType.getAsString(),
+          funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case CompatiblePointerDiscardsQualifiers:
-        Diag(l, diag::ext_typecheck_passing_discards_qualifiers, utostr(i+1));
+        Diag(l, diag::ext_typecheck_passing_discards_qualifiers, utostr(i+1),
+          funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case Incompatible:
-        return Diag(l, diag::err_typecheck_passing_incompatible, utostr(i+1));
+        return Diag(l, diag::err_typecheck_passing_incompatible,
+                 rhsType.getAsString(), lhsType.getAsString(),
+                 funcExpr->getSourceRange(), argExpr->getSourceRange());
       }
     }
     // Even if the types checked, bail if we had the wrong number of arguments.
