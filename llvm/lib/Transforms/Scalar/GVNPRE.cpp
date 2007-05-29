@@ -390,7 +390,7 @@ bool GVNPRE::runOnFunction(Function &F) {
       std::set<Expression> old (anticIn.begin(), anticIn.end());
       
       if (BB->getTerminator()->getNumSuccessors() == 1) {
-         phi_translate(VN, anticIn, BB, anticOut);
+         phi_translate(VN, maximalSet, BB, anticOut);
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
         for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
@@ -439,7 +439,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     iterations++;
   }
   
-  /* printf("Iterations: %d\n", iterations);
+  printf("Iterations: %d\n", iterations);
   
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     printf("Name: ");
@@ -453,7 +453,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     printf("\nANTIC_IN: \n");
     dump(VN, anticipatedIn[I]);
     printf("\n");
-  } */
+  }
   
   return false;
 }
