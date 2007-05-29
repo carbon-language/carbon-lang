@@ -252,9 +252,11 @@ LLVM assembly language.  There is a difference between what the parser
 accepts and what is considered 'well formed'.  For example, the
 following instruction is syntactically okay, but not well formed:</p>
 
+<div class="doc_code">
 <pre>
-  %x = <a href="#i_add">add</a> i32 1, %x
+%x = <a href="#i_add">add</a> i32 1, %x
 </pre>
+</div>
 
 <p>...because the definition of <tt>%x</tt> does not dominate all of
 its uses. The LLVM infrastructure provides a verification pass that may
@@ -263,6 +265,7 @@ automatically run by the parser after parsing input assembly and by
 the optimizer before it outputs bytecode.  The violations pointed out
 by the verifier pass indicate bugs in transformation passes or input to
 the parser.</p>
+</div>
 
 <!-- Describe the typesetting conventions here. --> </div>
 
@@ -310,23 +313,29 @@ none of them start with a '%' character.</p>
 
 <p>The easy way:</p>
 
+<div class="doc_code">
 <pre>
-  %result = <a href="#i_mul">mul</a> i32 %X, 8
+%result = <a href="#i_mul">mul</a> i32 %X, 8
 </pre>
+</div>
 
 <p>After strength reduction:</p>
 
+<div class="doc_code">
 <pre>
-  %result = <a href="#i_shl">shl</a> i32 %X, i8 3
+%result = <a href="#i_shl">shl</a> i32 %X, i8 3
 </pre>
+</div>
 
 <p>And the hard way:</p>
 
+<div class="doc_code">
 <pre>
-  <a href="#i_add">add</a> i32 %X, %X           <i>; yields {i32}:%0</i>
-  <a href="#i_add">add</a> i32 %0, %0           <i>; yields {i32}:%1</i>
-  %result = <a href="#i_add">add</a> i32 %1, %1
+<a href="#i_add">add</a> i32 %X, %X           <i>; yields {i32}:%0</i>
+<a href="#i_add">add</a> i32 %0, %0           <i>; yields {i32}:%1</i>
+%result = <a href="#i_add">add</a> i32 %1, %1
 </pre>
+</div>
 
 <p>This last way of multiplying <tt>%X</tt> by 8 illustrates several
 important lexical features of LLVM:</p>
@@ -367,6 +376,7 @@ combined together with the LLVM linker, which merges function (and
 global variable) definitions, resolves forward declarations, and merges
 symbol table entries. Here is an example of the "hello world" module:</p>
 
+<div class="doc_code">
 <pre><i>; Declare the string constant as a global constant...</i>
 <a href="#identifiers">%.LC0</a> = <a href="#linkage_internal">internal</a> <a
  href="#globalvars">constant</a> <a href="#t_array">[13 x i8 ]</a> c"hello world\0A\00"          <i>; [13 x i8 ]*</i>
@@ -384,7 +394,9 @@ define i32 %main() {                                                 <i>; i32()*
         <a
  href="#i_call">call</a> i32 %puts(i8 * %cast210)                              <i>; i32</i>
         <a
- href="#i_ret">ret</a> i32 0<br>}<br></pre>
+ href="#i_ret">ret</a> i32 0<br>}<br>
+</pre>
+</div>
 
 <p>This example is made up of a <a href="#globalvars">global variable</a>
 named "<tt>.LC0</tt>", an external declaration of the "<tt>puts</tt>"
@@ -647,9 +659,11 @@ a power of 2.</p>
 <p>For example, the following defines a global with an initializer, section,
    and alignment:</p>
 
+<div class="doc_code">
 <pre>
-  %G = constant float 1.0, section "foo", align 4
+%G = constant float 1.0, section "foo", align 4
 </pre>
+</div>
 
 </div>
 
@@ -719,9 +733,11 @@ a power of 2.</p>
 
   <h5>Syntax:</h5>
 
+<div class="doc_code">
   <pre>
-    @&lt;Name&gt; = [Linkage] [Visibility] alias &lt;AliaseeTy&gt; @&lt;Aliasee&gt;
+@&lt;Name&gt; = [Linkage] [Visibility] alias &lt;AliaseeTy&gt; @&lt;Aliasee&gt;
   </pre>
+</div>
 
 </div>
 
@@ -739,9 +755,15 @@ a power of 2.</p>
 
   <p>Parameter attributes are simple keywords that follow the type specified. If
   multiple parameter attributes are needed, they are space separated. For 
-  example:</p><pre>
-    %someFunc = i16 (i8 sext %someParam) zext
-    %someFunc = i16 (i8 zext %someParam) zext</pre>
+  example:</p>
+
+<div class="doc_code">
+<pre>
+%someFunc = i16 (i8 sext %someParam) zext
+%someFunc = i16 (i8 zext %someParam) zext
+</pre>
+</div>
+
   <p>Note that the two function types above are unique because the parameter has
   a different attribute (sext in the first one, zext in the second). Also note
   that the attribute for the function result (zext) comes immediately after the
@@ -787,10 +809,12 @@ LLVM and treated as a single unit, but may be separated in the .ll file if
 desired.  The syntax is very simple:
 </p>
 
-<div class="doc_code"><pre>
-  module asm "inline asm code goes here"
-  module asm "more can go here"
-</pre></div>
+<div class="doc_code">
+<pre>
+module asm "inline asm code goes here"
+module asm "more can go here"
+</pre>
+</div>
 
 <p>The strings can contain any character by escaping non-printable characters.
    The escape sequence used is simply "\xx" where "xx" is the two digit hex code
@@ -1015,6 +1039,7 @@ value.</p>
     </td>
   </tr>
 </table>
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_array">Array Type</a> </div>
@@ -1398,11 +1423,13 @@ href="#identifiers">identifier for the global</a> is used and always have <a
 href="#t_pointer">pointer</a> type. For example, the following is a legal LLVM
 file:</p>
 
+<div class="doc_code">
 <pre>
-  %X = global i32 17
-  %Y = global i32 42
-  %Z = global [2 x i32*] [ i32* %X, i32* %Y ]
+%X = global i32 17
+%Y = global i32 42
+%Z = global [2 x i32*] [ i32* %X, i32* %Y ]
 </pre>
+</div>
 
 </div>
 
@@ -1556,18 +1583,22 @@ indicates whether or not the inline asm expression has side effects.  An example
 inline assembler expression is:
 </p>
 
+<div class="doc_code">
 <pre>
-  i32 (i32) asm "bswap $0", "=r,r"
+i32 (i32) asm "bswap $0", "=r,r"
 </pre>
+</div>
 
 <p>
 Inline assembler expressions may <b>only</b> be used as the callee operand of
 a <a href="#i_call"><tt>call</tt> instruction</a>.  Thus, typically we have:
 </p>
 
+<div class="doc_code">
 <pre>
-  %X = call i32 asm "<a href="#int_bswap">bswap</a> $0", "=r,r"(i32 %Y)
+%X = call i32 asm "<a href="#int_bswap">bswap</a> $0", "=r,r"(i32 %Y)
 </pre>
+</div>
 
 <p>
 Inline asms with side effects not visible in the constraint list must be marked
@@ -1575,9 +1606,11 @@ as having side effects.  This is done through the use of the
 '<tt>sideeffect</tt>' keyword, like so:
 </p>
 
+<div class="doc_code">
 <pre>
-  call void asm sideeffect "eieio", ""()
+call void asm sideeffect "eieio", ""()
 </pre>
+</div>
 
 <p>TODO: The format of the asm and constraints string still need to be
 documented here.  Constraints on what can be done (e.g. duplication, moving, etc
@@ -2663,8 +2696,8 @@ instructions), the memory is reclaimed.</p>
 
 <pre>
   %ptr = alloca i32                              <i>; yields {i32*}:ptr</i>
-  %ptr = alloca i32, i32 4                      <i>; yields {i32*}:ptr</i>
-  %ptr = alloca i32, i32 4, align 1024          <i>; yields {i32*}:ptr</i>
+  %ptr = alloca i32, i32 4                       <i>; yields {i32*}:ptr</i>
+  %ptr = alloca i32, i32 4, align 1024           <i>; yields {i32*}:ptr</i>
   %ptr = alloca i32, align 1024                  <i>; yields {i32*}:ptr</i>
 </pre>
 </div>
@@ -2754,35 +2787,39 @@ be sign extended to 64-bit values.</p>
 <p>For example, let's consider a C code fragment and how it gets
 compiled to LLVM:</p>
 
+<div class="doc_code">
 <pre>
-  struct RT {
-    char A;
-    i32 B[10][20];
-    char C;
-  };
-  struct ST {
-    i32 X;
-    double Y;
-    struct RT Z;
-  };
+struct RT {
+  char A;
+  i32 B[10][20];
+  char C;
+};
+struct ST {
+  i32 X;
+  double Y;
+  struct RT Z;
+};
 
-  define i32 *foo(struct ST *s) {
-    return &amp;s[1].Z.B[5][13];
-  }
+i32 *foo(struct ST *s) {
+  return &amp;s[1].Z.B[5][13];
+}
 </pre>
+</div>
 
 <p>The LLVM code generated by the GCC frontend is:</p>
 
+<div class="doc_code">
 <pre>
-  %RT = type { i8 , [10 x [20 x i32]], i8  }
-  %ST = type { i32, double, %RT }
+%RT = type { i8 , [10 x [20 x i32]], i8  }
+%ST = type { i32, double, %RT }
 
-  define i32* %foo(%ST* %s) {
-  entry:
-    %reg = getelementptr %ST* %s, i32 1, i32 2, i32 1, i32 5, i32 13
-    ret i32* %reg
-  }
+define i32* %foo(%ST* %s) {
+entry:
+  %reg = getelementptr %ST* %s, i32 1, i32 2, i32 1, i32 5, i32 13
+  ret i32* %reg
+}
 </pre>
+</div>
 
 <h5>Semantics:</h5>
 
@@ -3694,6 +3731,7 @@ the type used.</p>
 instruction and the variable argument handling intrinsic functions are
 used.</p>
 
+<div class="doc_code">
 <pre>
 define i32 @test(i32 %X, ...) {
   ; Initialize variable argument processing
@@ -3719,6 +3757,8 @@ declare void @llvm.va_start(i8*)
 declare void @llvm.va_copy(i8*, i8*)
 declare void @llvm.va_end(i8*)
 </pre>
+</div>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
