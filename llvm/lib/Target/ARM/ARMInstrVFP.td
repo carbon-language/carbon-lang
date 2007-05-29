@@ -108,21 +108,21 @@ def FSTS  : ASI5<(ops SPR:$src, addrmode5:$addr),
 
 let isLoad = 1 in {
 def FLDMD : AXDI5<(ops addrmode5:$addr, pred:$p, reglist:$dst1, variable_ops),
-                  "fldm${p}${addr:submode}d ${addr:base}, $dst1",
+                  "fldm${addr:submode}d${p} ${addr:base}, $dst1",
                   []>;
 
 def FLDMS : AXSI5<(ops addrmode5:$addr, pred:$p, reglist:$dst1, variable_ops),
-                  "fldm${p}${addr:submode}s ${addr:base}, $dst1",
+                  "fldm${addr:submode}s${p} ${addr:base}, $dst1",
                   []>;
 } // isLoad
 
 let isStore = 1 in {
 def FSTMD : AXDI5<(ops addrmode5:$addr, pred:$p, reglist:$src1, variable_ops),
-                 "fstm${p}${addr:submode}d ${addr:base}, $src1",
+                 "fstm${addr:submode}d${p} ${addr:base}, $src1",
                  []>;
 
 def FSTMS : AXSI5<(ops addrmode5:$addr, pred:$p, reglist:$src1, variable_ops),
-                 "fstm${p}${addr:submode}s ${addr:base}, $src1",
+                 "fstm${addr:submode}s${p} ${addr:base}, $src1",
                  []>;
 } // isStore
 
