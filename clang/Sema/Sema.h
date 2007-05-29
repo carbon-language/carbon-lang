@@ -143,9 +143,7 @@ public:
   virtual StmtResult ParseNullStmt(SourceLocation SemiLoc);
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts);
-  virtual StmtResult ParseExprStmt(ExprTy *Expr) {
-    return Expr; // Exprs are Stmts.
-  }
+  virtual StmtResult ParseDeclStmt(DeclTy *Decl);
   virtual StmtResult ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
                                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                                    SourceLocation ColonLoc, StmtTy *SubStmt);

@@ -109,6 +109,18 @@ void StmtPrinter::VisitNullStmt(NullStmt *Node) {
   Indent() << ";\n";
 }
 
+void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
+  // FIXME: Need to complete/beautify this...this code simply shows the
+  // nodes are where they need to be.
+  if (BlockVarDecl *localVar = dyn_cast<BlockVarDecl>(Node->getDecl())) {
+    Indent() << localVar->getType().getAsString();
+    OS << " " << localVar->getName() << ";\n";
+  } else if (TypedefDecl *localType = dyn_cast<TypedefDecl>(Node->getDecl())) {
+    Indent() << "typedef " << localType->getUnderlyingType().getAsString();
+    OS << " " << localType->getName() << ";\n";
+  }
+}
+
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
   Indent();
   PrintRawCompoundStmt(Node);

@@ -21,6 +21,7 @@
 namespace llvm {
 namespace clang {
   class Expr;
+  class Decl;
   class IdentifierInfo;
   class StmtVisitor;
   
@@ -60,6 +61,25 @@ public:
 
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }
+};
+
+/// DeclStmt - Adaptor class for mixing declarations with statements and
+/// expressions. For example, CompoundStmt mixes statements, expressions
+/// and declarations (variables, types). Another example is ForStmt, where 
+/// the first statement can be an expression or a declaration.
+///
+class DeclStmt : public Stmt {
+  Decl *BlockVarOrTypedefDecl;
+public:
+  DeclStmt(Decl *D) : Stmt(DeclStmtClass), BlockVarOrTypedefDecl(D) {}
+  
+  Decl *getDecl() const { return BlockVarOrTypedefDecl; }
+  
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == DeclStmtClass; 
+  }
+  static bool classof(const DeclStmt *) { return true; }
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.

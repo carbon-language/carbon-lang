@@ -86,9 +86,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   default:
     if (!OnlyStatement && isDeclarationSpecifier()) {
       // TODO: warn/disable if declaration is in the middle of a block and !C99.
-      ParseDeclaration(Declarator::BlockContext);
-      // FIXME: Make a DeclStmt node!
-      return 0;
+      return Actions.ParseDeclStmt(ParseDeclaration(Declarator::BlockContext));
     } else if (Tok.getKind() == tok::r_brace) {
       Diag(Tok, diag::err_expected_statement);
       return true;
@@ -102,7 +100,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
         SkipUntil(tok::semi);
         return true;
       } else {
-        return Actions.ParseExprStmt(Res.Val);
+        return Res.Val;
       }
     }
     
@@ -250,7 +248,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     return true;
   } else {
     ConsumeToken();
-    return Actions.ParseExprStmt(Res.Val);
+    return Res.Val;
   }
 }
 
@@ -586,18 +584,11 @@ Parser::StmtResult Parser::ParseForStatement() {
     // Parse declaration, which eats the ';'.
     if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
-    ParseDeclaration(Declarator::ForContext);
-    // FIXME: Turn declaration into a stmt ast node.
-    FirstPart = 0;
+    DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
+    StmtResult stmtResult = Actions.ParseDeclStmt(aBlockVarDecl);
+    FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
   } else {
     Value = ParseExpression();
-
-    // Turn the expression into a stmt.
-    if (!Value.isInvalid) {
-      StmtResult R = Actions.ParseExprStmt(Value.Val);
-      if (!R.isInvalid)
-        FirstPart = R.Val;
-    }
 
     if (Tok.getKind() == tok::semi) {
       ConsumeToken();

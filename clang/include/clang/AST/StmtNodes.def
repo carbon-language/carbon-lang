@@ -38,7 +38,8 @@ STMT(12, IndirectGotoStmt, Stmt)
 STMT(13, ContinueStmt    , Stmt)
 STMT(14, BreakStmt       , Stmt)
 STMT(15, ReturnStmt      , Stmt)
-LAST_STMT(15)
+STMT(16, DeclStmt        , Stmt)
+LAST_STMT(16)
 
 FIRST_EXPR(32)
 // Expressions.

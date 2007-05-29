@@ -180,7 +180,7 @@ public:
                                        StmtTy **Elts, unsigned NumElts) {
     return 0;
   }
-  virtual StmtResult ParseExprStmt(ExprTy *Expr) {
+  virtual StmtResult ParseDeclStmt(DeclTy *Decl) {
     return 0;
   }
   

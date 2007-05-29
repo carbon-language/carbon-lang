@@ -25,6 +25,9 @@ Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {
   return new NullStmt(SemiLoc);
 }
 
+Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
+  return decl ? new DeclStmt(static_cast<Decl *>(decl)) : 0;
+}
 
 Action::StmtResult 
 Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
