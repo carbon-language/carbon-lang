@@ -420,6 +420,21 @@ static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
   TII->InsertBranch(*CurMBB, SuccBB, NULL, std::vector<MachineOperand>());
 }
 
+static bool MergeCompare(std::pair<unsigned,MachineBasicBlock*> p,
+                         std::pair<unsigned,MachineBasicBlock*> q) {
+
+    if (p.first < q.first)
+      return true;
+     else if (p.first > q.first)
+      return false;
+    else if (p.second->getNumber() < q.second->getNumber())
+      return true;
+    else if (p.second->getNumber() > q.second->getNumber())
+      return false;
+    else
+      assert(0 && "Predecessor appears twice");
+}
+
 // See if any of the blocks in MergePotentials (which all have a common single
 // successor, or all have no successor) can be tail-merged.  If there is a
 // successor, any blocks in MergePotentials that are not tail-merged and
@@ -435,7 +450,7 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
   
   // Sort by hash value so that blocks with identical end sequences sort
   // together.
-  std::stable_sort(MergePotentials.begin(), MergePotentials.end());
+  std::stable_sort(MergePotentials.begin(), MergePotentials.end(), MergeCompare);
 
   // Walk through equivalence sets looking for actual exact matches.
   while (MergePotentials.size() > 1) {
