@@ -439,7 +439,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     iterations++;
   }
   
-  printf("Iterations: %d\n", iterations);
+  /*printf("Iterations: %d\n", iterations);
   
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     printf("Name: ");
@@ -453,7 +453,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     printf("\nANTIC_IN: \n");
     dump(VN, anticipatedIn[I]);
     printf("\n");
-  }
+  }*/
   
   return false;
 }
