@@ -28,10 +28,10 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include <map>
 #include <set>
-#include <cstdio>
 using namespace llvm;
 
 namespace {
@@ -288,11 +288,13 @@ void GVNPRE::clean(GVNPRE::ValueTable VN, std::set<GVNPRE::Expression>& set) {
 }
 
 void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<GVNPRE::Expression>& s) {
-  printf("{ ");
+  DOUT << "{ ";
   for (std::set<Expression>::iterator I = s.begin(), E = s.end(); I != E; ++I) {
-    printf("(%d, %s, value.%d, value.%d) ", I->opcode, I->value == 0 ? "0" : I->value->getName().c_str(), I->lhs, I->rhs);
+    DOUT << "( " << I->opcode << ", "
+         << (I->value == 0 ? "0" : I->value->getName().c_str())
+         << ", value." << I->lhs << ", value." << I->rhs << " ) ";
   }
-  printf("}\n\n");
+  DOUT << "}\n\n";
 }
 
 void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Expression>& MS,
@@ -439,21 +441,23 @@ bool GVNPRE::runOnFunction(Function &F) {
     iterations++;
   }
   
-  /*printf("Iterations: %d\n", iterations);
+  DOUT << "Iterations: " << iterations << "\n";
   
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    printf("Name: ");
-    printf(I->getName().c_str());
-    printf("\nTMP_GEN: ");
+    DOUT << "Name: " << I->getName().c_str() << "\n";
+    
+    DOUT << "TMP_GEN: ";
     dump(VN, generatedTemporaries[I]);
-    printf("\nEXP_GEN: ");
+    DOUT << "\n";
+    
+    DOUT << "EXP_GEN: ";
     dump(VN, generatedExpressions[I]);
-    //printf("\nANTIC_OUT: ");
-    //dump(VN, anticipatedOut[I]);
-    printf("\nANTIC_IN: \n");
+    DOUT << "\n";
+    
+    DOUT << "ANTIC_IN: ";
     dump(VN, anticipatedIn[I]);
-    printf("\n");
-  }*/
+    DOUT << "\n";
+  }
   
   return false;
 }
