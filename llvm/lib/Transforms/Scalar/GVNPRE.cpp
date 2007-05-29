@@ -376,6 +376,8 @@ bool GVNPRE::runOnFunction(Function &F) {
   
   // Second Phase of BuildSets - calculate ANTIC_IN
   
+  std::set<BasicBlock*> visited;
+  
   bool changed = true;
   unsigned iterations = 0;
   while (changed) {
@@ -388,6 +390,8 @@ bool GVNPRE::runOnFunction(Function &F) {
          PDI != E; ++PDI) {
       BasicBlock* BB = PDI->getBlock();
       
+      visited.insert(BB);
+      
       std::set<Expression>& anticIn = anticipatedIn[BB];
       std::set<Expression> old (anticIn.begin(), anticIn.end());
       
@@ -397,7 +401,7 @@ bool GVNPRE::runOnFunction(Function &F) {
         for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
           std::set<Expression> temp;
-          if (i == 0)
+          if (visted.find(currSucc) == visited.end())
             temp.insert(maximalSet.begin(), maximalSet.end());
           else
             temp.insert(anticIn.begin(), anticIn.end());
