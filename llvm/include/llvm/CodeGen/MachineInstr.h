@@ -415,15 +415,16 @@ public:
   /// findRegisterUseOperandIdx() - Returns the operand index that is a use of
   /// the specific register or -1 if it is not found. It further tightening
   /// the search criteria to a use that kills the register if isKill is true.
-  int findRegisterUseOperandIdx(unsigned Reg, bool isKill = false);
+  int findRegisterUseOperandIdx(unsigned Reg, bool isKill = false) const;
   
   /// findRegisterDefOperand() - Returns the MachineOperand that is a def of
   /// the specific register or NULL if it is not found.
   MachineOperand *findRegisterDefOperand(unsigned Reg);
 
-  /// findFirstPredOperand() - Find the first operand in the operand list that
-  // is used to represent the predicate.
-  MachineOperand *findFirstPredOperand();
+  /// findFirstPredOperandIdx() - Find the index of the first operand in the
+  /// operand list that is used to represent the predicate. It returns -1 if
+  /// none is found.
+  int findFirstPredOperandIdx() const;
   
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///

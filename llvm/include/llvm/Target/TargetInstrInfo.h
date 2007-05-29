@@ -395,19 +395,21 @@ public:
 
   /// isPredicable - Returns true if the instruction is already predicated.
   ///
-  virtual bool isPredicated(MachineInstr *MI) const {
+  virtual bool isPredicated(const MachineInstr *MI) const {
     return false;
   }
 
   /// PredicateInstruction - Convert the instruction into a predicated
   /// instruction. It returns true if the operation was successful.
-  virtual bool PredicateInstruction(MachineInstr *MI,
-                                    std::vector<MachineOperand> &Pred) const;
+  virtual
+  bool PredicateInstruction(MachineInstr *MI,
+                            const std::vector<MachineOperand> &Pred) const;
 
   /// SubsumesPredicate - Returns true if the first specified predicated
   /// subsumes the second, e.g. GE subsumes GT.
-  virtual bool SubsumesPredicate(std::vector<MachineOperand> &Pred1,
-                                 std::vector<MachineOperand> &Pred2) const {
+  virtual
+  bool SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
+                         const std::vector<MachineOperand> &Pred2) const {
     return false;
   }
 

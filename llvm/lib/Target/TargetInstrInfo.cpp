@@ -61,7 +61,7 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI) const {
 }
 
 bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
-                                      std::vector<MachineOperand> &Pred) const {
+                                const std::vector<MachineOperand> &Pred) const {
   bool MadeChange = false;
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   if (TID->Flags & M_PREDICABLE) {

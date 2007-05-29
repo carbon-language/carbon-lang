@@ -191,9 +191,9 @@ bool MachineInstr::isPredicable() const {
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightening
 /// the search criteria to a use that kills the register if isKill is true.
-int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill) {
+int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = getOperand(i);
+    const MachineOperand &MO = getOperand(i);
     if (MO.isReg() && MO.isUse() && MO.getReg() == Reg)
       if (!isKill || MO.isKill())
         return i;
@@ -212,17 +212,18 @@ MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
   return NULL;
 }
 
-/// findFirstPredOperand() - Find the first operand in the operand list that
-// is used to represent the predicate.
-MachineOperand *MachineInstr::findFirstPredOperand() {
+/// findFirstPredOperandIdx() - Find the index of the first operand in the
+/// operand list that is used to represent the predicate. It returns -1 if
+/// none is found.
+int MachineInstr::findFirstPredOperandIdx() const {
   const TargetInstrDescriptor *TID = getInstrDescriptor();
   if (TID->Flags & M_PREDICABLE) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND))
-        return &getOperand(i);
+        return i;
   }
 
-  return NULL;
+  return -1;
 }
   
 /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
