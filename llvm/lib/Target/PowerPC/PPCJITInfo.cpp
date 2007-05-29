@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "jit"
 #include "PPCJITInfo.h"
 #include "PPCRelocations.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
@@ -147,56 +148,52 @@ asm(
     ".align 2\n"
     ".globl PPC32CompilationCallback\n"
 "PPC32CompilationCallback:\n"
-    // Make space for 8 ints r[3-10] and 13 doubles f[1-13] and the 
+    // Make space for 8 ints r[3-10] and 8 doubles f[1-8] and the 
     // FIXME: need to save v[0-19] for altivec?
     // FIXME: could shrink frame
     // Set up a proper stack frame
     // FIXME Layout
-    //   PowerPC64 ABI linkage    -  24 bytes
-    //                 parameters -  32 bytes
-    //   13 double registers      - 104 bytes
+    //   8 double registers       -  64 bytes
     //   8 int registers          -  32 bytes
     "mflr 0\n"
     "stw 0,  4(1)\n"
-    "stwu 1, -180(1)\n"
+    "stwu 1, -104(1)\n"
     // Save all int arg registers
-    "stw 10, 176(1)\n"    "stw 9,  172(1)\n"
-    "stw 8,  168(1)\n"    "stw 7,  164(1)\n"
-    "stw 6,  160(1)\n"    "stw 5,  156(1)\n"
-    "stw 4,  152(1)\n"    "stw 3,  148(1)\n"
+    "stw 10, 100(1)\n"   "stw 9,  96(1)\n"
+    "stw 8,  92(1)\n"    "stw 7,  88(1)\n"
+    "stw 6,  84(1)\n"    "stw 5,  80(1)\n"
+    "stw 4,  76(1)\n"    "stw 3,  72(1)\n"
     // Save all call-clobbered FP regs.
-    "stfd 10, 144(1)\n"
-    "stfd 9,  136(1)\n"   "stfd 8,  128(1)\n"
-    "stfd 7,  120(1)\n"   "stfd 6,  112(1)\n"
-    "stfd 5,  104(1)\n"   "stfd 4,   96(1)\n"
-    "stfd 3,   88(1)\n"   "stfd 2,   80(1)\n"
-    "stfd 1,   72(1)\n"
+    "stfd 8,  64(1)\n"
+    "stfd 7,  56(1)\n"   "stfd 6,  48(1)\n"
+    "stfd 5,  40(1)\n"   "stfd 4,  32(1)\n"
+    "stfd 3,  24(1)\n"   "stfd 2,  16(1)\n"
+    "stfd 1,  8(1)\n"
     // Arguments to Compilation Callback:
     // r3 - our lr (address of the call instruction in stub plus 4)
     // r4 - stub's lr (address of instruction that called the stub plus 4)
     // r5 - is64Bit - always 0.
     "mr   3, 0\n"
-    "lwz  11, 180(1)\n" // stub's frame
-    "lwz  4, 4(11)\n" // stub's lr
+    "lwz  5, 104(1)\n" // stub's frame
+    "lwz  4, 4(5)\n" // stub's lr
     "li   5, 0\n"       // 0 == 32 bit
     "bl PPCCompilationCallbackC\n"
     "mtctr 3\n"
     // Restore all int arg registers
-    "lwz 10, 176(1)\n"    "lwz 9,  172(1)\n"
-    "lwz 8,  168(1)\n"    "lwz 7,  164(1)\n"
-    "lwz 6,  160(1)\n"    "lwz 5,  156(1)\n"
-    "lwz 4,  152(1)\n"    "lwz 3,  148(1)\n"
+    "lwz 10, 100(1)\n"   "lwz 9,  96(1)\n"
+    "lwz 8,  92(1)\n"    "lwz 7,  88(1)\n"
+    "lwz 6,  84(1)\n"    "lwz 5,  80(1)\n"
+    "lwz 4,  76(1)\n"    "lwz 3,  72(1)\n"
     // Restore all FP arg registers
-    "lfd 10, 144(1)\n"
-    "lfd 9,  136(1)\n"    "lfd 8,  128(1)\n"
-    "lfd 7,  120(1)\n"    "lfd 6,  112(1)\n"
-    "lfd 5,  104(1)\n"    "lfd 4,   96(1)\n"
-    "lfd 3,   88(1)\n"    "lfd 2,   80(1)\n"
-    "lfd 1,   72(1)\n"
+    "lfd 8,  64(1)\n"
+    "lfd 7,  56(1)\n"    "lfd 6,  48(1)\n"
+    "lfd 5,  40(1)\n"    "lfd 4,  32(1)\n"
+    "lfd 3,  24(1)\n"    "lfd 2,  16(1)\n"
+    "lfd 1,  8(1)\n"
     // Pop 3 frames off the stack and branch to target
-    "lwz  1, 184(1)\n"
-    "lwz  11, 4(1)\n"
-    "mtlr 11\n"
+    "lwz  1, 104(1)\n"
+    "lwz  0, 4(1)\n"
+    "mtlr 0\n"
     "bctr\n"
     );
 #else
@@ -350,10 +347,14 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
     MCE.emitWordBE(0x7d6802a6);     // mflr r11
     MCE.emitWordBE(0xf9610060);     // std r11, 96(r1)
-  } else {
+  } else if (TM.getSubtargetImpl()->isMachoABI()){
     MCE.emitWordBE(0x9421ffe0);     // stwu r1,-32(r1)
     MCE.emitWordBE(0x7d6802a6);     // mflr r11
     MCE.emitWordBE(0x91610028);     // stw r11, 40(r1)
+  } else {
+    MCE.emitWordBE(0x9421ffe0);     // stwu r1,-32(r1)
+    MCE.emitWordBE(0x7d6802a6);     // mflr r11
+    MCE.emitWordBE(0x91610024);     // stw r11, 36(r1)
   }
   intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
   MCE.emitWordBE(0);
