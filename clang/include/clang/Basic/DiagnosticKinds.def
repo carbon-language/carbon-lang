@@ -551,7 +551,7 @@ DIAG(err_typecheck_invalid_lvalue_addrof, ERROR,
 DIAG(err_typecheck_unary_expr, ERROR,
      "invalid argument type to unary expression '%0'")
 DIAG(err_typecheck_indirection_requires_pointer, ERROR,
-     "indirection requires a pointer operand ('%0' invalid)")
+     "indirection requires pointer operand ('%0' invalid)")
 DIAG(err_typecheck_deref_incomplete_type, ERROR,
      "dereferencing pointer to incomplete type '%0'")
 DIAG(ext_typecheck_deref_ptr_to_void, EXTENSION,
@@ -610,6 +610,8 @@ DIAG(err_typecheck_cond_incompatible_operands, ERROR,
      "incompatible operand types ('%0' and '%1')")
 DIAG(ext_typecheck_cond_incompatible_pointers, EXTENSION,
      "pointer type mismatch ('%0' and '%1')")
+DIAG(err_typecheck_statement_requires_scalar, ERROR,
+     "statement requires expression of scalar type ('%0' invalid)")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,

@@ -81,28 +81,73 @@ Action::StmtResult
 Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                   StmtTy *ThenVal, SourceLocation ElseLoc,
                   StmtTy *ElseVal) {
-  return new IfStmt((Expr*)CondVal, (Stmt*)ThenVal, (Stmt*)ElseVal);
+  Expr *condExpr = (Expr *)CondVal;
+  assert(condExpr && "ParseIfStmt(): missing expression");
+  
+  QualType condType = condExpr->getType();
+  assert(!condType.isNull() && "ParseIfStmt(): missing expression type");
+  
+  if (!condType->isScalarType()) // C99 6.8.4.1p1
+    return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar,
+             condType.getAsString(), condExpr->getSourceRange());
+
+  return new IfStmt(condExpr, (Stmt*)ThenVal, (Stmt*)ElseVal);
 }
+
 Action::StmtResult
 Sema::ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond, StmtTy *Body) {
   return new SwitchStmt((Expr*)Cond, (Stmt*)Body);
 }
 
 Action::StmtResult
-Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body){
-  return new WhileStmt((Expr*)Cond, (Stmt*)Body);
+Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
+  Expr *condExpr = (Expr *)Cond;
+  assert(condExpr && "ParseWhileStmt(): missing expression");
+  
+  QualType condType = condExpr->getType();
+  assert(!condType.isNull() && "ParseWhileStmt(): missing expression type");
+  
+  if (!condType->isScalarType()) // C99 6.8.5p2
+    return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar,
+             condType.getAsString(), condExpr->getSourceRange());
+
+  return new WhileStmt(condExpr, (Stmt*)Body);
 }
 
 Action::StmtResult
 Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
                   SourceLocation WhileLoc, ExprTy *Cond) {
-  return new DoStmt((Stmt*)Body, (Expr*)Cond);
+  Expr *condExpr = (Expr *)Cond;
+  assert(condExpr && "ParseDoStmt(): missing expression");
+  
+  QualType condType = condExpr->getType();
+  assert(!condType.isNull() && "ParseDoStmt(): missing expression type");
+  
+  if (!condType->isScalarType()) // C99 6.8.5p2
+    return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar,
+             condType.getAsString(), condExpr->getSourceRange());
+
+  return new DoStmt((Stmt*)Body, condExpr);
 }
 
 Action::StmtResult 
 Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
                    StmtTy *First, ExprTy *Second, ExprTy *Third,
                    SourceLocation RParenLoc, StmtTy *Body) {
+  if (First) {
+    // C99 6.8.5p3: FIXME. Need to hack Parser::ParseForStatement() and
+    // declaration support to create a DeclStmt node. Once this is done, 
+    // we can test for DeclStmt vs. Expr (already a sub-class of Stmt).
+  }
+  if (Second) {
+    Expr *testExpr = (Expr *)Second;
+    QualType testType = testExpr->getType();
+    assert(!testType.isNull() && "ParseForStmt(): missing test expression type");
+    
+    if (!testType->isScalarType()) // C99 6.8.5p2
+      return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
+               testType.getAsString(), testExpr->getSourceRange());
+  }
   return new ForStmt((Stmt*)First, (Expr*)Second, (Expr*)Third, (Stmt*)Body);
 }
 
