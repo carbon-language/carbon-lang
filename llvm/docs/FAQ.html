@@ -51,7 +51,9 @@
   <li>When I use the test suite, all of the C Backend tests fail.  What is
       wrong?</li>
   <li>After CVS update, rebuilding gives the error "No rule to make
-  target".</li>
+      target".</li>
+  <li><a href="#llvmc">The <tt>llvmc</tt> program gives me errors/doesn't
+      work.</li></a>
   </ol></li>
 
   <li><a href="#felangs">Source Languages</a>
@@ -384,6 +386,16 @@ which list dependencies for source files, and rebuild:</p>
 
 <p>In other cases, it may be necessary to run <tt>make clean</tt> before
 rebuilding.</p>
+</div>
+
+<div class="question">
+  <a name="llvmc"<p>The <tt>llvmc</tt> program gives me errors/doesn't
+  work.</p></a>
+</div>
+
+<div class="answer">
+  <p><tt>llvmc</tt> is experimental and isn't really supported. We suggest
+  using <tt>llvm-gcc</tt> instead.</p>
 </div>
 
 <!-- *********************************************************************** -->
