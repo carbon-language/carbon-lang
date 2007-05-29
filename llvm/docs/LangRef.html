@@ -2792,16 +2792,16 @@ compiled to LLVM:</p>
 <pre>
 struct RT {
   char A;
-  i32 B[10][20];
+  int B[10][20];
   char C;
 };
 struct ST {
-  i32 X;
+  int X;
   double Y;
   struct RT Z;
 };
 
-i32 *foo(struct ST *s) {
+int *foo(struct ST *s) {
   return &amp;s[1].Z.B[5][13];
 }
 </pre>
