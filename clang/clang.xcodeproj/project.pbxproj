@@ -103,23 +103,6 @@
 		DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXBuildStyle section */
-		84FADE170C0B37FF00330902 /* Development */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-			};
-			name = Development;
-		};
-		84FADE180C0B37FF00330902 /* Deployment */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-			};
-			name = Deployment;
-		};
-/* End PBXBuildStyle section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		8DD76F690486A84900D96B5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -555,12 +538,6 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			buildSettings = {
-			};
-			buildStyles = (
-				84FADE170C0B37FF00330902 /* Development */,
-				84FADE180C0B37FF00330902 /* Deployment */,
-			);
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";

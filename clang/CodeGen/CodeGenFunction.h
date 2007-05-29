@@ -16,9 +16,13 @@
 
 namespace llvm {
   class Module;
+  class Type;
 namespace clang {
   class ASTContext;
   class FunctionDecl;
+  class QualType;
+  class SourceLocation;
+  class TargetInfo;
   
 namespace CodeGen {
   class CodeGenModule;
@@ -27,9 +31,13 @@ namespace CodeGen {
 /// while generating LLVM code.
 class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
+  TargetInfo &Target;
 public:
-  CodeGenFunction(CodeGenModule &cgm) : CGM(cgm) {}
+  CodeGenFunction(CodeGenModule &cgm);
   
+  const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
+  
+  void GenerateCode(FunctionDecl *FD);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

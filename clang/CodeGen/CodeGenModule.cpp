@@ -19,6 +19,5 @@ using namespace CodeGen;
 
 
 void CodeGenModule::EmitFunction(FunctionDecl *FD) {
-  CodeGenFunction CGF(*this);
-  
+  CodeGenFunction(*this).GenerateCode(FD);
 }

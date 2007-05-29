@@ -30,6 +30,8 @@ class CodeGenModule {
 public:
   CodeGenModule(ASTContext &C, Module &M) : Context(C), TheModule(M) {}
   
+  ASTContext &getContext() const { return Context; }
+  
   void EmitFunction(FunctionDecl *FD);
   
   void PrintStats() {}
