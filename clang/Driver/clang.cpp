@@ -546,10 +546,10 @@ void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level,
       HighlightRange(Ranges[i], LineNo, CaratLine, SourceLine);
     
     // Next, insert the carat itself.
-    if (ColNo < CaratLine.size())
+    if (ColNo-1 < CaratLine.size())
       CaratLine[ColNo-1] = '^';
     else
-      CaratLine.push_back(ColNo);
+      CaratLine.push_back('^');
     
     // Scan the source line, looking for tabs.  If we find any, manually expand
     // them to 8 characters and update the CaratLine to match.
