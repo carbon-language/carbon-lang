@@ -431,13 +431,13 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   return false;
 }
 
-bool ARMInstrInfo::isPredicated(MachineInstr *MI) const {
-  MachineOperand *PMO = MI->findFirstPredOperand();
-  return PMO && PMO->getImmedValue() != ARMCC::AL;
+bool ARMInstrInfo::isPredicated(const MachineInstr *MI) const {
+  int PIdx = MI->findFirstPredOperandIdx();
+  return PIdx != -1 && MI->getOperand(PIdx).getImmedValue() != ARMCC::AL;
 }
 
 bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
-                                      std::vector<MachineOperand> &Pred) const {
+                                const std::vector<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setInstrDescriptor(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
@@ -445,16 +445,18 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
     return true;
   }
 
-  MachineOperand *PMO = MI->findFirstPredOperand();
-  if (PMO) {
-    PMO->setImm(Pred[0].getImmedValue());
+  int PIdx = MI->findFirstPredOperandIdx();
+  if (PIdx != -1) {
+    MachineOperand &PMO = MI->getOperand(PIdx);
+    PMO.setImm(Pred[0].getImmedValue());
     return true;
   }
   return false;
 }
 
-bool ARMInstrInfo::SubsumesPredicate(std::vector<MachineOperand> &Pred1,
-                                     std::vector<MachineOperand> &Pred2) const{
+bool
+ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
+                                const std::vector<MachineOperand> &Pred2) const{
   if (Pred1.size() > 1 || Pred2.size() > 1)
     return false;
 

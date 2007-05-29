@@ -245,8 +245,9 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL.
 static ARMCC::CondCodes getInstrPredicate(MachineInstr *MI) {
-  MachineOperand *PredMO = MI->findFirstPredOperand();
-  return PredMO ? (ARMCC::CondCodes)PredMO->getImmedValue() : ARMCC::AL;
+  int PIdx = MI->findFirstPredOperandIdx();
+  return PIdx == -1 ? ARMCC::AL
+                    : (ARMCC::CondCodes)MI->getOperand(PIdx).getImmedValue();
 }
 
 static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,

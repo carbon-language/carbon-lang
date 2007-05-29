@@ -104,13 +104,15 @@ public:
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 
   // Predication support.
-  virtual bool isPredicated(MachineInstr *MI) const;
+  virtual bool isPredicated(const MachineInstr *MI) const;
 
-  virtual bool PredicateInstruction(MachineInstr *MI,
-                                    std::vector<MachineOperand> &Pred) const;
+  virtual
+  bool PredicateInstruction(MachineInstr *MI,
+                            const std::vector<MachineOperand> &Pred) const;
 
-  virtual bool SubsumesPredicate(std::vector<MachineOperand> &Pred1,
-                                 std::vector<MachineOperand> &Pred1) const;
+  virtual
+  bool SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
+                         const std::vector<MachineOperand> &Pred1) const;
 };
 
   // Utility routines

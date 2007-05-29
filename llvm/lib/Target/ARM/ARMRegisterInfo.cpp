@@ -1009,9 +1009,9 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     if (ScratchReg == 0)
       // No register is "free". Scavenge a register.
       ScratchReg = RS->scavengeRegister(&ARM::GPRRegClass, II, SPAdj);
-    MachineOperand *MO = MI.findFirstPredOperand();
-    ARMCC::CondCodes Pred = MO ?
-      (ARMCC::CondCodes)MO->getImmedValue() : ARMCC::AL;
+    int PIdx = MI.findFirstPredOperandIdx();
+    ARMCC::CondCodes Pred = (PIdx == -1)
+      ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImmedValue();
     emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg, Pred,
                             isSub ? -Offset : Offset, TII);
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
