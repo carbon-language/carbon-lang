@@ -555,9 +555,11 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   } else
     InsertUncondBranch(BBI.BB, CvtBBI->BB, TII);
 
-  // If the if-converted block fallthrough into the tail block, then
+  // If the if-converted block fallthrough or unconditionally branch into the
+  // tail block, and the tail block does not have other predecessors, then
   // fold the tail block in as well.
-  if (BBI.TailBB && CvtBBI->BB->succ_size() == 1) {
+  if (BBI.TailBB &&
+      BBI.TailBB->succ_size() == 1 && CvtBBI->BB->succ_size() == 1) {
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
     BBInfo TailBBI = BBAnalysis[BBI.TailBB->getNumber()];
     MergeBlocks(*CvtBBI, TailBBI);
