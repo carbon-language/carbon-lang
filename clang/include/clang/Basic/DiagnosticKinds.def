@@ -594,6 +594,18 @@ DIAG(ext_typecheck_passing_pointer_from_int, EXTENSION,
      "passing argument %0 makes pointer from integer without a cast")
 DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
      "passing argument %0 discards qualifiers from pointer target type")
+DIAG(err_typecheck_cond_expect_scalar, ERROR,
+     "used type '%0' where arithmetic or pointer type is required")
+DIAG(err_typecheck_cond_incompatible_operands, ERROR,
+     "incompatible operand types ('%0' and '%1')")
+DIAG(ext_typecheck_cond_incompatible_pointers, EXTENSION,
+     "pointer type mismatch ('%0' and '%1')")
+
+// Statements.
+DIAG(err_continue_not_in_loop, ERROR,
+     "'continue' statement not in loop statement")
+DIAG(err_break_not_in_loop_or_switch, ERROR,
+     "'break' statement not in loop or switch statement")
 DIAG(err_typecheck_return_incompatible, ERROR,
      "incompatible types in return ('%0' and '%1')")
 DIAG(ext_typecheck_return_int_from_pointer, EXTENSION,
@@ -604,19 +616,14 @@ DIAG(ext_typecheck_return_incompatible_pointer, EXTENSION,
      "return from incompatible pointer type")
 DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
      "return discards qualifiers from pointer target type")
-DIAG(err_typecheck_cond_expect_scalar, ERROR,
-     "used type '%0' where arithmetic or pointer type is required")
-DIAG(err_typecheck_cond_incompatible_operands, ERROR,
-     "incompatible operand types ('%0' and '%1')")
-DIAG(ext_typecheck_cond_incompatible_pointers, EXTENSION,
-     "pointer type mismatch ('%0' and '%1')")
 DIAG(err_typecheck_statement_requires_scalar, ERROR,
      "statement requires expression of scalar type ('%0' invalid)")
-
-// Statements.
-DIAG(err_continue_not_in_loop, ERROR,
-     "'continue' statement not in loop statement")
-DIAG(err_break_not_in_loop_or_switch, ERROR,
-     "'break' statement not in loop or switch statement")
+     
+DIAG(warn_return_missing_expr, WARNING,
+     "non-void function '%0' should return a value")
+DIAG(ext_return_missing_expr, EXTENSION,
+     "non-void function '%0' should return a value")
+DIAG(ext_return_has_expr, EXTENSION,
+     "void function '%0' should not return a value")
 
 #undef DIAG

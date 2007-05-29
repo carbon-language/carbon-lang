@@ -16,6 +16,8 @@
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/LangOptions.h"
+#include "clang/Lex/IdentifierTable.h"
 using namespace llvm;
 using namespace clang;
 
@@ -199,25 +201,33 @@ Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 
 Action::StmtResult
 Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
-  // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
-  // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
-  // function return.
   QualType lhsType = CurFunctionDecl->getResultType();
 
-  if (!RetValExp)
-    return new ReturnStmt((Expr*)RetValExp);
-    
-  // C99 6.8.6.4p1
   if (lhsType->isVoidType()) {
-    // a void function may not return a value
-    // non-void function "voidFunc" should return a value
+    if (RetValExp) // C99 6.8.6.4p1 (ext_ since GCC warns)
+      Diag(ReturnLoc, diag::ext_return_has_expr, 
+           CurFunctionDecl->getIdentifier()->getName(),
+           ((Expr *)RetValExp)->getSourceRange());
+    return new ReturnStmt((Expr*)RetValExp);
+  } else {
+    if (!RetValExp) {
+      const char *funcName = CurFunctionDecl->getIdentifier()->getName();
+      if (getLangOptions().C99)  // C99 6.8.6.4p1 (ext_ since GCC warns)
+        Diag(ReturnLoc, diag::ext_return_missing_expr, funcName);
+      else  // C90 6.6.6.4p4
+        Diag(ReturnLoc, diag::warn_return_missing_expr, funcName);
+      return new ReturnStmt((Expr*)0);
+    }
   }
-
+  // we have a non-void function with an expression, continue checking
   QualType rhsType = ((Expr *)RetValExp)->getType();
 
   if (lhsType == rhsType) // common case, fast path...
     return new ReturnStmt((Expr*)RetValExp);
-  
+
+  // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
+  // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
+  // function return.  
   AssignmentConversionResult result;
   QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
   bool hadError = false;
