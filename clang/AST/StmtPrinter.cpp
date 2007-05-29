@@ -74,7 +74,7 @@ namespace  {
     }
     
     std::ostream &Indent(int Delta = 0) const {
-      for (unsigned i = 0, e = IndentLevel+Delta; i != e; ++i)
+      for (int i = 0, e = IndentLevel+Delta; i < e; ++i)
         OS << "  ";
       return OS;
     }
