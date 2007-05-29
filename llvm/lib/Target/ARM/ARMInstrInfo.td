@@ -370,7 +370,7 @@ class I<dag oprnds, AddrMode am, SizeFlagVal sz, IndexMode im,
   // FIXME: Set all opcodes to 0 for now.
   : InstARM<0, am, sz, im, cstr> {
   let OperandList = !con(oprnds, (ops pred:$p));
-  let AsmString   = !strconcat(opc, !strconcat("$p", asm));
+  let AsmString   = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
   list<Predicate> Predicates = [IsARM];
 }
@@ -672,25 +672,25 @@ def LDRcp : AI2<(ops GPR:$dst, addrmode2:$addr),
 
 // Loads with zero extension
 def LDRH  : AI3<(ops GPR:$dst, addrmode3:$addr),
-                 "ldrh", " $dst, $addr",
+                 "ldr", "h $dst, $addr",
                 [(set GPR:$dst, (zextloadi16 addrmode3:$addr))]>;
 
 def LDRB  : AI2<(ops GPR:$dst, addrmode2:$addr),
-                 "ldrb", " $dst, $addr",
+                 "ldr", "b $dst, $addr",
                 [(set GPR:$dst, (zextloadi8 addrmode2:$addr))]>;
 
 // Loads with sign extension
 def LDRSH : AI3<(ops GPR:$dst, addrmode3:$addr),
-                 "ldrsh", " $dst, $addr",
+                 "ldr", "sh $dst, $addr",
                 [(set GPR:$dst, (sextloadi16 addrmode3:$addr))]>;
 
 def LDRSB : AI3<(ops GPR:$dst, addrmode3:$addr),
-                 "ldrsb", " $dst, $addr",
+                 "ldr", "sb $dst, $addr",
                 [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
 // Load doubleword
 def LDRD  : AI3<(ops GPR:$dst, addrmode3:$addr),
-                 "ldrd", " $dst, $addr",
+                 "ldr", "d $dst, $addr",
                 []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed loads
@@ -701,28 +701,28 @@ def LDR_POST : AI2po<(ops GPR:$dst, GPR:$base_wb, GPR:$base, am2offset:$offset),
                     "ldr", " $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRH_PRE  : AI3pr<(ops GPR:$dst, GPR:$base_wb, addrmode3:$addr),
-                     "ldrh", " $dst, $addr!", "$addr.base = $base_wb", []>;
+                     "ldr", "h $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRH_POST : AI3po<(ops GPR:$dst, GPR:$base_wb, GPR:$base,am3offset:$offset),
-                     "ldrh", " $dst, [$base], $offset", "$base = $base_wb", []>;
+                     "ldr", "h $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRB_PRE  : AI2pr<(ops GPR:$dst, GPR:$base_wb, addrmode2:$addr),
-                     "ldrb", " $dst, $addr!", "$addr.base = $base_wb", []>;
+                     "ldr", "b $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRB_POST : AI2po<(ops GPR:$dst, GPR:$base_wb, GPR:$base,am2offset:$offset),
-                     "ldrb", " $dst, [$base], $offset", "$base = $base_wb", []>;
+                     "ldr", "b $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSH_PRE : AI3pr<(ops GPR:$dst, GPR:$base_wb, addrmode3:$addr),
-                      "ldrsh", " $dst, $addr!", "$addr.base = $base_wb", []>;
+                      "ldr", "sh $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSH_POST: AI3po<(ops GPR:$dst, GPR:$base_wb, GPR:$base,am3offset:$offset),
-                      "ldrsh", " $dst, [$base], $offset", "$base = $base_wb", []>;
+                      "ldr", "sh $dst, [$base], $offset", "$base = $base_wb", []>;
 
 def LDRSB_PRE : AI3pr<(ops GPR:$dst, GPR:$base_wb, addrmode3:$addr),
-                      "ldrsb", " $dst, $addr!", "$addr.base = $base_wb", []>;
+                      "ldr", "sb $dst, $addr!", "$addr.base = $base_wb", []>;
 
 def LDRSB_POST: AI3po<(ops GPR:$dst, GPR:$base_wb, GPR:$base,am3offset:$offset),
-                      "ldrsb", " $dst, [$base], $offset", "$base = $base_wb", []>;
+                      "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
 } // isLoad
 
 // Store
@@ -733,16 +733,16 @@ def STR  : AI2<(ops GPR:$src, addrmode2:$addr),
 
 // Stores with truncate
 def STRH : AI3<(ops GPR:$src, addrmode3:$addr),
-               "strh", " $src, $addr",
+               "str", "h $src, $addr",
                [(truncstorei16 GPR:$src, addrmode3:$addr)]>;
 
 def STRB : AI2<(ops GPR:$src, addrmode2:$addr),
-               "strb", " $src, $addr",
+               "str", "b $src, $addr",
                [(truncstorei8 GPR:$src, addrmode2:$addr)]>;
 
 // Store doubleword
 def STRD : AI3<(ops GPR:$src, addrmode3:$addr),
-               "strd", " $src, $addr",
+               "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed stores
@@ -757,22 +757,22 @@ def STR_POST : AI2po<(ops  GPR:$base_wb, GPR:$src, GPR:$base,am2offset:$offset),
                       (post_store GPR:$src, GPR:$base, am2offset:$offset))]>;
 
 def STRH_PRE : AI3pr<(ops  GPR:$base_wb, GPR:$src, GPR:$base,am3offset:$offset),
-                     "strh", " $src, [$base, $offset]!", "$base = $base_wb",
+                     "str", "h $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb,
                       (pre_truncsti16 GPR:$src, GPR:$base,am3offset:$offset))]>;
 
 def STRH_POST: AI3po<(ops  GPR:$base_wb, GPR:$src, GPR:$base,am3offset:$offset),
-                     "strh", " $src, [$base], $offset", "$base = $base_wb",
+                     "str", "h $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti16 GPR:$src,
                                          GPR:$base, am3offset:$offset))]>;
 
 def STRB_PRE : AI2pr<(ops  GPR:$base_wb, GPR:$src, GPR:$base,am2offset:$offset),
-                     "strb", " $src, [$base, $offset]!", "$base = $base_wb",
+                     "str", "b $src, [$base, $offset]!", "$base = $base_wb",
                     [(set GPR:$base_wb, (pre_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
 
 def STRB_POST: AI2po<(ops  GPR:$base_wb, GPR:$src, GPR:$base,am2offset:$offset),
-                     "strb", " $src, [$base], $offset", "$base = $base_wb",
+                     "str", "b $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
 } // isStore
@@ -808,10 +808,10 @@ def MOVi : AI1<(ops GPR:$dst, so_imm:$src),
 // due to flag operands.
 
 def MOVsrl_flag : AI1<(ops GPR:$dst, GPR:$src),
-                      "movs", " $dst, $src, lsr #1",
+                      "mov", "s $dst, $src, lsr #1",
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>;
 def MOVsra_flag : AI1<(ops GPR:$dst, GPR:$src),
-                      "movs", " $dst, $src, asr #1",
+                      "mov", "s $dst, $src, asr #1",
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
 def MOVrx       : AI1<(ops GPR:$dst, GPR:$src),
                       "mov", " $dst, $src, rrx",
