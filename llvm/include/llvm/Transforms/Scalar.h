@@ -318,6 +318,13 @@ FunctionPass *createPredicateSimplifierPass();
 
 //===----------------------------------------------------------------------===//
 //
+// GVN-PRE - This pass performs global value numbering and partial redundancy
+// elimination.
+//
+FunctionPass *createGVNPREPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
