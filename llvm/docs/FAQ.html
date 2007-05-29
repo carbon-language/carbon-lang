@@ -311,11 +311,20 @@ clean</tt> and then <tt>make</tt> in the directory that fails to build.</p>
 
 <p>For example, if you built LLVM with the command:</p>
 
-<p><tt>gmake ENABLE_PROFILING=1</tt>
+<div class="doc_code">
+<pre>
+% gmake ENABLE_PROFILING=1
+</pre>
+</div>
 
 <p>...then you must run the tests with the following commands:</p>
 
-<p><tt>cd llvm/test<br>gmake  ENABLE_PROFILING=1</tt></p>
+<div class="doc_code">
+<pre>
+% cd llvm/test
+% gmake ENABLE_PROFILING=1
+</pre>
+</div>
 
 </div>
 
@@ -354,11 +363,11 @@ build.</p>
 <p>If the error is of the form:</p>
 
 <div class="doc_code">
-<tt>
+<pre>
 gmake[2]: *** No rule to make target `/path/to/somefile', needed by
 `/path/to/another/file.d'.<br>
 Stop.
-</tt>
+</pre>
 </div>
 
 <p>This may occur anytime files are moved within the CVS repository or removed
@@ -471,10 +480,13 @@ find libcrtend.a.
 <p>
 The only way this can happen is if you haven't installed the runtime library. To
 correct this, do:</p>
+
+<div class="doc_code">
 <pre>
-  % cd llvm/runtime
-  % make clean ; make install-bytecode
+% cd llvm/runtime
+% make clean ; make install-bytecode
 </pre>
+</div>
 </div>
 
 <div class="question">
@@ -512,14 +524,20 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 <ol>
 <li><p>Compile your program as normal with llvm-g++:</p></li>
 
-<div class="doc_code">$ llvm-g++ x.cpp -o program</div>
+<div class="doc_code">
+<pre>
+% llvm-g++ x.cpp -o program
+</pre>
+</div>
 
 <p>or:</p>
 
 <div class="doc_code">
- llvm-g++ a.cpp -c<br>
- llvm-g++ b.cpp -c<br>
- llvm-g++ a.o b.o -o program
+<pre>
+% llvm-g++ a.cpp -c
+% llvm-g++ b.cpp -c
+% llvm-g++ a.o b.o -o program
+</pre>
 </div>
 
 <p>With llvm-gcc3, this will generate program and program.bc.  The .bc file is 
@@ -528,11 +546,19 @@ the LLVM version of the program all linked together.</p>
 <li><p>Convert the LLVM code to C code, using the LLC tool with the C
 backend:</p></li>
 
-<div class="doc_code">$ llc -march=c program.bc -o program.c</div>
+<div class="doc_code">
+<pre>
+% llc -march=c program.bc -o program.c
+</pre>
+</div>
 
 <li><p>Finally, compile the c file:</p></li>
 
-<div class="doc_code">$ cc x.c</div>
+<div class="doc_code">
+<pre>
+% cc x.c
+</pre>
+</div>
 
 </ol>
 
@@ -650,12 +676,13 @@ a value that is not defined.  You can get these if you do not initialize a
 variable before you use it.  For example, the C function:</p>
 
 <div class="doc_code">
-  <tt>int X() { int i; return i; }</tt>
+<pre>
+int X() { int i; return i; }
+</pre>
 </div>
 
-<p>Is compiled to "<tt>ret int undef</tt>" because "i" never has a value 
-specified for it.
-</p>
+<p>Is compiled to "<tt>ret i32 undef</tt>" because "<tt>i</tt>" never has
+a value specified for it.</p>
 </div>
 
 <!-- *********************************************************************** -->
