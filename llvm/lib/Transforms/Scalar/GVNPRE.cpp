@@ -401,7 +401,7 @@ bool GVNPRE::runOnFunction(Function &F) {
         for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
           std::set<Expression> temp;
-          if (visted.find(currSucc) == visited.end())
+          if (visited.find(currSucc) == visited.end())
             temp.insert(maximalSet.begin(), maximalSet.end());
           else
             temp.insert(anticIn.begin(), anticIn.end());
