@@ -109,6 +109,10 @@ public:
   typedef SmallVector<Stmt*, 16>::iterator body_iterator;
   body_iterator body_begin() { return Body.begin(); }
   body_iterator body_end() { return Body.end(); }
+
+  typedef SmallVector<Stmt*, 16>::const_iterator const_body_iterator;
+  const_body_iterator body_begin() const { return Body.begin(); }
+  const_body_iterator body_end() const { return Body.end(); }
   
   void push_back(Stmt *S) { Body.push_back(S); }
     
