@@ -31,6 +31,7 @@ public:
   CodeGenModule(ASTContext &C, Module &M) : Context(C), TheModule(M) {}
   
   ASTContext &getContext() const { return Context; }
+  Module &getModule() const { return TheModule; }
   
   void EmitFunction(FunctionDecl *FD);
   

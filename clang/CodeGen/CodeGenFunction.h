@@ -14,15 +14,18 @@
 #ifndef CODEGEN_CODEGENFUNCTION_H
 #define CODEGEN_CODEGENFUNCTION_H
 
+#include "llvm/Support/LLVMBuilder.h"
+
 namespace llvm {
   class Module;
-  class Type;
 namespace clang {
   class ASTContext;
   class FunctionDecl;
   class QualType;
   class SourceLocation;
   class TargetInfo;
+  class Stmt;
+  class CompoundStmt;
   
 namespace CodeGen {
   class CodeGenModule;
@@ -32,12 +35,20 @@ namespace CodeGen {
 class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
+  LLVMBuilder Builder;
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
   const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
   
-  void GenerateCode(FunctionDecl *FD);
+  void GenerateCode(const FunctionDecl *FD);
+  
+  //===--------------------------------------------------------------------===//
+  //                             Statement Emission
+  //===--------------------------------------------------------------------===//
+
+  void EmitStmt(const Stmt *S);
+  void EmitCompoundStmt(const CompoundStmt &S);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

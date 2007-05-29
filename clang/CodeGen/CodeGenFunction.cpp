@@ -16,7 +16,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Function.h"
 using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
@@ -101,9 +101,45 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
 }
 
 
-void CodeGenFunction::GenerateCode(FunctionDecl *FD) {
+void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   const llvm::Type *Ty = ConvertType(FD->getType(), FD->getLocation());
   
-  Ty->dump();
+  llvm::Function *F = new Function(cast<llvm::FunctionType>(Ty),
+                                   Function::ExternalLinkage,
+                                   FD->getName(), &CGM.getModule());
   
+  BasicBlock *EntryBB = new BasicBlock("entry", F);
+  
+  // TODO: Walk the decls, creating allocas etc.
+  
+  Builder.SetInsertPoint(EntryBB);
+  
+  EmitStmt(FD->getBody());
 }
+
+
+//===----------------------------------------------------------------------===//
+//                              Statement Emission
+//===----------------------------------------------------------------------===//
+
+void CodeGenFunction::EmitStmt(const Stmt *S) {
+  assert(S && "Null statement?");
+  
+  switch (S->getStmtClass()) {
+  default:
+    printf("Unimplemented stmt!\n");
+    S->dump();
+    break;
+  case Stmt::NullStmtClass: break;
+  case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
+  }
+}
+
+void CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S) {
+  // FIXME: handle vla's etc.
+  
+  for (CompoundStmt::const_body_iterator I = S.body_begin(), E = S.body_end();
+       I != E; ++I)
+    EmitStmt(*I);
+}
+
