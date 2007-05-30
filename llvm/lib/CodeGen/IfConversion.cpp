@@ -72,6 +72,10 @@ namespace {
                  BB(0), TrueBB(0), FalseBB(0), TailBB(0) {}
     };
 
+    /// Roots - Basic blocks that do not have successors. These are the starting
+    /// points of Graph traversal.
+    std::vector<MachineBasicBlock*> Roots;
+
     /// BBAnalysis - Results of if-conversion feasibility analysis indexed by
     /// basic block number.
     std::vector<BBInfo> BBAnalysis;
@@ -90,9 +94,10 @@ namespace {
     void StructuralAnalysis(MachineBasicBlock *BB);
     void FeasibilityAnalysis(BBInfo &BBI,
                              std::vector<MachineOperand> &Cond);
-    void AnalyzeBlocks(MachineFunction &MF,
+    bool AttemptRestructuring(BBInfo &BBI);
+    bool AnalyzeBlocks(MachineFunction &MF,
                        std::vector<BBInfo*> &Candidates);
-    void InvalidatePreds(MachineBasicBlock *BB);
+    void ReTryPreds(MachineBasicBlock *BB);
     bool IfConvertEarlyExit(BBInfo &BBI);
     bool IfConvertTriangle(BBInfo &BBI);
     bool IfConvertDiamond(BBInfo &BBI);
@@ -115,6 +120,11 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   unsigned NumBBs = MF.getNumBlockIDs();
   BBAnalysis.resize(NumBBs);
 
+  // Look for root nodes, i.e. blocks without successors.
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
+    if (I->succ_size() == 0)
+      Roots.push_back(I);
+
   std::vector<BBInfo*> Candidates;
   MadeChange = false;
   while (true) {
@@ -122,7 +132,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
 
     // Do an intial analysis for each basic block and finding all the potential
     // candidates to perform if-convesion.
-    AnalyzeBlocks(MF, Candidates);
+    Change |= AnalyzeBlocks(MF, Candidates);
     while (!Candidates.empty()) {
       BBInfo &BBI = *Candidates.back();
       Candidates.pop_back();
@@ -146,6 +156,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       break;
   }
 
+  Roots.clear();
   BBAnalysis.clear();
 
   return MadeChange;
@@ -274,26 +285,60 @@ void IfConverter::FeasibilityAnalysis(BBInfo &BBI,
   BBI.isPredicable = true;
 }
 
-/// AnalyzeBlocks - Analyze all blocks and find entries for all
-/// if-conversion candidates.
-void IfConverter::AnalyzeBlocks(MachineFunction &MF,
+/// AttemptRestructuring - Restructure the sub-CFG rooted in the given block to
+/// expose more if-conversion opportunities. e.g.
+///
+///                cmp
+///                b le BB1
+///                /  \____
+///               /        |
+///             cmp        |
+///             b eq BB1   |
+///              /  \____  |
+///             /        \ |
+///                      BB1
+///  ==>
+///
+///                cmp
+///                b eq BB1
+///                /  \____
+///               /        |
+///             cmp        |
+///             b le BB1   |
+///              /  \____  |
+///             /        \ |
+///                      BB1
+bool IfConverter::AttemptRestructuring(BBInfo &BBI) {
+  return false;
+}
+
+/// AnalyzeBlocks - Analyze all blocks and find entries for all if-conversion
+/// candidates. It returns true if any CFG restructuring is done to expose more
+/// if-conversion opportunities.
+bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
                                 std::vector<BBInfo*> &Candidates) {
+  bool Change = false;
   std::set<MachineBasicBlock*> Visited;
-  MachineBasicBlock *Entry = MF.begin();
-  for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
-         E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
-    MachineBasicBlock *BB = *DFI;
-    StructuralAnalysis(BB);
-    BBInfo &BBI = BBAnalysis[BB->getNumber()];
-    switch (BBI.Kind) {
-    default: break;
-    case ICEarlyExit:
-    case ICTriangle:
-    case ICDiamond:
-      Candidates.push_back(&BBI);
-      break;
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i) {
+    for (idf_ext_iterator<MachineBasicBlock*> I=idf_ext_begin(Roots[i],Visited),
+           E = idf_ext_end(Roots[i], Visited); I != E; ++I) {
+      MachineBasicBlock *BB = *I;
+      StructuralAnalysis(BB);
+      BBInfo &BBI = BBAnalysis[BB->getNumber()];
+      switch (BBI.Kind) {
+        case ICEarlyExit:
+        case ICTriangle:
+        case ICDiamond:
+          Candidates.push_back(&BBI);
+          break;
+        default:
+          Change |= AttemptRestructuring(BBI);
+          break;
+      }
     }
   }
+
+  return Change;
 }
 
 /// TransferPreds - Transfer all the predecessors of FromBB to ToBB.
@@ -329,9 +374,9 @@ static bool isNextBlock(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
   return MachineFunction::iterator(ToBB) == ++Fallthrough;
 }
 
-/// InvalidatePreds - Invalidate predecessor BB info so it would be re-analyzed
+/// ReTryPreds - Invalidate predecessor BB info so it would be re-analyzed
 /// to determine if it can be if-converted.
-void IfConverter::InvalidatePreds(MachineBasicBlock *BB) {
+void IfConverter::ReTryPreds(MachineBasicBlock *BB) {
   for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
          E = BB->pred_end(); PI != E; ++PI) {
     BBInfo &PBBI = BBAnalysis[(*PI)->getNumber()];
@@ -386,7 +431,7 @@ bool IfConverter::IfConvertEarlyExit(BBInfo &BBI) {
   BBI.TrueBB = BBI.FalseBB = NULL;
   BBI.BrCond.clear();
   TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
-  InvalidatePreds(BBI.BB);
+  ReTryPreds(BBI.BB);
   CvtBBI->Kind = ICDead;
 
   // FIXME: Must maintain LiveIns.
@@ -424,6 +469,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   BBI.TrueBB = BBI.FalseBB = NULL;
   BBI.BrCond.clear();
   TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
+  ReTryPreds(BBI.BB);
   TrueBBI.Kind = ICDead;
 
   // FIXME: Must maintain LiveIns.
@@ -572,7 +618,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     BBI.TrueBB = BBI.FalseBB = NULL;
     BBI.BrCond.clear();
     TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
-    InvalidatePreds(BBI.BB);
+    ReTryPreds(BBI.BB);
   }
   TrueBBI.Kind = ICDead;
   FalseBBI.Kind = ICDead;
