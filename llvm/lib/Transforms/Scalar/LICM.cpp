@@ -223,7 +223,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   ET = &getAnalysis<ETForest>();
 
   CurAST = new AliasSetTracker(*AA);
-  // Collect Alias info frmo subloops
+  // Collect Alias info from subloops
   for (Loop::iterator LoopItr = L->begin(), LoopItrE = L->end();
        LoopItr != LoopItrE; ++LoopItr) {
     Loop *InnerL = *LoopItr;
