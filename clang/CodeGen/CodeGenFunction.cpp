@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/Analysis/Verifier.h"
 using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
@@ -125,6 +126,13 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   Builder.SetInsertPoint(EntryBB);
   
   EmitStmt(FD->getBody());
+  
+  // Emit a simple return for now.
+  Builder.CreateRetVoid();
+  
+  
+  // Verify that the function is well formed.
+  assert(!verifyFunction(*CurFn));
 }
 
 
