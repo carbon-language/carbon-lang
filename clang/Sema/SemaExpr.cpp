@@ -22,7 +22,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 using namespace clang;
 
@@ -364,15 +363,12 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
               ExprTy **Args, unsigned NumArgsInCall,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   Expr *funcExpr = (Expr *)Fn;
-
   assert(funcExpr && "no function call expression");
   
   QualType qType = funcExpr->getType();
-
   assert(!qType.isNull() && "no type for function call expression");
 
   const FunctionType *funcT = dyn_cast<FunctionType>(qType.getCanonicalType());
-  
   assert(funcT && "ParseCallExpr(): not a function type");
     
   // If a prototype isn't declared, the parser implicitly defines a func decl
@@ -387,19 +383,18 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     
     if (NumArgsInCall < NumArgsInProto)
       Diag(LParenLoc, diag::err_typecheck_call_too_few_args,
-        funcExpr->getSourceRange());
+           funcExpr->getSourceRange());
     else if (NumArgsInCall > NumArgsInProto) {
       if (!proto->isVariadic()) {
         Diag(LParenLoc, diag::err_typecheck_call_too_many_args,
-          funcExpr->getSourceRange(),
-          ((Expr **)Args)[NumArgsInProto]->getSourceRange());
+             funcExpr->getSourceRange(),
+             ((Expr **)Args)[NumArgsInProto]->getSourceRange());
       }
       NumArgsToCheck = NumArgsInProto;
     }
     // Continue to check argument types (even if we have too few/many args).
     for (unsigned i = 0; i < NumArgsToCheck; i++) {
       Expr *argExpr = ((Expr **)Args)[i];
-      
       assert(argExpr && "ParseCallExpr(): missing argument expression");
       
       QualType lhsType = proto->getArgType(i);
@@ -413,29 +408,31 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       SourceLocation l = argExpr->getLocStart();
 
       // decode the result (notice that AST's are still created for extensions).
-      // FIXME: decide to include/exclude the argument # (decided to remove
-      // it for the incompatible diags below). The range should be sufficient.
       switch (result) {
       case Compatible:
         break;
       case PointerFromInt:
         // check for null pointer constant (C99 6.3.2.3p3)
-        if (!argExpr->isNullPointerConstant())
-          Diag(l, diag::ext_typecheck_passing_pointer_from_int, utostr(i+1),
-            funcExpr->getSourceRange(), argExpr->getSourceRange());
+        if (!argExpr->isNullPointerConstant()) {
+          Diag(l, diag::ext_typecheck_passing_pointer_from_int, 
+               lhsType.getAsString(),
+               funcExpr->getSourceRange(), argExpr->getSourceRange());
+        }
         break;
       case IntFromPointer:
-        Diag(l, diag::ext_typecheck_passing_int_from_pointer, utostr(i+1),
-          funcExpr->getSourceRange(), argExpr->getSourceRange());
+        Diag(l, diag::ext_typecheck_passing_int_from_pointer, 
+             rhsType.getAsString(),
+             funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case IncompatiblePointer:
         Diag(l, diag::ext_typecheck_passing_incompatible_pointer, 
-          rhsType.getAsString(), lhsType.getAsString(),
-          funcExpr->getSourceRange(), argExpr->getSourceRange());
+             rhsType.getAsString(), lhsType.getAsString(),
+             funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case CompatiblePointerDiscardsQualifiers:
-        Diag(l, diag::ext_typecheck_passing_discards_qualifiers, utostr(i+1),
-          funcExpr->getSourceRange(), argExpr->getSourceRange());
+        Diag(l, diag::ext_typecheck_passing_discards_qualifiers,
+             rhsType.getAsString(), lhsType.getAsString(),
+             funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case Incompatible:
         return Diag(l, diag::err_typecheck_passing_incompatible,
@@ -524,8 +521,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
                                   rhptee.getUnqualifiedType())) {
       Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
-                        lhs.getAsString(), rhs.getAsString(),
-                        LHS->getSourceRange(), RHS->getSourceRange());
+           lhs.getAsString(), rhs.getAsString(),
+           LHS->getSourceRange(), RHS->getSourceRange());
       return lhs; // FIXME: this is an _ext - is this return o.k?
     }
   }
@@ -533,8 +530,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     return lhs;
     
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-      lhs.getAsString(), rhs.getAsString(),
-      LHS->getSourceRange(), RHS->getSourceRange());
+       lhs.getAsString(), rhs.getAsString(),
+       LHS->getSourceRange(), RHS->getSourceRange());
   return QualType();
 }
 
@@ -879,6 +876,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
 
   // decode the result (notice that extensions still return a type).
+  // FIXME: make sure the text of the message is consistent with function calls.
   switch (result) {
   case Compatible:
     break;
@@ -1016,17 +1014,17 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
       // GCC compat: special case 'void *' (treat as warning).
       if (ptype->isVoidType()) {
         Diag(OpLoc, diag::ext_typecheck_deref_ptr_to_void, 
-          qType.getAsString(), op->getSourceRange());
+             qType.getAsString(), op->getSourceRange());
       } else {
         Diag(OpLoc, diag::err_typecheck_deref_incomplete_type, 
-          ptype.getAsString(), op->getSourceRange());
+             ptype.getAsString(), op->getSourceRange());
         return QualType();
       }
     }
     return ptype;
   }
   Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer, 
-    qType.getAsString(), op->getSourceRange());
+       qType.getAsString(), op->getSourceRange());
   return QualType();
 }
 

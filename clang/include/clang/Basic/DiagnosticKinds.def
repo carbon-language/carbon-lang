@@ -589,11 +589,11 @@ DIAG(err_typecheck_passing_incompatible, ERROR,
 DIAG(ext_typecheck_passing_incompatible_pointer, EXTENSION,
      "passing incompatible pointer '%0' to function expecting '%1'")
 DIAG(ext_typecheck_passing_int_from_pointer, EXTENSION,
-     "passing argument %0 makes integer from pointer without a cast")
+     "passing pointer '%0' to function expecting integer (without a cast)")
 DIAG(ext_typecheck_passing_pointer_from_int, EXTENSION,
-     "passing argument %0 makes pointer from integer without a cast")
+     "passing integer to function expecting '%0' (without a cast)")
 DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
-     "passing argument %0 discards qualifiers from pointer target type")
+     "function call discards qualifiers (passing '%0' to '%1')")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
 DIAG(err_typecheck_cond_incompatible_operands, ERROR,
