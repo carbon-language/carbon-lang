@@ -65,11 +65,41 @@ namespace {
     }
 
   private:
-    int isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI);
-    int isSafeUseOfAllocation(Instruction *User, AllocationInst *AI);
-    bool isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI);
-    bool isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocationInst *AI);
+    /// AllocaInfo - When analyzing uses of an alloca instruction, this captures
+    /// information about the uses.  All these fields are initialized to false
+    /// and set to true when something is learned.
+    struct AllocaInfo {
+      /// isUnsafe - This is set to true if the alloca cannot be SROA'd.
+      bool isUnsafe : 1;
+      
+      /// needsCanon - This is set to true if there is some use of the alloca
+      /// that requires canonicalization.
+      bool needsCanon : 1;
+      
+      /// isMemCpySrc - This is true if this aggregate is memcpy'd from.
+      bool isMemCpySrc : 1;
+
+      /// isMemCpyDst - This is true if this aggregate is memcpy'd info.
+      bool isMemCpyDst : 1;
+
+      AllocaInfo()
+        : isUnsafe(false), needsCanon(false), 
+          isMemCpySrc(false), isMemCpyDst(false) {}
+    };
+    
+    void MarkUnsafe(AllocaInfo &I) { I.isUnsafe = true; }
+
     int isSafeAllocaToScalarRepl(AllocationInst *AI);
+
+    void isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
+                               AllocaInfo &Info);
+    void isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
+                         AllocaInfo &Info);
+    void isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
+                                        unsigned OpNo, AllocaInfo &Info);
+    void isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocationInst *AI,
+                                        AllocaInfo &Info);
+    
     void DoScalarReplacement(AllocationInst *AI, 
                              std::vector<AllocationInst*> &WorkList);
     void CanonicalizeAllocaUsers(AllocationInst *AI);
@@ -320,7 +350,8 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
 /// getelementptr instruction of an array aggregate allocation.  isFirstElt
 /// indicates whether Ptr is known to the start of the aggregate.
 ///
-int SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI) {
+void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
+                            AllocaInfo &Info) {
   for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
        I != E; ++I) {
     Instruction *User = cast<Instruction>(*I);
@@ -328,7 +359,7 @@ int SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI) {
     case Instruction::Load:  break;
     case Instruction::Store:
       // Store is ok if storing INTO the pointer, not storing the pointer
-      if (User->getOperand(0) == Ptr) return 0;
+      if (User->getOperand(0) == Ptr) return MarkUnsafe(Info);
       break;
     case Instruction::GetElementPtr: {
       GetElementPtrInst *GEP = cast<GetElementPtrInst>(User);
@@ -336,7 +367,8 @@ int SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI) {
       if (GEP->getNumOperands() > 1) {
         if (!isa<ConstantInt>(GEP->getOperand(1)) ||
             !cast<ConstantInt>(GEP->getOperand(1))->isZero())
-          return 0;  // Using pointer arithmetic to navigate the array.
+          // Using pointer arithmetic to navigate the array.
+          return MarkUnsafe(Info);
        
         if (AreAllZeroIndices) {
           for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i) {
@@ -348,28 +380,34 @@ int SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI) {
           }
         }
       }
-      if (!isSafeElementUse(GEP, AreAllZeroIndices, AI)) return 0;
+      isSafeElementUse(GEP, AreAllZeroIndices, AI, Info);
+      if (Info.isUnsafe) return;
       break;
     }
     case Instruction::BitCast:
-      if (isFirstElt &&
-          isSafeUseOfBitCastedAllocation(cast<BitCastInst>(User), AI)) 
+      if (isFirstElt) {
+        isSafeUseOfBitCastedAllocation(cast<BitCastInst>(User), AI, Info);
+        if (Info.isUnsafe) return;
         break;
-      DOUT << "  Transformation preventing inst: " << *User;
-      return 0;
-    case Instruction::Call:
-      if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
-        if (isFirstElt && isSafeMemIntrinsicOnAllocation(MI, AI))
-          break;
       }
       DOUT << "  Transformation preventing inst: " << *User;
-      return 0;
+      return MarkUnsafe(Info);
+    case Instruction::Call:
+      if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(User)) {
+        if (isFirstElt) {
+          isSafeMemIntrinsicOnAllocation(MI, AI, I.getOperandNo(), Info);
+          if (Info.isUnsafe) return;
+          break;
+        }
+      }
+      DOUT << "  Transformation preventing inst: " << *User;
+      return MarkUnsafe(Info);
     default:
       DOUT << "  Transformation preventing inst: " << *User;
-      return 0;
+      return MarkUnsafe(Info);
     }
   }
-  return 3;  // All users look ok :)
+  return;  // All users look ok :)
 }
 
 /// AllUsersAreLoads - Return true if all users of this value are loads.
@@ -384,21 +422,25 @@ static bool AllUsersAreLoads(Value *Ptr) {
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
 /// aggregate allocation.
 ///
-int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
+void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
+                                 AllocaInfo &Info) {
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
-    return isSafeUseOfBitCastedAllocation(C, AI) ? 3 : 0;
-  if (!isa<GetElementPtrInst>(User)) return 0;
+    return isSafeUseOfBitCastedAllocation(C, AI, Info);
 
-  GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
+  GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User);
+  if (GEPI == 0)
+    return MarkUnsafe(Info);
+
   gep_type_iterator I = gep_type_begin(GEPI), E = gep_type_end(GEPI);
 
   // The GEP is not safe to transform if not of the form "GEP <ptr>, 0, <cst>".
   if (I == E ||
-      I.getOperand() != Constant::getNullValue(I.getOperand()->getType()))
-    return 0;
+      I.getOperand() != Constant::getNullValue(I.getOperand()->getType())) {
+    return MarkUnsafe(Info);
+  }
 
   ++I;
-  if (I == E) return 0;  // ran out of GEP indices??
+  if (I == E) return MarkUnsafe(Info);  // ran out of GEP indices??
 
   bool IsAllZeroIndices = true;
   
@@ -413,7 +455,7 @@ int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
       // something funny is going on, so we won't do the optimization.
       //
       if (Idx->getZExtValue() >= NumElements)
-        return 0;
+        return MarkUnsafe(Info);
 
       // We cannot scalar repl this level of the array unless any array
       // sub-indices are in-range constants.  In particular, consider:
@@ -430,9 +472,9 @@ int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
           NumElements = cast<VectorType>(*I)->getNumElements();
         
         ConstantInt *IdxVal = dyn_cast<ConstantInt>(I.getOperand());
-        if (!IdxVal) return 0;
+        if (!IdxVal) return MarkUnsafe(Info);
         if (IdxVal->getZExtValue() >= NumElements)
-          return 0;
+          return MarkUnsafe(Info);
         IsAllZeroIndices &= IdxVal->isZero();
       }
       
@@ -444,53 +486,62 @@ int SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI) {
       // it, in which case we CAN promote it, but we have to canonicalize this
       // out if this is the only problem.
       if ((NumElements == 1 || NumElements == 2) &&
-          AllUsersAreLoads(GEPI))
-        return 1;  // Canonicalization required!
-      return 0;
+          AllUsersAreLoads(GEPI)) {
+        Info.needsCanon = true;
+        return;  // Canonicalization required!
+      }
+      return MarkUnsafe(Info);
     }
   }
 
   // If there are any non-simple uses of this getelementptr, make sure to reject
   // them.
-  return isSafeElementUse(GEPI, IsAllZeroIndices, AI);
+  return isSafeElementUse(GEPI, IsAllZeroIndices, AI, Info);
 }
 
 /// isSafeMemIntrinsicOnAllocation - Return true if the specified memory
 /// intrinsic can be promoted by SROA.  At this point, we know that the operand
 /// of the memintrinsic is a pointer to the beginning of the allocation.
-bool SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI){
+void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
+                                          unsigned OpNo, AllocaInfo &Info) {
   // If not constant length, give up.
   ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
-  if (!Length) return false;
+  if (!Length) return MarkUnsafe(Info);
   
   // If not the whole aggregate, give up.
   const TargetData &TD = getAnalysis<TargetData>();
   if (Length->getZExtValue() != TD.getTypeSize(AI->getType()->getElementType()))
-    return false;
+    return MarkUnsafe(Info);
   
   // We only know about memcpy/memset/memmove.
   if (!isa<MemCpyInst>(MI) && !isa<MemSetInst>(MI) && !isa<MemMoveInst>(MI))
-    return false;
-  // Otherwise, we can transform it.
-  return true;
+    return MarkUnsafe(Info);
+  
+  // Otherwise, we can transform it.  Determine whether this is a memcpy/set
+  // into or out of the aggregate.
+  if (OpNo == 1)
+    Info.isMemCpyDst = true;
+  else {
+    assert(OpNo == 2);
+    Info.isMemCpySrc = true;
+  }
 }
 
 /// isSafeUseOfBitCastedAllocation - Return true if all users of this bitcast
 /// are 
-bool SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI) {
+void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
+                                          AllocaInfo &Info) {
   for (Value::use_iterator UI = BC->use_begin(), E = BC->use_end();
        UI != E; ++UI) {
     if (BitCastInst *BCU = dyn_cast<BitCastInst>(UI)) {
-      if (!isSafeUseOfBitCastedAllocation(BCU, AI)) 
-        return false;
+      isSafeUseOfBitCastedAllocation(BCU, AI, Info);
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(UI)) {
-      if (!isSafeMemIntrinsicOnAllocation(MI, AI))
-        return false;
+      isSafeMemIntrinsicOnAllocation(MI, AI, UI.getOperandNo(), Info);
     } else {
-      return false;
+      return MarkUnsafe(Info);
     }
+    if (Info.isUnsafe) return;
   }
-  return true;
 }
 
 /// RewriteBitCastUserOfAlloca - BCInst (transitively) bitcasts AI, or indexes
@@ -668,6 +719,44 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
   }
 }
 
+/// HasStructPadding - Return true if the specified type has any structure
+/// padding, false otherwise.
+static bool HasStructPadding(const Type *Ty, const TargetData &TD) {
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    const StructLayout *SL = TD.getStructLayout(STy);
+    unsigned PrevFieldBitOffset = 0;
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      unsigned FieldBitOffset = SL->getElementOffset(i)*8;
+      
+      // Padding in sub-elements?
+      if (HasStructPadding(STy->getElementType(i), TD))
+        return true;
+      
+      // Check to see if there is any padding between this element and the
+      // previous one.
+      if (i) {
+        unsigned PrevFieldEnd = 
+        PrevFieldBitOffset+TD.getTypeSizeInBits(STy->getElementType(i-1));
+        if (PrevFieldEnd < FieldBitOffset)
+          return true;
+      }
+      
+      PrevFieldBitOffset = FieldBitOffset;
+    }
+    
+    //  Check for tail padding.
+    if (unsigned EltCount = STy->getNumElements()) {
+      unsigned PrevFieldEnd = PrevFieldBitOffset +
+                   TD.getTypeSizeInBits(STy->getElementType(EltCount-1));
+      if (PrevFieldEnd < SL->getSizeInBytes()*8)
+        return true;
+    }
+
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    return HasStructPadding(ATy->getElementType(), TD);
+  }
+  return false;
+}
 
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
 /// an aggregate can be broken down into elements.  Return 0 if not, 3 if safe,
@@ -676,18 +765,29 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
 int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
-  //
-  int isSafe = 3;
+  AllocaInfo Info;
+  
   for (Value::use_iterator I = AI->use_begin(), E = AI->use_end();
        I != E; ++I) {
-    isSafe &= isSafeUseOfAllocation(cast<Instruction>(*I), AI);
-    if (isSafe == 0) {
+    isSafeUseOfAllocation(cast<Instruction>(*I), AI, Info);
+    if (Info.isUnsafe) {
       DOUT << "Cannot transform: " << *AI << "  due to user: " << **I;
       return 0;
     }
   }
-  // If we require cleanup, isSafe is now 1, otherwise it is 3.
-  return isSafe;
+  
+  // Okay, we know all the users are promotable.  If the aggregate is a memcpy
+  // source and destination, we have to be careful.  In particular, the memcpy
+  // could be moving around elements that live in structure padding of the LLVM
+  // types, but may actually be used.  In these cases, we refuse to promote the
+  // struct.
+  if (Info.isMemCpySrc && Info.isMemCpyDst &&
+      HasStructPadding(AI->getType()->getElementType(), 
+                       getAnalysis<TargetData>()))
+    return 0;
+  
+  // If we require cleanup, return 1, otherwise return 3.
+  return Info.needsCanon ? 1 : 3;
 }
 
 /// CanonicalizeAllocaUsers - If SROA reported that it can promote the specified
