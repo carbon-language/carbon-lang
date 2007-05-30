@@ -18,10 +18,9 @@ I. Introduction:
  specific use.  Oh yeah, did I mention that we want the resultant libraries to
  be as fast as possible? :)
 
- This front-end is built as a component of the LLVM toolkit (which really really
- needs a better name) that can be used with the LLVM backend or independently of
- it.  In this spirit, the API has been carefully designed as the following
- stack of components:
+ This front-end is built as a component of the LLVM toolkit that can be used
+ with the LLVM backend or independently of it.  In this spirit, the API has been
+ carefully designed as the following components:
  
    libsupport  - Basic support library, reused from LLVM.
    libsystem   - System abstraction library, reused from LLVM.
@@ -36,11 +35,9 @@ I. Introduction:
                  
    liblex      - C/C++/ObjC lexing and preprocessing, identifier hash table,
                  pragma handling, tokens, and macros.  This depends on libbasic.
-   libparse    - C99 (for now) parsing and local semantic analysis. This library
+   libparse    - C (for now) parsing and local semantic analysis. This library
                  invokes coarse-grained 'Actions' provided by the client to do
-                 stuff (great idea shamelessly stolen from Devkit).  ObjC/C90
-                 need to be added soon, K&R C and C++ can be added in the
-                 future, but are not a high priority.  This depends on liblex.
+                 stuff (e.g. libsema builds ASTs).  This depends on liblex.
    libsema     - Provides a set of parser actions to build a standardized AST
                  for programs.  AST's are 'streamed' out a top-level declaration
                  at a time, allowing clients to use decl-at-a-time processing,
@@ -48,12 +45,14 @@ I. Introduction:
                  program' ASTs depending on how they use the APIs.  This depends
                  on libast and libparse.
                  
-   libast2llvm - [Planned] Lower the AST to LLVM IR for optimization & codegen.
+   libcodegen  - Lower the AST to LLVM IR for optimization & codegen.  Depends
+                 on libast.
    clang       - An example driver, client of the libraries at various levels.
+                 This depends on all these libraries, and on LLVM VMCore.
 
- This front-end has been intentionally built as a stack, making it trivial to
- replace anything below (in this list) a particular point. For example, to build
- a preprocessor, you take the Basic and Lexer libraries. If you want an indexer,
+ This front-end has been intentionally built as a DAG, making it easy to
+ reuse individual parts or replace pieces if desired. For example, to build a
+ preprocessor, you take the Basic and Lexer libraries. If you want an indexer,
  you take those plus the Parser library and provide some actions for indexing.
  If you want a refactoring, static analysis, or source-to-source compiler tool,
  it makes sense to take those plus the AST building and semantic analyzer
@@ -81,9 +80,14 @@ II. Usage of clang driver:
  * -fsyntax-only is the default mode.
 
  * -E mode gives output nearly identical to GCC, though not all bugs in
-   whitespace calculation have been emulated.
+   whitespace calculation have been emulated (e.g. the number of blank lines
+   emitted).
 
- * -fsyntax-only is currently partially implemented.
+ * -fsyntax-only is currently partially implemented, lacking some semantic
+   analysis.
+
+ * -Eonly mode does all preprocessing, but does not print the output, useful for
+   timing the preprocessor.
  
  * -parse-print-callbacks prints almost no callbacks so far.
  
@@ -91,35 +95,35 @@ II. Usage of clang driver:
    timing AST building vs -parse-noop.
  
  * -parse-ast-print prints most expression and statements nodes, but some
-   things are missing.
+   minor things are missing.
 
 
 III. Current advantages over GCC:
 
  * Column numbers are fully tracked (no 256 col limit, no GCC-style pruning).
- * All diagnostics have column numbers, includes 'caret diagnostics', highlights
-   regions of interesting code in diagnostics.
+ * All diagnostics have column numbers, includes 'caret diagnostics', and they
+   highlight regions of interesting code (e.g. the LHS and RHS of a binop).
  * Full diagnostic customization by client (can format diagnostics however they
    like, e.g. in an IDE or refactoring tool) through DiagnosticClient interface.
  * Built as a framework, can be reused by multiple tools.
  * All languages supported linked into same library (no cc1,cc1obj, ...).
  * mmap's code in read-only, does not dirty the pages like GCC (mem footprint).
- * BSD License, can be linked into non-GPL projects.
- * Full diagnostic control, per diagnostic.
- * Faster than GCC at parsing, lexing, and preprocessing.
+ * LLVM License, can be linked into non-GPL projects.
+ * Full diagnostic control, per diagnostic.  Diagnostics are identified by ID.
+ * Significantly faster than GCC at semantic analysis, parsing, preprocessing
+   and lexing.
  * Defers exposing platform-specific stuff to as late as possible, tracks use of
    platform-specific features (e.g. #ifdef PPC) to allow 'portable bytecodes'.
  * The lexer doesn't rely on the "lexer hack": it has no notion of scope and
    does not categorize identifiers as types or variables -- this is up to the
    parser to decide.
 
-Future Features:
+Potential Future Features:
 
  * Fine grained diag control within the source (#pragma enable/disable warning).
- * Faster than GCC at AST generation [measure when complete].
  * Better token tracking within macros?  (Token came from this line, which is
    a macro argument instantiated here, recursively instantiated here).
- * Fast #import!
+ * Fast #import with a module system.
  * Dependency tracking: change to header file doesn't recompile every function
    that texually depends on it: recompile only those functions that need it.
 
@@ -153,16 +157,13 @@ Traditional Preprocessor:
  * All.
 
 Parser:
- * C90/K&R modes.
+ * C90/K&R modes are only partially implemented.
  * __extension__, __attribute__ [currently just skipped and ignored].
  * "initializers", GCC inline asm.
-
-Parser Actions:
- * All that are missing.
- * Implement a little devkit-style "indexer".
  
-AST Builder:
- * Implement more nodes as actions are available.
-
 Semantic Analysis:
- * Perhaps 30-40% done.
+ * Perhaps 75% done.
+
+Code Gen:
+ * Mostly missing.
+
