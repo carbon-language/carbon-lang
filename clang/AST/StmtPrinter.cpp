@@ -55,7 +55,7 @@ namespace  {
         // If this is an expr used in a stmt context, indent and newline it.
         Indent();
         S->visit(*this);
-        OS << "\n";
+        OS << ";\n";
       } else if (S) {
         S->visit(*this);
       } else {
