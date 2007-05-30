@@ -168,6 +168,7 @@ public:
   IdentifierInfo *getID() const { return Label; }
   const char *getName() const;
   Stmt *getSubStmt() { return SubStmt; }
+  const Stmt *getSubStmt() const { return SubStmt; }
 
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
