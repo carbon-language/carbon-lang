@@ -876,7 +876,6 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
 
   // decode the result (notice that extensions still return a type).
-  // FIXME: make sure the text of the message is consistent with function calls.
   switch (result) {
   case Compatible:
     break;
@@ -888,10 +887,11 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
-    if (compoundType.isNull() && !rex->isNullPointerConstant())
+    if (compoundType.isNull() && !rex->isNullPointerConstant()) {
       Diag(loc, diag::ext_typecheck_assign_pointer_int,
            lhsType.getAsString(), rhsType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
+    }
     break;
   case IntFromPointer: 
     Diag(loc, diag::ext_typecheck_assign_pointer_int, 

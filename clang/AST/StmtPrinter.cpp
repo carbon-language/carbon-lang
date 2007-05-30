@@ -118,7 +118,8 @@ void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
   } else if (TypedefDecl *localType = dyn_cast<TypedefDecl>(Node->getDecl())) {
     Indent() << "typedef " << localType->getUnderlyingType().getAsString();
     OS << " " << localType->getName() << ";\n";
-  }
+  } else 
+    assert(0 && "Unexpected decl (expecting BlockVarDecl or TypedefDecl");
 }
 
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {

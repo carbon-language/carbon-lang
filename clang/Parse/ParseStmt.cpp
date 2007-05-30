@@ -590,6 +590,9 @@ Parser::StmtResult Parser::ParseForStatement() {
   } else {
     Value = ParseExpression();
 
+    if (!Value.isInvalid)
+      FirstPart = Value.Val;
+      
     if (Tok.getKind() == tok::semi) {
       ConsumeToken();
     } else {

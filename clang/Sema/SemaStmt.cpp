@@ -250,10 +250,11 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
     break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
-    if (!((Expr *)RetValExp)->isNullPointerConstant())
+    if (!((Expr *)RetValExp)->isNullPointerConstant()) {
       Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
            lhsType.getAsString(), rhsType.getAsString(),
            ((Expr *)RetValExp)->getSourceRange());
+    }
     break;
   case IntFromPointer:
     Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
