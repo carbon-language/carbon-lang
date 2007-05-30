@@ -670,10 +670,10 @@ QualType Sema::CheckPointerTypesForAssignment(QualType lhsType,
 ///
 QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
                                           AssignmentConversionResult &r) {
-  // this check seems unnatural, however it necessary to insure the proper
-  // conversion of functions/arrays. If the conversion where done for all
-  // DeclExpr's (created by ParseIdentifierExpr), it would mess up the
-  // unary expressions that surpress this implicit conversion (&, sizeof).
+  // This check seems unnatural, however it is necessary to insure the proper
+  // conversion of functions/arrays. If the conversion were done for all
+  // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
+  // expressions that surpress this implicit conversion (&, sizeof).
   if (rhsType->isFunctionType() || rhsType->isArrayType())
     rhsType = UsualUnaryConversion(rhsType);
     
@@ -699,7 +699,7 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
   } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Type::tagTypesAreCompatible(lhsType, rhsType))
       return rhsType;
-  } 
+  }
   r = Incompatible;
   return QualType();
 }
