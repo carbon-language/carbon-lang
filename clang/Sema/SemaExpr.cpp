@@ -382,13 +382,13 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     unsigned NumArgsToCheck = NumArgsInCall;
     
     if (NumArgsInCall < NumArgsInProto)
-      Diag(LParenLoc, diag::err_typecheck_call_too_few_args,
+      Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
            funcExpr->getSourceRange());
     else if (NumArgsInCall > NumArgsInProto) {
       if (!proto->isVariadic()) {
-        Diag(LParenLoc, diag::err_typecheck_call_too_many_args,
-             funcExpr->getSourceRange(),
-             ((Expr **)Args)[NumArgsInProto]->getSourceRange());
+        Diag(((Expr **)Args)[NumArgsInProto+1]->getLocStart(), 
+             diag::err_typecheck_call_too_many_args, funcExpr->getSourceRange(),
+             ((Expr **)Args)[NumArgsInProto+1]->getSourceRange());
       }
       NumArgsToCheck = NumArgsInProto;
     }
@@ -414,14 +414,14 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       case PointerFromInt:
         // check for null pointer constant (C99 6.3.2.3p3)
         if (!argExpr->isNullPointerConstant()) {
-          Diag(l, diag::ext_typecheck_passing_pointer_from_int, 
-               lhsType.getAsString(),
+          Diag(l, diag::ext_typecheck_passing_pointer_int, 
+               lhsType.getAsString(), rhsType.getAsString(),
                funcExpr->getSourceRange(), argExpr->getSourceRange());
         }
         break;
       case IntFromPointer:
-        Diag(l, diag::ext_typecheck_passing_int_from_pointer, 
-             rhsType.getAsString(),
+        Diag(l, diag::ext_typecheck_passing_pointer_int, 
+             lhsType.getAsString(), rhsType.getAsString(),
              funcExpr->getSourceRange(), argExpr->getSourceRange());
         break;
       case IncompatiblePointer:
@@ -889,11 +889,13 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
     if (compoundType.isNull() && !rex->isNullPointerConstant())
-      Diag(loc, diag::ext_typecheck_assign_pointer_from_int,
+      Diag(loc, diag::ext_typecheck_assign_pointer_int,
+           lhsType.getAsString(), rhsType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
     break;
-  case IntFromPointer:
-    Diag(loc, diag::ext_typecheck_assign_int_from_pointer,
+  case IntFromPointer: 
+    Diag(loc, diag::ext_typecheck_assign_pointer_int, 
+         lhsType.getAsString(), rhsType.getAsString(),
          lex->getSourceRange(), rex->getSourceRange());
     break;
   case IncompatiblePointer:

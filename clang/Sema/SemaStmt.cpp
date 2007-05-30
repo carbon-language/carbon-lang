@@ -26,7 +26,10 @@ Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {
 }
 
 Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
-  return decl ? new DeclStmt(static_cast<Decl *>(decl)) : 0;
+  if (decl)
+    return new DeclStmt(static_cast<Decl *>(decl));
+  else 
+    return true; // error
 }
 
 Action::StmtResult 
@@ -248,16 +251,24 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
     if (!((Expr *)RetValExp)->isNullPointerConstant())
-      Diag(ReturnLoc, diag::ext_typecheck_return_pointer_from_int);
+      Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
+           lhsType.getAsString(), rhsType.getAsString(),
+           ((Expr *)RetValExp)->getSourceRange());
     break;
   case IntFromPointer:
-    Diag(ReturnLoc, diag::ext_typecheck_return_int_from_pointer);
+    Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
+         lhsType.getAsString(), rhsType.getAsString(),
+         ((Expr *)RetValExp)->getSourceRange());
     break;
   case IncompatiblePointer:
-    Diag(ReturnLoc, diag::ext_typecheck_return_incompatible_pointer);
+    Diag(ReturnLoc, diag::ext_typecheck_return_incompatible_pointer,
+         lhsType.getAsString(), rhsType.getAsString(),
+         ((Expr *)RetValExp)->getSourceRange());
     break;
   case CompatiblePointerDiscardsQualifiers:
-    Diag(ReturnLoc, diag::ext_typecheck_return_discards_qualifiers);
+    Diag(ReturnLoc, diag::ext_typecheck_return_discards_qualifiers,
+         lhsType.getAsString(), rhsType.getAsString(),
+         ((Expr *)RetValExp)->getSourceRange());
     break;
   }
   return new ReturnStmt((Expr*)RetValExp);
