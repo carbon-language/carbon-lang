@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 using namespace llvm;
@@ -136,8 +137,14 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   
   switch (S->getStmtClass()) {
   default:
-    printf("Unimplemented stmt!\n");
-    S->dump();
+    // Must be an expression in a stmt context.  Emit the value and ignore the
+    // result.
+    if (const Expr *E = dyn_cast<Expr>(S)) {
+      EmitExpr(E);
+    } else {
+      printf("Unimplemented stmt!\n");
+      S->dump();
+    }
     break;
   case Stmt::NullStmtClass: break;
   case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
@@ -179,4 +186,29 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   
   Builder.SetInsertPoint(new BasicBlock("", CurFn));
 }
+
+
+
+//===--------------------------------------------------------------------===//
+//                             Expression Emission
+//===--------------------------------------------------------------------===//
+
+ExprResult CodeGenFunction::EmitExpr(const Expr *E) {
+  assert(E && "Null expression?");
+  
+  switch (E->getStmtClass()) {
+  default:
+    printf("Unimplemented expr!\n");
+    E->dump();
+    return ExprResult::get(UndefValue::get(llvm::Type::Int32Ty));
+  case Stmt::IntegerLiteralClass:
+    return EmitIntegerLiteral(cast<IntegerLiteral>(E)); 
+  }
+  
+}
+
+ExprResult CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
+  return ExprResult::get(ConstantInt::get(E->getValue()));
+}
+
 

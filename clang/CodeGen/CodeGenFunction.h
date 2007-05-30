@@ -30,8 +30,29 @@ namespace clang {
   class LabelStmt;
   class GotoStmt;
   
+  class Expr;
+  class IntegerLiteral;
+  
 namespace CodeGen {
   class CodeGenModule;
+  
+struct ExprResult {
+  Value *V;
+  bool isAggregate;
+  
+  static ExprResult get(Value *V) {
+    ExprResult ER;
+    ER.V = V;
+    ER.isAggregate = false;
+    return ER;
+  }
+  static ExprResult getAggregate(Value *V) {
+    ExprResult ER;
+    ER.V = V;
+    ER.isAggregate = true;
+    return ER;
+  }
+};
   
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
@@ -66,6 +87,14 @@ public:
   void EmitCompoundStmt(const CompoundStmt &S);
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
+  
+  
+  //===--------------------------------------------------------------------===//
+  //                             Expression Emission
+  //===--------------------------------------------------------------------===//
+
+  ExprResult EmitExpr(const Expr *E);
+  ExprResult EmitIntegerLiteral(const IntegerLiteral *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
