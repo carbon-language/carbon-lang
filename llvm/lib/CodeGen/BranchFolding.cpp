@@ -420,9 +420,8 @@ static void FixTail(MachineBasicBlock* CurMBB, MachineBasicBlock *SuccBB,
   TII->InsertBranch(*CurMBB, SuccBB, NULL, std::vector<MachineOperand>());
 }
 
-static bool MergeCompare(std::pair<unsigned,MachineBasicBlock*> p,
-                         std::pair<unsigned,MachineBasicBlock*> q) {
-
+static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
+                         const std::pair<unsigned,MachineBasicBlock*> &q) {
     if (p.first < q.first)
       return true;
      else if (p.first > q.first)
