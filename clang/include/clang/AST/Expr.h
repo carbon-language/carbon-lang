@@ -206,7 +206,8 @@ public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : Expr(ParenExprClass, val->getType()), L(l), R(r), Val(val) {}
   
-  Expr *getSubExpr() const { return Val; }
+  const Expr *getSubExpr() const { return Val; }
+  Expr *getSubExpr() { return Val; }
   SourceRange getSourceRange() const { return SourceRange(L, R); }
 
   virtual void visit(StmtVisitor &Visitor);

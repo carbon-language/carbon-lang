@@ -29,6 +29,7 @@ namespace clang {
   class CompoundStmt;
   class LabelStmt;
   class GotoStmt;
+  class IfStmt;
   
   class Expr;
   class IntegerLiteral;
@@ -36,20 +37,36 @@ namespace clang {
 namespace CodeGen {
   class CodeGenModule;
   
-struct ExprResult {
+class ExprResult {
   Value *V;
-  bool isAggregate;
+  bool IsAggregate;
+public:
+  
+  bool isAggregate() const { return IsAggregate; }
+  bool isScalar() const { return !IsAggregate; }
+  
+  /// getVal() - Return the Value* of this scalar value.
+  Value *getVal() const {
+    assert(!isAggregate() && "Not a scalar!");
+    return V;
+  }
+
+  /// getAggregateVal() - Return the Value* of the address of the aggregate.
+  Value *getAggregateVal() const {
+    assert(isAggregate() && "Not an aggregate!");
+    return V;
+  }
   
   static ExprResult get(Value *V) {
     ExprResult ER;
     ER.V = V;
-    ER.isAggregate = false;
+    ER.IsAggregate = false;
     return ER;
   }
   static ExprResult getAggregate(Value *V) {
     ExprResult ER;
     ER.V = V;
-    ER.isAggregate = true;
+    ER.IsAggregate = true;
     return ER;
   }
 };
@@ -87,7 +104,7 @@ public:
   void EmitCompoundStmt(const CompoundStmt &S);
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
-  
+  void EmitIfStmt(const IfStmt &S);
   
   //===--------------------------------------------------------------------===//
   //                             Expression Emission
