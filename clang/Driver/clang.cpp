@@ -1211,7 +1211,9 @@ int main(int argc, char **argv) {
                      HeaderInfo, *Target, LangInfo);
   
   if (NumDiagnostics)
-    std::cerr << NumDiagnostics << " diagnostics generated.\n";
+    std::cerr << NumDiagnostics << " diagnostic"
+              << (NumDiagnostics == 1 ? "" : "s")
+              << " generated.\n";
   
   if (Stats) {
     // Printed from high-to-low level.
