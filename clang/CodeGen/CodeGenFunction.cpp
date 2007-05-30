@@ -25,6 +25,15 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : CGM(cgm), Target(CGM.getContext().Target) {}
 
 
+llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
+  BasicBlock *&BB = LabelMap[S];
+  if (BB) return BB;
+  
+  // Create, but don't insert, the new block.
+  return BB = new BasicBlock(S->getName());
+}
+
+
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
   // FIXME: Cache these, move the CodeGenModule, expand, etc.
@@ -104,11 +113,11 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   const llvm::Type *Ty = ConvertType(FD->getType(), FD->getLocation());
   
-  llvm::Function *F = new Function(cast<llvm::FunctionType>(Ty),
-                                   Function::ExternalLinkage,
-                                   FD->getName(), &CGM.getModule());
+  CurFn = new Function(cast<llvm::FunctionType>(Ty),
+                       Function::ExternalLinkage,
+                       FD->getName(), &CGM.getModule());
   
-  BasicBlock *EntryBB = new BasicBlock("entry", F);
+  BasicBlock *EntryBB = new BasicBlock("entry", CurFn);
   
   // TODO: Walk the decls, creating allocas etc.
   
@@ -132,6 +141,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     break;
   case Stmt::NullStmtClass: break;
   case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
+  case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
+  case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
   }
 }
 
@@ -141,5 +152,31 @@ void CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S) {
   for (CompoundStmt::const_body_iterator I = S.body_begin(), E = S.body_end();
        I != E; ++I)
     EmitStmt(*I);
+}
+
+void CodeGenFunction::EmitBlock(BasicBlock *BB) {
+  // Emit a branch from this block to the next one if this was a real block.  If
+  // this was just a fall-through block after a terminator, don't emit it.
+  if (!Builder.GetInsertBlock()->empty() ||
+      Builder.GetInsertBlock()->getValueName()) {
+    Builder.CreateBr(BB);
+  } else {
+    // TODO: cache and reuse these.
+    Builder.GetInsertBlock()->eraseFromParent();
+  }
+  CurFn->getBasicBlockList().push_back(BB);
+  Builder.SetInsertPoint(BB);
+}
+
+void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
+  llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
+  
+  EmitBlock(NextBB);
+}
+
+void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
+  Builder.CreateBr(getBasicBlockForLabel(S.getLabel()));
+  
+  Builder.SetInsertPoint(new BasicBlock("", CurFn));
 }
 

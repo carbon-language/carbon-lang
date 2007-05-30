@@ -293,7 +293,7 @@ class GotoStmt : public Stmt {
 public:
   GotoStmt(LabelStmt *label) : Stmt(GotoStmtClass), Label(label) {}
   
-  LabelStmt *getLabel() { return Label; }
+  LabelStmt *getLabel() const { return Label; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

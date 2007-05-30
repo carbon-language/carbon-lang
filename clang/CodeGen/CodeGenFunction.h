@@ -14,6 +14,7 @@
 #ifndef CODEGEN_CODEGENFUNCTION_H
 #define CODEGEN_CODEGENFUNCTION_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/LLVMBuilder.h"
 
 namespace llvm {
@@ -26,6 +27,8 @@ namespace clang {
   class TargetInfo;
   class Stmt;
   class CompoundStmt;
+  class LabelStmt;
+  class GotoStmt;
   
 namespace CodeGen {
   class CodeGenModule;
@@ -36,6 +39,10 @@ class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
   LLVMBuilder Builder;
+  llvm::Function *CurFn;
+
+  /// LabelMap - This keeps track of the LLVM basic block for each C label.
+  DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
@@ -43,12 +50,22 @@ public:
   
   void GenerateCode(const FunctionDecl *FD);
   
+  
+  /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
+  /// label maps to.
+  llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
+  
+  
+  void EmitBlock(BasicBlock *BB);
+  
   //===--------------------------------------------------------------------===//
   //                             Statement Emission
   //===--------------------------------------------------------------------===//
 
   void EmitStmt(const Stmt *S);
   void EmitCompoundStmt(const CompoundStmt &S);
+  void EmitLabelStmt(const LabelStmt &S);
+  void EmitGotoStmt(const GotoStmt &S);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
