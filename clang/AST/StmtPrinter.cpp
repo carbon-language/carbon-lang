@@ -125,6 +125,7 @@ void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
   Indent();
   PrintRawCompoundStmt(Node);
+  OS << "\n";
 }
 
 void StmtPrinter::VisitCaseStmt(CaseStmt *Node) {
