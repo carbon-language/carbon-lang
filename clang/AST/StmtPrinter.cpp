@@ -207,7 +207,7 @@ void StmtPrinter::VisitDoStmt(DoStmt *Node) {
   PrintStmt(Node->getBody());
   Indent() << "while (";
   PrintExpr(Node->getCond());
-  OS << ")\n";
+  OS << ");\n";
 }
 
 void StmtPrinter::VisitForStmt(ForStmt *Node) {
@@ -231,15 +231,15 @@ void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
 void StmtPrinter::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
   Indent() << "goto *";
   PrintExpr(Node->getTarget());
-  OS << "\n";
+  OS << ";\n";
 }
 
 void StmtPrinter::VisitContinueStmt(ContinueStmt *Node) {
-  Indent() << "continue\n";
+  Indent() << "continue;\n";
 }
 
 void StmtPrinter::VisitBreakStmt(BreakStmt *Node) {
-  Indent() << "break\n";
+  Indent() << "break;\n";
 }
 
 
@@ -249,7 +249,7 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
     OS << " ";
     PrintExpr(Node->getRetValue());
   }
-  OS << "\n";
+  OS << ";\n";
 }
 
 //===----------------------------------------------------------------------===//
