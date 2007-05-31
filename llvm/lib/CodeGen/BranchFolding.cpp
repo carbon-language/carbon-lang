@@ -684,18 +684,26 @@ static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB,
     }
   }
   
-  MachineBasicBlock::pred_iterator SI = MBB.succ_begin();
+  MachineBasicBlock::succ_iterator SI = MBB.succ_begin();
+  bool foundPad = false;
   while (SI != MBB.succ_end()) {
     if (*SI == DestA && DestA == DestB) {
       DestA = DestB = 0;
+      if ((*SI)->isLandingPad())
+        foundPad = true;
       ++SI;
     } else if (*SI == DestA) {
       DestA = 0;
+      if ((*SI)->isLandingPad())
+        foundPad = true;
       ++SI;
     } else if (*SI == DestB) {
       DestB = 0;
+      if ((*SI)->isLandingPad())
+        foundPad = true;
       ++SI;
-    } else if ((*SI)->isLandingPad()) {
+    } else if ((*SI)->isLandingPad() && !foundPad) {
+      foundPad = true;
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
@@ -832,8 +840,9 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   ++FallThrough;
   
   // If this block is empty, make everyone use its fall-through, not the block
-  // explicitly.
-  if (MBB->empty()) {
+  // explicitly.  Landing pads should not do this since the landing-pad table
+  // points to this block.
+  if (MBB->empty() && !MBB->isLandingPad()) {
     // Dead block?  Leave for cleanup later.
     if (MBB->pred_empty()) return;
     
