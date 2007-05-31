@@ -605,7 +605,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   // tail block, and the tail block does not have other predecessors, then
   // fold the tail block in as well.
   if (BBI.TailBB &&
-      BBI.TailBB->succ_size() == 1 && CvtBBI->BB->succ_size() == 1) {
+      BBI.TailBB->pred_size() == 1 && CvtBBI->BB->succ_size() == 1) {
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
     BBInfo TailBBI = BBAnalysis[BBI.TailBB->getNumber()];
     MergeBlocks(*CvtBBI, TailBBI);
