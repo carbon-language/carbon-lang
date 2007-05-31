@@ -20,24 +20,6 @@
 using namespace llvm;
 using namespace clang;
 
-namespace {
-  struct VISIBILITY_HIDDEN IsExprStmtVisitor : public StmtVisitor {
-    bool &Result;
-    IsExprStmtVisitor(bool &R) : Result(R) { Result = false; }
-    
-    virtual void VisitExpr(Expr *Node) {
-      Result = true;
-    }
-  };
-}
-
-static bool isExpr(Stmt *S) {
-  bool Val = false;
-  IsExprStmtVisitor V(Val);
-  S->visit(V);
-  return Val;
-}
-
 //===----------------------------------------------------------------------===//
 // StmtPrinter Visitor
 //===----------------------------------------------------------------------===//
@@ -51,7 +33,7 @@ namespace  {
     
     void PrintStmt(Stmt *S, int SubIndent = 1) {
       IndentLevel += SubIndent;
-      if (S && isExpr(S)) {
+      if (S && isa<Expr>(S)) {
         // If this is an expr used in a stmt context, indent and newline it.
         Indent();
         S->visit(*this);
@@ -151,9 +133,8 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
 }
 
 void StmtPrinter::VisitIfStmt(IfStmt *If) {
-  Indent() << "if (";
+  Indent() << "if ";
   PrintExpr(If->getCond());
-  OS << ')';
   
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(If->getThen())) {
     OS << ' ';
@@ -205,9 +186,9 @@ void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {
 void StmtPrinter::VisitDoStmt(DoStmt *Node) {
   Indent() << "do\n";
   PrintStmt(Node->getBody());
-  Indent() << "while (";
+  Indent() << "while ";
   PrintExpr(Node->getCond());
-  OS << ");\n";
+  OS << ";\n";
 }
 
 void StmtPrinter::VisitForStmt(ForStmt *Node) {
@@ -310,7 +291,7 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
 void StmtPrinter::VisitParenExpr(ParenExpr *Node) {
   OS << "(";
   PrintExpr(Node->getSubExpr());
-  OS << ")'";
+  OS << ")";
 }
 void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
   if (!Node->isPostfix())
