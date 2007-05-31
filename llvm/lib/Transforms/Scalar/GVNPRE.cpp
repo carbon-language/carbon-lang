@@ -30,7 +30,9 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
+#include <deque>
 #include <map>
+#include <vector>
 #include <set>
 using namespace llvm;
 
@@ -112,6 +114,9 @@ namespace {
     void phi_translate(ValueTable& VN, std::set<Expression>& MS,
                        std::set<Expression>& anticIn, BasicBlock* B,
                        std::set<Expression>& out);
+    
+    void topo_sort(ValueTable& VN, std::set<Expression>& set,
+                   std::vector<Expression>& vec);
     
     // For a given block, calculate the generated expressions, temporaries,
     // and the AVAIL_OUT set
@@ -332,11 +337,60 @@ void GVNPRE::clean(GVNPRE::ValueTable VN, std::set<GVNPRE::Expression>& set) {
   }
 }
 
+void GVNPRE::topo_sort(GVNPRE::ValueTable& VN,
+                       std::set<GVNPRE::Expression>& set,
+                       std::vector<GVNPRE::Expression>& vec) {
+  std::set<Expression> toErase;               
+  for (std::set<Expression>::iterator I = set.begin(), E = set.end();
+       I != E; ++I) {
+    for (std::set<Expression>::iterator SI = set.begin(); SI != E; ++SI) {
+      if (I->lhs == VN[*SI] || I->rhs == VN[*SI]) {
+        toErase.insert(*SI);
+      }
+    }
+  }
+  
+  std::vector<Expression> Q;
+  std::insert_iterator<std::vector<Expression> > q_ins(Q, Q.begin());
+  std::set_difference(set.begin(), set.end(),
+                     toErase.begin(), toErase.end(),
+                     q_ins);
+  
+  std::set<Expression> visited;
+  while (!Q.empty()) {
+    Expression e = Q.back();
+    
+    if (e.opcode == 0) {
+      visited.insert(e);
+      vec.push_back(e);
+      Q.pop_back();
+      continue;
+    }
+    
+    std::set<Expression>::iterator l = find_leader(VN, set, e.lhs);
+    std::set<Expression>::iterator r = find_leader(VN, set, e.rhs);
+    
+    if (l != set.end() && visited.find(*l) == visited.end())
+      Q.push_back(*l);
+    else if (r != set.end() && visited.find(*r) == visited.end())
+      Q.push_back(*r);
+    else {
+      vec.push_back(e);
+      visited.insert(e);
+      Q.pop_back();
+    }
+  }
+}
+
 void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<GVNPRE::Expression>& s) {
+  std::vector<Expression> sorted;
+  topo_sort(VN, s, sorted);
   DOUT << "{ ";
-  for (std::set<Expression>::iterator I = s.begin(), E = s.end(); I != E; ++I) {
+  for (std::vector<Expression>::iterator I = sorted.begin(), E = sorted.end();
+       I != E; ++I) {
+    DOUT << VN[*I] << ": ";
     DOUT << "( ";
-    DOUT << I->opcode+48;
+    DOUT << (char)(I->opcode+48);
     DOUT << ", "
          << (I->value == 0 ? "0" : I->value->getName().c_str())
          << ", value." << I->lhs << ", value." << I->rhs << " ) ";
