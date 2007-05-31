@@ -90,9 +90,9 @@ namespace {
         return true;
       }
     };
-  
+    
     typedef std::map<Expression, uint32_t> ValueTable;
-  
+    
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTree>();
@@ -109,7 +109,7 @@ namespace {
     std::set<Expression>::iterator find_leader(ValueTable VN, 
                                                std::set<Expression>& vals,
                                                uint32_t v);
-    void phi_translate(ValueTable& VN, 
+    void phi_translate(ValueTable& VN, std::set<Expression>& MS,
                        std::set<Expression>& anticIn, BasicBlock* B,
                        std::set<Expression>& out);
     
@@ -232,7 +232,8 @@ std::set<GVNPRE::Expression>::iterator GVNPRE::find_leader(GVNPRE::ValueTable VN
   return vals.end();
 }
 
-void GVNPRE::phi_translate(GVNPRE::ValueTable& VN, 
+void GVNPRE::phi_translate(GVNPRE::ValueTable& VN,
+                           std::set<GVNPRE::Expression>& MS,
                            std::set<GVNPRE::Expression>& anticIn, BasicBlock* B,
                            std::set<GVNPRE::Expression>& out) {
   BasicBlock* succ = B->getTerminator()->getSuccessor(0);
@@ -241,13 +242,57 @@ void GVNPRE::phi_translate(GVNPRE::ValueTable& VN,
        I != E; ++I) {
     if (I->opcode == 0) {
       Value *v = I->value;
-      if (PHINode* p = dyn_cast<PHINode>(v))
-        if (p->getParent() == succ) {
+      if (PHINode* p = dyn_cast<PHINode>(v)) {
+        if (p->getParent() == succ)
           out.insert(buildExpression(VN, p->getIncomingValueForBlock(B)));
-          continue;
-        }
+      } else {
+        out.insert(*I);
+      }
+    } else {
+      std::set<Expression>::iterator lhs_it = find_leader(VN, anticIn, I->lhs);
+      if (lhs_it == anticIn.end())
+        continue;
+      
+      Expression lhs = *lhs_it;
+      if (lhs.value != 0)
+        if (PHINode* p = dyn_cast<PHINode>(lhs.value))
+          if (p->getParent() == succ) {
+            Expression t = buildExpression(VN, p->getIncomingValueForBlock(B));
+            lhs.opcode = t.opcode;
+            lhs.value = t.value;
+            lhs.lhs = t.lhs;
+            lhs.rhs = t.rhs;
+            
+            out.insert(t);
+          }
+      
+      std::set<Expression>::iterator rhs_it = find_leader(VN, anticIn, I->rhs);
+      if (rhs_it == anticIn.end())
+        continue;
+      
+      Expression rhs = *rhs_it;
+      if (rhs.value != 0)
+        if (PHINode* p = dyn_cast<PHINode>(rhs.value))
+          if (p->getParent() == succ) {
+            Expression t = buildExpression(VN, p->getIncomingValueForBlock(B));
+            rhs.opcode = t.opcode;
+            rhs.value = t.value;
+            rhs.lhs = t.lhs;
+            rhs.rhs = t.rhs;
+            
+            out.insert(t);
+          }
+      
+      Expression e;
+      e.opcode = I->opcode;
+      e.value = 0;
+      e.lhs = VN[lhs];
+      e.rhs = VN[rhs];
+      
+      if (VN.insert(std::make_pair(e, nextValueNumber)).second)
+        nextValueNumber++;
+      MS.insert(e);
     }
-    //out.insert(*I);
   }
 }
 
@@ -290,7 +335,9 @@ void GVNPRE::clean(GVNPRE::ValueTable VN, std::set<GVNPRE::Expression>& set) {
 void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<GVNPRE::Expression>& s) {
   DOUT << "{ ";
   for (std::set<Expression>::iterator I = s.begin(), E = s.end(); I != E; ++I) {
-    DOUT << "( " << I->opcode << ", "
+    DOUT << "( ";
+    DOUT << I->opcode+48;
+    DOUT << ", "
          << (I->value == 0 ? "0" : I->value->getName().c_str())
          << ", value." << I->lhs << ", value." << I->rhs << " ) ";
   }
@@ -396,7 +443,10 @@ bool GVNPRE::runOnFunction(Function &F) {
       std::set<Expression> old (anticIn.begin(), anticIn.end());
       
       if (BB->getTerminator()->getNumSuccessors() == 1) {
-         phi_translate(VN, maximalSet, BB, anticOut);
+         if (visited.find(BB) == visited.end())
+           phi_translate(VN, maximalSet, anticIn, BB, anticOut);
+         else
+           phi_translate(VN, anticIn, anticIn, BB, anticOut);
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
         for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
