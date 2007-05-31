@@ -605,12 +605,25 @@ void AsmPrinter::EmitString(const std::string &String) const {
 
 //===----------------------------------------------------------------------===//
 
-// EmitAlignment - Emit an alignment directive to the specified power of two.
-// Use the maximum of the specified alignment and the alignment from the
-// specified GlobalValue (if any).
-void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
+// EmitAlignment - Emit an alignment directive to the specified power of
+// two boundary.  For example, if you pass in 3 here, you will get an 8
+// byte alignment.  If a global value is specified, and if that global has
+// an explicit alignment requested, it will unconditionally override the
+// alignment request.  However, if ForcedAlignBits is specified, this value
+// has final say: the ultimate alignment will be the max of ForcedAlignBits
+// and the alignment computed with NumBits and the global.
+//
+// The algorithm is:
+//     Align = NumBits;
+//     if (GV && GV->hasalignment) Align = GV->getalignment();
+//     Align = std::max(Align, ForcedAlignBits);
+//
+void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
+                               unsigned ForcedAlignBits) const {
   if (GV && GV->getAlignment())
-    NumBits = std::max(NumBits, Log2_32(GV->getAlignment()));
+    NumBits = Log2_32(GV->getAlignment());
+  NumBits = std::max(NumBits, ForcedAlignBits);
+  
   if (NumBits == 0) return;   // No need to emit alignment.
   if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
   O << TAI->getAlignDirective() << NumBits << "\n";
