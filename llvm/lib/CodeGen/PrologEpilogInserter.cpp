@@ -428,7 +428,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Make sure the special register scavenging spill slot is closest to the
   // stack pointer.
-  if (RS) {
+  if (RS && !RegInfo->hasFP(Fn)) {
     int SFI = RS->getScavengingFrameIndex();
     if (SFI >= 0) {
       // If stack grows down, we need to add size of find the lowest
