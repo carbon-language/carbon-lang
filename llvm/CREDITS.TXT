@@ -221,3 +221,8 @@ E: isanbard@gmail.com
 W: http://web.mac.com/bwendling/
 D: MMX & SSSE3 instructions
 D: SPEC2006 support
+
+N: Bruno Cardoso Lopes
+E: bruno.cardoso@gmail.com
+W: http://www.brunocardoso.org
+D: The Mips backend
