@@ -172,9 +172,12 @@ Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
   
   return new GotoStmt(LabelDecl);
 }
+
 Action::StmtResult 
 Sema::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
                             ExprTy *DestExp) {
+  // FIXME: Verify that the operand is convertible to void*.
+  
   return new IndirectGotoStmt((Expr*)DestExp);
 }
 
