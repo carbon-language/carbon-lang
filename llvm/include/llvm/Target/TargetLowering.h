@@ -440,6 +440,13 @@ public:
     return IfCvtBlockSizeLimit;
   }
 
+  /// getIfCvtDupBlockLimit - returns the target specific size limit for a
+  /// block to be considered for duplication. Any block whose size is greater
+  /// should not be duplicated to facilitate its predication.
+  virtual unsigned getIfCvtDupBlockSizeLimit() const {
+    return IfCvtDupBlockSizeLimit;
+  }
+
   /// getPreIndexedAddressParts - returns true by value, base pointer and
   /// offset pointer and addressing mode by reference if the node's address
   /// can be legally represented as pre-indexed load / store address.
@@ -758,9 +765,16 @@ protected:
   }
 
   /// setIfCvtBlockSizeLimit - Set the target's if-conversion block size
-  /// (in number of instructions); default is 2.
+  /// limit (in number of instructions); default is 2.
   void setIfCvtBlockSizeLimit(unsigned Limit) {
     IfCvtBlockSizeLimit = Limit;
+  }
+  
+  /// setIfCvtDupBlockSizeLimit - Set the target's block size limit (in number
+  /// of instructions) to be considered for code duplication during
+  /// if-conversion; default is 2.
+  void setIfCvtDupBlockSizeLimit(unsigned Limit) {
+    IfCvtDupBlockSizeLimit = Limit;
   }
   
 public:
@@ -995,10 +1009,14 @@ private:
   /// buffers
   unsigned JumpBufAlignment;
 
-  /// IfCvtBlockSizeLimit - The maximum allowed block size for if-conversion.
-  /// 
+  /// IfCvtBlockSizeLimit - The maximum allowed size for a block to be
+  /// if-converted.
   unsigned IfCvtBlockSizeLimit;
   
+  /// IfCvtDupBlockSizeLimit - The maximum allowed size for a block to be
+  /// duplicated during if-conversion.
+  unsigned IfCvtDupBlockSizeLimit;
+
   /// StackPointerRegisterToSaveRestore - If set to a physical register, this
   /// specifies the register that llvm.savestack/llvm.restorestack should save
   /// and restore.
