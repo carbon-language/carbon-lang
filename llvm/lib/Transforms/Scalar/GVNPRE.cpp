@@ -299,37 +299,30 @@ void GVNPRE::phi_translate(GVNPRE::ValueTable& VN,
 
 // Remove all expressions whose operands are not themselves in the set
 void GVNPRE::clean(GVNPRE::ValueTable VN, std::set<GVNPRE::Expression>& set) {
-  unsigned size = set.size();
-  unsigned old = 0;
+  std::vector<Expression> worklist;
+  topo_sort(VN, set, worklist);
   
-  while (size != old) {
-    old = size;
-  
-    std::vector<Expression> worklist(set.begin(), set.end());
-    while (!worklist.empty()) {
-      Expression e = worklist.back();
-      worklist.pop_back();
+  while (!worklist.empty()) {
+    Expression e = worklist.back();
+    worklist.pop_back();
     
-      if (e.opcode == 0) // OPAQUE
-        continue;
+    if (e.opcode == 0) // OPAQUE
+      continue;
       
-      bool lhsValid = false;
-      for (std::set<Expression>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN[*I] == e.lhs);
-          lhsValid = true;
+    bool lhsValid = false;
+    for (std::set<Expression>::iterator I = set.begin(), E = set.end();
+         I != E; ++I)
+      if (VN[*I] == e.lhs);
+        lhsValid = true;
           
-      bool rhsValid = false;
-      for (std::set<Expression>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN[*I] == e.rhs);
-          rhsValid = true;
+    bool rhsValid = false;
+    for (std::set<Expression>::iterator I = set.begin(), E = set.end();
+         I != E; ++I)
+      if (VN[*I] == e.rhs);
+        rhsValid = true;
       
-      if (!lhsValid || !rhsValid)
-        set.erase(e);
-    }
-    
-    size = set.size();
+    if (!lhsValid || !rhsValid)
+      set.erase(e);
   }
 }
 
