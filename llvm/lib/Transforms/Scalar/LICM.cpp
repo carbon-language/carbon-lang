@@ -476,9 +476,11 @@ void LICM::sink(Instruction &I) {
     // Firstly, we create a stack object to hold the value...
     AllocaInst *AI = 0;
 
-    if (I.getType() != Type::VoidTy)
+    if (I.getType() != Type::VoidTy) {
       AI = new AllocaInst(I.getType(), 0, I.getName(),
                           I.getParent()->getParent()->getEntryBlock().begin());
+      CurAST->add(AI);
+    }
 
     // Secondly, insert load instructions for each use of the instruction
     // outside of the loop.
@@ -499,6 +501,7 @@ void LICM::sink(Instruction &I) {
               // Insert a new load instruction right before the terminator in
               // the predecessor block.
               PredVal = new LoadInst(AI, "", Pred->getTerminator());
+              CurAST->add(cast<LoadInst>(PredVal));
             }
 
             UPN->setIncomingValue(i, PredVal);
@@ -507,6 +510,7 @@ void LICM::sink(Instruction &I) {
       } else {
         LoadInst *L = new LoadInst(AI, "", U);
         U->replaceUsesOfWith(&I, L);
+        CurAST->add(L);
       }
     }
 
