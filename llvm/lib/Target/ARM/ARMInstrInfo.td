@@ -400,14 +400,6 @@ class AI2po<dag ops, string opc, string asm, string cstr, list<dag> pattern>
 class AI3po<dag ops, string opc, string asm, string cstr, list<dag> pattern>
   : I<ops, AddrMode3, Size4Bytes, IndexModePost, opc, asm, cstr, pattern>;
 
-// BR_JT instructions
-class JTI<dag ops, string opc, string asm, list<dag> pattern>
-  : I<ops, AddrModeNone, SizeSpecial, IndexModeNone, opc, asm, "", pattern>;
-class JTI1<dag ops, string opc, string asm, list<dag> pattern>
-  : I<ops, AddrMode1, SizeSpecial, IndexModeNone, opc, asm, "", pattern>;
-class JTI2<dag ops, string opc, string asm, list<dag> pattern>
-  : I<ops, AddrMode2, SizeSpecial, IndexModeNone, opc, asm, "", pattern>;
-
 
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
 class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
@@ -516,6 +508,13 @@ class AXI4<dag ops, string asm, list<dag> pattern>
 class AXIx2<dag ops, string asm, list<dag> pattern>
   : XI<ops, AddrModeNone, Size8Bytes, IndexModeNone, asm, "", pattern>;
 
+// BR_JT instructions
+class JTI<dag ops, string asm, list<dag> pattern>
+  : XI<ops, AddrModeNone, SizeSpecial, IndexModeNone, asm, "", pattern>;
+class JTI1<dag ops, string asm, list<dag> pattern>
+  : XI<ops, AddrMode1, SizeSpecial, IndexModeNone, asm, "", pattern>;
+class JTI2<dag ops, string asm, list<dag> pattern>
+  : XI<ops, AddrMode2, SizeSpecial, IndexModeNone, asm, "", pattern>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -639,14 +638,14 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
                 [(br bb:$dst)]>;
 
   def BR_JTr : JTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
-                    "mov", " pc, $dst \n$jt",
+                    "mov pc, $dst \n$jt",
                     [(ARMbrjt GPR:$dst, tjumptable:$jt, imm:$id)]>;
   def BR_JTm : JTI2<(ops addrmode2:$dst, jtblock_operand:$jt, i32imm:$id),
-                     "ldr", " pc, $dst \n$jt",
+                     "ldr pc, $dst \n$jt",
                      [(ARMbrjt (i32 (load addrmode2:$dst)), tjumptable:$jt,
                        imm:$id)]>;
   def BR_JTadd : JTI1<(ops GPR:$dst, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
-                       "add", " pc, $dst, $idx \n$jt",
+                       "add pc, $dst, $idx \n$jt",
                        [(ARMbrjt (add GPR:$dst, GPR:$idx), tjumptable:$jt,
                          imm:$id)]>;
   }
