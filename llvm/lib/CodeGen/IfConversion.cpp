@@ -460,14 +460,29 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   if (!TrueBBI.isPredicable)
     return false;
 
+  // FIXME: Consider duplicating if BB is small.
+  if (BBI.TrueBB->pred_size() > 1)
+    return false;
+
   // Predicate the 'true' block after removing its branch.
   TrueBBI.NonPredSize -= TII->RemoveBranch(*BBI.TrueBB);
   PredicateBlock(TrueBBI, BBI.BrCond);
 
-  // Join the 'true' and 'false' blocks by copying the instructions
-  // from the 'false' block to the 'true' block.
+  // If 'true' block has a 'false' successor, add a early exit branch to it.
+  if (TrueBBI.FalseBB) {
+    std::vector<MachineOperand> RevCond(TrueBBI.BrCond);
+    if (TII->ReverseBranchCondition(RevCond))
+      assert(false && "Unable to reverse branch condition!");
+    TII->InsertBranch(*BBI.TrueBB, TrueBBI.FalseBB, NULL, RevCond);
+  }
+
+  // Join the 'true' and 'false' blocks if the 'false' block has no other
+  // predecessors. Otherwise, add a unconditional branch from 'true' to 'false'.
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-  MergeBlocks(TrueBBI, FalseBBI);
+  if (FalseBBI.BB->pred_size() == 2)
+    MergeBlocks(TrueBBI, FalseBBI);
+  else
+    InsertUncondBranch(TrueBBI.BB, FalseBBI.BB, TII);
 
   // Now merge the entry of the triangle with the true block.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
