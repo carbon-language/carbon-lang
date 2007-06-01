@@ -60,19 +60,14 @@ namespace {
           return false;
         
         if (opcode == 0) {
-          if (value < other.value)
-            return true;
-          else
-            return false;
+          return value < other.value;
         } else {
           if (lhs < other.lhs)
             return true;
           else if (other.lhs < lhs)
-            return true;
-          else if (rhs < other.rhs)
-            return true;
-          else
             return false;
+          else
+            return rhs < other.rhs;
         }
       }
       
@@ -214,7 +209,8 @@ GVNPRE::Expression GVNPRE::buildExpression(ValueTable& VN, Value* V) {
 GVNPRE::Expression GVNPRE::add(ValueTable& VN, std::set<Expression>& MS,
                                Instruction* V) {
   Expression e = buildExpression(VN, V);
-  if (VN.insert(std::make_pair(e, nextValueNumber)).second)
+  std::pair<ValueTable::iterator, bool> ret = VN.insert(std::make_pair(e, nextValueNumber));
+  if (ret.second)
     nextValueNumber++;
   if (e.opcode != 0 || (e.opcode == 0 && isa<PHINode>(e.value)))
     MS.insert(e);
@@ -391,9 +387,12 @@ void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<GVNPRE::Expression>& s) {
     DOUT << VN[*I] << ": ";
     DOUT << "( ";
     DOUT << (char)(I->opcode+48);
-    DOUT << ", "
-         << (I->value == 0 ? "0" : I->value->getName().c_str())
-         << ", value." << I->lhs << ", value." << I->rhs << " ) ";
+    DOUT << ", ";
+    if (I->value == 0)
+      DOUT << "0";
+    else
+      DEBUG(I->value->dump());
+    DOUT << ", value." << I->lhs << ", value." << I->rhs << " ) ";
   }
   DOUT << "}\n\n";
 }
