@@ -2620,8 +2620,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
         Constant *C = cast<Constant>(I.getOperand(i));
         GlobalVariable *GV = ExtractGlobalVariable(C);
-        assert (GV || (isa<ConstantInt>(C) &&
-                       cast<ConstantInt>(C)->isNullValue()) &&
+        assert (GV || isa<ConstantPointerNull>(C) &&
                 "TypeInfo must be a global variable or NULL");
         TyInfo.push_back(GV);
       }
@@ -2653,8 +2652,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // Find the type id for the given typeinfo.
       Constant *C = cast<Constant>(I.getOperand(1));
       GlobalVariable *GV = ExtractGlobalVariable(C);
-      assert (GV || (isa<ConstantInt>(C) &&
-                     cast<ConstantInt>(C)->isNullValue()) &&
+      assert (GV || isa<ConstantPointerNull>(C) &&
               "TypeInfo must be a global variable or NULL");
 
       unsigned TypeID = MMI->getTypeIDFor(GV);
