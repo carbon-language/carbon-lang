@@ -407,15 +407,15 @@ class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
 
 /// AI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
-multiclass AI1_bin_irs<string opc, PatFrag opnode> {
+multiclass AI1_bin_irs<string opc, string mod, PatFrag opnode> {
   def ri : AI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
-               opc, " $dst, $a, $b",
+               opc, !strconcat(mod, " $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rr : AI1<(ops GPR:$dst, GPR:$a, GPR:$b),
-               opc, " $dst, $a, $b",
+               opc, !strconcat(mod, " $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
   def rs : AI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
-               opc, " $dst, $a, $b",
+               opc, !strconcat(mod, " $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
 }
 
@@ -434,12 +434,12 @@ multiclass AI1_bin0_irs<string opc, PatFrag opnode> {
 }
 
 /// AI1_bin_is - Defines a set of (op r, {so_imm|so_reg}) patterns for a binop.
-multiclass AI1_bin_is<string opc, PatFrag opnode> {
+multiclass AI1_bin_is<string opc, string mod, PatFrag opnode> {
   def ri : AI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
-               opc, " $dst, $a, $b",
+               opc, !strconcat(mod, " $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rs : AI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
-               opc, " $dst, $a, $b",
+               opc, !strconcat(mod, " $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
 }
 
@@ -859,17 +859,17 @@ defm UXTAH : AI_bin_rrot<"uxtah",
 //  Arithmetic Instructions.
 //
 
-defm ADD  : AI1_bin_irs<"add" , BinOpFrag<(add  node:$LHS, node:$RHS)>>;
-defm ADDS : AI1_bin_irs<"adds", BinOpFrag<(addc node:$LHS, node:$RHS)>>;
-defm ADC  : AI1_bin_irs<"adc" , BinOpFrag<(adde node:$LHS, node:$RHS)>>;
-defm SUB  : AI1_bin_irs<"sub" , BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
-defm SUBS : AI1_bin_irs<"subs", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
-defm SBC  : AI1_bin_irs<"sbc" , BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+defm ADD  : AI1_bin_irs<"add", "" , BinOpFrag<(add  node:$LHS, node:$RHS)>>;
+defm ADDS : AI1_bin_irs<"add", "s", BinOpFrag<(addc node:$LHS, node:$RHS)>>;
+defm ADC  : AI1_bin_irs<"adc", "" , BinOpFrag<(adde node:$LHS, node:$RHS)>>;
+defm SUB  : AI1_bin_irs<"sub", "" , BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
+defm SUBS : AI1_bin_irs<"sub", "s", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
+defm SBC  : AI1_bin_irs<"sbc", "" , BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // These don't define reg/reg forms, because they are handled above.
-defm RSB  : AI1_bin_is <"rsb" , BinOpFrag<(sub  node:$RHS, node:$LHS)>>;
-defm RSBS : AI1_bin_is <"rsbs", BinOpFrag<(subc node:$RHS, node:$LHS)>>;
-defm RSC  : AI1_bin_is <"rsc" , BinOpFrag<(sube node:$RHS, node:$LHS)>>;
+defm RSB  : AI1_bin_is <"rsb", "" , BinOpFrag<(sub  node:$RHS, node:$LHS)>>;
+defm RSBS : AI1_bin_is <"rsb", "s", BinOpFrag<(subc node:$RHS, node:$LHS)>>;
+defm RSC  : AI1_bin_is <"rsc", "" , BinOpFrag<(sube node:$RHS, node:$LHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
@@ -891,10 +891,10 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 //  Bitwise Instructions.
 //
 
-defm AND   : AI1_bin_irs<"and", BinOpFrag<(and node:$LHS, node:$RHS)>>;
-defm ORR   : AI1_bin_irs<"orr", BinOpFrag<(or  node:$LHS, node:$RHS)>>;
-defm EOR   : AI1_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
-defm BIC   : AI1_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
+defm AND   : AI1_bin_irs<"and", "", BinOpFrag<(and node:$LHS, node:$RHS)>>;
+defm ORR   : AI1_bin_irs<"orr", "", BinOpFrag<(or  node:$LHS, node:$RHS)>>;
+defm EOR   : AI1_bin_irs<"eor", "", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
+defm BIC   : AI1_bin_irs<"bic", "", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 def  MVNr  : AI<(ops GPR:$dst, GPR:$src),
                 "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
