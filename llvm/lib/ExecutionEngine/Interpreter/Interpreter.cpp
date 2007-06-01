@@ -54,7 +54,7 @@ ExecutionEngine *Interpreter::create(ModuleProvider *MP, std::string* ErrStr) {
 //
 Interpreter::Interpreter(Module *M) : ExecutionEngine(M), TD(M) {
       
-  memset(&ExitValue, 0, sizeof(ExitValue));
+  memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
   setTargetData(&TD);
   // Initialize the "backend"
   initializeExecutionEngine();

@@ -610,7 +610,7 @@ void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
     if (RetTy && RetTy->isInteger()) {          // Nonvoid return type?
       ExitValue = Result;   // Capture the exit value of the program
     } else {
-      memset(&ExitValue, 0, sizeof(ExitValue));
+      memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
     }
   } else {
     // If we have a previous stack frame, and we have a previous call,
