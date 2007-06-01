@@ -255,6 +255,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setStackPointerRegisterToSaveRestore(ARM::SP);
   setSchedulingPreference(SchedulingForRegPressure);
   setIfCvtBlockSizeLimit(Subtarget->isThumb() ? 0 : 10);
+  setIfCvtDupBlockSizeLimit(Subtarget->isThumb() ? 0 : 3);
 
   maxStoresPerMemcpy = 1;   //// temporary - rewrite interface to use type
 }
