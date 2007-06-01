@@ -143,21 +143,3 @@ load [T + 7]
 ...
 load [T + 15]
 //===---------------------------------------------------------------------===//
-Tail merging issue:
-When we're trying to merge the tails of predecessors of a block I, and there
-are more than 2 predecessors, we don't do it optimally.  Suppose predecessors
-are A,B,C where B and C have 5 instructions in common, and A has 2 in common
-with B or C.  We want to get:
-A:
-  jmp C3
-B:
-  jmp C2
-C:
-C2:  3 common to B and C but not A
-C3:  2 common to all 3
-You get this if B and C are merged first, but currently it might randomly decide
-to merge A and B first, which results in not sharing the C2 instructions.  We 
-could look at all N*(N-1) combinations of predecessors and merge the ones with
-the most instructions in common first.  Usually that will be fast, but it 
-could get slow on big graphs (e.g. large switches tend to have blocks with many 
-predecessors).
