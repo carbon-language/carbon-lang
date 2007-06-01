@@ -283,8 +283,6 @@ void IfConverter::FeasibilityAnalysis(BBInfo &BBI,
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
     // TODO: check if instruction clobbers predicate.
-    if (TII->isTerminatorInstr(I->getOpcode()))
-      break;
     if (!I->isPredicable())
       return;
   }
@@ -654,7 +652,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
     if (TII->isPredicated(MI))
       continue;
     if (!TII->PredicateInstruction(MI, Cond)) {
-      cerr << "Unable to predication " << *I << "!\n";
+      cerr << "Unable to predicate " << *I << "!\n";
       abort();
     }
   }
