@@ -11,7 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ifconversion"
+#define DEBUG_TYPE "ifcvt"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -105,6 +106,12 @@ namespace {
                         std::vector<MachineOperand> &Cond,
                         bool IgnoreTerm = false);
     void MergeBlocks(BBInfo &TrueBBI, BBInfo &FalseBBI);
+
+    // IfcvtCandidateCmp - Used to sort if-conversion candidates.
+    static bool IfcvtCandidateCmp(BBInfo* C1, BBInfo* C2){
+      // Favor diamond over triangle, etc.
+      return (unsigned)C1->Kind < (unsigned)C2->Kind;
+    }
   };
   char IfConverter::ID = 0;
 }
@@ -116,9 +123,10 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
+  DOUT << "\nIfcvt: function \'" << MF.getFunction()->getName() << "\'\n";
+
   MF.RenumberBlocks();
-  unsigned NumBBs = MF.getNumBlockIDs();
-  BBAnalysis.resize(NumBBs);
+  BBAnalysis.resize(MF.getNumBlockIDs());
 
   // Look for root nodes, i.e. blocks without successors.
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
@@ -139,13 +147,19 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       switch (BBI.Kind) {
       default: assert(false && "Unexpected!");
         break;
+      case ICReAnalyze:
+        // One or more of 'childrean' have been modified, abort!
+        break;
       case ICEarlyExit:
+        DOUT << "Ifcvt (Early exit): BB#" << BBI.BB->getNumber() << "\n";
         Change |= IfConvertEarlyExit(BBI);
         break;
       case ICTriangle:
+        DOUT << "Ifcvt (Triangle): BB#" << BBI.BB->getNumber() << "\n";
         Change |= IfConvertTriangle(BBI);
         break;
       case ICDiamond:
+        DOUT << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << "\n";
         Change |= IfConvertDiamond(BBI);
         break;
       }
@@ -198,8 +212,6 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   // Not a candidate if 'true' block is going to be if-converted.
   StructuralAnalysis(BBI.TrueBB);
   BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
-  if (TrueBBI.Kind != ICNotClassfied)
-    return;
 
   // TODO: Only handle very simple cases for now.
   if (TrueBBI.FalseBB || TrueBBI.BrCond.size())
@@ -214,8 +226,6 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   // Not a candidate if 'false' block is going to be if-converted.
   StructuralAnalysis(BBI.FalseBB);
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-  if (FalseBBI.Kind != ICNotClassfied)
-    return;
 
   // TODO: Only handle very simple cases for now.
   if (FalseBBI.FalseBB || FalseBBI.BrCond.size())
@@ -337,6 +347,9 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
       }
     }
   }
+
+  // Sort to favor more complex ifcvt scheme.
+  std::stable_sort(Candidates.begin(), Candidates.end(), IfcvtCandidateCmp);
 
   return Change;
 }
