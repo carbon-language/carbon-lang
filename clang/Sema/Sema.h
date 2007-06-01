@@ -250,8 +250,8 @@ public:
                                          tok::TokenKind Kind);
                                          
   /// ParseAttribute GCC __attribute__
-  virtual DeclTy *ParseAttribute(
-    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, DeclTy *PrevAttr,
+  virtual AttrTy *ParseAttribute(
+    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, AttrTy *PrevAttr,
     IdentifierInfo *ParmName = 0, SourceLocation ParmNameLoc = SourceLocation(),
     ExprTy **Args = 0, unsigned NumArgs = 0, 
     SourceLocation LParenLoc = SourceLocation(),

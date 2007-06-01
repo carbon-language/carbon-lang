@@ -397,7 +397,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     
     // GNU attributes support.
     case tok::kw___attribute:
-      ParseAttributes();
+      DS.SetAttributeList(ParseAttributes());
       continue;
       
     // storage-class-specifier

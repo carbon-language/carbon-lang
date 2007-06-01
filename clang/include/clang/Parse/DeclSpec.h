@@ -117,7 +117,7 @@ private:
   void *TypeRep;  
   
   // attributes.
-  // FIXME: implement declspec attributes.
+  void *AttributeList;
   
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
@@ -217,6 +217,9 @@ public:
                    const LangOptions &Lang);
   
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
+  
+  /// attributes
+  void SetAttributeList(void *alist) { AttributeList = alist; }
   
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,

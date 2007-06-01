@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/Attr.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/IdentifierTable.h"
@@ -848,15 +849,15 @@ void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
 }
 
 /// ParseAttribute GCC __attribute__
-Sema::DeclTy *Sema::ParseAttribute(
-    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, DeclTy *PrevAttr,
+Sema::AttrTy *Sema::ParseAttribute(
+    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, AttrTy *PrevAttr,
     IdentifierInfo *ParmName, SourceLocation ParmNameLoc,
     ExprTy **Args, unsigned NumArgs, 
     SourceLocation LParenLoc, SourceLocation RParenLoc) {
-  AttributeDecl *attrib = new AttributeDecl(AttrNameLoc, AttrName, ParmName, 
-                                            (Expr **)Args, NumArgs);
+  Attr *attrib = new Attr(AttrNameLoc, AttrName, ParmName, (Expr **)Args, 
+                          NumArgs);
   if (PrevAttr)
     // reuse Decl's "Next" pointer for chaining the attribute list
-    attrib->setNext(static_cast<Decl *>(PrevAttr));
+    attrib->setNext(static_cast<Attr *>(PrevAttr));
   return attrib;
 }

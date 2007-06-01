@@ -51,6 +51,7 @@ public:
   typedef void StmtTy;
   typedef void DeclTy;
   typedef void TypeTy;
+  typedef void AttrTy;
   
   /// ActionResult - This structure is used while parsing/acting on expressions,
   /// stmts, etc.  It encapsulates both the object returned by the action, plus
@@ -357,9 +358,9 @@ public:
                                          tok::TokenKind Kind) {
     return 0;
   }
-  /// ParseAttribute
-  virtual DeclTy *ParseAttribute(
-    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, DeclTy *PrevAttr,
+  /// ParseAttribute GCC __attribute__
+  virtual AttrTy *ParseAttribute(
+    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, AttrTy *PrevAttr,
     IdentifierInfo *ParmName = 0, SourceLocation ParmNameLoc = SourceLocation(),
     ExprTy **Args = 0, unsigned NumArgs = 0,
     SourceLocation LParenLoc = SourceLocation(),
