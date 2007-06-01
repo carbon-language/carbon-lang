@@ -2,10 +2,9 @@
 ; RUN:   -o %t -f
 ; RUN: grep _GLOBAL_OFFSET_TABLE_ %t
 ; RUN: grep piclabel %t | wc -l | grep 3 
-; RUN: grep PLT %t | wc -l | grep 11 
+; RUN: grep PLT %t | wc -l | grep 6 
 ; RUN: grep GOTOFF %t | wc -l | grep 1 
-; RUN: grep JTI %t | wc -l | grep 13
-; Improved tail merging could reduce the number of PLT's and JTI's further.
+; RUN: grep JTI %t | wc -l | grep 8
 
 define void @bar(i32 %n.u) {
 entry:

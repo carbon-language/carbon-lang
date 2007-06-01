@@ -466,43 +466,58 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
       continue;
     }
     
-    // Look through all the blocks that have the same hash as this one, and
-    // find the one that has the largest number of instructions in common.  
-    // Since instructions may get combined later (e.g. single stores into
+    // Look through all the pairs of blocks that have the same hash as this
+    // one, and find the pair that has the largest number of instructions in
+    // common.
+     // Since instructions may get combined later (e.g. single stores into
     // store multiple) this measure is not particularly accurate.
-    MachineBasicBlock::iterator BBI1, BBI2;
+   MachineBasicBlock::iterator BBI1, BBI2;
     
-    unsigned FoundMatch = ~0U;
+    unsigned FoundI = ~0U, FoundJ = ~0U;
     unsigned maxCommonTailLength = 0U;
-    for (int i = MergePotentials.size()-2;
+    for (int i = MergePotentials.size()-1;
          i != -1 && MergePotentials[i].first == CurHash; --i) {
-      MachineBasicBlock::iterator TrialBBI1, TrialBBI2;
-      unsigned CommonTailLen = ComputeCommonTailLength(CurMBB, 
-                                              MergePotentials[i].second,
-                                              TrialBBI1, TrialBBI2);
-      if (CommonTailLen >= minCommonTailLength &&
-          CommonTailLen >= maxCommonTailLength) {
-        FoundMatch = i;
-        maxCommonTailLength = CommonTailLen;
-        BBI1 = TrialBBI1;
-        BBI2 = TrialBBI2;
+      for (int j = i-1; 
+           j != -1 && MergePotentials[j].first == CurHash; --j) {
+        MachineBasicBlock::iterator TrialBBI1, TrialBBI2;
+        unsigned CommonTailLen = ComputeCommonTailLength(
+                                                MergePotentials[i].second,
+                                                MergePotentials[j].second,
+                                                TrialBBI1, TrialBBI2);
+        if (CommonTailLen >= minCommonTailLength &&
+            CommonTailLen > maxCommonTailLength) {
+          FoundI = i;
+          FoundJ = j;
+          maxCommonTailLength = CommonTailLen;
+          BBI1 = TrialBBI1;
+          BBI2 = TrialBBI2;
+        }
       }
-    }      
+    }
 
-    // If we didn't find anything that has at least minCommonTailLength 
-    // instructions matching this one, bail out.
-    if (FoundMatch == ~0U) {
-      // Put the unconditional branch back, if we need one.
-      if (SuccBB && CurMBB != PredBB)
-        FixTail(CurMBB, SuccBB, TII);
-      MergePotentials.pop_back();
+    // If we didn't find any pair that has at least minCommonTailLength 
+    // instructions in common, bail out.  All entries with this
+    // hash code can go away now.
+    if (FoundI == ~0U) {
+      for (int i = MergePotentials.size()-1;
+           i != -1 && MergePotentials[i].first == CurHash; --i) {
+        // Put the unconditional branch back, if we need one.
+        CurMBB = MergePotentials[i].second;
+        if (SuccBB && CurMBB != PredBB)
+          FixTail(CurMBB, SuccBB, TII);
+        MergePotentials.pop_back();
+      }
       continue;
     }
-      
-    // Otherwise, move the matching block to the right position.
-    if (FoundMatch != MergePotentials.size()-2)
-      std::swap(MergePotentials[FoundMatch], *(MergePotentials.end()-2));
 
+    // Otherwise, move the block(s) to the right position(s).  So that
+    // BBI1/2 will be valid, the last must be I and the next-to-last J.
+    if (FoundI != MergePotentials.size()-1)
+      std::swap(MergePotentials[FoundI], *(MergePotentials.end()-1));
+    if (FoundJ != MergePotentials.size()-2)
+      std::swap(MergePotentials[FoundJ], *(MergePotentials.end()-2));
+
+    CurMBB = (MergePotentials.end()-1)->second;
     MachineBasicBlock *MBB2 = (MergePotentials.end()-2)->second;
 
     // If neither block is the entire common tail, split the tail of one block
