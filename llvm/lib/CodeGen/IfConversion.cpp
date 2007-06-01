@@ -33,6 +33,7 @@ namespace {
       ICReAnalyze,     // BB must be re-analyzed.
       ICNotClassfied,  // BB data valid, but not classified.
       ICEarlyExit,     // BB is entry of an early-exit sub-CFG.
+      ICEarlyExitFalse,// Same as ICEarlyExit, but on the false path.
       ICTriangle,      // BB is entry of a triangle sub-CFG.
       ICDiamond,       // BB is entry of a diamond sub-CFG.
       ICChild,         // BB is part of the sub-CFG that'll be predicated.
@@ -151,6 +152,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         // One or more of 'childrean' have been modified, abort!
         break;
       case ICEarlyExit:
+      case ICEarlyExitFalse:
         DOUT << "Ifcvt (Early exit): BB#" << BBI.BB->getNumber() << "\n";
         Change |= IfConvertEarlyExit(BBI);
         break;
@@ -239,7 +241,7 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     TrueBBI.Kind = ICChild;
   } else if (!(TrueBBI.hasEarlyExit && TrueNumPreds <= 1) &&
              (FalseBBI.hasEarlyExit && FalseNumPreds <=1)) {
-    BBI.Kind = ICEarlyExit;
+    BBI.Kind = ICEarlyExitFalse;
     FalseBBI.Kind = ICChild;
   } else if (TrueBBI.TrueBB && TrueBBI.TrueBB == BBI.FalseBB) {
     // Triangle:
@@ -335,6 +337,7 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
       BBInfo &BBI = BBAnalysis[BB->getNumber()];
       switch (BBI.Kind) {
         case ICEarlyExit:
+        case ICEarlyExitFalse:
         case ICTriangle:
         case ICDiamond:
           Candidates.push_back(&BBI);
@@ -406,6 +409,8 @@ static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
 /// IfConvertEarlyExit - If convert a early exit sub-CFG.
 ///
 bool IfConverter::IfConvertEarlyExit(BBInfo &BBI) {
+  bool ReverseCond = BBI.Kind == ICEarlyExitFalse;
+
   BBI.Kind = ICNotClassfied;
 
   BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
@@ -413,15 +418,11 @@ bool IfConverter::IfConvertEarlyExit(BBInfo &BBI) {
   BBInfo *CvtBBI = &TrueBBI;
   BBInfo *NextBBI = &FalseBBI;
 
-  bool ReserveCond = false;
-  if (TrueBBI.Kind != ICChild) {
-    std::swap(CvtBBI, NextBBI);
-    ReserveCond = true;
-  }
-
   std::vector<MachineOperand> NewCond(BBI.BrCond);
-  if (ReserveCond)
+  if (ReverseCond) {
+    std::swap(CvtBBI, NextBBI);
     TII->ReverseBranchCondition(NewCond);
+  }
   FeasibilityAnalysis(*CvtBBI, NewCond);
   if (!CvtBBI->isPredicable)
     return false;
