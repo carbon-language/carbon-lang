@@ -51,23 +51,141 @@ Parser::TypeTy *Parser::ParseTypeName() {
 ///
 /// [GNU]  attrib:
 ///          empty
-///          any-word
-///          any-word '(' identifier ')'
-///          any-word '(' identifier ',' nonempty-expr-list ')'
-///          any-word '(' expr-list ')'
+///          attrib-name
+///          attrib-name '(' identifier ')'
+///          attrib-name '(' identifier ',' nonempty-expr-list ')'
+///          attrib-name '(' argument-expression-list [C99 6.5.2] ')'
 ///
-void Parser::ParseAttributes() {
-  assert(Tok.getKind() == tok::kw___attribute && "Not an attribute list!");
-  ConsumeToken();
-  
-  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
-                       "attribute"))
-    return;
-  
-  // TODO: Parse the attributes.
-  SkipUntil(tok::r_paren, false);
-}
+/// [GNU]  attrib-name:
+///          identifier
+///          typespec
+///          typequal
+///          storageclass
+///          
+/// FIXME: The GCC grammar/code for this construct implies we need two
+/// token lookahead. Comment from gcc: "If they start with an identifier 
+/// which is followed by a comma or close parenthesis, then the arguments 
+/// start with that identifier; otherwise they are an expression list."
+///
+/// At the moment, I am not doing 2 token lookahead. I am also unaware of
+/// any attributes that don't work (based on my limited testing). Most
+/// attributes are very simple in practice. Until we find a bug, I don't see
+/// a pressing need to implement the 2 token lookahead.
 
+Parser::DeclTy *Parser::ParseAttributes() {
+  assert(Tok.getKind() == tok::kw___attribute && "Not an attribute list!");
+  
+  DeclTy *CurrAttr = 0;
+  
+  while (Tok.getKind() == tok::kw___attribute) {
+    ConsumeToken();
+    if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+                         "attribute")) {
+      SkipUntil(tok::r_paren, true); // skip until ) or ;
+      return CurrAttr;
+    }
+    if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after, "(")) {
+      SkipUntil(tok::r_paren, true); // skip until ) or ;
+      return CurrAttr;
+    }
+    // Parse the attribute-list. e.g. __attribute__(( weak, alias("__f") ))
+    while (Tok.getKind() == tok::identifier || isDeclarationSpecifier() ||
+           Tok.getKind() == tok::comma) {
+           
+      if (Tok.getKind() == tok::comma) { 
+        // allows for empty/non-empty attributes. ((__vector_size__(16),,,,))
+        ConsumeToken();
+        continue;
+      }
+      // we have an identifier or declaration specifier (const, int, etc.)
+      IdentifierInfo *AttrName = Tok.getIdentifierInfo();
+      SourceLocation AttrNameLoc = ConsumeToken();
+      SourceLocation LParenLoc, RParenLoc;
+      
+      // check if we have a "paramterized" attribute
+      if (Tok.getKind() == tok::l_paren) {
+        LParenLoc = ConsumeParen();
+        
+        if (Tok.getKind() == tok::identifier) {
+          IdentifierInfo *ParmName = Tok.getIdentifierInfo();
+          SourceLocation ParmLoc = ConsumeToken();
+          
+          if (Tok.getKind() == tok::r_paren) { 
+            // __attribute__(( mode(byte) ))
+            RParenLoc = ConsumeParen();
+            CurrAttr = Actions.ParseAttribute(AttrName, AttrNameLoc, CurrAttr, 
+              ParmName, ParmLoc, 0, 0, LParenLoc, RParenLoc);
+          } else if (Tok.getKind() == tok::comma) {
+            ConsumeToken();
+            // __attribute__(( format(printf, 1, 2) ))
+            SmallVector<ExprTy*, 8> ArgExprs;
+            bool ArgExprsOk = true;
+            
+            // now parse the non-empty comma separated list of expressions
+            while (1) {
+              ExprResult ArgExpr = ParseAssignmentExpression();
+              if (ArgExpr.isInvalid) {
+                ArgExprsOk = false;
+                SkipUntil(tok::r_paren);
+                break;
+              } else {
+                ArgExprs.push_back(ArgExpr.Val);
+              }
+              if (Tok.getKind() != tok::comma)
+                break;
+              ConsumeToken(); // Eat the comma, move to the next argument
+            }
+            if (ArgExprsOk && Tok.getKind() == tok::r_paren) {
+              RParenLoc = ConsumeParen();
+              CurrAttr = Actions.ParseAttribute(AttrName, AttrNameLoc, CurrAttr, 
+                ParmName, ParmLoc, &ArgExprs[0], ArgExprs.size(), 
+                LParenLoc, RParenLoc);
+            }
+          }
+        } else { // not an identifier
+          // parse a possibly empty comma separated list of expressions
+          if (Tok.getKind() == tok::r_paren) { 
+            // __attribute__(( nonnull() ))
+            RParenLoc = ConsumeParen();
+            CurrAttr = Actions.ParseAttribute(AttrName, AttrNameLoc, CurrAttr,
+              0, SourceLocation(), 0, 0, LParenLoc, RParenLoc);
+          } else { 
+            // __attribute__(( aligned(16) ))
+            SmallVector<ExprTy*, 8> ArgExprs;
+            bool ArgExprsOk = true;
+            
+            // now parse the list of expressions
+            while (1) {
+              ExprResult ArgExpr = ParseAssignmentExpression();
+              if (ArgExpr.isInvalid) {
+                ArgExprsOk = false;
+                SkipUntil(tok::r_paren);
+                break;
+              } else {
+                ArgExprs.push_back(ArgExpr.Val);
+              }
+              if (Tok.getKind() != tok::comma)
+                break;
+              ConsumeToken(); // Eat the comma, move to the next argument
+            }
+            // Match the ')'.
+            if (ArgExprsOk && Tok.getKind() == tok::r_paren) {
+              RParenLoc = ConsumeParen();
+              CurrAttr = Actions.ParseAttribute(AttrName, AttrNameLoc, CurrAttr, 
+                0, SourceLocation(), &ArgExprs[0], ArgExprs.size(), 
+                LParenLoc, RParenLoc);
+            }
+          }
+        }
+      } else {
+        CurrAttr = Actions.ParseAttribute(AttrName, AttrNameLoc, CurrAttr);
+      }
+    }
+    SkipUntil(tok::r_paren, false);
+    SkipUntil(tok::r_paren, false);
+  }
+  return CurrAttr;
+}
 
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
@@ -123,9 +241,10 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     if (Tok.getKind() == tok::kw_asm)
       ParseSimpleAsm();
     
+    DeclTy *AttrList = 0;
     // If attributes are present, parse them.
     if (Tok.getKind() == tok::kw___attribute)
-      ParseAttributes();
+      AttrList = ParseAttributes();
     
     // Parse declarator '=' initializer.
     ExprResult Init;
@@ -400,9 +519,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 /// of DeclSpec::TST (TagType).  This returns true if there is an error parsing,
 /// otherwise it returns false and fills in Decl.
 bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
+  DeclTy *AttrList = 0;
   // If attributes exist after tag, parse them.
   if (Tok.getKind() == tok::kw___attribute)
-    ParseAttributes();
+    AttrList = ParseAttributes();
   
   // Must have either 'struct name' or 'struct {...}'.
   if (Tok.getKind() != tok::identifier &&
@@ -547,9 +667,10 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         }
       }
       
+      DeclTy *AttrList = 0;
       // If attributes exist after the declarator, parse them.
       if (Tok.getKind() == tok::kw___attribute)
-        ParseAttributes();
+        AttrList = ParseAttributes();
       
       // Install the declarator into the current TagDecl.
       DeclTy *Field = Actions.ParseField(CurScope, TagDecl, SpecQualLoc,
@@ -569,7 +690,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       
       // Attributes are only allowed on the second declarator.
       if (Tok.getKind() == tok::kw___attribute)
-        ParseAttributes();
+        AttrList = ParseAttributes();
     }
     
     if (Tok.getKind() == tok::semi) {
@@ -585,9 +706,10 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   
   Actions.ParseRecordBody(RecordLoc, TagDecl, &FieldDecls[0],FieldDecls.size());
   
+  DeclTy *AttrList = 0;
   // If attributes exist after struct contents, parse them.
   if (Tok.getKind() == tok::kw___attribute)
-    ParseAttributes();
+    AttrList = ParseAttributes(); // FIXME: where should I put them?
 }
 
 
@@ -671,9 +793,10 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   Actions.ParseEnumBody(StartLoc, EnumDecl, &EnumConstantDecls[0],
                         EnumConstantDecls.size());
   
+  DeclTy *AttrList = 0;
   // If attributes exist after the identifier list, parse them.
   if (Tok.getKind() == tok::kw___attribute)
-    ParseAttributes();
+    AttrList = ParseAttributes(); // FIXME: where do they do?
 }
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the
@@ -981,8 +1104,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // direct-declarator: '(' declarator ')'
     // direct-declarator: '(' attributes declarator ')'
     if (isGrouping) {
+      DeclTy *AttrList = 0;
       if (Tok.getKind() == tok::kw___attribute)
-        ParseAttributes();
+        AttrList = ParseAttributes();
       
       ParseDeclaratorInternal(D);
       // Match the ')'.
@@ -1097,8 +1221,9 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       ParseDeclarator(ParmDecl);
 
       // Parse GNU attributes, if present.
+      DeclTy *AttrList = 0;
       if (Tok.getKind() == tok::kw___attribute)
-        ParseAttributes();
+        AttrList = ParseAttributes();
       
       // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
       // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.

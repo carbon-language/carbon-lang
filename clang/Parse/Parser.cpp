@@ -508,10 +508,11 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 
     // Handle the full declarator list.
     while (1) {
+      DeclTy *AttrList;
       // If attributes are present, parse them.
       if (Tok.getKind() == tok::kw___attribute)
         // FIXME: attach attributes too.
-        ParseAttributes();
+        AttrList = ParseAttributes();
       
       // Ask the actions module to compute the type for this declarator.
       Action::TypeResult TR =

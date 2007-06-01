@@ -357,6 +357,16 @@ public:
                                          tok::TokenKind Kind) {
     return 0;
   }
+  /// ParseAttribute
+  virtual DeclTy *ParseAttribute(
+    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, DeclTy *PrevAttr,
+    IdentifierInfo *ParmName = 0, SourceLocation ParmNameLoc = SourceLocation(),
+    ExprTy **Args = 0, unsigned NumArgs = 0,
+    SourceLocation LParenLoc = SourceLocation(),
+    SourceLocation RParenLoc = SourceLocation()) {
+    return 0;
+  }
+  
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

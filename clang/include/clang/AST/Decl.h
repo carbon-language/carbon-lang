@@ -36,7 +36,7 @@ public:
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, 
     // Concrete sub-class of Decl
-    Field
+    Field, Attribute
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -403,6 +403,43 @@ public:
            D->getKind() == Class;
   }
   static bool classof(const RecordDecl *D) { return true; }
+};
+
+/// AttributeDecl - Represents GCC's __attribute__ declaration. There are
+/// 4 forms of this construct...they are:
+///
+/// 1: __attribute__(( const )). ParmName/Args/NumArgs will all be unused.
+/// 2: __attribute__(( mode(byte) )). ParmName used, Args/NumArgs unused.
+/// 3: __attribute__(( format(printf, 1, 2) )). ParmName/Args/NumArgs all used.
+/// 4: __attribute__(( aligned(16) )). ParmName is unused, Args/Num used.
+///
+class AttributeDecl : public Decl {
+  IdentifierInfo *ParmName;
+  Expr **Args;
+  unsigned NumArgs;
+public:
+  AttributeDecl(SourceLocation L, IdentifierInfo *AttrName, 
+                IdentifierInfo *ParmName, Expr **args, unsigned numargs);
+  ~AttributeDecl() {
+    delete [] Args;
+  }
+  
+  IdentifierInfo *getAttributeName() const { return getIdentifier(); }
+  IdentifierInfo *getParameterName() const { return ParmName; }
+  
+  /// getNumArgs - Return the number of actual arguments to this attribute.
+  unsigned getNumArgs() const { return NumArgs; }
+  
+  /// getArg - Return the specified argument.
+  Expr *getArg(unsigned Arg) const {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return Args[Arg];
+  }
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == Attribute;
+  }
+  static bool classof(const AttributeDecl *D) { return true; }
 };
 
 }  // end namespace clang

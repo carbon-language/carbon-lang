@@ -355,7 +355,7 @@ private:
   bool isTypeSpecifierQualifier() const;
 
   TypeTy *ParseTypeName();
-  void ParseAttributes();
+  DeclTy *ParseAttributes();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);

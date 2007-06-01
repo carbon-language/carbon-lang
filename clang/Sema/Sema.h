@@ -248,6 +248,16 @@ public:
   /// ParseCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
+                                         
+  /// ParseAttribute GCC __attribute__
+  virtual DeclTy *ParseAttribute(
+    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, DeclTy *PrevAttr,
+    IdentifierInfo *ParmName = 0, SourceLocation ParmNameLoc = SourceLocation(),
+    ExprTy **Args = 0, unsigned NumArgs = 0, 
+    SourceLocation LParenLoc = SourceLocation(),
+    SourceLocation RParenLoc = SourceLocation()
+  );
+    
 private:
   QualType UsualUnaryConversion(QualType t); // C99 6.3
   QualType UsualArithmeticConversions(QualType t1, QualType t2); // C99 6.3.1.8

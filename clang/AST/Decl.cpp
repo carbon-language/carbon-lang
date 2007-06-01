@@ -102,6 +102,9 @@ void Decl::addDeclKind(const Kind k) {
     case Enum:
       nEnumDecls++;
       break;
+    case Attribute:
+      // FIXME
+      break;
   }
 }
 
@@ -176,3 +179,10 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   return 0;
 }
 
+AttributeDecl::AttributeDecl(SourceLocation L, IdentifierInfo *AttrName, 
+                IdentifierInfo *pname, Expr **elist, unsigned numargs)
+  : Decl(Attribute, L, AttrName), ParmName(pname), NumArgs(numargs) {
+  Args = new Expr*[numargs];
+  for (unsigned i = 0; i != numargs; ++i)
+    Args[i] = elist[i];
+}

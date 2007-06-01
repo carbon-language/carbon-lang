@@ -185,9 +185,10 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     SourceLocation ColonLoc = ConsumeToken();
 
     // Read label attributes, if present.
+    DeclTy *AttrList = 0;
     if (Tok.getKind() == tok::kw___attribute)
       // TODO: save these somewhere.
-      ParseAttributes();
+      AttrList = ParseAttributes();
 
     StmtResult SubStmt = ParseStatement();
     
