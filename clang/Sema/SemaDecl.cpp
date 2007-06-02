@@ -331,7 +331,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
           return 0;
         }
       }
-      // FIXME: Find C99 spec reference
+      // C99 6.9p2: The storage-class specifiers auto and register shall not
+      // appear in the declaration specifiers in an external declaration.
       if (SC == VarDecl::Auto || SC == VarDecl::Register) {
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope,
              R.getAsString());
