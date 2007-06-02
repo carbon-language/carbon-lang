@@ -208,17 +208,30 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
   };
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
+  unsigned WordSize = (BitSize + 63) / 64;
+  Value *Count = ConstantInt::get(V->getType(), 0);
 
-  for (unsigned i = 1, ct = 0; i != BitSize; i <<= 1, ++ct) {
-    Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
-    Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
-    Value *VShift = BinaryOperator::createLShr(V,
-                      ConstantInt::get(V->getType(), i), "ctpop.sh", IP);
-    Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
-    V = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
+  for (unsigned n = 0; n < WordSize; ++n) {
+    Value *PartValue = V;
+    for (unsigned i = 1, ct = 0; i < (BitSize>64 ? 64 : BitSize); 
+         i <<= 1, ++ct) {
+      Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
+      Value *LHS = BinaryOperator::createAnd(
+                     PartValue, MaskCst, "cppop.and1", IP);
+      Value *VShift = BinaryOperator::createLShr(PartValue,
+                        ConstantInt::get(V->getType(), i), "ctpop.sh", IP);
+      Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
+      PartValue = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
+    }
+    Count = BinaryOperator::createAdd(PartValue, Count, "ctpop.part", IP);
+    if (BitSize > 64) {
+      V = BinaryOperator::createLShr(V, ConstantInt::get(V->getType(), 64), 
+                                     "ctpop.part.sh", IP);
+      BitSize -= 64;
+    }
   }
 
-  return CastInst::createIntegerCast(V, Type::Int32Ty, false, "ctpop", IP);
+  return CastInst::createIntegerCast(Count, Type::Int32Ty, false, "ctpop", IP);
 }
 
 /// LowerCTLZ - Emit the code to lower ctlz of V before the specified
@@ -226,7 +239,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
 static Value *LowerCTLZ(Value *V, Instruction *IP) {
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
-  for (unsigned i = 1; i != BitSize; i <<= 1) {
+  for (unsigned i = 1; i < BitSize; i <<= 1) {
     Value *ShVal = ConstantInt::get(V->getType(), i);
     ShVal = BinaryOperator::createLShr(V, ShVal, "ctlz.sh", IP);
     V = BinaryOperator::createOr(V, ShVal, "ctlz.step", IP);
