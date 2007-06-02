@@ -559,7 +559,7 @@ QualType Sema::UsualUnaryConversion(QualType t) {
   if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
     return Context.IntTy;
   if (t->isFunctionType()) // C99 6.3.2.1p4
-    return Context.getPointerType(t.getCanonicalType());
+    return Context.getPointerType(t);
   if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
     return Context.getPointerType(ary->getElementType()); // C99 6.3.2.1p3
   return t;
