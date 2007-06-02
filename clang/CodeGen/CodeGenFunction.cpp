@@ -126,6 +126,9 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   Builder.SetInsertPoint(EntryBB);
   
+  // TODO: handle params. 
+  
+  // Emit the function body.
   EmitStmt(FD->getBody());
   
   // Emit a return for code that falls off the end.

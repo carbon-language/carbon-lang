@@ -21,21 +21,26 @@ namespace llvm {
   class Module;
 namespace clang {
   class ASTContext;
+  class Decl;
   class FunctionDecl;
   class QualType;
   class SourceLocation;
   class TargetInfo;
+  
   class Stmt;
   class CompoundStmt;
   class LabelStmt;
   class GotoStmt;
   class IfStmt;
   class ReturnStmt;
+  class DeclStmt;
   
   class Expr;
   class IntegerLiteral;
   class BinaryOperator;
   
+  class BlockVarDecl;
+  class EnumConstantDecl;
 namespace CodeGen {
   class CodeGenModule;
   
@@ -85,6 +90,10 @@ class CodeGenFunction {
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
 
+  /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
+  /// decls.
+  DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
+
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
 public:
@@ -101,7 +110,16 @@ public:
   
   
   void EmitBlock(BasicBlock *BB);
+
   
+  //===--------------------------------------------------------------------===//
+  //                        Local Declaration Emission
+  //===--------------------------------------------------------------------===//
+  
+  void EmitDeclStmt(const DeclStmt &S);
+  void EmitBlockVarDecl(const BlockVarDecl &D);
+  void EmitEnumConstantDecl(const EnumConstantDecl &D);
+
   //===--------------------------------------------------------------------===//
   //                             Statement Emission
   //===--------------------------------------------------------------------===//
