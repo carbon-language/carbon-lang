@@ -67,25 +67,9 @@ LPCRELL0:
 
 //===---------------------------------------------------------------------===//
 
-We compiles the following using a jump table.
+We compiles the following:
 
 define i16 @func_entry_2E_ce(i32 %i) {
-newFuncRoot:
-        br label %entry.ce
-
-bb12.exitStub:          ; preds = %entry.ce
-        ret i16 0
-
-bb4.exitStub:           ; preds = %entry.ce, %entry.ce, %entry.ce
-        ret i16 1
-
-bb9.exitStub:           ; preds = %entry.ce, %entry.ce, %entry.ce
-        ret i16 2
-
-bb.exitStub:            ; preds = %entry.ce
-        ret i16 3
-
-entry.ce:               ; preds = %newFuncRoot
         switch i32 %i, label %bb12.exitStub [
                  i32 0, label %bb4.exitStub
                  i32 1, label %bb9.exitStub
@@ -95,7 +79,57 @@ entry.ce:               ; preds = %newFuncRoot
                  i32 8, label %bb.exitStub
                  i32 9, label %bb9.exitStub
         ]
+
+bb12.exitStub:
+        ret i16 0
+
+bb4.exitStub:
+        ret i16 1
+
+bb9.exitStub:
+        ret i16 2
+
+bb.exitStub:
+        ret i16 3
 }
+
+into:
+
+_func_entry_2E_ce:
+        mov r2, #1
+        lsl r2, r0
+        cmp r0, #9
+        bhi LBB1_4      @bb12.exitStub
+LBB1_1: @newFuncRoot
+        mov r1, #13
+        tst r2, r1
+        bne LBB1_5      @bb4.exitStub
+LBB1_2: @newFuncRoot
+        ldr r1, LCPI1_0
+        tst r2, r1
+        bne LBB1_6      @bb9.exitStub
+LBB1_3: @newFuncRoot
+        mov r1, #1
+        lsl r1, r1, #8
+        tst r2, r1
+        bne LBB1_7      @bb.exitStub
+LBB1_4: @bb12.exitStub
+        mov r0, #0
+        bx lr
+LBB1_5: @bb4.exitStub
+        mov r0, #1
+        bx lr
+LBB1_6: @bb9.exitStub
+        mov r0, #2
+        bx lr
+LBB1_7: @bb.exitStub
+        mov r0, #3
+        bx lr
+LBB1_8:
+        .align  2
+LCPI1_0:
+        .long   642
+
 
 gcc compiles to:
 
@@ -124,6 +158,21 @@ L12:
 	.align 2
 L11:
 	.long	642
+        
+
+GCC is doing a couple of clever things here:
+  1. It is predicating one of the returns.  This isn't a clear win though: in
+     cases where that return isn't taken, it is replacing one condbranch with
+     two 'ne' predicated instructions.
+  2. It is sinking the shift of "1 << i" into the tst, and using ands instead of
+     tst.  This will probably require whole function isel.
+  3. GCC emits:
+  	tst	r1, #256
+     we emit:
+        mov r1, #1
+        lsl r1, r1, #8
+        tst r2, r1
+  
 
 //===---------------------------------------------------------------------===//
 
