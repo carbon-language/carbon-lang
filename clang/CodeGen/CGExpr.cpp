@@ -246,9 +246,10 @@ ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
 void CodeGenFunction::EmitUsualArithmeticConversions(const BinaryOperator *E,
                                                      ExprResult &LHS, 
                                                      ExprResult &RHS) {
-  // FIXME: implement right.
-  LHS = EmitExpr(E->getLHS());
-  RHS = EmitExpr(E->getRHS());
+  QualType LHSType, RHSType;
+  LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), LHSType);
+  RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSType);
+
 }
 
 
