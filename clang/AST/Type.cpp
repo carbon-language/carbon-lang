@@ -117,6 +117,23 @@ bool Type::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
   return typesAreCompatible(ltype, rtype);
 }
 
+// C++ 5.17p6: When the left opperand of an assignment operator denotes a
+// reference to T, the operation assigns to the object of type T denoted by the
+// reference.
+bool Type::referenceTypesAreCompatible(QualType lhs, QualType rhs) {
+  QualType ltype = lhs;
+
+  if (lhs->isReferenceType())
+    ltype = cast<ReferenceType>(lhs.getCanonicalType())->getReferenceeType();
+
+  QualType rtype = rhs;
+
+  if (rhs->isReferenceType())
+    rtype = cast<ReferenceType>(rhs.getCanonicalType())->getReferenceeType();
+
+  return typesAreCompatible(ltype, rtype);
+}
+
 bool Type::functionTypesAreCompatible(QualType lhs, QualType rhs) {
   const FunctionType *lbase = cast<FunctionType>(lhs.getCanonicalType());
   const FunctionType *rbase = cast<FunctionType>(rhs.getCanonicalType());
@@ -190,6 +207,8 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
   switch (lcanon->getTypeClass()) {
     case Type::Pointer:
       return pointerTypesAreCompatible(lcanon, rcanon);
+    case Type::Reference:
+      return referenceTypesAreCompatible(lcanon, rcanon);
     case Type::Array:
       return arrayTypesAreCompatible(lcanon, rcanon);
     case Type::FunctionNoProto:
