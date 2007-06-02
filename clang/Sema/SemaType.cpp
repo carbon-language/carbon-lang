@@ -116,12 +116,25 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::Pointer:
-      T = Context.getPointerType(T);
+      if (isa<ReferenceType>(T.getCanonicalType().getTypePtr())) {
+        // C++ 8.3.2p4: There shall be no ... pointers to references ...
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_pointer_to_reference,
+             D.getIdentifier()->getName());
+        return QualType();
+      }
 
       // Apply the pointer typequals to the pointer object.
-      T = T.getQualifiedType(DeclType.Ptr.TypeQuals);
+      T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
     case DeclaratorChunk::Reference:
+      if (isa<ReferenceType>(T.getCanonicalType().getTypePtr())) {
+        // C++ 8.3.2p4: There shall be no references to references ...
+        Diag(D.getIdentifierLoc(),
+             diag::err_illegal_decl_reference_to_reference,
+             D.getIdentifier()->getName());
+        return QualType();
+      }
+
       T = Context.getReferenceType(T);
       break;
     case DeclaratorChunk::Array: {
@@ -144,6 +157,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         return QualType();
       } else if (isa<FunctionType>(CanonicalT)) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
+             D.getIdentifier()->getName());
+        return QualType();
+      } else if (isa<ReferenceType>(CanonicalT)) {
+        // C++ 8.3.2p4: There shall be no ... arrays of references ...
+        Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier()->getName());
         return QualType();
       } else if (RecordType *EltTy = dyn_cast<RecordType>(CanonicalT)) {
