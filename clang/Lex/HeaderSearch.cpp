@@ -16,7 +16,7 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/SmallString.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 using namespace llvm;
 using namespace clang;
 
@@ -30,8 +30,8 @@ HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
 }
 
 void HeaderSearch::PrintStats() {
-  std::cerr << "\n*** HeaderSearch Stats:\n";
-  std::cerr << FileInfo.size() << " files tracked.\n";
+  cerr << "\n*** HeaderSearch Stats:\n";
+  cerr << FileInfo.size() << " files tracked.\n";
   unsigned NumOnceOnlyFiles = 0, MaxNumIncludes = 0, NumSingleIncludedFiles = 0;
   for (unsigned i = 0, e = FileInfo.size(); i != e; ++i) {
     NumOnceOnlyFiles += FileInfo[i].isImport;
@@ -39,16 +39,16 @@ void HeaderSearch::PrintStats() {
       MaxNumIncludes = FileInfo[i].NumIncludes;
     NumSingleIncludedFiles += FileInfo[i].NumIncludes == 1;
   }
-  std::cerr << "  " << NumOnceOnlyFiles << " #import/#pragma once files.\n";
-  std::cerr << "  " << NumSingleIncludedFiles << " included exactly once.\n";
-  std::cerr << "  " << MaxNumIncludes << " max times a file is included.\n";
+  cerr << "  " << NumOnceOnlyFiles << " #import/#pragma once files.\n";
+  cerr << "  " << NumSingleIncludedFiles << " included exactly once.\n";
+  cerr << "  " << MaxNumIncludes << " max times a file is included.\n";
   
-  std::cerr << "  " << NumIncluded << " #include/#include_next/#import.\n";
-  std::cerr << "    " << NumMultiIncludeFileOptzn << " #includes skipped due to"
-            << " the multi-include optimization.\n";
+  cerr << "  " << NumIncluded << " #include/#include_next/#import.\n";
+  cerr << "    " << NumMultiIncludeFileOptzn << " #includes skipped due to"
+       << " the multi-include optimization.\n";
   
-  std::cerr << NumFrameworkLookups << " framework lookups.\n";
-  std::cerr << NumSubFrameworkLookups << " subframework lookups.\n";
+  cerr << NumFrameworkLookups << " framework lookups.\n";
+  cerr << NumSubFrameworkLookups << " subframework lookups.\n";
 }
 
 //===----------------------------------------------------------------------===//
