@@ -39,16 +39,18 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
 }
 
 Action::StmtResult
-Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
                     SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                     SourceLocation ColonLoc, StmtTy *SubStmt) {
+  Expr *LHSVal = ((Expr *)lhsval);
   assert((LHSVal != 0) && "missing expression in case statement");
     
-  SourceLocation expLoc;
+  SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
-  if (!((Expr *)LHSVal)->isIntegerConstantExpr(&expLoc))
-    // FIXME: Should pass in case expr as range.
-    return Diag(CaseLoc, diag::err_case_label_not_integer_constant_expr);
+  if (!LHSVal->isIntegerConstantExpr(&ExpLoc))
+    return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
+                LHSVal->getSourceRange());
+  }
 
   return new CaseStmt((Expr*)LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
 }

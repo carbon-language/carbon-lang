@@ -573,17 +573,18 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
   QualType lhs = UsualUnaryConversion(t1);
   QualType rhs = UsualUnaryConversion(t2);
   
-  // if either operand is not of arithmetic type, no conversion is possible.
+  // If both types are identical, no conversion is needed.
+  if (lhs == rhs) 
+    return lhs;
+  
+  // If either side is a non-arithmetic type (e.g. a pointer), we are done.
+  // The caller can deal with this (e.g. pointer + int).
   if (!lhs->isArithmeticType())
     return lhs;
   if (!rhs->isArithmeticType())
     return rhs;
     
-  // if both arithmetic types are identical, no conversion is needed.
-  if (lhs == rhs) 
-    return lhs;
-  
-  // at this point, we have two different arithmetic types. 
+  // At this point, we have two different arithmetic types. 
   
   // Handle complex types first (C99 6.3.1.8p1).
   if (lhs->isComplexType() || rhs->isComplexType()) {
@@ -595,6 +596,7 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
 
     return Context.maxComplexType(lhs, rhs);
   }
+  
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
