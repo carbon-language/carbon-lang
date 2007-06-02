@@ -36,6 +36,7 @@ namespace clang {
   class DeclStmt;
   
   class Expr;
+  class DeclRefExpr;
   class IntegerLiteral;
   class BinaryOperator;
   
@@ -44,6 +45,11 @@ namespace clang {
 namespace CodeGen {
   class CodeGenModule;
   
+
+/// ExprResult - This trivial value class is used to represent the result of an
+/// expression that is evaluated.  It can be one of two things: either a simple
+/// LLVM SSA value, or the address of an aggregate value in memory.  These two
+/// possibilities are discriminated by isAggregate/isScalar.
 class ExprResult {
   Value *V;
   // TODO: Encode this into the low bit of pointer for more efficient
@@ -79,7 +85,26 @@ public:
     return ER;
   }
 };
+
+
+/// LValue - This represents an lvalue references.  Because C/C++ allow
+/// bitfields, this is not a simple LLVM pointer, it may be a pointer plus a
+/// bitrange.
+class LValue {
+  // FIXME: Volatility.  Restrict?
+  llvm::Value *V;
+public:
+  bool isBitfield() const { return false; }
   
+  llvm::Value *getAddress() const { assert(!isBitfield()); return V; }
+  
+  static LValue getAddr(Value *V) {
+    LValue R;
+    R.V = V;
+    return R;
+  }
+};
+
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction {
@@ -136,6 +161,13 @@ public:
   void EmitIfStmt(const IfStmt &S);
   void EmitReturnStmt(const ReturnStmt &S);
   
+  //===--------------------------------------------------------------------===//
+  //                         LValue Expression Emission
+  //===--------------------------------------------------------------------===//
+  
+  LValue EmitLValue(const Expr *E);
+  LValue EmitDeclRefLValue(const DeclRefExpr *E);
+    
   //===--------------------------------------------------------------------===//
   //                             Expression Emission
   //===--------------------------------------------------------------------===//

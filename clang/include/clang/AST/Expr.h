@@ -109,7 +109,8 @@ public:
   DeclRefExpr(Decl *d, QualType t, SourceLocation l) : 
     Expr(DeclRefExprClass, t), D(d), Loc(l) {}
   
-  Decl *getDecl() const { return D; }
+  Decl *getDecl() { return D; }
+  const Decl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   virtual void visit(StmtVisitor &Visitor);

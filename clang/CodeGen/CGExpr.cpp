@@ -19,6 +19,32 @@ using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
 
+//===--------------------------------------------------------------------===//
+//                         LValue Expression Emission
+//===--------------------------------------------------------------------===//
+
+LValue CodeGenFunction::EmitLValue(const Expr *E) {
+  switch (E->getStmtClass()) {
+  default:
+    printf("Unimplemented lvalue expr!\n");
+    E->dump();
+    return LValue::getAddr(UndefValue::get(
+                              llvm::PointerType::get(llvm::Type::Int32Ty)));
+
+  case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
+  }
+}
+
+
+LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
+  const Decl *D = E->getDecl();
+  if (isa<BlockVarDecl>(D)) {
+    Value *V = LocalDeclMap[D];
+    assert(V && "BlockVarDecl not entered in LocalDeclMap?");
+    return LValue::getAddr(V);
+  }
+  assert(0 && "Unimp declref");
+}
 
 //===--------------------------------------------------------------------===//
 //                             Expression Emission
@@ -32,12 +58,24 @@ ExprResult CodeGenFunction::EmitExpr(const Expr *E) {
     printf("Unimplemented expr!\n");
     E->dump();
     return ExprResult::get(UndefValue::get(llvm::Type::Int32Ty));
-  case Stmt::ParenExprClass:
-    return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
-  case Stmt::IntegerLiteralClass:
+    
+  // l-values.
+  case Expr::DeclRefExprClass: {
+    // FIXME: EnumConstantDecl's are not lvalues.
+    LValue LV = EmitLValue(E);
+    // FIXME: this is silly.
+    assert(!LV.isBitfield());
+    return ExprResult::get(Builder.CreateLoad(LV.getAddress(), "tmp"));
+  }
+    
+  // Leaf expressions.
+  case Expr::IntegerLiteralClass:
     return EmitIntegerLiteral(cast<IntegerLiteral>(E)); 
     
-  case Stmt::BinaryOperatorClass:
+  // Operators.  
+  case Expr::ParenExprClass:
+    return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
+  case Expr::BinaryOperatorClass:
     return EmitBinaryOperator(cast<BinaryOperator>(E));
   }
   

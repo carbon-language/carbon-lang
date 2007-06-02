@@ -39,6 +39,7 @@
 		DE3461270AFE68BE00DBC861 /* MinimalAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */; };
 		DE34621D0AFEB19B00DBC861 /* StmtPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */; };
 		DE3464220B03040900DBC861 /* Type.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3464210B03040900DBC861 /* Type.h */; };
+		DE4264FC0C113592005A861D /* CGDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4264FB0C113592005A861D /* CGDecl.cpp */; };
 		DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE46BF270AE0A82D00CC047C /* TargetInfo.h */; };
 		DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772F90C10EAE5002239E8 /* CGStmt.cpp */; };
 		DE4772FC0C10EAEC002239E8 /* CGExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */; };
@@ -198,6 +199,7 @@
 		DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = MinimalAction.cpp; path = Parse/MinimalAction.cpp; sourceTree = "<group>"; };
 		DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtPrinter.cpp; path = AST/StmtPrinter.cpp; sourceTree = "<group>"; };
 		DE3464210B03040900DBC861 /* Type.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Type.h; path = clang/AST/Type.h; sourceTree = "<group>"; };
+		DE4264FB0C113592005A861D /* CGDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGDecl.cpp; path = CodeGen/CGDecl.cpp; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
 		DE4772F90C10EAE5002239E8 /* CGStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGStmt.cpp; path = CodeGen/CGStmt.cpp; sourceTree = "<group>"; };
 		DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExpr.cpp; path = CodeGen/CGExpr.cpp; sourceTree = "<group>"; };
@@ -374,6 +376,7 @@
 				DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */,
 				DE928B7C0C0A615100231DA4 /* CodeGenModule.h */,
 				DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */,
+				DE4264FB0C113592005A861D /* CGDecl.cpp */,
 				DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,
@@ -607,6 +610,7 @@
 				DE928B830C0A616000231DA4 /* CodeGenFunction.cpp in Sources */,
 				DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */,
 				DE4772FC0C10EAEC002239E8 /* CGExpr.cpp in Sources */,
+				DE4264FC0C113592005A861D /* CGDecl.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
