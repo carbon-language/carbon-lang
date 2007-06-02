@@ -40,6 +40,8 @@
 		DE34621D0AFEB19B00DBC861 /* StmtPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */; };
 		DE3464220B03040900DBC861 /* Type.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3464210B03040900DBC861 /* Type.h */; };
 		DE46BF280AE0A82D00CC047C /* TargetInfo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE46BF270AE0A82D00CC047C /* TargetInfo.h */; };
+		DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772F90C10EAE5002239E8 /* CGStmt.cpp */; };
+		DE4772FC0C10EAEC002239E8 /* CGExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */; };
 		DE5932D10AD60FF400BC794C /* clang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CD0AD60FF400BC794C /* clang.cpp */; };
 		DE5932D20AD60FF400BC794C /* clang.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE5932CE0AD60FF400BC794C /* clang.h */; };
 		DE5932D30AD60FF400BC794C /* PrintParserCallbacks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */; };
@@ -102,23 +104,6 @@
 		DED7D9180A52518C003AD0FB /* ScratchBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED7D9170A52518C003AD0FB /* ScratchBuffer.h */; };
 		DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXBuildStyle section */
-		8424C61B0C0E1747008BC1FE /* Development */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-			};
-			name = Development;
-		};
-		8424C61C0C0E1747008BC1FE /* Deployment */ = {
-			isa = PBXBuildStyle;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-			};
-			name = Deployment;
-		};
-/* End PBXBuildStyle section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		8DD76F690486A84900D96B5E /* CopyFiles */ = {
@@ -214,6 +199,8 @@
 		DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtPrinter.cpp; path = AST/StmtPrinter.cpp; sourceTree = "<group>"; };
 		DE3464210B03040900DBC861 /* Type.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Type.h; path = clang/AST/Type.h; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
+		DE4772F90C10EAE5002239E8 /* CGStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGStmt.cpp; path = CodeGen/CGStmt.cpp; sourceTree = "<group>"; };
+		DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExpr.cpp; path = CodeGen/CGExpr.cpp; sourceTree = "<group>"; };
 		DE5932CD0AD60FF400BC794C /* clang.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = clang.cpp; path = Driver/clang.cpp; sourceTree = "<group>"; };
 		DE5932CE0AD60FF400BC794C /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = clang.h; path = Driver/clang.h; sourceTree = "<group>"; };
 		DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = Driver/PrintParserCallbacks.cpp; sourceTree = "<group>"; };
@@ -387,6 +374,8 @@
 				DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */,
 				DE928B7C0C0A615100231DA4 /* CodeGenModule.h */,
 				DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */,
+				DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */,
+				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,
 			);
 			name = CodeGen;
@@ -555,12 +544,6 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			buildSettings = {
-			};
-			buildStyles = (
-				8424C61B0C0E1747008BC1FE /* Development */,
-				8424C61C0C0E1747008BC1FE /* Deployment */,
-			);
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
@@ -622,6 +605,8 @@
 				DE928B130C05659200231DA4 /* ModuleBuilder.cpp in Sources */,
 				DE928B7F0C0A615600231DA4 /* CodeGenModule.cpp in Sources */,
 				DE928B830C0A616000231DA4 /* CodeGenFunction.cpp in Sources */,
+				DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */,
+				DE4772FC0C10EAEC002239E8 /* CGExpr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
