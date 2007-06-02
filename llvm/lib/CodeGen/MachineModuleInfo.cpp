@@ -1728,6 +1728,10 @@ void MachineModuleInfo::TidyLandingPads() {
     LandingPadInfo &LandingPad = LandingPads[i];
     LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
 
+    if (!LandingPad.LandingPadBlock)
+      // Must not have cleanups if no landing pad.
+      LandingPad.TypeIds.clear();
+
     // Special case: we *should* emit LPs with null LP MBB. This indicates
     // "rethrow" case.
     if (!LandingPad.LandingPadLabel && LandingPad.LandingPadBlock) {

@@ -966,7 +966,7 @@ struct LandingPadInfo {
   : LandingPadBlock(MBB)
   , LandingPadLabel(0)
   , Personality(NULL)  
-  , TypeIds()
+  , TypeIds(1, 0) // Always have cleanups
   {}
 };
 
