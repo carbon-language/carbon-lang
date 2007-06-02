@@ -46,11 +46,47 @@ void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
   }
 }
 
-void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
-  //assert(0 && "FIXME: Enum constant decls not implemented yet!");  
-  
-}
-
 void CodeGenFunction::EmitEnumConstantDecl(const EnumConstantDecl &D) {
   assert(0 && "FIXME: Enum constant decls not implemented yet!");  
+}
+
+/// EmitBlockVarDecl - This method handles emission of any variable declaration
+/// inside a function, including static vars etc.
+void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
+  switch (D.getStorageClass()) {
+  case VarDecl::Static:
+    assert(0 && "FIXME: local static vars not implemented yet");
+  case VarDecl::Extern:
+    assert(0 && "FIXME: should call up to codegenmodule");
+  default:
+    assert((D.getStorageClass() == VarDecl::None ||
+            D.getStorageClass() == VarDecl::Auto ||
+            D.getStorageClass() == VarDecl::Register) &&
+           "Unknown storage class");
+    return EmitLocalBlockVarDecl(D);
+  }
+}
+
+/// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
+/// variable declaration with auto, register, or no storage class specifier.
+/// These turn into simple stack objects.
+void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
+  QualType Ty = D.getCanonicalType();
+
+  llvm::Value *DeclPtr;
+  if (Ty->isConstantSizeType()) {
+    // A normal fixed sized variable becomes an alloca in the entry block.
+    const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
+    // TODO: Alignment
+    DeclPtr = new AllocaInst(LTy, 0, D.getName(), AllocaInsertPt);
+  } else {
+    // TODO: Create a dynamic alloca.
+    assert(0 && "FIXME: Local VLAs not implemented yet");
+  }
+  
+  llvm::Value *&DMEntry = LocalDeclMap[&D];
+  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  DMEntry = DeclPtr;
+  
+  // FIXME: Evaluate initializer.
 }

@@ -90,6 +90,10 @@ class CodeGenFunction {
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
 
+  /// AllocaInsertPoint - This is an instruction in the entry block before which
+  /// we prefer to insert allocas.
+  llvm::Instruction *AllocaInsertPt;
+  
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
   DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -117,9 +121,10 @@ public:
   //===--------------------------------------------------------------------===//
   
   void EmitDeclStmt(const DeclStmt &S);
-  void EmitBlockVarDecl(const BlockVarDecl &D);
   void EmitEnumConstantDecl(const EnumConstantDecl &D);
-
+  void EmitBlockVarDecl(const BlockVarDecl &D);
+  void EmitLocalBlockVarDecl(const BlockVarDecl &D);
+  
   //===--------------------------------------------------------------------===//
   //                             Statement Emission
   //===--------------------------------------------------------------------===//

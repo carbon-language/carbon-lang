@@ -125,6 +125,11 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   // TODO: Walk the decls, creating allocas etc.
   
   Builder.SetInsertPoint(EntryBB);
+
+  // Create a marker to make it easy to insert allocas into the entryblock
+  // later.
+  AllocaInsertPt = Builder.CreateBitCast(UndefValue::get(llvm::Type::Int32Ty),
+                                         llvm::Type::Int32Ty, "allocapt");
   
   // TODO: handle params. 
   
