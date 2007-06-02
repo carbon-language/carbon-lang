@@ -1521,6 +1521,7 @@ void MachineModuleInfo::EndFunction() {
   // Clean up exception info.
   LandingPads.clear();
   TypeInfos.clear();
+  FilterIds.clear();
 }
 
 /// getDescFor - Convert a Value to a debug information descriptor.
@@ -1708,12 +1709,16 @@ void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
   for (unsigned N = TyInfo.size(); N; --N)
     LP.TypeIds.push_back(getTypeIDFor(TyInfo[N - 1]));
 }
-                        
-/// setIsFilterLandingPad - Indicates that the landing pad is a throw filter.
+
+/// addFilterTypeInfo - Provide the filter typeinfo for a landing pad.
 ///
-void MachineModuleInfo::setIsFilterLandingPad(MachineBasicBlock *LandingPad) {
+void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
+                                        std::vector<GlobalVariable *> &TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  LP.IsFilter = true;
+  std::vector<unsigned> IdsInFilter (TyInfo.size());
+  for (unsigned I = 0, E = TyInfo.size(); I != E; ++I)
+    IdsInFilter[I] = getTypeIDFor(TyInfo[I]);
+  LP.TypeIds.push_back(getFilterIDFor(IdsInFilter));
 }
 
 /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
@@ -1758,6 +1763,20 @@ unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
 
   TypeInfos.push_back(TI);
   return TypeInfos.size();
+}
+
+/// getFilterIDFor - Return the filter id for the specified typeinfos.  This is
+/// function wide.
+int MachineModuleInfo::getFilterIDFor(std::vector<unsigned> &TyIds) {
+  // TODO: map duplicate filters to the same filter id; a filter equal to the
+  // tail of an existing filter also need not be added; re-order filters and
+  // filter elements to maximize this kind of sharing.
+  int FilterID = -(1 + FilterIds.size());
+  FilterIds.reserve(FilterIds.size() + TyIds.size() + 1);
+  for (unsigned I = 0, N = TyIds.size(); I != N; ++I)
+    FilterIds.push_back(TyIds[I]);
+  FilterIds.push_back(0); // terminator
+  return FilterID;
 }
 
 /// getPersonality - Return the personality function for the current function.

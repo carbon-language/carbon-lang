@@ -960,16 +960,13 @@ struct LandingPadInfo {
   SmallVector<unsigned, 1> EndLabels;   // Labels after invoke.
   unsigned LandingPadLabel;             // Label at beginning of landing pad.
   Function *Personality;                // Personality function.
-  std::vector<unsigned> TypeIds;        // List of type ids.
-  bool IsFilter;                        // Indicate if the landing pad is a
-                                        // throw filter.
-  
+  std::vector<int> TypeIds;             // List of type ids (filters negative)
+
   LandingPadInfo(MachineBasicBlock *MBB)
   : LandingPadBlock(MBB)
   , LandingPadLabel(0)
   , Personality(NULL)  
   , TypeIds()
-  , IsFilter(false)
   {}
 };
 
@@ -1020,6 +1017,10 @@ private:
   // TypeInfos - List of C++ TypeInfo used in the current function.
   //
   std::vector<GlobalVariable *> TypeInfos;
+
+  // FilterIds - List of typeids encoding filters used in the current function.
+  //
+  std::vector<unsigned> FilterIds;
 
   // Personalities - Vector of all personality functions ever seen. Used to emit
   // common EH frames.
@@ -1213,20 +1214,25 @@ public:
   const std::vector<Function *>& getPersonalities() const {
     return Personalities;
   }
-    
+
   /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.
   ///
   void addCatchTypeInfo(MachineBasicBlock *LandingPad,
                         std::vector<GlobalVariable *> &TyInfo);
-                        
-  /// setIsFilterLandingPad - Indicates that the landing pad is a throw filter.
+
+  /// addFilterTypeInfo - Provide the filter typeinfo for a landing pad.
   ///
-  void setIsFilterLandingPad(MachineBasicBlock *LandingPad);
-                        
+  void addFilterTypeInfo(MachineBasicBlock *LandingPad,
+                         std::vector<GlobalVariable *> &TyInfo);
+
   /// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
   /// function wide.
   unsigned getTypeIDFor(GlobalVariable *TI);
-  
+
+  /// getFilterIDFor - Return the id of the filter encoded by TyIds.  This is
+  /// function wide.
+  int getFilterIDFor(std::vector<unsigned> &TyIds);
+
   /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
   /// pads.
   void TidyLandingPads();
@@ -1242,7 +1248,13 @@ public:
   const std::vector<GlobalVariable *> &getTypeInfos() const {
     return TypeInfos;
   }
-  
+
+  /// getFilterIds - Return a reference to the typeids encoding filters used in
+  /// the current function.
+  const std::vector<unsigned> &getFilterIds() const {
+    return FilterIds;
+  }
+
   /// getPersonality - Return a personality function if available.  The presence
   /// of one is required to emit exception handling info.
   Function *getPersonality() const;

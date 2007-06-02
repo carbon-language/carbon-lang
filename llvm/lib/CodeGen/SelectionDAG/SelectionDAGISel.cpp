@@ -2611,8 +2611,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
              isa<Function>(CE->getOperand(0)) &&
              "Personality should be a function");
       MMI->addPersonality(CurMBB, cast<Function>(CE->getOperand(0)));
-      if (Intrinsic == Intrinsic::eh_filter)
-        MMI->setIsFilterLandingPad(CurMBB);
 
       // Gather all the type infos for this landing pad and pass them along to
       // MachineModuleInfo.
@@ -2624,7 +2622,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                 "TypeInfo must be a global variable or NULL");
         TyInfo.push_back(GV);
       }
-      MMI->addCatchTypeInfo(CurMBB, TyInfo);
+      if (Intrinsic == Intrinsic::eh_filter)
+        MMI->addFilterTypeInfo(CurMBB, TyInfo);
+      else
+        MMI->addCatchTypeInfo(CurMBB, TyInfo);
       
       // Mark exception selector register as live in.
       unsigned Reg = TLI.getExceptionSelectorRegister();

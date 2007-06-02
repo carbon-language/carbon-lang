@@ -2896,12 +2896,9 @@ private:
 
   /// EquivPads - Whether two landing pads have equivalent actions.
   static bool EquivPads(const LandingPadInfo *L, const LandingPadInfo *R) {
-    const std::vector<unsigned> &LIds = L->TypeIds;
-    const std::vector<unsigned> &RIds = R->TypeIds;
+    const std::vector<int> &LIds = L->TypeIds;
+    const std::vector<int> &RIds = R->TypeIds;
     unsigned LSize = LIds.size(), RSize = RIds.size();
-
-    if (L->IsFilter != R->IsFilter)
-      return false;
 
     if (LSize != RSize)
       return false;
@@ -2915,13 +2912,9 @@ private:
 
   /// PadLT - An order on landing pads, with EquivPads as order equivalence.
   static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
-    const std::vector<unsigned> &LIds = L->TypeIds;
-    const std::vector<unsigned> &RIds = R->TypeIds;
+    const std::vector<int> &LIds = L->TypeIds;
+    const std::vector<int> &RIds = R->TypeIds;
     unsigned LSize = LIds.size(), RSize = RIds.size();
-
-    if (L->IsFilter != R->IsFilter)
-      // Make filters come last
-      return L->IsFilter < R->IsFilter;
 
     if (LSize != RSize)
       return LSize < RSize;
@@ -2972,6 +2965,7 @@ private:
     MMI->TidyLandingPads();
 
     const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+    const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
     const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
     if (PadInfos.empty()) return;
 
@@ -2984,11 +2978,6 @@ private:
 
     // Gather first action index for each landing pad site.
     SmallVector<unsigned, 32> Actions;
-
-    // FIXME - Assume there is only one filter typeinfo list per function
-    // time being.  I.E., Each call to eh_filter will have the same list.
-    // This can change if a function is inlined. 
-    const LandingPadInfo *Filter = 0;
 
     // Compute sizes for exception table.
     unsigned SizeSites = 0;
@@ -3003,24 +2992,15 @@ private:
       unsigned SizeSiteActions = 0;
 
       if (!i || !EquivPads(LandingPad, LandingPads[i-1])) {
-        const std::vector<unsigned> &TypeIds = LandingPad->TypeIds;
+        const std::vector<int> &TypeIds = LandingPad->TypeIds;
         unsigned SizeAction = 0;
 
-        if (LandingPad->IsFilter) {
-          // FIXME - Assume there is only one filter typeinfo list per function
-          // time being.  I.E., Each call to eh_filter will have the same list.
-          // This can change if a function is inlined.
-          Filter = LandingPad;
-          SizeAction =  Asm->SizeSLEB128(-1) + Asm->SizeSLEB128(0);
-          SizeSiteActions += SizeAction;
-          // Record the first action of the landing pad site.
-          FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
-        } else if (TypeIds.empty()) {
+        if (TypeIds.empty()) {
           FirstAction = 0;
         } else {
           // Gather the action sizes
           for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
-            unsigned TypeID = TypeIds[j];
+            int TypeID = TypeIds[j];
             unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
             signed Action = j ? -(SizeAction + SizeTypeID) : 0;
             SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
@@ -3140,25 +3120,18 @@ private:
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       if (!i || Actions[i] != Actions[i-1]) {
         const LandingPadInfo *LandingPad = LandingPads[i];
-        const std::vector<unsigned> &TypeIds = LandingPad->TypeIds;
+        const std::vector<int> &TypeIds = LandingPad->TypeIds;
         unsigned SizeAction = 0;
 
-        if (LandingPad->IsFilter) {
-          Asm->EmitSLEB128Bytes(-1);
+        for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
+          int TypeID = TypeIds[j];
+          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
+          Asm->EmitSLEB128Bytes(TypeID);
           Asm->EOL("TypeInfo index");
-          Asm->EmitSLEB128Bytes(0);
+          signed Action = j ? -(SizeAction + SizeTypeID) : 0;
+          SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
+          Asm->EmitSLEB128Bytes(Action);
           Asm->EOL("Next action");
-        } else {
-          for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
-            unsigned TypeID = TypeIds[j];
-            unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
-            Asm->EmitSLEB128Bytes(TypeID);
-            Asm->EOL("TypeInfo index");
-            signed Action = j ? -(SizeAction + SizeTypeID) : 0;
-            SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
-            Asm->EmitSLEB128Bytes(Action);
-            Asm->EOL("Next action");
-          }
         }
       }
     }
@@ -3180,16 +3153,11 @@ private:
       Asm->EOL("TypeInfo");
     }
 
-    // Emit the filter typeinfo.
-    if (Filter) {
-      const std::vector<unsigned> &TypeIds = Filter->TypeIds;
-      for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
-        unsigned TypeID = TypeIds[j];
-        Asm->EmitSLEB128Bytes(TypeID);
-        Asm->EOL("TypeInfo index");
-      }
-      Asm->EmitSLEB128Bytes(0);
-      Asm->EOL("End of filter typeinfo");
+    // Emit the filter typeids.
+    for (unsigned j = 0, M = FilterIds.size(); j < M; ++j) {
+      unsigned TypeID = FilterIds[j];
+      Asm->EmitSLEB128Bytes(TypeID);
+      Asm->EOL("Filter TypeInfo index");
     }
     
     Asm->EmitAlignment(2);
