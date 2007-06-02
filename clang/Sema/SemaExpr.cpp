@@ -1229,6 +1229,8 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
+    // LNot always has type int. C99 6.5.3.3p5.
+    resultType = Context.IntTy;
     break;
   case UnaryOperator::SizeOf:
     resultType = CheckSizeOfAlignOfOperand(((Expr *)Input)->getType(), OpLoc,
