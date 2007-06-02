@@ -98,9 +98,22 @@ void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
     Indent() << "typedef " << localType->getUnderlyingType().getAsString();
     OS << " " << localType->getName() << ";\n";
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(Node->getDecl())) {
+    Indent();
+    // Emit storage class for vardecls.
+    if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
+      switch (V->getStorageClass()) {
+      default: assert(0 && "Unknown storage class!");
+      case VarDecl::None:     break;
+      case VarDecl::Extern:   OS << "extern "; break;
+      case VarDecl::Static:   OS << "static "; break; 
+      case VarDecl::Auto:     OS << "auto "; break;
+      case VarDecl::Register: OS << "register "; break;
+      }
+    }
+    
     std::string Name = VD->getName();
     VD->getType().getAsStringInternal(Name);
-    Indent() << Name << ";\n";
+    OS << Name << ";\n";
   } else
     // FIXME: "struct x;"
     assert(0 && "Unexpected decl");
