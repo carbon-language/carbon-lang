@@ -94,14 +94,16 @@ void StmtPrinter::VisitNullStmt(NullStmt *Node) {
 void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
   // FIXME: Need to complete/beautify this...this code simply shows the
   // nodes are where they need to be.
-  if (BlockVarDecl *localVar = dyn_cast<BlockVarDecl>(Node->getDecl())) {
-    Indent() << localVar->getType().getAsString();
-    OS << " " << localVar->getName() << ";\n";
-  } else if (TypedefDecl *localType = dyn_cast<TypedefDecl>(Node->getDecl())) {
+  if (TypedefDecl *localType = dyn_cast<TypedefDecl>(Node->getDecl())) {
     Indent() << "typedef " << localType->getUnderlyingType().getAsString();
     OS << " " << localType->getName() << ";\n";
-  } else 
-    assert(0 && "Unexpected decl (expecting BlockVarDecl or TypedefDecl");
+  } else if (ValueDecl *VD = dyn_cast<ValueDecl>(Node->getDecl())) {
+    std::string Name = VD->getName();
+    VD->getType().getAsStringInternal(Name);
+    Indent() << Name << ";\n";
+  } else
+    // FIXME: "struct x;"
+    assert(0 && "Unexpected decl");
 }
 
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
