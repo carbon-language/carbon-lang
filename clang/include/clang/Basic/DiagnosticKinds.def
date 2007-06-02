@@ -419,6 +419,8 @@ DIAG(err_unspecified_vla_size_with_static, ERROR,
      "'static' may not be used with an unspecified variable length array size")
 DIAG(err_invalid_storage_class_in_func_decl, ERROR,
      "invalid storage class specifier in function declarator")
+DIAG(err_invalid_reference_qualifier_application, ERROR,
+     "'%0' qualifier may not be applied to a reference")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_void_param_with_identifier, ERROR,
@@ -496,7 +498,13 @@ DIAG(err_illegal_decl_array_of_functions, ERROR,
      "'%0' declared as array of functions")
 DIAG(err_illegal_decl_array_incomplete_type, ERROR,
      "array has incomplete element type '%0'")
-     
+DIAG(err_illegal_decl_array_of_references, ERROR,
+     "'%0' declared as array of references")
+DIAG(err_illegal_decl_pointer_to_reference, ERROR,
+     "'%0' declared as a pointer to a reference")
+DIAG(err_illegal_decl_reference_to_reference, ERROR,
+     "'%0' declared as a reference to a reference")
+
 // Expressions.
 DIAG(ext_sizeof_function_type, EXTENSION,
      "invalid application of 'sizeof' to a function type")
