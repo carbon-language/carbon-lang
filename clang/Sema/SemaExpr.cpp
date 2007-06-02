@@ -699,6 +699,11 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
   } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Type::tagTypesAreCompatible(lhsType, rhsType))
       return rhsType;
+  } else if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
+    if (Type::referenceTypesAreCompatible(lhsType, rhsType))
+      // C++ 5.17p1: ...the type of the assignment exression is that of its left
+      // operand.
+      return lhsType;
   }
   r = Incompatible;
   return QualType();
