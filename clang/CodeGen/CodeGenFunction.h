@@ -33,12 +33,15 @@ namespace clang {
   
   class Expr;
   class IntegerLiteral;
+  class BinaryOperator;
   
 namespace CodeGen {
   class CodeGenModule;
   
 class ExprResult {
   Value *V;
+  // TODO: Encode this into the low bit of pointer for more efficient
+  // return-by-value.
   bool IsAggregate;
 public:
   
@@ -112,6 +115,14 @@ public:
 
   ExprResult EmitExpr(const Expr *E);
   ExprResult EmitIntegerLiteral(const IntegerLiteral *E);
+  ExprResult EmitBinaryOperator(const BinaryOperator *E);
+  
+
+  void EmitUsualArithmeticConversions(const BinaryOperator *E,
+                                      ExprResult &LHS, ExprResult &RHS);
+  
+  // Binary Operators.
+  ExprResult EmitBinaryAdd(const BinaryOperator *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

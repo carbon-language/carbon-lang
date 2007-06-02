@@ -440,6 +440,13 @@ public:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType t=QualType())
     : Expr(BinaryOperatorClass, t), LHS(lhs), RHS(rhs), Opc(opc) {}
 
+  Opcode getOpcode() const { return Opc; }
+  Expr *getLHS() const { return LHS; }
+  Expr *getRHS() const { return RHS; }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLHS()->getLocStart(), getRHS()->getLocEnd());
+  }
+  
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "<<=".
   static const char *getOpcodeStr(Opcode Op);
@@ -454,12 +461,6 @@ public:
   bool isLogicalOp() const { return Opc == LAnd || Opc == LOr; }
   bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
   
-  Opcode getOpcode() const { return Opc; }
-  Expr *getLHS() const { return LHS; }
-  Expr *getRHS() const { return RHS; }
-  virtual SourceRange getSourceRange() const {
-    return SourceRange(getLHS()->getLocStart(), getRHS()->getLocEnd());
-  }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

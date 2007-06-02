@@ -36,6 +36,9 @@ ExprResult CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
   case Stmt::IntegerLiteralClass:
     return EmitIntegerLiteral(cast<IntegerLiteral>(E)); 
+    
+  case Stmt::BinaryOperatorClass:
+    return EmitBinaryOperator(cast<BinaryOperator>(E));
   }
   
 }
@@ -45,3 +48,36 @@ ExprResult CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
 }
 
 
+//===--------------------------------------------------------------------===//
+//                         Binary Operator Emission
+//===--------------------------------------------------------------------===//
+
+// FIXME describe.
+void CodeGenFunction::EmitUsualArithmeticConversions(const BinaryOperator *E,
+                                                     ExprResult &LHS, 
+                                                     ExprResult &RHS) {
+  // FIXME: implement right.
+  LHS = EmitExpr(E->getLHS());
+  RHS = EmitExpr(E->getRHS());
+}
+
+
+ExprResult CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
+  switch (E->getOpcode()) {
+  default:
+    printf("Unimplemented expr!\n");
+    E->dump();
+    return ExprResult::get(UndefValue::get(llvm::Type::Int32Ty));
+  case BinaryOperator::Add: return EmitBinaryAdd(E);
+  }
+}
+
+
+ExprResult CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
+  ExprResult LHS, RHS;
+  
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+
+  
+  return ExprResult::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "tmp"));
+}

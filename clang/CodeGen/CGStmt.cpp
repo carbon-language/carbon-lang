@@ -119,7 +119,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
       // Compare against zero for integers.
       BoolCondVal = CondVal.getVal();
       llvm::Value *Zero = Constant::getNullValue(BoolCondVal->getType());
-      BoolCondVal = Builder.CreateICmpNE(BoolCondVal, Zero);
+      BoolCondVal = Builder.CreateICmpNE(BoolCondVal, Zero, "tobool");
       break;
     }
     case BuiltinType::Float:
@@ -129,7 +129,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
       BoolCondVal = CondVal.getVal();
       llvm::Value *Zero = Constant::getNullValue(BoolCondVal->getType());
       // FIXME: llvm-gcc produces a une comparison: validate this is right.
-      BoolCondVal = Builder.CreateFCmpUNE(BoolCondVal, Zero);
+      BoolCondVal = Builder.CreateFCmpUNE(BoolCondVal, Zero, "tobool");
       break;
     }
       
@@ -141,7 +141,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   } else if (isa<PointerType>(CondTy)) {
     BoolCondVal = CondVal.getVal();
     llvm::Value *NullPtr = Constant::getNullValue(BoolCondVal->getType());
-    BoolCondVal = Builder.CreateICmpNE(BoolCondVal, NullPtr);
+    BoolCondVal = Builder.CreateICmpNE(BoolCondVal, NullPtr, "tobool");
     
   } else {
     const TagType *TT = cast<TagType>(CondTy);
@@ -149,7 +149,7 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
     // Compare against zero.
     BoolCondVal = CondVal.getVal();
     llvm::Value *Zero = Constant::getNullValue(BoolCondVal->getType());
-    BoolCondVal = Builder.CreateICmpNE(BoolCondVal, Zero);
+    BoolCondVal = Builder.CreateICmpNE(BoolCondVal, Zero, "tobool");
   }
   
   BasicBlock *ContBlock = new BasicBlock("ifend");
