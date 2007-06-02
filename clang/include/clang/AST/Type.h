@@ -245,6 +245,7 @@ public:
   static bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
   static bool tagTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
   static bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
+  static bool referenceTypesAreCompatible(QualType, QualType); // C++ 5.17p6
   static bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
 private:  
