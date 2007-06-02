@@ -75,13 +75,25 @@ Value *CodeGenFunction::EvaluateScalarValueToBool(ExprResult Val, QualType Ty) {
   
   // Usual case for integers, pointers, and enums: compare against zero.
   Result = Val.getVal();
+  
+  // Because of the type rules of C, we often end up computing a logical value,
+  // then zero extending it to int, then wanting it as a logical value again.
+  // Optimize this common case.
+  if (llvm::ZExtInst *ZI = dyn_cast<ZExtInst>(Result)) {
+    if (ZI->getOperand(0)->getType() == llvm::Type::Int1Ty) {
+      Result = ZI->getOperand(0);
+      ZI->eraseFromParent();
+      return Result;
+    }
+  }
+  
   llvm::Value *Zero = Constant::getNullValue(Result->getType());
   return Builder.CreateICmpNE(Result, Zero, "tobool");
 }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //                         LValue Expression Emission
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
@@ -171,6 +183,8 @@ ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
   Value *BoolVal = EvaluateScalarValueToBool(Op, E->getSubExpr()->getType());
   
   // Invert value.
+  // TODO: Could dynamically modify easy computations here.  For example, if
+  // the operand is an icmp ne, turn into icmp eq.
   BoolVal = Builder.CreateNot(BoolVal, "lnot");
   
   // ZExt result to int.
