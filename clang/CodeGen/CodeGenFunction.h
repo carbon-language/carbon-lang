@@ -30,6 +30,7 @@ namespace clang {
   class LabelStmt;
   class GotoStmt;
   class IfStmt;
+  class ReturnStmt;
   
   class Expr;
   class IntegerLiteral;
@@ -80,6 +81,8 @@ class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
   LLVMBuilder Builder;
+  
+  const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
@@ -108,6 +111,7 @@ public:
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
   void EmitIfStmt(const IfStmt &S);
+  void EmitReturnStmt(const ReturnStmt &S);
   
   //===--------------------------------------------------------------------===//
   //                             Expression Emission

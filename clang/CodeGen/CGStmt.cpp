@@ -43,6 +43,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
   case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
   case Stmt::IfStmtClass:       EmitIfStmt(cast<IfStmt>(*S));             break;
+  case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
   }
 }
 
@@ -176,5 +177,38 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   
   // Emit the continuation block for code after the if.
   EmitBlock(ContBlock);
+}
+
+/// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
+/// if the function returns void, or may be missing one if the function returns
+/// non-void.  Fun stuff :).
+void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
+  ExprResult RetVal;
+  
+  // Emit the result value, even if unused, to evalute the side effects.
+  const Expr *RV = S.getRetValue();
+  if (RV)
+    RetVal = EmitExpr(RV);
+  
+  if (CurFuncDecl->getType()->isVoidType()) {
+    // If the function returns void, emit ret void, and ignore the retval.
+    Builder.CreateRetVoid();
+  } else if (RV == 0) {
+    // "return;" in a function that returns a value.
+    const llvm::Type *RetTy = CurFn->getFunctionType()->getReturnType();
+    if (RetTy == llvm::Type::VoidTy)
+      Builder.CreateRetVoid();   // struct return etc.
+    else
+      Builder.CreateRet(llvm::UndefValue::get(RetTy));
+  } else if (RetVal.isScalar()) {
+    // FIXME: return should coerce its operand to the return type!
+    Builder.CreateRet(RetVal.getVal());
+  } else {
+    assert(0 && "FIXME: aggregate return unimp");
+  }
+  
+  // Emit a block after the branch so that dead code after a goto has some place
+  // to go.
+  Builder.SetInsertPoint(new BasicBlock("", CurFn));
 }
 

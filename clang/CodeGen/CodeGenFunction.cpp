@@ -116,6 +116,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   const llvm::FunctionType *Ty = 
     cast<llvm::FunctionType>(ConvertType(FD->getType(), FD->getLocation()));
   
+  CurFuncDecl = FD;
   CurFn = new Function(Ty, Function::ExternalLinkage,
                        FD->getName(), &CGM.getModule());
   
