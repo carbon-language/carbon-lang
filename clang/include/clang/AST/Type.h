@@ -236,7 +236,10 @@ public:
   bool isSignedIntegerType() const;     // C99 6.2.5p4
   bool isUnsignedIntegerType() const;   // C99 6.2.5p6
   
-  bool isConstantSizeType(SourceLocation &) const; // C99 6.7.5p3: VLA if false
+  /// isConstantSizeType - Return true if this is not a variable sized type,
+  /// according to the rules of C99 6.7.5p3.  If Loc is non-null, it is set to
+  /// the location of the subexpression that makes it a vla type.
+  bool isConstantSizeType(SourceLocation *Loc = 0) const;
 
   /// Compatibility predicates used to check assignment expressions.
   static bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1

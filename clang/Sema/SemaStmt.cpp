@@ -46,7 +46,8 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
     
   SourceLocation expLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
-  if (!((Expr *)LHSVal)->isIntegerConstantExpr(expLoc))
+  if (!((Expr *)LHSVal)->isIntegerConstantExpr(&expLoc))
+    // FIXME: Should pass in case expr as range.
     return Diag(CaseLoc, diag::err_case_label_not_integer_constant_expr);
 
   return new CaseStmt((Expr*)LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);

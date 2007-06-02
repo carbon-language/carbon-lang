@@ -79,10 +79,12 @@ public:
   
   bool isNullPointerConstant() const;
 
-  bool isConstantExpr(SourceLocation &loc) const 
-    { return isConstantExpr(false, loc); }
-  bool isIntegerConstantExpr(SourceLocation &loc) const 
-    { return isConstantExpr(true, loc); }
+  bool isConstantExpr(SourceLocation *Loc = 0) const {
+    return isConstantExpr(false, Loc);
+  }
+  bool isIntegerConstantExpr(SourceLocation *Loc = 0) const {
+    return isConstantExpr(true, Loc);
+  }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -91,7 +93,7 @@ public:
   }
   static bool classof(const Expr *) { return true; }
 private:
-  bool isConstantExpr(bool isIntegerConstant, SourceLocation &loc) const;
+  bool isConstantExpr(bool isIntegerConstant, SourceLocation *loc) const;
 };
 
 //===----------------------------------------------------------------------===//

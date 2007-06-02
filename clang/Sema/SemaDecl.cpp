@@ -33,7 +33,7 @@ using namespace clang;
 bool Sema::isConstantArrayType(ArrayType *ary, SourceLocation loc) { 
   if (Expr *size = ary->getSize()) {
     SourceLocation expLoc;
-    if (!size->isConstantExpr(expLoc)) {
+    if (!size->isConstantExpr(&expLoc)) {
       Diag(expLoc, diag::err_typecheck_illegal_vla);
       return false;
     }
@@ -806,7 +806,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
   }
   SourceLocation expLoc;
   // C99 6.7.2.2p2: Make sure we have an integer constant expression.
-  if (Val && !((Expr *)Val)->isIntegerConstantExpr(expLoc)) {
+  if (Val && !((Expr *)Val)->isIntegerConstantExpr(&expLoc)) {
     Diag(expLoc, diag::err_enum_value_not_integer_constant_expr, Id->getName());
     return 0;
   }
