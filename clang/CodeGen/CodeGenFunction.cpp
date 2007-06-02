@@ -113,10 +113,10 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
 
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
-  const llvm::Type *Ty = ConvertType(FD->getType(), FD->getLocation());
+  const llvm::FunctionType *Ty = 
+    cast<llvm::FunctionType>(ConvertType(FD->getType(), FD->getLocation()));
   
-  CurFn = new Function(cast<llvm::FunctionType>(Ty),
-                       Function::ExternalLinkage,
+  CurFn = new Function(Ty, Function::ExternalLinkage,
                        FD->getName(), &CGM.getModule());
   
   BasicBlock *EntryBB = new BasicBlock("entry", CurFn);
@@ -127,8 +127,13 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   EmitStmt(FD->getBody());
   
-  // Emit a simple return for now.
-  Builder.CreateRetVoid();
+  // Emit a return for code that falls off the end.
+  // FIXME: if this is C++ main, this should return 0.
+  if (Ty->getReturnType() == llvm::Type::VoidTy)
+    Builder.CreateRetVoid();
+  else
+    Builder.CreateRet(UndefValue::get(Ty->getReturnType()));
+      
   
   
   // Verify that the function is well formed.
