@@ -343,7 +343,7 @@ struct DeclaratorChunk {
     DeclaratorChunk I;
     I.Kind            = Reference;
     I.Loc             = Loc;
-    I.Ref.HasRestrict = (TypeQuals & TQ_restrict) != 0;
+    I.Ref.HasRestrict = (TypeQuals & DeclSpec::TQ_restrict) != 0;
     return I;
   }
   
