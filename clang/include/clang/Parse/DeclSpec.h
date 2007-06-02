@@ -256,6 +256,8 @@ struct DeclaratorChunk {
   };
 
   struct ReferenceTypeInfo {
+    /// The type qualifier: restrict. [GNU] C++ extension
+    bool HasRestrict;
     void destroy() {}
   };
 
@@ -337,10 +339,11 @@ struct DeclaratorChunk {
   
   /// getReference - Return a DeclaratorChunk for a reference.
   ///
-  static DeclaratorChunk getReference(SourceLocation Loc) {
+  static DeclaratorChunk getReference(unsigned TypeQuals, SourceLocation Loc) {
     DeclaratorChunk I;
-    I.Kind          = Reference;
-    I.Loc           = Loc;
+    I.Kind            = Reference;
+    I.Loc             = Loc;
+    I.Ref.HasRestrict = (TypeQuals & TQ_restrict) != 0;
     return I;
   }
   
