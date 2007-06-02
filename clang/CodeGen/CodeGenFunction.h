@@ -126,8 +126,6 @@ class CodeGenFunction {
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
-  
-  const llvm::Type *LLVMIntTy;
 public:
   CodeGenFunction(CodeGenModule &cgm);
   

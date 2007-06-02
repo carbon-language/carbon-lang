@@ -81,10 +81,28 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
     }
     break;
   }
-  case Type::Pointer:
-  case Type::Reference:
-  case Type::Array:
-    break;
+  case Type::Pointer: {
+    const PointerType &P = cast<PointerType>(Ty);
+    return llvm::PointerType::get(ConvertType(P.getPointeeType(), Loc));
+  }
+  case Type::Reference: {
+    const ReferenceType &R = cast<ReferenceType>(Ty);
+    return llvm::PointerType::get(ConvertType(R.getReferenceeType(), Loc));
+  }
+    
+  case Type::Array: {
+    const ArrayType &A = cast<ArrayType>(Ty);
+    assert(A.getSizeModifier() == ArrayType::Normal &&
+           A.getIndexTypeQualifier() == 0 &&
+           "FIXME: We only handle trivial array types so far!");
+    // FIXME: are there any promotions etc here?
+    ExprResult Size = EmitExpr(A.getSize());
+    assert(Size.isScalar() && isa<llvm::ConstantInt>(Size.getVal()) &&
+           "FIXME: Only handle fixed-size arrays so far");
+    const llvm::Type *EltTy = ConvertType(A.getElementType(), Loc);
+    return llvm::ArrayType::get(EltTy, 
+                      cast<llvm::ConstantInt>(Size.getVal())->getZExtValue());
+  }
   case Type::FunctionNoProto:
   case Type::FunctionProto: {
     const FunctionType &FP = cast<FunctionType>(Ty);
