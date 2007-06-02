@@ -163,6 +163,52 @@ ExprResult CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
 //                          Unary Operator Emission
 //===--------------------------------------------------------------------===//
 
+ExprResult CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E, 
+                                                              QualType &ResTy) {
+  ResTy = E->getType().getCanonicalType();
+  
+  if (isa<FunctionType>(ResTy)) { // C99 6.3.2.1p4
+    // Functions are promoted to their address.
+    ResTy = getContext().getPointerType(ResTy);
+    return ExprResult::get(EmitLValue(E).getAddress());
+  } else if (const ArrayType *ary = dyn_cast<ArrayType>(ResTy)) {
+    // C99 6.3.2.1p3
+    ResTy = getContext().getPointerType(ary->getElementType());
+    
+    // FIXME: For now we assume that all source arrays map to LLVM arrays.  This
+    // will not true when we add support for VLAs.
+    llvm::Value *V = EmitLValue(E).getAddress();  // Bitfields can't be arrays.
+    
+    assert(isa<llvm::PointerType>(V->getType()) &&
+           isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
+                                ->getElementType()) &&
+           "Doesn't support VLAs yet!");
+    llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    V = Builder.CreateGEP(V, Idx0, Idx0, "arraydecay");
+    return ExprResult::get(V);
+  } else if (ResTy->isPromotableIntegerType()) { // C99 6.3.1.1p2
+    // FIXME: this probably isn't right, pending clarification from Steve.
+    llvm::Value *Val = EmitExpr(E).getVal();
+    
+    // FIXME: this doesn't handle 'char'!.
+    
+    // If the input is a signed integer, sign extend to the destination.
+    if (ResTy->isSignedIntegerType()) {
+      Val = Builder.CreateSExt(Val, LLVMIntTy, "promote");
+    } else {
+      // This handles unsigned types, including bool.
+      Val = Builder.CreateZExt(Val, LLVMIntTy, "promote");
+    }
+    ResTy = getContext().IntTy;
+    
+    return ExprResult::get(Val);
+  }
+  
+  // Otherwise, this is a float, double, int, struct, etc.
+  return EmitExpr(E);
+}
+
+
 ExprResult CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
   switch (E->getOpcode()) {
   default:
@@ -175,12 +221,11 @@ ExprResult CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
 
 /// C99 6.5.3.3
 ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
-  ExprResult Op = EmitExpr(E->getSubExpr());
-
-  //UsualUnary();
+  QualType ResTy;
+  ExprResult Op = EmitExprWithUsualUnaryConversions(E->getSubExpr(), ResTy);
   
   // Compare to zero.
-  Value *BoolVal = EvaluateScalarValueToBool(Op, E->getSubExpr()->getType());
+  Value *BoolVal = EvaluateScalarValueToBool(Op, ResTy);
   
   // Invert value.
   // TODO: Could dynamically modify easy computations here.  For example, if
@@ -188,8 +233,8 @@ ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
   BoolVal = Builder.CreateNot(BoolVal, "lnot");
   
   // ZExt result to int.
-  const llvm::Type *ResTy = ConvertType(E->getType(), E->getOperatorLoc());
-  return ExprResult::get(Builder.CreateZExt(BoolVal, ResTy, "lnot.ext"));
+  const llvm::Type *ResLTy = ConvertType(E->getType(), E->getOperatorLoc());
+  return ExprResult::get(Builder.CreateZExt(BoolVal, ResLTy, "lnot.ext"));
 }
 
 

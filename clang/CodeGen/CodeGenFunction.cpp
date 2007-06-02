@@ -26,6 +26,10 @@ using namespace CodeGen;
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
   : CGM(cgm), Target(CGM.getContext().Target) {}
 
+ASTContext &CodeGenFunction::getContext() const {
+  return CGM.getContext();
+}
+
 
 llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
   BasicBlock *&BB = LabelMap[S];
@@ -131,6 +135,8 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
 
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
+  LLVMIntTy = ConvertType(getContext().IntTy, FD->getLocation());
+  
   const llvm::FunctionType *Ty = 
     cast<llvm::FunctionType>(ConvertType(FD->getType(), FD->getLocation()));
   

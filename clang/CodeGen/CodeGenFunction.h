@@ -120,6 +120,8 @@ class CodeGenFunction {
   /// we prefer to insert allocas.
   llvm::Instruction *AllocaInsertPt;
   
+  const llvm::Type *LLVMIntTy;
+  
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
   DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -129,6 +131,8 @@ class CodeGenFunction {
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
+  ASTContext &getContext() const;
+
   const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
   
   void GenerateCode(const FunctionDecl *FD);
@@ -180,7 +184,7 @@ public:
   ExprResult EmitExpr(const Expr *E);
   ExprResult EmitIntegerLiteral(const IntegerLiteral *E);
   
-
+  ExprResult EmitExprWithUsualUnaryConversions(const Expr *E, QualType &ResTy);
   void EmitUsualArithmeticConversions(const BinaryOperator *E,
                                       ExprResult &LHS, ExprResult &RHS);
   
