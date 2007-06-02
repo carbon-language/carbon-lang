@@ -248,8 +248,7 @@ bool Type::isRealType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDouble;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->getKind() == Decl::Enum)
-      return true;
+    return TT->getDecl()->getKind() == Decl::Enum;
   return false;
 }
 
