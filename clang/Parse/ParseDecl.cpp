@@ -927,7 +927,6 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec,
                                  getLang())*2;
       break;
-      
     case tok::kw___attribute:
       ParseAttributes();
       break;
@@ -960,14 +959,12 @@ void Parser::ParseDeclarator(Declarator &D) {
 /// ParseDeclaratorInternal
 ///       declarator: [C99 6.7.5]
 ///         pointer[opt] direct-declarator
-/// [C++]   reference direct-declarator [C++ 8p4, dcl.decl]
+/// [C++]   '&' declarator [C++ 8p4, dcl.decl]
+/// [GNU]   '&' restrict[opt] attributes[opt] declarator
 ///
 ///       pointer: [C99 6.7.5]
 ///         '*' type-qualifier-list[opt]
 ///         '*' type-qualifier-list[opt] pointer
-///
-///       reference: [C++ 8p4, dcl.decl]
-/// [C++]   '&' declarator
 ///
 void Parser::ParseDeclaratorInternal(Declarator &D) {
   tok::TokenKind Kind = Tok.getKind();
@@ -991,12 +988,32 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
     D.AddTypeInfo(DeclaratorChunk::getPointer(DS.getTypeQualifiers(), Loc));
   } else {
     // Is a reference
+    DeclSpec DS;
+
+    // C++ 8.3.2p1: cv-qualified references are ill-formed except when the
+    // cv-qualifiers are introduced through the use of a typedef or of a
+    // template type argument, in which case the cv-qualifiers are ignored.
+    //
+    // [GNU] Retricted references are allowed.
+    // [GNU] Attributes on references are allowed.
+    ParseTypeQualifierListOpt(DS);
+
+    if (DS.getTypeQualifiers() != DeclSpec::TQ_unspecified) {
+      if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
+        Diag(DS.getConstSpecLoc(),
+             diag::err_invalid_reference_qualifier_application,
+             "const");
+      if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
+        Diag(DS.getVolatileSpecLoc(),
+             diag::err_invalid_reference_qualifier_application,
+             "volatile");
+    }
 
     // Recursively parse the declarator.
     ParseDeclaratorInternal(D);
 
     // Remember that we parsed a reference type. It doesn't have type-quals.
-    D.AddTypeInfo(DeclaratorChunk::getReference(Loc));
+    D.AddTypeInfo(DeclaratorChunk::getReference(DS.getTypeQualifiers(), Loc));
   }
 }
 
@@ -1355,7 +1372,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
         0/*TODO: NumElts is not a C90 constantexpr */)
       Diag(StartLoc, diag::ext_c99_array_usage);
   }
-  
+
   // Remember that we parsed a pointer type, and remember the type-quals.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
