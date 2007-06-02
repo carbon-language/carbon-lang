@@ -675,6 +675,9 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
 /// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
 /// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
 /// be null.
+/// Besides DestA and DestB, retain other edges leading to LandingPads (currently
+/// there can be only one; we don't check or require that here).
+/// Note it is possible that DestA and/or DestB are LandingPads.
 static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB, 
                                  MachineBasicBlock *DestA,
                                  MachineBasicBlock *DestB,
@@ -700,25 +703,19 @@ static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB,
   }
   
   MachineBasicBlock::succ_iterator SI = MBB.succ_begin();
-  bool foundPad = false;
+  MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
   while (SI != MBB.succ_end()) {
     if (*SI == DestA && DestA == DestB) {
       DestA = DestB = 0;
-      if ((*SI)->isLandingPad())
-        foundPad = true;
       ++SI;
     } else if (*SI == DestA) {
       DestA = 0;
-      if ((*SI)->isLandingPad())
-        foundPad = true;
       ++SI;
     } else if (*SI == DestB) {
       DestB = 0;
-      if ((*SI)->isLandingPad())
-        foundPad = true;
       ++SI;
-    } else if ((*SI)->isLandingPad() && !foundPad) {
-      foundPad = true;
+    } else if ((*SI)->isLandingPad() && 
+               *SI!=OrigDestA && *SI!=OrigDestB) {
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
