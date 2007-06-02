@@ -236,46 +236,50 @@ public:
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
     Extension         // __extension__ marker.
   };
+private:
+  Expr *Val;
+  Opcode Opc;
+  SourceLocation Loc;
+public:  
 
   UnaryOperator(Expr *input, Opcode opc, QualType type, SourceLocation l)
     : Expr(UnaryOperatorClass, type), Val(input), Opc(opc), Loc(l) {}
+
+  Opcode getOpcode() const { return Opc; }
+  Expr *getSubExpr() const { return Val; }
+  
+  /// getOperatorLoc - Return the location of the operator.
+  SourceLocation getOperatorLoc() const { return Loc; }
+  
+  /// isPostfix - Return true if this is a postfix operation, like x++.
+  static bool isPostfix(Opcode Op);
+
+  bool isPostfix() const { return isPostfix(Opc); }
+  bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
+  bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
+  static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
+  
+  /// getDecl - a recursive routine that derives the base decl for an
+  /// expression. For example, it will return the declaration for "s" from
+  /// the following complex expression "s.zz[2].bb.vv".
+  static bool isAddressable(Expr *e);
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
   static const char *getOpcodeStr(Opcode Op);
 
-  /// isPostfix - Return true if this is a postfix operation, like x++.
-  static bool isPostfix(Opcode Op);
-
-  static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
-
-  Opcode getOpcode() const { return Opc; }
-  Expr *getSubExpr() const { return Val; }
   virtual SourceRange getSourceRange() const {
     if (isPostfix())
       return SourceRange(Val->getLocStart(), Loc);
     else
       return SourceRange(Loc, Val->getLocEnd());
   }
-  bool isPostfix() const { return isPostfix(Opc); }
-  bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
-  bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
   
-  /// getDecl - a recursive routine that derives the base decl for an
-  /// expression. For example, it will return the declaration for "s" from
-  /// the following complex expression "s.zz[2].bb.vv".
-  static bool isAddressable(Expr *e);
-
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == UnaryOperatorClass; 
   }
   static bool classof(const UnaryOperator *) { return true; }
-  
-private:
-  Expr *Val;
-  Opcode Opc;
-  SourceLocation Loc;
 };
 
 /// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of

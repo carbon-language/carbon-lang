@@ -38,6 +38,7 @@ namespace clang {
   class Expr;
   class DeclRefExpr;
   class IntegerLiteral;
+  class UnaryOperator;
   class BinaryOperator;
   
   class BlockVarDecl;
@@ -125,6 +126,8 @@ class CodeGenFunction {
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
+  
+  const llvm::Type *LLVMIntTy;
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
@@ -140,6 +143,10 @@ public:
   
   void EmitBlock(BasicBlock *BB);
 
+  
+  /// EvaluateScalarValueToBool - Evaluate the specified expression value to a
+  /// boolean (i1) truth value.  This is equivalent to "Val == 0".
+  Value *EvaluateScalarValueToBool(ExprResult Val, QualType Ty);
   
   //===--------------------------------------------------------------------===//
   //                        Local Declaration Emission
@@ -174,13 +181,17 @@ public:
 
   ExprResult EmitExpr(const Expr *E);
   ExprResult EmitIntegerLiteral(const IntegerLiteral *E);
-  ExprResult EmitBinaryOperator(const BinaryOperator *E);
   
 
   void EmitUsualArithmeticConversions(const BinaryOperator *E,
                                       ExprResult &LHS, ExprResult &RHS);
   
+  // Unary Operators.
+  ExprResult EmitUnaryOperator(const UnaryOperator *E);
+  ExprResult EmitUnaryLNot(const UnaryOperator *E);
+  
   // Binary Operators.
+  ExprResult EmitBinaryOperator(const BinaryOperator *E);
   ExprResult EmitBinaryAdd(const BinaryOperator *E);
 };
 }  // end namespace CodeGen

@@ -97,62 +97,8 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
-  llvm::Value *BoolCondVal;
-  
-  // MOVE this to a helper method, to share with for/while, assign to bool, etc.
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CondTy)) {
-    switch (BT->getKind()) {
-    default: assert(0 && "Unknown scalar value");
-    case BuiltinType::Bool:
-      BoolCondVal = CondVal.getVal();
-      // Bool is already evaluated right.
-      assert(BoolCondVal->getType() == llvm::Type::Int1Ty &&
-             "Unexpected bool value type!");
-      break;
-    case BuiltinType::Char:
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-    case BuiltinType::Int:
-    case BuiltinType::UInt:
-    case BuiltinType::Long:
-    case BuiltinType::ULong:
-    case BuiltinType::LongLong:
-    case BuiltinType::ULongLong: {
-      // Compare against zero for integers.
-      BoolCondVal = CondVal.getVal();
-      llvm::Value *Zero = Constant::getNullValue(BoolCondVal->getType());
-      BoolCondVal = Builder.CreateICmpNE(BoolCondVal, Zero, "tobool");
-      break;
-    }
-    case BuiltinType::Float:
-    case BuiltinType::Double:
-    case BuiltinType::LongDouble: {
-      // Compare against 0.0 for fp scalars.
-      BoolCondVal = CondVal.getVal();
-      llvm::Value *Zero = Constant::getNullValue(BoolCondVal->getType());
-      // FIXME: llvm-gcc produces a une comparison: validate this is right.
-      BoolCondVal = Builder.CreateFCmpUNE(BoolCondVal, Zero, "tobool");
-      break;
-    }
-      
-    case BuiltinType::FloatComplex:
-    case BuiltinType::DoubleComplex:
-    case BuiltinType::LongDoubleComplex:
-      assert(0 && "comparisons against complex not implemented yet");
-    }
-  } else if (isa<PointerType>(CondTy)) {
-    BoolCondVal = CondVal.getVal();
-    llvm::Value *NullPtr = Constant::getNullValue(BoolCondVal->getType());
-    BoolCondVal = Builder.CreateICmpNE(BoolCondVal, NullPtr, "tobool");
-    
-  } else {
-    const TagType *TT = cast<TagType>(CondTy);
-    assert(TT->getDecl()->getKind() == Decl::Enum && "Unknown scalar type");
-    // Compare against zero.
-    BoolCondVal = CondVal.getVal();
-    llvm::Value *Zero = Constant::getNullValue(BoolCondVal->getType());
-    BoolCondVal = Builder.CreateICmpNE(BoolCondVal, Zero, "tobool");
-  }
+  llvm::Value *BoolCondVal =
+    EvaluateScalarValueToBool(CondVal, S.getCond()->getType());
   
   BasicBlock *ContBlock = new BasicBlock("ifend");
   BasicBlock *ThenBlock = new BasicBlock("ifthen");
