@@ -69,11 +69,12 @@ public:
 /// the first statement can be an expression or a declaration.
 ///
 class DeclStmt : public Stmt {
-  Decl *BlockVarOrTypedefDecl;
+  Decl *TheDecl;
 public:
-  DeclStmt(Decl *D) : Stmt(DeclStmtClass), BlockVarOrTypedefDecl(D) {}
+  DeclStmt(Decl *D) : Stmt(DeclStmtClass), TheDecl(D) {}
   
-  Decl *getDecl() const { return BlockVarOrTypedefDecl; }
+  const Decl *getDecl() const { return TheDecl; }
+  Decl *getDecl() { return TheDecl; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -353,6 +354,7 @@ class ReturnStmt : public Stmt {
 public:
   ReturnStmt(Expr *E = 0) : Stmt(ReturnStmtClass), RetExpr(E) {}
   
+  const Expr *getRetValue() const { return RetExpr; }
   Expr *getRetValue() { return RetExpr; }
   
   virtual void visit(StmtVisitor &Visitor);
