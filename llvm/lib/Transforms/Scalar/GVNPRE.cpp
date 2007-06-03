@@ -36,6 +36,23 @@
 #include <set>
 using namespace llvm;
 
+struct ExprLT {
+  bool operator()(Value* left, Value* right) {
+    if (!isa<BinaryOperator>(left) || !isa<BinaryOperator>(right))
+      return left < right;
+    
+    BinaryOperator* BO1 = cast<BinaryOperator>(left);
+    BinaryOperator* BO2 = cast<BinaryOperator>(right);
+    
+    if ((*this)(BO1->getOperand(0), BO2->getOperand(0)))
+      return true;
+    else if ((*this)(BO2->getOperand(0), BO1->getOperand(0)))
+      return false;
+    else
+      return (*this)(BO1->getOperand(1), BO2->getOperand(1));
+  }
+};
+
 namespace {
 
   class VISIBILITY_HIDDEN GVNPRE : public FunctionPass {
@@ -46,49 +63,7 @@ namespace {
 
   private:
     uint32_t nextValueNumber;
-  
-    struct Expression {
-      char opcode;
-      Value* value;
-      uint32_t lhs;
-      uint32_t rhs;
-      
-      bool operator<(const Expression& other) const {
-        if (opcode < other.opcode)
-          return true;
-        else if (other.opcode < opcode)
-          return false;
-        
-        if (opcode == 0) {
-          return value < other.value;
-        } else {
-          if (lhs < other.lhs)
-            return true;
-          else if (other.lhs < lhs)
-            return false;
-          else
-            return rhs < other.rhs;
-        }
-      }
-      
-      bool operator==(const Expression& other) const {
-        if (opcode != other.opcode)
-          return false;
-        
-        if (value != other.value)
-          return false;
-        
-        if (lhs != other.lhs)
-          return false;
-          
-        if (rhs != other.rhs)
-          return false;
-        
-        return true;
-      }
-    };
-    
-    typedef std::map<Expression, uint32_t> ValueTable;
+    typedef std::map<Value*, uint32_t, ExprLT> ValueTable;
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -98,30 +73,27 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(ValueTable& VN, std::set<Expression>& s);
-    void clean(ValueTable VN, std::set<Expression>& set);
-    Expression add(ValueTable& VN, std::set<Expression>& MS, Instruction* V);
+    void dump(ValueTable& VN, std::set<Value*, ExprLT>& s);
+    void clean(ValueTable VN, std::set<Value*, ExprLT>& set);
+    bool add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V);
     ValueTable::iterator lookup(ValueTable& VN, Value* V);
-    Expression buildExpression(ValueTable& VN, Value* V);
-    std::set<Expression>::iterator find_leader(ValueTable VN, 
-                                               std::set<Expression>& vals,
-                                               uint32_t v);
-    void phi_translate(ValueTable& VN, std::set<Expression>& MS,
-                       std::set<Expression>& anticIn, BasicBlock* B,
-                       std::set<Expression>& out);
+    Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, uint32_t v);
+    void phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
+                       std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
+                       std::set<Value*, ExprLT>& out);
     
-    void topo_sort(ValueTable& VN, std::set<Expression>& set,
-                   std::vector<Expression>& vec);
+    void topo_sort(ValueTable& VN, std::set<Value*, ExprLT>& set,
+                   std::vector<Value*>& vec);
     
     // For a given block, calculate the generated expressions, temporaries,
     // and the AVAIL_OUT set
-    void CalculateAvailOut(ValueTable& VN, std::set<Expression>& MS,
+    void CalculateAvailOut(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                        DominatorTree::Node* DI,
-                       std::set<Expression>& currExps,
+                       std::set<Value*, ExprLT>& currExps,
                        std::set<PHINode*>& currPhis,
-                       std::set<Expression>& currTemps,
-                       std::set<Expression>& currAvail,
-                       std::map<BasicBlock*, std::set<Expression> > availOut);
+                       std::set<Value*, ExprLT>& currTemps,
+                       std::set<Value*, ExprLT>& currAvail,
+                       std::map<BasicBlock*, std::set<Value*, ExprLT> > availOut);
   
   };
   
@@ -134,269 +106,173 @@ FunctionPass *llvm::createGVNPREPass() { return new GVNPRE(); }
 RegisterPass<GVNPRE> X("gvnpre",
                        "Global Value Numbering/Partial Redundancy Elimination");
 
-// Given a Value, build an Expression to represent it
-GVNPRE::Expression GVNPRE::buildExpression(ValueTable& VN, Value* V) {
-  if (Instruction* I = dyn_cast<Instruction>(V)) {
-    Expression e;
-    
-    switch (I->getOpcode()) {
-    case 7:
-      e.opcode = 1; // ADD
-      break;
-    case 8:
-      e.opcode = 2; // SUB
-      break;
-    case 9:
-      e.opcode = 3; // MUL
-      break;
-    case 10:
-      e.opcode = 4; // UDIV
-      break;
-    case 11:
-      e.opcode = 5; // SDIV
-      break;
-    case 12:
-      e.opcode = 6; // FDIV
-      break;
-    case 13:
-      e.opcode = 7; // UREM
-      break;
-    case 14:
-      e.opcode = 8; // SREM
-      break;
-    case 15:
-      e.opcode = 9; // FREM
-      break;
-    default:
-     e.opcode = 0; // OPAQUE
-     e.lhs = 0;
-     e.rhs = 0;
-     e.value = V;
-     return e;
-    }
-    
-    e.value = 0;
-    
-    ValueTable::iterator lhs = lookup(VN, I->getOperand(0));
-    if (lhs == VN.end()) {
-      Expression lhsExp = buildExpression(VN, I->getOperand(0));
-      VN.insert(std::make_pair(lhsExp, nextValueNumber));
-      e.lhs = nextValueNumber;
-      nextValueNumber++;
-    } else
-      e.lhs = lhs->second;
-    ValueTable::iterator rhs = lookup(VN, I->getOperand(1));
-    if (rhs == VN.end()) {
-      Expression rhsExp = buildExpression(VN, I->getOperand(1));
-      VN.insert(std::make_pair(rhsExp, nextValueNumber));
-      e.rhs = nextValueNumber;
-      nextValueNumber++;
-    } else
-      e.rhs = rhs->second;
-  
-    return e;
-  } else {
-    Expression e;
-    e.opcode = 0;
-    e.value = V;
-    e.lhs = 0;
-    e.rhs = 0;
-    
-    return e;
-  }
-}
 
-GVNPRE::Expression GVNPRE::add(ValueTable& VN, std::set<Expression>& MS,
-                               Instruction* V) {
-  Expression e = buildExpression(VN, V);
-  std::pair<ValueTable::iterator, bool> ret = VN.insert(std::make_pair(e, nextValueNumber));
+
+bool GVNPRE::add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V) {
+  std::pair<ValueTable::iterator, bool> ret = VN.insert(std::make_pair(V, nextValueNumber));
   if (ret.second)
     nextValueNumber++;
-  if (e.opcode != 0 || (e.opcode == 0 && isa<PHINode>(e.value)))
-    MS.insert(e);
-  return e;
+  if (isa<BinaryOperator>(V) || isa<PHINode>(V))
+    MS.insert(V);
+  return ret.second;
 }
 
 GVNPRE::ValueTable::iterator GVNPRE::lookup(ValueTable& VN, Value* V) {
-  Expression e = buildExpression(VN, V);
-  return VN.find(e);
+  return VN.find(V);
 }
 
-std::set<GVNPRE::Expression>::iterator GVNPRE::find_leader(GVNPRE::ValueTable VN,
-                           std::set<GVNPRE::Expression>& vals,
+Value* GVNPRE::find_leader(GVNPRE::ValueTable VN,
+                           std::set<Value*, ExprLT>& vals,
                            uint32_t v) {
-  for (std::set<Expression>::iterator I = vals.begin(), E = vals.end();
+  for (std::set<Value*, ExprLT>::iterator I = vals.begin(), E = vals.end();
        I != E; ++I)
     if (VN[*I] == v)
-      return I;
+      return *I;
   
-  return vals.end();
+  return 0;
 }
 
 void GVNPRE::phi_translate(GVNPRE::ValueTable& VN,
-                           std::set<GVNPRE::Expression>& MS,
-                           std::set<GVNPRE::Expression>& anticIn, BasicBlock* B,
-                           std::set<GVNPRE::Expression>& out) {
+                           std::set<Value*, ExprLT>& MS,
+                           std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
+                           std::set<Value*, ExprLT>& out) {
   BasicBlock* succ = B->getTerminator()->getSuccessor(0);
   
-  for (std::set<Expression>::iterator I = anticIn.begin(), E = anticIn.end();
+  for (std::set<Value*, ExprLT>::iterator I = anticIn.begin(), E = anticIn.end();
        I != E; ++I) {
-    if (I->opcode == 0) {
-      Value *v = I->value;
-      if (PHINode* p = dyn_cast<PHINode>(v)) {
+    if (!isa<BinaryOperator>(*I)) {
+      if (PHINode* p = dyn_cast<PHINode>(*I)) {
         if (p->getParent() == succ)
-          out.insert(buildExpression(VN, p->getIncomingValueForBlock(B)));
+          out.insert(p);
       } else {
         out.insert(*I);
       }
     } else {
-      std::set<Expression>::iterator lhs_it = find_leader(VN, anticIn, I->lhs);
-      if (lhs_it == anticIn.end())
+      BinaryOperator* BO = cast<BinaryOperator>(*I);
+      Value* lhs = find_leader(VN, anticIn, VN[BO->getOperand(0)]);
+      if (lhs == 0)
         continue;
       
-      Expression lhs = *lhs_it;
-      if (lhs.value != 0)
-        if (PHINode* p = dyn_cast<PHINode>(lhs.value))
-          if (p->getParent() == succ) {
-            Expression t = buildExpression(VN, p->getIncomingValueForBlock(B));
-            lhs.opcode = t.opcode;
-            lhs.value = t.value;
-            lhs.lhs = t.lhs;
-            lhs.rhs = t.rhs;
-            
-            out.insert(t);
-          }
+      if (PHINode* p = dyn_cast<PHINode>(lhs))
+        if (p->getParent() == succ) {
+          lhs = p->getIncomingValueForBlock(B);
+          out.insert(lhs);
+        }
       
-      std::set<Expression>::iterator rhs_it = find_leader(VN, anticIn, I->rhs);
-      if (rhs_it == anticIn.end())
+      Value* rhs = find_leader(VN, anticIn, VN[BO->getOperand(1)]);
+      if (rhs == 0)
         continue;
       
-      Expression rhs = *rhs_it;
-      if (rhs.value != 0)
-        if (PHINode* p = dyn_cast<PHINode>(rhs.value))
-          if (p->getParent() == succ) {
-            Expression t = buildExpression(VN, p->getIncomingValueForBlock(B));
-            rhs.opcode = t.opcode;
-            rhs.value = t.value;
-            rhs.lhs = t.lhs;
-            rhs.rhs = t.rhs;
-            
-            out.insert(t);
-          }
+      if (PHINode* p = dyn_cast<PHINode>(rhs))
+        if (p->getParent() == succ) {
+          rhs = p->getIncomingValueForBlock(B);
+          out.insert(rhs);
+        }
       
-      Expression e;
-      e.opcode = I->opcode;
-      e.value = 0;
-      e.lhs = VN[lhs];
-      e.rhs = VN[rhs];
+      if (lhs != BO->getOperand(0) || rhs != BO->getOperand(1)) {
+        BO = BinaryOperator::create(BO->getOpcode(), lhs, rhs, BO->getName()+".gvnpre");
+        if (VN.insert(std::make_pair(BO, nextValueNumber)).second)
+          nextValueNumber++;
+        MS.insert(BO);
+      }
       
-      if (VN.insert(std::make_pair(e, nextValueNumber)).second)
-        nextValueNumber++;
-      MS.insert(e);
+      out.insert(BO);
+      
     }
   }
 }
 
 // Remove all expressions whose operands are not themselves in the set
-void GVNPRE::clean(GVNPRE::ValueTable VN, std::set<GVNPRE::Expression>& set) {
-  std::vector<Expression> worklist;
+void GVNPRE::clean(GVNPRE::ValueTable VN, std::set<Value*, ExprLT>& set) {
+  std::vector<Value*> worklist;
   topo_sort(VN, set, worklist);
   
   while (!worklist.empty()) {
-    Expression e = worklist.back();
+    Value* v = worklist.back();
     worklist.pop_back();
     
-    if (e.opcode == 0) // OPAQUE
-      continue;
+    if (BinaryOperator* BO = dyn_cast<BinaryOperator>(v)) {   
+      bool lhsValid = false;
+      for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN[*I] == VN[BO->getOperand(0)]);
+          lhsValid = true;
+    
+      bool rhsValid = false;
+      for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN[*I] == VN[BO->getOperand(1)]);
+          rhsValid = true;
       
-    bool lhsValid = false;
-    for (std::set<Expression>::iterator I = set.begin(), E = set.end();
-         I != E; ++I)
-      if (VN[*I] == e.lhs);
-        lhsValid = true;
-          
-    bool rhsValid = false;
-    for (std::set<Expression>::iterator I = set.begin(), E = set.end();
-         I != E; ++I)
-      if (VN[*I] == e.rhs);
-        rhsValid = true;
-      
-    if (!lhsValid || !rhsValid)
-      set.erase(e);
+      if (!lhsValid || !rhsValid)
+        set.erase(BO);
+    }
   }
 }
 
 void GVNPRE::topo_sort(GVNPRE::ValueTable& VN,
-                       std::set<GVNPRE::Expression>& set,
-                       std::vector<GVNPRE::Expression>& vec) {
-  std::set<Expression> toErase;               
-  for (std::set<Expression>::iterator I = set.begin(), E = set.end();
+                       std::set<Value*, ExprLT>& set,
+                       std::vector<Value*>& vec) {
+  std::set<Value*, ExprLT> toErase;               
+  for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
        I != E; ++I) {
-    for (std::set<Expression>::iterator SI = set.begin(); SI != E; ++SI) {
-      if (I->lhs == VN[*SI] || I->rhs == VN[*SI]) {
-        toErase.insert(*SI);
-      }
+    if (BinaryOperator* BO = dyn_cast<BinaryOperator>(*I))
+      for (std::set<Value*, ExprLT>::iterator SI = set.begin(); SI != E; ++SI) {
+        if (VN[BO->getOperand(0)] == VN[*SI] || VN[BO->getOperand(1)] == VN[*SI]) {
+          toErase.insert(BO);
+        }
     }
   }
   
-  std::vector<Expression> Q;
-  std::insert_iterator<std::vector<Expression> > q_ins(Q, Q.begin());
+  std::vector<Value*> Q;
+  std::insert_iterator<std::vector<Value*> > q_ins(Q, Q.begin());
   std::set_difference(set.begin(), set.end(),
                      toErase.begin(), toErase.end(),
-                     q_ins);
+                     q_ins, ExprLT());
   
-  std::set<Expression> visited;
+  std::set<Value*, ExprLT> visited;
   while (!Q.empty()) {
-    Expression e = Q.back();
-    
-    if (e.opcode == 0) {
+    Value* e = Q.back();
+  
+    if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
+      Value* l = find_leader(VN, set, VN[BO->getOperand(0)]);
+      Value* r = find_leader(VN, set, VN[BO->getOperand(1)]);
+      
+      if (l != 0 && visited.find(l) == visited.end())
+        Q.push_back(l);
+      else if (r != 0 && visited.find(r) == visited.end())
+        Q.push_back(r);
+      else {
+        vec.push_back(e);
+        visited.insert(e);
+        Q.pop_back();
+      }
+    } else {
       visited.insert(e);
       vec.push_back(e);
-      Q.pop_back();
-      continue;
-    }
-    
-    std::set<Expression>::iterator l = find_leader(VN, set, e.lhs);
-    std::set<Expression>::iterator r = find_leader(VN, set, e.rhs);
-    
-    if (l != set.end() && visited.find(*l) == visited.end())
-      Q.push_back(*l);
-    else if (r != set.end() && visited.find(*r) == visited.end())
-      Q.push_back(*r);
-    else {
-      vec.push_back(e);
-      visited.insert(e);
       Q.pop_back();
     }
   }
 }
 
-void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<GVNPRE::Expression>& s) {
-  std::vector<Expression> sorted;
+void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>& s) {
+  std::vector<Value*> sorted;
   topo_sort(VN, s, sorted);
   DOUT << "{ ";
-  for (std::vector<Expression>::iterator I = sorted.begin(), E = sorted.end();
+  for (std::vector<Value*>::iterator I = sorted.begin(), E = sorted.end();
        I != E; ++I) {
-    DOUT << VN[*I] << ": ";
-    DOUT << "( ";
-    DOUT << (char)(I->opcode+48);
-    DOUT << ", ";
-    if (I->value == 0)
-      DOUT << "0";
-    else
-      DEBUG(I->value->dump());
-    DOUT << ", value." << I->lhs << ", value." << I->rhs << " ) ";
+    DEBUG((*I)->dump());
   }
   DOUT << "}\n\n";
 }
 
-void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Expression>& MS,
+void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>& MS,
                        DominatorTree::Node* DI,
-                       std::set<Expression>& currExps,
+                       std::set<Value*, ExprLT>& currExps,
                        std::set<PHINode*>& currPhis,
-                       std::set<Expression>& currTemps,
-                       std::set<Expression>& currAvail,
-                       std::map<BasicBlock*, std::set<Expression> > availOut) {
+                       std::set<Value*, ExprLT>& currTemps,
+                       std::set<Value*, ExprLT>& currAvail,
+                       std::map<BasicBlock*, std::set<Value*, ExprLT> > availOut) {
   
   BasicBlock* BB = DI->getBlock();
   
@@ -416,36 +292,37 @@ void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Expression>& MS,
     
     // Handle binary ops...
     } else if (BinaryOperator* BO = dyn_cast<BinaryOperator>(BI)) {
-      Expression leftValue = buildExpression(VN, BO->getOperand(0));
-      Expression rightValue = buildExpression(VN, BO->getOperand(1));
+      Value* leftValue = BO->getOperand(0);
+      Value* rightValue = BO->getOperand(1);
       
-      Expression e = add(VN, MS, BO);
+      add(VN, MS, BO);
       
       currExps.insert(leftValue);
       currExps.insert(rightValue);
-      currExps.insert(e);
+      currExps.insert(BO);
       
-      currTemps.insert(e);
+      currTemps.insert(BO);
         
     // Handle unsupported ops
-    } else {
-      Expression e = add(VN, MS, BI);
-      currTemps.insert(e);
+    } else if (!BI->isTerminator()){
+      add(VN, MS, BI);
+      currTemps.insert(BI);
     }
-      
-    currAvail.insert(buildExpression(VN, BI));
+    
+    if (!BI->isTerminator())
+      currAvail.insert(BI);
   }
 }
 
 bool GVNPRE::runOnFunction(Function &F) {
   ValueTable VN;
-  std::set<Expression> maximalSet;
+  std::set<Value*, ExprLT> maximalSet;
 
-  std::map<BasicBlock*, std::set<Expression> > generatedExpressions;
+  std::map<BasicBlock*, std::set<Value*, ExprLT> > generatedExpressions;
   std::map<BasicBlock*, std::set<PHINode*> > generatedPhis;
-  std::map<BasicBlock*, std::set<Expression> > generatedTemporaries;
-  std::map<BasicBlock*, std::set<Expression> > availableOut;
-  std::map<BasicBlock*, std::set<Expression> > anticipatedIn;
+  std::map<BasicBlock*, std::set<Value*, ExprLT> > generatedTemporaries;
+  std::map<BasicBlock*, std::set<Value*, ExprLT> > availableOut;
+  std::map<BasicBlock*, std::set<Value*, ExprLT> > anticipatedIn;
   
   DominatorTree &DT = getAnalysis<DominatorTree>();   
   
@@ -456,10 +333,10 @@ bool GVNPRE::runOnFunction(Function &F) {
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     
     // Get the sets to update for this block
-    std::set<Expression>& currExps = generatedExpressions[DI->getBlock()];
+    std::set<Value*, ExprLT>& currExps = generatedExpressions[DI->getBlock()];
     std::set<PHINode*>& currPhis = generatedPhis[DI->getBlock()];
-    std::set<Expression>& currTemps = generatedTemporaries[DI->getBlock()];
-    std::set<Expression>& currAvail = availableOut[DI->getBlock()];     
+    std::set<Value*, ExprLT>& currTemps = generatedTemporaries[DI->getBlock()];
+    std::set<Value*, ExprLT>& currAvail = availableOut[DI->getBlock()];     
     
     CalculateAvailOut(VN, maximalSet, *DI, currExps, currPhis,
                       currTemps, currAvail, availableOut);
@@ -475,7 +352,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   unsigned iterations = 0;
   while (changed) {
     changed = false;
-    std::set<Expression> anticOut;
+    std::set<Value*, ExprLT> anticOut;
     
     // Top-down walk of the postdominator tree
     for (df_iterator<PostDominatorTree::Node*> PDI = 
@@ -485,8 +362,8 @@ bool GVNPRE::runOnFunction(Function &F) {
       
       visited.insert(BB);
       
-      std::set<Expression>& anticIn = anticipatedIn[BB];
-      std::set<Expression> old (anticIn.begin(), anticIn.end());
+      std::set<Value*, ExprLT>& anticIn = anticipatedIn[BB];
+      std::set<Value*, ExprLT> old (anticIn.begin(), anticIn.end());
       
       if (BB->getTerminator()->getNumSuccessors() == 1) {
          if (visited.find(BB) == visited.end())
@@ -496,42 +373,42 @@ bool GVNPRE::runOnFunction(Function &F) {
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
         for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
-          std::set<Expression> temp;
+          std::set<Value*, ExprLT> temp;
           if (visited.find(currSucc) == visited.end())
             temp.insert(maximalSet.begin(), maximalSet.end());
           else
             temp.insert(anticIn.begin(), anticIn.end());
        
           anticIn.clear();
-          std::insert_iterator<std::set<Expression> >  ai_ins(anticIn,
+          std::insert_iterator<std::set<Value*, ExprLT> >  ai_ins(anticIn,
                                                        anticIn.begin());
                                                        
           std::set_difference(anticipatedIn[currSucc].begin(),
                               anticipatedIn[currSucc].end(),
                               temp.begin(),
                               temp.end(),
-                              ai_ins);
+                              ai_ins,
+                              ExprLT());
         }
       }
       
-      std::set<Expression> S;
-      std::insert_iterator<std::set<Expression> >  s_ins(S, S.begin());
+      std::set<Value*, ExprLT> S;
+      std::insert_iterator<std::set<Value*, ExprLT> >  s_ins(S, S.begin());
       std::set_union(anticOut.begin(), anticOut.end(),
                      generatedExpressions[BB].begin(),
                      generatedExpressions[BB].end(),
-                     s_ins);
+                     s_ins, ExprLT());
       
       anticIn.clear();
-      std::insert_iterator<std::set<Expression> >  antic_ins(anticIn, 
+      std::insert_iterator<std::set<Value*, ExprLT> >  antic_ins(anticIn, 
                                                              anticIn.begin());
       std::set_difference(S.begin(), S.end(),
                           generatedTemporaries[BB].begin(),
                           generatedTemporaries[BB].end(),
-                          antic_ins);
+                          antic_ins,
+                          ExprLT());
       
       clean(VN, anticIn);
-      
-      
       
       if (old != anticIn)
         changed = true;
@@ -556,6 +433,10 @@ bool GVNPRE::runOnFunction(Function &F) {
     
     DOUT << "ANTIC_IN: ";
     dump(VN, anticipatedIn[I]);
+    DOUT << "\n";
+    
+    DOUT << "AVAIL_OUT: ";
+    dump(VN, availableOut[I]);
     DOUT << "\n";
   }
   
