@@ -73,7 +73,8 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(ValueTable& VN, std::set<Value*, ExprLT>& s);
+    void dump(ValueTable& VN, std::set<Value*>& s);
+    void dump_unique(ValueTable& VN, std::set<Value*, ExprLT>& s);
     void clean(ValueTable VN, std::set<Value*, ExprLT>& set);
     bool add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V);
     Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, uint32_t v);
@@ -90,7 +91,7 @@ namespace {
                        DominatorTree::DomTreeNode* DI,
                        std::set<Value*, ExprLT>& currExps,
                        std::set<PHINode*>& currPhis,
-                       std::set<Value*, ExprLT>& currTemps,
+                       std::set<Value*>& currTemps,
                        std::set<Value*, ExprLT>& currAvail,
                        std::map<BasicBlock*, std::set<Value*, ExprLT> > availOut);
   
@@ -250,11 +251,19 @@ void GVNPRE::topo_sort(GVNPRE::ValueTable& VN,
   }
 }
 
-void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>& s) {
-  std::vector<Value*> sorted;
-  topo_sort(VN, s, sorted);
+
+void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<Value*>& s) {
   DOUT << "{ ";
-  for (std::vector<Value*>::iterator I = sorted.begin(), E = sorted.end();
+  for (std::set<Value*>::iterator I = s.begin(), E = s.end();
+       I != E; ++I) {
+    DEBUG((*I)->dump());
+  }
+  DOUT << "}\n\n";
+}
+
+void GVNPRE::dump_unique(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>& s) {
+  DOUT << "{ ";
+  for (std::set<Value*>::iterator I = s.begin(), E = s.end();
        I != E; ++I) {
     DEBUG((*I)->dump());
   }
@@ -265,7 +274,7 @@ void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>&
                        DominatorTree::DomTreeNode* DI,
                        std::set<Value*, ExprLT>& currExps,
                        std::set<PHINode*>& currPhis,
-                       std::set<Value*, ExprLT>& currTemps,
+                       std::set<Value*>& currTemps,
                        std::set<Value*, ExprLT>& currAvail,
                        std::map<BasicBlock*, std::set<Value*, ExprLT> > availOut) {
   
@@ -297,7 +306,7 @@ void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>&
       currExps.insert(BO);
       
       currTemps.insert(BO);
-        
+      
     // Handle unsupported ops
     } else if (!BI->isTerminator()){
       add(VN, MS, BI);
@@ -315,7 +324,7 @@ bool GVNPRE::runOnFunction(Function &F) {
 
   std::map<BasicBlock*, std::set<Value*, ExprLT> > generatedExpressions;
   std::map<BasicBlock*, std::set<PHINode*> > generatedPhis;
-  std::map<BasicBlock*, std::set<Value*, ExprLT> > generatedTemporaries;
+  std::map<BasicBlock*, std::set<Value*> > generatedTemporaries;
   std::map<BasicBlock*, std::set<Value*, ExprLT> > availableOut;
   std::map<BasicBlock*, std::set<Value*, ExprLT> > anticipatedIn;
   
@@ -330,7 +339,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     // Get the sets to update for this block
     std::set<Value*, ExprLT>& currExps = generatedExpressions[DI->getBlock()];
     std::set<PHINode*>& currPhis = generatedPhis[DI->getBlock()];
-    std::set<Value*, ExprLT>& currTemps = generatedTemporaries[DI->getBlock()];
+    std::set<Value*>& currTemps = generatedTemporaries[DI->getBlock()];
     std::set<Value*, ExprLT>& currAvail = availableOut[DI->getBlock()];     
     
     CalculateAvailOut(VN, maximalSet, *DI, currExps, currPhis,
@@ -423,15 +432,15 @@ bool GVNPRE::runOnFunction(Function &F) {
     DOUT << "\n";
     
     DOUT << "EXP_GEN: ";
-    dump(VN, generatedExpressions[I]);
+    dump_unique(VN, generatedExpressions[I]);
     DOUT << "\n";
     
     DOUT << "ANTIC_IN: ";
-    dump(VN, anticipatedIn[I]);
+    dump_unique(VN, anticipatedIn[I]);
     DOUT << "\n";
     
     DOUT << "AVAIL_OUT: ";
-    dump(VN, availableOut[I]);
+    dump_unique(VN, availableOut[I]);
     DOUT << "\n";
   }
   
