@@ -228,7 +228,7 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
 bool Type::isIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::ULongLong;
+           BT->getKind() <= BuiltinType::LongLong;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
