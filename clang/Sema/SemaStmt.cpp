@@ -50,9 +50,10 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   if (!LHSVal->isIntegerConstantExpr(&ExpLoc))
     return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
                 LHSVal->getSourceRange());
-  }
 
-  return new CaseStmt((Expr*)LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
+  // FIXME: SEMA for RHS of case range.
+
+  return new CaseStmt(LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
 }
 
 Action::StmtResult
