@@ -185,8 +185,8 @@ public:
   ExprResult EmitIntegerLiteral(const IntegerLiteral *E);
   
   ExprResult EmitExprWithUsualUnaryConversions(const Expr *E, QualType &ResTy);
-  void EmitUsualArithmeticConversions(const BinaryOperator *E,
-                                      ExprResult &LHS, ExprResult &RHS);
+  QualType EmitUsualArithmeticConversions(const BinaryOperator *E,
+                                          ExprResult &LHS, ExprResult &RHS);
   
   // Unary Operators.
   ExprResult EmitUnaryOperator(const UnaryOperator *E);

@@ -243,13 +243,109 @@ ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
 //===--------------------------------------------------------------------===//
 
 // FIXME describe.
-void CodeGenFunction::EmitUsualArithmeticConversions(const BinaryOperator *E,
-                                                     ExprResult &LHS, 
-                                                     ExprResult &RHS) {
+QualType CodeGenFunction::
+EmitUsualArithmeticConversions(const BinaryOperator *E, ExprResult &LHS, 
+                               ExprResult &RHS) {
   QualType LHSType, RHSType;
   LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), LHSType);
   RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSType);
 
+  // If both operands have the same source type, we're done already.
+  if (LHSType == RHSType) return LHSType;
+
+  // If either side is a non-arithmetic type (e.g. a pointer), we are done.
+  // The caller can deal with this (e.g. pointer + int).
+  if (!LHSType->isArithmeticType() || !RHSType->isArithmeticType())
+    return LHSType;
+
+  // At this point, we have two different arithmetic types. 
+  
+  // Handle complex types first (C99 6.3.1.8p1).
+  if (LHSType->isComplexType() || RHSType->isComplexType()) {
+    assert(0 && "FIXME: complex types unimp");
+#if 0
+    // if we have an integer operand, the result is the complex type.
+    if (rhs->isIntegerType())
+      return lhs;
+    if (lhs->isIntegerType())
+      return rhs;
+    return Context.maxComplexType(lhs, rhs);
+#endif
+  }
+  
+  // If neither operand is complex, they must be scalars.
+  llvm::Value *LHSV = LHS.getVal();
+  llvm::Value *RHSV = RHS.getVal();
+  
+  // If the LLVM types are already equal, then they only differed in sign, or it
+  // was something like char/signed char or double/long double.
+  if (LHSV->getType() == RHSV->getType())
+    return LHSType;
+  
+  // Now handle "real" floating types (i.e. float, double, long double).
+  if (LHSType->isRealFloatingType() || RHSType->isRealFloatingType()) {
+    // if we have an integer operand, the result is the real floating type, and
+    // the integer converts to FP.
+    if (RHSType->isIntegerType()) {
+      // Promote the RHS to an FP type of the LHS, with the sign following the
+      // RHS.
+      if (RHSType->isSignedIntegerType())
+        RHS = ExprResult::get(Builder.CreateSIToFP(RHSV, LHSV->getType(),
+                                                   "promote"));
+      else
+        RHS = ExprResult::get(Builder.CreateUIToFP(RHSV, LHSV->getType(),
+                                                   "promote"));
+      return LHSType;
+    }
+    
+    if (LHSType->isIntegerType()) {
+      // Promote the LHS to an FP type of the RHS, with the sign following the
+      // LHS.
+      if (LHSType->isSignedIntegerType())
+        LHS = ExprResult::get(Builder.CreateSIToFP(LHSV, RHSV->getType(),
+                                                   "promote"));
+      else
+        LHS = ExprResult::get(Builder.CreateUIToFP(LHSV, RHSV->getType(),
+                                                   "promote"));
+      return RHSType;
+    }
+    
+    // Otherwise, they are two FP types.  Promote the smaller operand to the
+    // bigger result.
+    QualType BiggerType = ASTContext::maxFloatingType(LHSType, RHSType);
+    
+    if (BiggerType == LHSType)
+      RHS = ExprResult::get(Builder.CreateFPExt(RHSV, LHSV->getType(),
+                                                "promote"));
+    else
+      LHS = ExprResult::get(Builder.CreateFPExt(LHSV, RHSV->getType(),
+                                                "promote"));
+    return BiggerType;
+  }
+  
+  // Finally, we have two integer types that are different according to C.  Do
+  // a sign or zero extension if needed.
+  
+  // Otherwise, one type is smaller than the other.  
+  QualType ResTy = ASTContext::maxIntegerType(LHSType, RHSType);
+  
+  if (LHSType == ResTy) {
+    if (RHSType->isSignedIntegerType())
+      RHS = ExprResult::get(Builder.CreateSExt(RHSV, LHSV->getType(),
+                                               "promote"));
+    else
+      RHS = ExprResult::get(Builder.CreateZExt(RHSV, LHSV->getType(),
+                                               "promote"));
+  } else {
+    assert(RHSType == ResTy && "Unknown conversion");
+    if (LHSType->isSignedIntegerType())
+      LHS = ExprResult::get(Builder.CreateSExt(LHSV, RHSV->getType(),
+                                               "promote"));
+    else
+      LHS = ExprResult::get(Builder.CreateZExt(LHSV, RHSV->getType(),
+                                               "promote"));
+  }  
+  return ResTy;
 }
 
 
