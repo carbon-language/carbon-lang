@@ -96,7 +96,7 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
   Expr *condExpr = (Expr *)CondVal;
   assert(condExpr && "ParseIfStmt(): missing expression");
   
-  QualType condType = condExpr->getType();
+  QualType condType = UsualUnaryConversion(condExpr->getType());
   assert(!condType.isNull() && "ParseIfStmt(): missing expression type");
   
   if (!condType->isScalarType()) // C99 6.8.4.1p1
@@ -116,7 +116,7 @@ Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
   Expr *condExpr = (Expr *)Cond;
   assert(condExpr && "ParseWhileStmt(): missing expression");
   
-  QualType condType = condExpr->getType();
+  QualType condType = UsualUnaryConversion(condExpr->getType());
   assert(!condType.isNull() && "ParseWhileStmt(): missing expression type");
   
   if (!condType->isScalarType()) // C99 6.8.5p2
@@ -132,7 +132,7 @@ Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
   Expr *condExpr = (Expr *)Cond;
   assert(condExpr && "ParseDoStmt(): missing expression");
   
-  QualType condType = condExpr->getType();
+  QualType condType = UsualUnaryConversion(condExpr->getType());
   assert(!condType.isNull() && "ParseDoStmt(): missing expression type");
   
   if (!condType->isScalarType()) // C99 6.8.5p2
@@ -153,7 +153,7 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   }
   if (Second) {
     Expr *testExpr = (Expr *)Second;
-    QualType testType = testExpr->getType();
+    QualType testType = UsualUnaryConversion(testExpr->getType());
     assert(!testType.isNull() && "ParseForStmt(): missing test expression type");
     
     if (!testType->isScalarType()) // C99 6.8.5p2
