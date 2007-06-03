@@ -1986,7 +1986,7 @@ namespace {
     UnreachableBlocks UB;
     ValueRanges *VR;
 
-    std::vector<DominatorTree::Node *> WorkList;
+    std::vector<DominatorTree::DomTreeNode *> WorkList;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -2012,14 +2012,14 @@ namespace {
     class VISIBILITY_HIDDEN Forwards : public InstVisitor<Forwards> {
       friend class InstVisitor<Forwards>;
       PredicateSimplifier *PS;
-      DominatorTree::Node *DTNode;
+      DominatorTree::DomTreeNode *DTNode;
 
     public:
       InequalityGraph &IG;
       UnreachableBlocks &UB;
       ValueRanges &VR;
 
-      Forwards(PredicateSimplifier *PS, DominatorTree::Node *DTNode)
+      Forwards(PredicateSimplifier *PS, DominatorTree::DomTreeNode *DTNode)
         : PS(PS), DTNode(DTNode), IG(*PS->IG), UB(PS->UB), VR(*PS->VR) {}
 
       void visitTerminatorInst(TerminatorInst &TI);
@@ -2040,19 +2040,19 @@ namespace {
     // Used by terminator instructions to proceed from the current basic
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
-    void proceedToSuccessors(DominatorTree::Node *Current) {
-      for (DominatorTree::Node::iterator I = Current->begin(),
+    void proceedToSuccessors(DominatorTree::DomTreeNode *Current) {
+      for (DominatorTree::DomTreeNode::iterator I = Current->begin(),
            E = Current->end(); I != E; ++I) {
         WorkList.push_back(*I);
       }
     }
 
-    void proceedToSuccessor(DominatorTree::Node *Next) {
+    void proceedToSuccessor(DominatorTree::DomTreeNode *Next) {
       WorkList.push_back(Next);
     }
 
     // Visits each instruction in the basic block.
-    void visitBasicBlock(DominatorTree::Node *Node) {
+    void visitBasicBlock(DominatorTree::DomTreeNode *Node) {
       BasicBlock *BB = Node->getBlock();
       ETNode *ET = Forest->getNodeForBlock(BB);
       DOUT << "Entering Basic Block: " << BB->getName()
@@ -2064,7 +2064,7 @@ namespace {
 
     // Tries to simplify each Instruction and add new properties to
     // the PropertySet.
-    void visitInstruction(Instruction *I, DominatorTree::Node *DT, ETNode *ET) {
+    void visitInstruction(Instruction *I, DominatorTree::DomTreeNode *DT, ETNode *ET) {
       DOUT << "Considering instruction " << *I << "\n";
       DEBUG(IG->dump());
 
@@ -2132,7 +2132,7 @@ namespace {
     WorkList.push_back(DT->getRootNode());
 
     do {
-      DominatorTree::Node *DTNode = WorkList.back();
+      DominatorTree::DomTreeNode *DTNode = WorkList.back();
       WorkList.pop_back();
       if (!UB.isDead(DTNode->getBlock())) visitBasicBlock(DTNode);
     } while (!WorkList.empty());
@@ -2164,7 +2164,7 @@ namespace {
       return;
     }
 
-    for (DominatorTree::Node::iterator I = DTNode->begin(), E = DTNode->end();
+    for (DominatorTree::DomTreeNode::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *Dest = (*I)->getBlock();
       DOUT << "Branch thinking about %" << Dest->getName()
@@ -2194,7 +2194,7 @@ namespace {
     // Set the EQProperty in each of the cases BBs, and the NEProperties
     // in the default BB.
 
-    for (DominatorTree::Node::iterator I = DTNode->begin(), E = DTNode->end();
+    for (DominatorTree::DomTreeNode::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *BB = (*I)->getBlock();
       DOUT << "Switch thinking about BB %" << BB->getName()

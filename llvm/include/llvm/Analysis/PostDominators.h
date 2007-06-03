@@ -38,7 +38,7 @@ struct PostDominatorTree : public DominatorTreeBase {
   }
 private:
   void calculate(Function &F);
-  Node *getNodeForBlock(BasicBlock *BB);
+  DomTreeNode *getNodeForBlock(BasicBlock *BB);
   unsigned DFSPass(BasicBlock *V, InfoRec &VInfo,unsigned N);
   void Compress(BasicBlock *V, InfoRec &VInfo);
   BasicBlock *Eval(BasicBlock *V);
@@ -87,7 +87,7 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
     Frontiers.clear();
     PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
     Roots = DT.getRoots();
-    if (const DominatorTree::Node *Root = DT.getRootNode())
+    if (const DominatorTree::DomTreeNode *Root = DT.getRootNode())
       calculate(DT, Root);
     return false;
   }
@@ -99,7 +99,7 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
 
 private:
   const DomSetType &calculate(const PostDominatorTree &DT,
-                              const DominatorTree::Node *Node);
+                              const DominatorTree::DomTreeNode *Node);
 };
 
 } // End llvm namespace

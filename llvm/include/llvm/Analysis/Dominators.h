@@ -61,13 +61,13 @@ public:
 ///
 class DominatorTreeBase : public DominatorBase {
 public:
-  class Node;
+  class DomTreeNode;
 protected:
-  std::map<BasicBlock*, Node*> Nodes;
+  std::map<BasicBlock*, DomTreeNode*> DomTreeNodes;
   void reset();
-  typedef std::map<BasicBlock*, Node*> NodeMapType;
+  typedef std::map<BasicBlock*, DomTreeNode*> DomTreeNodeMapType;
 
-  Node *RootNode;
+  DomTreeNode *RootNode;
 
   struct InfoRec {
     unsigned Semi;
@@ -88,16 +88,16 @@ protected:
   std::map<BasicBlock*, InfoRec> Info;
 
 public:
-  class Node {
+  class DomTreeNode {
     friend class DominatorTree;
     friend struct PostDominatorTree;
     friend class DominatorTreeBase;
     BasicBlock *TheBB;
-    Node *IDom;
-    std::vector<Node*> Children;
+    DomTreeNode *IDom;
+    std::vector<DomTreeNode*> Children;
   public:
-    typedef std::vector<Node*>::iterator iterator;
-    typedef std::vector<Node*>::const_iterator const_iterator;
+    typedef std::vector<DomTreeNode*>::iterator iterator;
+    typedef std::vector<DomTreeNode*>::const_iterator const_iterator;
 
     iterator begin()             { return Children.begin(); }
     iterator end()               { return Children.end(); }
@@ -105,14 +105,14 @@ public:
     const_iterator end()   const { return Children.end(); }
 
     inline BasicBlock *getBlock() const { return TheBB; }
-    inline Node *getIDom() const { return IDom; }
-    inline const std::vector<Node*> &getChildren() const { return Children; }
+    inline DomTreeNode *getIDom() const { return IDom; }
+    inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
 
     /// properlyDominates - Returns true iff this dominates N and this != N.
     /// Note that this is not a constant time operation!
     ///
-    bool properlyDominates(const Node *N) const {
-      const Node *IDom;
+    bool properlyDominates(const DomTreeNode *N) const {
+      const DomTreeNode *IDom;
       if (this == 0 || N == 0) return false;
       while ((IDom = N->getIDom()) != 0 && IDom != this)
         N = IDom;   // Walk up the tree
@@ -122,16 +122,16 @@ public:
     /// dominates - Returns true iff this dominates N.  Note that this is not a
     /// constant time operation!
     ///
-    inline bool dominates(const Node *N) const {
+    inline bool dominates(const DomTreeNode *N) const {
       if (N == this) return true;  // A node trivially dominates itself.
       return properlyDominates(N);
     }
     
   private:
-    inline Node(BasicBlock *BB, Node *iDom) : TheBB(BB), IDom(iDom) {}
-    inline Node *addChild(Node *C) { Children.push_back(C); return C; }
+    inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom) : TheBB(BB), IDom(iDom) {}
+    inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
 
-    void setIDom(Node *NewIDom);
+    void setIDom(DomTreeNode *NewIDom);
   };
 
 public:
@@ -144,12 +144,12 @@ public:
   /// getNode - return the (Post)DominatorTree node for the specified basic
   /// block.  This is the same as using operator[] on this class.
   ///
-  inline Node *getNode(BasicBlock *BB) const {
-    NodeMapType::const_iterator i = Nodes.find(BB);
-    return (i != Nodes.end()) ? i->second : 0;
+  inline DomTreeNode *getNode(BasicBlock *BB) const {
+    DomTreeNodeMapType::const_iterator i = DomTreeNodes.find(BB);
+    return (i != DomTreeNodes.end()) ? i->second : 0;
   }
 
-  inline Node *operator[](BasicBlock *BB) const {
+  inline DomTreeNode *operator[](BasicBlock *BB) const {
     return getNode(BB);
   }
 
@@ -160,8 +160,8 @@ public:
   /// post-dominance information must be capable of dealing with this
   /// possibility.
   ///
-  Node *getRootNode() { return RootNode; }
-  const Node *getRootNode() const { return RootNode; }
+  DomTreeNode *getRootNode() { return RootNode; }
+  const DomTreeNode *getRootNode() const { return RootNode; }
 
   //===--------------------------------------------------------------------===//
   // API to update (Post)DominatorTree information based on modifications to
@@ -171,16 +171,16 @@ public:
   /// creates a new node as a child of IDomNode, linking it into the children
   /// list of the immediate dominator.
   ///
-  Node *createNewNode(BasicBlock *BB, Node *IDomNode) {
+  DomTreeNode *createNewNode(BasicBlock *BB, DomTreeNode *IDomNode) {
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
     assert(IDomNode && "Not immediate dominator specified for block!");
-    return Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
+    return DomTreeNodes[BB] = IDomNode->addChild(new DomTreeNode(BB, IDomNode));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator
   /// tree information when a node's immediate dominator changes.
   ///
-  void changeImmediateDominator(Node *N, Node *NewIDom) {
+  void changeImmediateDominator(DomTreeNode *N, DomTreeNode *NewIDom) {
     assert(N && NewIDom && "Cannot change null node pointers!");
     N->setIDom(NewIDom);
   }
@@ -190,7 +190,7 @@ public:
   /// block.
   void removeNode(BasicBlock *BB) {
     assert(getNode(BB) && "Removing node that isn't in dominator tree.");
-    Nodes.erase(BB);
+    DomTreeNodes.erase(BB);
   }
 
   /// print - Convert to human readable form
@@ -223,7 +223,7 @@ public:
   }
 private:
   void calculate(Function& F);
-  Node *getNodeForBlock(BasicBlock *BB);
+  DomTreeNode *getNodeForBlock(BasicBlock *BB);
   unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
   void Compress(BasicBlock *V);
   BasicBlock *Eval(BasicBlock *v);
@@ -238,8 +238,8 @@ private:
 /// DominatorTree GraphTraits specialization so the DominatorTree can be
 /// iterable by generic graph iterators.
 ///
-template <> struct GraphTraits<DominatorTree::Node*> {
-  typedef DominatorTree::Node NodeType;
+template <> struct GraphTraits<DominatorTree::DomTreeNode*> {
+  typedef DominatorTree::DomTreeNode NodeType;
   typedef NodeType::iterator  ChildIteratorType;
   
   static NodeType *getEntryNode(NodeType *N) {
@@ -254,7 +254,7 @@ template <> struct GraphTraits<DominatorTree::Node*> {
 };
 
 template <> struct GraphTraits<DominatorTree*>
-  : public GraphTraits<DominatorTree::Node*> {
+  : public GraphTraits<DominatorTree::DomTreeNode*> {
   static NodeType *getEntryNode(DominatorTree *DT) {
     return DT->getRootNode();
   }
@@ -503,7 +503,7 @@ public:
   }
 private:
   const DomSetType &calculate(const DominatorTree &DT,
-                              const DominatorTree::Node *Node);
+                              const DominatorTree::DomTreeNode *Node);
 };
 
 

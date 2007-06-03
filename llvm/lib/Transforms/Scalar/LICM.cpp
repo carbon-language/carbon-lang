@@ -107,7 +107,7 @@ namespace {
     /// visit uses before definitions, allowing us to sink a loop body in one
     /// pass without iteration.
     ///
-    void SinkRegion(DominatorTree::Node *N);
+    void SinkRegion(DominatorTree::DomTreeNode *N);
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
     /// blocks dominated by the specified block, and that are in the current
@@ -115,7 +115,7 @@ namespace {
     /// visit definitions before uses, allowing us to hoist a loop body in one
     /// pass without iteration.
     ///
-    void HoistRegion(DominatorTree::Node *N);
+    void HoistRegion(DominatorTree::DomTreeNode *N);
 
     /// inSubLoop - Little predicate that returns true if the specified basic
     /// block is in a subloop of the current one, not the current one itself.
@@ -140,8 +140,8 @@ namespace {
       if (BlockInLoop == LoopHeader)
         return true;
 
-      DominatorTree::Node *BlockInLoopNode = DT->getNode(BlockInLoop);
-      DominatorTree::Node *IDom            = DT->getNode(ExitBlock);
+      DominatorTree::DomTreeNode *BlockInLoopNode = DT->getNode(BlockInLoop);
+      DominatorTree::DomTreeNode *IDom            = DT->getNode(ExitBlock);
 
       // Because the exit block is not in the loop, we know we have to get _at
       // least_ its immediate dominator.
@@ -281,7 +281,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 /// uses before definitions, allowing us to sink a loop body in one pass without
 /// iteration.
 ///
-void LICM::SinkRegion(DominatorTree::Node *N) {
+void LICM::SinkRegion(DominatorTree::DomTreeNode *N) {
   assert(N != 0 && "Null dominator tree node?");
   BasicBlock *BB = N->getBlock();
 
@@ -289,7 +289,7 @@ void LICM::SinkRegion(DominatorTree::Node *N) {
   if (!CurLoop->contains(BB)) return;
 
   // We are processing blocks in reverse dfo, so process children first...
-  const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  const std::vector<DominatorTree::DomTreeNode*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     SinkRegion(Children[i]);
 
@@ -318,7 +318,7 @@ void LICM::SinkRegion(DominatorTree::Node *N) {
 /// first order w.r.t the DominatorTree.  This allows us to visit definitions
 /// before uses, allowing us to hoist a loop body in one pass without iteration.
 ///
-void LICM::HoistRegion(DominatorTree::Node *N) {
+void LICM::HoistRegion(DominatorTree::DomTreeNode *N) {
   assert(N != 0 && "Null dominator tree node?");
   BasicBlock *BB = N->getBlock();
 
@@ -340,7 +340,7 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
         hoist(I);
       }
 
-  const std::vector<DominatorTree::Node*> &Children = N->getChildren();
+  const std::vector<DominatorTree::DomTreeNode*> &Children = N->getChildren();
   for (unsigned i = 0, e = Children.size(); i != e; ++i)
     HoistRegion(Children[i]);
 }

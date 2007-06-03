@@ -203,20 +203,20 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
   
   // Should we update DominatorTree information?
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
-    DominatorTree::Node *TINode = DT->getNode(TIBB);
+    DominatorTree::DomTreeNode *TINode = DT->getNode(TIBB);
 
     // The new block is not the immediate dominator for any other nodes, but
     // TINode is the immediate dominator for the new node.
     //
     if (TINode) {       // Don't break unreachable code!
-      DominatorTree::Node *NewBBNode = DT->createNewNode(NewBB, TINode);
-      DominatorTree::Node *DestBBNode = 0;
+      DominatorTree::DomTreeNode *NewBBNode = DT->createNewNode(NewBB, TINode);
+      DominatorTree::DomTreeNode *DestBBNode = 0;
      
       // If NewBBDominatesDestBB hasn't been computed yet, do so with DT.
       if (!OtherPreds.empty()) {
         DestBBNode = DT->getNode(DestBB);
         while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-          if (DominatorTree::Node *OPNode = DT->getNode(OtherPreds.back()))
+          if (DominatorTree::DomTreeNode *OPNode = DT->getNode(OtherPreds.back()))
             NewBBDominatesDestBB = DestBBNode->dominates(OPNode);
           OtherPreds.pop_back();
         }

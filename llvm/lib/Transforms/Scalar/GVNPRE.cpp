@@ -87,7 +87,7 @@ namespace {
     // For a given block, calculate the generated expressions, temporaries,
     // and the AVAIL_OUT set
     void CalculateAvailOut(ValueTable& VN, std::set<Value*, ExprLT>& MS,
-                       DominatorTree::Node* DI,
+                       DominatorTree::DomTreeNode* DI,
                        std::set<Value*, ExprLT>& currExps,
                        std::set<PHINode*>& currPhis,
                        std::set<Value*, ExprLT>& currTemps,
@@ -262,7 +262,7 @@ void GVNPRE::dump(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>& s) {
 }
 
 void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>& MS,
-                       DominatorTree::Node* DI,
+                       DominatorTree::DomTreeNode* DI,
                        std::set<Value*, ExprLT>& currExps,
                        std::set<PHINode*>& currPhis,
                        std::set<Value*, ExprLT>& currTemps,
@@ -324,7 +324,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   // First Phase of BuildSets - calculate AVAIL_OUT
   
   // Top-down walk of the dominator tree
-  for (df_iterator<DominatorTree::Node*> DI = df_begin(DT.getRootNode()),
+  for (df_iterator<DominatorTree::DomTreeNode*> DI = df_begin(DT.getRootNode()),
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     
     // Get the sets to update for this block
@@ -350,7 +350,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     std::set<Value*, ExprLT> anticOut;
     
     // Top-down walk of the postdominator tree
-    for (df_iterator<PostDominatorTree::Node*> PDI = 
+    for (df_iterator<PostDominatorTree::DomTreeNode*> PDI = 
          df_begin(PDT.getRootNode()), E = df_end(DT.getRootNode());
          PDI != E; ++PDI) {
       BasicBlock* BB = PDI->getBlock();

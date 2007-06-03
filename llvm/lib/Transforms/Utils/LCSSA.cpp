@@ -75,8 +75,8 @@ namespace {
     void getLoopValuesUsedOutsideLoop(Loop *L,
                                       SetVector<Instruction*> &AffectedValues);
 
-    Value *GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                            std::map<DominatorTree::Node*, Value*> &Phis);
+    Value *GetValueForBlock(DominatorTree::DomTreeNode *BB, Instruction *OrigInst,
+                            std::map<DominatorTree::DomTreeNode*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
     const bool inLoop(BasicBlock* B) {
@@ -146,16 +146,16 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
-  std::map<DominatorTree::Node*, Value*> Phis;
+  std::map<DominatorTree::DomTreeNode*, Value*> Phis;
 
-  DominatorTree::Node *InstrNode = DT->getNode(Instr->getParent());
+  DominatorTree::DomTreeNode *InstrNode = DT->getNode(Instr->getParent());
 
   // Insert the LCSSA phi's into the exit blocks (dominated by the value), and
   // add them to the Phi's map.
   for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
-    DominatorTree::Node *ExitBBNode = DT->getNode(BB);
+    DominatorTree::DomTreeNode *ExitBBNode = DT->getNode(BB);
     Value *&Phi = Phis[ExitBBNode];
     if (!Phi && InstrNode->dominates(ExitBBNode)) {
       PHINode *PN = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
@@ -229,8 +229,8 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
-Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
-                               std::map<DominatorTree::Node*, Value*> &Phis) {
+Value *LCSSA::GetValueForBlock(DominatorTree::DomTreeNode *BB, Instruction *OrigInst,
+                               std::map<DominatorTree::DomTreeNode*, Value*> &Phis) {
   // If there is no dominator info for this BB, it is unreachable.
   if (BB == 0)
     return UndefValue::get(OrigInst->getType());
@@ -239,7 +239,7 @@ Value *LCSSA::GetValueForBlock(DominatorTree::Node *BB, Instruction *OrigInst,
   Value *&V = Phis[BB];
   if (V) return V;
 
-  DominatorTree::Node *IDom = BB->getIDom();
+  DominatorTree::DomTreeNode *IDom = BB->getIDom();
 
   // Otherwise, there are two cases: we either have to insert a PHI node or we
   // don't.  We need to insert a PHI node if this block is not dominated by one
