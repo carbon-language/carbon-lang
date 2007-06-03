@@ -37,7 +37,8 @@ Value *CodeGenFunction::EvaluateScalarValueToBool(ExprResult Val, QualType Ty) {
       assert(Result->getType() == llvm::Type::Int1Ty &&
              "Unexpected bool value type!");
       return Result;
-    case BuiltinType::Char:
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
     case BuiltinType::SChar:
     case BuiltinType::UChar:
     case BuiltinType::Short:
@@ -189,8 +190,6 @@ ExprResult CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E,
   } else if (ResTy->isPromotableIntegerType()) { // C99 6.3.1.1p2
     // FIXME: this probably isn't right, pending clarification from Steve.
     llvm::Value *Val = EmitExpr(E).getVal();
-    
-    // FIXME: this doesn't handle 'char'!.
     
     // If the input is a signed integer, sign extend to the destination.
     if (ResTy->isSignedIntegerType()) {

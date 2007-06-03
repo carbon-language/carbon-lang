@@ -51,7 +51,8 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
     case BuiltinType::Void:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
-    case BuiltinType::Char:
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
     case BuiltinType::SChar:
     case BuiltinType::UChar:
       return IntegerType::get(Target.getCharWidth(Loc));

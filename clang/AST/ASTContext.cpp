@@ -110,7 +110,10 @@ void ASTContext::InitBuiltinTypes() {
   // C99 6.2.5p2.
   InitBuiltinType(BoolTy,              BuiltinType::Bool);
   // C99 6.2.5p3.
-  InitBuiltinType(CharTy,              BuiltinType::Char);
+  if (Target.isCharSigned(SourceLocation()))
+    InitBuiltinType(CharTy,            BuiltinType::Char_S);
+  else
+    InitBuiltinType(CharTy,            BuiltinType::Char_U);
   // C99 6.2.5p4.
   InitBuiltinType(SignedCharTy,        BuiltinType::SChar);
   InitBuiltinType(ShortTy,             BuiltinType::Short);
@@ -347,7 +350,8 @@ unsigned ASTContext::getIntegerBitwidth(QualType T, SourceLocation Loc) {
   switch (BT->getKind()) {
   default: assert(0 && "getIntegerBitwidth(): not a built-in integer");
   case BuiltinType::Bool:      return Target.getBoolWidth(Loc);
-  case BuiltinType::Char:
+  case BuiltinType::Char_S:
+  case BuiltinType::Char_U:
   case BuiltinType::SChar:
   case BuiltinType::UChar:     return Target.getCharWidth(Loc);
   case BuiltinType::Short:
@@ -375,7 +379,8 @@ static int getIntegerRank(QualType t) {
     assert(0 && "getIntegerRank(): not a built-in integer");
   case BuiltinType::Bool:
     return 1;
-  case BuiltinType::Char:
+  case BuiltinType::Char_S:
+  case BuiltinType::Char_U:
   case BuiltinType::SChar:
   case BuiltinType::UChar:
     return 2;
@@ -448,6 +453,8 @@ QualType ASTContext::maxFloatingType(QualType lt, QualType rt) {
 // maxIntegerType - Returns the highest ranked integer type. Handles 3 case:
 // unsigned/unsigned, signed/signed, signed/unsigned. C99 6.3.1.8p1.
 QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
+  if (lhs == rhs) return lhs;
+  
   bool t1Unsigned = lhs->isUnsignedIntegerType();
   bool t2Unsigned = rhs->isUnsignedIntegerType();
   

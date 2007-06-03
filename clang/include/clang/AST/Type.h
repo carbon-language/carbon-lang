@@ -233,8 +233,14 @@ public:
   
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
-  bool isSignedIntegerType() const;     // C99 6.2.5p4
-  bool isUnsignedIntegerType() const;   // C99 6.2.5p6
+
+  /// isSignedIntegerType - Return true if this is an integer type that is
+  /// signed, according to C99 6.2.5p4.
+  bool isSignedIntegerType() const;
+
+  /// isUnsignedIntegerType - Return true if this is an integer type that is
+  /// unsigned, according to C99 6.2.5p6. Note that this returns true for _Bool.
+  bool isUnsignedIntegerType() const;
   
   /// isConstantSizeType - Return true if this is not a variable sized type,
   /// according to the rules of C99 6.7.5p3.  If Loc is non-null, it is set to
@@ -262,9 +268,23 @@ public:
 class BuiltinType : public Type {
 public:
   enum Kind {
-    Void, Bool, Char,
-    SChar,  Short,  Int,  Long,  LongLong,
-    UChar, UShort, UInt, ULong, ULongLong,
+    Void,
+    
+    Bool,     // This is bool and/or _Bool.
+    Char_U,   // This is 'char' for targets where char is unsigned.
+    UChar,    // This is explicitly qualified unsigned char.
+    UShort,
+    UInt,
+    ULong,
+    ULongLong,
+    
+    Char_S,   // This is 'char' for targets where char is signed.
+    SChar,    // This is explicitly qualified signed char.
+    Short,
+    Int,
+    Long,
+    LongLong,
+    
     Float, Double, LongDouble,
     FloatComplex, DoubleComplex, LongDoubleComplex
   };

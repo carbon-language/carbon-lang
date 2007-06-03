@@ -15,6 +15,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Streams.h"
 
 using namespace llvm;
@@ -235,16 +236,18 @@ bool Type::isIntegerType() const {
 }
 
 bool Type::isSignedIntegerType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::SChar &&
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
+    return BT->getKind() >= BuiltinType::Char_S &&
            BT->getKind() <= BuiltinType::LongLong;
+  }
   return false;
 }
 
 bool Type::isUnsignedIntegerType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::UChar &&
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
+    return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::ULongLong;
+  }
   return false;
 }
 
@@ -343,20 +346,20 @@ bool Type::isIncompleteType() const {
 }
 
 bool Type::isPromotableIntegerType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
-    switch (BT->getKind()) {
-      case BuiltinType::Bool:
-      case BuiltinType::Char:
-      case BuiltinType::SChar:
-      case BuiltinType::UChar:
-      case BuiltinType::Short:
-      case BuiltinType::UShort:
-        return true;
-      default: 
-        return false;
-    }
+  const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType);
+  if (!BT) return false;
+  switch (BT->getKind()) {
+  case BuiltinType::Bool:
+  case BuiltinType::Char_S:
+  case BuiltinType::Char_U:
+  case BuiltinType::SChar:
+  case BuiltinType::UChar:
+  case BuiltinType::Short:
+  case BuiltinType::UShort:
+    return true;
+  default: 
+    return false;
   }
-  return false;
 }
 
 const char *BuiltinType::getName() const {
@@ -364,7 +367,8 @@ const char *BuiltinType::getName() const {
   default: assert(0 && "Unknown builtin type!");
   case Void:              return "void";
   case Bool:              return "_Bool";
-  case Char:              return "char";
+  case Char_S:            return "char";
+  case Char_U:            return "char";
   case SChar:             return "signed char";
   case Short:             return "short";
   case Int:               return "int";
