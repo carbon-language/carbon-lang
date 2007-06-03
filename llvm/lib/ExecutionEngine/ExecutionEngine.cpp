@@ -231,7 +231,39 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   std::vector<GenericValue> GVArgs;
   GenericValue GVArgc;
   GVArgc.IntVal = APInt(32, argv.size());
+
+  // Check main() type
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
+  const FunctionType *FTy = Fn->getFunctionType();
+  const Type* PPInt8Ty = PointerType::get(PointerType::get(Type::Int8Ty));
+  switch (NumArgs) {
+  case 3:
+   if (FTy->getParamType(2) != PPInt8Ty) {
+     cerr << "Invalid type for third argument of main() supplied\n";
+     abort();
+   }
+  case 2:
+   if (FTy->getParamType(1) != PPInt8Ty) {
+     cerr << "Invalid type for second argument of main() supplied\n";
+     abort();
+   }
+  case 1:
+   if (FTy->getParamType(0) != Type::Int32Ty) {
+     cerr << "Invalid type for first argument of main() supplied\n";
+     abort();
+   }
+  case 0:
+   if (FTy->getReturnType() != Type::Int32Ty &&
+       FTy->getReturnType() != Type::VoidTy) {
+     cerr << "Invalid return type of main() supplied\n";
+     abort();
+   }
+   break;
+  default:
+   cerr << "Invalid number of arguments of main() supplied\n";
+   abort();
+  }
+  
   if (NumArgs) {
     GVArgs.push_back(GVArgc); // Arg #0 = argc.
     if (NumArgs > 1) {
