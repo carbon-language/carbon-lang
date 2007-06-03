@@ -242,16 +242,19 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
      cerr << "Invalid type for third argument of main() supplied\n";
      abort();
    }
+   // FALLS THROUGH
   case 2:
    if (FTy->getParamType(1) != PPInt8Ty) {
      cerr << "Invalid type for second argument of main() supplied\n";
      abort();
    }
+   // FALLS THROUGH
   case 1:
    if (FTy->getParamType(0) != Type::Int32Ty) {
      cerr << "Invalid type for first argument of main() supplied\n";
      abort();
    }
+   // FALLS THROUGH
   case 0:
    if (FTy->getReturnType() != Type::Int32Ty &&
        FTy->getReturnType() != Type::VoidTy) {
