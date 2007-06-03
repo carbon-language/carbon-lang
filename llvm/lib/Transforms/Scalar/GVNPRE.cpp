@@ -76,7 +76,6 @@ namespace {
     void dump(ValueTable& VN, std::set<Value*, ExprLT>& s);
     void clean(ValueTable VN, std::set<Value*, ExprLT>& set);
     bool add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V);
-    ValueTable::iterator lookup(ValueTable& VN, Value* V);
     Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, uint32_t v);
     void phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                        std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
@@ -115,10 +114,6 @@ bool GVNPRE::add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V) {
   if (isa<BinaryOperator>(V) || isa<PHINode>(V))
     MS.insert(V);
   return ret.second;
-}
-
-GVNPRE::ValueTable::iterator GVNPRE::lookup(ValueTable& VN, Value* V) {
-  return VN.find(V);
 }
 
 Value* GVNPRE::find_leader(GVNPRE::ValueTable VN,
