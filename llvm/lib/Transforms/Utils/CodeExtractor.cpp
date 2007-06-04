@@ -143,7 +143,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // blocks that dominate TIBB plus the new block itself.
   if (EF) {
     BasicBlock* idom = EF->getIDom(OldPred);
-    DT->createNewNode(NewBB, idom);
+    DT->addNewBlock(NewBB, idom);
     EF->addNewBlock(NewBB, idom);
 
     // Additionally, NewBB replaces OldPred as the immediate dominator of blocks

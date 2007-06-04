@@ -170,18 +170,17 @@ protected:
   // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
 
-  /// createNewNode - Add a new node to the dominator tree information.  This
-  /// creates a new node as a child of IDomNode, linking it into the children
-  /// list of the immediate dominator.
-  ///
-  DomTreeNode *createNewNode(BasicBlock *BB, DomTreeNode *IDomNode) {
+  /// addNewBlock - Add a new node to the dominator tree information.  This
+  /// creates a new node as a child of DomBB dominator node,linking it into 
+  /// the children list of the immediate dominator.
+  DomTreeNode *addNewBlock(BasicBlock *BB, DomTreeNode *IDomNode) {
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
     assert(IDomNode && "Not immediate dominator specified for block!");
     return DomTreeNodes[BB] = IDomNode->addChild(new DomTreeNode(BB, IDomNode));
   }
 
-  void createNewNode(BasicBlock *BB, BasicBlock *DomBB) {
-    createNewNode(BB, getNode(DomBB));
+  DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
+    return addNewBlock(BB, getNode(DomBB));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator

@@ -209,7 +209,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
     // TINode is the immediate dominator for the new node.
     //
     if (TINode) {       // Don't break unreachable code!
-      DomTreeNode *NewBBNode = DT->createNewNode(NewBB, TINode);
+      DomTreeNode *NewBBNode = DT->addNewBlock(NewBB, TIBB);
       DomTreeNode *DestBBNode = 0;
      
       // If NewBBDominatesDestBB hasn't been computed yet, do so with DT.
