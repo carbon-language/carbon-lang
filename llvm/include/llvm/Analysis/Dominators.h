@@ -110,7 +110,7 @@ private:
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
 class DominatorTreeBase : public DominatorBase {
-public:
+
 protected:
   std::map<BasicBlock*, DomTreeNode*> DomTreeNodes;
   void reset();
@@ -118,6 +118,7 @@ protected:
 
   DomTreeNode *RootNode;
 
+  // Information record used during immediate dominators computation.
   struct InfoRec {
     unsigned Semi;
     unsigned Size;
@@ -136,8 +137,7 @@ protected:
   // Info - Collection of information used during the computation of idoms.
   std::map<BasicBlock*, InfoRec> Info;
 
-public:
-public:
+  public:
   DominatorTreeBase(intptr_t ID, bool isPostDom) 
     : DominatorBase(ID, isPostDom) {}
   ~DominatorTreeBase() { reset(); }
@@ -180,6 +180,10 @@ public:
     return DomTreeNodes[BB] = IDomNode->addChild(new DomTreeNode(BB, IDomNode));
   }
 
+  void createNewNode(BasicBlock *BB, BasicBlock *DomBB) {
+    createNewNode(BB, getNode(DomBB));
+  }
+
   /// changeImmediateDominator - This method is used to update the dominator
   /// tree information when a node's immediate dominator changes.
   ///
@@ -187,6 +191,11 @@ public:
     assert(N && NewIDom && "Cannot change null node pointers!");
     N->setIDom(NewIDom);
   }
+
+  void changeImmediateDominator(BasicBlock *BB, BasicBlock *NewBB) {
+    changeImmediateDominator(getNode(BB), getNode(NewBB));
+  }
+
 
   /// removeNode - Removes a node from the dominator tree.  Block must not
   /// dominate any other blocks.  Invalidates any node pointing to removed

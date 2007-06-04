@@ -143,14 +143,14 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // blocks that dominate TIBB plus the new block itself.
   if (EF) {
     BasicBlock* idom = EF->getIDom(OldPred);
-    DT->createNewNode(NewBB, DT->getNode(idom));
+    DT->createNewNode(NewBB, idom);
     EF->addNewBlock(NewBB, idom);
 
     // Additionally, NewBB replaces OldPred as the immediate dominator of blocks
     Function *F = Header->getParent();
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
       if (EF->getIDom(I) == OldPred) {
-        DT->changeImmediateDominator(DT->getNode(I), DT->getNode(NewBB));
+        DT->changeImmediateDominator(I, NewBB);
         EF->setImmediateDominator(I, NewBB);
       }
   }
