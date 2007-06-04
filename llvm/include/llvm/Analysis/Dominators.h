@@ -283,6 +283,8 @@ public:
 
   typedef std::map<BasicBlock*, ETNode*> ETMapType;
 
+  // FIXME : There is no need to make this interface public. 
+  // Fix predicate simplifier.
   void updateDFSNumbers();
     
   /// dominates - Return true if A dominates B.
@@ -426,6 +428,8 @@ public:
   }
 
   void calculate(const DominatorTree &DT);
+  // FIXME : There is no need to make getNodeForBlock public. Fix
+  // predicate simplifier.
   ETNode *getNodeForBlock(BasicBlock *BB);
 };
 

@@ -921,6 +921,8 @@ const bool ETForestBase::isReachableFromEntry(BasicBlock* A) {
   return dominates(&A->getParent()->getEntryBlock(), A);
 }
 
+// FIXME : There is no need to make getNodeForBlock public. Fix
+// predicate simplifier.
 ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
   ETNode *&BBNode = Nodes[BB];
   if (BBNode) return BBNode;
