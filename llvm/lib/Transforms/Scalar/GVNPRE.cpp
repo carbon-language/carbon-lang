@@ -78,7 +78,10 @@ namespace {
     void clean(ValueTable VN, std::set<Value*, ExprLT>& set);
     bool add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V);
     Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, uint32_t v);
-    void phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
+    Value* phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
+                         std::set<Value*, ExprLT>& set,
+                         Value* V, BasicBlock* pred);
+    void phi_translate_set(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                        std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
                        std::set<Value*, ExprLT>& out);
     
@@ -128,53 +131,52 @@ Value* GVNPRE::find_leader(GVNPRE::ValueTable VN,
   return 0;
 }
 
-void GVNPRE::phi_translate(GVNPRE::ValueTable& VN,
+Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
+                             std::set<Value*, ExprLT>& set,
+                             Value* V, BasicBlock* pred) {
+  if (V == 0)
+    return 0;
+  
+  if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
+    Value* newOp1 = phi_translate(VN, MS, set,
+                                  find_leader(VN, set, VN[BO->getOperand(0)]),
+                                  pred);
+    if (newOp1 == 0)
+      return 0;
+    
+    Value* newOp2 = phi_translate(VN, MS, set,
+                                  find_leader(VN, set, VN[BO->getOperand(1)]),
+                                  pred);
+    if (newOp2 == 0)
+      return 0;
+    
+    if (newOp1 != BO->getOperand(0) || newOp2 != BO->getOperand(1)) {
+      Value* newVal = BinaryOperator::create(BO->getOpcode(),
+                                             newOp1, newOp2,
+                                             BO->getName()+".gvnpre");
+      add(VN, MS, newVal);
+      if (!find_leader(VN, set, VN[newVal]))
+        return newVal;
+      else
+        return 0;
+    }
+  } else if (PHINode* P = dyn_cast<PHINode>(V)) {
+    if (P->getParent() == pred->getTerminator()->getSuccessor(0))
+      return P->getIncomingValueForBlock(pred);
+  }
+  
+  return V;
+}
+
+void GVNPRE::phi_translate_set(GVNPRE::ValueTable& VN,
                            std::set<Value*, ExprLT>& MS,
                            std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
                            std::set<Value*, ExprLT>& out) {
-  BasicBlock* succ = B->getTerminator()->getSuccessor(0);
-  
-  for (std::set<Value*, ExprLT>::iterator I = anticIn.begin(), E = anticIn.end();
-       I != E; ++I) {
-    if (!isa<BinaryOperator>(*I)) {
-      if (PHINode* p = dyn_cast<PHINode>(*I)) {
-        if (p->getParent() == succ)
-          out.insert(p);
-      } else {
-        out.insert(*I);
-      }
-    } else {
-      BinaryOperator* BO = cast<BinaryOperator>(*I);
-      Value* lhs = find_leader(VN, anticIn, VN[BO->getOperand(0)]);
-      if (lhs == 0)
-        continue;
-      
-      if (PHINode* p = dyn_cast<PHINode>(lhs))
-        if (p->getParent() == succ) {
-          lhs = p->getIncomingValueForBlock(B);
-          out.insert(lhs);
-        }
-      
-      Value* rhs = find_leader(VN, anticIn, VN[BO->getOperand(1)]);
-      if (rhs == 0)
-        continue;
-      
-      if (PHINode* p = dyn_cast<PHINode>(rhs))
-        if (p->getParent() == succ) {
-          rhs = p->getIncomingValueForBlock(B);
-          out.insert(rhs);
-        }
-      
-      if (lhs != BO->getOperand(0) || rhs != BO->getOperand(1)) {
-        BO = BinaryOperator::create(BO->getOpcode(), lhs, rhs, BO->getName()+".gvnpre");
-        if (VN.insert(std::make_pair(BO, nextValueNumber)).second)
-          nextValueNumber++;
-        MS.insert(BO);
-      }
-      
-      out.insert(BO);
-      
-    }
+  for (std::set<Value*, ExprLT>::iterator I = anticIn.begin(),
+       E = anticIn.end(); I != E; ++I) {
+    Value* V = phi_translate(VN, MS, anticIn, *I, B);
+    if (V != 0)
+      out.insert(V);
   }
 }
 
@@ -371,9 +373,9 @@ bool GVNPRE::runOnFunction(Function &F) {
       
       if (BB->getTerminator()->getNumSuccessors() == 1) {
          if (visited.find(BB) == visited.end())
-           phi_translate(VN, maximalSet, anticIn, BB, anticOut);
+           phi_translate_set(VN, maximalSet, anticIn, BB, anticOut);
          else
-           phi_translate(VN, anticIn, anticIn, BB, anticOut);
+           phi_translate_set(VN, anticIn, anticIn, BB, anticOut);
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
         for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
@@ -419,6 +421,7 @@ bool GVNPRE::runOnFunction(Function &F) {
       
       anticOut.clear();
     }
+    
     iterations++;
   }
   
