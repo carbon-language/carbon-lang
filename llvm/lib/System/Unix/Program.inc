@@ -125,10 +125,12 @@ static void SetMemoryLimits (unsigned size)
   r.rlim_cur = limit;
   setrlimit (RLIMIT_RSS, &r);
 #endif
+#ifdef RLIMIT_AS  // e.g. NetBSD doesn't have it.
   // Virtual memory.
   getrlimit (RLIMIT_AS, &r);
   r.rlim_cur = limit;
   setrlimit (RLIMIT_AS, &r);
+#endif
 #endif
 }
 
