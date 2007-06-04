@@ -87,7 +87,7 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
     Frontiers.clear();
     PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
     Roots = DT.getRoots();
-    if (const DominatorTree::DomTreeNode *Root = DT.getRootNode())
+    if (const DomTreeNode *Root = DT.getRootNode())
       calculate(DT, Root);
     return false;
   }
@@ -99,7 +99,7 @@ struct PostDominanceFrontier : public DominanceFrontierBase {
 
 private:
   const DomSetType &calculate(const PostDominatorTree &DT,
-                              const DominatorTree::DomTreeNode *Node);
+                              const DomTreeNode *Node);
 };
 
 } // End llvm namespace

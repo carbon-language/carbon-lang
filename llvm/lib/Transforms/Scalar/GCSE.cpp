@@ -94,7 +94,7 @@ bool GCSE::runOnFunction(Function &F) {
 
   // Traverse the CFG of the function in dominator order, so that we see each
   // instruction after we see its operands.
-  for (df_iterator<DominatorTree::DomTreeNode*> DI = df_begin(DT.getRootNode()),
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     BasicBlock *BB = DI->getBlock();
 

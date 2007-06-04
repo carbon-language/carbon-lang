@@ -188,7 +188,7 @@ void PostDominatorTree::calculate(Function &F) {
 }
 
 
-DominatorTreeBase::DomTreeNode *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
+DomTreeNode *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
   DomTreeNode *&BBNode = DomTreeNodes[BB];
   if (BBNode) return BBNode;
   
@@ -215,7 +215,7 @@ ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
-  PostDominatorTree::DomTreeNode *node = getAnalysis<PostDominatorTree>().getNode(BB);
+  DomTreeNode *node = getAnalysis<PostDominatorTree>().getNode(BB);
 
   // If we are unreachable, we may not have an immediate dominator.
   if (!node)
@@ -245,7 +245,7 @@ void PostETForest::calculate(const PostDominatorTree &DT) {
     ETNode *&BBNode = Nodes[BB];
     if (!BBNode) {  
       ETNode *IDomNode =  NULL;
-      PostDominatorTree::DomTreeNode *node = DT.getNode(BB);
+      DomTreeNode *node = DT.getNode(BB);
       if (node && node->getIDom())
         IDomNode = getNodeForBlock(node->getIDom()->getBlock());
 
@@ -277,7 +277,7 @@ H("postdomfrontier", "Post-Dominance Frontier Construction", true);
 
 const DominanceFrontier::DomSetType &
 PostDominanceFrontier::calculate(const PostDominatorTree &DT,
-                                 const DominatorTree::DomTreeNode *Node) {
+                                 const DomTreeNode *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getBlock();
   DomSetType &S = Frontiers[BB];       // The new set to fill in...
@@ -287,7 +287,7 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
     for (pred_iterator SI = pred_begin(BB), SE = pred_end(BB);
          SI != SE; ++SI) {
       // Does Node immediately dominate this predecessor?
-      DominatorTree::DomTreeNode *SINode = DT[*SI];
+      DomTreeNode *SINode = DT[*SI];
       if (SINode && SINode->getIDom() != Node)
         S.insert(*SI);
     }
@@ -296,9 +296,9 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   // Loop through and visit the nodes that Node immediately dominates (Node's
   // children in the IDomTree)
   //
-  for (PostDominatorTree::DomTreeNode::const_iterator
+  for (DomTreeNode::const_iterator
          NI = Node->begin(), NE = Node->end(); NI != NE; ++NI) {
-    DominatorTree::DomTreeNode *IDominee = *NI;
+    DomTreeNode *IDominee = *NI;
     const DomSetType &ChildDF = calculate(DT, IDominee);
 
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();

@@ -387,8 +387,8 @@ bool ADCE::doADCE() {
           // postdominator that is alive, and the last postdominator that is
           // dead...
           //
-          PostDominatorTree::DomTreeNode *LastNode = DT[TI->getSuccessor(i)];
-          PostDominatorTree::DomTreeNode *NextNode = 0;
+          DomTreeNode *LastNode = DT[TI->getSuccessor(i)];
+          DomTreeNode *NextNode = 0;
 
           if (LastNode) {
             NextNode = LastNode->getIDom();

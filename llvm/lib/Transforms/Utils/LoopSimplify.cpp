@@ -778,15 +778,15 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       }
       assert(NewBBIDom && "No immediate dominator found??");
     }
-    DominatorTree::DomTreeNode *NewBBIDomNode = DT->getNode(NewBBIDom);
+    DomTreeNode *NewBBIDomNode = DT->getNode(NewBBIDom);
 
     // Create the new dominator tree node... and set the idom of NewBB.
-    DominatorTree::DomTreeNode *NewBBNode = DT->createNewNode(NewBB, NewBBIDomNode);
+    DomTreeNode *NewBBNode = DT->createNewNode(NewBB, NewBBIDomNode);
 
     // If NewBB strictly dominates other blocks, then it is now the immediate
     // dominator of NewBBSucc.  Update the dominator tree as appropriate.
     if (NewBBDominatesNewBBSucc) {
-      DominatorTree::DomTreeNode *NewBBSuccNode = DT->getNode(NewBBSucc);
+      DomTreeNode *NewBBSuccNode = DT->getNode(NewBBSucc);
       DT->changeImmediateDominator(NewBBSuccNode, NewBBNode);
     }
   }

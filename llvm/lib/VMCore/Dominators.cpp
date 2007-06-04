@@ -311,7 +311,7 @@ void DominatorTreeBase::reset() {
   RootNode = 0;
 }
 
-void DominatorTreeBase::DomTreeNode::setIDom(DomTreeNode *NewIDom) {
+void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
   assert(IDom && "No immediate dominator?");
   if (IDom != NewIDom) {
     std::vector<DomTreeNode*>::iterator I =
@@ -327,7 +327,7 @@ void DominatorTreeBase::DomTreeNode::setIDom(DomTreeNode *NewIDom) {
   }
 }
 
-DominatorTreeBase::DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
+DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
   DomTreeNode *&BBNode = DomTreeNodes[BB];
   if (BBNode) return BBNode;
 
@@ -342,7 +342,7 @@ DominatorTreeBase::DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
 }
 
 static std::ostream &operator<<(std::ostream &o,
-                                const DominatorTreeBase::DomTreeNode *Node) {
+                                const DomTreeNode *Node) {
   if (Node->getBlock())
     WriteAsOperand(o, Node->getBlock(), false);
   else
@@ -350,10 +350,10 @@ static std::ostream &operator<<(std::ostream &o,
   return o << "\n";
 }
 
-static void PrintDomTree(const DominatorTreeBase::DomTreeNode *N, std::ostream &o,
+static void PrintDomTree(const DomTreeNode *N, std::ostream &o,
                          unsigned Lev) {
   o << std::string(2*Lev, ' ') << "[" << Lev << "] " << N;
-  for (DominatorTreeBase::DomTreeNode::const_iterator I = N->begin(), E = N->end();
+  for (DomTreeNode::const_iterator I = N->begin(), E = N->end();
        I != E; ++I)
     PrintDomTree(*I, o, Lev+1);
 }
@@ -387,19 +387,19 @@ namespace {
   class DFCalculateWorkObject {
   public:
     DFCalculateWorkObject(BasicBlock *B, BasicBlock *P, 
-                          const DominatorTree::DomTreeNode *N,
-                          const DominatorTree::DomTreeNode *PN)
-    : currentBB(B), parentBB(P), DomTreeNode(N), parentNode(PN) {}
+                          const DomTreeNode *N,
+                          const DomTreeNode *PN)
+    : currentBB(B), parentBB(P), Node(N), parentNode(PN) {}
     BasicBlock *currentBB;
     BasicBlock *parentBB;
-    const DominatorTree::DomTreeNode *DomTreeNode;
-    const DominatorTree::DomTreeNode *parentNode;
+    const DomTreeNode *Node;
+    const DomTreeNode *parentNode;
   };
 }
 
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT,
-                             const DominatorTree::DomTreeNode *Node) {
+                             const DomTreeNode *Node) {
   BasicBlock *BB = Node->getBlock();
   DomSetType *Result = NULL;
 
@@ -413,8 +413,8 @@ DominanceFrontier::calculate(const DominatorTree &DT,
 
     BasicBlock *currentBB = currentW->currentBB;
     BasicBlock *parentBB = currentW->parentBB;
-    const DominatorTree::DomTreeNode *currentNode = currentW->DomTreeNode;
-    const DominatorTree::DomTreeNode *parentNode = currentW->parentNode;
+    const DomTreeNode *currentNode = currentW->Node;
+    const DomTreeNode *parentNode = currentW->parentNode;
     assert (currentBB && "Invalid work object. Missing current Basic Block");
     assert (currentNode && "Invalid work object. Missing current Node");
     DomSetType &S = Frontiers[currentBB];
@@ -436,9 +436,9 @@ DominanceFrontier::calculate(const DominatorTree &DT,
     // Loop through and visit the nodes that Node immediately dominates (Node's
     // children in the IDomTree)
     bool visitChild = false;
-    for (DominatorTree::DomTreeNode::const_iterator NI = currentNode->begin(), 
+    for (DomTreeNode::const_iterator NI = currentNode->begin(), 
            NE = currentNode->end(); NI != NE; ++NI) {
-      DominatorTree::DomTreeNode *IDominee = *NI;
+      DomTreeNode *IDominee = *NI;
       BasicBlock *childBB = IDominee->getBlock();
       if (visited.count(childBB) == 0) {
         workList.push_back(DFCalculateWorkObject(childBB, currentBB,
@@ -927,7 +927,7 @@ ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
-  DominatorTree::DomTreeNode *node= getAnalysis<DominatorTree>().getNode(BB);
+  DomTreeNode *node= getAnalysis<DominatorTree>().getNode(BB);
 
   // If we are unreachable, we may not have an immediate dominator.
   if (!node || !node->getIDom())
@@ -951,7 +951,7 @@ void ETForest::calculate(const DominatorTree &DT) {
   Function *F = Root->getParent();
   // Loop over all of the reachable blocks in the function...
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    DominatorTree::DomTreeNode* node = DT.getNode(I);
+    DomTreeNode* node = DT.getNode(I);
     if (node && node->getIDom()) {  // Reachable block.
       BasicBlock* ImmDom = node->getIDom()->getBlock();
       ETNode *&BBNode = Nodes[I];

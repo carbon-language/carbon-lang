@@ -56,12 +56,61 @@ public:
   bool isPostDominator() const { return IsPostDominators; }
 };
 
+
+//===----------------------------------------------------------------------===//
+// DomTreeNode - Dominator Tree Node
+
+class DomTreeNode {
+  friend class DominatorTree;
+  friend struct PostDominatorTree;
+  friend class DominatorTreeBase;
+  BasicBlock *TheBB;
+  DomTreeNode *IDom;
+  std::vector<DomTreeNode*> Children;
+public:
+  typedef std::vector<DomTreeNode*>::iterator iterator;
+  typedef std::vector<DomTreeNode*>::const_iterator const_iterator;
+  
+  iterator begin()             { return Children.begin(); }
+  iterator end()               { return Children.end(); }
+  const_iterator begin() const { return Children.begin(); }
+  const_iterator end()   const { return Children.end(); }
+  
+  inline BasicBlock *getBlock() const { return TheBB; }
+  inline DomTreeNode *getIDom() const { return IDom; }
+  inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
+  
+  /// properlyDominates - Returns true iff this dominates N and this != N.
+  /// Note that this is not a constant time operation!
+  ///
+  bool properlyDominates(const DomTreeNode *N) const {
+    const DomTreeNode *IDom;
+    if (this == 0 || N == 0) return false;
+    while ((IDom = N->getIDom()) != 0 && IDom != this)
+      N = IDom;   // Walk up the tree
+    return IDom != 0;
+  }
+  
+  /// dominates - Returns true iff this dominates N.  Note that this is not a
+  /// constant time operation!
+  ///
+  inline bool dominates(const DomTreeNode *N) const {
+    if (N == this) return true;  // A node trivially dominates itself.
+    return properlyDominates(N);
+  }
+  
+private:
+  inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom) : TheBB(BB), IDom(iDom) {}
+  inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
+
+  void setIDom(DomTreeNode *NewIDom);
+};
+
 //===----------------------------------------------------------------------===//
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
 class DominatorTreeBase : public DominatorBase {
 public:
-  class DomTreeNode;
 protected:
   std::map<BasicBlock*, DomTreeNode*> DomTreeNodes;
   void reset();
@@ -88,52 +137,6 @@ protected:
   std::map<BasicBlock*, InfoRec> Info;
 
 public:
-  class DomTreeNode {
-    friend class DominatorTree;
-    friend struct PostDominatorTree;
-    friend class DominatorTreeBase;
-    BasicBlock *TheBB;
-    DomTreeNode *IDom;
-    std::vector<DomTreeNode*> Children;
-  public:
-    typedef std::vector<DomTreeNode*>::iterator iterator;
-    typedef std::vector<DomTreeNode*>::const_iterator const_iterator;
-
-    iterator begin()             { return Children.begin(); }
-    iterator end()               { return Children.end(); }
-    const_iterator begin() const { return Children.begin(); }
-    const_iterator end()   const { return Children.end(); }
-
-    inline BasicBlock *getBlock() const { return TheBB; }
-    inline DomTreeNode *getIDom() const { return IDom; }
-    inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
-
-    /// properlyDominates - Returns true iff this dominates N and this != N.
-    /// Note that this is not a constant time operation!
-    ///
-    bool properlyDominates(const DomTreeNode *N) const {
-      const DomTreeNode *IDom;
-      if (this == 0 || N == 0) return false;
-      while ((IDom = N->getIDom()) != 0 && IDom != this)
-        N = IDom;   // Walk up the tree
-      return IDom != 0;
-    }
-
-    /// dominates - Returns true iff this dominates N.  Note that this is not a
-    /// constant time operation!
-    ///
-    inline bool dominates(const DomTreeNode *N) const {
-      if (N == this) return true;  // A node trivially dominates itself.
-      return properlyDominates(N);
-    }
-    
-  private:
-    inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom) : TheBB(BB), IDom(iDom) {}
-    inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
-
-    void setIDom(DomTreeNode *NewIDom);
-  };
-
 public:
   DominatorTreeBase(intptr_t ID, bool isPostDom) 
     : DominatorBase(ID, isPostDom) {}
@@ -238,8 +241,8 @@ private:
 /// DominatorTree GraphTraits specialization so the DominatorTree can be
 /// iterable by generic graph iterators.
 ///
-template <> struct GraphTraits<DominatorTree::DomTreeNode*> {
-  typedef DominatorTree::DomTreeNode NodeType;
+template <> struct GraphTraits<DomTreeNode*> {
+  typedef DomTreeNode NodeType;
   typedef NodeType::iterator  ChildIteratorType;
   
   static NodeType *getEntryNode(NodeType *N) {
@@ -254,7 +257,7 @@ template <> struct GraphTraits<DominatorTree::DomTreeNode*> {
 };
 
 template <> struct GraphTraits<DominatorTree*>
-  : public GraphTraits<DominatorTree::DomTreeNode*> {
+  : public GraphTraits<DomTreeNode*> {
   static NodeType *getEntryNode(DominatorTree *DT) {
     return DT->getRootNode();
   }
@@ -501,9 +504,10 @@ public:
     AU.setPreservesAll();
     AU.addRequired<DominatorTree>();
   }
+
 private:
   const DomSetType &calculate(const DominatorTree &DT,
-                              const DominatorTree::DomTreeNode *Node);
+                              const DomTreeNode *Node);
 };
 
 
