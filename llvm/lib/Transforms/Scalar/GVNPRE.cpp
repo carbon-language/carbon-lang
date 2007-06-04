@@ -420,13 +420,12 @@ bool GVNPRE::runOnFunction(Function &F) {
                      s_ins, ExprLT());
       
       anticIn.clear();
-      std::insert_iterator<std::set<Value*, ExprLT> >  antic_ins(anticIn, 
-                                                             anticIn.begin());
-      std::set_difference(S.begin(), S.end(),
-                          generatedTemporaries[BB].begin(),
-                          generatedTemporaries[BB].end(),
-                          antic_ins,
-                          ExprLT());
+      
+      for (std::set<Value*, ExprLT>::iterator I = S.begin(), E = S.end();
+           I != E; ++I) {
+        if (generatedTemporaries[BB].find(*I) == generatedTemporaries[BB].end())
+          anticIn.insert(*I);
+      }
       
       clean(VN, anticIn);
       
