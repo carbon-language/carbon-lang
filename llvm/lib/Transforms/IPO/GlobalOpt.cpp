@@ -1625,7 +1625,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1);
     
     // Return the modified struct.
-    return ConstantStruct::get(Elts);
+    return ConstantStruct::get(&Elts[0], Elts.size(), STy->isPacked());
   } else {
     ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
     const ArrayType *ATy = cast<ArrayType>(Init->getType());
