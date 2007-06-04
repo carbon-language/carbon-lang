@@ -138,15 +138,19 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
     return 0;
   
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
-    Value* newOp1 = phi_translate(VN, MS, set,
+    Value* newOp1 = isa<Instruction>(BO->getOperand(0))
+                                ? phi_translate(VN, MS, set,
                                   find_leader(VN, set, VN[BO->getOperand(0)]),
-                                  pred);
+                                  pred)
+                                : BO->getOperand(0);
     if (newOp1 == 0)
       return 0;
     
-    Value* newOp2 = phi_translate(VN, MS, set,
-                                  find_leader(VN, set, VN[BO->getOperand(1)]),
-                                  pred);
+    Value* newOp2 = isa<Instruction>(BO->getOperand(1))
+                                ? phi_translate(VN, MS, set,
+                                  find_leader(VN, set, VN[BO->getOperand(0)]),
+                                  pred)
+                                : BO->getOperand(1);
     if (newOp2 == 0)
       return 0;
     
@@ -303,8 +307,10 @@ void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>&
       
       add(VN, MS, BO);
       
-      currExps.insert(leftValue);
-      currExps.insert(rightValue);
+      if (isa<Instruction>(leftValue))
+        currExps.insert(leftValue);
+      if (isa<Instruction>(rightValue))
+        currExps.insert(rightValue);
       currExps.insert(BO);
       
       currTemps.insert(BO);
@@ -365,7 +371,13 @@ bool GVNPRE::runOnFunction(Function &F) {
          df_begin(PDT.getRootNode()), E = df_end(DT.getRootNode());
          PDI != E; ++PDI) {
       BasicBlock* BB = PDI->getBlock();
-      
+      DOUT << "Block: " << BB->getName() << "\n";
+      DOUT << "TMP_GEN: ";
+      dump(VN, generatedTemporaries[BB]);
+      DOUT << "\n";
+    
+      DOUT << "EXP_GEN: ";
+      dump_unique(VN, generatedExpressions[BB]);
       visited.insert(BB);
       
       std::set<Value*, ExprLT>& anticIn = anticipatedIn[BB];
@@ -373,30 +385,32 @@ bool GVNPRE::runOnFunction(Function &F) {
       
       if (BB->getTerminator()->getNumSuccessors() == 1) {
          if (visited.find(BB) == visited.end())
-           phi_translate_set(VN, maximalSet, anticIn, BB, anticOut);
+           phi_translate_set(VN, maximalSet, maximalSet, BB, anticOut);
          else
-           phi_translate_set(VN, anticIn, anticIn, BB, anticOut);
+           phi_translate_set(VN, maximalSet, anticipatedIn[BB->getTerminator()->getSuccessor(0)], BB, anticOut);
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
-        for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
+        BasicBlock* first = BB->getTerminator()->getSuccessor(0);
+        anticOut.insert(anticipatedIn[first].begin(),
+                        anticipatedIn[first].end());
+        for (unsigned i = 1; i < BB->getTerminator()->getNumSuccessors(); ++i) {
           BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
+          std::set<Value*, ExprLT>& succAnticIn = anticipatedIn[currSucc];
+          
           std::set<Value*, ExprLT> temp;
-          if (visited.find(currSucc) == visited.end())
-            temp.insert(maximalSet.begin(), maximalSet.end());
-          else
-            temp.insert(anticIn.begin(), anticIn.end());
-       
-          anticIn.clear();
-          std::insert_iterator<std::set<Value*, ExprLT> >  ai_ins(anticIn,
-                                                       anticIn.begin());
-                                                       
-          std::set_difference(anticipatedIn[currSucc].begin(),
-                              anticipatedIn[currSucc].end(),
-                              temp.begin(),
-                              temp.end(),
-                              ai_ins,
-                              ExprLT());
+          std::insert_iterator<std::set<Value*, ExprLT> >  temp_ins(temp, 
+                                                                  temp.begin());
+          std::set_intersection(anticOut.begin(), anticOut.end(),
+                                succAnticIn.begin(), succAnticIn.end(),
+                                temp_ins, ExprLT());
+          
+          anticOut.clear();
+          anticOut.insert(temp.begin(), temp.end());
         }
       }
+      
+      DOUT << "ANTIC_OUT: ";
+      dump_unique(VN, anticOut);
+      DOUT << "\n";
       
       std::set<Value*, ExprLT> S;
       std::insert_iterator<std::set<Value*, ExprLT> >  s_ins(S, S.begin());
@@ -415,6 +429,10 @@ bool GVNPRE::runOnFunction(Function &F) {
                           ExprLT());
       
       clean(VN, anticIn);
+      
+      DOUT << "ANTIC_IN: ";
+      dump_unique(VN, anticIn);
+      DOUT << "\n";
       
       if (old != anticIn)
         changed = true;
