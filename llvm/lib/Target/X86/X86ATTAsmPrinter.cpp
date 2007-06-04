@@ -286,7 +286,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     }
 
     if (printStub(TM, Subtarget)) {
-      // Link-once, External, or Weakly-linked global variables need
+      // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
       if (GV->isDeclaration() ||
           GV->hasWeakLinkage() ||
@@ -351,7 +351,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         else
           O << "@GOTOFF";
       } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel) {
-        if ((GV->hasExternalLinkage() ||
+        if ((GV->isDeclaration() ||
              GV->hasWeakLinkage() ||
              GV->hasLinkOnceLinkage()) &&
             TM.getRelocationModel() != Reloc::Static)
