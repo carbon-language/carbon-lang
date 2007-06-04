@@ -597,7 +597,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
       return 0;   // Never CSE anything that produces a flag.
   
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), 0, 0);
+  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops, NumOps);
   
   if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     ID.AddInteger(LD->getAddressingMode());
@@ -617,7 +617,6 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
     ID.AddInteger(ST->isVolatile());
   }
   
-  AddNodeIDOperands(ID, Ops, NumOps);
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
@@ -1548,6 +1547,18 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,
                                 const Value *SV, int SVOffset,
                                 bool isVolatile, unsigned Alignment) {
+  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
+    const Type *Ty = 0;
+    if (VT != MVT::Vector && VT != MVT::iPTR) {
+      Ty = MVT::getTypeForValueType(VT);
+    } else if (SV) {
+      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
+      assert(PT && "Value for load must be a pointer");
+      Ty = PT->getElementType();
+    }  
+    assert(Ty && "Could not get type information for load");
+    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
+  }
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Ptr, Undef };
@@ -1563,18 +1574,6 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
-      Ty = MVT::getTypeForValueType(VT);
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for load must be a pointer");
-      Ty = PT->getElementType();
-    }  
-    assert(Ty && "Could not get type information for load");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED,
                              ISD::NON_EXTLOAD, VT, SV, SVOffset, Alignment,
                              isVolatile);
@@ -1602,6 +1601,18 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
          "Cannot convert from FP to Int or Int -> FP!");
 
+  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
+    const Type *Ty = 0;
+    if (VT != MVT::Vector && VT != MVT::iPTR) {
+      Ty = MVT::getTypeForValueType(VT);
+    } else if (SV) {
+      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
+      assert(PT && "Value for load must be a pointer");
+      Ty = PT->getElementType();
+    }  
+    assert(Ty && "Could not get type information for load");
+    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
+  }
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Ptr, Undef };
@@ -1617,18 +1628,6 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
-      Ty = MVT::getTypeForValueType(VT);
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for load must be a pointer");
-      Ty = PT->getElementType();
-    }  
-    assert(Ty && "Could not get type information for load");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new LoadSDNode(Ops, VTs, ISD::UNINDEXED, ExtType, EVT,
                              SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
@@ -1679,6 +1678,18 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
                                  bool isVolatile, unsigned Alignment) {
   MVT::ValueType VT = Val.getValueType();
 
+  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
+    const Type *Ty = 0;
+    if (VT != MVT::Vector && VT != MVT::iPTR) {
+      Ty = MVT::getTypeForValueType(VT);
+    } else if (SV) {
+      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
+      assert(PT && "Value for store must be a pointer");
+      Ty = PT->getElementType();
+    }
+    assert(Ty && "Could not get type information for store");
+    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
+  }
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Val, Ptr, Undef };
@@ -1694,18 +1705,6 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
-      Ty = MVT::getTypeForValueType(VT);
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for store must be a pointer");
-      Ty = PT->getElementType();
-    }
-    assert(Ty && "Could not get type information for store");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, false,
                               VT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
@@ -1724,6 +1723,18 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   assert(MVT::isInteger(VT) == MVT::isInteger(SVT) &&
          "Can't do FP-INT conversion!");
 
+  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
+    const Type *Ty = 0;
+    if (VT != MVT::Vector && VT != MVT::iPTR) {
+      Ty = MVT::getTypeForValueType(VT);
+    } else if (SV) {
+      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
+      assert(PT && "Value for store must be a pointer");
+      Ty = PT->getElementType();
+    }
+    assert(Ty && "Could not get type information for store");
+    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
+  }
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Val, Ptr, Undef };
@@ -1739,18 +1750,6 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
-      Ty = MVT::getTypeForValueType(VT);
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for store must be a pointer");
-      Ty = PT->getElementType();
-    }
-    assert(Ty && "Could not get type information for store");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
   SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, isTrunc,
                               SVT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
