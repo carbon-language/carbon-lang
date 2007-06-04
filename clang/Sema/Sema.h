@@ -259,8 +259,19 @@ public:
   );
     
 private:
-  QualType UsualUnaryConversion(QualType t); // C99 6.3
-  QualType UsualArithmeticConversions(QualType t1, QualType t2); // C99 6.3.1.8
+  // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
+  // functions and arrays to their respective pointers (C99 6.3.2.1)
+  QualType UsualUnaryConversions(QualType t); 
+  // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
+  // operands and then handles various conversions that are common to binary
+  // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
+  // routine returns the first non-arithmetic type found. The client is 
+  // responsible for emitting appropriate error diagnostics.
+  QualType UsualArithmeticConversions(QualType t1, QualType t2);
+  // DefaultFunctionArrayConversion - simply converts functions and arrays
+  // to their respective pointers (C99 6.3.2.1). If the type isn't a function
+  // or array, this routine simply returns the input type (unmodified).
+  QualType DefaultFunctionArrayConversion(QualType t);
   
   enum AssignmentConversionResult {
     Compatible,

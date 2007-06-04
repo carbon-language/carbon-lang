@@ -222,7 +222,7 @@ Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
   return new ParenExpr(L, R, e);
 }
 
-/// The UsualUnaryConversion() function is *not* called by this routine.
+/// The UsualUnaryConversions() function is *not* called by this routine.
 /// See C99 6.3.2.1p[2-4] for more details.
 QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
                                          SourceLocation OpLoc, bool isSizeof) {
@@ -466,9 +466,9 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
   assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
 
-  cond = UsualUnaryConversion(cond);
-  lhs = UsualUnaryConversion(lhs);
-  rhs = UsualUnaryConversion(rhs);
+  cond = UsualUnaryConversions(cond);
+  lhs = UsualUnaryConversions(lhs);
+  rhs = UsualUnaryConversions(rhs);
   
   // first, check the condition.
   if (!cond->isScalarType()) { // C99 6.5.15p2
@@ -548,16 +548,7 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
 }
 
-/// UsualUnaryConversion - Performs various conversions that are common to most
-/// operators (C99 6.3). The conversions of array and function types are 
-/// sometimes surpressed. For example, the array->pointer conversion doesn't
-/// apply if the array is an argument to the sizeof or address (&) operators.
-/// In these instances, this routine should *not* be called.
-QualType Sema::UsualUnaryConversion(QualType t) {
-  assert(!t.isNull() && "UsualUnaryConversion - missing type");
-  
-  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
-    return Context.IntTy;
+inline QualType Sema::DefaultFunctionArrayConversion(QualType t) {
   if (t->isFunctionType()) // C99 6.3.2.1p4
     return Context.getPointerType(t);
   if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
@@ -565,13 +556,26 @@ QualType Sema::UsualUnaryConversion(QualType t) {
   return t;
 }
 
+/// UsualUnaryConversion - Performs various conversions that are common to most
+/// operators (C99 6.3). The conversions of array and function types are 
+/// sometimes surpressed. For example, the array->pointer conversion doesn't
+/// apply if the array is an argument to the sizeof or address (&) operators.
+/// In these instances, this routine should *not* be called.
+QualType Sema::UsualUnaryConversions(QualType t) {
+  assert(!t.isNull() && "UsualUnaryConversions - missing type");
+  
+  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
+    return Context.IntTy;
+  return DefaultFunctionArrayConversion(t);
+}
+
 /// UsualArithmeticConversions - Performs various conversions that are common to 
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
 QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
-  QualType lhs = UsualUnaryConversion(t1);
-  QualType rhs = UsualUnaryConversion(t2);
+  QualType lhs = UsualUnaryConversions(t1);
+  QualType rhs = UsualUnaryConversions(t2);
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs) 
@@ -676,8 +680,7 @@ QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
   // conversion of functions/arrays. If the conversion were done for all
   // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
-  if (rhsType->isFunctionType() || rhsType->isArrayType())
-    rhsType = UsualUnaryConversion(rhsType);
+  rhsType = DefaultFunctionArrayConversion(rhsType);
     
   r = Compatible;
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
@@ -834,8 +837,8 @@ inline QualType Sema::CheckBitwiseOperands(
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
-  QualType lhsType = UsualUnaryConversion(lex->getType());
-  QualType rhsType = UsualUnaryConversion(rex->getType());
+  QualType lhsType = UsualUnaryConversions(lex->getType());
+  QualType rhsType = UsualUnaryConversions(rex->getType());
   
   if (lhsType->isScalarType() || rhsType->isScalarType())
     return Context.IntTy;
@@ -921,7 +924,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17
   Expr *lex, Expr *rex, SourceLocation loc) {
-  return UsualUnaryConversion(rex->getType());
+  return UsualUnaryConversions(rex->getType());
 }
 
 QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
@@ -1012,7 +1015,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
 }
 
 QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
-  QualType qType = UsualUnaryConversion(op->getType());
+  QualType qType = UsualUnaryConversions(op->getType());
   
   assert(!qType.isNull() && "no type for * expression");
 
@@ -1220,19 +1223,20 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     break;
   case UnaryOperator::Plus:
   case UnaryOperator::Minus:
-    resultType = UsualUnaryConversion(((Expr *)Input)->getType());
+    resultType = UsualUnaryConversions(((Expr *)Input)->getType());
     if (!resultType->isArithmeticType())  // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr, 
                   resultType.getAsString());
     break;
   case UnaryOperator::Not: // bitwise complement
-    resultType = UsualUnaryConversion(((Expr *)Input)->getType());
+    resultType = UsualUnaryConversions(((Expr *)Input)->getType());
     if (!resultType->isIntegerType())  // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
     break;
   case UnaryOperator::LNot: // logical negation
-    resultType = UsualUnaryConversion(((Expr *)Input)->getType());
+    // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
+    resultType = DefaultFunctionArrayConversion(((Expr *)Input)->getType());
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
