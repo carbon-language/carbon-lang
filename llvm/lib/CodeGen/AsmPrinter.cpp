@@ -327,16 +327,18 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
     return true;
   }
 
+  const TargetData *TD = TM.getTargetData();
+  unsigned Align = Log2_32(TD->getPointerPrefAlignment());
   if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
     SwitchToDataSection(TAI->getStaticCtorsSection());
-    EmitAlignment(2, 0);
+    EmitAlignment(Align, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   } 
   
   if (GV->getName() == "llvm.global_dtors" && GV->use_empty()) {
     SwitchToDataSection(TAI->getStaticDtorsSection());
-    EmitAlignment(2, 0);
+    EmitAlignment(Align, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   }
