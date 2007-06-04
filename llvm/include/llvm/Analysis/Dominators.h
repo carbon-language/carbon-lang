@@ -173,14 +173,11 @@ protected:
   /// addNewBlock - Add a new node to the dominator tree information.  This
   /// creates a new node as a child of DomBB dominator node,linking it into 
   /// the children list of the immediate dominator.
-  DomTreeNode *addNewBlock(BasicBlock *BB, DomTreeNode *IDomNode) {
+  DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
+    DomTreeNode *IDomNode = getNode(DomBB);
     assert(IDomNode && "Not immediate dominator specified for block!");
     return DomTreeNodes[BB] = IDomNode->addChild(new DomTreeNode(BB, IDomNode));
-  }
-
-  DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
-    return addNewBlock(BB, getNode(DomBB));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator
