@@ -478,6 +478,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "    }; break;\n";
   }
   OS << "  };\n";
+  OS << "  return 0;\n";
   OS << "}\n\n";
   
   // Emit the constructor of the class...

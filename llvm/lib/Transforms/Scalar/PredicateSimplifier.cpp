@@ -232,6 +232,13 @@ namespace {
       bool operator<(unsigned to) const {
         return To < to;
       }
+      bool operator>(unsigned to) const {
+        return To > to;
+      }
+
+      friend bool operator<(unsigned to, const Edge &edge) {
+        return edge.operator>(to);
+      }
     };
 
     /// A single node in the InequalityGraph. This stores the canonical Value
@@ -668,6 +675,14 @@ namespace {
 
       bool operator<(const Value *value) const {
         return V < value;
+      }
+
+      bool operator>(const Value *value) const {
+          return V > value;
+      }
+
+      friend bool operator<(const Value *value, const ScopedRange &range) {
+          return range.operator>(value);
       }
     };
 
