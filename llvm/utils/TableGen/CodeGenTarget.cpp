@@ -99,11 +99,6 @@ std::string llvm::getEnumName(MVT::ValueType T) {
 }
 
 
-std::ostream &llvm::operator<<(std::ostream &OS, MVT::ValueType T) {
-  return OS << getName(T);
-}
-
-
 /// getTarget - Return the current instance of the Target class.
 ///
 CodeGenTarget::CodeGenTarget() {

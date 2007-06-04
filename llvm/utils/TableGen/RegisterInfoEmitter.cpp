@@ -209,7 +209,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "  static const MVT::ValueType " << Name
        << "[] = {\n    ";
     for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
-      OS << RC.VTs[i] << ", ";
+      OS << getName(RC.VTs[i]) << ", ";
     OS << "MVT::Other\n  };\n\n";
   }
   OS << "}  // end anonymous namespace\n\n";
