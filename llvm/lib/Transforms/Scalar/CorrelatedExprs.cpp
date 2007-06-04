@@ -352,7 +352,7 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // information down now.
   //
   std::vector<BasicBlock*> children;
-  EF->getChildren(BB, children);
+  EF->getETNodeChildren(BB, children);
   if (!RI.empty()) {     // Time opt: only propagate if we can change something
     for (std::vector<BasicBlock*>::iterator CI = children.begin(), 
          E = children.end(); CI != E; ++CI) {

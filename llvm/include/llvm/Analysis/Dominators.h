@@ -343,7 +343,7 @@ public:
     return idom ? idom->getData<BasicBlock>() : 0;
   }
   
-  void getChildren(BasicBlock *A, std::vector<BasicBlock*>& children) const {
+  void getETNodeChildren(BasicBlock *A, std::vector<BasicBlock*>& children) const {
     ETNode *NodeA = getNode(A);
     if (!NodeA) return;
     const ETNode* son = NodeA->getSon();
