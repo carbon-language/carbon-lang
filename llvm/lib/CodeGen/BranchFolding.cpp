@@ -733,44 +733,6 @@ static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB,
 }
 
 
-/// ReplaceUsesOfBlockWith - Given a machine basic block 'BB' that branched to
-/// 'Old', change the code and CFG so that it branches to 'New' instead.
-static void ReplaceUsesOfBlockWith(MachineBasicBlock *BB,
-                                   MachineBasicBlock *Old,
-                                   MachineBasicBlock *New,
-                                   const TargetInstrInfo *TII) {
-  assert(Old != New && "Cannot replace self with self!");
-
-  MachineBasicBlock::iterator I = BB->end();
-  while (I != BB->begin()) {
-    --I;
-    if (!TII->isTerminatorInstr(I->getOpcode())) break;
-
-    // Scan the operands of this machine instruction, replacing any uses of Old
-    // with New.
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      if (I->getOperand(i).isMachineBasicBlock() &&
-          I->getOperand(i).getMachineBasicBlock() == Old)
-        I->getOperand(i).setMachineBasicBlock(New);
-  }
-
-  // Update the successor information.  If New was already a successor, just
-  // remove the link to Old instead of creating another one.  PR 1444.
-  bool HadSuccessorNew = false;
-  std::vector<MachineBasicBlock*> Succs(BB->succ_begin(), BB->succ_end());
-  for (int i = Succs.size()-1; i >= 0; --i)
-    if (Succs[i] == New) {
-      HadSuccessorNew = true;
-      break;
-    }
-  for (int i = Succs.size()-1; i >= 0; --i)
-    if (Succs[i] == Old) {
-      BB->removeSuccessor(Old);
-      if (!HadSuccessorNew)
-        BB->addSuccessor(New);
-    }
-}
-
 /// CanFallThrough - Return true if the specified block (with the specified
 /// branch condition) can implicitly transfer control to the block after it by
 /// falling off the end of it.  This should return false if it can reach the
@@ -865,7 +827,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       // instead.
       while (!MBB->pred_empty()) {
         MachineBasicBlock *Pred = *(MBB->pred_end()-1);
-        ReplaceUsesOfBlockWith(Pred, MBB, FallThrough, TII);
+        Pred->ReplaceUsesOfBlockWith(MBB, FallThrough);
       }
       
       // If MBB was the target of a jump table, update jump tables to go to the
@@ -1066,7 +1028,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
               HasBranchToSelf = true;
             } else {
               DidChange = true;
-              ReplaceUsesOfBlockWith(*PI, MBB, CurTBB, TII);
+              (*PI)->ReplaceUsesOfBlockWith(MBB, CurTBB);
             }
           }
 

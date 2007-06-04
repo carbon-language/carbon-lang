@@ -198,3 +198,30 @@ bool MachineBasicBlock::isSuccessor(MachineBasicBlock *MBB) const {
     std::find(Successors.begin(), Successors.end(), MBB);
   return I != Successors.end();
 }
+
+/// ReplaceUsesOfBlockWith - Given a machine basic block that branched to
+/// 'Old', change the code and CFG so that it branches to 'New' instead.
+void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
+                                               MachineBasicBlock *New) {
+  assert(Old != New && "Cannot replace self with self!");
+
+  MachineBasicBlock::iterator I = end();
+  while (I != begin()) {
+    --I;
+    if (!(I->getInstrDescriptor()->Flags & M_TERMINATOR_FLAG)) break;
+
+    // Scan the operands of this machine instruction, replacing any uses of Old
+    // with New.
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+      if (I->getOperand(i).isMachineBasicBlock() &&
+          I->getOperand(i).getMachineBasicBlock() == Old)
+        I->getOperand(i).setMachineBasicBlock(New);
+  }
+
+  // Update the successor information.  If New was already a successor, just
+  // remove the link to Old instead of creating another one.  PR 1444.
+  removeSuccessor(Old);
+  if (!isSuccessor(New))
+    addSuccessor(New);
+}
+

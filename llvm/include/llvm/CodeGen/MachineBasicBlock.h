@@ -246,6 +246,10 @@ public:
     Insts.splice(where, Other->Insts, From, To);
   }
 
+  /// ReplaceUsesOfBlockWith - Given a machine basic block that branched to
+  /// 'Old', change the code and CFG so that it branches to 'New' instead.
+  void ReplaceUsesOfBlockWith(MachineBasicBlock *Old, MachineBasicBlock *New);
+
   // Debugging methods.
   void dump() const;
   void print(std::ostream &OS) const;
