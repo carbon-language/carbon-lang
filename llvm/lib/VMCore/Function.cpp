@@ -271,7 +271,7 @@ std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) {
 }
 
 const FunctionType *Intrinsic::getType(ID id, const Type **Tys, 
-                                       uint32_t numTys) {
+                                       unsigned numTys) {
   const Type *ResultTy = NULL;
   std::vector<const Type*> ArgTys;
   bool IsVarArg = false;
