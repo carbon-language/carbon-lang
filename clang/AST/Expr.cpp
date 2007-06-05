@@ -203,76 +203,240 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
 /// violation. FIXME: This routine currently implements C90 semantics.
 /// To properly implement C99 semantics this routine will need to evaluate
 /// expressions involving operators previously mentioned.
-bool Expr::isIntegerConstantExpr(SourceLocation *Loc) const {
+
+/// FIXME: Pass up a reason why! Invalid operation in i-c-e, division by zero,
+/// comma, etc
+bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
+                                 bool isEvaluated) const {
   switch (getStmtClass()) {
-  case IntegerLiteralClass:
-  case CharacterLiteralClass:
-    return true;
-  case FloatingLiteralClass:
-  case StringLiteralClass:
-    if (Loc) *Loc = getLocStart();
-    return false;
-  case DeclRefExprClass:
-    if (isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl()))
-      return true;
-    if (Loc) *Loc = getLocStart();
-    return false;
-  case UnaryOperatorClass:
-    const UnaryOperator *uop = cast<UnaryOperator>(this);
-    if (uop->isIncrementDecrementOp()) { // C99 6.6p3
-      if (Loc) *Loc = getLocStart();
-      return false;
-    }
-    // C99 6.5.3.4p2: otherwise, the operand is *not* evaluated and the result
-    // is an integer constant. This effective ignores any subexpression that
-    // isn't actually a constant expression (what an odd language:-)
-    if (uop->isSizeOfAlignOfOp())
-      return uop->getSubExpr()->getType()->isConstantSizeType(Loc);
-    return uop->getSubExpr()->isIntegerConstantExpr(Loc);
-  case BinaryOperatorClass:
-    const BinaryOperator *bop = cast<BinaryOperator>(this);
-    // C99 6.6p3: shall not contain assignment, increment/decrement,
-    // function call, or comma operators, *except* when they are contained
-    // within a subexpression that is not evaluated. 
-    if (bop->isAssignmentOp() || bop->getOpcode() == BinaryOperator::Comma) {
-      if (Loc) *Loc = getLocStart();
-      return false;
-    }
-    return bop->getLHS()->isIntegerConstantExpr(Loc) &&
-           bop->getRHS()->isIntegerConstantExpr(Loc);
-  case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isIntegerConstantExpr(Loc);
-  case CastExprClass: 
-    const CastExpr *castExpr = cast<CastExpr>(this);    
-    // C99 6.6p6: shall only convert arithmetic types to integer types.
-    if (!castExpr->getSubExpr()->getType()->isArithmeticType()) {
-      if (Loc) *Loc = castExpr->getSubExpr()->getLocStart();
-      return false;
-    }
-    if (!castExpr->getDestType()->isIntegerType()) {
-      if (Loc) *Loc = getLocStart();
-      return false;
-    }
-    // allow floating constants that are the immediate operands of casts.
-    if (castExpr->getSubExpr()->isIntegerConstantExpr(Loc) ||
-        isa<FloatingLiteral>(castExpr->getSubExpr()))
-      return true;
-    if (Loc) *Loc = getLocStart();
-    return false;
-  case SizeOfAlignOfTypeExprClass:
-    const SizeOfAlignOfTypeExpr *sizeExpr = cast<SizeOfAlignOfTypeExpr>(this);
-    if (sizeExpr->isSizeOf())
-      return sizeExpr->getArgumentType()->isConstantSizeType(Loc);
-    return true; // alignof will always evaluate to a constant
-  case ConditionalOperatorClass:
-    const ConditionalOperator *condExpr = cast<ConditionalOperator>(this);
-    return condExpr->getCond()->isIntegerConstantExpr(Loc) &&
-           condExpr->getLHS()->isIntegerConstantExpr(Loc) &&
-           condExpr->getRHS()->isIntegerConstantExpr(Loc);
   default:
     if (Loc) *Loc = getLocStart();
     return false;
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->
+                     isIntegerConstantExpr(Result, Loc, isEvaluated);
+  case IntegerLiteralClass:
+    Result = cast<IntegerLiteral>(this)->getValue();
+    break;
+  case CharacterLiteralClass:
+    // FIXME: This doesn't set the right width etc.
+    Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
+    Result = cast<IntegerLiteral>(this)->getValue();
+    break;
+  case DeclRefExprClass:
+    if (const EnumConstantDecl *D = 
+          dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl())) {
+      D = D;
+      // FIXME: Get the real assigned value and width.
+      Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
+      Result = cast<IntegerLiteral>(this)->getValue();
+      break;
+    }
+    if (Loc) *Loc = getLocStart();
+    return false;
+  case UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(this);
+    
+    // Get the operand value.  If this is sizeof/alignof, do not evalute the
+    // operand.  This affects C99 6.6p3.
+    if (Exp->isSizeOfAlignOfOp()) isEvaluated = false;
+    if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+      return false;
+
+    switch (Exp->getOpcode()) {
+    // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
+    // See C99 6.6p3.
+    default:
+      if (Loc) *Loc = Exp->getOperatorLoc();
+      return false;
+    case UnaryOperator::Extension:
+      return true;
+    case UnaryOperator::SizeOf:
+    case UnaryOperator::AlignOf:
+      // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Loc))
+        return false;
+      
+      // FIXME: Evaluate sizeof/alignof.
+      Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
+      Result = 1;  // FIXME: Obviously bogus
+      break;
+    case UnaryOperator::LNot: {
+      bool Val = Result != 0;
+      Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
+      Result = Val;
+      break;
+    }
+    case UnaryOperator::Plus:
+      // FIXME: Do usual unary promotions here!
+      break;
+    case UnaryOperator::Minus:
+      // FIXME: Do usual unary promotions here!
+      Result = -Result;
+      break;
+    case UnaryOperator::Not:
+      // FIXME: Do usual unary promotions here!
+      Result = ~Result;
+      break;
+    }
+    break;
   }
+  case SizeOfAlignOfTypeExprClass: {
+    const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
+    // alignof always evaluates to a constant.
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Loc))
+      return false;
+
+    // FIXME: Evaluate sizeof/alignof.
+    Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
+    Result = 1;  // FIXME: Obviously bogus
+    break;
+  }
+  case BinaryOperatorClass: {
+    const BinaryOperator *Exp = cast<BinaryOperator>(this);
+    
+    // The LHS of a constant expr is always evaluated and needed.
+    if (!Exp->getLHS()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+      return false;
+    
+    APSInt RHS(Result);
+    
+    // The short-circuiting &&/|| operators don't necessarily evaluate their
+    // RHS.  Make sure to pass isEvaluated down correctly.
+    if (Exp->isLogicalOp()) {
+      bool RHSEval;
+      if (Exp->getOpcode() == BinaryOperator::LAnd)
+        RHSEval = Result != 0;
+      else {
+        assert(Exp->getOpcode() == BinaryOperator::LOr &&"Unexpected logical");
+        RHSEval = Result == 0;
+      }
+      
+      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Loc,
+                                                isEvaluated & RHSEval))
+        return false;
+    } else {
+      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Loc, isEvaluated))
+        return false;
+    }
+    
+    // FIXME: These should all do the standard promotions, etc.
+    switch (Exp->getOpcode()) {
+    default:
+      if (Loc) *Loc = getLocStart();
+      return false;
+    case BinaryOperator::Mul:
+      Result *= RHS;
+      break;
+    case BinaryOperator::Div:
+      if (RHS == 0) {
+        if (!isEvaluated) break;
+        if (Loc) *Loc = getLocStart();
+        return false;
+      }
+      Result /= RHS;
+      break;
+    case BinaryOperator::Rem:
+      if (RHS == 0) {
+        if (!isEvaluated) break;
+        if (Loc) *Loc = getLocStart();
+        return false;
+      }
+      Result %= RHS;
+      break;
+    case BinaryOperator::Add: Result += RHS; break;
+    case BinaryOperator::Sub: Result -= RHS; break;
+    case BinaryOperator::Shl: Result <<= RHS.getLimitedValue(); break;
+    case BinaryOperator::Shr: Result >>= RHS.getLimitedValue(); break;
+    case BinaryOperator::LT:  Result = Result < RHS; break;
+    case BinaryOperator::GT:  Result = Result > RHS; break;
+    case BinaryOperator::LE:  Result = Result <= RHS; break;
+    case BinaryOperator::GE:  Result = Result >= RHS; break;
+    case BinaryOperator::EQ:  Result = Result == RHS; break;
+    case BinaryOperator::NE:  Result = Result != RHS; break;
+    case BinaryOperator::And: Result &= RHS; break;
+    case BinaryOperator::Xor: Result ^= RHS; break;
+    case BinaryOperator::Or:  Result |= RHS; break;
+    case BinaryOperator::LAnd:
+      Result = Result != 0 && RHS != 0;
+      break;
+    case BinaryOperator::LOr:
+      Result = Result != 0 || RHS != 0;
+      break;
+      
+    case BinaryOperator::Comma:
+      // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
+      // *except* when they are contained within a subexpression that is not
+      // evaluated".  Note that Assignment can never happen due to constraints
+      // on the LHS subexpr, so we don't need to check it here.
+      if (isEvaluated) {
+        if (Loc) *Loc = getLocStart();
+        return false;
+      }
+      
+      // The result of the constant expr is the RHS.
+      Result = RHS;
+      return true;
+    }
+    
+    assert(!Exp->isAssignmentOp() && "LHS can't be a constant expr!");
+    break;
+  }
+  case CastExprClass: {
+    const CastExpr *Exp = cast<CastExpr>(this);    
+    // C99 6.6p6: shall only convert arithmetic types to integer types.
+    if (!Exp->getSubExpr()->getType()->isArithmeticType() ||
+        !Exp->getDestType()->isIntegerType()) {
+      if (Loc) *Loc = Exp->getSubExpr()->getLocStart();
+      return false;
+    }
+      
+    // Handle simple integer->integer casts.
+    if (Exp->getSubExpr()->getType()->isIntegerType()) {
+      if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+        return false;
+      // FIXME: do the conversion on Result.
+      break;
+    }
+    
+    // Allow floating constants that are the immediate operands of casts or that
+    // are parenthesized.
+    const Expr *Operand = Exp->getSubExpr();
+    while (const ParenExpr *PE = dyn_cast<ParenExpr>(Operand))
+      Operand = PE->getSubExpr();
+    
+    if (const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand)) {
+      // FIXME: Evaluate this correctly!
+      Result = (int)FL->getValue();
+      break;
+    }
+    if (Loc) *Loc = getLocStart();
+    return false;
+  }
+  case ConditionalOperatorClass: {
+    const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
+    
+    if (!Exp->getCond()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+      return false;
+    
+    const Expr *TrueExp  = Exp->getLHS();
+    const Expr *FalseExp = Exp->getRHS();
+    if (Result == 0) std::swap(TrueExp, FalseExp);
+    
+    // Evaluate the false one first, discard the result.
+    if (!FalseExp->isIntegerConstantExpr(Result, Loc, false))
+      return false;
+    // Evalute the true one, capture the result.
+    if (!TrueExp->isIntegerConstantExpr(Result, Loc, isEvaluated))
+      return false;
+    // FIXME: promotions on result.
+    break;
+  }
+  }
+
+  // Cases that are valid constant exprs fall through to here.
+  Result.setIsUnsigned(getType()->isUnsignedIntegerType());
+  return true;
 }
 
 

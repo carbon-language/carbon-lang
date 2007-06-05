@@ -17,7 +17,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
-#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APSInt.h"
 
 namespace llvm {
 namespace clang {
@@ -79,8 +79,16 @@ public:
   
   bool isNullPointerConstant() const;
 
-  bool isConstantExpr(SourceLocation *Loc = 0) const;
-  bool isIntegerConstantExpr(SourceLocation *Loc = 0) const;
+  /// isIntegerConstantExpr - Return true if this expression is a valid integer
+  /// constant expression, and, if so, return its value in Result.  If not a
+  /// valid i-c-e, return false and fill in Loc (if specified) with the location
+  /// of the invalid expression.
+  bool isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc = 0,
+                             bool isEvaluated = true) const;
+  bool isIntegerConstantExpr(SourceLocation *Loc = 0) const {
+    APSInt X(32);
+    return isIntegerConstantExpr(X, Loc);
+  }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -158,6 +166,8 @@ public:
   FloatingLiteral(float value, QualType type, SourceLocation l)
     : Expr(FloatingLiteralClass, type), Value(value), Loc(l) {} 
 
+  float getValue() const { return Value; }
+  
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
