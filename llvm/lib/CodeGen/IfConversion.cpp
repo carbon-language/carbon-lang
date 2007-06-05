@@ -284,7 +284,7 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     }
   } else if (TrueBBI.TrueBB == FalseBBI.TrueBB && CanRevCond &&
              TrueBBI.BB->pred_size() == 1 &&
-             TrueBBI.BB->pred_size() == 1 &&
+             FalseBBI.BB->pred_size() == 1 &&
              // Check the 'true' and 'false' blocks if either isn't ended with
              // a branch. If the block does not fallthrough to another block
              // then we need to add a branch to its successor.
@@ -301,7 +301,7 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     // TBB FBB
     //   \ /
     //  TailBB
-    // Note MBB can be empty in case both TBB and FBB are return blocks.
+    // Note TailBB can be empty.
     BBI.Kind = ICDiamond;
     TrueBBI.Kind = FalseBBI.Kind = ICChild;
     BBI.TailBB = TrueBBI.TrueBB;
@@ -611,74 +611,58 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     --TrueBBI.NonPredSize;
   }
     
-  // Check the 'true' and 'false' blocks if either isn't ended with a branch.
-  // Either the block fallthrough to another block or it ends with a
-  // return. If it's the former, add a branch to its successor.
-  bool TrueNeedBr  = !TrueBBI.TrueBB && BBI.TrueBB->succ_size();
-  bool FalseNeedBr = !FalseBBI.TrueBB && BBI.FalseBB->succ_size(); 
-
   // Merge the 'true' and 'false' blocks by copying the instructions
   // from the 'false' block to the 'true' block. That is, unless the true
   // block would clobber the predicate, in that case, do the opposite.
+  BBInfo *BBI1 = &TrueBBI;
+  BBInfo *BBI2 = &FalseBBI;
   std::vector<MachineOperand> RevCond(BBI.BrCond);
   TII->ReverseBranchCondition(RevCond);
-  BBInfo *CvtBBI;
-  if (!TrueBBI.ModifyPredicate) {
-    // Predicate the 'true' block after removing its branch.
-    TrueBBI.NonPredSize -= TII->RemoveBranch(*BBI.TrueBB);
-    PredicateBlock(TrueBBI, BBI.BrCond);
-
-    // Predicate the 'false' block.
-    PredicateBlock(FalseBBI, RevCond, true);
-
-    if (TrueNeedBr)
-      TII->InsertBranch(*BBI.TrueBB, *BBI.TrueBB->succ_begin(), NULL,
-                        BBI.BrCond);
-    // Add an unconditional branch from 'false' to to 'false' successor if it
-    // will not be the fallthrough block.
-    if (FalseNeedBr &&
-        !isNextBlock(BBI.BB, *BBI.FalseBB->succ_begin()))
-      InsertUncondBranch(BBI.FalseBB, *BBI.FalseBB->succ_begin(), TII);
-    MergeBlocks(TrueBBI, FalseBBI);
-    CvtBBI = &TrueBBI;
-  } else {
-    // Predicate the 'false' block after removing its branch.
-    FalseBBI.NonPredSize -= TII->RemoveBranch(*BBI.FalseBB);
-    PredicateBlock(FalseBBI, RevCond);
-
-    // Predicate the 'false' block.
-    PredicateBlock(TrueBBI, BBI.BrCond, true);
-
-    // Add a conditional branch from 'false' to 'false' successor if needed.
-    if (FalseNeedBr)
-      TII->InsertBranch(*BBI.FalseBB, *BBI.FalseBB->succ_begin(), NULL,
-                        RevCond);
-    // Add an unconditional branch from 'true' to to 'true' successor if it
-    // will not be the fallthrough block.
-    if (TrueNeedBr &&
-        !isNextBlock(BBI.BB, *BBI.TrueBB->succ_begin()))
-      InsertUncondBranch(BBI.TrueBB, *BBI.TrueBB->succ_begin(), TII);
-    MergeBlocks(FalseBBI, TrueBBI);
-    CvtBBI = &FalseBBI;
+  std::vector<MachineOperand> *Cond1 = &BBI.BrCond;
+  std::vector<MachineOperand> *Cond2 = &RevCond;
+  if (TrueBBI.ModifyPredicate) {
+    std::swap(BBI1, BBI2);
+    std::swap(Cond1, Cond2);
   }
+
+  // Check the 'true' and 'false' blocks if either isn't ended with a branch.
+  // Either the block fallthrough to another block or it ends with a
+  // return. If it's the former, add a branch to its successor.
+  bool NeedBr1 = !BBI1->TrueBB && BBI1->BB->succ_size();
+  bool NeedBr2 = !BBI2->TrueBB && BBI1->BB->succ_size(); 
+
+  // Predicate the 'true' block after removing its branch.
+  BBI1->NonPredSize -= TII->RemoveBranch(*BBI1->BB);
+  PredicateBlock(*BBI1, *Cond1);
+
+  // Add an early exit branch if needed.
+  if (NeedBr1)
+    TII->InsertBranch(*BBI1->BB, *BBI1->BB->succ_begin(), NULL, *Cond1);
+
+  // Predicate the 'false' block.
+  PredicateBlock(*BBI2, *Cond2, true);
+
+  // Add an unconditional branch from 'false' to to 'false' successor if it
+  // will not be the fallthrough block.
+  if (NeedBr2 && !isNextBlock(BBI2->BB, *BBI2->BB->succ_begin()))
+    InsertUncondBranch(BBI2->BB, *BBI2->BB->succ_begin(), TII);
+
+  // Keep them as two separate blocks if there is an early exit.
+  if (!NeedBr1)
+    MergeBlocks(*BBI1, *BBI2);
+  else if (!isNextBlock(BBI1->BB, BBI2->BB))
+    InsertUncondBranch(BBI1->BB, BBI2->BB, TII);
 
   // Remove the conditional branch from entry to the blocks.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
 
-  bool OkToIfcvt = true;
-  // Merge the combined block into the entry of the diamond if the entry
-  // block is its only predecessor. Otherwise, insert an unconditional
-  // branch from entry to the if-converted block.
-  if (CvtBBI->BB->pred_size() == 1) {
-    MergeBlocks(BBI, *CvtBBI);
-    CvtBBI = &BBI;
-    OkToIfcvt = false;
-  } else if (!isNextBlock(BBI.BB, CvtBBI->BB))
-    InsertUncondBranch(BBI.BB, CvtBBI->BB, TII);
+  // Merge the combined block into the entry of the diamond.
+  MergeBlocks(BBI, *BBI1);
 
   // If the if-converted block fallthrough or unconditionally branch into the
   // tail block, and the tail block does not have other predecessors, then
   // fold the tail block in as well.
+  BBInfo *CvtBBI = NeedBr1 ? BBI2 : &BBI;
   if (BBI.TailBB &&
       BBI.TailBB->pred_size() == 1 && CvtBBI->BB->succ_size() == 1) {
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
@@ -687,11 +671,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     TailBBI.Kind = ICDead;
   }
 
-  // Update block info. BB may be iteratively if-converted.
-  if (OkToIfcvt) {
-    BBI.Kind = ICReAnalyze;
-    ReTryPreds(BBI.BB);
-  }
+  // Update block info.
   TrueBBI.Kind = ICDead;
   FalseBBI.Kind = ICDead;
 
