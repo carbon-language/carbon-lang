@@ -470,6 +470,7 @@ bool Expr::isNullPointerConstant() const {
   //
   //  void test1() { *(n ? p : (void *)(7-7)) = 1; }
   //
+  /// FIXME: Just call isIntegerConstantExpr now.
   if (const IntegerLiteral *C = dyn_cast<IntegerLiteral>(this))
     return C->getValue() == 0;
   return false;
