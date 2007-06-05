@@ -453,6 +453,7 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
   // If error parsing type, ignore.
   assert((Ty != 0) && "ParseCastExpr(): missing type");
+  // FIXME: Sema for cast is completely missing.
   return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op, LParenLoc);
 }
 
@@ -778,6 +779,8 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
 inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   Expr *lex, Expr *rex, SourceLocation loc)
 {
+  // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
+  // for int << longlong -> the result type should be int, not long long.
   QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
   
   if (resType->isIntegerType())
