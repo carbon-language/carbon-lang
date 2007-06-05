@@ -354,6 +354,10 @@ bool GVNPRE::runOnFunction(Function &F) {
                       currTemps, currAvail, availableOut);
   }
   
+  DOUT << "Maximal Set: ";
+  dump_unique(VN, maximalSet);
+  DOUT << "\n";
+  
   PostDominatorTree &PDT = getAnalysis<PostDominatorTree>();
   
   // Second Phase of BuildSets - calculate ANTIC_IN
@@ -384,10 +388,12 @@ bool GVNPRE::runOnFunction(Function &F) {
       std::set<Value*, ExprLT> old (anticIn.begin(), anticIn.end());
       
       if (BB->getTerminator()->getNumSuccessors() == 1) {
-         if (visited.find(BB) == visited.end())
+         if (visited.find(BB->getTerminator()->getSuccessor(0)) == 
+             visited.end())
            phi_translate_set(VN, maximalSet, maximalSet, BB, anticOut);
          else
-           phi_translate_set(VN, maximalSet, anticipatedIn[BB->getTerminator()->getSuccessor(0)], BB, anticOut);
+           phi_translate_set(VN, maximalSet, 
+             anticipatedIn[BB->getTerminator()->getSuccessor(0)], BB, anticOut);
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
         BasicBlock* first = BB->getTerminator()->getSuccessor(0);
         anticOut.insert(anticipatedIn[first].begin(),
