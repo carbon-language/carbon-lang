@@ -753,6 +753,15 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     switch (Opc) {
     case ARM::PICADD:
     case ARM::PICLD:
+    case ARM::PICLDZH:
+    case ARM::PICLDZB:
+    case ARM::PICLDH:
+    case ARM::PICLDB:
+    case ARM::PICLDSH:
+    case ARM::PICLDSB:
+    case ARM::PICSTR:
+    case ARM::PICSTRH:
+    case ARM::PICSTRB:
     case ARM::tPICADD:
       break;
     default:
