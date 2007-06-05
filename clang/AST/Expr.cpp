@@ -192,9 +192,8 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
   return MLV_Valid;    
 }
 
-/// isConstantExpr - this recursive routine will test if an expression is
-/// either a constant expression (isIntConst == false) or an integer constant
-/// expression (isIntConst == true). Note: With the introduction of VLA's in
+/// isIntegerConstantExpr - this recursive routine will test if an expression is
+/// an integer constant expression. Note: With the introduction of VLA's in
 /// C99 the result of the sizeof operator is no longer always a constant
 /// expression. The generalization of the wording to include any subexpression
 /// that is not evaluated (C99 6.6p3) means that nonconstant subexpressions
@@ -204,15 +203,13 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
 /// violation. FIXME: This routine currently implements C90 semantics.
 /// To properly implement C99 semantics this routine will need to evaluate
 /// expressions involving operators previously mentioned.
-bool Expr::isConstantExpr(bool isIntConst, SourceLocation *Loc) const {
+bool Expr::isIntegerConstantExpr(SourceLocation *Loc) const {
   switch (getStmtClass()) {
   case IntegerLiteralClass:
   case CharacterLiteralClass:
     return true;
   case FloatingLiteralClass:
   case StringLiteralClass:
-    if (!isIntConst)
-      return true;
     if (Loc) *Loc = getLocStart();
     return false;
   case DeclRefExprClass:
@@ -231,7 +228,7 @@ bool Expr::isConstantExpr(bool isIntConst, SourceLocation *Loc) const {
     // isn't actually a constant expression (what an odd language:-)
     if (uop->isSizeOfAlignOfOp())
       return uop->getSubExpr()->getType()->isConstantSizeType(Loc);
-    return uop->getSubExpr()->isConstantExpr(isIntConst, Loc);
+    return uop->getSubExpr()->isIntegerConstantExpr(Loc);
   case BinaryOperatorClass:
     const BinaryOperator *bop = cast<BinaryOperator>(this);
     // C99 6.6p3: shall not contain assignment, increment/decrement,
@@ -241,10 +238,10 @@ bool Expr::isConstantExpr(bool isIntConst, SourceLocation *Loc) const {
       if (Loc) *Loc = getLocStart();
       return false;
     }
-    return bop->getLHS()->isConstantExpr(isIntConst, Loc) &&
-           bop->getRHS()->isConstantExpr(isIntConst, Loc);
+    return bop->getLHS()->isIntegerConstantExpr(Loc) &&
+           bop->getRHS()->isIntegerConstantExpr(Loc);
   case ParenExprClass:
-    return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr(isIntConst, Loc);
+    return cast<ParenExpr>(this)->getSubExpr()->isIntegerConstantExpr(Loc);
   case CastExprClass: 
     const CastExpr *castExpr = cast<CastExpr>(this);    
     // C99 6.6p6: shall only convert arithmetic types to integer types.
@@ -257,7 +254,7 @@ bool Expr::isConstantExpr(bool isIntConst, SourceLocation *Loc) const {
       return false;
     }
     // allow floating constants that are the immediate operands of casts.
-    if (castExpr->getSubExpr()->isConstantExpr(isIntConst, Loc) ||
+    if (castExpr->getSubExpr()->isIntegerConstantExpr(Loc) ||
         isa<FloatingLiteral>(castExpr->getSubExpr()))
       return true;
     if (Loc) *Loc = getLocStart();
@@ -269,14 +266,15 @@ bool Expr::isConstantExpr(bool isIntConst, SourceLocation *Loc) const {
     return true; // alignof will always evaluate to a constant
   case ConditionalOperatorClass:
     const ConditionalOperator *condExpr = cast<ConditionalOperator>(this);
-    return condExpr->getCond()->isConstantExpr(isIntConst, Loc) &&
-           condExpr->getLHS()->isConstantExpr(isIntConst, Loc) &&
-           condExpr->getRHS()->isConstantExpr(isIntConst, Loc);
+    return condExpr->getCond()->isIntegerConstantExpr(Loc) &&
+           condExpr->getLHS()->isIntegerConstantExpr(Loc) &&
+           condExpr->getRHS()->isIntegerConstantExpr(Loc);
   default:
     if (Loc) *Loc = getLocStart();
     return false;
   }
 }
+
 
 /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
 /// integer constant expression with the value zero, or if this is one that is
