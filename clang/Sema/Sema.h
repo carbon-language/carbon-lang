@@ -268,7 +268,7 @@ private:
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
   QualType UsualArithmeticConversions(QualType t1, QualType t2);
-  // DefaultFunctionArrayConversion - simply converts functions and arrays
+  // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). If the type isn't a function
   // or array, this routine simply returns the input type (unmodified).
   QualType DefaultFunctionArrayConversion(QualType t);
@@ -281,9 +281,9 @@ private:
     IncompatiblePointer,
     CompatiblePointerDiscardsQualifiers
   };
-  // Conversions for assignment, argument passing, initialization, and
-  // function return values. UsualAssignmentConversions is currently used by 
-  // CheckSimpleAssignment, CheckCompoundAssignment and ParseCallExpr. 
+  // UsualAssignmentConversions - conversions for assignment, argument passing, 
+  // variable initialization, and function return values. Currently used by 
+  // CheckAssignmentOperands, ParseCallExpr, and ParseReturnStmt. 
   QualType UsualAssignmentConversions(QualType lhs, QualType rhs, // C99 6.5.16
                                       AssignmentConversionResult &r);
   // Helper function for UsualAssignmentConversions (C99 6.5.16.1p1)
