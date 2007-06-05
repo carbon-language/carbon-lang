@@ -32,6 +32,7 @@ namespace clang {
   class LabelStmt;
   class GotoStmt;
   class IfStmt;
+  class WhileStmt;
   class ReturnStmt;
   class DeclStmt;
   
@@ -168,6 +169,7 @@ public:
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
   void EmitIfStmt(const IfStmt &S);
+  void EmitWhileStmt(const WhileStmt &S);
   void EmitReturnStmt(const ReturnStmt &S);
   
   //===--------------------------------------------------------------------===//

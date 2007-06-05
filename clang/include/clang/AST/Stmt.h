@@ -236,7 +236,9 @@ public:
     : Stmt(WhileStmtClass), Cond(cond), Body(body) {}
   
   Expr *getCond() { return Cond; }
+  const Expr *getCond() const { return Cond; }
   Stmt *getBody() { return Body; }
+  const Stmt *getBody() const { return Body; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

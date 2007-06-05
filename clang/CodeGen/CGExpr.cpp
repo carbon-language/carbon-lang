@@ -105,6 +105,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
                               llvm::PointerType::get(llvm::Type::Int32Ty)));
 
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
+  case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
   }
 }
 
@@ -364,6 +365,6 @@ ExprResult CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
   
   EmitUsualArithmeticConversions(E, LHS, RHS);
 
-  
+  // FIXME: This doesn't handle complex addition yet.
   return ExprResult::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "tmp"));
 }

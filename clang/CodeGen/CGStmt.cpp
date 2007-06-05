@@ -42,7 +42,10 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
   case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
   case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
+
   case Stmt::IfStmtClass:       EmitIfStmt(cast<IfStmt>(*S));             break;
+  case Stmt::WhileStmtClass:    EmitWhileStmt(cast<WhileStmt>(*S));       break;
+    
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
   case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
   }
@@ -92,13 +95,12 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // Emit the if condition.
-  ExprResult CondVal = EmitExpr(S.getCond());
-  QualType CondTy = S.getCond()->getType().getCanonicalType();
+  QualType CondTy;
+  ExprResult CondVal = EmitExprWithUsualUnaryConversions(S.getCond(), CondTy);
   
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
-  llvm::Value *BoolCondVal =
-    EvaluateScalarValueToBool(CondVal, S.getCond()->getType());
+  llvm::Value *BoolCondVal = EvaluateScalarValueToBool(CondVal, CondTy);
   
   BasicBlock *ContBlock = new BasicBlock("ifend");
   BasicBlock *ThenBlock = new BasicBlock("ifthen");
@@ -125,6 +127,46 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // Emit the continuation block for code after the if.
   EmitBlock(ContBlock);
 }
+
+void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
+  // FIXME: Handle continue/break.
+  
+  // Emit the header for the loop, insert it, which will create an uncond br to
+  // it.
+  BasicBlock *LoopHeader = new BasicBlock("whilecond");
+  EmitBlock(LoopHeader);
+  
+  // Evaluate the conditional in the while header.  C99 6.8.5.1: The evaluation
+  // of the controlling expression takes place before each execution of the loop
+  // body. 
+  QualType CondTy;
+  ExprResult CondVal = EmitExprWithUsualUnaryConversions(S.getCond(), CondTy);
+
+  // C99 6.8.5p2: The first substatement is executed if the expression compares
+  // unequal to 0.  The condition must be a scalar type.
+  llvm::Value *BoolCondVal = EvaluateScalarValueToBool(CondVal, CondTy);
+  
+  // TODO: while(1) is common, avoid extra exit blocks, etc.
+  
+  // Create an exit block for when the condition fails, create a block for the
+  // body of the loop.
+  BasicBlock *ExitBlock = new BasicBlock("whileexit");
+  BasicBlock *LoopBody  = new BasicBlock("whilebody");
+  
+  // As long as the condition is true, go to the loop body.
+  Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
+  
+  // Emit the loop body.
+  EmitBlock(LoopBody);
+  EmitStmt(S.getBody());
+  
+  // Cycle to the condition.
+  Builder.CreateBr(LoopHeader);
+  
+  // Emit the exit block.
+  EmitBlock(ExitBlock);
+}
+
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
 /// if the function returns void, or may be missing one if the function returns
