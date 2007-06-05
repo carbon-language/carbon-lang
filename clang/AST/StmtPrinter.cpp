@@ -47,6 +47,7 @@ namespace  {
     }
     
     void PrintRawCompoundStmt(CompoundStmt *S);
+    void PrintRawDecl(Decl *D);
 
     void PrintExpr(Expr *E) {
       if (E)
@@ -87,36 +88,45 @@ void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
   Indent() << "}";
 }
 
-void StmtPrinter::VisitNullStmt(NullStmt *Node) {
-  Indent() << ";\n";
-}
-
-void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
-  // FIXME: Need to complete/beautify this...this code simply shows the
+void StmtPrinter::PrintRawDecl(Decl *D) {
+  // FIXME: Need to complete/beautify this... this code simply shows the
   // nodes are where they need to be.
-  if (TypedefDecl *localType = dyn_cast<TypedefDecl>(Node->getDecl())) {
-    Indent() << "typedef " << localType->getUnderlyingType().getAsString();
-    OS << " " << localType->getName() << ";\n";
-  } else if (ValueDecl *VD = dyn_cast<ValueDecl>(Node->getDecl())) {
-    Indent();
+  if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
+    OS << "typedef " << localType->getUnderlyingType().getAsString();
+    OS << " " << localType->getName();
+  } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       switch (V->getStorageClass()) {
-      default: assert(0 && "Unknown storage class!");
-      case VarDecl::None:     break;
-      case VarDecl::Extern:   OS << "extern "; break;
-      case VarDecl::Static:   OS << "static "; break; 
-      case VarDecl::Auto:     OS << "auto "; break;
-      case VarDecl::Register: OS << "register "; break;
+        default: assert(0 && "Unknown storage class!");
+        case VarDecl::None:     break;
+        case VarDecl::Extern:   OS << "extern "; break;
+        case VarDecl::Static:   OS << "static "; break; 
+        case VarDecl::Auto:     OS << "auto "; break;
+        case VarDecl::Register: OS << "register "; break;
       }
     }
     
     std::string Name = VD->getName();
     VD->getType().getAsStringInternal(Name);
-    OS << Name << ";\n";
-  } else
+    OS << Name;
+    
+    // FIXME: Initializer for vardecl
+  } else {
     // FIXME: "struct x;"
     assert(0 && "Unexpected decl");
+  }
+}
+
+
+void StmtPrinter::VisitNullStmt(NullStmt *Node) {
+  Indent() << ";\n";
+}
+
+void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
+  Indent();
+  PrintRawDecl(Node->getDecl());
+  OS << ";\n";
 }
 
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {
@@ -208,14 +218,18 @@ void StmtPrinter::VisitDoStmt(DoStmt *Node) {
 
 void StmtPrinter::VisitForStmt(ForStmt *Node) {
   Indent() << "for (";
-  if (Node->getFirst())
-    PrintExpr((Expr*)Node->getFirst());
+  if (Node->getInit()) {
+    if (DeclStmt *DS = dyn_cast<DeclStmt>(Node->getInit()))
+      PrintRawDecl(DS->getDecl());
+    else
+      PrintExpr(cast<Expr>(Node->getInit()));
+  }
   OS << "; ";
-  if (Node->getSecond())
-    PrintExpr(Node->getSecond());
+  if (Node->getCond())
+    PrintExpr(Node->getCond());
   OS << "; ";
-  if (Node->getThird())
-    PrintExpr(Node->getThird());
+  if (Node->getInc())
+    PrintExpr(Node->getInc());
   OS << ")\n";
   PrintStmt(Node->getBody());
 }
