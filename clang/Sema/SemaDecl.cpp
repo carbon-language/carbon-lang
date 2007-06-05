@@ -33,7 +33,7 @@ using namespace clang;
 bool Sema::isConstantArrayType(ArrayType *ary, SourceLocation loc) { 
   if (Expr *size = ary->getSize()) {
     SourceLocation expLoc;
-    if (!size->isConstantExpr(&expLoc)) {
+    if (!size->isIntegerConstantExpr(&expLoc)) {
       Diag(expLoc, diag::err_typecheck_illegal_vla);
       return false;
     }

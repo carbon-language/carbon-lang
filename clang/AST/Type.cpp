@@ -318,7 +318,7 @@ bool Type::isAggregateType() const {
 bool Type::isConstantSizeType(SourceLocation *loc) const {
   if (const ArrayType *ary = dyn_cast<ArrayType>(CanonicalType)) {
     if (Expr *size = ary->getSize()) {
-      if (!size->isConstantExpr(loc))
+      if (!size->isIntegerConstantExpr(loc))
         return false; // Variable Length Array
     }
   }
