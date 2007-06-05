@@ -45,6 +45,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
 
   case Stmt::IfStmtClass:       EmitIfStmt(cast<IfStmt>(*S));             break;
   case Stmt::WhileStmtClass:    EmitWhileStmt(cast<WhileStmt>(*S));       break;
+  case Stmt::DoStmtClass:       EmitDoStmt(cast<DoStmt>(*S));             break;
+  case Stmt::ForStmtClass:      EmitForStmt(cast<ForStmt>(*S));           break;
     
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
   case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
@@ -94,13 +96,9 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
 }
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
-  // Emit the if condition.
-  QualType CondTy;
-  ExprResult CondVal = EmitExprWithUsualUnaryConversions(S.getCond(), CondTy);
-  
   // C99 6.8.4.1: The first substatement is executed if the expression compares
   // unequal to 0.  The condition must be a scalar type.
-  llvm::Value *BoolCondVal = EvaluateScalarValueToBool(CondVal, CondTy);
+  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
   
   BasicBlock *ContBlock = new BasicBlock("ifend");
   BasicBlock *ThenBlock = new BasicBlock("ifthen");
@@ -139,14 +137,10 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The evaluation
   // of the controlling expression takes place before each execution of the loop
   // body. 
-  QualType CondTy;
-  ExprResult CondVal = EmitExprWithUsualUnaryConversions(S.getCond(), CondTy);
-
-  // C99 6.8.5p2: The first substatement is executed if the expression compares
-  // unequal to 0.  The condition must be a scalar type.
-  llvm::Value *BoolCondVal = EvaluateScalarValueToBool(CondVal, CondTy);
+  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
   
-  // TODO: while(1) is common, avoid extra exit blocks, etc.
+  // TODO: while(1) is common, avoid extra exit blocks, etc.  Be sure
+  // to correctly handle break/continue though.
   
   // Create an exit block for when the condition fails, create a block for the
   // body of the loop.
@@ -167,12 +161,88 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   EmitBlock(ExitBlock);
 }
 
+void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
+  // FIXME: Handle continue/break.
+  // TODO: "do {} while (0)" is common in macros, avoid extra blocks.  Be sure
+  // to correctly handle break/continue though.
+
+  // Emit the body for the loop, insert it, which will create an uncond br to
+  // it.
+  BasicBlock *LoopBody = new BasicBlock("dobody");
+  BasicBlock *AfterDo = new BasicBlock("afterdo");
+  EmitBlock(LoopBody);
+  
+  // Emit the body of the loop into the block.
+  EmitStmt(S.getBody());
+  
+  // C99 6.8.5.2: "The evaluation of the controlling expression takes place
+  // after each execution of the loop body."
+  
+  // Evaluate the conditional in the while header.
+  // C99 6.8.5p2/p4: The first substatement is executed if the expression
+  // compares unequal to 0.  The condition must be a scalar type.
+  llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
+  
+  // As long as the condition is true, iterate the loop.
+  Builder.CreateCondBr(BoolCondVal, LoopBody, AfterDo);
+  
+  // Emit the exit block.
+  EmitBlock(AfterDo);
+}
+
+void CodeGenFunction::EmitForStmt(const ForStmt &S) {
+  // FIXME: Handle continue/break.
+  // FIXME: What do we do if the increment (f.e.) contains a stmt expression,
+  // which contains a continue/break?
+  
+  // Evaluate the first part before the loop.
+  if (S.getInit())
+    EmitStmt(S.getInit());
+
+  // Start the loop with a block that tests the condition.
+  BasicBlock *CondBlock = new BasicBlock("forcond");
+  BasicBlock *AfterFor = 0;
+  EmitBlock(CondBlock);
+
+  // Evaluate the condition if present.  If not, treat it as a non-zero-constant
+  // according to 6.8.5.3p2, aka, true.
+  if (S.getCond()) {
+    // C99 6.8.5p2/p4: The first substatement is executed if the expression
+    // compares unequal to 0.  The condition must be a scalar type.
+    llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
+    
+    // As long as the condition is true, iterate the loop.
+    BasicBlock *ForBody = new BasicBlock("forbody");
+    AfterFor = new BasicBlock("afterfor");
+    Builder.CreateCondBr(BoolCondVal, ForBody, AfterFor);
+    EmitBlock(ForBody);    
+  } else {
+    // Treat it as a non-zero constant.  Don't even create a new block for the
+    // body, just fall into it.
+  }
+
+  // If the condition is true, execute the body of the for stmt.
+  EmitStmt(S.getBody());
+  
+  // If there is an increment, emit it next.
+  if (S.getInc())
+    EmitExpr(S.getInc());
+      
+  // Finally, branch back up to the condition for the next iteration.
+  Builder.CreateBr(CondBlock);
+
+  // Emit the fall-through block if there is any.
+  if (AfterFor) 
+    EmitBlock(AfterFor);
+  else
+    EmitBlock(new BasicBlock());
+}
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
-  ExprResult RetVal;
+  RValue RetVal;
   
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
@@ -196,8 +266,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     assert(0 && "FIXME: aggregate return unimp");
   }
   
-  // Emit a block after the branch so that dead code after a goto has some place
-  // to go.
-  Builder.SetInsertPoint(new BasicBlock("", CurFn));
+  // Emit a block after the branch so that dead code after a return has some
+  // place to go.
+  EmitBlock(new BasicBlock());
 }
 

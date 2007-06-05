@@ -33,12 +33,15 @@ namespace clang {
   class GotoStmt;
   class IfStmt;
   class WhileStmt;
+  class DoStmt;
+  class ForStmt;
   class ReturnStmt;
   class DeclStmt;
   
   class Expr;
   class DeclRefExpr;
   class IntegerLiteral;
+  class CastExpr;
   class UnaryOperator;
   class BinaryOperator;
   
@@ -48,11 +51,11 @@ namespace CodeGen {
   class CodeGenModule;
   
 
-/// ExprResult - This trivial value class is used to represent the result of an
+/// RValue - This trivial value class is used to represent the result of an
 /// expression that is evaluated.  It can be one of two things: either a simple
 /// LLVM SSA value, or the address of an aggregate value in memory.  These two
 /// possibilities are discriminated by isAggregate/isScalar.
-class ExprResult {
+class RValue {
   Value *V;
   // TODO: Encode this into the low bit of pointer for more efficient
   // return-by-value.
@@ -74,14 +77,14 @@ public:
     return V;
   }
   
-  static ExprResult get(Value *V) {
-    ExprResult ER;
+  static RValue get(Value *V) {
+    RValue ER;
     ER.V = V;
     ER.IsAggregate = false;
     return ER;
   }
-  static ExprResult getAggregate(Value *V) {
-    ExprResult ER;
+  static RValue getAggregate(Value *V) {
+    RValue ER;
     ER.V = V;
     ER.IsAggregate = true;
     return ER;
@@ -94,6 +97,7 @@ public:
 /// bitrange.
 class LValue {
   // FIXME: Volatility.  Restrict?
+  // alignment?
   llvm::Value *V;
 public:
   bool isBitfield() const { return false; }
@@ -146,10 +150,22 @@ public:
   
   void EmitBlock(BasicBlock *BB);
 
+
+  /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
+  /// expression and compare the result against zero, returning an Int1Ty value.
+  Value *EvaluateExprAsBool(const Expr *E);
   
-  /// EvaluateScalarValueToBool - Evaluate the specified expression value to a
+  //===--------------------------------------------------------------------===//
+  //                                Conversions
+  //===--------------------------------------------------------------------===//
+  
+  /// EmitConversion - Convert the value specied by Val, whose type is ValTy, to
+  /// the type specified by DstTy, following the rules of C99 6.3.
+  RValue EmitConversion(RValue Val, QualType ValTy, QualType DstTy);
+  
+  /// ConvertScalarValueToBool - Convert the specified expression value to a
   /// boolean (i1) truth value.  This is equivalent to "Val == 0".
-  Value *EvaluateScalarValueToBool(ExprResult Val, QualType Ty);
+  Value *ConvertScalarValueToBool(RValue Val, QualType Ty);
   
   //===--------------------------------------------------------------------===//
   //                        Local Declaration Emission
@@ -170,33 +186,91 @@ public:
   void EmitGotoStmt(const GotoStmt &S);
   void EmitIfStmt(const IfStmt &S);
   void EmitWhileStmt(const WhileStmt &S);
+  void EmitDoStmt(const DoStmt &S);
+  void EmitForStmt(const ForStmt &S);
   void EmitReturnStmt(const ReturnStmt &S);
   
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//
-  
+
+  /// EmitLValue - Emit code to compute a designator that specifies the location
+  /// of the expression.
+  ///
+  /// This can return one of two things: a simple address or a bitfield
+  /// reference.  In either case, the LLVM Value* in the LValue structure is
+  /// guaranteed to be an LLVM pointer type.
+  ///
+  /// If this returns a bitfield reference, nothing about the pointee type of
+  /// the LLVM value is known: For example, it may not be a pointer to an
+  /// integer.
+  ///
+  /// If this returns a normal address, and if the lvalue's C type is fixed
+  /// size, this method guarantees that the returned pointer type will point to
+  /// an LLVM type of the same size of the lvalue's type.  If the lvalue has a
+  /// variable length type, this is not possible.
+  ///
   LValue EmitLValue(const Expr *E);
+  
+  /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
+  /// this method emits the address of the lvalue, then loads the result as an
+  /// rvalue, returning the rvalue.
+  RValue EmitLoadOfLValue(const Expr *E);
+  
+  /// EmitStoreThroughLValue - Store the specified rvalue into the specified
+  /// lvalue, where both are guaranteed to the have the same type, and that type
+  /// is 'Ty'.
+  void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
+  
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
+  LValue EmitUnaryOpLValue(const UnaryOperator *E);
     
   //===--------------------------------------------------------------------===//
   //                             Expression Emission
   //===--------------------------------------------------------------------===//
 
-  ExprResult EmitExpr(const Expr *E);
-  ExprResult EmitIntegerLiteral(const IntegerLiteral *E);
-  
-  ExprResult EmitExprWithUsualUnaryConversions(const Expr *E, QualType &ResTy);
+  RValue EmitExprWithUsualUnaryConversions(const Expr *E, QualType &ResTy);
   QualType EmitUsualArithmeticConversions(const BinaryOperator *E,
-                                          ExprResult &LHS, ExprResult &RHS);
+                                          RValue &LHS, RValue &RHS);
   
+  RValue EmitExpr(const Expr *E);
+  RValue EmitIntegerLiteral(const IntegerLiteral *E);
+  
+  RValue EmitCastExpr(const CastExpr *E);
+
   // Unary Operators.
-  ExprResult EmitUnaryOperator(const UnaryOperator *E);
-  ExprResult EmitUnaryLNot(const UnaryOperator *E);
+  RValue EmitUnaryOperator(const UnaryOperator *E);
+  // FIXME: pre/post inc/dec
+  RValue EmitUnaryAddrOf  (const UnaryOperator *E);
+  RValue EmitUnaryPlus    (const UnaryOperator *E);
+  RValue EmitUnaryMinus   (const UnaryOperator *E);
+  RValue EmitUnaryNot     (const UnaryOperator *E);
+  RValue EmitUnaryLNot    (const UnaryOperator *E);
+  // FIXME: SIZEOF/ALIGNOF(expr).
+  // FIXME: real/imag
   
   // Binary Operators.
-  ExprResult EmitBinaryOperator(const BinaryOperator *E);
-  ExprResult EmitBinaryAdd(const BinaryOperator *E);
+  RValue EmitBinaryOperator(const BinaryOperator *E);
+  RValue EmitBinaryMul(const BinaryOperator *E);
+  RValue EmitBinaryDiv(const BinaryOperator *E);
+  RValue EmitBinaryRem(const BinaryOperator *E);
+  RValue EmitBinaryAdd(const BinaryOperator *E);
+  RValue EmitBinarySub(const BinaryOperator *E);
+  RValue EmitBinaryShl(const BinaryOperator *E);
+  RValue EmitBinaryShr(const BinaryOperator *E);
+  
+  // FIXME: relational
+  
+  RValue EmitBinaryAnd(const BinaryOperator *E);
+  RValue EmitBinaryXor(const BinaryOperator *E);
+  RValue EmitBinaryOr (const BinaryOperator *E);
+  RValue EmitBinaryLAnd(const BinaryOperator *E);
+  RValue EmitBinaryLOr(const BinaryOperator *E);
+  
+  RValue EmitBinaryAssign(const BinaryOperator *E);
+  // FIXME: Assignment.
+  
+  RValue EmitBinaryComma(const BinaryOperator *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

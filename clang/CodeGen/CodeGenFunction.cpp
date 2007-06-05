@@ -58,7 +58,9 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
       return IntegerType::get(Target.getCharWidth(Loc));
 
     case BuiltinType::Bool:
-      return IntegerType::get(Target.getBoolWidth(Loc));
+      // FIXME: This is very strange.  We want scalars to be i1, but in memory
+      // they can be i1 or i32.  Should the codegen handle this issue?
+      return llvm::Type::Int1Ty;
       
     case BuiltinType::Short:
     case BuiltinType::UShort:
@@ -101,7 +103,7 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
            A.getIndexTypeQualifier() == 0 &&
            "FIXME: We only handle trivial array types so far!");
     // FIXME: are there any promotions etc here?
-    ExprResult Size = EmitExpr(A.getSize());
+    RValue Size = EmitExpr(A.getSize());
     assert(Size.isScalar() && isa<llvm::ConstantInt>(Size.getVal()) &&
            "FIXME: Only handle fixed-size arrays so far");
     const llvm::Type *EltTy = ConvertType(A.getElementType(), Loc);

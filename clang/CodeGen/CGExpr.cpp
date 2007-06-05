@@ -23,9 +23,39 @@ using namespace CodeGen;
 //                        Miscellaneous Helper Methods
 //===--------------------------------------------------------------------===//
 
-/// EvaluateScalarValueToBool - Evaluate the specified expression value to a
+
+/// EvaluateExprAsBool - Perform the usual unary conversions on the specified
+/// expression and compare the result against zero, returning an Int1Ty value.
+Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
+  QualType Ty;
+  RValue Val = EmitExprWithUsualUnaryConversions(E, Ty);
+  return ConvertScalarValueToBool(Val, Ty);
+}
+
+//===--------------------------------------------------------------------===//
+//                               Conversions
+//===--------------------------------------------------------------------===//
+
+/// EmitConversion - Convert the value specied by Val, whose type is ValTy, to
+/// the type specified by DstTy, following the rules of C99 6.3.
+RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
+                                       QualType DstTy) {
+  ValTy = ValTy.getCanonicalType();
+  DstTy = DstTy.getCanonicalType();
+  if (ValTy == DstTy) return Val;
+  
+  if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstTy)) {
+    if (DestBT->getKind() == BuiltinType::Bool)
+      return RValue::get(ConvertScalarValueToBool(Val, ValTy));
+  }
+  
+  assert(0 && "FIXME: Unsupported conversion!");
+}
+
+
+/// ConvertScalarValueToBool - Convert the specified expression value to a
 /// boolean (i1) truth value.  This is equivalent to "Val == 0".
-Value *CodeGenFunction::EvaluateScalarValueToBool(ExprResult Val, QualType Ty) {
+Value *CodeGenFunction::ConvertScalarValueToBool(RValue Val, QualType Ty) {
   Ty = Ty.getCanonicalType();
   Value *Result;
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(Ty)) {
@@ -96,17 +126,71 @@ Value *CodeGenFunction::EvaluateScalarValueToBool(ExprResult Val, QualType Ty) {
 //                         LValue Expression Emission
 //===----------------------------------------------------------------------===//
 
+/// EmitLValue - Emit code to compute a designator that specifies the location
+/// of the expression.
+///
+/// This can return one of two things: a simple address or a bitfield
+/// reference.  In either case, the LLVM Value* in the LValue structure is
+/// guaranteed to be an LLVM pointer type.
+///
+/// If this returns a bitfield reference, nothing about the pointee type of
+/// the LLVM value is known: For example, it may not be a pointer to an
+/// integer.
+///
+/// If this returns a normal address, and if the lvalue's C type is fixed
+/// size, this method guarantees that the returned pointer type will point to
+/// an LLVM type of the same size of the lvalue's type.  If the lvalue has a
+/// variable length type, this is not possible.
+///
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default:
-    printf("Unimplemented lvalue expr!\n");
+    fprintf(stderr, "Unimplemented lvalue expr!\n");
     E->dump();
     return LValue::getAddr(UndefValue::get(
                               llvm::PointerType::get(llvm::Type::Int32Ty)));
 
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
+    
+    
+  case Expr::UnaryOperatorClass: 
+    return EmitUnaryOpLValue(cast<UnaryOperator>(E));
   }
+}
+
+/// EmitLoadOfLValue - Given an expression that represents a value lvalue,
+/// this method emits the address of the lvalue, then loads the result as an
+/// rvalue, returning the rvalue.
+RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
+  LValue LV = EmitLValue(E);
+  
+  QualType ExprTy = E->getType().getCanonicalType();
+  
+  // FIXME: this is silly and obviously wrong for non-scalars.
+  assert(!LV.isBitfield());
+  return RValue::get(Builder.CreateLoad(LV.getAddress(), "tmp"));
+}
+
+/// EmitStoreThroughLValue - Store the specified rvalue into the specified
+/// lvalue, where both are guaranteed to the have the same type, and that type
+/// is 'Ty'.
+void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
+                                             QualType Ty) {
+  // FIXME: This is obviously bogus.
+  assert(!Dst.isBitfield() && "FIXME: Don't support store to bitfield yet");
+  assert(Src.isScalar() && "FIXME: Don't support store of aggregate yet");
+  
+  // TODO: Handle volatility etc.
+  Value *Addr = Dst.getAddress();
+  const llvm::Type *SrcTy = Src.getVal()->getType();
+  const llvm::Type *AddrTy = 
+    cast<llvm::PointerType>(Addr->getType())->getElementType();
+  
+  if (AddrTy != SrcTy)
+    Addr = Builder.CreateBitCast(Addr, llvm::PointerType::get(SrcTy),
+                                 "storetmp");
+  Builder.CreateStore(Src.getVal(), Addr);
 }
 
 
@@ -120,27 +204,33 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   assert(0 && "Unimp declref");
 }
 
+LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
+  // __extension__ doesn't affect lvalue-ness.
+  if (E->getOpcode() == UnaryOperator::Extension)
+    return EmitLValue(E->getSubExpr());
+  
+  assert(E->getOpcode() == UnaryOperator::Deref &&
+         "'*' is the only unary operator that produces an lvalue");
+  return LValue::getAddr(EmitExpr(E->getSubExpr()).getVal());
+}
+
 //===--------------------------------------------------------------------===//
 //                             Expression Emission
 //===--------------------------------------------------------------------===//
 
-ExprResult CodeGenFunction::EmitExpr(const Expr *E) {
+RValue CodeGenFunction::EmitExpr(const Expr *E) {
   assert(E && "Null expression?");
   
   switch (E->getStmtClass()) {
   default:
     printf("Unimplemented expr!\n");
     E->dump();
-    return ExprResult::get(UndefValue::get(llvm::Type::Int32Ty));
+    return RValue::get(UndefValue::get(llvm::Type::Int32Ty));
     
   // l-values.
-  case Expr::DeclRefExprClass: {
-    // FIXME: EnumConstantDecl's are not lvalues.
-    LValue LV = EmitLValue(E);
-    // FIXME: this is silly.
-    assert(!LV.isBitfield());
-    return ExprResult::get(Builder.CreateLoad(LV.getAddress(), "tmp"));
-  }
+  case Expr::DeclRefExprClass:
+    // FIXME: EnumConstantDecl's are not lvalues.  This is wrong for them.
+    return EmitLoadOfLValue(E);
     
   // Leaf expressions.
   case Expr::IntegerLiteralClass:
@@ -151,28 +241,41 @@ ExprResult CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
   case Expr::UnaryOperatorClass:
     return EmitUnaryOperator(cast<UnaryOperator>(E));
+  case Expr::CastExprClass: 
+    return EmitCastExpr(cast<CastExpr>(E));
   case Expr::BinaryOperatorClass:
     return EmitBinaryOperator(cast<BinaryOperator>(E));
   }
   
 }
 
-ExprResult CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
-  return ExprResult::get(ConstantInt::get(E->getValue()));
+RValue CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
+  return RValue::get(ConstantInt::get(E->getValue()));
 }
 
-//===--------------------------------------------------------------------===//
-//                          Unary Operator Emission
-//===--------------------------------------------------------------------===//
+RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
+  QualType SrcTy;
+  RValue Src = EmitExprWithUsualUnaryConversions(E->getSubExpr(), SrcTy);
+  
+  // If the destination is void, just evaluate the source.
+  if (E->getType()->isVoidType())
+    return RValue::getAggregate(0);
+  
+  return EmitConversion(Src, SrcTy, E->getType());
+}
 
-ExprResult CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E, 
-                                                              QualType &ResTy) {
+//===----------------------------------------------------------------------===//
+//                           Unary Operator Emission
+//===----------------------------------------------------------------------===//
+
+RValue CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E, 
+                                                          QualType &ResTy) {
   ResTy = E->getType().getCanonicalType();
   
   if (isa<FunctionType>(ResTy)) { // C99 6.3.2.1p4
     // Functions are promoted to their address.
     ResTy = getContext().getPointerType(ResTy);
-    return ExprResult::get(EmitLValue(E).getAddress());
+    return RValue::get(EmitLValue(E).getAddress());
   } else if (const ArrayType *ary = dyn_cast<ArrayType>(ResTy)) {
     // C99 6.3.2.1p3
     ResTy = getContext().getPointerType(ary->getElementType());
@@ -186,8 +289,7 @@ ExprResult CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E,
                                 ->getElementType()) &&
            "Doesn't support VLAs yet!");
     llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    V = Builder.CreateGEP(V, Idx0, Idx0, "arraydecay");
-    return ExprResult::get(V);
+    return RValue::get(Builder.CreateGEP(V, Idx0, Idx0, "arraydecay"));
   } else if (ResTy->isPromotableIntegerType()) { // C99 6.3.1.1p2
     // FIXME: this probably isn't right, pending clarification from Steve.
     llvm::Value *Val = EmitExpr(E).getVal();
@@ -201,7 +303,7 @@ ExprResult CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E,
     }
     ResTy = getContext().IntTy;
     
-    return ExprResult::get(Val);
+    return RValue::get(Val);
   }
   
   // Otherwise, this is a float, double, int, struct, etc.
@@ -209,23 +311,64 @@ ExprResult CodeGenFunction::EmitExprWithUsualUnaryConversions(const Expr *E,
 }
 
 
-ExprResult CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
+RValue CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
   switch (E->getOpcode()) {
   default:
     printf("Unimplemented unary expr!\n");
     E->dump();
-    return ExprResult::get(UndefValue::get(llvm::Type::Int32Ty));
-  case UnaryOperator::LNot: return EmitUnaryLNot(E);
+    return RValue::get(UndefValue::get(llvm::Type::Int32Ty));
+  // FIXME: pre/post inc/dec
+  case UnaryOperator::AddrOf: return EmitUnaryAddrOf(E);
+  case UnaryOperator::Deref : return EmitLoadOfLValue(E);
+  case UnaryOperator::Plus  : return EmitUnaryPlus(E);
+  case UnaryOperator::Minus : return EmitUnaryMinus(E);
+  case UnaryOperator::Not   : return EmitUnaryNot(E);
+  case UnaryOperator::LNot  : return EmitUnaryLNot(E);
+  // FIXME: SIZEOF/ALIGNOF(expr).
+  // FIXME: real/imag
+  case UnaryOperator::Extension: return EmitExpr(E->getSubExpr());
   }
 }
 
-/// C99 6.5.3.3
-ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
-  QualType ResTy;
-  ExprResult Op = EmitExprWithUsualUnaryConversions(E->getSubExpr(), ResTy);
+/// C99 6.5.3.2
+RValue CodeGenFunction::EmitUnaryAddrOf(const UnaryOperator *E) {
+  // The address of the operand is just its lvalue.  It cannot be a bitfield.
+  return RValue::get(EmitLValue(E->getSubExpr()).getAddress());
+}
+
+RValue CodeGenFunction::EmitUnaryPlus(const UnaryOperator *E) {
+  // Unary plus just performs promotions on its arithmetic operand.
+  QualType Ty;
+  return EmitExprWithUsualUnaryConversions(E, Ty);
+}
+
+RValue CodeGenFunction::EmitUnaryMinus(const UnaryOperator *E) {
+  // Unary minus performs promotions, then negates its arithmetic operand.
+  QualType Ty;
+  RValue V = EmitExprWithUsualUnaryConversions(E, Ty);
   
-  // Compare to zero.
-  Value *BoolVal = EvaluateScalarValueToBool(Op, ResTy);
+  if (V.isScalar())
+    return RValue::get(Builder.CreateNeg(V.getVal(), "neg"));
+  
+  assert(0 && "FIXME: This doesn't handle complex operands yet");
+}
+
+RValue CodeGenFunction::EmitUnaryNot(const UnaryOperator *E) {
+  // Unary not performs promotions, then complements its integer operand.
+  QualType Ty;
+  RValue V = EmitExprWithUsualUnaryConversions(E, Ty);
+  
+  if (V.isScalar())
+    return RValue::get(Builder.CreateNot(V.getVal(), "neg"));
+                      
+  assert(0 && "FIXME: This doesn't handle integer complex operands yet (GNU)");
+}
+
+
+/// C99 6.5.3.3
+RValue CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
+  // Compare operand to zero.
+  Value *BoolVal = EvaluateExprAsBool(E->getSubExpr());
   
   // Invert value.
   // TODO: Could dynamically modify easy computations here.  For example, if
@@ -233,8 +376,7 @@ ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
   BoolVal = Builder.CreateNot(BoolVal, "lnot");
   
   // ZExt result to int.
-  const llvm::Type *ResLTy = ConvertType(E->getType(), E->getOperatorLoc());
-  return ExprResult::get(Builder.CreateZExt(BoolVal, ResLTy, "lnot.ext"));
+  return RValue::get(Builder.CreateZExt(BoolVal, LLVMIntTy, "lnot.ext"));
 }
 
 
@@ -244,8 +386,8 @@ ExprResult CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
 
 // FIXME describe.
 QualType CodeGenFunction::
-EmitUsualArithmeticConversions(const BinaryOperator *E, ExprResult &LHS, 
-                               ExprResult &RHS) {
+EmitUsualArithmeticConversions(const BinaryOperator *E, RValue &LHS, 
+                               RValue &RHS) {
   QualType LHSType, RHSType;
   LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), LHSType);
   RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSType);
@@ -290,11 +432,9 @@ EmitUsualArithmeticConversions(const BinaryOperator *E, ExprResult &LHS,
       // Promote the RHS to an FP type of the LHS, with the sign following the
       // RHS.
       if (RHSType->isSignedIntegerType())
-        RHS = ExprResult::get(Builder.CreateSIToFP(RHSV, LHSV->getType(),
-                                                   "promote"));
+        RHS = RValue::get(Builder.CreateSIToFP(RHSV,LHSV->getType(),"promote"));
       else
-        RHS = ExprResult::get(Builder.CreateUIToFP(RHSV, LHSV->getType(),
-                                                   "promote"));
+        RHS = RValue::get(Builder.CreateUIToFP(RHSV,LHSV->getType(),"promote"));
       return LHSType;
     }
     
@@ -302,11 +442,9 @@ EmitUsualArithmeticConversions(const BinaryOperator *E, ExprResult &LHS,
       // Promote the LHS to an FP type of the RHS, with the sign following the
       // LHS.
       if (LHSType->isSignedIntegerType())
-        LHS = ExprResult::get(Builder.CreateSIToFP(LHSV, RHSV->getType(),
-                                                   "promote"));
+        LHS = RValue::get(Builder.CreateSIToFP(LHSV,RHSV->getType(),"promote"));
       else
-        LHS = ExprResult::get(Builder.CreateUIToFP(LHSV, RHSV->getType(),
-                                                   "promote"));
+        LHS = RValue::get(Builder.CreateUIToFP(LHSV,RHSV->getType(),"promote"));
       return RHSType;
     }
     
@@ -315,11 +453,9 @@ EmitUsualArithmeticConversions(const BinaryOperator *E, ExprResult &LHS,
     QualType BiggerType = ASTContext::maxFloatingType(LHSType, RHSType);
     
     if (BiggerType == LHSType)
-      RHS = ExprResult::get(Builder.CreateFPExt(RHSV, LHSV->getType(),
-                                                "promote"));
+      RHS = RValue::get(Builder.CreateFPExt(RHSV, LHSV->getType(), "promote"));
     else
-      LHS = ExprResult::get(Builder.CreateFPExt(LHSV, RHSV->getType(),
-                                                "promote"));
+      LHS = RValue::get(Builder.CreateFPExt(LHSV, RHSV->getType(), "promote"));
     return BiggerType;
   }
   
@@ -331,40 +467,255 @@ EmitUsualArithmeticConversions(const BinaryOperator *E, ExprResult &LHS,
   
   if (LHSType == ResTy) {
     if (RHSType->isSignedIntegerType())
-      RHS = ExprResult::get(Builder.CreateSExt(RHSV, LHSV->getType(),
-                                               "promote"));
+      RHS = RValue::get(Builder.CreateSExt(RHSV, LHSV->getType(), "promote"));
     else
-      RHS = ExprResult::get(Builder.CreateZExt(RHSV, LHSV->getType(),
-                                               "promote"));
+      RHS = RValue::get(Builder.CreateZExt(RHSV, LHSV->getType(), "promote"));
   } else {
     assert(RHSType == ResTy && "Unknown conversion");
     if (LHSType->isSignedIntegerType())
-      LHS = ExprResult::get(Builder.CreateSExt(LHSV, RHSV->getType(),
-                                               "promote"));
+      LHS = RValue::get(Builder.CreateSExt(LHSV, RHSV->getType(), "promote"));
     else
-      LHS = ExprResult::get(Builder.CreateZExt(LHSV, RHSV->getType(),
-                                               "promote"));
+      LHS = RValue::get(Builder.CreateZExt(LHSV, RHSV->getType(), "promote"));
   }  
   return ResTy;
 }
 
 
-ExprResult CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
+RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   switch (E->getOpcode()) {
   default:
-    printf("Unimplemented expr!\n");
+    fprintf(stderr, "Unimplemented expr!\n");
     E->dump();
-    return ExprResult::get(UndefValue::get(llvm::Type::Int32Ty));
+    return RValue::get(UndefValue::get(llvm::Type::Int32Ty));
+  case BinaryOperator::Mul: return EmitBinaryMul(E);
+  case BinaryOperator::Div: return EmitBinaryDiv(E);
+  case BinaryOperator::Rem: return EmitBinaryRem(E);
   case BinaryOperator::Add: return EmitBinaryAdd(E);
+  case BinaryOperator::Sub: return EmitBinarySub(E);
+  case BinaryOperator::Shl: return EmitBinaryShl(E);
+  case BinaryOperator::Shr: return EmitBinaryShr(E);
+    
+    // FIXME: relational
+    
+  case BinaryOperator::And: return EmitBinaryAnd(E);
+  case BinaryOperator::Xor: return EmitBinaryXor(E);
+  case BinaryOperator::Or : return EmitBinaryOr(E);
+  case BinaryOperator::LAnd: return EmitBinaryLAnd(E);
+  case BinaryOperator::LOr: return EmitBinaryLOr(E);
+
+  case BinaryOperator::Assign: return EmitBinaryAssign(E);
+    // FIXME: Assignment.
+  case BinaryOperator::Comma: return EmitBinaryComma(E);
   }
 }
 
-
-ExprResult CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
-  ExprResult LHS, RHS;
+RValue CodeGenFunction::EmitBinaryMul(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
   
+  if (LHS.isScalar())
+    return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
+  
+  assert(0 && "FIXME: This doesn't handle complex operands yet");
+}
+
+RValue CodeGenFunction::EmitBinaryDiv(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+  
+  if (LHS.isScalar()) {
+    Value *RV;
+    if (LHS.getVal()->getType()->isFloatingPoint())
+      RV = Builder.CreateFDiv(LHS.getVal(), RHS.getVal(), "div");
+    else if (E->getType()->isUnsignedIntegerType())
+      RV = Builder.CreateUDiv(LHS.getVal(), RHS.getVal(), "div");
+    else
+      RV = Builder.CreateSDiv(LHS.getVal(), RHS.getVal(), "div");
+    return RValue::get(RV);
+  }
+  assert(0 && "FIXME: This doesn't handle complex operands yet");
+}
+
+RValue CodeGenFunction::EmitBinaryRem(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+  
+  if (LHS.isScalar()) {
+    Value *RV;
+    // Rem in C can't be a floating point type: C99 6.5.5p2.
+    if (E->getType()->isUnsignedIntegerType())
+      RV = Builder.CreateURem(LHS.getVal(), RHS.getVal(), "rem");
+    else
+      RV = Builder.CreateSRem(LHS.getVal(), RHS.getVal(), "rem");
+    return RValue::get(RV);
+  }
+  
+  assert(0 && "FIXME: This doesn't handle complex operands yet");
+}
+
+RValue CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
+  RValue LHS, RHS;
   EmitUsualArithmeticConversions(E, LHS, RHS);
 
-  // FIXME: This doesn't handle complex addition yet.
-  return ExprResult::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "tmp"));
+  // FIXME: This doesn't handle ptr+int etc yet.
+  
+  if (LHS.isScalar())
+    return RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
+  
+  assert(0 && "FIXME: This doesn't handle complex operands yet");
+
+}
+
+RValue CodeGenFunction::EmitBinarySub(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+  
+  // FIXME: This doesn't handle ptr-int or ptr-ptr, etc yet.
+  
+  if (LHS.isScalar())
+    return RValue::get(Builder.CreateSub(LHS.getVal(), RHS.getVal(), "sub"));
+  
+  assert(0 && "FIXME: This doesn't handle complex operands yet");
+  
+}
+
+RValue CodeGenFunction::EmitBinaryShl(const BinaryOperator *E) {
+  // For shifts, integer promotions are performed, but the usual arithmetic 
+  // conversions are not.  The LHS and RHS need not have the same type.
+  
+  QualType ResTy;
+  Value *LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), ResTy).getVal();
+  Value *RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), ResTy).getVal();
+
+  // LLVM requires the LHS and RHS to be the same type, promote or truncate the
+  // RHS to the same size as the LHS.
+  if (LHS->getType() != RHS->getType())
+    RHS = Builder.CreateIntCast(RHS, LHS->getType(), false, "sh_prom");
+  
+  return RValue::get(Builder.CreateShl(LHS, RHS, "shl"));
+}
+
+RValue CodeGenFunction::EmitBinaryShr(const BinaryOperator *E) {
+  // For shifts, integer promotions are performed, but the usual arithmetic 
+  // conversions are not.  The LHS and RHS need not have the same type.
+  
+  QualType ResTy;
+  Value *LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), ResTy).getVal();
+  Value *RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), ResTy).getVal();
+  
+  // LLVM requires the LHS and RHS to be the same type, promote or truncate the
+  // RHS to the same size as the LHS.
+  if (LHS->getType() != RHS->getType())
+    RHS = Builder.CreateIntCast(RHS, LHS->getType(), false, "sh_prom");
+  
+  if (E->getType()->isUnsignedIntegerType())
+    return RValue::get(Builder.CreateLShr(LHS, RHS, "shr"));
+  else
+    return RValue::get(Builder.CreateAShr(LHS, RHS, "shr"));
+}
+
+RValue CodeGenFunction::EmitBinaryAnd(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+  
+  if (LHS.isScalar())
+    return RValue::get(Builder.CreateAnd(LHS.getVal(), RHS.getVal(), "and"));
+  
+  assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
+}
+
+RValue CodeGenFunction::EmitBinaryXor(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+  
+  if (LHS.isScalar())
+    return RValue::get(Builder.CreateXor(LHS.getVal(), RHS.getVal(), "xor"));
+  
+  assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
+}
+
+RValue CodeGenFunction::EmitBinaryOr(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+  
+  if (LHS.isScalar())
+    return RValue::get(Builder.CreateOr(LHS.getVal(), RHS.getVal(), "or"));
+  
+  assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
+}
+
+RValue CodeGenFunction::EmitBinaryLAnd(const BinaryOperator *E) {
+  Value *LHSCond = EvaluateExprAsBool(E->getLHS());
+  
+  BasicBlock *ContBlock = new BasicBlock("land_cont");
+  BasicBlock *RHSBlock = new BasicBlock("land_rhs");
+
+  BasicBlock *OrigBlock = Builder.GetInsertBlock();
+  Builder.CreateCondBr(LHSCond, RHSBlock, ContBlock);
+  
+  EmitBlock(RHSBlock);
+  Value *RHSCond = EvaluateExprAsBool(E->getRHS());
+  
+  // Reaquire the RHS block, as there may be subblocks inserted.
+  RHSBlock = Builder.GetInsertBlock();
+  EmitBlock(ContBlock);
+  
+  // Create a PHI node.  If we just evaluted the LHS condition, the result is
+  // false.  If we evaluated both, the result is the RHS condition.
+  PHINode *PN = Builder.CreatePHI(llvm::Type::Int1Ty, "land");
+  PN->reserveOperandSpace(2);
+  PN->addIncoming(ConstantInt::getFalse(), OrigBlock);
+  PN->addIncoming(RHSCond, RHSBlock);
+  
+  // ZExt result to int.
+  return RValue::get(Builder.CreateZExt(PN, LLVMIntTy, "land.ext"));
+}
+
+RValue CodeGenFunction::EmitBinaryLOr(const BinaryOperator *E) {
+  Value *LHSCond = EvaluateExprAsBool(E->getLHS());
+  
+  BasicBlock *ContBlock = new BasicBlock("lor_cont");
+  BasicBlock *RHSBlock = new BasicBlock("lor_rhs");
+  
+  BasicBlock *OrigBlock = Builder.GetInsertBlock();
+  Builder.CreateCondBr(LHSCond, ContBlock, RHSBlock);
+  
+  EmitBlock(RHSBlock);
+  Value *RHSCond = EvaluateExprAsBool(E->getRHS());
+  
+  // Reaquire the RHS block, as there may be subblocks inserted.
+  RHSBlock = Builder.GetInsertBlock();
+  EmitBlock(ContBlock);
+  
+  // Create a PHI node.  If we just evaluted the LHS condition, the result is
+  // true.  If we evaluated both, the result is the RHS condition.
+  PHINode *PN = Builder.CreatePHI(llvm::Type::Int1Ty, "lor");
+  PN->reserveOperandSpace(2);
+  PN->addIncoming(ConstantInt::getTrue(), OrigBlock);
+  PN->addIncoming(RHSCond, RHSBlock);
+  
+  // ZExt result to int.
+  return RValue::get(Builder.CreateZExt(PN, LLVMIntTy, "lor.ext"));
+}
+
+RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
+  LValue LHS = EmitLValue(E->getLHS());
+  
+  QualType RHSTy;
+  RValue RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSTy);
+  
+  // Convert the RHS to the type of the LHS.
+  RHS = EmitConversion(RHS, RHSTy, E->getType());
+  
+  // Store the value into the LHS.
+  EmitStoreThroughLValue(RHS, LHS, E->getType());
+  
+  // Return the converted RHS.
+  return RHS;
+}
+
+
+RValue CodeGenFunction::EmitBinaryComma(const BinaryOperator *E) {
+  EmitExpr(E->getLHS());
+  return EmitExpr(E->getRHS());
 }
