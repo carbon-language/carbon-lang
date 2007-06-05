@@ -77,7 +77,7 @@ namespace {
     void dump_unique(ValueTable& VN, std::set<Value*, ExprLT>& s);
     void clean(ValueTable VN, std::set<Value*, ExprLT>& set);
     bool add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V);
-    Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, uint32_t v);
+    Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, Value* v);
     Value* phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                          std::set<Value*, ExprLT>& set,
                          Value* V, BasicBlock* pred);
@@ -122,10 +122,11 @@ bool GVNPRE::add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V) {
 
 Value* GVNPRE::find_leader(GVNPRE::ValueTable VN,
                            std::set<Value*, ExprLT>& vals,
-                           uint32_t v) {
+                           Value* v) {
+  ExprLT cmp;
   for (std::set<Value*, ExprLT>::iterator I = vals.begin(), E = vals.end();
        I != E; ++I)
-    if (VN[*I] == v)
+    if (!cmp(v, *I) && !cmp(*I, v))
       return *I;
   
   return 0;
@@ -140,7 +141,7 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
     Value* newOp1 = isa<Instruction>(BO->getOperand(0))
                                 ? phi_translate(VN, MS, set,
-                                  find_leader(VN, set, VN[BO->getOperand(0)]),
+                                  find_leader(VN, set, BO->getOperand(0)),
                                   pred)
                                 : BO->getOperand(0);
     if (newOp1 == 0)
@@ -148,7 +149,7 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
     
     Value* newOp2 = isa<Instruction>(BO->getOperand(1))
                                 ? phi_translate(VN, MS, set,
-                                  find_leader(VN, set, VN[BO->getOperand(0)]),
+                                  find_leader(VN, set, BO->getOperand(1)),
                                   pred)
                                 : BO->getOperand(1);
     if (newOp2 == 0)
@@ -159,7 +160,7 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                                              newOp1, newOp2,
                                              BO->getName()+".gvnpre");
       
-      if (!find_leader(VN, set, VN[newVal])) {
+      if (!find_leader(VN, set, newVal)) {
         add(VN, MS, newVal);
         return newVal;
       } else {
@@ -233,19 +234,21 @@ void GVNPRE::topo_sort(GVNPRE::ValueTable& VN,
   std::insert_iterator<std::vector<Value*> > q_ins(Q, Q.begin());
   std::set_difference(set.begin(), set.end(),
                      toErase.begin(), toErase.end(),
-                     q_ins, ExprLT());
+                     q_ins);
   
-  std::set<Value*, ExprLT> visited;
+  std::set<Value*> visited;
   while (!Q.empty()) {
     Value* e = Q.back();
   
     if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
-      Value* l = find_leader(VN, set, VN[BO->getOperand(0)]);
-      Value* r = find_leader(VN, set, VN[BO->getOperand(1)]);
+      Value* l = find_leader(VN, set, BO->getOperand(0));
+      Value* r = find_leader(VN, set, BO->getOperand(1));
       
-      if (l != 0 && visited.find(l) == visited.end())
+      if (l != 0 && isa<Instruction>(l) &&
+          visited.find(l) == visited.end())
         Q.push_back(l);
-      else if (r != 0 && visited.find(r) == visited.end())
+      else if (r != 0 && isa<Instruction>(r) &&
+               visited.find(r) == visited.end())
         Q.push_back(r);
       else {
         vec.push_back(e);
@@ -316,7 +319,7 @@ void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>&
         currExps.insert(rightValue);
       currExps.insert(BO);
       
-      currTemps.insert(BO);
+      //currTemps.insert(BO);
       
     // Handle unsupported ops
     } else if (!BI->isTerminator()){
@@ -442,7 +445,7 @@ bool GVNPRE::runOnFunction(Function &F) {
       dump_unique(VN, anticIn);
       DOUT << "\n";
       
-      if (old != anticIn)
+      if (old.size() != anticIn.size())
         changed = true;
       
       anticOut.clear();
