@@ -444,10 +444,11 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
 /// isNextBlock - Returns true either if ToBB the next block after BB or
 /// that all the intervening blocks are empty.
 static bool isNextBlock(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
-  MachineFunction *MF = BB->getParent();
   MachineFunction::iterator I = BB;
-  while (++I != MF->end() && I != MachineFunction::iterator(ToBB))
-    if (!I->empty())
+  MachineFunction::iterator TI = ToBB;
+  MachineFunction::iterator E = BB->getParent()->end();
+  while (++I != TI)
+    if (I == E || !I->empty())
       return false;
   return true;
 }
