@@ -257,7 +257,9 @@ public:
     : Stmt(DoStmtClass), Body(body), Cond(cond) {}
   
   Stmt *getBody() { return Body; }
+  const Stmt *getBody() const { return Body; }
   Expr *getCond() { return Cond; }
+  const Expr *getCond() const { return Cond; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -267,22 +269,28 @@ public:
 };
 
 
-/// ForStmt - This represents a 'for' stmt.
+/// ForStmt - This represents a 'for (init;cond;inc)' stmt.  Note that any of
+/// the init/cond/inc parts of the ForStmt will be null if they were not
+/// specified in the source.
 ///
 class ForStmt : public Stmt {
-  Stmt *First;  // Expression or decl.
-  Expr *Second, *Third;
+  Stmt *Init;  // Expression or declstmt.
+  Expr *Cond, *Inc;
   Stmt *Body;
 public:
-  ForStmt(Stmt *first, Expr *second, Expr *third, Stmt *body)
-    : Stmt(ForStmtClass),
-      First(first), Second(second), Third(third), Body(body) {}
+  ForStmt(Stmt *init, Expr *cond, Expr *inc, Stmt *body)
+    : Stmt(ForStmtClass), Init(init), Cond(cond), Inc(inc), Body(body) {}
   
-  Stmt *getFirst() { return First; }
-  Expr *getSecond() { return Second; }
-  Expr *getThird() { return Third; }
+  Stmt *getInit() { return Init; }
+  Expr *getCond() { return Cond; }
+  Expr *getInc()  { return Inc; }
   Stmt *getBody() { return Body; }
  
+  const Stmt *getInit() const { return Init; }
+  const Expr *getCond() const { return Cond; }
+  const Expr *getInc()  const { return Inc; }
+  const Stmt *getBody() const { return Body; }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ForStmtClass; 
