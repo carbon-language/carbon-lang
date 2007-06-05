@@ -99,6 +99,8 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
     Result += "nounwind ";
   if (Attrs & ParamAttr::InReg)
     Result += "inreg ";
+  if (Attrs & ParamAttr::NoAlias)
+    Result += "noalias ";
   if (Attrs & ParamAttr::StructRet)
     Result += "sret ";  
   return Result;

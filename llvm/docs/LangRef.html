@@ -784,6 +784,9 @@ a power of 2.</p>
     <dt><tt>sret</tt></dt>
     <dd>This indicates that the parameter specifies the address of a structure
     that is the return value of the function in the source program.</dd>
+    <dt><tt>noalias</tt></dt>
+    <dd>This indicates that the parameter not alias any other object or any 
+    other "noalias" objects during the function call.
     <dt><tt>noreturn</tt></dt>
     <dd>This function attribute indicates that the function never returns. This
     indicates to LLVM that every call to this function should be treated as if

@@ -1101,7 +1101,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 
 // Function Attributes
-%token NORETURN INREG SRET NOUNWIND
+%token NORETURN INREG SRET NOUNWIND NOALIAS
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1224,10 +1224,11 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                   CHECK_FOR_ERROR
                  };
 
-ParamAttr     : ZEXT  { $$ = ParamAttr::ZExt;      }
-              | SEXT  { $$ = ParamAttr::SExt;      }
-              | INREG { $$ = ParamAttr::InReg;     }
-              | SRET  { $$ = ParamAttr::StructRet; }
+ParamAttr     : ZEXT    { $$ = ParamAttr::ZExt;      }
+              | SEXT    { $$ = ParamAttr::SExt;      }
+              | INREG   { $$ = ParamAttr::InReg;     }
+              | SRET    { $$ = ParamAttr::StructRet; }
+              | NOALIAS { $$ = ParamAttr::NoAlias;   }
               ;
 
 OptParamAttrs : /* empty */  { $$ = ParamAttr::None; }

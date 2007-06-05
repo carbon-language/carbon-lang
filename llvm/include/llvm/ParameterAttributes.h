@@ -35,7 +35,8 @@ enum Attributes {
   NoReturn   = 1 << 2, ///< mark the function as not returning
   InReg      = 1 << 3, ///< force argument to be passed in register
   StructRet  = 1 << 4, ///< hidden pointer to structure to return
-  NoUnwind   = 1 << 5  ///< Function doesn't unwind stack
+  NoUnwind   = 1 << 5, ///< Function doesn't unwind stack
+  NoAlias    = 1 << 6  ///< Considered to not alias after call.
 };
 
 }

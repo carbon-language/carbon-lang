@@ -473,6 +473,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
             Out << " | ParamAttr::SExt";
           if (attrs & ParamAttr::ZExt)
             Out << " | ParamAttr::ZExt";
+          if (attrs & ParamAttr::NoAlias)
+            Out << " | ParamAttr::NoAlias";
           if (attrs & ParamAttr::StructRet)
             Out << " | ParamAttr::StructRet";
           if (attrs & ParamAttr::InReg)

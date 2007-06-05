@@ -8,6 +8,8 @@
 declare i16 @"test"(i16 sext %arg) sext 
 declare i8 @"test2" (i16 zext %a2) zext 
 
+declare i32 @"test3"(i32* noalias %p)
+
 declare void @exit(i32) noreturn nounwind
 
 define i32 @main(i32 %argc, i8 **%argv) nounwind inreg {
