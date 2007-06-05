@@ -361,7 +361,9 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImmedValue());
   unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImmedValue());
   printSOImm(O, ARM_AM::getSOImmVal(V1), TAI);
-  O << "\n\torr ";
+  O << "\n\torr";
+  printPredicateOperand(MI, 2);
+  O << " ";
   printOperand(MI, 0); 
   O << ", ";
   printOperand(MI, 0); 
