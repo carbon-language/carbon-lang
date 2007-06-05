@@ -237,6 +237,9 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
     !TII->AnalyzeBranch(*BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
   if (!BBI.IsAnalyzable || BBI.BrCond.size() == 0)
     return;
+  // Do not ifcvt if either path is a back edge to the entry block.
+  if (BBI.TrueBB == BB || BBI.FalseBB == BB)
+    return;
 
   StructuralAnalysis(BBI.TrueBB);
   BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
