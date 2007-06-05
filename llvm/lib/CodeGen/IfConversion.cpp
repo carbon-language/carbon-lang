@@ -756,9 +756,10 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
     ToBBI.BB->removeSuccessor(FromBBI.BB);
 
   // Redirect all branches to FromBB to ToBB.
-  for (MachineBasicBlock::pred_iterator I = FromBBI.BB->pred_begin(),
-         E = FromBBI.BB->pred_end(); I != E; ++I)
-    (*I)->ReplaceUsesOfBlockWith(FromBBI.BB, ToBBI.BB);
+  std::vector<MachineBasicBlock *> Preds(FromBBI.BB->pred_begin(),
+                                         FromBBI.BB->pred_end());
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+    Preds[i]->ReplaceUsesOfBlockWith(FromBBI.BB, ToBBI.BB);
 
   // Transfer preds / succs and update size.
   TransferPreds(ToBBI.BB, FromBBI.BB);
