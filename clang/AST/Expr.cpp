@@ -410,7 +410,7 @@ bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
       Result = (int)FL->getValue();
       break;
     }
-    if (Loc) *Loc = getLocStart();
+    if (Loc) *Loc = Operand->getLocStart();
     return false;
   }
   case ConditionalOperatorClass: {

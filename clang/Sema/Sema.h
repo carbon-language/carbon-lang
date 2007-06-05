@@ -331,9 +331,11 @@ private:
   QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation loc, 
                                      bool isSizeof);
     
-  // C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
-  // a constant expression of type int with a value greater than zero.
-  bool isConstantArrayType(ArrayType *ary, SourceLocation loc); 
+  /// C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
+  /// a constant expression of type int with a value greater than zero.  If the
+  /// array has an incomplete type or a valid constant size, return false,
+  /// otherwise emit a diagnostic and return true.
+  bool VerifyConstantArrayType(const ArrayType *ary, SourceLocation loc); 
 };
 
 

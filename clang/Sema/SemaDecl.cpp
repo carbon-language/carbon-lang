@@ -30,23 +30,47 @@ using namespace clang;
 
 // C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
 // a constant expression of type int with a value greater than zero.
-bool Sema::isConstantArrayType(ArrayType *ary, SourceLocation loc) { 
-  if (Expr *size = ary->getSize()) {
-    SourceLocation expLoc;
-    if (!size->isIntegerConstantExpr(&expLoc)) {
-      Diag(expLoc, diag::err_typecheck_illegal_vla);
-      return false;
-    }
-    if (!size->getType()->isIntegerType()) {
-      Diag(size->getLocStart(), diag::err_array_size_non_int, 
-           size->getType().getAsString());
-      return false;
-    }
-    // We have a constant expression with an integer type, now make sure 
-    // value greater than zero (C99 6.7.5.2p1).
-    // FIXME: evaluate constant expression.
+bool Sema::VerifyConstantArrayType(const ArrayType *Array,
+                                   SourceLocation DeclLoc) { 
+  const Expr *Size = Array->getSize();
+  if (Size == 0) return false;  // incomplete type.
+  
+  if (!Size->getType()->isIntegerType()) {
+    Diag(Size->getLocStart(), diag::err_array_size_non_int, 
+         Size->getType().getAsString(), Size->getSourceRange());
+    return true;
   }
-  return true;
+
+  // Verify that the size of the array is an integer constant expr.
+  SourceLocation Loc;
+  APSInt SizeVal(32);
+  if (!Size->isIntegerConstantExpr(SizeVal, &Loc)) {
+    // FIXME: This emits the diagnostic to enforce 6.7.2.1p8, but the message
+    // is wrong.  It is also wrong for static variables.
+    Diag(DeclLoc, diag::err_typecheck_illegal_vla, Size->getSourceRange());
+    return true;
+  }
+  
+  // We have a constant expression with an integer type, now make sure 
+  // value greater than zero (C99 6.7.5.2p1).
+  
+  // FIXME: This check isn't specific to static VLAs, this should be moved
+  // elsewhere or replicated.  'int X[-1];' inside a function should emit an
+  // error.
+  if (SizeVal.isSigned()) {
+    APSInt Zero(SizeVal.getBitWidth());
+    Zero.setIsUnsigned(false);
+    if (SizeVal < Zero) {
+      Diag(DeclLoc, diag::err_typecheck_negative_array_size,
+           Size->getSourceRange());
+      return true;
+    } else if (SizeVal == 0) {
+      // GCC accepts zero sized static arrays.
+      Diag(DeclLoc, diag::err_typecheck_zero_array_size, 
+           Size->getSourceRange());
+    }
+  }
+  return false;
 }
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
@@ -272,7 +296,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       // C99 6.7.7p2: If a typedef name specifies a variably modified type
       // then it shall have block scope.
       if (ArrayType *ary = dyn_cast<ArrayType>(NewTD->getUnderlyingType())) {
-        if (!isConstantArrayType(ary, D.getIdentifierLoc()))
+        if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
           return 0;
       }
     }
@@ -340,8 +364,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       }
       // C99 6.7.5.2p2: If an identifier is declared to be an object with 
       // static storage duration, it shall not have a variable length array.
-      if (ArrayType *ary = dyn_cast<ArrayType>(R)) {
-        if (!isConstantArrayType(ary, D.getIdentifierLoc()))
+      if (ArrayType *ary = dyn_cast<ArrayType>(R.getCanonicalType())) {
+        if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
           return 0;
       }
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC);
@@ -358,8 +382,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       if (SC == VarDecl::Static) {
         // C99 6.7.5.2p2: If an identifier is declared to be an object with 
         // static storage duration, it shall not have a variable length array.
-        if (ArrayType *ary = dyn_cast<ArrayType>(R)) {
-          if (!isConstantArrayType(ary, D.getIdentifierLoc()))
+        if (ArrayType *ary = dyn_cast<ArrayType>(R.getCanonicalType())) {
+          if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
             return 0;
         }
       }
@@ -669,8 +693,8 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
-  if (ArrayType *ary = dyn_cast<ArrayType>(T)) {
-    if (!isConstantArrayType(ary, Loc))
+  if (ArrayType *ary = dyn_cast<ArrayType>(T.getCanonicalType())) {
+    if (VerifyConstantArrayType(ary, Loc))
       return 0;
   }
   return new FieldDecl(Loc, II, T);
@@ -807,6 +831,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
   }
   SourceLocation expLoc;
   // C99 6.7.2.2p2: Make sure we have an integer constant expression.
+  // FIXME: Capture this value in the enumconstantdecl.
   if (Val && !((Expr *)Val)->isIntegerConstantExpr(&expLoc)) {
     Diag(expLoc, diag::err_enum_value_not_integer_constant_expr, Id->getName());
     return 0;
