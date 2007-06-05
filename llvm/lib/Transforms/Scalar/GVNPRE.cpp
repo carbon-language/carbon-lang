@@ -158,11 +158,14 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
       Value* newVal = BinaryOperator::create(BO->getOpcode(),
                                              newOp1, newOp2,
                                              BO->getName()+".gvnpre");
-      add(VN, MS, newVal);
-      if (!find_leader(VN, set, VN[newVal]))
+      
+      if (!find_leader(VN, set, VN[newVal])) {
+        add(VN, MS, newVal);
         return newVal;
-      else
+      } else {
+        delete newVal;
         return 0;
+      }
     }
   } else if (PHINode* P = dyn_cast<PHINode>(V)) {
     if (P->getParent() == pred->getTerminator()->getSuccessor(0))
