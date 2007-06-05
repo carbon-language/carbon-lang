@@ -135,6 +135,7 @@ namespace {
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass((intptr_t)&ID) {}
+    CFGPrinter(intptr_t pid) : FunctionPass(pid) {}
 
     virtual bool runOnFunction(Function &F) {
       std::string Filename = "cfg." + F.getName() + ".dot";
@@ -162,6 +163,7 @@ namespace {
 
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
     static char ID; // Pass identification, replacement for typeid
+    CFGOnlyPrinter() : CFGPrinter((intptr_t)&ID) {}
     virtual bool runOnFunction(Function &F) {
       bool OldCFGOnly = CFGOnly;
       CFGOnly = true;
