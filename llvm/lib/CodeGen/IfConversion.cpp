@@ -527,7 +527,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   PredicateBlock(TrueBBI, BBI.BrCond);
 
   // If 'true' block has a 'false' successor, add an exit branch to it.
-  if (TrueBBI.FalseBB) {
+  bool HasEarlyExit = TrueBBI.FalseBB != NULL;
+  if (HasEarlyExit) {
     std::vector<MachineOperand> RevCond(TrueBBI.BrCond);
     if (TII->ReverseBranchCondition(RevCond))
       assert(false && "Unable to reverse branch condition!");
@@ -538,7 +539,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   // predecessors. Otherwise, add a unconditional branch from 'true' to 'false'.
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   bool FalseBBDead = false;
-  if (FalseBBI.BB->pred_size() == 2) {
+  if (!HasEarlyExit && FalseBBI.BB->pred_size() == 2) {
     MergeBlocks(TrueBBI, FalseBBI);
     FalseBBDead = true;
   } else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB))
