@@ -153,7 +153,9 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       default: assert(false && "Unexpected!");
         break;
       case ICReAnalyze:
-        // One or more of 'childrean' have been modified, abort!
+        // One or more of 'children' have been modified, abort!
+      case ICDead:
+        // Block has been already been if-converted, abort!
         break;
       case ICSimple:
       case ICSimpleFalse:
@@ -219,9 +221,10 @@ bool IfConverter::ReverseBranchCondition(BBInfo &BBI) {
 void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   BBInfo &BBI = BBAnalysis[BB->getNumber()];
 
-  if (BBI.Kind == ICReAnalyze)
+  if (BBI.Kind == ICReAnalyze) {
     BBI.BrCond.clear();
-  else {
+    BBI.TrueBB = BBI.FalseBB = NULL;
+  } else {
     if (BBI.Kind != ICNotAnalyzed)
       return;  // Already analyzed.
     BBI.BB = BB;
@@ -504,10 +507,7 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
-  BBI.Kind = ICNotAnalyzed;
-  BBI.TrueBB = BBI.FalseBB = NULL;
-  BBI.BrCond.clear();
-  TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
+  BBI.Kind = ICReAnalyze;
   ReTryPreds(BBI.BB);
   CvtBBI->Kind = ICDead;
 
@@ -537,9 +537,11 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   // Join the 'true' and 'false' blocks if the 'false' block has no other
   // predecessors. Otherwise, add a unconditional branch from 'true' to 'false'.
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-  if (FalseBBI.BB->pred_size() == 2)
+  bool FalseBBDead = false;
+  if (FalseBBI.BB->pred_size() == 2) {
     MergeBlocks(TrueBBI, FalseBBI);
-  else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB))
+    FalseBBDead = true;
+  } else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB))
     InsertUncondBranch(TrueBBI.BB, FalseBBI.BB, TII);
 
   // Now merge the entry of the triangle with the true block.
@@ -549,12 +551,11 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
             std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
-  BBI.Kind = ICNotClassfied;
-  BBI.TrueBB = BBI.FalseBB = NULL;
-  BBI.BrCond.clear();
-  TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
+  BBI.Kind = ICReAnalyze;
   ReTryPreds(BBI.BB);
   TrueBBI.Kind = ICDead;
+  if (FalseBBDead)
+    FalseBBI.Kind = ICDead;
 
   // FIXME: Must maintain LiveIns.
   return true;
@@ -683,10 +684,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
 
   // Update block info. BB may be iteratively if-converted.
   if (OkToIfcvt) {
-    BBI.Kind = ICNotClassfied;
-    BBI.TrueBB = BBI.FalseBB = NULL;
-    BBI.BrCond.clear();
-    TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
+    BBI.Kind = ICReAnalyze;
     ReTryPreds(BBI.BB);
   }
   TrueBBI.Kind = ICDead;
@@ -734,9 +732,10 @@ static void TransferPreds(MachineBasicBlock *ToBB, MachineBasicBlock *FromBB) {
 static void TransferSuccs(MachineBasicBlock *ToBB, MachineBasicBlock *FromBB) {
   for (MachineBasicBlock::succ_iterator I = FromBB->succ_begin(),
          E = FromBB->succ_end(); I != E; ++I) {
-    FromBB->removeSuccessor(*I);
-    if (!ToBB->isSuccessor(*I))
-      ToBB->addSuccessor(*I);
+    MachineBasicBlock *Succ = *I;
+    FromBB->removeSuccessor(Succ);
+    if (!ToBB->isSuccessor(Succ))
+      ToBB->addSuccessor(Succ);
   }
 }
 
