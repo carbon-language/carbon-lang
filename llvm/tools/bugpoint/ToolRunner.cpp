@@ -555,6 +555,8 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   GCCArgs.push_back(fileType == AsmFile ? "assembler" : "c");
   GCCArgs.push_back("-fno-strict-aliasing");
   GCCArgs.push_back(InputFile.c_str());   // Specify the input filename.
+  GCCArgs.push_back("-x");
+  GCCArgs.push_back("none");
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
   GCCArgs.push_back("-G");       // Compile a shared library, `-G' for Sparc
 #elif defined(__APPLE__)

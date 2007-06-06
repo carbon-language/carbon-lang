@@ -260,7 +260,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   // as the GCCArgs.
   int RetVal = 0;
   if (InterpreterSel == RunLLC || InterpreterSel == RunCBE ||
-      InterpreterSel == CBE_bug)
+      InterpreterSel == CBE_bug || InterpreterSel == LLC_Safe)
     RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
                                 OutputFile, AdditionalLinkerArgs, SharedObjs, 
                                 Timeout, MemoryLimit);
