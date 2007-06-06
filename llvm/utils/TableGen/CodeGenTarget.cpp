@@ -360,6 +360,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   noResults    = R->getValueAsBit("noResults");
+  clobbersPred = R->getValueAsBit("clobbersPred");
   hasVariableNumberOfOperands = false;
   
   DagInit *DI;
