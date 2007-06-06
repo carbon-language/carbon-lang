@@ -1196,9 +1196,28 @@ namespace {
 /// client before it removes an instruction from the program, to make sure
 /// that no dangling references are left around.
 void ScalarEvolutionsImpl::deleteInstructionFromRecords(Instruction *I) {
-  Scalars.erase(I);
-  if (PHINode *PN = dyn_cast<PHINode>(I))
-    ConstantEvolutionLoopExitValue.erase(PN);
+  SmallVector<Instruction *, 16> Worklist;
+
+  if (Scalars.erase(I)) {
+    if (PHINode *PN = dyn_cast<PHINode>(I))
+      ConstantEvolutionLoopExitValue.erase(PN);
+    Worklist.push_back(I);
+  }
+
+  while (!Worklist.empty()) {
+    Instruction *II = Worklist.back();
+    Worklist.pop_back();
+
+    for (Instruction::use_iterator UI = II->use_begin(), UE = II->use_end();
+         UI != UE; ++UI) {
+      Instruction *Inst = dyn_cast<Instruction>(*UI);
+      if (Inst && hasSCEV(Inst) && Scalars.erase(Inst)) {
+        if (PHINode *PN = dyn_cast<PHINode>(II))
+          ConstantEvolutionLoopExitValue.erase(PN);
+        Worklist.push_back(Inst);
+      }
+    }
+  }
 }
 
 
