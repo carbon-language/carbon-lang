@@ -590,6 +590,8 @@ DIAG(err_typecheck_expression_not_modifiable_lvalue, ERROR,
      "expression is not assignable")
 DIAG(err_typecheck_incomplete_type_not_modifiable_lvalue, ERROR,
      "incomplete type '%0' is not assignable")
+DIAG(err_typecheck_call_not_function, ERROR,
+     "called object is not a function or function pointer")
 DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to function")
 DIAG(err_typecheck_call_too_many_args, ERROR,
