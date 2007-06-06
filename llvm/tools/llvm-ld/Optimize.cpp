@@ -122,7 +122,8 @@ void Optimize(Module* M) {
     // Now that composite has been compiled, scan through the module, looking
     // for a main function.  If main is defined, mark all other functions
     // internal.
-    addPass(Passes, createInternalizePass(!DisableInternalize));
+    if (!DisableInternalize)
+      addPass(Passes, createInternalizePass(true));
 
     // Propagate constants at call sites into the functions they call.  This
     // opens opportunities for globalopt (and inlining) by substituting function
