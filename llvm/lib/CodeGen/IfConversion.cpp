@@ -308,8 +308,8 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
   } else {
     // FIXME: Consider duplicating if BB is small.
     bool TryTriangle = TrueBBI.TrueBB && TrueBBI.TrueBB == BBI.FalseBB &&
-                       BBI.TrueBB->pred_size() == 1;
-    bool TrySimple = TrueBBI.BrCond.size() == 0 && BBI.TrueBB->pred_size() == 1;
+                       TrueBBI.BB->pred_size() == 1;
+    bool TrySimple = TrueBBI.BrCond.size() == 0 && TrueBBI.BB->pred_size() == 1;
     if ((TryTriangle || TrySimple) &&
         FeasibilityAnalysis(TrueBBI, BBI.BrCond)) {
       if (TryTriangle) {
@@ -333,14 +333,21 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
         BBI.Kind = ICSimple;
         TrueBBI.Kind = ICChild;
       }
-    } else if (FalseBBI.BrCond.size() == 0 && BBI.FalseBB->pred_size() == 1) {
-      // Try 'simple' on the other path...
+    } else if (FalseBBI.BrCond.size() == 0 && FalseBBI.BB->pred_size() == 1) {
+      // Try the other path...
       std::vector<MachineOperand> RevCond(BBI.BrCond);
-      if (TII->ReverseBranchCondition(RevCond))
-        assert(false && "Unable to reverse branch condition!");
-      if (FeasibilityAnalysis(FalseBBI, RevCond)) {
-        BBI.Kind = ICSimpleFalse;
-        FalseBBI.Kind = ICChild;
+      if (!TII->ReverseBranchCondition(RevCond) &&
+          FeasibilityAnalysis(FalseBBI, RevCond)) {
+        if (FalseBBI.TrueBB && FalseBBI.TrueBB == BBI.TrueBB &&
+            FalseBBI.BB->pred_size() == 1) {
+          // Reverse 'true' and 'false' paths.
+          ReverseBranchCondition(BBI);
+          BBI.Kind = ICTriangle;
+          FalseBBI.Kind = ICChild;
+        } else {
+          BBI.Kind = ICSimpleFalse;
+          FalseBBI.Kind = ICChild;
+        }
       }
     }
   }
@@ -620,16 +627,19 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   TII->ReverseBranchCondition(RevCond);
   std::vector<MachineOperand> *Cond1 = &BBI.BrCond;
   std::vector<MachineOperand> *Cond2 = &RevCond;
-  if (TrueBBI.ModifyPredicate) {
-    std::swap(BBI1, BBI2);
-    std::swap(Cond1, Cond2);
-  }
-
   // Check the 'true' and 'false' blocks if either isn't ended with a branch.
   // Either the block fallthrough to another block or it ends with a
   // return. If it's the former, add a branch to its successor.
   bool NeedBr1 = !BBI1->TrueBB && BBI1->BB->succ_size();
-  bool NeedBr2 = !BBI2->TrueBB && BBI1->BB->succ_size(); 
+  bool NeedBr2 = !BBI2->TrueBB && BBI2->BB->succ_size(); 
+
+  if ((TrueBBI.ModifyPredicate && !FalseBBI.ModifyPredicate) ||
+      (!TrueBBI.ModifyPredicate && !FalseBBI.ModifyPredicate &&
+       NeedBr1 && !NeedBr2)) {
+    std::swap(BBI1, BBI2);
+    std::swap(Cond1, Cond2);
+    std::swap(NeedBr1, NeedBr2);
+  }
 
   // Predicate the 'true' block after removing its branch.
   BBI1->NonPredSize -= TII->RemoveBranch(*BBI1->BB);
@@ -650,14 +660,17 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   // Keep them as two separate blocks if there is an early exit.
   if (!NeedBr1)
     MergeBlocks(*BBI1, *BBI2);
-  else if (!isNextBlock(BBI1->BB, BBI2->BB))
-    InsertUncondBranch(BBI1->BB, BBI2->BB, TII);
 
   // Remove the conditional branch from entry to the blocks.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
 
   // Merge the combined block into the entry of the diamond.
   MergeBlocks(BBI, *BBI1);
+
+  // 'True' and 'false' aren't combined, see if we need to add a unconditional
+  // branch to the 'false' block.
+  if (NeedBr1 && !isNextBlock(BBI.BB, BBI2->BB))
+    InsertUncondBranch(BBI1->BB, BBI2->BB, TII);
 
   // If the if-converted block fallthrough or unconditionally branch into the
   // tail block, and the tail block does not have other predecessors, then
