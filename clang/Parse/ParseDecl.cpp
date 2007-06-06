@@ -181,8 +181,10 @@ Parser::DeclTy *Parser::ParseAttributes() {
         CurrAttr = Actions.ParseAttribute(AttrName, AttrNameLoc, CurrAttr);
       }
     }
-    SkipUntil(tok::r_paren, false);
-    SkipUntil(tok::r_paren, false);
+    if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+      SkipUntil(tok::r_paren, false); 
+    if (ExpectAndConsume(tok::r_paren, diag::err_expected_rparen))
+      SkipUntil(tok::r_paren, false);
   }
   return CurrAttr;
 }
@@ -929,7 +931,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
       break;
     case tok::kw___attribute:
       ParseAttributes();
-      break;
+      continue; // do *not* consume the next token!
     }
     
     // If the specifier combination wasn't legal, issue a diagnostic.
@@ -979,6 +981,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D) {
   if (Kind == tok::star) {
     // Is a pointer
     DeclSpec DS;
+    
     ParseTypeQualifierListOpt(DS);
   
     // Recursively parse the declarator.
