@@ -1,4 +1,4 @@
-/* RUN: %llvmgcc -xc %s -S -o - | grep -v alloca | not grep bitcast
+/* RUN: %llvmgcc -xc %s -S -o - | grep -v alloca | grep -v llvm.noinline | not grep bitcast
  */
 
 void test(int* array, long long N) {
