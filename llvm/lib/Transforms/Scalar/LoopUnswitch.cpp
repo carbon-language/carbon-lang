@@ -67,10 +67,12 @@ namespace {
     // after RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
     SmallPtrSet<Value *,8> UnswitchedVals;
-
+    
+    bool OptimizeForSize;
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopUnswitch() : LoopPass((intptr_t)&ID) {}
+    LoopUnswitch(bool Os = false) : 
+      LoopPass((intptr_t)&ID), OptimizeForSize(Os) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
 
@@ -116,7 +118,9 @@ namespace {
   RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
 
-LoopPass *llvm::createLoopUnswitchPass() { return new LoopUnswitch(); }
+LoopPass *llvm::createLoopUnswitchPass(bool Os) { 
+  return new LoopUnswitch(Os); 
+}
 
 /// FindLIVLoopCondition - Cond is a condition that occurs in L.  If it is
 /// invariant in the loop, or has an invariant piece, return the invariant.
@@ -359,6 +363,11 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Loop *L, Value *LIC) {
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L){
   // Check to see if it would be profitable to unswitch this loop.
   unsigned Cost = getLoopUnswitchCost(L, LoopCond);
+
+  // Do not do non-trivial unswitch while optimizing for size.
+  if (Cost && OptimizeForSize)
+    return false;
+
   if (Cost > Threshold) {
     // FIXME: this should estimate growth by the amount of code shared by the
     // resultant unswitched loops.
