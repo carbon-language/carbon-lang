@@ -1210,8 +1210,8 @@ void ScalarEvolutionsImpl::deleteInstructionFromRecords(Instruction *I) {
 
     for (Instruction::use_iterator UI = II->use_begin(), UE = II->use_end();
          UI != UE; ++UI) {
-      Instruction *Inst = dyn_cast<Instruction>(*UI);
-      if (Inst && hasSCEV(Inst) && Scalars.erase(Inst)) {
+      Instruction *Inst = cast<Instruction>(*UI);
+      if (Scalars.erase(Inst)) {
         if (PHINode *PN = dyn_cast<PHINode>(II))
           ConstantEvolutionLoopExitValue.erase(PN);
         Worklist.push_back(Inst);
