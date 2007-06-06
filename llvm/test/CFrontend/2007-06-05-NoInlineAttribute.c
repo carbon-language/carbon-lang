@@ -1,8 +1,8 @@
 // RUN: %llvmgxx -c -emit-llvm %s -o - | llvm-dis | grep llvm.noinline 
 
-int bar(int x, int y); __attribute__((noinline))
+static int bar(int x, int y) __attribute__((noinline));
 
-int bar(int x, int y)  
+static int bar(int x, int y)  
 {
  return x + y;
 }
