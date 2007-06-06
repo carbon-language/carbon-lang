@@ -181,6 +181,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               GetElementPtrInst *NGEPI = new GetElementPtrInst(
                   NCE, Constant::getNullValue(Type::Int32Ty), NewAdd, 
                   GEPI->getName(), GEPI);
+              SE->deleteInstructionFromRecords(GEPI);
               GEPI->replaceAllUsesWith(NGEPI);
               GEPI->eraseFromParent();
               GEPI = NGEPI;
@@ -398,6 +399,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
         // the PHI entirely.  This is safe, because the NewVal won't be variant
         // in the loop, so we don't need an LCSSA phi node anymore.
         if (NumPreds == 1) {
+          SE->deleteInstructionFromRecords(PN);
           PN->replaceAllUsesWith(ExitVal);
           PN->eraseFromParent();
           break;
