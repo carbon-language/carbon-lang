@@ -348,6 +348,8 @@ DIAG(err_expected_while, ERROR,
      "expected 'while' in do/while loop")
 DIAG(err_expected_semi_after, ERROR,
      "expected ';' after %0")
+DIAG(err_expected_semi_after_expr, ERROR,
+     "expected ';' after expression")
 DIAG(err_expected_semi_for, ERROR,
      "expected ';' in 'for' statement specifier")
 DIAG(err_expected_colon_after, ERROR,

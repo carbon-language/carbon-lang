@@ -99,9 +99,10 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
         // ParseExpression does not consume any tokens.
         SkipUntil(tok::semi);
         return true;
-      } else {
-        return Res.Val;
       }
+      // Otherwise, eat the semicolon.
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+      return Res.Val;
     }
     
   case tok::kw_case:                // C99 6.8.1: labeled-statement
