@@ -158,15 +158,17 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         // Block has been already been if-converted, abort!
         break;
       case ICSimple:
-      case ICSimpleFalse:
+      case ICSimpleFalse: {
+        bool isRev = BBI.Kind == ICSimpleFalse;
         DOUT << "Ifcvt (Simple" << (BBI.Kind == ICSimpleFalse ? " false" : "")
              << "): BB#" << BBI.BB->getNumber() << " ";
         RetVal = IfConvertSimple(BBI);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal)
-          if (BBI.Kind == ICSimple) NumSimple++;
-          else                      NumSimpleRev++;
+          if (isRev) NumSimple++;
+          else       NumSimpleRev++;
        break;
+      }
       case ICTriangle:
         DOUT << "Ifcvt (Triangle): BB#" << BBI.BB->getNumber() << " ";
         RetVal = IfConvertTriangle(BBI);
