@@ -289,7 +289,9 @@ void DominatorTree::calculate(Function& F) {
 
         // Add a new tree node for this BasicBlock, and link it as a child of
         // IDomNode
-        BBNode = IDomNode->addChild(new DomTreeNode(I, IDomNode));
+        DomTreeNode *C = new DomTreeNode(I, IDomNode);
+        DomTreeNodes[I] = C;
+        BBNode = IDomNode->addChild(C);
       }
     }
 
@@ -338,7 +340,9 @@ DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
 
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
-  return BBNode = IDomNode->addChild(new DomTreeNode(BB, IDomNode));
+  DomTreeNode *C = new DomTreeNode(BB, IDomNode);
+  DomTreeNodes[BB] = C;
+  return BBNode = IDomNode->addChild(C);
 }
 
 static std::ostream &operator<<(std::ostream &o,
