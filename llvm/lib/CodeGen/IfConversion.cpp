@@ -41,7 +41,7 @@ namespace {
       ICTriangle,      // BB is entry of a triangle sub-CFG.
       ICDiamond,       // BB is entry of a diamond sub-CFG.
       ICChild,         // BB is part of the sub-CFG that'll be predicated.
-      ICDead           // BB has been converted and merged, it's now dead.
+      ICDead           // BB cannot be if-converted again.
     };
 
     /// BBInfo - One per MachineBasicBlock, this is used to cache the result
@@ -54,8 +54,8 @@ namespace {
     /// Kind            - Type of block. See BBICKind.
     /// NonPredSize     - Number of non-predicated instructions.
     /// IsAnalyzable    - True if AnalyzeBranch() returns false.
-    /// ModifyPredicate - FIXME: Not used right now. True if BB would modify
-    ///                   the predicate (e.g. has cmp, call, etc.)
+    /// ModifyPredicate - True if BB would modify the predicate (e.g. has
+    ///                   cmp, call, etc.)
     /// BB              - Corresponding MachineBasicBlock.
     /// TrueBB / FalseBB- See AnalyzeBranch().
     /// BrCond          - Conditions for end of block conditional branches.
@@ -96,6 +96,7 @@ namespace {
 
   private:
     bool ReverseBranchCondition(BBInfo &BBI);
+    bool BlockModifyPredicate(MachineBasicBlock *BB) const;
     void StructuralAnalysis(MachineBasicBlock *BB);
     bool FeasibilityAnalysis(BBInfo &BBI,
                              std::vector<MachineOperand> &Cond,
@@ -111,6 +112,11 @@ namespace {
                         std::vector<MachineOperand> &Cond,
                         bool IgnoreTerm = false);
     void MergeBlocks(BBInfo &TrueBBI, BBInfo &FalseBBI);
+
+    // blockFallsThrough - Block ends without a terminator.
+    bool blockFallsThrough(BBInfo &BBI) const {
+      return BBI.IsAnalyzable && BBI.TrueBB == NULL;
+    }
 
     // IfcvtCandidateCmp - Used to sort if-conversion candidates.
     static bool IfcvtCandidateCmp(BBInfo* C1, BBInfo* C2){
@@ -161,7 +167,9 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       case ICSimpleFalse: {
         bool isRev = BBI.Kind == ICSimpleFalse;
         DOUT << "Ifcvt (Simple" << (BBI.Kind == ICSimpleFalse ? " false" : "")
-             << "): BB#" << BBI.BB->getNumber() << " ";
+             << "): BB#" << BBI.BB->getNumber() << " ("
+             << ((BBI.Kind == ICSimpleFalse)
+                 ? BBI.FalseBB->getNumber() : BBI.TrueBB->getNumber()) << ") ";
         RetVal = IfConvertSimple(BBI);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal)
@@ -170,13 +178,19 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
        break;
       }
       case ICTriangle:
-        DOUT << "Ifcvt (Triangle): BB#" << BBI.BB->getNumber() << " ";
+        DOUT << "Ifcvt (Triangle): BB#" << BBI.BB->getNumber() << " (T:"
+             << BBI.TrueBB->getNumber() << ",F:" << BBI.FalseBB->getNumber()
+             << ") ";
         RetVal = IfConvertTriangle(BBI);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal) NumTriangle++;
         break;
       case ICDiamond:
-        DOUT << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " ";
+        DOUT << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " (T:"
+             << BBI.TrueBB->getNumber() << ",F:" << BBI.FalseBB->getNumber();
+        if (BBI.TailBB)
+          DOUT << "," << BBI.TailBB->getNumber() ;
+        DOUT << ") ";
         RetVal = IfConvertDiamond(BBI);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal) NumDiamonds++;
@@ -217,6 +231,17 @@ bool IfConverter::ReverseBranchCondition(BBInfo &BBI) {
   return false;
 }
 
+/// BlockModifyPredicate - Returns true if any instruction in the block may
+/// clobber the condition code or register(s) used to predicate instructions,
+/// e.g. call, cmp.
+bool IfConverter::BlockModifyPredicate(MachineBasicBlock *BB) const {
+  for (MachineBasicBlock::const_reverse_iterator I = BB->rbegin(),
+         E = BB->rend(); I != E; ++I)
+    if (I->getInstrDescriptor()->Flags & M_CLOBBERS_PRED)
+      return true;
+  return false;
+}
+
 /// StructuralAnalysis - Analyze the structure of the sub-CFG starting from
 /// the specified block. Record its successors and whether it looks like an
 /// if-conversion candidate.
@@ -231,6 +256,7 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
       return;  // Already analyzed.
     BBI.BB = BB;
     BBI.NonPredSize = std::distance(BB->begin(), BB->end());
+    BBI.ModifyPredicate = BlockModifyPredicate(BB);
   }
 
   // Look for 'root' of a simple (non-nested) triangle or diamond.
@@ -254,7 +280,13 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
 
   StructuralAnalysis(BBI.FalseBB);
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-  
+
+  // If both paths are dead, then forget about it.
+  if (TrueBBI.Kind == ICDead && FalseBBI.Kind == ICDead) {
+    BBI.Kind = ICDead;
+    return;
+  }
+
   // Look for more opportunities to if-convert a triangle. Try to restructure
   // the CFG to form a triangle with the 'false' path.
   std::vector<MachineOperand> RevCond(BBI.BrCond);
@@ -337,11 +369,12 @@ void IfConverter::StructuralAnalysis(MachineBasicBlock *BB) {
       }
     } else if (FalseBBI.BrCond.size() == 0 && FalseBBI.BB->pred_size() == 1) {
       // Try the other path...
+      bool TryTriangle = FalseBBI.TrueBB && FalseBBI.TrueBB == BBI.TrueBB &&
+                         FalseBBI.BB->pred_size() == 1;
       std::vector<MachineOperand> RevCond(BBI.BrCond);
       if (!TII->ReverseBranchCondition(RevCond) &&
           FeasibilityAnalysis(FalseBBI, RevCond)) {
-        if (FalseBBI.TrueBB && FalseBBI.TrueBB == BBI.TrueBB &&
-            FalseBBI.BB->pred_size() == 1) {
+        if (TryTriangle) {
           // Reverse 'true' and 'false' paths.
           ReverseBranchCondition(BBI);
           BBI.Kind = ICTriangle;
@@ -486,17 +519,13 @@ static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
 /// IfConvertSimple - If convert a simple (split, no rejoin) sub-CFG.
 ///
 bool IfConverter::IfConvertSimple(BBInfo &BBI) {
-  bool ReverseCond = BBI.Kind == ICSimpleFalse;
-
-  BBI.Kind = ICNotClassfied;
-
   BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   BBInfo *CvtBBI = &TrueBBI;
   BBInfo *NextBBI = &FalseBBI;
 
   std::vector<MachineOperand> Cond(BBI.BrCond);
-  if (ReverseCond) {
+  if (BBI.Kind == ICSimpleFalse) {
     std::swap(CvtBBI, NextBBI);
     TII->ReverseBranchCondition(Cond);
   }
@@ -517,23 +546,27 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
   MergeBlocks(BBI, *CvtBBI);
   bool IterIfcvt = true;
   if (!isNextBlock(BBI.BB, NextBBI->BB)) {
-    // Now ifcvt'd block will look like this:
-    // BB:
-    // ...
-    // t, f = cmp
-    // if t op
-    // b BBf
-    //
-    // We cannot further ifcvt this block because the unconditional branch will
-    // have to be predicated on the new condition, that will not be available
-    // if cmp executes.
     InsertUncondBranch(BBI.BB, NextBBI->BB, TII);
+    if (BBI.ModifyPredicate)
+      // Now ifcvt'd block will look like this:
+      // BB:
+      // ...
+      // t, f = cmp
+      // if t op
+      // b BBf
+      //
+      // We cannot further ifcvt this block because the unconditional branch will
+      // have to be predicated on the new condition, that will not be available
+      // if cmp executes.
+      IterIfcvt = false;
   }
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
   if (IterIfcvt)
     BBI.Kind = ICReAnalyze;
+  else
+    BBI.Kind = ICDead;
   ReTryPreds(BBI.BB);
   CvtBBI->Kind = ICDead;
 
@@ -544,8 +577,6 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
 /// IfConvertTriangle - If convert a triangle sub-CFG.
 ///
 bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
-  BBI.Kind = ICNotClassfied;
-
   BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
 
   // Predicate the 'true' block after removing its branch.
@@ -571,17 +602,18 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
     FalseBBDead = true;
   } else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB)) {
     InsertUncondBranch(TrueBBI.BB, FalseBBI.BB, TII);
-    // Now ifcvt'd block will look like this:
-    // BB:
-    // ...
-    // t, f = cmp
-    // if t op
-    // b BBf
-    //
-    // We cannot further ifcvt this block because the unconditional branch will
-    // have to be predicated on the new condition, that will not be available
-    // if cmp executes.
-    IterIfcvt = false;
+    if (BBI.ModifyPredicate || TrueBBI.ModifyPredicate)
+      // Now ifcvt'd block will look like this:
+      // BB:
+      // ...
+      // t, f = cmp
+      // if t op
+      // b BBf
+      //
+      // We cannot further ifcvt this block because the unconditional branch will
+      // have to be predicated on the new condition, that will not be available
+      // if cmp executes.
+      IterIfcvt = false;
   }
 
   // Now merge the entry of the triangle with the true block.
@@ -593,6 +625,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   // Update block info. BB can be iteratively if-converted.
   if (IterIfcvt) 
     BBI.Kind = ICReAnalyze;
+  else
+    BBI.Kind = ICDead;
   ReTryPreds(BBI.BB);
   TrueBBI.Kind = ICDead;
   if (FalseBBDead)
@@ -605,8 +639,6 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
 /// IfConvertDiamond - If convert a diamond sub-CFG.
 ///
 bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
-  BBI.Kind = ICNotClassfied;
-
   BBInfo &TrueBBI  = BBAnalysis[BBI.TrueBB->getNumber()];
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
 
@@ -714,6 +746,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   }
 
   // Update block info.
+  BBI.Kind = ICDead;
   TrueBBI.Kind = ICDead;
   FalseBBI.Kind = ICDead;
 
@@ -785,7 +818,10 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
 
   // Transfer preds / succs and update size.
   TransferPreds(ToBBI.BB, FromBBI.BB);
-  TransferSuccs(ToBBI.BB, FromBBI.BB);
+  if (!blockFallsThrough(FromBBI.BB))
+    TransferSuccs(ToBBI.BB, FromBBI.BB);
   ToBBI.NonPredSize += FromBBI.NonPredSize;
   FromBBI.NonPredSize = 0;
+
+  ToBBI.ModifyPredicate |= FromBBI.ModifyPredicate;
 }
