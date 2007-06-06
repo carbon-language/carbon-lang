@@ -560,11 +560,17 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
                                     OperandValToReplace->getType());
 
   Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
+
+  // If we are inserting the base and imm values in the same block, make sure to
+  // adjust the IP position if insertion reused a result.
+  if (IP == BaseInsertPt)
+    IP = Rewriter.getInsertionPoint();
   
   // Always emit the immediate (if non-zero) into the same block as the user.
   SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(Base), Imm);
   return Rewriter.expandCodeFor(NewValSCEV, IP,
                                 OperandValToReplace->getType());
+  
 }
 
 
