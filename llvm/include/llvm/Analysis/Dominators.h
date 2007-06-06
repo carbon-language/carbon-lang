@@ -61,9 +61,6 @@ public:
 // DomTreeNode - Dominator Tree Node
 
 class DomTreeNode {
-  friend class DominatorTree;
-  friend struct PostDominatorTree;
-
   BasicBlock *TheBB;
   DomTreeNode *IDom;
   std::vector<DomTreeNode*> Children;
