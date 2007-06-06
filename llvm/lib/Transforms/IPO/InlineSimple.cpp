@@ -15,11 +15,14 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/Function.h"
+#include "llvm/Module.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/IPO.h"
+#include <set>
+
 using namespace llvm;
 
 namespace {
@@ -53,10 +56,12 @@ namespace {
 
   class VISIBILITY_HIDDEN SimpleInliner : public Inliner {
     std::map<const Function*, FunctionInfo> CachedFunctionInfo;
+    std::set<const Function*> NeverInline; // Functions that are never inlined
   public:
     SimpleInliner() : Inliner(&ID) {}
     static char ID; // Pass identification, replacement for typeid
     int getInlineCost(CallSite CS);
+    virtual bool doInitialization(CallGraph &CG);
   };
   char SimpleInliner::ID = 0;
   RegisterPass<SimpleInliner> X("inline", "Function Integration/Inlining");
@@ -191,6 +196,9 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   // Don't inline a directly recursive call.
   if (Caller == Callee) return 2000000000;
 
+  // Don't inline functions marked noinline
+  if (NeverInline.count(Callee)) return 2000000000;
+  
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
   // be inlined.  This value may go negative.
@@ -274,3 +282,37 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   return InlineCost;
 }
 
+// doInitialization - Initializes the vector of functions that have been
+// annotated with the noinline attribute.
+bool SimpleInliner::doInitialization(CallGraph &CG) {
+  
+  Module &M = CG.getModule();
+  
+  // Get llvm.noinline
+  GlobalVariable *GV = M.getNamedGlobal("llvm.noinline");
+  
+  if(GV == 0)
+    return false;
+
+  const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  
+  if(InitList == 0)
+    return false;
+
+  // Iterate over each element and add to the NeverInline set
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
+        
+    // Get Source
+    const Constant *Elt = InitList->getOperand(i);
+        
+    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(Elt))
+      if (CE->getOpcode() == Instruction::BitCast) 
+        Elt = CE->getOperand(0);
+    
+    // Insert into set of functions to never inline
+    if(const Function *f = dyn_cast<Function>(Elt))
+      NeverInline.insert(f);
+  }
+  
+  return false;
+}
