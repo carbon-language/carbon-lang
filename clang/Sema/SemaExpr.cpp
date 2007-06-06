@@ -364,10 +364,12 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
   Expr *funcExpr = (Expr *)Fn;
   assert(funcExpr && "no function call expression");
   
-  QualType qType = funcExpr->getType();
+  QualType qType = UsualUnaryConversions(funcExpr->getType());
   assert(!qType.isNull() && "no type for function call expression");
 
-  const FunctionType *funcT = dyn_cast<FunctionType>(qType.getCanonicalType());
+  const PointerType *PT = dyn_cast<PointerType>(qType.getCanonicalType());
+  
+  const FunctionType *funcT = dyn_cast<FunctionType>(PT->getPointeeType());
   assert(funcT && "ParseCallExpr(): not a function type");
     
   // If a prototype isn't declared, the parser implicitly defines a func decl
