@@ -1,0 +1,96 @@
+//===- MipsRegisterInfo.td - Mips Register defs -----------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file was developed by Bruno Cardoso Lopes and is distributed under the 
+// University of Illinois Open Source License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//  Describe MIPS instructions format
+//
+//  All the possible Mips fields are:
+//
+//  opcode  - operation code.
+//  rs      - src reg.
+//  rt      - dst reg (on a 2 regs instr) or src reg (on a 3 reg instr).
+//  rd      - dst reg, only used on 3 regs instr.
+//  shamt   - only used on shift instructions, contains the shift amount.
+//  funct   - combined with opcode field give us an operation code.
+//
+//===----------------------------------------------------------------------===//
+
+// Generic Mips Format
+class MipsInst<dag ops, string asmstr, list<dag> pattern>: 
+      Instruction 
+{
+  field bits<32> Inst;
+
+  let Namespace = "Mips";
+
+  bits<6> opcode;
+
+  // Top 5 bits are the 'opcode' field
+  let Inst{31-26} = opcode;   
+  
+  dag OperandList = ops;
+  let AsmString   = asmstr;
+  let Pattern     = pattern;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Format R instruction class in Mips : <|opcode|rs|rt|rd|shamt|funct|>
+//===----------------------------------------------------------------------===//
+
+class FR<bits<6> op, bits<6> _funct, dag ops, string asmstr, list<dag> pattern>:
+      MipsInst<ops, asmstr, pattern> 
+{
+  bits<5>  rd;
+  bits<5>  rs;
+  bits<5>  rt;
+  bits<5>  shamt;
+  bits<6>  funct;
+
+  let opcode = op;
+  let funct  = _funct;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt; 
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = shamt;
+  let Inst{5-0}   = funct;
+}
+
+//===----------------------------------------------------------------------===//
+// Format I instruction class in Mips : <|opcode|rs|rt|immediate|>
+//===----------------------------------------------------------------------===//
+
+class FI<bits<6> op, dag ops, string asmstr, list<dag> pattern>: 
+      MipsInst<ops, asmstr, pattern> 
+{
+  bits<5>  rt;
+  bits<5>  rs;
+  bits<16> imm16;
+
+  let opcode = op;
+
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt; 
+  let Inst{15-0}  = imm16;
+}
+
+//===----------------------------------------------------------------------===//
+// Format J instruction class in Mips : <|opcode|address|>
+//===----------------------------------------------------------------------===//
+
+class FJ<bits<6> op, dag ops, string asmstr, list<dag> pattern>: 
+      MipsInst<ops, asmstr, pattern> 
+{
+  bits<26> addr;
+
+  let opcode = op;
+  
+  let Inst{25-0} = addr;
+}
