@@ -412,6 +412,8 @@ public:
   CastExpr(StmtClass SC, QualType ty, Expr *op) : 
     Expr(SC, QualType()), Ty(ty), Op(op), Loc(SourceLocation()) {}
   
+  SourceLocation getLParenLoc() const { return Loc; }
+  
   QualType getDestType() const { return Ty; }
   Expr *getSubExpr() const { return Op; }
   virtual SourceRange getSourceRange() const {

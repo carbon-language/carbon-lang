@@ -39,16 +39,29 @@ Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
 /// EmitConversion - Convert the value specied by Val, whose type is ValTy, to
 /// the type specified by DstTy, following the rules of C99 6.3.
 RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
-                                       QualType DstTy) {
+                                       QualType DstTy, SourceLocation Loc) {
   ValTy = ValTy.getCanonicalType();
   DstTy = DstTy.getCanonicalType();
   if (ValTy == DstTy) return Val;
   
-  if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstTy)) {
+  if (isa<PointerType>(DstTy)) {
+    const llvm::Type *DestTy = ConvertType(DstTy, Loc);
+    
+    // The source value may be an integer, or a pointer.
+    assert(Val.isScalar() && "Can only convert from integer or pointer");
+    if (isa<llvm::PointerType>(Val.getVal()->getType()))
+      return RValue::get(Builder.CreateBitCast(Val.getVal(), DestTy, "conv"));
+    assert(ValTy->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
+    return RValue::get(Builder.CreatePtrToInt(Val.getVal(), DestTy, "conv"));
+  } else if (isa<PointerType>(ValTy)) {
+    // Must be an ptr to int cast.
+    const llvm::Type *DestTy = ConvertType(DstTy, Loc);
+    assert(isa<llvm::IntegerType>(DestTy) && "not ptr->int?");
+    return RValue::get(Builder.CreateIntToPtr(Val.getVal(), DestTy, "conv"));
+  } else if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstTy)) {
     if (DestBT->getKind() == BuiltinType::Bool)
       return RValue::get(ConvertScalarValueToBool(Val, ValTy));
   }
-  
   assert(0 && "FIXME: Unsupported conversion!");
 }
 
@@ -261,7 +274,7 @@ RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
   if (E->getType()->isVoidType())
     return RValue::getAggregate(0);
   
-  return EmitConversion(Src, SrcTy, E->getType());
+  return EmitConversion(Src, SrcTy, E->getType(), E->getLParenLoc());
 }
 
 //===----------------------------------------------------------------------===//
@@ -705,7 +718,8 @@ RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
   RValue RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSTy);
   
   // Convert the RHS to the type of the LHS.
-  RHS = EmitConversion(RHS, RHSTy, E->getType());
+  // FIXME: I'm not thrilled about having to call getLocStart() here... :(
+  RHS = EmitConversion(RHS, RHSTy, E->getType(), E->getLocStart());
   
   // Store the value into the LHS.
   EmitStoreThroughLValue(RHS, LHS, E->getType());

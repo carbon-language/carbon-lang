@@ -161,7 +161,8 @@ public:
   
   /// EmitConversion - Convert the value specied by Val, whose type is ValTy, to
   /// the type specified by DstTy, following the rules of C99 6.3.
-  RValue EmitConversion(RValue Val, QualType ValTy, QualType DstTy);
+  RValue EmitConversion(RValue Val, QualType ValTy, QualType DstTy,
+                        SourceLocation Loc);
   
   /// ConvertScalarValueToBool - Convert the specified expression value to a
   /// boolean (i1) truth value.  This is equivalent to "Val == 0".
