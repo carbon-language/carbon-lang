@@ -77,7 +77,7 @@ namespace {
     void dump_unique(ValueTable& VN, std::set<Value*, ExprLT>& s);
     void clean(ValueTable VN, std::set<Value*, ExprLT>& set);
     bool add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V);
-    Value* find_leader(ValueTable VN, std::set<Value*, ExprLT>& vals, Value* v);
+    Value* find_leader(std::set<Value*, ExprLT>& vals, Value* v);
     Value* phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                          std::set<Value*, ExprLT>& set,
                          Value* V, BasicBlock* pred);
@@ -120,8 +120,7 @@ bool GVNPRE::add(ValueTable& VN, std::set<Value*, ExprLT>& MS, Value* V) {
   return ret.second;
 }
 
-Value* GVNPRE::find_leader(GVNPRE::ValueTable VN,
-                           std::set<Value*, ExprLT>& vals,
+Value* GVNPRE::find_leader(std::set<Value*, ExprLT>& vals,
                            Value* v) {
   ExprLT cmp;
   for (std::set<Value*, ExprLT>::iterator I = vals.begin(), E = vals.end();
@@ -141,7 +140,7 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
     Value* newOp1 = isa<Instruction>(BO->getOperand(0))
                                 ? phi_translate(VN, MS, set,
-                                  find_leader(VN, set, BO->getOperand(0)),
+                                  find_leader(set, BO->getOperand(0)),
                                   pred)
                                 : BO->getOperand(0);
     if (newOp1 == 0)
@@ -149,7 +148,7 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
     
     Value* newOp2 = isa<Instruction>(BO->getOperand(1))
                                 ? phi_translate(VN, MS, set,
-                                  find_leader(VN, set, BO->getOperand(1)),
+                                  find_leader(set, BO->getOperand(1)),
                                   pred)
                                 : BO->getOperand(1);
     if (newOp2 == 0)
@@ -160,7 +159,7 @@ Value* GVNPRE::phi_translate(ValueTable& VN, std::set<Value*, ExprLT>& MS,
                                              newOp1, newOp2,
                                              BO->getName()+".gvnpre");
       
-      if (!find_leader(VN, set, newVal)) {
+      if (!find_leader(set, newVal)) {
         add(VN, MS, newVal);
         return newVal;
       } else {
@@ -241,8 +240,8 @@ void GVNPRE::topo_sort(GVNPRE::ValueTable& VN,
     Value* e = Q.back();
   
     if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
-      Value* l = find_leader(VN, set, BO->getOperand(0));
-      Value* r = find_leader(VN, set, BO->getOperand(1));
+      Value* l = find_leader(set, BO->getOperand(0));
+      Value* r = find_leader(set, BO->getOperand(1));
       
       if (l != 0 && isa<Instruction>(l) &&
           visited.find(l) == visited.end())
@@ -319,8 +318,6 @@ void GVNPRE::CalculateAvailOut(GVNPRE::ValueTable& VN, std::set<Value*, ExprLT>&
         currExps.insert(rightValue);
       currExps.insert(BO);
       
-      //currTemps.insert(BO);
-      
     // Handle unsupported ops
     } else if (!BI->isTerminator()){
       add(VN, MS, BI);
@@ -344,7 +341,9 @@ bool GVNPRE::runOnFunction(Function &F) {
   
   DominatorTree &DT = getAnalysis<DominatorTree>();   
   
-  // First Phase of BuildSets - calculate AVAIL_OUT
+  // Phase 1: BuildSets
+  
+  // Phase 1, Part 1: calculate AVAIL_OUT
   
   // Top-down walk of the dominator tree
   for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
@@ -366,7 +365,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   
   PostDominatorTree &PDT = getAnalysis<PostDominatorTree>();
   
-  // Second Phase of BuildSets - calculate ANTIC_IN
+  // Phase 1, Part 2: calculate ANTIC_IN
   
   std::set<BasicBlock*> visited;
   
@@ -474,6 +473,33 @@ bool GVNPRE::runOnFunction(Function &F) {
     DOUT << "AVAIL_OUT: ";
     dump_unique(VN, availableOut[I]);
     DOUT << "\n";
+  }
+  
+  
+  // Phase 2: Insert
+  // FIXME: Not implemented yet
+  
+  // Phase 3: Eliminate
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
+         E = df_end(DT.getRootNode()); DI != E; ++DI) {
+    BasicBlock* BB = DI->getBlock();
+    
+    std::vector<Instruction*> erase;
+    
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
+         BI != BE; ++BI) {
+      Value* leader = find_leader(availableOut[BB], BI);
+      if (leader != 0)
+        if (Instruction* Instr = dyn_cast<Instruction>(leader))
+          if (Instr->getParent() != 0 && Instr != BI) {
+            BI->replaceAllUsesWith(leader);
+            erase.push_back(BI);
+          }
+    }
+    
+    for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
+         I != E; ++I)
+      (*I)->eraseFromParent();
   }
   
   return false;
