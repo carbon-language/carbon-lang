@@ -818,7 +818,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
 
   // Transfer preds / succs and update size.
   TransferPreds(ToBBI.BB, FromBBI.BB);
-  if (!blockFallsThrough(FromBBI.BB))
+  if (!blockFallsThrough(FromBBI))
     TransferSuccs(ToBBI.BB, FromBBI.BB);
   ToBBI.NonPredSize += FromBBI.NonPredSize;
   FromBBI.NonPredSize = 0;
