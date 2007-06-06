@@ -43,7 +43,14 @@ RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
   ValTy = ValTy.getCanonicalType();
   DstTy = DstTy.getCanonicalType();
   if (ValTy == DstTy) return Val;
+
+  // Handle conversions to bool first, they are special: comparisons against 0.
+  if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstTy))
+    if (DestBT->getKind() == BuiltinType::Bool)
+      return RValue::get(ConvertScalarValueToBool(Val, ValTy));
   
+  // Handle pointer conversions next: pointers can only be converted to/from
+  // other pointers and integers.
   if (isa<PointerType>(DstTy)) {
     const llvm::Type *DestTy = ConvertType(DstTy, Loc);
     
@@ -53,16 +60,53 @@ RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
       return RValue::get(Builder.CreateBitCast(Val.getVal(), DestTy, "conv"));
     assert(ValTy->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
     return RValue::get(Builder.CreatePtrToInt(Val.getVal(), DestTy, "conv"));
-  } else if (isa<PointerType>(ValTy)) {
+  }
+  
+  if (isa<PointerType>(ValTy)) {
     // Must be an ptr to int cast.
     const llvm::Type *DestTy = ConvertType(DstTy, Loc);
     assert(isa<llvm::IntegerType>(DestTy) && "not ptr->int?");
     return RValue::get(Builder.CreateIntToPtr(Val.getVal(), DestTy, "conv"));
-  } else if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstTy)) {
-    if (DestBT->getKind() == BuiltinType::Bool)
-      return RValue::get(ConvertScalarValueToBool(Val, ValTy));
   }
-  assert(0 && "FIXME: Unsupported conversion!");
+  
+  // Finally, we have the arithmetic types: real int/float and complex
+  // int/float.  Handle real->real conversions first, they are the most
+  // common.
+  if (Val.isScalar() && DstTy->isRealType()) {
+    // We know that these are representable as scalars in LLVM, convert to LLVM
+    // types since they are easier to reason about.
+    Value *SrcVal = Val.getVal();
+    const llvm::Type *DestTy = ConvertType(DstTy, Loc);
+    if (SrcVal->getType() == DestTy) return Val;
+    
+    Value *Result;
+    if (isa<llvm::IntegerType>(SrcVal->getType())) {
+      bool InputSigned = ValTy->isSignedIntegerType();
+      if (isa<llvm::IntegerType>(DestTy))
+        Result = Builder.CreateIntCast(SrcVal, DestTy, InputSigned, "conv");
+      else if (InputSigned)
+        Result = Builder.CreateSIToFP(SrcVal, DestTy, "conv");
+      else
+        Result = Builder.CreateUIToFP(SrcVal, DestTy, "conv");
+    } else {
+      assert(SrcVal->getType()->isFloatingPoint() && "Unknown real conversion");
+      if (isa<llvm::IntegerType>(DestTy)) {
+        if (DstTy->isSignedIntegerType())
+          Result = Builder.CreateFPToSI(SrcVal, DestTy, "conv");
+        else
+          Result = Builder.CreateFPToUI(SrcVal, DestTy, "conv");
+      } else {
+        assert(DestTy->isFloatingPoint() && "Unknown real conversion");
+        if (DestTy->getTypeID() < SrcVal->getType()->getTypeID())
+          Result = Builder.CreateFPTrunc(SrcVal, DestTy, "conv");
+        else
+          Result = Builder.CreateFPExt(SrcVal, DestTy, "conv");
+      }
+    }
+    return RValue::get(Result);
+  }
+  
+  assert(0 && "FIXME: We don't support complex conversions yet!");
 }
 
 
