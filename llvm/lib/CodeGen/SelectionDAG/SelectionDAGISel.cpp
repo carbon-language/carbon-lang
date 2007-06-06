@@ -1337,12 +1337,10 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
 void SelectionDAGLowering::visitInvoke(InvokeInst &I, bool AsTerminator) {
   // Retrieve successors.
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
-  MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
-  
+
   if (!AsTerminator) {
-    // Mark landing pad so that it doesn't get deleted in branch folding.
-    LandingPad->setIsLandingPad();
-        
+    MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
+
     LowerCallTo(I, I.getCalledValue()->getType(),
                 I.getCallingConv(),
                 false,
@@ -2577,16 +2575,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
     if (MMI) {
-      // Add a label to mark the beginning of the landing pad.  Deletion of the
-      // landing pad can thus be detected via the MachineModuleInfo.
-      unsigned LabelID = MMI->addLandingPad(CurMBB);
-      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
-                              DAG.getConstant(LabelID, MVT::i32)));
-      
       // Mark exception register as live in.
       unsigned Reg = TLI.getExceptionAddressRegister();
       if (Reg) CurMBB->addLiveIn(Reg);
-      
+
       // Insert the EXCEPTIONADDR instruction.
       SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
       SDOperand Ops[1];
@@ -2626,7 +2618,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         MMI->addFilterTypeInfo(CurMBB, TyInfo);
       else
         MMI->addCatchTypeInfo(CurMBB, TyInfo);
-      
+
       // Mark exception selector register as live in.
       unsigned Reg = TLI.getExceptionSelectorRegister();
       if (Reg) CurMBB->addLiveIn(Reg);
@@ -2788,7 +2780,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Args.push_back(Entry);
   }
 
-  if (ExceptionHandling) {
+  if (ExceptionHandling && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
@@ -2805,7 +2797,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 
-  if (ExceptionHandling) {
+  if (ExceptionHandling && MMI) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
@@ -4387,6 +4379,13 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator())) {
+      // Mark landing pad.
+      MachineBasicBlock *LandingPad = FuncInfo.MBBMap[Invoke->getSuccessor(1)];
+      LandingPad->setIsLandingPad();
+    }
+
+  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
 
   // Add function live-ins to entry block live-in set.
@@ -4522,6 +4521,18 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   BB = FuncInfo.MBBMap[LLVMBB];
   SDL.setCurrentBasicBlock(BB);
+
+  if (ExceptionHandling && BB->isLandingPad()) {
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+
+    if (MMI) {
+      // Add a label to mark the beginning of the landing pad.  Deletion of the
+      // landing pad can thus be detected via the MachineModuleInfo.
+      unsigned LabelID = MMI->addLandingPad(BB);
+      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
+                              DAG.getConstant(LabelID, MVT::i32)));
+    }
+  }
 
   // Lower all of the non-terminator instructions.
   for (BasicBlock::iterator I = LLVMBB->begin(), E = --LLVMBB->end();
