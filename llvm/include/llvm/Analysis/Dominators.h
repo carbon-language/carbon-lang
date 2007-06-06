@@ -63,7 +63,7 @@ public:
 class DomTreeNode {
   friend class DominatorTree;
   friend struct PostDominatorTree;
-  friend class DominatorTreeBase;
+
   BasicBlock *TheBB;
   DomTreeNode *IDom;
   std::vector<DomTreeNode*> Children;
@@ -99,10 +99,8 @@ public:
     return properlyDominates(N);
   }
   
-private:
   inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom) : TheBB(BB), IDom(iDom) {}
   inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
-
   void setIDom(DomTreeNode *NewIDom);
 };
 
