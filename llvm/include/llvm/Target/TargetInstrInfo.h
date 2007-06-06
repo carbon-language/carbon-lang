@@ -82,6 +82,9 @@ const unsigned M_PREDICABLE = 1 << 12;
 // at any time, e.g. constant generation, load from constant pool.
 const unsigned M_REMATERIALIZIBLE = 1 << 13;
 
+// M_CLOBBERS_PRED - Set if this instruction may clobbers the condition code
+// register and / or registers that are used to predicate instructions.
+const unsigned M_CLOBBERS_PRED = 1 << 14;
 
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
@@ -210,6 +213,9 @@ public:
 
   bool isPredicable(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_PREDICABLE;
+  }
+  bool clobbersPredicate(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_CLOBBERS_PRED;
   }
   bool isReMaterializable(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_REMATERIALIZIBLE;
