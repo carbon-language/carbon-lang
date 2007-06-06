@@ -15,6 +15,8 @@
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
@@ -209,7 +211,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
-    
+  case Expr::StringLiteralClass:
+    return EmitStringLiteralLValue(cast<StringLiteral>(E));
     
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
@@ -271,6 +274,23 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   return LValue::getAddr(EmitExpr(E->getSubExpr()).getVal());
 }
 
+LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
+  assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
+  const char *StrData = E->getStrData();
+  unsigned Len = E->getByteLength();
+  
+  // FIXME: Can cache/reuse these within the module.
+  Constant *C = llvm::ConstantArray::get(std::string(StrData, StrData+Len));
+  
+  // Create a global variable for this.
+  C = new llvm::GlobalVariable(C->getType(), true, GlobalValue::InternalLinkage,
+                               C, ".str", CurFn->getParent());
+  Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  Constant *Zeros[] = { Zero, Zero };
+  C = ConstantExpr::getGetElementPtr(C, Zeros, 2);
+  return LValue::getAddr(C);
+}
+
 //===--------------------------------------------------------------------===//
 //                             Expression Emission
 //===--------------------------------------------------------------------===//
@@ -288,6 +308,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
   case Expr::DeclRefExprClass:
     // FIXME: EnumConstantDecl's are not lvalues.  This is wrong for them.
     return EmitLoadOfLValue(E);
+  case Expr::StringLiteralClass:
+    return RValue::get(EmitLValue(E).getAddress());
     
   // Leaf expressions.
   case Expr::IntegerLiteralClass:

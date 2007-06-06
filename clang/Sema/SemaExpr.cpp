@@ -46,7 +46,6 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
   // FIXME: handle wchar_t
   QualType t = Context.getPointerType(Context.CharTy);
   
-  // FIXME: use factory.
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
                            Literal.AnyWide, t, StringToks[0].getLocation(),

@@ -40,6 +40,7 @@ namespace clang {
   
   class Expr;
   class DeclRefExpr;
+  class StringLiteral;
   class IntegerLiteral;
   class CastExpr;
   class UnaryOperator;
@@ -224,6 +225,7 @@ public:
   void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
   
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
+  LValue EmitStringLiteralLValue(const StringLiteral *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
     
   //===--------------------------------------------------------------------===//
