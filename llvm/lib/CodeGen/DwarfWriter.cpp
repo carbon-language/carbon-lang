@@ -2894,36 +2894,32 @@ private:
       O << UsedDirective << EHFrameInfo.FnName << ".eh\n\n";
   }
 
-  /// EquivPads - Whether two landing pads have equivalent actions.
-  static bool EquivPads(const LandingPadInfo *L, const LandingPadInfo *R) {
-    const std::vector<int> &LIds = L->TypeIds;
-    const std::vector<int> &RIds = R->TypeIds;
+  /// SharedTypeIds - How many leading type ids two landing pads have in common.
+  static unsigned SharedTypeIds(const LandingPadInfo *L,
+                                const LandingPadInfo *R) {
+    const std::vector<int> &LIds = L->TypeIds, &RIds = R->TypeIds;
     unsigned LSize = LIds.size(), RSize = RIds.size();
+    unsigned MinSize = LSize < RSize ? LSize : RSize;
+    unsigned Count = 0;
 
-    if (LSize != RSize)
-      return false;
+    for (; Count != MinSize; ++Count)
+      if (LIds[Count] != RIds[Count])
+        return Count;
 
-    for (unsigned i = 0; i != LSize; ++i)
-      if (LIds[i] != RIds[i])
-        return false;
-
-    return true;
+    return Count;
   }
 
-  /// PadLT - An order on landing pads, with EquivPads as order equivalence.
+  /// PadLT - Order landing pads lexicographically by type id.
   static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
-    const std::vector<int> &LIds = L->TypeIds;
-    const std::vector<int> &RIds = R->TypeIds;
+    const std::vector<int> &LIds = L->TypeIds, &RIds = R->TypeIds;
     unsigned LSize = LIds.size(), RSize = RIds.size();
+    unsigned MinSize = LSize < RSize ? LSize : RSize;
 
-    if (LSize != RSize)
-      return LSize < RSize;
-
-    for (unsigned i = 0; i != LSize; ++i)
+    for (unsigned i = 0; i != MinSize; ++i)
       if (LIds[i] != RIds[i])
         return LIds[i] < RIds[i];
 
-    return false; // Equivalent
+    return LSize < RSize;
   }
 
   /// EmitExceptionTable - Emit landpads and actions.
@@ -2960,6 +2956,12 @@ private:
 
   typedef DenseMap<unsigned, PadSite, KeyInfo> PadMapType;
 
+  struct ActionEntry {
+    int TypeID;
+    int NextAction;
+    struct ActionEntry *Previous;
+  };
+
   void EmitExceptionTable() {
     // Map all labels and get rid of any dead landing pads.
     MMI->TidyLandingPads();
@@ -2977,7 +2979,10 @@ private:
     std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
 
     // Gather first action index for each landing pad site.
-    SmallVector<unsigned, 32> Actions;
+    SmallVector<unsigned, 32> FirstActions;
+
+    // The actions table.
+    SmallVector<ActionEntry, 64> Actions;
 
     // Compute sizes for exception table.
     unsigned SizeSites = 0;
@@ -2985,38 +2990,55 @@ private:
 
     // Look at each landing pad site to compute size.  We need the size of each
     // landing pad site info and the size of the landing pad's actions.
-    signed FirstAction = 0;
+    int FirstAction = 0;
 
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-      const LandingPadInfo *LandingPad = LandingPads[i];
+      const LandingPadInfo *LP = LandingPads[i];
+      const std::vector<int> &TypeIds = LP->TypeIds;
+      const unsigned NumShared = i ? SharedTypeIds(LP, LandingPads[i-1]) : 0;
       unsigned SizeSiteActions = 0;
 
-      if (!i || !EquivPads(LandingPad, LandingPads[i-1])) {
-        const std::vector<int> &TypeIds = LandingPad->TypeIds;
+      if (NumShared < TypeIds.size()) {
         unsigned SizeAction = 0;
+        ActionEntry *PrevAction = 0;
 
-        if (TypeIds.empty()) {
-          FirstAction = 0;
-        } else {
-          // Gather the action sizes
-          for (unsigned j = 0, M = TypeIds.size(); j != M; ++j) {
-            int TypeID = TypeIds[j];
-            unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
-            signed Action = j ? -(SizeAction + SizeTypeID) : 0;
-            SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
-            SizeSiteActions += SizeAction;
+        if (NumShared) {
+          const unsigned SizePrevIds = LandingPads[i-1]->TypeIds.size();
+          assert(Actions.size());
+          PrevAction = &Actions.back();
+          SizeAction = Asm->SizeSLEB128(PrevAction->NextAction) +
+            Asm->SizeSLEB128(PrevAction->TypeID);
+          for (unsigned j = NumShared; j != SizePrevIds; ++j) {
+            SizeAction -= Asm->SizeSLEB128(PrevAction->TypeID);
+            SizeAction += -PrevAction->NextAction;
+            PrevAction = PrevAction->Previous;
           }
-
-          // Record the first action of the landing pad site.
-          FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
         }
-      } // else re-use previous FirstAction
 
-      Actions.push_back(FirstAction);
+        // Compute the actions.
+        for (unsigned I = NumShared, M = TypeIds.size(); I != M; ++I) {
+          int TypeID = TypeIds[I];
+          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
+
+          int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
+          SizeAction = SizeTypeID + Asm->SizeSLEB128(NextAction);
+          SizeSiteActions += SizeAction;
+
+          ActionEntry Action = {TypeID, NextAction, PrevAction};
+          Actions.push_back(Action);
+
+          PrevAction = &Actions.back();
+        }
+
+        // Record the first action of the landing pad site.
+        FirstAction = SizeActions + SizeSiteActions - SizeAction + 1;
+      } // else identical - re-use previous FirstAction
+
+      FirstActions.push_back(FirstAction);
 
       // Compute this sites contribution to size.
       SizeActions += SizeSiteActions;
-      unsigned M = LandingPad->BeginLabels.size();
+      unsigned M = LP->BeginLabels.size();
       SizeSites += M*(sizeof(int32_t) +               // Site start.
                       sizeof(int32_t) +               // Site length.
                       sizeof(int32_t) +               // Landing pad.
@@ -3111,29 +3133,19 @@ private:
         }
         Asm->EOL("Landing pad");
 
-        Asm->EmitULEB128Bytes(Actions[P.PadIndex]);
+        Asm->EmitULEB128Bytes(FirstActions[P.PadIndex]);
         Asm->EOL("Action");
       }
     }
 
     // Emit the actions.
-    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-      if (!i || Actions[i] != Actions[i-1]) {
-        const LandingPadInfo *LandingPad = LandingPads[i];
-        const std::vector<int> &TypeIds = LandingPad->TypeIds;
-        unsigned SizeAction = 0;
+    for (unsigned I = 0, N = Actions.size(); I != N; ++I) {
+      ActionEntry &Action = Actions[I];
 
-        for (unsigned j = 0, M = TypeIds.size(); j < M; ++j) {
-          int TypeID = TypeIds[j];
-          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
-          Asm->EmitSLEB128Bytes(TypeID);
-          Asm->EOL("TypeInfo index");
-          signed Action = j ? -(SizeAction + SizeTypeID) : 0;
-          SizeAction = SizeTypeID + Asm->SizeSLEB128(Action);
-          Asm->EmitSLEB128Bytes(Action);
-          Asm->EOL("Next action");
-        }
-      }
+      Asm->EmitSLEB128Bytes(Action.TypeID);
+      Asm->EOL("TypeInfo index");
+      Asm->EmitSLEB128Bytes(Action.NextAction);
+      Asm->EOL("Next action");
     }
 
     // Emit the type ids.
