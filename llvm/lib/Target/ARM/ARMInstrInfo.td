@@ -612,7 +612,7 @@ let isLoad = 1, isReturn = 1, isTerminator = 1 in
                     "ldm${p}${addr:submode} $addr, $dst1",
                     []>;
 
-let isCall = 1, noResults = 1, 
+let isCall = 1, noResults = 1, clobbersPred = 1,
   Defs = [R0, R1, R2, R3, R12, LR,
           D0, D1, D2, D3, D4, D5, D6, D7] in {
   def BL  : AXI<(ops i32imm:$func, variable_ops),
@@ -806,12 +806,14 @@ def MOVi : AI1<(ops GPR:$dst, so_imm:$src),
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.
 
+let clobbersPred = 1 in {
 def MOVsrl_flag : AI1<(ops GPR:$dst, GPR:$src),
                       "mov", "s $dst, $src, lsr #1",
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>;
 def MOVsra_flag : AI1<(ops GPR:$dst, GPR:$src),
                       "mov", "s $dst, $src, asr #1",
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
+}
 def MOVrx       : AI1<(ops GPR:$dst, GPR:$src),
                       "mov", " $dst, $src, rrx",
                       [(set GPR:$dst, (ARMrrx GPR:$src))]>;
@@ -860,16 +862,21 @@ defm UXTAH : AI_bin_rrot<"uxtah",
 //
 
 defm ADD  : AI1_bin_irs<"add", "" , BinOpFrag<(add  node:$LHS, node:$RHS)>>;
-defm ADDS : AI1_bin_irs<"add", "s", BinOpFrag<(addc node:$LHS, node:$RHS)>>;
 defm ADC  : AI1_bin_irs<"adc", "" , BinOpFrag<(adde node:$LHS, node:$RHS)>>;
 defm SUB  : AI1_bin_irs<"sub", "" , BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
-defm SUBS : AI1_bin_irs<"sub", "s", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 defm SBC  : AI1_bin_irs<"sbc", "" , BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+
+let clobbersPred = 1 in {
+defm ADDS : AI1_bin_irs<"add", "s", BinOpFrag<(addc node:$LHS, node:$RHS)>>;
+defm SUBS : AI1_bin_irs<"sub", "s", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
+}
 
 // These don't define reg/reg forms, because they are handled above.
 defm RSB  : AI1_bin_is <"rsb", "" , BinOpFrag<(sub  node:$RHS, node:$LHS)>>;
-defm RSBS : AI1_bin_is <"rsb", "s", BinOpFrag<(subc node:$RHS, node:$LHS)>>;
 defm RSC  : AI1_bin_is <"rsc", "" , BinOpFrag<(sube node:$RHS, node:$LHS)>>;
+
+let clobbersPred = 1 in
+defm RSBS : AI1_bin_is <"rsb", "s", BinOpFrag<(subc node:$RHS, node:$LHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
@@ -1094,11 +1101,9 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 //  Comparison Instructions...
 //
 
+let clobbersPred = 1 in {
 defm CMP  : AI1_bin0_irs<"cmp", BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 defm CMN  : AI1_bin0_irs<"cmn", BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
-
-def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
-             (CMNri  GPR:$src, so_imm_neg:$imm)>;
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_bin0_irs<"tst", BinOpFrag<(ARMcmpNZ (and node:$LHS, node:$RHS), 0)>>;
@@ -1106,6 +1111,10 @@ defm TEQ  : AI1_bin0_irs<"teq", BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 
 
 defm CMPnz : AI1_bin0_irs<"cmp", BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
 defm CMNnz : AI1_bin0_irs<"cmn", BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
+}
+
+def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
+             (CMNri  GPR:$src, so_imm_neg:$imm)>;
 
 def : ARMPat<(ARMcmpNZ GPR:$src, so_imm_neg:$imm),
              (CMNri  GPR:$src, so_imm_neg:$imm)>;
@@ -1148,7 +1157,7 @@ def LEApcrelJT : AXI1<(ops GPR:$dst, i32imm:$label, i32imm:$id, pred:$p),
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-let isCall = 1,
+let isCall = 1, clobbersPred = 1,
   Defs = [R0, R12, LR] in {
   def TPsoft : AXI<(ops),
                "bl __aeabi_read_tp",

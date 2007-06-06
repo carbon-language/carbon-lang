@@ -277,7 +277,7 @@ def FMDRR : ADI<(ops DPR:$dst, GPR:$src1, GPR:$src2),
 
 // FMSRR: GPR -> SPR
 
-
+let clobbersPred = 1 in
 def FMSTAT : ASI<(ops), "fmstat", "", [(arm_fmstat)]>;
 
 // FMXR: GPR -> VFP Sstem reg

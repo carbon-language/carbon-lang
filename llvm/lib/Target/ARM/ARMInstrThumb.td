@@ -33,6 +33,7 @@ class ThumbI<dag ops, AddrMode am, SizeFlagVal sz,
              string asm, string cstr, list<dag> pattern>
   // FIXME: Set all opcodes to 0 for now.
   : InstARM<0, am, sz, IndexModeNone, cstr> {
+  let clobbersPred = 1;
   let OperandList = ops;
   let AsmString   = asm;
   let Pattern = pattern;
