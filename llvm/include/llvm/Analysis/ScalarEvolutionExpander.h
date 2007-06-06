@@ -73,6 +73,8 @@ namespace llvm {
       InsertedInstructions.insert(I);
     }
 
+    Instruction *getInsertionPoint() const { return InsertPt; }
+    
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
