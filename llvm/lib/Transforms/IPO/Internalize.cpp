@@ -128,29 +128,14 @@ bool InternalizePass::runOnModule(Module &M) {
   ExternalNames.insert("llvm.dbg.compile_units");
   ExternalNames.insert("llvm.dbg.global_variables");
   ExternalNames.insert("llvm.dbg.subprograms");
+  ExternalNames.insert("llvm.global_ctors");
+  ExternalNames.insert("llvm.global_dtors");
       
   // Mark all global variables with initializers as internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (!I->isDeclaration() && !I->hasInternalLinkage() &&
         !ExternalNames.count(I->getName())) {
-      // Special case handling of the global ctor and dtor list.  When we
-      // internalize it, we mark it constant, which allows elimination of
-      // the list if it's empty.
-      //
-      if (I->hasAppendingLinkage() && (I->getName() == "llvm.global_ctors" ||
-                                       I->getName() == "llvm.global_dtors")) {
-        // If the global ctors/dtors list has no uses, do not internalize it, as
-        // there is no __main in this program, so the asmprinter should handle
-        // it.
-        if (I->use_empty()) continue;
- 
-        // Otherwise, also mark the list constant, as we know that it will not
-        // be mutated any longer, and the makes simple IPO xforms automatically
-        // better.
-        I->setConstant(true);
-      }
-      
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumGlobals;
