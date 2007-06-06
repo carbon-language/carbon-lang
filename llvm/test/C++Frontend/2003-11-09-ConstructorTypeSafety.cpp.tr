@@ -1,6 +1,6 @@
 // The code generated for this testcase should be completely typesafe!
 // RUN: %llvmgcc -xc++ -S -o - %s | llvm-as | opt -die | llvm-dis | \
-// RUN:    grep -v llvm.noinline | notcast
+// RUN:    notcast
 
 struct contained {
   unsigned X;
