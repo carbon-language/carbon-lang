@@ -827,6 +827,18 @@ static bool LinkAppendingVars(Module *M,
         return Error(ErrorMsg,
                      "Appending variables linked with different const'ness!");
 
+      if (G1->getAlignment() != G2->getAlignment())
+        return Error(ErrorMsg,
+         "Appending variables with different alignment need to be linked!");
+
+      if (G1->getVisibility() != G2->getVisibility())
+        return Error(ErrorMsg,
+         "Appending variables with different visibility need to be linked!");
+
+      if (G1->getSection() != G2->getSection())
+        return Error(ErrorMsg,
+         "Appending variables with different section name need to be linked!");
+      
       unsigned NewSize = T1->getNumElements() + T2->getNumElements();
       ArrayType *NewType = ArrayType::get(T1->getElementType(), NewSize);
 
@@ -836,6 +848,9 @@ static bool LinkAppendingVars(Module *M,
       GlobalVariable *NG =
         new GlobalVariable(NewType, G1->isConstant(), G1->getLinkage(),
                            /*init*/0, First->first, M, G1->isThreadLocal());
+
+      // Propagate alignment, visibility and section info.
+      CopyGVAttributes(NG, G1);
 
       // Merge the initializer...
       Inits.reserve(NewSize);
