@@ -165,8 +165,8 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         RetVal = IfConvertSimple(BBI);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal)
-          if (isRev) NumSimple++;
-          else       NumSimpleRev++;
+          if (isRev) NumSimpleRev++;
+          else       NumSimple++;
        break;
       }
       case ICTriangle:
@@ -515,12 +515,25 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
   // to the 'false' branch.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
   MergeBlocks(BBI, *CvtBBI);
-  if (!isNextBlock(BBI.BB, NextBBI->BB))
+  bool IterIfcvt = true;
+  if (!isNextBlock(BBI.BB, NextBBI->BB)) {
+    // Now ifcvt'd block will look like this:
+    // BB:
+    // ...
+    // t, f = cmp
+    // if t op
+    // b BBf
+    //
+    // We cannot further ifcvt this block because the unconditional branch will
+    // have to be predicated on the new condition, that will not be available
+    // if cmp executes.
     InsertUncondBranch(BBI.BB, NextBBI->BB, TII);
+  }
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
-  BBI.Kind = ICReAnalyze;
+  if (IterIfcvt)
+    BBI.Kind = ICReAnalyze;
   ReTryPreds(BBI.BB);
   CvtBBI->Kind = ICDead;
 
@@ -552,11 +565,24 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   // predecessors. Otherwise, add a unconditional branch from 'true' to 'false'.
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   bool FalseBBDead = false;
+  bool IterIfcvt = true;
   if (!HasEarlyExit && FalseBBI.BB->pred_size() == 2) {
     MergeBlocks(TrueBBI, FalseBBI);
     FalseBBDead = true;
-  } else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB))
+  } else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB)) {
     InsertUncondBranch(TrueBBI.BB, FalseBBI.BB, TII);
+    // Now ifcvt'd block will look like this:
+    // BB:
+    // ...
+    // t, f = cmp
+    // if t op
+    // b BBf
+    //
+    // We cannot further ifcvt this block because the unconditional branch will
+    // have to be predicated on the new condition, that will not be available
+    // if cmp executes.
+    IterIfcvt = false;
+  }
 
   // Now merge the entry of the triangle with the true block.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -565,7 +591,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
             std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
-  BBI.Kind = ICReAnalyze;
+  if (IterIfcvt) 
+    BBI.Kind = ICReAnalyze;
   ReTryPreds(BBI.BB);
   TrueBBI.Kind = ICDead;
   if (FalseBBDead)
