@@ -1346,6 +1346,10 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       
       // Signed shift right.
       APInt DemandedMaskIn(DemandedMask.shl(ShiftAmt));
+      // If any of the "high bits" are demanded, we should set the sign bit as
+      // demanded.
+      if (DemandedMask.countLeadingZeros() <= ShiftAmt)
+        DemandedMaskIn.set(BitWidth-1);
       if (SimplifyDemandedBits(I->getOperand(0),
                                DemandedMaskIn,
                                RHSKnownZero, RHSKnownOne, Depth+1))
