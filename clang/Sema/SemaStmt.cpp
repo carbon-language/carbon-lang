@@ -241,8 +241,7 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
   // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
   // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
   // function return.  
-  AssignmentConversionResult result;
-  QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
+  AssignmentCheckResult result = CheckAssignmentConstraints(lhsType, rhsType);
   bool hadError = false;
   
   // decode the result (notice that extensions still return a type).

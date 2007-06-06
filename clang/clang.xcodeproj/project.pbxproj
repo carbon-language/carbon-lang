@@ -10,6 +10,8 @@
 		1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A30A9E80B93A4C800201A91 /* ExprCXX.h */; };
 		1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A869A6E0BA2164C008DA07A /* LiteralSupport.h */; };
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
+		84916BE50C161E580080778F /* Attr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84916BE40C161E580080778F /* Attr.cpp */; };
+		84916BE70C161E800080778F /* Attr.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84916BE60C161E800080778F /* Attr.h */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
@@ -106,6 +108,23 @@
 		DED7D9E50A5257F6003AD0FB /* ScratchBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXBuildStyle section */
+		84916C3B0C1736920080778F /* Development */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Development;
+		};
+		84916C3C0C1736920080778F /* Deployment */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			name = Deployment;
+		};
+/* End PBXBuildStyle section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		8DD76F690486A84900D96B5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -160,6 +179,7 @@
 				DE928B200C0565B000231DA4 /* ModuleBuilder.h in CopyFiles */,
 				DE928B7D0C0A615100231DA4 /* CodeGenModule.h in CopyFiles */,
 				DE928B810C0A615B00231DA4 /* CodeGenFunction.h in CopyFiles */,
+				84916BE70C161E800080778F /* Attr.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -169,6 +189,8 @@
 		1A30A9E80B93A4C800201A91 /* ExprCXX.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ExprCXX.h; path = clang/AST/ExprCXX.h; sourceTree = "<group>"; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
+		84916BE40C161E580080778F /* Attr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Attr.cpp; path = AST/Attr.cpp; sourceTree = "<group>"; };
+		84916BE60C161E800080778F /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = include/clang/AST/Attr.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = Parse/ParseExprCXX.cpp; sourceTree = "<group>"; };
@@ -432,6 +454,8 @@
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
 				DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */,
 				DE0FCB330A9C21F100248FD5 /* Expr.cpp */,
+				84916BE60C161E800080778F /* Attr.h */,
+				84916BE40C161E580080778F /* Attr.cpp */,
 				DE3452400AEF1A2D00DBC861 /* Stmt.cpp */,
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
 				DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */,
@@ -547,6 +571,12 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				84916C3B0C1736920080778F /* Development */,
+				84916C3C0C1736920080778F /* Deployment */,
+			);
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
@@ -611,6 +641,7 @@
 				DE4772FA0C10EAE5002239E8 /* CGStmt.cpp in Sources */,
 				DE4772FC0C10EAEC002239E8 /* CGExpr.cpp in Sources */,
 				DE4264FC0C113592005A861D /* CGDecl.cpp in Sources */,
+				84916BE50C161E580080778F /* Attr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

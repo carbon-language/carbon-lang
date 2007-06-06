@@ -415,9 +415,9 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       
       if (lhsType == rhsType) // common case, fast path...
         continue;
-      AssignmentConversionResult result;
-      UsualAssignmentConversions(lhsType, rhsType, result);
-
+        
+      AssignmentCheckResult result = CheckAssignmentConstraints(lhsType,
+                                                                rhsType);
       SourceLocation l = argExpr->getLocStart();
 
       // decode the result (notice that AST's are still created for extensions).
@@ -634,9 +634,8 @@ QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
 // routine is it effectively iqnores the qualifiers on the top level pointee.
 // This circumvents the usual type rules specified in 6.2.7p1 & 6.7.5.[1-3].
 // FIXME: add a couple examples in this comment.
-QualType Sema::CheckPointerTypesForAssignment(QualType lhsType, 
-                                              QualType rhsType,
-                                              AssignmentConversionResult &r) {
+Sema::AssignmentCheckResult 
+Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   QualType lhptee, rhptee;
   
   // get the "pointed to" type (ignoring qualifiers at the top level)
@@ -647,6 +646,8 @@ QualType Sema::CheckPointerTypesForAssignment(QualType lhsType,
   lhptee = lhptee.getCanonicalType();
   rhptee = rhptee.getCanonicalType();
 
+  AssignmentCheckResult r = Compatible;
+  
   // C99 6.5.16.1p1: This following citation is common to constraints 
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the 
   // qualifiers of the type *pointed to* by the right; 
@@ -668,10 +669,10 @@ QualType Sema::CheckPointerTypesForAssignment(QualType lhsType,
   else if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
                                      rhptee.getUnqualifiedType()))
     r = IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
-  return rhsType;
+  return r;
 }
 
-/// UsualAssignmentConversions (C99 6.5.16) - This routine currently 
+/// CheckAssignmentConstraints (C99 6.5.16) - This routine currently 
 /// has code to accommodate several GCC extensions when type checking 
 /// pointers. Here are some objectionable examples that GCC considers warnings:
 ///
@@ -688,44 +689,37 @@ QualType Sema::CheckPointerTypesForAssignment(QualType lhsType,
 /// C99 spec dictates. 
 /// Note: the warning above turn into errors when -pedantic-errors is enabled. 
 ///
-QualType Sema::UsualAssignmentConversions(QualType lhsType, QualType rhsType,
-                                          AssignmentConversionResult &r) {
+Sema::AssignmentCheckResult
+Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   // This check seems unnatural, however it is necessary to insure the proper
   // conversion of functions/arrays. If the conversion were done for all
   // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
   rhsType = DefaultFunctionArrayConversion(rhsType);
     
-  r = Compatible;
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
-    return lhsType;
+    return Compatible;
   else if (lhsType->isPointerType()) {
-    if (rhsType->isIntegerType()) {
-      r = PointerFromInt;
-      return rhsType;
-    }
+    if (rhsType->isIntegerType())
+      return PointerFromInt;
+      
     if (rhsType->isPointerType())
-      return CheckPointerTypesForAssignment(lhsType, rhsType, r);
+      return CheckPointerTypesForAssignment(lhsType, rhsType);
   } else if (rhsType->isPointerType()) {
-    if (lhsType->isIntegerType()) {
-      // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
-      if (lhsType != Context.BoolTy)
-        r = IntFromPointer;
-      return rhsType;
-    }
+    // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
+    if ((lhsType->isIntegerType()) && (lhsType != Context.BoolTy))
+      return IntFromPointer;
+
     if (lhsType->isPointerType()) 
-      return CheckPointerTypesForAssignment(lhsType, rhsType, r);
+      return CheckPointerTypesForAssignment(lhsType, rhsType);
   } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Type::tagTypesAreCompatible(lhsType, rhsType))
-      return rhsType;
+      return Compatible;
   } else if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
     if (Type::referenceTypesAreCompatible(lhsType, rhsType))
-      // C++ 5.17p1: ...the type of the assignment exression is that of its left
-      // operand.
-      return lhsType;
+      return Compatible;
   }
-  r = Incompatible;
-  return QualType();
+  return Incompatible;
 }
 
 inline void Sema::InvalidOperands(SourceLocation loc, Expr *lex, Expr *rex) {
@@ -898,8 +892,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   if (lhsType == rhsType) // common case, fast path...
     return lhsType;
   
-  AssignmentConversionResult result;
-  QualType resType = UsualAssignmentConversions(lhsType, rhsType, result);
+  AssignmentCheckResult result = CheckAssignmentConstraints(lhsType, rhsType);
 
   // decode the result (notice that extensions still return a type).
   switch (result) {
@@ -935,7 +928,13 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
          lex->getSourceRange(), rex->getSourceRange());
     break;
   }
-  return hadError ? QualType() : resType;
+  // C99 6.5.16p3: The type of an assignment expression is the type of the
+  // left operand unless the left operand has qualified type, in which case
+  // it is the unqualified version of the type of the left operand. 
+  // C99 6.5.16.1p2: In simple assignment, the value of the right operand
+  // is converted to the type of the assignment expression (above).
+  // C++ 5.17p1: the type of the assignment expression is that of its left oprdu.
+  return hadError ? QualType() : lhsType.getUnqualifiedType();
 }
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17

@@ -273,7 +273,7 @@ private:
   // or array, this routine simply returns the input type (unmodified).
   QualType DefaultFunctionArrayConversion(QualType t);
   
-  enum AssignmentConversionResult {
+  enum AssignmentCheckResult {
     Compatible,
     Incompatible,
     PointerFromInt, 
@@ -281,14 +281,13 @@ private:
     IncompatiblePointer,
     CompatiblePointerDiscardsQualifiers
   };
-  // UsualAssignmentConversions - conversions for assignment, argument passing, 
+  // CheckAssignmentConstraints - conversions for assignment, argument passing, 
   // variable initialization, and function return values. Currently used by 
-  // CheckAssignmentOperands, ParseCallExpr, and ParseReturnStmt. 
-  QualType UsualAssignmentConversions(QualType lhs, QualType rhs, // C99 6.5.16
-                                      AssignmentConversionResult &r);
-  // Helper function for UsualAssignmentConversions (C99 6.5.16.1p1)
-  QualType CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType,
-                                          AssignmentConversionResult &r);
+  // CheckAssignmentOperands, ParseCallExpr, and ParseReturnStmt.  C99 6.5.16.
+  AssignmentCheckResult CheckAssignmentConstraints(QualType lhs, QualType rhs);
+  // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
+  AssignmentCheckResult CheckPointerTypesForAssignment(QualType lhsType, 
+                                                       QualType rhsType);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).
