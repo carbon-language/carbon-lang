@@ -127,7 +127,7 @@ LoopPass *createLoopStrengthReducePass(const TargetLowering *TLI = 0);
 //
 // LoopUnswitch - This pass is a simple loop unswitching pass.
 //
-LoopPass *createLoopUnswitchPass(bool Os = false);
+LoopPass *createLoopUnswitchPass(bool OptimizeForSize = false);
 
 //===----------------------------------------------------------------------===//
 //
