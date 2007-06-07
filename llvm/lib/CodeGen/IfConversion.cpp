@@ -647,8 +647,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   // Now merge the entry of the triangle with the true block.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
   MergeBlocks(BBI, TrueBBI);
-  // Remove entry to false edge.
-  if (BBI.BB->isSuccessor(FalseBBI.BB))
+  // Remove entry to false edge if false block is merged in as well.
+  if (FalseBBDead && BBI.BB->isSuccessor(FalseBBI.BB))
     BBI.BB->removeSuccessor(FalseBBI.BB);
   std::copy(BBI.BrCond.begin(), BBI.BrCond.end(),
             std::back_inserter(BBI.Predicate));
