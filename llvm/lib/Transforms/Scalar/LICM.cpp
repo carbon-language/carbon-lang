@@ -76,7 +76,6 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<ETForest>();
       AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<AliasAnalysis>();
     }
@@ -90,7 +89,6 @@ namespace {
     // Various analyses that we use...
     AliasAnalysis *AA;       // Current AliasAnalysis information
     LoopInfo      *LI;       // Current LoopInfo
-    ETForest      *ET;       // ETForest for the current loop..
     DominatorTree *DT;       // Dominator Tree for the current Loop...
     DominanceFrontier *DF;   // Current Dominance Frontier
 
@@ -220,7 +218,6 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   AA = &getAnalysis<AliasAnalysis>();
   DF = &getAnalysis<DominanceFrontier>();
   DT = &getAnalysis<DominatorTree>();
-  ET = &getAnalysis<ETForest>();
 
   CurAST = new AliasSetTracker(*AA);
   // Collect Alias info from subloops
