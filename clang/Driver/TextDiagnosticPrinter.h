@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DIAGNOSTIC_CLIENTS_H_
-#define DIAGNOSTIC_CLIENTS_H_
+#ifndef TEXT_DIAGNOSTIC_PRINTER_H_
+#define TEXT_DIAGNOSTIC_PRINTER_H_
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
