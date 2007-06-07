@@ -1,4 +1,4 @@
-// RUN: %llvmgxx %s -S -emit-llvm -O2 -o - | grep _Unwind_Resume | wc -l | grep {\[03\]}
+// RUN: %llvmgxx %s -S -emit-llvm -O2 -o - | grep -c {handle\\|_Unwind_Resume} | grep {\[14\]}
 
 struct One { };
 struct Two { };
