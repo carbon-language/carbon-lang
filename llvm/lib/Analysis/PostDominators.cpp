@@ -165,7 +165,9 @@ void PostDominatorTree::calculate(Function &F) {
   // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
   // which postdominates all real exits if there are multiple exit blocks.
   BasicBlock *Root = Roots.size() == 1 ? Roots[0] : 0;
-  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0);
+  ETNode *ERoot = new ETNode(Root);
+  ETNodes[Root] = ERoot;
+  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0, ERoot);
   
   // Loop over all of the reachable blocks in the function...
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
@@ -177,7 +179,11 @@ void PostDominatorTree::calculate(Function &F) {
         
         // Add a new tree node for this BasicBlock, and link it as a child of
         // IDomNode
-        BBNode = IPDomNode->addChild(new DomTreeNode(I, IPDomNode));
+        ETNode *ET = new ETNode(I);
+        ETNodes[I] = ET;
+        DomTreeNode *C = new DomTreeNode(I, IPDomNode, ET);
+        DomTreeNodes[I] = C;
+        BBNode = IPDomNode->addChild(C);
       }
     }
 
@@ -185,6 +191,16 @@ void PostDominatorTree::calculate(Function &F) {
   IDoms.clear();
   Info.clear();
   std::vector<BasicBlock*>().swap(Vertex);
+
+  int dfsnum = 0;
+  // Iterate over all nodes in depth first order...
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
+           E = idf_end(Roots[i]); I != E; ++I) {
+      if (!getNodeForBlock(*I)->getETNode()->hasFather())
+        getNodeForBlock(*I)->getETNode()->assignDFSNumber(dfsnum);
+    }
+  DFSInfoValid = true;
 }
 
 
@@ -199,7 +215,11 @@ DomTreeNode *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
   
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
-  return BBNode = IPDomNode->addChild(new DomTreeNode(BB, IPDomNode));
+  ETNode *ET = new ETNode(BB);
+  ETNodes[BB] = ET;
+  DomTreeNode *C = new DomTreeNode(BB, IPDomNode, ET);
+  DomTreeNodes[BB] = C;
+  return BBNode = IPDomNode->addChild(C);
 }
 
 //===----------------------------------------------------------------------===//
@@ -303,7 +323,7 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {
-      if (!Node->properlyDominates(DT[*CDFI]))
+      if (!DT.properlyDominates(Node, DT[*CDFI]))
         S.insert(*CDFI);
     }
   }

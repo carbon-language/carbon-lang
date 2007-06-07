@@ -233,8 +233,11 @@ void DominatorTree::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
 
 void DominatorTree::calculate(Function& F) {
   BasicBlock* Root = Roots[0];
-  
-  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0); // Add a node for the root...
+
+  // Add a node for the root...
+  ETNode *ERoot = new ETNode(Root);
+  ETNodes[Root] = ERoot;
+  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0, ERoot);
 
   Vertex.push_back(0);
 
@@ -289,7 +292,9 @@ void DominatorTree::calculate(Function& F) {
 
         // Add a new tree node for this BasicBlock, and link it as a child of
         // IDomNode
-        DomTreeNode *C = new DomTreeNode(I, IDomNode);
+        ETNode *ET = new ETNode(I);
+        ETNodes[I] = ET;
+        DomTreeNode *C = new DomTreeNode(I, IDomNode, ET);
         DomTreeNodes[I] = C;
         BBNode = IDomNode->addChild(C);
       }
@@ -299,7 +304,26 @@ void DominatorTree::calculate(Function& F) {
   Info.clear();
   IDoms.clear();
   std::vector<BasicBlock*>().swap(Vertex);
+
+  updateDFSNumbers();
 }
+
+void DominatorTreeBase::updateDFSNumbers()
+{
+  int dfsnum = 0;
+  // Iterate over all nodes in depth first order.
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    for (df_iterator<BasicBlock*> I = df_begin(Roots[i]),
+           E = df_end(Roots[i]); I != E; ++I) {
+      BasicBlock *BB = *I;
+      ETNode *ETN = getNode(BB)->getETNode();
+      if (ETN && !ETN->hasFather())
+        ETN->assignDFSNumber(dfsnum);    
+  }
+  SlowQueries = 0;
+  DFSInfoValid = true;
+}
+
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //
@@ -326,6 +350,13 @@ void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
     // Switch to new dominator
     IDom = NewIDom;
     IDom->Children.push_back(this);
+
+    if (!ETN->hasFather())
+      ETN->setFather(IDom->getETNode());
+    else if (ETN->getFather()->getData<BasicBlock>() != IDom->getBlock()) {
+        ETN->Split();
+        ETN->setFather(IDom->getETNode());
+    }
   }
 }
 
@@ -340,7 +371,9 @@ DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
 
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
-  DomTreeNode *C = new DomTreeNode(BB, IDomNode);
+  ETNode *ET = new ETNode(BB);
+  ETNodes[BB] = ET;
+  DomTreeNode *C = new DomTreeNode(BB, IDomNode, ET);
   DomTreeNodes[BB] = C;
   return BBNode = IDomNode->addChild(C);
 }
@@ -463,7 +496,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
       DomSetType::const_iterator CDFI = S.begin(), CDFE = S.end();
       DomSetType &parentSet = Frontiers[parentBB];
       for (; CDFI != CDFE; ++CDFI) {
-        if (!parentNode->properlyDominates(DT[*CDFI]))
+        if (!DT.properlyDominates(parentNode, DT[*CDFI]))
           parentSet.insert(*CDFI);
       }
       workList.pop_back();

@@ -217,7 +217,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
         DestBBNode = DT->getNode(DestBB);
         while (!OtherPreds.empty() && NewBBDominatesDestBB) {
           if (DomTreeNode *OPNode = DT->getNode(OtherPreds.back()))
-            NewBBDominatesDestBB = DestBBNode->dominates(OPNode);
+            NewBBDominatesDestBB = DT->dominates(DestBBNode, OPNode);
           OtherPreds.pop_back();
         }
         OtherPreds.clear();

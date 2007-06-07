@@ -63,6 +63,7 @@ public:
 class DomTreeNode {
   BasicBlock *TheBB;
   DomTreeNode *IDom;
+  ETNode *ETN;
   std::vector<DomTreeNode*> Children;
 public:
   typedef std::vector<DomTreeNode*>::iterator iterator;
@@ -75,28 +76,14 @@ public:
   
   inline BasicBlock *getBlock() const { return TheBB; }
   inline DomTreeNode *getIDom() const { return IDom; }
+  inline ETNode *getETNode() const { return ETN; }
   inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
   
-  /// properlyDominates - Returns true iff this dominates N and this != N.
-  /// Note that this is not a constant time operation!
-  ///
-  bool properlyDominates(const DomTreeNode *N) const {
-    const DomTreeNode *IDom;
-    if (this == 0 || N == 0) return false;
-    while ((IDom = N->getIDom()) != 0 && IDom != this)
-      N = IDom;   // Walk up the tree
-    return IDom != 0;
+  inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom, ETNode *E) 
+    : TheBB(BB), IDom(iDom), ETN(E) {
+    if (IDom)
+      ETN->setFather(IDom->getETNode());
   }
-  
-  /// dominates - Returns true iff this dominates N.  Note that this is not a
-  /// constant time operation!
-  ///
-  inline bool dominates(const DomTreeNode *N) const {
-    if (N == this) return true;  // A node trivially dominates itself.
-    return properlyDominates(N);
-  }
-  
-  inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom) : TheBB(BB), IDom(iDom) {}
   inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
   void setIDom(DomTreeNode *NewIDom);
 };
@@ -107,12 +94,16 @@ public:
 class DominatorTreeBase : public DominatorBase {
 
 protected:
-  std::map<BasicBlock*, DomTreeNode*> DomTreeNodes;
   void reset();
   typedef std::map<BasicBlock*, DomTreeNode*> DomTreeNodeMapType;
-
+  DomTreeNodeMapType DomTreeNodes;
   DomTreeNode *RootNode;
 
+  typedef std::map<BasicBlock*, ETNode*> ETMapType;
+  ETMapType ETNodes;
+
+  bool DFSInfoValid;
+  unsigned int SlowQueries;
   // Information record used during immediate dominators computation.
   struct InfoRec {
     unsigned Semi;
@@ -134,7 +125,7 @@ protected:
 
   public:
   DominatorTreeBase(intptr_t ID, bool isPostDom) 
-    : DominatorBase(ID, isPostDom) {}
+    : DominatorBase(ID, isPostDom), DFSInfoValid(false), SlowQueries(0) {}
   ~DominatorTreeBase() { reset(); }
 
   virtual void releaseMemory() { reset(); }
@@ -161,6 +152,47 @@ protected:
   DomTreeNode *getRootNode() { return RootNode; }
   const DomTreeNode *getRootNode() const { return RootNode; }
 
+  /// properlyDominates - Returns true iff this dominates N and this != N.
+  /// Note that this is not a constant time operation!
+  ///
+  bool properlyDominates(const DomTreeNode *A, DomTreeNode *B) const {
+    if (A == 0 || B == 0) return false;
+    return dominatedBySlowTreeWalk(A, B);
+  }
+
+  bool dominatedBySlowTreeWalk(const DomTreeNode *A, 
+                               const DomTreeNode *B) const {
+    const DomTreeNode *IDom;
+    if (A == 0 || B == 0) return false;
+    while ((IDom = B->getIDom()) != 0 && IDom != A)
+      B = IDom;   // Walk up the tree
+    return IDom != 0;
+  }
+
+  void updateDFSNumbers();  
+  /// dominates - Returns true iff this dominates N.  Note that this is not a
+  /// constant time operation!
+  ///
+  inline bool dominates(const DomTreeNode *A, DomTreeNode *B) {
+    if (B == A) return true;  // A node trivially dominates itself.
+
+    ETNode *NodeA = A->getETNode();
+    ETNode *NodeB = B->getETNode();
+    
+    if (DFSInfoValid)
+      return NodeB->DominatedBy(NodeA);
+
+    // If we end up with too many slow queries, just update the
+    // DFS numbers on the theory that we are going to keep querying.
+    SlowQueries++;
+    if (SlowQueries > 32) {
+      updateDFSNumbers();
+      return NodeB->DominatedBy(NodeA);
+    }
+    //return NodeB->DominatedBySlow(NodeA);
+    return dominatedBySlowTreeWalk(A, B);
+  }
+  
   //===--------------------------------------------------------------------===//
   // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
@@ -172,7 +204,11 @@ protected:
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
     DomTreeNode *IDomNode = getNode(DomBB);
     assert(IDomNode && "Not immediate dominator specified for block!");
-    return DomTreeNodes[BB] = IDomNode->addChild(new DomTreeNode(BB, IDomNode));
+    DFSInfoValid = false;
+    ETNode *E = new ETNode(BB);
+    ETNodes[BB] = E;
+    return DomTreeNodes[BB] = 
+      IDomNode->addChild(new DomTreeNode(BB, IDomNode, E));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator
@@ -180,13 +216,13 @@ protected:
   ///
   void changeImmediateDominator(DomTreeNode *N, DomTreeNode *NewIDom) {
     assert(N && NewIDom && "Cannot change null node pointers!");
+    DFSInfoValid = false;
     N->setIDom(NewIDom);
   }
 
   void changeImmediateDominator(BasicBlock *BB, BasicBlock *NewBB) {
     changeImmediateDominator(getNode(BB), getNode(NewBB));
   }
-
 
   /// removeNode - Removes a node from the dominator tree.  Block must not
   /// dominate any other blocks.  Invalidates any node pointing to removed

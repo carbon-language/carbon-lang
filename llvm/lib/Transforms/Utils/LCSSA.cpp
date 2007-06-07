@@ -157,7 +157,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
     BasicBlock *BB = *BBI;
     DomTreeNode *ExitBBNode = DT->getNode(BB);
     Value *&Phi = Phis[ExitBBNode];
-    if (!Phi && InstrNode->dominates(ExitBBNode)) {
+    if (!Phi && DT->dominates(InstrNode, ExitBBNode)) {
       PHINode *PN = new PHINode(Instr->getType(), Instr->getName()+".lcssa",
                                 BB->begin());
       PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
