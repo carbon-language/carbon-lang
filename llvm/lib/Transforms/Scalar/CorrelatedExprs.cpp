@@ -223,7 +223,7 @@ namespace {
   class VISIBILITY_HIDDEN CEE : public FunctionPass {
     std::map<Value*, unsigned> RankMap;
     std::map<BasicBlock*, RegionInfo> RegionInfoMap;
-    ETForest *EF;
+    DominatorTree *DT;
   public:
     static char ID; // Pass identification, replacement for typeid
     CEE() : FunctionPass((intptr_t)&ID) {}
@@ -232,7 +232,7 @@ namespace {
 
     // We don't modify the program, so we preserve all analyses
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<ETForest>();
+      AU.addRequired<DominatorTree>();
       AU.addRequiredID(BreakCriticalEdgesID);
     };
 
@@ -304,7 +304,7 @@ bool CEE::runOnFunction(Function &F) {
   // Traverse the dominator tree, computing information for each node in the
   // tree.  Note that our traversal will not even touch unreachable basic
   // blocks.
-  EF = &getAnalysis<ETForest>();
+  DT = &getAnalysis<DominatorTree>();
 
   std::set<BasicBlock*> VisitedBlocks;
   bool Changed = TransformRegion(&F.getEntryBlock(), VisitedBlocks);
@@ -351,14 +351,14 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
   // blocks that are dominated by this one, we can safely propagate the
   // information down now.
   //
-  std::vector<BasicBlock*> children;
-  EF->getETNodeChildren(BB, children);
+  DomTreeNode *BBDom = DT->getNode(BB);
   if (!RI.empty()) {     // Time opt: only propagate if we can change something
-    for (std::vector<BasicBlock*>::iterator CI = children.begin(), 
-         E = children.end(); CI != E; ++CI) {
-      assert(RegionInfoMap.find(*CI) == RegionInfoMap.end() &&
+    for (std::vector<DomTreeNode*>::iterator DI = BBDom->begin(),
+           E = BBDom->end(); DI != E; ++DI) {
+      BasicBlock *ChildBB = (*DI)->getBlock();
+      assert(RegionInfoMap.find(ChildBB) == RegionInfoMap.end() &&
              "RegionInfo should be calculated in dominanace order!");
-      getRegionInfo(*CI) = RI;
+      getRegionInfo(ChildBB) = RI;
     }
   }
 
@@ -383,9 +383,11 @@ bool CEE::TransformRegion(BasicBlock *BB, std::set<BasicBlock*> &VisitedBlocks){
     }
 
   // Now that all of our successors have information, recursively process them.
-  for (std::vector<BasicBlock*>::iterator CI = children.begin(), 
-       E = children.end(); CI != E; ++CI)
-    Changed |= TransformRegion(*CI, VisitedBlocks);
+  for (std::vector<DomTreeNode*>::iterator DI = BBDom->begin(),
+         E = BBDom->end(); DI != E; ++DI) {
+    BasicBlock *ChildBB = (*DI)->getBlock();
+    Changed |= TransformRegion(ChildBB, VisitedBlocks);
+  }
 
   return Changed;
 }
@@ -552,7 +554,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
   // insert dead phi nodes, but it is more trouble to see if they are used than
   // to just blindly insert them.
   //
-  if (EF->dominates(OldSucc, Dest)) {
+  if (DT->dominates(OldSucc, Dest)) {
     // RegionExitBlocks - Find all of the blocks that are not dominated by Dest,
     // but have predecessors that are.  Additionally, prune down the set to only
     // include blocks that are dominated by OldSucc as well.
@@ -652,7 +654,7 @@ void CEE::ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
   for (Value::use_iterator I = Orig->use_begin(), E = Orig->use_end();
        I != E; ++I)
     if (Instruction *User = dyn_cast<Instruction>(*I))
-      if (EF->dominates(RegionDominator, User->getParent()))
+      if (DT->dominates(RegionDominator, User->getParent()))
         InstsToChange.push_back(User);
       else if (PHINode *PN = dyn_cast<PHINode>(User)) {
         PHIsToChange.push_back(PN);
@@ -665,7 +667,7 @@ void CEE::ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
     PHINode *PN = PHIsToChange[i];
     for (unsigned j = 0, e = PN->getNumIncomingValues(); j != e; ++j)
       if (PN->getIncomingValue(j) == Orig &&
-          EF->dominates(RegionDominator, PN->getIncomingBlock(j)))
+          DT->dominates(RegionDominator, PN->getIncomingBlock(j)))
         PN->setIncomingValue(j, New);
   }
 
@@ -679,7 +681,7 @@ void CEE::ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
       // values that correspond to basic blocks in the region.
       for (unsigned j = 0, e = PN->getNumIncomingValues(); j != e; ++j)
         if (PN->getIncomingValue(j) == Orig &&
-            EF->dominates(RegionDominator, PN->getIncomingBlock(j)))
+            DT->dominates(RegionDominator, PN->getIncomingBlock(j)))
           PN->setIncomingValue(j, New);
 
     } else {
@@ -689,14 +691,14 @@ void CEE::ReplaceUsesOfValueInRegion(Value *Orig, Value *New,
 
 static void CalcRegionExitBlocks(BasicBlock *Header, BasicBlock *BB,
                                  std::set<BasicBlock*> &Visited,
-                                 ETForest &EF,
+                                 DominatorTree &DT,
                                  std::vector<BasicBlock*> &RegionExitBlocks) {
   if (Visited.count(BB)) return;
   Visited.insert(BB);
 
-  if (EF.dominates(Header, BB)) {  // Block in the region, recursively traverse
+  if (DT.dominates(Header, BB)) {  // Block in the region, recursively traverse
     for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
-      CalcRegionExitBlocks(Header, *I, Visited, EF, RegionExitBlocks);
+      CalcRegionExitBlocks(Header, *I, Visited, DT, RegionExitBlocks);
   } else {
     // Header does not dominate this block, but we have a predecessor that does
     // dominate us.  Add ourself to the list.
@@ -713,11 +715,11 @@ void CEE::CalculateRegionExitBlocks(BasicBlock *BB, BasicBlock *OldSucc,
   std::set<BasicBlock*> Visited;  // Don't infinite loop
 
   // Recursively calculate blocks we are interested in...
-  CalcRegionExitBlocks(BB, BB, Visited, *EF, RegionExitBlocks);
+  CalcRegionExitBlocks(BB, BB, Visited, *DT, RegionExitBlocks);
 
   // Filter out blocks that are not dominated by OldSucc...
   for (unsigned i = 0; i != RegionExitBlocks.size(); ) {
-    if (EF->dominates(OldSucc, RegionExitBlocks[i]))
+    if (DT->dominates(OldSucc, RegionExitBlocks[i]))
       ++i;  // Block is ok, keep it.
     else {
       // Move to end of list...
@@ -746,7 +748,7 @@ void CEE::InsertRegionExitMerges(PHINode *BBVal, Instruction *OldVal,
          PI != PE; ++PI) {
       // If the incoming edge is from the region dominated by BB, use BBVal,
       // otherwise use OldVal.
-      NewPN->addIncoming(EF->dominates(BB, *PI) ? BBVal : OldVal, *PI);
+      NewPN->addIncoming(DT->dominates(BB, *PI) ? BBVal : OldVal, *PI);
     }
 
     // Now make everyone dominated by this block use this new value!
@@ -989,7 +991,7 @@ void CEE::UpdateUsersOfValue(Value *V, RegionInfo &RI) {
       // here.  This check is also effectively checking to make sure that Inst
       // is in the same function as our region (in case V is a global f.e.).
       //
-      if (EF->properlyDominates(Inst->getParent(), RI.getEntryBlock()))
+      if (DT->properlyDominates(Inst->getParent(), RI.getEntryBlock()))
         IncorporateInstruction(Inst, RI);
     }
 }
