@@ -111,7 +111,7 @@ namespace {
 
   class VISIBILITY_HIDDEN LoopStrengthReduce : public LoopPass {
     LoopInfo *LI;
-    ETForest *EF;
+    DominatorTree *DT;
     ScalarEvolution *SE;
     const TargetData *TD;
     const Type *UIntPtrTy;
@@ -156,13 +156,12 @@ namespace {
       // many analyses if they are around.
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<LoopInfo>();
-      AU.addPreserved<ETForest>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<DominatorTree>();
 
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
-      AU.addRequired<ETForest>();
+      AU.addRequired<DominatorTree>();
       AU.addRequired<TargetData>();
       AU.addRequired<ScalarEvolution>();
     }
@@ -353,7 +352,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 /// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
-                                       Loop *L, ETForest *EF, Pass *P) {
+                                       Loop *L, DominatorTree *DT, Pass *P) {
   // If the user is in the loop, use the preinc value.
   if (L->contains(User->getParent())) return false;
   
@@ -361,7 +360,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   
   // Ok, the user is outside of the loop.  If it is dominated by the latch
   // block, use the post-inc value.
-  if (EF->dominates(LatchBlock, User->getParent()))
+  if (DT->dominates(LatchBlock, User->getParent()))
     return true;
 
   // There is one case we have to be careful of: PHI nodes.  These little guys
@@ -378,7 +377,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
     if (PN->getIncomingValue(i) == IV) {
       ++NumUses;
-      if (!EF->dominates(LatchBlock, PN->getIncomingBlock(i)))
+      if (!DT->dominates(LatchBlock, PN->getIncomingBlock(i)))
         return false;
     }
 
@@ -456,7 +455,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
-      if (IVUseShouldUsePostIncValue(User, I, L, EF, this)) {
+      if (IVUseShouldUsePostIncValue(User, I, L, DT, this)) {
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
         SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
@@ -1400,7 +1399,7 @@ namespace {
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   LI = &getAnalysis<LoopInfo>();
-  EF = &getAnalysis<ETForest>();
+  DT = &getAnalysis<DominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
   TD = &getAnalysis<TargetData>();
   UIntPtrTy = TD->getIntPtrType();
