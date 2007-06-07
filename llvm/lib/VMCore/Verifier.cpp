@@ -46,6 +46,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
@@ -357,6 +358,20 @@ void Verifier::visitFunction(Function &F) {
           (FT->getReturnType() == Type::VoidTy && 
            FT->getNumParams() > 0 && isa<PointerType>(FT->getParamType(0))),
           "Invalid struct-return function!", &F);
+
+  if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
+    unsigned Idx = 1;
+    for (FunctionType::param_iterator I = FT->param_begin(), 
+         E = FT->param_end(); I != E; ++I, ++Idx) {
+      if (Attrs->paramHasAttr(Idx, ParamAttr::ZExt) ||
+          Attrs->paramHasAttr(Idx, ParamAttr::SExt))
+        Assert1(FT->getParamType(Idx-1)->isInteger(),
+                "Attribute ZExt should only apply to Integer type!", &F);
+      if (Attrs->paramHasAttr(Idx, ParamAttr::NoAlias))
+        Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
+                "Attribute NoAlias should only apply to Pointer type!", &F);
+    }
+  }
 
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
