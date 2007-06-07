@@ -291,12 +291,12 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
   // Get llvm.noinline
   GlobalVariable *GV = M.getNamedGlobal("llvm.noinline");
   
-  if(GV == 0)
+  if (GV == 0)
     return false;
 
   const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
   
-  if(InitList == 0)
+  if (InitList == 0)
     return false;
 
   // Iterate over each element and add to the NeverInline set
@@ -310,8 +310,8 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
         Elt = CE->getOperand(0);
     
     // Insert into set of functions to never inline
-    if(const Function *f = dyn_cast<Function>(Elt))
-      NeverInline.insert(f);
+    if (const Function *F = dyn_cast<Function>(Elt))
+      NeverInline.insert(F);
   }
   
   return false;
