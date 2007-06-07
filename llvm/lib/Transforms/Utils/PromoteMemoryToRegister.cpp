@@ -88,7 +88,7 @@ namespace {
     ///
     std::vector<AllocaInst*> Allocas;
     SmallVector<AllocaInst*, 16> &RetryList;
-    ETForest &ET;
+    DominatorTree &DT;
     DominanceFrontier &DF;
 
     /// AST - An AliasSetTracker object to update.  If null, don't update it.
@@ -126,9 +126,9 @@ namespace {
 
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
-                   SmallVector<AllocaInst*, 16> &Retry, ETForest &et,
+                   SmallVector<AllocaInst*, 16> &Retry, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast)
-      : Allocas(A), RetryList(Retry), ET(et), DF(df), AST(ast) {}
+      : Allocas(A), RetryList(Retry), DT(dt), DF(df), AST(ast) {}
 
     void run();
 
@@ -137,13 +137,13 @@ namespace {
     bool properlyDominates(Instruction *I1, Instruction *I2) const {
       if (InvokeInst *II = dyn_cast<InvokeInst>(I1))
         I1 = II->getNormalDest()->begin();
-      return ET.properlyDominates(I1->getParent(), I2->getParent());
+      return DT.properlyDominates(I1->getParent(), I2->getParent());
     }
     
-    /// dominates - Return true if BB1 dominates BB2 using the ETForest.
+    /// dominates - Return true if BB1 dominates BB2 using the DominatorTree.
     ///
     bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
-      return ET.dominates(BB1, BB2);
+      return DT.dominates(BB1, BB2);
     }
 
   private:
@@ -532,7 +532,9 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
                                       SmallPtrSet<PHINode*, 16> &DeadPHINodes) {
   // Scan the immediate dominators of this block looking for a block which has a
   // PHI node for Alloca num.  If we find it, mark the PHI node as being alive!
-  for (BasicBlock* DomBB = BB; DomBB; DomBB = ET.getIDom(DomBB)) {
+  DomTreeNode *IDomNode = DT.getNode(BB);
+  for (DomTreeNode *IDom = IDomNode; IDom; IDom = IDom->getIDom()) {
+    BasicBlock *DomBB = IDom->getBlock();
     DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator
       I = NewPhiNodes.find(std::make_pair(DomBB, AllocaNum));
     if (I != NewPhiNodes.end()) {
@@ -803,13 +805,13 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 /// made to the IR.
 ///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                           ETForest &ET, DominanceFrontier &DF,
+                           DominatorTree &DT, DominanceFrontier &DF,
                            AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 
   SmallVector<AllocaInst*, 16> RetryList;
-  PromoteMem2Reg(Allocas, RetryList, ET, DF, AST).run();
+  PromoteMem2Reg(Allocas, RetryList, DT, DF, AST).run();
 
   // PromoteMem2Reg may not have been able to promote all of the allocas in one
   // pass, run it again if needed.
@@ -827,7 +829,7 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
 
     NewAllocas.assign(RetryList.begin(), RetryList.end());
     RetryList.clear();
-    PromoteMem2Reg(NewAllocas, RetryList, ET, DF, AST).run();
+    PromoteMem2Reg(NewAllocas, RetryList, DT, DF, AST).run();
     NewAllocas.clear();
   }
 }

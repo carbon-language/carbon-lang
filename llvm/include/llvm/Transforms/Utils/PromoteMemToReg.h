@@ -20,7 +20,7 @@
 namespace llvm {
 
 class AllocaInst;
-class ETForest;
+class DominatorTree;
 class DominanceFrontier;
 class AliasSetTracker;
 
@@ -38,7 +38,7 @@ bool isAllocaPromotable(const AllocaInst *AI);
 /// made to the IR.
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     ETForest &ET, DominanceFrontier &DF,
+                     DominatorTree &DT, DominanceFrontier &DF,
                      AliasSetTracker *AST = 0);
 
 } // End llvm namespace
