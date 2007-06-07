@@ -44,14 +44,13 @@ namespace {
   class VISIBILITY_HIDDEN CodeExtractor {
     typedef std::vector<Value*> Values;
     std::set<BasicBlock*> BlocksToExtract;
-    ETForest *EF;
     DominatorTree* DT;
     bool AggregateArgs;
     unsigned NumExitBlocks;
     const Type *RetTy;
   public:
-    CodeExtractor(ETForest *ef = 0, DominatorTree* dt = 0, bool AggArgs = false)
-      : EF(ef), DT(dt), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
+    CodeExtractor(DominatorTree* dt = 0, bool AggArgs = false)
+      : DT(dt), AggregateArgs(AggArgs||AggregateArgsOpt), NumExitBlocks(~0U) {}
 
     Function *ExtractCodeRegion(const std::vector<BasicBlock*> &code);
 
@@ -141,17 +140,17 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 
   // Okay, update dominator sets. The blocks that dominate the new one are the
   // blocks that dominate TIBB plus the new block itself.
-  if (EF) {
-    BasicBlock* idom = EF->getIDom(OldPred);
+  if (DT) {
+    DomTreeNode *OPNode = DT->getNode(OldPred);
+    DomTreeNode *IDomNode = OPNode->getIDom();
+    BasicBlock* idom = IDomNode->getBlock();
     DT->addNewBlock(NewBB, idom);
-    EF->addNewBlock(NewBB, idom);
 
     // Additionally, NewBB replaces OldPred as the immediate dominator of blocks
     Function *F = Header->getParent();
     for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-      if (EF->getIDom(I) == OldPred) {
+      if (DT->getIDomBlock(I) == OldPred) {
         DT->changeImmediateDominator(I, NewBB);
-        EF->setImmediateDominator(I, NewBB);
       }
   }
 
@@ -509,12 +508,12 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
               // In the extract block case, if the block we are extracting ends
               // with an invoke instruction, make sure that we don't emit a
               // store of the invoke value for the unwind block.
-              if (!EF && DefBlock != OldTarget)
+              if (!DT && DefBlock != OldTarget)
                 DominatesDef = false;
             }
 
-            if (EF)
-              DominatesDef = EF->dominates(DefBlock, OldTarget);
+            if (DT)
+              DominatesDef = DT->dominates(DefBlock, OldTarget);
 
             if (DominatesDef) {
               if (AggregateArgs) {
@@ -728,16 +727,16 @@ bool CodeExtractor::isEligible(const std::vector<BasicBlock*> &code) {
 /// ExtractCodeRegion - slurp a sequence of basic blocks into a brand new
 /// function
 ///
-Function* llvm::ExtractCodeRegion(ETForest &EF, DominatorTree &DT,
+Function* llvm::ExtractCodeRegion(DominatorTree &DT,
                                   const std::vector<BasicBlock*> &code,
                                   bool AggregateArgs) {
-  return CodeExtractor(&EF, &DT, AggregateArgs).ExtractCodeRegion(code);
+  return CodeExtractor(&DT, AggregateArgs).ExtractCodeRegion(code);
 }
 
 /// ExtractBasicBlock - slurp a natural loop into a brand new function
 ///
-Function* llvm::ExtractLoop(ETForest &EF, DominatorTree &DF, Loop *L, bool AggregateArgs) {
-  return CodeExtractor(&EF, &DF, AggregateArgs).ExtractCodeRegion(L->getBlocks());
+Function* llvm::ExtractLoop(DominatorTree &DT, Loop *L, bool AggregateArgs) {
+  return CodeExtractor(&DT, AggregateArgs).ExtractCodeRegion(L->getBlocks());
 }
 
 /// ExtractBasicBlock - slurp a basic block into a brand new function
@@ -745,5 +744,5 @@ Function* llvm::ExtractLoop(ETForest &EF, DominatorTree &DF, Loop *L, bool Aggre
 Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
   std::vector<BasicBlock*> Blocks;
   Blocks.push_back(BB);
-  return CodeExtractor(0, 0, AggregateArgs).ExtractCodeRegion(Blocks);
+  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);
 }

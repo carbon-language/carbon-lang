@@ -24,13 +24,13 @@ namespace llvm {
 
   /// ExtractCodeRegion - rip out a sequence of basic blocks into a new function
   ///
-  Function* ExtractCodeRegion(ETForest &DS, DominatorTree& DT,
+  Function* ExtractCodeRegion(DominatorTree& DT,
                               const std::vector<BasicBlock*> &code,
                               bool AggregateArgs = false);
 
   /// ExtractLoop - rip out a natural loop into a new function
   ///
-  Function* ExtractLoop(ETForest &DS, DominatorTree& DT, Loop *L,
+  Function* ExtractLoop(DominatorTree& DT, Loop *L,
                         bool AggregateArgs = false);
 
   /// ExtractBasicBlock - rip out a basic block into a new function

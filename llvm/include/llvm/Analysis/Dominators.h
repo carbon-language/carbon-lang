@@ -142,6 +142,16 @@ protected:
     return getNode(BB);
   }
 
+  /// getIDomBlock - return basic block BB's immediate domiantor basic block.
+  ///
+  BasicBlock *getIDomBlock(BasicBlock *BB) {
+    DomTreeNode *N = getNode(BB);
+    assert (N && "Missing dominator tree node");
+    DomTreeNode *I = N->getIDom();
+    assert (N && "Missing immediate dominator");
+    return I->getBlock();
+  }
+
   /// getRootNode - This returns the entry node for the CFG of the function.  If
   /// this tree represents the post-dominance relations for a function, however,
   /// this root may be a node with the block == NULL.  This is the case when
