@@ -170,11 +170,16 @@ protected:
   }
 
   void updateDFSNumbers();  
+
   /// dominates - Returns true iff this dominates N.  Note that this is not a
   /// constant time operation!
   ///
   inline bool dominates(const DomTreeNode *A, DomTreeNode *B) {
-    if (B == A) return true;  // A node trivially dominates itself.
+    if (B == A) 
+      return true;  // A node trivially dominates itself.
+
+    if (A == 0 || B == 0)
+      return false;
 
     ETNode *NodeA = A->getETNode();
     ETNode *NodeB = B->getETNode();
@@ -192,7 +197,14 @@ protected:
     //return NodeB->DominatedBySlow(NodeA);
     return dominatedBySlowTreeWalk(A, B);
   }
-  
+
+  inline bool dominates(BasicBlock *A, BasicBlock *B) {
+    if (A == B) 
+      return true;
+    
+    return dominates(getNode(A), getNode(B));
+  }
+
   //===--------------------------------------------------------------------===//
   // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
