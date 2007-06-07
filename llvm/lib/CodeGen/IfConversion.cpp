@@ -615,29 +615,41 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
   bool FalseBBDead = false;
   bool IterIfcvt = true;
-  if (!HasEarlyExit && FalseBBI.BB->pred_size() == 2) {
-    MergeBlocks(TrueBBI, FalseBBI);
-    FalseBBDead = true;
-  } else if (!isNextBlock(TrueBBI.BB, FalseBBI.BB)) {
-    InsertUncondBranch(TrueBBI.BB, FalseBBI.BB, TII);
-    TrueBBI.hasFallThrough = false;
-    if (BBI.ModifyPredicate || TrueBBI.ModifyPredicate)
-      // Now ifcvt'd block will look like this:
-      // BB:
-      // ...
-      // t, f = cmp
-      // if t op
-      // b BBf
-      //
-      // We cannot further ifcvt this block because the unconditional branch will
-      // have to be predicated on the new condition, that will not be available
-      // if cmp executes.
+  bool isFallThrough = isNextBlock(TrueBBI.BB, FalseBBI.BB);
+  if (!isFallThrough) {
+    // Only merge them if the true block does not fallthrough to the false
+    // block. By not merging them, we make it possible to iteratively
+    // ifcvt the blocks.
+    if (!HasEarlyExit && FalseBBI.BB->pred_size() == 2) {
+      MergeBlocks(TrueBBI, FalseBBI);
+      FalseBBDead = true;
+      // Mixed predicated and unpredicated code. This cannot be iteratively
+      // predicated.
       IterIfcvt = false;
+    } else {
+      InsertUncondBranch(TrueBBI.BB, FalseBBI.BB, TII);
+      TrueBBI.hasFallThrough = false;
+      if (BBI.ModifyPredicate || TrueBBI.ModifyPredicate)
+        // Now ifcvt'd block will look like this:
+        // BB:
+        // ...
+        // t, f = cmp
+        // if t op
+        // b BBf
+        //
+        // We cannot further ifcvt this block because the unconditional branch will
+        // have to be predicated on the new condition, that will not be available
+        // if cmp executes.
+        IterIfcvt = false;
+    }
   }
 
   // Now merge the entry of the triangle with the true block.
   BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
   MergeBlocks(BBI, TrueBBI);
+  // Remove entry to false edge.
+  if (BBI.BB->isSuccessor(FalseBBI.BB))
+    BBI.BB->removeSuccessor(FalseBBI.BB);
   std::copy(BBI.BrCond.begin(), BBI.BrCond.end(),
             std::back_inserter(BBI.Predicate));
 
