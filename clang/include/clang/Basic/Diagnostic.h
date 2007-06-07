@@ -131,9 +131,18 @@ public:
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
+protected:
+  unsigned NumDiagnostics;
+  unsigned NumErrors;
 public:
-  
+  DiagnosticClient() : NumDiagnostics(0), NumErrors(0) {}
   virtual ~DiagnosticClient();
+
+  unsigned getNumDiagnostics() const { return NumDiagnostics; }
+  unsigned getNumErrors() const { return NumErrors; }
+
+  void incrNumDiagnostics() { ++NumDiagnostics; }
+  void incrNumErrors() { ++NumErrors; }
   
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or 
   /// capturing it to a log as needed.

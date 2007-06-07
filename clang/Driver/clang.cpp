@@ -23,24 +23,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
+#include "TextDiagnosticPrinter.h"
 #include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/AST.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/System/MappedFile.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 using namespace llvm;
 using namespace clang;
-
-static unsigned NumDiagnostics = 0;
-static unsigned NumErrors = 0;
 
 //===----------------------------------------------------------------------===//
 // Global options.
@@ -325,261 +321,6 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   // Silence the "macro is not used" warning unless requested.
   if (!WarnUnusedMacros)
     Diags.setDiagnosticMapping(diag::pp_macro_not_used, diag::MAP_IGNORE);
-}
-
-static cl::opt<bool>
-NoShowColumn("fno-show-column",
-             cl::desc("Do not include column number on diagnostics"));
-static cl::opt<bool>
-NoCaretDiagnostics("fno-caret-diagnostics",
-                   cl::desc("Do not include source line and caret with"
-                            " diagnostics"));
-
-/// DiagnosticPrinterSTDERR - This is a concrete diagnostic client, which prints
-/// the diagnostics to standard error.
-class DiagnosticPrinterSTDERR : public DiagnosticClient {
-  SourceManager &SourceMgr;
-  SourceLocation LastWarningLoc;
-  HeaderSearch *TheHeaderSearch;
-  Preprocessor *ThePreprocessor;
-public:
-  DiagnosticPrinterSTDERR(SourceManager &sourceMgr)
-    : SourceMgr(sourceMgr) {}
-  
-  void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
-  void setPreprocessor(Preprocessor &P) { ThePreprocessor = &P; }
-  
-  void PrintIncludeStack(SourceLocation Pos);
-  void HighlightRange(const SourceRange &R, unsigned LineNo,
-                      std::string &CaratLine, const std::string &SourceLine);
-  unsigned GetTokenLength(SourceLocation Loc);
-    
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
-                                diag::kind ID, const std::string *Strs,
-                                unsigned NumStrs, const SourceRange *Ranges, 
-                                unsigned NumRanges);
-};
-
-void DiagnosticPrinterSTDERR::
-PrintIncludeStack(SourceLocation Pos) {
-  unsigned FileID = Pos.getFileID();
-  if (FileID == 0) return;
-  
-  // Print out the other include frames first.
-  PrintIncludeStack(SourceMgr.getIncludeLoc(FileID));
-  
-  unsigned LineNo = SourceMgr.getLineNumber(Pos);
-  
-  const MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
-  std::cerr << "In file included from " << Buffer->getBufferIdentifier()
-            << ":" << LineNo << ":\n";
-}
-
-
-/// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
-/// any characters in LineNo that intersect the SourceRange.
-void DiagnosticPrinterSTDERR::HighlightRange(const SourceRange &R, 
-                                             unsigned LineNo,
-                                             std::string &CaratLine,
-                                             const std::string &SourceLine) {
-  assert(CaratLine.size() == SourceLine.size() &&
-         "Expect a correspondence between source and carat line!");
-  if (!R.isValid()) return;
-
-  unsigned StartLineNo = SourceMgr.getLineNumber(R.Begin());
-  if (StartLineNo > LineNo) return;  // No intersection.
-  
-  unsigned EndLineNo = SourceMgr.getLineNumber(R.End());
-  if (EndLineNo < LineNo) return;  // No intersection.
-  
-  // Compute the column number of the start.
-  unsigned StartColNo = 0;
-  if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr.getColumnNumber(R.Begin());
-    if (StartColNo) --StartColNo;  // Zero base the col #.
-  }
-
-  // Pick the first non-whitespace column.
-  while (StartColNo < SourceLine.size() &&
-         (SourceLine[StartColNo] == ' ' || SourceLine[StartColNo] == '\t'))
-    ++StartColNo;
-  
-  // Compute the column number of the end.
-  unsigned EndColNo = CaratLine.size();
-  if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr.getColumnNumber(R.End());
-    if (EndColNo) {
-      --EndColNo;  // Zero base the col #.
-      
-      // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += GetTokenLength(R.End());
-    } else {
-      EndColNo = CaratLine.size();
-    }
-  }
-  
-  // Pick the last non-whitespace column.
-  while (EndColNo-1 &&
-         (SourceLine[EndColNo-1] == ' ' || SourceLine[EndColNo-1] == '\t'))
-    --EndColNo;
-  
-  // Fill the range with ~'s.
-  assert(StartColNo <= EndColNo && "Invalid range!");
-  for (unsigned i = StartColNo; i != EndColNo; ++i)
-    CaratLine[i] = '~';
-}
-
-
-/// GetTokenLength - Given the source location of a token, determine its length.
-/// This is a fully general function that uses a lexer to relex the token.
-unsigned DiagnosticPrinterSTDERR::GetTokenLength(SourceLocation Loc) {
-  const char *StrData = 
-    SourceMgr.getCharacterData(SourceMgr.getLogicalLoc(Loc));
-  
-  // Note, this could be special cased for common tokens like identifiers, ')',
-  // etc to make this faster, if it mattered.
-
-  unsigned FileID = Loc.getFileID();
-  
-  // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(SourceMgr.getBuffer(FileID), FileID,
-                 *ThePreprocessor,  StrData);
-  
-  LexerToken TheTok;
-  TheLexer.LexRawToken(TheTok);
-
-  return TheTok.getLength();
-}
-
-
-void DiagnosticPrinterSTDERR::HandleDiagnostic(Diagnostic::Level Level, 
-                                               SourceLocation Pos,
-                                               diag::kind ID,
-                                               const std::string *Strs,
-                                               unsigned NumStrs,
-                                               const SourceRange *Ranges,
-                                               unsigned NumRanges) {
-  unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
-  unsigned LineStart = 0, LineEnd = 0;
-  const MemoryBuffer *Buffer = 0;
-  
-  if (Pos.isValid()) {
-    LineNo = SourceMgr.getLineNumber(Pos);
-    FileID  = SourceMgr.getLogicalLoc(Pos).getFileID();
-    
-    // If this is a warning or note, and if it a system header, suppress the
-    // diagnostic.
-    if (Level == Diagnostic::Warning ||
-        Level == Diagnostic::Note) {
-      SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
-      const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
-      DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
-      if (DirInfo == DirectoryLookup::SystemHeaderDir ||
-          DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
-        return;
-    }
-    
-    // First, if this diagnostic is not in the main file, print out the
-    // "included from" lines.
-    if (LastWarningLoc != SourceMgr.getIncludeLoc(FileID)) {
-      LastWarningLoc = SourceMgr.getIncludeLoc(FileID);
-      PrintIncludeStack(LastWarningLoc);
-    }
-  
-    // Compute the column number.  Rewind from the current position to the start
-    // of the line.
-    ColNo = SourceMgr.getColumnNumber(Pos);
-    FilePos = SourceMgr.getSourceFilePos(Pos);
-    LineStart = FilePos-ColNo+1;  // Column # is 1-based
-  
-    // Compute the line end.  Scan forward from the error position to the end of
-    // the line.
-    Buffer = SourceMgr.getBuffer(FileID);
-    const char *Buf = Buffer->getBufferStart();
-    const char *BufEnd = Buffer->getBufferEnd();
-    LineEnd = FilePos;
-    while (Buf+LineEnd != BufEnd && 
-           Buf[LineEnd] != '\n' && Buf[LineEnd] != '\r')
-      ++LineEnd;
-  
-    std::cerr << Buffer->getBufferIdentifier() 
-              << ":" << LineNo << ":";
-    if (ColNo && !NoShowColumn) 
-      std::cerr << ColNo << ":";
-    std::cerr << " ";
-  }
-  
-  switch (Level) {
-  default: assert(0 && "Unknown diagnostic type!");
-  case Diagnostic::Note:                 std::cerr << "note: "; break;
-  case Diagnostic::Warning:              std::cerr << "warning: "; break;
-  case Diagnostic::Error:   ++NumErrors; std::cerr << "error: "; break;
-  case Diagnostic::Fatal:   ++NumErrors; std::cerr << "fatal error: "; break;
-  case Diagnostic::Sorry:   ++NumErrors; std::cerr << "sorry, unimplemented: ";
-    break;
-  }
-  
-  std::string Msg = Diagnostic::getDescription(ID);
-  
-  // Replace all instances of %0 in Msg with 'Extra'.
-  for (unsigned i = 0; i < Msg.size()-1; ++i) {
-    if (Msg[i] == '%' && isdigit(Msg[i+1])) {
-      unsigned StrNo = Msg[i+1]-'0';
-      Msg = std::string(Msg.begin(), Msg.begin()+i) +
-            (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
-            std::string(Msg.begin()+i+2, Msg.end());
-    }
-  }
-  std::cerr << Msg << "\n";
-  
-  if (!NoCaretDiagnostics && Pos.isValid()) {
-    // Get the line of the source file.
-    const char *Buf = Buffer->getBufferStart();
-    std::string SourceLine(Buf+LineStart, Buf+LineEnd);
-    
-    // Create a line for the carat that is filled with spaces that is the same
-    // length as the line of source code.
-    std::string CaratLine(LineEnd-LineStart, ' ');
-    
-    // Highlight all of the characters covered by Ranges with ~ characters.
-    for (unsigned i = 0; i != NumRanges; ++i)
-      HighlightRange(Ranges[i], LineNo, CaratLine, SourceLine);
-    
-    // Next, insert the carat itself.
-    if (ColNo-1 < CaratLine.size())
-      CaratLine[ColNo-1] = '^';
-    else
-      CaratLine.push_back('^');
-    
-    // Scan the source line, looking for tabs.  If we find any, manually expand
-    // them to 8 characters and update the CaratLine to match.
-    for (unsigned i = 0; i != SourceLine.size(); ++i) {
-      if (SourceLine[i] != '\t') continue;
-      
-      // Replace this tab with at least one space.
-      SourceLine[i] = ' ';
-      
-      // Compute the number of spaces we need to insert.
-      unsigned NumSpaces = ((i+8)&~7) - (i+1);
-      assert(NumSpaces < 8 && "Invalid computation of space amt");
-      
-      // Insert spaces into the SourceLine.
-      SourceLine.insert(i+1, NumSpaces, ' ');
-      
-      // Insert spaces or ~'s into CaratLine.
-      CaratLine.insert(i+1, NumSpaces, CaratLine[i] == '~' ? '~' : ' ');
-    }
-    
-    // Finally, remove any blank spaces from the end of CaratLine.
-    while (CaratLine[CaratLine.size()-1] == ' ')
-      CaratLine.erase(CaratLine.end()-1);
-    
-    // Emit what we have computed.
-    std::cerr << SourceLine << "\n";
-    std::cerr << CaratLine << "\n";
-  }
-  
-  ++NumDiagnostics;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1043,7 +784,7 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
 ///
 static void ProcessInputFile(const std::string &InFile, 
                              SourceManager &SourceMgr, Diagnostic &Diags,
-                             DiagnosticPrinterSTDERR &OurDiagnosticClient,
+                             TextDiagnosticPrinter &OurDiagnosticClient,
                              HeaderSearch &HeaderInfo, TargetInfo &Target,
                              const LangOptions &LangInfo) {
   FileManager &FileMgr = HeaderInfo.getFileMgr();
@@ -1067,7 +808,7 @@ static void ProcessInputFile(const std::string &InFile,
     if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
     if (MainFileID == 0) {
       std::cerr << "Error reading '" << InFile << "'!\n";
-      ++NumErrors;
+      OurDiagnosticClient.incrNumErrors();
       return;
     }
   } else {
@@ -1075,7 +816,7 @@ static void ProcessInputFile(const std::string &InFile,
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
       std::cerr << "Error reading standard input!  Empty?\n";
-      ++NumErrors;
+      OurDiagnosticClient.incrNumErrors();
       return;
     }
   }
@@ -1176,7 +917,7 @@ int main(int argc, char **argv) {
   SourceManager SourceMgr;
   
   // Print diagnostics to stderr.
-  DiagnosticPrinterSTDERR OurDiagnosticClient(SourceMgr);
+  TextDiagnosticPrinter OurDiagnosticClient(SourceMgr);
   
   // Configure our handling of diagnostics.
   Diagnostic Diags(OurDiagnosticClient);
@@ -1210,9 +951,9 @@ int main(int argc, char **argv) {
     ProcessInputFile(InputFilenames[i], SourceMgr, Diags, OurDiagnosticClient,
                      HeaderInfo, *Target, LangInfo);
   
-  if (NumDiagnostics)
-    std::cerr << NumDiagnostics << " diagnostic"
-              << (NumDiagnostics == 1 ? "" : "s")
+  if (OurDiagnosticClient.getNumDiagnostics())
+    std::cerr << OurDiagnosticClient.getNumDiagnostics() << " diagnostic"
+              << (OurDiagnosticClient.getNumDiagnostics() == 1 ? "" : "s")
               << " generated.\n";
   
   if (Stats) {
@@ -1222,5 +963,5 @@ int main(int argc, char **argv) {
     std::cerr << "\n";
   }
   
-  return NumErrors != 0;
+  return OurDiagnosticClient.getNumErrors() != 0;
 }
