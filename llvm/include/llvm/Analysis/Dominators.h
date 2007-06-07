@@ -160,6 +160,10 @@ protected:
     return dominatedBySlowTreeWalk(A, B);
   }
 
+  inline bool properlyDominates(BasicBlock *A, BasicBlock *B) {
+    return properlyDominates(getNode(A), getNode(B));
+  }
+
   bool dominatedBySlowTreeWalk(const DomTreeNode *A, 
                                const DomTreeNode *B) const {
     const DomTreeNode *IDom;
