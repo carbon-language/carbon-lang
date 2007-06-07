@@ -324,6 +324,29 @@ void DominatorTreeBase::updateDFSNumbers()
   DFSInfoValid = true;
 }
 
+// dominates - Return true if A dominates B. THis performs the
+// special checks necessary if A and B are in the same basic block.
+bool DominatorTreeBase::dominates(Instruction *A, Instruction *B) {
+  BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+  if (BBA != BBB) return dominates(BBA, BBB);
+  
+  // It is not possible to determine dominance between two PHI nodes 
+  // based on their ordering.
+  if (isa<PHINode>(A) && isa<PHINode>(B)) 
+    return false;
+
+  // Loop through the basic block until we find A or B.
+  BasicBlock::iterator I = BBA->begin();
+  for (; &*I != A && &*I != B; ++I) /*empty*/;
+  
+  if(!IsPostDominators) {
+    // A dominates B if it is found first in the basic block.
+    return &*I == A;
+  } else {
+    // A post-dominates B if B is found first in the basic block.
+    return &*I == B;
+  }
+}
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //

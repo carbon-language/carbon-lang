@@ -219,6 +219,10 @@ protected:
     return dominates(getNode(A), getNode(B));
   }
 
+  // dominates - Return true if A dominates B. This performs the
+  // special checks necessary if A and B are in the same basic block.
+  bool dominates(Instruction *A, Instruction *B);
+
   //===--------------------------------------------------------------------===//
   // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
