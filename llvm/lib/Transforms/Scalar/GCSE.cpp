@@ -68,9 +68,9 @@ bool GCSE::runOnFunction(Function &F) {
   bool Changed = false;
 
   // Get pointers to the analysis results that we will be using...
-  ETForest &EF = getAnalysis<ETForest>();
-  ValueNumbering &VN = getAnalysis<ValueNumbering>();
   DominatorTree &DT = getAnalysis<DominatorTree>();
+  ETForest &ET = getAnalysis<ETForest>();
+  ValueNumbering &VN = getAnalysis<ValueNumbering>();
 
   std::vector<Value*> EqualValues;
 
@@ -145,7 +145,7 @@ bool GCSE::runOnFunction(Function &F) {
             if (OtherI->getParent() == BB)
               Dominates = BlockInsts.count(OtherI);
             else
-              Dominates = EF.dominates(OtherI->getParent(), BB);
+              Dominates = ET.dominates(OtherI->getParent(), BB);
 
             if (Dominates) {
               // Okay, we found an instruction with the same value as this one
