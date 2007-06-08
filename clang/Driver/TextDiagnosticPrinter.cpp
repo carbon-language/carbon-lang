@@ -145,10 +145,12 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         Level == Diagnostic::Note) {
       SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
       const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
-      DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
-      if (DirInfo == DirectoryLookup::SystemHeaderDir ||
-          DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
-        return;
+      if (F) {
+        DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
+        if (DirInfo == DirectoryLookup::SystemHeaderDir ||
+            DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
+          return;
+      }
     }
     
     // First, if this diagnostic is not in the main file, print out the
