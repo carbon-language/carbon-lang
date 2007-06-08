@@ -185,6 +185,17 @@ protected:
 
   void updateDFSNumbers();  
 
+  /// Return the nearest common dominator of A and B.
+  BasicBlock *nearestCommonDominator(BasicBlock *A, BasicBlock *B) const  {
+    ETNode *NodeA = getNode(A)->getETNode();
+    ETNode *NodeB = getNode(B)->getETNode();
+    
+    ETNode *Common = NodeA->NCA(NodeB);
+    if (!Common)
+      return NULL;
+    return Common->getData<BasicBlock>();
+  }
+  
   /// dominates - Returns true iff this dominates N.  Note that this is not a
   /// constant time operation!
   ///
