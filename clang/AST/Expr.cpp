@@ -346,8 +346,12 @@ bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
       break;
     case BinaryOperator::Add: Result += RHS; break;
     case BinaryOperator::Sub: Result -= RHS; break;
-    case BinaryOperator::Shl: Result <<= RHS.getLimitedValue(); break;
-    case BinaryOperator::Shr: Result >>= RHS.getLimitedValue(); break;
+    case BinaryOperator::Shl:
+      Result <<= RHS.getLimitedValue(Result.getBitWidth()-1);
+      break;
+    case BinaryOperator::Shr:
+      Result >>= RHS.getLimitedValue(Result.getBitWidth()-1);
+      break;
     case BinaryOperator::LT:  Result = Result < RHS; break;
     case BinaryOperator::GT:  Result = Result > RHS; break;
     case BinaryOperator::LE:  Result = Result <= RHS; break;
