@@ -35,7 +35,7 @@
 
 namespace llvm {
 
-class ETForest;
+class DominatorTree;
 class LoopInfo;
 class PHINode;
 class Instruction;
@@ -321,8 +321,8 @@ public:
   void removeBlock(BasicBlock *BB);
 
 private:
-  void Calculate(ETForest &EF);
-  Loop *ConsiderForLoop(BasicBlock *BB, ETForest &EF);
+  void Calculate(DominatorTree &DT);
+  Loop *ConsiderForLoop(BasicBlock *BB, DominatorTree &DT);
   void MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent);
   void InsertLoopInto(Loop *L, Loop *Parent);
 };

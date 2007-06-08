@@ -91,7 +91,7 @@ void Loop::dump() const {
 //
 bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();
-  Calculate(getAnalysis<ETForest>());    // Update
+  Calculate(getAnalysis<DominatorTree>());    // Update
   return false;
 }
 
@@ -105,18 +105,18 @@ void LoopInfo::releaseMemory() {
 }
 
 
-void LoopInfo::Calculate(ETForest &EF) {
-  BasicBlock *RootNode = EF.getRoot();
+void LoopInfo::Calculate(DominatorTree &DT) {
+  BasicBlock *RootNode = DT.getRootNode()->getBlock();
 
   for (df_iterator<BasicBlock*> NI = df_begin(RootNode),
          NE = df_end(RootNode); NI != NE; ++NI)
-    if (Loop *L = ConsiderForLoop(*NI, EF))
+    if (Loop *L = ConsiderForLoop(*NI, DT))
       TopLevelLoops.push_back(L);
 }
 
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<ETForest>();
+  AU.addRequired<DominatorTree>();
 }
 
 void LoopInfo::print(std::ostream &OS, const Module* ) const {
@@ -136,7 +136,7 @@ static bool isNotAlreadyContainedIn(Loop *SubLoop, Loop *ParentLoop) {
   return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
 }
 
-Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, ETForest &EF) {
+Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, DominatorTree &DT) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Haven't processed this node?
 
   std::vector<BasicBlock *> TodoStack;
@@ -144,7 +144,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, ETForest &EF) {
   // Scan the predecessors of BB, checking to see if BB dominates any of
   // them.  This identifies backedges which target this node...
   for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
-    if (EF.dominates(BB, *I))   // If BB dominates it's predecessor...
+    if (DT.dominates(BB, *I))   // If BB dominates it's predecessor...
       TodoStack.push_back(*I);
 
   if (TodoStack.empty()) return 0;  // No backedges to this block...
@@ -160,7 +160,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, ETForest &EF) {
     TodoStack.pop_back();
 
     if (!L->contains(X) &&         // As of yet unprocessed??
-        EF.dominates(EntryBlock, X)) {   // X is reachable from entry block?
+        DT.dominates(EntryBlock, X)) {   // X is reachable from entry block?
       // Check to see if this block already belongs to a loop.  If this occurs
       // then we have a case where a loop that is supposed to be a child of the
       // current loop was processed before the current loop.  When this occurs,
@@ -192,7 +192,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, ETForest &EF) {
   // If there are any loops nested within this loop, create them now!
   for (std::vector<BasicBlock*>::iterator I = L->Blocks.begin(),
          E = L->Blocks.end(); I != E; ++I)
-    if (Loop *NewLoop = ConsiderForLoop(*I, EF)) {
+    if (Loop *NewLoop = ConsiderForLoop(*I, DT)) {
       L->SubLoops.push_back(NewLoop);
       NewLoop->ParentLoop = L;
     }
