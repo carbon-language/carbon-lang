@@ -38,6 +38,12 @@ STATISTIC(NumTailMerge , "Number of block tails merged");
 static cl::opt<cl::boolOrDefault> FlagEnableTailMerge("enable-tail-merge", 
                               cl::init(cl::BOU_UNSET), cl::Hidden);
 namespace {
+  // Throttle for huge numbers of predecessors (compile speed problems)
+  cl::opt<unsigned>
+  TailMergeThreshold("tail-merge-threshold", 
+            cl::desc("Max number of predecessors to consider tail merging"),
+            cl::init(100), cl::Hidden);
+
   struct BranchFolder : public MachineFunctionPass {
     static char ID;
     BranchFolder(bool defaultEnableTailMerge) : 
@@ -564,9 +570,6 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
   return MadeChange;
 }
 
-// Throttle for huge numbers of predecessors (compile speed problems)
-#define THRESHOLD 100
-
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   if (!EnableTailMerge) return false;
@@ -580,7 +583,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
       MergePotentials.push_back(std::make_pair(HashEndOfMBB(I, 2U), I));
   }
   // See if we can do any tail merging on those.
-  if (MergePotentials.size() < THRESHOLD)
+  if (MergePotentials.size() < TailMergeThreshold)
     MadeChange |= TryMergeBlocks(NULL, NULL);
 
   // Look at blocks (IBB) with multiple predecessors (PBB).
@@ -603,11 +606,13 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   // transformations.)
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    if (!I->succ_empty() && I->pred_size() >= 2 && I->pred_size() < THRESHOLD) {
+    if (!I->succ_empty() && I->pred_size() >= 2 && 
+         I->pred_size() < TailMergeThreshold) {
       MachineBasicBlock *IBB = I;
       MachineBasicBlock *PredBB = prior(I);
       MergePotentials.clear();
-      for (MachineBasicBlock::pred_iterator P = I->pred_begin(), E2 = I->pred_end(); 
+      for (MachineBasicBlock::pred_iterator P = I->pred_begin(), 
+                                            E2 = I->pred_end();
            P != E2; ++P) {
         MachineBasicBlock* PBB = *P;
         // Skip blocks that loop to themselves, can't tail merge these.
