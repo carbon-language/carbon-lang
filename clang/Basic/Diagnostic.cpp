@@ -134,10 +134,11 @@ void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
     ErrorOccurred = true;
     ++NumErrors;
   }
-  
+
   // Finally, report it.
   Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Strs, NumStrs,
                           Ranges, NumRanges);
+  ++NumDiagnostics;
 }
 
 DiagnosticClient::~DiagnosticClient() {}
