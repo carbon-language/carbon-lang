@@ -610,7 +610,6 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
     // available if cmp executes.
     IterIfcvt = false;
   }
-  std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
   if (IterIfcvt)
@@ -671,8 +670,6 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   // Remove entry to false edge if false block is merged in as well.
   if (FalseBBDead)
     BBI.BB->removeSuccessor(FalseBBI.BB);
-  std::copy(BBI.BrCond.begin(), BBI.BrCond.end(),
-            std::back_inserter(BBI.Predicate));
 
   // Update block info. BB can be iteratively if-converted.
   if (IterIfcvt) 
@@ -785,11 +782,6 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
 
   // Merge the combined block into the entry of the diamond.
   MergeBlocks(BBI, *BBI1);
-  std::copy(Cond1->begin(), Cond1->end(),
-            std::back_inserter(BBI.Predicate));
-  if (!NeedBr1)
-    std::copy(Cond2->begin(), Cond2->end(),
-              std::back_inserter(BBI.Predicate));
 
   // 'True' and 'false' aren't combined, see if we need to add a unconditional
   // branch to the 'false' block.
@@ -837,6 +829,8 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
   }
 
   BBI.NonPredSize = 0;
+  std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
+
   NumIfConvBBs++;
 }
 
@@ -883,4 +877,8 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
 
   ToBBI.ModifyPredicate |= FromBBI.ModifyPredicate;
   ToBBI.hasFallThrough = FromBBI.hasFallThrough;
+
+  std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
+            std::back_inserter(ToBBI.Predicate));
+  FromBBI.Predicate.clear();
 }
