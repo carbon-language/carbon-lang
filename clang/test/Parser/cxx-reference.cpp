@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s &&
+// RUN: not clang -fsyntax-only %s &&
 // RUN: clang -fsyntax-only %s 2>&1 | grep "error: 'const' qualifier may not be applied to a reference" &&
 // RUN: clang -fsyntax-only %s 2>&1 | grep "error: 'volatile' qualifier may not be applied to a reference"
 
