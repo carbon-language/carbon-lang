@@ -79,6 +79,16 @@ static void AddKeyword(const char *Keyword, unsigned KWLen,
   Info.setIsExtensionToken(Flags == 1);
 }
 
+static void AddAlias(const char *Keyword, unsigned KWLen,
+                     const char *AliaseeKeyword, unsigned AliaseeKWLen,
+                     const LangOptions &LangOpts, IdentifierTable &Table) {
+  IdentifierInfo &AliasInfo = Table.get(Keyword, Keyword+KWLen);
+  IdentifierInfo &AliaseeInfo = Table.get(AliaseeKeyword,
+                                          AliaseeKeyword+AliaseeKWLen);
+  AliasInfo.setTokenID(AliaseeInfo.getTokenID());
+  AliasInfo.setIsExtensionToken(AliaseeInfo.isExtensionToken());
+}  
+
 /// AddPPKeyword - Register a preprocessor keyword like "define" "undef" or 
 /// "elif".
 static void AddPPKeyword(tok::PPKeywordKind PPID, 
@@ -128,7 +138,7 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
              ((FLAGS) >> C99Shift) & Mask, \
              ((FLAGS) >> CPPShift) & Mask, LangOpts, *this);
 #define ALIAS(NAME, TOK) \
-  AddKeyword(NAME, strlen(NAME), tok::kw_ ## TOK, 0, 0, 0, LangOpts, *this);
+  AddAlias(NAME, strlen(NAME), #TOK, strlen(#TOK), LangOpts, *this);
 #define PPKEYWORD(NAME) \
   AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
