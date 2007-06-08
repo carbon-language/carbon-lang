@@ -1111,7 +1111,7 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
   case tok::kw___alignof: Opc = UnaryOperator::AlignOf; break;
   case tok::kw___real:    Opc = UnaryOperator::Real; break;
   case tok::kw___imag:    Opc = UnaryOperator::Imag; break;
-  // FIXME: case tok::kw___extension__: 
+  case tok::kw___extension__: Opc = UnaryOperator::Extension; break;
   }
   return Opc;
 }
