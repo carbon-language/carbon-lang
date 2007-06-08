@@ -59,6 +59,8 @@ Diagnostic::Diagnostic(DiagnosticClient &client) : Client(client) {
   memset(DiagMappings, 0, sizeof(DiagMappings));
   
   ErrorOccurred = false;
+  NumDiagnostics = 0;
+  NumErrors = 0;
 }
 
 /// isNoteWarningOrExtension - Return true if the unmapped diagnostic level of
@@ -128,8 +130,10 @@ void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
   if (DiagLevel == Diagnostic::Ignored)
     return;
   
-  if (DiagLevel >= Diagnostic::Error)
+  if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
+    ++NumErrors;
+  }
   
   // Finally, report it.
   Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Strs, NumStrs,

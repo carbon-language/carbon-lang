@@ -808,7 +808,6 @@ static void ProcessInputFile(const std::string &InFile,
     if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
     if (MainFileID == 0) {
       std::cerr << "Error reading '" << InFile << "'!\n";
-      OurDiagnosticClient.incrNumErrors();
       return;
     }
   } else {
@@ -816,7 +815,6 @@ static void ProcessInputFile(const std::string &InFile,
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
       std::cerr << "Error reading standard input!  Empty?\n";
-      OurDiagnosticClient.incrNumErrors();
       return;
     }
   }
@@ -951,9 +949,10 @@ int main(int argc, char **argv) {
     ProcessInputFile(InputFilenames[i], SourceMgr, Diags, OurDiagnosticClient,
                      HeaderInfo, *Target, LangInfo);
   
-  if (OurDiagnosticClient.getNumDiagnostics())
-    std::cerr << OurDiagnosticClient.getNumDiagnostics() << " diagnostic"
-              << (OurDiagnosticClient.getNumDiagnostics() == 1 ? "" : "s")
+  unsigned NumDiagnostics = Diags.getNumDiagnostics();
+  if (NumDiagnostics)
+    std::cerr << NumDiagnostics << " diagnostic"
+              << (NumDiagnostics == 1 ? "" : "s")
               << " generated.\n";
   
   if (Stats) {
@@ -963,5 +962,5 @@ int main(int argc, char **argv) {
     std::cerr << "\n";
   }
   
-  return OurDiagnosticClient.getNumErrors() != 0;
+  return Diags.getNumErrors() != 0;
 }

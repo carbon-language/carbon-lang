@@ -47,7 +47,6 @@ PrintIncludeStack(SourceLocation Pos) {
        << ":" << LineNo << ":\n";
 }
 
-
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R, 
@@ -101,7 +100,6 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaratLine[i] = '~';
 }
 
-
 /// GetTokenLength - Given the source location of a token, determine its length.
 /// This is a fully general function that uses a lexer to relex the token.
 unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
@@ -122,7 +120,6 @@ unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
 
   return TheTok.getLength();
 }
-
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              SourceLocation Pos,
@@ -185,11 +182,11 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   
   switch (Level) {
   default: assert(0 && "Unknown diagnostic type!");
-  case Diagnostic::Note:                 cerr << "note: "; break;
-  case Diagnostic::Warning:              cerr << "warning: "; break;
-  case Diagnostic::Error:   ++NumErrors; cerr << "error: "; break;
-  case Diagnostic::Fatal:   ++NumErrors; cerr << "fatal error: "; break;
-  case Diagnostic::Sorry:   ++NumErrors; cerr << "sorry, unimplemented: ";
+  case Diagnostic::Note:    cerr << "note: "; break;
+  case Diagnostic::Warning: cerr << "warning: "; break;
+  case Diagnostic::Error:   cerr << "error: "; break;
+  case Diagnostic::Fatal:   cerr << "fatal error: "; break;
+  case Diagnostic::Sorry:   cerr << "sorry, unimplemented: ";
     break;
   }
   
@@ -252,6 +249,4 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     cerr << SourceLine << "\n";
     cerr << CaratLine << "\n";
   }
-  
-  ++NumDiagnostics;
 }

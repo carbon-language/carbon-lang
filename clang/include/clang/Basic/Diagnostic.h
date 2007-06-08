@@ -59,6 +59,9 @@ class Diagnostic {
   /// ErrorOccurred - This is set to true when an error is emitted, and is
   /// sticky.
   bool ErrorOccurred;
+
+  unsigned NumDiagnostics;    // Number of diagnostics reported
+  unsigned NumErrors;         // Number of diagnostics that are errors
 public:
   explicit Diagnostic(DiagnosticClient &client);
   
@@ -98,6 +101,9 @@ public:
   }
   
   bool hasErrorOccurred() const { return ErrorOccurred; }
+
+  unsigned getNumErrors() const { return NumErrors; }
+  unsigned getNumDiagnostics() const { return NumDiagnostics; }
   
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
@@ -131,20 +137,10 @@ public:
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
-protected:
-  unsigned NumDiagnostics;
-  unsigned NumErrors;
 public:
-  DiagnosticClient() : NumDiagnostics(0), NumErrors(0) {}
   virtual ~DiagnosticClient();
 
-  unsigned getNumDiagnostics() const { return NumDiagnostics; }
-  unsigned getNumErrors() const { return NumErrors; }
-
-  void incrNumDiagnostics() { ++NumDiagnostics; }
-  void incrNumErrors() { ++NumErrors; }
-  
-  /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or 
+  /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
