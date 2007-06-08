@@ -221,7 +221,7 @@ bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
   case CharacterLiteralClass:
     // FIXME: This doesn't set the right width etc.
     Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
-    Result = cast<IntegerLiteral>(this)->getValue();
+    Result = cast<CharacterLiteral>(this)->getValue();
     break;
   case DeclRefExprClass:
     if (const EnumConstantDecl *D = 
@@ -229,7 +229,7 @@ bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
       D = D;
       // FIXME: Get the real assigned value and width.
       Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
-      Result = cast<IntegerLiteral>(this)->getValue();
+      Result = 0;
       break;
     }
     if (Loc) *Loc = getLocStart();

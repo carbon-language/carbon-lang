@@ -151,6 +151,8 @@ public:
     : Expr(CharacterLiteralClass, type), Value(value), Loc(l) {
   }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  
+  unsigned getValue() const { return Value; }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
