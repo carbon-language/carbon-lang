@@ -114,6 +114,10 @@ RegisterPass<GVNPRE> X("gvnpre",
                        "Global Value Numbering/Partial Redundancy Elimination");
 
 
+STATISTIC(NumInsertedVals, "Number of values inserted");
+STATISTIC(NumInsertedPhis, "Number of PHI nodes inserted");
+STATISTIC(NumEliminated, "Number of redundant instructions eliminated");
+
 
 bool GVNPRE::add(Value* V, uint32_t number) {
   std::pair<ValueTable::iterator, bool> ret = VN.insert(std::make_pair(V, number));
@@ -618,6 +622,8 @@ bool GVNPRE::runOnFunction(Function &F) {
                   if (av != avail.end())
                     avail.erase(av);
                   avail.insert(std::make_pair(*PI, newVal));
+                  
+                  ++NumInsertedVals;
                 }
               }
               
@@ -655,6 +661,8 @@ bool GVNPRE::runOnFunction(Function &F) {
               DOUT << "\n\n";
               
               new_set.insert(p);
+              
+              ++NumInsertedPhis;
             }
           }
         }
@@ -688,6 +696,7 @@ bool GVNPRE::runOnFunction(Function &F) {
             if (Instr->getParent() != 0 && Instr != BI) {
               replace.push_back(std::make_pair(BI, leader));
               erase.push_back(BI);
+              ++NumEliminated;
             }
       }
     }
