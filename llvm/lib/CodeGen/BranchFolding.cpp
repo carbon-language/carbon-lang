@@ -564,6 +564,9 @@ bool BranchFolder::TryMergeBlocks(MachineBasicBlock *SuccBB,
   return MadeChange;
 }
 
+// Throttle for huge numbers of predecessors (compile speed problems)
+#define THRESHOLD 100
+
 bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   if (!EnableTailMerge) return false;
@@ -577,7 +580,8 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
       MergePotentials.push_back(std::make_pair(HashEndOfMBB(I, 2U), I));
   }
   // See if we can do any tail merging on those.
-  MadeChange |= TryMergeBlocks(NULL, NULL);
+  if (MergePotentials.size() < THRESHOLD)
+    MadeChange |= TryMergeBlocks(NULL, NULL);
 
   // Look at blocks (IBB) with multiple predecessors (PBB).
   // We change each predecessor to a canonical form, by
@@ -599,7 +603,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   // transformations.)
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    if (!I->succ_empty() && I->pred_size() >= 2) {
+    if (!I->succ_empty() && I->pred_size() >= 2 && I->pred_size() < THRESHOLD) {
       MachineBasicBlock *IBB = I;
       MachineBasicBlock *PredBB = prior(I);
       MergePotentials.clear();
