@@ -19,10 +19,26 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+namespace {
+  // Hidden options for help debugging.
+  cl::opt<int> IfCvtFnStart("ifcvt-fn-start", cl::init(-1), cl::Hidden);
+  cl::opt<int> IfCvtFnStop("ifcvt-fn-stop", cl::init(-1), cl::Hidden);
+  cl::opt<int> IfCvtLimit("ifcvt-limit", cl::init(-1), cl::Hidden);
+  cl::opt<bool> DisableSimple("disable-ifcvt-simple", 
+                              cl::init(false), cl::Hidden);
+  cl::opt<bool> DisableSimpleFalse("disable-ifcvt-simple-false", 
+                                   cl::init(false), cl::Hidden);
+  cl::opt<bool> DisableTriangle("disable-ifcvt-triangle", 
+                                cl::init(false), cl::Hidden);
+  cl::opt<bool> DisableDiamond("disable-ifcvt-diamond", 
+                               cl::init(false), cl::Hidden);
+}
 
 STATISTIC(NumSimple,    "Number of simple if-conversions performed");
 STATISTIC(NumSimpleRev, "Number of simple (reversed) if-conversions performed");
@@ -139,7 +155,15 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  DOUT << "\nIfcvt: function \'" << MF.getFunction()->getName() << "\'\n";
+  static int FnNum = -1;
+  DOUT << "\nIfcvt: function (" << ++FnNum <<  ") \'"
+       << MF.getFunction()->getName() << "\'";
+
+  if (FnNum < IfCvtFnStart || (IfCvtFnStop != -1 && FnNum > IfCvtFnStop)) {
+    DOUT << " skipped\n";
+    return false;
+  }
+  DOUT << "\n";
 
   MF.RenumberBlocks();
   BBAnalysis.resize(MF.getNumBlockIDs());
@@ -151,7 +175,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
 
   std::vector<BBInfo*> Candidates;
   MadeChange = false;
-  while (true) {
+  while (IfCvtLimit == -1 || (int)NumIfConvBBs < IfCvtLimit) {
     // Do an intial analysis for each basic block and finding all the potential
     // candidates to perform if-convesion.
     bool Change = AnalyzeBlocks(MF, Candidates);
@@ -171,6 +195,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       case ICSimple:
       case ICSimpleFalse: {
         bool isRev = BBI.Kind == ICSimpleFalse;
+        if ((isRev && DisableSimpleFalse) || (!isRev && DisableSimple)) break;
         DOUT << "Ifcvt (Simple" << (BBI.Kind == ICSimpleFalse ? " false" : "")
              << "): BB#" << BBI.BB->getNumber() << " ("
              << ((BBI.Kind == ICSimpleFalse)
@@ -183,6 +208,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
        break;
       }
       case ICTriangle:
+        if (DisableTriangle) break;
         DOUT << "Ifcvt (Triangle): BB#" << BBI.BB->getNumber() << " (T:"
              << BBI.TrueBB->getNumber() << ",F:" << BBI.FalseBB->getNumber()
              << ") ";
@@ -191,6 +217,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         if (RetVal) NumTriangle++;
         break;
       case ICDiamond:
+        if (DisableDiamond) break;
         DOUT << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " (T:"
              << BBI.TrueBB->getNumber() << ",F:" << BBI.FalseBB->getNumber();
         if (BBI.TailBB)
@@ -202,6 +229,9 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
         break;
       }
       Change |= RetVal;
+
+      if (IfCvtLimit != -1 && (int)NumIfConvBBs > IfCvtLimit)
+        break;
     }
 
     if (!Change)
