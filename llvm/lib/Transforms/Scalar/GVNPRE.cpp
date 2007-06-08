@@ -45,7 +45,9 @@ struct ExprLT {
     BinaryOperator* BO1 = cast<BinaryOperator>(left);
     BinaryOperator* BO2 = cast<BinaryOperator>(right);
     
-    if ((*this)(BO1->getOperand(0), BO2->getOperand(0)))
+    if (BO1->getOpcode() != BO2->getOpcode())
+      return BO1->getOpcode() < BO2->getOpcode();
+    else if ((*this)(BO1->getOperand(0), BO2->getOperand(0)))
       return true;
     else if ((*this)(BO2->getOperand(0), BO1->getOperand(0)))
       return false;
@@ -158,6 +160,7 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
       Instruction* newVal = BinaryOperator::create(BO->getOpcode(),
                                              newOp1, newOp2,
                                              BO->getName()+".gvnpre");
+      
       if (add(newVal, nextValueNumber))
         nextValueNumber++;
       if (!find_leader(set, newVal)) {
@@ -165,6 +168,14 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
         createdExpressions.insert(newVal);
         return newVal;
       } else {
+        ValueTable::iterator I = VN.find(newVal);
+        if (I->first == newVal)
+          VN.erase(newVal);
+        
+        std::set<Value*, ExprLT>::iterator F = MS.find(newVal);
+        if (*F == newVal)
+          MS.erase(newVal);
+        
         delete newVal;
         return 0;
       }
@@ -486,7 +497,6 @@ bool GVNPRE::runOnFunction(Function &F) {
   
   
   // Phase 2: Insert
-  
   DOUT<< "\nPhase 2: Insertion\n";
   
   std::map<BasicBlock*, std::set<Value*, ExprLT> > new_sets;
@@ -503,6 +513,8 @@ bool GVNPRE::runOnFunction(Function &F) {
       std::set<Value*, ExprLT>& availOut = availableOut[BB];
       std::set<Value*, ExprLT>& anticIn = anticipatedIn[BB];
       
+      new_set.clear();
+      
       // Replace leaders with leaders inherited from dominator
       if (DI->getIDom() != 0) {
         std::set<Value*, ExprLT>& dom_set = new_sets[DI->getIDom()->getBlock()];
@@ -510,9 +522,11 @@ bool GVNPRE::runOnFunction(Function &F) {
              E = dom_set.end(); I != E; ++I) {
           new_set.insert(*I);
           
-          std::set<Value*, ExprLT>::iterator val = availOut.find(*I);
-          if (val != availOut.end())
+          Value* val = find_leader(availOut, *I);
+          while (val != 0) {
             availOut.erase(val);
+            val = find_leader(availOut, *I);
+          }
           availOut.insert(*I);
         }
       }
@@ -589,7 +603,14 @@ bool GVNPRE::runOnFunction(Function &F) {
                                              BO->getName()+".gvnpre",
                                              (*PI)->getTerminator());
                   add(newVal, VN[BO]);
-                  availableOut[*PI].insert(newVal);
+                  
+                  std::set<Value*, ExprLT>& predAvail = availableOut[*PI];
+                  Value* val = find_leader(predAvail, newVal);
+                  while (val != 0) {
+                    predAvail.erase(val);
+                    val = find_leader(predAvail, newVal);
+                  }
+                  predAvail.insert(newVal);
                   
                   DOUT << "Creating value: " << std::hex << newVal << std::dec << "\n";
                   
@@ -614,7 +635,13 @@ bool GVNPRE::runOnFunction(Function &F) {
               add(p, VN[e]);
               DOUT << "Creating value: " << std::hex << p << std::dec << "\n";
               
+              Value* val = find_leader(availOut, p);
+              while (val != 0) {
+                availOut.erase(val);
+                val = find_leader(availOut, p);
+              }
               availOut.insert(p);
+              
               new_stuff = true;
               
               DOUT << "Preds After Processing: ";
@@ -637,29 +664,45 @@ bool GVNPRE::runOnFunction(Function &F) {
   }
   
   // Phase 3: Eliminate
+  DOUT << "\n\nPhase 3: Elimination\n\n";
+  
+  std::vector<std::pair<Instruction*, Value*> > replace;
+  std::vector<Instruction*> erase;
+  
   for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     BasicBlock* BB = DI->getBlock();
     
-    std::vector<Instruction*> erase;
+    DOUT << "Block: " << BB->getName() << "\n";
+    dump_unique(availableOut[BB]);
+    DOUT << "\n\n";
     
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI) {
-      if (!BI->isTerminator()) {
-        Value* leader = find_leader(availableOut[BB], BI);
+
+      if (isa<BinaryOperator>(BI)) {
+         Value *leader = find_leader(availableOut[BB], BI);
+  
         if (leader != 0)
           if (Instruction* Instr = dyn_cast<Instruction>(leader))
             if (Instr->getParent() != 0 && Instr != BI) {
-              BI->replaceAllUsesWith(leader);
+              replace.push_back(std::make_pair(BI, leader));
               erase.push_back(BI);
             }
       }
     }
-    
-    for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
-         I != E; ++I)
-      (*I)->eraseFromParent();
   }
+  
+  while (!replace.empty()) {
+    std::pair<Instruction*, Value*> rep = replace.back();
+    replace.pop_back();
+      
+    rep.first->replaceAllUsesWith(rep.second);
+  }
+    
+  for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
+       I != E; ++I)
+     (*I)->eraseFromParent();
   
   // Phase 4: Cleanup
   for (std::set<Instruction*>::iterator I = createdExpressions.begin(),
