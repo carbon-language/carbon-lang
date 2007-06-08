@@ -1220,7 +1220,8 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
 
 // Unary Operators.  'Tok' is the token for the operator.
 Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
-                                      ExprTy *Input) {
+                                      ExprTy *input) {
+  Expr *Input = (Expr*)input;
   UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
   QualType resultType;
   switch (Opc) {
@@ -1228,30 +1229,30 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     assert(0 && "Unimplemented unary expr!");
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
-    resultType = CheckIncrementDecrementOperand((Expr *)Input, OpLoc);
+    resultType = CheckIncrementDecrementOperand(Input, OpLoc);
     break;
   case UnaryOperator::AddrOf: 
-    resultType = CheckAddressOfOperand((Expr *)Input, OpLoc);
+    resultType = CheckAddressOfOperand(Input, OpLoc);
     break;
   case UnaryOperator::Deref: 
-    resultType = CheckIndirectionOperand((Expr *)Input, OpLoc);
+    resultType = CheckIndirectionOperand(Input, OpLoc);
     break;
   case UnaryOperator::Plus:
   case UnaryOperator::Minus:
-    resultType = UsualUnaryConversions(((Expr *)Input)->getType());
+    resultType = UsualUnaryConversions(Input->getType());
     if (!resultType->isArithmeticType())  // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr, 
                   resultType.getAsString());
     break;
   case UnaryOperator::Not: // bitwise complement
-    resultType = UsualUnaryConversions(((Expr *)Input)->getType());
+    resultType = UsualUnaryConversions(Input->getType());
     if (!resultType->isIntegerType())  // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
-    resultType = DefaultFunctionArrayConversion(((Expr *)Input)->getType());
+    resultType = DefaultFunctionArrayConversion(Input->getType());
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
@@ -1259,17 +1260,19 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     resultType = Context.IntTy;
     break;
   case UnaryOperator::SizeOf:
-    resultType = CheckSizeOfAlignOfOperand(((Expr *)Input)->getType(), OpLoc,
-                                           true);
+    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc, true);
     break;
   case UnaryOperator::AlignOf:
-    resultType = CheckSizeOfAlignOfOperand(((Expr *)Input)->getType(), OpLoc,
-                                           false);
+    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc, false);
+    break;
+  case UnaryOperator::Extension:
+    // FIXME: does __extension__ cause any promotions? I would think not.
+    resultType = Input->getType();
     break;
   }
   if (resultType.isNull())
     return true;
-  return new UnaryOperator((Expr *)Input, Opc, resultType, OpLoc);
+  return new UnaryOperator(Input, Opc, resultType, OpLoc);
 }
 
 /// ParseAddrLabel - Parse the GNU address of label extension: "&&foo".
