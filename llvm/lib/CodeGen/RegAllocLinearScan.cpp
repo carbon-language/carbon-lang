@@ -96,6 +96,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveIntervals>();
+      AU.addRequiredID(SimpleRegisterCoalescingID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

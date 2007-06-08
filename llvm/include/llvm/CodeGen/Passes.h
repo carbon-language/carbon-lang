@@ -44,6 +44,11 @@ namespace llvm {
   ///
   extern const PassInfo *PHIEliminationID;
 
+  /// SimpleRegisterCoalescing pass.  Aggressively coalesces every register
+  /// copy it can.
+  ///
+  extern const PassInfo *SimpleRegisterCoalescingID;
+
   /// TwoAddressInstruction pass - This pass reduces two-address instructions to
   /// use two operands. This destroys SSA information but it is desired by
   /// register allocators.

@@ -44,7 +44,7 @@ namespace llvm {
     /// MBB2IdxMap - The index of the first instruction in the specified basic
     /// block.
     std::vector<unsigned> MBB2IdxMap;
-    
+
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
 
@@ -54,31 +54,12 @@ namespace llvm {
     typedef std::map<unsigned, LiveInterval> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
 
-    typedef IndexedMap<unsigned> Reg2RegMap;
-    Reg2RegMap r2rMap_;
-
     BitVector allocatableRegs_;
-    DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
-
-    /// JoinedLIs - Keep track which register intervals have been coalesced
-    /// with other intervals.
-    BitVector JoinedLIs;
 
   public:
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass((intptr_t)&ID) {}
 
-    struct CopyRec {
-      MachineInstr *MI;
-      unsigned SrcReg, DstReg;
-    };
-    CopyRec getCopyRec(MachineInstr *MI, unsigned SrcReg, unsigned DstReg) {
-      CopyRec R;
-      R.MI = MI;
-      R.SrcReg = SrcReg;
-      R.DstReg = DstReg;
-      return R;
-    }
     struct InstrSlots {
       enum {
         LOAD  = 0,
@@ -158,29 +139,31 @@ namespace llvm {
              "index does not correspond to an instruction");
       return i2miMap_[index];
     }
-    
-    std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
-                                                     VirtRegMap& vrm,
-                                                     int slot);
+
+    // Interval creation
+
+    LiveInterval &getOrCreateInterval(unsigned reg) {
+      Reg2IntervalMap::iterator I = r2iMap_.find(reg);
+      if (I == r2iMap_.end())
+        I = r2iMap_.insert(I, std::make_pair(reg, createInterval(reg)));
+      return I->second;
+    }
 
     /// CreateNewLiveInterval - Create a new live interval with the given live
     /// ranges. The new live interval will have an infinite spill weight.
     LiveInterval &CreateNewLiveInterval(const LiveInterval *LI,
                                         const std::vector<LiveRange> &LRs);
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual void releaseMemory();
+    std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
+                                                     VirtRegMap& vrm,
+                                                     int slot);
 
-    /// runOnMachineFunction - pass entry point
-    virtual bool runOnMachineFunction(MachineFunction&);
+    // Interval removal
 
-    /// print - Implement the dump method.
-    virtual void print(std::ostream &O, const Module* = 0) const;
-    void print(std::ostream *O, const Module* M = 0) const {
-      if (O) print(*O, M);
+    void removeInterval(unsigned Reg) {
+      r2iMap_.erase(Reg);
     }
 
-  private:
     /// isRemoved - returns true if the specified machine instr has been
     /// removed.
     bool isRemoved(MachineInstr* instr) const {
@@ -198,40 +181,22 @@ namespace llvm {
         mi2iMap_.erase(mi2i);
       }
     }
-      
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    virtual void releaseMemory();
+
+    /// runOnMachineFunction - pass entry point
+    virtual bool runOnMachineFunction(MachineFunction&);
+
+    /// print - Implement the dump method.
+    virtual void print(std::ostream &O, const Module* = 0) const;
+    void print(std::ostream *O, const Module* M = 0) const {
+      if (O) print(*O, M);
+    }
+
+  private:      
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
-
-    /// joinIntervals - join compatible live intervals
-    void joinIntervals();
-
-    /// CopyCoallesceInMBB - Coallsece copies in the specified MBB, putting
-    /// copies that cannot yet be coallesced into the "TryAgain" list.
-    void CopyCoallesceInMBB(MachineBasicBlock *MBB,
-                         std::vector<CopyRec> *TryAgain, bool PhysOnly = false);
-
-    /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
-    /// which are the src/dst of the copy instruction CopyMI.  This returns true
-    /// if the copy was successfully coallesced away, or if it is never possible
-    /// to coallesce these this copy, due to register constraints.  It returns
-    /// false if it is not currently possible to coallesce this interval, but
-    /// it may be possible if other things get coallesced.
-    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg,
-                  bool PhysOnly = false);
-    
-    /// JoinIntervals - Attempt to join these two intervals.  On failure, this
-    /// returns false.  Otherwise, if one of the intervals being joined is a
-    /// physreg, this method always canonicalizes DestInt to be it.  The output
-    /// "SrcInt" will not have been modified, so we can use this information
-    /// below to update aliases.
-    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS);
-    
-    /// SimpleJoin - Attempt to join the specified interval into this one. The
-    /// caller of this method must guarantee that the RHS only contains a single
-    /// value number and that the RHS is not defined by a copy from this
-    /// interval.  This returns false if the intervals are not joinable, or it
-    /// joins them and returns true.
-    bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS);
     
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
@@ -260,56 +225,7 @@ namespace llvm {
                               unsigned MIIdx,
                               LiveInterval &interval, bool isAlias = false);
 
-    /// Return true if the two specified registers belong to different
-    /// register classes.  The registers may be either phys or virt regs.
-    bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
-
-
-    bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
-                              MachineInstr *CopyMI);
-
-    /// lastRegisterUse - Returns the last use of the specific register between
-    /// cycles Start and End. It also returns the use operand by reference. It
-    /// returns NULL if there are no uses.
-    MachineInstr *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
-                                  MachineOperand *&MOU);
-
-    /// findDefOperand - Returns the MachineOperand that is a def of the specific
-    /// register. It returns NULL if the def is not found.
-    MachineOperand *findDefOperand(MachineInstr *MI, unsigned Reg);
-
-    /// unsetRegisterKill - Unset IsKill property of all uses of the specific
-    /// register of the specific instruction.
-    void unsetRegisterKill(MachineInstr *MI, unsigned Reg);
-
-    /// unsetRegisterKills - Unset IsKill property of all uses of specific register
-    /// between cycles Start and End.
-    void unsetRegisterKills(unsigned Start, unsigned End, unsigned Reg);
-
-    /// hasRegisterDef - True if the instruction defines the specific register.
-    ///
-    bool hasRegisterDef(MachineInstr *MI, unsigned Reg);
-
     static LiveInterval createInterval(unsigned Reg);
-
-    void removeInterval(unsigned Reg) {
-      r2iMap_.erase(Reg);
-    }
-
-    LiveInterval &getOrCreateInterval(unsigned reg) {
-      Reg2IntervalMap::iterator I = r2iMap_.find(reg);
-      if (I == r2iMap_.end())
-        I = r2iMap_.insert(I, std::make_pair(reg, createInterval(reg)));
-      return I->second;
-    }
-
-    /// rep - returns the representative of this register
-    unsigned rep(unsigned Reg) {
-      unsigned Rep = r2rMap_[Reg];
-      if (Rep)
-        return r2rMap_[Reg] = rep(Rep);
-      return Reg;
-    }
 
     void printRegName(unsigned reg) const;
   };
