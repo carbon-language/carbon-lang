@@ -1,4 +1,5 @@
 // RUN: clang -fsyntax-only %s
+// XFAIL: *
 
 char *const_cast_test(const char *var)
 {
