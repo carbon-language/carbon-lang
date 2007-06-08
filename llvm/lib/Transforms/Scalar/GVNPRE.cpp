@@ -77,8 +77,8 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(std::set<Value*>& s);
-    void dump_unique(std::set<Value*, ExprLT>& s);
+    void dump(const std::set<Value*>& s) const;
+    void dump_unique(const std::set<Value*, ExprLT>& s) const;
     void clean(std::set<Value*, ExprLT>& set);
     bool add(Value* V, uint32_t number);
     Value* find_leader(std::set<Value*, ExprLT>& vals,
@@ -269,7 +269,7 @@ void GVNPRE::topo_sort(std::set<Value*, ExprLT>& set,
 }
 
 
-void GVNPRE::dump(std::set<Value*>& s) {
+void GVNPRE::dump(const std::set<Value*>& s) const {
   DOUT << "{ ";
   for (std::set<Value*>::iterator I = s.begin(), E = s.end();
        I != E; ++I) {
@@ -278,7 +278,7 @@ void GVNPRE::dump(std::set<Value*>& s) {
   DOUT << "}\n\n";
 }
 
-void GVNPRE::dump_unique(std::set<Value*, ExprLT>& s) {
+void GVNPRE::dump_unique(const std::set<Value*, ExprLT>& s) const {
   DOUT << "{ ";
   for (std::set<Value*>::iterator I = s.begin(), E = s.end();
        I != E; ++I) {
@@ -512,8 +512,8 @@ bool GVNPRE::runOnFunction(Function &F) {
           
           std::set<Value*, ExprLT>::iterator val = availOut.find(*I);
           if (val != availOut.end())
-            new_set.erase(val);
-          new_set.insert(*I);
+            availOut.erase(val);
+          availOut.insert(*I);
         }
       }
       
