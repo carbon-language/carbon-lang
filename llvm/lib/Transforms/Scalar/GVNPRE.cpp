@@ -13,7 +13,7 @@
 // the optimization.  It replaces redundant values with uses of earlier 
 // occurences of the same value.  While this is beneficial in that it eliminates
 // unneeded computation, it also increases register pressure by creating large
-// live ranges, and should be used with caution on platforms that a very 
+// live ranges, and should be used with caution on platforms that are very 
 // sensitive to register pressure.
 //
 //===----------------------------------------------------------------------===//
