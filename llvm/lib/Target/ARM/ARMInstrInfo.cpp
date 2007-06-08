@@ -471,13 +471,13 @@ ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
   case ARMCC::AL:
     return true;
   case ARMCC::HS:
-    return CC2 == ARMCC::HI || CC2 == ARMCC::EQ;
+    return CC2 == ARMCC::HI;
   case ARMCC::LS:
     return CC2 == ARMCC::LO || CC2 == ARMCC::EQ;
   case ARMCC::GE:
-    return CC2 == ARMCC::GT || CC2 == ARMCC::EQ;
+    return CC2 == ARMCC::GT;
   case ARMCC::LE:
-    return CC2 == ARMCC::LT || CC2 == ARMCC::EQ;
+    return CC2 == ARMCC::LT;
   }
 }
 
