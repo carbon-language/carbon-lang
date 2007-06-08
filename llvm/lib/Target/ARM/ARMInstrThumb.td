@@ -222,7 +222,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
   }
 }
 
-let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in
+let isBranch = 1, isTerminator = 1, noResults = 1 in
   def tBcc : TI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
                  [(ARMbrcond bb:$dst, imm:$cc)]>;
 
