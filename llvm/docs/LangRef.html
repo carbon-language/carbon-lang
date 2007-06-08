@@ -698,7 +698,7 @@ basic block a symbol table entry), contains a list of instructions, and ends
 with a <a href="#terminators">terminator</a> instruction (such as a branch or
 function return).</p>
 
-<p>The first basic block in a program is special in two ways: it is immediately
+<p>The first basic block in a function is special in two ways: it is immediately
 executed on entrance to the function, and it is not allowed to have predecessor
 basic blocks (i.e. there can not be any branches to the entry block of a
 function).  Because the block can have no predecessors, it also cannot have any
