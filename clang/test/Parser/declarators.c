@@ -1,6 +1,6 @@
 // RUN: clang %s -fsyntax-only
 
-extern void a1[];
+extern int a1[];
 
 void f0();
 void f1(int [*]);
