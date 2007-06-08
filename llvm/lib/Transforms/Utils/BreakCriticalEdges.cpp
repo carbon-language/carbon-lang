@@ -40,7 +40,6 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addPreserved<ETForest>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<LoopInfo>();
@@ -110,11 +109,11 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 }
 
 // SplitCriticalEdge - If this edge is a critical edge, insert a new node to
-// split the critical edge.  This will update ETForest, ImmediateDominator,
-// DominatorTree, and DominatorFrontier information if it is available, thus
-// calling this pass will not invalidate any of them.  This returns true if
-// the edge was split, false otherwise.  This ensures that all edges to that
-// dest go to one block instead of each going to a different block.
+// split the critical edge.  This will update DominatorTree, and DominatorFrontier 
+// information if it is available, thus calling this pass will not invalidate 
+// any of them.  This returns true if the edge was split, false otherwise. 
+// This ensures that all edges to that dest go to one block instead of each 
+// going to a different block.
 //
 bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
                              bool MergeIdenticalEdges) {
@@ -180,26 +179,6 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
       OtherPreds.push_back(*I);
   
   bool NewBBDominatesDestBB = true;
-  
-  // Update the forest?
-  if (ETForest *EF = P->getAnalysisToUpdate<ETForest>()) {
-    // NewBB is dominated by TIBB.
-    EF->addNewBlock(NewBB, TIBB);
-    
-    // If NewBBDominatesDestBB hasn't been computed yet, do so with EF.
-    if (!OtherPreds.empty()) {
-      while (!OtherPreds.empty() && NewBBDominatesDestBB) {
-        NewBBDominatesDestBB = EF->dominates(DestBB, OtherPreds.back());
-        OtherPreds.pop_back();
-      }
-      OtherPreds.clear();
-    }
-    
-    // If NewBBDominatesDestBB, then NewBB dominates DestBB, otherwise it
-    // doesn't dominate anything.
-    if (NewBBDominatesDestBB)
-      EF->setImmediateDominator(DestBB, NewBB);
-  }
   
   // Should we update DominatorTree information?
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
