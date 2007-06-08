@@ -95,6 +95,11 @@ N: Dan Gohman
 E: djg@cray.com
 D: Miscellaneous bug fixes
 
+N: David Greene
+E: greened@obbligato.org
+D: Miscellaneous bug fixes
+D: Register allocation refactoring
+
 N: Paolo Invernizzi
 E: arathorn@fastwebnet.it
 D: Visual C++ compatibility fixes 
