@@ -245,6 +245,10 @@ NumericLiteralParser(const char *begin, const char *end,
       DigitsBegin = s;
       s = SkipOctalDigits(s);
       if (s == ThisTokEnd) {
+        // Done.
+      } else if (isxdigit(*s)) {
+        Diag(TokLoc, diag::err_invalid_octal_digit, std::string(s, s+1));
+        return;
       } else if (*s == '.') {
         s++;
         radix = 10;
@@ -269,6 +273,10 @@ NumericLiteralParser(const char *begin, const char *end,
     radix = 10;
     s = SkipDigits(s);
     if (s == ThisTokEnd) {
+      // Done.
+    } else if (isxdigit(*s)) {
+      Diag(TokLoc, diag::err_invalid_decimal_digit, std::string(s, s+1));
+      return;
     } else if (*s == '.') {
       s++;
       saw_period = true;
