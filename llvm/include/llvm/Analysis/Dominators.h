@@ -195,6 +195,10 @@ protected:
       return NULL;
     return Common->getData<BasicBlock>();
   }
+
+  /// isReachableFromEntry - Return true if A is dominated by the entry
+  /// block of the function containing it.
+  const bool isReachableFromEntry(BasicBlock* A);
   
   /// dominates - Returns true iff this dominates N.  Note that this is not a
   /// constant time operation!

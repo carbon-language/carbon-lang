@@ -316,12 +316,21 @@ void DominatorTreeBase::updateDFSNumbers()
     for (df_iterator<BasicBlock*> I = df_begin(Roots[i]),
            E = df_end(Roots[i]); I != E; ++I) {
       BasicBlock *BB = *I;
-      ETNode *ETN = getNode(BB)->getETNode();
-      if (ETN && !ETN->hasFather())
-        ETN->assignDFSNumber(dfsnum);    
+      DomTreeNode *BBNode = getNode(BB);
+      if (BBNode) {
+        ETNode *ETN = BBNode->getETNode();
+        if (ETN && !ETN->hasFather())
+          ETN->assignDFSNumber(dfsnum);
+      }
   }
   SlowQueries = 0;
   DFSInfoValid = true;
+}
+
+/// isReachableFromEntry - Return true if A is dominated by the entry
+/// block of the function containing it.
+const bool DominatorTreeBase::isReachableFromEntry(BasicBlock* A) {
+  return dominates(&A->getParent()->getEntryBlock(), A);
 }
 
 // dominates - Return true if A dominates B. THis performs the

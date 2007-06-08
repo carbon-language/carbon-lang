@@ -68,10 +68,8 @@ namespace {
       // We need loop information to identify the loops...
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<ETForest>();
 
       AU.addPreserved<LoopInfo>();
-      AU.addPreserved<ETForest>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
@@ -315,10 +313,10 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // Can we eliminate this phi node now?
       if (Value *V = PN->hasConstantValue(true)) {
         Instruction *I = dyn_cast<Instruction>(V);
-        // If I is in NewBB, the ETForest call will fail, because NewBB isn't
-        // registered in ETForest yet.  Handle this case explicitly.
+        // If I is in NewBB, the Dominator call will fail, because NewBB isn't
+        // registered in DominatorTree yet.  Handle this case explicitly.
         if (!I || (I->getParent() != NewBB &&
-                   getAnalysis<ETForest>().dominates(I, PN))) {
+                   getAnalysis<DominatorTree>().dominates(I, PN))) {
           PN->replaceAllUsesWith(V);
           if (AA) AA->deleteValue(PN);
           BB->getInstList().erase(PN);
@@ -429,13 +427,13 @@ static void AddBlockAndPredsToSet(BasicBlock *InputBB, BasicBlock *StopBlock,
 
 /// FindPHIToPartitionLoops - The first part of loop-nestification is to find a
 /// PHI node that tells us how to partition the loops.
-static PHINode *FindPHIToPartitionLoops(Loop *L, ETForest *EF,
+static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorTree *DT,
                                         AliasAnalysis *AA) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
     if (Value *V = PN->hasConstantValue())
-      if (!isa<Instruction>(V) || EF->dominates(cast<Instruction>(V), PN)) {
+      if (!isa<Instruction>(V) || DT->dominates(cast<Instruction>(V), PN)) {
         // This is a degenerate PHI already, don't modify it!
         PN->replaceAllUsesWith(V);
         if (AA) AA->deleteValue(PN);
@@ -509,8 +507,8 @@ void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
 /// created.
 ///
 Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
-  ETForest *EF = getAnalysisToUpdate<ETForest>();
-  PHINode *PN = FindPHIToPartitionLoops(L, EF, AA);
+  DominatorTree *DT = getAnalysisToUpdate<DominatorTree>();
+  PHINode *PN = FindPHIToPartitionLoops(L, DT, AA);
   if (PN == 0) return 0;  // No known way to partition.
 
   // Pull out all predecessors that have varying values in the loop.  This
@@ -555,7 +553,7 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   // the Outer loop now.
   std::set<BasicBlock*> BlocksInL;
   for (pred_iterator PI = pred_begin(Header), E = pred_end(Header); PI!=E; ++PI)
-    if (EF->dominates(Header, *PI))
+    if (DT->dominates(Header, *PI))
       AddBlockAndPredsToSet(*PI, Header, BlocksInL);
 
 
@@ -686,10 +684,10 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 // Returns true if BasicBlock A dominates at least one block in vector B
 // Helper function for UpdateDomInfoForRevectoredPreds
 static bool BlockDominatesAny(BasicBlock* A, const std::vector<BasicBlock*>& B,
-                              ETForest& ETF) {
+                              DominatorTree &DT) {
   for (std::vector<BasicBlock*>::const_iterator BI = B.begin(), BE = B.end();
        BI != BE; ++BI) {
-    if (ETF.dominates(A, *BI))
+    if (DT.dominates(A, *BI))
       return true;
   }
   return false;
@@ -715,8 +713,8 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
          ++succ_begin(NewBB) == succ_end(NewBB) &&
          "NewBB should have a single successor!");
   BasicBlock *NewBBSucc = *succ_begin(NewBB);
-  ETForest& ETF = getAnalysis<ETForest>();
-  
+  DominatorTree &DT = getAnalysis<DominatorTree>();
+
   // The newly inserted basic block will dominate existing basic blocks iff the
   // PredBlocks dominate all of the non-pred blocks.  If all predblocks dominate
   // the non-pred blocks, then they all must be the same block!
@@ -725,13 +723,13 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   {
     BasicBlock *OnePred = PredBlocks[0];
     unsigned i = 1, e = PredBlocks.size();
-    for (i = 1; !ETF.isReachableFromEntry(OnePred); ++i) {
+    for (i = 1; !DT.isReachableFromEntry(OnePred); ++i) {
       assert(i != e && "Didn't find reachable pred?");
       OnePred = PredBlocks[i];
     }
     
     for (; i != e; ++i)
-      if (PredBlocks[i] != OnePred && ETF.isReachableFromEntry(OnePred)){
+      if (PredBlocks[i] != OnePred && DT.isReachableFromEntry(OnePred)){
         NewBBDominatesNewBBSucc = false;
         break;
       }
@@ -739,7 +737,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     if (NewBBDominatesNewBBSucc)
       for (pred_iterator PI = pred_begin(NewBBSucc), E = pred_end(NewBBSucc);
            PI != E; ++PI)
-        if (*PI != NewBB && !ETF.dominates(NewBBSucc, *PI)) {
+        if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI)) {
           NewBBDominatesNewBBSucc = false;
           break;
         }
@@ -752,7 +750,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     NewBBDominatesNewBBSucc = true;
     for (pred_iterator PI = pred_begin(NewBBSucc), E = pred_end(NewBBSucc);
          PI != E; ++PI)
-      if (*PI != NewBB && !ETF.dominates(NewBBSucc, *PI)) {
+      if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI)) {
         NewBBDominatesNewBBSucc = false;
         break;
       }
@@ -767,14 +765,16 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
     if (!NewBBIDom) {
       unsigned i = 0;
       for (i = 0; i < PredBlocks.size(); ++i)
-        if (ETF.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), PredBlocks[i])) {
+        if (DT->dominates(&PredBlocks[i]->getParent()->getEntryBlock(), 
+                                  PredBlocks[i])) {
           NewBBIDom = PredBlocks[i];
           break;
         }
       assert(i != PredBlocks.size() && "No reachable preds?");
       for (i = i + 1; i < PredBlocks.size(); ++i) {
-        if (ETF.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), PredBlocks[i]))
-          NewBBIDom = ETF.nearestCommonDominator(NewBBIDom, PredBlocks[i]);
+        if (DT->dominates(&PredBlocks[i]->getParent()->getEntryBlock(), 
+                                  PredBlocks[i]))
+          NewBBIDom = DT->nearestCommonDominator(NewBBIDom, PredBlocks[i]);
       }
       assert(NewBBIDom && "No immediate dominator found??");
     }
@@ -788,13 +788,6 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       DomTreeNode *NewBBSuccNode = DT->getNode(NewBBSucc);
       DT->changeImmediateDominator(NewBBSuccNode, NewBBNode);
     }
-  }
-
-  // Update ET-Forest information if it is active.
-  if (ETForest *EF = getAnalysisToUpdate<ETForest>()) {
-    EF->addNewBlock(NewBB, NewBBIDom);
-    if (NewBBDominatesNewBBSucc)
-      EF->setImmediateDominator(NewBBSucc, NewBB);
   }
 
   // Update dominance frontier information...
@@ -812,7 +805,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
           bool DominatesPred = false;
           for (pred_iterator PI = pred_begin(*SetI), E = pred_end(*SetI);
                PI != E; ++PI)
-            if (ETF.dominates(NewBB, *PI))
+            if (DT.dominates(NewBB, *PI))
               DominatesPred = true;
           if (!DominatesPred)
             Set.erase(SetI++);
@@ -845,17 +838,18 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       // Only consider dominators of NewBBSucc
       if (!DFI->second.count(NewBBSucc)) continue;
       
-      if (BlockDominatesAny(FI, PredBlocks, ETF)) {
+      if (BlockDominatesAny(FI, PredBlocks, DT)) {
         // If NewBBSucc should not stay in our dominator frontier, remove it.
         // We remove it unless there is a predecessor of NewBBSucc that we
         // dominate, but we don't strictly dominate NewBBSucc.
         bool ShouldRemove = true;
-        if ((BasicBlock*)FI == NewBBSucc || !ETF.dominates(FI, NewBBSucc)) {
+        if ((BasicBlock*)FI == NewBBSucc
+            || !DT.dominates(FI, NewBBSucc)) {
           // Okay, we know that PredDom does not strictly dominate NewBBSucc.
           // Check to see if it dominates any predecessors of NewBBSucc.
           for (pred_iterator PI = pred_begin(NewBBSucc),
                E = pred_end(NewBBSucc); PI != E; ++PI)
-            if (ETF.dominates(FI, *PI)) {
+            if (DT.dominates(FI, *PI)) {
               ShouldRemove = false;
               break;
             }
