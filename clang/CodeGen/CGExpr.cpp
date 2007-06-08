@@ -216,6 +216,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     
   case Expr::UnaryOperatorClass: 
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
+  case Expr::ArraySubscriptExprClass:
+    return EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E));
   }
 }
 
@@ -291,6 +293,36 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   return LValue::getAddr(C);
 }
 
+LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
+  // The base and index must be pointers or integers, neither of which are
+  // aggregates.  Emit them.
+  QualType BaseTy;
+  Value *Base =EmitExprWithUsualUnaryConversions(E->getBase(), BaseTy).getVal();
+  QualType IdxTy;
+  Value *Idx = EmitExprWithUsualUnaryConversions(E->getIdx(), IdxTy).getVal();
+  
+  // Usually the base is the pointer type, but sometimes it is the index.
+  // Canonicalize to have the pointer as the base.
+  if (isa<llvm::PointerType>(Idx->getType())) {
+    std::swap(Base, Idx);
+    std::swap(BaseTy, IdxTy);
+  }
+  
+  // The pointer is now the base.  Extend or truncate the index type to 32 or
+  // 64-bits.
+  bool IdxSigned = IdxTy->isSignedIntegerType();
+  unsigned IdxBitwidth = cast<IntegerType>(Idx->getType())->getBitWidth();
+  if (IdxBitwidth != LLVMPointerWidth)
+    Idx = Builder.CreateIntCast(Idx, IntegerType::get(LLVMPointerWidth),
+                                IdxSigned, "idxprom");
+
+  // We know that the pointer points to a type of the correct size, unless the
+  // size is a VLA.
+  if (!E->getType()->isConstantSizeType())
+    assert(0 && "VLA idx not implemented");
+  return LValue::getAddr(Builder.CreateGEP(Base, Idx, "arrayidx"));
+}
+
 //===--------------------------------------------------------------------===//
 //                             Expression Emission
 //===--------------------------------------------------------------------===//
@@ -307,6 +339,7 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
   // l-values.
   case Expr::DeclRefExprClass:
     // FIXME: EnumConstantDecl's are not lvalues.  This is wrong for them.
+  case Expr::ArraySubscriptExprClass:
     return EmitLoadOfLValue(E);
   case Expr::StringLiteralClass:
     return RValue::get(EmitLValue(E).getAddress());

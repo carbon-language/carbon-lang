@@ -104,6 +104,12 @@ public:
     return true;
   }
   
+  /// getPointerWidth - Return the width of pointers on this target, we
+  /// currently assume one pointer type.
+  unsigned getPointerWidth(SourceLocation Loc) {
+    return 32;   // FIXME: implement correctly.
+  }
+  
   /// getBoolWidth - Return the size of '_Bool' and C++ 'bool' for this target,
   /// in bits.  
   unsigned getBoolWidth(SourceLocation Loc) {

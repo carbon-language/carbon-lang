@@ -139,6 +139,7 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy, FD->getLocation());
+  LLVMPointerWidth = Target.getPointerWidth(FD->getLocation());
   
   const llvm::FunctionType *Ty = 
     cast<llvm::FunctionType>(ConvertType(FD->getType(), FD->getLocation()));

@@ -324,8 +324,10 @@ public:
     Expr(ArraySubscriptExprClass, t),
     Base(base), Idx(idx), Loc(l) {}
   
-  Expr *getBase() const { return Base; }
+  Expr *getBase() { return Base; }
+  const Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
+  const Expr *getIdx() const { return Idx; }
   SourceRange getSourceRange() const { 
     return SourceRange(Base->getLocStart(), Loc);
   }

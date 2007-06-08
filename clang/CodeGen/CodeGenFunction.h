@@ -45,6 +45,7 @@ namespace clang {
   class CastExpr;
   class UnaryOperator;
   class BinaryOperator;
+  class ArraySubscriptExpr;
   
   class BlockVarDecl;
   class EnumConstantDecl;
@@ -127,6 +128,7 @@ class CodeGenFunction {
   llvm::Instruction *AllocaInsertPt;
   
   const llvm::Type *LLVMIntTy;
+  unsigned LLVMPointerWidth;
   
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
@@ -227,6 +229,7 @@ public:
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
+  LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
     
   //===--------------------------------------------------------------------===//
   //                             Expression Emission
