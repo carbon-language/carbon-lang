@@ -215,6 +215,7 @@ NumericLiteralParser(const char *begin, const char *end,
       DigitsBegin = s;
       s = SkipHexDigits(s);
       if (s == ThisTokEnd) {
+        // Done.
       } else if (*s == '.') {
         s++;
         saw_period = true;
@@ -237,6 +238,19 @@ NumericLiteralParser(const char *begin, const char *end,
         Diag(TokLoc, diag::err_hexconstant_requires_exponent);
         return;
       }
+    } else if (*s == 'b' || *s == 'B') {
+      // 0b101010 is a GCC extension.
+      ++s;
+      radix = 2;
+      DigitsBegin = s;
+      s = SkipBinaryDigits(s);
+      if (s == ThisTokEnd) {
+        // Done.
+      } else if (isxdigit(*s)) {
+        Diag(TokLoc, diag::err_invalid_binary_digit, std::string(s, s+1));
+        return;
+      }
+      PP.Diag(TokLoc, diag::ext_binary_literal);
     } else {
       // For now, the radix is set to 8. If we discover that we have a
       // floating point constant, the radix will change to 10. Octal floating

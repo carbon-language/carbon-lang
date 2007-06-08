@@ -97,6 +97,15 @@ private:
       ptr++;
     return ptr;
   }
+  
+  /// SkipBinaryDigits - Read and skip over any binary digits, up to End.
+  /// Return a pointer to the first non-binary digit or End.
+  const char *SkipBinaryDigits(const char *ptr) {
+    while (ptr != ThisTokEnd && (*ptr == '0' || *ptr == '1'))
+      ptr++;
+    return ptr;
+  }
+  
 };
 
 /// CharLiteralParser - Perform interpretation and semantic analysis of a

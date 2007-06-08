@@ -530,6 +530,10 @@ DIAG(warn_integer_too_large_for_signed, WARNING,
      "integer constant is so large that it is unsigned")
 DIAG(err_exponent_has_no_digits, ERROR,
      "exponent has no digits")
+DIAG(ext_binary_literal, EXTENSION,
+     "binary integer literals are an extension")
+DIAG(err_invalid_binary_digit, ERROR,
+     "invalid digit '%0' in binary constant")
 DIAG(err_invalid_octal_digit, ERROR,
      "invalid digit '%0' in octal constant")
 DIAG(err_invalid_decimal_digit, ERROR,
