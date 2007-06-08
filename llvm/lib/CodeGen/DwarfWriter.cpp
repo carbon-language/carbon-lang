@@ -2973,16 +2973,19 @@ private:
 
     // Sort the landing pads in order of their type ids.  This is used to fold
     // duplicate actions.
-    SmallVector<const LandingPadInfo *, 32> LandingPads(PadInfos.size(), NULL);
+    SmallVector<const LandingPadInfo *, 64> LandingPads;
+
+    LandingPads.reserve(PadInfos.size());
     for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
-      LandingPads[i] = &PadInfos[i];
+      LandingPads.push_back(&PadInfos[i]);
     std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
 
     // Gather first action index for each landing pad site.
-    SmallVector<unsigned, 32> FirstActions;
+    SmallVector<unsigned, 64> FirstActions;
+    FirstActions.reserve(PadInfos.size());
 
     // The actions table.
-    SmallVector<ActionEntry, 64> Actions;
+    SmallVector<ActionEntry, 32> Actions;
 
     // Compute sizes for exception table.
     unsigned SizeSites = 0;
