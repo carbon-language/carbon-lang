@@ -463,15 +463,8 @@ bool Expr::isNullPointerConstant() const {
   if (!getType()->isIntegerType())
     return false;
   
-  // FIXME: If we have an integer constant expression, we need
-  // to *evaluate* it and test for the value 0. The current code is too 
-  // simplistic...it only allows for the integer literal "0". 
-  // For example, the following is valid code:
-  //
-  //  void test1() { *(n ? p : (void *)(7-7)) = 1; }
-  //
-  /// FIXME: Just call isIntegerConstantExpr now.
-  if (const IntegerLiteral *C = dyn_cast<IntegerLiteral>(this))
-    return C->getValue() == 0;
-  return false;
+  // If we have an integer constant expression, we need to *evaluate* it and
+  // test for the value 0.
+  APSInt Val(32);
+  return isIntegerConstantExpr(Val, 0, true) && Val == 0;
 }
