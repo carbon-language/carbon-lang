@@ -142,7 +142,7 @@ protected:
     return getNode(BB);
   }
 
-  /// getIDomBlock - return basic block BB's immediate domiantor basic block.
+  /// getIDomBlock - return basic block BB's immediate dominator basic block.
   ///
   BasicBlock *getIDomBlock(BasicBlock *BB) {
     DomTreeNode *N = getNode(BB);
