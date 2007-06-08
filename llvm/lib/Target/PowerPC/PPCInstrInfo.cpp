@@ -180,14 +180,14 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                  std::vector<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode()))
+  if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
     return false;
 
   // Get the last instruction in the block.
   MachineInstr *LastInst = I;
   
   // If there is only one terminator instruction, process it.
-  if (I == MBB.begin() || !isTerminatorInstr((--I)->getOpcode())) {
+  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (LastInst->getOpcode() == PPC::B) {
       TBB = LastInst->getOperand(0).getMachineBasicBlock();
       return false;
@@ -207,7 +207,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
 
   // If there are three terminators, we don't know what sort of block this is.
   if (SecondLastInst && I != MBB.begin() &&
-      isTerminatorInstr((--I)->getOpcode()))
+      isUnpredicatedTerminator(--I))
     return true;
   
   // If the block ends with PPC::B and PPC:BCC, handle it.

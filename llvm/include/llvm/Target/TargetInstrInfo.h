@@ -399,11 +399,15 @@ public:
     abort();
   }
 
-  /// isPredicable - Returns true if the instruction is already predicated.
+  /// isPredicated - Returns true if the instruction is already predicated.
   ///
   virtual bool isPredicated(const MachineInstr *MI) const {
     return false;
   }
+
+  /// isUnpredicatedTerminator - Returns true if the instruction is a
+  /// terminator instruction that has not been predicated.
+  bool isUnpredicatedTerminator(const MachineInstr *MI) const;
 
   /// PredicateInstruction - Convert the instruction into a predicated
   /// instruction. It returns true if the operation was successful.
@@ -411,7 +415,7 @@ public:
   bool PredicateInstruction(MachineInstr *MI,
                             const std::vector<MachineOperand> &Pred) const;
 
-  /// SubsumesPredicate - Returns true if the first specified predicated
+  /// SubsumesPredicate - Returns true if the first specified predicate
   /// subsumes the second, e.g. GE subsumes GT.
   virtual
   bool SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
