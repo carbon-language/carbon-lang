@@ -124,9 +124,11 @@ void StmtPrinter::VisitNullStmt(NullStmt *Node) {
 }
 
 void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
-  Indent();
-  PrintRawDecl(Node->getDecl());
-  OS << ";\n";
+  for (Decl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
+    Indent();
+    PrintRawDecl(D);
+    OS << ";\n";
+  }
 }
 
 void StmtPrinter::VisitCompoundStmt(CompoundStmt *Node) {

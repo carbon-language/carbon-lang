@@ -98,6 +98,8 @@ private:
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
                                   DeclTy *LastInGroup);
+  virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
+
   virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
@@ -120,7 +122,7 @@ private:
                              DeclTy **Elements, unsigned NumElements);
 private:
   /// Subroutines of ParseDeclarator()...
-  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D);
+  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *LastDeclarator);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);

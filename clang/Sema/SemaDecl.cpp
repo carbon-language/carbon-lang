@@ -155,7 +155,8 @@ Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
-  FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R);
+  FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R,
+                                       FunctionDecl::Extern, 0);
   
   // Find translation-unit scope to insert this function into.
   while (S->getParent())
@@ -270,20 +271,21 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return 0;
 }
 
-Action::DeclTy *
+Sema::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
-                      DeclTy *LastInGroup) {
+                      DeclTy *lastDeclarator) {
+  Decl *LastDeclarator = (Decl*)lastDeclarator;
   IdentifierInfo *II = D.getIdentifier();
   
   // See if this is a redefinition of a variable in the same scope.
   Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
                                     D.getIdentifierLoc(), S);
-  if (!S->isDeclScope(PrevDecl))
+  if (PrevDecl && !S->isDeclScope(PrevDecl))
     PrevDecl = 0;   // If in outer scope, it isn't the same thing.
 
   Decl *New;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    TypedefDecl *NewTD = ParseTypedefDecl(S, D);
+    TypedefDecl *NewTD = ParseTypedefDecl(S, D, LastDeclarator);
     if (!NewTD) return 0;
     
     // Merge the decl with the existing one if appropriate.
@@ -317,7 +319,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
     }
 
-    FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC);
+    FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
+                                           LastDeclarator);
     
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
@@ -368,7 +371,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
         if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
           return 0;
       }
-      NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC);
+      NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     } else { 
       // Block scope. C99 6.7p7: If an identifier for an object is declared with
       // no linkage (C99 6.2.2p6), the type for the object shall be complete...
@@ -387,7 +390,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
             return 0;
         }
       }
-      NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC);
+      NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     }    
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
@@ -406,11 +409,27 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   }
   
   if (S->getParent() == 0)
-    AddTopLevelDecl(New, (Decl *)LastInGroup);
+    AddTopLevelDecl(New, LastDeclarator);
   
   return New;
 }
 
+/// The declarators are chained together backwards, reverse the list.
+Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
+  // Often we have single declarators, handle them quickly.
+  Decl *Group = static_cast<Decl*>(group);
+  if (Group->getNextDeclarator() == 0) return Group;
+  
+  Decl *NewGroup = 0;
+  while (Group) {
+    Decl *Next = Group->getNextDeclarator();
+    Group->setNextDeclarator(NewGroup);
+    NewGroup = Group;
+    Group = Next;
+  }
+  return NewGroup;
+}
+  
 VarDecl *
 Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
                            Scope *FnScope) {
@@ -426,9 +445,10 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   }
   
   // FIXME: Handle storage class (auto, register). No declarator?
+  // TODO: Chain to previous parameter with the prevdeclarator chain?
   VarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
                                  QualType::getFromOpaquePtr(PI.TypeInfo), 
-                                 VarDecl::None);
+                                 VarDecl::None, 0);
 
   // If this has an identifier, add it to the scope stack.
   if (II) {
@@ -556,14 +576,16 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
 }
 
 
-TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D) {
-  assert(D.getIdentifier() && "Wrong callback for declspec withotu declarator");
+TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
+                                    Decl *LastDeclarator) {
+  assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   
   QualType T = GetTypeForDeclarator(D, S);
   if (T.isNull()) return 0;
   
   // Scope manipulation handled by caller.
-  return new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), T);
+  return new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), T,
+                         LastDeclarator);
 }
 
 
@@ -638,14 +660,18 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   switch (Kind) {
   default: assert(0 && "Unknown tag kind!");
   case Decl::Enum:
-    New = new EnumDecl(Loc, Name);
+    // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
+    // enum X { A, B, C } D;    D should chain to X.
+    New = new EnumDecl(Loc, Name, 0);
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
     break;
   case Decl::Union:
   case Decl::Struct:
   case Decl::Class:
-    New = new RecordDecl(Kind, Loc, Name);
+    // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
+    // struct X { int A; } D;    D should chain to X.
+    New = new RecordDecl(Kind, Loc, Name, 0);
     break;
   }    
   
@@ -697,7 +723,9 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
     if (VerifyConstantArrayType(ary, Loc))
       return 0;
   }
-  return new FieldDecl(Loc, II, T);
+  
+  // FIXME: Chain fielddecls together.
+  return new FieldDecl(Loc, II, T, 0);
 }
 
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
@@ -837,7 +865,8 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
     return 0;
   }
   QualType Ty = Context.getTagDeclType(TheEnumDecl);
-  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty, (Expr *)Val);
+  // FIXME: Chain EnumConstantDecl's together.
+  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty, (Expr *)Val, 0);
   
   // Register this decl in the current scope stack.
   New->setNext(Id->getFETokenInfo<Decl>());
@@ -869,9 +898,8 @@ void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
 
   // If this is a top-level decl that is chained to some other (e.g. int A,B,C;)
   // remember this in the LastInGroupList list.
-  if (last) {
+  if (last)
     LastInGroupList.push_back((Decl*)last);
-  }
 }
 
 /// ParseAttribute GCC __attribute__

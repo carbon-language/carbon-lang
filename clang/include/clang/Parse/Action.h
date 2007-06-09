@@ -98,6 +98,12 @@ public:
     return 0;
   }
 
+  /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
+  /// gives the actions implementation a chance to process the group as a whole.
+  virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group) {
+    return Group;
+  }
+
   /// ParseStartOfFunctionDef - This is called at the start of a function
   /// definition, instead of calling ParseDeclarator.  The Declarator includes
   /// information about formal arguments that are part of this function.

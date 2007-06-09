@@ -64,9 +64,13 @@ private:
   ///
   Decl *Next;
 
+  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
+  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
+  Decl *NextDeclarator;
+  
 protected:
-  Decl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-    : DeclKind(DK), Loc(L), Identifier(Id), Next(0) {
+  Decl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *NextDecl)
+    : DeclKind(DK), Loc(L), Identifier(Id), Next(0), NextDeclarator(NextDecl) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   virtual ~Decl();
@@ -80,6 +84,13 @@ public:
   Kind getKind() const { return DeclKind; }
   Decl *getNext() const { return Next; }
   void setNext(Decl *N) { Next = N; }
+  
+  /// getNextDeclarator - If this decl was part of a multi-declarator
+  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
+  /// declarator.  Otherwise it returns null.
+  Decl *getNextDeclarator() { return NextDeclarator; }
+  const Decl *getNextDeclarator() const { return NextDeclarator; }
+  void setNextDeclarator(Decl *N) { NextDeclarator = N; }
   
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
@@ -113,8 +124,8 @@ public:
 class ValueDecl : public Decl {
   QualType DeclType;
 protected:
-  ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T): 
-             Decl(DK, L, Id), DeclType(T) {}
+  ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
+            Decl *PrevDecl) : Decl(DK, L, Id, PrevDecl), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -142,8 +153,8 @@ public:
   static bool classof(const VarDecl *D) { return true; }
 protected:
   VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-          StorageClass SC)
-    : ValueDecl(DK, L, Id, T) { SClass = SC; }
+          StorageClass SC, Decl *PrevDecl)
+    : ValueDecl(DK, L, Id, T, PrevDecl) { SClass = SC; }
 private:
   StorageClass SClass;
   // TODO: Initializer.
@@ -152,8 +163,9 @@ private:
 /// BlockVarDecl - Represent a local variable declaration.
 class BlockVarDecl : public VarDecl {
 public:
-  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S)
-    : VarDecl(BlockVariable, L, Id, T, S) {}
+  BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
+               Decl *PrevDecl)
+    : VarDecl(BlockVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == BlockVariable; }
@@ -166,8 +178,9 @@ public:
 /// pointer to the decl's scope, which is transient).
 class FileVarDecl : public VarDecl {
 public:
-  FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S)
-    : VarDecl(FileVariable, L, Id, T, S) {}
+  FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
+              Decl *PrevDecl)
+    : VarDecl(FileVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == FileVariable; }
@@ -177,8 +190,9 @@ public:
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
 public:
-  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S)
-    : VarDecl(ParmVariable, L, Id, T, S) {}
+  ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
+              Decl *PrevDecl)
+    : VarDecl(ParmVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVariable; }
@@ -192,8 +206,9 @@ public:
   enum StorageClass {
     None, Extern, Static
   };
-  FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S=None)
-    : ValueDecl(Function, L, Id, T), 
+  FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+               StorageClass S = None, Decl *PrevDecl)
+    : ValueDecl(Function, L, Id, T, PrevDecl), 
       ParamInfo(0), Body(0), DeclChain(0), SClass(S) {}
   virtual ~FunctionDecl();
 
@@ -240,8 +255,8 @@ private:
 class FieldDecl : public Decl {
   QualType DeclType;
 public:
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : Decl(Field, L, Id), DeclType(T) {}
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
+    : Decl(Field, L, Id, PrevDecl), DeclType(T) {}
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -260,8 +275,9 @@ public:
 class EnumConstantDecl : public ValueDecl {
   Expr *Init; // an integer constant expression
 public:
-  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E)
-    : ValueDecl(EnumConstant, L, Id, T), Init(E) {}
+  EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E,
+                   Decl *PrevDecl)
+    : ValueDecl(EnumConstant, L, Id, T, PrevDecl), Init(E) {}
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -280,8 +296,8 @@ class TypeDecl : public Decl {
   Type *TypeForDecl;
   friend class ASTContext;
 protected:
-  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
-    : Decl(DK, L, Id), TypeForDecl(0) {}
+  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+    : Decl(DK, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
   
   // Implement isa/cast/dyncast/etc.
@@ -296,8 +312,8 @@ class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   QualType UnderlyingType;
 public:
-  TypedefDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : TypeDecl(Typedef, L, Id), UnderlyingType(T) {}
+  TypedefDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
+    : TypeDecl(Typedef, L, Id, PrevDecl), UnderlyingType(T) {}
   
   QualType getUnderlyingType() const { return UnderlyingType; }
   
@@ -313,7 +329,8 @@ class TagDecl : public TypeDecl {
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
-  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) : TypeDecl(DK, L, Id) {
+  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+    : TypeDecl(DK, L, Id, PrevDecl) {
     IsDefinition = false;
   }
 public:
@@ -351,7 +368,8 @@ class EnumDecl : public TagDecl {
   EnumConstantDecl **Elements;   // Null if not defined.
   int NumElements;   // -1 if not defined.
 public:
-  EnumDecl(SourceLocation L, IdentifierInfo *Id) : TagDecl(Enum, L, Id) {
+  EnumDecl(SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+    : TagDecl(Enum, L, Id, PrevDecl) {
     Elements = 0;
     NumElements = -1;
   }
@@ -379,7 +397,8 @@ class RecordDecl : public TagDecl {
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
 public:
-  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id) :TagDecl(DK, L, Id){
+  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+    : TagDecl(DK, L, Id, PrevDecl) {
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
     Members = 0;

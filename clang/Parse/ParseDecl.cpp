@@ -279,15 +279,15 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   
   if (Tok.getKind() == tok::semi) {
     ConsumeToken();
-    return LastDeclInGroup;
-  } else {
-    Diag(Tok, diag::err_parse_error);
-    // Skip to end of block or statement
-    SkipUntil(tok::r_brace, true);
-    if (Tok.getKind() == tok::semi)
-      ConsumeToken();
-    return 0;
+    return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }
+  
+  Diag(Tok, diag::err_parse_error);
+  // Skip to end of block or statement
+  SkipUntil(tok::r_brace, true);
+  if (Tok.getKind() == tok::semi)
+    ConsumeToken();
+  return 0;
 }
 
 /// ParseSpecifierQualifierList
