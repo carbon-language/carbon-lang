@@ -22,6 +22,9 @@ namespace clang {
 class IdentifierInfo;
 class Expr;
 
+/// This will contain AST nodes for specific GCC attributes
+/// "Raw" attribute list nodes (created during parsing) are declared
+/// in "clang/Parse/AttributeList.h"
 
 }  // end namespace clang
 }  // end namespace llvm
