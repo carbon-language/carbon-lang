@@ -181,7 +181,7 @@
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		84916BE40C161E580080778F /* Attr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Attr.cpp; path = AST/Attr.cpp; sourceTree = "<group>"; };
-		84916BE60C161E800080778F /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = include/clang/AST/Attr.h; sourceTree = "<group>"; };
+		84916BE60C161E800080778F /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = clang/AST/Attr.h; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -437,6 +437,7 @@
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
 				DED676D00B6C786700AAD4A3 /* Builtins.def */,
 				DED676F90B6C797B00AAD4A3 /* Builtins.h */,
+				84916BE60C161E800080778F /* Attr.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
 				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
@@ -455,7 +456,6 @@
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
 				DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */,
 				DE0FCB330A9C21F100248FD5 /* Expr.cpp */,
-				84916BE60C161E800080778F /* Attr.h */,
 				84916BE40C161E580080778F /* Attr.cpp */,
 				DE3452400AEF1A2D00DBC861 /* Stmt.cpp */,
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
