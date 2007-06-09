@@ -595,7 +595,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
 /// reference/declaration/definition of a tag.
 Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
                              SourceLocation KWLoc, IdentifierInfo *Name,
-                             SourceLocation NameLoc) {
+                             SourceLocation NameLoc, AttributeList *Attr) {
   // If this is a use of an existing tag, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");
@@ -900,18 +900,4 @@ void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
   // remember this in the LastInGroupList list.
   if (last)
     LastInGroupList.push_back((Decl*)last);
-}
-
-/// ParseAttribute GCC __attribute__
-Sema::AttrTy *Sema::ParseAttribute(
-    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, AttrTy *PrevAttr,
-    IdentifierInfo *ParmName, SourceLocation ParmNameLoc,
-    ExprTy **Args, unsigned NumArgs, 
-    SourceLocation LParenLoc, SourceLocation RParenLoc) {
-  Attr *attrib = new Attr(AttrNameLoc, AttrName, ParmName, (Expr **)Args, 
-                          NumArgs);
-  if (PrevAttr)
-    // reuse Decl's "Next" pointer for chaining the attribute list
-    attrib->setNext(static_cast<Attr *>(PrevAttr));
-  return attrib;
 }

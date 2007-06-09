@@ -12,6 +12,8 @@
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		84916BE50C161E580080778F /* Attr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84916BE40C161E580080778F /* Attr.cpp */; };
 		84916BE70C161E800080778F /* Attr.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84916BE60C161E800080778F /* Attr.h */; };
+		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
+		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
 		DE06756C0C051CFE00EBBFD8 /* ParseExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */; };
 		DE06B73E0A8307640050E87E /* LangOptions.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE06B73D0A8307640050E87E /* LangOptions.h */; };
@@ -168,6 +170,7 @@
 				84916BE70C161E800080778F /* Attr.h in CopyFiles */,
 				F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */,
 				DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */,
+				84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -179,6 +182,8 @@
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		84916BE40C161E580080778F /* Attr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Attr.cpp; path = AST/Attr.cpp; sourceTree = "<group>"; };
 		84916BE60C161E800080778F /* Attr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Attr.h; path = include/clang/AST/Attr.h; sourceTree = "<group>"; };
+		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
+		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = Parse/ParseExprCXX.cpp; sourceTree = "<group>"; };
@@ -336,6 +341,7 @@
 		DE1F21F20A7D84E800FBF588 /* Parse */ = {
 			isa = PBXGroup;
 			children = (
+				84D9A88B0C1A581300AC7ABC /* AttributeList.h */,
 				DE06E8130A8FF9330050E87E /* Action.h */,
 				DE17336F0B068DC60080B521 /* DeclSpec.h */,
 				DE1F22020A7D852A00FBF588 /* Parser.h */,
@@ -347,6 +353,7 @@
 		DE1F22600A7D8C9B00FBF588 /* Parse */ = {
 			isa = PBXGroup;
 			children = (
+				84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */,
 				DE3461260AFE68BE00DBC861 /* MinimalAction.cpp */,
 				DE06D42F0A8BB52D0050E87E /* Parser.cpp */,
 				DE3460040AFDCC6500DBC861 /* ParseInit.cpp */,
@@ -631,6 +638,7 @@
 				DE4264FC0C113592005A861D /* CGDecl.cpp in Sources */,
 				84916BE50C161E580080778F /* Attr.cpp in Sources */,
 				F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */,
+				84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

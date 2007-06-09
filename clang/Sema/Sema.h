@@ -110,7 +110,7 @@ private:
   
   virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
-                           SourceLocation NameLoc);
+                           SourceLocation NameLoc, AttributeList *Attr);
   virtual DeclTy *ParseField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
@@ -250,16 +250,6 @@ public:
   /// ParseCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
-                                         
-  /// ParseAttribute GCC __attribute__
-  virtual AttrTy *ParseAttribute(
-    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, AttrTy *PrevAttr,
-    IdentifierInfo *ParmName = 0, SourceLocation ParmNameLoc = SourceLocation(),
-    ExprTy **Args = 0, unsigned NumArgs = 0, 
-    SourceLocation LParenLoc = SourceLocation(),
-    SourceLocation RParenLoc = SourceLocation()
-  );
-    
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1)

@@ -283,40 +283,45 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   assert(!t1.isNull() && "no type for array base expression");
   assert(!t2.isNull() && "no type for array index expression");
 
-  QualType canonT1 = t1.getCanonicalType();
-  QualType canonT2 = t2.getCanonicalType();
+  QualType canonT1 = DefaultFunctionArrayConversion(t1).getCanonicalType();
+  QualType canonT2 = DefaultFunctionArrayConversion(t2).getCanonicalType();
   
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
   // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
   // in the subscript position. As a result, we need to derive the array base 
   // and index from the expression types.
   
+  Expr *baseExpr, *indexExpr;
   QualType baseType, indexType;
-  if (isa<ArrayType>(canonT1) || isa<PointerType>(canonT1)) {
+  if (isa<PointerType>(canonT1)) {
     baseType = canonT1;
     indexType = canonT2;
-  } else if (isa<ArrayType>(canonT2) || isa<PointerType>(canonT2)) { // uncommon
+    baseExpr = static_cast<Expr *>(Base);
+    indexExpr = static_cast<Expr *>(Idx);
+  } else if (isa<PointerType>(canonT2)) { // uncommon
     baseType = canonT2;
     indexType = canonT1;
-  } else 
-    return Diag(LLoc, diag::err_typecheck_subscript_value);
-
+    baseExpr = static_cast<Expr *>(Idx);
+    indexExpr = static_cast<Expr *>(Base);
+  } else {
+    return Diag(baseExpr->getLocStart(), diag::err_typecheck_subscript_value, 
+                baseExpr->getSourceRange());
+  }              
   // C99 6.5.2.1p1
-  if (!indexType->isIntegerType())
-    return Diag(LLoc, diag::err_typecheck_subscript);
-
+  if (!indexType->isIntegerType()) {
+    return Diag(indexExpr->getLocStart(), diag::err_typecheck_subscript,
+                indexExpr->getSourceRange());
+  }
   // FIXME: need to deal with const...
-  QualType resultType;
-  if (ArrayType *ary = dyn_cast<ArrayType>(baseType)) {
-    resultType = ary->getElementType();
-  } else if (PointerType *ary = dyn_cast<PointerType>(baseType)) {
-    resultType = ary->getPointeeType();
-    // in practice, the following check catches trying to index a pointer
-    // to a function (e.g. void (*)(int)). Functions are not objects in c99.
-    if (!resultType->isObjectType())
-      return Diag(LLoc, diag::err_typecheck_subscript_not_object,
-                  baseType.getAsString());
-  } 
+  PointerType *ary = cast<PointerType>(baseType);
+  QualType resultType = ary->getPointeeType();
+  // in practice, the following check catches trying to index a pointer
+  // to a function (e.g. void (*)(int)). Functions are not objects in c99.
+  if (!resultType->isObjectType()) {
+    return Diag(baseExpr->getLocStart(), 
+                diag::err_typecheck_subscript_not_object,
+                baseType.getAsString(), baseExpr->getSourceRange());
+  }
   return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType, RLoc);
 }
 

@@ -17,10 +17,3 @@
 using namespace llvm;
 using namespace clang;
 
-Attr::Attr(SourceLocation L, IdentifierInfo *aName, 
-                IdentifierInfo *pname, Expr **elist, unsigned numargs)
-  : AttrName(aName), AttrLoc(L), ParmName(pname), NumArgs(numargs) {
-  Args = new Expr*[numargs];
-  for (unsigned i = 0; i != numargs; ++i)
-    Args[i] = elist[i];
-}
