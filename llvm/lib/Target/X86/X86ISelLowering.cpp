@@ -1183,9 +1183,10 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
         RC = X86::FR64RegisterClass;
       else {
         assert(MVT::isVector(RegVT));
-        if (MVT::getSizeInBits(RegVT) == 64)
-          RC = X86::VR64RegisterClass;
-        else
+        if (MVT::getSizeInBits(RegVT) == 64) {
+          RC = X86::GR64RegisterClass;       // MMX values are passed in GPRs.
+          RegVT = MVT::i64;
+        } else
           RC = X86::VR128RegisterClass;
       }
 
@@ -1204,6 +1205,11 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
       
       if (VA.getLocInfo() != CCValAssign::Full)
         ArgValue = DAG.getNode(ISD::TRUNCATE, VA.getValVT(), ArgValue);
+      
+      // Handle MMX values passed in GPRs.
+      if (RegVT != VA.getLocVT() && RC == X86::GR64RegisterClass &&
+          MVT::getSizeInBits(RegVT) == 64)
+        ArgValue = DAG.getNode(ISD::BIT_CONVERT, VA.getLocVT(), ArgValue);
       
       ArgValues.push_back(ArgValue);
     } else {
