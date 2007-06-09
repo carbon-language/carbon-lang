@@ -22,6 +22,7 @@ namespace clang {
   // Semantic.
   class DeclSpec;
   class Declarator;
+  class AttributeList;
   // Parse.
   class Scope;
   class Action;
@@ -154,7 +155,7 @@ public:
   };
   virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
-                           SourceLocation NameLoc) {
+                           SourceLocation NameLoc, AttributeList *Attr) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
     // is (struct/union/enum/class).
     return 0;
@@ -364,16 +365,6 @@ public:
                                          tok::TokenKind Kind) {
     return 0;
   }
-  /// ParseAttribute GCC __attribute__
-  virtual AttrTy *ParseAttribute(
-    IdentifierInfo *AttrName, SourceLocation AttrNameLoc, AttrTy *PrevAttr,
-    IdentifierInfo *ParmName = 0, SourceLocation ParmNameLoc = SourceLocation(),
-    ExprTy **Args = 0, unsigned NumArgs = 0,
-    SourceLocation LParenLoc = SourceLocation(),
-    SourceLocation RParenLoc = SourceLocation()) {
-    return 0;
-  }
-  
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

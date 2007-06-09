@@ -21,6 +21,7 @@ namespace llvm {
 namespace clang {
   class DeclSpec;
   class Declarator;
+  class AttributeList;
   class Scope;
 
 /// Parser - This implements a parser for the C family of languages.  After
@@ -355,7 +356,7 @@ private:
   bool isTypeSpecifierQualifier() const;
 
   TypeTy *ParseTypeName();
-  DeclTy *ParseAttributes();
+  AttributeList *ParseAttributes();
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);

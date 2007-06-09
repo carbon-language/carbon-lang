@@ -16,6 +16,7 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Action.h"
+#include "clang/Parse/AttributeList.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -117,7 +118,7 @@ private:
   void *TypeRep;  
   
   // attributes.
-  void *AttributeList;
+  AttributeList *AttrList;
   
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
@@ -219,8 +220,11 @@ public:
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
   
   /// attributes
-  void SetAttributeList(void *alist) { AttributeList = alist; }
-  
+  void AddAttribute(AttributeList *alist) { 
+    if (AttrList) 
+      alist->addAttributeList(AttrList); 
+    AttrList = alist;
+  }
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
@@ -419,7 +423,9 @@ private:
   /// #0 will be the most closely bound to the identifier, and
   /// DeclTypeInfo.back() will be the least closely bound.
   SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
-  
+
+  // attributes.
+  AttributeList *AttrList;  
 public:
   Declarator(const DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C) {
@@ -504,6 +510,13 @@ public:
   bool isFunctionDeclarator() const {
     return !DeclTypeInfo.empty() &&
            DeclTypeInfo[0].Kind == DeclaratorChunk::Function;
+  }
+  
+  /// attributes
+  void AddAttribute(AttributeList *alist) { 
+    if (AttrList) 
+      alist->addAttributeList(AttrList); 
+    AttrList = alist;
   }
 };
 
