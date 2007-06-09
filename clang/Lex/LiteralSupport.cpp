@@ -109,6 +109,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
   case '0': case '1': case '2': case '3':
   case '4': case '5': case '6': case '7': {
     // Octal escapes.
+    --ThisTokBuf;
     ResultChar = 0;
 
     // Octal escapes are a series of octal digits with maximum length 3.
