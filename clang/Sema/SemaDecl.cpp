@@ -421,7 +421,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   // Often we have single declarators, handle them quickly.
   Decl *Group = static_cast<Decl*>(group);
-  if (Group->getNextDeclarator() == 0) return Group;
+  if (Group == 0 || Group->getNextDeclarator() == 0) return Group;
   
   Decl *NewGroup = 0;
   while (Group) {
