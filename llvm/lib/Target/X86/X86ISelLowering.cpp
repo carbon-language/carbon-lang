@@ -1183,7 +1183,10 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
         RC = X86::FR64RegisterClass;
       else {
         assert(MVT::isVector(RegVT));
-        RC = X86::VR128RegisterClass;
+        if (MVT::getSizeInBits(RegVT) == 64)
+          RC = X86::VR64RegisterClass;
+        else
+          RC = X86::VR128RegisterClass;
       }
 
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
