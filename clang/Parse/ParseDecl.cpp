@@ -244,7 +244,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     
     // If attributes are present, parse them.
     if (Tok.getKind() == tok::kw___attribute)
-      D.AddAttribute(ParseAttributes());
+      D.AddAttributes(ParseAttributes());
     
     // Parse declarator '=' initializer.
     ExprResult Init;
@@ -397,7 +397,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     
     // GNU attributes support.
     case tok::kw___attribute:
-      DS.AddAttribute(ParseAttributes());
+      DS.AddAttributes(ParseAttributes());
       continue;
       
     // storage-class-specifier
@@ -680,7 +680,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       
       // If attributes exist after the declarator, parse them.
       if (Tok.getKind() == tok::kw___attribute)
-        DeclaratorInfo.AddAttribute(ParseAttributes());
+        DeclaratorInfo.AddAttributes(ParseAttributes());
       
       // Install the declarator into the current TagDecl.
       DeclTy *Field = Actions.ParseField(CurScope, TagDecl, SpecQualLoc,
@@ -700,7 +700,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       
       // Attributes are only allowed on the second declarator.
       if (Tok.getKind() == tok::kw___attribute)
-        DeclaratorInfo.AddAttribute(ParseAttributes());
+        DeclaratorInfo.AddAttributes(ParseAttributes());
     }
     
     if (Tok.getKind() == tok::semi) {
@@ -941,7 +941,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
                                  getLang())*2;
       break;
     case tok::kw___attribute:
-      DS.AddAttribute(ParseAttributes());
+      DS.AddAttributes(ParseAttributes());
       continue; // do *not* consume the next token!
     }
     
@@ -1136,7 +1136,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // direct-declarator: '(' attributes declarator ')'
     if (isGrouping) {
       if (Tok.getKind() == tok::kw___attribute)
-        D.AddAttribute(ParseAttributes());
+        D.AddAttributes(ParseAttributes());
       
       ParseDeclaratorInternal(D);
       // Match the ')'.
@@ -1252,7 +1252,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 
       // Parse GNU attributes, if present.
       if (Tok.getKind() == tok::kw___attribute)
-        ParmDecl.AddAttribute(ParseAttributes());
+        ParmDecl.AddAttributes(ParseAttributes());
       
       // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
       // NOTE: we could trivially allow 'int foo(auto int X)' if we wanted.

@@ -222,10 +222,23 @@ public:
   
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
   
-  /// attributes
-  void AddAttribute(AttributeList *alist) {
+  /// AddAttributes - contatenates two attribute lists. 
+  /// The GCC attribute syntax allows for the following:
+  ///
+  /// short __attribute__(( unused, deprecated )) 
+  /// int __attribute__(( may_alias, aligned(16) )) var;
+  ///
+  /// This declares 4 attributes using 2 lists. The following syntax is
+  /// also allowed and identical to the previous declaration.
+  ///
+  /// short __attribute__((unused)) __attribute__((deprecated)) 
+  /// int __attribute__((may_alias)) __attribute__((aligned(16))) var;
+  /// 
+  /// I don't believe this usage of attributes is common.
+  void AddAttributes(AttributeList *alist) {
     if (!alist)
       return; // we parsed __attribute__(()) or had a syntax error
+      
     if (AttrList) 
       alist->addAttributeList(AttrList); 
     AttrList = alist;
@@ -518,12 +531,16 @@ public:
            DeclTypeInfo[0].Kind == DeclaratorChunk::Function;
   }
   
-  /// attributes
-  void AddAttribute(AttributeList *alist) { 
+  /// AddAttributes - simply adds the attribute list to the Declarator.
+  /// Unlike AddAttributes on DeclSpec, this routine should never have to
+  /// concatenate two lists. The following syntax adds 3 attributes to "var":
+  ///
+  /// short int var __attribute__((aligned(16),common,deprecated));
+  ///
+  void AddAttributes(AttributeList *alist) { 
     if (!alist)
       return; // we parsed __attribute__(()) or had a syntax error
-    if (AttrList) 
-      alist->addAttributeList(AttrList); 
+    assert((AttrList == 0) && "Declarator already has an attribute list");
     AttrList = alist;
   }
 };
