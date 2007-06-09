@@ -47,6 +47,9 @@ bool Sema::VerifyConstantArrayType(const ArrayType *Array,
   if (!Size->isIntegerConstantExpr(SizeVal, &Loc)) {
     // FIXME: This emits the diagnostic to enforce 6.7.2.1p8, but the message
     // is wrong.  It is also wrong for static variables.
+    // FIXME: This is also wrong for:
+    // int sub1(int i, char *pi) { typedef int foo[i];
+    // struct bar {foo f1; int f2:3; int f3:4} *p; }
     Diag(DeclLoc, diag::err_typecheck_illegal_vla, Size->getSourceRange());
     return true;
   }
