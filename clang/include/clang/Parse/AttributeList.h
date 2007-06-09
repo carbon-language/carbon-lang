@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the AttributeList class interface
+// This file defines the AttributeList class interface.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,11 +15,10 @@
 #define LLVM_CLANG_ATTRLIST_H
 
 #include "clang/Parse/Action.h"
-#include <assert.h>
+#include <cassert>
 
 namespace llvm {
 namespace clang {
-class IdentifierInfo;
 
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
 /// 4 forms of this construct...they are:
@@ -52,6 +51,7 @@ public:
   void setNext(AttributeList *N) { Next = N; }
   
   void addAttributeList(AttributeList *alist) {
+    assert((alist != 0) && "addAttributeList(): alist is null");
     AttributeList *next = this, *prev;
     do {
       prev = next;

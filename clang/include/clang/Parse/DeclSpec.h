@@ -220,7 +220,9 @@ public:
   bool SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec);
   
   /// attributes
-  void AddAttribute(AttributeList *alist) { 
+  void AddAttribute(AttributeList *alist) {
+    if (!alist)
+      return; // we parsed __attribute__(()) or had a syntax error
     if (AttrList) 
       alist->addAttributeList(AttrList); 
     AttrList = alist;
@@ -514,6 +516,8 @@ public:
   
   /// attributes
   void AddAttribute(AttributeList *alist) { 
+    if (!alist)
+      return; // we parsed __attribute__(()) or had a syntax error
     if (AttrList) 
       alist->addAttributeList(AttrList); 
     AttrList = alist;
