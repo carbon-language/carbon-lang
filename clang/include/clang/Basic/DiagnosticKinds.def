@@ -332,6 +332,8 @@ DIAG(err_expected_greater, ERROR,
      "expected '>'")
 DIAG(err_expected_semi_decl_list, ERROR,
      "expected ';' at end of declaration list")
+DIAG(ext_expected_semi_decl_list, EXTENSION,
+     "expected ';' at end of declaration list")
 DIAG(err_expected_fn_body, ERROR,
      "expected function body after function declarator")
 DIAG(err_expected_after_declarator, ERROR,
