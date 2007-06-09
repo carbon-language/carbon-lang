@@ -16,16 +16,18 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/LLVMBuilder.h"
+#include <vector>
 
 namespace llvm {
   class Module;
 namespace clang {
+  class SourceLocation;
+  class TargetInfo;
   class ASTContext;
   class Decl;
   class FunctionDecl;
   class QualType;
-  class SourceLocation;
-  class TargetInfo;
+  class FunctionTypeProto;
   
   class Stmt;
   class CompoundStmt;
@@ -142,6 +144,9 @@ public:
   ASTContext &getContext() const;
 
   const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
+  void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
+                           std::vector<const llvm::Type*> &ArgTys,
+                           SourceLocation Loc);
   
   void GenerateCode(const FunctionDecl *FD);
   

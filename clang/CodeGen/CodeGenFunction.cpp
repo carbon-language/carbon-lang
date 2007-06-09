@@ -121,11 +121,16 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
       ResultType = ConvertType(FP.getResultType(), Loc);
     
     // FIXME: Convert argument types.
+    bool isVarArg;
+    std::vector<const llvm::Type*> ArgTys;
+    if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(&FP)) {
+      DecodeArgumentTypes(*FTP, ArgTys, Loc);
+      isVarArg = FTP->isVariadic();
+    } else {
+      isVarArg = true;
+    }
     
-    return llvm::FunctionType::get(ResultType,
-                                   std::vector<const llvm::Type*>(),
-                                   false,
-                                   0);
+    return llvm::FunctionType::get(ResultType, ArgTys, isVarArg, 0);
   }
   case Type::TypeName:
   case Type::Tagged:
@@ -136,6 +141,12 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
   return OpaqueType::get();
 }
 
+void  CodeGenFunction::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
+                                           std::vector<const llvm::Type*> &
+                                           ArgTys, SourceLocation Loc) {
+  for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i)
+    ArgTys.push_back(ConvertType(FTP.getArgType(i), Loc));
+}
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy, FD->getLocation());
