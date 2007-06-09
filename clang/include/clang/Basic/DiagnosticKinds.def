@@ -265,6 +265,8 @@ DIAG(ext_empty_source_file, EXTENSION,
      "ISO C forbids an empty source file")
 DIAG(ext_top_level_semi, EXTENSION,
      "ISO C does not allow extra ';' outside of a function")
+DIAG(ext_extra_struct_semi, EXTENSION,
+     "ISO C does not allow extra ';' inside a struct or union")
 DIAG(ext_duplicate_declspec, EXTENSION,
      "duplicate '%0' declaration specifier")
 DIAG(ext_plain_complex, EXTENSION,

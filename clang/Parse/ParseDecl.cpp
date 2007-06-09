@@ -633,6 +633,12 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
          Tok.getKind() != tok::eof) {
     // Each iteration of this loop reads one struct-declaration.
     
+    if (Tok.getKind() == tok::semi) {
+      Diag(Tok, diag::ext_extra_struct_semi);
+      ConsumeToken();
+      continue;
+    }
+    
     // Parse the common specifier-qualifiers-list piece.
     DeclSpec DS;
     SourceLocation SpecQualLoc = Tok.getLocation();
