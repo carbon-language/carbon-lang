@@ -271,3 +271,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   EmitBlock(new BasicBlock());
 }
 
+void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
+  for (const Decl *Decl = S.getDecl(); Decl; Decl = Decl->getNextDeclarator())
+    EmitDecl(*Decl);
+}

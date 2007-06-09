@@ -175,7 +175,7 @@ public:
   //                        Local Declaration Emission
   //===--------------------------------------------------------------------===//
   
-  void EmitDeclStmt(const DeclStmt &S);
+  void EmitDecl(const Decl &D);
   void EmitEnumConstantDecl(const EnumConstantDecl &D);
   void EmitBlockVarDecl(const BlockVarDecl &D);
   void EmitLocalBlockVarDecl(const BlockVarDecl &D);
@@ -193,7 +193,8 @@ public:
   void EmitDoStmt(const DoStmt &S);
   void EmitForStmt(const ForStmt &S);
   void EmitReturnStmt(const ReturnStmt &S);
-  
+  void EmitDeclStmt(const DeclStmt &S);
+
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//

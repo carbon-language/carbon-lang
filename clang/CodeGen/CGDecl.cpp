@@ -21,10 +21,9 @@ using namespace clang;
 using namespace CodeGen;
 
 
-void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
-  const Decl *Decl = S.getDecl();
+void CodeGenFunction::EmitDecl(const Decl &D) {
 
-  switch (Decl->getKind()) {
+  switch (D.getKind()) {
   default: assert(0 && "Unknown decl kind!");
   case Decl::FileVariable:
     assert(0 && "Should not see file-scope variables inside a function!");
@@ -40,9 +39,9 @@ void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
     return;
     
   case Decl::BlockVariable:
-    return EmitBlockVarDecl(cast<BlockVarDecl>(*Decl));
+    return EmitBlockVarDecl(cast<BlockVarDecl>(D));
   case Decl::EnumConstant:
-    return EmitEnumConstantDecl(cast<EnumConstantDecl>(*Decl));
+    return EmitEnumConstantDecl(cast<EnumConstantDecl>(D));
   }
 }
 
