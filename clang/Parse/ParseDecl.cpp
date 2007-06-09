@@ -597,15 +597,15 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 ///       struct-contents:
 ///         struct-declaration-list
 /// [EXT]   empty
-/// [GNU]   "struct-declaration-list" without terminatoring ';'   [TODO]
+/// [GNU]   "struct-declaration-list" without terminatoring ';'
 ///       struct-declaration-list:
 ///         struct-declaration
 ///         struct-declaration-list struct-declaration
 /// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
 ///       struct-declaration:
 ///         specifier-qualifier-list struct-declarator-list ';'
-/// [GNU]   __extension__ struct-declaration                       [TODO]
-/// [GNU]   specifier-qualifier-list ';'                           [TODO]
+/// [GNU]   __extension__ struct-declaration
+/// [GNU]   specifier-qualifier-list ';'
 ///       struct-declarator-list:
 ///         struct-declarator
 ///         struct-declarator-list ',' struct-declarator
@@ -633,11 +633,16 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
          Tok.getKind() != tok::eof) {
     // Each iteration of this loop reads one struct-declaration.
     
+    // Check for extraneous top-level semicolon.
     if (Tok.getKind() == tok::semi) {
       Diag(Tok, diag::ext_extra_struct_semi);
       ConsumeToken();
       continue;
     }
+
+    // FIXME: When __extension__ is specified, disable extension diagnostics.
+    if (Tok.getKind() == tok::kw___extension__)
+      ConsumeToken();
     
     // Parse the common specifier-qualifiers-list piece.
     DeclSpec DS;
