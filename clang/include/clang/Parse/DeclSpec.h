@@ -137,9 +137,12 @@ public:
       TypeSpecType(TST_unspecified),
       TypeQualifiers(TSS_unspecified),
       FS_inline_specified(false),
-      TypeRep(0) {
+      TypeRep(0),
+      AttrList(0) {
   }
-  
+  ~DeclSpec() {
+    delete AttrList;
+  }
   // storage-class-specifier
   SCS getStorageClassSpec() const { return StorageClassSpec; }
   bool isThreadSpecified() const { return SCS_thread_specified; }
@@ -430,7 +433,7 @@ private:
   AttributeList *AttrList;  
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C) {
+    : DS(ds), Identifier(0), Context(C), AttrList(0) {
   }
   
   ~Declarator() {
@@ -461,6 +464,7 @@ public:
         assert(0 && "Unknown decl type!");
     }
     DeclTypeInfo.clear();
+    delete AttrList;
   }
   
   /// mayOmitIdentifier - Return true if the identifier is either optional or
