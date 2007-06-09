@@ -39,20 +39,43 @@ using namespace llvm;
 
 struct ExprLT {
   bool operator()(Value* left, Value* right) {
-    if (!isa<BinaryOperator>(left) || !isa<BinaryOperator>(right))
+    if (BinaryOperator* leftBO = dyn_cast<BinaryOperator>(left)) {
+      if (BinaryOperator* rightBO = dyn_cast<BinaryOperator>(right))
+        return cmpBinaryOperator(leftBO, rightBO);
+      else
+        return left < right;
+    } else if (CmpInst* leftCmp = dyn_cast<CmpInst>(left)) {
+      if (CmpInst* rightCmp = dyn_cast<CmpInst>(right))
+        return cmpComparison(leftCmp, rightCmp);
+      else
+        return left < right;
+    } else {
       return left < right;
-    
-    BinaryOperator* BO1 = cast<BinaryOperator>(left);
-    BinaryOperator* BO2 = cast<BinaryOperator>(right);
-    
-    if (BO1->getOpcode() != BO2->getOpcode())
-      return BO1->getOpcode() < BO2->getOpcode();
-    else if ((*this)(BO1->getOperand(0), BO2->getOperand(0)))
+    }
+  }
+  
+  bool cmpBinaryOperator(BinaryOperator* left, BinaryOperator* right) {
+    if (left->getOpcode() != right->getOpcode())
+      return left->getOpcode() < right->getOpcode();
+    else if ((*this)(left->getOperand(0), right->getOperand(0)))
       return true;
-    else if ((*this)(BO2->getOperand(0), BO1->getOperand(0)))
+    else if ((*this)(right->getOperand(0), left->getOperand(0)))
       return false;
     else
-      return (*this)(BO1->getOperand(1), BO2->getOperand(1));
+      return (*this)(left->getOperand(1), right->getOperand(1));
+  }
+  
+  bool cmpComparison(CmpInst* left, CmpInst* right) {
+    if (left->getOpcode() != right->getOpcode())
+      return left->getOpcode() < right->getOpcode();
+    else if (left->getPredicate() != right->getPredicate())
+      return left->getPredicate() < right->getPredicate();
+    else if ((*this)(left->getOperand(0), right->getOperand(0)))
+      return true;
+    else if ((*this)(right->getOperand(0), left->getOperand(0)))
+      return false;
+    else
+      return (*this)(left->getOperand(1), right->getOperand(1));
   }
 };
 
@@ -62,7 +85,7 @@ namespace {
     bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
-    GVNPRE() : FunctionPass((intptr_t)&ID) { nextValueNumber = 0; }
+    GVNPRE() : FunctionPass((intptr_t)&ID) { nextValueNumber = 1; }
 
   private:
     uint32_t nextValueNumber;
@@ -121,7 +144,7 @@ STATISTIC(NumEliminated, "Number of redundant instructions eliminated");
 
 bool GVNPRE::add(Value* V, uint32_t number) {
   std::pair<ValueTable::iterator, bool> ret = VN.insert(std::make_pair(V, number));
-  if (isa<BinaryOperator>(V) || isa<PHINode>(V))
+  if (isa<BinaryOperator>(V) || isa<PHINode>(V) || isa<CmpInst>(V))
     MS.insert(V);
   return ret.second;
 }
@@ -187,6 +210,48 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
   } else if (PHINode* P = dyn_cast<PHINode>(V)) {
     if (P->getParent() == pred->getTerminator()->getSuccessor(0))
       return P->getIncomingValueForBlock(pred);
+  } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
+    Value* newOp1 = isa<Instruction>(C->getOperand(0))
+                                ? phi_translate(set,
+                                  find_leader(set, C->getOperand(0)),
+                                  pred)
+                                : C->getOperand(0);
+    if (newOp1 == 0)
+      return 0;
+    
+    Value* newOp2 = isa<Instruction>(C->getOperand(1))
+                                ? phi_translate(set,
+                                  find_leader(set, C->getOperand(1)),
+                                  pred)
+                                : C->getOperand(1);
+    if (newOp2 == 0)
+      return 0;
+    
+    if (newOp1 != C->getOperand(0) || newOp2 != C->getOperand(1)) {
+      Instruction* newVal = CmpInst::create(C->getOpcode(),
+                                            C->getPredicate(),
+                                             newOp1, newOp2,
+                                             C->getName()+".gvnpre");
+      
+      if (add(newVal, nextValueNumber))
+        nextValueNumber++;
+      if (!find_leader(set, newVal)) {
+        DOUT << "Creating value: " << std::hex << newVal << std::dec << "\n";
+        createdExpressions.insert(newVal);
+        return newVal;
+      } else {
+        ValueTable::iterator I = VN.find(newVal);
+        if (I->first == newVal)
+          VN.erase(newVal);
+        
+        std::set<Value*, ExprLT>::iterator F = MS.find(newVal);
+        if (*F == newVal)
+          MS.erase(newVal);
+        
+        delete newVal;
+        return 0;
+      }
+    }
   }
   
   return V;
@@ -231,6 +296,27 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
       
       if (!lhsValid || !rhsValid)
         set.erase(BO);
+    } else if (CmpInst* C = dyn_cast<CmpInst>(v)) {
+      bool lhsValid = !isa<Instruction>(C->getOperand(0));
+      if (!lhsValid)
+        for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
+             I != E; ++I)
+          if (VN[*I] == VN[C->getOperand(0)]) {
+            lhsValid = true;
+            break;
+          }
+  
+      bool rhsValid = !isa<Instruction>(C->getOperand(1));
+      if (!rhsValid)
+      for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN[*I] == VN[C->getOperand(1)]) {
+          rhsValid = true;
+          break;
+        }
+    
+      if (!lhsValid || !rhsValid)
+        set.erase(C);
     }
   }
 }
@@ -246,7 +332,14 @@ void GVNPRE::topo_sort(std::set<Value*, ExprLT>& set,
             VN[BO->getOperand(1)] == VN[*SI]) {
           toErase.insert(*SI);
         }
-    }
+      }
+    else if (CmpInst* C = dyn_cast<CmpInst>(*I))
+      for (std::set<Value*, ExprLT>::iterator SI = set.begin(); SI != E; ++SI) {
+        if (VN[C->getOperand(0)] == VN[*SI] ||
+            VN[C->getOperand(1)] == VN[*SI]) {
+          toErase.insert(*SI);
+        }
+      }
   }
   
   std::vector<Value*> Q;
@@ -263,6 +356,21 @@ void GVNPRE::topo_sort(std::set<Value*, ExprLT>& set,
     if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
       Value* l = find_leader(set, BO->getOperand(0));
       Value* r = find_leader(set, BO->getOperand(1));
+      
+      if (l != 0 && isa<Instruction>(l) &&
+          visited.find(l) == visited.end())
+        Q.push_back(l);
+      else if (r != 0 && isa<Instruction>(r) &&
+               visited.find(r) == visited.end())
+        Q.push_back(r);
+      else {
+        vec.push_back(e);
+        visited.insert(e);
+        Q.pop_back();
+      }
+    } else if (CmpInst* C = dyn_cast<CmpInst>(e)) {
+      Value* l = find_leader(set, C->getOperand(0));
+      Value* r = find_leader(set, C->getOperand(1));
       
       if (l != 0 && isa<Instruction>(l) &&
           visited.find(l) == visited.end())
@@ -339,6 +447,20 @@ void GVNPRE::CalculateAvailOut(DomTreeNode* DI,
       if (isa<Instruction>(rightValue))
         currExps.insert(rightValue);
       currExps.insert(BO);
+      
+    // Handle cmp ops...
+    } else if (CmpInst* C = dyn_cast<CmpInst>(BI)) {
+      Value* leftValue = C->getOperand(0);
+      Value* rightValue = C->getOperand(1);
+      
+      if (add(C, nextValueNumber))
+        nextValueNumber++;
+      
+      if (isa<Instruction>(leftValue))
+        currExps.insert(leftValue);
+      if (isa<Instruction>(rightValue))
+        currExps.insert(rightValue);
+      currExps.insert(C);
       
     // Handle unsupported ops
     } else if (!BI->isTerminator()){
@@ -549,7 +671,7 @@ bool GVNPRE::runOnFunction(Function &F) {
           Value* e = workList.back();
           workList.pop_back();
           
-          if (isa<BinaryOperator>(e)) {
+          if (isa<BinaryOperator>(e) || isa<CmpInst>(e)) {
             if (find_leader(availableOut[DI->getIDom()->getBlock()], e) != 0)
               continue;
             
@@ -588,25 +710,34 @@ bool GVNPRE::runOnFunction(Function &F) {
                    PI != PE; ++PI) {
                 Value* e2 = avail[*PI];
                 if (!find_leader(availableOut[*PI], e2)) {
-                  BinaryOperator* BO = cast<BinaryOperator>(e2);
+                  User* U = cast<User>(e2);
                 
                   Value* s1 = 0;
-                  if (isa<Instruction>(BO->getOperand(0)))
-                    s1 = find_leader(availableOut[*PI], BO->getOperand(0));
+                  if (isa<Instruction>(U->getOperand(0)))
+                    s1 = find_leader(availableOut[*PI], U->getOperand(0));
                   else
-                    s1 = BO->getOperand(0);
+                    s1 = U->getOperand(0);
                   
                   Value* s2 = 0;
-                  if (isa<Instruction>(BO->getOperand(1)))
-                    s2 = find_leader(availableOut[*PI], BO->getOperand(1));
+                  if (isa<Instruction>(U->getOperand(1)))
+                    s2 = find_leader(availableOut[*PI], U->getOperand(1));
                   else
-                    s2 = BO->getOperand(1);
+                    s2 = U->getOperand(1);
                   
-                  Value* newVal = BinaryOperator::create(BO->getOpcode(),
+                  Value* newVal = 0;
+                  if (BinaryOperator* BO = dyn_cast<BinaryOperator>(U))
+                    newVal = BinaryOperator::create(BO->getOpcode(),
                                              s1, s2,
                                              BO->getName()+".gvnpre",
                                              (*PI)->getTerminator());
-                  add(newVal, VN[BO]);
+                  else if (CmpInst* C = dyn_cast<CmpInst>(U))
+                    newVal = CmpInst::create(C->getOpcode(),
+                                             C->getPredicate(),
+                                             s1, s2,
+                                             C->getName()+".gvnpre",
+                                             (*PI)->getTerminator());
+                  
+                  add(newVal, VN[U]);
                   
                   std::set<Value*, ExprLT>& predAvail = availableOut[*PI];
                   Value* val = find_leader(predAvail, newVal);
@@ -688,7 +819,7 @@ bool GVNPRE::runOnFunction(Function &F) {
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI) {
 
-      if (isa<BinaryOperator>(BI)) {
+      if (isa<BinaryOperator>(BI) || isa<CmpInst>(BI)) {
          Value *leader = find_leader(availableOut[BB], BI);
   
         if (leader != 0)
