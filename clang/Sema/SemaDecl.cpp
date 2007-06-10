@@ -475,7 +475,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   if (!FTI.hasPrototype) {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
       if (FTI.ArgInfo[i].TypeInfo == 0) {
-        Diag(FTI.ArgInfo[i].IdentLoc, diag::err_param_not_declared,
+        Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared,
              FTI.ArgInfo[i].Ident->getName());
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.
