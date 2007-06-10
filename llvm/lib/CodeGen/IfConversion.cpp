@@ -218,7 +218,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       }
       case ICTriangle:
       case ICTriangleFalse:
-      case ICTriangleFRev:
+      case ICTriangleFRev: {
         bool isFalse = BBI.Kind == ICTriangleFalse;
         bool isFalseRev = BBI.Kind == ICTriangleFRev;
         if (DisableTriangle && !isFalse && !isFalseRev) break;
@@ -240,6 +240,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
           else              NumTriangle++;
         }
         break;
+      }
       case ICDiamond:
         if (DisableDiamond) break;
         DOUT << "Ifcvt (Diamond): BB#" << BBI.BB->getNumber() << " (T:"
