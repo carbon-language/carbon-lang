@@ -121,6 +121,27 @@ unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
   return TheTok.getLength();
 }
 
+bool TextDiagnosticPrinter::IgnoreDiagnostic(Diagnostic::Level Level, 
+                                             SourceLocation Pos) {
+  if (Pos.isValid()) {
+    // If this is a warning or note, and if it a system header, suppress the
+    // diagnostic.
+    if (Level == Diagnostic::Warning ||
+        Level == Diagnostic::Note) {
+      SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
+      const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
+      if (F) {
+        DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
+        if (DirInfo == DirectoryLookup::SystemHeaderDir ||
+            DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              SourceLocation Pos,
                                              diag::kind ID,
@@ -135,20 +156,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   if (Pos.isValid()) {
     LineNo = SourceMgr.getLineNumber(Pos);
     FileID  = SourceMgr.getLogicalLoc(Pos).getFileID();
-    
-    // If this is a warning or note, and if it a system header, suppress the
-    // diagnostic.
-    if (Level == Diagnostic::Warning ||
-        Level == Diagnostic::Note) {
-      SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
-      const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
-      if (F) {
-        DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
-        if (DirInfo == DirectoryLookup::SystemHeaderDir ||
-            DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
-          return;
-      }
-    }
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.

@@ -140,6 +140,11 @@ class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
 
+  /// IgnoreDiagnostic - If the client wants to ignore this diagnostic, then
+  /// return true.
+  virtual bool IgnoreDiagnostic(Diagnostic::Level DiagLevel,
+                                SourceLocation Pos) = 0;
+
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,

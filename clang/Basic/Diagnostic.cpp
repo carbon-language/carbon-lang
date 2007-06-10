@@ -135,6 +135,10 @@ void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
     ++NumErrors;
   }
 
+  // Are we going to ignore this diagnosic?
+  if (Client.IgnoreDiagnostic(DiagLevel, Pos))
+    return;
+
   // Finally, report it.
   Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Strs, NumStrs,
                           Ranges, NumRanges);

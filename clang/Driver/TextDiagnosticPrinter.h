@@ -42,6 +42,8 @@ namespace llvm {
                           const std::string &SourceLine);
       unsigned GetTokenLength(SourceLocation Loc);
 
+      virtual bool IgnoreDiagnostic(Diagnostic::Level Level,
+                                    SourceLocation Pos);
       virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                     SourceLocation Pos,
                                     diag::kind ID, const std::string *Strs,
