@@ -708,10 +708,9 @@ static bool BlockDominatesAny(BasicBlock* A, const std::vector<BasicBlock*>& B,
 void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
                                          std::vector<BasicBlock*> &PredBlocks) {
   assert(!PredBlocks.empty() && "No predblocks??");
-  assert(succ_begin(NewBB) != succ_end(NewBB) &&
-         ++succ_begin(NewBB) == succ_end(NewBB) &&
-         "NewBB should have a single successor!");
-  BasicBlock *NewBBSucc = *succ_begin(NewBB);
+  assert(NewBB->getTerminator()->getNumSuccessors() == 1
+         && "NewBB should have a single successor!");
+  BasicBlock *NewBBSucc = NewBB->getTerminator()->getSuccessor(0);
   DominatorTree &DT = getAnalysis<DominatorTree>();
 
   // The newly inserted basic block will dominate existing basic blocks iff the
