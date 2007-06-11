@@ -144,7 +144,7 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
                                      "bswap.and2", IP);
     Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or1", IP);
     Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or2", IP);
-    V = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.i32", IP);
+    V = BinaryOperator::createOr(Tmp4, Tmp2, "bswap.i32", IP);
     break;
   }
   case 64: {
