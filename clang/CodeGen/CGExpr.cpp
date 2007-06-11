@@ -338,7 +338,12 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     
   // l-values.
   case Expr::DeclRefExprClass:
-    // FIXME: EnumConstantDecl's are not lvalues.  This is wrong for them.
+    // DeclRef's of EnumConstantDecl's are simple rvalues.
+    if (const EnumConstantDecl *EC = 
+          dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
+      return RValue::get(ConstantInt::get(EC->getInitVal()));
+    
+    // FALLTHROUGH
   case Expr::ArraySubscriptExprClass:
     return EmitLoadOfLValue(E);
   case Expr::StringLiteralClass:
