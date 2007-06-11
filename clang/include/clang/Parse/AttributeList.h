@@ -56,6 +56,7 @@ public:
   }
   
   IdentifierInfo *getAttributeName() const { return AttrName; }
+  SourceLocation getAttributeLoc() const { return AttrLoc; }
   IdentifierInfo *getParameterName() const { return ParmName; }
   
   AttributeList *getNext() const { return Next; }

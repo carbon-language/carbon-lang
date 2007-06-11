@@ -229,12 +229,11 @@ public:
   /// int __attribute__(( may_alias, aligned(16) )) var;
   ///
   /// This declares 4 attributes using 2 lists. The following syntax is
-  /// also allowed and identical to the previous declaration.
+  /// also allowed and equivalent to the previous declaration.
   ///
   /// short __attribute__((unused)) __attribute__((deprecated)) 
   /// int __attribute__((may_alias)) __attribute__((aligned(16))) var;
   /// 
-  /// I don't believe this usage of attributes is common.
   void AddAttributes(AttributeList *alist) {
     if (!alist)
       return; // we parsed __attribute__(()) or had a syntax error
@@ -243,6 +242,8 @@ public:
       alist->addAttributeList(AttrList); 
     AttrList = alist;
   }
+  AttributeList *getAttributes() const { return AttrList; }
+  
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
@@ -543,6 +544,7 @@ public:
     assert((AttrList == 0) && "Declarator already has an attribute list");
     AttrList = alist;
   }
+  AttributeList *getAttributes() const { return AttrList; }
 };
 
   

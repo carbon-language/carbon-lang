@@ -290,7 +290,10 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     TypedefDecl *NewTD = ParseTypedefDecl(S, D, LastDeclarator);
     if (!NewTD) return 0;
-    
+
+    // Handle attributes prior to checking for duplicates in MergeVarDecl
+    HandleDeclAttributes(NewTD, D.getDeclSpec().getAttributes(),
+                         D.getAttributes());
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
       NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
@@ -395,6 +398,10 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       }
       NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     }    
+    // Handle attributes prior to checking for duplicates in MergeVarDecl
+    HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
+                         D.getAttributes());
+     
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
@@ -402,7 +409,6 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
     }
     New = NewVD;
   }
-  
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
@@ -904,3 +910,70 @@ void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
   if (last)
     LastInGroupList.push_back((Decl*)last);
 }
+
+void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
+  if (strcmp(rawAttr->getAttributeName()->getName(), "vector_size") == 0) {
+    if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
+      HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
+      // install the new vector type into the decl
+    } 
+    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
+      HandleVectorTypeAttribute(tDecl->getUnderlyingType(), rawAttr);
+      // install the new vector type into the decl
+    }
+  }
+  // FIXME: add other attributes...
+}
+
+void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
+                                AttributeList *declarator_postfix) {
+  while (declspec_prefix) {
+    HandleDeclAttribute(New, declspec_prefix);
+    declspec_prefix = declspec_prefix->getNext();
+  }
+  while (declarator_postfix) {
+    HandleDeclAttribute(New, declarator_postfix);
+    declarator_postfix = declarator_postfix->getNext();
+  }
+}
+
+void *Sema::HandleVectorTypeAttribute(QualType curType, 
+                                      AttributeList *rawAttr) {
+  // check the attribute arugments
+  if (rawAttr->getNumArgs() != 1) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return 0;
+  }
+  Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
+  APSInt vecSize(32);
+  if (!sizeExpr->isIntegerConstantExpr(vecSize)) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
+         sizeExpr->getSourceRange());
+    return 0;
+  }
+  // navigate to the base type - we need to provide for vector pointers, 
+  // vector arrays, and functions returning vectors.
+  Type *canonType = curType.getCanonicalType().getTypePtr();
+  
+  while (canonType->isPointerType() || canonType->isArrayType() ||
+         canonType->isFunctionType()) {
+    if (PointerType *PT = dyn_cast<PointerType>(canonType))
+      canonType = PT->getPointeeType().getTypePtr();
+    else if (ArrayType *AT = dyn_cast<ArrayType>(canonType))
+      canonType = AT->getElementType().getTypePtr();
+    else if (FunctionType *FT = dyn_cast<FunctionType>(canonType))
+      canonType = FT->getResultType().getTypePtr();
+  }
+  // the base type must be integer or float.
+  if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_vector_type,
+         curType.getCanonicalType().getAsString());
+    return 0;
+  }
+  // FIXME: check that the vector size is a multiple of the type size (and
+  // not 0). check that the vector components are a power of two. Last, and
+  // certainly not least, instantiate a vector type AST node!
+  return 0;
+}
+

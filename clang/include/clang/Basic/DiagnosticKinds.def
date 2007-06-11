@@ -428,6 +428,14 @@ DIAG(err_invalid_storage_class_in_func_decl, ERROR,
 DIAG(err_invalid_reference_qualifier_application, ERROR,
      "'%0' qualifier may not be applied to a reference")
 
+// Attributes
+DIAG(err_attribute_wrong_number_arguments, ERROR,
+     "attribute requires precisely %0 argument")
+DIAG(err_attribute_invalid_vector_type, ERROR,
+     "invalid vector type '%0'")
+DIAG(err_attribute_vector_size_not_int, ERROR,
+     "vector_size requires integer constant (attribute ignored)")
+
 // Function Parameter Semantic Analysis.
 DIAG(err_void_param_with_identifier, ERROR,
      "void argument may not have a name")

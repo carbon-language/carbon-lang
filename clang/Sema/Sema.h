@@ -138,6 +138,20 @@ private:
   Decl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
+  // Decl attributes - this routine is the top level dispatcher. 
+  void HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
+                            AttributeList *declarator_postfix);
+  void HandleDeclAttribute(Decl *New, AttributeList *rawAttr);
+                                
+  // HandleVectorTypeAttribute - this attribute is only applicable to 
+  // integral and float scalars, although arrays, pointers, and function
+  // return values are allowed in conjunction with this construct. Aggregates
+  // with this attribute are invalid, even if they are of the same size as a
+  // corresponding scalar.
+  // The raw attribute should contain precisely 1 argument, the vector size 
+  // for the variable, measured in bytes. If curType and rawAttr are well
+  // formed, this routine will return a new vector type.
+  void *HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
