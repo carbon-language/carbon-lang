@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
+#include "llvm/ADT/APSInt.h"
 
 namespace llvm {
 namespace clang {
@@ -274,11 +275,16 @@ public:
 /// TagType for the X EnumDecl.
 class EnumConstantDecl : public ValueDecl {
   Expr *Init; // an integer constant expression
+  APSInt Val; // The value.
 public:
   EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E,
-                   Decl *PrevDecl)
-    : ValueDecl(EnumConstant, L, Id, T, PrevDecl), Init(E) {}
+                   const APSInt &V, Decl *PrevDecl)
+    : ValueDecl(EnumConstant, L, Id, T, PrevDecl), Init(E), Val(V) {}
 
+  const Expr *getInitExpr() const { return Init; }
+  Expr *getInitExpr() { return Init; }
+  const APSInt &getInitVal() const { return Val; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() == EnumConstant;
@@ -363,21 +369,23 @@ protected:
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
 /// enums.
 class EnumDecl : public TagDecl {
-  /// Elements/NumElements - This is a new[]'d array of pointers to
-  /// EnumConstantDecls.
-  EnumConstantDecl **Elements;   // Null if not defined.
-  int NumElements;   // -1 if not defined.
+  /// ElementList - this is a linked list of EnumConstantDecl's which are linked
+  /// together through their getNextDeclarator pointers.
+  EnumConstantDecl *ElementList;
 public:
   EnumDecl(SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
     : TagDecl(Enum, L, Id, PrevDecl) {
-    Elements = 0;
-    NumElements = -1;
+    ElementList = 0;
   }
   
   /// defineElements - When created, EnumDecl correspond to a forward declared
   /// enum.  This method is used to mark the decl as being defined, with the
-  /// specified contents.
-  void defineElements(EnumConstantDecl **Elements, unsigned NumElements);
+  /// specified list of enums.
+  void defineElements(EnumConstantDecl *ListHead) {
+    assert(!isDefinition() && "Cannot redefine enums!");
+    ElementList = ListHead;
+    setDefinition(true);
+  }
   
   static bool classof(const Decl *D) {
     return D->getKind() == Enum;

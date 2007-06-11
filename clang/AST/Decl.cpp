@@ -136,21 +136,6 @@ void FunctionDecl::setParams(VarDecl **NewParamInfo, unsigned NumParams) {
 }
 
 
-/// defineElements - When created, EnumDecl correspond to a forward declared
-/// enum.  This method is used to mark the decl as being defined, with the
-/// specified contents.
-void EnumDecl::defineElements(EnumConstantDecl **Elts, unsigned NumElts) {
-  assert(!isDefinition() && "Cannot redefine enums!");
-  setDefinition(true);
-  NumElements = NumElts;
-  if (NumElts) {
-    Elements = new EnumConstantDecl*[NumElts];
-    memcpy(Elements, Elts, NumElts*sizeof(Decl*));
-  }
-}
-
-
-
 /// defineBody - When created, RecordDecl's correspond to a forward declared
 /// record.  This method is used to mark the decl as being defined, with the
 /// specified contents.

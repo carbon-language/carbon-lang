@@ -849,10 +849,14 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   Record->defineBody(&RecFields[0], RecFields.size());
 }
 
-Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
+Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
+                                      DeclTy *lastEnumConst,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
-                                      SourceLocation EqualLoc, ExprTy *Val) {
-  EnumDecl *TheEnumDecl = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
+                                      SourceLocation EqualLoc, ExprTy *val) {
+  theEnumDecl = theEnumDecl;  // silence unused warning.
+  EnumConstantDecl *LastEnumConst =
+    cast_or_null<EnumConstantDecl>(static_cast<Decl*>(lastEnumConst));
+  Expr *Val = static_cast<Expr*>(val);
 
   // Verify that there isn't already something declared with this name in this
   // scope.
@@ -863,19 +867,43 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *EnumDeclX,
       else
         Diag(IdLoc, diag::err_redefinition, Id->getName());
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      // FIXME: Don't leak memory: delete Val;
       return 0;
     }
   }
-  SourceLocation expLoc;
-  // C99 6.7.2.2p2: Make sure we have an integer constant expression.
-  // FIXME: Capture this value in the enumconstantdecl.
-  if (Val && !((Expr *)Val)->isIntegerConstantExpr(&expLoc)) {
-    Diag(expLoc, diag::err_enum_value_not_integer_constant_expr, Id->getName());
-    return 0;
+
+  APSInt EnumVal(32);
+  QualType EltTy;
+  if (Val) {
+    // C99 6.7.2.2p2: Make sure we have an integer constant expression.
+    SourceLocation ExpLoc;
+    if (!Val->isIntegerConstantExpr(EnumVal, &ExpLoc)) {
+      Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr, 
+           Id->getName());
+      // FIXME: Don't leak memory: delete Val;
+      return 0;
+    }
+    EltTy = Val->getType();
+  } else if (LastEnumConst) {
+    // Assign the last value + 1.
+    EnumVal = LastEnumConst->getInitVal();
+    ++EnumVal;
+    // FIXME: detect overflow!
+    EltTy = LastEnumConst->getType();
+  } else {
+    // First value, set to zero.
+    EltTy = Context.IntTy;
+    // FIXME: Resize EnumVal to the size of int.
   }
-  QualType Ty = Context.getTagDeclType(TheEnumDecl);
-  // FIXME: Chain EnumConstantDecl's together.
-  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, Ty, (Expr *)Val, 0);
+  
+  // TODO: Default promotions to int/uint.
+  
+  // TODO: If the result value doesn't fit in an int, it must be a long or long
+  // long value.  ISO C does not support this, but GCC does as an extension,
+  // emit a warning.
+  
+  EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, EltTy, Val, EnumVal,
+                                               LastEnumConst);
   
   // Register this decl in the current scope stack.
   New->setNext(Id->getFETokenInfo<Decl>());
@@ -889,17 +917,18 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
   assert(!Enum->isDefinition() && "Enum redefinitions can't reach here");
   
-  // Verify that all the values are okay.
-  SmallVector<EnumConstantDecl*, 32> Values;
+  // Verify that all the values are okay, and reverse the list.
+  EnumConstantDecl *EltList = 0;
   for (unsigned i = 0; i != NumElements; ++i) {
     EnumConstantDecl *ECD =
       cast_or_null<EnumConstantDecl>(static_cast<Decl*>(Elements[i]));
     if (!ECD) continue;  // Already issued a diagnostic.
-    
-    Values.push_back(ECD);
+
+    ECD->setNextDeclarator(EltList);
+    EltList = ECD;
   }
   
-  Enum->defineElements(&Values[0], Values.size());
+  Enum->defineElements(EltList);
 }
 
 void Sema::AddTopLevelDecl(Decl *current, Decl *last) {

@@ -169,6 +169,7 @@ public:
                                DeclTy **Fields, unsigned NumFields) {}
 
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
+                                    DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
                                     SourceLocation EqualLoc, ExprTy *Val) {
     return 0;

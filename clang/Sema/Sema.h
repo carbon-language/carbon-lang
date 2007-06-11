@@ -116,6 +116,7 @@ private:
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
                                DeclTy **Fields, unsigned NumFields);
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
+                                    DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
                                     SourceLocation EqualLoc, ExprTy *Val);
   virtual void ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,

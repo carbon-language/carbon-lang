@@ -770,6 +770,8 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   
   SmallVector<DeclTy*, 32> EnumConstantDecls;
 
+  DeclTy *LastEnumConstDecl = 0;
+  
   // Parse the enumerator-list.
   while (Tok.getKind() == tok::identifier) {
     IdentifierInfo *Ident = Tok.getIdentifierInfo();
@@ -787,10 +789,12 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
     }
     
     // Install the enumerator constant into EnumDecl.
-    DeclTy *ConstDecl = Actions.ParseEnumConstant(CurScope, EnumDecl,
-                                                  IdentLoc, Ident,
-                                                  EqualLoc, AssignedVal);
-    EnumConstantDecls.push_back(ConstDecl);
+    DeclTy *EnumConstDecl = Actions.ParseEnumConstant(CurScope, EnumDecl,
+                                                      LastEnumConstDecl,
+                                                      IdentLoc, Ident,
+                                                      EqualLoc, AssignedVal);
+    EnumConstantDecls.push_back(EnumConstDecl);
+    LastEnumConstDecl = EnumConstDecl;
     
     if (Tok.getKind() != tok::comma)
       break;

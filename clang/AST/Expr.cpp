@@ -206,6 +206,9 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
 
 /// FIXME: Pass up a reason why! Invalid operation in i-c-e, division by zero,
 /// comma, etc
+///
+/// FIXME: This should ext-warn on overflow during evaluation!  ISO C does not
+/// permit this.
 bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
                                  bool isEvaluated) const {
   switch (getStmtClass()) {
