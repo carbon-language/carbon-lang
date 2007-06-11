@@ -229,10 +229,7 @@ bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
   case DeclRefExprClass:
     if (const EnumConstantDecl *D = 
           dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl())) {
-      D = D;
-      // FIXME: Get the real assigned value and width.
-      Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
-      Result = 0;
+      Result = D->getInitVal();
       break;
     }
     if (Loc) *Loc = getLocStart();
