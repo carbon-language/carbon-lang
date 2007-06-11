@@ -693,9 +693,8 @@ static bool BlockDominatesAny(BasicBlock* A, const std::vector<BasicBlock*>& B,
   return false;
 }
 
-/// UpdateDomInfoForRevectoredPreds - This method is used to update the four
-/// different kinds of dominator information (immediate dominators,
-/// dominator trees, et-forest and dominance frontiers) after a new block has
+/// UpdateDomInfoForRevectoredPreds - This method is used to update
+/// dominator trees and dominance frontiers after a new block has
 /// been added to the CFG.
 ///
 /// This only supports the case when an existing block (known as "NewBBSucc"),
@@ -756,38 +755,34 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       }
   }
 
-  BasicBlock *NewBBIDom = 0;
 
   // Update DominatorTree information if it is active.
-  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
-    // If we don't have ImmediateDominator info around, calculate the idom as
-    // above.
-    if (!NewBBIDom) {
-      unsigned i = 0;
-      for (i = 0; i < PredBlocks.size(); ++i)
-        if (DT->dominates(&PredBlocks[i]->getParent()->getEntryBlock(), 
-                                  PredBlocks[i])) {
-          NewBBIDom = PredBlocks[i];
-          break;
-        }
-      assert(i != PredBlocks.size() && "No reachable preds?");
-      for (i = i + 1; i < PredBlocks.size(); ++i) {
-        if (DT->dominates(&PredBlocks[i]->getParent()->getEntryBlock(), 
-                                  PredBlocks[i]))
-          NewBBIDom = DT->nearestCommonDominator(NewBBIDom, PredBlocks[i]);
-      }
-      assert(NewBBIDom && "No immediate dominator found??");
-    }
 
-    // Create the new dominator tree node... and set the idom of NewBB.
-    DomTreeNode *NewBBNode = DT->addNewBlock(NewBB, NewBBIDom);
-
-    // If NewBB strictly dominates other blocks, then it is now the immediate
-    // dominator of NewBBSucc.  Update the dominator tree as appropriate.
-    if (NewBBDominatesNewBBSucc) {
-      DomTreeNode *NewBBSuccNode = DT->getNode(NewBBSucc);
-      DT->changeImmediateDominator(NewBBSuccNode, NewBBNode);
+  // Find NewBB's immediate dominator and create new dominator tree node for NewBB.
+  BasicBlock *NewBBIDom = 0;
+  unsigned i = 0;
+  for (i = 0; i < PredBlocks.size(); ++i)
+    if (DT.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), 
+                     PredBlocks[i])) {
+      NewBBIDom = PredBlocks[i];
+      break;
     }
+  assert(i != PredBlocks.size() && "No reachable preds?");
+  for (i = i + 1; i < PredBlocks.size(); ++i) {
+    if (DT.dominates(&PredBlocks[i]->getParent()->getEntryBlock(), 
+                      PredBlocks[i]))
+      NewBBIDom = DT.nearestCommonDominator(NewBBIDom, PredBlocks[i]);
+  }
+  assert(NewBBIDom && "No immediate dominator found??");
+  
+  // Create the new dominator tree node... and set the idom of NewBB.
+  DomTreeNode *NewBBNode = DT.addNewBlock(NewBB, NewBBIDom);
+  
+  // If NewBB strictly dominates other blocks, then it is now the immediate
+  // dominator of NewBBSucc.  Update the dominator tree as appropriate.
+  if (NewBBDominatesNewBBSucc) {
+    DomTreeNode *NewBBSuccNode = DT.getNode(NewBBSucc);
+    DT.changeImmediateDominator(NewBBSuccNode, NewBBNode);
   }
 
   // Update dominance frontier information...
