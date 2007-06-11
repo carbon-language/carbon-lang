@@ -234,6 +234,10 @@ protected:
     return dominates(getNode(A), getNode(B));
   }
 
+  /// findNearestCommonDominator - Find nearest common dominator basic block
+  /// for basic block A and B. If there is no such block then return NULL.
+  BasicBlock *findNearestCommonDominator(BasicBlock *A, BasicBlock *B);
+
   // dominates - Return true if A dominates B. This performs the
   // special checks necessary if A and B are in the same basic block.
   bool dominates(Instruction *A, Instruction *B);

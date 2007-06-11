@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <set>
 using namespace llvm;
 
 namespace llvm {
@@ -367,6 +368,50 @@ void DominatorTreeBase::reset() {
   Roots.clear();
   Vertex.clear();
   RootNode = 0;
+}
+
+/// findNearestCommonDominator - Find nearest common dominator basic block
+/// for basic block A and B. If there is no such block then return NULL.
+BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, BasicBlock *B) {
+
+  assert (!isPostDominator()  && "This is not implemented for post dominators");
+  assert (A->getParent() == B->getParent()  && "Two blocks are not in same function");
+
+  // If either A or B is a entry block then it is nearest common dominator.
+  BasicBlock &Entry  = A->getParent()->getEntryBlock();
+  if (A == &Entry || B == &Entry)
+    return &Entry;
+
+  // If A and B are same then A is nearest common dominator.
+  DomTreeNode *NodeA = getNode(A);
+  if (A != 0 && A == B)
+    return A;
+
+  DomTreeNode *NodeB = getNode(B);
+
+  // Collect NodeA dominators set.
+  std::set<DomTreeNode *> NodeADoms;
+  NodeADoms.insert(NodeA);
+  DomTreeNode *IDomA = NodeA->getIDom();
+  while(IDomA) {
+    NodeADoms.insert(IDomA);
+    IDomA = IDomA->getIDom();
+  }
+
+  // If B dominates A then B is nearest common dominator.
+  if (NodeADoms.count(NodeB) != 0)
+    return B;
+
+  // Walk NodeB immediate dominators chain and find common dominator node.
+  DomTreeNode *IDomB = NodeB->getIDom();
+  while(IDomB) {
+    if (NodeADoms.count(IDomB) != 0)
+      return IDomB->getBlock();
+
+    IDomB = IDomB->getIDom();
+  }
+
+  return NULL;
 }
 
 void DomTreeNode::setIDom(DomTreeNode *NewIDom) {

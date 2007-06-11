@@ -768,7 +768,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
   assert(i != PredBlocks.size() && "No reachable preds?");
   for (i = i + 1; i < PredBlocks.size(); ++i) {
     if (DT.isReachableFromEntry(PredBlocks[i]))
-      NewBBIDom = DT.nearestCommonDominator(NewBBIDom, PredBlocks[i]);
+      NewBBIDom = DT.findNearestCommonDominator(NewBBIDom, PredBlocks[i]);
   }
   assert(NewBBIDom && "No immediate dominator found??");
   
