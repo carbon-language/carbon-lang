@@ -55,17 +55,13 @@ STATISTIC(NumIfConvBBs,    "Number of if-converted blocks");
 namespace {
   class IfConverter : public MachineFunctionPass {
     enum BBICKind {
-      ICNotAnalyzed,   // BB has not been analyzed.
-      ICReAnalyze,     // BB must be re-analyzed.
       ICNotClassfied,  // BB data valid, but not classified.
       ICSimple,        // BB is entry of an one split, no rejoin sub-CFG.
       ICSimpleFalse,   // Same as ICSimple, but on the false path.
       ICTriangle,      // BB is entry of a triangle sub-CFG.
       ICTriangleFalse, // Same as ICTriangle, but on the false path.
       ICTriangleFRev,  // Same as ICTriangleFalse, but false path rev condition.
-      ICDiamond,       // BB is entry of a diamond sub-CFG.
-      ICChild,         // BB is part of the sub-CFG that'll be predicated.
-      ICDead           // BB cannot be if-converted again.
+      ICDiamond        // BB is entry of a diamond sub-CFG.
     };
 
     /// BBInfo - One per MachineBasicBlock, this is used to cache the result
@@ -76,29 +72,41 @@ namespace {
     /// instruction can clobber the 'would-be' predicate.
     ///
     /// Kind            - Type of block. See BBICKind.
-    /// NonPredSize     - Number of non-predicated instructions.
-    /// IsAnalyzable    - True if AnalyzeBranch() returns false.
-    /// ModifyPredicate - True if BB would modify the predicate (e.g. has
+    /// IsDone          - True if BB is not to be considered for ifcvt.
+    /// IsBeingAnalyzed - True if BB is currently being analyzed.
+    /// IsAnalyzed      - True if BB has been analyzed (info is still valid).
+    /// IsEnqueued      - True if BB has been enqueued to be ifcvt'ed.
+    /// IsBrAnalyzable  - True if AnalyzeBranch() returns false.
+    /// HasFallThrough  - True if BB may fallthrough to the following BB.
+    /// IsUnpredicable  - True if BB is known to be unpredicable.
+    /// ClobbersPredicate- True if BB would modify the predicate (e.g. has
     ///                   cmp, call, etc.)
+    /// NonPredSize     - Number of non-predicated instructions.
     /// BB              - Corresponding MachineBasicBlock.
     /// TrueBB / FalseBB- See AnalyzeBranch().
     /// BrCond          - Conditions for end of block conditional branches.
     /// Predicate       - Predicate used in the BB.
     struct BBInfo {
       BBICKind Kind;
+      bool IsDone          : 1;
+      bool IsBeingAnalyzed : 1;
+      bool IsAnalyzed      : 1;
+      bool IsEnqueued      : 1;
+      bool IsBrAnalyzable  : 1;
+      bool HasFallThrough  : 1;
+      bool IsUnpredicable  : 1;
+      bool ClobbersPred    : 1;
       unsigned NonPredSize;
-      bool IsAnalyzable;
-      bool HasFallThrough;
-      bool ModifyPredicate;
       MachineBasicBlock *BB;
       MachineBasicBlock *TrueBB;
       MachineBasicBlock *FalseBB;
       MachineBasicBlock *TailBB;
       std::vector<MachineOperand> BrCond;
       std::vector<MachineOperand> Predicate;
-      BBInfo() : Kind(ICNotAnalyzed), NonPredSize(0),
-                 IsAnalyzable(false), HasFallThrough(false),
-                 ModifyPredicate(false),
+      BBInfo() : Kind(ICNotClassfied), IsDone(false), IsBeingAnalyzed(false),
+                 IsAnalyzed(false), IsEnqueued(false), IsBrAnalyzable(false),
+                 HasFallThrough(false), IsUnpredicable(false),
+                 ClobbersPred(false), NonPredSize(0),
                  BB(0), TrueBB(0), FalseBB(0), TailBB(0) {}
     };
 
@@ -127,7 +135,7 @@ namespace {
                        bool FalseBranch = false) const;
     bool ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI) const;
     void ScanInstructions(BBInfo &BBI);
-    void AnalyzeBlock(MachineBasicBlock *BB);
+    BBInfo &AnalyzeBlock(MachineBasicBlock *BB);
     bool FeasibilityAnalysis(BBInfo &BBI, std::vector<MachineOperand> &Cond,
                              bool isTriangle = false, bool RevBranch = false);
     bool AttemptRestructuring(BBInfo &BBI);
@@ -145,7 +153,7 @@ namespace {
 
     // blockAlwaysFallThrough - Block ends without a terminator.
     bool blockAlwaysFallThrough(BBInfo &BBI) const {
-      return BBI.IsAnalyzable && BBI.TrueBB == NULL;
+      return BBI.IsBrAnalyzable && BBI.TrueBB == NULL;
     }
 
     // IfcvtCandidateCmp - Used to sort if-conversion candidates.
@@ -192,14 +200,14 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       BBInfo &BBI = *Candidates.back();
       Candidates.pop_back();
 
+      // If the block has been evicted out of the queue or it has already been
+      // marked dead (due to it being predicated), then skip it.
+      if (!BBI.IsEnqueued || BBI.IsDone)
+        continue;
+
       bool RetVal = false;
       switch (BBI.Kind) {
       default: assert(false && "Unexpected!");
-        break;
-      case ICReAnalyze:
-        // One or more of 'children' have been modified, abort!
-      case ICDead:
-        // Block has been already been if-converted, abort!
         break;
       case ICSimple:
       case ICSimpleFalse: {
@@ -304,6 +312,9 @@ static inline MachineBasicBlock *getNextBlock(MachineBasicBlock *BB) {
 /// ValidSimple - Returns true if the 'true' block (along with its
 /// predecessor) forms a valid simple shape for ifcvt.
 bool IfConverter::ValidSimple(BBInfo &TrueBBI) const {
+  if (TrueBBI.IsBeingAnalyzed)
+    return false;
+
   return !blockAlwaysFallThrough(TrueBBI) &&
     TrueBBI.BrCond.size() == 0 && TrueBBI.BB->pred_size() == 1;
 }
@@ -312,6 +323,9 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI) const {
 /// with their common predecessor) forms a valid triangle shape for ifcvt.
 bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
                                 bool FalseBranch) const {
+  if (TrueBBI.IsBeingAnalyzed)
+    return false;
+
   if (TrueBBI.BB->pred_size() != 1)
     return false;
 
@@ -328,6 +342,9 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
 /// ValidDiamond - Returns true if the 'true' and 'false' blocks (along
 /// with their common predecessor) forms a valid diamond shape for ifcvt.
 bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI) const {
+  if (TrueBBI.IsBeingAnalyzed || FalseBBI.IsBeingAnalyzed)
+    return false;
+
   MachineBasicBlock *TT = TrueBBI.TrueBB;
   MachineBasicBlock *FT = FalseBBI.TrueBB;
 
@@ -337,7 +354,7 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI) const {
     FT = getNextBlock(FalseBBI.BB);
   if (TT != FT)
     return false;
-  if (TT == NULL && (TrueBBI.IsAnalyzable || FalseBBI.IsAnalyzable))
+  if (TT == NULL && (TrueBBI.IsBrAnalyzable || FalseBBI.IsBrAnalyzable))
     return false;
   // FIXME: Allow false block to have an early exit?
   return (TrueBBI.BB->pred_size() == 1 &&
@@ -345,59 +362,155 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI) const {
           !TrueBBI.FalseBB && !FalseBBI.FalseBB);
 }
 
+/// ScanInstructions - Scan all the instructions in the block to determine if
+/// the block is predicable. In most cases, that means all the instructions
+/// in the block has M_PREDICABLE flag. Also checks if the block contains any
+/// instruction which can clobber a predicate (e.g. condition code register).
+/// If so, the block is not predicable unless it's the last instruction.
+void IfConverter::ScanInstructions(BBInfo &BBI) {
+  if (BBI.IsDone)
+    return;
+
+  // First analyze the end of BB branches.
+  BBI.TrueBB = BBI.FalseBB;
+  BBI.BrCond.clear();
+  BBI.IsBrAnalyzable =
+    !TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
+  BBI.HasFallThrough = BBI.IsBrAnalyzable && BBI.FalseBB == NULL;
+
+  if (BBI.BrCond.size()) {
+    // No false branch. This BB must end with a conditional branch and a
+    // fallthrough.
+    if (!BBI.FalseBB)
+      BBI.FalseBB = findFalseBlock(BBI.BB, BBI.TrueBB);  
+    assert(BBI.FalseBB && "Expected to find the fallthrough block!");
+  }
+
+  // Then scan all the instructions.
+  BBI.NonPredSize = 0;
+  BBI.ClobbersPred = false;
+  bool SeenCondBr = false;
+  for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
+       I != E; ++I) {
+    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
+    bool isPredicated = TII->isPredicated(I);
+    bool isCondBr = BBI.IsBrAnalyzable &&
+      (TID->Flags & M_BRANCH_FLAG) != 0 && (TID->Flags & M_BARRIER_FLAG) == 0;
+
+    if (!isPredicated && !isCondBr)
+      BBI.NonPredSize++;
+
+    if (BBI.ClobbersPred && !isPredicated) {
+      // Predicate modification instruction should end the block (except for
+      // already predicated instructions and end of block branches).
+      if (isCondBr) {
+        SeenCondBr = true;
+
+        // Conditional branches is not predicable. But it may be eliminated.
+        continue;
+      }
+
+      // Predicate may have been modified, the subsequent (currently)
+      // unpredocated instructions cannot be correctly predicated.
+      BBI.IsUnpredicable = true;
+      return;
+    }
+
+    if (TID->Flags & M_CLOBBERS_PRED)
+      BBI.ClobbersPred = true;
+
+    if (!I->isPredicable()) {
+      BBI.IsUnpredicable = true;
+      return;
+    }
+  }
+}
+
+/// FeasibilityAnalysis - Determine if the block is a suitable candidate to be
+/// predicated by the specified predicate.
+bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
+                                      std::vector<MachineOperand> &Pred,
+                                      bool isTriangle, bool RevBranch) {
+  // Forget about it if it's unpredicable.
+  if (BBI.IsUnpredicable)
+    return false;
+
+  // If the block is dead, or it is going to be the entry block of a sub-CFG
+  // that will be if-converted, then it cannot be predicated.
+  if (BBI.IsDone || BBI.IsEnqueued)
+    return false;
+
+  // Check predication threshold.
+  if (BBI.NonPredSize == 0 || BBI.NonPredSize > TLI->getIfCvtBlockSizeLimit())
+    return false;
+
+  // If it is already predicated, check if its predicate subsumes the new
+  // predicate.
+  if (BBI.Predicate.size() && !TII->SubsumesPredicate(BBI.Predicate, Pred))
+    return false;
+
+  if (BBI.BrCond.size()) {
+    if (!isTriangle)
+      return false;
+
+    // Test predicate subsumsion.
+    std::vector<MachineOperand> RevPred(Pred);
+    std::vector<MachineOperand> Cond(BBI.BrCond);
+    if (RevBranch) {
+      if (TII->ReverseBranchCondition(Cond))
+        return false;
+    }
+    if (TII->ReverseBranchCondition(RevPred) ||
+        !TII->SubsumesPredicate(Cond, RevPred))
+      return false;
+  }
+
+  return true;
+}
+
 /// AnalyzeBlock - Analyze the structure of the sub-CFG starting from
 /// the specified block. Record its successors and whether it looks like an
 /// if-conversion candidate.
-void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
+IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
   BBInfo &BBI = BBAnalysis[BB->getNumber()];
 
-  if (BBI.Kind == ICReAnalyze) {
-    BBI.BrCond.clear();
-    BBI.TrueBB = BBI.FalseBB = NULL;
-  } else {
-    if (BBI.Kind != ICNotAnalyzed)
-      return;  // Already analyzed.
-    BBI.BB = BB;
-    BBI.NonPredSize = std::distance(BB->begin(), BB->end());
-  }
+  if (BBI.IsAnalyzed || BBI.IsBeingAnalyzed)
+    return BBI;
 
-  // Look for 'root' of a simple (non-nested) triangle or diamond.
+  BBI.BB = BB;
+  BBI.IsBeingAnalyzed = true;
   BBI.Kind = ICNotClassfied;
-  BBI.IsAnalyzable =
-    !TII->AnalyzeBranch(*BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
-  BBI.HasFallThrough = BBI.IsAnalyzable && BBI.FalseBB == NULL;
+
+  ScanInstructions(BBI);
+
   // Unanalyable or ends with fallthrough or unconditional branch.
-  if (!BBI.IsAnalyzable || BBI.BrCond.size() == 0)
-    return;
-  // Do not ifcvt if either path is a back edge to the entry block.
-  if (BBI.TrueBB == BB || BBI.FalseBB == BB)
-    return;
-
-  AnalyzeBlock(BBI.TrueBB);
-  BBInfo &TrueBBI = BBAnalysis[BBI.TrueBB->getNumber()];
-
-  // No false branch. This BB must end with a conditional branch and a
-  // fallthrough.
-  if (!BBI.FalseBB)
-    BBI.FalseBB = findFalseBlock(BB, BBI.TrueBB);  
-  assert(BBI.FalseBB && "Expected to find the fallthrough block!");
-
-  AnalyzeBlock(BBI.FalseBB);
-  BBInfo &FalseBBI = BBAnalysis[BBI.FalseBB->getNumber()];
-
-  // If both paths are dead, then forget about it.
-  if (TrueBBI.Kind == ICDead && FalseBBI.Kind == ICDead) {
-    BBI.Kind = ICDead;
-    return;
+  if (!BBI.IsBrAnalyzable || BBI.BrCond.size() == 0) {
+    BBI.IsBeingAnalyzed = false;
+    BBI.IsAnalyzed = true;
+    return BBI;
   }
 
-  // Look for more opportunities to if-convert a triangle. Try to restructure
-  // the CFG to form a triangle with the 'false' path.
+  // Do not ifcvt if either path is a back edge to the entry block.
+  if (BBI.TrueBB == BB || BBI.FalseBB == BB) {
+    BBI.IsBeingAnalyzed = false;
+    BBI.IsAnalyzed = true;
+    return BBI;
+  }
+
+  BBInfo &TrueBBI  = AnalyzeBlock(BBI.TrueBB);
+  BBInfo &FalseBBI = AnalyzeBlock(BBI.FalseBB);
+
+  if (TrueBBI.IsDone && FalseBBI.IsDone) {
+    BBI.IsBeingAnalyzed = false;
+    BBI.IsAnalyzed = true;
+    return BBI;
+  }
+
   std::vector<MachineOperand> RevCond(BBI.BrCond);
   bool CanRevCond = !TII->ReverseBranchCondition(RevCond);
 
   if (CanRevCond && ValidDiamond(TrueBBI, FalseBBI) &&
-      !(TrueBBI.ModifyPredicate && FalseBBI.ModifyPredicate) &&
+      !(TrueBBI.ClobbersPred && FalseBBI.ClobbersPred) &&
       FeasibilityAnalysis(TrueBBI, BBI.BrCond) &&
       FeasibilityAnalysis(FalseBBI, RevCond)) {
     // Diamond:
@@ -409,7 +522,6 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
     //  TailBB
     // Note TailBB can be empty.
     BBI.Kind = ICDiamond;
-    TrueBBI.Kind = FalseBBI.Kind = ICChild;
     BBI.TailBB = TrueBBI.TrueBB;
   } else {
     // FIXME: Consider duplicating if BB is small.
@@ -423,7 +535,6 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
       //   |  /
       //   FBB
       BBI.Kind = ICTriangle;
-      TrueBBI.Kind = ICChild;
     } else if (ValidSimple(TrueBBI) &&
                FeasibilityAnalysis(TrueBBI, BBI.BrCond)) {
       // Simple (split, no rejoin):
@@ -434,93 +545,24 @@ void IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
       //   |    
       //   FBB
       BBI.Kind = ICSimple;
-      TrueBBI.Kind = ICChild;
     } else if (CanRevCond) {
       // Try the other path...
       if (ValidTriangle(FalseBBI, TrueBBI) &&
           FeasibilityAnalysis(FalseBBI, RevCond, true)) {
         BBI.Kind = ICTriangleFalse;
-        FalseBBI.Kind = ICChild;
       } else if (ValidTriangle(FalseBBI, TrueBBI, true) &&
                  FeasibilityAnalysis(FalseBBI, RevCond, true, true)) {
         BBI.Kind = ICTriangleFRev;
-        FalseBBI.Kind = ICChild;
       } else if (ValidSimple(FalseBBI) &&
                  FeasibilityAnalysis(FalseBBI, RevCond)) {
         BBI.Kind = ICSimpleFalse;
-        FalseBBI.Kind = ICChild;
       }
     }
   }
-  return;
-}
 
-/// FeasibilityAnalysis - Determine if the block is predicable. In most
-/// cases, that means all the instructions in the block has M_PREDICABLE flag.
-/// Also checks if the block contains any instruction which can clobber a
-/// predicate (e.g. condition code register). If so, the block is not
-/// predicable unless it's the last instruction.
-bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
-                                      std::vector<MachineOperand> &Pred,
-                                      bool isTriangle, bool RevBranch) {
-  // If the block is dead, or it is going to be the entry block of a sub-CFG
-  // that will be if-converted, then it cannot be predicated.
-  if (BBI.Kind != ICNotAnalyzed &&
-      BBI.Kind != ICNotClassfied &&
-      BBI.Kind != ICChild)
-    return false;
-
-  // Check predication threshold.
-  if (BBI.NonPredSize == 0 || BBI.NonPredSize > TLI->getIfCvtBlockSizeLimit())
-    return false;
-
-  // If it is already predicated, check if its predicate subsumes the new
-  // predicate.
-  if (BBI.Predicate.size() && !TII->SubsumesPredicate(BBI.Predicate, Pred))
-    return false;
-
-  bool SeenPredMod = false;
-  bool SeenCondBr = false;
-  for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
-       I != E; ++I) {
-    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
-    if (SeenPredMod) {
-      // Predicate modification instruction should end the block (except for
-      // already predicated instructions and end of block branches).
-      if (!TII->isPredicated(I)) {
-        // This is the 'true' block of a triangle, i.e. its 'true' block is
-        // the same as the 'false' block of the entry. So false positive
-        // is ok.
-        if (isTriangle && !SeenCondBr && BBI.IsAnalyzable &&
-            (TID->Flags & M_BRANCH_FLAG) != 0 &&
-            (TID->Flags & M_BARRIER_FLAG) == 0) {
-          // This is the first conditional branch, test predicate subsumsion.
-          std::vector<MachineOperand> RevPred(Pred);
-          std::vector<MachineOperand> Cond(BBI.BrCond);
-          if (RevBranch) {
-            if (TII->ReverseBranchCondition(Cond))
-              return false;
-          }
-          if (TII->ReverseBranchCondition(RevPred) ||
-              !TII->SubsumesPredicate(Cond, RevPred))
-            return false;
-          SeenCondBr = true;
-          continue;  // Conditional branches is not predicable.
-        }
-        return false;
-      }
-    }
-
-    if (TID->Flags & M_CLOBBERS_PRED) {
-      BBI.ModifyPredicate = true;
-      SeenPredMod = true;
-    }
-
-    if (!I->isPredicable())
-      return false;
-  }
-
-  return true;
+  BBI.IsBeingAnalyzed = false;
+  BBI.IsAnalyzed = true;
+  return BBI;
 }
 
 /// AttemptRestructuring - Restructure the sub-CFG rooted in the given block to
@@ -561,8 +603,7 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
     for (idf_ext_iterator<MachineBasicBlock*> I=idf_ext_begin(Roots[i],Visited),
            E = idf_ext_end(Roots[i], Visited); I != E; ++I) {
       MachineBasicBlock *BB = *I;
-      AnalyzeBlock(BB);
-      BBInfo &BBI = BBAnalysis[BB->getNumber()];
+      BBInfo &BBI = AnalyzeBlock(BB);
       switch (BBI.Kind) {
         case ICSimple:
         case ICSimpleFalse:
@@ -602,8 +643,10 @@ void IfConverter::ReTryPreds(MachineBasicBlock *BB) {
   for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
          E = BB->pred_end(); PI != E; ++PI) {
     BBInfo &PBBI = BBAnalysis[(*PI)->getNumber()];
-    if (PBBI.Kind == ICNotClassfied)
-      PBBI.Kind = ICReAnalyze;
+    if (!PBBI.IsDone && PBBI.Kind == ICNotClassfied) {
+      assert(PBBI.IsEnqueued && "Unexpected");
+      PBBI.IsAnalyzed = false;
+    }
   }
 }
 
@@ -672,12 +715,10 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
   RemoveExtraEdges(BBI);
 
   // Update block info. BB can be iteratively if-converted.
-  if (IterIfcvt)
-    BBI.Kind = ICReAnalyze;
-  else
-    BBI.Kind = ICDead;
+  if (!IterIfcvt)
+    BBI.IsDone = true;
   ReTryPreds(BBI.BB);
-  CvtBBI->Kind = ICDead;
+  CvtBBI->IsDone = true;
 
   // FIXME: Must maintain LiveIns.
   return true;
@@ -703,7 +744,8 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
         if (PBB == BBI.BB)
           continue;
         BBInfo &PBBI = BBAnalysis[PBB->getNumber()];
-        PBBI.Kind = ICReAnalyze;
+        if (PBBI.IsEnqueued)
+          PBBI.IsEnqueued = false;
       }
     }
     std::swap(CvtBBI, NextBBI);
@@ -751,14 +793,12 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   RemoveExtraEdges(BBI);
 
   // Update block info. BB can be iteratively if-converted.
-  if (IterIfcvt) 
-    BBI.Kind = ICReAnalyze;
-  else
-    BBI.Kind = ICDead;
+  if (!IterIfcvt) 
+    BBI.IsDone = true;
   ReTryPreds(BBI.BB);
-  CvtBBI->Kind = ICDead;
+  CvtBBI->IsDone = true;
   if (FalseBBDead)
-    NextBBI->Kind = ICDead;
+    NextBBI->IsDone = true;
 
   // FIXME: Must maintain LiveIns.
   return true;
@@ -822,8 +862,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
   bool NeedBr1 = !BBI1->TrueBB && BBI1->BB->succ_size();
   bool NeedBr2 = !BBI2->TrueBB && BBI2->BB->succ_size(); 
 
-  if ((TrueBBI.ModifyPredicate && !FalseBBI.ModifyPredicate) ||
-      (!TrueBBI.ModifyPredicate && !FalseBBI.ModifyPredicate &&
+  if ((TrueBBI.ClobbersPred && !FalseBBI.ClobbersPred) ||
+      (!TrueBBI.ClobbersPred && !FalseBBI.ClobbersPred &&
        NeedBr1 && !NeedBr2)) {
     std::swap(BBI1, BBI2);
     std::swap(Cond1, Cond2);
@@ -878,15 +918,13 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
     BBInfo TailBBI = BBAnalysis[BBI.TailBB->getNumber()];
     MergeBlocks(*CvtBBI, TailBBI);
-    TailBBI.Kind = ICDead;
+    TailBBI.IsDone = true;
   }
 
   RemoveExtraEdges(BBI);
 
   // Update block info.
-  BBI.Kind = ICDead;
-  TrueBBI.Kind = ICDead;
-  FalseBBI.Kind = ICDead;
+  BBI.IsDone = TrueBBI.IsDone = FalseBBI.IsDone = true;
 
   // FIXME: Must maintain LiveIns.
   return true;
@@ -953,7 +991,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
   ToBBI.NonPredSize += FromBBI.NonPredSize;
   FromBBI.NonPredSize = 0;
 
-  ToBBI.ModifyPredicate |= FromBBI.ModifyPredicate;
+  ToBBI.ClobbersPred |= FromBBI.ClobbersPred;
   ToBBI.HasFallThrough = FromBBI.HasFallThrough;
 
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
