@@ -526,6 +526,9 @@ bool GVNPRE::runOnFunction(Function &F) {
          df_begin(PDT.getRootNode()), E = df_end(PDT.getRootNode());
          PDI != E; ++PDI) {
       BasicBlock* BB = PDI->getBlock();
+      if (BB == 0)
+        continue;
+      
       DOUT << "Block: " << BB->getName() << "\n";
       DOUT << "TMP_GEN: ";
       dump(generatedTemporaries[BB]);
@@ -634,6 +637,9 @@ bool GVNPRE::runOnFunction(Function &F) {
     for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
       BasicBlock* BB = DI->getBlock();
+      
+      if (BB == 0)
+        continue;
       
       std::set<Value*, ExprLT>& new_set = new_sets[BB];
       std::set<Value*, ExprLT>& availOut = availableOut[BB];
