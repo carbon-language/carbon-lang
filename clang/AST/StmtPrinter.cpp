@@ -48,7 +48,8 @@ namespace  {
     
     void PrintRawCompoundStmt(CompoundStmt *S);
     void PrintRawDecl(Decl *D);
-
+    void PrintRawIfStmt(IfStmt *If);
+    
     void PrintExpr(Expr *E) {
       if (E)
         E->visit(*this);
@@ -159,8 +160,8 @@ void StmtPrinter::VisitLabelStmt(LabelStmt *Node) {
   PrintStmt(Node->getSubStmt(), 0);
 }
 
-void StmtPrinter::VisitIfStmt(IfStmt *If) {
-  Indent() << "if ";
+void StmtPrinter::PrintRawIfStmt(IfStmt *If) {
+  OS << "if ";
   PrintExpr(If->getCond());
   
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(If->getThen())) {
@@ -172,7 +173,7 @@ void StmtPrinter::VisitIfStmt(IfStmt *If) {
     PrintStmt(If->getThen());
     if (If->getElse()) Indent();
   }
-
+  
   if (Stmt *Else = If->getElse()) {
     OS << "else";
     
@@ -180,11 +181,19 @@ void StmtPrinter::VisitIfStmt(IfStmt *If) {
       OS << ' ';
       PrintRawCompoundStmt(CS);
       OS << '\n';
+    } else if (IfStmt *ElseIf = dyn_cast<IfStmt>(Else)) {
+      OS << ' ';
+      PrintRawIfStmt(ElseIf);
     } else {
       OS << '\n';
       PrintStmt(If->getElse());
     }
   }
+}
+
+void StmtPrinter::VisitIfStmt(IfStmt *If) {
+  Indent();
+  PrintRawIfStmt(If);
 }
 
 void StmtPrinter::VisitSwitchStmt(SwitchStmt *Node) {
