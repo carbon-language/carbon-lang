@@ -403,8 +403,7 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
     return A;
 
   // Collect NodeA dominators set.
-  // SmallPtrSet<DomTreeNode*, 16> NodeADoms;
-  std::set<DomTreeNode*> NodeADoms;
+  SmallPtrSet<DomTreeNode*, 16> NodeADoms;
   NodeADoms.insert(NodeA);
   DomTreeNode *IDomA = NodeA->getIDom();
   while(IDomA) {
