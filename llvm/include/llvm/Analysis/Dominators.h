@@ -131,6 +131,8 @@ protected:
   // Info - Collection of information used during the computation of idoms.
   std::map<BasicBlock*, InfoRec> Info;
 
+  void updateDFSNumbers();
+
   public:
   DominatorTreeBase(intptr_t ID, bool isPostDom) 
     : DominatorBase(ID, isPostDom), DFSInfoValid(false), SlowQueries(0) {}
@@ -191,13 +193,12 @@ protected:
     return IDom != 0;
   }
 
-  void updateDFSNumbers();  
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
   const bool isReachableFromEntry(BasicBlock* A);
   
-  /// dominates - Returns true iff this dominates N.  Note that this is not a
+  /// dominates - Returns true iff A dominates B.  Note that this is not a
   /// constant time operation!
   ///
   inline bool dominates(const DomTreeNode *A, DomTreeNode *B) {
