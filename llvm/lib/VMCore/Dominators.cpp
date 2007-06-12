@@ -23,7 +23,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
-#include <set>
 using namespace llvm;
 
 namespace llvm {
@@ -363,7 +362,8 @@ bool DominatorTreeBase::dominates(Instruction *A, Instruction *B) {
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //
 void DominatorTreeBase::reset() {
-  for (DomTreeNodeMapType::iterator I = DomTreeNodes.begin(), E = DomTreeNodes.end(); I != E; ++I)
+  for (DomTreeNodeMapType::iterator I = DomTreeNodes.begin(), 
+         E = DomTreeNodes.end(); I != E; ++I)
     delete I->second;
   DomTreeNodes.clear();
   IDoms.clear();
@@ -374,10 +374,13 @@ void DominatorTreeBase::reset() {
 
 /// findNearestCommonDominator - Find nearest common dominator basic block
 /// for basic block A and B. If there is no such block then return NULL.
-BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, BasicBlock *B) {
+BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, 
+                                                          BasicBlock *B) {
 
-  assert (!isPostDominator()  && "This is not implemented for post dominators");
-  assert (A->getParent() == B->getParent()  && "Two blocks are not in same function");
+  assert (!isPostDominator() 
+          && "This is not implemented for post dominators");
+  assert (A->getParent() == B->getParent() 
+          && "Two blocks are not in same function");
 
   // If either A or B is a entry block then it is nearest common dominator.
   BasicBlock &Entry  = A->getParent()->getEntryBlock();
@@ -391,8 +394,17 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, BasicBl
 
   DomTreeNode *NodeB = getNode(B);
 
+  // If B immediately dominates A then B is nearest common dominator.
+  if (NodeA->getIDom() == NodeB)
+    return B;
+
+  // If A immediately dominates B then A is nearest common dominator.
+  if (NodeB->getIDom() == NodeA) 
+    return A;
+
   // Collect NodeA dominators set.
-  std::set<DomTreeNode *> NodeADoms;
+  // SmallPtrSet<DomTreeNode*, 16> NodeADoms;
+  std::set<DomTreeNode*> NodeADoms;
   NodeADoms.insert(NodeA);
   DomTreeNode *IDomA = NodeA->getIDom();
   while(IDomA) {
