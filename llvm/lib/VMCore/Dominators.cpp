@@ -380,13 +380,6 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
   if (A == &Entry || B == &Entry)
     return &Entry;
 
-  // If A and B are same then A is nearest common dominator.
-  DomTreeNode *NodeA = getNode(A);
-  if (A != 0 && A == B)
-    return A;
-
-  DomTreeNode *NodeB = getNode(B);
-
   // If B dominates A then B is nearest common dominator.
   if (dominates(B,A))
     return B;
@@ -394,6 +387,9 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
   // If A dominates B then A is nearest common dominator.
   if (dominates(A,B))
     return A;
+
+  DomTreeNode *NodeA = getNode(A);
+  DomTreeNode *NodeB = getNode(B);
 
   // Collect NodeA dominators set.
   SmallPtrSet<DomTreeNode*, 16> NodeADoms;
