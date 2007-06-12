@@ -65,6 +65,8 @@ class DomTreeNode {
   DomTreeNode *IDom;
   ETNode *ETN;
   std::vector<DomTreeNode*> Children;
+  int DFSNumIn, DFSNumOut;
+
 public:
   typedef std::vector<DomTreeNode*>::iterator iterator;
   typedef std::vector<DomTreeNode*>::const_iterator const_iterator;
@@ -80,12 +82,22 @@ public:
   inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
   
   inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom, ETNode *E) 
-    : TheBB(BB), IDom(iDom), ETN(E) {
+    : TheBB(BB), IDom(iDom), ETN(E), DFSNumIn(-1), DFSNumOut(-1) {
     if (IDom)
       ETN->setFather(IDom->getETNode());
   }
   inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
   void setIDom(DomTreeNode *NewIDom);
+
+  // Return true if this node is dominated by other. Use this only if DFS info is valid.
+  bool DominatedBy(const DomTreeNode *other) const {
+    return this->DFSNumIn >= other->DFSNumIn &&
+      this->DFSNumOut <= other->DFSNumOut;
+  }
+
+  /// assignDFSNumber - Assign In and Out numbers while walking dominator tree
+  /// in dfs order.
+  void assignDFSNumber(int num);
 };
 
 //===----------------------------------------------------------------------===//
@@ -214,14 +226,16 @@ protected:
     ETNode *NodeB = B->getETNode();
     
     if (DFSInfoValid)
-      return NodeB->DominatedBy(NodeA);
+      return B->DominatedBy(A);
+      //return NodeB->DominatedBy(NodeA);
 
     // If we end up with too many slow queries, just update the
     // DFS numbers on the theory that we are going to keep querying.
     SlowQueries++;
     if (SlowQueries > 32) {
       updateDFSNumbers();
-      return NodeB->DominatedBy(NodeA);
+      return B->DominatedBy(A);
+      //return NodeB->DominatedBy(NodeA);
     }
     //return NodeB->DominatedBySlow(NodeA);
     return dominatedBySlowTreeWalk(A, B);

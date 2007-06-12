@@ -319,9 +319,11 @@ void DominatorTreeBase::updateDFSNumbers()
       BasicBlock *BB = *I;
       DomTreeNode *BBNode = getNode(BB);
       if (BBNode) {
-        ETNode *ETN = BBNode->getETNode();
-        if (ETN && !ETN->hasFather())
-          ETN->assignDFSNumber(dfsnum);
+        if (!BBNode->getIDom())
+          BBNode->assignDFSNumber(dfsnum);
+        //ETNode *ETN = BBNode->getETNode();
+        //if (ETN && !ETN->hasFather())
+        //  ETN->assignDFSNumber(dfsnum);
       }
   }
   SlowQueries = 0;
@@ -412,6 +414,38 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, BasicBl
   }
 
   return NULL;
+}
+
+/// assignDFSNumber - Assign In and Out numbers while walking dominator tree
+/// in dfs order.
+void DomTreeNode::assignDFSNumber(int num) {
+  std::vector<DomTreeNode *>  workStack;
+  std::set<DomTreeNode *> visitedNodes;
+  
+  workStack.push_back(this);
+  visitedNodes.insert(this);
+  this->DFSNumIn = num++;
+  
+  while (!workStack.empty()) {
+    DomTreeNode  *Node = workStack.back();
+    
+    bool visitChild = false;
+    for (std::vector<DomTreeNode*>::iterator DI = Node->begin(),
+           E = Node->end(); DI != E && !visitChild; ++DI) {
+      DomTreeNode *Child = *DI;
+      if (visitedNodes.count(Child) == 0) {
+        visitChild = true;
+        Child->DFSNumIn = num++;
+        workStack.push_back(Child);
+        visitedNodes.insert(Child);
+      }
+    }
+    if (!visitChild) {
+      // If we reach here means all children are visited
+      Node->DFSNumOut = num++;
+      workStack.pop_back();
+    }
+  }
 }
 
 void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
