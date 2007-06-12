@@ -387,12 +387,12 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
 
   DomTreeNode *NodeB = getNode(B);
 
-  // If B immediately dominates A then B is nearest common dominator.
-  if (NodeA->getIDom() == NodeB)
+  // If B dominates A then B is nearest common dominator.
+  if (dominates(B,A))
     return B;
 
-  // If A immediately dominates B then A is nearest common dominator.
-  if (NodeB->getIDom() == NodeA) 
+  // If A dominates B then A is nearest common dominator.
+  if (dominates(A,B))
     return A;
 
   // Collect NodeA dominators set.
@@ -403,10 +403,6 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
     NodeADoms.insert(IDomA);
     IDomA = IDomA->getIDom();
   }
-
-  // If B dominates A then B is nearest common dominator.
-  if (NodeADoms.count(NodeB) != 0)
-    return B;
 
   // Walk NodeB immediate dominators chain and find common dominator node.
   DomTreeNode *IDomB = NodeB->getIDom();
