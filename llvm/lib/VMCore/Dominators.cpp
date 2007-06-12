@@ -235,9 +235,7 @@ void DominatorTree::calculate(Function& F) {
   BasicBlock* Root = Roots[0];
 
   // Add a node for the root...
-  ETNode *ERoot = new ETNode(Root);
-  ETNodes[Root] = ERoot;
-  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0, ERoot);
+  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0);
 
   Vertex.push_back(0);
 
@@ -292,9 +290,7 @@ void DominatorTree::calculate(Function& F) {
 
         // Add a new tree node for this BasicBlock, and link it as a child of
         // IDomNode
-        ETNode *ET = new ETNode(I);
-        ETNodes[I] = ET;
-        DomTreeNode *C = new DomTreeNode(I, IDomNode, ET);
+        DomTreeNode *C = new DomTreeNode(I, IDomNode);
         DomTreeNodes[I] = C;
         BBNode = IDomNode->addChild(C);
       }
@@ -320,9 +316,6 @@ void DominatorTreeBase::updateDFSNumbers()
       if (BBNode) {
         if (!BBNode->getIDom())
           BBNode->assignDFSNumber(dfsnum);
-        //ETNode *ETN = BBNode->getETNode();
-        //if (ETN && !ETN->hasFather())
-        //  ETN->assignDFSNumber(dfsnum);
       }
   }
   SlowQueries = 0;
@@ -472,13 +465,6 @@ void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
     // Switch to new dominator
     IDom = NewIDom;
     IDom->Children.push_back(this);
-
-    if (!ETN->hasFather())
-      ETN->setFather(IDom->getETNode());
-    else if (ETN->getFather()->getData<BasicBlock>() != IDom->getBlock()) {
-        ETN->Split();
-        ETN->setFather(IDom->getETNode());
-    }
   }
 }
 
@@ -493,9 +479,7 @@ DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
 
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
-  ETNode *ET = new ETNode(BB);
-  ETNodes[BB] = ET;
-  DomTreeNode *C = new DomTreeNode(BB, IDomNode, ET);
+  DomTreeNode *C = new DomTreeNode(BB, IDomNode);
   DomTreeNodes[BB] = C;
   return BBNode = IDomNode->addChild(C);
 }

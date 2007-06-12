@@ -24,7 +24,6 @@ using namespace llvm;
 
 char PostDominatorTree::ID = 0;
 char PostDominanceFrontier::ID = 0;
-char PostETForest::ID = 0;
 static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
@@ -165,9 +164,7 @@ void PostDominatorTree::calculate(Function &F) {
   // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
   // which postdominates all real exits if there are multiple exit blocks.
   BasicBlock *Root = Roots.size() == 1 ? Roots[0] : 0;
-  ETNode *ERoot = new ETNode(Root);
-  ETNodes[Root] = ERoot;
-  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0, ERoot);
+  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0);
   
   // Loop over all of the reachable blocks in the function...
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
@@ -179,9 +176,7 @@ void PostDominatorTree::calculate(Function &F) {
         
         // Add a new tree node for this BasicBlock, and link it as a child of
         // IDomNode
-        ETNode *ET = new ETNode(I);
-        ETNodes[I] = ET;
-        DomTreeNode *C = new DomTreeNode(I, IPDomNode, ET);
+        DomTreeNode *C = new DomTreeNode(I, IPDomNode);
         DomTreeNodes[I] = C;
         BBNode = IPDomNode->addChild(C);
       }
@@ -197,8 +192,8 @@ void PostDominatorTree::calculate(Function &F) {
   for (unsigned i = 0, e = Roots.size(); i != e; ++i)
     for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
            E = idf_end(Roots[i]); I != E; ++I) {
-      if (!getNodeForBlock(*I)->getETNode()->hasFather())
-        getNodeForBlock(*I)->getETNode()->assignDFSNumber(dfsnum);
+      if (!getNodeForBlock(*I)->getIDom())
+        getNodeForBlock(*I)->assignDFSNumber(dfsnum);
     }
   DFSInfoValid = true;
 }
@@ -215,77 +210,9 @@ DomTreeNode *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
   
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
-  ETNode *ET = new ETNode(BB);
-  ETNodes[BB] = ET;
-  DomTreeNode *C = new DomTreeNode(BB, IPDomNode, ET);
+  DomTreeNode *C = new DomTreeNode(BB, IPDomNode);
   DomTreeNodes[BB] = C;
   return BBNode = IPDomNode->addChild(C);
-}
-
-//===----------------------------------------------------------------------===//
-// PostETForest Implementation
-//===----------------------------------------------------------------------===//
-
-static RegisterPass<PostETForest>
-G("postetforest", "Post-ET-Forest Construction", true);
-
-ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
-  ETNode *&BBNode = Nodes[BB];
-  if (BBNode) return BBNode;
-
-  // Haven't calculated this node yet?  Get or calculate the node for the
-  // immediate dominator.
-  DomTreeNode *node = getAnalysis<PostDominatorTree>().getNode(BB);
-
-  // If we are unreachable, we may not have an immediate dominator.
-  if (!node)
-    return 0;
-  else if (!node->getIDom())
-    return BBNode = new ETNode(BB);
-  else {
-    ETNode *IDomNode = getNodeForBlock(node->getIDom()->getBlock());
-    
-    // Add a new tree node for this BasicBlock, and link it as a child of
-    // IDomNode
-    BBNode = new ETNode(BB);
-    BBNode->setFather(IDomNode);
-    return BBNode;
-  }
-}
-
-void PostETForest::calculate(const PostDominatorTree &DT) {
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    Nodes[Roots[i]] = new ETNode(Roots[i]); // Add a node for the root
-
-  // Iterate over all nodes in inverse depth first order.
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
-           E = idf_end(Roots[i]); I != E; ++I) {
-    BasicBlock *BB = *I;
-    ETNode *&BBNode = Nodes[BB];
-    if (!BBNode) {  
-      ETNode *IDomNode =  NULL;
-      DomTreeNode *node = DT.getNode(BB);
-      if (node && node->getIDom())
-        IDomNode = getNodeForBlock(node->getIDom()->getBlock());
-
-      // Add a new ETNode for this BasicBlock, and set it's parent
-      // to it's immediate dominator.
-      BBNode = new ETNode(BB);
-      if (IDomNode)          
-        BBNode->setFather(IDomNode);
-    }
-  }
-
-  int dfsnum = 0;
-  // Iterate over all nodes in depth first order...
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
-           E = idf_end(Roots[i]); I != E; ++I) {
-        if (!getNodeForBlock(*I)->hasFather())
-          getNodeForBlock(*I)->assignDFSNumber(dfsnum);
-    }
-  DFSInfoValid = true;
 }
 
 //===----------------------------------------------------------------------===//

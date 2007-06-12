@@ -51,30 +51,6 @@ private:
 };
 
 
-/// PostETForest Class - Concrete subclass of ETForestBase that is used to
-/// compute a forwards post-dominator ET-Forest.
-struct PostETForest : public ETForestBase {
-  static char ID;
-  PostETForest() : ETForestBase((intptr_t)&ID, true) {}
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<PostDominatorTree>();
-  }
-
-  virtual bool runOnFunction(Function &F) {
-    reset();     // Reset from the last time we were run...
-    PostDominatorTree &DT = getAnalysis<PostDominatorTree>();
-    Roots = DT.getRoots();
-    calculate(DT);
-    return false;
-  }
-
-  void calculate(const PostDominatorTree &DT);
-  ETNode *getNodeForBlock(BasicBlock *BB);
-};
-
-
 /// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
 /// used to compute the a post-dominance frontier.
 ///

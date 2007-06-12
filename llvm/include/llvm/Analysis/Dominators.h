@@ -63,7 +63,6 @@ public:
 class DomTreeNode {
   BasicBlock *TheBB;
   DomTreeNode *IDom;
-  ETNode *ETN;
   std::vector<DomTreeNode*> Children;
   int DFSNumIn, DFSNumOut;
 
@@ -78,14 +77,10 @@ public:
   
   inline BasicBlock *getBlock() const { return TheBB; }
   inline DomTreeNode *getIDom() const { return IDom; }
-  inline ETNode *getETNode() const { return ETN; }
   inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
   
-  inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom, ETNode *E) 
-    : TheBB(BB), IDom(iDom), ETN(E), DFSNumIn(-1), DFSNumOut(-1) {
-    if (IDom)
-      ETN->setFather(IDom->getETNode());
-  }
+  inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom)
+    : TheBB(BB), IDom(iDom), DFSNumIn(-1), DFSNumOut(-1) { }
   inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
   void setIDom(DomTreeNode *NewIDom);
 
@@ -110,9 +105,6 @@ protected:
   typedef std::map<BasicBlock*, DomTreeNode*> DomTreeNodeMapType;
   DomTreeNodeMapType DomTreeNodes;
   DomTreeNode *RootNode;
-
-  typedef std::map<BasicBlock*, ETNode*> ETMapType;
-  ETMapType ETNodes;
 
   bool DFSInfoValid;
   unsigned int SlowQueries;
@@ -197,17 +189,6 @@ protected:
 
   void updateDFSNumbers();  
 
-  /// Return the nearest common dominator of A and B.
-  BasicBlock *nearestCommonDominator(BasicBlock *A, BasicBlock *B) const  {
-    ETNode *NodeA = getNode(A)->getETNode();
-    ETNode *NodeB = getNode(B)->getETNode();
-    
-    ETNode *Common = NodeA->NCA(NodeB);
-    if (!Common)
-      return NULL;
-    return Common->getData<BasicBlock>();
-  }
-
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
   const bool isReachableFromEntry(BasicBlock* A);
@@ -222,12 +203,8 @@ protected:
     if (A == 0 || B == 0)
       return false;
 
-    ETNode *NodeA = A->getETNode();
-    ETNode *NodeB = B->getETNode();
-    
     if (DFSInfoValid)
       return B->DominatedBy(A);
-      //return NodeB->DominatedBy(NodeA);
 
     // If we end up with too many slow queries, just update the
     // DFS numbers on the theory that we are going to keep querying.
@@ -235,9 +212,8 @@ protected:
     if (SlowQueries > 32) {
       updateDFSNumbers();
       return B->DominatedBy(A);
-      //return NodeB->DominatedBy(NodeA);
     }
-    //return NodeB->DominatedBySlow(NodeA);
+
     return dominatedBySlowTreeWalk(A, B);
   }
 
@@ -268,10 +244,8 @@ protected:
     DomTreeNode *IDomNode = getNode(DomBB);
     assert(IDomNode && "Not immediate dominator specified for block!");
     DFSInfoValid = false;
-    ETNode *E = new ETNode(BB);
-    ETNodes[BB] = E;
     return DomTreeNodes[BB] = 
-      IDomNode->addChild(new DomTreeNode(BB, IDomNode, E));
+      IDomNode->addChild(new DomTreeNode(BB, IDomNode));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator
