@@ -43,14 +43,21 @@ struct ExprLT {
       if (BinaryOperator* rightBO = dyn_cast<BinaryOperator>(right))
         return cmpBinaryOperator(leftBO, rightBO);
       else
-        return left < right;
+        if (isa<CmpInst>(right)) {
+          return false;
+        } else {
+          return true;
+        }
     } else if (CmpInst* leftCmp = dyn_cast<CmpInst>(left)) {
       if (CmpInst* rightCmp = dyn_cast<CmpInst>(right))
         return cmpComparison(leftCmp, rightCmp);
       else
-        return left < right;
+        return true;
     } else {
-      return left < right;
+      if (isa<BinaryOperator>(right) || isa<CmpInst>(right))
+        return false;
+      else
+        return left < right;
     }
   }
   
@@ -92,7 +99,7 @@ namespace {
     typedef std::map<Value*, uint32_t, ExprLT> ValueTable;
     ValueTable VN;
     std::set<Value*, ExprLT> MS;
-    std::set<Instruction*> createdExpressions;
+    std::vector<Instruction*> createdExpressions;
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -109,9 +116,9 @@ namespace {
     Value* find_leader(std::set<Value*, ExprLT>& vals,
                        Value* v);
     Value* phi_translate(std::set<Value*, ExprLT>& set,
-                         Value* V, BasicBlock* pred);
-    void phi_translate_set(std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
-                       std::set<Value*, ExprLT>& out);
+                         Value* V, BasicBlock* pred, BasicBlock* succ);
+    void phi_translate_set(std::set<Value*, ExprLT>& anticIn, BasicBlock* pred,
+                           BasicBlock* succ, std::set<Value*, ExprLT>& out);
     
     void topo_sort(std::set<Value*, ExprLT>& set,
                    std::vector<Value*>& vec);
@@ -162,7 +169,7 @@ Value* GVNPRE::find_leader(std::set<Value*, ExprLT>& vals, Value* v) {
 }
 
 Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
-                             Value* V, BasicBlock* pred) {
+                             Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
   
@@ -170,7 +177,7 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
     Value* newOp1 = isa<Instruction>(BO->getOperand(0))
                                 ? phi_translate(set,
                                   find_leader(set, BO->getOperand(0)),
-                                  pred)
+                                  pred, succ)
                                 : BO->getOperand(0);
     if (newOp1 == 0)
       return 0;
@@ -178,7 +185,7 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
     Value* newOp2 = isa<Instruction>(BO->getOperand(1))
                                 ? phi_translate(set,
                                   find_leader(set, BO->getOperand(1)),
-                                  pred)
+                                  pred, succ)
                                 : BO->getOperand(1);
     if (newOp2 == 0)
       return 0;
@@ -192,7 +199,7 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
         nextValueNumber++;
       if (!find_leader(set, newVal)) {
         DOUT << "Creating value: " << std::hex << newVal << std::dec << "\n";
-        createdExpressions.insert(newVal);
+        createdExpressions.push_back(newVal);
         return newVal;
       } else {
         ValueTable::iterator I = VN.find(newVal);
@@ -208,13 +215,13 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
       }
     }
   } else if (PHINode* P = dyn_cast<PHINode>(V)) {
-    if (P->getParent() == pred->getTerminator()->getSuccessor(0))
+    if (P->getParent() == succ)
       return P->getIncomingValueForBlock(pred);
   } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
     Value* newOp1 = isa<Instruction>(C->getOperand(0))
                                 ? phi_translate(set,
                                   find_leader(set, C->getOperand(0)),
-                                  pred)
+                                  pred, succ)
                                 : C->getOperand(0);
     if (newOp1 == 0)
       return 0;
@@ -222,7 +229,7 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
     Value* newOp2 = isa<Instruction>(C->getOperand(1))
                                 ? phi_translate(set,
                                   find_leader(set, C->getOperand(1)),
-                                  pred)
+                                  pred, succ)
                                 : C->getOperand(1);
     if (newOp2 == 0)
       return 0;
@@ -237,7 +244,7 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
         nextValueNumber++;
       if (!find_leader(set, newVal)) {
         DOUT << "Creating value: " << std::hex << newVal << std::dec << "\n";
-        createdExpressions.insert(newVal);
+        createdExpressions.push_back(newVal);
         return newVal;
       } else {
         ValueTable::iterator I = VN.find(newVal);
@@ -257,11 +264,12 @@ Value* GVNPRE::phi_translate(std::set<Value*, ExprLT>& set,
   return V;
 }
 
-void GVNPRE::phi_translate_set(std::set<Value*, ExprLT>& anticIn, BasicBlock* B,
-                           std::set<Value*, ExprLT>& out) {
+void GVNPRE::phi_translate_set(std::set<Value*, ExprLT>& anticIn,
+                              BasicBlock* pred, BasicBlock* succ,
+                              std::set<Value*, ExprLT>& out) {
   for (std::set<Value*, ExprLT>::iterator I = anticIn.begin(),
        E = anticIn.end(); I != E; ++I) {
-    Value* V = phi_translate(anticIn, *I, B);
+    Value* V = phi_translate(anticIn, *I, pred, succ);
     if (V != 0)
       out.insert(V);
   }
@@ -544,10 +552,12 @@ bool GVNPRE::runOnFunction(Function &F) {
       if (BB->getTerminator()->getNumSuccessors() == 1) {
          if (visited.find(BB->getTerminator()->getSuccessor(0)) == 
              visited.end())
-           phi_translate_set(MS, BB, anticOut);
+           phi_translate_set(MS, BB, BB->getTerminator()->getSuccessor(0),
+                             anticOut);
          else
-           phi_translate_set(
-             anticipatedIn[BB->getTerminator()->getSuccessor(0)], BB, anticOut);
+           phi_translate_set(anticipatedIn[BB->getTerminator()->getSuccessor(0)],
+                             BB,  BB->getTerminator()->getSuccessor(0), 
+                             anticOut);
       } else if (BB->getTerminator()->getNumSuccessors() > 1) {
         BasicBlock* first = BB->getTerminator()->getSuccessor(0);
         anticOut.insert(anticipatedIn[first].begin(),
@@ -673,9 +683,8 @@ bool GVNPRE::runOnFunction(Function &F) {
         dump_unique(anticIn);
         DOUT << "\n";
         
-        while (!workList.empty()) {
-          Value* e = workList.back();
-          workList.pop_back();
+        for (unsigned i = 0; i < workList.size(); ++i) {
+          Value* e = workList[i];
           
           if (isa<BinaryOperator>(e) || isa<CmpInst>(e)) {
             if (find_leader(availableOut[DI->getIDom()->getBlock()], e) != 0)
@@ -687,7 +696,7 @@ bool GVNPRE::runOnFunction(Function &F) {
             
             for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;
                  ++PI) {
-              Value *e2 = phi_translate(anticIn, e, *PI);
+              Value *e2 = phi_translate(anticIn, e, *PI, BB);
               Value *e3 = find_leader(availableOut[*PI], e2);
               
               if (e3 == 0) {
@@ -720,13 +729,21 @@ bool GVNPRE::runOnFunction(Function &F) {
                 
                   Value* s1 = 0;
                   if (isa<Instruction>(U->getOperand(0)))
-                    s1 = find_leader(availableOut[*PI], U->getOperand(0));
+                    s1 = find_leader(availableOut[*PI], 
+                                     phi_translate(availableOut[*PI], 
+                                                   U->getOperand(0), 
+                                                   *PI, BB)
+                                     );
                   else
                     s1 = U->getOperand(0);
                   
                   Value* s2 = 0;
                   if (isa<Instruction>(U->getOperand(1)))
-                    s2 = find_leader(availableOut[*PI], U->getOperand(1));
+                    s2 = find_leader(availableOut[*PI], 
+                                     phi_translate(availableOut[*PI],
+                                                   U->getOperand(1), 
+                                                   *PI, BB)
+                                     );
                   else
                     s2 = U->getOperand(1);
                   
@@ -842,7 +859,6 @@ bool GVNPRE::runOnFunction(Function &F) {
   while (!replace.empty()) {
     std::pair<Instruction*, Value*> rep = replace.back();
     replace.pop_back();
-      
     rep.first->replaceAllUsesWith(rep.second);
   }
     
@@ -851,9 +867,11 @@ bool GVNPRE::runOnFunction(Function &F) {
      (*I)->eraseFromParent();
   
   // Phase 4: Cleanup
-  for (std::set<Instruction*>::iterator I = createdExpressions.begin(),
-       E = createdExpressions.end(); I != E; ++I) {
-    delete *I;
+  while (!createdExpressions.empty()) {
+    Instruction* I = createdExpressions.back();
+    createdExpressions.pop_back();
+    
+    delete I;
   }
   
   return false;
