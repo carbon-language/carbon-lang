@@ -317,7 +317,7 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
 /// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
 /// copy (e.g. it's casting from one pointer type to another, int->uint, or
 /// int->sbyte on PPC), sink it into user blocks to reduce the number of virtual
-/// registers that must be created and coallesced.
+/// registers that must be created and coalesced.
 ///
 /// Return true if any changes are made.
 static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
@@ -348,7 +348,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   BasicBlock *DefBB = CI->getParent();
   
   /// InsertedCasts - Only insert a cast in each block once.
-  std::map<BasicBlock*, CastInst*> InsertedCasts;
+  DenseMap<BasicBlock*, CastInst*> InsertedCasts;
   
   bool MadeChange = false;
   for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
@@ -383,11 +383,67 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
       MadeChange = true;
     }
     
-    // Replace a use of the cast with a use of the new casat.
+    // Replace a use of the cast with a use of the new cast.
     TheUse = InsertedCast;
   }
   
   // If we removed all uses, nuke the cast.
+  if (CI->use_empty())
+    CI->eraseFromParent();
+  
+  return MadeChange;
+}
+
+/// OptimizeCmpExpression - sink the given CmpInst into user blocks to reduce 
+/// the number of virtual registers that must be created and coalesced.  This is
+/// a clear win except on targets with multiple condition code registers (powerPC),
+/// where it might lose; some adjustment may be wanted there.
+///
+/// Return true if any changes are made.
+static bool OptimizeCmpExpression(CmpInst *CI){
+
+  BasicBlock *DefBB = CI->getParent();
+  
+  /// InsertedCmp - Only insert a cmp in each block once.
+  DenseMap<BasicBlock*, CmpInst*> InsertedCmps;
+  
+  bool MadeChange = false;
+  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end(); 
+       UI != E; ) {
+    Use &TheUse = UI.getUse();
+    Instruction *User = cast<Instruction>(*UI);
+    
+    // Preincrement use iterator so we don't invalidate it.
+    ++UI;
+    
+    // Don't bother for PHI nodes.
+    if (isa<PHINode>(User))
+      continue;
+
+    // Figure out which BB this cmp is used in.
+    BasicBlock *UserBB = User->getParent();
+    
+    // If this user is in the same block as the cmp, don't change the cmp.
+    if (UserBB == DefBB) continue;
+    
+    // If we have already inserted a cmp into this block, use it.
+    CmpInst *&InsertedCmp = InsertedCmps[UserBB];
+
+    if (!InsertedCmp) {
+      BasicBlock::iterator InsertPt = UserBB->begin();
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
+      InsertedCmp = 
+        CmpInst::create(CI->getOpcode(), CI->getPredicate(), CI->getOperand(0), 
+                        CI->getOperand(1), "", InsertPt);
+      MadeChange = true;
+    }
+    
+    // Replace a use of the cmp with a use of the new cmp.
+    TheUse = InsertedCmp;
+  }
+  
+  // If we removed all uses, nuke the cmp.
   if (CI->use_empty())
     CI->eraseFromParent();
   
@@ -894,6 +950,8 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
       
       if (TLI)
         MadeChange |= OptimizeNoopCopyExpression(CI, *TLI);
+    } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
+      MadeChange |= OptimizeCmpExpression(CI);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       if (TLI)
         MadeChange |= OptimizeLoadStoreInst(I, I->getOperand(0), LI->getType(),
