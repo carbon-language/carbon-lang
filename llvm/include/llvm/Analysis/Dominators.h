@@ -59,13 +59,16 @@ public:
 
 //===----------------------------------------------------------------------===//
 // DomTreeNode - Dominator Tree Node
-
+class DominatorTreeBase;
+class PostDominatorTree;
 class DomTreeNode {
   BasicBlock *TheBB;
   DomTreeNode *IDom;
   std::vector<DomTreeNode*> Children;
   int DFSNumIn, DFSNumOut;
 
+  friend class DominatorTreeBase;
+  friend class PostDominatorTree;
 public:
   typedef std::vector<DomTreeNode*>::iterator iterator;
   typedef std::vector<DomTreeNode*>::const_iterator const_iterator;
@@ -84,6 +87,7 @@ public:
   inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
   void setIDom(DomTreeNode *NewIDom);
 
+private:
   // Return true if this node is dominated by other. Use this only if DFS info is valid.
   bool DominatedBy(const DomTreeNode *other) const {
     return this->DFSNumIn >= other->DFSNumIn &&
