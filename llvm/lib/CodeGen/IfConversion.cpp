@@ -36,6 +36,8 @@ namespace {
                                cl::init(false), cl::Hidden);
   cl::opt<bool> DisableTriangle("disable-ifcvt-triangle", 
                                 cl::init(false), cl::Hidden);
+  cl::opt<bool> DisableTriangleR("disable-ifcvt-triangle-rev", 
+                                 cl::init(false), cl::Hidden);
   cl::opt<bool> DisableTriangleF("disable-ifcvt-triangle-false", 
                                  cl::init(false), cl::Hidden);
   cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev", 
@@ -47,6 +49,7 @@ namespace {
 STATISTIC(NumSimple,       "Number of simple if-conversions performed");
 STATISTIC(NumSimpleFalse,  "Number of simple (F) if-conversions performed");
 STATISTIC(NumTriangle,     "Number of triangle if-conversions performed");
+STATISTIC(NumTriangleRev,  "Number of triangle (R) if-conversions performed");
 STATISTIC(NumTriangleFalse,"Number of triangle (F) if-conversions performed");
 STATISTIC(NumTriangleFRev, "Number of triangle (F/R) if-conversions performed");
 STATISTIC(NumDiamonds,     "Number of diamond if-conversions performed");
@@ -59,6 +62,7 @@ namespace {
       ICSimple,        // BB is entry of an one split, no rejoin sub-CFG.
       ICSimpleFalse,   // Same as ICSimple, but on the false path.
       ICTriangle,      // BB is entry of a triangle sub-CFG.
+      ICTriangleRev,   // Same as ICTriangle, but true path rev condition.
       ICTriangleFalse, // Same as ICTriangle, but on the false path.
       ICTriangleFRev,  // Same as ICTriangleFalse, but false path rev condition.
       ICDiamond        // BB is entry of a diamond sub-CFG.
@@ -225,27 +229,33 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
        break;
       }
       case ICTriangle:
+      case ICTriangleRev:
       case ICTriangleFalse:
       case ICTriangleFRev: {
-        bool isFalse = BBI.Kind == ICTriangleFalse;
-        bool isFalseRev = BBI.Kind == ICTriangleFRev;
-        if (DisableTriangle && !isFalse && !isFalseRev) break;
-        if (DisableTriangleF && isFalse) break;
-        if (DisableTriangleFR && isFalseRev) break;
+        bool isFalse    = BBI.Kind == ICTriangleFalse;
+        bool isRev      = (BBI.Kind == ICTriangleRev || BBI.Kind == ICTriangleFRev);
+        if (DisableTriangle && !isFalse && !isRev) break;
+        if (DisableTriangleR && !isFalse && isRev) break;
+        if (DisableTriangleF && isFalse && !isRev) break;
+        if (DisableTriangleFR && isFalse && isRev) break;
         DOUT << "Ifcvt (Triangle";
         if (isFalse)
           DOUT << " false";
-        if (isFalseRev)
-          DOUT << " false/rev";
+        if (isRev)
+          DOUT << " rev";
         DOUT << "): BB#" << BBI.BB->getNumber() << " (T:"
              << BBI.TrueBB->getNumber() << ",F:" << BBI.FalseBB->getNumber()
              << ") ";
         RetVal = IfConvertTriangle(BBI);
         DOUT << (RetVal ? "succeeded!" : "failed!") << "\n";
         if (RetVal) {
-          if (isFalseRev)   NumTriangleFRev++;
-          else if (isFalse) NumTriangleFalse++;
-          else              NumTriangle++;
+          if (isFalse) {
+            if (isRev) NumTriangleFRev++;
+            else       NumTriangleFalse++;
+          } else {
+            if (isRev) NumTriangleRev++;
+            else       NumTriangle++;
+          }
         }
         break;
       }
@@ -535,6 +545,9 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB) {
       //   |  /
       //   FBB
       BBI.Kind = ICTriangle;
+    } else if (ValidTriangle(TrueBBI, FalseBBI, true) &&
+               FeasibilityAnalysis(TrueBBI, BBI.BrCond, true, true)) {
+      BBI.Kind = ICTriangleRev;
     } else if (ValidSimple(TrueBBI) &&
                FeasibilityAnalysis(TrueBBI, BBI.BrCond)) {
       // Simple (split, no rejoin):
@@ -608,6 +621,9 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
         case ICSimple:
         case ICSimpleFalse:
         case ICTriangle:
+        case ICTriangleRev:
+        case ICTriangleFalse:
+        case ICTriangleFRev:
         case ICDiamond:
           Candidates.push_back(&BBI);
           break;
@@ -734,22 +750,22 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
 
   std::vector<MachineOperand> Cond(BBI.BrCond);
   if (BBI.Kind == ICTriangleFalse || BBI.Kind == ICTriangleFRev) {
-    if (BBI.Kind == ICTriangleFRev) {
-      ReverseBranchCondition(*NextBBI);
-      // False BB has been changed, modify its predecessors (except for this
-      // one) so they don't get ifcvt'ed based on bad intel.
-      for (MachineBasicBlock::pred_iterator PI = NextBBI->BB->pred_begin(),
-             E = NextBBI->BB->pred_end(); PI != E; ++PI) {
-        MachineBasicBlock *PBB = *PI;
-        if (PBB == BBI.BB)
-          continue;
-        BBInfo &PBBI = BBAnalysis[PBB->getNumber()];
-        if (PBBI.IsEnqueued)
-          PBBI.IsEnqueued = false;
-      }
-    }
     std::swap(CvtBBI, NextBBI);
     TII->ReverseBranchCondition(Cond);
+  }
+  if (BBI.Kind == ICTriangleRev || BBI.Kind == ICTriangleFRev) {
+    ReverseBranchCondition(*CvtBBI);
+    // BB has been changed, modify its predecessors (except for this
+    // one) so they don't get ifcvt'ed based on bad intel.
+    for (MachineBasicBlock::pred_iterator PI = CvtBBI->BB->pred_begin(),
+           E = CvtBBI->BB->pred_end(); PI != E; ++PI) {
+      MachineBasicBlock *PBB = *PI;
+      if (PBB == BBI.BB)
+        continue;
+      BBInfo &PBBI = BBAnalysis[PBB->getNumber()];
+      if (PBBI.IsEnqueued)
+        PBBI.IsEnqueued = false;
+    }
   }
 
   // Predicate the 'true' block after removing its branch.
