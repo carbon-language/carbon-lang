@@ -378,21 +378,21 @@ symbol table entries. Here is an example of the "hello world" module:</p>
 
 <div class="doc_code">
 <pre><i>; Declare the string constant as a global constant...</i>
-<a href="#identifiers">%.LC0</a> = <a href="#linkage_internal">internal</a> <a
- href="#globalvars">constant</a> <a href="#t_array">[13 x i8 ]</a> c"hello world\0A\00"          <i>; [13 x i8 ]*</i>
+<a href="#identifiers">@.LC0</a> = <a href="#linkage_internal">internal</a> <a
+ href="#globalvars">constant</a> <a href="#t_array">[13 x i8]</a> c"hello world\0A\00"          <i>; [13 x i8]*</i>
 
 <i>; External declaration of the puts function</i>
-<a href="#functionstructure">declare</a> i32 %puts(i8 *)                                            <i>; i32(i8 *)* </i>
+<a href="#functionstructure">declare</a> i32 @puts(i8 *)                                            <i>; i32(i8 *)* </i>
 
 <i>; Definition of main function</i>
-define i32 %main() {                                                 <i>; i32()* </i>
+define i32 @main() {                                                 <i>; i32()* </i>
         <i>; Convert [13x i8 ]* to i8  *...</i>
         %cast210 = <a
  href="#i_getelementptr">getelementptr</a> [13 x i8 ]* %.LC0, i64 0, i64 0 <i>; i8 *</i>
 
         <i>; Call puts function to write out the string to stdout...</i>
         <a
- href="#i_call">call</a> i32 %puts(i8 * %cast210)                              <i>; i32</i>
+ href="#i_call">call</a> i32 @puts(i8 * %cast210)                              <i>; i32</i>
         <a
  href="#i_ret">ret</a> i32 0<br>}<br>
 </pre>
