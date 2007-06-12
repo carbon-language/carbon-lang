@@ -131,6 +131,9 @@ namespace {
                        std::set<Value*>& currTemps,
                        std::set<Value*, ExprLT>& currAvail,
                        std::map<BasicBlock*, std::set<Value*, ExprLT> > availOut);
+    void cleanup();
+    void elimination(std::map<BasicBlock*,
+                     std::set<Value*, ExprLT> >& availOut);
   
   };
   
@@ -482,6 +485,61 @@ void GVNPRE::CalculateAvailOut(DomTreeNode* DI,
   }
 }
 
+void GVNPRE::elimination(std::map<BasicBlock*,
+                         std::set<Value*, ExprLT> >& availableOut) {
+  DOUT << "\n\nPhase 3: Elimination\n\n";
+  
+  std::vector<std::pair<Instruction*, Value*> > replace;
+  std::vector<Instruction*> erase;
+  
+  DominatorTree& DT = getAnalysis<DominatorTree>();
+  
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
+         E = df_end(DT.getRootNode()); DI != E; ++DI) {
+    BasicBlock* BB = DI->getBlock();
+    
+    DOUT << "Block: " << BB->getName() << "\n";
+    dump_unique(availableOut[BB]);
+    DOUT << "\n\n";
+    
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
+         BI != BE; ++BI) {
+
+      if (isa<BinaryOperator>(BI) || isa<CmpInst>(BI)) {
+         Value *leader = find_leader(availableOut[BB], BI);
+  
+        if (leader != 0)
+          if (Instruction* Instr = dyn_cast<Instruction>(leader))
+            if (Instr->getParent() != 0 && Instr != BI) {
+              replace.push_back(std::make_pair(BI, leader));
+              erase.push_back(BI);
+              ++NumEliminated;
+            }
+      }
+    }
+  }
+  
+  while (!replace.empty()) {
+    std::pair<Instruction*, Value*> rep = replace.back();
+    replace.pop_back();
+    rep.first->replaceAllUsesWith(rep.second);
+  }
+    
+  for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
+       I != E; ++I)
+     (*I)->eraseFromParent();
+}
+
+
+void GVNPRE::cleanup() {
+  while (!createdExpressions.empty()) {
+    Instruction* I = createdExpressions.back();
+    createdExpressions.pop_back();
+    
+    delete I;
+  }
+}
+
 bool GVNPRE::runOnFunction(Function &F) {
   VN.clear();
   MS.clear();
@@ -517,7 +575,15 @@ bool GVNPRE::runOnFunction(Function &F) {
   dump_unique(MS);
   DOUT << "\n";
   
+  // If function has no exit blocks, only perform GVN
   PostDominatorTree &PDT = getAnalysis<PostDominatorTree>();
+  if (PDT[&F.getEntryBlock()] == 0) {
+    elimination(availableOut);
+    cleanup();
+    
+    return true;
+  }
+  
   
   // Phase 1, Part 2: calculate ANTIC_IN
   
@@ -633,7 +699,6 @@ bool GVNPRE::runOnFunction(Function &F) {
     dump_unique(availableOut[I]);
     DOUT << "\n";
   }
-  
   
   // Phase 2: Insert
   DOUT<< "\nPhase 2: Insertion\n";
@@ -826,53 +891,10 @@ bool GVNPRE::runOnFunction(Function &F) {
   }
   
   // Phase 3: Eliminate
-  DOUT << "\n\nPhase 3: Elimination\n\n";
-  
-  std::vector<std::pair<Instruction*, Value*> > replace;
-  std::vector<Instruction*> erase;
-  
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
-         E = df_end(DT.getRootNode()); DI != E; ++DI) {
-    BasicBlock* BB = DI->getBlock();
-    
-    DOUT << "Block: " << BB->getName() << "\n";
-    dump_unique(availableOut[BB]);
-    DOUT << "\n\n";
-    
-    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-         BI != BE; ++BI) {
-
-      if (isa<BinaryOperator>(BI) || isa<CmpInst>(BI)) {
-         Value *leader = find_leader(availableOut[BB], BI);
-  
-        if (leader != 0)
-          if (Instruction* Instr = dyn_cast<Instruction>(leader))
-            if (Instr->getParent() != 0 && Instr != BI) {
-              replace.push_back(std::make_pair(BI, leader));
-              erase.push_back(BI);
-              ++NumEliminated;
-            }
-      }
-    }
-  }
-  
-  while (!replace.empty()) {
-    std::pair<Instruction*, Value*> rep = replace.back();
-    replace.pop_back();
-    rep.first->replaceAllUsesWith(rep.second);
-  }
-    
-  for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
-       I != E; ++I)
-     (*I)->eraseFromParent();
+  elimination(availableOut);
   
   // Phase 4: Cleanup
-  while (!createdExpressions.empty()) {
-    Instruction* I = createdExpressions.back();
-    createdExpressions.pop_back();
-    
-    delete I;
-  }
+  cleanup();
   
-  return false;
+  return true;
 }
