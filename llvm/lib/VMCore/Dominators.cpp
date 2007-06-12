@@ -325,6 +325,8 @@ void DominatorTreeBase::updateDFSNumbers()
 /// isReachableFromEntry - Return true if A is dominated by the entry
 /// block of the function containing it.
 const bool DominatorTreeBase::isReachableFromEntry(BasicBlock* A) {
+  assert (!isPostDominator() 
+          && "This is not implemented for post dominators");
   return dominates(&A->getParent()->getEntryBlock(), A);
 }
 
