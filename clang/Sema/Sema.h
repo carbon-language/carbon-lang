@@ -274,7 +274,7 @@ private:
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
-  QualType UsualArithmeticConversions(QualType t1, QualType t2);
+  QualType UsualArithmeticConversions(QualType &t1, QualType &t2);
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). If the type isn't a function
   // or array, this routine simply returns the input type (unmodified).

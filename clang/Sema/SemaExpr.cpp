@@ -592,9 +592,9 @@ QualType Sema::UsualUnaryConversions(QualType t) {
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
-QualType Sema::UsualArithmeticConversions(QualType t1, QualType t2) {
-  QualType lhs = UsualUnaryConversions(t1);
-  QualType rhs = UsualUnaryConversions(t2);
+QualType Sema::UsualArithmeticConversions(QualType &lhs, QualType &rhs) {
+  lhs = UsualUnaryConversions(lhs);
+  rhs = UsualUnaryConversions(rhs);
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs) 
@@ -736,7 +736,8 @@ inline void Sema::InvalidOperands(SourceLocation loc, Expr *lex, Expr *rex) {
 inline QualType Sema::CheckMultiplyDivideOperands(
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
-  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   if (resType->isArithmeticType())
     return resType;
@@ -747,7 +748,8 @@ inline QualType Sema::CheckMultiplyDivideOperands(
 inline QualType Sema::CheckRemainderOperands(
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
-  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   if (resType->isIntegerType())
     return resType;
@@ -793,7 +795,8 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
 {
   // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
   // for int << longlong -> the result type should be int, not long long.
-  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   if (resType->isIntegerType())
     return resType;
@@ -804,7 +807,8 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
 inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
   Expr *lex, Expr *rex, SourceLocation loc)
 {
-  QualType lType = lex->getType(), rType = rex->getType();
+  QualType lType = UsualUnaryConversions(lex->getType());
+  QualType rType = UsualUnaryConversions(rex->getType());
   
   if (lType->isRealType() && rType->isRealType())
     return Context.IntTy;
@@ -823,7 +827,8 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
 inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
   Expr *lex, Expr *rex, SourceLocation loc)
 {
-  QualType lType = lex->getType(), rType = rex->getType();
+  QualType lType = UsualUnaryConversions(lex->getType());
+  QualType rType = UsualUnaryConversions(rex->getType());
   
   if (lType->isArithmeticType() && rType->isArithmeticType())
     return Context.IntTy;
@@ -841,7 +846,8 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
 inline QualType Sema::CheckBitwiseOperands(
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
-  QualType resType = UsualArithmeticConversions(lex->getType(), rex->getType());
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   if (resType->isIntegerType())
     return resType;
@@ -948,7 +954,8 @@ inline QualType Sema::CheckCommaOperands( // C99 6.5.17
 }
 
 QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
-  QualType resType = UsualArithmeticConversions(op->getType(), Context.IntTy);
+  QualType lhsType = op->getType(), rhsType = Context.IntTy;
+  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1
