@@ -772,7 +772,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // If the register was promoted, use TRUNCATE or FP_ROUND as appropriate.
       for (unsigned i = 0; i != NE; ++i) {
         SDOperand Op = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                          PTyElementVT);
+                                          PTyLegalElementVT);
         if (MVT::isFloatingPoint(PTyElementVT))
           Op = DAG.getNode(ISD::FP_ROUND, PTyElementVT, Op);
         else
@@ -782,17 +782,17 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     } else {
       // If the register was expanded, use BUILD_PAIR.
       assert((NE & 1) == 0 && "Must expand into a multiple of 2 elements!");
-      for (unsigned i = 0; i != NE/2; ++i) {
+      for (unsigned i = 0; i != NE; ++i) {
         SDOperand Op0 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                           PTyElementVT);
+                                           PTyLegalElementVT);
         SDOperand Op1 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                           PTyElementVT);
-        Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, VT, Op0, Op1));
+                                           PTyLegalElementVT);
+        Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, PTyElementVT, Op0, Op1));
       }
     }
     
     Ops.push_back(DAG.getConstant(NE, MVT::i32));
-    Ops.push_back(DAG.getValueType(PTyLegalElementVT));
+    Ops.push_back(DAG.getValueType(PTyElementVT));
     N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
     
     // Finally, use a VBIT_CONVERT to make this available as the appropriate
