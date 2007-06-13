@@ -566,7 +566,6 @@ public:
   
   // These all get lowered before this pass.
   void visitInvoke(InvokeInst &I);
-  void visitInvoke(InvokeInst &I, bool AsTerminator);
   void visitUnwind(UnwindInst &I);
 
   void visitScalarBinary(User &I, unsigned OpCode);
@@ -1332,29 +1331,31 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
 }
 
 void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
-  assert(0 && "Should never be visited directly");
-}
-void SelectionDAGLowering::visitInvoke(InvokeInst &I, bool AsTerminator) {
   // Retrieve successors.
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
+  MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
 
-  if (!AsTerminator) {
-    MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
+  LowerCallTo(I, I.getCalledValue()->getType(),
+              I.getCallingConv(),
+              false,
+              getValue(I.getOperand(0)),
+              3, LandingPad);
 
-    LowerCallTo(I, I.getCalledValue()->getType(),
-                I.getCallingConv(),
-                false,
-                getValue(I.getOperand(0)),
-                3, LandingPad);
-
-    // Update successor info
-    CurMBB->addSuccessor(Return);
-    CurMBB->addSuccessor(LandingPad);
-  } else {
-    // Drop into normal successor.
-    DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(), 
-                            DAG.getBasicBlock(Return)));
+  // If the value of the invoke is used outside of its defining block, make it
+  // available as a virtual register.
+  if (!I.use_empty()) {
+    DenseMap<const Value*, unsigned>::iterator VMI = FuncInfo.ValueMap.find(&I);
+    if (VMI != FuncInfo.ValueMap.end())
+      DAG.setRoot(CopyValueToVirtualRegister(&I, VMI->second));
   }
+
+  // Drop into normal successor.
+  DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
+                          DAG.getBasicBlock(Return)));
+
+  // Update successor info
+  CurMBB->addSuccessor(Return);
+  CurMBB->addSuccessor(LandingPad);
 }
 
 void SelectionDAGLowering::visitUnwind(UnwindInst &I) {
@@ -4546,15 +4547,11 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   for (BasicBlock::iterator I = LLVMBB->begin(), E = --LLVMBB->end();
        I != E; ++I)
     SDL.visit(*I);
-    
-  // Lower call part of invoke.
-  InvokeInst *Invoke = dyn_cast<InvokeInst>(LLVMBB->getTerminator());
-  if (Invoke) SDL.visitInvoke(*Invoke, false);
-  
+
   // Ensure that all instructions which are used outside of their defining
-  // blocks are available as virtual registers.
+  // blocks are available as virtual registers.  Invoke is handled elsewhere.
   for (BasicBlock::iterator I = LLVMBB->begin(), E = LLVMBB->end(); I != E;++I)
-    if (!I->use_empty() && !isa<PHINode>(I)) {
+    if (!I->use_empty() && !isa<PHINode>(I) && !isa<InvokeInst>(I)) {
       DenseMap<const Value*, unsigned>::iterator VMI =FuncInfo.ValueMap.find(I);
       if (VMI != FuncInfo.ValueMap.end())
         UnorderedChains.push_back(
@@ -4662,12 +4659,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   }
 
   // Lower the terminator after the copies are emitted.
-  if (Invoke) {
-    // Just the branch part of invoke.
-    SDL.visitInvoke(*Invoke, true);
-  } else {
-    SDL.visit(*LLVMBB->getTerminator());
-  }
+  SDL.visit(*LLVMBB->getTerminator());
 
   // Copy over any CaseBlock records that may now exist due to SwitchInst
   // lowering, as well as any jump table information.
