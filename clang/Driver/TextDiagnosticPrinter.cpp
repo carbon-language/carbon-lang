@@ -121,27 +121,6 @@ unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
   return TheTok.getLength();
 }
 
-bool TextDiagnosticPrinter::IgnoreDiagnostic(Diagnostic::Level Level, 
-                                             SourceLocation Pos) {
-  if (Pos.isValid()) {
-    // If this is a warning or note, and if it a system header, suppress the
-    // diagnostic.
-    if (Level == Diagnostic::Warning ||
-        Level == Diagnostic::Note) {
-      SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
-      const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
-      if (F) {
-        DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
-        if (DirInfo == DirectoryLookup::SystemHeaderDir ||
-            DirInfo == DirectoryLookup::ExternCSystemHeaderDir)
-          return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
                                              SourceLocation Pos,
                                              diag::kind ID,
@@ -197,18 +176,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     break;
   }
   
-  std::string Msg = Diagnostic::getDescription(ID);
-  
-  // Replace all instances of %0 in Msg with 'Extra'.
-  for (unsigned i = 0; i < Msg.size()-1; ++i) {
-    if (Msg[i] == '%' && isdigit(Msg[i+1])) {
-      unsigned StrNo = Msg[i+1]-'0';
-      Msg = std::string(Msg.begin(), Msg.begin()+i) +
-            (StrNo < NumStrs ? Strs[StrNo] : "<<<INTERNAL ERROR>>>") +
-            std::string(Msg.begin()+i+2, Msg.end());
-    }
-  }
-  cerr << Msg << "\n";
+  cerr << FormatDiagnostic(Level, ID, Strs, NumStrs) << "\n";
   
   if (!NoCaretDiagnostics && Pos.isValid()) {
     // Get the line of the source file.

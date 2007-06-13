@@ -15,26 +15,18 @@
 #ifndef TEXT_DIAGNOSTIC_PRINTER_H_
 #define TEXT_DIAGNOSTIC_PRINTER_H_
 
-#include "clang/Basic/Diagnostic.h"
+#include "TextDiagnostics.h"
 #include "clang/Basic/SourceLocation.h"
 
 namespace llvm {
   namespace clang {
     class SourceManager;
-    class HeaderSearch;
-    class Preprocessor;
 
-    class TextDiagnosticPrinter : public DiagnosticClient {
-      SourceManager &SourceMgr;
+    class TextDiagnosticPrinter : public TextDiagnostics {
       SourceLocation LastWarningLoc;
-      HeaderSearch *TheHeaderSearch;
-      Preprocessor *ThePreprocessor;
     public:
       TextDiagnosticPrinter(SourceManager &sourceMgr)
-        : SourceMgr(sourceMgr) {}
-
-      void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
-      void setPreprocessor(Preprocessor &P) { ThePreprocessor = &P; }
+        : TextDiagnostics(sourceMgr) {}
 
       void PrintIncludeStack(SourceLocation Pos);
       void HighlightRange(const SourceRange &R, unsigned LineNo,
@@ -42,8 +34,6 @@ namespace llvm {
                           const std::string &SourceLine);
       unsigned GetTokenLength(SourceLocation Loc);
 
-      virtual bool IgnoreDiagnostic(Diagnostic::Level Level,
-                                    SourceLocation Pos);
       virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                     SourceLocation Pos,
                                     diag::kind ID, const std::string *Strs,
