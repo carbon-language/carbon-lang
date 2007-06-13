@@ -427,6 +427,16 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     return false;
   }
 
+  // If the block ends with two X86::JMPs, handle it.  The second one is not
+  // executed, so remove it.
+  if (SecondLastInst->getOpcode() == X86::JMP && 
+      LastInst->getOpcode() == X86::JMP) {
+    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    I = LastInst;
+    I->eraseFromParent();
+    return false;
+  }
+
   // Otherwise, can't handle this.
   return true;
 }

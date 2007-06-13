@@ -200,6 +200,16 @@ bool AlphaInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TB
     return false;
   }
   
+  // If the block ends with two Alpha::BRs, handle it.  The second one is not
+  // executed, so remove it.
+  if (SecondLastInst->getOpcode() == Alpha::BR && 
+      LastInst->getOpcode() == Alpha::BR) {
+    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    I = LastInst;
+    I->eraseFromParent();
+    return false;
+  }
+
   // Otherwise, can't handle this.
   return true;
 }

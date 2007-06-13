@@ -345,6 +345,16 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     return false;
   }
   
+  // If the block ends with two B's or tB's, handle it.  The second one is not
+  // executed, so remove it.
+  if ((SecondLastOpc == ARM::B || SecondLastOpc==ARM::tB) &&
+      (LastOpc == ARM::B || LastOpc == ARM::tB)) {
+    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    I = LastInst;
+    I->eraseFromParent();
+    return false;
+  }
+
   // Otherwise, can't handle this.
   return true;
 }

@@ -220,6 +220,16 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     return false;
   }
   
+  // If the block ends with two PPC:Bs, handle it.  The second one is not
+  // executed, so remove it.
+  if (SecondLastInst->getOpcode() == PPC::B && 
+      LastInst->getOpcode() == PPC::B) {
+    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    I = LastInst;
+    I->eraseFromParent();
+    return false;
+  }
+
   // Otherwise, can't handle this.
   return true;
 }
