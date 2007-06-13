@@ -2574,7 +2574,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_exception: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
-    if (MMI) {
+    if (ExceptionHandling && MMI) {
       // Mark exception register as live in.
       unsigned Reg = TLI.getExceptionAddressRegister();
       if (Reg) CurMBB->addLiveIn(Reg);
@@ -2596,7 +2596,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_filter:{
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     
-    if (MMI) {
+    if (ExceptionHandling && MMI) {
       // Inform the MachineModuleInfo of the personality for this landing pad.
       ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(2));
       assert(CE && CE->getOpcode() == Instruction::BitCast &&
@@ -4386,12 +4386,11 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator())) {
-      // Mark landing pad.
-      MachineBasicBlock *LandingPad = FuncInfo.MBBMap[Invoke->getSuccessor(1)];
-      LandingPad->setIsLandingPad();
-    }
+  if (ExceptionHandling)
+    for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+      if (InvokeInst *Invoke = dyn_cast<InvokeInst>(I->getTerminator()))
+        // Mark landing pad.
+        FuncInfo.MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
