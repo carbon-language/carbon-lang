@@ -761,7 +761,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     unsigned NE = TLI.getVectorTypeBreakdown(PTy, PTyElementVT,
                                              PTyLegalElementVT);
 
-    // Build a VBUILD_VECTOR with the input registers.
+    // Build a VBUILD_VECTOR or VCONCAT_VECTORS with the input registers.
     SmallVector<SDOperand, 8> Ops;
     if (PTyElementVT == PTyLegalElementVT) {
       // If the value types are legal, just VBUILD the CopyFromReg nodes.
@@ -791,16 +791,15 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       }
     }
     
-    Ops.push_back(DAG.getConstant(NE, MVT::i32));
-    Ops.push_back(DAG.getValueType(PTyElementVT));
-    N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
-    
-    // Finally, use a VBIT_CONVERT to make this available as the appropriate
-    // vector type.
-    N = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, N, 
-                    DAG.getConstant(PTy->getNumElements(),
-                                    MVT::i32),
-                    DAG.getValueType(TLI.getValueType(PTy->getElementType())));
+    if (MVT::isVector(PTyElementVT)) {
+      Ops.push_back(DAG.getConstant(NE * MVT::getVectorNumElements(PTyElementVT), MVT::i32));
+      Ops.push_back(DAG.getValueType(MVT::getVectorBaseType(PTyElementVT)));
+      N = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &Ops[0], Ops.size());
+    } else {
+      Ops.push_back(DAG.getConstant(NE, MVT::i32));
+      Ops.push_back(DAG.getValueType(PTyElementVT));
+      N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
+    }
   }
   
   return N;
@@ -4426,21 +4425,19 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
     MVT::ValueType PTyElementVT, PTyLegalElementVT;
     unsigned NE = TLI.getVectorTypeBreakdown(cast<VectorType>(V->getType()),
                                              PTyElementVT, PTyLegalElementVT);
+    uint64_t SrcVL = cast<ConstantSDNode>(*(Op.Val->op_end()-2))->getValue();
     
-    // Insert a VBIT_CONVERT of the input vector to a "N x PTyElementVT" 
-    // MVT::Vector type.
-    Op = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Op,
-                     DAG.getConstant(NE, MVT::i32), 
-                     DAG.getValueType(PTyElementVT));
-
     // Loop over all of the elements of the resultant vector,
-    // VEXTRACT_VECTOR_ELT'ing them, converting them to PTyLegalElementVT, then
-    // copying them into output registers.
+    // VEXTRACT_VECTOR_ELT'ing or VEXTRACT_SUBVECTOR'ing them, converting them
+    // to PTyLegalElementVT, then copying them into output registers.
     SmallVector<SDOperand, 8> OutChains;
     SDOperand Root = getRoot();
     for (unsigned i = 0; i != NE; ++i) {
-      SDOperand Elt = DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
-                                  Op, DAG.getConstant(i, TLI.getPointerTy()));
+      SDOperand Elt = MVT::isVector(PTyElementVT) ?
+        DAG.getNode(ISD::VEXTRACT_SUBVECTOR, PTyElementVT,
+                    Op, DAG.getConstant(i * (SrcVL / NE), TLI.getPointerTy())) :
+        DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
+                    Op, DAG.getConstant(i, TLI.getPointerTy()));
       if (PTyElementVT == PTyLegalElementVT) {
         // Elements are legal.
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));

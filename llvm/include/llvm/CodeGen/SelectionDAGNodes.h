@@ -267,6 +267,19 @@ namespace ISD {
     /// element number IDX.
     EXTRACT_VECTOR_ELT,
     
+    /// VCONCAT_VECTORS(VECTOR0, VECTOR1, ..., COUNT,TYPE) - Given a number of
+    /// values of MVT::Vector type with the same length and element type, this
+    /// produces a concatenated MVT::Vector result value, with length equal to
+    /// the sum of the input vectors.  This can only be used before
+    /// legalization.
+    VCONCAT_VECTORS,
+    
+    /// VEXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an
+    /// MVT::Vector value) starting with the (potentially variable)
+    /// element number IDX, which must be a multiple of the result vector
+    /// length.  This can only be used before legalization.
+    VEXTRACT_SUBVECTOR,
+    
     /// VVECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC, COUNT,TYPE) - Returns a vector,
     /// of the same type as VEC1/VEC2.  SHUFFLEVEC is a VBUILD_VECTOR of
     /// constant int values that indicate which value each result element will

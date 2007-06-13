@@ -225,6 +225,7 @@ private:
                         SDOperand &Lo, SDOperand &Hi);
 
   SDOperand LowerVEXTRACT_VECTOR_ELT(SDOperand Op);
+  SDOperand LowerVEXTRACT_SUBVECTOR(SDOperand Op);
   SDOperand ExpandEXTRACT_VECTOR_ELT(SDOperand Op);
   
   SDOperand getIntPtrConstant(uint64_t Val) {
@@ -1176,6 +1177,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::VEXTRACT_VECTOR_ELT: 
     Result = LegalizeOp(LowerVEXTRACT_VECTOR_ELT(Op));
+    break;
+    
+  case ISD::VEXTRACT_SUBVECTOR: 
+    Result = LegalizeOp(LowerVEXTRACT_SUBVECTOR(Op));
     break;
     
   case ISD::CALLSEQ_START: {
@@ -3561,6 +3566,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::VEXTRACT_VECTOR_ELT:
     Result = PromoteOp(LowerVEXTRACT_VECTOR_ELT(Op));
     break;
+  case ISD::VEXTRACT_SUBVECTOR:
+    Result = PromoteOp(LowerVEXTRACT_SUBVECTOR(Op));
+    break;
   case ISD::EXTRACT_VECTOR_ELT:
     Result = PromoteOp(ExpandEXTRACT_VECTOR_ELT(Op));
     break;
@@ -3620,6 +3628,37 @@ SDOperand SelectionDAGLegalize::LowerVEXTRACT_VECTOR_ELT(SDOperand Op) {
     assert(0 && "unimp!");
     return SDOperand();
   }
+}
+
+/// LowerVEXTRACT_SUBVECTOR - Lower a VEXTRACT_SUBVECTOR operation.  For now
+/// we assume the operation can be split if it is not already legal.
+SDOperand SelectionDAGLegalize::LowerVEXTRACT_SUBVECTOR(SDOperand Op) {
+  // We know that operand #0 is the Vec vector.  For now we assume the index
+  // is a constant and that the extracted result is a supported hardware type.
+  SDOperand Vec = Op.getOperand(0);
+  SDOperand Idx = LegalizeOp(Op.getOperand(1));
+  
+  SDNode *InVal = Vec.Val;
+  unsigned NumElems = cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+  
+  if (NumElems == MVT::getVectorNumElements(Op.getValueType())) {
+    // This must be an access of the desired vector length.  Return it.
+    return PackVectorOp(Vec, Op.getValueType());
+  }
+
+  ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
+  SDOperand Lo, Hi;
+  SplitVectorOp(Vec, Lo, Hi);
+  if (CIdx->getValue() < NumElems/2) {
+    Vec = Lo;
+  } else {
+    Vec = Hi;
+    Idx = DAG.getConstant(CIdx->getValue() - NumElems/2, Idx.getValueType());
+  }
+  
+  // It's now an extract from the appropriate high or low part.  Recurse.
+  Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
+  return LowerVEXTRACT_SUBVECTOR(Op);
 }
 
 /// ExpandEXTRACT_VECTOR_ELT - Expand an EXTRACT_VECTOR_ELT operation into
@@ -5501,6 +5540,21 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Hi = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &HiOps[0], HiOps.size());
     break;
   }
+  case ISD::VCONCAT_VECTORS: {
+    unsigned NewNumSubvectors = (Node->getNumOperands() - 2) / 2;
+    SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
+                                    Node->op_begin()+NewNumSubvectors);
+    LoOps.push_back(NewNumEltsNode);
+    LoOps.push_back(TypeNode);
+    Lo = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &LoOps[0], LoOps.size());
+
+    SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumSubvectors, 
+                                    Node->op_end()-2);
+    HiOps.push_back(NewNumEltsNode);
+    HiOps.push_back(TypeNode);
+    Hi = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &HiOps[0], HiOps.size());
+    break;
+  }
   case ISD::VADD:
   case ISD::VSUB:
   case ISD::VMUL:
@@ -5655,6 +5709,11 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
       }
     }
     break;
+  case ISD::VCONCAT_VECTORS:
+    assert(Node->getOperand(0).getValueType() == NewVT &&
+           "Concat of non-legal vectors not yet supported!");
+    Result = Node->getOperand(0);
+    break;
   case ISD::VINSERT_VECTOR_ELT:
     if (!MVT::isVector(NewVT)) {
       // Returning a scalar?  Must be the inserted element.
@@ -5664,6 +5723,10 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
                            PackVectorOp(Node->getOperand(0), NewVT),
                            Node->getOperand(1), Node->getOperand(2));
     }
+    break;
+  case ISD::VEXTRACT_SUBVECTOR:
+    Result = PackVectorOp(Node->getOperand(0), NewVT);
+    assert(Result.getValueType() == NewVT);
     break;
   case ISD::VVECTOR_SHUFFLE:
     if (!MVT::isVector(NewVT)) {

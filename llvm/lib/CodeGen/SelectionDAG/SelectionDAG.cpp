@@ -2865,6 +2865,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::VINSERT_VECTOR_ELT:  return "vinsert_vector_elt";
   case ISD::EXTRACT_VECTOR_ELT:  return "extract_vector_elt";
   case ISD::VEXTRACT_VECTOR_ELT: return "vextract_vector_elt";
+  case ISD::VCONCAT_VECTORS:     return "vconcat_vectors";
+  case ISD::VEXTRACT_SUBVECTOR:  return "vextract_subvector";
   case ISD::SCALAR_TO_VECTOR:    return "scalar_to_vector";
   case ISD::VBUILD_VECTOR:       return "vbuild_vector";
   case ISD::VECTOR_SHUFFLE:      return "vector_shuffle";
