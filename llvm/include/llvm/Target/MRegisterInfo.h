@@ -64,6 +64,7 @@ private:
   const vt_iterator VTs;
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
+  const sc_iterator SubRegClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
@@ -71,8 +72,10 @@ public:
                       const MVT::ValueType *vts,
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
+                      const TargetRegisterClass * const *subregcs,
                       unsigned RS, unsigned Al, iterator RB, iterator RE)
     : ID(id), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
+    SubRegClasses(subregcs),
     RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
@@ -163,6 +166,47 @@ public:
   
   sc_iterator superclasses_end() const {
     sc_iterator I = SuperClasses;
+    while (*I != NULL) ++I;
+    return I;
+  }
+  
+  /// hasSubRegForClass - return true if the specified TargetRegisterClass is a
+  /// class of a sub-register class for this TargetRegisterClass.
+  bool hasSubRegForClass(const TargetRegisterClass *cs) const {
+    for (int i = 0; SubRegClasses[i] != NULL; ++i) 
+      if (SubRegClasses[i] == cs)
+        return true;
+    return false;
+  }
+
+  /// hasClassForSubReg - return true if the specified TargetRegisterClass is a
+  /// class of a sub-register class for this TargetRegisterClass.
+  bool hasClassForSubReg(unsigned SubReg) const {
+    --SubReg;
+    for (unsigned i = 0; SubRegClasses[i] != NULL; ++i) 
+      if (i == SubReg)
+        return true;
+    return false;
+  }
+
+  /// getClassForSubReg - return theTargetRegisterClass for the sub-register
+  /// at idx for this TargetRegisterClass.
+  sc_iterator getClassForSubReg(unsigned SubReg) const {
+    --SubReg;
+    for (unsigned i = 0; SubRegClasses[i] != NULL; ++i) 
+      if (i == SubReg)
+        return &SubRegClasses[i];
+    return NULL;
+  }
+  
+  /// subregclasses_begin / subregclasses_end - Loop over all of
+  /// the subregister classes of this register class.
+  sc_iterator subregclasses_begin() const {
+    return SubRegClasses;
+  }
+  
+  sc_iterator subregclasses_end() const {
+    sc_iterator I = SubRegClasses;
     while (*I != NULL) ++I;
     return I;
   }

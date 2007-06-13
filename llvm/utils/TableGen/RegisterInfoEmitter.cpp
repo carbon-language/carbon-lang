@@ -224,6 +224,44 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
          
     std::map<unsigned, std::set<unsigned> > SuperClassMap;
     OS << "\n";
+    
+    
+    // Emit the sub-register classes for each RegisterClass
+    for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
+      const CodeGenRegisterClass &RC = RegisterClasses[rc];
+
+      // Give the register class a legal C name if it's anonymous.
+      std::string Name = RC.TheDef->getName();
+
+      OS << "  // " << Name 
+         << " Sub-register Classess...\n"
+         << "  static const TargetRegisterClass* const "
+         << Name << "SubRegClasses [] = {\n    ";
+
+      bool Empty = true;
+      
+      for (unsigned subrc = 0, e2 = RC.SubRegClasses.size();
+            subrc != e2; ++subrc) {
+        unsigned rc2 = 0, e2 = RegisterClasses.size();
+        for (; rc2 != e2; ++rc2) {
+          const CodeGenRegisterClass &RC2 =  RegisterClasses[rc2];
+          if (RC.SubRegClasses[subrc]->getName() == RC2.getName()) {
+            if (!Empty) OS << ", ";
+              OS << "&" << getQualifiedName(RC2.TheDef) << "RegClass";
+            Empty = false;
+            break;
+          }
+        }
+        if (rc2 == e2)
+          throw "Register Class member '" + 
+            RC.SubRegClasses[subrc]->getName() + 
+            "' is not a valid RegisterClass!";
+      }
+
+      OS << (!Empty ? ", " : "") << "NULL";
+      OS << "\n  };\n\n";
+    }
+    
     // Emit the sub-classes array for each RegisterClass
     for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
       const CodeGenRegisterClass &RC = RegisterClasses[rc];
@@ -304,6 +342,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
          << RC.getName() + "VTs" << ", "
          << RC.getName() + "Subclasses" << ", "
          << RC.getName() + "Superclasses" << ", "
+         << RC.getName() + "SubRegClasses" << ", "
          << RC.SpillSize/8 << ", "
          << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
          << RC.getName() << " + " << RC.Elements.size() << ") {}\n";

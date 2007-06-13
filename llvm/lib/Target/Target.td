@@ -109,6 +109,10 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // allocation used by the register allocator.
   //
   list<Register> MemberList = regList;
+  
+  // SubClassList - Specify which register classes correspond to subregisters
+  // of this class. The order should be by subregister set index.
+  list<RegisterClass> SubRegClassList = [];
 
   // MethodProtos/MethodBodies - These members can be used to insert arbitrary
   // code into a generated register class.   The normal usage of this is to 

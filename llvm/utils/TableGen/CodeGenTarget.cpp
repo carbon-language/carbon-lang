@@ -199,6 +199,16 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
     Elements.push_back(Reg);
   }
   
+  std::vector<Record*> SubRegClassList = 
+                        R->getValueAsListOfDefs("SubRegClassList");
+  for (unsigned i = 0, e = SubRegClassList.size(); i != e; ++i) {
+    Record *SubRegClass = SubRegClassList[i];
+    if (!SubRegClass->isSubClassOf("RegisterClass"))
+      throw "Register Class member '" + SubRegClass->getName() +
+            "' does not derive from the RegisterClass class!";
+    SubRegClasses.push_back(SubRegClass);
+  }  
+  
   // Allow targets to override the size in bits of the RegisterClass.
   unsigned Size = R->getValueAsInt("Size");
 
