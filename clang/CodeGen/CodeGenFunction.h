@@ -51,6 +51,7 @@ namespace clang {
   
   class BlockVarDecl;
   class EnumConstantDecl;
+  class ParmVarDecl;
 namespace CodeGen {
   class CodeGenModule;
   
@@ -177,13 +178,14 @@ public:
   Value *ConvertScalarValueToBool(RValue Val, QualType Ty);
   
   //===--------------------------------------------------------------------===//
-  //                        Local Declaration Emission
+  //                            Declaration Emission
   //===--------------------------------------------------------------------===//
   
   void EmitDecl(const Decl &D);
   void EmitEnumConstantDecl(const EnumConstantDecl &D);
   void EmitBlockVarDecl(const BlockVarDecl &D);
   void EmitLocalBlockVarDecl(const BlockVarDecl &D);
+  void EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg);
   
   //===--------------------------------------------------------------------===//
   //                             Statement Emission

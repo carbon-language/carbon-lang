@@ -13,9 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "clang/AST/AST.h"
-//#include "llvm/Constants.h"
-//#include "llvm/DerivedTypes.h"
-//#include "llvm/Function.h"
+#include "llvm/Type.h"
 using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
@@ -89,3 +87,37 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   
   // FIXME: Evaluate initializer.
 }
+
+/// Emit an alloca for the specified parameter and set up LocalDeclMap.
+void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
+  QualType Ty = D.getCanonicalType();
+  
+  llvm::Value *DeclPtr;
+  if (!Ty->isConstantSizeType()) {
+    // Variable sized values always are passed by-reference.
+    DeclPtr = Arg;
+    Arg->setName(DeclPtr->getName());
+  } else {
+    // A fixed sized first class variable becomes an alloca in the entry block.
+    const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
+    if (LTy->isFirstClassType()) {
+      // TODO: Alignment
+      DeclPtr = new AllocaInst(LTy, 0, 
+                               std::string(D.getName())+".addr",AllocaInsertPt);
+      
+      // Store the initial value into the alloca.
+      Builder.CreateStore(Arg, DeclPtr);
+
+      Arg->setName(D.getName());
+    } else {
+      // Otherwise, if this is an aggregate, just use the input pointer.
+      DeclPtr = Arg;
+      Arg->setName(DeclPtr->getName());
+    }
+  }
+
+  llvm::Value *&DMEntry = LocalDeclMap[&D];
+  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  DMEntry = DeclPtr;
+}
+

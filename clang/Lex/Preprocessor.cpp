@@ -971,8 +971,8 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
   // If this is an extension token, diagnose its use.
   // FIXME: tried (unsuccesfully) to shut this up when compiling with gnu99
   // For now, I'm just commenting it out (while I work on attributes).
-  //if (II.isExtensionToken() && Features.C99) 
-  //  Diag(Identifier, diag::ext_token_used);
+  if (II.isExtensionToken() && Features.C99) 
+    Diag(Identifier, diag::ext_token_used);
 }
 
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of

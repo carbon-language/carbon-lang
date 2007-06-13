@@ -439,7 +439,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   return NewGroup;
 }
   
-VarDecl *
+ParmVarDecl *
 Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
                            Scope *FnScope) {
   const DeclaratorChunk::ParamInfo &PI = FTI.Fun.ArgInfo[ArgNo];
@@ -455,9 +455,9 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   
   // FIXME: Handle storage class (auto, register). No declarator?
   // TODO: Chain to previous parameter with the prevdeclarator chain?
-  VarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
-                                 QualType::getFromOpaquePtr(PI.TypeInfo), 
-                                 VarDecl::None, 0);
+  ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
+                                     QualType::getFromOpaquePtr(PI.TypeInfo), 
+                                     VarDecl::None, 0);
 
   // If this has an identifier, add it to the scope stack.
   if (II) {
@@ -504,7 +504,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
-  SmallVector<VarDecl*, 16> Params;
+  SmallVector<ParmVarDecl*, 16> Params;
   
   // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
   // no arguments, not a function that takes a single void argument.

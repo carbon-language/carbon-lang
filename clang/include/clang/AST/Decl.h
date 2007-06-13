@@ -220,11 +220,15 @@ public:
   void setDeclChain(Decl *D) { DeclChain = D; }
 
   unsigned getNumParams() const;
-  VarDecl *getParamDecl(unsigned i) const {
+  const ParmVarDecl *getParamDecl(unsigned i) const {
     assert(i < getNumParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(VarDecl **NewParamInfo, unsigned NumParams);
+  ParmVarDecl *getParamDecl(unsigned i) {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }
+  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   QualType getResultType() const { 
     return cast<FunctionType>(getType())->getResultType();
@@ -239,7 +243,7 @@ private:
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.  TODO: we could allocate this space immediately after the
   /// FunctionDecl object to save an allocation like FunctionType does.
-  VarDecl **ParamInfo;
+  ParmVarDecl **ParamInfo;
   
   Stmt *Body;  // Null if a prototype.
   

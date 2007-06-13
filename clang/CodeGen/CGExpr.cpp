@@ -258,7 +258,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const Decl *D = E->getDecl();
-  if (isa<BlockVarDecl>(D)) {
+  if (isa<BlockVarDecl>(D) || isa<ParmVarDecl>(D)) {
     Value *V = LocalDeclMap[D];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
     return LValue::getAddr(V);

@@ -141,11 +141,16 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
   return OpaqueType::get();
 }
 
-void  CodeGenFunction::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                                           std::vector<const llvm::Type*> &
-                                           ArgTys, SourceLocation Loc) {
-  for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i)
-    ArgTys.push_back(ConvertType(FTP.getArgType(i), Loc));
+void CodeGenFunction::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
+                                          std::vector<const llvm::Type*> &
+                                          ArgTys, SourceLocation Loc) {
+  for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i) {
+    const llvm::Type *Ty = ConvertType(FTP.getArgType(i), Loc);
+    if (Ty->isFirstClassType())
+      ArgTys.push_back(Ty);
+    else
+      ArgTys.push_back(llvm::PointerType::get(Ty));
+  }
 }
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
@@ -155,13 +160,13 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   const llvm::FunctionType *Ty = 
     cast<llvm::FunctionType>(ConvertType(FD->getType(), FD->getLocation()));
   
+  // FIXME: param attributes for sext/zext etc.
+  
   CurFuncDecl = FD;
   CurFn = new Function(Ty, Function::ExternalLinkage,
                        FD->getName(), &CGM.getModule());
   
   BasicBlock *EntryBB = new BasicBlock("entry", CurFn);
-  
-  // TODO: Walk the decls, creating allocas etc.
   
   Builder.SetInsertPoint(EntryBB);
 
@@ -170,7 +175,12 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   AllocaInsertPt = Builder.CreateBitCast(UndefValue::get(llvm::Type::Int32Ty),
                                          llvm::Type::Int32Ty, "allocapt");
   
-  // TODO: handle params. 
+  // Emit allocs for param decls. 
+  llvm::Function::arg_iterator AI = CurFn->arg_begin();
+  for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i, ++AI) {
+    assert(AI != CurFn->arg_end() && "Argument mismatch!");
+    EmitParmDecl(*FD->getParamDecl(i), AI);
+  }
   
   // Emit the function body.
   EmitStmt(FD->getBody());

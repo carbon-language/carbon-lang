@@ -124,14 +124,14 @@ unsigned FunctionDecl::getNumParams() const {
   return cast<FunctionTypeProto>(getType().getTypePtr())->getNumArgs();
 }
 
-void FunctionDecl::setParams(VarDecl **NewParamInfo, unsigned NumParams) {
+void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
   assert(NumParams == getNumParams() && "Parameter count mismatch!");
   
   // Zero params -> null pointer.
   if (NumParams) {
-    ParamInfo = new VarDecl*[NumParams];
-    memcpy(ParamInfo, NewParamInfo, sizeof(VarDecl*)*NumParams);
+    ParamInfo = new ParmVarDecl*[NumParams];
+    memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
   }
 }
 

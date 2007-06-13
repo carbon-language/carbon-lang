@@ -27,6 +27,7 @@ namespace clang {
   class Decl;
   class Expr;
   class VarDecl;
+  class ParmVarDecl;
   class TypedefDecl;
   class FunctionDecl;
   class QualType;
@@ -132,8 +133,8 @@ private:
   void AddTopLevelDecl(Decl *current, Decl *last);
 
   /// More parsing and symbol table subroutines...
-  VarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
-                                Scope *FnBodyScope);
+  ParmVarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
+                                    Scope *FnBodyScope);
   Decl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, SourceLocation IdLoc,
                          Scope *S);  
   Decl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
