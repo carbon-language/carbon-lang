@@ -813,12 +813,22 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
   if (lType->isRealType() && rType->isRealType())
     return Context.IntTy;
   
-  if (lType->isPointerType() &&  rType->isPointerType())
-    return Context.IntTy;
-
-  if (lType->isIntegerType() || rType->isIntegerType()) { // GCC extension.
-    Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
-    return Context.IntTy;
+  if (lType->isPointerType()) {
+    if (rType->isPointerType())
+      return Context.IntTy;
+    if (rType->isIntegerType()) {
+      if (!rex->isNullPointerConstant())
+        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+             lex->getSourceRange(), rex->getSourceRange());
+      return Context.IntTy; // the previous diagnostic is a GCC extension.
+    }
+  } else if (rType->isPointerType()) {
+    if (lType->isIntegerType()) {
+      if (!lex->isNullPointerConstant())
+        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+             lex->getSourceRange(), rex->getSourceRange());
+      return Context.IntTy; // the previous diagnostic is a GCC extension.
+    }
   }
   InvalidOperands(loc, lex, rex);
   return QualType();
@@ -832,12 +842,23 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
   
   if (lType->isArithmeticType() && rType->isArithmeticType())
     return Context.IntTy;
-  if (lType->isPointerType() &&  rType->isPointerType())
-    return Context.IntTy;
     
-  if (lType->isIntegerType() || rType->isIntegerType()) { // GCC extension.
-    Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer);
-    return Context.IntTy;
+  if (lType->isPointerType()) {
+    if (rType->isPointerType())
+      return Context.IntTy;
+    if (rType->isIntegerType()) {
+      if (!rex->isNullPointerConstant())
+        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+             lex->getSourceRange(), rex->getSourceRange());
+      return Context.IntTy; // the previous diagnostic is a GCC extension.
+    }
+  } else if (rType->isPointerType()) {
+    if (lType->isIntegerType()) {
+      if (!lex->isNullPointerConstant())
+        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+             lex->getSourceRange(), rex->getSourceRange());
+      return Context.IntTy; // the previous diagnostic is a GCC extension.
+    }
   }
   InvalidOperands(loc, lex, rex);
   return QualType();
