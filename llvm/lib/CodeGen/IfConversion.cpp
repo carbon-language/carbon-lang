@@ -769,7 +769,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   }
 
   // Predicate the 'true' block after removing its branch.
-  TrueBBI.NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
+  CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
   PredicateBlock(*CvtBBI, Cond);
 
   // If 'true' block has a 'false' successor, add an exit branch to it.
