@@ -71,6 +71,8 @@
 		DE928B830C0A616000231DA4 /* CodeGenFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
 		DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEED4A0A5AF89A0045101B /* NOTES.txt */; };
+		DEB0AEB90C2087A700718A22 /* TextDiagnostics.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */; };
+		DEB0AEBB0C2087AB00718A22 /* TextDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */; };
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
@@ -171,6 +173,7 @@
 				F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */,
 				DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */,
 				84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */,
+				DEB0AEB90C2087A700718A22 /* TextDiagnostics.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -242,6 +245,8 @@
 		DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenFunction.cpp; path = CodeGen/CodeGenFunction.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
+		DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnostics.h; path = Driver/TextDiagnostics.h; sourceTree = "<group>"; };
+		DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnostics.cpp; path = Driver/TextDiagnostics.cpp; sourceTree = "<group>"; };
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
@@ -418,14 +423,16 @@
 			children = (
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
-				DED627020AE0C51D001E80A4 /* Targets.cpp */,
-				F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */,
-				F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */,
 				DED67AEF0B6DB92F00AAD4A3 /* PPCBuiltins.def */,
 				DED67AED0B6DB92A00AAD4A3 /* X86Builtins.def */,
 				DE927FFC0C055DE900231DA4 /* LLVMCodegen.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
+				DED627020AE0C51D001E80A4 /* Targets.cpp */,
+				DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */,
+				DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */,
+				F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */,
+				F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */,
 			);
 			name = Driver;
 			sourceTree = "<group>";
@@ -639,6 +646,7 @@
 				84916BE50C161E580080778F /* Attr.cpp in Sources */,
 				F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */,
 				84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */,
+				DEB0AEBB0C2087AB00718A22 /* TextDiagnostics.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
