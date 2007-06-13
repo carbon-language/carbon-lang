@@ -249,7 +249,10 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   if (RV)
     RetVal = EmitExpr(RV);
   
-  if (CurFuncDecl->getType()->isVoidType()) {
+  QualType FnRetTy = CurFuncDecl->getType().getCanonicalType();
+  FnRetTy = cast<FunctionType>(FnRetTy)->getResultType();
+  
+  if (FnRetTy->isVoidType()) {
     // If the function returns void, emit ret void, and ignore the retval.
     Builder.CreateRetVoid();
   } else if (RV == 0) {
@@ -259,11 +262,16 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
       Builder.CreateRetVoid();   // struct return etc.
     else
       Builder.CreateRet(llvm::UndefValue::get(RetTy));
-  } else if (RetVal.isScalar()) {
-    // FIXME: return should coerce its operand to the return type!
-    Builder.CreateRet(RetVal.getVal());
   } else {
-    assert(0 && "FIXME: aggregate return unimp");
+    // Do implicit conversions to the returned type.
+    RetVal = EmitConversion(RetVal, RV->getType(), FnRetTy, SourceLocation());
+    
+    if (RetVal.isScalar()) {
+      // FIXME: Pass return loc in!
+      Builder.CreateRet(RetVal.getVal());
+    } else {
+      assert(0 && "FIXME: aggregate return unimp");
+    }
   }
   
   // Emit a block after the branch so that dead code after a return has some
