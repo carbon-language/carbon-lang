@@ -208,6 +208,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       // marked dead (due to it being predicated), then skip it.
       if (!BBI.IsEnqueued || BBI.IsDone)
         continue;
+      BBI.IsEnqueued = false;
 
       bool RetVal = false;
       switch (BBI.Kind) {
@@ -625,6 +626,7 @@ bool IfConverter::AnalyzeBlocks(MachineFunction &MF,
         case ICTriangleFalse:
         case ICTriangleFRev:
         case ICDiamond:
+          BBI.IsEnqueued = true;
           Candidates.push_back(&BBI);
           break;
         default:
@@ -660,7 +662,7 @@ void IfConverter::ReTryPreds(MachineBasicBlock *BB) {
          E = BB->pred_end(); PI != E; ++PI) {
     BBInfo &PBBI = BBAnalysis[(*PI)->getNumber()];
     if (!PBBI.IsDone && PBBI.Kind == ICNotClassfied) {
-      assert(PBBI.IsEnqueued && "Unexpected");
+      assert(!PBBI.IsEnqueued && "Unexpected");
       PBBI.IsAnalyzed = false;
     }
   }
@@ -963,6 +965,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
     }
   }
 
+  BBI.IsAnalyzed = false;
   BBI.NonPredSize = 0;
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
 
@@ -1013,4 +1016,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
             std::back_inserter(ToBBI.Predicate));
   FromBBI.Predicate.clear();
+
+  ToBBI.IsAnalyzed = false;
+  FromBBI.IsAnalyzed = false;
 }
