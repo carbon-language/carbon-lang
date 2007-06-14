@@ -129,9 +129,9 @@ namespace MVT {  // MVT = Machine Value Types
   ///
   ValueType getVectorType(ValueType VT, unsigned NumElements);
     
-  /// MVT::getVectorBaseType - Given a packed vector type, return the type of
+  /// MVT::getVectorElementType - Given a packed vector type, return the type of
   /// each element.
-  static inline ValueType getVectorBaseType(ValueType VT) {
+  static inline ValueType getVectorElementType(ValueType VT) {
     switch (VT) {
     default: assert(0 && "Invalid vector type!");
     case v8i8 :

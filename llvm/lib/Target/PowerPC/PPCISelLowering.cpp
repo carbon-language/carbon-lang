@@ -2257,7 +2257,7 @@ static SDOperand BuildSplatI(int Val, unsigned SplatSize, MVT::ValueType VT,
   MVT::ValueType CanonicalVT = VTys[SplatSize-1];
   
   // Build a canonical splat for this value.
-  SDOperand Elt = DAG.getConstant(Val, MVT::getVectorBaseType(CanonicalVT));
+  SDOperand Elt = DAG.getConstant(Val, MVT::getVectorElementType(CanonicalVT));
   SmallVector<SDOperand, 8> Ops;
   Ops.assign(MVT::getVectorNumElements(CanonicalVT), Elt);
   SDOperand Res = DAG.getNode(ISD::BUILD_VECTOR, CanonicalVT,
@@ -2647,7 +2647,7 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   
   // The SHUFFLE_VECTOR mask is almost exactly what we want for vperm, except
   // that it is in input element units, not in bytes.  Convert now.
-  MVT::ValueType EltVT = MVT::getVectorBaseType(V1.getValueType());
+  MVT::ValueType EltVT = MVT::getVectorElementType(V1.getValueType());
   unsigned BytesPerElement = MVT::getSizeInBits(EltVT)/8;
   
   SmallVector<SDOperand, 16> ResultMask;

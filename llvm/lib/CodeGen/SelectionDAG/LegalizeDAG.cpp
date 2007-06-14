@@ -1014,7 +1014,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         
         unsigned NumElts = MVT::getVectorNumElements(Tmp1.getValueType());
         MVT::ValueType ShufMaskVT = MVT::getIntVectorWithNumElements(NumElts);
-        MVT::ValueType ShufMaskEltVT = MVT::getVectorBaseType(ShufMaskVT);
+        MVT::ValueType ShufMaskEltVT = MVT::getVectorElementType(ShufMaskVT);
         
         // We generate a shuffle of InVec and ScVec, so the shuffle mask should
         // be 0,1,2,3,4,5... with the appropriate element replaced with elt 0 of
@@ -1110,7 +1110,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // FALLTHROUGH
     case TargetLowering::Expand: {
       MVT::ValueType VT = Node->getValueType(0);
-      MVT::ValueType EltVT = MVT::getVectorBaseType(VT);
+      MVT::ValueType EltVT = MVT::getVectorElementType(VT);
       MVT::ValueType PtrVT = TLI.getPointerTy();
       SDOperand Mask = Node->getOperand(2);
       unsigned NumElems = Mask.getNumOperands();
@@ -2386,7 +2386,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
              "Cannot expand this binary operator!");
       // Expand the operation into a bunch of nasty scalar code.
       SmallVector<SDOperand, 8> Ops;
-      MVT::ValueType EltVT = MVT::getVectorBaseType(Node->getValueType(0));
+      MVT::ValueType EltVT = MVT::getVectorElementType(Node->getValueType(0));
       MVT::ValueType PtrVT = TLI.getPointerTy();
       for (unsigned i = 0, e = MVT::getVectorNumElements(Node->getValueType(0));
            i != e; ++i) {
@@ -4006,7 +4006,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     // Build the shuffle constant vector: <0, 0, 0, 0>
     MVT::ValueType MaskVT = 
       MVT::getIntVectorWithNumElements(NumElems);
-    SDOperand Zero = DAG.getConstant(0, MVT::getVectorBaseType(MaskVT));
+    SDOperand Zero = DAG.getConstant(0, MVT::getVectorElementType(MaskVT));
     std::vector<SDOperand> ZeroVec(NumElems, Zero);
     SDOperand SplatMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                       &ZeroVec[0], ZeroVec.size());
@@ -4036,7 +4036,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
            E = Values.end(); I != E; ++I) {
       for (std::vector<unsigned>::iterator II = I->second.begin(),
              EE = I->second.end(); II != EE; ++II)
-        MaskVec[*II] = DAG.getConstant(i, MVT::getVectorBaseType(MaskVT));
+        MaskVec[*II] = DAG.getConstant(i, MVT::getVectorElementType(MaskVT));
       i += NumElems;
     }
     SDOperand ShuffleMask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,

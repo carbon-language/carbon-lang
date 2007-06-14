@@ -793,7 +793,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     
     if (MVT::isVector(PTyElementVT)) {
       Ops.push_back(DAG.getConstant(NE * MVT::getVectorNumElements(PTyElementVT), MVT::i32));
-      Ops.push_back(DAG.getValueType(MVT::getVectorBaseType(PTyElementVT)));
+      Ops.push_back(DAG.getValueType(MVT::getVectorElementType(PTyElementVT)));
       N = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &Ops[0], Ops.size());
     } else {
       Ops.push_back(DAG.getConstant(NE, MVT::i32));
@@ -2905,7 +2905,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     return DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Val, 
                        DAG.getConstant(MVT::getVectorNumElements(RegVT),
                                        MVT::i32),
-                       DAG.getValueType(MVT::getVectorBaseType(RegVT)));
+                       DAG.getValueType(MVT::getVectorElementType(RegVT)));
   }
   
   if (MVT::isInteger(RegVT)) {

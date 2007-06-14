@@ -2106,7 +2106,7 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SDOperand &V1,
                                       SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType MaskVT = Mask.getValueType();
-  MVT::ValueType EltVT = MVT::getVectorBaseType(MaskVT);
+  MVT::ValueType EltVT = MVT::getVectorElementType(MaskVT);
   unsigned NumElems = Mask.getNumOperands();
   SmallVector<SDOperand, 8> MaskVec;
 
@@ -2265,7 +2265,7 @@ static bool isZeroShuffle(SDNode *N) {
 static SDOperand getZeroVector(MVT::ValueType VT, SelectionDAG &DAG) {
   assert(MVT::isVector(VT) && "Expected a vector type");
   unsigned NumElems = MVT::getVectorNumElements(VT);
-  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+  MVT::ValueType EVT = MVT::getVectorElementType(VT);
   bool isFP = MVT::isFloatingPoint(EVT);
   SDOperand Zero = isFP ? DAG.getConstantFP(0.0, EVT) : DAG.getConstant(0, EVT);
   SmallVector<SDOperand, 8> ZeroVec(NumElems, Zero);
@@ -2302,7 +2302,7 @@ static SDOperand NormalizeMask(SDOperand Mask, SelectionDAG &DAG) {
 /// operation of specified width.
 static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-  MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+  MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
 
   SmallVector<SDOperand, 8> MaskVec;
   MaskVec.push_back(DAG.getConstant(NumElems, BaseVT));
@@ -2315,7 +2315,7 @@ static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG) {
 /// of specified width.
 static SDOperand getUnpacklMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-  MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+  MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
   SmallVector<SDOperand, 8> MaskVec;
   for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
     MaskVec.push_back(DAG.getConstant(i,            BaseVT));
@@ -2328,7 +2328,7 @@ static SDOperand getUnpacklMask(unsigned NumElems, SelectionDAG &DAG) {
 /// of specified width.
 static SDOperand getUnpackhMask(unsigned NumElems, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-  MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+  MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
   unsigned Half = NumElems/2;
   SmallVector<SDOperand, 8> MaskVec;
   for (unsigned i = 0; i != Half; ++i) {
@@ -2366,7 +2366,7 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, MVT::ValueType VT,
                                              bool isZero, SelectionDAG &DAG) {
   SDOperand V1 = isZero ? getZeroVector(VT, DAG) : DAG.getNode(ISD::UNDEF, VT);
   MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-  MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
+  MVT::ValueType EVT = MVT::getVectorElementType(MaskVT);
   SDOperand Zero = DAG.getConstant(0, EVT);
   SmallVector<SDOperand, 8> MaskVec(NumElems, Zero);
   MaskVec[Idx] = DAG.getConstant(NumElems, EVT);
@@ -2458,7 +2458,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     return Op;
 
   MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+  MVT::ValueType EVT = MVT::getVectorElementType(VT);
   unsigned EVTBits = MVT::getSizeInBits(EVT);
 
   unsigned NumElems = Op.getNumOperands();
@@ -2502,7 +2502,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       Item = getShuffleVectorZeroOrUndef(Item, VT, NumElems, 0, NumZero > 0,
                                          DAG);
       MVT::ValueType MaskVT  = MVT::getIntVectorWithNumElements(NumElems);
-      MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
+      MVT::ValueType MaskEVT = MVT::getVectorElementType(MaskVT);
       SmallVector<SDOperand, 8> MaskVec;
       for (unsigned i = 0; i < NumElems; i++)
         MaskVec.push_back(DAG.getConstant((i == Idx) ? 0 : 1, MaskEVT));
@@ -2571,7 +2571,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     if (MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
       return V[0];
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-    MVT::ValueType EVT = MVT::getVectorBaseType(MaskVT);
+    MVT::ValueType EVT = MVT::getVectorElementType(MaskVT);
     SmallVector<SDOperand, 8> MaskVec;
     bool Reverse = (NonZeros & 0x3) == 2;
     for (unsigned i = 0; i < 2; ++i)
@@ -2728,7 +2728,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     // Handle v8i16 shuffle high / low shuffle node pair.
     if (VT == MVT::v8i16 && isPSHUFHW_PSHUFLWMask(PermMask.Val)) {
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
-      MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+      MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
       SmallVector<SDOperand, 8> MaskVec;
       for (unsigned i = 0; i != 4; ++i)
         MaskVec.push_back(PermMask.getOperand(i));
@@ -2763,7 +2763,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       // Don't do this for MMX.
       MVT::getSizeInBits(VT) != 64) {
     MVT::ValueType MaskVT = PermMask.getValueType();
-    MVT::ValueType MaskEVT = MVT::getVectorBaseType(MaskVT);
+    MVT::ValueType MaskEVT = MVT::getVectorElementType(MaskVT);
     SmallVector<std::pair<int, int>, 8> Locs;
     Locs.reserve(NumElems);
     SmallVector<SDOperand, 8> Mask1(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
@@ -2888,10 +2888,10 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     // SHUFPS the element to the lowest double word, then movss.
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
     SmallVector<SDOperand, 8> IdxVec;
-    IdxVec.push_back(DAG.getConstant(Idx, MVT::getVectorBaseType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
+    IdxVec.push_back(DAG.getConstant(Idx, MVT::getVectorElementType(MaskVT)));
+    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
+    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
+    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
     SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                  &IdxVec[0], IdxVec.size());
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
@@ -2909,8 +2909,8 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     // to a f64mem, the whole operation is folded into a single MOVHPDmr.
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
     SmallVector<SDOperand, 8> IdxVec;
-    IdxVec.push_back(DAG.getConstant(1, MVT::getVectorBaseType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(MaskVT)));
+    IdxVec.push_back(DAG.getConstant(1, MVT::getVectorElementType(MaskVT)));
+    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
     SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                  &IdxVec[0], IdxVec.size());
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
@@ -2927,7 +2927,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   // Transform it so it match pinsrw which expects a 16-bit value in a GR32
   // as its second argument.
   MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType BaseVT = MVT::getVectorBaseType(VT);
+  MVT::ValueType BaseVT = MVT::getVectorElementType(VT);
   SDOperand N0 = Op.getOperand(0);
   SDOperand N1 = Op.getOperand(1);
   SDOperand N2 = Op.getOperand(2);
@@ -2943,7 +2943,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       // Use a movss.
       N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, N1);
       MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-      MVT::ValueType BaseVT = MVT::getVectorBaseType(MaskVT);
+      MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
       SmallVector<SDOperand, 8> MaskVec;
       MaskVec.push_back(DAG.getConstant(4, BaseVT));
       for (unsigned i = 1; i <= 3; ++i)
@@ -4513,11 +4513,11 @@ static SDOperand getShuffleScalarElt(SDNode *N, unsigned i, SelectionDAG &DAG) {
   i %= NumElems;
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR) {
     return (i == 0)
-      ? V.getOperand(0) : DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(VT));
+      ? V.getOperand(0) : DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
   } else if (V.getOpcode() == ISD::VECTOR_SHUFFLE) {
     SDOperand Idx = PermMask.getOperand(i);
     if (Idx.getOpcode() == ISD::UNDEF)
-      return DAG.getNode(ISD::UNDEF, MVT::getVectorBaseType(VT));
+      return DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
     return getShuffleScalarElt(V.Val,cast<ConstantSDNode>(Idx)->getValue(),DAG);
   }
   return SDOperand();
@@ -4613,7 +4613,7 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MVT::ValueType VT = N->getValueType(0);
-  MVT::ValueType EVT = MVT::getVectorBaseType(VT);
+  MVT::ValueType EVT = MVT::getVectorElementType(VT);
   SDOperand PermMask = N->getOperand(2);
   int NumElems = (int)PermMask.getNumOperands();
   SDNode *Base = NULL;

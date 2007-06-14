@@ -1114,7 +1114,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   case ISD::SCALAR_TO_VECTOR:
     assert(MVT::isVector(VT) && !MVT::isVector(Operand.getValueType()) &&
-           MVT::getVectorBaseType(VT) == Operand.getValueType() &&
+           MVT::getVectorElementType(VT) == Operand.getValueType() &&
            "Illegal SCALAR_TO_VECTOR node!");
     break;
   case ISD::FNEG:
@@ -1593,7 +1593,7 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
     ExtType = ISD::NON_EXTLOAD;
 
   if (MVT::isVector(VT))
-    assert(EVT == MVT::getVectorBaseType(VT) && "Invalid vector extload!");
+    assert(EVT == MVT::getVectorElementType(VT) && "Invalid vector extload!");
   else
     assert(EVT < VT && "Should only be an extending load, not truncating!");
   assert((ExtType == ISD::EXTLOAD || MVT::isInteger(VT)) &&

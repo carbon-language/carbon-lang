@@ -1809,7 +1809,7 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
       return DAG.getConstant(0, VT);
     } else if (!AfterLegalize || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)) {
       // Produce a vector of zeros.
-      SDOperand El = DAG.getConstant(0, MVT::getVectorBaseType(VT));
+      SDOperand El = DAG.getConstant(0, MVT::getVectorElementType(VT));
       std::vector<SDOperand> Ops(MVT::getVectorNumElements(VT), El);
       return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
     }
