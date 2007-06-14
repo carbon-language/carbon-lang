@@ -656,15 +656,19 @@ static bool canFallThroughTo(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
 }
 
 /// ReTryPreds - Invalidate predecessor BB info so it would be re-analyzed
-/// to determine if it can be if-converted.
+/// to determine if it can be if-converted. If predecessor is already
+/// enqueud, dequeue it!
 void IfConverter::ReTryPreds(MachineBasicBlock *BB) {
   for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
          E = BB->pred_end(); PI != E; ++PI) {
     BBInfo &PBBI = BBAnalysis[(*PI)->getNumber()];
-    if (!PBBI.IsDone && PBBI.Kind == ICNotClassfied) {
+    if (PBBI.IsDone)
+      continue;
+    if (PBBI.Kind == ICNotClassfied) {
       assert(!PBBI.IsEnqueued && "Unexpected");
       PBBI.IsAnalyzed = false;
-    }
+    } else if (PBBI.IsEnqueued && PBBI.BB != BB)
+      PBBI.IsEnqueued = false;
   }
 }
 
