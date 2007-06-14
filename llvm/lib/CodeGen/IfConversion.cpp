@@ -383,7 +383,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     return;
 
   // First analyze the end of BB branches.
-  BBI.TrueBB = BBI.FalseBB;
+  BBI.TrueBB = BBI.FalseBB = NULL;
   BBI.BrCond.clear();
   BBI.IsBrAnalyzable =
     !TII->AnalyzeBranch(*BBI.BB, BBI.TrueBB, BBI.FalseBB, BBI.BrCond);
