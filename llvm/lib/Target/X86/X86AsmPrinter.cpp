@@ -307,7 +307,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         ExtWeakSymbols.insert(GV);
 
     EmitGlobalConstant(C);
-    O << '\n';
   }
   
   // Output linker support code for dllexported globals

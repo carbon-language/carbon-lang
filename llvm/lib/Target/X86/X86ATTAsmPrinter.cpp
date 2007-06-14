@@ -59,10 +59,10 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
     if (Subtarget->isTargetDarwin()) {
       return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
     } else if (Subtarget->isTargetCygMing()) {
-      return "\t.section\t.text$linkonce." + CurrentFnName + ",\"ax\"\n";
+      return "\t.section\t.text$linkonce." + CurrentFnName + ",\"ax\"";
     } else {
       return "\t.section\t.llvm.linkonce.t." + CurrentFnName +
-             ",\"ax\",@progbits\n";
+             ",\"ax\",@progbits";
     }
   }
 }
