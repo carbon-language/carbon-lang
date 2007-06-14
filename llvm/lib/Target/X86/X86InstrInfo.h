@@ -261,6 +261,7 @@ public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
 
   // Branch analysis.
+  virtual bool isUnpredicatedTerminator(const MachineInstr* MI) const;
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
                              std::vector<MachineOperand> &Cond) const;

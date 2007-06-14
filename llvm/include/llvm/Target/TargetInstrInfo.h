@@ -417,7 +417,7 @@ public:
 
   /// isUnpredicatedTerminator - Returns true if the instruction is a
   /// terminator instruction that has not been predicated.
-  bool isUnpredicatedTerminator(const MachineInstr *MI) const;
+  virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
 
   /// PredicateInstruction - Convert the instruction into a predicated
   /// instruction. It returns true if the operation was successful.
