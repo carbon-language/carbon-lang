@@ -662,13 +662,11 @@ void IfConverter::ReTryPreds(MachineBasicBlock *BB) {
   for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
          E = BB->pred_end(); PI != E; ++PI) {
     BBInfo &PBBI = BBAnalysis[(*PI)->getNumber()];
-    if (PBBI.IsDone)
+    if (PBBI.IsDone || PBBI.BB == BB)
       continue;
-    if (PBBI.Kind == ICNotClassfied) {
-      assert(!PBBI.IsEnqueued && "Unexpected");
-      PBBI.IsAnalyzed = false;
-    } else if (PBBI.IsEnqueued && PBBI.BB != BB)
-      PBBI.IsEnqueued = false;
+    PBBI.Kind = ICNotClassfied;
+    PBBI.IsAnalyzed = false;
+    PBBI.IsEnqueued = false;
   }
 }
 
@@ -769,8 +767,11 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
       if (PBB == BBI.BB)
         continue;
       BBInfo &PBBI = BBAnalysis[PBB->getNumber()];
-      if (PBBI.IsEnqueued)
+      if (PBBI.IsEnqueued) {
+        PBBI.Kind = ICNotClassfied;
+        PBBI.IsAnalyzed = false;
         PBBI.IsEnqueued = false;
+      }
     }
   }
 
