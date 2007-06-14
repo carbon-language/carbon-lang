@@ -298,6 +298,16 @@ public:
     return 0;
   }
 
+  /// isOtherReMaterializableLoad - If the specified machine instruction is a
+  /// direct load that is trivially rematerializable, not counting loads from
+  /// stack slots, return true. If not, return false.  This predicate must
+  /// return false if the instruction has any side effects other than
+  /// producing the value from the load, or if it requres any address
+  /// registers that are not always available.
+  virtual bool isOtherReMaterializableLoad(MachineInstr *MI) const {
+    return false;
+  }
+
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into one or moretrue

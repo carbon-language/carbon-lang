@@ -664,7 +664,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
     // If this instruction is being rematerialized, just remove it!
     int FrameIdx;
     if ((TID->Flags & M_REMATERIALIZIBLE) ||
-        TII->isLoadFromStackSlot(&MI, FrameIdx)) {
+        TII->isLoadFromStackSlot(&MI, FrameIdx) ||
+        TII->isOtherReMaterializableLoad(&MI)) {
       bool Remove = true;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);

@@ -112,6 +112,31 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
+bool X86InstrInfo::isOtherReMaterializableLoad(MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::MOV8rm:
+  case X86::MOV16rm:
+  case X86::MOV16_rm:
+  case X86::MOV32rm:
+  case X86::MOV32_rm:
+  case X86::MOV64rm:
+  case X86::FpLD64m:
+  case X86::MOVSSrm:
+  case X86::MOVSDrm:
+  case X86::MOVAPSrm:
+  case X86::MOVAPDrm:
+  case X86::MMX_MOVD64rm:
+  case X86::MMX_MOVQ64rm:
+    return MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate() &&
+           MI->getOperand(3).isRegister() && MI->getOperand(4).isConstantPoolIndex() &&
+           MI->getOperand(1).getReg() == 0 &&
+           MI->getOperand(2).getImmedValue() == 1 &&
+           MI->getOperand(3).getReg() == 0;
+  }
+  return false;
+}
+
 /// convertToThreeAddress - This method must be implemented by targets that
 /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
 /// may be able to convert a two-address instruction into a true
