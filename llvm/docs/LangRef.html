@@ -191,6 +191,12 @@
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
       <li><a href="#int_eh">Exception Handling intrinsics</a></li>
+      <li><a href="#int_general">General intrinsics</a></li>
+        <ol>
+          <li><a href="#int_var_annotation">'<tt>llvm.var.annotation</tt>' 
+                                                              Intrinsic</a></li>
+          </ol>
+      </li>
     </ol>
   </li>
 </ol>
@@ -4817,6 +4823,50 @@ Debugging</a> document.
 <tt>llvm.eh.</tt> prefix), are described in the <a
 href="ExceptionHandling.html#format_common_intrinsics">LLVM Exception
 Handling</a> document. </p>
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_general">General Intrinsics</a>
+</div>
+
+<div class="doc_text">
+<p> This class of intrinsics is designed to be generic and has
+no specific purpose. </p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_var_annotation">'<tt>llvm.var.annotation</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare void @llvm.var.annotation(i8* &lt;val&gt;, i8* &lt;str&gt;)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.var.annotation</tt>' intrinsic
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument is a pointer to a value, and the second is a pointer to a 
+global string.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic allows annotation of local variables with arbitrary strings.  
+This can be useful for special purpose optimizations that want to look for these
+ annotations.  These have no other defined use, they are ignored by code 
+ generation and optimization.
 </div>
 
 
