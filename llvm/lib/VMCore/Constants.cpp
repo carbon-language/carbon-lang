@@ -122,6 +122,11 @@ Constant *Constant::getNullValue(const Type *Ty) {
   }
 }
 
+Constant *Constant::getAllOnesValue(const Type *Ty) {
+  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
+    return ConstantInt::get(APInt::getAllOnesValue(ITy->getBitWidth()));
+  return ConstantVector::getAllOnesValue(cast<VectorType>(Ty));
+}
 
 // Static constructor to create an integral constant with all bits set
 ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
