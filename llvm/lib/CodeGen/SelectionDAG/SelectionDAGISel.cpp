@@ -3222,7 +3222,8 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
   // Otherwise, if this was a reference to an LLVM register class, create vregs
   // for this reference.
   std::vector<unsigned> RegClassRegs;
-  if (PhysReg.second) {
+  const TargetRegisterClass *RC = PhysReg.second;
+  if (RC) {
     // If this is an early clobber or tied register, our regalloc doesn't know
     // how to maintain the constraint.  If it isn't, go ahead and create vreg
     // and let the regalloc do the right thing.
@@ -3272,11 +3273,13 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
     
     // Check to see if this register is allocatable (i.e. don't give out the
     // stack pointer).
-    const TargetRegisterClass *RC = isAllocatableRegister(Reg, MF, TLI, MRI);
-    if (!RC) {
-      // Make sure we find consecutive registers.
-      NumAllocated = 0;
-      continue;
+    if (RC == 0) {
+      RC = isAllocatableRegister(Reg, MF, TLI, MRI);
+      if (!RC) {        // Couldn't allocate this register.
+        // Reset NumAllocated to make sure we return consecutive registers.
+        NumAllocated = 0;
+        continue;
+      }
     }
     
     // Okay, this register is good, we can use it.
