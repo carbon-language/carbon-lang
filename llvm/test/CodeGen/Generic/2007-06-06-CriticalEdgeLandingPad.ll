@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc -enable-eh -asm-verbose -o - | grep {Llabel137.*Region start}
+; RUN: llvm-as < %s | llc -enable-eh -asm-verbose -o - | \
+; RUN:   grep -A 3 {Llabel137.*Region start} | grep {5.*Action}
 ; PR1422
+; PR1508
 
 target triple = "i686-pc-linux-gnu"
 	%struct.exception = type { i8, i8, i32, i8*, i8*, i32, i8* }

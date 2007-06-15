@@ -1,5 +1,7 @@
 ; RUN: llvm-as < %s | llc -enable-eh
 ; RUN: llvm-as < %s | llc -enable-eh -march=x86-64 
+; XFAIL: *
+; Un-XFAIL this when PR1508 is fixed.
 
 ; PR1326
 

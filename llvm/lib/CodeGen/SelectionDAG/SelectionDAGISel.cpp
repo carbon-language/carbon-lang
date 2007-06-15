@@ -179,6 +179,11 @@ namespace llvm {
     /// anywhere in the function.
     std::map<const AllocaInst*, int> StaticAllocaMap;
 
+#ifndef NDEBUG
+    SmallSet<Instruction*, 8> CatchInfoLost;
+    SmallSet<Instruction*, 8> CatchInfoFound;
+#endif
+
     unsigned MakeReg(MVT::ValueType VT) {
       return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
     }
@@ -197,6 +202,15 @@ namespace llvm {
       return R = CreateRegForValue(V);
     }
   };
+}
+
+/// isFilterOrSelector - Return true if this instruction is a call to the
+/// eh.filter or the eh.selector intrinsic.
+static bool isFilterOrSelector(Instruction *I) {
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+    return II->getIntrinsicID() == Intrinsic::eh_selector
+      || II->getIntrinsicID() == Intrinsic::eh_filter;
+  return false;
 }
 
 /// isUsedOutsideOfDefiningBlock - Return true if this instruction is used by
@@ -2463,6 +2477,33 @@ static GlobalVariable *ExtractGlobalVariable (Constant *C) {
   return NULL;
 }
 
+/// addCatchInfo - Extract the personality and type infos from an eh.selector
+/// or eh.filter call, and add them to the specified machine basic block.
+static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
+                         MachineBasicBlock *MBB) {
+  // Inform the MachineModuleInfo of the personality for this landing pad.
+  ConstantExpr *CE = cast<ConstantExpr>(I.getOperand(2));
+  assert(CE->getOpcode() == Instruction::BitCast &&
+         isa<Function>(CE->getOperand(0)) &&
+         "Personality should be a function");
+  MMI->addPersonality(MBB, cast<Function>(CE->getOperand(0)));
+
+  // Gather all the type infos for this landing pad and pass them along to
+  // MachineModuleInfo.
+  std::vector<GlobalVariable *> TyInfo;
+  for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
+    Constant *C = cast<Constant>(I.getOperand(i));
+    GlobalVariable *GV = ExtractGlobalVariable(C);
+    assert (GV || isa<ConstantPointerNull>(C) &&
+            "TypeInfo must be a global variable or NULL");
+    TyInfo.push_back(GV);
+  }
+  if (I.getCalledFunction()->getIntrinsicID() == Intrinsic::eh_filter)
+    MMI->addFilterTypeInfo(MBB, TyInfo);
+  else
+    MMI->addCatchTypeInfo(MBB, TyInfo);
+}
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -2595,29 +2636,14 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_selector:
   case Intrinsic::eh_filter:{
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    
-    if (ExceptionHandling && MMI) {
-      // Inform the MachineModuleInfo of the personality for this landing pad.
-      ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(2));
-      assert(CE && CE->getOpcode() == Instruction::BitCast &&
-             isa<Function>(CE->getOperand(0)) &&
-             "Personality should be a function");
-      MMI->addPersonality(CurMBB, cast<Function>(CE->getOperand(0)));
 
-      // Gather all the type infos for this landing pad and pass them along to
-      // MachineModuleInfo.
-      std::vector<GlobalVariable *> TyInfo;
-      for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-        Constant *C = cast<Constant>(I.getOperand(i));
-        GlobalVariable *GV = ExtractGlobalVariable(C);
-        assert (GV || isa<ConstantPointerNull>(C) &&
-                "TypeInfo must be a global variable or NULL");
-        TyInfo.push_back(GV);
-      }
-      if (Intrinsic == Intrinsic::eh_filter)
-        MMI->addFilterTypeInfo(CurMBB, TyInfo);
+    if (ExceptionHandling && MMI) {
+      if (CurMBB->isLandingPad())
+        addCatchInfo(I, MMI, CurMBB);
+#ifndef NDEBUG
       else
-        MMI->addCatchTypeInfo(CurMBB, TyInfo);
+        FuncInfo.CatchInfoLost.insert(&I);
+#endif
 
       // Mark exception selector register as live in.
       unsigned Reg = TLI.getExceptionSelectorRegister();
@@ -4403,6 +4429,11 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
            E = MF.livein_end(); I != E; ++I)
       BB->addLiveIn(I->first);
 
+#ifndef NDEBUG
+  assert(FuncInfo.CatchInfoFound.size() == FuncInfo.CatchInfoLost.size() &&
+         "Not all catch info was assigned to a landing pad!");
+#endif
+
   return true;
 }
 
@@ -4513,6 +4544,20 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL,
   EmitFunctionEntryCode(F, SDL.DAG.getMachineFunction());
 }
 
+static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
+                          MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
+  assert(!FLI.MBBMap[SrcBB]->isLandingPad() &&
+         "Copying catch info out of a landing pad!");
+  for (BasicBlock::iterator I = SrcBB->begin(), E = --SrcBB->end(); I != E; ++I)
+    if (isFilterOrSelector(I)) {
+      // Apply the catch info to DestBB.
+      addCatchInfo(cast<CallInst>(*I), MMI, FLI.MBBMap[DestBB]);
+#ifndef NDEBUG
+      FLI.CatchInfoFound.insert(I);
+#endif
+    }
+}
+
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                          FunctionLoweringInfo &FuncInfo) {
@@ -4527,15 +4572,37 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   BB = FuncInfo.MBBMap[LLVMBB];
   SDL.setCurrentBasicBlock(BB);
 
-  if (ExceptionHandling && BB->isLandingPad()) {
-    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+  MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
-    if (MMI) {
-      // Add a label to mark the beginning of the landing pad.  Deletion of the
-      // landing pad can thus be detected via the MachineModuleInfo.
-      unsigned LabelID = MMI->addLandingPad(BB);
-      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
-                              DAG.getConstant(LabelID, MVT::i32)));
+  if (ExceptionHandling && MMI && BB->isLandingPad()) {
+    // Add a label to mark the beginning of the landing pad.  Deletion of the
+    // landing pad can thus be detected via the MachineModuleInfo.
+    unsigned LabelID = MMI->addLandingPad(BB);
+    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
+                            DAG.getConstant(LabelID, MVT::i32)));
+
+    // FIXME: Hack around an exception handling flaw (PR1508): the personality
+    // function and list of typeids logically belong to the invoke (or, if you
+    // like, the basic block containing the invoke), and need to be associated
+    // with it in the dwarf exception handling tables.  Currently however the
+    // information is provided by intrinsics (eh.filter and eh.selector) that
+    // can be moved to unexpected places by the optimizers: if the unwind edge
+    // is critical, then breaking it can result in the intrinsics being in the
+    // successor of the landing pad, not the landing pad itself.  This results
+    // in exceptions not being caught because no typeids are associated with
+    // the invoke.  This may not be the only way things can go wrong, but it
+    // is the only way we try to work around for the moment.
+    BranchInst *Br = dyn_cast<BranchInst>(LLVMBB->getTerminator());
+
+    if (Br && Br->isUnconditional()) { // Critical edge?
+      BasicBlock::iterator I, E;
+      for (I = LLVMBB->begin(), E = --LLVMBB->end(); I != E; ++I)
+        if (isFilterOrSelector(I))
+          break;
+
+      if (I == E)
+        // No catch info found - try to extract some from the successor.
+        copyCatchInfo(Br->getSuccessor(0), LLVMBB, MMI, FuncInfo);
     }
   }
 
