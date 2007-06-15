@@ -329,8 +329,12 @@ private:
   bool matchIfNot(Value *LHS, Value *RHS) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
       return CI->isAllOnesValue() && L.match(LHS);
-    else if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS))
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS))
       return CI->isAllOnesValue() && L.match(RHS);
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(RHS))
+      return CV->isAllOnesValue() && L.match(LHS);
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(LHS))
+      return CV->isAllOnesValue() && L.match(RHS);
     return false;
   }
 };
