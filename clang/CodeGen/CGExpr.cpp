@@ -456,13 +456,13 @@ RValue CodeGenFunction::EmitUnaryAddrOf(const UnaryOperator *E) {
 RValue CodeGenFunction::EmitUnaryPlus(const UnaryOperator *E) {
   // Unary plus just performs promotions on its arithmetic operand.
   QualType Ty;
-  return EmitExprWithUsualUnaryConversions(E, Ty);
+  return EmitExprWithUsualUnaryConversions(E->getSubExpr(), Ty);
 }
 
 RValue CodeGenFunction::EmitUnaryMinus(const UnaryOperator *E) {
   // Unary minus performs promotions, then negates its arithmetic operand.
   QualType Ty;
-  RValue V = EmitExprWithUsualUnaryConversions(E, Ty);
+  RValue V = EmitExprWithUsualUnaryConversions(E->getSubExpr(), Ty);
   
   if (V.isScalar())
     return RValue::get(Builder.CreateNeg(V.getVal(), "neg"));
@@ -473,7 +473,7 @@ RValue CodeGenFunction::EmitUnaryMinus(const UnaryOperator *E) {
 RValue CodeGenFunction::EmitUnaryNot(const UnaryOperator *E) {
   // Unary not performs promotions, then complements its integer operand.
   QualType Ty;
-  RValue V = EmitExprWithUsualUnaryConversions(E, Ty);
+  RValue V = EmitExprWithUsualUnaryConversions(E->getSubExpr(), Ty);
   
   if (V.isScalar())
     return RValue::get(Builder.CreateNot(V.getVal(), "neg"));
