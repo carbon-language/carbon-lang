@@ -54,6 +54,7 @@ STATISTIC(NumTriangleFalse,"Number of triangle (F) if-conversions performed");
 STATISTIC(NumTriangleFRev, "Number of triangle (F/R) if-conversions performed");
 STATISTIC(NumDiamonds,     "Number of diamond if-conversions performed");
 STATISTIC(NumIfConvBBs,    "Number of if-converted blocks");
+STATISTIC(NumDupBBs,       "Number of duplicated blocks");
 
 namespace {
   class IfConverter : public MachineFunctionPass {
@@ -153,7 +154,10 @@ namespace {
     void PredicateBlock(BBInfo &BBI,
                         std::vector<MachineOperand> &Cond,
                         bool IgnoreTerm = false);
-    void MergeBlocks(BBInfo &TrueBBI, BBInfo &FalseBBI);
+    void CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
+                               std::vector<MachineOperand> &Cond,
+                               bool IgnoreBr = false);
+    void MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI);
 
     // blockAlwaysFallThrough - Block ends without a terminator.
     bool blockAlwaysFallThrough(BBInfo &BBI) const {
@@ -196,7 +200,9 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
 
   std::vector<BBInfo*> Candidates;
   MadeChange = false;
-  while (IfCvtLimit == -1 || (int)NumIfConvBBs < IfCvtLimit) {
+  unsigned NumIfCvts = NumSimple + NumSimpleFalse + NumTriangle +
+    NumTriangleRev + NumTriangleFalse + NumTriangleFRev + NumDiamonds;
+  while (IfCvtLimit == -1 || (int)NumIfCvts < IfCvtLimit) {
     // Do an intial analysis for each basic block and finding all the potential
     // candidates to perform if-convesion.
     bool Change = AnalyzeBlocks(MF, Candidates);
@@ -274,7 +280,9 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
       }
       Change |= RetVal;
 
-      if (IfCvtLimit != -1 && (int)NumIfConvBBs >= IfCvtLimit)
+      NumIfCvts = NumSimple + NumSimpleFalse + NumTriangle + NumTriangleRev +
+        NumTriangleFalse + NumTriangleFRev + NumDiamonds;
+      if (IfCvtLimit != -1 && (int)NumIfCvts >= IfCvtLimit)
         break;
     }
 
@@ -326,8 +334,12 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI) const {
   if (TrueBBI.IsBeingAnalyzed)
     return false;
 
-  return !blockAlwaysFallThrough(TrueBBI) &&
-    TrueBBI.BrCond.size() == 0 && TrueBBI.BB->pred_size() == 1;
+  if (TrueBBI.BB->pred_size() != 1) {
+    if (TrueBBI.NonPredSize > TLI->getIfCvtDupBlockSizeLimit())
+      return false;
+  }
+
+  return !blockAlwaysFallThrough(TrueBBI) && TrueBBI.BrCond.size() == 0;
 }
 
 /// ValidTriangle - Returns true if the 'true' and 'false' blocks (along
@@ -337,8 +349,13 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
   if (TrueBBI.IsBeingAnalyzed)
     return false;
 
-  if (TrueBBI.BB->pred_size() != 1)
-    return false;
+  if (TrueBBI.BB->pred_size() != 1) {
+    unsigned Size = TrueBBI.NonPredSize;
+    if (TrueBBI.FalseBB)
+      ++Size;
+    if (Size > TLI->getIfCvtDupBlockSizeLimit())
+      return false;
+  }
 
   MachineBasicBlock *TExit = FalseBranch ? TrueBBI.FalseBB : TrueBBI.TrueBB;
   if (!TExit && blockAlwaysFallThrough(TrueBBI)) {
@@ -709,11 +726,18 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
     TII->ReverseBranchCondition(Cond);
   }
 
-  PredicateBlock(*CvtBBI, Cond);
+  if (CvtBBI->BB->pred_size() > 1) {
+    BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+    // Copy instructions in the true block, predicate them add them to
+    // the entry block.
+    CopyAndPredicateBlock(BBI, *CvtBBI, Cond);
+  } else {
+    PredicateBlock(*CvtBBI, Cond);
 
-  // Merge converted block into entry block.
-  BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
-  MergeBlocks(BBI, *CvtBBI);
+    // Merge converted block into entry block.
+    BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+    MergeBlocks(BBI, *CvtBBI);
+  }
 
   bool IterIfcvt = true;
   if (!canFallThroughTo(BBI.BB, NextBBI->BB)) {
@@ -775,22 +799,38 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
     }
   }
 
-  // Predicate the 'true' block after removing its branch.
-  CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
-  PredicateBlock(*CvtBBI, Cond);
+  bool HasEarlyExit = CvtBBI->FalseBB != NULL;
+  bool DupBB = CvtBBI->BB->pred_size() > 1;
+  if (DupBB) {
+    BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+    // Copy instructions in the true block, predicate them add them to
+    // the entry block.
+    CopyAndPredicateBlock(BBI, *CvtBBI, Cond, true);
+    BBI.BB->removeSuccessor(CvtBBI->BB);
+  } else {
+    // Predicate the 'true' block after removing its branch.
+    CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
+    PredicateBlock(*CvtBBI, Cond);
+  }
 
   // If 'true' block has a 'false' successor, add an exit branch to it.
-  bool HasEarlyExit = CvtBBI->FalseBB != NULL;
   if (HasEarlyExit) {
     std::vector<MachineOperand> RevCond(CvtBBI->BrCond);
     if (TII->ReverseBranchCondition(RevCond))
       assert(false && "Unable to reverse branch condition!");
-    TII->InsertBranch(*CvtBBI->BB, CvtBBI->FalseBB, NULL, RevCond);
+    if (DupBB) {
+      TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond);
+      BBI.BB->addSuccessor(CvtBBI->FalseBB);
+    } else {
+      TII->InsertBranch(*CvtBBI->BB, CvtBBI->FalseBB, NULL, RevCond);
+    }
   }
 
-  // Now merge the entry of the triangle with the true block.
-  BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
-  MergeBlocks(BBI, *CvtBBI);
+  if (!DupBB) {
+    // Now merge the entry of the triangle with the true block.
+    BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+    MergeBlocks(BBI, *CvtBBI);
+  }
 
   // Merge in the 'false' block if the 'false' block has no other
   // predecessors. Otherwise, add a unconditional branch from to 'false'.
@@ -970,11 +1010,46 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
     }
   }
 
-  BBI.IsAnalyzed = false;
-  BBI.NonPredSize = 0;
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(BBI.Predicate));
 
+  BBI.IsAnalyzed = false;
+  BBI.NonPredSize = 0;
+
   NumIfConvBBs++;
+}
+
+/// CopyAndPredicateBlock - Copy and predicate instructions from source BB to
+/// the destination block. Skip end of block branches if IgnoreBr is true.
+void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
+                                        std::vector<MachineOperand> &Cond,
+                                        bool IgnoreBr) {
+  for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
+         E = FromBBI.BB->end(); I != E; ++I) {
+    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
+    bool isPredicated = TII->isPredicated(I);
+    // Do not copy the end of the block branches.
+    if (IgnoreBr && !isPredicated && (TID->Flags & M_BRANCH_FLAG) != 0)
+      break;
+
+    MachineInstr *MI = I->clone();
+    ToBBI.BB->insert(ToBBI.BB->end(), MI);
+    ToBBI.NonPredSize++;
+
+    if (!isPredicated)
+      if (!TII->PredicateInstruction(MI, Cond)) {
+        cerr << "Unable to predicate " << *MI << "!\n";
+        abort();
+      }
+  }
+
+  std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
+            std::back_inserter(ToBBI.Predicate));
+  std::copy(Cond.begin(), Cond.end(), std::back_inserter(ToBBI.Predicate));
+
+  ToBBI.ClobbersPred |= FromBBI.ClobbersPred;
+  ToBBI.IsAnalyzed = false;
+
+  NumDupBBs++;
 }
 
 /// MergeBlocks - Move all instructions from FromBB to the end of ToBB.
@@ -1012,16 +1087,15 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
   if (NBB)
     FromBBI.BB->addSuccessor(NBB);
 
+  std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
+            std::back_inserter(ToBBI.Predicate));
+  FromBBI.Predicate.clear();
+
   ToBBI.NonPredSize += FromBBI.NonPredSize;
   FromBBI.NonPredSize = 0;
 
   ToBBI.ClobbersPred |= FromBBI.ClobbersPred;
   ToBBI.HasFallThrough = FromBBI.HasFallThrough;
-
-  std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
-            std::back_inserter(ToBBI.Predicate));
-  FromBBI.Predicate.clear();
-
   ToBBI.IsAnalyzed = false;
   FromBBI.IsAnalyzed = false;
 }
