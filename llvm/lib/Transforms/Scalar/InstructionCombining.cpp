@@ -3245,8 +3245,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       return &I;
   } else {
     if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1)) {
-      if (CP->isAllOnesValue())
+      if (CP->isAllOnesValue())            // X & <-1,-1> -> X
         return ReplaceInstUsesWith(I, I.getOperand(0));
+    } else if (isa<ConstantAggregateZero>(Op1)) {
+      return ReplaceInstUsesWith(I, Op1);  // X & <0,0> -> <0,0>
     }
   }
   
@@ -3714,7 +3716,14 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
                              KnownZero, KnownOne))
       return &I;
+  } else if (isa<ConstantAggregateZero>(Op1)) {
+    return ReplaceInstUsesWith(I, Op0);  // X | <0,0> -> X
+  } else if (ConstantVector *CP = dyn_cast<ConstantVector>(Op1)) {
+    if (CP->isAllOnesValue())            // X | <-1,-1> -> <-1,-1>
+      return ReplaceInstUsesWith(I, I.getOperand(1));
   }
+    
+
   
   // or X, -1 == -1
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
@@ -4107,6 +4116,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (SimplifyDemandedBits(&I, APInt::getAllOnesValue(BitWidth),
                              KnownZero, KnownOne))
       return &I;
+  } else if (isa<ConstantAggregateZero>(Op1)) {
+    return ReplaceInstUsesWith(I, Op0);  // X ^ <0,0> -> X
   }
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
