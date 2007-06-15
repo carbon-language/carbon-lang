@@ -72,6 +72,11 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
 /// of work to avoid inserting an obviously redundant operation.
 Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
                                  Value *RHS, Instruction *&InsertPt) {
+  // Fold a binop with constant operands.
+  if (Constant *CLHS = dyn_cast<Constant>(LHS))
+    if (Constant *CRHS = dyn_cast<Constant>(RHS))
+      return ConstantExpr::get(Opcode, CLHS, CRHS);
+
   // Do a quick scan to see if we have this binop nearby.  If so, reuse it.
   unsigned ScanLimit = 6;
   for (BasicBlock::iterator IP = InsertPt, E = InsertPt->getParent()->begin();
