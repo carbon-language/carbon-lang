@@ -446,6 +446,35 @@ bool ARMInstrInfo::isPredicated(const MachineInstr *MI) const {
   return PIdx != -1 && MI->getOperand(PIdx).getImmedValue() != ARMCC::AL;
 }
 
+bool ARMInstrInfo::CanBeDuplicated(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default: return true;
+  // These have unique labels.
+  case ARM::PICADD:
+  case ARM::PICLD:
+  case ARM::PICLDZH:
+  case ARM::PICLDZB:
+  case ARM::PICLDH:
+  case ARM::PICLDB:
+  case ARM::PICLDSH:
+  case ARM::PICLDSB:
+  case ARM::PICSTR:
+  case ARM::PICSTRH:
+  case ARM::PICSTRB:
+  case ARM::LEApcrel:
+  case ARM::LEApcrelJT:
+  case ARM::tPICADD:
+  case ARM::tLEApcrel:
+  case ARM::tLEApcrelJT:
+  case ARM::CONSTPOOL_ENTRY:
+  // These embed jumptables.
+  case ARM::BR_JTr:
+  case ARM::BR_JTm:
+  case ARM::BR_JTadd:
+    return false;
+  }
+}
+
 bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
                                 const std::vector<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
