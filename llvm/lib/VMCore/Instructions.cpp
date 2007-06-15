@@ -1404,7 +1404,11 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
 
 // isConstantAllOnes - Helper function for several functions below
 static inline bool isConstantAllOnes(const Value *V) {
-  return isa<ConstantInt>(V) &&cast<ConstantInt>(V)->isAllOnesValue();
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+    return CI->isAllOnesValue();
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
+    return CV->isAllOnesValue();
+  return false;
 }
 
 bool BinaryOperator::isNeg(const Value *V) {
