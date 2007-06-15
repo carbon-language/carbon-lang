@@ -277,8 +277,7 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
 
   // Expand the code for the iteration count into the preheader of the loop.
   BasicBlock *Preheader = L->getLoopPreheader();
-  Value *ExitCnt = RW.expandCodeFor(TripCount, Preheader->getTerminator(),
-                                    IndVar->getType());
+  Value *ExitCnt = RW.expandCodeFor(TripCount, Preheader->getTerminator());
 
   // Insert a new icmp_ne or icmp_eq instruction before the branch.
   ICmpInst::Predicate Opcode;
@@ -383,7 +382,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
         // just reuse it.
         Value *&ExitVal = ExitValues[Inst];
         if (!ExitVal)
-          ExitVal = Rewriter.expandCodeFor(ExitValue, InsertPt,Inst->getType());
+          ExitVal = Rewriter.expandCodeFor(ExitValue, InsertPt);
         
         DOUT << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal
              << "  LoopVal = " << *Inst << "\n";
@@ -519,9 +518,12 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   Changed = true;
   DOUT << "INDVARS: New CanIV: " << *IndVar;
 
-  if (!isa<SCEVCouldNotCompute>(IterationCount))
+  if (!isa<SCEVCouldNotCompute>(IterationCount)) {
+    if (IterationCount->getType() != LargestType)
+      IterationCount = SCEVZeroExtendExpr::get(IterationCount, LargestType);
     if (Instruction *DI = LinearFunctionTestReplace(L, IterationCount,Rewriter))
       DeadInsts.insert(DI);
+  }
 
   // Now that we have a canonical induction variable, we can rewrite any
   // recurrences in terms of the induction variable.  Start with the auxillary
@@ -555,8 +557,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   std::map<unsigned, Value*> InsertedSizes;
   while (!IndVars.empty()) {
     PHINode *PN = IndVars.back().first;
-    Value *NewVal = Rewriter.expandCodeFor(IndVars.back().second, InsertPt,
-                                           PN->getType());
+    Value *NewVal = Rewriter.expandCodeFor(IndVars.back().second, InsertPt);
     DOUT << "INDVARS: Rewrote IV '" << *IndVars.back().second << "' " << *PN
          << "   into = " << *NewVal << "\n";
     NewVal->takeName(PN);

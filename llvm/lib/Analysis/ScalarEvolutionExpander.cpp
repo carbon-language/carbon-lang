@@ -93,18 +93,17 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
 }
 
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
-  const Type *Ty = S->getType();
   int FirstOp = 0;  // Set if we should emit a subtract.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getOperand(0)))
     if (SC->getValue()->isAllOnesValue())
       FirstOp = 1;
 
   int i = S->getNumOperands()-2;
-  Value *V = expandInTy(S->getOperand(i+1), Ty);
+  Value *V = expand(S->getOperand(i+1));
 
   // Emit a bunch of multiply instructions
   for (; i >= FirstOp; --i)
-    V = InsertBinop(Instruction::Mul, V, expandInTy(S->getOperand(i), Ty),
+    V = InsertBinop(Instruction::Mul, V, expand(S->getOperand(i)),
                     InsertPt);
   // -1 * ...  --->  0 - ...
   if (FirstOp == 1)
@@ -122,10 +121,10 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   // {X,+,F} --> X + {0,+,F}
   if (!isa<SCEVConstant>(S->getStart()) ||
       !cast<SCEVConstant>(S->getStart())->getValue()->isZero()) {
-    Value *Start = expandInTy(S->getStart(), Ty);
+    Value *Start = expand(S->getStart());
     std::vector<SCEVHandle> NewOps(S->op_begin(), S->op_end());
     NewOps[0] = SCEVUnknown::getIntegerSCEV(0, Ty);
-    Value *Rest = expandInTy(SCEVAddRecExpr::get(NewOps, L), Ty);
+    Value *Rest = expand(SCEVAddRecExpr::get(NewOps, L));
 
     // FIXME: look for an existing add to use.
     return InsertBinop(Instruction::Add, Rest, Start, InsertPt);
@@ -164,7 +163,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
 
   // If this is a simple linear addrec, emit it now as a special case.
   if (S->getNumOperands() == 2) {   // {0,+,F} --> i*F
-    Value *F = expandInTy(S->getOperand(1), Ty);
+    Value *F = expand(S->getOperand(1));
     
     // IF the step is by one, just return the inserted IV.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(F))
@@ -201,5 +200,5 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   SCEVHandle V = S->evaluateAtIteration(IH);
   //cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
-  return expandInTy(V, Ty);
+  return expand(V);
 }

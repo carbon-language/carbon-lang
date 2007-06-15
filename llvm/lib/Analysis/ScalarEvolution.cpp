@@ -245,6 +245,32 @@ void SCEVZeroExtendExpr::print(std::ostream &OS) const {
   OS << "(zeroextend " << *Op << " to " << *Ty << ")";
 }
 
+// SCEVSignExtends - Only allow the creation of one SCEVSignExtendExpr for any
+// particular input.  Don't use a SCEVHandle here, or else the object will never
+// be deleted!
+static ManagedStatic<std::map<std::pair<SCEV*, const Type*>,
+                     SCEVSignExtendExpr*> > SCEVSignExtends;
+
+SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
+  : SCEV(scSignExtend), Op(op), Ty(ty) {
+  assert(Op->getType()->isInteger() && Ty->isInteger() &&
+         "Cannot sign extend non-integer value!");
+  assert(Op->getType()->getPrimitiveSizeInBits() < Ty->getPrimitiveSizeInBits()
+         && "This is not an extending conversion!");
+}
+
+SCEVSignExtendExpr::~SCEVSignExtendExpr() {
+  SCEVSignExtends->erase(std::make_pair(Op, Ty));
+}
+
+ConstantRange SCEVSignExtendExpr::getValueRange() const {
+  return getOperand()->getValueRange().signExtend(getBitWidth());
+}
+
+void SCEVSignExtendExpr::print(std::ostream &OS) const {
+  OS << "(signextend " << *Op << " to " << *Ty << ")";
+}
+
 // SCEVCommExprs - Only allow the creation of one SCEVCommutativeExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
@@ -585,6 +611,21 @@ SCEVHandle SCEVZeroExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
 
   SCEVZeroExtendExpr *&Result = (*SCEVZeroExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVZeroExtendExpr(Op, Ty);
+  return Result;
+}
+
+SCEVHandle SCEVSignExtendExpr::get(const SCEVHandle &Op, const Type *Ty) {
+  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
+    return SCEVUnknown::get(
+        ConstantExpr::getSExt(SC->getValue(), Ty));
+
+  // FIXME: If the input value is a chrec scev, and we can prove that the value
+  // did not overflow the old, smaller, value, we can sign extend all of the
+  // operands (often constants).  This would allow analysis of something like
+  // this:  for (signed char X = 0; X < 100; ++X) { int Y = X; }
+
+  SCEVSignExtendExpr *&Result = (*SCEVSignExtends)[std::make_pair(Op, Ty)];
+  if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty);
   return Result;
 }
 
@@ -1370,6 +1411,9 @@ static APInt GetConstantFactor(SCEVHandle S) {
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
     return GetConstantFactor(E->getOperand()).zext(
                                cast<IntegerType>(E->getType())->getBitWidth());
+  if (SCEVSignExtendExpr *E = dyn_cast<SCEVSignExtendExpr>(S))
+    return GetConstantFactor(E->getOperand()).sext(
+                               cast<IntegerType>(E->getType())->getBitWidth());
   
   if (SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
     // The result is the min of all operands.
@@ -1469,6 +1513,9 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
 
     case Instruction::ZExt:
       return SCEVZeroExtendExpr::get(getSCEV(I->getOperand(0)), I->getType());
+
+    case Instruction::SExt:
+      return SCEVSignExtendExpr::get(getSCEV(I->getOperand(0)), I->getType());
 
     case Instruction::BitCast:
       // BitCasts are no-op casts so we just eliminate the cast.

@@ -24,8 +24,8 @@ namespace llvm {
   enum SCEVTypes {
     // These should be ordered in terms of increasing complexity to make the
     // folders simpler.
-    scConstant, scTruncate, scZeroExtend, scAddExpr, scMulExpr, scSDivExpr,
-    scAddRecExpr, scUnknown, scCouldNotCompute
+    scConstant, scTruncate, scZeroExtend, scSignExtend, scAddExpr, scMulExpr,
+    scSDivExpr, scAddRecExpr, scUnknown, scCouldNotCompute
   };
 
   //===--------------------------------------------------------------------===//
@@ -163,6 +163,53 @@ namespace llvm {
     static inline bool classof(const SCEVZeroExtendExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
       return S->getSCEVType() == scZeroExtend;
+    }
+  };
+
+  //===--------------------------------------------------------------------===//
+  /// SCEVSignExtendExpr - This class represents a sign extension of a small
+  /// integer value to a larger integer value.
+  ///
+  class SCEVSignExtendExpr : public SCEV {
+    SCEVHandle Op;
+    const Type *Ty;
+    SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty);
+    virtual ~SCEVSignExtendExpr();
+  public:
+    /// get method - This just gets and returns a new SCEVSignExtend object
+    ///
+    static SCEVHandle get(const SCEVHandle &Op, const Type *Ty);
+
+    const SCEVHandle &getOperand() const { return Op; }
+    virtual const Type *getType() const { return Ty; }
+
+    virtual bool isLoopInvariant(const Loop *L) const {
+      return Op->isLoopInvariant(L);
+    }
+
+    virtual bool hasComputableLoopEvolution(const Loop *L) const {
+      return Op->hasComputableLoopEvolution(L);
+    }
+
+    /// getValueRange - Return the tightest constant bounds that this value is
+    /// known to have.  This method is only valid on integer SCEV objects.
+    virtual ConstantRange getValueRange() const;
+
+    SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
+                                                 const SCEVHandle &Conc) const {
+      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc);
+      if (H == Op)
+        return this;
+      return get(H, Ty);
+    }
+
+    virtual void print(std::ostream &OS) const;
+    void print(std::ostream *OS) const { if (OS) print(*OS); }
+
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const SCEVSignExtendExpr *S) { return true; }
+    static inline bool classof(const SCEV *S) {
+      return S->getSCEVType() == scSignExtend;
     }
   };
 
@@ -503,6 +550,8 @@ namespace llvm {
         return ((SC*)this)->visitTruncateExpr((SCEVTruncateExpr*)S);
       case scZeroExtend:
         return ((SC*)this)->visitZeroExtendExpr((SCEVZeroExtendExpr*)S);
+      case scSignExtend:
+        return ((SC*)this)->visitSignExtendExpr((SCEVSignExtendExpr*)S);
       case scAddExpr:
         return ((SC*)this)->visitAddExpr((SCEVAddExpr*)S);
       case scMulExpr:

@@ -555,8 +555,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
   // If there is no immediate value, skip the next part.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
     if (SC->getValue()->isZero())
-      return Rewriter.expandCodeFor(NewBase, BaseInsertPt,
-                                    OperandValToReplace->getType());
+      return Rewriter.expandCodeFor(NewBase, BaseInsertPt);
 
   Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
 
@@ -567,8 +566,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
   
   // Always emit the immediate (if non-zero) into the same block as the user.
   SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(Base), Imm);
-  return Rewriter.expandCodeFor(NewValSCEV, IP,
-                                OperandValToReplace->getType());
+  return Rewriter.expandCodeFor(NewValSCEV, IP);
   
 }
 
@@ -598,6 +596,11 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       }
     }
     Value *NewVal = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
+    // Adjust the type back to match the Inst.
+    if (isa<PointerType>(OperandValToReplace->getType())) {
+      NewVal = new IntToPtrInst(NewVal, OperandValToReplace->getType(), "cast",
+                                InsertPt);
+    }
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
     DOUT << "    CHANGED: IMM =" << *Imm;
@@ -644,6 +647,11 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
         // Insert the code into the end of the predecessor block.
         Instruction *InsertPt = PN->getIncomingBlock(i)->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
+
+        // Adjust the type back to match the PHI.
+        if (isa<PointerType>(PN->getType())) {
+          Code = new IntToPtrInst(Code, PN->getType(), "cast", InsertPt);
+        }
       }
       
       // Replace the use of the operand Value with the new Phi we just created.
@@ -1112,8 +1120,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
   // Emit the initial base value into the loop preheader.
   Value *CommonBaseV
-    = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt,
-                                      ReplacedTy);
+    = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt);
 
   if (RewriteFactor == 0) {
     // Create a new Phi for this base, and stick it in the loop header.
@@ -1131,8 +1138,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       IncAmount = SCEV::getNegativeSCEV(Stride);
     
     // Insert the stride into the preheader.
-    Value *StrideV = PreheaderRewriter.expandCodeFor(IncAmount, PreInsertPt,
-                                                     ReplacedTy);
+    Value *StrideV = PreheaderRewriter.expandCodeFor(IncAmount, PreInsertPt);
     if (!isa<ConstantInt>(StrideV)) ++NumVariable;
 
     // Emit the increment of the base value before the terminator of the loop
@@ -1142,8 +1148,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       IncExp = SCEV::getNegativeSCEV(IncExp);
     IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI), IncExp);
   
-    IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator(),
-                                  ReplacedTy);
+    IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator());
     IncV->setName(NewPHI->getName()+".inc");
     NewPHI->addIncoming(IncV, LatchBlock);
 
@@ -1199,8 +1204,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     SCEVHandle Base = UsersToProcess.back().Base;
 
     // Emit the code for Base into the preheader.
-    Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt,
-                                                   ReplacedTy);
+    Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt);
 
     DOUT << "  INSERTING code for BASE = " << *Base << ":";
     if (BaseV->hasName())

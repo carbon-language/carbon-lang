@@ -78,13 +78,10 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    ///
-    /// If a particular value sign is required, a type may be specified for the
-    /// result.
-    Value *expandCodeFor(SCEVHandle SH, Instruction *IP, const Type *Ty = 0) {
+    Value *expandCodeFor(SCEVHandle SH, Instruction *IP) {
       // Expand the code for this SCEV.
       this->InsertPt = IP;
-      return expandInTy(SH, Ty);
+      return expand(SH);
     }
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
@@ -107,25 +104,6 @@ namespace llvm {
       return V;
     }
 
-    Value *expandInTy(SCEV *S, const Type *Ty) {
-      Value *V = expand(S);
-      if (Ty && V->getType() != Ty) {
-        if (isa<PointerType>(Ty) && V->getType()->isInteger())
-          return InsertCastOfTo(Instruction::IntToPtr, V, Ty);
-        else if (Ty->isInteger() && isa<PointerType>(V->getType()))
-          return InsertCastOfTo(Instruction::PtrToInt, V, Ty);
-        else if (Ty->getPrimitiveSizeInBits() == 
-                 V->getType()->getPrimitiveSizeInBits())
-          return InsertCastOfTo(Instruction::BitCast, V, Ty);
-        else if (Ty->getPrimitiveSizeInBits() > 
-                 V->getType()->getPrimitiveSizeInBits())
-          return InsertCastOfTo(Instruction::ZExt, V, Ty);
-        else
-          return InsertCastOfTo(Instruction::Trunc, V, Ty);
-      }
-      return V;
-    }
-
     Value *visitConstant(SCEVConstant *S) {
       return S->getValue();
     }
@@ -136,17 +114,21 @@ namespace llvm {
     }
 
     Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
-      Value *V = expandInTy(S->getOperand(), S->getType());
+      Value *V = expand(S->getOperand());
       return CastInst::createZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
+    Value *visitSignExtendExpr(SCEVSignExtendExpr *S) {
+      Value *V = expand(S->getOperand());
+      return CastInst::createSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+    }
+
     Value *visitAddExpr(SCEVAddExpr *S) {
-      const Type *Ty = S->getType();
-      Value *V = expandInTy(S->getOperand(S->getNumOperands()-1), Ty);
+      Value *V = expand(S->getOperand(S->getNumOperands()-1));
 
       // Emit a bunch of add instructions
       for (int i = S->getNumOperands()-2; i >= 0; --i)
-        V = InsertBinop(Instruction::Add, V, expandInTy(S->getOperand(i), Ty),
+        V = InsertBinop(Instruction::Add, V, expand(S->getOperand(i)),
                         InsertPt);
       return V;
     }
@@ -154,9 +136,8 @@ namespace llvm {
     Value *visitMulExpr(SCEVMulExpr *S);
 
     Value *visitSDivExpr(SCEVSDivExpr *S) {
-      const Type *Ty = S->getType();
-      Value *LHS = expandInTy(S->getLHS(), Ty);
-      Value *RHS = expandInTy(S->getRHS(), Ty);
+      Value *LHS = expand(S->getLHS());
+      Value *RHS = expand(S->getRHS());
       return InsertBinop(Instruction::SDiv, LHS, RHS, InsertPt);
     }
 
