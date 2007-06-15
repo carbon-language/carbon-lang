@@ -264,8 +264,8 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     // The IterationCount expression contains the number of times that the
     // backedge actually branches to the loop header.  This is one less than the
     // number of times the loop executes, so add one to it.
-    Constant *OneC = ConstantInt::get(IterationCount->getType(), 1);
-    TripCount = SCEVAddExpr::get(IterationCount, SCEVUnknown::get(OneC));
+    ConstantInt *OneC = ConstantInt::get(IterationCount->getType(), 1);
+    TripCount = SCEVAddExpr::get(IterationCount, SCEVConstant::get(OneC));
     IndVar = L->getCanonicalInductionVariableIncrement();
   } else {
     // We have to use the preincremented value...
