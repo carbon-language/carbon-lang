@@ -100,6 +100,7 @@ namespace {
       bool IsBrAnalyzable  : 1;
       bool HasFallThrough  : 1;
       bool IsUnpredicable  : 1;
+      bool CannotBeCopied  : 1;
       bool ClobbersPred    : 1;
       unsigned NonPredSize;
       MachineBasicBlock *BB;
@@ -111,7 +112,7 @@ namespace {
       BBInfo() : Kind(ICNotClassfied), IsDone(false), IsBeingAnalyzed(false),
                  IsAnalyzed(false), IsEnqueued(false), IsBrAnalyzable(false),
                  HasFallThrough(false), IsUnpredicable(false),
-                 ClobbersPred(false), NonPredSize(0),
+                 CannotBeCopied(false), ClobbersPred(false), NonPredSize(0),
                  BB(0), TrueBB(0), FalseBB(0), TailBB(0) {}
     };
 
@@ -334,8 +335,9 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI) const {
   if (TrueBBI.IsBeingAnalyzed)
     return false;
 
-  if (TrueBBI.BB->pred_size() != 1) {
-    if (TrueBBI.NonPredSize > TLI->getIfCvtDupBlockSizeLimit())
+  if (TrueBBI.BB->pred_size() > 1) {
+    if (TrueBBI.CannotBeCopied ||
+        TrueBBI.NonPredSize > TLI->getIfCvtDupBlockSizeLimit())
       return false;
   }
 
@@ -349,7 +351,10 @@ bool IfConverter::ValidTriangle(BBInfo &TrueBBI, BBInfo &FalseBBI,
   if (TrueBBI.IsBeingAnalyzed)
     return false;
 
-  if (TrueBBI.BB->pred_size() != 1) {
+  if (TrueBBI.BB->pred_size() > 1) {
+    if (TrueBBI.CannotBeCopied)
+      return false;
+
     unsigned Size = TrueBBI.NonPredSize;
     if (TrueBBI.FalseBB)
       ++Size;
@@ -420,6 +425,9 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   bool SeenCondBr = false;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
+    if (!BBI.CannotBeCopied && !TII->CanBeDuplicated(I))
+      BBI.CannotBeCopied = true;
+
     const TargetInstrDescriptor *TID = I->getInstrDescriptor();
     bool isPredicated = TII->isPredicated(I);
     bool isCondBr = BBI.IsBrAnalyzable &&
@@ -721,10 +729,19 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI) {
   BBInfo *NextBBI = &FalseBBI;
 
   std::vector<MachineOperand> Cond(BBI.BrCond);
-  if (BBI.Kind == ICSimpleFalse) {
+  if (BBI.Kind == ICSimpleFalse)
     std::swap(CvtBBI, NextBBI);
-    TII->ReverseBranchCondition(Cond);
+
+  if (CvtBBI->CannotBeCopied && CvtBBI->BB->pred_size() > 1) {
+    // Something has changed. It's no longer safe to predicate this block.
+    BBI.Kind = ICNotClassfied;
+    BBI.IsAnalyzed = false;
+    CvtBBI->IsAnalyzed = false;
+    return false;
   }
+
+  if (BBI.Kind == ICSimpleFalse)
+    TII->ReverseBranchCondition(Cond);
 
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
@@ -777,10 +794,20 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
   BBInfo *NextBBI = &FalseBBI;
 
   std::vector<MachineOperand> Cond(BBI.BrCond);
-  if (BBI.Kind == ICTriangleFalse || BBI.Kind == ICTriangleFRev) {
+  if (BBI.Kind == ICTriangleFalse || BBI.Kind == ICTriangleFRev)
     std::swap(CvtBBI, NextBBI);
-    TII->ReverseBranchCondition(Cond);
+
+  if (CvtBBI->CannotBeCopied && CvtBBI->BB->pred_size() > 1) {
+    // Something has changed. It's no longer safe to predicate this block.
+    BBI.Kind = ICNotClassfied;
+    BBI.IsAnalyzed = false;
+    CvtBBI->IsAnalyzed = false;
+    return false;
   }
+
+  if (BBI.Kind == ICTriangleFalse || BBI.Kind == ICTriangleFRev)
+    TII->ReverseBranchCondition(Cond);
+
   if (BBI.Kind == ICTriangleRev || BBI.Kind == ICTriangleFRev) {
     ReverseBranchCondition(*CvtBBI);
     // BB has been changed, modify its predecessors (except for this
