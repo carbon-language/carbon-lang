@@ -711,6 +711,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::eh_filter:
     break;    // Simply strip out debugging and eh intrinsics
 
+  case Intrinsic::var_annotation:
+    break;   // Strip out annotate intrinsic
+    
   case Intrinsic::memcpy_i32:
   case Intrinsic::memcpy_i64: {
     static Constant *MemcpyFCache = 0;

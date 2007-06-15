@@ -2774,6 +2774,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::prefetch:
     // FIXME: Currently discarding prefetches.
     return 0;
+  
+  case Intrinsic::var_annotation:
+    // Discard annotate attributes
+    return 0;
   }
 }
 
