@@ -360,6 +360,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitUnaryOperator(cast<UnaryOperator>(E));
   case Expr::CastExprClass: 
     return EmitCastExpr(cast<CastExpr>(E));
+  case Expr::CallExprClass:
+    return EmitCallExpr(cast<CallExpr>(E));
   case Expr::BinaryOperatorClass:
     return EmitBinaryOperator(cast<BinaryOperator>(E));
   }
@@ -380,6 +382,31 @@ RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
   
   return EmitConversion(Src, SrcTy, E->getType(), E->getLParenLoc());
 }
+
+RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
+  QualType Ty;
+  Value *Callee =EmitExprWithUsualUnaryConversions(E->getCallee(), Ty).getVal();
+  
+  SmallVector<Value*, 16> Args;
+  
+  // FIXME: Handle struct return.
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
+    RValue ArgVal = EmitExprWithUsualUnaryConversions(E->getArg(i), Ty);
+    
+    if (ArgVal.isScalar())
+      Args.push_back(ArgVal.getVal());
+    else  // Pass by-address.  FIXME: Set attribute bit on call.
+      Args.push_back(ArgVal.getAggregateVal());
+  }
+  
+  Value *V = Builder.CreateCall(Callee, &Args[0], Args.size());
+  if (V->getType() != llvm::Type::VoidTy)
+    V->setName("call");
+  
+  // FIXME: Struct return;
+  return RValue::get(V);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           Unary Operator Emission

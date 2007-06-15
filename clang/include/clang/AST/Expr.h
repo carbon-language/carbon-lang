@@ -328,6 +328,7 @@ public:
   const Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
   const Expr *getIdx() const { return Idx; }
+  
   SourceRange getSourceRange() const { 
     return SourceRange(Base->getLocStart(), Loc);
   }
@@ -353,17 +354,19 @@ public:
     delete [] Args;
   }
   
-  Expr *getCallee() const { return Fn; }
-  SourceRange getSourceRange() const { 
-    return SourceRange(Fn->getLocStart(), Loc);
-  }
+  const Expr *getCallee() const { return Fn; }
+  Expr *getCallee() { return Fn; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
   unsigned getNumArgs() const { return NumArgs; }
   
   /// getArg - Return the specified argument.
-  Expr *getArg(unsigned Arg) const {
+  Expr *getArg(unsigned Arg) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return Args[Arg];
+  }
+  const Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
     return Args[Arg];
   }
@@ -372,6 +375,10 @@ public:
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
+  SourceRange getSourceRange() const { 
+    return SourceRange(Fn->getLocStart(), Loc);
+  }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CallExprClass; 

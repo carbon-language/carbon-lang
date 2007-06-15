@@ -45,6 +45,7 @@ namespace clang {
   class StringLiteral;
   class IntegerLiteral;
   class CastExpr;
+  class CallExpr;
   class UnaryOperator;
   class BinaryOperator;
   class ArraySubscriptExpr;
@@ -251,6 +252,7 @@ public:
   RValue EmitIntegerLiteral(const IntegerLiteral *E);
   
   RValue EmitCastExpr(const CastExpr *E);
+  RValue EmitCallExpr(const CallExpr *E);
 
   // Unary Operators.
   RValue EmitUnaryOperator(const UnaryOperator *E);
