@@ -16,7 +16,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
 
@@ -61,10 +60,10 @@ void CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S) {
     EmitStmt(*I);
 }
 
-void CodeGenFunction::EmitBlock(BasicBlock *BB) {
+void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
   // Emit a branch from this block to the next one if this was a real block.  If
   // this was just a fall-through block after a terminator, don't emit it.
-  BasicBlock *LastBB = Builder.GetInsertBlock();
+  llvm::BasicBlock *LastBB = Builder.GetInsertBlock();
   
   if (LastBB->getTerminator()) {
     // If the previous block is already terminated, don't touch it.
@@ -92,7 +91,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   
   // Emit a block after the branch so that dead code after a goto has some place
   // to go.
-  Builder.SetInsertPoint(new BasicBlock("", CurFn));
+  Builder.SetInsertPoint(new llvm::BasicBlock("", CurFn));
 }
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
@@ -100,12 +99,12 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // unequal to 0.  The condition must be a scalar type.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
   
-  BasicBlock *ContBlock = new BasicBlock("ifend");
-  BasicBlock *ThenBlock = new BasicBlock("ifthen");
-  BasicBlock *ElseBlock = ContBlock;
+  llvm::BasicBlock *ContBlock = new llvm::BasicBlock("ifend");
+  llvm::BasicBlock *ThenBlock = new llvm::BasicBlock("ifthen");
+  llvm::BasicBlock *ElseBlock = ContBlock;
   
   if (S.getElse())
-    ElseBlock = new BasicBlock("ifelse");
+    ElseBlock = new llvm::BasicBlock("ifelse");
   
   // Insert the conditional branch.
   Builder.CreateCondBr(BoolCondVal, ThenBlock, ElseBlock);
@@ -131,7 +130,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // Emit the header for the loop, insert it, which will create an uncond br to
   // it.
-  BasicBlock *LoopHeader = new BasicBlock("whilecond");
+  llvm::BasicBlock *LoopHeader = new llvm::BasicBlock("whilecond");
   EmitBlock(LoopHeader);
   
   // Evaluate the conditional in the while header.  C99 6.8.5.1: The evaluation
@@ -144,8 +143,8 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // Create an exit block for when the condition fails, create a block for the
   // body of the loop.
-  BasicBlock *ExitBlock = new BasicBlock("whileexit");
-  BasicBlock *LoopBody  = new BasicBlock("whilebody");
+  llvm::BasicBlock *ExitBlock = new llvm::BasicBlock("whileexit");
+  llvm::BasicBlock *LoopBody  = new llvm::BasicBlock("whilebody");
   
   // As long as the condition is true, go to the loop body.
   Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
@@ -168,8 +167,8 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 
   // Emit the body for the loop, insert it, which will create an uncond br to
   // it.
-  BasicBlock *LoopBody = new BasicBlock("dobody");
-  BasicBlock *AfterDo = new BasicBlock("afterdo");
+  llvm::BasicBlock *LoopBody = new llvm::BasicBlock("dobody");
+  llvm::BasicBlock *AfterDo = new llvm::BasicBlock("afterdo");
   EmitBlock(LoopBody);
   
   // Emit the body of the loop into the block.
@@ -200,8 +199,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     EmitStmt(S.getInit());
 
   // Start the loop with a block that tests the condition.
-  BasicBlock *CondBlock = new BasicBlock("forcond");
-  BasicBlock *AfterFor = 0;
+  llvm::BasicBlock *CondBlock = new llvm::BasicBlock("forcond");
+  llvm::BasicBlock *AfterFor = 0;
   EmitBlock(CondBlock);
 
   // Evaluate the condition if present.  If not, treat it as a non-zero-constant
@@ -212,8 +211,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
     
     // As long as the condition is true, iterate the loop.
-    BasicBlock *ForBody = new BasicBlock("forbody");
-    AfterFor = new BasicBlock("afterfor");
+    llvm::BasicBlock *ForBody = new llvm::BasicBlock("forbody");
+    AfterFor = new llvm::BasicBlock("afterfor");
     Builder.CreateCondBr(BoolCondVal, ForBody, AfterFor);
     EmitBlock(ForBody);    
   } else {
@@ -235,7 +234,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   if (AfterFor) 
     EmitBlock(AfterFor);
   else
-    EmitBlock(new BasicBlock());
+    EmitBlock(new llvm::BasicBlock());
 }
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
@@ -276,7 +275,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   
   // Emit a block after the branch so that dead code after a return has some
   // place to go.
-  EmitBlock(new BasicBlock());
+  EmitBlock(new llvm::BasicBlock());
 }
 
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {

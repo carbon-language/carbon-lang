@@ -13,7 +13,6 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 
 // temporary statistics gathering

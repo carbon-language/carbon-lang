@@ -17,9 +17,9 @@
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <iostream>
-using namespace llvm;
 using namespace clang;
 using namespace SrcMgr;
+using llvm::MemoryBuffer;
 
 SourceManager::~SourceManager() {
   for (std::map<const FileEntry *, FileInfo>::iterator I = FileInfos.begin(),

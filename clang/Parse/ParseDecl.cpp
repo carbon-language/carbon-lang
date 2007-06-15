@@ -14,7 +14,6 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallSet.h"
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -117,7 +116,7 @@ AttributeList *Parser::ParseAttributes() {
           } else if (Tok.getKind() == tok::comma) {
             ConsumeToken();
             // __attribute__(( format(printf, 1, 2) ))
-            SmallVector<ExprTy*, 8> ArgExprs;
+            llvm::SmallVector<ExprTy*, 8> ArgExprs;
             bool ArgExprsOk = true;
             
             // now parse the non-empty comma separated list of expressions
@@ -149,7 +148,7 @@ AttributeList *Parser::ParseAttributes() {
                                          0, SourceLocation(), 0, 0, CurrAttr);
           } else { 
             // __attribute__(( aligned(16) ))
-            SmallVector<ExprTy*, 8> ArgExprs;
+            llvm::SmallVector<ExprTy*, 8> ArgExprs;
             bool ArgExprsOk = true;
             
             // now parse the list of expressions
@@ -626,7 +625,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     Diag(Tok, diag::ext_empty_struct_union_enum, 
          DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
 
-  SmallVector<DeclTy*, 32> FieldDecls;
+  llvm::SmallVector<DeclTy*, 32> FieldDecls;
   
   // While we still have something to read, read the declarations in the struct.
   while (Tok.getKind() != tok::r_brace && 
@@ -768,7 +767,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   if (Tok.getKind() == tok::r_brace)
     Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
   
-  SmallVector<DeclTy*, 32> EnumConstantDecls;
+  llvm::SmallVector<DeclTy*, 32> EnumConstantDecls;
 
   DeclTy *LastEnumConstDecl = 0;
   
@@ -1162,8 +1161,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   bool ErrorEmitted = false;
 
   // Build up an array of information about the parsed arguments.
-  SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
-  SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
+  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
+  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
   
   if (Tok.getKind() == tok::r_paren) {
     // int() -> no prototype, no '...'.

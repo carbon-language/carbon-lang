@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 
-namespace llvm {
 namespace clang {
 
 class TargetInfoImpl;
@@ -205,6 +204,5 @@ private:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

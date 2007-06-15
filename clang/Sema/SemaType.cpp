@@ -16,7 +16,6 @@
 #include "clang/AST/Decl.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
@@ -193,7 +192,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       } else {
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
-        SmallVector<QualType, 16> ArgTys;
+        llvm::SmallVector<QualType, 16> ArgTys;
         
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
           QualType ArgTy = QualType::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);

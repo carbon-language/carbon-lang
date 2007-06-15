@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_SOURCELOCATION_H
 #define LLVM_CLANG_SOURCELOCATION_H
 
-namespace llvm {
 namespace clang {
     
 /// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
@@ -105,6 +104,5 @@ public:
 };
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

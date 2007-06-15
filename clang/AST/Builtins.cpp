@@ -15,7 +15,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
-using namespace llvm;
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
@@ -112,7 +111,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
 QualType Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context)const{
   const char *TypeStr = GetRecord(id).Type;
   
-  SmallVector<QualType, 8> ArgTypes;
+  llvm::SmallVector<QualType, 8> ArgTypes;
   
   QualType ResType = DecodeTypeFromStr(TypeStr, Context);
   while (TypeStr[0] && TypeStr[0] != '.')

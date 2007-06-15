@@ -30,12 +30,11 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
-using namespace llvm;
 using namespace clang;
 
 static void InitCharacterInfo();
 
-Lexer::Lexer(const MemoryBuffer *File, unsigned fileid, Preprocessor &pp,
+Lexer::Lexer(const llvm::MemoryBuffer *File, unsigned fileid, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
   : BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
     InputFile(File), CurFileID(fileid), PP(pp), Features(PP.getLangOptions()) {

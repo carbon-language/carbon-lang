@@ -14,7 +14,6 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/AST.h"
 #include "llvm/Type.h"
-using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
 
@@ -75,7 +74,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
     // A normal fixed sized variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
     // TODO: Alignment
-    DeclPtr = new AllocaInst(LTy, 0, D.getName(), AllocaInsertPt);
+    DeclPtr = new llvm::AllocaInst(LTy, 0, D.getName(), AllocaInsertPt);
   } else {
     // TODO: Create a dynamic alloca.
     assert(0 && "FIXME: Local VLAs not implemented yet");
@@ -102,8 +101,8 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
     const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
     if (LTy->isFirstClassType()) {
       // TODO: Alignment
-      DeclPtr = new AllocaInst(LTy, 0, 
-                               std::string(D.getName())+".addr",AllocaInsertPt);
+      DeclPtr = new llvm::AllocaInst(LTy, 0, std::string(D.getName())+".addr",
+                                     AllocaInsertPt);
       
       // Store the initial value into the alloca.
       Builder.CreateStore(Arg, DeclPtr);

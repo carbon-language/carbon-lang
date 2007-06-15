@@ -22,7 +22,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
-using namespace llvm;
 using namespace clang;
 
 /// ParseStringLiteral - The specified tokens were lexed as pasted string
@@ -39,7 +38,7 @@ Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
   if (Literal.hadError)
     return ExprResult(true);
 
-  SmallVector<SourceLocation, 4> StringTokLocs;
+  llvm::SmallVector<SourceLocation, 4> StringTokLocs;
   for (unsigned i = 0; i != NumStringToks; ++i)
     StringTokLocs.push_back(StringToks[i].getLocation());
   
@@ -97,7 +96,7 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
 }
 
 Sema::ExprResult Sema::ParseCharacterConstant(const LexerToken &Tok) {
-  SmallString<16> CharBuffer;
+  llvm::SmallString<16> CharBuffer;
   CharBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &CharBuffer[0];
   unsigned ActualLength = PP.getSpelling(Tok, ThisTokBegin);
@@ -117,10 +116,11 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
     
     unsigned IntSize = Context.Target.getIntWidth(Tok.getLocation());
-    return ExprResult(new IntegerLiteral(APInt(IntSize, *t-'0'), Context.IntTy, 
+    return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *t-'0'),
+                                         Context.IntTy, 
                                          Tok.getLocation()));
   }
-  SmallString<512> IntegerBuffer;
+  llvm::SmallString<512> IntegerBuffer;
   IntegerBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &IntegerBuffer[0];
   
@@ -135,7 +135,7 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
     QualType t;
 
     // Get the value in the widest-possible width.
-    APInt ResultVal(Context.Target.getIntMaxTWidth(Tok.getLocation()), 0);
+    llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(Tok.getLocation()), 0);
    
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.

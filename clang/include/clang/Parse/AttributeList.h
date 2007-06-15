@@ -17,7 +17,6 @@
 #include "clang/Parse/Action.h"
 #include <cassert>
 
-namespace llvm {
 namespace clang {
 
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
@@ -83,6 +82,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

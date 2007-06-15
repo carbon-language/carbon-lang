@@ -17,8 +17,6 @@
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include <iostream>
-
-using namespace llvm;
 using namespace clang;
 
 namespace {
@@ -52,6 +50,6 @@ namespace {
   };
 }
 
-MinimalAction *llvm::clang::CreatePrintParserActionsAction() {
+MinimalAction *clang::CreatePrintParserActionsAction() {
   return new ParserPrintActions();
 }

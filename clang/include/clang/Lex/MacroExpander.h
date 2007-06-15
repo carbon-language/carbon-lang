@@ -17,7 +17,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include <vector>
 
-namespace llvm {
 namespace clang {
   class MacroInfo;
   class Preprocessor;
@@ -175,7 +174,6 @@ private:
   void ExpandFunctionArguments();
 };
 
-}  // end namespace llvm
 }  // end namespace clang
 
 #endif

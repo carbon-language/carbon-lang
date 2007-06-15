@@ -17,7 +17,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
 
-namespace llvm {
 namespace clang {
 class IdentifierInfo;
 class Expr;
@@ -27,6 +26,5 @@ class Expr;
 /// in "clang/Parse/AttributeList.h"
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

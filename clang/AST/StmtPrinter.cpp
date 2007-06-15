@@ -17,7 +17,6 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include <iostream>
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -422,6 +421,7 @@ void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dump() const {
+  // FIXME: eliminate use of <iostream>
   print(std::cerr);
 }
 

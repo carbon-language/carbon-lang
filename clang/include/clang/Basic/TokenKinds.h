@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_TOKENKINDS_H
 #define LLVM_CLANG_TOKENKINDS_H
 
-namespace llvm {
 namespace clang {
 
 namespace tok {
@@ -48,6 +47,5 @@ const char *getTokenName(enum TokenKind Kind);
 
 }  // end namespace tok
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

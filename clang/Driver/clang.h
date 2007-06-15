@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_CLANG_H
 #define LLVM_CLANG_CLANG_H
 
-namespace llvm {
 namespace clang {
 class Preprocessor;
 class LangOptions;
@@ -39,6 +38,5 @@ void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
                       bool PrintStats);
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

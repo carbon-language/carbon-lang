@@ -18,7 +18,6 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
 
-namespace llvm {
 namespace clang {
 class IdentifierInfo;
 class Expr;
@@ -279,15 +278,15 @@ public:
 /// TagType for the X EnumDecl.
 class EnumConstantDecl : public ValueDecl {
   Expr *Init; // an integer constant expression
-  APSInt Val; // The value.
+  llvm::APSInt Val; // The value.
 public:
   EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E,
-                   const APSInt &V, Decl *PrevDecl)
+                   const llvm::APSInt &V, Decl *PrevDecl)
     : ValueDecl(EnumConstant, L, Id, T, PrevDecl), Init(E), Val(V) {}
 
   const Expr *getInitExpr() const { return Init; }
   Expr *getInitExpr() { return Init; }
-  const APSInt &getInitVal() const { return Val; }
+  const llvm::APSInt &getInitVal() const { return Val; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -437,6 +436,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

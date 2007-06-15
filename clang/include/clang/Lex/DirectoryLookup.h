@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 #define LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 
-namespace llvm {
 namespace clang {
 class DirectoryEntry;
 
@@ -66,7 +65,6 @@ public:
   bool isFramework() const { return Framework; }
 };
 
-}  // end namespace llvm
 }  // end namespace clang
 
 #endif

@@ -17,7 +17,6 @@
 #include <cassert>
 #include <vector>
 
-namespace llvm {
 namespace clang {
   class Preprocessor;
   class LexerToken;
@@ -79,6 +78,5 @@ public:
 
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

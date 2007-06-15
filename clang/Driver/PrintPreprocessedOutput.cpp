@@ -21,7 +21,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -98,12 +97,13 @@ static void OutputString(const char *Ptr, unsigned Size) {
 // Preprocessed token printer
 //===----------------------------------------------------------------------===//
 
-static cl::opt<bool>
-DisableLineMarkers("P", cl::desc("Disable linemarker output in -E mode"));
-static cl::opt<bool>
-EnableCommentOutput("C", cl::desc("Enable comment output in -E mode"));
-static cl::opt<bool>
-EnableMacroCommentOutput("CC", cl::desc("Enable comment output in -E mode, "
+static llvm::cl::opt<bool>
+DisableLineMarkers("P", llvm::cl::desc("Disable linemarker output in -E mode"));
+static llvm::cl::opt<bool>
+EnableCommentOutput("C", llvm::cl::desc("Enable comment output in -E mode"));
+static llvm::cl::opt<bool>
+EnableMacroCommentOutput("CC",
+                         llvm::cl::desc("Enable comment output in -E mode, "
                                         "even from macro expansions"));
 
 namespace {
@@ -165,7 +165,7 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     
     OutputChar('#');
     OutputChar(' ');
-    std::string Num = utostr_32(LineNo);
+    std::string Num = llvm::utostr_32(LineNo);
     OutputString(&Num[0], Num.size());
     OutputChar(' ');
     OutputString(&CurFilename[0], CurFilename.size());
@@ -213,7 +213,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   OutputChar('#');
   OutputChar(' ');
-  std::string Num = utostr_32(CurLine);
+  std::string Num = llvm::utostr_32(CurLine);
   OutputString(&Num[0], Num.size());
   OutputChar(' ');
   OutputString(&CurFilename[0], CurFilename.size());

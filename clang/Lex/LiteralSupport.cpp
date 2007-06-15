@@ -18,7 +18,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
-using namespace llvm;
 using namespace clang;
 
 /// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
@@ -145,7 +144,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     if (isgraph(ThisTokBuf[0])) {
       PP.Diag(Loc, diag::ext_unknown_escape, std::string()+(char)ResultChar);
     } else {
-      PP.Diag(Loc, diag::ext_unknown_escape, "x"+utohexstr(ResultChar));
+      PP.Diag(Loc, diag::ext_unknown_escape, "x"+llvm::utohexstr(ResultChar));
     }
     break;
   }
@@ -377,13 +376,13 @@ NumericLiteralParser(const char *begin, const char *end,
 /// GetIntegerValue - Convert this numeric literal value to an APInt that
 /// matches Val's input width.  If there is an overflow, set Val to the low bits
 /// of the result and return true.  Otherwise, return false.
-bool NumericLiteralParser::GetIntegerValue(APInt &Val) {
+bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   Val = 0;
   s = DigitsBegin;
 
-  APInt RadixVal(Val.getBitWidth(), radix);
-  APInt CharVal(Val.getBitWidth(), 0);
-  APInt OldVal = Val;
+  llvm::APInt RadixVal(Val.getBitWidth(), radix);
+  llvm::APInt CharVal(Val.getBitWidth(), 0);
+  llvm::APInt OldVal = Val;
   
   bool OverflowOccurred = false;
   while (s < SuffixBegin) {
@@ -579,7 +578,7 @@ StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
   ResultBuf.resize(SizeBound);
   
   // Likewise, but for each string piece.
-  SmallString<512> TokenBuf;
+  llvm::SmallString<512> TokenBuf;
   TokenBuf.resize(MaxTokenLength);
   
   // Loop over all the strings, getting their spelling, and expanding them to

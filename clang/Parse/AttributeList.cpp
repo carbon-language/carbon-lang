@@ -13,7 +13,6 @@
 
 #include "clang/Parse/AttributeList.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 
 AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,

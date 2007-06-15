@@ -17,7 +17,6 @@
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/SourceLocation.h"
 
-namespace llvm {
 namespace clang {
 
 class IdentifierInfo;
@@ -134,6 +133,5 @@ struct PPConditionalInfo {
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

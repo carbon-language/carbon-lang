@@ -14,6 +14,5 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/Expr.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 

@@ -14,7 +14,6 @@
 #include "clang/Lex/ScratchBuffer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
-using namespace llvm;
 using namespace clang;
 
 // ScratchBufSize - The size of each chunk of scratch memory.  Slightly less
@@ -64,8 +63,8 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   if (RequestLen < ScratchBufSize)
     RequestLen = ScratchBufSize;
   
-  MemoryBuffer *Buf = 
-    MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
+  llvm::MemoryBuffer *Buf = 
+    llvm::MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
   FileID = SourceMgr.createFileIDForMemBuffer(Buf);
   CurBuffer = const_cast<char*>(Buf->getBufferStart());
   BytesUsed = 0;

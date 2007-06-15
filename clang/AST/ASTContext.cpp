@@ -16,8 +16,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
-
-using namespace llvm;
 using namespace clang;
 
 enum FloatingRank {
@@ -144,7 +142,7 @@ void ASTContext::InitBuiltinTypes() {
 QualType ASTContext::getPointerType(QualType T) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
-  FoldingSetNodeID ID;
+  llvm::FoldingSetNodeID ID;
   PointerType::Profile(ID, T);
   
   void *InsertPos = 0;
@@ -172,7 +170,7 @@ QualType ASTContext::getPointerType(QualType T) {
 QualType ASTContext::getReferenceType(QualType T) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
-  FoldingSetNodeID ID;
+  llvm::FoldingSetNodeID ID;
   ReferenceType::Profile(ID, T);
 
   void *InsertPos = 0;
@@ -202,7 +200,7 @@ QualType ASTContext::getArrayType(QualType EltTy,ArrayType::ArraySizeModifier AS
                                   unsigned EltTypeQuals, Expr *NumElts) {
   // Unique array types, to guarantee there is only one array of a particular
   // structure.
-  FoldingSetNodeID ID;
+  llvm::FoldingSetNodeID ID;
   ArrayType::Profile(ID, ASM, EltTypeQuals, EltTy, NumElts);
       
   void *InsertPos = 0;
@@ -232,7 +230,7 @@ QualType ASTContext::getArrayType(QualType EltTy,ArrayType::ArraySizeModifier AS
 QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
-  FoldingSetNodeID ID;
+  llvm::FoldingSetNodeID ID;
   FunctionTypeNoProto::Profile(ID, ResultTy);
   
   void *InsertPos = 0;
@@ -262,7 +260,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
                                      unsigned NumArgs, bool isVariadic) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
-  FoldingSetNodeID ID;
+  llvm::FoldingSetNodeID ID;
   FunctionTypeProto::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic);
 
   void *InsertPos = 0;
@@ -279,7 +277,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
   // If this type isn't canonical, get the canonical version of it.
   QualType Canonical;
   if (!isCanonical) {
-    SmallVector<QualType, 16> CanonicalArgs;
+    llvm::SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
       CanonicalArgs.push_back(ArgArray[i].getCanonicalType());

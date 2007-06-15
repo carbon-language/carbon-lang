@@ -19,7 +19,6 @@
 #include "clang/AST/Expr.h"
 #include <vector>
 
-namespace llvm {
 namespace clang {
   class TargetInfo;
   
@@ -27,11 +26,11 @@ namespace clang {
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
   std::vector<Type*> Types;
-  FoldingSet<PointerType> PointerTypes;
-  FoldingSet<ReferenceType> ReferenceTypes;
-  FoldingSet<ArrayType> ArrayTypes;
-  FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
-  FoldingSet<FunctionTypeProto> FunctionTypeProtos;
+  llvm::FoldingSet<PointerType> PointerTypes;
+  llvm::FoldingSet<ReferenceType> ReferenceTypes;
+  llvm::FoldingSet<ArrayType> ArrayTypes;
+  llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
+  llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
 public:
   TargetInfo &Target;
   Builtin::Context BuiltinInfo;
@@ -114,6 +113,5 @@ private:
 };
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

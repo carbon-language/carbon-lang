@@ -12,14 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LITERALSUPPORT_H
-#define LLVM_CLANG_LITERALSUPPORT_H
+#ifndef CLANG_LITERALSUPPORT_H
+#define CLANG_LITERALSUPPORT_H
 
 #include <string>
 #include "llvm/ADT/SmallString.h"
 
 namespace llvm {
   class APInt;
+}
+
 namespace clang {
 
 class Diagnostic;
@@ -68,7 +70,7 @@ public:
   /// matches Val's input width.  If there is an overflow (i.e., if the unsigned
   /// value read is larger than the APInt's bits will hold), set Val to the low
   /// bits of the result and return true.  Otherwise, return false.
-  bool GetIntegerValue(APInt &Val);
+  bool GetIntegerValue(llvm::APInt &Val);
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 
@@ -133,7 +135,7 @@ class StringLiteralParser {
   unsigned MaxTokenLength;
   unsigned SizeBound;
   unsigned wchar_tByteWidth;
-  SmallString<512> ResultBuf;
+  llvm::SmallString<512> ResultBuf;
   char *ResultPtr; // cursor
 public:
   StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
@@ -146,6 +148,5 @@ public:
 };
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

@@ -15,7 +15,6 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 
 // Implement all the AST node visit methods using the StmtNodes.def database.

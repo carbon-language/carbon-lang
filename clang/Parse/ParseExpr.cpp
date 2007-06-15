@@ -23,7 +23,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallString.h"
-using namespace llvm;
 using namespace clang;
 
 /// PrecedenceLevels - These are precedences for the binary/ternary operators in
@@ -620,8 +619,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     }
       
     case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
-      SmallVector<ExprTy*, 8> ArgExprs;
-      SmallVector<SourceLocation, 8> CommaLocs;
+      llvm::SmallVector<ExprTy*, 8> ArgExprs;
+      llvm::SmallVector<SourceLocation, 8> CommaLocs;
       bool ArgExprsOk = true;
       
       Loc = ConsumeParen();
@@ -921,7 +920,7 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   
   // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
   // considered to be strings for concatenation purposes.
-  SmallVector<LexerToken, 4> StringToks;
+  llvm::SmallVector<LexerToken, 4> StringToks;
   
   do {
     StringToks.push_back(Tok);

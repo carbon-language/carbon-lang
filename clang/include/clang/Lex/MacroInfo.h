@@ -17,7 +17,6 @@
 #include "clang/Lex/LexerToken.h"
 #include <vector>
 
-namespace llvm {
 namespace clang {
   class Preprocessor;
     
@@ -182,7 +181,6 @@ public:
   }
 };
     
-}  // end namespace llvm
 }  // end namespace clang
 
 #endif

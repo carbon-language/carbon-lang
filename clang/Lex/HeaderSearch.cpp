@@ -16,8 +16,6 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Streams.h"
-using namespace llvm;
 using namespace clang;
 
 HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
@@ -30,8 +28,8 @@ HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
 }
 
 void HeaderSearch::PrintStats() {
-  cerr << "\n*** HeaderSearch Stats:\n";
-  cerr << FileInfo.size() << " files tracked.\n";
+  fprintf(stderr, "\n*** HeaderSearch Stats:\n");
+  fprintf(stderr, "%d files tracked.\n", (int)FileInfo.size());
   unsigned NumOnceOnlyFiles = 0, MaxNumIncludes = 0, NumSingleIncludedFiles = 0;
   for (unsigned i = 0, e = FileInfo.size(); i != e; ++i) {
     NumOnceOnlyFiles += FileInfo[i].isImport;
@@ -39,16 +37,16 @@ void HeaderSearch::PrintStats() {
       MaxNumIncludes = FileInfo[i].NumIncludes;
     NumSingleIncludedFiles += FileInfo[i].NumIncludes == 1;
   }
-  cerr << "  " << NumOnceOnlyFiles << " #import/#pragma once files.\n";
-  cerr << "  " << NumSingleIncludedFiles << " included exactly once.\n";
-  cerr << "  " << MaxNumIncludes << " max times a file is included.\n";
+  fprintf(stderr, "  %d #import/#pragma once files.\n", NumOnceOnlyFiles);
+  fprintf(stderr, "  %d included exactly once.\n", NumSingleIncludedFiles);
+  fprintf(stderr, "  %d max times a file is included.\n", MaxNumIncludes);
   
-  cerr << "  " << NumIncluded << " #include/#include_next/#import.\n";
-  cerr << "    " << NumMultiIncludeFileOptzn << " #includes skipped due to"
-       << " the multi-include optimization.\n";
+  fprintf(stderr, "  %d #include/#include_next/#import.\n", NumIncluded);
+  fprintf(stderr, "    %d #includes skipped due to"
+          " the multi-include optimization.\n", NumMultiIncludeFileOptzn);
   
-  cerr << NumFrameworkLookups << " framework lookups.\n";
-  cerr << NumSubFrameworkLookups << " subframework lookups.\n";
+  fprintf(stderr, "%d framework lookups.\n", NumFrameworkLookups);
+  fprintf(stderr, "%d subframework lookups.\n", NumSubFrameworkLookups);
 }
 
 //===----------------------------------------------------------------------===//
@@ -62,7 +60,7 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   const char *SlashPos = std::find(FilenameStart, FilenameEnd, '/');
   if (SlashPos == FilenameEnd) return 0;
   
-  StringMapEntry<const DirectoryEntry *> &CacheLookup =
+  llvm::StringMapEntry<const DirectoryEntry *> &CacheLookup =
     FrameworkMap.GetOrCreateValue(FilenameStart, SlashPos);
   
   // If it is some other directory, fail.
@@ -70,7 +68,7 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
     return 0;
 
   // FrameworkName = "/System/Library/Frameworks/"
-  SmallString<1024> FrameworkName;
+  llvm::SmallString<1024> FrameworkName;
   FrameworkName += Dir->getName();
   if (FrameworkName.empty() || FrameworkName.back() != '/')
     FrameworkName.push_back('/');
@@ -85,8 +83,8 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
     ++NumFrameworkLookups;
     
     // If the framework dir doesn't exist, we fail.
-    if (!sys::Path(std::string(FrameworkName.begin(), 
-                               FrameworkName.end())).exists())
+    if (!llvm::sys::Path(std::string(FrameworkName.begin(), 
+                                     FrameworkName.end())).exists())
       return 0;
     
     // Otherwise, if it does, remember that this is the right direntry for this
@@ -135,7 +133,7 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
     return FileMgr.getFile(FilenameStart, FilenameEnd);
   }
   
-  SmallString<1024> TmpDir;
+  llvm::SmallString<1024> TmpDir;
   
   // Step #0, unless disabled, check to see if the file is in the #includer's
   // directory.  This search is not done for <> headers.
@@ -214,15 +212,15 @@ LookupSubframeworkHeader(const char *FilenameStart,
   if (FrameworkPos == 0)
     return 0;
   
-  SmallString<1024> FrameworkName(ContextName, 
-                                  FrameworkPos+strlen(".framework/"));
+  llvm::SmallString<1024> FrameworkName(ContextName, 
+                                        FrameworkPos+strlen(".framework/"));
 
   // Append Frameworks/HIToolbox.framework/
   FrameworkName += "Frameworks/";
   FrameworkName.append(FilenameStart, SlashPos);
   FrameworkName += ".framework/";
 
-  StringMapEntry<const DirectoryEntry *> &CacheLookup =
+  llvm::StringMapEntry<const DirectoryEntry *> &CacheLookup =
     FrameworkMap.GetOrCreateValue(FilenameStart, SlashPos);
   
   // Some other location?
@@ -249,7 +247,7 @@ LookupSubframeworkHeader(const char *FilenameStart,
   const FileEntry *FE = 0;
 
   // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
-  SmallString<1024> HeadersFilename(FrameworkName);
+  llvm::SmallString<1024> HeadersFilename(FrameworkName);
   HeadersFilename += "Headers/";
   HeadersFilename.append(SlashPos+1, FilenameEnd);
   if (!(FE = FileMgr.getFile(HeadersFilename.begin(),

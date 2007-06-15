@@ -13,8 +13,7 @@
 
 #include "clang/Basic/TokenKinds.h"
 #include <cassert>
-using namespace llvm;
-using namespace llvm::clang;
+using namespace clang;
 
 static const char * const TokNames[] = {
 #define TOK(X) #X,

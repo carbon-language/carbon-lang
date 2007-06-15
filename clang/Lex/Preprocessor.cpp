@@ -37,7 +37,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iostream>
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -343,7 +342,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
-  const MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
+  const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
   Lexer *TheLexer = new Lexer(Buffer, FileID, *this);
   if (isMainFile) TheLexer->setIsMainFile();
   EnterSourceFileWithLexer(TheLexer, CurDir);
@@ -658,7 +657,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
   // ArgTokens - Build up a list of tokens that make up each argument.  Each
   // argument is separated by an EOF token.  Use a SmallVector so we can avoid
   // heap allocations in the common case.
-  SmallVector<LexerToken, 64> ArgTokens;
+  llvm::SmallVector<LexerToken, 64> ArgTokens;
 
   unsigned NumActuals = 0;
   while (Tok.getKind() == tok::comma) {
@@ -1556,7 +1555,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
     return;
   
   // Reserve a buffer to get the spelling.
-  SmallVector<char, 128> FilenameBuffer;
+  llvm::SmallVector<char, 128> FilenameBuffer;
   FilenameBuffer.resize(FilenameTok.getLength());
   
   const char *FilenameStart = &FilenameBuffer[0], *FilenameEnd;

@@ -15,8 +15,6 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/LangOptions.h"
-#include <iostream>
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -168,7 +166,7 @@ void IdentifierTable::PrintStats() const {
   unsigned MaxIdentifierLength = 0;
   
   // TODO: Figure out maximum times an identifier had to probe for -stats.
-  for (StringMap<IdentifierInfo, BumpPtrAllocator>::const_iterator
+  for (llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator>::const_iterator
        I = HashTable.begin(), E = HashTable.end(); I != E; ++I) {
     unsigned IdLen = I->getKeyLength();
     AverageIdentifierSize += IdLen;
@@ -176,14 +174,14 @@ void IdentifierTable::PrintStats() const {
       MaxIdentifierLength = IdLen;
   }
   
-  std::cerr << "\n*** Identifier Table Stats:\n";
-  std::cerr << "# Identifiers:   " << NumIdentifiers << "\n";
-  std::cerr << "# Empty Buckets: " << NumEmptyBuckets << "\n";
-  std::cerr << "Hash density (#identifiers per bucket): "
-            << NumIdentifiers/(double)NumBuckets << "\n";
-  std::cerr << "Ave identifier length: "
-            << (AverageIdentifierSize/(double)NumIdentifiers) << "\n";
-  std::cerr << "Max identifier length: " << MaxIdentifierLength << "\n";
+  fprintf(stderr, "\n*** Identifier Table Stats:\n");
+  fprintf(stderr, "# Identifiers:   %d\n", NumIdentifiers);
+  fprintf(stderr, "# Empty Buckets: %d\n", NumEmptyBuckets);
+  fprintf(stderr, "Hash density (#identifiers per bucket): %f\n",
+          NumIdentifiers/(double)NumBuckets);
+  fprintf(stderr, "Ave identifier length: %f\n",
+          (AverageIdentifierSize/(double)NumIdentifiers));
+  fprintf(stderr, "Max identifier length: %d\n", MaxIdentifierLength);
   
   // Compute statistics about the memory allocated for identifiers.
   HashTable.getAllocator().PrintStats();

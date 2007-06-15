@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_MULTIPLEINCLUDEOPT_H
 #define LLVM_CLANG_MULTIPLEINCLUDEOPT_H
 
-namespace llvm {
 namespace clang {
 class IdentifierInfo;
 
@@ -104,6 +103,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_AST_STMTVISITOR_H
 #define LLVM_CLANG_AST_STMTVISITOR_H
 
-namespace llvm {
 namespace clang {
   class Stmt;
   // Add prototypes for all AST node classes.
@@ -36,7 +35,6 @@ public:
 #include "clang/AST/StmtNodes.def"
 };
   
-}
 }
 
 #endif

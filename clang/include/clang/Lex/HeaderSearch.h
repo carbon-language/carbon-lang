@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringMap.h"
 #include <vector>
 
-namespace llvm {
 namespace clang {
 class FileEntry;
 class FileManager;
@@ -71,7 +70,7 @@ class HeaderSearch {
 
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
-  StringMap<const DirectoryEntry *> FrameworkMap;
+  llvm::StringMap<const DirectoryEntry *> FrameworkMap;
 
   // Various statistics we track for performance analysis.
   unsigned NumIncluded;
@@ -162,7 +161,6 @@ private:
   PerFileInfo &getFileInfo(const FileEntry *FE);
 };
 
-}  // end namespace llvm
 }  // end namespace clang
 
 #endif

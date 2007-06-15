@@ -20,7 +20,6 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallVector.h"
-using namespace llvm;
 using namespace clang;
 
 // Out-of-line destructor to provide a home for the class.
@@ -256,7 +255,7 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
     return;
   
   // Reserve a buffer to get the spelling.
-  SmallVector<char, 128> FilenameBuffer;
+  llvm::SmallVector<char, 128> FilenameBuffer;
   FilenameBuffer.resize(FilenameTok.getLength());
   
   const char *FilenameStart = &FilenameBuffer[0], *FilenameEnd;

@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_LANGOPTIONS_H
 #define LLVM_CLANG_LANGOPTIONS_H
 
-namespace llvm {
 namespace clang {
 
 /// LangOptions - This class keeps track of the various options that can be
@@ -41,6 +40,5 @@ struct LangOptions {
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

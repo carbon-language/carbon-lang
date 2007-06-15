@@ -18,7 +18,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include <string>
 
-namespace llvm {
 namespace clang {
   class SourceLocation;
     
@@ -50,6 +49,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

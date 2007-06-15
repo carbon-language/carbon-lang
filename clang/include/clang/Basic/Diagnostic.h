@@ -16,7 +16,6 @@
 
 #include <string>
 
-namespace llvm {
 namespace clang {
   class DiagnosticClient;
   class SourceLocation;
@@ -154,6 +153,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

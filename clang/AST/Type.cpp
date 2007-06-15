@@ -17,8 +17,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Streams.h"
-
-using namespace llvm;
 using namespace clang;
 
 Type::~Type() {}
@@ -386,7 +384,7 @@ const char *BuiltinType::getName() const {
   }
 }
 
-void FunctionTypeProto::Profile(FoldingSetNodeID &ID, QualType Result,
+void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 QualType* ArgTys,
                                 unsigned NumArgs, bool isVariadic) {
   ID.AddPointer(Result.getAsOpaquePtr());
@@ -395,7 +393,7 @@ void FunctionTypeProto::Profile(FoldingSetNodeID &ID, QualType Result,
   ID.AddInteger(isVariadic);
 }
 
-void FunctionTypeProto::Profile(FoldingSetNodeID &ID) {
+void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), ArgInfo, NumArgs, isVariadic());
 }
 
@@ -415,9 +413,9 @@ void QualType::dump(const char *msg) const {
   std::string R = "foo";
   getAsStringInternal(R);
   if (msg)
-    cerr << msg << ": " << R << "\n";
+    fprintf(stderr, "%s: %s\n", msg, R.c_str());
   else
-    cerr << R << "\n";
+    fprintf(stderr, "%s\n", R.c_str());
 }
 
 static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {

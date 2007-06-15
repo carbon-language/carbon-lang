@@ -18,7 +18,6 @@
 #include "llvm/ADT/StringMap.h"
 #include <string> 
 
-namespace llvm {
 namespace clang {
   class MacroInfo;
   class LangOptions;
@@ -132,7 +131,7 @@ public:
 class IdentifierTable {
   // Shark shows that using MallocAllocator is *much* slower than using this
   // BumpPtrAllocator!
-  typedef StringMap<IdentifierInfo, BumpPtrAllocator> HashTableTy;
+  typedef llvm::StringMap<IdentifierInfo, llvm::BumpPtrAllocator> HashTableTy;
   HashTableTy HashTable;
 public:
   /// IdentifierTable ctor - Create the identifier table, populating it with
@@ -167,7 +166,6 @@ private:
   void AddKeywords(const LangOptions &LangOpts);
 };
 
-}  // end namespace llvm
 }  // end namespace clang
 
 #endif

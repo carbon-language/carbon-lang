@@ -19,7 +19,6 @@
 #include "clang/Lex/MacroExpander.h"
 #include "clang/Basic/SourceLocation.h"
 
-namespace llvm {
 namespace clang {
   
 class SourceManager;
@@ -451,6 +450,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

@@ -16,7 +16,6 @@
 #include "clang/AST/Builtins.h"
 #include <map>
 #include <set>
-using namespace llvm;
 using namespace clang;
 
 void TargetInfoImpl::ANCHOR() {} // out-of-line virtual method for class.

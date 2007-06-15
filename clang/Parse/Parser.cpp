@@ -14,7 +14,6 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
-using namespace llvm;
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Action &actions)
@@ -174,7 +173,8 @@ bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
 //===----------------------------------------------------------------------===//
 
 /// ScopeCache - Cache scopes to avoid malloc traffic.
-static SmallVector<Scope*, 16> ScopeCache;
+/// FIXME: eliminate this static ctor
+static llvm::SmallVector<Scope*, 16> ScopeCache;
 
 /// EnterScope - Start a new scope.
 void Parser::EnterScope(unsigned ScopeFlags) {

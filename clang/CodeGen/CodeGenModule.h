@@ -16,6 +16,8 @@
 
 namespace llvm {
   class Module;
+}
+
 namespace clang {
   class ASTContext;
   class FunctionDecl;
@@ -26,12 +28,12 @@ namespace CodeGen {
 /// while generating LLVM code.
 class CodeGenModule {
   ASTContext &Context;
-  Module &TheModule;
+  llvm::Module &TheModule;
 public:
-  CodeGenModule(ASTContext &C, Module &M) : Context(C), TheModule(M) {}
+  CodeGenModule(ASTContext &C, llvm::Module &M) : Context(C), TheModule(M) {}
   
   ASTContext &getContext() const { return Context; }
-  Module &getModule() const { return TheModule; }
+  llvm::Module &getModule() const { return TheModule; }
   
   void EmitFunction(FunctionDecl *FD);
   
@@ -39,6 +41,5 @@ public:
 };
 }  // end namespace CodeGen
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

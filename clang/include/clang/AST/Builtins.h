@@ -17,7 +17,6 @@
 
 #include <cstring>
 
-namespace llvm {
 namespace clang {
   class TargetInfo;
   class IdentifierTable;
@@ -70,5 +69,4 @@ private:
 
 }
 } // end namespace clang
-} // end namespace llvm
 #endif

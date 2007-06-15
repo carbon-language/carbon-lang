@@ -18,19 +18,17 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Streams.h"
 #include <iostream>
 #include <string>
-using namespace llvm;
 using namespace clang;
 
-static cl::opt<bool>
+static llvm::cl::opt<bool>
 NoShowColumn("fno-show-column",
-             cl::desc("Do not include column number on diagnostics"));
-static cl::opt<bool>
+             llvm::cl::desc("Do not include column number on diagnostics"));
+static llvm::cl::opt<bool>
 NoCaretDiagnostics("fno-caret-diagnostics",
-                   cl::desc("Do not include source line and caret with"
-                            " diagnostics"));
+                   llvm::cl::desc("Do not include source line and caret with"
+                                  " diagnostics"));
 
 void TextDiagnosticPrinter::
 PrintIncludeStack(SourceLocation Pos) {
@@ -42,9 +40,9 @@ PrintIncludeStack(SourceLocation Pos) {
   
   unsigned LineNo = SourceMgr.getLineNumber(Pos);
   
-  const MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
-  cerr << "In file included from " << Buffer->getBufferIdentifier()
-       << ":" << LineNo << ":\n";
+  const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
+  std::cerr << "In file included from " << Buffer->getBufferIdentifier()
+            << ":" << LineNo << ":\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
@@ -130,7 +128,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                                              unsigned NumRanges) {
   unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
   unsigned LineStart = 0, LineEnd = 0;
-  const MemoryBuffer *Buffer = 0;
+  const llvm::MemoryBuffer *Buffer = 0;
   
   if (Pos.isValid()) {
     LineNo = SourceMgr.getLineNumber(Pos);
@@ -159,24 +157,24 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
            Buf[LineEnd] != '\n' && Buf[LineEnd] != '\r')
       ++LineEnd;
   
-    cerr << Buffer->getBufferIdentifier() 
-         << ":" << LineNo << ":";
+    std::cerr << Buffer->getBufferIdentifier() 
+              << ":" << LineNo << ":";
     if (ColNo && !NoShowColumn) 
-      cerr << ColNo << ":";
-    cerr << " ";
+      std::cerr << ColNo << ":";
+    std::cerr << " ";
   }
   
   switch (Level) {
   default: assert(0 && "Unknown diagnostic type!");
-  case Diagnostic::Note:    cerr << "note: "; break;
-  case Diagnostic::Warning: cerr << "warning: "; break;
-  case Diagnostic::Error:   cerr << "error: "; break;
-  case Diagnostic::Fatal:   cerr << "fatal error: "; break;
-  case Diagnostic::Sorry:   cerr << "sorry, unimplemented: ";
+  case Diagnostic::Note:    std::cerr << "note: "; break;
+  case Diagnostic::Warning: std::cerr << "warning: "; break;
+  case Diagnostic::Error:   std::cerr << "error: "; break;
+  case Diagnostic::Fatal:   std::cerr << "fatal error: "; break;
+  case Diagnostic::Sorry:   std::cerr << "sorry, unimplemented: ";
     break;
   }
   
-  cerr << FormatDiagnostic(Level, ID, Strs, NumStrs) << "\n";
+  std::cerr << FormatDiagnostic(Level, ID, Strs, NumStrs) << "\n";
   
   if (!NoCaretDiagnostics && Pos.isValid()) {
     // Get the line of the source file.
@@ -221,7 +219,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       CaratLine.erase(CaratLine.end()-1);
     
     // Emit what we have computed.
-    cerr << SourceLine << "\n";
-    cerr << CaratLine << "\n";
+    std::cerr << SourceLine << "\n";
+    std::cerr << CaratLine << "\n";
   }
 }

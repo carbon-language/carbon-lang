@@ -24,10 +24,9 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallString.h"
-using namespace llvm;
 using namespace clang;
 
-static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
+static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
                                      LexerToken &PeekTok, bool ValueLive,
                                      Preprocessor &PP);
 
@@ -61,7 +60,7 @@ struct DefinedTracker {
 /// If ValueLive is false, then this value is being evaluated in a context where
 /// the result is not used.  As such, avoid diagnostics that relate to
 /// evaluation.
-static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
+static bool EvaluateValue(llvm::APSInt &Result, LexerToken &PeekTok,
                           DefinedTracker &DT, bool ValueLive,
                           Preprocessor &PP) {
   Result = 0;
@@ -153,7 +152,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     PP.Diag(PeekTok, diag::err_pp_expected_value_in_expr);
     return true;
   case tok::numeric_constant: {
-    SmallString<64> IntegerBuffer;
+    llvm::SmallString<64> IntegerBuffer;
     IntegerBuffer.resize(PeekTok.getLength());
     const char *ThisTokBegin = &IntegerBuffer[0];
     unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
@@ -193,7 +192,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
     return false;
   }
   case tok::char_constant: {   // 'x'
-    SmallString<32> CharBuffer;
+    llvm::SmallString<32> CharBuffer;
     CharBuffer.resize(PeekTok.getLength());
     const char *ThisTokBegin = &CharBuffer[0];
     unsigned ActualLength = PP.getSpelling(PeekTok, ThisTokBegin);
@@ -211,7 +210,7 @@ static bool EvaluateValue(APSInt &Result, LexerToken &PeekTok,
       NumBits = TI.getCharWidth(PeekTok.getLocation());
     
     // Set the width.
-    APSInt Val(NumBits);
+    llvm::APSInt Val(NumBits);
     // Set the value.
     Val = Literal.getValue();
     // Set the signedness.
@@ -360,7 +359,7 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
 /// If ValueLive is false, then this value is being evaluated in a context where
 /// the result is not used.  As such, avoid diagnostics that relate to
 /// evaluation.
-static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
+static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
                                      LexerToken &PeekTok, bool ValueLive,
                                      Preprocessor &PP) {
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
@@ -397,7 +396,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     LexerToken OpToken = PeekTok;
     PP.LexNonComment(PeekTok);
 
-    APSInt RHS(LHS.getBitWidth());
+    llvm::APSInt RHS(LHS.getBitWidth());
     // Parse the RHS of the operator.
     DefinedTracker DT;
     if (EvaluateValue(RHS, PeekTok, DT, RHSIsLive, PP)) return true;
@@ -427,7 +426,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
     
     // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
     // either operand is unsigned.  Don't do this for x and y in "x ? y : z".
-    APSInt Res(LHS.getBitWidth());
+    llvm::APSInt Res(LHS.getBitWidth());
     if (Operator != tok::question) {
       Res.setIsUnsigned(LHS.isUnsigned()|RHS.isUnsigned());
       // If this just promoted something from signed to unsigned, and if the
@@ -564,7 +563,7 @@ static bool EvaluateDirectiveSubExpr(APSInt &LHS, unsigned MinPrec,
 
       // Evaluate the value after the :.
       bool AfterColonLive = ValueLive && LHS == 0;
-      APSInt AfterColonVal(LHS.getBitWidth());
+      llvm::APSInt AfterColonVal(LHS.getBitWidth());
       DefinedTracker DT;
       if (EvaluateValue(AfterColonVal, PeekTok, DT, AfterColonLive, PP))
         return true;
@@ -613,7 +612,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
   unsigned BitWidth = getTargetInfo().getIntMaxTWidth(Tok.getLocation());
-  APSInt ResVal(BitWidth);
+  llvm::APSInt ResVal(BitWidth);
   DefinedTracker DT;
   if (EvaluateValue(ResVal, Tok, DT, true, *this)) {
     // Parse error, skip the rest of the macro line.

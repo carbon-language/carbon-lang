@@ -17,7 +17,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/CommandLine.h"
-using namespace llvm;
 using namespace clang;
 
 /// Note: a hard coded list of targets is clearly silly, these should be
@@ -28,9 +27,9 @@ enum SupportedTargets {
   target_linux_i386
 };
 
-static cl::list<SupportedTargets>
-Archs("arch", cl::desc("Architectures to compile for"),
-      cl::values(clEnumValN(target_ppc,       "ppc",   "32-bit Darwin PowerPC"),
+static llvm::cl::list<SupportedTargets>
+Archs("arch", llvm::cl::desc("Architectures to compile for"),
+llvm::cl::values(clEnumValN(target_ppc,       "ppc",   "32-bit Darwin PowerPC"),
                  clEnumValN(target_ppc64,     "ppc64", "64-bit Darwin PowerPC"),
                  clEnumValN(target_i386,      "i386",  "32-bit Darwin X86"),
                  clEnumValN(target_x86_64,    "x86_64","64-bit Darwin X86"),

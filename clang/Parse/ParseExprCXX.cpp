@@ -13,7 +13,6 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/Parser.h"
-using namespace llvm;
 using namespace clang;
 
 /// ParseCXXCasts - This handles the various ways to cast expressions to another

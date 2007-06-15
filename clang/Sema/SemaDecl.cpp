@@ -24,8 +24,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallSet.h"
-
-using namespace llvm;
 using namespace clang;
 
 // C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
@@ -43,7 +41,7 @@ bool Sema::VerifyConstantArrayType(const ArrayType *Array,
 
   // Verify that the size of the array is an integer constant expr.
   SourceLocation Loc;
-  APSInt SizeVal(32);
+  llvm::APSInt SizeVal(32);
   if (!Size->isIntegerConstantExpr(SizeVal, &Loc)) {
     // FIXME: This emits the diagnostic to enforce 6.7.2.1p8, but the message
     // is wrong.  It is also wrong for static variables.
@@ -61,7 +59,7 @@ bool Sema::VerifyConstantArrayType(const ArrayType *Array,
   // elsewhere or replicated.  'int X[-1];' inside a function should emit an
   // error.
   if (SizeVal.isSigned()) {
-    APSInt Zero(SizeVal.getBitWidth());
+    llvm::APSInt Zero(SizeVal.getBitWidth());
     Zero.setIsUnsigned(false);
     if (SizeVal < Zero) {
       Diag(DeclLoc, diag::err_typecheck_negative_array_size,
@@ -504,7 +502,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
-  SmallVector<ParmVarDecl*, 16> Params;
+  llvm::SmallVector<ParmVarDecl*, 16> Params;
   
   // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
   // no arguments, not a function that takes a single void argument.
@@ -531,8 +529,8 @@ Sema::DeclTy *Sema::ParseFunctionDefBody(DeclTy *D, StmtTy *Body) {
   // Verify and clean out per-function state.
   
   // Check goto/label use.
-  for (DenseMap<IdentifierInfo*, LabelStmt*>::iterator I = LabelMap.begin(),
-       E = LabelMap.end(); I != E; ++I) {
+  for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
+       I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
     // Verify that we have no forward references left.  If so, there was a goto
     // or address of a label taken, but no definition of it.  Label fwd
     // definitions are indicated with a null substmt.
@@ -753,8 +751,8 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
 
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
-  SmallVector<FieldDecl*, 32> RecFields;
-  SmallSet<const IdentifierInfo*, 32> FieldIDs;
+  llvm::SmallVector<FieldDecl*, 32> RecFields;
+  llvm::SmallSet<const IdentifierInfo*, 32> FieldIDs;
   
   for (unsigned i = 0; i != NumFields; ++i) {
     FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
@@ -872,7 +870,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
     }
   }
 
-  APSInt EnumVal(32);
+  llvm::APSInt EnumVal(32);
   QualType EltTy;
   if (Val) {
     // C99 6.7.2.2p2: Make sure we have an integer constant expression.
@@ -975,7 +973,7 @@ void *Sema::HandleVectorTypeAttribute(QualType curType,
     return 0;
   }
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
-  APSInt vecSize(32);
+  llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize)) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
          sizeExpr->getSourceRange());

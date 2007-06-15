@@ -14,7 +14,6 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
-using namespace llvm;
 using namespace clang;
 
 
@@ -55,7 +54,7 @@ void Parser::ParseObjCAtDirectives() {
 ///  
 void Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
-  SmallVector<IdentifierInfo *, 8> ClassNames;
+  llvm::SmallVector<IdentifierInfo *, 8> ClassNames;
   
   while (1) {
     if (Tok.getKind() != tok::identifier) {

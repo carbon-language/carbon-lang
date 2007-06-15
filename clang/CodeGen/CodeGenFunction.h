@@ -20,6 +20,8 @@
 
 namespace llvm {
   class Module;
+}
+
 namespace clang {
   class SourceLocation;
   class TargetInfo;
@@ -62,7 +64,7 @@ namespace CodeGen {
 /// LLVM SSA value, or the address of an aggregate value in memory.  These two
 /// possibilities are discriminated by isAggregate/isScalar.
 class RValue {
-  Value *V;
+  llvm::Value *V;
   // TODO: Encode this into the low bit of pointer for more efficient
   // return-by-value.
   bool IsAggregate;
@@ -72,24 +74,24 @@ public:
   bool isScalar() const { return !IsAggregate; }
   
   /// getVal() - Return the Value* of this scalar value.
-  Value *getVal() const {
+  llvm::Value *getVal() const {
     assert(!isAggregate() && "Not a scalar!");
     return V;
   }
 
   /// getAggregateVal() - Return the Value* of the address of the aggregate.
-  Value *getAggregateVal() const {
+  llvm::Value *getAggregateVal() const {
     assert(isAggregate() && "Not an aggregate!");
     return V;
   }
   
-  static RValue get(Value *V) {
+  static RValue get(llvm::Value *V) {
     RValue ER;
     ER.V = V;
     ER.IsAggregate = false;
     return ER;
   }
-  static RValue getAggregate(Value *V) {
+  static RValue getAggregate(llvm::Value *V) {
     RValue ER;
     ER.V = V;
     ER.IsAggregate = true;
@@ -110,7 +112,7 @@ public:
   
   llvm::Value *getAddress() const { assert(!isBitfield()); return V; }
   
-  static LValue getAddr(Value *V) {
+  static LValue getAddr(llvm::Value *V) {
     LValue R;
     R.V = V;
     return R;
@@ -122,7 +124,7 @@ public:
 class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
-  LLVMBuilder Builder;
+  llvm::LLVMBuilder Builder;
   
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
@@ -136,10 +138,10 @@ class CodeGenFunction {
   
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
-  DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
+  llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
-  DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
+  llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
@@ -158,12 +160,12 @@ public:
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);
   
   
-  void EmitBlock(BasicBlock *BB);
+  void EmitBlock(llvm::BasicBlock *BB);
 
 
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.
-  Value *EvaluateExprAsBool(const Expr *E);
+  llvm::Value *EvaluateExprAsBool(const Expr *E);
   
   //===--------------------------------------------------------------------===//
   //                                Conversions
@@ -176,7 +178,7 @@ public:
   
   /// ConvertScalarValueToBool - Convert the specified expression value to a
   /// boolean (i1) truth value.  This is equivalent to "Val == 0".
-  Value *ConvertScalarValueToBool(RValue Val, QualType Ty);
+  llvm::Value *ConvertScalarValueToBool(RValue Val, QualType Ty);
   
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
@@ -290,6 +292,5 @@ public:
 };
 }  // end namespace CodeGen
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

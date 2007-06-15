@@ -14,7 +14,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -209,7 +208,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
 ///
 /// FIXME: This should ext-warn on overflow during evaluation!  ISO C does not
 /// permit this.
-bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
+bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
                                  bool isEvaluated) const {
   switch (getStmtClass()) {
   default:
@@ -299,7 +298,7 @@ bool Expr::isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc,
     if (!Exp->getLHS()->isIntegerConstantExpr(Result, Loc, isEvaluated))
       return false;
     
-    APSInt RHS(Result);
+    llvm::APSInt RHS(Result);
     
     // The short-circuiting &&/|| operators don't necessarily evaluate their
     // RHS.  Make sure to pass isEvaluated down correctly.
@@ -469,6 +468,6 @@ bool Expr::isNullPointerConstant() const {
   
   // If we have an integer constant expression, we need to *evaluate* it and
   // test for the value 0.
-  APSInt Val(32);
+  llvm::APSInt Val(32);
   return isIntegerConstantExpr(Val, 0, true) && Val == 0;
 }

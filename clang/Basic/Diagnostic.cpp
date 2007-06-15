@@ -14,7 +14,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include <cassert>
-using namespace llvm;
 using namespace clang;
 
 /// Flag values for diagnostics.

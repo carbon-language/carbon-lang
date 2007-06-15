@@ -16,9 +16,7 @@
 
 #include "clang/Parse/Action.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
 
-namespace llvm {
 namespace clang {
 
 /// Scope - A scope is a transient data structure that is used while parsing the
@@ -78,7 +76,7 @@ private:
   /// popped, these declarations are removed from the IdentifierTable's notion
   /// of current declaration.  It is up to the current Action implementation to
   /// implement these semantics.
-  typedef SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
+  typedef llvm::SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
@@ -144,6 +142,5 @@ public:
 };
     
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

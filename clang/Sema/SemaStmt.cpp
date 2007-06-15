@@ -18,7 +18,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Lex/IdentifierTable.h"
-using namespace llvm;
 using namespace clang;
 
 Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {

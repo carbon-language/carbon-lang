@@ -21,6 +21,7 @@
 
 namespace llvm {
 class MemoryBuffer;
+}
   
 namespace clang {
   
@@ -36,7 +37,7 @@ namespace SrcMgr {
   struct FileInfo {
     /// Buffer - The actual buffer containing the characters from the input
     /// file.
-    const MemoryBuffer *Buffer;
+    const llvm::MemoryBuffer *Buffer;
     
     /// SourceLineCache - A new[]'d array of offsets for each source line.  This
     /// is lazily computed.
@@ -188,7 +189,7 @@ public:
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
-  unsigned createFileIDForMemBuffer(const MemoryBuffer *Buffer) {
+  unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
     return createFileID(createMemBufferInfoRec(Buffer), SourceLocation());
   }
   
@@ -200,7 +201,7 @@ public:
   
   /// getBuffer - Return the buffer for the specified FileID.
   ///
-  const MemoryBuffer *getBuffer(unsigned FileID) const {
+  const llvm::MemoryBuffer *getBuffer(unsigned FileID) const {
     return getFileInfo(FileID)->Buffer;
   }
   
@@ -298,7 +299,7 @@ private:
   
   /// createMemBufferInfoRec - Create a new info record for the specified memory
   /// buffer.  This does no caching.
-  const SrcMgr::InfoRec *createMemBufferInfoRec(const MemoryBuffer *Buffer);
+  const SrcMgr::InfoRec *createMemBufferInfoRec(const llvm::MemoryBuffer *Buf);
 
   const SrcMgr::FileIDInfo *getFIDInfo(unsigned FileID) const {
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
@@ -336,6 +337,5 @@ private:
 
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

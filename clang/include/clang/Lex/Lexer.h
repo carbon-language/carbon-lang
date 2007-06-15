@@ -21,7 +21,8 @@
 #include <vector>
 
 namespace llvm {
-class MemoryBuffer;
+  class MemoryBuffer;
+}
   
 namespace clang {
 class Diagnostic;
@@ -35,7 +36,7 @@ class Lexer {
   //===--------------------------------------------------------------------===//
   // Constant configuration values for this lexer.
   const char * const BufferEnd;  // End of the buffer.
-  const MemoryBuffer *InputFile; // The file we are reading from.
+  const llvm::MemoryBuffer *InputFile; // The file we are reading from.
   unsigned CurFileID;            // FileID for the current input file.
   Preprocessor &PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
@@ -98,8 +99,8 @@ public:
   /// with the specified preprocessor managing the lexing process.  This lexer
   /// assumes that the specified MemoryBuffer and Preprocessor objects will
   /// outlive it, but doesn't take ownership of either pointer.
-  Lexer(const MemoryBuffer *InBuffer, unsigned CurFileID, Preprocessor &PP,
-        const char *BufStart = 0, const char *BufEnd = 0);
+    Lexer(const llvm::MemoryBuffer *InBuffer, unsigned CurFileID, 
+          Preprocessor &PP, const char *BufStart = 0, const char *BufEnd = 0);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!
@@ -348,6 +349,5 @@ private:
 
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

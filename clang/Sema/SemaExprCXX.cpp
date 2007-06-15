@@ -13,7 +13,6 @@
 
 #include "Sema.h"
 #include "clang/AST/ExprCXX.h"
-using namespace llvm;
 using namespace clang;
 
 /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.

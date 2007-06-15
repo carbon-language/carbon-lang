@@ -19,7 +19,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/Verifier.h"
-using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
 
@@ -32,11 +31,11 @@ ASTContext &CodeGenFunction::getContext() const {
 
 
 llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
-  BasicBlock *&BB = LabelMap[S];
+  llvm::BasicBlock *&BB = LabelMap[S];
   if (BB) return BB;
   
   // Create, but don't insert, the new block.
-  return BB = new BasicBlock(S->getName());
+  return BB = new llvm::BasicBlock(S->getName());
 }
 
 
@@ -55,7 +54,7 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
     case BuiltinType::Char_U:
     case BuiltinType::SChar:
     case BuiltinType::UChar:
-      return IntegerType::get(Target.getCharWidth(Loc));
+      return llvm::IntegerType::get(Target.getCharWidth(Loc));
 
     case BuiltinType::Bool:
       // FIXME: This is very strange.  We want scalars to be i1, but in memory
@@ -64,19 +63,19 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
       
     case BuiltinType::Short:
     case BuiltinType::UShort:
-      return IntegerType::get(Target.getShortWidth(Loc));
+      return llvm::IntegerType::get(Target.getShortWidth(Loc));
       
     case BuiltinType::Int:
     case BuiltinType::UInt:
-      return IntegerType::get(Target.getIntWidth(Loc));
+      return llvm::IntegerType::get(Target.getIntWidth(Loc));
 
     case BuiltinType::Long:
     case BuiltinType::ULong:
-      return IntegerType::get(Target.getLongWidth(Loc));
+      return llvm::IntegerType::get(Target.getLongWidth(Loc));
 
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
-      return IntegerType::get(Target.getLongLongWidth(Loc));
+      return llvm::IntegerType::get(Target.getLongLongWidth(Loc));
       
     case BuiltinType::Float:      return llvm::Type::FloatTy;
     case BuiltinType::Double:     return llvm::Type::DoubleTy;
@@ -138,7 +137,7 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
   }
   
   // FIXME: implement.
-  return OpaqueType::get();
+  return llvm::OpaqueType::get();
 }
 
 void CodeGenFunction::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
@@ -163,17 +162,17 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   // FIXME: param attributes for sext/zext etc.
   
   CurFuncDecl = FD;
-  CurFn = new Function(Ty, Function::ExternalLinkage,
-                       FD->getName(), &CGM.getModule());
+  CurFn = new llvm::Function(Ty, llvm::Function::ExternalLinkage,
+                             FD->getName(), &CGM.getModule());
   
-  BasicBlock *EntryBB = new BasicBlock("entry", CurFn);
+  llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
   
   Builder.SetInsertPoint(EntryBB);
 
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.
-  AllocaInsertPt = Builder.CreateBitCast(UndefValue::get(llvm::Type::Int32Ty),
-                                         llvm::Type::Int32Ty, "allocapt");
+  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
+  AllocaInsertPt = Builder.CreateBitCast(Undef,llvm::Type::Int32Ty, "allocapt");
   
   // Emit allocs for param decls. 
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
@@ -190,9 +189,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   if (Ty->getReturnType() == llvm::Type::VoidTy)
     Builder.CreateRetVoid();
   else
-    Builder.CreateRet(UndefValue::get(Ty->getReturnType()));
-      
-  
+    Builder.CreateRet(llvm::UndefValue::get(Ty->getReturnType()));
   
   // Verify that the function is well formed.
   assert(!verifyFunction(*CurFn));

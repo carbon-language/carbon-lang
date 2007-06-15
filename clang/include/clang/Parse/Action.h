@@ -17,7 +17,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
 
-namespace llvm {
 namespace clang {
   // Semantic.
   class DeclSpec;
@@ -397,6 +396,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

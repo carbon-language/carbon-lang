@@ -13,7 +13,6 @@
 
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
-using namespace llvm;
 using namespace clang;
 
 MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {

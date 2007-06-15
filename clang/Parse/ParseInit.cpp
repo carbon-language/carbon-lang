@@ -13,7 +13,6 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
-using namespace llvm;
 using namespace clang;
 
 

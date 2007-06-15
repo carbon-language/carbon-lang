@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_SCRATCHBUFFER_H
 #define LLVM_CLANG_SCRATCHBUFFER_H
 
-namespace llvm {
 namespace clang {
   class SourceManager;
   class SourceLocation;
@@ -47,6 +46,5 @@ private:
 };
 
 } // end namespace clang
-} // end namespace llvm
 
 #endif

@@ -16,7 +16,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Scope.h"
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -394,7 +393,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody() {
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
   // only allowed at the start of a compound stmt.
   
-  SmallVector<StmtTy*, 32> Stmts;
+  llvm::SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
     StmtResult R = ParseStatementOrDeclaration(false);
     if (!R.isInvalid && R.Val)

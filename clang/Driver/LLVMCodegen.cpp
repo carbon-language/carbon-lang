@@ -19,22 +19,21 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Module.h"
 #include <iostream>
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // LLVM Emission
 //===----------------------------------------------------------------------===//
 
-void llvm::clang::EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
-                                   bool PrintStats) {
+void clang::EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
+                             bool PrintStats) {
   Diagnostic &Diags = PP.getDiagnostics();
   // Create the streamer to read the file.
   ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
   // Create the module to codegen into.
-  Module M("foo");
+  llvm::Module M("foo");
   
   CodeGen::BuilderTy *Builder = CodeGen::Init(Context, M);
   

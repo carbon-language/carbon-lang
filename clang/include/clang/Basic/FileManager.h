@@ -20,7 +20,6 @@
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
 
-namespace llvm {
 namespace clang {
 class FileManager;
   
@@ -71,8 +70,8 @@ class FileManager {
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
   ///
-  StringMap<DirectoryEntry*> DirEntries;
-  StringMap<FileEntry*> FileEntries;
+  llvm::StringMap<DirectoryEntry*> DirEntries;
+  llvm::StringMap<FileEntry*> FileEntries;
   
   /// NextFileUID - Each FileEntry we create is assigned a unique ID #.
   ///
@@ -108,6 +107,5 @@ public:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

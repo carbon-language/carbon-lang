@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 
-namespace llvm {
 namespace clang {
   class ASTContext;
   class Preprocessor;
@@ -57,7 +56,7 @@ class Sema : public Action {
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
   /// labels have a LabelStmt created for them with a null location & SubStmt.
-  DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -347,6 +346,5 @@ private:
 
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

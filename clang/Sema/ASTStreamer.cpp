@@ -16,7 +16,6 @@
 #include "Sema.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
-using namespace llvm;
 using namespace clang;
 
 namespace {
@@ -87,27 +86,26 @@ void ASTStreamer::PrintStats() const {
 
 /// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
 /// and FileID.
-ASTStreamerTy *llvm::clang::ASTStreamer_Init(Preprocessor &pp,
-                                             ASTContext &ctxt,
-                                             unsigned MainFileID) {
+ASTStreamerTy *clang::ASTStreamer_Init(Preprocessor &pp, ASTContext &ctxt,
+                                       unsigned MainFileID) {
   return new ASTStreamer(pp, ctxt, MainFileID);
 }
 
 /// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration. This
 /// returns null at end of file.
-Decl *llvm::clang::ASTStreamer_ReadTopLevelDecl(ASTStreamerTy *Streamer) {
+Decl *clang::ASTStreamer_ReadTopLevelDecl(ASTStreamerTy *Streamer) {
   return static_cast<ASTStreamer*>(Streamer)->ReadTopLevelDecl();
 }
 
 
 /// ASTStreamer_PrintStats - Emit statistic information to stderr.
 ///
-void llvm::clang::ASTStreamer_PrintStats(ASTStreamerTy *Streamer) {
+void clang::ASTStreamer_PrintStats(ASTStreamerTy *Streamer) {
   return static_cast<ASTStreamer*>(Streamer)->PrintStats();
 }
 
 /// ASTStreamer_Terminate - Gracefully shut down the streamer.
 ///
-void llvm::clang::ASTStreamer_Terminate(ASTStreamerTy *Streamer) {
+void clang::ASTStreamer_Terminate(ASTStreamerTy *Streamer) {
   delete static_cast<ASTStreamer*>(Streamer);
 }

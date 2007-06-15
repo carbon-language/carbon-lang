@@ -16,7 +16,6 @@
 
 #include "clang/AST/Expr.h"
 
-namespace llvm {
 namespace clang {
 
   //===--------------------------------------------------------------------===//
@@ -60,6 +59,5 @@ namespace clang {
   };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include <iosfwd>
 
-namespace llvm {
 namespace clang {
   class Expr;
   class Decl;
@@ -102,16 +101,16 @@ public:
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
 ///
 class CompoundStmt : public Stmt {
-  SmallVector<Stmt*, 16> Body;
+  llvm::SmallVector<Stmt*, 16> Body;
 public:
   CompoundStmt(Stmt **StmtStart, unsigned NumStmts)
     : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts) {}
   
-  typedef SmallVector<Stmt*, 16>::iterator body_iterator;
+  typedef llvm::SmallVector<Stmt*, 16>::iterator body_iterator;
   body_iterator body_begin() { return Body.begin(); }
   body_iterator body_end() { return Body.end(); }
 
-  typedef SmallVector<Stmt*, 16>::const_iterator const_body_iterator;
+  typedef llvm::SmallVector<Stmt*, 16>::const_iterator const_body_iterator;
   const_body_iterator body_begin() const { return Body.begin(); }
   const_body_iterator body_end() const { return Body.end(); }
   
@@ -374,9 +373,6 @@ public:
   static bool classof(const ReturnStmt *) { return true; }
 };
 
-
-  
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

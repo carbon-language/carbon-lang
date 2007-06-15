@@ -19,7 +19,6 @@
 #include "clang/Parse/AttributeList.h"
 #include "llvm/ADT/SmallVector.h"
 
-namespace llvm {
 namespace clang {
   class LangOptions;
   class IdentifierInfo;
@@ -441,7 +440,7 @@ private:
   /// parsed.  This is pushed from the identifier out, which means that element
   /// #0 will be the most closely bound to the identifier, and
   /// DeclTypeInfo.back() will be the least closely bound.
-  SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
+  llvm::SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
 
   // attributes.
   AttributeList *AttrList;  
@@ -549,6 +548,5 @@ public:
 
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

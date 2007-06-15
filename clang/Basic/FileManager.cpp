@@ -20,7 +20,6 @@
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/SmallString.h"
 #include <iostream>
-using namespace llvm;
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.
@@ -37,7 +36,7 @@ using namespace clang;
 const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
                                                 const char *NameEnd) {
   ++NumDirLookups;
-  StringMapEntry<DirectoryEntry *> &NamedDirEnt =
+  llvm::StringMapEntry<DirectoryEntry *> &NamedDirEnt =
     DirEntries.GetOrCreateValue(NameStart, NameEnd);
   
   // See if there is already an entry in the map.
@@ -87,7 +86,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   ++NumFileLookups;
   
   // See if there is already an entry in the map.
-  StringMapEntry<FileEntry *> &NamedFileEnt =
+  llvm::StringMapEntry<FileEntry *> &NamedFileEnt =
     FileEntries.GetOrCreateValue(NameStart, NameEnd);
 
   // See if there is already an entry in the map.

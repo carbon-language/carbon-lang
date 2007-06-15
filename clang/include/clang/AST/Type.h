@@ -17,7 +17,12 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
 
-namespace llvm {
+using llvm::isa;
+using llvm::cast;
+using llvm::cast_or_null;
+using llvm::dyn_cast;
+using llvm::dyn_cast_or_null;
+
 namespace clang {
   class ASTContext;
   class Type;
@@ -131,16 +136,18 @@ private:
 
 } // end clang.
 
+namespace llvm {
 /// Implement simplify_type for QualType, so that we can dyn_cast from QualType
 /// to a specific Type class.
-template<> struct simplify_type<const clang::QualType> {
-  typedef clang::Type* SimpleType;
-  static SimpleType getSimplifiedValue(const clang::QualType &Val) {
+template<> struct simplify_type<const ::clang::QualType> {
+  typedef ::clang::Type* SimpleType;
+  static SimpleType getSimplifiedValue(const ::clang::QualType &Val) {
     return Val.getTypePtr();
   }
 };
-template<> struct simplify_type<clang::QualType>
-  : public simplify_type<const clang::QualType> {};
+template<> struct simplify_type< ::clang::QualType>
+  : public simplify_type<const ::clang::QualType> {};
+}
 
 namespace clang {
 
@@ -305,7 +312,7 @@ public:
 
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///
-class PointerType : public Type, public FoldingSetNode {
+class PointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
   PointerType(QualType Pointee, QualType CanonicalPtr) :
     Type(Pointer, CanonicalPtr), PointeeType(Pointee) {
@@ -318,10 +325,10 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   
-  void Profile(FoldingSetNodeID &ID) {
+  void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());
   }
-  static void Profile(FoldingSetNodeID &ID, QualType Pointee) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
     ID.AddPointer(Pointee.getAsOpaquePtr());
   }
   
@@ -331,7 +338,7 @@ public:
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
 ///
-class ReferenceType : public Type, public FoldingSetNode {
+class ReferenceType : public Type, public llvm::FoldingSetNode {
   QualType ReferenceeType;
   ReferenceType(QualType Referencee, QualType CanonicalRef) :
     Type(Reference, CanonicalRef), ReferenceeType(Referencee) {
@@ -342,10 +349,10 @@ public:
 
   QualType getReferenceeType() const { return ReferenceeType; }
 
-  void Profile(FoldingSetNodeID &ID) {
+  void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getReferenceeType());
   }
-  static void Profile(FoldingSetNodeID &ID, QualType Referencee) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Referencee) {
     ID.AddPointer(Referencee.getAsOpaquePtr());
   }
 
@@ -355,7 +362,7 @@ public:
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
 ///
-class ArrayType : public Type, public FoldingSetNode {
+class ArrayType : public Type, public llvm::FoldingSetNode {
 public:
   /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
   /// an array with a static size (e.g. int X[static 4]), or with a star size
@@ -392,11 +399,12 @@ public:
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
-  void Profile(FoldingSetNodeID &ID) {
+  void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType(),
             getSize());
   }
-  static void Profile(FoldingSetNodeID &ID, ArraySizeModifier SizeModifier,
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      ArraySizeModifier SizeModifier,
                       unsigned IndexTypeQuals, QualType ElementType,
                       Expr *SizeExpr) {
     ID.AddInteger(SizeModifier);
@@ -437,7 +445,7 @@ public:
 
 /// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
 /// no information available about its arguments.
-class FunctionTypeNoProto : public FunctionType, public FoldingSetNode {
+class FunctionTypeNoProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeNoProto(QualType Result, QualType Canonical)
     : FunctionType(FunctionNoProto, Result, false, Canonical) {}
   friend class ASTContext;  // ASTContext creates these.
@@ -446,10 +454,10 @@ public:
   
   virtual void getAsStringInternal(std::string &InnerString) const;
 
-  void Profile(FoldingSetNodeID &ID) {
+  void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getResultType());
   }
-  static void Profile(FoldingSetNodeID &ID, QualType ResultType) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType) {
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
   
@@ -462,7 +470,7 @@ public:
 /// FunctionTypeProto - Represents a prototype with argument type info, e.g.
 /// 'int foo(int)' or 'int foo(void)'.  'void' is represented as having no
 /// arguments, not as having a single void argument.
-class FunctionTypeProto : public FunctionType, public FoldingSetNode {
+class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   FunctionTypeProto(QualType Result, QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, Canonical),
@@ -495,9 +503,9 @@ public:
   }
   static bool classof(const FunctionTypeProto *) { return true; }
   
-  void Profile(FoldingSetNodeID &ID);
-  static void Profile(FoldingSetNodeID &ID, QualType Result, QualType* ArgTys,
-                      unsigned NumArgs, bool isVariadic);
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
+                      QualType* ArgTys, unsigned NumArgs, bool isVariadic);
 };
 
 
@@ -568,6 +576,5 @@ inline QualType QualType::getCanonicalType() const {
 }
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

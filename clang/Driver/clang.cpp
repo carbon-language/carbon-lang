@@ -35,17 +35,16 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // Global options.
 //===----------------------------------------------------------------------===//
 
-static cl::opt<bool>
-Verbose("v", cl::desc("Enable verbose output"));
-static cl::opt<bool>
-Stats("stats", cl::desc("Print performance metrics and statistics"));
+static llvm::cl::opt<bool>
+Verbose("v", llvm::cl::desc("Enable verbose output"));
+static llvm::cl::opt<bool>
+Stats("stats", llvm::cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
   EmitLLVM,                     // Emit a .ll file.
@@ -59,10 +58,10 @@ enum ProgActions {
   DumpTokens                    // Token dump mode.
 };
 
-static cl::opt<ProgActions> 
-ProgAction(cl::desc("Choose output type:"), cl::ZeroOrMore,
-           cl::init(ParseSyntaxOnly),
-           cl::values(
+static llvm::cl::opt<ProgActions> 
+ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
+           llvm::cl::init(ParseSyntaxOnly),
+           llvm::cl::values(
              clEnumValN(RunPreprocessorOnly, "Eonly",
                         "Just run preprocessor, no output (for timings)"),
              clEnumValN(PrintPreprocessedInput, "E",
@@ -104,10 +103,10 @@ enum LangKind {
    assembler  assembler-with-cpp
    ada, f77*, ratfor (!), f95, java, treelang
  */
-static cl::opt<LangKind>
-BaseLang("x", cl::desc("Base language to compile"),
-         cl::init(langkind_unspecified),
-         cl::values(clEnumValN(langkind_c,     "c",            "C"),
+static llvm::cl::opt<LangKind>
+BaseLang("x", llvm::cl::desc("Base language to compile"),
+         llvm::cl::init(langkind_unspecified),
+   llvm::cl::values(clEnumValN(langkind_c,     "c",            "C"),
                     clEnumValN(langkind_cxx,   "c++",          "C++"),
                     clEnumValN(langkind_objc,  "objective-c",  "Objective C"),
                     clEnumValN(langkind_objcxx,"objective-c++","Objective C++"),
@@ -121,12 +120,12 @@ BaseLang("x", cl::desc("Base language to compile"),
                                "Preprocessed Objective C++"),
                     clEnumValEnd));
 
-static cl::opt<bool>
-LangObjC("ObjC", cl::desc("Set base language to Objective-C"),
-         cl::Hidden);
-static cl::opt<bool>
-LangObjCXX("ObjC++", cl::desc("Set base language to Objective-C++"),
-           cl::Hidden);
+static llvm::cl::opt<bool>
+LangObjC("ObjC", llvm::cl::desc("Set base language to Objective-C"),
+         llvm::cl::Hidden);
+static llvm::cl::opt<bool>
+LangObjCXX("ObjC++", llvm::cl::desc("Set base language to Objective-C++"),
+           llvm::cl::Hidden);
 
 /// InitializeBaseLanguage - Handle the -x foo options or infer a base language
 /// from the input filename.
@@ -208,10 +207,10 @@ enum LangStds {
   lang_cxx98, lang_gnucxx98
 };
 
-static cl::opt<LangStds>
-LangStd("std", cl::desc("Language standard to compile for"),
-        cl::init(lang_unspecified),
-        cl::values(clEnumValN(lang_c89,      "c89",            "ISO C 1990"),
+static llvm::cl::opt<LangStds>
+LangStd("std", llvm::cl::desc("Language standard to compile for"),
+        llvm::cl::init(lang_unspecified),
+  llvm::cl::values(clEnumValN(lang_c89,      "c89",            "ISO C 1990"),
                    clEnumValN(lang_c89,      "c90",            "ISO C 1990"),
                    clEnumValN(lang_c89,      "iso9899:1990",   "ISO C 1990"),
                    clEnumValN(lang_c94,      "iso9899:199409",
@@ -233,10 +232,10 @@ LangStd("std", cl::desc("Language standard to compile for"),
                               "extensions (default for C++)"),
                    clEnumValEnd));
 
-static cl::opt<bool>
+static llvm::cl::opt<bool>
 NoOperatorNames("fno-operator-names",
-                cl::desc("Do not treat C++ operator name keywords as "
-                         "synonyms for operators"));
+                llvm::cl::desc("Do not treat C++ operator name keywords as "
+                               "synonyms for operators"));
 
 // FIXME: add:
 //   -ansi
@@ -295,20 +294,20 @@ static void InitializeLanguageStandard(LangOptions &Options) {
 //===----------------------------------------------------------------------===//
 
 // FIXME: Werror should take a list of things, -Werror=foo,bar
-static cl::opt<bool>
-WarningsAsErrors("Werror", cl::desc("Treat all warnings as errors"));
+static llvm::cl::opt<bool>
+WarningsAsErrors("Werror", llvm::cl::desc("Treat all warnings as errors"));
 
-static cl::opt<bool>
-WarnOnExtensions("pedantic", cl::init(true),
-                 cl::desc("Issue a warning on uses of GCC extensions"));
+static llvm::cl::opt<bool>
+WarnOnExtensions("pedantic", llvm::cl::init(true),
+                 llvm::cl::desc("Issue a warning on uses of GCC extensions"));
 
-static cl::opt<bool>
+static llvm::cl::opt<bool>
 ErrorOnExtensions("pedantic-errors",
-                  cl::desc("Issue an error on uses of GCC extensions"));
+                  llvm::cl::desc("Issue an error on uses of GCC extensions"));
 
-static cl::opt<bool>
+static llvm::cl::opt<bool>
 WarnUnusedMacros("Wunused_macros",
-               cl::desc("Warn for unused macros in the main translation unit"));
+         llvm::cl::desc("Warn for unused macros in the main translation unit"));
 
 
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
@@ -331,12 +330,12 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
 //   -A...    - Play with #assertions
 //   -undef   - Undefine all predefined macros
 
-static cl::list<std::string>
-D_macros("D", cl::value_desc("macro"), cl::Prefix,
-       cl::desc("Predefine the specified macro"));
-static cl::list<std::string>
-U_macros("U", cl::value_desc("macro"), cl::Prefix,
-         cl::desc("Undefine the specified macro"));
+static llvm::cl::list<std::string>
+D_macros("D", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
+       llvm::cl::desc("Predefine the specified macro"));
+static llvm::cl::list<std::string>
+U_macros("U", llvm::cl::value_desc("macro"), llvm::cl::Prefix,
+         llvm::cl::desc("Undefine the specified macro"));
 
 // Append a #define line to Buf for Macro.  Macro should be of the form XXX,
 // in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
@@ -442,36 +441,37 @@ static void InitializePredefinedMacros(Preprocessor &PP,
 //
 // FIXME: -include,-imacros
 
-static cl::opt<bool>
-nostdinc("nostdinc", cl::desc("Disable standard #include directories"));
+static llvm::cl::opt<bool>
+nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
 
 // Various command line options.  These four add directories to each chain.
-static cl::list<std::string>
-F_dirs("F", cl::value_desc("directory"), cl::Prefix,
-       cl::desc("Add directory to framework include search path"));
-static cl::list<std::string>
-I_dirs("I", cl::value_desc("directory"), cl::Prefix,
-       cl::desc("Add directory to include search path"));
-static cl::list<std::string>
-idirafter_dirs("idirafter", cl::value_desc("directory"), cl::Prefix,
-               cl::desc("Add directory to AFTER include search path"));
-static cl::list<std::string>
-iquote_dirs("iquote", cl::value_desc("directory"), cl::Prefix,
-               cl::desc("Add directory to QUOTE include search path"));
-static cl::list<std::string>
-isystem_dirs("isystem", cl::value_desc("directory"), cl::Prefix,
-            cl::desc("Add directory to SYSTEM include search path"));
+static llvm::cl::list<std::string>
+F_dirs("F", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+       llvm::cl::desc("Add directory to framework include search path"));
+static llvm::cl::list<std::string>
+I_dirs("I", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+       llvm::cl::desc("Add directory to include search path"));
+static llvm::cl::list<std::string>
+idirafter_dirs("idirafter", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+               llvm::cl::desc("Add directory to AFTER include search path"));
+static llvm::cl::list<std::string>
+iquote_dirs("iquote", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+               llvm::cl::desc("Add directory to QUOTE include search path"));
+static llvm::cl::list<std::string>
+isystem_dirs("isystem", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
+            llvm::cl::desc("Add directory to SYSTEM include search path"));
 
 // These handle -iprefix/-iwithprefix/-iwithprefixbefore.
-static cl::list<std::string>
-iprefix_vals("iprefix", cl::value_desc("prefix"), cl::Prefix,
-             cl::desc("Set the -iwithprefix/-iwithprefixbefore prefix"));
-static cl::list<std::string>
-iwithprefix_vals("iwithprefix", cl::value_desc("dir"), cl::Prefix,
-          cl::desc("Set directory to SYSTEM include search path with prefix"));
-static cl::list<std::string>
-iwithprefixbefore_vals("iwithprefixbefore", cl::value_desc("dir"), cl::Prefix,
-                 cl::desc("Set directory to include search path with prefix"));
+static llvm::cl::list<std::string>
+iprefix_vals("iprefix", llvm::cl::value_desc("prefix"), llvm::cl::Prefix,
+             llvm::cl::desc("Set the -iwithprefix/-iwithprefixbefore prefix"));
+static llvm::cl::list<std::string>
+iwithprefix_vals("iwithprefix", llvm::cl::value_desc("dir"), llvm::cl::Prefix,
+     llvm::cl::desc("Set directory to SYSTEM include search path with prefix"));
+static llvm::cl::list<std::string>
+iwithprefixbefore_vals("iwithprefixbefore", llvm::cl::value_desc("dir"),
+                       llvm::cl::Prefix,
+            llvm::cl::desc("Set directory to include search path with prefix"));
 
 // Finally, implement the code that groks the options above.
 enum IncludeDirGroup {
@@ -808,7 +808,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
       return 0;
     }
   } else {
-    MemoryBuffer *SB = MemoryBuffer::getSTDIN();
+    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
       std::cerr << "Error reading standard input!  Empty?\n";
@@ -822,9 +822,9 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   // Memory buffer must end with a null byte!
   PrologMacros.push_back(0);
     
-  MemoryBuffer *SB = MemoryBuffer::getMemBuffer(&PrologMacros.front(),
-                                                &PrologMacros.back(),
-                                                "<predefines>");
+  llvm::MemoryBuffer *SB = 
+    llvm::MemoryBuffer::getMemBuffer(&PrologMacros.front(),&PrologMacros.back(),
+                                     "<predefines>");
   assert(SB && "Cannot fail to create predefined source buffer");
   unsigned FileID = SourceMgr.createFileIDForMemBuffer(SB);
   assert(FileID && "Could not create FileID for predefines?");
@@ -905,12 +905,12 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   HeaderInfo.ClearFileInfo();
 }
 
-static cl::list<std::string>
-InputFilenames(cl::Positional, cl::desc("<input files>"));
+static llvm::cl::list<std::string>
+InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
 int main(int argc, char **argv) {
-  cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
-  sys::PrintStackTraceOnErrorSignal();
+  llvm::cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
+  llvm::sys::PrintStackTraceOnErrorSignal();
   
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())

@@ -17,7 +17,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
 
-namespace llvm {
 namespace clang {
   class DeclSpec;
   class Declarator;
@@ -368,6 +367,5 @@ private:
 };
 
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

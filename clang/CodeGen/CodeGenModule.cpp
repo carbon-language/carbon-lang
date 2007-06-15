@@ -14,7 +14,6 @@
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/Decl.h"
-using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
 

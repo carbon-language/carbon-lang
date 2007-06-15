@@ -19,7 +19,6 @@
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/APSInt.h"
 
-namespace llvm {
 namespace clang {
   class IdentifierInfo;
   class Decl;
@@ -83,10 +82,10 @@ public:
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
   /// of the invalid expression.
-  bool isIntegerConstantExpr(APSInt &Result, SourceLocation *Loc = 0,
+  bool isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
   bool isIntegerConstantExpr(SourceLocation *Loc = 0) const {
-    APSInt X(32);
+    llvm::APSInt X(32);
     return isIntegerConstantExpr(X, Loc);
   }
   
@@ -123,16 +122,16 @@ public:
 };
 
 class IntegerLiteral : public Expr {
-  APInt Value;
+  llvm::APInt Value;
   SourceLocation Loc;
 public:
   // type should be IntTy, LongTy, LongLongTy, UnsignedIntTy, UnsignedLongTy, 
   // or UnsignedLongLongTy
-  IntegerLiteral(const APInt &V, QualType type, SourceLocation l)
+  IntegerLiteral(const llvm::APInt &V, QualType type, SourceLocation l)
     : Expr(IntegerLiteralClass, type), Value(V), Loc(l) {
     assert(type->isIntegerType() && "Illegal type in IntegerLiteral");
   }
-  const APInt &getValue() const { return Value; }
+  const llvm::APInt &getValue() const { return Value; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   virtual void visit(StmtVisitor &Visitor);
@@ -541,6 +540,5 @@ public:
 };
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

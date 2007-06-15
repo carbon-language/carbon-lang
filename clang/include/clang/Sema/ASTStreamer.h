@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_AST_ASTSTREAMER_H
 #define LLVM_CLANG_AST_ASTSTREAMER_H
 
-namespace llvm {
 namespace clang {
   class Preprocessor;
   class ASTContext;
@@ -42,6 +41,5 @@ namespace clang {
   void ASTStreamer_Terminate(ASTStreamerTy *Streamer);
   
 }  // end namespace clang
-}  // end namespace llvm
 
 #endif

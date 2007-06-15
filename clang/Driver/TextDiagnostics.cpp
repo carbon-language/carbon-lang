@@ -15,7 +15,6 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/HeaderSearch.h"
-using namespace llvm;
 using namespace clang;
 
 TextDiagnostics:: ~TextDiagnostics() {}

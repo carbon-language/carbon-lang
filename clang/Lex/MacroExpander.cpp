@@ -17,7 +17,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
-using namespace llvm;
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -286,7 +285,7 @@ MacroExpander::~MacroExpander() {
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from MacroTokens.
 void MacroExpander::ExpandFunctionArguments() {
-  SmallVector<LexerToken, 128> ResultToks;
+  llvm::SmallVector<LexerToken, 128> ResultToks;
   
   // Loop through the MacroTokens tokens, expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,
@@ -509,7 +508,7 @@ void MacroExpander::Lex(LexerToken &Tok) {
 /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
 /// are is another ## after it, chomp it iteratively.  Return the result as Tok.
 void MacroExpander::PasteTokens(LexerToken &Tok) {
-  SmallVector<char, 128> Buffer;
+  llvm::SmallVector<char, 128> Buffer;
   do {
     // Consume the ## operator.
     SourceLocation PasteOpLoc = MacroTokens[CurToken].getLocation();
