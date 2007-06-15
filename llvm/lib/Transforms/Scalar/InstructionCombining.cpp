@@ -3363,13 +3363,28 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   }
   
   {
-    Value *A = 0, *B = 0;
-    if (match(Op0, m_Or(m_Value(A), m_Value(B))))
+    Value *A = 0, *B = 0, *C = 0, *D = 0;
+    if (match(Op0, m_Or(m_Value(A), m_Value(B)))) {
       if (A == Op1 || B == Op1)    // (A | ?) & A  --> A
         return ReplaceInstUsesWith(I, Op1);
-    if (match(Op1, m_Or(m_Value(A), m_Value(B))))
+    
+      // (A|B) & ~(A&B) -> A^B
+      if (match(Op1, m_Not(m_And(m_Value(C), m_Value(D))))) {
+        if ((A == C && B == D) || (A == D && B == C))
+          return BinaryOperator::createXor(A, B);
+      }
+    }
+    
+    if (match(Op1, m_Or(m_Value(A), m_Value(B)))) {
       if (A == Op0 || B == Op0)    // A & (A | ?)  --> A
         return ReplaceInstUsesWith(I, Op0);
+
+      // ~(A&B) & (A|B) -> A^B
+      if (match(Op0, m_Not(m_And(m_Value(C), m_Value(D))))) {
+        if ((A == C && B == D) || (A == D && B == C))
+          return BinaryOperator::createXor(A, B);
+      }
+    }
     
     if (Op0->hasOneUse() &&
         match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
@@ -4137,15 +4152,20 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           return BinaryOperator::createAdd(Op0I->getOperand(1), ConstantRHS);
         }
 
-      // ~(~X & Y) --> (X | ~Y)
-      if (Op0I->getOpcode() == Instruction::And && RHS->isAllOnesValue()) {
+      // ~(~X & Y) --> (X | ~Y) - De Morgan's Law
+      // ~(~X | Y) === (X & ~Y) - De Morgan's Law
+      if ((Op0I->getOpcode() == Instruction::And || 
+           Op0I->getOpcode() == Instruction::Or) && RHS->isAllOnesValue()) {
         if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
         if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
           Instruction *NotY =
             BinaryOperator::createNot(Op0I->getOperand(1),
                                       Op0I->getOperand(1)->getName()+".not");
           InsertNewInstBefore(NotY, I);
-          return BinaryOperator::createOr(Op0NotVal, NotY);
+          if (Op0I->getOpcode() == Instruction::And)
+            return BinaryOperator::createOr(Op0NotVal, NotY);
+          else
+            return BinaryOperator::createAnd(Op0NotVal, NotY);
         }
       }
           
