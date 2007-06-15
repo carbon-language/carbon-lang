@@ -2050,9 +2050,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     return BinaryOperator::createMul(LHS, AddOne(C2));
 
   // X + ~X --> -1   since   ~X = -X-1
-  if (dyn_castNotVal(LHS) == RHS ||
-      dyn_castNotVal(RHS) == LHS)
-    return ReplaceInstUsesWith(I, ConstantInt::getAllOnesValue(I.getType()));
+  if (dyn_castNotVal(LHS) == RHS || dyn_castNotVal(RHS) == LHS)
+    return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
   
 
   // (A & C1)+(B & C2) --> (A & C1)|(B & C2) iff C1&C2 == 0
@@ -3717,7 +3716,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (isa<UndefValue>(Op1))                       // X | undef -> -1
-    return ReplaceInstUsesWith(I, ConstantInt::getAllOnesValue(I.getType()));
+    return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
 
   // or X, X = X
   if (Op0 == Op1)
@@ -3912,16 +3911,14 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   if (match(Op0, m_Not(m_Value(A)))) {   // ~A | Op1
     if (A == Op1)   // ~A | A == -1
-      return ReplaceInstUsesWith(I,
-                                ConstantInt::getAllOnesValue(I.getType()));
+      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
   } else {
     A = 0;
   }
   // Note, A is still live here!
   if (match(Op1, m_Not(m_Value(B)))) {   // Op0 | ~B
     if (Op0 == B)
-      return ReplaceInstUsesWith(I,
-                                ConstantInt::getAllOnesValue(I.getType()));
+      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
 
     // (~A | ~B) == (~(A & B)) - De Morgan's Law
     if (A && isOnlyUse(Op0) && isOnlyUse(Op1)) {
@@ -4135,6 +4132,29 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op0);  // X ^ <0,0> -> X
   }
 
+  // Is this a ~ operation?
+  if (Value *NotOp = dyn_castNotVal(&I)) {
+    // ~(~X & Y) --> (X | ~Y) - De Morgan's Law
+    // ~(~X | Y) === (X & ~Y) - De Morgan's Law
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(NotOp)) {
+      if (Op0I->getOpcode() == Instruction::And || 
+          Op0I->getOpcode() == Instruction::Or) {
+        if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
+        if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
+          Instruction *NotY =
+            BinaryOperator::createNot(Op0I->getOperand(1),
+                                      Op0I->getOperand(1)->getName()+".not");
+          InsertNewInstBefore(NotY, I);
+          if (Op0I->getOpcode() == Instruction::And)
+            return BinaryOperator::createOr(Op0NotVal, NotY);
+          else
+            return BinaryOperator::createAnd(Op0NotVal, NotY);
+        }
+      }
+    }
+  }
+  
+  
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // xor (icmp A, B), true = not (icmp A, B) = !icmp A, B
     if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
@@ -4151,23 +4171,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                               ConstantInt::get(I.getType(), 1));
           return BinaryOperator::createAdd(Op0I->getOperand(1), ConstantRHS);
         }
-
-      // ~(~X & Y) --> (X | ~Y) - De Morgan's Law
-      // ~(~X | Y) === (X & ~Y) - De Morgan's Law
-      if ((Op0I->getOpcode() == Instruction::And || 
-           Op0I->getOpcode() == Instruction::Or) && RHS->isAllOnesValue()) {
-        if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
-        if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
-          Instruction *NotY =
-            BinaryOperator::createNot(Op0I->getOperand(1),
-                                      Op0I->getOperand(1)->getName()+".not");
-          InsertNewInstBefore(NotY, I);
-          if (Op0I->getOpcode() == Instruction::And)
-            return BinaryOperator::createOr(Op0NotVal, NotY);
-          else
-            return BinaryOperator::createAnd(Op0NotVal, NotY);
-        }
-      }
           
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
         if (Op0I->getOpcode() == Instruction::Add) {
@@ -4212,12 +4215,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   if (Value *X = dyn_castNotVal(Op0))   // ~A ^ A == -1
     if (X == Op1)
-      return ReplaceInstUsesWith(I,
-                                ConstantInt::getAllOnesValue(I.getType()));
+      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
 
   if (Value *X = dyn_castNotVal(Op1))   // A ^ ~A == -1
     if (X == Op0)
-      return ReplaceInstUsesWith(I, ConstantInt::getAllOnesValue(I.getType()));
+      return ReplaceInstUsesWith(I, Constant::getAllOnesValue(I.getType()));
 
   
   BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1);
@@ -7092,7 +7094,7 @@ static Constant *GetSelectFoldableConstant(Instruction *I) {
   case Instruction::AShr:
     return Constant::getNullValue(I->getType());
   case Instruction::And:
-    return ConstantInt::getAllOnesValue(I->getType());
+    return Constant::getAllOnesValue(I->getType());
   case Instruction::Mul:
     return ConstantInt::get(I->getType(), 1);
   }
