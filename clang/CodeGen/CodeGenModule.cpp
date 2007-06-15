@@ -13,11 +13,14 @@
 
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+#include "clang/AST/Decl.h"
 using namespace llvm;
 using namespace clang;
 using namespace CodeGen;
 
 
 void CodeGenModule::EmitFunction(FunctionDecl *FD) {
-  CodeGenFunction(*this).GenerateCode(FD);
+  // If this is not a prototype, emit the body.
+  if (FD->getBody())
+    CodeGenFunction(*this).GenerateCode(FD);
 }
