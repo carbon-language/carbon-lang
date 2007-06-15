@@ -415,6 +415,13 @@ public:
     return false;
   }
 
+  /// CanBeDuplicated - Returns true if the instruction can be duplicated
+  /// without causing unforseenable side-effect (e.g. instructions with unique
+  /// labels attached).
+  virtual bool CanBeDuplicated(const MachineInstr *MI) const {
+    return false;
+  }
+
   /// isUnpredicatedTerminator - Returns true if the instruction is a
   /// terminator instruction that has not been predicated.
   virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
