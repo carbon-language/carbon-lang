@@ -184,10 +184,6 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   }
 }
 
-bool MachineInstr::isPredicable() const {
-  return TID->Flags & M_PREDICABLE;
-}
-
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightening
 /// the search criteria to a use that kills the register if isKill is true.

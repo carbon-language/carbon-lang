@@ -447,7 +447,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (TID->Flags & M_CLOBBERS_PRED)
       BBI.ClobbersPred = true;
 
-    if (!I->isPredicable()) {
+    if ((TID->Flags & M_PREDICABLE) == 0) {
       BBI.IsUnpredicable = true;
       return;
     }
@@ -881,7 +881,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     while (TT != BBI.TrueBB->end() && FT != BBI.FalseBB->end()) {
       if (TT->isIdenticalTo(FT))
         Dups.push_back(TT);  // Will erase these later.
-      else if (!TT->isPredicable() && !FT->isPredicable())
+      else if ((TT->getInstrDescriptor()->Flags & M_PREDICABLE) == 0 ||
+               (FT->getInstrDescriptor()->Flags & M_PREDICABLE) == 0)
         return false; // Can't if-convert. Abort!
       ++TT;
       ++FT;
@@ -890,15 +891,13 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI) {
     // One of the two pathes have more terminators, make sure they are
     // all predicable.
     while (TT != BBI.TrueBB->end()) {
-      if (!TT->isPredicable()) {
+      if ((TT->getInstrDescriptor()->Flags & M_PREDICABLE) == 0)
         return false; // Can't if-convert. Abort!
-      }
       ++TT;
     }
     while (FT != BBI.FalseBB->end()) {
-      if (!FT->isPredicable()) {
+      if ((FT->getInstrDescriptor()->Flags & M_PREDICABLE) == 0)
         return false; // Can't if-convert. Abort!
-      }
       ++FT;
     }
   }
