@@ -780,19 +780,16 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
 // Main driver
 //===----------------------------------------------------------------------===//
 
-/// ProcessInputFile - Process a single input file with the specified state.
+/// InitializePreprocessor - Initialize the preprocessor getting it and the
+/// environment ready to process a single file. This returns the file ID for the
+/// input file. If a failure happens, it returns 0.
 ///
-static void ProcessInputFile(const std::string &InFile, 
-                             SourceManager &SourceMgr, Diagnostic &Diags,
-                             TextDiagnosticPrinter &OurDiagnosticClient,
-                             HeaderSearch &HeaderInfo, TargetInfo &Target,
-                             const LangOptions &LangInfo) {
+static unsigned InitializePreprocessor(Preprocessor &PP,
+                                       const std::string &InFile,
+                                       SourceManager &SourceMgr,
+                                       HeaderSearch &HeaderInfo,
+                                       const LangOptions &LangInfo) {
   FileManager &FileMgr = HeaderInfo.getFileMgr();
-  
-  // Set up the preprocessor with these options.
-  Preprocessor PP(Diags, LangInfo, Target, SourceMgr, HeaderInfo);
-  
-  OurDiagnosticClient.setPreprocessor(PP);
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   std::vector<char> PrologMacros;
@@ -808,41 +805,50 @@ static void ProcessInputFile(const std::string &InFile,
     if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
     if (MainFileID == 0) {
       std::cerr << "Error reading '" << InFile << "'!\n";
-      return;
+      return 0;
     }
   } else {
     MemoryBuffer *SB = MemoryBuffer::getSTDIN();
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
       std::cerr << "Error reading standard input!  Empty?\n";
-      return;
+      return 0;
     }
   }
   
   // Now that we have emitted the predefined macros, #includes, etc into
   // PrologMacros, preprocess it to populate the initial preprocessor state.
-  {
-    // Memory buffer must end with a null byte!
-    PrologMacros.push_back(0);
+
+  // Memory buffer must end with a null byte!
+  PrologMacros.push_back(0);
     
-    MemoryBuffer *SB = MemoryBuffer::getMemBuffer(&PrologMacros.front(),
-                                                  &PrologMacros.back(),
-                                                  "<predefines>");
-    assert(SB && "Cannot fail to create predefined source buffer");
-    unsigned FileID = SourceMgr.createFileIDForMemBuffer(SB);
-    assert(FileID && "Could not create FileID for predefines?");
-    
-    // Start parsing the predefines.
-    PP.EnterSourceFile(FileID, 0);
-    
-    // Lex the file, which will read all the macros.
-    LexerToken Tok;
-    PP.Lex(Tok);
-    assert(Tok.getKind() == tok::eof && "Didn't read entire file!");
-    
-    // Once we've read this, we're done.
-  }
-  
+  MemoryBuffer *SB = MemoryBuffer::getMemBuffer(&PrologMacros.front(),
+                                                &PrologMacros.back(),
+                                                "<predefines>");
+  assert(SB && "Cannot fail to create predefined source buffer");
+  unsigned FileID = SourceMgr.createFileIDForMemBuffer(SB);
+  assert(FileID && "Could not create FileID for predefines?");
+
+  // Start parsing the predefines.
+  PP.EnterSourceFile(FileID, 0);
+
+  // Lex the file, which will read all the macros.
+  LexerToken Tok;
+  PP.Lex(Tok);
+  assert(Tok.getKind() == tok::eof && "Didn't read entire file!");
+
+  // Once we've read this, we're done.
+  return MainFileID;
+}  
+
+/// ProcessInputFile - Process a single input file with the specified state.
+///
+static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
+                             const std::string &InFile,
+                             SourceManager &SourceMgr,
+                             TextDiagnostics &OurDiagnosticClient,
+                             HeaderSearch &HeaderInfo,
+                             const LangOptions &LangInfo) {
   switch (ProgAction) {
   case DumpTokens: {                 // Token dump mode.
     LexerToken Tok;
@@ -914,6 +920,16 @@ int main(int argc, char **argv) {
   /// allocated to the program.
   SourceManager SourceMgr;
   
+  // Create a file manager object to provide access to and cache the filesystem.
+  FileManager FileMgr;
+  
+  // Initialize language options, inferring file types from input filenames.
+  // FIXME: This infers info from the first file, we should clump by language
+  // to handle 'x.c y.c a.cpp b.cpp'.
+  LangOptions LangInfo;
+  InitializeBaseLanguage(LangInfo, InputFilenames[0]);
+  InitializeLanguageStandard(LangInfo);
+  
   // Print diagnostics to stderr.
   TextDiagnosticPrinter OurDiagnosticClient(SourceMgr);
   
@@ -930,24 +946,24 @@ int main(int argc, char **argv) {
     return 1;
   }
   
-  // Create a file manager object to provide access to and cache the filesystem.
-  FileManager FileMgr;
-  
-  // Initialize language options, inferring file types from input filenames.
-  // FIXME: This infers info from the first file, we should clump by language
-  // to handle 'x.c y.c a.cpp b.cpp'.
-  LangOptions LangInfo;
-  InitializeBaseLanguage(LangInfo, InputFilenames[0]);
-  InitializeLanguageStandard(LangInfo);
-  
   // Process the -I options and set them in the HeaderInfo.
   HeaderSearch HeaderInfo(FileMgr);
   OurDiagnosticClient.setHeaderSearch(HeaderInfo);
   InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
   
-  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i)
-    ProcessInputFile(InputFilenames[i], SourceMgr, Diags, OurDiagnosticClient,
-                     HeaderInfo, *Target, LangInfo);
+  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
+    // Set up the preprocessor with these options.
+    Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
+    OurDiagnosticClient.setPreprocessor(PP);
+    const std::string &InFile = InputFilenames[i];
+    unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
+                                                 HeaderInfo, LangInfo);
+
+    if (!MainFileID) continue;
+
+    ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
+                     OurDiagnosticClient, HeaderInfo, LangInfo);
+  }
   
   unsigned NumDiagnostics = Diags.getNumDiagnostics();
   if (NumDiagnostics)
