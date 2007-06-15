@@ -801,15 +801,13 @@ bool GVNPRE::runOnFunction(Function &F) {
                 
                   Value* s1 = 0;
                   if (isa<Instruction>(U->getOperand(0)))
-                    s1 = find_leader(availableOut[*PI], 
-                                     phi_translate(U->getOperand(0), *PI, BB));
+                    s1 = find_leader(availableOut[*PI], U->getOperand(0));
                   else
                     s1 = U->getOperand(0);
                   
                   Value* s2 = 0;
                   if (isa<Instruction>(U->getOperand(1)))
-                    s2 = find_leader(availableOut[*PI], 
-                                     phi_translate(U->getOperand(1), *PI, BB));
+                    s2 = find_leader(availableOut[*PI], U->getOperand(1));
                   else
                     s2 = U->getOperand(1);
                   
