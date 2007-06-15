@@ -806,7 +806,6 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI) {
     // Copy instructions in the true block, predicate them add them to
     // the entry block.
     CopyAndPredicateBlock(BBI, *CvtBBI, Cond, true);
-    BBI.BB->removeSuccessor(CvtBBI->BB);
   } else {
     // Predicate the 'true' block after removing its branch.
     CvtBBI->NonPredSize -= TII->RemoveBranch(*CvtBBI->BB);
