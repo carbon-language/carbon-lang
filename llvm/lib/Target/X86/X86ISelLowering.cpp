@@ -394,8 +394,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v4i16, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v2i32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v1i64, Custom);
-
-    setOperationAction(ISD::BIT_CONVERT,        MVT::i64,   Expand);
   }
 
   if (Subtarget->hasSSE1()) {
