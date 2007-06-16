@@ -285,6 +285,33 @@ void GVNPRE::phi_translate_set(std::set<Value*, ExprLT>& anticIn,
   }
 }
 
+bool dependsOnInvoke(Value* V) {
+  if (!isa<User>(V))
+    return false;
+    
+  User* U = cast<User>(V);
+  std::vector<Value*> worklist(U->op_begin(), U->op_end());
+  std::set<Value*> visited;
+  
+  while (!worklist.empty()) {
+    Value* current = worklist.back();
+    worklist.pop_back();
+    visited.insert(current);
+    
+    if (!isa<User>(current))
+      continue;
+    else if (isa<InvokeInst>(current))
+      return true;
+    
+    User* curr = cast<User>(current);
+    for (unsigned i = 0; i < curr->getNumOperands(); ++i)
+      if (visited.find(curr->getOperand(i)) == visited.end())
+        worklist.push_back(curr->getOperand(i));
+  }
+  
+  return false;
+}
+
 // Remove all expressions whose operands are not themselves in the set
 void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
   std::vector<Value*> worklist;
@@ -302,6 +329,7 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
             lhsValid = true;
             break;
           }
+      lhsValid &= !dependsOnInvoke(BO->getOperand(0));
     
       bool rhsValid = !isa<Instruction>(BO->getOperand(1));
       if (!rhsValid)
@@ -311,6 +339,7 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
           rhsValid = true;
           break;
         }
+      rhsValid &= !dependsOnInvoke(BO->getOperand(1));
       
       if (!lhsValid || !rhsValid)
         set.erase(BO);
@@ -323,7 +352,8 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
             lhsValid = true;
             break;
           }
-  
+      lhsValid &= !dependsOnInvoke(C->getOperand(0));
+      
       bool rhsValid = !isa<Instruction>(C->getOperand(1));
       if (!rhsValid)
       for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
@@ -332,6 +362,7 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
           rhsValid = true;
           break;
         }
+      rhsValid &= !dependsOnInvoke(C->getOperand(1));
     
       if (!lhsValid || !rhsValid)
         set.erase(C);
@@ -800,13 +831,15 @@ bool GVNPRE::runOnFunction(Function &F) {
                   User* U = cast<User>(e2);
                 
                   Value* s1 = 0;
-                  if (isa<Instruction>(U->getOperand(0)))
+                  if (isa<BinaryOperator>(U->getOperand(0)) ||
+                      isa<CmpInst>(U->getOperand(0)))
                     s1 = find_leader(availableOut[*PI], U->getOperand(0));
                   else
                     s1 = U->getOperand(0);
                   
                   Value* s2 = 0;
-                  if (isa<Instruction>(U->getOperand(1)))
+                  if (isa<BinaryOperator>(U->getOperand(1)) ||
+                      isa<CmpInst>(U->getOperand(1)))
                     s2 = find_leader(availableOut[*PI], U->getOperand(1));
                   else
                     s2 = U->getOperand(1);
