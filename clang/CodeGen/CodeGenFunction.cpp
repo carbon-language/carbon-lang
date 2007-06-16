@@ -23,7 +23,7 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
-  : CGM(cgm), Target(CGM.getContext().Target), Types(Target) {}
+  : CGM(cgm), Target(CGM.getContext().Target) {}
 
 ASTContext &CodeGenFunction::getContext() const {
   return CGM.getContext();
@@ -40,7 +40,7 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
 
 
 const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
-  return Types.ConvertType(T, Loc);
+  return CGM.getTypes().ConvertType(T, Loc);
 }
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {

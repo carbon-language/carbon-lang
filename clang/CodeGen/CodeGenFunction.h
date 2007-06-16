@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/LLVMBuilder.h"
-#include "CodeGenTypes.h"
+#include <vector>
 
 namespace llvm {
   class Module;
@@ -26,6 +26,10 @@ namespace clang {
   class ASTContext;
   class Decl;
   class FunctionDecl;
+  class TargetInfo;
+  class SourceLocation;
+  class QualType;
+  class FunctionTypeProto;
   
   class Stmt;
   class CompoundStmt;
@@ -121,7 +125,6 @@ class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
   llvm::LLVMBuilder Builder;
-  CodeGenTypes Types;
   
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;

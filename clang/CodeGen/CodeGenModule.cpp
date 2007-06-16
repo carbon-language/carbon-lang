@@ -13,10 +13,14 @@
 
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 using namespace clang;
 using namespace CodeGen;
 
+
+CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M)
+  : Context(C), TheModule(M), Types(C.Target) {}
 
 void CodeGenModule::EmitFunction(FunctionDecl *FD) {
   // If this is not a prototype, emit the body.
