@@ -16,11 +16,13 @@
 
 namespace llvm {
   class Module;
+  class Constant;
 }
 
 namespace clang {
   class ASTContext;
   class FunctionDecl;
+  class Decl;
     
 namespace CodeGen {
 
@@ -29,6 +31,8 @@ namespace CodeGen {
 class CodeGenModule {
   ASTContext &Context;
   llvm::Module &TheModule;
+  
+  //llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
 public:
   CodeGenModule(ASTContext &C, llvm::Module &M) : Context(C), TheModule(M) {}
   

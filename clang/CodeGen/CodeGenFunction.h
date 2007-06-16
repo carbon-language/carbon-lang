@@ -16,20 +16,16 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/LLVMBuilder.h"
-#include <vector>
+#include "CodeGenTypes.h"
 
 namespace llvm {
   class Module;
 }
 
 namespace clang {
-  class SourceLocation;
-  class TargetInfo;
   class ASTContext;
   class Decl;
   class FunctionDecl;
-  class QualType;
-  class FunctionTypeProto;
   
   class Stmt;
   class CompoundStmt;
@@ -125,6 +121,7 @@ class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
   llvm::LLVMBuilder Builder;
+  CodeGenTypes Types;
   
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
@@ -147,13 +144,9 @@ public:
   
   ASTContext &getContext() const;
 
-  const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
-  void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                           std::vector<const llvm::Type*> &ArgTys,
-                           SourceLocation Loc);
-  
   void GenerateCode(const FunctionDecl *FD);
   
+  const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
   
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
   /// label maps to.
