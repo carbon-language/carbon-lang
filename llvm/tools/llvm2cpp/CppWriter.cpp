@@ -23,6 +23,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -1423,8 +1424,8 @@ void CppWriter::printFunctionUses(const Function* F) {
 
   // Print type definitions for every type referenced by an instruction and
   // make a note of any global values or constants that are referenced
-  std::vector<GlobalValue*> gvs;
-  std::vector<Constant*> consts;
+  SmallPtrSet<GlobalValue*,64> gvs;
+  SmallPtrSet<Constant*,64> consts;
   for (Function::const_iterator BB = F->begin(), BE = F->end(); BB != BE; ++BB){
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); 
          I != E; ++I) {
@@ -1438,19 +1439,19 @@ void CppWriter::printFunctionUses(const Function* F) {
 
         // If the operand references a GVal or Constant, make a note of it
         if (GlobalValue* GV = dyn_cast<GlobalValue>(operand)) {
-          gvs.push_back(GV);
+          gvs.insert(GV);
           if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) 
             if (GVar->hasInitializer())
-              consts.push_back(GVar->getInitializer());
+              consts.insert(GVar->getInitializer());
         } else if (Constant* C = dyn_cast<Constant>(operand))
-          consts.push_back(C);
+          consts.insert(C);
       }
     }
   }
 
   // Print the function declarations for any functions encountered
   nl(Out) << "// Function Declarations"; nl(Out);
-  for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
+  for (SmallPtrSet<GlobalValue*,64>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
     if (Function* Fun = dyn_cast<Function>(*I)) {
       if (!is_inline || Fun != F)
@@ -1460,7 +1461,7 @@ void CppWriter::printFunctionUses(const Function* F) {
 
   // Print the global variable declarations for any variables encountered
   nl(Out) << "// Global Variable Declarations"; nl(Out);
-  for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
+  for (SmallPtrSet<GlobalValue*,64>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
     if (GlobalVariable* F = dyn_cast<GlobalVariable>(*I))
       printVariableHead(F);
@@ -1468,7 +1469,7 @@ void CppWriter::printFunctionUses(const Function* F) {
 
   // Print the constants found
   nl(Out) << "// Constant Definitions"; nl(Out);
-  for (std::vector<Constant*>::iterator I = consts.begin(), E = consts.end();
+  for (SmallPtrSet<Constant*,64>::iterator I = consts.begin(), E = consts.end();
        I != E; ++I) {
       printConstant(*I);
   }
@@ -1477,7 +1478,7 @@ void CppWriter::printFunctionUses(const Function* F) {
   // been emitted. These definitions just couple the gvars with their constant
   // initializers.
   nl(Out) << "// Global Variable Definitions"; nl(Out);
-  for (std::vector<GlobalValue*>::iterator I = gvs.begin(), E = gvs.end();
+  for (SmallPtrSet<GlobalValue*,64>::iterator I = gvs.begin(), E = gvs.end();
        I != E; ++I) {
     if (GlobalVariable* GV = dyn_cast<GlobalVariable>(*I))
       printVariableBody(GV);
