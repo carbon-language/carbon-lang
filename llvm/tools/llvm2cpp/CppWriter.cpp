@@ -1690,7 +1690,7 @@ void CppWriter::printProgram(
   Out << "using namespace llvm;\n\n";
   Out << "Module* " << fname << "();\n\n";
   Out << "int main(int argc, char**argv) {\n";
-  Out << "  Module* Mod = makeLLVMModule();\n";
+  Out << "  Module* Mod = " << fname << "();\n";
   Out << "  verifyModule(*Mod, PrintMessageAction);\n";
   Out << "  std::cerr.flush();\n";
   Out << "  std::cout.flush();\n";
