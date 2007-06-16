@@ -1435,9 +1435,14 @@ void CppWriter::printFunctionUses(const Function* F) {
       for (unsigned i = 0; i < I->getNumOperands(); ++i) {
         Value* operand = I->getOperand(i);
         printType(operand->getType());
-        if (GlobalValue* GV = dyn_cast<GlobalValue>(operand))
+
+        // If the operand references a GVal or Constant, make a note of it
+        if (GlobalValue* GV = dyn_cast<GlobalValue>(operand)) {
           gvs.push_back(GV);
-        else if (Constant* C = dyn_cast<Constant>(operand))
+          if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) 
+            if (GVar->hasInitializer())
+              consts.push_back(GVar->getInitializer());
+        } else if (Constant* C = dyn_cast<Constant>(operand))
           consts.push_back(C);
       }
     }
