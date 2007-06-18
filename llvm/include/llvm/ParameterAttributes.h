@@ -47,6 +47,13 @@ enum Attributes {
 struct ParamAttrsWithIndex {
   uint16_t attrs; ///< The attributes that are set, |'d together
   uint16_t index; ///< Index of the parameter for which the attributes apply
+  
+  static ParamAttrsWithIndex get(uint16_t idx, uint16_t attrs) {
+    ParamAttrsWithIndex P;
+    P.index = idx;
+    P.attrs = attrs;
+    return P;
+  }
 };
 
 /// @brief A vector of attribute/index pairs.
