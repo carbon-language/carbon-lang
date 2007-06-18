@@ -850,7 +850,7 @@ void PMDataManager:: dumpPassInfo(Pass *P, enum PassDebuggingString S1,
     cerr << "Executing Pass '" << P->getPassName();
     break;
   case MODIFICATION_MSG:
-    cerr << "' Made Modification '" << P->getPassName();
+    cerr << "Made Modification '" << P->getPassName();
     break;
   case FREEING_MSG:
     cerr << " Freeing Pass '" << P->getPassName();
@@ -860,19 +860,19 @@ void PMDataManager:: dumpPassInfo(Pass *P, enum PassDebuggingString S1,
   }
   switch (S2) {
   case ON_BASICBLOCK_MSG:
-    cerr << "' on BasicBlock '" << Msg << "...\n";
+    cerr << "' on BasicBlock '" << Msg << "'...\n";
     break;
   case ON_FUNCTION_MSG:
-    cerr << "' on Function '" << Msg << "...\n";
+    cerr << "' on Function '" << Msg << "'...\n";
     break;
   case ON_MODULE_MSG:
-    cerr << "' on Module '"  << Msg << "...\n";
+    cerr << "' on Module '"  << Msg << "'...\n";
     break;
   case ON_LOOP_MSG:
-    cerr << "' on Loop " << Msg << "...\n";
+    cerr << "' on Loop " << Msg << "'...\n";
     break;
   case ON_CG_MSG:
-    cerr << "' on Call Graph " << Msg << "...\n";
+    cerr << "' on Call Graph " << Msg << "'...\n";
     break;
   default:
     break;
