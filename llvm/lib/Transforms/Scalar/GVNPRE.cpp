@@ -338,12 +338,12 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
     
       bool rhsValid = !isa<Instruction>(BO->getOperand(1));
       if (!rhsValid)
-      for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN[*I] == VN[BO->getOperand(1)]) {
-          rhsValid = true;
-          break;
-        }
+        for (std::set<Value*, ExprLT>::iterator I = set.begin(), E = set.end();
+             I != E; ++I)
+          if (VN[*I] == VN[BO->getOperand(1)]) {
+            rhsValid = true;
+            break;
+          }
       
       // Check for dependency on invoke insts
       // NOTE: This check is expensive, so don't do it if we
