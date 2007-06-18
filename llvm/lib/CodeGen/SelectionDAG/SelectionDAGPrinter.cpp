@@ -51,7 +51,7 @@ namespace llvm {
       if (VT == MVT::Flag)
         return "color=red,style=bold";
       else if (VT == MVT::Other)
-        return "style=dashed";
+        return "color=blue,style=dashed";
       return "";
     }
     
