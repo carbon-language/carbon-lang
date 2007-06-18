@@ -685,8 +685,11 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
       return SCEVAddExpr::get(Ops);
     }
 
-  // Okay, now we know the first non-constant operand.  If there are add
-  // operands they would be next.
+  // Now we know the first non-constant operand.  Skip past any cast SCEVs.
+  while (Idx < Ops.size() && Ops[Idx]->getSCEVType() < scAddExpr)
+    ++Idx;
+
+  // If there are add operands they would be next.
   if (Idx < Ops.size()) {
     bool DeletedAdd = false;
     while (SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Ops[Idx])) {
