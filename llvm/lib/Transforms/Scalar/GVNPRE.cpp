@@ -103,6 +103,7 @@ namespace {
     
     std::map<BasicBlock*, std::set<Value*, ExprLT> > availableOut;
     std::map<BasicBlock*, std::set<Value*, ExprLT> > anticipatedIn;
+    std::map<User*, bool> invokeDep;
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -135,6 +136,8 @@ namespace {
                        std::map<BasicBlock*, std::set<Value*, ExprLT> > availOut);
     void cleanup();
     void elimination();
+    
+    bool dependsOnInvoke(Value* V);
   
   };
   
@@ -285,11 +288,15 @@ void GVNPRE::phi_translate_set(std::set<Value*, ExprLT>& anticIn,
   }
 }
 
-bool dependsOnInvoke(Value* V) {
+bool GVNPRE::dependsOnInvoke(Value* V) {
   if (!isa<User>(V))
     return false;
     
   User* U = cast<User>(V);
+  std::map<User*, bool>::iterator I = invokeDep.find(U);
+  if (I != invokeDep.end())
+    return I->second;
+  
   std::vector<Value*> worklist(U->op_begin(), U->op_end());
   std::set<Value*> visited;
   
@@ -304,9 +311,15 @@ bool dependsOnInvoke(Value* V) {
       return true;
     
     User* curr = cast<User>(current);
-    for (unsigned i = 0; i < curr->getNumOperands(); ++i)
-      if (visited.find(curr->getOperand(i)) == visited.end())
-        worklist.push_back(curr->getOperand(i));
+    std::map<User*, bool>::iterator CI = invokeDep.find(curr);
+    if (CI != invokeDep.end()) {
+      if (CI->second)
+        return true;
+    } else {
+      for (unsigned i = 0; i < curr->getNumOperands(); ++i)
+        if (visited.find(curr->getOperand(i)) == visited.end())
+          worklist.push_back(curr->getOperand(i));
+    }
   }
   
   return false;
@@ -593,6 +606,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   createdExpressions.clear();
   availableOut.clear();
   anticipatedIn.clear();
+  invokeDep.clear();
 
   std::map<BasicBlock*, std::set<Value*, ExprLT> > generatedExpressions;
   std::map<BasicBlock*, std::set<PHINode*> > generatedPhis;
