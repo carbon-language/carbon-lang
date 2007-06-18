@@ -302,24 +302,45 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
          "Too many value types for ValueTypeActions to hold!");
 }
 
-/// ComputeTopDownOrdering - Add the specified node to the Order list if it has
-/// not been visited yet and if all of its operands have already been visited.
-static void ComputeTopDownOrdering(SDNode *N, SmallVector<SDNode*, 64> &Order,
-                                   DenseMap<SDNode*, unsigned> &Visited) {
-  if (++Visited[N] != N->getNumOperands())
-    return;  // Haven't visited all operands yet
+/// ComputeTopDownOrdering - Compute a top-down ordering of the dag, where Order
+/// contains all of a nodes operands before it contains the node.
+static void ComputeTopDownOrdering(SelectionDAG &DAG,
+                                   SmallVector<SDNode*, 64> &Order) {
+
+  DenseMap<SDNode*, unsigned> Visited;
+  std::vector<SDNode*> Worklist;
+  Worklist.reserve(128);
   
-  Order.push_back(N);
-  
-  if (N->hasOneUse()) { // Tail recurse in common case.
-    ComputeTopDownOrdering(*N->use_begin(), Order, Visited);
-    return;
+  // Compute ordering from all of the leaves in the graphs, those (like the
+  // entry node) that have no operands.
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ++I) {
+    if (I->getNumOperands() == 0) {
+      Visited[I] = 0 - 1U;
+      Worklist.push_back(I);
+    }
   }
   
-  // Now that we have N in, add anything that uses it if all of their operands
-  // are now done.
-  for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); UI != E;++UI)
-    ComputeTopDownOrdering(*UI, Order, Visited);
+  while (!Worklist.empty()) {
+    SDNode *N = Worklist.back();
+    Worklist.pop_back();
+    
+    if (++Visited[N] != N->getNumOperands())
+      continue;  // Haven't visited all operands yet
+    
+    Order.push_back(N);
+
+    // Now that we have N in, add anything that uses it if all of their operands
+    // are now done.
+    for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
+         UI != E; ++UI)
+      Worklist.push_back(*UI);
+  }
+
+  assert(Order.size() == Visited.size() &&
+         Order.size() == 
+         (unsigned)std::distance(DAG.allnodes_begin(), DAG.allnodes_end()) &&
+         "Error: DAG is cyclic!");
 }
 
 
@@ -333,24 +354,8 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // practice however, this causes us to run out of stack space on large basic
   // blocks.  To avoid this problem, compute an ordering of the nodes where each
   // node is only legalized after all of its operands are legalized.
-  DenseMap<SDNode*, unsigned> Visited;
   SmallVector<SDNode*, 64> Order;
-  
-  // Compute ordering from all of the leaves in the graphs, those (like the
-  // entry node) that have no operands.
-  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
-       E = DAG.allnodes_end(); I != E; ++I) {
-    if (I->getNumOperands() == 0) {
-      Visited[I] = 0 - 1U;
-      ComputeTopDownOrdering(I, Order, Visited);
-    }
-  }
-  
-  assert(Order.size() == Visited.size() &&
-         Order.size() == 
-            (unsigned)std::distance(DAG.allnodes_begin(), DAG.allnodes_end()) &&
-         "Error: DAG is cyclic!");
-  Visited.clear();
+  ComputeTopDownOrdering(DAG, Order);
   
   for (unsigned i = 0, e = Order.size(); i != e; ++i)
     HandleOp(SDOperand(Order[i], 0));
