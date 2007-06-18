@@ -87,12 +87,6 @@ namespace {
   char BranchFolder::ID = 0;
 }
 
-static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB, 
-                                 MachineBasicBlock *DestA,
-                                 MachineBasicBlock *DestB,
-                                 bool isCond, 
-                                 MachineFunction::iterator FallThru);
-
 FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) { 
       return new BranchFolder(DefaultEnableTailMerge); }
 
@@ -133,8 +127,7 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
     MachineBasicBlock *MBB = I, *TBB = 0, *FBB = 0;
     std::vector<MachineOperand> Cond;
     if (!TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
-      EverMadeChange |= CorrectExtraCFGEdges(*MBB, TBB, FBB, 
-                        !Cond.empty(), next(I));
+      EverMadeChange |= MBB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
   }
 
   RegInfo = MF.getTarget().getRegisterInfo();
@@ -702,68 +695,6 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
 }
 
 
-/// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
-/// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
-/// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
-/// be null.
-/// Besides DestA and DestB, retain other edges leading to LandingPads (currently
-/// there can be only one; we don't check or require that here).
-/// Note it is possible that DestA and/or DestB are LandingPads.
-static bool CorrectExtraCFGEdges(MachineBasicBlock &MBB, 
-                                 MachineBasicBlock *DestA,
-                                 MachineBasicBlock *DestB,
-                                 bool isCond, 
-                                 MachineFunction::iterator FallThru) {
-  bool MadeChange = false;
-  bool AddedFallThrough = false;
-  
-  // If this block ends with a conditional branch that falls through to its
-  // successor, set DestB as the successor.
-  if (isCond) {
-    if (DestB == 0 && FallThru != MBB.getParent()->end()) {
-      DestB = FallThru;
-      AddedFallThrough = true;
-    }
-  } else {
-    // If this is an unconditional branch with no explicit dest, it must just be
-    // a fallthrough into DestB.
-    if (DestA == 0 && FallThru != MBB.getParent()->end()) {
-      DestA = FallThru;
-      AddedFallThrough = true;
-    }
-  }
-  
-  MachineBasicBlock::succ_iterator SI = MBB.succ_begin();
-  MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
-  while (SI != MBB.succ_end()) {
-    if (*SI == DestA && DestA == DestB) {
-      DestA = DestB = 0;
-      ++SI;
-    } else if (*SI == DestA) {
-      DestA = 0;
-      ++SI;
-    } else if (*SI == DestB) {
-      DestB = 0;
-      ++SI;
-    } else if ((*SI)->isLandingPad() && 
-               *SI!=OrigDestA && *SI!=OrigDestB) {
-      ++SI;
-    } else {
-      // Otherwise, this is a superfluous edge, remove it.
-      MBB.removeSuccessor(SI);
-      MadeChange = true;
-    }
-  }
-  if (!AddedFallThrough) {
-    assert(DestA == 0 && DestB == 0 &&
-           "MachineCFG is missing edges!");
-  } else if (isCond) {
-    assert(DestA == 0 && "MachineCFG is missing edges!");
-  }
-  return MadeChange;
-}
-
-
 /// CanFallThrough - Return true if the specified block (with the specified
 /// branch condition) can implicitly transfer control to the block after it by
 /// falling off the end of it.  This should return false if it can reach the
@@ -880,8 +811,8 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     TII->AnalyzeBranch(PrevBB, PriorTBB, PriorFBB, PriorCond);
   if (!PriorUnAnalyzable) {
     // If the CFG for the prior block has extra edges, remove them.
-    MadeChange |= CorrectExtraCFGEdges(PrevBB, PriorTBB, PriorFBB,
-                                       !PriorCond.empty(), MBB);
+    MadeChange |= PrevBB.CorrectExtraCFGEdges(PriorTBB, PriorFBB,
+                                              !PriorCond.empty());
     
     // If the previous branch is conditional and both conditions go to the same
     // destination, remove the branch, replacing it with an unconditional one or
@@ -993,9 +924,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   bool CurUnAnalyzable = TII->AnalyzeBranch(*MBB, CurTBB, CurFBB, CurCond);
   if (!CurUnAnalyzable) {
     // If the CFG for the prior block has extra edges, remove them.
-    MadeChange |= CorrectExtraCFGEdges(*MBB, CurTBB, CurFBB,
-                                       !CurCond.empty(),
-                                       ++MachineFunction::iterator(MBB));
+    MadeChange |= MBB->CorrectExtraCFGEdges(CurTBB, CurFBB, !CurCond.empty());
 
     // If this is a two-way branch, and the FBB branches to this block, reverse 
     // the condition so the single-basic-block loop is faster.  Instead of:

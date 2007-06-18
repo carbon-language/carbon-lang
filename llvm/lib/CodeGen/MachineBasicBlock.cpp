@@ -225,3 +225,63 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
     addSuccessor(New);
 }
 
+/// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
+/// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
+/// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
+/// be null.
+/// Besides DestA and DestB, retain other edges leading to LandingPads (currently
+/// there can be only one; we don't check or require that here).
+/// Note it is possible that DestA and/or DestB are LandingPads.
+bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
+                                             MachineBasicBlock *DestB,
+                                             bool isCond) {
+  bool MadeChange = false;
+  bool AddedFallThrough = false;
+
+  MachineBasicBlock *FallThru = getNext();
+  
+  // If this block ends with a conditional branch that falls through to its
+  // successor, set DestB as the successor.
+  if (isCond) {
+    if (DestB == 0 && FallThru != getParent()->end()) {
+      DestB = FallThru;
+      AddedFallThrough = true;
+    }
+  } else {
+    // If this is an unconditional branch with no explicit dest, it must just be
+    // a fallthrough into DestB.
+    if (DestA == 0 && FallThru != getParent()->end()) {
+      DestA = FallThru;
+      AddedFallThrough = true;
+    }
+  }
+  
+  MachineBasicBlock::succ_iterator SI = succ_begin();
+  MachineBasicBlock *OrigDestA = DestA, *OrigDestB = DestB;
+  while (SI != succ_end()) {
+    if (*SI == DestA && DestA == DestB) {
+      DestA = DestB = 0;
+      ++SI;
+    } else if (*SI == DestA) {
+      DestA = 0;
+      ++SI;
+    } else if (*SI == DestB) {
+      DestB = 0;
+      ++SI;
+    } else if ((*SI)->isLandingPad() && 
+               *SI!=OrigDestA && *SI!=OrigDestB) {
+      ++SI;
+    } else {
+      // Otherwise, this is a superfluous edge, remove it.
+      removeSuccessor(SI);
+      MadeChange = true;
+    }
+  }
+  if (!AddedFallThrough) {
+    assert(DestA == 0 && DestB == 0 &&
+           "MachineCFG is missing edges!");
+  } else if (isCond) {
+    assert(DestA == 0 && "MachineCFG is missing edges!");
+  }
+  return MadeChange;
+}

@@ -250,6 +250,16 @@ public:
   /// 'Old', change the code and CFG so that it branches to 'New' instead.
   void ReplaceUsesOfBlockWith(MachineBasicBlock *Old, MachineBasicBlock *New);
 
+  /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in
+  /// the CFG to be inserted.  If we have proven that MBB can only branch to
+  /// DestA and DestB, remove any other MBB successors from the CFG. DestA and
+  /// DestB can be null. Besides DestA and DestB, retain other edges leading
+  /// to LandingPads (currently there can be only one; we don't check or require
+  /// that here). Note it is possible that DestA and/or DestB are LandingPads.
+  bool CorrectExtraCFGEdges(MachineBasicBlock *DestA,
+                            MachineBasicBlock *DestB,
+                            bool isCond);
+
   // Debugging methods.
   void dump() const;
   void print(std::ostream &OS) const;
