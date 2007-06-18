@@ -4844,7 +4844,7 @@ no specific purpose. </p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.var.annotation(i8* &lt;val&gt;, i8* &lt;str&gt;)
+  declare void @llvm.var.annotation(i8* &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
 </pre>
 
 <h5>Overview:</h5>
@@ -4856,8 +4856,9 @@ The '<tt>llvm.var.annotation</tt>' intrinsic
 <h5>Arguments:</h5>
 
 <p>
-The first argument is a pointer to a value, and the second is a pointer to a 
-global string.
+The first argument is a pointer to a value, the second is a pointer to a 
+global string, the third is a pointer to a global string which is the source 
+file name, and the last argument is the line number.
 </p>
 
 <h5>Semantics:</h5>
