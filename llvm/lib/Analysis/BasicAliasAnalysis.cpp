@@ -38,6 +38,7 @@ namespace {
   struct VISIBILITY_HIDDEN NoAA : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
     NoAA() : ImmutablePass((intptr_t)&ID) {}
+    NoAA(intptr_t PID) : ImmutablePass(PID) { }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
@@ -93,6 +94,7 @@ namespace {
   /// derives from the NoAA class.
   struct VISIBILITY_HIDDEN BasicAliasAnalysis : public NoAA {
     static char ID; // Class identification, replacement for typeinfo
+    BasicAliasAnalysis() : NoAA((intptr_t)&ID) { }
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
 
