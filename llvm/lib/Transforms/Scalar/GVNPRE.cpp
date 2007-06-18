@@ -329,7 +329,12 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
             lhsValid = true;
             break;
           }
-      lhsValid &= !dependsOnInvoke(BO->getOperand(0));
+          
+      // Check for dependency on invoke insts
+      // NOTE: This check is expensive, so don't do it if we
+      // don't have to
+      if (lhsValid)
+        lhsValid = !dependsOnInvoke(BO->getOperand(0));
     
       bool rhsValid = !isa<Instruction>(BO->getOperand(1));
       if (!rhsValid)
@@ -339,7 +344,12 @@ void GVNPRE::clean(std::set<Value*, ExprLT>& set) {
           rhsValid = true;
           break;
         }
-      rhsValid &= !dependsOnInvoke(BO->getOperand(1));
+      
+      // Check for dependency on invoke insts
+      // NOTE: This check is expensive, so don't do it if we
+      // don't have to
+      if (rhsValid)
+        rhsValid = !dependsOnInvoke(BO->getOperand(1));
       
       if (!lhsValid || !rhsValid)
         set.erase(BO);
