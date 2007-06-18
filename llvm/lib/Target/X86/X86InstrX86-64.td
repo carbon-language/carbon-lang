@@ -141,6 +141,8 @@ def LEAVE64  : I<0xC9, RawFrm,
                  (ops), "leave", []>, Imp<[RBP,RSP],[RBP,RSP]>;
 def POP64r   : I<0x58, AddRegFrm,
                  (ops GR64:$reg), "pop{q} $reg", []>, Imp<[RSP],[RSP]>;
+def PUSH64r  : I<0x50, AddRegFrm,
+                 (ops GR64:$reg), "push{q} $reg", []>, Imp<[RSP],[RSP]>;
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
                   (ops GR32:$dst, lea64_32mem:$src),
