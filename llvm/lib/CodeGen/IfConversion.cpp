@@ -486,11 +486,12 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
     return false;
   if (TT == NULL && (TrueBBI.IsBrAnalyzable || FalseBBI.IsBrAnalyzable))
     return false;
-  // FIXME: Allow false block to have an early exit?
-  if  (TrueBBI.BB->pred_size() > 1 ||
-       FalseBBI.BB->pred_size() > 1 ||
-       TrueBBI.FalseBB || FalseBBI.FalseBB ||
-       (TrueBBI.ClobbersPred && FalseBBI.ClobbersPred))
+  if  (TrueBBI.BB->pred_size() > 1 || FalseBBI.BB->pred_size() > 1)
+    return false;
+
+  // FIXME: Allow true block to have an early exit?
+  if (TrueBBI.FalseBB || FalseBBI.FalseBB ||
+      (TrueBBI.ClobbersPred && FalseBBI.ClobbersPred))
     return false;
 
   MachineBasicBlock::iterator TI = TrueBBI.BB->begin();
@@ -806,16 +807,8 @@ static void InsertUncondBranch(MachineBasicBlock *BB, MachineBasicBlock *ToBB,
 void IfConverter::RemoveExtraEdges(BBInfo &BBI) {
   MachineBasicBlock *TBB = NULL, *FBB = NULL;
   std::vector<MachineOperand> Cond;
-  bool isAnalyzable = !TII->AnalyzeBranch(*BBI.BB, TBB, FBB, Cond);
-  bool CanFallthrough = isAnalyzable && (TBB == NULL || FBB == NULL);
-  if (BBI.TrueBB && BBI.BB->isSuccessor(BBI.TrueBB))
-    if (!(BBI.TrueBB == TBB || BBI.TrueBB == FBB ||
-          (CanFallthrough && getNextBlock(BBI.BB) == BBI.TrueBB)))
-      BBI.BB->removeSuccessor(BBI.TrueBB);
-  if (BBI.FalseBB && BBI.BB->isSuccessor(BBI.FalseBB))
-    if (!(BBI.FalseBB == TBB || BBI.FalseBB == FBB ||
-          (CanFallthrough && getNextBlock(BBI.BB) == BBI.FalseBB)))
-      BBI.BB->removeSuccessor(BBI.FalseBB);
+  if (!TII->AnalyzeBranch(*BBI.BB, TBB, FBB, Cond))
+    BBI.BB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
 }
 
 /// IfConvertSimple - If convert a simple (split, no rejoin) sub-CFG.
@@ -936,23 +929,19 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     PredicateBlock(*CvtBBI, CvtBBI->BB->end(), Cond);
   }
 
+  if (!DupBB) {
+    // Now merge the entry of the triangle with the true block.
+    BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+    MergeBlocks(BBI, *CvtBBI);
+  }
+
   // If 'true' block has a 'false' successor, add an exit branch to it.
   if (HasEarlyExit) {
     std::vector<MachineOperand> RevCond(CvtBBI->BrCond);
     if (TII->ReverseBranchCondition(RevCond))
       assert(false && "Unable to reverse branch condition!");
-    if (DupBB) {
-      TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond);
-      BBI.BB->addSuccessor(CvtBBI->FalseBB);
-    } else {
-      TII->InsertBranch(*CvtBBI->BB, CvtBBI->FalseBB, NULL, RevCond);
-    }
-  }
-
-  if (!DupBB) {
-    // Now merge the entry of the triangle with the true block.
-    BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
-    MergeBlocks(BBI, *CvtBBI);
+    TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond);
+    BBI.BB->addSuccessor(CvtBBI->FalseBB);
   }
 
   // Merge in the 'false' block if the 'false' block has no other
@@ -1024,25 +1013,18 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   TII->ReverseBranchCondition(RevCond);
   std::vector<MachineOperand> *Cond1 = &BBI.BrCond;
   std::vector<MachineOperand> *Cond2 = &RevCond;
-  bool NeedBr1 = BBI1->FalseBB != NULL;
-  bool NeedBr2 = BBI2->FalseBB != NULL; 
 
   // Figure out the more profitable ordering.
   bool DoSwap = false;
   if (TrueBBI.ClobbersPred && !FalseBBI.ClobbersPred)
     DoSwap = true;
   else if (TrueBBI.ClobbersPred == FalseBBI.ClobbersPred) {
-    if (!NeedBr1 && NeedBr2)
+    if (TrueBBI.NonPredSize > FalseBBI.NonPredSize)
       DoSwap = true;
-    else if (NeedBr1 == NeedBr2) {
-      if (TrueBBI.NonPredSize > FalseBBI.NonPredSize)
-        DoSwap = true;
-    }
   }
   if (DoSwap) {
     std::swap(BBI1, BBI2);
     std::swap(Cond1, Cond2);
-    std::swap(NeedBr1, NeedBr2);
   }
 
   // Remove the conditional branch from entry to the blocks.
@@ -1069,10 +1051,6 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   BBI1->BB->erase(DI1, BBI1->BB->end());
   PredicateBlock(*BBI1, BBI1->BB->end(), *Cond1);
 
-  // Add an early exit branch if needed.
-  if (NeedBr1)
-    TII->InsertBranch(*BBI1->BB, BBI1->FalseBB, NULL, *Cond1);
-
   // Predicate the 'false' block.
   BBI2->NonPredSize -= TII->RemoveBranch(*BBI2->BB);
   DI2 = BBI2->BB->end();
@@ -1082,30 +1060,9 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   }
   PredicateBlock(*BBI2, DI2, *Cond2);
 
-  // Add an unconditional branch from 'false' to to 'false' successor if it
-  // will not be the fallthrough block.
-  if (NeedBr2 && !NeedBr1) {
-    // If BBI2 isn't going to be merged in, then the existing fallthrough
-    // or branch is fine.
-    if (!canFallThroughTo(BBI.BB, BBI2->FalseBB)) {
-      InsertUncondBranch(BBI2->BB, BBI2->FalseBB, TII);
-      BBI2->HasFallThrough = false;
-    }
-  }
-
-  // Keep them as two separate blocks if there is an early exit.
-  if (!NeedBr1)
-    MergeBlocks(*BBI1, *BBI2);
-
-  // Merge the combined block into the entry of the diamond.
+  // Merge the true block into the entry of the diamond.
   MergeBlocks(BBI, *BBI1);
-
-  // 'True' and 'false' aren't combined, see if we need to add a unconditional
-  // branch to the 'false' block.
-  if (NeedBr1 && !canFallThroughTo(BBI.BB, BBI2->BB)) {
-    InsertUncondBranch(BBI.BB, BBI2->BB, TII);
-    BBI1->HasFallThrough = false;
-  }
+  MergeBlocks(BBI, *BBI2);
 
   // If the if-converted block fallthrough or unconditionally branch into the
   // tail block, and the tail block does not have other predecessors, then
@@ -1113,19 +1070,13 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   // tail, add a unconditional branch to it.
   if (TailBB) {
     BBInfo TailBBI = BBAnalysis[TailBB->getNumber()];
-    BBInfo *LastBBI = NeedBr1 ? BBI2 : &BBI;
-    bool HasEarlyExit = NeedBr1 ? NeedBr2 : false;
-    if (!HasEarlyExit &&
-        TailBB->pred_size() == 1 && !TailBBI.HasFallThrough) {
-      LastBBI->NonPredSize -= TII->RemoveBranch(*LastBBI->BB);
-      MergeBlocks(*LastBBI, TailBBI);
+    if (TailBB->pred_size() == 1 && !TailBBI.HasFallThrough) {
+      BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
+      MergeBlocks(BBI, TailBBI);
       TailBBI.IsDone = true;
     } else {
-      bool isFallThrough = canFallThroughTo(LastBBI->BB, TailBB);
-      if (!isFallThrough) {
-        InsertUncondBranch(LastBBI->BB, TailBB, TII);
-        LastBBI->HasFallThrough = false;
-      }
+      InsertUncondBranch(BBI.BB, TailBB, TII);
+      BBI.HasFallThrough = false;
     }
   }
 
@@ -1185,6 +1136,20 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
       }
   }
 
+  std::vector<MachineBasicBlock *> Succs(FromBBI.BB->succ_begin(),
+                                         FromBBI.BB->succ_end());
+  MachineBasicBlock *NBB = getNextBlock(FromBBI.BB);
+  MachineBasicBlock *FallThrough = FromBBI.HasFallThrough ? NBB : NULL;
+
+  for (unsigned i = 0, e = Succs.size(); i != e; ++i) {
+    MachineBasicBlock *Succ = Succs[i];
+    // Fallthrough edge can't be transferred.
+    if (Succ == FallThrough)
+      continue;
+    if (!ToBBI.BB->isSuccessor(Succ))
+      ToBBI.BB->addSuccessor(Succ);
+  }
+
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
             std::back_inserter(ToBBI.Predicate));
   std::copy(Cond.begin(), Cond.end(), std::back_inserter(ToBBI.Predicate));
@@ -1227,7 +1192,7 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI) {
   }
 
   // Now FromBBI always fall through to the next block!
-  if (NBB)
+  if (NBB && !FromBBI.BB->isSuccessor(NBB))
     FromBBI.BB->addSuccessor(NBB);
 
   std::copy(FromBBI.Predicate.begin(), FromBBI.Predicate.end(),
