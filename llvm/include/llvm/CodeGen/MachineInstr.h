@@ -344,7 +344,7 @@ public:
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands. It reserves space for number of operands specified by
   /// TargetInstrDescriptor.
-  MachineInstr(const TargetInstrDescriptor &TID);
+  explicit MachineInstr(const TargetInstrDescriptor &TID);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
