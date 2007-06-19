@@ -40,6 +40,8 @@ class CCIfCC<string CC, CCAction A>
 /// the specified action.
 class CCIfInReg<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::InReg", A> {}
 
+/// CCIfNotVarArg - If the current function is not vararg - apply the action
+class CCIfNotVarArg<CCAction A> : CCIf<"!State.isVarArg()", A> {}
 
 /// CCAssignToReg - This action matches if there is a register in the specified
 /// list that is still available.  If so, it assigns the value to the first

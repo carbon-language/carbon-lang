@@ -148,9 +148,9 @@ def CC_X86_32_C : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
   
-  // The first 3 integer arguments, if marked 'inreg', are passed in integer
-  // registers.
-  CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>>,
+  // The first 3 integer arguments, if marked 'inreg' and if the call is not
+  // a vararg call, are passed in integer registers.
+  CCIfNotVarArg<CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>>>,
   
   // Otherwise, same as everything else.
   CCDelegateTo<CC_X86_32_Common>

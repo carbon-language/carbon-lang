@@ -1830,7 +1830,8 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM) {
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
-  CCState CCInfo(CC, TM, RVLocs);
+  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  CCState CCInfo(CC, isVarArg, TM, RVLocs);
   CCInfo.AnalyzeReturn(Op.Val, RetCC_PPC);
   
   // If this is the first return lowered for this function, add the regs to the

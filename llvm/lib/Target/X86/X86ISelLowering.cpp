@@ -502,7 +502,8 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
-  CCState CCInfo(CC, getTargetMachine(), RVLocs);
+  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
   CCInfo.AnalyzeReturn(Op.Val, RetCC_X86);
   
   
@@ -582,7 +583,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallingConv, getTargetMachine(), RVLocs);
+  bool isVarArg = cast<ConstantSDNode>(TheCall->getOperand(2))->getValue() != 0;
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
   CCInfo.AnalyzeCallResult(TheCall, RetCC_X86);
 
   
@@ -667,8 +669,8 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
-                 ArgLocs);
+  CCState CCInfo(MF.getFunction()->getCallingConv(), isVarArg,
+                 getTargetMachine(), ArgLocs);
   CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_C);
    
   SmallVector<SDOperand, 8> ArgValues;
@@ -764,7 +766,7 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
   CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_C);
   
   // Get a count of how many bytes are to be pushed on the stack.
@@ -919,11 +921,12 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
-                 ArgLocs);
+  CCState CCInfo(MF.getFunction()->getCallingConv(), isVarArg,
+                 getTargetMachine(), ArgLocs);
   CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_FastCall);
   
   SmallVector<SDOperand, 8> ArgValues;
@@ -1003,11 +1006,12 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
                                                unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
   bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
   CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_FastCall);
   
   // Get a count of how many bytes are to be pushed on the stack.
@@ -1156,8 +1160,8 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(MF.getFunction()->getCallingConv(), getTargetMachine(),
-                 ArgLocs);
+  CCState CCInfo(MF.getFunction()->getCallingConv(), isVarArg,
+                 getTargetMachine(), ArgLocs);
   CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_64_C);
   
   SmallVector<SDOperand, 8> ArgValues;
@@ -1292,7 +1296,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
   CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_C);
     
   // Get a count of how many bytes are to be pushed on the stack.
