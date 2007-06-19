@@ -32,7 +32,9 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc");
+static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc", 
+cl::desc("enable preincrement load/store generation on PPC (experimental)"),
+                                     cl::Hidden);
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
