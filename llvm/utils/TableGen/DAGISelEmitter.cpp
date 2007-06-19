@@ -1502,8 +1502,7 @@ void DAGISelEmitter::ParseInstructions() {
     unsigned NumResults = InstResults.size();
 
     // Parse the operands list from the (ops) list, validating it.
-    std::vector<std::string> &Args = I->getArgList();
-    assert(Args.empty() && "Args list should still be empty here!");
+    assert(I->getArgList().empty() && "Args list should still be empty here!");
     CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]->getName());
 
     // Check that all of the results occur first in the list.
