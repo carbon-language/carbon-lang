@@ -115,7 +115,7 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
           Insts.insert(U);
-      SE->deleteInstructionFromRecords(I);
+      SE->deleteValueFromRecords(I);
       DOUT << "INDVARS: Deleting: " << *I;
       I->eraseFromParent();
       Changed = true;
@@ -181,7 +181,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               GetElementPtrInst *NGEPI = new GetElementPtrInst(
                   NCE, Constant::getNullValue(Type::Int32Ty), NewAdd, 
                   GEPI->getName(), GEPI);
-              SE->deleteInstructionFromRecords(GEPI);
+              SE->deleteValueFromRecords(GEPI);
               GEPI->replaceAllUsesWith(NGEPI);
               GEPI->eraseFromParent();
               GEPI = NGEPI;
@@ -398,7 +398,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
         // the PHI entirely.  This is safe, because the NewVal won't be variant
         // in the loop, so we don't need an LCSSA phi node anymore.
         if (NumPreds == 1) {
-          SE->deleteInstructionFromRecords(PN);
+          SE->deleteValueFromRecords(PN);
           PN->replaceAllUsesWith(ExitVal);
           PN->eraseFromParent();
           break;

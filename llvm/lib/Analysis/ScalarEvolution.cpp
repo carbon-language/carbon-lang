@@ -1167,10 +1167,10 @@ namespace {
     /// loop without a loop-invariant iteration count.
     SCEVHandle getIterationCount(const Loop *L);
 
-    /// deleteInstructionFromRecords - This method should be called by the
-    /// client before it removes an instruction from the program, to make sure
+    /// deleteValueFromRecords - This method should be called by the
+    /// client before it removes a value from the program, to make sure
     /// that no dangling references are left around.
-    void deleteInstructionFromRecords(Instruction *I);
+    void deleteValueFromRecords(Value *V);
 
   private:
     /// createSCEV - We know that there is no SCEV for the specified value.
@@ -1236,27 +1236,27 @@ namespace {
 //            Basic SCEV Analysis and PHI Idiom Recognition Code
 //
 
-/// deleteInstructionFromRecords - This method should be called by the
+/// deleteValueFromRecords - This method should be called by the
 /// client before it removes an instruction from the program, to make sure
 /// that no dangling references are left around.
-void ScalarEvolutionsImpl::deleteInstructionFromRecords(Instruction *I) {
-  SmallVector<Instruction *, 16> Worklist;
+void ScalarEvolutionsImpl::deleteValueFromRecords(Value *V) {
+  SmallVector<Value *, 16> Worklist;
 
-  if (Scalars.erase(I)) {
-    if (PHINode *PN = dyn_cast<PHINode>(I))
+  if (Scalars.erase(V)) {
+    if (PHINode *PN = dyn_cast<PHINode>(V))
       ConstantEvolutionLoopExitValue.erase(PN);
-    Worklist.push_back(I);
+    Worklist.push_back(V);
   }
 
   while (!Worklist.empty()) {
-    Instruction *II = Worklist.back();
+    Value *VV = Worklist.back();
     Worklist.pop_back();
 
-    for (Instruction::use_iterator UI = II->use_begin(), UE = II->use_end();
+    for (Instruction::use_iterator UI = VV->use_begin(), UE = VV->use_end();
          UI != UE; ++UI) {
       Instruction *Inst = cast<Instruction>(*UI);
       if (Scalars.erase(Inst)) {
-        if (PHINode *PN = dyn_cast<PHINode>(II))
+        if (PHINode *PN = dyn_cast<PHINode>(VV))
           ConstantEvolutionLoopExitValue.erase(PN);
         Worklist.push_back(Inst);
       }
@@ -2593,8 +2593,8 @@ SCEVHandle ScalarEvolution::getSCEVAtScope(Value *V, const Loop *L) const {
   return ((ScalarEvolutionsImpl*)Impl)->getSCEVAtScope(getSCEV(V), L);
 }
 
-void ScalarEvolution::deleteInstructionFromRecords(Instruction *I) const {
-  return ((ScalarEvolutionsImpl*)Impl)->deleteInstructionFromRecords(I);
+void ScalarEvolution::deleteValueFromRecords(Value *V) const {
+  return ((ScalarEvolutionsImpl*)Impl)->deleteValueFromRecords(V);
 }
 
 static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,

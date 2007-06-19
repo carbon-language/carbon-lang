@@ -232,10 +232,10 @@ namespace llvm {
     /// an analyzable loop-invariant iteration count.
     bool hasLoopInvariantIterationCount(const Loop *L) const;
 
-    /// deleteInstructionFromRecords - This method should be called by the
-    /// client before it removes an instruction from the program, to make sure
+    /// deleteValueFromRecords - This method should be called by the
+    /// client before it removes a Value from the program, to make sure
     /// that no dangling references are left around.
-    void deleteInstructionFromRecords(Instruction *I) const;
+    void deleteValueFromRecords(Value *V) const;
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();
