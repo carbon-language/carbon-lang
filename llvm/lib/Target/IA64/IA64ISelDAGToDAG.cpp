@@ -470,7 +470,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     switch (TypeBeingLoaded) {
     default:
 #ifndef NDEBUG
-      N->dump();
+      N->dump(CurDAG);
 #endif
       assert(0 && "Cannot load this type!");
     case MVT::i1: { // this is a bool

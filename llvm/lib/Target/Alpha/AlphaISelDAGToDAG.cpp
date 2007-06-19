@@ -356,7 +356,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
       bool rev = false;
       bool inv = false;
       switch(CC) {
-      default: DEBUG(N->dump()); assert(0 && "Unknown FP comparison!");
+      default: DEBUG(N->dump(CurDAG)); assert(0 && "Unknown FP comparison!");
       case ISD::SETEQ: case ISD::SETOEQ: case ISD::SETUEQ:
         Opc = Alpha::CMPTEQ; break;
       case ISD::SETLT: case ISD::SETOLT: case ISD::SETULT: 

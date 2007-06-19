@@ -113,7 +113,7 @@ namespace {
                         bool AddTo = true) {
       assert(N->getNumValues() == NumTo && "Broken CombineTo call!");
       ++NodesCombined;
-      DOUT << "\nReplacing.1 "; DEBUG(N->dump());
+      DOUT << "\nReplacing.1 "; DEBUG(N->dump(&DAG));
       DOUT << "\nWith: "; DEBUG(To[0].Val->dump(&DAG));
       DOUT << " and " << NumTo-1 << " other values\n";
       std::vector<SDNode*> NowDead;
@@ -164,7 +164,7 @@ namespace {
       
       // Replace the old value with the new one.
       ++NodesCombined;
-      DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.Val->dump());
+      DOUT << "\nReplacing.2 "; DEBUG(TLO.Old.Val->dump(&DAG));
       DOUT << "\nWith: "; DEBUG(TLO.New.Val->dump(&DAG));
       DOUT << '\n';
 
@@ -592,7 +592,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
                RV.Val->getOpcode() != ISD::DELETED_NODE &&
                "Node was deleted but visit returned new node!");
 
-        DOUT << "\nReplacing.3 "; DEBUG(N->dump());
+        DOUT << "\nReplacing.3 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith: "; DEBUG(RV.Val->dump(&DAG));
         DOUT << '\n';
         std::vector<SDNode*> NowDead;
@@ -3314,7 +3314,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     Result = DAG.getIndexedStore(SDOperand(N,0), BasePtr, Offset, AM);
   ++PreIndexedNodes;
   ++NodesCombined;
-  DOUT << "\nReplacing.4 "; DEBUG(N->dump());
+  DOUT << "\nReplacing.4 "; DEBUG(N->dump(&DAG));
   DOUT << "\nWith: "; DEBUG(Result.Val->dump(&DAG));
   DOUT << '\n';
   std::vector<SDNode*> NowDead;
@@ -3445,7 +3445,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
           : DAG.getIndexedStore(SDOperand(N,0), BasePtr, Offset, AM);
         ++PostIndexedNodes;
         ++NodesCombined;
-        DOUT << "\nReplacing.5 "; DEBUG(N->dump());
+        DOUT << "\nReplacing.5 "; DEBUG(N->dump(&DAG));
         DOUT << "\nWith: "; DEBUG(Result.Val->dump(&DAG));
         DOUT << '\n';
         std::vector<SDNode*> NowDead;

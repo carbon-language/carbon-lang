@@ -476,7 +476,7 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     switch (Node->getOpcode()) {
     default:
 #ifndef NDEBUG
-      Node->dump();
+      Node->dump(&DAG);
 #endif
       assert(0 && "This target-independent node should have been selected!");
     case ISD::EntryToken: // fall thru
