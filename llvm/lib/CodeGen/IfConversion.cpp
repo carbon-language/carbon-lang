@@ -399,6 +399,9 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups) const {
   if (TrueBBI.IsBeingAnalyzed || TrueBBI.IsDone)
     return false;
 
+  if (TrueBBI.IsBrAnalyzable)
+    return false;
+
   if (TrueBBI.BB->pred_size() > 1) {
     if (TrueBBI.CannotBeCopied ||
         TrueBBI.NonPredSize > TLI->getIfCvtDupBlockSizeLimit())
@@ -406,7 +409,7 @@ bool IfConverter::ValidSimple(BBInfo &TrueBBI, unsigned &Dups) const {
     Dups = TrueBBI.NonPredSize;
   }
 
-  return !blockAlwaysFallThrough(TrueBBI) && TrueBBI.BrCond.size() == 0;
+  return true;
 }
 
 /// ValidTriangle - Returns true if the 'true' and 'false' blocks (along
