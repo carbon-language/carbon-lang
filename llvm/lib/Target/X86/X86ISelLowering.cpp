@@ -1954,6 +1954,16 @@ bool X86::isMOVSLDUPMask(SDNode *N) {
   return HasHi;
 }
 
+/// isIdentityMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a identity operation on the LHS or RHS.
+static bool isIdentityMask(SDNode *N, bool RHS = false) {
+  unsigned NumElems = N->getNumOperands();
+  for (unsigned i = 0; i < NumElems; ++i)
+    if (!isUndefOrEqual(N->getOperand(i), i + (RHS ? NumElems : 0)))
+      return false;
+  return true;
+}
+
 /// isSplatMask - Return true if the specified VECTOR_SHUFFLE operand specifies
 /// a splat of a single element.
 static bool isSplatMask(SDNode *N) {
@@ -2629,6 +2639,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 
   if (isZeroShuffle(Op.Val))
     return getZeroVector(VT, DAG);
+
+  if (isIdentityMask(PermMask.Val))
+    return V1;
+  else if (isIdentityMask(PermMask.Val, true))
+    return V2;
 
   if (isSplatMask(PermMask.Val)) {
     if (NumElems <= 4) return Op;
@@ -4316,12 +4331,14 @@ X86TargetLowering::isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const {
   // Only do shuffles on 128-bit vector types for now.
   if (MVT::getSizeInBits(VT) == 64) return false;
   return (Mask.Val->getNumOperands() <= 4 ||
+          isIdentityMask(Mask.Val) ||
+          isIdentityMask(Mask.Val, true) ||
           isSplatMask(Mask.Val)  ||
           isPSHUFHW_PSHUFLWMask(Mask.Val) ||
           X86::isUNPCKLMask(Mask.Val) ||
+          X86::isUNPCKHMask(Mask.Val) ||
           X86::isUNPCKL_v_undef_Mask(Mask.Val) ||
-          X86::isUNPCKH_v_undef_Mask(Mask.Val) ||
-          X86::isUNPCKHMask(Mask.Val));
+          X86::isUNPCKH_v_undef_Mask(Mask.Val));
 }
 
 bool X86TargetLowering::isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
