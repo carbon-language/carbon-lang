@@ -22,8 +22,11 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-static cl::opt<bool> PrintLSR("print-lsr-output");
-static cl::opt<bool> PrintISelInput("print-isel-input");
+static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
+    cl::desc("Print LLVM IR produced by the loop-reduce pass"));
+static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
+    cl::desc("Print LLVM IR input to isel pass"));
+
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
                                        std::ostream &Out,
