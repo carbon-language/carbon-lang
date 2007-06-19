@@ -105,6 +105,7 @@ typedef bool CCAssignFn(unsigned ValNo, MVT::ValueType ValVT,
 /// stack slots are used.  It provides accessors to allocate these values.
 class CCState {
   unsigned CallingConv;
+  bool IsVarArg;
   const TargetMachine &TM;
   const MRegisterInfo &MRI;
   SmallVector<CCValAssign, 16> &Locs;
@@ -112,7 +113,7 @@ class CCState {
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
 public:
-  CCState(unsigned CC, const TargetMachine &TM,
+  CCState(unsigned CC, bool isVarArg, const TargetMachine &TM,
           SmallVector<CCValAssign, 16> &locs);
   
   void addLoc(const CCValAssign &V) {
@@ -121,6 +122,7 @@ public:
   
   const TargetMachine &getTarget() const { return TM; }
   unsigned getCallingConv() const { return CallingConv; }
+  bool isVarArg() const { return IsVarArg; }
   
   unsigned getNextStackOffset() const { return StackOffset; }
 
