@@ -19,7 +19,7 @@
     <ol>
       <li><a href="#hardware">Hardware</a>
       <li><a href="#software">Software</a>
-      <li><a href="#brokengcc">Broken versions of GCC</a>
+      <li><a href="#brokengcc">Broken versions of GCC and other tools</a>
     </ol></li>
 
   <li><a href="#starting">Getting Started with LLVM</a>
@@ -491,7 +491,7 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="brokengcc">Broken versions of GCC</a>
+  <a name="brokengcc">Broken versions of GCC and other tools</a>
 </div>
 
 <div class="doc_text">
@@ -553,6 +553,12 @@ long warning messages complaining that some ".gnu.linkonce.t.*" symbol was
 defined in a discarded section. You can safely ignore these messages as they are
 erroneous and the linkage is correct.  These messages disappear using ld
 2.17.</p>
+
+<p><b>GNU binutils 2.17</b>: Binutils 2.17 contains <a 
+href="http://sourceware.org/bugzilla/show_bug.cgi?id=3111">a bug</a> which
+causes huge link times (minutes instead of seconds) when building LLVM.  We
+recommend upgrading to a newer version (2.17.50.0.4 or later).</p>
+
 </div>
 
 
