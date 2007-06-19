@@ -336,14 +336,13 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   // time we see a vreg.
   if (interval.empty()) {
     // Remember if the definition can be rematerialized. All load's from fixed
-    // stack slots are re-materializable. The target may permit other loads to
-    // be re-materialized as well.
+    // stack slots are re-materializable. The target may permit other
+    // instructions to be re-materialized as well.
     int FrameIdx = 0;
     if (vi.DefInst &&
-        (tii_->isReMaterializable(vi.DefInst->getOpcode()) ||
+        (tii_->isTriviallyReMaterializable(vi.DefInst) ||
          (tii_->isLoadFromStackSlot(vi.DefInst, FrameIdx) &&
-          mf_->getFrameInfo()->isFixedObjectIndex(FrameIdx)) ||
-         tii_->isOtherReMaterializableLoad(vi.DefInst)))
+          mf_->getFrameInfo()->isFixedObjectIndex(FrameIdx))))
       interval.remat = vi.DefInst;
 
     // Get the Idx of the defining instructions.

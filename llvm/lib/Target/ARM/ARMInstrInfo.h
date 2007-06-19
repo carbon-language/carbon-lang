@@ -87,6 +87,7 @@ public:
                            unsigned &SrcReg, unsigned &DstReg) const;
   virtual unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+  virtual bool isTriviallyReMaterializable(MachineInstr *MI) const;
   
   virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,

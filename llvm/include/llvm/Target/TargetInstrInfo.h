@@ -78,10 +78,6 @@ const unsigned M_VARIABLE_OPS = 1 << 11;
 // controls execution. It may be set to 'always'.
 const unsigned M_PREDICABLE = 1 << 12;
 
-// M_REMATERIALIZIBLE - Set if this instruction can be trivally re-materialized
-// at any time, e.g. constant generation, load from constant pool.
-const unsigned M_REMATERIALIZIBLE = 1 << 13;
-
 // M_CLOBBERS_PRED - Set if this instruction may clobbers the condition code
 // register and / or registers that are used to predicate instructions.
 const unsigned M_CLOBBERS_PRED = 1 << 14;
@@ -264,10 +260,6 @@ public:
     return get(Opcode).Flags & M_PREDICABLE;
   }
 
-  bool isReMaterializable(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_REMATERIALIZIBLE;
-  }
-
   bool clobbersPredicate(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_CLOBBERS_PRED;
   }
@@ -309,13 +301,13 @@ public:
     return 0;
   }
 
-  /// isOtherReMaterializableLoad - If the specified machine instruction is a
-  /// direct load that is trivially rematerializable, not counting loads from
-  /// stack slots, return true. If not, return false.  This predicate must
+  /// isTriviallyReMaterializable - If the specified machine instruction can
+  /// be trivally re-materialized  at any time, e.g. constant generation or
+  /// loads from constant pools. If not, return false.  This predicate must
   /// return false if the instruction has any side effects other than
   /// producing the value from the load, or if it requres any address
   /// registers that are not always available.
-  virtual bool isOtherReMaterializableLoad(MachineInstr *MI) const {
+  virtual bool isTriviallyReMaterializable(MachineInstr *MI) const {
     return false;
   }
 

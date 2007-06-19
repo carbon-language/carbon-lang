@@ -112,9 +112,20 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
-bool X86InstrInfo::isOtherReMaterializableLoad(MachineInstr *MI) const {
+bool X86InstrInfo::isTriviallyReMaterializable(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default: break;
+  case X86::FpLD0:
+  case X86::FpLD1:
+  case X86::MOV8ri:
+  case X86::MOV16ri:
+  case X86::MOV32ri:
+  case X86::MMX_V_SET0:
+  case X86::MMX_V_SETALLONES:
+  case X86::V_SET0:
+  case X86::V_SETALLONES:
+    // These instructions are always trivially rematerializable.
+    return true;
   case X86::MOV8rm:
   case X86::MOV16rm:
   case X86::MOV16_rm:
@@ -128,6 +139,7 @@ bool X86InstrInfo::isOtherReMaterializableLoad(MachineInstr *MI) const {
   case X86::MOVAPDrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
+    // Loads from constant pools are trivially rematerializable.
     return MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate() &&
            MI->getOperand(3).isRegister() && MI->getOperand(4).isConstantPoolIndex() &&
            MI->getOperand(1).getReg() == 0 &&

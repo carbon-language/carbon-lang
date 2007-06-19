@@ -365,7 +365,6 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
   isCommutable = R->getValueAsBit("isCommutable");
   isTerminator = R->getValueAsBit("isTerminator");
-  isReMaterializable = R->getValueAsBit("isReMaterializable");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");

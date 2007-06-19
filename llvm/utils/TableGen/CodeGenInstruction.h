@@ -91,7 +91,6 @@ namespace llvm {
     bool isConvertibleToThreeAddress;
     bool isCommutable;
     bool isTerminator;
-    bool isReMaterializable;
     bool hasDelaySlot;
     bool usesCustomDAGSchedInserter;
     bool hasVariableNumberOfOperands;

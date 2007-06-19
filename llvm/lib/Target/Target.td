@@ -186,7 +186,6 @@ class Instruction {
   bit isConvertibleToThreeAddress = 0;  // Can this 2-addr instruction promote?
   bit isCommutable = 0;     // Is this 3 operand instruction commutable?
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
-  bit isReMaterializable = 0; // Is this instruction re-materializable?
   bit isPredicable = 0;     // Is this instruction predicable?
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
   bit usesCustomDAGSchedInserter = 0; // Pseudo instr needing special help.

@@ -670,7 +670,6 @@ def LDR  : AI2<(ops GPR:$dst, addrmode2:$addr),
                [(set GPR:$dst, (load addrmode2:$addr))]>;
 
 // Special LDR for loads from non-pc-relative constpools.
-let isReMaterializable = 1 in
 def LDRcp : AI2<(ops GPR:$dst, addrmode2:$addr),
                  "ldr", " $dst, $addr", []>;
 
@@ -804,7 +803,6 @@ def MOVr : AI1<(ops GPR:$dst, GPR:$src),
 def MOVs : AI1<(ops GPR:$dst, so_reg:$src),
                 "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
 
-let isReMaterializable = 1 in
 def MOVi : AI1<(ops GPR:$dst, so_imm:$src),
                 "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
 
@@ -912,7 +910,6 @@ def  MVNr  : AI<(ops GPR:$dst, GPR:$src),
                 "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
 def  MVNs  : AI<(ops GPR:$dst, so_reg:$src),
                 "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
-let isReMaterializable = 1 in
 def  MVNi  : AI<(ops GPR:$dst, so_imm:$imm),
                 "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
 
@@ -1183,7 +1180,6 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // Large immediate handling.
 
 // Two piece so_imms.
-let isReMaterializable = 1 in
 def MOVi2pieces : AI1x2<(ops GPR:$dst, so_imm2part:$src),
                          "mov", " $dst, $src",
                          [(set GPR:$dst, so_imm2part:$src)]>;
