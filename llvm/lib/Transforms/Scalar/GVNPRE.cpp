@@ -25,6 +25,7 @@
 #include "llvm/Function.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
@@ -78,7 +79,7 @@ namespace {
       };
     
     private:
-      std::map<Value*, uint32_t> valueNumbering;
+      DenseMap<Value*, uint32_t> valueNumbering;
       std::map<Expression, uint32_t> expressionNumbering;
   
       std::set<Expression> maximalExpressions;
@@ -217,7 +218,7 @@ ValueTable::Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
 uint32_t ValueTable::lookup_or_add(Value* V) {
   maximalValues.insert(V);
 
-  std::map<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
+  DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
   if (VI != valueNumbering.end())
     return VI->second;
   
@@ -255,7 +256,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
 }
 
 uint32_t ValueTable::lookup(Value* V) {
-  std::map<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
+  DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
   if (VI != valueNumbering.end())
     return VI->second;
   else
@@ -265,7 +266,7 @@ uint32_t ValueTable::lookup(Value* V) {
 }
 
 void ValueTable::add(Value* V, uint32_t num) {
-  std::map<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
+  DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
   if (VI != valueNumbering.end())
     valueNumbering.erase(VI);
   valueNumbering.insert(std::make_pair(V, num));
