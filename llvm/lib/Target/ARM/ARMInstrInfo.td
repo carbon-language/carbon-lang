@@ -52,6 +52,8 @@ def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq,
 
 def ARMcall          : SDNode<"ARMISD::CALL", SDT_ARMcall,
                               [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def ARMcall_pred    : SDNode<"ARMISD::CALL_PRED", SDT_ARMcall,
+                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def ARMcall_nolink   : SDNode<"ARMISD::CALL_NOLINK", SDT_ARMcall,
                               [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
@@ -621,6 +623,11 @@ let isCall = 1, noResults = 1, clobbersPred = 1,
   def BL  : AXI<(ops i32imm:$func, variable_ops),
                 "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>;
+
+  def BL_pred : AI<(ops i32imm:$func, variable_ops),
+                    "bl", " ${func:call}",
+                    [(ARMcall_pred tglobaladdr:$func)]>;
+
   // ARMv5T and above
   def BLX : AXI<(ops GPR:$dst, variable_ops),
                 "blx $dst",

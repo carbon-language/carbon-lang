@@ -34,6 +34,7 @@ namespace llvm {
       WrapperJT,    // WrapperJT - A wrapper node for TargetJumpTable
       
       CALL,         // Function call.
+      CALL_PRED,    // Function call that's predicable.
       CALL_NOLINK,  // Function call with branch not branch-and-link.
       tCALL,        // Thumb function call.
       BRCOND,       // Conditional branch.

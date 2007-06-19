@@ -267,6 +267,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::Wrapper:       return "ARMISD::Wrapper";
   case ARMISD::WrapperJT:     return "ARMISD::WrapperJT";
   case ARMISD::CALL:          return "ARMISD::CALL";
+  case ARMISD::CALL_PRED:     return "ARMISD::CALL_PRED";
   case ARMISD::CALL_NOLINK:   return "ARMISD::CALL_NOLINK";
   case ARMISD::tCALL:         return "ARMISD::tCALL";
   case ARMISD::BRCOND:        return "ARMISD::BRCOND";
@@ -517,6 +518,7 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // node so that legalize doesn't hack it.
   bool isDirect = false;
   bool isARMFunc = false;
+  bool isLocalARMFunc = false;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     isDirect = true;
@@ -525,6 +527,8 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
+    // ARM call to a local ARM function is predicable.
+    isLocalARMFunc = !Subtarget->isThumb() && !isExt;
     // tBX takes a register source operand.
     if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
@@ -564,7 +568,8 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       CallOpc = isARMFunc ? ARMISD::CALL : ARMISD::tCALL;
   } else {
     CallOpc = (isDirect || Subtarget->hasV5TOps())
-      ? ARMISD::CALL : ARMISD::CALL_NOLINK;
+      ? (isLocalARMFunc ? ARMISD::CALL_PRED : ARMISD::CALL)
+      : ARMISD::CALL_NOLINK;
   }
   if (CallOpc == ARMISD::CALL_NOLINK && !Subtarget->isThumb()) {
     // implicit def LR - LR mustn't be allocated as GRP:$dst of CALL_NOLINK
