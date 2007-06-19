@@ -927,7 +927,16 @@ bool GVNPRE::runOnFunction(Function &F) {
       
       for (std::set<Value*>::iterator I = S.begin(), E = S.end();
            I != E; ++I) {
-        if (find_leader(anticIn, VN.lookup(*I)) == 0)
+        // For non-opaque values, we should already have a value numbering.
+        // However, for opaques, such as constants within PHI nodes, it is
+        // possible that they have not yet received a number.  Make sure they do
+        // so now.
+        uint32_t valNum = 0;
+        if (isa<BinaryOperator>(*I) || isa<CmpInst>(*I))
+          valNum = VN.lookup(*I);
+        else
+          valNum = VN.lookup_or_add(*I);
+        if (find_leader(anticIn, valNum) == 0)
           val_insert(anticIn, *I);
       }
       
