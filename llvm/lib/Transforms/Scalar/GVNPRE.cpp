@@ -101,6 +101,7 @@ namespace {
       std::set<Value*>& getMaximalValues() { return maximalValues; }
       Expression create_expression(BinaryOperator* BO);
       Expression create_expression(CmpInst* C);
+      void erase(Value* v);
   };
 }
 
@@ -302,6 +303,15 @@ void ValueTable::clear() {
   nextValueNumber = 1;
 }
 
+void ValueTable::erase(Value* V) {
+  maximalValues.erase(V);
+  valueNumbering.erase(V);
+  if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V))
+    maximalExpressions.erase(create_expression(BO));
+  else if (CmpInst* C = dyn_cast<CmpInst>(V))
+    maximalExpressions.erase(create_expression(C));
+}
+
 namespace {
 
   class VISIBILITY_HIDDEN GVNPRE : public FunctionPass {
@@ -419,7 +429,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
     if (newOp1 != BO->getOperand(0) || newOp2 != BO->getOperand(1)) {
       Instruction* newVal = BinaryOperator::create(BO->getOpcode(),
                                              newOp1, newOp2,
-                                             BO->getName()+".gvnpre");
+                                             BO->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       
@@ -428,6 +438,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
         createdExpressions.push_back(newVal);
         return newVal;
       } else {
+        VN.erase(newVal);
         delete newVal;
         return leader;
       }
@@ -462,7 +473,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
       Instruction* newVal = CmpInst::create(C->getOpcode(),
                                             C->getPredicate(),
                                              newOp1, newOp2,
-                                             C->getName()+".gvnpre");
+                                             C->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
         
@@ -471,6 +482,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
         createdExpressions.push_back(newVal);
         return newVal;
       } else {
+        VN.erase(newVal);
         delete newVal;
         return leader;
       }
