@@ -3808,7 +3808,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   }
 
   // (A & C)|(B & D)
-  Value *C, *D;
+  Value *C = 0, *D = 0;
   if (match(Op0, m_And(m_Value(A), m_Value(C))) &&
       match(Op1, m_And(m_Value(B), m_Value(D)))) {
     Value *V1 = 0, *V2 = 0, *V3 = 0;
