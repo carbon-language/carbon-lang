@@ -86,6 +86,10 @@ const unsigned M_REMATERIALIZIBLE = 1 << 13;
 // register and / or registers that are used to predicate instructions.
 const unsigned M_CLOBBERS_PRED = 1 << 14;
 
+// M_NOT_DUPLICABLE - Set if this instruction cannot be safely duplicated.
+// (e.g. instructions with unique labels attached).
+const unsigned M_NOT_DUPLICABLE = 1 << 15;
+
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
 // requires a callback to look up its register class.
@@ -211,15 +215,6 @@ public:
     return get(Opcode).Flags & M_RET_FLAG;
   }
 
-  bool isPredicable(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_PREDICABLE;
-  }
-  bool clobbersPredicate(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_CLOBBERS_PRED;
-  }
-  bool isReMaterializable(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_REMATERIALIZIBLE;
-  }
   bool isCommutableInstr(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_COMMUTABLE;
   }
@@ -263,6 +258,22 @@ public:
 
   bool hasVariableOperands(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_VARIABLE_OPS;
+  }
+
+  bool isPredicable(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_PREDICABLE;
+  }
+
+  bool isReMaterializable(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_REMATERIALIZIBLE;
+  }
+
+  bool clobbersPredicate(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_CLOBBERS_PRED;
+  }
+
+  bool isNotDuplicable(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_NOT_DUPLICABLE;
   }
 
   /// getOperandConstraint - Returns the value of the specific constraint if
@@ -412,13 +423,6 @@ public:
   /// isPredicated - Returns true if the instruction is already predicated.
   ///
   virtual bool isPredicated(const MachineInstr *MI) const {
-    return false;
-  }
-
-  /// CanBeDuplicated - Returns true if the instruction can be duplicated
-  /// without causing unforseenable side-effect (e.g. instructions with unique
-  /// labels attached).
-  virtual bool CanBeDuplicated(const MachineInstr *MI) const {
     return false;
   }
 
