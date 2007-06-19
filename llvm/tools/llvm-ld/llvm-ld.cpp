@@ -326,46 +326,52 @@ static int GenerateNative(const std::string &OutputFilename,
   //  We can't just assemble and link the file with the system assembler
   //  and linker because we don't know where to put the _start symbol.
   //  GCC mysteriously knows how to do it.
-  std::vector<const char*> args;
+  std::vector<std::string> args;
   args.push_back(gcc.c_str());
   args.push_back("-fno-strict-aliasing");
   args.push_back("-O3");
   args.push_back("-o");
-  args.push_back(OutputFilename.c_str());
-  args.push_back(InputFilename.c_str());
+  args.push_back(OutputFilename);
+  args.push_back(InputFilename);
 
   // Add in the library paths
   for (unsigned index = 0; index < LibPaths.size(); index++) {
     args.push_back("-L");
-    args.push_back(LibPaths[index].c_str());
+    args.push_back(LibPaths[index]);
   }
 
   // Add the requested options
   for (unsigned index = 0; index < XLinker.size(); index++) {
-    args.push_back(XLinker[index].c_str());
-    args.push_back(Libraries[index].c_str());
+    args.push_back(XLinker[index]);
+    args.push_back(Libraries[index]);
   }
 
   // Add in the libraries to link.
   for (unsigned index = 0; index < LinkItems.size(); index++)
     if (LinkItems[index].first != "crtend") {
-      if (LinkItems[index].second) {
-        std::string lib_name = "-l" + LinkItems[index].first;
-        args.push_back(lib_name.c_str());
-      } else
-        args.push_back(LinkItems[index].first.c_str());
+      if (LinkItems[index].second)
+        args.push_back("-l" + LinkItems[index].first);
+      else
+        args.push_back(LinkItems[index].first);
     }
 
-  args.push_back(0);
+      
+  // Now that "args" owns all the std::strings for the arguments, call the c_str
+  // method to get the underlying string array.  We do this game so that the
+  // std::string array is guaranteed to outlive the const char* array.
+  std::vector<const char *> Args;
+  for (unsigned i = 0, e = args.size(); i != e; ++i)
+    Args.push_back(args[i].c_str());
+  Args.push_back(0);
 
   if (Verbose) {
     cout << "Generating Native Executable With:\n";
-    PrintCommand(args);
+    PrintCommand(Args);
   }
 
   // Run the compiler to assembly and link together the program.
   int R = sys::Program::ExecuteAndWait(
-    gcc, &args[0], (const char**)clean_env, 0, 0, 0, &ErrMsg);
+    gcc, &Args[0], (const char**)clean_env, 0, 0, 0, &ErrMsg);
   delete [] clean_env;
   return R;
 }
