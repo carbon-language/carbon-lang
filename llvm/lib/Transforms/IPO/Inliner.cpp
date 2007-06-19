@@ -14,12 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "inline"
-#include "Inliner.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/IPO/InlinerPass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

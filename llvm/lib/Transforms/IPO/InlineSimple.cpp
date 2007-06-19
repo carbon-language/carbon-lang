@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Inliner.h"
+#define DEBUG_TYPE "inline"
 #include "llvm/CallingConv.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -21,6 +21,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/InlinerPass.h"
 #include <set>
 
 using namespace llvm;
