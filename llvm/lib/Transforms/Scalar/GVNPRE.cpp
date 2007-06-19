@@ -504,40 +504,14 @@ void GVNPRE::phi_translate_set(std::set<Value*>& anticIn,
 }
 
 bool GVNPRE::dependsOnInvoke(Value* V) {
-  if (!isa<User>(V))
-    return false;
-    
-  User* U = cast<User>(V);
-  std::map<User*, bool>::iterator I = invokeDep.find(U);
-  if (I != invokeDep.end())
-    return I->second;
-  
-  std::vector<Value*> worklist(U->op_begin(), U->op_end());
-  std::set<Value*> visited;
-  
-  while (!worklist.empty()) {
-    Value* current = worklist.back();
-    worklist.pop_back();
-    visited.insert(current);
-    
-    if (!isa<User>(current))
-      continue;
-    else if (isa<InvokeInst>(current))
-      return true;
-    
-    User* curr = cast<User>(current);
-    std::map<User*, bool>::iterator CI = invokeDep.find(curr);
-    if (CI != invokeDep.end()) {
-      if (CI->second)
+  if (PHINode* p = dyn_cast<PHINode>(V)) {
+    for (PHINode::op_iterator I = p->op_begin(), E = p->op_end(); I != E; ++I)
+      if (isa<InvokeInst>(*I))
         return true;
-    } else {
-      for (unsigned i = 0; i < curr->getNumOperands(); ++i)
-        if (visited.find(curr->getOperand(i)) == visited.end())
-          worklist.push_back(curr->getOperand(i));
-    }
+    return false;
+  } else {
+    return false;
   }
-  
-  return false;
 }
 
 // Remove all expressions whose operands are not themselves in the set
@@ -557,10 +531,6 @@ void GVNPRE::clean(std::set<Value*>& set) {
             lhsValid = true;
             break;
           }
-          
-      // Check for dependency on invoke insts
-      // NOTE: This check is expensive, so don't do it if we
-      // don't have to
       if (lhsValid)
         lhsValid = !dependsOnInvoke(BO->getOperand(0));
     
@@ -572,10 +542,6 @@ void GVNPRE::clean(std::set<Value*>& set) {
             rhsValid = true;
             break;
           }
-      
-      // Check for dependency on invoke insts
-      // NOTE: This check is expensive, so don't do it if we
-      // don't have to
       if (rhsValid)
         rhsValid = !dependsOnInvoke(BO->getOperand(1));
       
@@ -590,7 +556,8 @@ void GVNPRE::clean(std::set<Value*>& set) {
             lhsValid = true;
             break;
           }
-      lhsValid &= !dependsOnInvoke(C->getOperand(0));
+      if (lhsValid)
+        lhsValid = !dependsOnInvoke(C->getOperand(0));
       
       bool rhsValid = !isa<Instruction>(C->getOperand(1));
       if (!rhsValid)
@@ -600,7 +567,8 @@ void GVNPRE::clean(std::set<Value*>& set) {
           rhsValid = true;
           break;
         }
-      rhsValid &= !dependsOnInvoke(C->getOperand(1));
+      if (rhsValid)
+        rhsValid = !dependsOnInvoke(C->getOperand(1));
     
       if (!lhsValid || !rhsValid)
         set.erase(C);
