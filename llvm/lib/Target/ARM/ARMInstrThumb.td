@@ -170,6 +170,7 @@ PseudoInst<(ops i32imm:$amt),
            "@ tADJCALLSTACKDOWN $amt",
            [(ARMcallseq_start imm:$amt)]>, Imp<[SP],[SP]>, Requires<[IsThumb]>;
 
+let isNotDuplicable = 1 in
 def tPICADD : TIt<(ops GPR:$dst, GPR:$lhs, pclabel:$cp),
                   "$cp:\n\tadd $dst, pc",
                   [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;

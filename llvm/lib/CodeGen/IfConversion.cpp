@@ -547,10 +547,10 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   bool SeenCondBr = false;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
-    if (!BBI.CannotBeCopied && !TII->CanBeDuplicated(I))
+    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
+    if ((TID->Flags & M_NOT_DUPLICABLE) != 0)
       BBI.CannotBeCopied = true;
 
-    const TargetInstrDescriptor *TID = I->getInstrDescriptor();
     bool isPredicated = TII->isPredicated(I);
     bool isCondBr = BBI.IsBrAnalyzable &&
       (TID->Flags & M_BRANCH_FLAG) != 0 && (TID->Flags & M_BARRIER_FLAG) == 0;

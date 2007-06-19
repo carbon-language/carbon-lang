@@ -106,8 +106,6 @@ public:
   // Predication support.
   virtual bool isPredicated(const MachineInstr *MI) const;
 
-  virtual bool CanBeDuplicated(const MachineInstr *MI) const;
-
   virtual
   bool PredicateInstruction(MachineInstr *MI,
                             const std::vector<MachineOperand> &Pred) const;

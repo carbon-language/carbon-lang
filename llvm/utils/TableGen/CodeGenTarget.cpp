@@ -371,6 +371,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   noResults    = R->getValueAsBit("noResults");
   clobbersPred = R->getValueAsBit("clobbersPred");
+  isNotDuplicable = R->getValueAsBit("isNotDuplicable");
   hasVariableNumberOfOperands = false;
   
   DagInit *DI;

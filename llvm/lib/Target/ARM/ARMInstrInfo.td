@@ -533,6 +533,7 @@ PseudoInst<(ops GPR:$rD, pred:$p),
 /// the function.  The first operand is the ID# for this instruction, the second
 /// is the index into the MachineConstantPool that this is, the third is the
 /// size in bytes of this constant pool entry.
+let isNotDuplicable = 1 in
 def CONSTPOOL_ENTRY :
 PseudoInst<(ops cpinst_operand:$instid, cpinst_operand:$cpidx, i32imm:$size),
            "${instid:label} ${cpidx:cpentry}", []>;
@@ -552,6 +553,7 @@ PseudoInst<(ops i32imm:$line, i32imm:$col, i32imm:$file),
            ".loc $file, $line, $col",
            [(dwarf_loc (i32 imm:$line), (i32 imm:$col), (i32 imm:$file))]>;
 
+let isNotDuplicable = 1 in {
 def PICADD : AXI1<(ops GPR:$dst, GPR:$a, pclabel:$cp, pred:$p),
                    "$cp:\n\tadd$p $dst, pc, $a",
                    [(set GPR:$dst, (ARMpic_add GPR:$a, imm:$cp))]>;
@@ -598,6 +600,7 @@ def PICSTRB : AXI2<(ops GPR:$src, addrmodepc:$addr, pred:$p),
                "${addr:label}:\n\tstr${p}b $src, $addr",
                [(truncstorei8 GPR:$src, addrmodepc:$addr)]>;
 }
+}
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.
@@ -637,6 +640,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
     def B : AXI<(ops brtarget:$dst), "b $dst",
                 [(br bb:$dst)]>;
 
+  let isNotDuplicable = 1 in {
   def BR_JTr : JTI<(ops GPR:$dst, jtblock_operand:$jt, i32imm:$id),
                     "mov pc, $dst \n$jt",
                     [(ARMbrjt GPR:$dst, tjumptable:$jt, imm:$id)]>;
@@ -648,6 +652,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
                        "add pc, $dst, $idx \n$jt",
                        [(ARMbrjt (add GPR:$dst, GPR:$idx), tjumptable:$jt,
                          imm:$id)]>;
+  }
   }
 
   def Bcc : AXI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
@@ -1152,6 +1157,7 @@ def LEApcrelJT : AXI1<(ops GPR:$dst, i32imm:$label, i32imm:$id, pred:$p),
                               !strconcat("${:private}PCRELL${:uid}:\n\t",
                                          "add$p $dst, pc, #PCRELV${:uid}")),
                    []>;
+
 //===----------------------------------------------------------------------===//
 // TLS Instructions
 //

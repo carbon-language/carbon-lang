@@ -193,6 +193,7 @@ class Instruction {
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit noResults    = 0;     // Does this instruction produce no results?
   bit clobbersPred = 0;     // Does it clobbers condition code / predicate?
+  bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
   
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
