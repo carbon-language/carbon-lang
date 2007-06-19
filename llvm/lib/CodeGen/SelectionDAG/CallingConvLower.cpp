@@ -18,9 +18,10 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-CCState::CCState(unsigned CC, const TargetMachine &tm,
+CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
                  SmallVector<CCValAssign, 16> &locs)
-  : CallingConv(CC), TM(tm), MRI(*TM.getRegisterInfo()), Locs(locs) {
+  : CallingConv(CC), IsVarArg(isVarArg), TM(tm),
+    MRI(*TM.getRegisterInfo()), Locs(locs) {
   // No stack is used.
   StackOffset = 0;
   
