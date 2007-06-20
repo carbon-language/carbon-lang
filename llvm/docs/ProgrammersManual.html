@@ -106,6 +106,7 @@ use-def chains</a> </li>
           <li><a href="#schanges_deleting">Deleting 		 <tt>Instruction</tt>s</a> </li>
           <li><a href="#schanges_replacing">Replacing an 		 <tt>Instruction</tt>
 with another <tt>Value</tt></a> </li>
+          <li><a href="#schanges_deletingGV">Deleting <tt>GlobalVariable</tt>s</a> </li>  
         </ul>
       </li>
 <!--
@@ -1875,6 +1876,31 @@ information.</p>
 <!-- Value::replaceAllUsesWith User::replaceUsesOfWith Point out:
 include/llvm/Transforms/Utils/ especially BasicBlockUtils.h with:
 ReplaceInstWithValue, ReplaceInstWithInst -->
+
+</div>
+
+<!--_______________________________________________________________________-->
+<div class="doc_subsubsection">
+  <a name="schanges_deletingGV">Deleting <tt>GlobalVariable</tt>s</a>
+</div>
+
+<div class="doc_text">
+
+<p>Deleting a global variable from a module is similar to deleting an 
+instruction. First, you must have a pointer to the global variable that you wish
+ to delete.  Second, you must have a pointer to the module the global variable 
+ belongs to. You use the pointer to the module to get its list of global 
+ variables and then use the erase function to remove your global variable. 
+ For example:</p>
+
+<div class="doc_code">
+<pre>
+<a href="#GlobalVariable">GlobalVariable</a> *GV = .. ;
+<a href="#Module">Module</a> *M = GV-&gt;getParent();
+
+M-&gt;getGlobaleList().erase(GV);
+</pre>
+</div>
 
 </div>
 
