@@ -338,7 +338,6 @@ namespace {
     // Helper fuctions
     // FIXME: eliminate or document these better
     void dump(const std::set<Value*>& s) const;
-    void dump_unique(const std::set<Value*>& s) const;
     void clean(std::set<Value*>& set);
     Value* find_leader(std::set<Value*>& vals,
                        uint32_t v);
@@ -657,15 +656,6 @@ void GVNPRE::dump(const std::set<Value*>& s) const {
   DOUT << "}\n\n";
 }
 
-void GVNPRE::dump_unique(const std::set<Value*>& s) const {
-  DOUT << "{ ";
-  for (std::set<Value*>::iterator I = s.begin(), E = s.end();
-       I != E; ++I) {
-    DEBUG((*I)->dump());
-  }
-  DOUT << "}\n\n";
-}
-
 void GVNPRE::elimination() {
   DOUT << "\n\nPhase 3: Elimination\n\n";
   
@@ -679,7 +669,7 @@ void GVNPRE::elimination() {
     BasicBlock* BB = DI->getBlock();
     
     DOUT << "Block: " << BB->getName() << "\n";
-    dump_unique(availableOut[BB]);
+    dump(availableOut[BB]);
     DOUT << "\n\n";
     
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
@@ -802,7 +792,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   }
   
   DOUT << "Maximal Set: ";
-  dump_unique(VN.getMaximalValues());
+  dump(VN.getMaximalValues());
   DOUT << "\n";
   
   // If function has no exit blocks, only perform GVN
@@ -839,7 +829,7 @@ bool GVNPRE::runOnFunction(Function &F) {
       DOUT << "\n";
     
       DOUT << "EXP_GEN: ";
-      dump_unique(generatedExpressions[BB]);
+      dump(generatedExpressions[BB]);
       visited.insert(BB);
       
       std::set<Value*>& anticIn = anticipatedIn[BB];
@@ -876,7 +866,7 @@ bool GVNPRE::runOnFunction(Function &F) {
       }
       
       DOUT << "ANTIC_OUT: ";
-      dump_unique(anticOut);
+      dump(anticOut);
       DOUT << "\n";
       
       std::set<Value*> S;
@@ -912,7 +902,7 @@ bool GVNPRE::runOnFunction(Function &F) {
       clean(anticIn);
       
       DOUT << "ANTIC_IN: ";
-      dump_unique(anticIn);
+      dump(anticIn);
       DOUT << "\n";
       
       if (old.size() != anticIn.size())
@@ -934,15 +924,15 @@ bool GVNPRE::runOnFunction(Function &F) {
     DOUT << "\n";
     
     DOUT << "EXP_GEN: ";
-    dump_unique(generatedExpressions[I]);
+    dump(generatedExpressions[I]);
     DOUT << "\n";
     
     DOUT << "ANTIC_IN: ";
-    dump_unique(anticipatedIn[I]);
+    dump(anticipatedIn[I]);
     DOUT << "\n";
     
     DOUT << "AVAIL_OUT: ";
-    dump_unique(availableOut[I]);
+    dump(availableOut[I]);
     DOUT << "\n";
   }
   
@@ -985,7 +975,7 @@ bool GVNPRE::runOnFunction(Function &F) {
         
         DOUT << "Merge Block: " << BB->getName() << "\n";
         DOUT << "ANTIC_IN: ";
-        dump_unique(anticIn);
+        dump(anticIn);
         DOUT << "\n";
         
         for (unsigned i = 0; i < workList.size(); ++i) {
