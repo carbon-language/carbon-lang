@@ -1308,8 +1308,9 @@ no problem.</p>
 <p>Here we show how the default implementation is specified (using the extra
 argument to the <tt>RegisterAnalysisGroup</tt> template).  There must be exactly
 one default implementation available at all times for an Analysis Group to be
-used.  Here we declare that the <tt><a
-href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a></tt>
+used.  Only default implementation can derive from <tt>ImmutablePass</tt>. 
+Here we declare that the
+ <tt><a href="http://llvm.org/doxygen/structBasicAliasAnalysis.html">BasicAliasAnalysis</a></tt>
 pass is the default implementation for the interface.</p>
 
 </div>
