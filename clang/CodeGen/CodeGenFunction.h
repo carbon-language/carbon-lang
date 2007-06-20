@@ -272,10 +272,8 @@ public:
   RValue EmitBinarySub(const BinaryOperator *E);
   RValue EmitBinaryShl(const BinaryOperator *E);
   RValue EmitBinaryShr(const BinaryOperator *E);
-  
-  // FIXME: relational
-  RValue EmitBinaryEquality(const BinaryOperator *E);
-  
+  RValue EmitBinaryCompare(const BinaryOperator *E, unsigned UICmpOpc,
+                           unsigned SICmpOpc, unsigned FCmpOpc);
   RValue EmitBinaryAnd(const BinaryOperator *E);
   RValue EmitBinaryXor(const BinaryOperator *E);
   RValue EmitBinaryOr (const BinaryOperator *E);

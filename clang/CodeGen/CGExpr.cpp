@@ -337,7 +337,7 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
   
   switch (E->getStmtClass()) {
   default:
-    printf("Unimplemented expr!\n");
+    fprintf(stderr, "Unimplemented expr!\n");
     E->dump();
     return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
     
@@ -644,18 +644,35 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Sub: return EmitBinarySub(E);
   case BinaryOperator::Shl: return EmitBinaryShl(E);
   case BinaryOperator::Shr: return EmitBinaryShr(E);
-    
-  case BinaryOperator::EQ:
-  case BinaryOperator::NE:  return EmitBinaryEquality(E);
-    
-    // FIXME: relational
-    
   case BinaryOperator::And: return EmitBinaryAnd(E);
   case BinaryOperator::Xor: return EmitBinaryXor(E);
   case BinaryOperator::Or : return EmitBinaryOr(E);
   case BinaryOperator::LAnd: return EmitBinaryLAnd(E);
   case BinaryOperator::LOr: return EmitBinaryLOr(E);
-
+  case BinaryOperator::LT:
+    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_ULT,
+                             llvm::ICmpInst::ICMP_SLT,
+                             llvm::FCmpInst::FCMP_OLT);
+  case BinaryOperator::GT:
+    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_UGT,
+                             llvm::ICmpInst::ICMP_SGT,
+                             llvm::FCmpInst::FCMP_OGT);
+  case BinaryOperator::LE:
+    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_ULE,
+                             llvm::ICmpInst::ICMP_SLE,
+                             llvm::FCmpInst::FCMP_OLE);
+  case BinaryOperator::GE:
+    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_UGE,
+                             llvm::ICmpInst::ICMP_SGE,
+                             llvm::FCmpInst::FCMP_OGE);
+  case BinaryOperator::EQ:
+    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_EQ,
+                             llvm::ICmpInst::ICMP_EQ,
+                             llvm::FCmpInst::FCMP_OEQ);
+  case BinaryOperator::NE:
+    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_NE,
+                             llvm::ICmpInst::ICMP_NE, 
+                             llvm::FCmpInst::FCMP_UNE);
   case BinaryOperator::Assign: return EmitBinaryAssign(E);
     // FIXME: Assignment.
   case BinaryOperator::Comma: return EmitBinaryComma(E);
@@ -771,23 +788,26 @@ RValue CodeGenFunction::EmitBinaryShr(const BinaryOperator *E) {
     return RValue::get(Builder.CreateAShr(LHS, RHS, "shr"));
 }
 
-RValue CodeGenFunction::EmitBinaryEquality(const BinaryOperator *E) {
+RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
+                                          unsigned UICmpOpc, unsigned SICmpOpc,
+                                          unsigned FCmpOpc) {
   RValue LHS, RHS;
   EmitUsualArithmeticConversions(E, LHS, RHS);
 
   llvm::Value *Result;
   if (LHS.isScalar()) {
     if (LHS.getVal()->getType()->isFloatingPoint()) {
-      if (E->getOpcode() == BinaryOperator::EQ)
-        Result = Builder.CreateFCmpOEQ(LHS.getVal(), RHS.getVal(), "eq");
-      else
-        Result = Builder.CreateFCmpUNE(LHS.getVal(), RHS.getVal(), "ne");
+      Result = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
+                                  LHS.getVal(), RHS.getVal(), "cmp");
+    } else if (E->getLHS()->getType()->isUnsignedIntegerType()) {
+      // FIXME: This check isn't right for "unsigned short < int" where ushort
+      // promotes to int and does a signed compare.
+      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
+                                  LHS.getVal(), RHS.getVal(), "cmp");
     } else {
-      // Otherwise, it is an integer or pointer comparison.
-      if (E->getOpcode() == BinaryOperator::EQ)
-        Result = Builder.CreateICmpEQ(LHS.getVal(), RHS.getVal(), "eq");
-      else
-        Result = Builder.CreateICmpNE(LHS.getVal(), RHS.getVal(), "ne");
+      // Signed integers and pointers.
+      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)SICmpOpc,
+                                  LHS.getVal(), RHS.getVal(), "cmp");
     }
   } else {
     // Struct/union/complex
