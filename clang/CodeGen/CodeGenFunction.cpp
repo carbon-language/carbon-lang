@@ -47,14 +47,11 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy, FD->getLocation());
   LLVMPointerWidth = Target.getPointerWidth(FD->getLocation());
   
-  const llvm::FunctionType *Ty = 
-    cast<llvm::FunctionType>(ConvertType(FD->getType(), FD->getLocation()));
-  
-  // FIXME: param attributes for sext/zext etc.
-  
+  CurFn = cast<llvm::Function>(CGM.GetAddrOfGlobalDecl(FD));
   CurFuncDecl = FD;
-  CurFn = new llvm::Function(Ty, llvm::Function::ExternalLinkage,
-                             FD->getName(), &CGM.getModule());
+  
+  // TODO: Set up linkage and many other things.
+  assert(CurFn->isDeclaration() && "Function already has body?");
   
   llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
   
@@ -77,10 +74,10 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   // Emit a return for code that falls off the end.
   // FIXME: if this is C++ main, this should return 0.
-  if (Ty->getReturnType() == llvm::Type::VoidTy)
+  if (CurFn->getReturnType() == llvm::Type::VoidTy)
     Builder.CreateRetVoid();
   else
-    Builder.CreateRet(llvm::UndefValue::get(Ty->getReturnType()));
+    Builder.CreateRet(llvm::UndefValue::get(CurFn->getReturnType()));
   
   // Verify that the function is well formed.
   assert(!verifyFunction(*CurFn));

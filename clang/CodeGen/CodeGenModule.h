@@ -15,6 +15,7 @@
 #define CODEGEN_CODEGENMODULE_H
 
 #include "CodeGenTypes.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
   class Module;
@@ -35,13 +36,15 @@ class CodeGenModule {
   llvm::Module &TheModule;
   CodeGenTypes Types;
 
-  //llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
+  llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
 public:
   CodeGenModule(ASTContext &C, llvm::Module &M);
   
   ASTContext &getContext() const { return Context; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
+  
+  llvm::Constant *GetAddrOfGlobalDecl(const Decl *D);
   
   void EmitFunction(FunctionDecl *FD);
   

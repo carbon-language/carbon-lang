@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CodeGenModule.h"
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -261,6 +262,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     llvm::Value *V = LocalDeclMap[D];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
     return LValue::getAddr(V);
+  } else if (isa<FunctionDecl>(D) || isa<FileVarDecl>(D)) {
+    return LValue::getAddr(CGM.GetAddrOfGlobalDecl(D));
   }
   assert(0 && "Unimp declref");
 }
