@@ -351,7 +351,7 @@ namespace {
     // For a given block, calculate the generated expressions, temporaries,
     // and the AVAIL_OUT set
     void cleanup();
-    void elimination();
+    void elimination(bool& changed_function);
     
     void val_insert(std::set<Value*>& s, Value* v);
     void val_replace(std::set<Value*>& s, Value* v);
@@ -656,7 +656,7 @@ void GVNPRE::dump(const std::set<Value*>& s) const {
   DOUT << "}\n\n";
 }
 
-void GVNPRE::elimination() {
+void GVNPRE::elimination(bool& changed_function) {
   DOUT << "\n\nPhase 3: Elimination\n\n";
   
   std::vector<std::pair<Instruction*, Value*> > replace;
@@ -693,6 +693,7 @@ void GVNPRE::elimination() {
     std::pair<Instruction*, Value*> rep = replace.back();
     replace.pop_back();
     rep.first->replaceAllUsesWith(rep.second);
+    changed_function = true;
   }
     
   for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
@@ -716,6 +717,8 @@ bool GVNPRE::runOnFunction(Function &F) {
   availableOut.clear();
   anticipatedIn.clear();
   invokeDep.clear();
+  
+  bool changed_function = false;
 
   std::map<BasicBlock*, std::set<Value*> > generatedExpressions;
   std::map<BasicBlock*, std::set<PHINode*> > generatedPhis;
@@ -798,7 +801,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   // If function has no exit blocks, only perform GVN
   PostDominatorTree &PDT = getAnalysis<PostDominatorTree>();
   if (PDT[&F.getEntryBlock()] == 0) {
-    elimination();
+    elimination(changed_function);
     cleanup();
     
     return true;
@@ -1049,6 +1052,8 @@ bool GVNPRE::runOnFunction(Function &F) {
                                              C->getName()+".gvnpre",
                                              (*PI)->getTerminator());
                   
+                  changed_function = true;
+                  
                   VN.add(newVal, VN.lookup(U));
                   
                   std::set<Value*>& predAvail = availableOut[*PI];
@@ -1075,6 +1080,8 @@ bool GVNPRE::runOnFunction(Function &F) {
                 
                 p->addIncoming(avail[*PI], *PI);
               }
+              
+              changed_function = true;
               
               VN.add(p, VN.lookup(e));
               DOUT << "Creating value: " << std::hex << p << std::dec << "\n";
@@ -1106,10 +1113,10 @@ bool GVNPRE::runOnFunction(Function &F) {
   }
   
   // Phase 3: Eliminate
-  elimination();
+  elimination(changed_function);
   
   // Phase 4: Cleanup
   cleanup();
   
-  return true;
+  return changed_function;
 }
