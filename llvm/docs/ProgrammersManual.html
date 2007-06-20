@@ -1886,19 +1886,16 @@ ReplaceInstWithValue, ReplaceInstWithInst -->
 
 <div class="doc_text">
 
-<p>Deleting a global variable from a module is similar to deleting an 
-instruction. First, you must have a pointer to the global variable that you wish
- to delete.  Second, you must have a pointer to the module the global variable 
- belongs to. You use the pointer to the module to get its list of global 
- variables and then use the erase function to remove your global variable. 
+<p>Deleting a global variable from a module is just as easy as deleting an 
+Instruction. First, you must have a pointer to the global variable that you wish
+ to delete.  You use this pointer to erase it from its parent, the module.
  For example:</p>
 
 <div class="doc_code">
 <pre>
 <a href="#GlobalVariable">GlobalVariable</a> *GV = .. ;
-<a href="#Module">Module</a> *M = GV-&gt;getParent();
 
-M-&gt;getGlobaleList().erase(GV);
+GV-&gt;eraseFromParent();
 </pre>
 </div>
 
