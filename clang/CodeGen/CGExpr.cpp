@@ -645,6 +645,9 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Shl: return EmitBinaryShl(E);
   case BinaryOperator::Shr: return EmitBinaryShr(E);
     
+  case BinaryOperator::EQ:
+  case BinaryOperator::NE:  return EmitBinaryEquality(E);
+    
     // FIXME: relational
     
   case BinaryOperator::And: return EmitBinaryAnd(E);
@@ -768,6 +771,33 @@ RValue CodeGenFunction::EmitBinaryShr(const BinaryOperator *E) {
     return RValue::get(Builder.CreateAShr(LHS, RHS, "shr"));
 }
 
+RValue CodeGenFunction::EmitBinaryEquality(const BinaryOperator *E) {
+  RValue LHS, RHS;
+  EmitUsualArithmeticConversions(E, LHS, RHS);
+
+  llvm::Value *Result;
+  if (LHS.isScalar()) {
+    if (LHS.getVal()->getType()->isFloatingPoint()) {
+      if (E->getOpcode() == BinaryOperator::EQ)
+        Result = Builder.CreateFCmpOEQ(LHS.getVal(), RHS.getVal(), "eq");
+      else
+        Result = Builder.CreateFCmpUNE(LHS.getVal(), RHS.getVal(), "ne");
+    } else {
+      // Otherwise, it is an integer or pointer comparison.
+      if (E->getOpcode() == BinaryOperator::EQ)
+        Result = Builder.CreateICmpEQ(LHS.getVal(), RHS.getVal(), "eq");
+      else
+        Result = Builder.CreateICmpNE(LHS.getVal(), RHS.getVal(), "ne");
+    }
+  } else {
+    // Struct/union/complex
+    assert(0 && "Aggregate comparisons not implemented yet!");
+  }
+  
+  // ZExt result to int.
+  return RValue::get(Builder.CreateZExt(Result, LLVMIntTy, "cmp.ext"));
+}
+
 RValue CodeGenFunction::EmitBinaryAnd(const BinaryOperator *E) {
   RValue LHS, RHS;
   EmitUsualArithmeticConversions(E, LHS, RHS);
@@ -868,7 +898,6 @@ RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
   // Return the converted RHS.
   return RHS;
 }
-
 
 RValue CodeGenFunction::EmitBinaryComma(const BinaryOperator *E) {
   EmitExpr(E->getLHS());

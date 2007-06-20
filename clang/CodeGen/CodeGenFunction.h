@@ -274,6 +274,7 @@ public:
   RValue EmitBinaryShr(const BinaryOperator *E);
   
   // FIXME: relational
+  RValue EmitBinaryEquality(const BinaryOperator *E);
   
   RValue EmitBinaryAnd(const BinaryOperator *E);
   RValue EmitBinaryXor(const BinaryOperator *E);
