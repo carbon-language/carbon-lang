@@ -16,3 +16,5 @@ cond_true:		; preds = %entry
 UnifiedReturnBlock:		; preds = %entry
 	ret void
 }
+
+declare i32 @bar(...)

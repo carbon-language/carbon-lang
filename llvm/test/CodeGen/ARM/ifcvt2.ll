@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxlt | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxlt | wc -l | grep 1
 ; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxgt | wc -l | grep 1
 ; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxge | wc -l | grep 1
 
