@@ -140,19 +140,8 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 
   // Okay, update dominator sets. The blocks that dominate the new one are the
   // blocks that dominate TIBB plus the new block itself.
-  if (DT) {
-    DomTreeNode *OPNode = DT->getNode(OldPred);
-    DomTreeNode *IDomNode = OPNode->getIDom();
-    BasicBlock* idom = IDomNode->getBlock();
-    DT->addNewBlock(NewBB, idom);
-
-    // Additionally, NewBB replaces OldPred as the immediate dominator of blocks
-    Function *F = Header->getParent();
-    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
-      if (DT->getIDomBlock(I) == OldPred) {
-        DT->changeImmediateDominator(I, NewBB);
-      }
-  }
+  if (DT)
+    DT->splitBlock(NewBB);
 
   // Okay, now we need to adjust the PHI nodes and any branches from within the
   // region to go to the new header block instead of the old header block.

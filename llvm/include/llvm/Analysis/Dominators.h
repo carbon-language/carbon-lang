@@ -302,6 +302,11 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
+
+  /// splitBlock
+  /// BB is split and now it has one successor. Update dominator tree to
+  /// reflect this change.
+  void splitBlock(BasicBlock *BB);
 private:
   void calculate(Function& F);
   DomTreeNode *getNodeForBlock(BasicBlock *BB);
@@ -586,6 +591,11 @@ public:
     AU.setPreservesAll();
     AU.addRequired<DominatorTree>();
   }
+
+  /// splitBlock
+  /// BB is split and now it has one successor. Update dominace frontier to
+  /// reflect this change.
+  void splitBlock(BasicBlock *BB);
 
 private:
   const DomSetType &calculate(const DominatorTree &DT,
