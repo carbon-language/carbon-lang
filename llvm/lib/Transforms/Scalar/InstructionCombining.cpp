@@ -5131,12 +5131,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   if (!ICI.isEquality() && DivIsSigned != ICI.isSignedPredicate())
     return 0;
   if (DivRHS->isZero())
-    return 0; // Don't hack on div by zero
-
-  // Initialize the variables that will indicate the nature of the
-  // range check.
-  bool LoOverflow = false, HiOverflow = false;
-  ConstantInt *LoBound = 0, *HiBound = 0;
+    return 0; // The ProdOV computation fails on divide by zero.
 
   // Compute Prod = CI * DivRHS. We are essentially solving an equation
   // of form X/C1=C2. We solve for X by multiplying C1 (DivRHS) and 
@@ -5151,87 +5146,108 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                  ConstantExpr::getUDiv(Prod, DivRHS)) != CmpRHS;
 
   // Get the ICmp opcode
-  ICmpInst::Predicate predicate = ICI.getPredicate();
+  ICmpInst::Predicate Pred = ICI.getPredicate();
 
+  // Figure out the interval that is being checked.  For example, a comparison
+  // like "X /u 5 == 0" is really checking that X is in the interval [0, 5). 
+  // Compute this interval based on the constants involved and the signedness of
+  // the compare/divide.  This computes a half-open interval, keeping track of
+  // whether either value in the interval overflows.  After analysis each
+  // overflow variable is set to 0 if it's corresponding bound variable is valid
+  // -1 if overflowed off the bottom end, or +1 if overflowed off the top end.
+  int LoOverflow = 0, HiOverflow = 0;
+  ConstantInt *LoBound = 0, *HiBound = 0;
+  
+  
   if (!DivIsSigned) {  // udiv
+    // e.g. X/5 op 3  --> [15, 20)
     LoBound = Prod;
-    LoOverflow = ProdOV;
-    HiOverflow = ProdOV || AddWithOverflow(HiBound, LoBound, DivRHS, false);
+    HiOverflow = LoOverflow = ProdOV;
+    if (!HiOverflow)
+      HiOverflow = AddWithOverflow(HiBound, LoBound, DivRHS, false);
   } else if (DivRHS->getValue().isPositive()) { // Divisor is > 0.
     if (CmpRHSV == 0) {       // (X / pos) op 0
-      // Can't overflow.
+      // Can't overflow.  e.g.  X/2 op 0 --> [-1, 2)
       LoBound = cast<ConstantInt>(ConstantExpr::getNeg(SubOne(DivRHS)));
       HiBound = DivRHS;
     } else if (CmpRHSV.isPositive()) {   // (X / pos) op pos
-      LoBound = Prod;
-      LoOverflow = ProdOV;
-      HiOverflow = ProdOV || AddWithOverflow(HiBound, Prod, DivRHS, true);
+      LoBound = Prod;     // e.g.   X/5 op 3 --> [15, 20)
+      HiOverflow = LoOverflow = ProdOV;
+      if (!HiOverflow)
+        HiOverflow = AddWithOverflow(HiBound, Prod, DivRHS, true);
     } else {                       // (X / pos) op neg
+      // e.g. X/5 op -3  --> [-15-4, -15+1) --> [-19, -14)
       Constant *DivRHSH = ConstantExpr::getNeg(SubOne(DivRHS));
       LoOverflow = AddWithOverflow(LoBound, Prod,
-                                   cast<ConstantInt>(DivRHSH), true);
+                                   cast<ConstantInt>(DivRHSH), true) ? -1 : 0;
       HiBound = AddOne(Prod);
-      HiOverflow = ProdOV;
+      HiOverflow = ProdOV ? -1 : 0;
     }
   } else {                         // Divisor is < 0.
     if (CmpRHSV == 0) {       // (X / neg) op 0
+      // e.g. X/-5 op 0  --> [-4, 5)
       LoBound = AddOne(DivRHS);
       HiBound = cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
-      if (HiBound == DivRHS)
-        return 0;               // - INTMIN = INTMIN
+      if (HiBound == DivRHS) {     // -INTMIN = INTMIN
+        HiOverflow = 1;            // [INTMIN+1, overflow)
+        HiBound = 0;               // e.g. X/INTMIN = 0 --> X > INTMIN
+      }
     } else if (CmpRHSV.isPositive()) {   // (X / neg) op pos
-      HiOverflow = LoOverflow = ProdOV;
+      // e.g. X/-5 op 3  --> [-19, -14)
+      HiOverflow = LoOverflow = ProdOV ? -1 : 0;
       if (!LoOverflow)
-        LoOverflow = AddWithOverflow(LoBound, Prod, AddOne(DivRHS),
-                                     true);
+        LoOverflow = AddWithOverflow(LoBound, Prod, AddOne(DivRHS), true) ?-1:0;
       HiBound = AddOne(Prod);
     } else {                       // (X / neg) op neg
+      // e.g. X/-5 op -3  --> [15, 20)
       LoBound = Prod;
-      LoOverflow = HiOverflow = ProdOV;
+      LoOverflow = HiOverflow = ProdOV ? 1 : 0;
       HiBound = Subtract(Prod, DivRHS);
     }
     
-    // Dividing by a negate swaps the condition.
-    predicate = ICmpInst::getSwappedPredicate(predicate);
+    // Dividing by a negative swaps the condition.  LT <-> GT
+    Pred = ICmpInst::getSwappedPredicate(Pred);
   }
 
   Value *X = DivI->getOperand(0);
-  switch (predicate) {
+  switch (Pred) {
   default: assert(0 && "Unhandled icmp opcode!");
   case ICmpInst::ICMP_EQ:
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse());
     else if (HiOverflow)
-      return new ICmpInst(DivIsSigned ?  ICmpInst::ICMP_SGE : 
+      return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE : 
                           ICmpInst::ICMP_UGE, X, LoBound);
     else if (LoOverflow)
       return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT : 
                           ICmpInst::ICMP_ULT, X, HiBound);
     else
-      return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, 
-                             true, ICI);
+      return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, true, ICI);
   case ICmpInst::ICMP_NE:
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, ConstantInt::getTrue());
     else if (HiOverflow)
-      return new ICmpInst(DivIsSigned ?  ICmpInst::ICMP_SLT : 
+      return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SLT : 
                           ICmpInst::ICMP_ULT, X, LoBound);
     else if (LoOverflow)
       return new ICmpInst(DivIsSigned ? ICmpInst::ICMP_SGE : 
                           ICmpInst::ICMP_UGE, X, HiBound);
     else
-      return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, 
-                             false, ICI);
+      return InsertRangeTest(X, LoBound, HiBound, DivIsSigned, false, ICI);
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_SLT:
-    if (LoOverflow)
+    if (LoOverflow == +1)   // Low bound is greater than input range.
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue());
+    if (LoOverflow == -1)   // Low bound is less than input range.
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse());
-    return new ICmpInst(predicate, X, LoBound);
+    return new ICmpInst(Pred, X, LoBound);
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_SGT:
-    if (HiOverflow)
+    if (HiOverflow == +1)       // High bound greater than input range.
       return ReplaceInstUsesWith(ICI, ConstantInt::getFalse());
-    if (predicate == ICmpInst::ICMP_UGT)
+    else if (HiOverflow == -1)  // High bound less than input range.
+      return ReplaceInstUsesWith(ICI, ConstantInt::getTrue());
+    if (Pred == ICmpInst::ICMP_UGT)
       return new ICmpInst(ICmpInst::ICMP_UGE, X, HiBound);
     else
       return new ICmpInst(ICmpInst::ICMP_SGE, X, HiBound);
