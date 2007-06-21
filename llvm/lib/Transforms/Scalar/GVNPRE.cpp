@@ -887,13 +887,9 @@ bool GVNPRE::buildsets_anticin(BasicBlock* BB,
     // However, for opaques, such as constants within PHI nodes, it is
     // possible that they have not yet received a number.  Make sure they do
     // so now.
-    uint32_t valNum = 0;
-    if (isa<BinaryOperator>(*I) || isa<CmpInst>(*I))
-      valNum = VN.lookup(*I);
-    else
-      valNum = VN.lookup_or_add(*I);
-    if (find_leader(anticIn, valNum) == 0)
-      val_insert(anticIn, *I);
+    if (!isa<BinaryOperator>(*I) && !isa<CmpInst>(*I))
+      VN.lookup_or_add(*I);
+    val_insert(anticIn, *I);
   }
       
   clean(anticIn);
