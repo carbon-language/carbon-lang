@@ -54,9 +54,8 @@ bool SmallPtrSetImpl::erase(void *Ptr) {
     for (void **APtr = SmallArray, **E = SmallArray+NumElements;
          APtr != E; ++APtr)
       if (*APtr == Ptr) {
-        // If it is in the set, move everything over, replacing this element.
-        memmove(APtr, APtr+1, sizeof(void*)*(E-APtr-1));
-        // Clear the end element.
+        // If it is in the set, replace this element.
+        *APtr = E[-1];
         E[-1] = getEmptyMarker();
         --NumElements;
         return true;
@@ -151,7 +150,9 @@ SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
   if (that.isSmall()) {
     CurArraySize = that.CurArraySize;
     CurArray = &SmallArray[0];
-    memcpy(CurArray, that.CurArray, sizeof(void*)*CurArraySize);
+    // Copy the entire contents of the array, including the -1's and the null
+    // terminator.
+    memcpy(CurArray, that.CurArray, sizeof(void*)*(CurArraySize+1));
   } else {
     CurArraySize = that.NumElements < 64 ? 128 : that.NumElements*2;
     CurArray = new void*[CurArraySize+1];
