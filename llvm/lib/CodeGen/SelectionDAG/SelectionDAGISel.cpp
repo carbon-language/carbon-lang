@@ -290,19 +290,19 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
       if (PN->use_empty()) continue;
       
       MVT::ValueType VT = TLI.getValueType(PN->getType());
-      unsigned NumElements;
+      unsigned NumRegisters;
       if (VT != MVT::Vector)
-        NumElements = TLI.getNumElements(VT);
+        NumRegisters = TLI.getNumRegisters(VT);
       else {
         MVT::ValueType VT1,VT2;
-        NumElements = 
+        NumRegisters = 
           TLI.getVectorTypeBreakdown(cast<VectorType>(PN->getType()),
                                      VT1, VT2);
       }
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
       const TargetInstrInfo *TII = TLI.getTargetMachine().getInstrInfo();
-      for (unsigned i = 0; i != NumElements; ++i)
+      for (unsigned i = 0; i != NumRegisters; ++i)
         BuildMI(MBB, TII->get(TargetInstrInfo::PHI), PHIReg+i);
     }
   }
@@ -343,7 +343,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
 
   // The common case is that we will only create one register for this
   // value.  If we have that case, create and return the virtual register.
-  unsigned NV = TLI.getNumElements(VT);
+  unsigned NV = TLI.getNumRegisters(VT);
   if (NV == 1) {
     // If we are promoting this value, pick the next largest supported type.
     MVT::ValueType PromotedType = TLI.getTypeToTransformTo(VT);
@@ -750,7 +750,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       // Source must be expanded.  This input value is actually coming from the
       // register pair InReg and InReg+1.
       MVT::ValueType DestVT = TLI.getTypeToExpandTo(VT);
-      unsigned NumVals = TLI.getNumElements(VT);
+      unsigned NumVals = TLI.getNumRegisters(VT);
       N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
       if (NumVals == 1)
         N = DAG.getNode(ISD::BIT_CONVERT, VT, N);
@@ -3185,7 +3185,7 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
 
   unsigned NumRegs = 1;
   if (OpInfo.ConstraintVT != MVT::Other)
-    NumRegs = TLI.getNumElements(OpInfo.ConstraintVT);
+    NumRegs = TLI.getNumRegisters(OpInfo.ConstraintVT);
   MVT::ValueType RegVT;
   MVT::ValueType ValueVT = OpInfo.ConstraintVT;
   
@@ -3831,7 +3831,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // integers.  Figure out what the destination type is and how many small
         // integers it turns into.
         MVT::ValueType NVT = getTypeToExpandTo(VT);
-        unsigned NumVals = getNumElements(VT);
+        unsigned NumVals = getNumRegisters(VT);
         for (unsigned i = 0; i != NumVals; ++i) {
           RetVals.push_back(NVT);
           // if it isn't first piece, alignment must be 1
@@ -4088,7 +4088,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
         MVT::ValueType NVT = getTypeToExpandTo(VT);
-        unsigned NumVals = getNumElements(VT);
+        unsigned NumVals = getNumRegisters(VT);
         for (unsigned i = 0; i != NumVals; ++i)
           RetTys.push_back(NVT);
       } else {
@@ -4507,7 +4507,7 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
     return DAG.getCopyToReg(getRoot(), Reg, Op);
   } else  {
     DestVT = TLI.getTypeToExpandTo(SrcVT);
-    unsigned NumVals = TLI.getNumElements(SrcVT);
+    unsigned NumVals = TLI.getNumRegisters(SrcVT);
     if (NumVals == 1)
       return DAG.getCopyToReg(getRoot(), Reg,
                               DAG.getNode(ISD::BIT_CONVERT, DestVT, Op));
@@ -4695,16 +4695,16 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       // Remember that this register needs to added to the machine PHI node as
       // the input for this MBB.
       MVT::ValueType VT = TLI.getValueType(PN->getType());
-      unsigned NumElements;
+      unsigned NumRegisters;
       if (VT != MVT::Vector)
-        NumElements = TLI.getNumElements(VT);
+        NumRegisters = TLI.getNumRegisters(VT);
       else {
         MVT::ValueType VT1,VT2;
-        NumElements = 
+        NumRegisters = 
           TLI.getVectorTypeBreakdown(cast<VectorType>(PN->getType()),
                                      VT1, VT2);
       }
-      for (unsigned i = 0, e = NumElements; i != e; ++i)
+      for (unsigned i = 0, e = NumRegisters; i != e; ++i)
         PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
     }
   }

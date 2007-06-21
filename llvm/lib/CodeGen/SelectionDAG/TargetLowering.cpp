@@ -216,7 +216,7 @@ void TargetLowering::computeRegisterProperties() {
 
   // Everything defaults to one.
   for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i)
-    NumElementsForVT[i] = 1;
+    NumRegistersForVT[i] = 1;
 
   // Find the largest integer register class.
   unsigned LargestIntReg = MVT::i128;
@@ -227,12 +227,12 @@ void TargetLowering::computeRegisterProperties() {
   // many registers to represent as the previous ValueType.
   unsigned ExpandedReg = LargestIntReg; ++LargestIntReg;
   for (++ExpandedReg; MVT::isInteger((MVT::ValueType)ExpandedReg);++ExpandedReg)
-    NumElementsForVT[ExpandedReg] = 2*NumElementsForVT[ExpandedReg-1];
+    NumRegistersForVT[ExpandedReg] = 2*NumRegistersForVT[ExpandedReg-1];
 
   // Inspect all of the ValueType's possible, deciding how to process them.
   for (unsigned IntReg = MVT::i1; IntReg <= MVT::i128; ++IntReg)
     // If we are expanding this type, expand it!
-    if (getNumElements((MVT::ValueType)IntReg) != 1)
+    if (getNumRegisters((MVT::ValueType)IntReg) != 1)
       SetValueTypeAction((MVT::ValueType)IntReg, Expand, *this, TransformToType,
                          ValueTypeActions);
     else if (!isTypeLegal((MVT::ValueType)IntReg))
@@ -250,7 +250,7 @@ void TargetLowering::computeRegisterProperties() {
   if (isTypeLegal(MVT::f64))
     TransformToType[MVT::f64] = MVT::f64;  
   else {
-    NumElementsForVT[MVT::f64] = NumElementsForVT[MVT::i64];
+    NumRegistersForVT[MVT::f64] = NumRegistersForVT[MVT::i64];
     SetValueTypeAction(MVT::f64, Expand, *this, TransformToType,
                        ValueTypeActions);
   }
@@ -260,7 +260,7 @@ void TargetLowering::computeRegisterProperties() {
     SetValueTypeAction(MVT::f32, Promote, *this, TransformToType,
                        ValueTypeActions);
   else {
-    NumElementsForVT[MVT::f32] = NumElementsForVT[MVT::i32];
+    NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
     SetValueTypeAction(MVT::f32, Expand, *this, TransformToType,
                        ValueTypeActions);
   }

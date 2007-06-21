@@ -347,12 +347,12 @@ public:
     return VT == MVT::iPTR ? PointerTy : VT;
   }
 
-  /// getNumElements - Return the number of registers that this ValueType will
+  /// getNumRegisters - Return the number of registers that this ValueType will
   /// eventually require.  This is one for any types promoted to live in larger
   /// registers, but may be more than one for types (like i64) that are split
   /// into pieces.
-  unsigned getNumElements(MVT::ValueType VT) const {
-    return NumElementsForVT[VT];
+  unsigned getNumRegisters(MVT::ValueType VT) const {
+    return NumRegistersForVT[VT];
   }
   
   /// hasTargetDAGCombine - If true, the target has custom DAG combine
@@ -1035,7 +1035,7 @@ private:
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
   TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
-  unsigned char NumElementsForVT[MVT::LAST_VALUETYPE];
+  unsigned char NumRegistersForVT[MVT::LAST_VALUETYPE];
 
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this
