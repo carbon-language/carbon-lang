@@ -243,10 +243,10 @@ void TargetLowering::computeRegisterProperties() {
     else
       TransformToType[(MVT::ValueType)IntReg] = (MVT::ValueType)IntReg;
 
-  // If the target does not have native F64 support, expand it to I64. We will
+  // If the target does not have native f64 support, expand it to i64. We will
   // be generating soft float library calls. If the target does not have native
-  // support for F32, promote it to F64 if it is legal. Otherwise, expand it to
-  // I32.
+  // support for f32, promote it to f64 if it is legal. Otherwise, expand it to
+  // i32.
   if (isTypeLegal(MVT::f64))
     TransformToType[MVT::f64] = MVT::f64;  
   else {

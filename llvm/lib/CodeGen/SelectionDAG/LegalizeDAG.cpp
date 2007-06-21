@@ -5649,8 +5649,8 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
 
 
 /// PackVectorOp - Given an operand of MVT::Vector type, convert it into the
-/// equivalent operation that returns a scalar (e.g. F32) or packed value
-/// (e.g. MVT::V4F32).  When this is called, we know that PackedVT is the right
+/// equivalent operation that returns a scalar (e.g. MVT::f32) or packed value
+/// (e.g. MVT::v4f32).  When this is called, we know that PackedVT is the right
 /// type for the result.
 SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op, 
                                              MVT::ValueType NewVT) {
