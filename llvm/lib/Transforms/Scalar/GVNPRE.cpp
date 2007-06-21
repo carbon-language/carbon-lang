@@ -42,7 +42,9 @@ using namespace llvm;
 //                         ValueTable Class
 //===----------------------------------------------------------------------===//
 
-/// This class holds the mapping between values and value numbers.
+/// This class holds the mapping between values and value numbers.  It is used
+/// as an efficient mechanism to determine the expression-wise equivalence of
+/// two values.
 
 namespace {
   class VISIBILITY_HIDDEN ValueTable {
@@ -89,6 +91,8 @@ namespace {
     
       Expression::ExpressionOpcode getOpcode(BinaryOperator* BO);
       Expression::ExpressionOpcode getOpcode(CmpInst* C);
+      Expression create_expression(BinaryOperator* BO);
+      Expression create_expression(CmpInst* C);
     public:
       ValueTable() { nextValueNumber = 1; }
       uint32_t lookup_or_add(Value* V);
@@ -100,14 +104,15 @@ namespace {
       
       }
       std::set<Value*>& getMaximalValues() { return maximalValues; }
-      Expression create_expression(BinaryOperator* BO);
-      Expression create_expression(CmpInst* C);
       void erase(Value* v);
   };
 }
 
+//===----------------------------------------------------------------------===//
+//                     ValueTable Internal Functions
+//===----------------------------------------------------------------------===//
 ValueTable::Expression::ExpressionOpcode 
-                                     ValueTable::getOpcode(BinaryOperator* BO) {
+                             ValueTable::getOpcode(BinaryOperator* BO) {
   switch(BO->getOpcode()) {
     case Instruction::Add:
       return Expression::ADD;
@@ -215,6 +220,36 @@ ValueTable::Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   }
 }
 
+ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
+  Expression e;
+    
+  e.leftVN = lookup_or_add(BO->getOperand(0));
+  e.rightVN = lookup_or_add(BO->getOperand(1));
+  e.opcode = getOpcode(BO);
+  
+  maximalExpressions.insert(e);
+  
+  return e;
+}
+
+ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
+  Expression e;
+    
+  e.leftVN = lookup_or_add(C->getOperand(0));
+  e.rightVN = lookup_or_add(C->getOperand(1));
+  e.opcode = getOpcode(C);
+  
+  maximalExpressions.insert(e);
+  
+  return e;
+}
+
+//===----------------------------------------------------------------------===//
+//                     ValueTable External Functions
+//===----------------------------------------------------------------------===//
+
+/// lookup_or_add - Returns the value number for the specified value, assigning
+/// it a new number if it did not have one before.
 uint32_t ValueTable::lookup_or_add(Value* V) {
   maximalValues.insert(V);
 
@@ -255,6 +290,8 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   }
 }
 
+/// lookup - Returns the value number of the specified value. Fails if
+/// the value has not yet been numbered.
 uint32_t ValueTable::lookup(Value* V) {
   DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
   if (VI != valueNumbering.end())
@@ -265,6 +302,8 @@ uint32_t ValueTable::lookup(Value* V) {
   return 0;
 }
 
+/// add - Add the specified value with the given value number, removing
+/// its old number, if any
 void ValueTable::add(Value* V, uint32_t num) {
   DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
   if (VI != valueNumbering.end())
@@ -272,30 +311,7 @@ void ValueTable::add(Value* V, uint32_t num) {
   valueNumbering.insert(std::make_pair(V, num));
 }
 
-ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
-  Expression e;
-    
-  e.leftVN = lookup_or_add(BO->getOperand(0));
-  e.rightVN = lookup_or_add(BO->getOperand(1));
-  e.opcode = getOpcode(BO);
-  
-  maximalExpressions.insert(e);
-  
-  return e;
-}
-
-ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
-  Expression e;
-    
-  e.leftVN = lookup_or_add(C->getOperand(0));
-  e.rightVN = lookup_or_add(C->getOperand(1));
-  e.opcode = getOpcode(C);
-  
-  maximalExpressions.insert(e);
-  
-  return e;
-}
-
+/// clear - Remove all entries from the ValueTable and the maximal sets
 void ValueTable::clear() {
   valueNumbering.clear();
   expressionNumbering.clear();
@@ -304,6 +320,7 @@ void ValueTable::clear() {
   nextValueNumber = 1;
 }
 
+/// erase - Remove a value from the value numbering and maximal sets
 void ValueTable::erase(Value* V) {
   maximalValues.erase(V);
   valueNumbering.erase(V);
@@ -312,6 +329,10 @@ void ValueTable::erase(Value* V) {
   else if (CmpInst* C = dyn_cast<CmpInst>(V))
     maximalExpressions.erase(create_expression(C));
 }
+
+//===----------------------------------------------------------------------===//
+//                         GVNPRE Pass
+//===----------------------------------------------------------------------===//
 
 namespace {
 
@@ -328,6 +349,7 @@ namespace {
     std::map<BasicBlock*, std::set<Value*> > availableOut;
     std::map<BasicBlock*, std::set<Value*> > anticipatedIn;
     
+    // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTree>();
@@ -382,6 +404,7 @@ namespace {
   
 }
 
+// createGVNPREPass - The public interface to this file...
 FunctionPass *llvm::createGVNPREPass() { return new GVNPRE(); }
 
 RegisterPass<GVNPRE> X("gvnpre",
@@ -392,6 +415,9 @@ STATISTIC(NumInsertedVals, "Number of values inserted");
 STATISTIC(NumInsertedPhis, "Number of PHI nodes inserted");
 STATISTIC(NumEliminated, "Number of redundant instructions eliminated");
 
+/// find_leader - Given a set and a value number, return the first
+/// element of the set with that value number, or 0 if no such element
+/// is present
 Value* GVNPRE::find_leader(std::set<Value*>& vals, uint32_t v) {
   for (std::set<Value*>::iterator I = vals.begin(), E = vals.end();
        I != E; ++I)
@@ -401,6 +427,8 @@ Value* GVNPRE::find_leader(std::set<Value*>& vals, uint32_t v) {
   return 0;
 }
 
+/// val_insert - Insert a value into a set only if there is not a value
+/// with the same value number already in the set
 void GVNPRE::val_insert(std::set<Value*>& s, Value* v) {
   uint32_t num = VN.lookup(v);
   Value* leader = find_leader(s, num);
@@ -408,6 +436,8 @@ void GVNPRE::val_insert(std::set<Value*>& s, Value* v) {
     s.insert(v);
 }
 
+/// val_replace - Insert a value into a set, replacing any values already in
+/// the set that have the same value number
 void GVNPRE::val_replace(std::set<Value*>& s, Value* v) {
   uint32_t num = VN.lookup(v);
   Value* leader = find_leader(s, num);
@@ -418,6 +448,10 @@ void GVNPRE::val_replace(std::set<Value*>& s, Value* v) {
   s.insert(v);
 }
 
+/// phi_translate - Given a value, its parent block, and a predecessor of its
+/// parent, translate the value into legal for the predecessor block.  This 
+/// means translating its operands (and recursively, their operands) through
+/// any phi nodes in the parent into values available in the predecessor
 Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
@@ -511,6 +545,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   return V;
 }
 
+/// phi_translate_set - Perform phi translation on every element of a set
 void GVNPRE::phi_translate_set(std::set<Value*>& anticIn,
                               BasicBlock* pred, BasicBlock* succ,
                               std::set<Value*>& out) {
@@ -522,6 +557,9 @@ void GVNPRE::phi_translate_set(std::set<Value*>& anticIn,
   }
 }
 
+/// dependsOnInvoke - Test if a value has an phi node as an operand, any of 
+/// whose inputs is an invoke instruction.  If this is true, we cannot safely
+/// PRE the instruction or anything that depends on it.
 bool GVNPRE::dependsOnInvoke(Value* V) {
   if (PHINode* p = dyn_cast<PHINode>(V)) {
     for (PHINode::op_iterator I = p->op_begin(), E = p->op_end(); I != E; ++I)
@@ -533,7 +571,9 @@ bool GVNPRE::dependsOnInvoke(Value* V) {
   }
 }
 
-// Remove all expressions whose operands are not themselves in the set
+/// clean - Remove all non-opaque values from the set whose operands are not
+/// themselves in the set, as well as all values that depend on invokes (see 
+/// above)
 void GVNPRE::clean(std::set<Value*>& set) {
   std::vector<Value*> worklist;
   topo_sort(set, worklist);
@@ -595,8 +635,9 @@ void GVNPRE::clean(std::set<Value*>& set) {
   }
 }
 
-void GVNPRE::topo_sort(std::set<Value*>& set,
-                       std::vector<Value*>& vec) {
+/// topo_sort - Given a set of values, sort them by topological
+/// order into the provided vector.
+void GVNPRE::topo_sort(std::set<Value*>& set, std::vector<Value*>& vec) {
   std::set<Value*> toErase;
   for (std::set<Value*>::iterator I = set.begin(), E = set.end();
        I != E; ++I) {
@@ -665,7 +706,7 @@ void GVNPRE::topo_sort(std::set<Value*>& set,
   }
 }
 
-
+/// dump - Dump a set of values to standard error
 void GVNPRE::dump(const std::set<Value*>& s) const {
   DOUT << "{ ";
   for (std::set<Value*>::iterator I = s.begin(), E = s.end();
@@ -675,6 +716,9 @@ void GVNPRE::dump(const std::set<Value*>& s) const {
   DOUT << "}\n\n";
 }
 
+/// elimination - Phase 3 of the main algorithm.  Perform full redundancy 
+/// elimination by walking the dominator tree and removing any instruction that 
+/// is dominated by another instruction with the same value number.
 bool GVNPRE::elimination() {
   DOUT << "\n\nPhase 3: Elimination\n\n";
   
@@ -724,7 +768,8 @@ bool GVNPRE::elimination() {
   return changed_function;
 }
 
-
+/// cleanup - Delete any extraneous values that were created to represent
+/// expressions without leaders.
 void GVNPRE::cleanup() {
   while (!createdExpressions.empty()) {
     Instruction* I = createdExpressions.back();
@@ -734,6 +779,8 @@ void GVNPRE::cleanup() {
   }
 }
 
+/// buildsets_availout - When calculating availability, handle an instruction
+/// by inserting it into the appropriate sets
 void GVNPRE::buildsets_availout(BasicBlock::iterator I,
                                 std::set<Value*>& currAvail,
                                 std::set<PHINode*>& currPhis,
@@ -780,6 +827,8 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     val_insert(currAvail, I);
 }
 
+/// buildsets_anticout - When walking the postdom tree, calculate the ANTIC_OUT
+/// set as a function of the ANTIC_IN set of the block's predecessors
 void GVNPRE::buildsets_anticout(BasicBlock* BB,
                                 std::set<Value*>& anticOut,
                                 std::set<BasicBlock*>& visited) {
@@ -809,6 +858,9 @@ void GVNPRE::buildsets_anticout(BasicBlock* BB,
   }
 }
 
+/// buildsets_anticin - Walk the postdom tree, calculating ANTIC_OUT for
+/// each block.  ANTIC_IN is then a function of ANTIC_OUT and the GEN
+/// sets populated in buildsets_availout
 bool GVNPRE::buildsets_anticin(BasicBlock* BB,
                                std::set<Value*>& anticOut,
                                std::set<Value*>& currExps,
@@ -853,6 +905,8 @@ bool GVNPRE::buildsets_anticin(BasicBlock* BB,
     return false;
 }
 
+/// buildsets - Phase 1 of the main algorithm.  Construct the AVAIL_OUT
+/// and the ANTIC_IN sets.
 unsigned GVNPRE::buildsets(Function& F) {
   std::map<BasicBlock*, std::set<Value*> > generatedExpressions;
   std::map<BasicBlock*, std::set<PHINode*> > generatedPhis;
@@ -926,38 +980,15 @@ unsigned GVNPRE::buildsets(Function& F) {
     iterations++;
   }
   
-  DOUT << "Iterations: " << iterations << "\n";
-  
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    DOUT << "Name: " << I->getName().c_str() << "\n";
-    
-    DOUT << "TMP_GEN: ";
-    dump(generatedTemporaries[I]);
-    DOUT << "\n";
-    
-    DOUT << "EXP_GEN: ";
-    dump(generatedExpressions[I]);
-    DOUT << "\n";
-    
-    DOUT << "ANTIC_IN: ";
-    dump(anticipatedIn[I]);
-    DOUT << "\n";
-    
-    DOUT << "AVAIL_OUT: ";
-    dump(availableOut[I]);
-    DOUT << "\n";
-  }
-  
   return 0; // No bail, no changes
 }
 
+/// insertion_pre - When a partial redundancy has been identified, eliminate it
+/// by inserting appropriate values into the predecessors and a phi node in
+/// the main block
 void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                            std::map<BasicBlock*, Value*>& avail,
                            std::set<Value*>& new_set) {
-  DOUT << "Processing Value: ";
-  DEBUG(e->dump());
-  DOUT << "\n\n";
-            
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     Value* e2 = avail[*PI];
     if (!find_leader(availableOut[*PI], VN.lookup(e2))) {
@@ -991,9 +1022,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                   
       std::set<Value*>& predAvail = availableOut[*PI];
       val_replace(predAvail, newVal);
-                  
-      DOUT << "Creating value: " << std::hex << newVal << std::dec << "\n";
-                  
+            
       std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
       if (av != avail.end())
         avail.erase(av);
@@ -1013,24 +1042,14 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
   }
 
   VN.add(p, VN.lookup(e));
-  DOUT << "Creating value: " << std::hex << p << std::dec << "\n";
-              
   val_replace(availableOut[BB], p);
-              
-  DOUT << "Preds After Processing: ";
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    DEBUG((*PI)->dump());
-  DOUT << "\n\n";
-              
-  DOUT << "Merge Block After Processing: ";
-  DEBUG(BB->dump());
-  DOUT << "\n\n";
-              
   new_set.insert(p);
               
   ++NumInsertedPhis;
 }
 
+/// insertion_mergepoint - When walking the dom tree, check at each merge
+/// block for the possibility of a partial redundancy.  If present, eliminate it
 unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
                                       df_iterator<DomTreeNode*> D,
                                       std::set<Value*>& new_set) {
@@ -1089,6 +1108,9 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
   return retval;
 }
 
+/// insert - Phase 2 of the main algorithm.  Walk the dominator tree looking for
+/// merge points.  When one is found, check for a partial redundancy.  If one is
+/// present, eliminate it.  Repeat this walk until no changes are made.
 bool GVNPRE::insertion(Function& F) {
   bool changed_function = false;
 
@@ -1143,7 +1165,11 @@ bool GVNPRE::insertion(Function& F) {
   return changed_function;
 }
 
+// GVNPRE::runOnFunction - This is the main transformation entry point for a
+// function.
+//
 bool GVNPRE::runOnFunction(Function &F) {
+  // Clean out global sets from any previous functions
   VN.clear();
   createdExpressions.clear();
   availableOut.clear();
@@ -1152,20 +1178,26 @@ bool GVNPRE::runOnFunction(Function &F) {
   bool changed_function = false;
   
   // Phase 1: BuildSets
+  // This phase calculates the AVAIL_OUT and ANTIC_IN sets
+  // NOTE: If full postdom information is no available, this will bail
+  // early, performing GVN but not PRE
   unsigned bail = buildsets(F);
   //If a bail occurred, terminate early
   if (bail != 0)
     return (bail == 2);
   
   // Phase 2: Insert
-  DOUT<< "\nPhase 2: Insertion\n";
-  
+  // This phase inserts values to make partially redundant values
+  // fully redundant
   changed_function |= insertion(F);
   
   // Phase 3: Eliminate
+  // This phase performs trivial full redundancy elimination
   changed_function |= elimination();
   
   // Phase 4: Cleanup
+  // This phase cleans up values that were created solely
+  // as leaders for expressions
   cleanup();
   
   return changed_function;
