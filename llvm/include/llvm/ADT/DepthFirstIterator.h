@@ -35,6 +35,7 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <vector>
 #include <set>
 
@@ -58,8 +59,8 @@ public:
 
 
 // Generic Depth First Iterator
-template<class GraphT, class SetType =
-                            std::set<typename GraphTraits<GraphT>::NodeType*>,
+template<class GraphT,
+class SetType = llvm::SmallPtrSet<typename GraphTraits<GraphT>::NodeType*, 8>,
          bool ExtStorage = false, class GT = GraphTraits<GraphT> >
 class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
                     public df_iterator_storage<SetType, ExtStorage> {
@@ -189,7 +190,8 @@ df_ext_iterator<T, SetTy> df_ext_end(T G, SetTy &S) {
 
 
 // Provide global definitions of inverse depth first iterators...
-template <class T, class SetTy = std::set<typename GraphTraits<T>::NodeType*>,
+template <class T,
+  class SetTy = llvm::SmallPtrSet<typename GraphTraits<T>::NodeType*, 8>,
           bool External = false>
 struct idf_iterator : public df_iterator<Inverse<T>, SetTy, External> {
   idf_iterator(const df_iterator<Inverse<T>, SetTy, External> &V)
