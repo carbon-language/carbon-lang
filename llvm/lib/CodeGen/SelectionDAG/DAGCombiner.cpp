@@ -801,6 +801,55 @@ SDOperand combineShlAddConstant(SDOperand N0, SDOperand N1, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+static
+SDOperand combineSelectAndUse(SDNode *N, SDOperand Slct, SDOperand OtherOp,
+                              SelectionDAG &DAG) {
+  MVT::ValueType VT = N->getValueType(0);
+  unsigned Opc = N->getOpcode();
+  bool isSlctCC = Slct.getOpcode() == ISD::SELECT_CC;
+  SDOperand LHS = isSlctCC ? Slct.getOperand(2) : Slct.getOperand(1);
+  SDOperand RHS = isSlctCC ? Slct.getOperand(3) : Slct.getOperand(2);
+  ISD::CondCode CC = ISD::SETCC_INVALID;
+  if (isSlctCC)
+    CC = cast<CondCodeSDNode>(Slct.getOperand(4))->get();
+  else {
+    SDOperand CCOp = Slct.getOperand(0);
+    if (CCOp.getOpcode() == ISD::SETCC)
+      CC = cast<CondCodeSDNode>(CCOp.getOperand(2))->get();
+  }
+
+  bool DoXform = false;
+  bool InvCC = false;
+  assert ((Opc == ISD::ADD || (Opc == ISD::SUB && Slct == N->getOperand(1))) &&
+          "Bad input!");
+  if (LHS.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(LHS)->isNullValue())
+    DoXform = true;
+  else if (CC != ISD::SETCC_INVALID &&
+           RHS.getOpcode() == ISD::Constant &&
+           cast<ConstantSDNode>(RHS)->isNullValue()) {
+    std::swap(LHS, RHS);
+    bool isInt = MVT::isInteger(isSlctCC ? Slct.getOperand(0).getValueType()
+                                : Slct.getOperand(0).getOperand(0).getValueType());
+    CC = ISD::getSetCCInverse(CC, isInt);
+    DoXform = true;
+    InvCC = true;
+  }
+
+  if (DoXform) {
+    SDOperand Result = DAG.getNode(Opc, VT, OtherOp, RHS);
+    if (isSlctCC)
+      return DAG.getSelectCC(OtherOp, Result,
+                             Slct.getOperand(0), Slct.getOperand(1), CC);
+    SDOperand CCOp = Slct.getOperand(0);
+    if (InvCC)
+      CCOp = DAG.getSetCC(CCOp.getValueType(), CCOp.getOperand(0),
+                          CCOp.getOperand(1), CC);
+    return DAG.getNode(ISD::SELECT, VT, CCOp, OtherOp, Result);
+  }
+  return SDOperand();
+}
+
 SDOperand DAGCombiner::visitADD(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
@@ -866,6 +915,16 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   }
   if (N1.getOpcode() == ISD::SHL && N1.Val->hasOneUse()) {
     SDOperand Result = combineShlAddConstant(N1, N0, DAG);
+    if (Result.Val) return Result;
+  }
+
+  // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
+  if (N0.getOpcode() == ISD::SELECT && N0.Val->hasOneUse()) {
+    SDOperand Result = combineSelectAndUse(N, N0, N1, DAG);
+    if (Result.Val) return Result;
+  }
+  if (N1.getOpcode() == ISD::SELECT && N1.Val->hasOneUse()) {
+    SDOperand Result = combineSelectAndUse(N, N1, N0, DAG);
     if (Result.Val) return Result;
   }
 
@@ -960,6 +1019,11 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   // fold (A+B)-B -> A
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(1) == N1)
     return N0.getOperand(0);
+  // fold (sub x, (select cc, 0, c)) -> (select cc, x, (sub, x, c))
+  if (N1.getOpcode() == ISD::SELECT && N1.Val->hasOneUse()) {
+    SDOperand Result = combineSelectAndUse(N, N1, N0, DAG);
+    if (Result.Val) return Result;
+  }
   return SDOperand();
 }
 
