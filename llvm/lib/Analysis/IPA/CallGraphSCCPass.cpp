@@ -178,7 +178,7 @@ void CallGraphSCCPass::assignPassManager(PMStack &PMS,
     // [3] Assign manager to manage this new manager. This may create
     // and push new managers into PMS
     Pass *P = dynamic_cast<Pass *>(CGP);
-    P->assignPassManager(PMS);
+    TPM->schedulePass(P);
 
     // [4] Push new manager into PMS
     PMS.push(CGP);
