@@ -266,10 +266,10 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     RetVal = EmitConversion(RetVal, RV->getType(), FnRetTy);
     
     if (RetVal.isScalar()) {
-      // FIXME: Pass return loc in!
       Builder.CreateRet(RetVal.getVal());
     } else {
-      assert(0 && "FIXME: aggregate return unimp");
+      llvm::Value *SRetPtr = CurFn->arg_begin();
+      EmitStoreThroughLValue(RetVal, LValue::getAddr(SRetPtr), FnRetTy);
     }
   }
   

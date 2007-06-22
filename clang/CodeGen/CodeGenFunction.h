@@ -153,6 +153,10 @@ public:
   
   const llvm::Type *ConvertType(QualType T);
   
+  /// hasAggregateLLVMType - Return true if the specified AST type will map into
+  /// an aggregate LLVM type or is void.
+  static bool hasAggregateLLVMType(QualType T);
+  
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
   /// label maps to.
   llvm::BasicBlock *getBasicBlockForLabel(const LabelStmt *S);

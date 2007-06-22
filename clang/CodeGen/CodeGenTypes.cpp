@@ -108,6 +108,13 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // FIXME: Convert argument types.
     bool isVarArg;
     std::vector<const llvm::Type*> ArgTys;
+    
+    // Struct return passes the struct byref.
+    if (!ResultType->isFirstClassType()) {
+      ArgTys.push_back(llvm::PointerType::get(ResultType));
+      ResultType = llvm::Type::VoidTy;
+    }
+    
     if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(&FP)) {
       DecodeArgumentTypes(*FTP, ArgTys);
       isVarArg = FTP->isVariadic();

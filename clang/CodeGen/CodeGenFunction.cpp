@@ -43,6 +43,11 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }
 
+bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
+  return !T->isRealType() && !T->isPointerType();
+}
+
+
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy);
   LLVMPointerWidth = Target.getPointerWidth(SourceLocation());
@@ -62,8 +67,15 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
   AllocaInsertPt = Builder.CreateBitCast(Undef,llvm::Type::Int32Ty, "allocapt");
   
-  // Emit allocs for param decls. 
+  // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
+  
+  // Name the struct return argument.
+  if (hasAggregateLLVMType(FD->getResultType())) {
+    AI->setName("agg.result");
+    ++AI;
+  }
+  
   for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i, ++AI) {
     assert(AI != CurFn->arg_end() && "Argument mismatch!");
     EmitParmDecl(*FD->getParamDecl(i), AI);
