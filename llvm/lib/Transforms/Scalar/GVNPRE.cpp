@@ -650,71 +650,54 @@ void GVNPRE::clean(SmallPtrSet<Value*, 32>& set) {
 /// topo_sort - Given a set of values, sort them by topological
 /// order into the provided vector.
 void GVNPRE::topo_sort(SmallPtrSet<Value*, 32>& set, std::vector<Value*>& vec) {
-  SmallPtrSet<Value*, 32> toErase;
-  for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-       I != E; ++I) {
-    if (BinaryOperator* BO = dyn_cast<BinaryOperator>(*I))
-      for (SmallPtrSet<Value*, 32>::iterator SI = set.begin(); SI != E; ++SI) {
-        if (VN.lookup(BO->getOperand(0)) == VN.lookup(*SI) ||
-            VN.lookup(BO->getOperand(1)) == VN.lookup(*SI)) {
-          toErase.insert(*SI);
-        }
-      }
-    else if (CmpInst* C = dyn_cast<CmpInst>(*I))
-      for (SmallPtrSet<Value*, 32>::iterator SI = set.begin(); SI != E; ++SI) {
-        if (VN.lookup(C->getOperand(0)) == VN.lookup(*SI) ||
-            VN.lookup(C->getOperand(1)) == VN.lookup(*SI)) {
-          toErase.insert(*SI);
-        }
-      }
-  }
-  
-  std::vector<Value*> Q;
-  for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-       I != E; ++I) {
-    if (toErase.count(*I) == 0)
-      Q.push_back(*I);
-  }
-  
   SmallPtrSet<Value*, 32> visited;
-  while (!Q.empty()) {
-    Value* e = Q.back();
+  std::vector<Value*> stack;
+  for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+       I != E; ++I) {
+    if (visited.count(*I) == 0)
+      stack.push_back(*I);
+    
+    while (!stack.empty()) {
+      Value* e = stack.back();
   
-    if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
-      Value* l = find_leader(set, VN.lookup(BO->getOperand(0)));
-      Value* r = find_leader(set, VN.lookup(BO->getOperand(1)));
+      if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
+        Value* l = find_leader(set, VN.lookup(BO->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(BO->getOperand(1)));
+    
+        if (l != 0 && isa<Instruction>(l) &&
+            visited.count(l) == 0)
+          stack.push_back(l);
+        else if (r != 0 && isa<Instruction>(r) &&
+                 visited.count(r) == 0)
+          stack.push_back(r);
+        else {
+          vec.push_back(e);
+          visited.insert(e);
+          stack.pop_back();
+        }
+      } else if (CmpInst* C = dyn_cast<CmpInst>(e)) {
+        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
       
-      if (l != 0 && isa<Instruction>(l) &&
-          visited.count(l) == 0)
-        Q.push_back(l);
-      else if (r != 0 && isa<Instruction>(r) &&
-               visited.count(r) == 0)
-        Q.push_back(r);
-      else {
-        vec.push_back(e);
+        if (l != 0 && isa<Instruction>(l) &&
+            visited.count(l) == 0)
+          stack.push_back(l);
+        else if (r != 0 && isa<Instruction>(r) &&
+                 visited.count(r) == 0)
+          stack.push_back(r);
+        else {
+          vec.push_back(e);
+          visited.insert(e);
+          stack.pop_back();
+        }
+      } else {
         visited.insert(e);
-        Q.pop_back();
-      }
-    } else if (CmpInst* C = dyn_cast<CmpInst>(e)) {
-      Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
-      Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
-      
-      if (l != 0 && isa<Instruction>(l) &&
-          visited.count(l) == 0)
-        Q.push_back(l);
-      else if (r != 0 && isa<Instruction>(r) &&
-               visited.count(r) == 0)
-        Q.push_back(r);
-      else {
         vec.push_back(e);
-        visited.insert(e);
-        Q.pop_back();
+        stack.pop_back();
       }
-    } else {
-      visited.insert(e);
-      vec.push_back(e);
-      Q.pop_back();
     }
+    
+    stack.clear();
   }
 }
 
