@@ -263,7 +263,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
       Builder.CreateRet(llvm::UndefValue::get(RetTy));
   } else {
     // Do implicit conversions to the returned type.
-    RetVal = EmitConversion(RetVal, RV->getType(), FnRetTy, SourceLocation());
+    RetVal = EmitConversion(RetVal, RV->getType(), FnRetTy);
     
     if (RetVal.isScalar()) {
       // FIXME: Pass return loc in!

@@ -39,13 +39,13 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
 }
 
 
-const llvm::Type *CodeGenFunction::ConvertType(QualType T, SourceLocation Loc) {
-  return CGM.getTypes().ConvertType(T, Loc);
+const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
+  return CGM.getTypes().ConvertType(T);
 }
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
-  LLVMIntTy = ConvertType(getContext().IntTy, FD->getLocation());
-  LLVMPointerWidth = Target.getPointerWidth(FD->getLocation());
+  LLVMIntTy = ConvertType(getContext().IntTy);
+  LLVMPointerWidth = Target.getPointerWidth(SourceLocation());
   
   CurFn = cast<llvm::Function>(CGM.GetAddrOfGlobalDecl(FD));
   CurFuncDecl = FD;

@@ -27,7 +27,6 @@ namespace clang {
   class Decl;
   class FunctionDecl;
   class TargetInfo;
-  class SourceLocation;
   class QualType;
   class FunctionTypeProto;
   
@@ -152,7 +151,7 @@ public:
 
   void GenerateCode(const FunctionDecl *FD);
   
-  const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
+  const llvm::Type *ConvertType(QualType T);
   
   /// getBasicBlockForLabel - Return the LLVM basicblock that the specified
   /// label maps to.
@@ -172,8 +171,7 @@ public:
   
   /// EmitConversion - Convert the value specied by Val, whose type is ValTy, to
   /// the type specified by DstTy, following the rules of C99 6.3.
-  RValue EmitConversion(RValue Val, QualType ValTy, QualType DstTy,
-                        SourceLocation Loc);
+  RValue EmitConversion(RValue Val, QualType ValTy, QualType DstTy);
   
   /// ConvertScalarValueToBool - Convert the specified expression value to a
   /// boolean (i1) truth value.  This is equivalent to "Val == 0".

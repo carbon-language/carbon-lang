@@ -26,7 +26,7 @@ void TargetInfoImpl::ANCHOR() {} // out-of-line virtual method for class.
 /// non-portable.
 void TargetInfo::DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind) {
   NonPortable = true;
-  if (Diag) Diag->Report(Loc, DiagKind);
+  if (Diag && Loc.isValid()) Diag->Report(Loc, DiagKind);
 }
 
 /// GetTargetDefineMap - Get the set of target #defines in an associative

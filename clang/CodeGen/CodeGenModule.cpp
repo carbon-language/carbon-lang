@@ -33,7 +33,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const Decl *D) {
   if (Entry) return Entry;
   
   QualType ASTTy = cast<ValueDecl>(D)->getType();
-  const llvm::Type *Ty = getTypes().ConvertType(ASTTy, D->getLocation());
+  const llvm::Type *Ty = getTypes().ConvertType(ASTTy);
   if (isa<FunctionDecl>(D)) {
     const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
     // FIXME: param attributes for sext/zext etc.

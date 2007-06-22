@@ -72,7 +72,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
     // A normal fixed sized variable becomes an alloca in the entry block.
-    const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
+    const llvm::Type *LTy = ConvertType(Ty);
     // TODO: Alignment
     DeclPtr = new llvm::AllocaInst(LTy, 0, D.getName(), AllocaInsertPt);
   } else {
@@ -97,7 +97,7 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
     DeclPtr = Arg;
   } else {
     // A fixed sized first class variable becomes an alloca in the entry block.
-    const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
+    const llvm::Type *LTy = ConvertType(Ty);
     if (LTy->isFirstClassType()) {
       // TODO: Alignment
       DeclPtr = new llvm::AllocaInst(LTy, 0, std::string(D.getName())+".addr",

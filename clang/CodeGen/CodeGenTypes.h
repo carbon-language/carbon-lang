@@ -23,7 +23,6 @@ namespace llvm {
 namespace clang {
   class TargetInfo;
   class QualType;
-  class SourceLocation;
   class FunctionTypeProto;
   
 namespace CodeGen {
@@ -38,10 +37,9 @@ public:
   
   TargetInfo &getTarget() const { return Target; }
   
-  const llvm::Type *ConvertType(QualType T, SourceLocation Loc);
+  const llvm::Type *ConvertType(QualType T);
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                           std::vector<const llvm::Type*> &ArgTys,
-                           SourceLocation Loc);
+                           std::vector<const llvm::Type*> &ArgTys);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

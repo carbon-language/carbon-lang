@@ -21,7 +21,7 @@ using namespace CodeGen;
 
 
 /// ConvertType - Convert the specified type to its LLVM form.
-const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
+const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // FIXME: Cache these, move the CodeGenModule, expand, etc.
   const clang::Type &Ty = *T.getCanonicalType();
   
@@ -35,7 +35,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
     case BuiltinType::Char_U:
     case BuiltinType::SChar:
     case BuiltinType::UChar:
-      return llvm::IntegerType::get(Target.getCharWidth(Loc));
+      return llvm::IntegerType::get(Target.getCharWidth(SourceLocation()));
 
     case BuiltinType::Bool:
       // FIXME: This is very strange.  We want scalars to be i1, but in memory
@@ -44,19 +44,19 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
       
     case BuiltinType::Short:
     case BuiltinType::UShort:
-      return llvm::IntegerType::get(Target.getShortWidth(Loc));
+      return llvm::IntegerType::get(Target.getShortWidth(SourceLocation()));
       
     case BuiltinType::Int:
     case BuiltinType::UInt:
-      return llvm::IntegerType::get(Target.getIntWidth(Loc));
+      return llvm::IntegerType::get(Target.getIntWidth(SourceLocation()));
 
     case BuiltinType::Long:
     case BuiltinType::ULong:
-      return llvm::IntegerType::get(Target.getLongWidth(Loc));
+      return llvm::IntegerType::get(Target.getLongWidth(SourceLocation()));
 
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
-      return llvm::IntegerType::get(Target.getLongLongWidth(Loc));
+      return llvm::IntegerType::get(Target.getLongLongWidth(SourceLocation()));
       
     case BuiltinType::Float:      return llvm::Type::FloatTy;
     case BuiltinType::Double:     return llvm::Type::DoubleTy;
@@ -83,11 +83,11 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
   }
   case Type::Pointer: {
     const PointerType &P = cast<PointerType>(Ty);
-    return llvm::PointerType::get(ConvertType(P.getPointeeType(), Loc));
+    return llvm::PointerType::get(ConvertType(P.getPointeeType())); 
   }
   case Type::Reference: {
     const ReferenceType &R = cast<ReferenceType>(Ty);
-    return llvm::PointerType::get(ConvertType(R.getReferenceeType(), Loc));
+    return llvm::PointerType::get(ConvertType(R.getReferenceeType()));
   }
     
   case Type::Array: {
@@ -98,7 +98,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
     
     llvm::APSInt Size(32);
     if (A.getSize() && A.getSize()->isIntegerConstantExpr(Size)) {
-      const llvm::Type *EltTy = ConvertType(A.getElementType(), Loc);
+      const llvm::Type *EltTy = ConvertType(A.getElementType());
       return llvm::ArrayType::get(EltTy, Size.getZExtValue());
     } else {
       assert(0 && "FIXME: VLAs not implemented yet!");
@@ -112,13 +112,13 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
     if (FP.getResultType()->isVoidType())
       ResultType = llvm::Type::VoidTy;    // Result of function uses llvm void.
     else
-      ResultType = ConvertType(FP.getResultType(), Loc);
+      ResultType = ConvertType(FP.getResultType());
     
     // FIXME: Convert argument types.
     bool isVarArg;
     std::vector<const llvm::Type*> ArgTys;
     if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(&FP)) {
-      DecodeArgumentTypes(*FTP, ArgTys, Loc);
+      DecodeArgumentTypes(*FTP, ArgTys);
       isVarArg = FTP->isVariadic();
     } else {
       isVarArg = true;
@@ -136,10 +136,9 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
 }
 
 void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP, 
-                                       std::vector<const llvm::Type*> &
-                                       ArgTys, SourceLocation Loc) {
+                                       std::vector<const llvm::Type*> &ArgTys) {
   for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i) {
-    const llvm::Type *Ty = ConvertType(FTP.getArgType(i), Loc);
+    const llvm::Type *Ty = ConvertType(FTP.getArgType(i));
     if (Ty->isFirstClassType())
       ArgTys.push_back(Ty);
     else
