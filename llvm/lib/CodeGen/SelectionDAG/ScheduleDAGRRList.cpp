@@ -118,7 +118,7 @@ void ScheduleDAGRRList::Schedule() {
 /// it is not the last use of its first operand, add it to the CommuteSet if
 /// possible. It will be commuted when it is translated to a MI.
 void ScheduleDAGRRList::CommuteNodesToReducePressure() {
-  std::set<SUnit *> OperandSeen;
+  SmallPtrSet<SUnit*, 4> OperandSeen;
   for (unsigned i = Sequence.size()-1; i != 0; --i) {  // Ignore first node.
     SUnit *SU = Sequence[i];
     if (!SU) continue;
@@ -680,13 +680,13 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 
 // FIXME: This is probably too slow!
 static void isReachable(SUnit *SU, SUnit *TargetSU,
-                        std::set<SUnit *> &Visited, bool &Reached) {
+                        SmallPtrSet<SUnit*, 32> &Visited, bool &Reached) {
   if (Reached) return;
   if (SU == TargetSU) {
     Reached = true;
     return;
   }
-  if (!Visited.insert(SU).second) return;
+  if (!Visited.insert(SU)) return;
 
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
        ++I)
@@ -694,7 +694,7 @@ static void isReachable(SUnit *SU, SUnit *TargetSU,
 }
 
 static bool isReachable(SUnit *SU, SUnit *TargetSU) {
-  std::set<SUnit *> Visited;
+  SmallPtrSet<SUnit*, 32> Visited;
   bool Reached = false;
   isReachable(SU, TargetSU, Visited, Reached);
   return Reached;
