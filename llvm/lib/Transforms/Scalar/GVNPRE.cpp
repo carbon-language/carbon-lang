@@ -818,20 +818,20 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     availNumbers.resize(VN.size());
       
     if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue)-1)) {
+      if (!expNumbers.test(VN.lookup(leftValue))) {
         currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue)-1);
+        expNumbers.set(VN.lookup(leftValue));
       }
     
     if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue)-1)) {
+      if (!expNumbers.test(VN.lookup(rightValue))) {
         currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue)-1);
+        expNumbers.set(VN.lookup(rightValue));
       }
     
-    if (!expNumbers.test(VN.lookup(BO)-1)) {
+    if (!expNumbers.test(VN.lookup(BO))) {
       currExps.insert(BO);
-      expNumbers.set(num-1);
+      expNumbers.set(num);
     }
     
   // Handle cmp ops...
@@ -846,19 +846,19 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     availNumbers.resize(VN.size());
     
     if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue)-1)) {
+      if (!expNumbers.test(VN.lookup(leftValue))) {
         currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue)-1);
+        expNumbers.set(VN.lookup(leftValue));
       }
     if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue)-1)) {
+      if (!expNumbers.test(VN.lookup(rightValue))) {
         currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue)-1);
+        expNumbers.set(VN.lookup(rightValue));
       }
     
-    if (!expNumbers.test(VN.lookup(C)-1)) {
+    if (!expNumbers.test(VN.lookup(C))) {
       currExps.insert(C);
-      expNumbers.set(num-1);
+      expNumbers.set(num);
     }
     
   // Handle unsupported ops
@@ -871,9 +871,9 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
   }
     
   if (!I->isTerminator())
-    if (!availNumbers.test(VN.lookup(I)-1)) {
+    if (!availNumbers.test(VN.lookup(I))) {
       currAvail.insert(I);
-      availNumbers.set(VN.lookup(I)-1);
+      availNumbers.set(VN.lookup(I));
     }
 }
 
@@ -921,45 +921,36 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
                                SmallPtrSet<Value*, 32>& currTemps,
                                std::set<BasicBlock*>& visited) {
   SmallPtrSet<Value*, 32>& anticIn = anticipatedIn[BB];
-  SmallPtrSet<Value*, 32> old (anticIn.begin(), anticIn.end());
+  unsigned old = anticIn.size();
       
   bool defer = buildsets_anticout(BB, anticOut, visited);
   if (defer)
     return 0;
-      
-  SmallPtrSet<Value*, 32> S;
-  for (SmallPtrSet<Value*, 32>::iterator I = anticOut.begin(),
-       E = anticOut.end(); I != E; ++I)
-    if (currTemps.count(*I) == 0)
-      S.insert(*I);
   
   anticIn.clear();
   
-  for (SmallPtrSet<Value*, 32>::iterator I = currExps.begin(),
-       E = currExps.end(); I != E; ++I)
-    if (currTemps.count(*I) == 0)
-      anticIn.insert(*I);
-  
   BitVector numbers(VN.size());
-  for (SmallPtrSet<Value*, 32>::iterator I = anticIn.begin(),
-       E = anticIn.end(); I != E; ++I)
-    numbers.set(VN.lookup(*I)-1);
-  for (SmallPtrSet<Value*, 32>::iterator I = S.begin(), E = S.end();
-       I != E; ++I) {
-    // For non-opaque values, we should already have a value numbering.
-    // However, for opaques, such as constants within PHI nodes, it is
-    // possible that they have not yet received a number.  Make sure they do
-    // so now.
-    if (!isa<BinaryOperator>(*I) && !isa<CmpInst>(*I))
-      VN.lookup_or_add(*I);
-    if (!numbers.test(VN.lookup(*I)-1))
-      anticIn.insert(*I);
+  for (SmallPtrSet<Value*, 32>::iterator I = anticOut.begin(),
+       E = anticOut.end(); I != E; ++I) {
+    anticIn.insert(*I);
+    numbers.set(VN.lookup_or_add(*I));
   }
-      
+  for (SmallPtrSet<Value*, 32>::iterator I = currExps.begin(),
+       E = currExps.end(); I != E; ++I) {
+    if (!numbers.test(VN.lookup_or_add(*I))) {
+      anticIn.insert(*I);
+      numbers.set(VN.lookup(*I));
+    }
+  } 
+  
+  for (SmallPtrSet<Value*, 32>::iterator I = currTemps.begin(),
+       E = currTemps.end(); I != E; ++I)
+    anticIn.erase(*I);
+  
   clean(anticIn);
   anticOut.clear();
   
-  if (old.size() != anticIn.size())
+  if (old != anticIn.size())
     return 2;
   else
     return 1;
