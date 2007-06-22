@@ -90,7 +90,7 @@ namespace {
       // see if the missing bits (0x1000) are already known zero if not, the zap
       // isn't okay to do, as it won't clear all the required bits.
       if (BitsToCheck &&
-          !getTargetLowering().MaskedValueIsZero(LHS, BitsToCheck))
+          !CurDAG->MaskedValueIsZero(LHS, BitsToCheck))
         return 0;
       
       return Result;

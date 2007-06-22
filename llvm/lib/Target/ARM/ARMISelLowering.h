@@ -108,6 +108,7 @@ namespace llvm {
                                                 uint64_t Mask,
                                                 uint64_t &KnownZero, 
                                                 uint64_t &KnownOne,
+                                                const SelectionDAG &DAG,
                                                 unsigned Depth) const;
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 

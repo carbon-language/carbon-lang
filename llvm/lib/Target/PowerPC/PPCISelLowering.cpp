@@ -688,10 +688,10 @@ bool PPCTargetLowering::SelectAddressRegReg(SDOperand N, SDOperand &Base,
     // disjoint.
     uint64_t LHSKnownZero, LHSKnownOne;
     uint64_t RHSKnownZero, RHSKnownOne;
-    ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+    DAG.ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
     
     if (LHSKnownZero) {
-      ComputeMaskedBits(N.getOperand(1), ~0U, RHSKnownZero, RHSKnownOne);
+      DAG.ComputeMaskedBits(N.getOperand(1), ~0U, RHSKnownZero, RHSKnownOne);
       // If all of the bits are known zero on the LHS or RHS, the add won't
       // carry.
       if ((LHSKnownZero | RHSKnownZero) == ~0U) {
@@ -742,7 +742,7 @@ bool PPCTargetLowering::SelectAddressRegImm(SDOperand N, SDOperand &Disp,
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
       uint64_t LHSKnownZero, LHSKnownOne;
-      ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+      DAG.ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
       if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
@@ -850,7 +850,7 @@ bool PPCTargetLowering::SelectAddressRegImmShift(SDOperand N, SDOperand &Disp,
       // (for better address arithmetic) if the LHS and RHS of the OR are
       // provably disjoint.
       uint64_t LHSKnownZero, LHSKnownOne;
-      ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
+      DAG.ComputeMaskedBits(N.getOperand(0), ~0U, LHSKnownZero, LHSKnownOne);
       if ((LHSKnownZero|~(unsigned)imm) == ~0U) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
@@ -3235,6 +3235,7 @@ void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                        uint64_t Mask,
                                                        uint64_t &KnownZero, 
                                                        uint64_t &KnownOne,
+                                                       const SelectionDAG &DAG,
                                                        unsigned Depth) const {
   KnownZero = 0;
   KnownOne = 0;

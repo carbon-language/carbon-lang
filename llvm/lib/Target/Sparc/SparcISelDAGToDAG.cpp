@@ -112,6 +112,7 @@ namespace {
                                                 uint64_t Mask,
                                                 uint64_t &KnownZero, 
                                                 uint64_t &KnownOne,
+                                                const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
     
     virtual std::vector<SDOperand>
@@ -261,6 +262,7 @@ void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                          uint64_t Mask,
                                                          uint64_t &KnownZero, 
                                                          uint64_t &KnownOne,
+                                                         const SelectionDAG &DAG,
                                                          unsigned Depth) const {
   uint64_t KnownZero2, KnownOne2;
   KnownZero = KnownOne = 0;   // Don't know anything.
@@ -269,8 +271,10 @@ void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   default: break;
   case SPISD::SELECT_ICC:
   case SPISD::SELECT_FCC:
-    ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
+    DAG.ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne,
+                          Depth+1);
+    DAG.ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero2, KnownOne2,
+                          Depth+1);
     assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
     

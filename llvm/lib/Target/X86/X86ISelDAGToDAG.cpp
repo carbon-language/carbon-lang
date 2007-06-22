@@ -744,7 +744,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
             // On x86-64, the resultant disp must fit in 32-bits.
             isInt32(AM.Disp + CN->getSignExtended()) &&
             // Check to see if the LHS & C is zero.
-            TLI.MaskedValueIsZero(N.getOperand(0), CN->getValue())) {
+            CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getValue())) {
           AM.Disp += CN->getValue();
           return false;
         }

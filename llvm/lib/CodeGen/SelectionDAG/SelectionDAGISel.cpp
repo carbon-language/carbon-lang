@@ -5026,7 +5026,7 @@ bool SelectionDAGISel::CheckAndMask(SDOperand LHS, ConstantSDNode *RHS,
   // Otherwise, the DAG Combiner may have proven that the value coming in is
   // either already zero or is not demanded.  Check for known zero input bits.
   uint64_t NeededMask = DesiredMask & ~ActualMask;
-  if (getTargetLowering().MaskedValueIsZero(LHS, NeededMask))
+  if (CurDAG->MaskedValueIsZero(LHS, NeededMask))
     return true;
   
   // TODO: check to see if missing bits are just not demanded.
@@ -5057,7 +5057,7 @@ bool SelectionDAGISel::CheckOrMask(SDOperand LHS, ConstantSDNode *RHS,
   uint64_t NeededMask = DesiredMask & ~ActualMask;
   
   uint64_t KnownZero, KnownOne;
-  getTargetLowering().ComputeMaskedBits(LHS, NeededMask, KnownZero, KnownOne);
+  CurDAG->ComputeMaskedBits(LHS, NeededMask, KnownZero, KnownOne);
   
   // If all the missing bits in the or are already known to be set, match!
   if ((NeededMask & KnownOne) == NeededMask)

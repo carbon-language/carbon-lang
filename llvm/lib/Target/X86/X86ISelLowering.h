@@ -319,6 +319,7 @@ namespace llvm {
                                                 uint64_t Mask,
                                                 uint64_t &KnownZero, 
                                                 uint64_t &KnownOne,
+                                                const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
     
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);

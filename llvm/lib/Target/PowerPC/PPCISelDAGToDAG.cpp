@@ -424,8 +424,8 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   SDOperand Op1 = N->getOperand(1);
   
   uint64_t LKZ, LKO, RKZ, RKO;
-  TLI.ComputeMaskedBits(Op0, 0xFFFFFFFFULL, LKZ, LKO);
-  TLI.ComputeMaskedBits(Op1, 0xFFFFFFFFULL, RKZ, RKO);
+  CurDAG->ComputeMaskedBits(Op0, 0xFFFFFFFFULL, LKZ, LKO);
+  CurDAG->ComputeMaskedBits(Op1, 0xFFFFFFFFULL, RKZ, RKO);
   
   unsigned TargetMask = LKZ;
   unsigned InsertMask = RKZ;

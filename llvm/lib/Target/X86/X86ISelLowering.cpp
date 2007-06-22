@@ -4506,6 +4506,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                        uint64_t Mask,
                                                        uint64_t &KnownZero,
                                                        uint64_t &KnownOne,
+                                                       const SelectionDAG &DAG,
                                                        unsigned Depth) const {
   unsigned Opc = Op.getOpcode();
   assert((Opc >= ISD::BUILTIN_OP_END ||

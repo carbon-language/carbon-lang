@@ -1449,7 +1449,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       
       // The top bits of the promoted condition are not necessarily zero, ensure
       // that the value is properly zero extended.
-      if (!TLI.MaskedValueIsZero(Tmp2, 
+      if (!DAG.MaskedValueIsZero(Tmp2, 
                                  MVT::getIntVTBitMask(Tmp2.getValueType())^1))
         Tmp2 = DAG.getZeroExtendInReg(Tmp2, MVT::i1);
       break;
@@ -2041,7 +2041,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Promote:
       Tmp1 = PromoteOp(Node->getOperand(0));  // Promote the condition.
       // Make sure the condition is either zero or one.
-      if (!TLI.MaskedValueIsZero(Tmp1,
+      if (!DAG.MaskedValueIsZero(Tmp1,
                                  MVT::getIntVTBitMask(Tmp1.getValueType())^1))
         Tmp1 = DAG.getZeroExtendInReg(Tmp1, MVT::i1);
       break;
@@ -4209,7 +4209,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   // Okay, the shift amount isn't constant.  However, if we can tell that it is
   // >= 32 or < 32, we can still simplify it, without knowing the actual value.
   uint64_t Mask = NVTBits, KnownZero, KnownOne;
-  TLI.ComputeMaskedBits(Amt, Mask, KnownZero, KnownOne);
+  DAG.ComputeMaskedBits(Amt, Mask, KnownZero, KnownOne);
   
   // If we know that the high bit of the shift amount is one, then we can do
   // this as a couple of simple shifts.

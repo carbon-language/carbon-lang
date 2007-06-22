@@ -494,20 +494,6 @@ public:
     bool ShrinkDemandedConstant(SDOperand Op, uint64_t Demanded);
   };
                                                 
-  /// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We
-  /// use this predicate to simplify operations downstream.  Op and Mask are
-  /// known to be the same type.
-  bool MaskedValueIsZero(SDOperand Op, uint64_t Mask, unsigned Depth = 0)
-    const;
-  
-  /// ComputeMaskedBits - Determine which of the bits specified in Mask are
-  /// known to be either zero or one and return them in the KnownZero/KnownOne
-  /// bitsets.  This code only analyzes bits in Mask, in order to short-circuit
-  /// processing.  Targets can implement the computeMaskedBitsForTargetNode 
-  /// method, to allow target nodes to be understood.
-  void ComputeMaskedBits(SDOperand Op, uint64_t Mask, uint64_t &KnownZero,
-                         uint64_t &KnownOne, unsigned Depth = 0) const;
-    
   /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
   /// DemandedMask bits of the result of Op are ever used downstream.  If we can
   /// use this information to simplify Op, create a new simplified DAG node and
@@ -527,15 +513,9 @@ public:
                                               uint64_t Mask,
                                               uint64_t &KnownZero, 
                                               uint64_t &KnownOne,
+                                              const SelectionDAG &DAG,
                                               unsigned Depth = 0) const;
 
-  /// ComputeNumSignBits - Return the number of times the sign bit of the
-  /// register is replicated into the other bits.  We know that at least 1 bit
-  /// is always equal to the sign bit (itself), but other cases can give us
-  /// information.  For example, immediately after an "SRA X, 2", we know that
-  /// the top 3 bits are all equal to each other, so we return 3.
-  unsigned ComputeNumSignBits(SDOperand Op, unsigned Depth = 0) const;
-  
   /// ComputeNumSignBitsForTargetNode - This method can be implemented by
   /// targets that want to expose additional information about sign bits to the
   /// DAG Combiner.

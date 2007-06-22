@@ -1254,9 +1254,8 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand RL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(1),
                              DAG.getConstant(0, MVT::i32));
 
-  const TargetLowering &TL = DAG.getTargetLoweringInfo();
-  unsigned LHSSB = TL.ComputeNumSignBits(Op.getOperand(0));
-  unsigned RHSSB = TL.ComputeNumSignBits(Op.getOperand(1));
+  unsigned LHSSB = DAG.ComputeNumSignBits(Op.getOperand(0));
+  unsigned RHSSB = DAG.ComputeNumSignBits(Op.getOperand(1));
   
   SDOperand Lo, Hi;
   // Figure out how to lower this multiply.
@@ -1265,8 +1264,8 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
     Lo = DAG.getNode(ISD::MUL, MVT::i32, LL, RL);
     Hi = DAG.getNode(ISD::MULHS, MVT::i32, LL, RL);
   } else if (LHSSB == 32 && RHSSB == 32 &&
-             TL.MaskedValueIsZero(Op.getOperand(0), 0xFFFFFFFF00000000ULL) &&
-             TL.MaskedValueIsZero(Op.getOperand(1), 0xFFFFFFFF00000000ULL)) {
+             DAG.MaskedValueIsZero(Op.getOperand(0), 0xFFFFFFFF00000000ULL) &&
+             DAG.MaskedValueIsZero(Op.getOperand(1), 0xFFFFFFFF00000000ULL)) {
     // If the inputs are zero extended, use mulhu.
     Lo = DAG.getNode(ISD::MUL, MVT::i32, LL, RL);
     Hi = DAG.getNode(ISD::MULHU, MVT::i32, LL, RL);
@@ -1757,6 +1756,7 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                        uint64_t Mask,
                                                        uint64_t &KnownZero, 
                                                        uint64_t &KnownOne,
+                                                       const SelectionDAG &DAG,
                                                        unsigned Depth) const {
   KnownZero = 0;
   KnownOne = 0;
@@ -1764,12 +1764,12 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   default: break;
   case ARMISD::CMOV: {
     // Bits are known zero/one if known on the LHS and RHS.
-    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+    DAG.ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
     if (KnownZero == 0 && KnownOne == 0) return;
 
     uint64_t KnownZeroRHS, KnownOneRHS;
-    ComputeMaskedBits(Op.getOperand(1), Mask,
-                      KnownZeroRHS, KnownOneRHS, Depth+1);
+    DAG.ComputeMaskedBits(Op.getOperand(1), Mask,
+                          KnownZeroRHS, KnownOneRHS, Depth+1);
     KnownZero &= KnownZeroRHS;
     KnownOne  &= KnownOneRHS;
     return;
