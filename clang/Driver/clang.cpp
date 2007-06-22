@@ -34,7 +34,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
-#include <iostream>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -491,7 +490,8 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
   const DirectoryEntry *DE = FM.getDirectory(Path);
   if (DE == 0) {
     if (Verbose)
-      std::cerr << "ignoring nonexistent directory \"" << Path << "\"\n";
+      fprintf(stderr, "ignoring nonexistent directory \"%s\"\n",
+              Path.c_str());
     return;
   }
   
@@ -515,8 +515,8 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
     // If this isn't the first time we've seen this dir, remove it.
     if (!SeenDirs.insert(SearchList[i].getDir()).second) {
       if (Verbose)
-        std::cerr << "ignoring duplicate directory \""
-                  << SearchList[i].getDir()->getName() << "\"\n";
+        fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
+                SearchList[i].getDir()->getName());
       SearchList.erase(SearchList.begin()+i);
       --i;
     }
@@ -654,12 +654,12 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
 
   // If verbose, print the list of directories that will be searched.
   if (Verbose) {
-    std::cerr << "#include \"...\" search starts here:\n";
+    fprintf(stderr, "#include \"...\" search starts here:\n");
     unsigned QuotedIdx = IncludeGroup[Quoted].size();
     for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
       if (i == QuotedIdx)
-        std::cerr << "#include <...> search starts here:\n";
-      std::cerr << " " << SearchList[i].getDir()->getName() << "\n";
+        fprintf(stderr, "#include <...> search starts here:\n");
+      fprintf(stderr, " %s\n", SearchList[i].getDir()->getName());
     }
   }
 }
@@ -699,7 +699,7 @@ static void BuildASTs(Preprocessor &PP, unsigned MainFileID) {
     /* keep reading */;
 
   if (Stats) {
-    std::cerr << "\nSTATISTICS:\n";
+    fprintf(stderr, "\nSTATISTICS:\n");
     ASTStreamer_PrintStats(Streamer);
     Context.PrintStats();
     Decl::PrintStats();
@@ -736,21 +736,21 @@ static void PrintFunctionDecl(FunctionDecl *FD) {
   }
   AFT->getResultType().getAsStringInternal(Proto);
 
-  std::cerr << "\n" << Proto;
+  fprintf(stderr, "\n%s", Proto.c_str());
   
   if (FD->getBody()) {
-    std::cerr << " ";
+    fprintf(stderr, " ");
     FD->getBody()->dump();
-    std::cerr << "\n";
+    fprintf(stderr, "\n");
   } else {
-    std::cerr << ";\n";
+    fprintf(stderr, ";\n");
   }
 }
 
 static void PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getName();
   TD->getUnderlyingType().getAsStringInternal(S);
-  std::cerr << "typedef " << S << ";\n";
+  fprintf(stderr, "typedef %s;\n", S.c_str());
 }
 
 static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
@@ -763,12 +763,12 @@ static void PrintASTs(Preprocessor &PP, unsigned MainFileID) {
     } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
       PrintTypeDefDecl(TD);
     } else {
-      std::cerr << "Read top-level variable decl: '" << D->getName() << "'\n";
+      fprintf(stderr, "Read top-level variable decl: '%s'\n", D->getName());
     }
   }
   
   if (Stats) {
-    std::cerr << "\nSTATISTICS:\n";
+    fprintf(stderr, "\nSTATISTICS:\n");
     ASTStreamer_PrintStats(Streamer);
     Context.PrintStats();
   }
@@ -804,14 +804,14 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
     const FileEntry *File = FileMgr.getFile(InFile);
     if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
     if (MainFileID == 0) {
-      std::cerr << "Error reading '" << InFile << "'!\n";
+      fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
       return 0;
     }
   } else {
     llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
     if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
     if (MainFileID == 0) {
-      std::cerr << "Error reading standard input!  Empty?\n";
+      fprintf(stderr, "Error reading standard input!  Empty?\n");
       return 0;
     }
   }
@@ -857,7 +857,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     do {
       PP.Lex(Tok);
       PP.DumpToken(Tok, true);
-      std::cerr << "\n";
+      fprintf(stderr, "\n");
     } while (Tok.getKind() != tok::eof);
     break;
   }
@@ -895,11 +895,11 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
   
   if (Stats) {
-    std::cerr << "\nSTATISTICS FOR '" << InFile << "':\n";
+    fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
     HeaderInfo.PrintStats();
-    std::cerr << "\n";
+    fprintf(stderr, "\n");
   }
   
   HeaderInfo.ClearFileInfo();
@@ -942,7 +942,8 @@ int main(int argc, char **argv) {
   // driver.
   TargetInfo *Target = CreateTargetInfo(Diags);
   if (Target == 0) {
-    std::cerr << "Sorry, don't know what target this is, please use -arch.\n";
+    fprintf(stderr,
+            "Sorry, don't know what target this is, please use -arch.\n");
     return 1;
   }
   
@@ -967,15 +968,14 @@ int main(int argc, char **argv) {
   
   unsigned NumDiagnostics = Diags.getNumDiagnostics();
   if (NumDiagnostics)
-    std::cerr << NumDiagnostics << " diagnostic"
-              << (NumDiagnostics == 1 ? "" : "s")
-              << " generated.\n";
+    fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
+            (NumDiagnostics == 1 ? "" : "s"));
   
   if (Stats) {
     // Printed from high-to-low level.
     SourceMgr.PrintStats();
     FileMgr.PrintStats();
-    std::cerr << "\n";
+    fprintf(stderr, "\n");
   }
   
   return Diags.getNumErrors() != 0;
