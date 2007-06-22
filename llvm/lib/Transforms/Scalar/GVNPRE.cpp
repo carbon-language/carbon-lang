@@ -585,6 +585,7 @@ bool GVNPRE::dependsOnInvoke(Value* V) {
 /// above)
 void GVNPRE::clean(SmallPtrSet<Value*, 32>& set) {
   std::vector<Value*> worklist;
+  worklist.reserve(set.size());
   topo_sort(set, worklist);
   
   for (unsigned i = 0; i < worklist.size(); ++i) {
@@ -1173,6 +1174,7 @@ bool GVNPRE::insertion(Function& F) {
       // If there is more than one predecessor...
       if (pred_begin(BB) != pred_end(BB) && ++pred_begin(BB) != pred_end(BB)) {
         std::vector<Value*> workList;
+        workList.reserve(anticIn.size());
         topo_sort(anticIn, workList);
         
         DOUT << "Merge Block: " << BB->getName() << "\n";
