@@ -179,7 +179,7 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Pointer, Reference, Array, FunctionNoProto, FunctionProto,
+    Builtin, Complex, Pointer, Reference, Array, FunctionNoProto, FunctionProto,
     TypeName, Tagged
   };
 private:
@@ -188,7 +188,7 @@ private:
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
-  TypeClass TC : 3;
+  TypeClass TC : 4;
 protected:
   Type(TypeClass tc, QualType Canonical)
     : CanonicalType(Canonical.isNull() ? QualType(this,0) : Canonical), TC(tc){}
@@ -293,8 +293,8 @@ public:
     Long,
     LongLong,
     
-    Float, Double, LongDouble,
-    FloatComplex, DoubleComplex, LongDoubleComplex
+    Float, Double, LongDouble//,
+//    FloatComplex, DoubleComplex, LongDoubleComplex
   };
 private:
   Kind TypeKind;
@@ -309,6 +309,33 @@ public:
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
 };
+
+/// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
+/// types (_Complex float etc) as well as the GCC integer complex extensions.
+///
+class ComplexType : public Type, public llvm::FoldingSetNode {
+  QualType ElementType;
+  ComplexType(QualType Element, QualType CanonicalPtr) :
+    Type(Complex, CanonicalPtr), ElementType(Element) {
+  }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  QualType getElementType() const { return ElementType; }
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
+  
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getElementType());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Element) {
+    ID.AddPointer(Element.getAsOpaquePtr());
+  }
+  
+  static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
+  static bool classof(const ComplexType *) { return true; }
+};
+
 
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
 ///

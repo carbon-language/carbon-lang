@@ -132,10 +132,39 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(LongDoubleTy,        BuiltinType::LongDouble);
   
   // C99 6.2.5p11.
-  InitBuiltinType(FloatComplexTy,      BuiltinType::FloatComplex);
-  InitBuiltinType(DoubleComplexTy,     BuiltinType::DoubleComplex);
-  InitBuiltinType(LongDoubleComplexTy, BuiltinType::LongDoubleComplex);
+  FloatComplexTy      = getComplexType(FloatTy);
+  DoubleComplexTy     = getComplexType(DoubleTy);
+  LongDoubleComplexTy = getComplexType(LongDoubleTy);
 }
+
+/// getComplexType - Return the uniqued reference to the type for a complex
+/// number with the specified element type.
+QualType ASTContext::getComplexType(QualType T) {
+  // Unique pointers, to guarantee there is only one pointer of a particular
+  // structure.
+  llvm::FoldingSetNodeID ID;
+  ComplexType::Profile(ID, T);
+  
+  void *InsertPos = 0;
+  if (ComplexType *CT = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(CT, 0);
+  
+  // If the pointee type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
+  QualType Canonical;
+  if (!T->isCanonical()) {
+    Canonical = getComplexType(T.getCanonicalType());
+    
+    // Get the new insert position for the node we care about.
+    ComplexType *NewIP = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
+  ComplexType *New = new ComplexType(T, Canonical);
+  Types.push_back(New);
+  ComplexTypes.InsertNode(New, InsertPos);
+  return QualType(New, 0);
+}
+
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
@@ -399,19 +428,16 @@ static int getIntegerRank(QualType t) {
 
 /// getFloatingRank - Return a relative rank for floating point types.
 /// This routine will assert if passed a built-in type that isn't a float.
-static int getFloatingRank(QualType t) {
-  switch (cast<BuiltinType>(t.getCanonicalType())->getKind()) {
-  default:
-    assert(0 && "getFloatingPointRank(): not a floating type");
-  case BuiltinType::Float:
-  case BuiltinType::FloatComplex:
-    return FloatRank;
-  case BuiltinType::Double:
-  case BuiltinType::DoubleComplex:
-    return DoubleRank;
-  case BuiltinType::LongDouble:
-  case BuiltinType::LongDoubleComplex:
-    return LongDoubleRank;
+static int getFloatingRank(QualType T) {
+  T = T.getCanonicalType();
+  if (ComplexType *CT = dyn_cast<ComplexType>(T))
+    return getFloatingRank(CT->getElementType());
+  
+  switch (cast<BuiltinType>(T)->getKind()) {
+  default:  assert(0 && "getFloatingPointRank(): not a floating type");
+  case BuiltinType::Float:      return FloatRank;
+  case BuiltinType::Double:     return DoubleRank;
+  case BuiltinType::LongDouble: return LongDoubleRank;
   }
 }
 
@@ -432,14 +458,10 @@ static int getFloatingRank(QualType t) {
 
 QualType ASTContext::maxComplexType(QualType lt, QualType rt) const {
   switch (std::max(getFloatingRank(lt), getFloatingRank(rt))) {
-  default:
-    assert(0 && "convertRankToComplex(): illegal value for rank");
-  case FloatRank:
-    return FloatComplexTy;
-  case DoubleRank:
-    return DoubleComplexTy;
-  case LongDoubleRank:
-    return LongDoubleComplexTy;
+  default: assert(0 && "convertRankToComplex(): illegal value for rank");
+  case FloatRank:      return FloatComplexTy;
+  case DoubleRank:     return DoubleComplexTy;
+  case LongDoubleRank: return LongDoubleComplexTy;
   }
 }
 

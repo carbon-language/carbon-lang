@@ -252,7 +252,9 @@ bool Type::isUnsignedIntegerType() const {
 bool Type::isFloatingType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Float &&
-           BT->getKind() <= BuiltinType::LongDoubleComplex;
+           BT->getKind() <= BuiltinType::LongDouble;
+  if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
+    return CT->isFloatingType();
   return false;
 }
 
@@ -273,32 +275,27 @@ bool Type::isRealType() const {
 }
 
 bool Type::isComplexType() const {
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::FloatComplex &&
-           BT->getKind() <= BuiltinType::LongDoubleComplex;
-  return false;
+  return isa<ComplexType>(CanonicalType);
 }
 
 bool Type::isArithmeticType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::LongDoubleComplex;
+    return BT->getKind() != BuiltinType::Void;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
-  return false;
+  return isa<ComplexType>(CanonicalType);
 }
 
 bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::LongDoubleComplex;
+    return BT->getKind() != BuiltinType::Void;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
     return false;
   }
-  return CanonicalType->getTypeClass() == Pointer;
+  return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType);
 }
 
 bool Type::isAggregateType() const {
@@ -378,9 +375,6 @@ const char *BuiltinType::getName() const {
   case Float:             return "float";
   case Double:            return "double";
   case LongDouble:        return "long double";
-  case FloatComplex:      return "float _Complex";
-  case DoubleComplex:     return "double _Complex";
-  case LongDoubleComplex: return "long double _Complex";
   }
 }
 
@@ -456,6 +450,11 @@ void BuiltinType::getAsStringInternal(std::string &S) const {
     S = ' ' + S;
     S = getName() + S;
   }
+}
+
+void ComplexType::getAsStringInternal(std::string &S) const {
+  ElementType->getAsStringInternal(S);
+  S = "_Complex " + S;
 }
 
 void PointerType::getAsStringInternal(std::string &S) const {

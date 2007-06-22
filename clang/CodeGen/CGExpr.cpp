@@ -150,17 +150,13 @@ llvm::Value *CodeGenFunction::ConvertScalarValueToBool(RValue Val, QualType Ty){
       Result = Builder.CreateFCmpUNE(Result, Zero, "tobool");
       return Result;
     }
-      
-    case BuiltinType::FloatComplex:
-    case BuiltinType::DoubleComplex:
-    case BuiltinType::LongDoubleComplex:
-      assert(0 && "comparisons against complex not implemented yet");
     }
-  } else {
-    assert((isa<PointerType>(Ty) || 
-           cast<TagType>(Ty)->getDecl()->getKind() == Decl::Enum) &&
-           "Unknown scalar type");
+  } else if (isa<PointerType>(Ty) || 
+             cast<TagType>(Ty)->getDecl()->getKind() == Decl::Enum) {
     // Code below handles this fine.
+  } else {
+    assert(isa<ComplexType>(Ty) && "Unknwon type!");
+    assert(0 && "FIXME: comparisons against complex not implemented yet");
   }
   
   // Usual case for integers, pointers, and enums: compare against zero.

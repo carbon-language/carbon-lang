@@ -26,6 +26,7 @@ namespace clang {
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
   std::vector<Type*> Types;
+  llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
   llvm::FoldingSet<ArrayType> ArrayTypes;
@@ -52,6 +53,10 @@ public:
   ~ASTContext();
   
   void PrintStats() const;
+
+  /// getComplexType - Return the uniqued reference to the type for a complex
+  /// number with the specified element type.
+  QualType getComplexType(QualType T);
   
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.

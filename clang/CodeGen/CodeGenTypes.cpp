@@ -63,23 +63,14 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::LongDouble:
       // FIXME: mapping long double onto double.
       return llvm::Type::DoubleTy;
-    case BuiltinType::FloatComplex: {
-      std::vector<const llvm::Type*> Elts;
-      Elts.push_back(llvm::Type::FloatTy);
-      Elts.push_back(llvm::Type::FloatTy);
-      return llvm::StructType::get(Elts);
-    }
-      
-    case BuiltinType::LongDoubleComplex:
-      // FIXME: mapping long double complex onto double complex.
-    case BuiltinType::DoubleComplex: {
-      std::vector<const llvm::Type*> Elts;
-      Elts.push_back(llvm::Type::DoubleTy);
-      Elts.push_back(llvm::Type::DoubleTy);
-      return llvm::StructType::get(Elts);
-    }
     }
     break;
+  }
+  case Type::Complex: {
+    std::vector<const llvm::Type*> Elts;
+    Elts.push_back(ConvertType(cast<ComplexType>(Ty).getElementType()));
+    Elts.push_back(Elts[0]);
+    return llvm::StructType::get(Elts);
   }
   case Type::Pointer: {
     const PointerType &P = cast<PointerType>(Ty);
