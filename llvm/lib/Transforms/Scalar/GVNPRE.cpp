@@ -367,47 +367,47 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(const SmallPtrSet<Value*, 32>& s) const __attribute__((noinline));
-    void clean(SmallPtrSet<Value*, 32>& set) __attribute__((noinline));
+    void dump(const SmallPtrSet<Value*, 32>& s) const;
+    void clean(SmallPtrSet<Value*, 32>& set);
     Value* find_leader(SmallPtrSet<Value*, 32>& vals,
-                       uint32_t v) __attribute__((noinline));
-    Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) __attribute__((noinline));
+                       uint32_t v);
+    Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ);
     void phi_translate_set(SmallPtrSet<Value*, 32>& anticIn, BasicBlock* pred,
-                           BasicBlock* succ, SmallPtrSet<Value*, 32>& out)  __attribute__((noinline));
+                           BasicBlock* succ, SmallPtrSet<Value*, 32>& out);
     
     void topo_sort(SmallPtrSet<Value*, 32>& set,
-                   std::vector<Value*>& vec) __attribute__((noinline));
+                   std::vector<Value*>& vec);
     
-    void cleanup() __attribute__((noinline));
-    bool elimination() __attribute__((noinline));
+    void cleanup();
+    bool elimination();
     
-    void val_insert(SmallPtrSet<Value*, 32>& s, Value* v) __attribute__((noinline));
-    void val_replace(SmallPtrSet<Value*, 32>& s, Value* v) __attribute__((noinline));
-    bool dependsOnInvoke(Value* V) __attribute__((noinline));
+    void val_insert(SmallPtrSet<Value*, 32>& s, Value* v);
+    void val_replace(SmallPtrSet<Value*, 32>& s, Value* v);
+    bool dependsOnInvoke(Value* V);
     void buildsets_availout(BasicBlock::iterator I,
                             SmallPtrSet<Value*, 32>& currAvail,
                             SmallPtrSet<PHINode*, 32>& currPhis,
                             SmallPtrSet<Value*, 32>& currExps,
                             SmallPtrSet<Value*, 32>& currTemps,
                             BitVector& availNumbers,
-                            BitVector& expNumbers) __attribute__((noinline));
+                            BitVector& expNumbers);
     bool buildsets_anticout(BasicBlock* BB,
                             SmallPtrSet<Value*, 32>& anticOut,
-                            std::set<BasicBlock*>& visited) __attribute__((noinline));
+                            std::set<BasicBlock*>& visited);
     unsigned buildsets_anticin(BasicBlock* BB,
                            SmallPtrSet<Value*, 32>& anticOut,
                            SmallPtrSet<Value*, 32>& currExps,
                            SmallPtrSet<Value*, 32>& currTemps,
-                           std::set<BasicBlock*>& visited) __attribute__((noinline));
-    unsigned buildsets(Function& F) __attribute__((noinline));
+                           std::set<BasicBlock*>& visited);
+    unsigned buildsets(Function& F);
     
     void insertion_pre(Value* e, BasicBlock* BB,
                        std::map<BasicBlock*, Value*>& avail,
-                       SmallPtrSet<Value*, 32>& new_set) __attribute__((noinline));
+                       SmallPtrSet<Value*, 32>& new_set);
     unsigned insertion_mergepoint(std::vector<Value*>& workList,
                                   df_iterator<DomTreeNode*>& D,
-                                  SmallPtrSet<Value*, 32>& new_set) __attribute__((noinline));
-    bool insertion(Function& F) __attribute__((noinline));
+                                  SmallPtrSet<Value*, 32>& new_set);
+    bool insertion(Function& F);
   
   };
   
