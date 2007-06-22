@@ -25,6 +25,12 @@ using namespace CodeGen;
 //                        Miscellaneous Helper Methods
 //===--------------------------------------------------------------------===//
 
+/// CreateTempAlloca - This creates a alloca and inserts it into the entry
+/// block.
+llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
+                                                    const char *Name) {
+  return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
+}
 
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
 /// expression and compare the result against zero, returning an Int1Ty value.
@@ -32,6 +38,36 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   QualType Ty;
   RValue Val = EmitExprWithUsualUnaryConversions(E, Ty);
   return ConvertScalarValueToBool(Val, Ty);
+}
+
+/// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
+/// load the real and imaginary pieces, returning them as Real/Imag.
+void CodeGenFunction::EmitLoadOfComplex(RValue V,
+                                        llvm::Value *&Real, llvm::Value *&Imag){
+  llvm::Value *Ptr = V.getAggregateAddr();
+  
+  llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+  llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
+  llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Zero, Zero, "realp");
+  llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Zero, One, "imagp");
+  
+  // FIXME: Handle volatility.
+  Real = Builder.CreateLoad(RealPtr, "real");
+  Imag = Builder.CreateLoad(ImagPtr, "imag");
+}
+
+/// EmitStoreOfComplex - Store the specified real/imag parts into the
+/// specified value pointer.
+void CodeGenFunction::EmitStoreOfComplex(llvm::Value *Real, llvm::Value *Imag,
+                                         llvm::Value *ResPtr) {
+  llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+  llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
+  llvm::Value *RealPtr = Builder.CreateGEP(ResPtr, Zero, Zero, "real");
+  llvm::Value *ImagPtr = Builder.CreateGEP(ResPtr, Zero, One, "imag");
+  
+  // FIXME: Handle volatility.
+  Builder.CreateStore(Real, RealPtr);
+  Builder.CreateStore(Imag, ImagPtr);
 }
 
 //===--------------------------------------------------------------------===//
@@ -257,6 +293,14 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
       DstAddr = Builder.CreateBitCast(DstAddr, llvm::PointerType::get(SrcTy),
                                       "storetmp");
     Builder.CreateStore(Src.getVal(), DstAddr);
+    return;
+  }
+  
+  // Don't use memcpy for complex numbers.
+  if (Ty->isComplexType()) {
+    llvm::Value *Real, *Imag;
+    EmitLoadOfComplex(Src, Real, Imag);
+    EmitStoreOfComplex(Real, Imag, Dst.getAddress());
     return;
   }
   
@@ -759,9 +803,19 @@ RValue CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
   
   if (LHS.isScalar())
     return RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
-  
-  assert(0 && "FIXME: This doesn't handle complex operands yet");
 
+  // Otherwise, this must be a complex number.
+  llvm::Value *LHSR, *LHSI, *RHSR, *RHSI;
+  
+  EmitLoadOfComplex(LHS, LHSR, LHSI);
+  EmitLoadOfComplex(RHS, RHSR, RHSI);
+  
+  llvm::Value *ResR = Builder.CreateAdd(LHSR, RHSR, "add.r");
+  llvm::Value *ResI = Builder.CreateAdd(LHSI, RHSI, "add.i");
+  
+  llvm::Value *Res = CreateTempAlloca(ConvertType(E->getType()));
+  EmitStoreOfComplex(ResR, ResI, Res);
+  return RValue::getAggregate(Res);
 }
 
 RValue CodeGenFunction::EmitBinarySub(const BinaryOperator *E) {

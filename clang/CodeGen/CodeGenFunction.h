@@ -160,11 +160,29 @@ public:
   
   void EmitBlock(llvm::BasicBlock *BB);
 
-
+  //===--------------------------------------------------------------------===//
+  //                                  Helpers
+  //===--------------------------------------------------------------------===//
+  
+  /// CreateTempAlloca - This creates a alloca and inserts it into the entry
+  /// block.
+  llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
+                                     const char *Name = "tmp");
+  
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.
   llvm::Value *EvaluateExprAsBool(const Expr *E);
+
   
+  /// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
+  /// load the real and imaginary pieces, returning them as Real/Imag.
+  void EmitLoadOfComplex(RValue V, llvm::Value *&Real, llvm::Value *&Imag);
+  
+  /// EmitStoreOfComplex - Store the specified real/imag parts into the
+  /// specified value pointer.
+  void EmitStoreOfComplex(llvm::Value *Real, llvm::Value *Imag,
+                          llvm::Value *ResPtr);
+
   //===--------------------------------------------------------------------===//
   //                                Conversions
   //===--------------------------------------------------------------------===//

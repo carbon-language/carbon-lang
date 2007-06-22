@@ -74,7 +74,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
     // A normal fixed sized variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty);
     // TODO: Alignment
-    DeclPtr = new llvm::AllocaInst(LTy, 0, D.getName(), AllocaInsertPt);
+    DeclPtr = CreateTempAlloca(LTy, D.getName());
   } else {
     // TODO: Create a dynamic alloca.
     assert(0 && "FIXME: Local VLAs not implemented yet");
