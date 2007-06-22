@@ -70,6 +70,15 @@ namespace llvm {
   ///
   FunctionPass *createLocalRegisterAllocator();
 
+  /// BigBlockRegisterAllocation Pass - The BigBlock register allocator
+  /// munches single basic blocks at a time, like the local register
+  /// allocator.  While the BigBlock allocator is a little slower, and uses
+  /// somewhat more memory than the local register allocator, it tends to
+  /// yield the best allocations (of any of the allocators) for blocks that
+  /// have hundreds or thousands of instructions in sequence.
+  ///
+  FunctionPass *createBigBlockRegisterAllocator();
+
   /// LinearScanRegisterAllocation Pass - This pass implements the linear scan
   /// register allocation algorithm, a global register allocator.
   ///
