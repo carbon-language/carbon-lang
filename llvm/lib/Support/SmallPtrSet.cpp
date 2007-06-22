@@ -154,7 +154,7 @@ SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
     // terminator.
     memcpy(CurArray, that.CurArray, sizeof(void*)*(CurArraySize+1));
   } else {
-    CurArraySize = that.NumElements < 64 ? 128 : that.NumElements*2;
+    CurArraySize = that.NumElements < 64 ? 128 : that.CurArraySize*2;
     CurArray = new void*[CurArraySize+1];
     memset(CurArray, -1, CurArraySize*sizeof(void*));
     
