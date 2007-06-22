@@ -231,7 +231,16 @@ RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
   
   // FIXME: this is silly and obviously wrong for non-scalars.
   assert(!LV.isBitfield());
-  return RValue::get(Builder.CreateLoad(LV.getAddress(), "tmp"));
+  llvm::Value *Ptr = LV.getAddress();
+  const llvm::Type *EltTy =
+    cast<llvm::PointerType>(Ptr->getType())->getElementType();
+  
+  // Simple scalar l-value.
+  if (EltTy->isFirstClassType())
+    return RValue::get(Builder.CreateLoad(Ptr, "tmp"));
+  
+  // Otherwise, we have an aggregate lvalue.
+  return RValue::getAggregate(Ptr);
 }
 
 /// EmitStoreThroughLValue - Store the specified rvalue into the specified
@@ -239,20 +248,43 @@ RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
 /// is 'Ty'.
 void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
                                              QualType Ty) {
-  // FIXME: This is obviously bogus.
   assert(!Dst.isBitfield() && "FIXME: Don't support store to bitfield yet");
-  assert(Src.isScalar() && "FIXME: Don't support store of aggregate yet");
   
-  // TODO: Handle volatility etc.
-  llvm::Value *Addr = Dst.getAddress();
-  const llvm::Type *SrcTy = Src.getVal()->getType();
-  const llvm::Type *AddrTy = 
-    cast<llvm::PointerType>(Addr->getType())->getElementType();
+  llvm::Value *DstAddr = Dst.getAddress();
+  if (Src.isScalar()) {
+    // FIXME: Handle volatility etc.
+    const llvm::Type *SrcTy = Src.getVal()->getType();
+    const llvm::Type *AddrTy = 
+      cast<llvm::PointerType>(DstAddr->getType())->getElementType();
+    
+    if (AddrTy != SrcTy)
+      DstAddr = Builder.CreateBitCast(DstAddr, llvm::PointerType::get(SrcTy),
+                                      "storetmp");
+    Builder.CreateStore(Src.getVal(), DstAddr);
+    return;
+  }
   
-  if (AddrTy != SrcTy)
-    Addr = Builder.CreateBitCast(Addr, llvm::PointerType::get(SrcTy),
-                                 "storetmp");
-  Builder.CreateStore(Src.getVal(), Addr);
+  // Aggregate assignment turns into llvm.memcpy.
+  const llvm::Type *SBP = llvm::PointerType::get(llvm::Type::Int8Ty);
+  llvm::Value *SrcAddr = Src.getAggregateAddr();
+  
+  if (DstAddr->getType() != SBP)
+    DstAddr = Builder.CreateBitCast(DstAddr, SBP, "tmp");
+  if (SrcAddr->getType() != SBP)
+    SrcAddr = Builder.CreateBitCast(SrcAddr, SBP, "tmp");
+
+  unsigned Align = 1;   // FIXME: Compute type alignments.
+  unsigned Size = 1234; // FIXME: Compute type sizes.
+  
+  // FIXME: Handle variable sized types.
+  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
+  llvm::Value *SizeVal = llvm::ConstantInt::get(IntPtr, Size);
+  
+  llvm::Value *MemCpyOps[4] = {
+    DstAddr, SrcAddr, SizeVal,llvm::ConstantInt::get(llvm::Type::Int32Ty, Align)
+  };
+  
+  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, 4);
 }
 
 
@@ -402,7 +434,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     if (ArgVal.isScalar())
       Args.push_back(ArgVal.getVal());
     else  // Pass by-address.  FIXME: Set attribute bit on call.
-      Args.push_back(ArgVal.getAggregateVal());
+      Args.push_back(ArgVal.getAggregateAddr());
   }
   
   llvm::Value *V = Builder.CreateCall(Callee, &Args[0], Args.size());

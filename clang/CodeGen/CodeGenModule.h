@@ -20,6 +20,7 @@
 namespace llvm {
   class Module;
   class Constant;
+  class Function;
 }
 
 namespace clang {
@@ -36,6 +37,7 @@ class CodeGenModule {
   llvm::Module &TheModule;
   CodeGenTypes Types;
 
+  llvm::Function *MemCpyFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
 public:
   CodeGenModule(ASTContext &C, llvm::Module &M);
@@ -45,6 +47,8 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   
   llvm::Constant *GetAddrOfGlobalDecl(const Decl *D);
+  
+  llvm::Function *getMemCpyFn();
   
   void EmitFunction(FunctionDecl *FD);
   

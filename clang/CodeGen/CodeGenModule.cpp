@@ -15,9 +15,11 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -50,4 +52,17 @@ void CodeGenModule::EmitFunction(FunctionDecl *FD) {
   // If this is not a prototype, emit the body.
   if (FD->getBody())
     CodeGenFunction(*this).GenerateCode(FD);
+}
+
+
+
+llvm::Function *CodeGenModule::getMemCpyFn() {
+  if (MemCpyFn) return MemCpyFn;
+  llvm::Intrinsic::ID IID;
+  switch (Context.Target.getPointerWidth(SourceLocation())) {
+  default: assert(0 && "Unknown ptr width");
+  case 32: IID = llvm::Intrinsic::memcpy_i32; break;
+  case 64: IID = llvm::Intrinsic::memcpy_i64; break;
+  }
+  return MemCpyFn = llvm::Intrinsic::getDeclaration(&TheModule, IID);
 }

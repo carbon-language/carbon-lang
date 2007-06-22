@@ -68,6 +68,9 @@ class RValue {
   // TODO: Encode this into the low bit of pointer for more efficient
   // return-by-value.
   bool IsAggregate;
+  
+  // FIXME: Aggregate rvalues need to retain information about whether they are
+  // volatile or not.
 public:
   
   bool isAggregate() const { return IsAggregate; }
@@ -79,8 +82,8 @@ public:
     return V;
   }
 
-  /// getAggregateVal() - Return the Value* of the address of the aggregate.
-  llvm::Value *getAggregateVal() const {
+  /// getAggregateAddr() - Return the Value* of the address of the aggregate.
+  llvm::Value *getAggregateAddr() const {
     assert(isAggregate() && "Not an aggregate!");
     return V;
   }
