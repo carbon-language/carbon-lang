@@ -780,7 +780,13 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   // Emit initial debug information.
   DW.BeginModule(&M);
   
-  return AsmPrinter::doInitialization(M);
+  AsmPrinter::doInitialization(M);
+
+  // Darwin wants symbols to be quoted if they have complex names.
+  if (Subtarget->isTargetDarwin())
+    Mang->setUseQuotes(true);
+
+  return false;
 }
 
 bool ARMAsmPrinter::doFinalization(Module &M) {
