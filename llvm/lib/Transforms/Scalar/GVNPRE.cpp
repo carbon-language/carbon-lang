@@ -367,45 +367,47 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(const SmallPtrSet<Value*, 32>& s) const;
-    void clean(SmallPtrSet<Value*, 32>& set);
+    void dump(const SmallPtrSet<Value*, 32>& s) const __attribute__((noinline));
+    void clean(SmallPtrSet<Value*, 32>& set) __attribute__((noinline));
     Value* find_leader(SmallPtrSet<Value*, 32>& vals,
-                       uint32_t v);
-    Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ);
+                       uint32_t v) __attribute__((noinline));
+    Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) __attribute__((noinline));
     void phi_translate_set(SmallPtrSet<Value*, 32>& anticIn, BasicBlock* pred,
-                           BasicBlock* succ, SmallPtrSet<Value*, 32>& out) ;
+                           BasicBlock* succ, SmallPtrSet<Value*, 32>& out)  __attribute__((noinline));
     
     void topo_sort(SmallPtrSet<Value*, 32>& set,
-                   std::vector<Value*>& vec);
+                   std::vector<Value*>& vec) __attribute__((noinline));
     
-    void cleanup();
-    bool elimination();
+    void cleanup() __attribute__((noinline));
+    bool elimination() __attribute__((noinline));
     
-    void val_insert(SmallPtrSet<Value*, 32>& s, Value* v);
-    void val_replace(SmallPtrSet<Value*, 32>& s, Value* v);
-    bool dependsOnInvoke(Value* V);
+    void val_insert(SmallPtrSet<Value*, 32>& s, Value* v) __attribute__((noinline));
+    void val_replace(SmallPtrSet<Value*, 32>& s, Value* v) __attribute__((noinline));
+    bool dependsOnInvoke(Value* V) __attribute__((noinline));
     void buildsets_availout(BasicBlock::iterator I,
                             SmallPtrSet<Value*, 32>& currAvail,
                             SmallPtrSet<PHINode*, 32>& currPhis,
                             SmallPtrSet<Value*, 32>& currExps,
-                            SmallPtrSet<Value*, 32>& currTemps);
+                            SmallPtrSet<Value*, 32>& currTemps,
+                            BitVector& availNumbers,
+                            BitVector& expNumbers) __attribute__((noinline));
     bool buildsets_anticout(BasicBlock* BB,
                             SmallPtrSet<Value*, 32>& anticOut,
-                            std::set<BasicBlock*>& visited);
+                            std::set<BasicBlock*>& visited) __attribute__((noinline));
     unsigned buildsets_anticin(BasicBlock* BB,
                            SmallPtrSet<Value*, 32>& anticOut,
                            SmallPtrSet<Value*, 32>& currExps,
                            SmallPtrSet<Value*, 32>& currTemps,
-                           std::set<BasicBlock*>& visited);
-    unsigned buildsets(Function& F);
+                           std::set<BasicBlock*>& visited) __attribute__((noinline));
+    unsigned buildsets(Function& F) __attribute__((noinline));
     
     void insertion_pre(Value* e, BasicBlock* BB,
                        std::map<BasicBlock*, Value*>& avail,
-                       SmallPtrSet<Value*, 32>& new_set);
+                       SmallPtrSet<Value*, 32>& new_set) __attribute__((noinline));
     unsigned insertion_mergepoint(std::vector<Value*>& workList,
                                   df_iterator<DomTreeNode*>& D,
-                                  SmallPtrSet<Value*, 32>& new_set);
-    bool insertion(Function& F);
+                                  SmallPtrSet<Value*, 32>& new_set) __attribute__((noinline));
+    bool insertion(Function& F) __attribute__((noinline));
   
   };
   
@@ -795,10 +797,15 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
                                 SmallPtrSet<Value*, 32>& currAvail,
                                 SmallPtrSet<PHINode*, 32>& currPhis,
                                 SmallPtrSet<Value*, 32>& currExps,
-                                SmallPtrSet<Value*, 32>& currTemps) {
+                                SmallPtrSet<Value*, 32>& currTemps,
+                                BitVector& availNumbers,
+                                BitVector& expNumbers) {
   // Handle PHI nodes...
   if (PHINode* p = dyn_cast<PHINode>(I)) {
     VN.lookup_or_add(p);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+    
     currPhis.insert(p);
     
   // Handle binary ops...
@@ -806,13 +813,26 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     Value* leftValue = BO->getOperand(0);
     Value* rightValue = BO->getOperand(1);
     
-    VN.lookup_or_add(BO);
+    unsigned num = VN.lookup_or_add(BO);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
       
     if (isa<Instruction>(leftValue))
-      val_insert(currExps, leftValue);
+      if (!expNumbers.test(VN.lookup(leftValue)-1)) {
+        currExps.insert(leftValue);
+        expNumbers.set(VN.lookup(leftValue)-1);
+      }
+    
     if (isa<Instruction>(rightValue))
-      val_insert(currExps, rightValue);
-    val_insert(currExps, BO);
+      if (!expNumbers.test(VN.lookup(rightValue)-1)) {
+        currExps.insert(rightValue);
+        expNumbers.set(VN.lookup(rightValue)-1);
+      }
+    
+    if (!expNumbers.test(VN.lookup(BO)-1)) {
+      currExps.insert(BO);
+      expNumbers.set(num-1);
+    }
     
   // Handle cmp ops...
   } else if (CmpInst* C = dyn_cast<CmpInst>(I)) {
@@ -820,21 +840,41 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     Value* rightValue = C->getOperand(1);
       
     VN.lookup_or_add(C);
-      
+    
+    unsigned num = VN.lookup_or_add(C);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+    
     if (isa<Instruction>(leftValue))
-      val_insert(currExps, leftValue);
+      if (!expNumbers.test(VN.lookup(leftValue)-1)) {
+        currExps.insert(leftValue);
+        expNumbers.set(VN.lookup(leftValue)-1);
+      }
     if (isa<Instruction>(rightValue))
-      val_insert(currExps, rightValue);
-    val_insert(currExps, C);
-      
+      if (!expNumbers.test(VN.lookup(rightValue)-1)) {
+        currExps.insert(rightValue);
+        expNumbers.set(VN.lookup(rightValue)-1);
+      }
+    
+    if (!expNumbers.test(VN.lookup(C)-1)) {
+      currExps.insert(C);
+      expNumbers.set(num-1);
+    }
+    
   // Handle unsupported ops
   } else if (!I->isTerminator()){
     VN.lookup_or_add(I);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+    
     currTemps.insert(I);
   }
     
   if (!I->isTerminator())
-    val_insert(currAvail, I);
+    if (!availNumbers.test(VN.lookup(I)-1)) {
+      currAvail.insert(I);
+      availNumbers.set(VN.lookup(I)-1);
+    }
 }
 
 /// buildsets_anticout - When walking the postdom tree, calculate the ANTIC_OUT
@@ -953,10 +993,16 @@ unsigned GVNPRE::buildsets(Function& F) {
     currAvail.insert(availableOut[DI->getIDom()->getBlock()].begin(),
                      availableOut[DI->getIDom()->getBlock()].end());
     
+    BitVector availNumbers(VN.size());
+    for (SmallPtrSet<Value*, 32>::iterator I = currAvail.begin(),
+        E = currAvail.end(); I != E; ++I)
+      availNumbers.set(VN.lookup(*I));
     
+    BitVector expNumbers(VN.size());
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI)
-      buildsets_availout(BI, currAvail, currPhis, currExps, currTemps);
+      buildsets_availout(BI, currAvail, currPhis, currExps,
+                         currTemps, availNumbers, expNumbers);
       
   }
   
