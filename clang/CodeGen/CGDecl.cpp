@@ -107,6 +107,7 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
       Builder.CreateStore(Arg, DeclPtr);
     } else {
       // Otherwise, if this is an aggregate, just use the input pointer.
+      DeclPtr = Arg;
     }
     Arg->setName(D.getName());
   }
