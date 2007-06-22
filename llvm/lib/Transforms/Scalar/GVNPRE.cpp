@@ -25,6 +25,7 @@
 #include "llvm/Function.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -106,6 +107,7 @@ namespace {
       }
       SmallPtrSet<Value*, 32>& getMaximalValues() { return maximalValues; }
       void erase(Value* v);
+      unsigned size();
   };
 }
 
@@ -331,6 +333,12 @@ void ValueTable::erase(Value* V) {
     maximalExpressions.erase(create_expression(C));
 }
 
+/// size - Return the number of assigned value numbers
+unsigned ValueTable::size() {
+  // NOTE: zero is never assigned
+  return nextValueNumber;
+}
+
 //===----------------------------------------------------------------------===//
 //                         GVNPRE Pass
 //===----------------------------------------------------------------------===//
@@ -365,7 +373,7 @@ namespace {
                        uint32_t v);
     Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ);
     void phi_translate_set(SmallPtrSet<Value*, 32>& anticIn, BasicBlock* pred,
-                           BasicBlock* succ, SmallPtrSet<Value*, 32>& out);
+                           BasicBlock* succ, SmallPtrSet<Value*, 32>& out) ;
     
     void topo_sort(SmallPtrSet<Value*, 32>& set,
                    std::vector<Value*>& vec);
@@ -381,10 +389,10 @@ namespace {
                             SmallPtrSet<PHINode*, 32>& currPhis,
                             SmallPtrSet<Value*, 32>& currExps,
                             SmallPtrSet<Value*, 32>& currTemps);
-    void buildsets_anticout(BasicBlock* BB,
+    bool buildsets_anticout(BasicBlock* BB,
                             SmallPtrSet<Value*, 32>& anticOut,
                             std::set<BasicBlock*>& visited);
-    bool buildsets_anticin(BasicBlock* BB,
+    unsigned buildsets_anticin(BasicBlock* BB,
                            SmallPtrSet<Value*, 32>& anticOut,
                            SmallPtrSet<Value*, 32>& currExps,
                            SmallPtrSet<Value*, 32>& currTemps,
@@ -395,7 +403,7 @@ namespace {
                        std::map<BasicBlock*, Value*>& avail,
                        SmallPtrSet<Value*, 32>& new_set);
     unsigned insertion_mergepoint(std::vector<Value*>& workList,
-                                  df_iterator<DomTreeNode*> D,
+                                  df_iterator<DomTreeNode*>& D,
                                   SmallPtrSet<Value*, 32>& new_set);
     bool insertion(Function& F);
   
@@ -830,13 +838,12 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
 
 /// buildsets_anticout - When walking the postdom tree, calculate the ANTIC_OUT
 /// set as a function of the ANTIC_IN set of the block's predecessors
-void GVNPRE::buildsets_anticout(BasicBlock* BB,
+bool GVNPRE::buildsets_anticout(BasicBlock* BB,
                                 SmallPtrSet<Value*, 32>& anticOut,
                                 std::set<BasicBlock*>& visited) {
   if (BB->getTerminator()->getNumSuccessors() == 1) {
-    if (visited.find(BB->getTerminator()->getSuccessor(0)) == visited.end())
-      phi_translate_set(VN.getMaximalValues(), BB, 
-                        BB->getTerminator()->getSuccessor(0), anticOut);
+    if (visited.count(BB->getTerminator()->getSuccessor(0)) == 0)
+      return true;
     else
       phi_translate_set(anticipatedIn[BB->getTerminator()->getSuccessor(0)],
                         BB,  BB->getTerminator()->getSuccessor(0), anticOut);
@@ -860,12 +867,14 @@ void GVNPRE::buildsets_anticout(BasicBlock* BB,
         anticOut.erase(*I);
     }
   }
+  
+  return false;
 }
 
 /// buildsets_anticin - Walk the postdom tree, calculating ANTIC_OUT for
 /// each block.  ANTIC_IN is then a function of ANTIC_OUT and the GEN
 /// sets populated in buildsets_availout
-bool GVNPRE::buildsets_anticin(BasicBlock* BB,
+unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
                                SmallPtrSet<Value*, 32>& anticOut,
                                SmallPtrSet<Value*, 32>& currExps,
                                SmallPtrSet<Value*, 32>& currTemps,
@@ -873,7 +882,9 @@ bool GVNPRE::buildsets_anticin(BasicBlock* BB,
   SmallPtrSet<Value*, 32>& anticIn = anticipatedIn[BB];
   SmallPtrSet<Value*, 32> old (anticIn.begin(), anticIn.end());
       
-  buildsets_anticout(BB, anticOut, visited);
+  bool defer = buildsets_anticout(BB, anticOut, visited);
+  if (defer)
+    return 0;
       
   SmallPtrSet<Value*, 32> S;
   for (SmallPtrSet<Value*, 32>::iterator I = anticOut.begin(),
@@ -887,7 +898,11 @@ bool GVNPRE::buildsets_anticin(BasicBlock* BB,
        E = currExps.end(); I != E; ++I)
     if (currTemps.count(*I) == 0)
       anticIn.insert(*I);
-      
+  
+  BitVector numbers(VN.size());
+  for (SmallPtrSet<Value*, 32>::iterator I = anticIn.begin(),
+       E = anticIn.end(); I != E; ++I)
+    numbers.set(VN.lookup(*I)-1);
   for (SmallPtrSet<Value*, 32>::iterator I = S.begin(), E = S.end();
        I != E; ++I) {
     // For non-opaque values, we should already have a value numbering.
@@ -896,16 +911,17 @@ bool GVNPRE::buildsets_anticin(BasicBlock* BB,
     // so now.
     if (!isa<BinaryOperator>(*I) && !isa<CmpInst>(*I))
       VN.lookup_or_add(*I);
-    val_insert(anticIn, *I);
+    if (!numbers.test(VN.lookup(*I)-1))
+      anticIn.insert(*I);
   }
       
   clean(anticIn);
   anticOut.clear();
   
   if (old.size() != anticIn.size())
-    return true;
+    return 2;
   else
-    return false;
+    return 1;
 }
 
 /// buildsets - Phase 1 of the main algorithm.  Construct the AVAIL_OUT
@@ -974,10 +990,18 @@ unsigned GVNPRE::buildsets(Function& F) {
       if (BB == 0)
         continue;
       
-      visited.insert(BB);
       
-      changed |= buildsets_anticin(BB, anticOut, generatedTemporaries[BB], 
+      
+      unsigned ret = buildsets_anticin(BB, anticOut, generatedTemporaries[BB], 
                                    generatedExpressions[BB], visited);
+      
+      if (ret == 0) {
+        changed = true;
+        break;
+      } else {
+        visited.insert(BB);
+        changed |= (ret == 2);
+      }
     }
     
     iterations++;
@@ -1054,7 +1078,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
 /// insertion_mergepoint - When walking the dom tree, check at each merge
 /// block for the possibility of a partial redundancy.  If present, eliminate it
 unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
-                                      df_iterator<DomTreeNode*> D,
+                                      df_iterator<DomTreeNode*>& D,
                                       SmallPtrSet<Value*, 32>& new_set) {
   bool changed_function = false;
   bool new_stuff = false;
