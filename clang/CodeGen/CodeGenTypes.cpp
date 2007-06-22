@@ -61,10 +61,23 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T, SourceLocation Loc) {
     case BuiltinType::Float:      return llvm::Type::FloatTy;
     case BuiltinType::Double:     return llvm::Type::DoubleTy;
     case BuiltinType::LongDouble:
-    case BuiltinType::FloatComplex:
-    case BuiltinType::DoubleComplex:
+      // FIXME: mapping long double onto double.
+      return llvm::Type::DoubleTy;
+    case BuiltinType::FloatComplex: {
+      std::vector<const llvm::Type*> Elts;
+      Elts.push_back(llvm::Type::FloatTy);
+      Elts.push_back(llvm::Type::FloatTy);
+      return llvm::StructType::get(Elts);
+    }
+      
     case BuiltinType::LongDoubleComplex:
-      ;
+      // FIXME: mapping long double complex onto double complex.
+    case BuiltinType::DoubleComplex: {
+      std::vector<const llvm::Type*> Elts;
+      Elts.push_back(llvm::Type::DoubleTy);
+      Elts.push_back(llvm::Type::DoubleTy);
+      return llvm::StructType::get(Elts);
+    }
     }
     break;
   }
