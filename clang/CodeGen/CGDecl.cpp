@@ -95,7 +95,6 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
   if (!Ty->isConstantSizeType()) {
     // Variable sized values always are passed by-reference.
     DeclPtr = Arg;
-    Arg->setName(DeclPtr->getName());
   } else {
     // A fixed sized first class variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty, D.getLocation());
@@ -106,13 +105,10 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
       
       // Store the initial value into the alloca.
       Builder.CreateStore(Arg, DeclPtr);
-
-      Arg->setName(D.getName());
     } else {
       // Otherwise, if this is an aggregate, just use the input pointer.
-      DeclPtr = Arg;
-      Arg->setName(DeclPtr->getName());
     }
+    Arg->setName(D.getName());
   }
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
