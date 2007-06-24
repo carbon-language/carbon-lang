@@ -92,7 +92,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/ET-Forest.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConstantRange.h"
@@ -103,6 +102,7 @@
 #include <algorithm>
 #include <deque>
 #include <sstream>
+#include <stack>
 using namespace llvm;
 
 STATISTIC(NumVarsReplaced, "Number of argument substitutions");
@@ -112,6 +112,186 @@ STATISTIC(NumBlocks      , "Number of blocks marked unreachable");
 STATISTIC(NumSnuggle     , "Number of comparisons snuggled");
 
 namespace {
+  class DomTreeDFS {
+  public:
+    class Node {
+      friend class DomTreeDFS;
+    public:
+      typedef std::vector<Node *>::iterator       iterator;
+      typedef std::vector<Node *>::const_iterator const_iterator;
+
+      unsigned getDFSNumIn()  const { return DFSin;  }
+      unsigned getDFSNumOut() const { return DFSout; }
+
+      BasicBlock *getBlock() const { return BB; }
+
+      iterator begin() { return Children.begin(); }
+      iterator end()   { return Children.end();   }
+
+      const_iterator begin() const { return Children.begin(); }
+      const_iterator end()   const { return Children.end();   }
+
+      bool dominates(const Node *N) const {
+        return DFSin <= N->DFSin && DFSout >= N->DFSout;
+      }
+
+      bool DominatedBy(const Node *N) const {
+        return N->dominates(this);
+      }
+
+      /// Sorts by the number of descendants. With this, you can iterate
+      /// through a sorted list and the first matching entry is the most
+      /// specific match for your basic block. The order provided is stable;
+      /// DomTreeDFS::Nodes with the same number of descendants are sorted by
+      /// DFS in number.
+      bool operator<(const Node &N) const {
+        unsigned   spread =   DFSout -   DFSin;
+        unsigned N_spread = N.DFSout - N.DFSin;
+        if (spread == N_spread) return DFSin < N.DFSin;
+        else return DFSout - DFSin < N.DFSout - N.DFSin;
+      }
+      bool operator>(const Node &N) const { return N < *this; }
+
+    private:
+      unsigned DFSin, DFSout;
+      BasicBlock *BB;
+
+      std::vector<Node *> Children;
+    };
+
+    // XXX: this may be slow. Instead of using "new" for each node, consider
+    // putting them in a vector to keep them contiguous.
+    explicit DomTreeDFS(DominatorTree *DT) {
+      std::stack<std::pair<Node *, DomTreeNode *> > S;
+
+      Entry = new Node;
+      Entry->BB = DT->getRootNode()->getBlock();
+      S.push(std::make_pair(Entry, DT->getRootNode()));
+
+      NodeMap[Entry->BB] = Entry;
+
+      while (!S.empty()) {
+        std::pair<Node *, DomTreeNode *> &Pair = S.top();
+        Node *N = Pair.first;
+        DomTreeNode *DTNode = Pair.second;
+        S.pop();
+
+        for (DomTreeNode::iterator I = DTNode->begin(), E = DTNode->end();
+             I != E; ++I) {
+          Node *NewNode = new Node;
+          NewNode->BB = (*I)->getBlock();
+          N->Children.push_back(NewNode);
+          S.push(std::make_pair(NewNode, *I));
+
+          NodeMap[NewNode->BB] = NewNode;
+        }
+      }
+
+      renumber();
+
+#ifndef NDEBUG
+      DEBUG(dump());
+#endif
+    }
+
+#ifndef NDEBUG
+    virtual
+#endif
+    ~DomTreeDFS() {
+      std::stack<Node *> S;
+
+      S.push(Entry);
+      while (!S.empty()) {
+        Node *N = S.top(); S.pop();
+
+        for (Node::iterator I = N->begin(), E = N->end(); I != E; ++I)
+          S.push(*I);
+
+        delete N;
+      }
+    }
+
+    Node *getRootNode() const { return Entry; }
+
+    Node *getNodeForBlock(BasicBlock *BB) const {
+      if (!NodeMap.count(BB)) return 0;
+      else return const_cast<DomTreeDFS*>(this)->NodeMap[BB];
+    }
+
+    bool dominates(Instruction *I1, Instruction *I2) {
+      BasicBlock *BB1 = I1->getParent(),
+                 *BB2 = I2->getParent();
+      if (BB1 == BB2) {
+        if (isa<TerminatorInst>(I1)) return false;
+        if (isa<TerminatorInst>(I2)) return true;
+        if ( isa<PHINode>(I1) && !isa<PHINode>(I2)) return true;
+        if (!isa<PHINode>(I1) &&  isa<PHINode>(I2)) return false;
+
+        for (BasicBlock::const_iterator I = BB2->begin(), E = BB2->end();
+             I != E; ++I) {
+          if (&*I == I1) return true;
+          else if (&*I == I2) return false;
+        }
+        assert(!"Instructions not found in parent BasicBlock?");
+      } else {
+	Node *Node1 = getNodeForBlock(BB1),
+             *Node2 = getNodeForBlock(BB2);
+        if (!Node1 || !Node2) return false;
+        return Node1->dominates(Node2);
+      }
+    }
+  private:
+    void renumber() {
+      std::stack<std::pair<Node *, Node::iterator> > S;
+      unsigned n = 0;
+
+      Entry->DFSin = ++n;
+      S.push(std::make_pair(Entry, Entry->begin()));
+
+      while (!S.empty()) {
+        std::pair<Node *, Node::iterator> &Pair = S.top();
+        Node *N = Pair.first;
+        Node::iterator &I = Pair.second;
+
+        if (I == N->end()) {
+          N->DFSout = ++n;
+          S.pop();
+        } else {
+          Node *Next = *I++;
+          Next->DFSin = ++n;
+          S.push(std::make_pair(Next, Next->begin()));
+        }
+      }
+    }
+
+#ifndef NDEBUG
+    virtual void dump() const {
+      dump(*cerr.stream());
+    }
+
+    void dump(std::ostream &os) const {
+      os << "Predicate simplifier DomTreeDFS: \n";
+      dump(Entry, 0, os);
+      os << "\n\n";
+    }
+
+    void dump(Node *N, int depth, std::ostream &os) const {
+      ++depth;
+      for (int i = 0; i < depth; ++i) { os << " "; }
+      os << "[" << depth << "] ";
+
+      os << N->getBlock()->getName() << " (" << N->getDFSNumIn()
+         << ", " << N->getDFSNumOut() << ")\n";
+
+      for (Node::iterator I = N->begin(), E = N->end(); I != E; ++I)
+        dump(*I, depth, os);
+    }
+#endif
+
+    Node *Entry;
+    std::map<BasicBlock *, Node *> NodeMap;
+  };
+
   // SLT SGT ULT UGT EQ
   //   0   1   0   1  0 -- GT                  10
   //   0   1   0   1  1 -- GE                  11
@@ -181,20 +361,6 @@ namespace {
     return Rev;
   }
 
-  /// This is a StrictWeakOrdering predicate that sorts ETNodes by how many
-  /// descendants they have. With this, you can iterate through a list sorted
-  /// by this operation and the first matching entry is the most specific
-  /// match for your basic block. The order provided is stable; ETNodes with
-  /// the same number of children are sorted by pointer address.
-  struct VISIBILITY_HIDDEN OrderByDominance {
-    bool operator()(const ETNode *LHS, const ETNode *RHS) const {
-      unsigned LHS_spread = LHS->getDFSNumOut() - LHS->getDFSNumIn();
-      unsigned RHS_spread = RHS->getDFSNumOut() - RHS->getDFSNumIn();
-      if (LHS_spread != RHS_spread) return LHS_spread < RHS_spread;
-      else return LHS < RHS;
-    }
-  };
-
   /// The InequalityGraph stores the relationships between values.
   /// Each Value in the graph is assigned to a Node. Nodes are pointer
   /// comparable for equality. The caller is expected to maintain the logical
@@ -203,35 +369,37 @@ namespace {
   /// The InequalityGraph class may invalidate Node*s after any mutator call.
   /// @brief The InequalityGraph stores the relationships between values.
   class VISIBILITY_HIDDEN InequalityGraph {
-    ETNode *TreeRoot;
+    DomTreeDFS::Node *TreeRoot;
 
     InequalityGraph();                  // DO NOT IMPLEMENT
     InequalityGraph(InequalityGraph &); // DO NOT IMPLEMENT
   public:
-    explicit InequalityGraph(ETNode *TreeRoot) : TreeRoot(TreeRoot) {}
+    explicit InequalityGraph(DomTreeDFS::Node *TreeRoot) : TreeRoot(TreeRoot){}
 
     class Node;
 
     /// An Edge is contained inside a Node making one end of the edge implicit
     /// and contains a pointer to the other end. The edge contains a lattice
-    /// value specifying the relationship and an ETNode specifying the root
-    /// in the dominator tree to which this edge applies.
+    /// value specifying the relationship and an DomTreeDFS::Node specifying
+    /// the root in the dominator tree to which this edge applies.
     class VISIBILITY_HIDDEN Edge {
     public:
-      Edge(unsigned T, LatticeVal V, ETNode *ST)
+      Edge(unsigned T, LatticeVal V, DomTreeDFS::Node *ST)
         : To(T), LV(V), Subtree(ST) {}
 
       unsigned To;
       LatticeVal LV;
-      ETNode *Subtree;
+      DomTreeDFS::Node *Subtree;
 
       bool operator<(const Edge &edge) const {
         if (To != edge.To) return To < edge.To;
-        else return OrderByDominance()(Subtree, edge.Subtree);
+        else return *Subtree < *edge.Subtree;
       }
+
       bool operator<(unsigned to) const {
         return To < to;
       }
+
       bool operator>(unsigned to) const {
         return To > to;
       }
@@ -293,7 +461,7 @@ namespace {
       const_iterator begin() const { return Relations.begin(); }
       const_iterator end()   const { return Relations.end();   }
 
-      iterator find(unsigned n, ETNode *Subtree) {
+      iterator find(unsigned n, DomTreeDFS::Node *Subtree) {
         iterator E = end();
         for (iterator I = std::lower_bound(begin(), E, n);
              I != E && I->To == n; ++I) {
@@ -303,7 +471,7 @@ namespace {
         return E;
       }
 
-      const_iterator find(unsigned n, ETNode *Subtree) const {
+      const_iterator find(unsigned n, DomTreeDFS::Node *Subtree) const {
         const_iterator E = end();
         for (const_iterator I = std::lower_bound(begin(), E, n);
              I != E && I->To == n; ++I) {
@@ -321,7 +489,7 @@ namespace {
       /// Updates the lattice value for a given node. Create a new entry if
       /// one doesn't exist, otherwise it merges the values. The new lattice
       /// value must not be inconsistent with any previously existing value.
-      void update(unsigned n, LatticeVal R, ETNode *Subtree) {
+      void update(unsigned n, LatticeVal R, DomTreeDFS::Node *Subtree) {
         assert(validPredicate(R) && "Invalid predicate.");
         iterator I = find(n, Subtree);
         if (I == end()) {
@@ -360,9 +528,9 @@ namespace {
     struct VISIBILITY_HIDDEN NodeMapEdge {
       Value *V;
       unsigned index;
-      ETNode *Subtree;
+      DomTreeDFS::Node *Subtree;
 
-      NodeMapEdge(Value *V, unsigned index, ETNode *Subtree)
+      NodeMapEdge(Value *V, unsigned index, DomTreeDFS::Node *Subtree)
         : V(V), index(index), Subtree(Subtree) {}
 
       bool operator==(const NodeMapEdge &RHS) const {
@@ -372,7 +540,7 @@ namespace {
 
       bool operator<(const NodeMapEdge &RHS) const {
         if (V != RHS.V) return V < RHS.V;
-        return OrderByDominance()(Subtree, RHS.Subtree);
+        else return *Subtree < *RHS.Subtree;
       }
 
       bool operator<(Value *RHS) const {
@@ -397,7 +565,7 @@ namespace {
 
     /// Returns the node currently representing Value V, or zero if no such
     /// node exists.
-    unsigned getNode(Value *V, ETNode *Subtree) {
+    unsigned getNode(Value *V, DomTreeDFS::Node *Subtree) {
       NodeMapType::iterator E = NodeMap.end();
       NodeMapEdge Edge(V, 0, Subtree);
       NodeMapType::iterator I = std::lower_bound(NodeMap.begin(), E, Edge);
@@ -411,7 +579,7 @@ namespace {
 
     /// getOrInsertNode - always returns a valid node index, creating a node
     /// to match the Value if needed.
-    unsigned getOrInsertNode(Value *V, ETNode *Subtree) {
+    unsigned getOrInsertNode(Value *V, DomTreeDFS::Node *Subtree) {
       if (unsigned n = getNode(V, Subtree))
         return n;
       else
@@ -420,6 +588,9 @@ namespace {
 
     /// newNode - creates a new node for a given Value and returns the index.
     unsigned newNode(Value *V) {
+      assert(!isa<BasicBlock>(V) && "BBs may not be nodes.");
+      assert(V->getType() != Type::VoidTy && "Void node?");
+
       Nodes.push_back(Node(V));
 
       NodeMapEdge MapEntry = NodeMapEdge(V, Nodes.size(), TreeRoot);
@@ -432,7 +603,7 @@ namespace {
 
     /// If the Value is in the graph, return the canonical form. Otherwise,
     /// return the original Value.
-    Value *canonicalize(Value *V, ETNode *Subtree) {
+    Value *canonicalize(Value *V, DomTreeDFS::Node *Subtree) {
       if (isa<Constant>(V)) return V;
 
       if (unsigned n = getNode(V, Subtree))
@@ -442,7 +613,8 @@ namespace {
     }
 
     /// isRelatedBy - true iff n1 op n2
-    bool isRelatedBy(unsigned n1, unsigned n2, ETNode *Subtree, LatticeVal LV) {
+    bool isRelatedBy(unsigned n1, unsigned n2, DomTreeDFS::Node *Subtree,
+                     LatticeVal LV) {
       if (n1 == n2) return LV & EQ_BIT;
 
       Node *N1 = node(n1);
@@ -455,7 +627,7 @@ namespace {
     // The add* methods assume that your input is logically valid and may 
     // assertion-fail or infinitely loop if you attempt a contradiction.
 
-    void addEquality(unsigned n, Value *V, ETNode *Subtree) {
+    void addEquality(unsigned n, Value *V, DomTreeDFS::Node *Subtree) {
       assert(canonicalize(node(n)->getValue(), Subtree) == node(n)->getValue()
              && "Node's 'canonical' choice isn't best within this subtree.");
 
@@ -504,7 +676,7 @@ namespace {
 
     /// addInequality - Sets n1 op n2.
     /// It is also an error to call this on an inequality that is already true.
-    void addInequality(unsigned n1, unsigned n2, ETNode *Subtree,
+    void addInequality(unsigned n1, unsigned n2, DomTreeDFS::Node *Subtree,
                        LatticeVal LV1) {
       assert(n1 != n2 && "A node can't be inequal to itself.");
 
@@ -529,7 +701,7 @@ namespace {
         for (Node::iterator I = N1->begin(), E = N1->end(); I != E; ++I) {
           if (I->LV != NE && I->To != n2) {
 
-            ETNode *Local_Subtree = NULL;
+            DomTreeDFS::Node *Local_Subtree = NULL;
             if (Subtree->DominatedBy(I->Subtree))
               Local_Subtree = Subtree;
             else if (I->Subtree->DominatedBy(Subtree))
@@ -565,7 +737,7 @@ namespace {
 
         for (Node::iterator I = N2->begin(), E = N2->end(); I != E; ++I) {
           if (I->LV != NE && I->To != n1) {
-            ETNode *Local_Subtree = NULL;
+            DomTreeDFS::Node *Local_Subtree = NULL;
             if (Subtree->DominatedBy(I->Subtree))
               Local_Subtree = Subtree;
             else if (I->Subtree->DominatedBy(Subtree))
@@ -661,16 +833,16 @@ namespace {
     /// the scope of a rooted subtree in the dominator tree.
     class VISIBILITY_HIDDEN ScopedRange {
     public:
-      ScopedRange(Value *V, ConstantRange CR, ETNode *ST)
+      ScopedRange(Value *V, ConstantRange CR, DomTreeDFS::Node *ST)
         : V(V), CR(CR), Subtree(ST) {}
 
       Value *V;
       ConstantRange CR;
-      ETNode *Subtree;
+      DomTreeDFS::Node *Subtree;
 
       bool operator<(const ScopedRange &range) const {
         if (V != range.V) return V < range.V;
-        else return OrderByDominance()(Subtree, range.Subtree);
+        else return Subtree < range.Subtree;
       }
 
       bool operator<(const Value *value) const {
@@ -697,7 +869,7 @@ namespace {
     iterator begin() { return Ranges.begin(); }
     iterator end()   { return Ranges.end();   }
 
-    iterator find(Value *V, ETNode *Subtree) {
+    iterator find(Value *V, DomTreeDFS::Node *Subtree) {
       iterator E = end();
       for (iterator I = std::lower_bound(begin(), E, V);
            I != E && I->V == V; ++I) {
@@ -707,7 +879,7 @@ namespace {
       return E;
     }
 
-    void update(Value *V, ConstantRange CR, ETNode *Subtree) {
+    void update(Value *V, ConstantRange CR, DomTreeDFS::Node *Subtree) {
       assert(!CR.isEmptySet() && "Empty ConstantRange!");
       if (CR.isFullSet()) return;
 
@@ -827,7 +999,7 @@ namespace {
     }
 
 #ifndef NDEBUG
-    bool isCanonical(Value *V, ETNode *Subtree, VRPSolver *VRP);
+    bool isCanonical(Value *V, DomTreeDFS::Node *Subtree, VRPSolver *VRP);
 #endif
 
   public:
@@ -838,7 +1010,8 @@ namespace {
     // constant it constructs the single element range, otherwise it performs
     // a lookup. The width W must be retrieved from typeToWidth and may not
     // be zero.
-    ConstantRange rangeFromValue(Value *V, ETNode *Subtree, uint32_t W) {
+    ConstantRange rangeFromValue(Value *V, DomTreeDFS::Node *Subtree,
+                                 uint32_t W) {
       if (ConstantInt *C = dyn_cast<ConstantInt>(V)) {
         return ConstantRange(C->getValue());
       } else if (isa<ConstantPointerNull>(V)) {
@@ -863,7 +1036,8 @@ namespace {
       return 0;
     }
 
-    bool isRelatedBy(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV) {
+    bool isRelatedBy(Value *V1, Value *V2, DomTreeDFS::Node *Subtree,
+                     LatticeVal LV) {
       uint32_t W = typeToWidth(V1->getType());
       if (!W) return false;
 
@@ -922,8 +1096,8 @@ namespace {
                        VRPSolver *VRP);
     void markBlock(VRPSolver *VRP);
 
-    void mergeInto(Value **I, unsigned n, Value *New, ETNode *Subtree,
-                   VRPSolver *VRP) {
+    void mergeInto(Value **I, unsigned n, Value *New,
+                   DomTreeDFS::Node *Subtree, VRPSolver *VRP) {
       assert(isCanonical(New, Subtree, VRP) && "Best choice not canonical?");
 
       uint32_t W = typeToWidth(New->getType());
@@ -943,8 +1117,8 @@ namespace {
       applyRange(New, Merged, Subtree, VRP);
     }
 
-    void applyRange(Value *V, const ConstantRange &CR, ETNode *Subtree,
-                    VRPSolver *VRP) {
+    void applyRange(Value *V, const ConstantRange &CR,
+                    DomTreeDFS::Node *Subtree, VRPSolver *VRP) {
       assert(isCanonical(V, Subtree, VRP) && "Value not canonical.");
 
       if (const APInt *I = CR.getSingleElement()) {
@@ -970,7 +1144,8 @@ namespace {
       update(V, Merged, Subtree);
     }
 
-    void addNotEquals(Value *V1, Value *V2, ETNode *Subtree, VRPSolver *VRP) {
+    void addNotEquals(Value *V1, Value *V2, DomTreeDFS::Node *Subtree,
+                      VRPSolver *VRP) {
       uint32_t W = typeToWidth(V1->getType());
       if (!W) return;
 
@@ -1024,8 +1199,8 @@ namespace {
       }
     }
 
-    void addInequality(Value *V1, Value *V2, ETNode *Subtree, LatticeVal LV,
-                       VRPSolver *VRP) {
+    void addInequality(Value *V1, Value *V2, DomTreeDFS::Node *Subtree,
+                       LatticeVal LV, VRPSolver *VRP) {
       assert(!isRelatedBy(V1, V2, Subtree, LV) && "Asked to do useless work.");
 
       assert(isCanonical(V1, Subtree, VRP) && "Value not canonical.");
@@ -1123,7 +1298,7 @@ namespace {
       Value *LHS, *RHS;
       ICmpInst::Predicate Op;
 
-      BasicBlock *ContextBB;
+      BasicBlock *ContextBB; // XXX use a DomTreeDFS::Node instead
       Instruction *ContextInst;
     };
     std::deque<Operation> WorkList;
@@ -1131,36 +1306,13 @@ namespace {
     InequalityGraph &IG;
     UnreachableBlocks &UB;
     ValueRanges &VR;
-
-    ETForest *Forest;
-    ETNode *Top;
+    DomTreeDFS *DTDFS;
+    DomTreeDFS::Node *Top;
     BasicBlock *TopBB;
     Instruction *TopInst;
     bool &modified;
 
     typedef InequalityGraph::Node Node;
-
-    /// IdomI - Determines whether one Instruction dominates another.
-    bool IdomI(Instruction *I1, Instruction *I2) const {
-      BasicBlock *BB1 = I1->getParent(),
-                 *BB2 = I2->getParent();
-      if (BB1 == BB2) {
-        if (isa<TerminatorInst>(I1)) return false;
-        if (isa<TerminatorInst>(I2)) return true;
-        if (isa<PHINode>(I1) && !isa<PHINode>(I2)) return true;
-        if (!isa<PHINode>(I1) && isa<PHINode>(I2)) return false;
-
-        for (BasicBlock::const_iterator I = BB1->begin(), E = BB1->end();
-             I != E; ++I) {
-          if (&*I == I1) return true;
-          if (&*I == I2) return false;
-        }
-        assert(!"Instructions not found in parent BasicBlock?");
-      } else {
-        return Forest->properlyDominates(BB1, BB2);
-      }
-      return false;
-    }
 
     /// Returns true if V1 is a better canonical value than V2.
     bool compare(Value *V1, Value *V2) const {
@@ -1179,22 +1331,48 @@ namespace {
       if (!I1 || !I2)
         return V1->getNumUses() < V2->getNumUses();
 
-      return IdomI(I1, I2);
+      return DTDFS->dominates(I1, I2);
     }
 
     // below - true if the Instruction is dominated by the current context
     // block or instruction
     bool below(Instruction *I) {
-      if (TopInst)
-        return IdomI(TopInst, I);
-      else {
-        ETNode *Node = Forest->getNodeForBlock(I->getParent());
-        return Node->DominatedBy(Top);
+      BasicBlock *BB = I->getParent();
+      if (TopInst && TopInst->getParent() == BB) {
+        if (isa<TerminatorInst>(TopInst)) return false;
+        if (isa<TerminatorInst>(I)) return true;
+        if ( isa<PHINode>(TopInst) && !isa<PHINode>(I)) return true;
+        if (!isa<PHINode>(TopInst) &&  isa<PHINode>(I)) return false;
+
+        for (BasicBlock::const_iterator Iter = BB->begin(), E = BB->end();
+             Iter != E; ++Iter) {
+          if (&*Iter == TopInst) return true;
+          else if (&*Iter == I) return false;
+        }
+        assert(!"Instructions not found in parent BasicBlock?");
+      } else {
+	DomTreeDFS::Node *Node = DTDFS->getNodeForBlock(BB);
+        if (!Node) return false;
+        return Top->dominates(Node);
       }
+    }
+
+    // aboveOrBelow - true if the Instruction either dominates or is dominated
+    // by the current context block or instruction
+    bool aboveOrBelow(Instruction *I) {
+      BasicBlock *BB = I->getParent();
+      DomTreeDFS::Node *Node = DTDFS->getNodeForBlock(BB);
+      if (!Node) return false;
+
+      return Top == Node || Top->dominates(Node) || Node->dominates(Top);
     }
 
     bool makeEqual(Value *V1, Value *V2) {
       DOUT << "makeEqual(" << *V1 << ", " << *V2 << ")\n";
+      DOUT << "context is ";
+      if (TopInst) DOUT << "I: " << *TopInst << "\n";
+      else DOUT << "BB: " << TopBB->getName()
+                << "(" << Top->getDFSNumIn() << ")\n";
 
       assert(V1->getType() == V2->getType() &&
              "Can't make two values with different types equal.");
@@ -1396,8 +1574,7 @@ namespace {
           if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
 
           if (Instruction *I2 = dyn_cast<Instruction>(R)) {
-            if (below(I2) ||
-                Top->DominatedBy(Forest->getNodeForBlock(I2->getParent())))
+            if (aboveOrBelow(I2))
             defToOps(I2);
           }
           for (Value::use_iterator UI = V2->use_begin(), UE = V2->use_end();
@@ -1405,8 +1582,7 @@ namespace {
             Use &TheUse = UI.getUse();
             ++UI;
             if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-              if (below(I) ||
-                  Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
+              if (aboveOrBelow(I))
                 opsToDef(I);
             }
           }
@@ -1422,8 +1598,7 @@ namespace {
           Value *V = TheUse.getUser();
           if (!V->use_empty()) {
             if (Instruction *Inst = dyn_cast<Instruction>(V)) {
-              if (below(Inst) ||
-                  Top->DominatedBy(Forest->getNodeForBlock(Inst->getParent())))
+              if (aboveOrBelow(Inst))
                 opsToDef(Inst);
             }
           }
@@ -1465,27 +1640,32 @@ namespace {
 
   public:
     VRPSolver(InequalityGraph &IG, UnreachableBlocks &UB, ValueRanges &VR,
-              ETForest *Forest, bool &modified, BasicBlock *TopBB)
+              DomTreeDFS *DTDFS, bool &modified, BasicBlock *TopBB)
       : IG(IG),
         UB(UB),
         VR(VR),
-        Forest(Forest),
-        Top(Forest->getNodeForBlock(TopBB)),
+        DTDFS(DTDFS),
+        Top(DTDFS->getNodeForBlock(TopBB)),
         TopBB(TopBB),
         TopInst(NULL),
-        modified(modified) {}
+        modified(modified)
+    {
+      assert(Top && "VRPSolver created for unreachable basic block.");
+    }
 
     VRPSolver(InequalityGraph &IG, UnreachableBlocks &UB, ValueRanges &VR,
-              ETForest *Forest, bool &modified, Instruction *TopInst)
+              DomTreeDFS *DTDFS, bool &modified, Instruction *TopInst)
       : IG(IG),
         UB(UB),
         VR(VR),
-        Forest(Forest),
+        DTDFS(DTDFS),
+        Top(DTDFS->getNodeForBlock(TopInst->getParent())),
+        TopBB(TopInst->getParent()),
         TopInst(TopInst),
         modified(modified)
     {
-      TopBB = TopInst->getParent();
-      Top = Forest->getNodeForBlock(TopBB);
+      assert(Top && "VRPSolver created for unreachable basic block.");
+      assert(Top->getBlock() == TopInst->getParent() && "Context mismatch.");
     }
 
     bool isRelatedBy(Value *V1, Value *V2, ICmpInst::Predicate Pred) const {
@@ -1514,7 +1694,7 @@ namespace {
              Instruction *I = NULL) {
       DOUT << "adding " << *V1 << " " << Pred << " " << *V2;
       if (I) DOUT << " context: " << *I;
-      else DOUT << " default context";
+      else DOUT << " default context (" << Top->getDFSNumIn() << ")";
       DOUT << "\n";
 
       assert(V1->getType() == V2->getType() &&
@@ -1856,7 +2036,7 @@ namespace {
         Operation &O = WorkList.front();
         TopInst = O.ContextInst;
         TopBB = O.ContextBB;
-        Top = Forest->getNodeForBlock(TopBB);
+        Top = DTDFS->getNodeForBlock(TopBB); // XXX move this into Context
 
         O.LHS = IG.canonicalize(O.LHS, Top);
         O.RHS = IG.canonicalize(O.RHS, Top);
@@ -1933,8 +2113,7 @@ namespace {
             }
 
             if (Instruction *I1 = dyn_cast<Instruction>(O.LHS)) {
-              if (below(I1) ||
-                  Top->DominatedBy(Forest->getNodeForBlock(I1->getParent())))
+              if (aboveOrBelow(I1))
                 defToOps(I1);
             }
             if (isa<Instruction>(O.LHS) || isa<Argument>(O.LHS)) {
@@ -1943,15 +2122,13 @@ namespace {
                 Use &TheUse = UI.getUse();
                 ++UI;
                 if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-                  if (below(I) ||
-                      Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
+                  if (aboveOrBelow(I))
                     opsToDef(I);
                 }
               }
             }
             if (Instruction *I2 = dyn_cast<Instruction>(O.RHS)) {
-              if (below(I2) ||
-                  Top->DominatedBy(Forest->getNodeForBlock(I2->getParent())))
+              if (aboveOrBelow(I2))
               defToOps(I2);
             }
             if (isa<Instruction>(O.RHS) || isa<Argument>(O.RHS)) {
@@ -1960,9 +2137,7 @@ namespace {
                 Use &TheUse = UI.getUse();
                 ++UI;
                 if (Instruction *I = dyn_cast<Instruction>(TheUse.getUser())) {
-                  if (below(I) ||
-                      Top->DominatedBy(Forest->getNodeForBlock(I->getParent())))
-
+                  if (aboveOrBelow(I))
                     opsToDef(I);
                 }
               }
@@ -1984,7 +2159,8 @@ namespace {
   }
 
 #ifndef NDEBUG
-  bool ValueRanges::isCanonical(Value *V, ETNode *Subtree, VRPSolver *VRP) {
+  bool ValueRanges::isCanonical(Value *V, DomTreeDFS::Node *Subtree,
+                                VRPSolver *VRP) {
     return V == VRP->IG.canonicalize(V, Subtree);
   }
 #endif
@@ -1994,14 +2170,13 @@ namespace {
   /// can't be equal and will solve setcc instructions when possible.
   /// @brief Root of the predicate simplifier optimization.
   class VISIBILITY_HIDDEN PredicateSimplifier : public FunctionPass {
-    DominatorTree *DT;
-    ETForest *Forest;
+    DomTreeDFS *DTDFS;
     bool modified;
     InequalityGraph *IG;
     UnreachableBlocks UB;
     ValueRanges *VR;
 
-    std::vector<DomTreeNode *> WorkList;
+    std::vector<DomTreeDFS::Node *> WorkList;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -2012,7 +2187,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequired<DominatorTree>();
-      AU.addRequired<ETForest>();
       AU.addRequired<TargetData>();
       AU.addPreserved<TargetData>();
     }
@@ -2027,14 +2201,14 @@ namespace {
     class VISIBILITY_HIDDEN Forwards : public InstVisitor<Forwards> {
       friend class InstVisitor<Forwards>;
       PredicateSimplifier *PS;
-      DomTreeNode *DTNode;
+      DomTreeDFS::Node *DTNode;
 
     public:
       InequalityGraph &IG;
       UnreachableBlocks &UB;
       ValueRanges &VR;
 
-      Forwards(PredicateSimplifier *PS, DomTreeNode *DTNode)
+      Forwards(PredicateSimplifier *PS, DomTreeDFS::Node *DTNode)
         : PS(PS), DTNode(DTNode), IG(*PS->IG), UB(PS->UB), VR(*PS->VR) {}
 
       void visitTerminatorInst(TerminatorInst &TI);
@@ -2055,31 +2229,30 @@ namespace {
     // Used by terminator instructions to proceed from the current basic
     // block to the next. Verifies that "current" dominates "next",
     // then calls visitBasicBlock.
-    void proceedToSuccessors(DomTreeNode *Current) {
-      for (DomTreeNode::iterator I = Current->begin(),
+    void proceedToSuccessors(DomTreeDFS::Node *Current) {
+      for (DomTreeDFS::Node::iterator I = Current->begin(),
            E = Current->end(); I != E; ++I) {
         WorkList.push_back(*I);
       }
     }
 
-    void proceedToSuccessor(DomTreeNode *Next) {
+    void proceedToSuccessor(DomTreeDFS::Node *Next) {
       WorkList.push_back(Next);
     }
 
     // Visits each instruction in the basic block.
-    void visitBasicBlock(DomTreeNode *Node) {
+    void visitBasicBlock(DomTreeDFS::Node *Node) {
       BasicBlock *BB = Node->getBlock();
-      ETNode *ET = Forest->getNodeForBlock(BB);
       DOUT << "Entering Basic Block: " << BB->getName()
-           << " (" << ET->getDFSNumIn() << ")\n";
+           << " (" << Node->getDFSNumIn() << ")\n";
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
-        visitInstruction(I++, Node, ET);
+        visitInstruction(I++, Node);
       }
     }
 
     // Tries to simplify each Instruction and add new properties to
     // the PropertySet.
-    void visitInstruction(Instruction *I, DomTreeNode *DT, ETNode *ET) {
+    void visitInstruction(Instruction *I, DomTreeDFS::Node *DT) {
       DOUT << "Considering instruction " << *I << "\n";
       DEBUG(IG->dump());
 
@@ -2094,7 +2267,7 @@ namespace {
 
 #ifndef NDEBUG
       // Try to replace the whole instruction.
-      Value *V = IG->canonicalize(I, ET);
+      Value *V = IG->canonicalize(I, DT);
       assert(V == I && "Late instruction canonicalization.");
       if (V != I) {
         modified = true;
@@ -2109,7 +2282,7 @@ namespace {
       // Try to substitute operands.
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
         Value *Oper = I->getOperand(i);
-        Value *V = IG->canonicalize(Oper, ET);
+        Value *V = IG->canonicalize(Oper, DT);
         assert(V == Oper && "Late operand canonicalization.");
         if (V != Oper) {
           modified = true;
@@ -2130,28 +2303,25 @@ namespace {
   };
 
   bool PredicateSimplifier::runOnFunction(Function &F) {
-    DT = &getAnalysis<DominatorTree>();
-    Forest = &getAnalysis<ETForest>();
-
+    DominatorTree *DT = &getAnalysis<DominatorTree>();
+    DTDFS = new DomTreeDFS(DT);
     TargetData *TD = &getAnalysis<TargetData>();
-
-    // XXX: should only act when numbers are out of date
-    Forest->updateDFSNumbers();
 
     DOUT << "Entering Function: " << F.getName() << "\n";
 
     modified = false;
-    BasicBlock *RootBlock = &F.getEntryBlock();
-    IG = new InequalityGraph(Forest->getNodeForBlock(RootBlock));
+    DomTreeDFS::Node *Root = DTDFS->getRootNode();
+    IG = new InequalityGraph(Root);
     VR = new ValueRanges(TD);
-    WorkList.push_back(DT->getRootNode());
+    WorkList.push_back(Root);
 
     do {
-      DomTreeNode *DTNode = WorkList.back();
+      DomTreeDFS::Node *DTNode = WorkList.back();
       WorkList.pop_back();
       if (!UB.isDead(DTNode->getBlock())) visitBasicBlock(DTNode);
     } while (!WorkList.empty());
 
+    delete DTDFS;
     delete VR;
     delete IG;
 
@@ -2179,21 +2349,21 @@ namespace {
       return;
     }
 
-    for (DomTreeNode::iterator I = DTNode->begin(), E = DTNode->end();
+    for (DomTreeDFS::Node::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *Dest = (*I)->getBlock();
       DOUT << "Branch thinking about %" << Dest->getName()
-           << "(" << PS->Forest->getNodeForBlock(Dest)->getDFSNumIn() << ")\n";
+           << "(" << PS->DTDFS->getNodeForBlock(Dest)->getDFSNumIn() << ")\n";
 
       if (Dest == TrueDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, Dest);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(ConstantInt::getTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
       } else if (Dest == FalseDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, Dest);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(ConstantInt::getFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
@@ -2209,13 +2379,13 @@ namespace {
     // Set the EQProperty in each of the cases BBs, and the NEProperties
     // in the default BB.
 
-    for (DomTreeNode::iterator I = DTNode->begin(), E = DTNode->end();
+    for (DomTreeDFS::Node::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *BB = (*I)->getBlock();
       DOUT << "Switch thinking about BB %" << BB->getName()
-           << "(" << PS->Forest->getNodeForBlock(BB)->getDFSNumIn() << ")\n";
+           << "(" << PS->DTDFS->getNodeForBlock(BB)->getDFSNumIn() << ")\n";
 
-      VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, BB);
+      VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, BB);
       if (BB == SI.getDefaultDest()) {
         for (unsigned i = 1, e = SI.getNumCases(); i < e; ++i)
           if (SI.getSuccessor(i) != BB)
@@ -2230,7 +2400,7 @@ namespace {
   }
 
   void PredicateSimplifier::Forwards::visitAllocaInst(AllocaInst &AI) {
-    VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &AI);
+    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &AI);
     VRP.add(Constant::getNullValue(AI.getType()), &AI, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2240,7 +2410,7 @@ namespace {
     // avoid "load uint* null" -> null NE null.
     if (isa<Constant>(Ptr)) return;
 
-    VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &LI);
+    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &LI);
     VRP.add(Constant::getNullValue(Ptr->getType()), Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2249,13 +2419,13 @@ namespace {
     Value *Ptr = SI.getPointerOperand();
     if (isa<Constant>(Ptr)) return;
 
-    VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &SI);
+    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &SI);
     VRP.add(Constant::getNullValue(Ptr->getType()), Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
 
   void PredicateSimplifier::Forwards::visitSExtInst(SExtInst &SI) {
-    VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &SI);
+    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &SI);
     uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
     APInt Min(APInt::getHighBitsSet(DstBitWidth, DstBitWidth-SrcBitWidth+1));
@@ -2266,7 +2436,7 @@ namespace {
   }
 
   void PredicateSimplifier::Forwards::visitZExtInst(ZExtInst &ZI) {
-    VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &ZI);
+    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &ZI);
     uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth));
@@ -2284,7 +2454,7 @@ namespace {
       case Instruction::UDiv:
       case Instruction::SDiv: {
         Value *Divisor = BO.getOperand(1);
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(Constant::getNullValue(Divisor->getType()), Divisor,
                 ICmpInst::ICMP_NE);
         VRP.solve();
@@ -2295,34 +2465,34 @@ namespace {
     switch (ops) {
       default: break;
       case Instruction::Shl: {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_UGE);
         VRP.solve();
       } break;
       case Instruction::AShr: {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_SLE);
         VRP.solve();
       } break;
       case Instruction::LShr:
       case Instruction::UDiv: {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_ULE);
         VRP.solve();
       } break;
       case Instruction::URem: {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(1), ICmpInst::ICMP_ULE);
         VRP.solve();
       } break;
       case Instruction::And: {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_ULE);
         VRP.add(&BO, BO.getOperand(1), ICmpInst::ICMP_ULE);
         VRP.solve();
       } break;
       case Instruction::Or: {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &BO);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_UGE);
         VRP.add(&BO, BO.getOperand(1), ICmpInst::ICMP_UGE);
         VRP.solve();
@@ -2348,7 +2518,7 @@ namespace {
       case ICmpInst::ICMP_SGE: Pred = ICmpInst::ICMP_SGT; break;
     }
     if (Pred != IC.getPredicate()) {
-      VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &IC);
+      VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &IC);
       if (VRP.isRelatedBy(IC.getOperand(1), IC.getOperand(0),
                           ICmpInst::ICMP_NE)) {
         ++NumSnuggle;
@@ -2376,7 +2546,7 @@ namespace {
 
       }
       if (NextVal) {
-        VRPSolver VRP(IG, UB, VR, PS->Forest, PS->modified, &IC);
+        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &IC);
         if (VRP.isRelatedBy(IC.getOperand(0), NextVal,
                             ICmpInst::getInversePredicate(Pred))) {
           ICmpInst *NewIC = new ICmpInst(ICmpInst::ICMP_EQ, IC.getOperand(0),
