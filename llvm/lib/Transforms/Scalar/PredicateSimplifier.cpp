@@ -234,7 +234,7 @@ namespace {
         }
         assert(!"Instructions not found in parent BasicBlock?");
       } else {
-	Node *Node1 = getNodeForBlock(BB1),
+        Node *Node1 = getNodeForBlock(BB1),
              *Node2 = getNodeForBlock(BB2);
         if (!Node1 || !Node2) return false;
         return Node1->dominates(Node2);
@@ -1351,7 +1351,7 @@ namespace {
         }
         assert(!"Instructions not found in parent BasicBlock?");
       } else {
-	DomTreeDFS::Node *Node = DTDFS->getNodeForBlock(BB);
+        DomTreeDFS::Node *Node = DTDFS->getNodeForBlock(BB);
         if (!Node) return false;
         return Top->dominates(Node);
       }
