@@ -1013,8 +1013,8 @@ unsigned GVNPRE::buildsets(Function& F) {
       
       
       
-      unsigned ret = buildsets_anticin(BB, anticOut, generatedTemporaries[BB], 
-                                   generatedExpressions[BB], visited);
+      unsigned ret = buildsets_anticin(BB, anticOut,generatedExpressions[BB],
+                                       generatedTemporaries[BB], visited);
       
       if (ret == 0) {
         changed = true;
