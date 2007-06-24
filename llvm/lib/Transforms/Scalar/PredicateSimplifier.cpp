@@ -842,7 +842,7 @@ namespace {
 
       bool operator<(const ScopedRange &range) const {
         if (V != range.V) return V < range.V;
-        else return Subtree < range.Subtree;
+        else return *Subtree < *range.Subtree;
       }
 
       bool operator<(const Value *value) const {
