@@ -88,15 +88,21 @@ DynamicLibrary::~DynamicLibrary() {
   }
 }
 
-#ifdef __MINGW32__
+// Stack probing routines are in the support library (e.g. libgcc), but we don't
+// have dynamic linking on windows. Provide a hook.
+#if defined(__MINGW32__) || defined (_MSC_VER)
   #define EXPLICIT_SYMBOL(SYM)                    \
     if (!strcmp(symbolName, #SYM)) return (void*)&SYM
   #define EXPLICIT_SYMBOL2(SYMFROM, SYMTO)        \
     if (!strcmp(symbolName, #SYMFROM)) return (void*)&SYMTO
   #define EXPLICIT_SYMBOL_DEF(SYM)                \
     extern "C" { extern void *SYM; }
-  
-  EXPLICIT_SYMBOL_DEF(_alloca);
+
+  #if defined(__MINGW32__)
+    EXPLICIT_SYMBOL_DEF(_alloca);
+  #elif defined(_MSC_VER)
+    EXPLICIT_SYMBOL_DEF(_alloca_probe);
+  #endif
 #endif
  
 bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
@@ -133,7 +139,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
       return (void *) ptr;
   }
 
-#ifdef __MINGW32__  
+#if defined(__MINGW32__)
   {
     EXPLICIT_SYMBOL(_alloca);
     EXPLICIT_SYMBOL2(alloca, _alloca);
@@ -141,6 +147,14 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
 #undef EXPLICIT_SYMBOL2
 #undef EXPLICIT_SYMBOL_DEF    
   }
+#elif defined(_MSC_VER)
+  {
+    EXPLICIT_SYMBOL2(alloca, _alloca_probe);
+    EXPLICIT_SYMBOL2(_alloca, _alloca_probe);
+#undef EXPLICIT_SYMBOL
+#undef EXPLICIT_SYMBOL2
+#undef EXPLICIT_SYMBOL_DEF    
+  }  
 #endif
 
   return 0;
