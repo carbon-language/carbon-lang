@@ -195,10 +195,14 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   const Function *Caller = TheCall->getParent()->getParent();
 
   // Don't inline a directly recursive call.
-  if (Caller == Callee) return 2000000000;
-
-  // Don't inline functions marked noinline
-  if (NeverInline.count(Callee)) return 2000000000;
+  if (Caller == Callee ||
+      // Don't inline functions which can be redefined at link-time to mean
+      // something else.  link-once linkage is ok though.
+      Callee->hasWeakLinkage() ||
+      
+      // Don't inline functions marked noinline.
+      NeverInline.count(Callee))
+    return 2000000000;
   
   // InlineCost - This value measures how good of an inline candidate this call
   // site is to inline.  A lower inline cost make is more likely for the call to
