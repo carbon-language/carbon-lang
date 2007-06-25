@@ -392,7 +392,6 @@ def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (ops FR32:$dst, f128mem:$src),
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
 let isTwoAddress = 1 in {
-
 let isCommutable = 1 in {
   def FsANDPSrr : PSI<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                       "andps {$src2, $dst|$dst, $src2}",
@@ -418,9 +417,11 @@ def FsXORPSrm : PSI<0x57, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
                     [(set FR32:$dst, (X86fxor FR32:$src1,
                                       (X86loadpf32 addr:$src2)))]>;
 
-def FsANDNPSrr : PSI<0x55, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+def FsANDNPSrr : PSI<0x55, MRMSrcReg,
+                     (ops FR32:$dst, FR32:$src1, FR32:$src2),
                      "andnps {$src2, $dst|$dst, $src2}", []>;
-def FsANDNPSrm : PSI<0x55, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f128mem:$src2),
+def FsANDNPSrm : PSI<0x55, MRMSrcMem,
+                     (ops FR32:$dst, FR32:$src1, f128mem:$src2),
                      "andnps {$src2, $dst|$dst, $src2}", []>;
 }
 
@@ -440,8 +441,8 @@ multiclass scalar_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
                                    bit Commutable = 0> {
   // Scalar operation, reg+reg.
   def SSrr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-               !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
-               [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
+                 !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
+                 [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
     let isCommutable = Commutable;
   }
 
@@ -498,20 +499,22 @@ def MOVUPSmr : PSI<0x11, MRMDestMem, (ops f128mem:$dst, VR128:$src),
                    [(int_x86_sse_storeu_ps addr:$dst, VR128:$src)]>;
 
 let isTwoAddress = 1 in {
-let AddedComplexity = 20 in {
-def MOVLPSrm : PSI<0x12, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                   "movlps {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, 
-                     (v4f32 (vector_shuffle VR128:$src1,
-                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                             MOVLP_shuffle_mask)))]>;
-def MOVHPSrm : PSI<0x16, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-                   "movhps {$src2, $dst|$dst, $src2}",
-                   [(set VR128:$dst, 
-                     (v4f32 (vector_shuffle VR128:$src1,
-                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                             MOVHP_shuffle_mask)))]>;
-} // AddedComplexity
+  let AddedComplexity = 20 in {
+    def MOVLPSrm : PSI<0x12, MRMSrcMem,
+                       (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                       "movlps {$src2, $dst|$dst, $src2}",
+                       [(set VR128:$dst, 
+                         (v4f32 (vector_shuffle VR128:$src1,
+                         (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
+                                 MOVLP_shuffle_mask)))]>;
+    def MOVHPSrm : PSI<0x16, MRMSrcMem,
+                       (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                       "movhps {$src2, $dst|$dst, $src2}",
+                       [(set VR128:$dst, 
+                         (v4f32 (vector_shuffle VR128:$src1,
+                         (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
+                                 MOVHP_shuffle_mask)))]>;
+  } // AddedComplexity
 } // isTwoAddress
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (ops f64mem:$dst, VR128:$src),
@@ -955,7 +958,7 @@ def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
                       "comisd {$src2, $src1|$src1, $src2}",
                       [(X86comi (v2f64 VR128:$src1), (load addr:$src2))]>;
 
-// Aliases of packed instructions for scalar use. These all have names that
+// Aliases of packed SSE2 instructions for scalar use. These all have names that
 // start with 'Fs'.
 
 // Alias instructions that map fld0 to pxor for sse.
@@ -963,16 +966,16 @@ def FsFLD0SD : I<0xEF, MRMInitReg, (ops FR64:$dst),
                  "pxor $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
-// Alias instructions to do FR64 reg-to-reg copy using movapd. Upper bits are
+// Alias instruction to do FR64 reg-to-reg copy using movapd. Upper bits are
 // disregarded.
 def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (ops FR64:$dst, FR64:$src),
-                   "movapd {$src, $dst|$dst, $src}", []>;
+                     "movapd {$src, $dst|$dst, $src}", []>;
 
-// Alias instructions to load FR64 from f128mem using movapd. Upper bits are
+// Alias instruction to load FR64 from f128mem using movapd. Upper bits are
 // disregarded.
 def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (ops FR64:$dst, f128mem:$src),
-                  "movapd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (X86loadpf64 addr:$src))]>;
+                     "movapd {$src, $dst|$dst, $src}",
+                     [(set FR64:$dst, (X86loadpf64 addr:$src))]>;
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
 let isTwoAddress = 1 in {
