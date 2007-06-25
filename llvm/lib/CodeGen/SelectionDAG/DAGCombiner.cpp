@@ -227,7 +227,7 @@ namespace {
     SDOperand visitAND(SDNode *N);
     SDOperand visitOR(SDNode *N);
     SDOperand visitXOR(SDNode *N);
-    SDOperand visitVBinOp(SDNode *N, ISD::NodeType IntOp, ISD::NodeType FPOp);
+    SDOperand SimplifyVBinOp(SDNode *N);
     SDOperand visitSHL(SDNode *N);
     SDOperand visitSRA(SDNode *N);
     SDOperand visitSRL(SDNode *N);
@@ -243,7 +243,6 @@ namespace {
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
     SDOperand visitBIT_CONVERT(SDNode *N);
-    SDOperand visitVBIT_CONVERT(SDNode *N);
     SDOperand visitFADD(SDNode *N);
     SDOperand visitFSUB(SDNode *N);
     SDOperand visitFMUL(SDNode *N);
@@ -264,10 +263,9 @@ namespace {
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
     SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
-    SDOperand visitVINSERT_VECTOR_ELT(SDNode *N);
-    SDOperand visitVBUILD_VECTOR(SDNode *N);
+    SDOperand visitBUILD_VECTOR(SDNode *N);
+    SDOperand visitCONCAT_VECTORS(SDNode *N);
     SDOperand visitVECTOR_SHUFFLE(SDNode *N);
-    SDOperand visitVVECTOR_SHUFFLE(SDNode *N);
 
     SDOperand XformToShuffleWithZero(SDNode *N);
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
@@ -280,7 +278,7 @@ namespace {
                                bool NotExtCompare = false);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                             ISD::CondCode Cond, bool foldBooleans = true);
-    SDOperand ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *, MVT::ValueType);
+    SDOperand ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *, MVT::ValueType);
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
@@ -657,7 +655,6 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
   case ISD::TRUNCATE:           return visitTRUNCATE(N);
   case ISD::BIT_CONVERT:        return visitBIT_CONVERT(N);
-  case ISD::VBIT_CONVERT:       return visitVBIT_CONVERT(N);
   case ISD::FADD:               return visitFADD(N);
   case ISD::FSUB:               return visitFSUB(N);
   case ISD::FMUL:               return visitFMUL(N);
@@ -678,18 +675,9 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::LOAD:               return visitLOAD(N);
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
-  case ISD::VINSERT_VECTOR_ELT: return visitVINSERT_VECTOR_ELT(N);
-  case ISD::VBUILD_VECTOR:      return visitVBUILD_VECTOR(N);
+  case ISD::BUILD_VECTOR:       return visitBUILD_VECTOR(N);
+  case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
-  case ISD::VVECTOR_SHUFFLE:    return visitVVECTOR_SHUFFLE(N);
-  case ISD::VADD:               return visitVBinOp(N, ISD::ADD , ISD::FADD);
-  case ISD::VSUB:               return visitVBinOp(N, ISD::SUB , ISD::FSUB);
-  case ISD::VMUL:               return visitVBinOp(N, ISD::MUL , ISD::FMUL);
-  case ISD::VSDIV:              return visitVBinOp(N, ISD::SDIV, ISD::FDIV);
-  case ISD::VUDIV:              return visitVBinOp(N, ISD::UDIV, ISD::UDIV);
-  case ISD::VAND:               return visitVBinOp(N, ISD::AND , ISD::AND);
-  case ISD::VOR:                return visitVBinOp(N, ISD::OR  , ISD::OR);
-  case ISD::VXOR:               return visitVBinOp(N, ISD::XOR , ISD::XOR);
   }
   return SDOperand();
 }
@@ -856,6 +844,10 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N0.getValueType();
+
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
@@ -927,6 +919,10 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
     SDOperand Result = combineSelectAndUse(N, N1, N0, DAG);
     if (Result.Val) return Result;
   }
+
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
 
   return SDOperand();
 }
@@ -1004,6 +1000,10 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   MVT::ValueType VT = N0.getValueType();
   
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
+  
   // fold (sub x, x) -> 0
   if (N0 == N1)
     return DAG.getConstant(0, N->getValueType(0));
@@ -1024,6 +1024,10 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
     SDOperand Result = combineSelectAndUse(N, N1, N0, DAG);
     if (Result.Val) return Result;
   }
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1033,6 +1037,10 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N0.getValueType();
+  
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (mul c1, c2) -> c1*c2
   if (N0C && N1C)
@@ -1098,6 +1106,11 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   SDOperand RMUL = ReassociateOps(ISD::MUL, N0, N1);
   if (RMUL.Val != 0)
     return RMUL;
+
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1108,6 +1121,10 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   MVT::ValueType VT = N->getValueType(0);
 
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
+  
   // fold (sdiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.getNode(ISD::SDIV, VT, N0, N1);
@@ -1162,6 +1179,11 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
     SDOperand Op = BuildSDIV(N);
     if (Op.Val) return Op;
   }
+
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1171,6 +1193,10 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   MVT::ValueType VT = N->getValueType(0);
+  
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (udiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
@@ -1198,6 +1224,11 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
     SDOperand Op = BuildUDIV(N);
     if (Op.Val) return Op;
   }
+
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1229,6 +1260,10 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
     return Sub;
   }
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1267,6 +1302,10 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
     return Sub;
   }
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1274,6 +1313,7 @@ SDOperand DAGCombiner::visitMULHS(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (mulhs x, 0) -> 0
   if (N1C && N1C->isNullValue())
@@ -1283,6 +1323,10 @@ SDOperand DAGCombiner::visitMULHS(SDNode *N) {
     return DAG.getNode(ISD::SRA, N0.getValueType(), N0, 
                        DAG.getConstant(MVT::getSizeInBits(N0.getValueType())-1,
                                        TLI.getShiftAmountTy()));
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1290,6 +1334,7 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (mulhu x, 0) -> 0
   if (N1C && N1C->isNullValue())
@@ -1297,6 +1342,10 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
   // fold (mulhu x, 1) -> 0
   if (N1C && N1C->getValue() == 1)
     return DAG.getConstant(0, N0.getValueType());
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1336,6 +1385,10 @@ SDOperand DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
     return DAG.getNode(N0.getOpcode(), VT, ORNode, N0.getOperand(1));
   }
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -1346,6 +1399,10 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
+  
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
@@ -1527,6 +1584,10 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
   unsigned OpSizeInBits = MVT::getSizeInBits(VT);
+  
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
@@ -1806,6 +1867,10 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N0.getValueType();
+  
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
@@ -2742,6 +2807,30 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   MVT::ValueType VT = N->getValueType(0);
 
+  // If the input is a BUILD_VECTOR with all constant elements, fold this now.
+  // Only do this before legalize, since afterward the target may be depending
+  // on the bitconvert.
+  // First check to see if this is all constant.
+  if (!AfterLegalize &&
+      N0.getOpcode() == ISD::BUILD_VECTOR && N0.Val->hasOneUse() &&
+      MVT::isVector(VT)) {
+    bool isSimple = true;
+    for (unsigned i = 0, e = N0.getNumOperands(); i != e; ++i)
+      if (N0.getOperand(i).getOpcode() != ISD::UNDEF &&
+          N0.getOperand(i).getOpcode() != ISD::Constant &&
+          N0.getOperand(i).getOpcode() != ISD::ConstantFP) {
+        isSimple = false; 
+        break;
+      }
+        
+    MVT::ValueType DestEltVT = MVT::getVectorElementType(N->getValueType(0));
+    assert(!MVT::isVector(DestEltVT) &&
+           "Element type of vector ValueType must not be vector!");
+    if (isSimple) {
+      return ConstantFoldBIT_CONVERTofBUILD_VECTOR(N0.Val, DestEltVT);
+    }
+  }
+  
   // If the input is a constant, let getNode() fold it.
   if (isa<ConstantSDNode>(N0) || isa<ConstantFPSDNode>(N0)) {
     SDOperand Res = DAG.getNode(ISD::BIT_CONVERT, VT, N0);
@@ -2774,37 +2863,11 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   return SDOperand();
 }
 
-SDOperand DAGCombiner::visitVBIT_CONVERT(SDNode *N) {
-  SDOperand N0 = N->getOperand(0);
-  MVT::ValueType VT = N->getValueType(0);
-
-  // If the input is a VBUILD_VECTOR with all constant elements, fold this now.
-  // First check to see if this is all constant.
-  if (N0.getOpcode() == ISD::VBUILD_VECTOR && N0.Val->hasOneUse() &&
-      VT == MVT::Vector) {
-    bool isSimple = true;
-    for (unsigned i = 0, e = N0.getNumOperands()-2; i != e; ++i)
-      if (N0.getOperand(i).getOpcode() != ISD::UNDEF &&
-          N0.getOperand(i).getOpcode() != ISD::Constant &&
-          N0.getOperand(i).getOpcode() != ISD::ConstantFP) {
-        isSimple = false; 
-        break;
-      }
-        
-    MVT::ValueType DestEltVT = cast<VTSDNode>(N->getOperand(2))->getVT();
-    if (isSimple && !MVT::isVector(DestEltVT)) {
-      return ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(N0.Val, DestEltVT);
-    }
-  }
-  
-  return SDOperand();
-}
-
-/// ConstantFoldVBIT_CONVERTofVBUILD_VECTOR - We know that BV is a vbuild_vector
+/// ConstantFoldBIT_CONVERTofBUILD_VECTOR - We know that BV is a build_vector
 /// node with Constant, ConstantFP or Undef operands.  DstEltVT indicates the 
 /// destination element value type.
 SDOperand DAGCombiner::
-ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
+ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   MVT::ValueType SrcEltVT = BV->getOperand(0).getValueType();
   
   // If this is already the right type, we're done.
@@ -2817,13 +2880,14 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   // type, convert each element.  This handles FP<->INT cases.
   if (SrcBitSize == DstBitSize) {
     SmallVector<SDOperand, 8> Ops;
-    for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i) {
+    for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
       Ops.push_back(DAG.getNode(ISD::BIT_CONVERT, DstEltVT, BV->getOperand(i)));
       AddToWorkList(Ops.back().Val);
     }
-    Ops.push_back(*(BV->op_end()-2)); // Add num elements.
-    Ops.push_back(DAG.getValueType(DstEltVT));
-    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
+    MVT::ValueType VT =
+      MVT::getVectorType(DstEltVT,
+                         MVT::getVectorNumElements(BV->getValueType(0)));
+    return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
   
   // Otherwise, we're growing or shrinking the elements.  To avoid having to
@@ -2834,7 +2898,7 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
     // same sizes.
     assert((SrcEltVT == MVT::f32 || SrcEltVT == MVT::f64) && "Unknown FP VT!");
     MVT::ValueType IntVT = SrcEltVT == MVT::f32 ? MVT::i32 : MVT::i64;
-    BV = ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(BV, IntVT).Val;
+    BV = ConstantFoldBIT_CONVERTofBUILD_VECTOR(BV, IntVT).Val;
     SrcEltVT = IntVT;
   }
   
@@ -2843,10 +2907,10 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
   if (MVT::isFloatingPoint(DstEltVT)) {
     assert((DstEltVT == MVT::f32 || DstEltVT == MVT::f64) && "Unknown FP VT!");
     MVT::ValueType TmpVT = DstEltVT == MVT::f32 ? MVT::i32 : MVT::i64;
-    SDNode *Tmp = ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(BV, TmpVT).Val;
+    SDNode *Tmp = ConstantFoldBIT_CONVERTofBUILD_VECTOR(BV, TmpVT).Val;
     
     // Next, convert to FP elements of the same size.
-    return ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(Tmp, DstEltVT);
+    return ConstantFoldBIT_CONVERTofBUILD_VECTOR(Tmp, DstEltVT);
   }
   
   // Okay, we know the src/dst types are both integers of differing types.
@@ -2856,7 +2920,7 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
     unsigned NumInputsPerOutput = DstBitSize/SrcBitSize;
     
     SmallVector<SDOperand, 8> Ops;
-    for (unsigned i = 0, e = BV->getNumOperands()-2; i != e;
+    for (unsigned i = 0, e = BV->getNumOperands(); i != e;
          i += NumInputsPerOutput) {
       bool isLE = TLI.isLittleEndian();
       uint64_t NewBits = 0;
@@ -2877,16 +2941,16 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
         Ops.push_back(DAG.getConstant(NewBits, DstEltVT));
     }
 
-    Ops.push_back(DAG.getConstant(Ops.size(), MVT::i32)); // Add num elements.
-    Ops.push_back(DAG.getValueType(DstEltVT));            // Add element size.
-    return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
+    MVT::ValueType VT = MVT::getVectorType(DstEltVT,
+                                           Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
   
   // Finally, this must be the case where we are shrinking elements: each input
   // turns into multiple outputs.
   unsigned NumOutputsPerInput = SrcBitSize/DstBitSize;
   SmallVector<SDOperand, 8> Ops;
-  for (unsigned i = 0, e = BV->getNumOperands()-2; i != e; ++i) {
+  for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
     if (BV->getOperand(i).getOpcode() == ISD::UNDEF) {
       for (unsigned j = 0; j != NumOutputsPerInput; ++j)
         Ops.push_back(DAG.getNode(ISD::UNDEF, DstEltVT));
@@ -2904,9 +2968,8 @@ ConstantFoldVBIT_CONVERTofVBUILD_VECTOR(SDNode *BV, MVT::ValueType DstEltVT) {
     if (!TLI.isLittleEndian())
       std::reverse(Ops.end()-NumOutputsPerInput, Ops.end());
   }
-  Ops.push_back(DAG.getConstant(Ops.size(), MVT::i32)); // Add num elements.
-  Ops.push_back(DAG.getValueType(DstEltVT));            // Add element size.
-  return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
+  MVT::ValueType VT = MVT::getVectorType(DstEltVT, Ops.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
 }
 
 
@@ -2917,6 +2980,10 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
+  
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (fadd c1, c2) -> c1+c2
   if (N0CFP && N1CFP)
@@ -2937,6 +3004,10 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
     return DAG.getNode(ISD::FADD, VT, N0.getOperand(0),
                        DAG.getNode(ISD::FADD, VT, N0.getOperand(1), N1));
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -2947,6 +3018,10 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
   
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
+  
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FSUB, VT, N0, N1);
@@ -2954,6 +3029,10 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   if (isNegatibleForFree(N1))
     return DAG.getNode(ISD::FADD, VT, N0, GetNegatedExpression(N1, DAG));
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -2964,6 +3043,10 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
 
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
+  
   // fold (fmul c1, c2) -> c1*c2
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FMUL, VT, N0, N1);
@@ -2994,6 +3077,10 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
     return DAG.getNode(ISD::FMUL, VT, N0.getOperand(0),
                        DAG.getNode(ISD::FMUL, VT, N0.getOperand(1), N1));
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -3004,6 +3091,10 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
 
+  // fold vector ops
+  SDOperand FoldedVOp = SimplifyVBinOp(N);
+  if (FoldedVOp.Val) return FoldedVOp;
+  
   // fold (fdiv c1, c2) -> c1/c2
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FDIV, VT, N0, N1);
@@ -3020,6 +3111,10 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
     }
   }
   
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -3033,6 +3128,11 @@ SDOperand DAGCombiner::visitFREM(SDNode *N) {
   // fold (frem c1, c2) -> fmod(c1,c2)
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FREM, VT, N0, N1);
+
+  // If either operand is undef, the result is undef
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(ISD::UNDEF, VT);
+
   return SDOperand();
 }
 
@@ -3735,53 +3835,32 @@ SDOperand DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   return SDOperand();
 }
 
-SDOperand DAGCombiner::visitVINSERT_VECTOR_ELT(SDNode *N) {
-  SDOperand InVec = N->getOperand(0);
-  SDOperand InVal = N->getOperand(1);
-  SDOperand EltNo = N->getOperand(2);
-  SDOperand NumElts = N->getOperand(3);
-  SDOperand EltType = N->getOperand(4);
-  
-  // If the invec is a VBUILD_VECTOR and if EltNo is a constant, build a new
-  // vector with the inserted element.
-  if (InVec.getOpcode() == ISD::VBUILD_VECTOR && isa<ConstantSDNode>(EltNo)) {
-    unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
-    SmallVector<SDOperand, 8> Ops(InVec.Val->op_begin(), InVec.Val->op_end());
-    if (Elt < Ops.size()-2)
-      Ops[Elt] = InVal;
-    return DAG.getNode(ISD::VBUILD_VECTOR, InVec.getValueType(),
-                       &Ops[0], Ops.size());
-  }
-  
-  return SDOperand();
-}
+SDOperand DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
+  unsigned NumInScalars = N->getNumOperands();
+  MVT::ValueType VT = N->getValueType(0);
+  unsigned NumElts = MVT::getVectorNumElements(VT);
+  MVT::ValueType EltType = MVT::getVectorElementType(VT);
 
-SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
-  unsigned NumInScalars = N->getNumOperands()-2;
-  SDOperand NumElts = N->getOperand(NumInScalars);
-  SDOperand EltType = N->getOperand(NumInScalars+1);
-
-  // Check to see if this is a VBUILD_VECTOR of a bunch of VEXTRACT_VECTOR_ELT
-  // operations.  If so, and if the EXTRACT_ELT vector inputs come from at most
-  // two distinct vectors, turn this into a shuffle node.
+  // Check to see if this is a BUILD_VECTOR of a bunch of EXTRACT_VECTOR_ELT
+  // operations.  If so, and if the EXTRACT_VECTOR_ELT vector inputs come from
+  // at most two distinct vectors, turn this into a shuffle node.
   SDOperand VecIn1, VecIn2;
   for (unsigned i = 0; i != NumInScalars; ++i) {
     // Ignore undef inputs.
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
     
-    // If this input is something other than a VEXTRACT_VECTOR_ELT with a
+    // If this input is something other than a EXTRACT_VECTOR_ELT with a
     // constant index, bail out.
-    if (N->getOperand(i).getOpcode() != ISD::VEXTRACT_VECTOR_ELT ||
+    if (N->getOperand(i).getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
         !isa<ConstantSDNode>(N->getOperand(i).getOperand(1))) {
       VecIn1 = VecIn2 = SDOperand(0, 0);
       break;
     }
     
-    // If the input vector type disagrees with the result of the vbuild_vector,
+    // If the input vector type disagrees with the result of the build_vector,
     // we can't make a shuffle.
     SDOperand ExtractedFromVec = N->getOperand(i).getOperand(0);
-    if (*(ExtractedFromVec.Val->op_end()-2) != NumElts ||
-        *(ExtractedFromVec.Val->op_end()-1) != EltType) {
+    if (ExtractedFromVec.getValueType() != VT) {
       VecIn1 = VecIn2 = SDOperand(0, 0);
       break;
     }
@@ -3825,32 +3904,42 @@ SDOperand DAGCombiner::visitVBUILD_VECTOR(SDNode *N) {
     }
     
     // Add count and size info.
-    BuildVecIndices.push_back(NumElts);
-    BuildVecIndices.push_back(DAG.getValueType(TLI.getPointerTy()));
+    MVT::ValueType BuildVecVT =
+      MVT::getVectorType(TLI.getPointerTy(), NumElts);
     
-    // Return the new VVECTOR_SHUFFLE node.
+    // Return the new VECTOR_SHUFFLE node.
     SDOperand Ops[5];
     Ops[0] = VecIn1;
     if (VecIn2.Val) {
       Ops[1] = VecIn2;
     } else {
-      // Use an undef vbuild_vector as input for the second operand.
+      // Use an undef build_vector as input for the second operand.
       std::vector<SDOperand> UnOps(NumInScalars,
                                    DAG.getNode(ISD::UNDEF, 
-                                           cast<VTSDNode>(EltType)->getVT()));
-      UnOps.push_back(NumElts);
-      UnOps.push_back(EltType);
-      Ops[1] = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+                                               EltType));
+      Ops[1] = DAG.getNode(ISD::BUILD_VECTOR, VT,
                            &UnOps[0], UnOps.size());
       AddToWorkList(Ops[1].Val);
     }
-    Ops[2] = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+    Ops[2] = DAG.getNode(ISD::BUILD_VECTOR, BuildVecVT,
                          &BuildVecIndices[0], BuildVecIndices.size());
-    Ops[3] = NumElts;
-    Ops[4] = EltType;
-    return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, Ops, 5);
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, Ops, 3);
   }
   
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
+  // TODO: Check to see if this is a CONCAT_VECTORS of a bunch of
+  // EXTRACT_SUBVECTOR operations.  If so, and if the EXTRACT_SUBVECTOR vector
+  // inputs come from at most two distinct vectors, turn this into a shuffle
+  // node.
+
+  // If we only have one input vector, we don't need to do any concatenation.
+  if (N->getNumOperands() == 1) {
+    return N->getOperand(0);
+  }
+
   return SDOperand();
 }
 
@@ -3913,139 +4002,18 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   // all scalar elements the same.
   if (isSplat) {
     SDNode *V = N0.Val;
-    if (V->getOpcode() == ISD::BIT_CONVERT)
-      V = V->getOperand(0).Val;
-    if (V->getOpcode() == ISD::BUILD_VECTOR) {
-      unsigned NumElems = V->getNumOperands()-2;
-      if (NumElems > BaseIdx) {
-        SDOperand Base;
-        bool AllSame = true;
-        for (unsigned i = 0; i != NumElems; ++i) {
-          if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
-            Base = V->getOperand(i);
-            break;
-          }
-        }
-        // Splat of <u, u, u, u>, return <u, u, u, u>
-        if (!Base.Val)
-          return N0;
-        for (unsigned i = 0; i != NumElems; ++i) {
-          if (V->getOperand(i).getOpcode() != ISD::UNDEF &&
-              V->getOperand(i) != Base) {
-            AllSame = false;
-            break;
-          }
-        }
-        // Splat of <x, x, x, x>, return <x, x, x, x>
-        if (AllSame)
-          return N0;
-      }
-    }
-  }
 
-  // If it is a unary or the LHS and the RHS are the same node, turn the RHS
-  // into an undef.
-  if (isUnary || N0 == N1) {
-    if (N0.getOpcode() == ISD::UNDEF)
-      return DAG.getNode(ISD::UNDEF, N->getValueType(0));
-    // Check the SHUFFLE mask, mapping any inputs from the 2nd operand into the
-    // first operand.
-    SmallVector<SDOperand, 8> MappedOps;
-    for (unsigned i = 0, e = ShufMask.getNumOperands(); i != e; ++i) {
-      if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF ||
-          cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() < NumElts) {
-        MappedOps.push_back(ShufMask.getOperand(i));
-      } else {
-        unsigned NewIdx = 
-           cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() - NumElts;
-        MappedOps.push_back(DAG.getConstant(NewIdx, MVT::i32));
-      }
-    }
-    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
-                           &MappedOps[0], MappedOps.size());
-    AddToWorkList(ShufMask.Val);
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
-                       N0, 
-                       DAG.getNode(ISD::UNDEF, N->getValueType(0)),
-                       ShufMask);
-  }
- 
-  return SDOperand();
-}
-
-SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
-  SDOperand ShufMask = N->getOperand(2);
-  unsigned NumElts = ShufMask.getNumOperands()-2;
-  
-  // If the shuffle mask is an identity operation on the LHS, return the LHS.
-  bool isIdentity = true;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
-        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i) {
-      isIdentity = false;
-      break;
-    }
-  }
-  if (isIdentity) return N->getOperand(0);
-  
-  // If the shuffle mask is an identity operation on the RHS, return the RHS.
-  isIdentity = true;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF &&
-        cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() != i+NumElts) {
-      isIdentity = false;
-      break;
-    }
-  }
-  if (isIdentity) return N->getOperand(1);
-
-  // Check if the shuffle is a unary shuffle, i.e. one of the vectors is not
-  // needed at all.
-  bool isUnary = true;
-  bool isSplat = true;
-  int VecNum = -1;
-  unsigned BaseIdx = 0;
-  for (unsigned i = 0; i != NumElts; ++i)
-    if (ShufMask.getOperand(i).getOpcode() != ISD::UNDEF) {
-      unsigned Idx = cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue();
-      int V = (Idx < NumElts) ? 0 : 1;
-      if (VecNum == -1) {
-        VecNum = V;
-        BaseIdx = Idx;
-      } else {
-        if (BaseIdx != Idx)
-          isSplat = false;
-        if (VecNum != V) {
-          isUnary = false;
-          break;
-        }
-      }
-    }
-
-  SDOperand N0 = N->getOperand(0);
-  SDOperand N1 = N->getOperand(1);
-  // Normalize unary shuffle so the RHS is undef.
-  if (isUnary && VecNum == 1)
-    std::swap(N0, N1);
-
-  // If it is a splat, check if the argument vector is a build_vector with
-  // all scalar elements the same.
-  if (isSplat) {
-    SDNode *V = N0.Val;
-
-    // If this is a vbit convert that changes the element type of the vector but
+    // If this is a bit convert that changes the element type of the vector but
     // not the number of vector elements, look through it.  Be careful not to
     // look though conversions that change things like v4f32 to v2f64.
-    if (V->getOpcode() == ISD::VBIT_CONVERT) {
+    if (V->getOpcode() == ISD::BIT_CONVERT) {
       SDOperand ConvInput = V->getOperand(0);
-      if (ConvInput.getValueType() == MVT::Vector &&
-          NumElts ==
-          ConvInput.getConstantOperandVal(ConvInput.getNumOperands()-2))
+      if (MVT::getVectorNumElements(ConvInput.getValueType()) == NumElts)
         V = ConvInput.Val;
     }
 
-    if (V->getOpcode() == ISD::VBUILD_VECTOR) {
-      unsigned NumElems = V->getNumOperands()-2;
+    if (V->getOpcode() == ISD::BUILD_VECTOR) {
+      unsigned NumElems = V->getNumOperands();
       if (NumElems > BaseIdx) {
         SDOperand Base;
         bool AllSame = true;
@@ -4088,48 +4056,33 @@ SDOperand DAGCombiner::visitVVECTOR_SHUFFLE(SDNode *N) {
         MappedOps.push_back(DAG.getConstant(NewIdx, MVT::i32));
       }
     }
-    // Add the type/#elts values.
-    MappedOps.push_back(ShufMask.getOperand(NumElts));
-    MappedOps.push_back(ShufMask.getOperand(NumElts+1));
-
-    ShufMask = DAG.getNode(ISD::VBUILD_VECTOR, ShufMask.getValueType(),
+    ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),
                            &MappedOps[0], MappedOps.size());
     AddToWorkList(ShufMask.Val);
-    
-    // Build the undef vector.
-    SDOperand UDVal = DAG.getNode(ISD::UNDEF, MappedOps[0].getValueType());
-    for (unsigned i = 0; i != NumElts; ++i)
-      MappedOps[i] = UDVal;
-    MappedOps[NumElts  ] = *(N0.Val->op_end()-2);
-    MappedOps[NumElts+1] = *(N0.Val->op_end()-1);
-    UDVal = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
-                        &MappedOps[0], MappedOps.size());
-    
-    return DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector, 
-                       N0, UDVal, ShufMask,
-                       MappedOps[NumElts], MappedOps[NumElts+1]);
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, N->getValueType(0),
+                       N0,
+                       DAG.getNode(ISD::UNDEF, N->getValueType(0)),
+                       ShufMask);
   }
-  
+ 
   return SDOperand();
 }
 
 /// XformToShuffleWithZero - Returns a vector_shuffle if it able to transform
-/// a VAND to a vector_shuffle with the destination vector and a zero vector.
-/// e.g. VAND V, <0xffffffff, 0, 0xffffffff, 0>. ==>
+/// an AND to a vector_shuffle with the destination vector and a zero vector.
+/// e.g. AND V, <0xffffffff, 0, 0xffffffff, 0>. ==>
 ///      vector_shuffle V, Zero, <0, 4, 2, 4>
 SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
   SDOperand LHS = N->getOperand(0);
   SDOperand RHS = N->getOperand(1);
-  if (N->getOpcode() == ISD::VAND) {
-    SDOperand DstVecSize = *(LHS.Val->op_end()-2);
-    SDOperand DstVecEVT  = *(LHS.Val->op_end()-1);
-    if (RHS.getOpcode() == ISD::VBIT_CONVERT)
+  if (N->getOpcode() == ISD::AND) {
+    if (RHS.getOpcode() == ISD::BIT_CONVERT)
       RHS = RHS.getOperand(0);
-    if (RHS.getOpcode() == ISD::VBUILD_VECTOR) {
+    if (RHS.getOpcode() == ISD::BUILD_VECTOR) {
       std::vector<SDOperand> IdxOps;
       unsigned NumOps = RHS.getNumOperands();
-      unsigned NumElts = NumOps-2;
-      MVT::ValueType EVT = cast<VTSDNode>(RHS.getOperand(NumOps-1))->getVT();
+      unsigned NumElts = NumOps;
+      MVT::ValueType EVT = MVT::getVectorElementType(RHS.getValueType());
       for (unsigned i = 0; i != NumElts; ++i) {
         SDOperand Elt = RHS.getOperand(i);
         if (!isa<ConstantSDNode>(Elt))
@@ -4146,30 +4099,21 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       if (!TLI.isVectorClearMaskLegal(IdxOps, EVT, DAG))
         return SDOperand();
 
-      // Return the new VVECTOR_SHUFFLE node.
-      SDOperand NumEltsNode = DAG.getConstant(NumElts, MVT::i32);
-      SDOperand EVTNode = DAG.getValueType(EVT);
+      // Return the new VECTOR_SHUFFLE node.
+      MVT::ValueType VT = MVT::getVectorType(EVT, NumElts);
       std::vector<SDOperand> Ops;
-      LHS = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, LHS, NumEltsNode,
-                        EVTNode);
+      LHS = DAG.getNode(ISD::BIT_CONVERT, VT, LHS);
       Ops.push_back(LHS);
       AddToWorkList(LHS.Val);
       std::vector<SDOperand> ZeroOps(NumElts, DAG.getConstant(0, EVT));
-      ZeroOps.push_back(NumEltsNode);
-      ZeroOps.push_back(EVTNode);
-      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, VT,
                                 &ZeroOps[0], ZeroOps.size()));
-      IdxOps.push_back(NumEltsNode);
-      IdxOps.push_back(EVTNode);
-      Ops.push_back(DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, VT,
                                 &IdxOps[0], IdxOps.size()));
-      Ops.push_back(NumEltsNode);
-      Ops.push_back(EVTNode);
-      SDOperand Result = DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector,
+      SDOperand Result = DAG.getNode(ISD::VECTOR_SHUFFLE, VT,
                                      &Ops[0], Ops.size());
-      if (NumEltsNode != DstVecSize || EVTNode != DstVecEVT) {
-        Result = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Result,
-                             DstVecSize, DstVecEVT);
+      if (VT != LHS.getValueType()) {
+        Result = DAG.getNode(ISD::BIT_CONVERT, LHS.getValueType(), Result);
       }
       return Result;
     }
@@ -4177,24 +4121,28 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
   return SDOperand();
 }
 
-/// visitVBinOp - Visit a binary vector operation, like VADD.  IntOp indicates
-/// the scalar operation of the vop if it is operating on an integer vector
-/// (e.g. ADD) and FPOp indicates the FP version (e.g. FADD).
-SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp, 
-                                   ISD::NodeType FPOp) {
-  MVT::ValueType EltType = cast<VTSDNode>(*(N->op_end()-1))->getVT();
-  ISD::NodeType ScalarOp = MVT::isInteger(EltType) ? IntOp : FPOp;
+/// SimplifyVBinOp - Visit a binary vector operation, like ADD.
+SDOperand DAGCombiner::SimplifyVBinOp(SDNode *N) {
+  // After legalize, the target may be depending on adds and other
+  // binary ops to provide legal ways to construct constants or other
+  // things. Simplifying them may result in a loss of legality.
+  if (AfterLegalize) return SDOperand();
+
+  MVT::ValueType VT = N->getValueType(0);
+  if (!MVT::isVector(VT)) return SDOperand();
+
+  MVT::ValueType EltType = MVT::getVectorElementType(VT);
   SDOperand LHS = N->getOperand(0);
   SDOperand RHS = N->getOperand(1);
   SDOperand Shuffle = XformToShuffleWithZero(N);
   if (Shuffle.Val) return Shuffle;
 
-  // If the LHS and RHS are VBUILD_VECTOR nodes, see if we can constant fold
+  // If the LHS and RHS are BUILD_VECTOR nodes, see if we can constant fold
   // this operation.
-  if (LHS.getOpcode() == ISD::VBUILD_VECTOR && 
-      RHS.getOpcode() == ISD::VBUILD_VECTOR) {
+  if (LHS.getOpcode() == ISD::BUILD_VECTOR && 
+      RHS.getOpcode() == ISD::BUILD_VECTOR) {
     SmallVector<SDOperand, 8> Ops;
-    for (unsigned i = 0, e = LHS.getNumOperands()-2; i != e; ++i) {
+    for (unsigned i = 0, e = LHS.getNumOperands(); i != e; ++i) {
       SDOperand LHSOp = LHS.getOperand(i);
       SDOperand RHSOp = RHS.getOperand(i);
       // If these two elements can't be folded, bail out.
@@ -4206,14 +4154,15 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
            RHSOp.getOpcode() != ISD::ConstantFP))
         break;
       // Can't fold divide by zero.
-      if (N->getOpcode() == ISD::VSDIV || N->getOpcode() == ISD::VUDIV) {
+      if (N->getOpcode() == ISD::SDIV || N->getOpcode() == ISD::UDIV ||
+          N->getOpcode() == ISD::FDIV) {
         if ((RHSOp.getOpcode() == ISD::Constant &&
              cast<ConstantSDNode>(RHSOp.Val)->isNullValue()) ||
             (RHSOp.getOpcode() == ISD::ConstantFP &&
              !cast<ConstantFPSDNode>(RHSOp.Val)->getValue()))
           break;
       }
-      Ops.push_back(DAG.getNode(ScalarOp, EltType, LHSOp, RHSOp));
+      Ops.push_back(DAG.getNode(N->getOpcode(), EltType, LHSOp, RHSOp));
       AddToWorkList(Ops.back().Val);
       assert((Ops.back().getOpcode() == ISD::UNDEF ||
               Ops.back().getOpcode() == ISD::Constant ||
@@ -4221,10 +4170,9 @@ SDOperand DAGCombiner::visitVBinOp(SDNode *N, ISD::NodeType IntOp,
              "Scalar binop didn't fold!");
     }
     
-    if (Ops.size() == LHS.getNumOperands()-2) {
-      Ops.push_back(*(LHS.Val->op_end()-2));
-      Ops.push_back(*(LHS.Val->op_end()-1));
-      return DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
+    if (Ops.size() == LHS.getNumOperands()) {
+      MVT::ValueType VT = LHS.getValueType();
+      return DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
     }
   }
   

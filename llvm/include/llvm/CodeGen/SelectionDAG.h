@@ -319,8 +319,6 @@ public:
                        unsigned Alignment=0);
   SDOperand getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
                            SDOperand Offset, ISD::MemIndexedMode AM);
-  SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
-                       SDOperand Ptr, SDOperand SV);
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///

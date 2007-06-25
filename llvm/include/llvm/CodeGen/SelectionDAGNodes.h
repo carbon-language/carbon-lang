@@ -237,58 +237,30 @@ namespace ISD {
     // FCOPYSIGN(f32, f64) is allowed.
     FCOPYSIGN,
 
-    /// VBUILD_VECTOR(ELT1, ELT2, ELT3, ELT4,...,  COUNT,TYPE) - Return a vector
-    /// with the specified, possibly variable, elements.  The number of elements
-    /// is required to be a power of two.
-    VBUILD_VECTOR,
-
     /// BUILD_VECTOR(ELT1, ELT2, ELT3, ELT4,...) - Return a vector
     /// with the specified, possibly variable, elements.  The number of elements
     /// is required to be a power of two.
     BUILD_VECTOR,
     
-    /// VINSERT_VECTOR_ELT(VECTOR, VAL, IDX,  COUNT,TYPE) - Given a vector
-    /// VECTOR, an element ELEMENT, and a (potentially variable) index IDX,
-    /// return a vector with the specified element of VECTOR replaced with VAL.
-    /// COUNT and TYPE specify the type of vector, as is standard for V* nodes.
-    VINSERT_VECTOR_ELT,
-    
-    /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR (a legal packed
-    /// type) with the element at IDX replaced with VAL.
+    /// INSERT_VECTOR_ELT(VECTOR, VAL, IDX) - Returns VECTOR with the element
+    /// at IDX replaced with VAL.
     INSERT_VECTOR_ELT,
 
-    /// VEXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR
-    /// (an MVT::Vector value) identified by the (potentially variable) element
-    /// number IDX.
-    VEXTRACT_VECTOR_ELT,
-    
     /// EXTRACT_VECTOR_ELT(VECTOR, IDX) - Returns a single element from VECTOR
-    /// (a legal vector type vector) identified by the (potentially variable)
-    /// element number IDX.
+    /// identified by the (potentially variable) element number IDX.
     EXTRACT_VECTOR_ELT,
     
-    /// VCONCAT_VECTORS(VECTOR0, VECTOR1, ..., COUNT,TYPE) - Given a number of
-    /// values of MVT::Vector type with the same length and element type, this
-    /// produces a concatenated MVT::Vector result value, with length equal to
-    /// the sum of the input vectors.  This can only be used before
-    /// legalization.
-    VCONCAT_VECTORS,
+    /// CONCAT_VECTORS(VECTOR0, VECTOR1, ...) - Given a number of values of
+    /// vector type with the same length and element type, this produces a
+    /// concatenated vector result value, with length equal to the sum of the
+    /// input vectors.
+    CONCAT_VECTORS,
     
-    /// VEXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an
-    /// MVT::Vector value) starting with the (potentially variable)
-    /// element number IDX, which must be a multiple of the result vector
-    /// length.  This can only be used before legalization.
-    VEXTRACT_SUBVECTOR,
+    /// EXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an
+    /// vector value) starting with the (potentially variable) element number
+    /// IDX, which must be a multiple of the result vector length.
+    EXTRACT_SUBVECTOR,
     
-    /// VVECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC, COUNT,TYPE) - Returns a vector,
-    /// of the same type as VEC1/VEC2.  SHUFFLEVEC is a VBUILD_VECTOR of
-    /// constant int values that indicate which value each result element will
-    /// get.  The elements of VEC1/VEC2 are enumerated in order.  This is quite
-    /// similar to the Altivec 'vperm' instruction, except that the indices must
-    /// be constants and are in terms of the element size of VEC1/VEC2, not in
-    /// terms of bytes.
-    VVECTOR_SHUFFLE,
-
     /// VECTOR_SHUFFLE(VEC1, VEC2, SHUFFLEVEC) - Returns a vector, of the same
     /// type as VEC1/VEC2.  SHUFFLEVEC is a BUILD_VECTOR of constant int values
     /// (regardless of whether its datatype is legal or not) that indicate
@@ -297,34 +269,6 @@ namespace ISD {
     /// instruction, except that the indices must be constants and are in terms
     /// of the element size of VEC1/VEC2, not in terms of bytes.
     VECTOR_SHUFFLE,
-    
-    /// X = VBIT_CONVERT(Y)  and X = VBIT_CONVERT(Y, COUNT,TYPE) - This node
-    /// represents a conversion from or to an ISD::Vector type.
-    ///
-    /// This is lowered to a BIT_CONVERT of the appropriate input/output types.
-    /// The input and output are required to have the same size and at least one
-    /// is required to be a vector (if neither is a vector, just use
-    /// BIT_CONVERT).
-    ///
-    /// If the result is a vector, this takes three operands (like any other
-    /// vector producer) which indicate the size and type of the vector result.
-    /// Otherwise it takes one input.
-    VBIT_CONVERT,
-    
-    /// BINOP(LHS, RHS,  COUNT,TYPE)
-    /// Simple abstract vector operators.  Unlike the integer and floating point
-    /// binary operators, these nodes also take two additional operands:
-    /// a constant element count, and a value type node indicating the type of
-    /// the elements.  The order is op0, op1, count, type.  All vector opcodes,
-    /// including VLOAD and VConstant must currently have count and type as
-    /// their last two operands.
-    VADD, VSUB, VMUL, VSDIV, VUDIV,
-    VAND, VOR, VXOR,
-    
-    /// VSELECT(COND,LHS,RHS,  COUNT,TYPE) - Select for MVT::Vector values.
-    /// COND is a boolean value.  This node return LHS if COND is true, RHS if
-    /// COND is false.
-    VSELECT,
     
     /// SCALAR_TO_VECTOR(VAL) - This represents the operation of loading a
     /// scalar value into the low element of the resultant vector type.  The top
@@ -432,11 +376,6 @@ namespace ISD {
     // indexed memory ops).
     LOAD, STORE,
     
-    // Abstract vector version of LOAD.  VLOAD has a constant element count as
-    // the first operand, followed by a value type node indicating the type of
-    // the elements, a token chain, a pointer operand, and a SRCVALUE node.
-    VLOAD,
-
     // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
     // value and stores it to memory in one operation.  This can be used for
     // either integer or floating point operands.  The first four operands of

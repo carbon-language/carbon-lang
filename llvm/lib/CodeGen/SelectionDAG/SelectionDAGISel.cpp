@@ -290,15 +290,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
       if (PN->use_empty()) continue;
       
       MVT::ValueType VT = TLI.getValueType(PN->getType());
-      unsigned NumRegisters;
-      if (VT != MVT::Vector)
-        NumRegisters = TLI.getNumRegisters(VT);
-      else {
-        MVT::ValueType VT1,VT2;
-        NumRegisters = 
-          TLI.getVectorTypeBreakdown(cast<VectorType>(PN->getType()),
-                                     VT1, VT2);
-      }
+      unsigned NumRegisters = TLI.getNumRegisters(VT);
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
       const TargetInstrInfo *TII = TLI.getTargetMachine().getInstrInfo();
@@ -320,7 +312,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   
   // If this is a vector type, figure out what type it will decompose into
   // and how many of the elements it will use.
-  if (VT == MVT::Vector) {
+  if (MVT::isVector(VT)) {
     const VectorType *PTy = cast<VectorType>(V->getType());
     unsigned NumElts = PTy->getNumElements();
     MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
@@ -582,36 +574,30 @@ public:
   void visitInvoke(InvokeInst &I);
   void visitUnwind(UnwindInst &I);
 
-  void visitScalarBinary(User &I, unsigned OpCode);
-  void visitVectorBinary(User &I, unsigned OpCode);
-  void visitEitherBinary(User &I, unsigned ScalarOp, unsigned VectorOp);
+  void visitBinary(User &I, unsigned OpCode);
   void visitShift(User &I, unsigned Opcode);
   void visitAdd(User &I) { 
-    if (isa<VectorType>(I.getType()))
-      visitVectorBinary(I, ISD::VADD);
-    else if (I.getType()->isFloatingPoint())
-      visitScalarBinary(I, ISD::FADD);
+    if (I.getType()->isFPOrFPVector())
+      visitBinary(I, ISD::FADD);
     else
-      visitScalarBinary(I, ISD::ADD);
+      visitBinary(I, ISD::ADD);
   }
   void visitSub(User &I);
   void visitMul(User &I) {
-    if (isa<VectorType>(I.getType()))
-      visitVectorBinary(I, ISD::VMUL);
-    else if (I.getType()->isFloatingPoint())
-      visitScalarBinary(I, ISD::FMUL);
+    if (I.getType()->isFPOrFPVector())
+      visitBinary(I, ISD::FMUL);
     else
-      visitScalarBinary(I, ISD::MUL);
+      visitBinary(I, ISD::MUL);
   }
-  void visitURem(User &I) { visitScalarBinary(I, ISD::UREM); }
-  void visitSRem(User &I) { visitScalarBinary(I, ISD::SREM); }
-  void visitFRem(User &I) { visitScalarBinary(I, ISD::FREM); }
-  void visitUDiv(User &I) { visitEitherBinary(I, ISD::UDIV, ISD::VUDIV); }
-  void visitSDiv(User &I) { visitEitherBinary(I, ISD::SDIV, ISD::VSDIV); }
-  void visitFDiv(User &I) { visitEitherBinary(I, ISD::FDIV, ISD::VSDIV); }
-  void visitAnd (User &I) { visitEitherBinary(I, ISD::AND,  ISD::VAND ); }
-  void visitOr  (User &I) { visitEitherBinary(I, ISD::OR,   ISD::VOR  ); }
-  void visitXor (User &I) { visitEitherBinary(I, ISD::XOR,  ISD::VXOR ); }
+  void visitURem(User &I) { visitBinary(I, ISD::UREM); }
+  void visitSRem(User &I) { visitBinary(I, ISD::SREM); }
+  void visitFRem(User &I) { visitBinary(I, ISD::FREM); }
+  void visitUDiv(User &I) { visitBinary(I, ISD::UDIV); }
+  void visitSDiv(User &I) { visitBinary(I, ISD::SDIV); }
+  void visitFDiv(User &I) { visitBinary(I, ISD::FDIV); }
+  void visitAnd (User &I) { visitBinary(I, ISD::AND); }
+  void visitOr  (User &I) { visitBinary(I, ISD::OR); }
+  void visitXor (User &I) { visitBinary(I, ISD::XOR); }
   void visitShl (User &I) { visitShift(I, ISD::SHL); }
   void visitLShr(User &I) { visitShift(I, ISD::SRL); }
   void visitAShr(User &I) { visitShift(I, ISD::SRA); }
@@ -687,7 +673,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       if (!isa<VectorType>(VTy))
         return N = DAG.getNode(ISD::UNDEF, VT);
 
-      // Create a VBUILD_VECTOR of undef nodes.
+      // Create a BUILD_VECTOR of undef nodes.
       const VectorType *PTy = cast<VectorType>(VTy);
       unsigned NumElements = PTy->getNumElements();
       MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
@@ -696,9 +682,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       Ops.assign(NumElements, DAG.getNode(ISD::UNDEF, PVT));
       
       // Create a VConstant node with generic Vector type.
-      Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
-      Ops.push_back(DAG.getValueType(PVT));
-      return N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector,
+      MVT::ValueType VT = MVT::getVectorType(PVT, NumElements);
+      return N = DAG.getNode(ISD::BUILD_VECTOR, VT,
                              &Ops[0], Ops.size());
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       return N = DAG.getConstantFP(CFP->getValue(), VT);
@@ -723,10 +708,9 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         Ops.assign(NumElements, Op);
       }
       
-      // Create a VBUILD_VECTOR node with generic Vector type.
-      Ops.push_back(DAG.getConstant(NumElements, MVT::i32));
-      Ops.push_back(DAG.getValueType(PVT));
-      return NodeMap[V] = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0],
+      // Create a BUILD_VECTOR node.
+      MVT::ValueType VT = MVT::getVectorType(PVT, NumElements);
+      return NodeMap[V] = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0],
                                       Ops.size());
     } else {
       // Canonicalize all constant ints to be unsigned.
@@ -745,7 +729,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   assert(InReg && "Value not in map!");
   
   // If this type is not legal, make it so now.
-  if (VT != MVT::Vector) {
+  if (!MVT::isVector(VT)) {
     if (TLI.getTypeAction(VT) == TargetLowering::Expand) {
       // Source must be expanded.  This input value is actually coming from the
       // register pair InReg and InReg+1.
@@ -757,7 +741,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       else {
         assert(NumVals == 2 && "1 to 4 (and more) expansion not implemented!");
         N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
-                       DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
+                        DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
       }
     } else {
       MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
@@ -768,29 +752,28 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
           : DAG.getNode(ISD::TRUNCATE, VT, N);
     }
   } else {
-    // Otherwise, if this is a vector, make it available as a generic vector
+    // Otherwise, if this is a vector, make it available as a vector
     // here.
-    MVT::ValueType PTyElementVT, PTyLegalElementVT;
-    const VectorType *PTy = cast<VectorType>(VTy);
-    unsigned NE = TLI.getVectorTypeBreakdown(PTy, PTyElementVT,
-                                             PTyLegalElementVT);
+    MVT::ValueType ElementVT, LegalElementVT;
+    unsigned NE = TLI.getVectorTypeBreakdown(VT, ElementVT,
+                                             LegalElementVT);
 
-    // Build a VBUILD_VECTOR or VCONCAT_VECTORS with the input registers.
+    // Build a BUILD_VECTOR or CONCAT_VECTORS with the input registers.
     SmallVector<SDOperand, 8> Ops;
-    if (PTyElementVT == PTyLegalElementVT) {
-      // If the value types are legal, just VBUILD the CopyFromReg nodes.
+    if (ElementVT == LegalElementVT) {
+      // If the value types are legal, just BUILD the CopyFromReg nodes.
       for (unsigned i = 0; i != NE; ++i)
         Ops.push_back(DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                         PTyElementVT));
-    } else if (PTyElementVT < PTyLegalElementVT) {
+                                         ElementVT));
+    } else if (ElementVT < LegalElementVT) {
       // If the register was promoted, use TRUNCATE or FP_ROUND as appropriate.
       for (unsigned i = 0; i != NE; ++i) {
         SDOperand Op = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                          PTyLegalElementVT);
-        if (MVT::isFloatingPoint(PTyElementVT))
-          Op = DAG.getNode(ISD::FP_ROUND, PTyElementVT, Op);
+                                          LegalElementVT);
+        if (MVT::isFloatingPoint(ElementVT))
+          Op = DAG.getNode(ISD::FP_ROUND, ElementVT, Op);
         else
-          Op = DAG.getNode(ISD::TRUNCATE, PTyElementVT, Op);
+          Op = DAG.getNode(ISD::TRUNCATE, ElementVT, Op);
         Ops.push_back(Op);
       }
     } else {
@@ -798,21 +781,22 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       assert((NE & 1) == 0 && "Must expand into a multiple of 2 elements!");
       for (unsigned i = 0; i != NE; ++i) {
         SDOperand Op0 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                           PTyLegalElementVT);
+                                           LegalElementVT);
         SDOperand Op1 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                           PTyLegalElementVT);
-        Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, PTyElementVT, Op0, Op1));
+                                           LegalElementVT);
+        Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, ElementVT, Op0, Op1));
       }
     }
     
-    if (MVT::isVector(PTyElementVT)) {
-      Ops.push_back(DAG.getConstant(NE * MVT::getVectorNumElements(PTyElementVT), MVT::i32));
-      Ops.push_back(DAG.getValueType(MVT::getVectorElementType(PTyElementVT)));
-      N = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &Ops[0], Ops.size());
+    if (MVT::isVector(ElementVT)) {
+      N = DAG.getNode(ISD::CONCAT_VECTORS,
+                      MVT::getVectorType(MVT::getVectorElementType(ElementVT),
+                                         NE * MVT::getVectorNumElements(ElementVT)),
+                      &Ops[0], Ops.size());
     } else {
-      Ops.push_back(DAG.getConstant(NE, MVT::i32));
-      Ops.push_back(DAG.getValueType(PTyElementVT));
-      N = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &Ops[0], Ops.size());
+      N = DAG.getNode(ISD::BUILD_VECTOR,
+                      MVT::getVectorType(ElementVT, NE),
+                      &Ops[0], Ops.size());
     }
   }
   
@@ -1220,7 +1204,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
   // register so it can be used as an index into the jump table in a 
   // subsequent basic block.  This value may be smaller or larger than the
   // target's pointer type, and therefore require extension or truncating.
-  if (VT > TLI.getPointerTy())
+  if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
     SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
   else
     SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
@@ -1270,7 +1254,7 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
                                     ISD::SETUGT);
 
   SDOperand ShiftOp;
-  if (VT > TLI.getShiftAmountTy())
+  if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getShiftAmountTy()))
     ShiftOp = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), SUB);
   else
     ShiftOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), SUB);
@@ -1910,52 +1894,44 @@ void SelectionDAGLowering::visitSub(User &I) {
   // -0.0 - X --> fneg
   const Type *Ty = I.getType();
   if (isa<VectorType>(Ty)) {
-    visitVectorBinary(I, ISD::VSUB);
-  } else if (Ty->isFloatingPoint()) {
+    if (ConstantVector *CV = dyn_cast<ConstantVector>(I.getOperand(0))) {
+      const VectorType *DestTy = cast<VectorType>(I.getType());
+      const Type *ElTy = DestTy->getElementType();
+      unsigned VL = DestTy->getNumElements();
+      std::vector<Constant*> NZ(VL, ConstantFP::get(ElTy, -0.0));
+      Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
+      if (CV == CNZ) {
+        SDOperand Op2 = getValue(I.getOperand(1));
+        setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
+        return;
+      }
+    }
+  }
+  if (Ty->isFloatingPoint()) {
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
       if (CFP->isExactlyValue(-0.0)) {
         SDOperand Op2 = getValue(I.getOperand(1));
         setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
         return;
       }
-    visitScalarBinary(I, ISD::FSUB);
-  } else 
-    visitScalarBinary(I, ISD::SUB);
+  }
+
+  visitBinary(I, Ty->isFPOrFPVector() ? ISD::FSUB : ISD::SUB);
 }
 
-void SelectionDAGLowering::visitScalarBinary(User &I, unsigned OpCode) {
+void SelectionDAGLowering::visitBinary(User &I, unsigned OpCode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   
   setValue(&I, DAG.getNode(OpCode, Op1.getValueType(), Op1, Op2));
 }
 
-void
-SelectionDAGLowering::visitVectorBinary(User &I, unsigned OpCode) {
-  assert(isa<VectorType>(I.getType()));
-  const VectorType *Ty = cast<VectorType>(I.getType());
-  SDOperand Typ = DAG.getValueType(TLI.getValueType(Ty->getElementType()));
-
-  setValue(&I, DAG.getNode(OpCode, MVT::Vector,
-                           getValue(I.getOperand(0)),
-                           getValue(I.getOperand(1)),
-                           DAG.getConstant(Ty->getNumElements(), MVT::i32),
-                           Typ));
-}
-
-void SelectionDAGLowering::visitEitherBinary(User &I, unsigned ScalarOp,
-                                             unsigned VectorOp) {
-  if (isa<VectorType>(I.getType()))
-    visitVectorBinary(I, VectorOp);
-  else
-    visitScalarBinary(I, ScalarOp);
-}
-
 void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   
-  if (TLI.getShiftAmountTy() < Op2.getValueType())
+  if (MVT::getSizeInBits(TLI.getShiftAmountTy()) <
+      MVT::getSizeInBits(Op2.getValueType()))
     Op2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Op2);
   else if (TLI.getShiftAmountTy() > Op2.getValueType())
     Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
@@ -2033,14 +2009,8 @@ void SelectionDAGLowering::visitSelect(User &I) {
   SDOperand Cond     = getValue(I.getOperand(0));
   SDOperand TrueVal  = getValue(I.getOperand(1));
   SDOperand FalseVal = getValue(I.getOperand(2));
-  if (!isa<VectorType>(I.getType())) {
-    setValue(&I, DAG.getNode(ISD::SELECT, TrueVal.getValueType(), Cond,
-                             TrueVal, FalseVal));
-  } else {
-    setValue(&I, DAG.getNode(ISD::VSELECT, MVT::Vector, Cond, TrueVal, FalseVal,
-                             *(TrueVal.Val->op_end()-2),
-                             *(TrueVal.Val->op_end()-1)));
-  }
+  setValue(&I, DAG.getNode(ISD::SELECT, TrueVal.getValueType(), Cond,
+                           TrueVal, FalseVal));
 }
 
 
@@ -2140,23 +2110,6 @@ void SelectionDAGLowering::visitIntToPtr(User &I) {
 void SelectionDAGLowering::visitBitCast(User &I) { 
   SDOperand N = getValue(I.getOperand(0));
   MVT::ValueType DestVT = TLI.getValueType(I.getType());
-  if (DestVT == MVT::Vector) {
-    // This is a cast to a vector from something else.  
-    // Get information about the output vector.
-    const VectorType *DestTy = cast<VectorType>(I.getType());
-    MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
-    setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N, 
-                             DAG.getConstant(DestTy->getNumElements(),MVT::i32),
-                             DAG.getValueType(EltVT)));
-    return;
-  } 
-  MVT::ValueType SrcVT = N.getValueType();
-  if (SrcVT == MVT::Vector) {
-    // This is a cast from a vctor to something else. 
-    // Get information about the input vector.
-    setValue(&I, DAG.getNode(ISD::VBIT_CONVERT, DestVT, N));
-    return;
-  }
 
   // BitCast assures us that source and destination are the same size so this 
   // is either a BIT_CONVERT or a no-op.
@@ -2172,18 +2125,16 @@ void SelectionDAGLowering::visitInsertElement(User &I) {
   SDOperand InIdx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(),
                                 getValue(I.getOperand(2)));
 
-  SDOperand Num = *(InVec.Val->op_end()-2);
-  SDOperand Typ = *(InVec.Val->op_end()-1);
-  setValue(&I, DAG.getNode(ISD::VINSERT_VECTOR_ELT, MVT::Vector,
-                           InVec, InVal, InIdx, Num, Typ));
+  setValue(&I, DAG.getNode(ISD::INSERT_VECTOR_ELT,
+                           TLI.getValueType(I.getType()),
+                           InVec, InVal, InIdx));
 }
 
 void SelectionDAGLowering::visitExtractElement(User &I) {
   SDOperand InVec = getValue(I.getOperand(0));
   SDOperand InIdx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(),
                                 getValue(I.getOperand(1)));
-  SDOperand Typ = *(InVec.Val->op_end()-1);
-  setValue(&I, DAG.getNode(ISD::VEXTRACT_VECTOR_ELT,
+  setValue(&I, DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
                            TLI.getValueType(I.getType()), InVec, InIdx));
 }
 
@@ -2192,10 +2143,9 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   SDOperand V2   = getValue(I.getOperand(1));
   SDOperand Mask = getValue(I.getOperand(2));
 
-  SDOperand Num = *(V1.Val->op_end()-2);
-  SDOperand Typ = *(V2.Val->op_end()-1);
-  setValue(&I, DAG.getNode(ISD::VVECTOR_SHUFFLE, MVT::Vector,
-                           V1, V2, Mask, Num, Typ));
+  setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE,
+                           TLI.getValueType(I.getType()),
+                           V1, V2, Mask));
 }
 
 
@@ -2325,15 +2275,9 @@ SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
                                             const Value *SV, SDOperand Root,
                                             bool isVolatile, 
                                             unsigned Alignment) {
-  SDOperand L;
-  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
-    MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-    L = DAG.getVecLoad(PTy->getNumElements(), PVT, Root, Ptr,
-                       DAG.getSrcValue(SV));
-  } else {
-    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, 0, 
-                    isVolatile, Alignment);
-  }
+  SDOperand L =
+    DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, 0, 
+                isVolatile, Alignment);
 
   if (isVolatile)
     DAG.setRoot(L.getValue(1));
@@ -2394,17 +2338,6 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   // Add all operands of the call to the operand list.
   for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
     SDOperand Op = getValue(I.getOperand(i));
-    
-    // If this is a vector type, force it to the right vector type.
-    if (Op.getValueType() == MVT::Vector) {
-      const VectorType *OpTy = cast<VectorType>(I.getOperand(i)->getType());
-      MVT::ValueType EltVT = TLI.getValueType(OpTy->getElementType());
-      
-      MVT::ValueType VVT = MVT::getVectorType(EltVT, OpTy->getNumElements());
-      assert(VVT != MVT::Other && "Intrinsic uses a non-legal type?");
-      Op = DAG.getNode(ISD::VBIT_CONVERT, VVT, Op);
-    }
-    
     assert(TLI.isTypeLegal(Op.getValueType()) &&
            "Intrinsic uses a non-legal type?");
     Ops.push_back(Op);
@@ -2413,7 +2346,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   std::vector<MVT::ValueType> VTs;
   if (I.getType() != Type::VoidTy) {
     MVT::ValueType VT = TLI.getValueType(I.getType());
-    if (VT == MVT::Vector) {
+    if (MVT::isVector(VT)) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
       MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
       
@@ -2450,10 +2383,8 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   }
   if (I.getType() != Type::VoidTy) {
     if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
-      MVT::ValueType EVT = TLI.getValueType(PTy->getElementType());
-      Result = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Result,
-                           DAG.getConstant(PTy->getNumElements(), MVT::i32),
-                           DAG.getValueType(EVT));
+      MVT::ValueType VT = TLI.getValueType(PTy);
+      Result = DAG.getNode(ISD::BIT_CONVERT, VT, Result);
     } 
     setValue(&I, Result);
   }
@@ -2931,11 +2862,8 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     return Val;
   
   if (MVT::isVector(RegVT)) {
-    assert(ValueVT == MVT::Vector && "Unknown vector conversion!");
-    return DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Val, 
-                       DAG.getConstant(MVT::getVectorNumElements(RegVT),
-                                       MVT::i32),
-                       DAG.getValueType(MVT::getVectorElementType(RegVT)));
+    assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
+    return DAG.getNode(ISD::BIT_CONVERT, RegVT, Val);
   }
   
   if (MVT::isInteger(RegVT)) {
@@ -2960,8 +2888,9 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
     // a promotion.
     if (RegVT != ValueVT) {
       if (MVT::isVector(RegVT)) {
-        assert(Val.getValueType() == MVT::Vector &&"Not a vector-vector cast?");
-        Val = DAG.getNode(ISD::VBIT_CONVERT, RegVT, Val);
+        assert(MVT::isVector(Val.getValueType()) &&
+               "Not a vector-vector cast?");
+        Val = DAG.getNode(ISD::BIT_CONVERT, RegVT, Val);
       } else if (MVT::isInteger(RegVT) && MVT::isInteger(Val.getValueType())) {
         if (RegVT < ValueVT)
           Val = DAG.getNode(ISD::TRUNCATE, RegVT, Val);
@@ -3631,15 +3560,12 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     
     // If the result of the inline asm is a vector, it may have the wrong
     // width/num elts.  Make sure to convert it to the right type with
-    // vbit_convert.
-    if (Val.getValueType() == MVT::Vector) {
+    // bit_convert.
+    if (MVT::isVector(Val.getValueType())) {
       const VectorType *VTy = cast<VectorType>(I.getType());
-      unsigned DesiredNumElts = VTy->getNumElements();
-      MVT::ValueType DesiredEltVT = TLI.getValueType(VTy->getElementType());
+      MVT::ValueType DesiredVT = TLI.getValueType(VTy);
       
-      Val = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Val, 
-                        DAG.getConstant(DesiredNumElts, MVT::i32),
-                        DAG.getValueType(DesiredEltVT));
+      Val = DAG.getNode(ISD::BIT_CONVERT, DesiredVT, Val);
     }
     
     setValue(&I, Val);
@@ -3826,7 +3752,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
     case Expand:
-      if (VT != MVT::Vector) {
+      if (!MVT::isVector(VT)) {
         // If this is a large integer, it needs to be broken up into small
         // integers.  Figure out what the destination type is and how many small
         // integers it turns into.
@@ -3848,7 +3774,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the vector type.
-        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        MVT::ValueType TVT =
+          MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           RetVals.push_back(TVT);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
@@ -3900,7 +3827,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       break;
     }
     case Expand:
-      if (VT != MVT::Vector) {
+      if (!MVT::isVector(VT)) {
         // If this is a large integer or a floating point node that needs to be
         // expanded, it needs to be reassembled from small integers.  Figure out
         // what the source elt type is and how many small integers it is.
@@ -3914,13 +3841,12 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the vector type.
-        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        MVT::ValueType TVT =
+          MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           SDOperand N = SDOperand(Result, i++);
-          // Handle copies from generic vectors to registers.
-          N = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, N,
-                          DAG.getConstant(NumElems, MVT::i32), 
-                          DAG.getValueType(getValueType(EltTy)));
+          // Handle copies from vectors to registers.
+          N = DAG.getNode(ISD::BIT_CONVERT, TVT, N);
           Ops.push_back(N);
         } else {
           assert(0 && "Don't support illegal by-val vector arguments yet!");
@@ -4040,7 +3966,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
     case Expand:
-      if (VT != MVT::Vector) {
+      if (!MVT::isVector(VT)) {
         // If this is a large integer, it needs to be broken down into small
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
@@ -4054,10 +3980,11 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the vector type.
-        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        MVT::ValueType TVT =
+          MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          // Insert a VBIT_CONVERT of the MVT::Vector type to the vector type.
-          Op = DAG.getNode(ISD::VBIT_CONVERT, TVT, Op);
+          // Insert a BIT_CONVERT of the original type to the vector type.
+          Op = DAG.getNode(ISD::BIT_CONVERT, TVT, Op);
           Ops.push_back(Op);
           Ops.push_back(DAG.getConstant(Flags, MVT::i32));
         } else {
@@ -4083,7 +4010,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       RetTys.push_back(getTypeToTransformTo(VT));
       break;
     case Expand:
-      if (VT != MVT::Vector) {
+      if (!MVT::isVector(VT)) {
         // If this is a large integer, it needs to be reassembled from small
         // integers.  Figure out what the source elt type is and how many small
         // integers it is.
@@ -4100,7 +4027,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         
         // Figure out if there is a Packed type corresponding to this Vector
         // type.  If so, convert to the vector type.
-        MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy), NumElems);
+        MVT::ValueType TVT =
+          MVT::getVectorType(getValueType(EltTy), NumElems);
         if (TVT != MVT::Other && isTypeLegal(TVT)) {
           RetTys.push_back(TVT);
         } else {
@@ -4129,21 +4057,20 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       
       // If this value was promoted, truncate it down.
       if (ResVal.getValueType() != VT) {
-        if (VT == MVT::Vector) {
-          // Insert a VBIT_CONVERT to convert from the packed result type to the
-          // MVT::Vector type.
+        if (MVT::isVector(VT)) {
+          // Insert a BIT_CONVERT to convert from the packed result type to the
+          // new vector type.
           unsigned NumElems = cast<VectorType>(RetTy)->getNumElements();
           const Type *EltTy = cast<VectorType>(RetTy)->getElementType();
           
           // Figure out if there is a Packed type corresponding to this Vector
           // type.  If so, convert to the vector type.
-          MVT::ValueType TVT = MVT::getVectorType(getValueType(EltTy),NumElems);
+          MVT::ValueType TVT =
+            MVT::getVectorType(getValueType(EltTy),NumElems);
           if (TVT != MVT::Other && isTypeLegal(TVT)) {
-            // Insert a VBIT_CONVERT of the FORMAL_ARGUMENTS to a
-            // "N x PTyElementVT" MVT::Vector type.
-            ResVal = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, ResVal,
-                                 DAG.getConstant(NumElems, MVT::i32), 
-                                 DAG.getValueType(getValueType(EltTy)));
+            // Insert a BIT_CONVERT of the FORMAL_ARGUMENTS to a
+            // "N x PTyElementVT" vector type.
+            ResVal = DAG.getNode(ISD::BIT_CONVERT, TVT, ResVal);
           } else {
             abort();
           }
@@ -4457,40 +4384,40 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
   MVT::ValueType DestVT = TLI.getTypeToTransformTo(SrcVT);
   if (SrcVT == DestVT) {
     return DAG.getCopyToReg(getRoot(), Reg, Op);
-  } else if (SrcVT == MVT::Vector) {
+  } else if (MVT::isVector(SrcVT)) {
     // Handle copies from generic vectors to registers.
-    MVT::ValueType PTyElementVT, PTyLegalElementVT;
-    unsigned NE = TLI.getVectorTypeBreakdown(cast<VectorType>(V->getType()),
-                                             PTyElementVT, PTyLegalElementVT);
-    uint64_t SrcVL = cast<ConstantSDNode>(*(Op.Val->op_end()-2))->getValue();
+    MVT::ValueType ElementVT, LegalElementVT;
+    unsigned NE = TLI.getVectorTypeBreakdown(SrcVT,
+                                             ElementVT, LegalElementVT);
+    uint64_t SrcVL = MVT::getVectorNumElements(SrcVT);
     
     // Loop over all of the elements of the resultant vector,
-    // VEXTRACT_VECTOR_ELT'ing or VEXTRACT_SUBVECTOR'ing them, converting them
-    // to PTyLegalElementVT, then copying them into output registers.
+    // EXTRACT_VECTOR_ELT'ing or EXTRACT_SUBVECTOR'ing them, converting them
+    // to LegalElementVT, then copying them into output registers.
     SmallVector<SDOperand, 8> OutChains;
     SDOperand Root = getRoot();
     for (unsigned i = 0; i != NE; ++i) {
-      SDOperand Elt = MVT::isVector(PTyElementVT) ?
-        DAG.getNode(ISD::VEXTRACT_SUBVECTOR, PTyElementVT,
+      SDOperand Elt = MVT::isVector(ElementVT) ?
+        DAG.getNode(ISD::EXTRACT_SUBVECTOR, ElementVT,
                     Op, DAG.getConstant(i * (SrcVL / NE), TLI.getPointerTy())) :
-        DAG.getNode(ISD::VEXTRACT_VECTOR_ELT, PTyElementVT,
+        DAG.getNode(ISD::EXTRACT_VECTOR_ELT, ElementVT,
                     Op, DAG.getConstant(i, TLI.getPointerTy()));
-      if (PTyElementVT == PTyLegalElementVT) {
+      if (ElementVT == LegalElementVT) {
         // Elements are legal.
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
-      } else if (PTyLegalElementVT > PTyElementVT) {
+      } else if (LegalElementVT > ElementVT) {
         // Elements are promoted.
-        if (MVT::isFloatingPoint(PTyLegalElementVT))
-          Elt = DAG.getNode(ISD::FP_EXTEND, PTyLegalElementVT, Elt);
+        if (MVT::isFloatingPoint(LegalElementVT))
+          Elt = DAG.getNode(ISD::FP_EXTEND, LegalElementVT, Elt);
         else
-          Elt = DAG.getNode(ISD::ANY_EXTEND, PTyLegalElementVT, Elt);
+          Elt = DAG.getNode(ISD::ANY_EXTEND, LegalElementVT, Elt);
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
       } else {
         // Elements are expanded.
         // The src value is expanded into multiple registers.
-        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, PTyLegalElementVT,
+        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, LegalElementVT,
                                    Elt, DAG.getConstant(0, TLI.getPointerTy()));
-        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, PTyLegalElementVT,
+        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, LegalElementVT,
                                    Elt, DAG.getConstant(1, TLI.getPointerTy()));
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Lo));
         OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Hi));
@@ -4695,15 +4622,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
       // Remember that this register needs to added to the machine PHI node as
       // the input for this MBB.
       MVT::ValueType VT = TLI.getValueType(PN->getType());
-      unsigned NumRegisters;
-      if (VT != MVT::Vector)
-        NumRegisters = TLI.getNumRegisters(VT);
-      else {
-        MVT::ValueType VT1,VT2;
-        NumRegisters = 
-          TLI.getVectorTypeBreakdown(cast<VectorType>(PN->getType()),
-                                     VT1, VT2);
-      }
+      unsigned NumRegisters = TLI.getNumRegisters(VT);
       for (unsigned i = 0, e = NumRegisters; i != e; ++i)
         PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
     }

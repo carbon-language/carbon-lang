@@ -111,10 +111,10 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   /// to avoid splitting the same node more than once.
   std::map<SDOperand, std::pair<SDOperand, SDOperand> > SplitNodes;
   
-  /// PackedNodes - For nodes that need to be packed from MVT::Vector types to
-  /// concrete vector types, this contains the mapping of ones we have already
+  /// ScalarizedNodes - For nodes that need to be converted from vector types to
+  /// scalar types, this contains the mapping of ones we have already
   /// processed to the result.
-  std::map<SDOperand, SDOperand> PackedNodes;
+  std::map<SDOperand, SDOperand> ScalarizedNodes;
   
   void AddLegalizedOperand(SDOperand From, SDOperand To) {
     LegalizedNodes.insert(std::make_pair(From, To));
@@ -149,7 +149,7 @@ public:
   void LegalizeDAG();
 
 private:
-  /// HandleOp - Legalize, Promote, Expand or Pack the specified operand as
+  /// HandleOp - Legalize, Promote, or Expand the specified operand as
   /// appropriate for its type.
   void HandleOp(SDOperand Op);
     
@@ -173,15 +173,13 @@ private:
   /// types.
   void ExpandOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
 
-  /// SplitVectorOp - Given an operand of MVT::Vector type, break it down into
-  /// two smaller values of MVT::Vector type.
+  /// SplitVectorOp - Given an operand of vector type, break it down into
+  /// two smaller values.
   void SplitVectorOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
   
-  /// PackVectorOp - Given an operand of MVT::Vector type, convert it into the
-  /// equivalent operation that returns a packed value (e.g. MVT::V4F32).  When
-  /// this is called, we know that PackedVT is the right type for the result and
-  /// we know that this type is legal for the target.
-  SDOperand PackVectorOp(SDOperand O, MVT::ValueType PackedVT);
+  /// ScalarizeVectorOp - Given an operand of vector type, convert it into the
+  /// equivalent operation that returns a scalar value.
+  SDOperand ScalarizeVectorOp(SDOperand O);
   
   /// isShuffleLegal - Return true if a vector shuffle is legal with the
   /// specified mask and type.  Targets can specify exactly which masks they
@@ -224,8 +222,7 @@ private:
   void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
                         SDOperand &Lo, SDOperand &Hi);
 
-  SDOperand LowerVEXTRACT_VECTOR_ELT(SDOperand Op);
-  SDOperand LowerVEXTRACT_SUBVECTOR(SDOperand Op);
+  SDOperand ExpandEXTRACT_SUBVECTOR(SDOperand Op);
   SDOperand ExpandEXTRACT_VECTOR_ELT(SDOperand Op);
   
   SDOperand getIntPtrConstant(uint64_t Val) {
@@ -277,22 +274,6 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT::ValueType VT,
   }
   }
   return TLI.isShuffleMaskLegal(Mask, VT) ? Mask.Val : 0;
-}
-
-/// getScalarizedOpcode - Return the scalar opcode that corresponds to the
-/// specified vector opcode.
-static unsigned getScalarizedOpcode(unsigned VecOp, MVT::ValueType VT) {
-  switch (VecOp) {
-  default: assert(0 && "Don't know how to scalarize this opcode!");
-  case ISD::VADD:  return MVT::isInteger(VT) ? ISD::ADD : ISD::FADD;
-  case ISD::VSUB:  return MVT::isInteger(VT) ? ISD::SUB : ISD::FSUB;
-  case ISD::VMUL:  return MVT::isInteger(VT) ? ISD::MUL : ISD::FMUL;
-  case ISD::VSDIV: return MVT::isInteger(VT) ? ISD::SDIV: ISD::FDIV;
-  case ISD::VUDIV: return MVT::isInteger(VT) ? ISD::UDIV: ISD::FDIV;
-  case ISD::VAND:  return MVT::isInteger(VT) ? ISD::AND : 0;
-  case ISD::VOR:   return MVT::isInteger(VT) ? ISD::OR  : 0;
-  case ISD::VXOR:  return MVT::isInteger(VT) ? ISD::XOR : 0;
-  }
 }
 
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
@@ -369,7 +350,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   LegalizedNodes.clear();
   PromotedNodes.clear();
   SplitNodes.clear();
-  PackedNodes.clear();
+  ScalarizedNodes.clear();
 
   // Remove dead nodes now.
   DAG.RemoveDeadNodes();
@@ -473,38 +454,29 @@ bool SelectionDAGLegalize::LegalizeAllNodesNotLeadingTo(SDNode *N, SDNode *Dest,
   return false;
 }
 
-/// HandleOp - Legalize, Promote, Expand or Pack the specified operand as
+/// HandleOp - Legalize, Promote, or Expand the specified operand as
 /// appropriate for its type.
 void SelectionDAGLegalize::HandleOp(SDOperand Op) {
-  switch (getTypeAction(Op.getValueType())) {
+  MVT::ValueType VT = Op.getValueType();
+  switch (getTypeAction(VT)) {
   default: assert(0 && "Bad type action!");
-  case Legal:   LegalizeOp(Op); break;
-  case Promote: PromoteOp(Op);  break;
+  case Legal:   (void)LegalizeOp(Op); break;
+  case Promote: (void)PromoteOp(Op); break;
   case Expand:
-    if (Op.getValueType() != MVT::Vector) {
+    if (!MVT::isVector(VT)) {
+      // If this is an illegal scalar, expand it into its two component
+      // pieces.
       SDOperand X, Y;
       ExpandOp(Op, X, Y);
+    } else if (MVT::getVectorNumElements(VT) == 1) {
+      // If this is an illegal single element vector, convert it to a
+      // scalar operation.
+      (void)ScalarizeVectorOp(Op);
     } else {
-      SDNode *N = Op.Val;
-      unsigned NumOps = N->getNumOperands();
-      unsigned NumElements =
-        cast<ConstantSDNode>(N->getOperand(NumOps-2))->getValue();
-      MVT::ValueType EVT = cast<VTSDNode>(N->getOperand(NumOps-1))->getVT();
-      MVT::ValueType PackedVT = MVT::getVectorType(EVT, NumElements);
-      if (PackedVT != MVT::Other && TLI.isTypeLegal(PackedVT)) {
-        // In the common case, this is a legal vector type, convert it to the
-        // packed operation and type now.
-        PackVectorOp(Op, PackedVT);
-      } else if (NumElements == 1) {
-        // Otherwise, if this is a single element vector, convert it to a
-        // scalar operation.
-        PackVectorOp(Op, EVT);
-      } else {
-        // Otherwise, this is a multiple element vector that isn't supported.
-        // Split it in half and legalize both parts.
-        SDOperand X, Y;
-        SplitVectorOp(Op, X, Y);
-      }
+      // Otherwise, this is an illegal multiple element vector.
+      // Split it in half and legalize both parts.
+      SDOperand X, Y;
+      SplitVectorOp(Op, X, Y);
     }
     break;
   }
@@ -556,6 +528,8 @@ SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
                                       SelectionDAG &DAG, TargetLowering &TLI) {
   MVT::ValueType VT = Node->getValueType(0);
   MVT::ValueType SrcVT = Node->getOperand(1).getValueType();
+  assert((SrcVT == MVT::f32 || SrcVT == MVT::f64) &&
+         "fcopysign expansion only supported for f32 and f64");
   MVT::ValueType SrcNVT = (SrcVT == MVT::f64) ? MVT::i64 : MVT::i32;
 
   // First get the sign bit of second operand.
@@ -1158,34 +1132,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   
   case ISD::EXTRACT_VECTOR_ELT:
-    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp1 = Node->getOperand(0);
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
-    
-    switch (TLI.getOperationAction(ISD::EXTRACT_VECTOR_ELT,
-                                   Tmp1.getValueType())) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal:
-      break;
-    case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
-        Result = Tmp3;
-        break;
-      }
-      // FALLTHROUGH
-    case TargetLowering::Expand:
-      Result = ExpandEXTRACT_VECTOR_ELT(Result);
-      break;
-    }
+    Result = ExpandEXTRACT_VECTOR_ELT(Result);
     break;
 
-  case ISD::VEXTRACT_VECTOR_ELT: 
-    Result = LegalizeOp(LowerVEXTRACT_VECTOR_ELT(Op));
-    break;
-    
-  case ISD::VEXTRACT_SUBVECTOR: 
-    Result = LegalizeOp(LowerVEXTRACT_SUBVECTOR(Op));
+  case ISD::EXTRACT_SUBVECTOR: 
+    Tmp1 = Node->getOperand(0);
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
+    Result = ExpandEXTRACT_SUBVECTOR(Result);
     break;
     
   case ISD::CALLSEQ_START: {
@@ -1688,7 +1645,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.UpdateNodeOperands(Result, Tmp1, LegalizeOp(Tmp2), Tmp3);
         break;
       case Expand:
-        if (Tmp2.getValueType() != MVT::Vector) {
+        if (!MVT::isVector(Tmp2.getValueType())) {
           SDOperand Lo, Hi;
           ExpandOp(Tmp2, Lo, Hi);
 
@@ -1703,20 +1660,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Result = LegalizeOp(Result);
         } else {
           SDNode *InVal = Tmp2.Val;
-          unsigned NumElems =
-            cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-          MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
+          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
           
-          // Figure out if there is a Packed type corresponding to this Vector
+          // Figure out if there is a simple type corresponding to this Vector
           // type.  If so, convert to the vector type.
           MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-          if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+          if (TLI.isTypeLegal(TVT)) {
             // Turn this into a return of the vector type.
-            Tmp2 = PackVectorOp(Tmp2, TVT);
+            Tmp2 = LegalizeOp(Tmp2);
             Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
           } else if (NumElems == 1) {
             // Turn this into a return of the scalar type.
-            Tmp2 = PackVectorOp(Tmp2, EVT);
+            Tmp2 = ScalarizeVectorOp(Tmp2);
+            Tmp2 = LegalizeOp(Tmp2);
             Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
             
             // FIXME: Returns of gcc generic vectors smaller than a legal type
@@ -1756,7 +1713,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;
         case Expand: {
           SDOperand Lo, Hi;
-          assert(Node->getOperand(i).getValueType() != MVT::Vector &&
+          assert(!MVT::isExtendedValueType(Node->getOperand(i).getValueType())&&
                  "FIXME: TODO: implement returning non-legal vector types!");
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);
@@ -1853,27 +1810,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // If this is a vector type, then we have to calculate the increment as
         // the product of the element size in bytes, and the number of elements
         // in the high half of the vector.
-        if (ST->getValue().getValueType() == MVT::Vector) {
+        if (MVT::isVector(ST->getValue().getValueType())) {
           SDNode *InVal = ST->getValue().Val;
-          unsigned NumElems =
-            cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-          MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
+          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
 
-          // Figure out if there is a Packed type corresponding to this Vector
+          // Figure out if there is a simple type corresponding to this Vector
           // type.  If so, convert to the vector type.
           MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-          if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+          if (TLI.isTypeLegal(TVT)) {
             // Turn this into a normal store of the vector type.
-            Tmp3 = PackVectorOp(Node->getOperand(1), TVT);
+            Tmp3 = LegalizeOp(Node->getOperand(1));
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                  ST->getSrcValueOffset());
+                                  ST->getSrcValueOffset(),
+                                  ST->isVolatile(),
+                                  ST->getAlignment());
             Result = LegalizeOp(Result);
             break;
           } else if (NumElems == 1) {
             // Turn this into a normal store of the scalar type.
-            Tmp3 = PackVectorOp(Node->getOperand(1), EVT);
+            Tmp3 = ScalarizeVectorOp(Node->getOperand(1));
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                  ST->getSrcValueOffset());
+                                  ST->getSrcValueOffset(),
+                                  ST->isVolatile(),
+                                  ST->getAlignment());
             // The scalarized value type may not be legal, e.g. it might require
             // promotion or expansion.  Relegalize the scalar store.
             Result = LegalizeOp(Result);
@@ -2864,6 +2824,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::BIT_CONVERT:
     if (!isTypeLegal(Node->getOperand(0).getValueType())) {
       Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+    } else if (MVT::isVector(Op.getOperand(0).getValueType())) {
+      // The input has to be a vector type, we have to either scalarize it, pack
+      // it, or convert it based on whether the input vector type is legal.
+      SDNode *InVal = Node->getOperand(0).Val;
+      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
+      MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
+    
+      // Figure out if there is a simple type corresponding to this Vector
+      // type.  If so, convert to the vector type.
+      MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+      if (TLI.isTypeLegal(TVT)) {
+        // Turn this into a bit convert of the packed input.
+        Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
+                             LegalizeOp(Node->getOperand(0)));
+        break;
+      } else if (NumElems == 1) {
+        // Turn this into a bit convert of the scalar input.
+        Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
+                             ScalarizeVectorOp(Node->getOperand(0)));
+        break;
+      } else {
+        // FIXME: UNIMP!  Store then reload
+        assert(0 && "Cast from unsupported vector type not implemented yet!");
+      }
     } else {
       switch (TLI.getOperationAction(ISD::BIT_CONVERT,
                                      Node->getOperand(0).getValueType())) {
@@ -2878,35 +2862,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
     }
     break;
-  case ISD::VBIT_CONVERT: {
-    assert(Op.getOperand(0).getValueType() == MVT::Vector &&
-           "Can only have VBIT_CONVERT where input or output is MVT::Vector!");
-    
-    // The input has to be a vector type, we have to either scalarize it, pack
-    // it, or convert it based on whether the input vector type is legal.
-    SDNode *InVal = Node->getOperand(0).Val;
-    unsigned NumElems =
-      cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-    MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
-    
-    // Figure out if there is a Packed type corresponding to this Vector
-    // type.  If so, convert to the vector type.
-    MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-    if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-      // Turn this into a bit convert of the packed input.
-      Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
-                           PackVectorOp(Node->getOperand(0), TVT));
-      break;
-    } else if (NumElems == 1) {
-      // Turn this into a bit convert of the scalar input.
-      Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
-                           PackVectorOp(Node->getOperand(0), EVT));
-      break;
-    } else {
-      // FIXME: UNIMP!  Store then reload
-      assert(0 && "Cast from unsupported vector type not implemented yet!");
-    }
-  }
       
     // Conversion operators.  The source and destination have different types.
   case ISD::SINT_TO_FP:
@@ -3568,11 +3523,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     }
     break;
-  case ISD::VEXTRACT_VECTOR_ELT:
-    Result = PromoteOp(LowerVEXTRACT_VECTOR_ELT(Op));
-    break;
-  case ISD::VEXTRACT_SUBVECTOR:
-    Result = PromoteOp(LowerVEXTRACT_SUBVECTOR(Op));
+  case ISD::EXTRACT_SUBVECTOR:
+    Result = PromoteOp(ExpandEXTRACT_SUBVECTOR(Op));
     break;
   case ISD::EXTRACT_VECTOR_ELT:
     Result = PromoteOp(ExpandEXTRACT_VECTOR_ELT(Op));
@@ -3589,66 +3541,90 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   return Result;
 }
 
-/// LowerVEXTRACT_VECTOR_ELT - Lower a VEXTRACT_VECTOR_ELT operation into a
-/// EXTRACT_VECTOR_ELT operation, to memory operations, or to scalar code based
-/// on the vector type.  The return type of this matches the element type of the
-/// vector, which may not be legal for the target.
-SDOperand SelectionDAGLegalize::LowerVEXTRACT_VECTOR_ELT(SDOperand Op) {
+/// ExpandEXTRACT_VECTOR_ELT - Expand an EXTRACT_VECTOR_ELT operation into
+/// a legal EXTRACT_VECTOR_ELT operation, scalar code, or memory traffic,
+/// based on the vector type. The return type of this matches the element type
+/// of the vector, which may not be legal for the target.
+SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
   // We know that operand #0 is the Vec vector.  If the index is a constant
   // or if the invec is a supported hardware type, we can use it.  Otherwise,
   // lower to a store then an indexed load.
   SDOperand Vec = Op.getOperand(0);
-  SDOperand Idx = LegalizeOp(Op.getOperand(1));
+  SDOperand Idx = Op.getOperand(1);
   
   SDNode *InVal = Vec.Val;
-  unsigned NumElems = cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-  MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+  MVT::ValueType TVT = InVal->getValueType(0);
+  unsigned NumElems = MVT::getVectorNumElements(TVT);
   
-  // Figure out if there is a Packed type corresponding to this Vector
-  // type.  If so, convert to the vector type.
-  MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-  if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-    // Turn this into a packed extract_vector_elt operation.
-    Vec = PackVectorOp(Vec, TVT);
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, Op.getValueType(), Vec, Idx);
-  } else if (NumElems == 1) {
+  switch (TLI.getOperationAction(ISD::EXTRACT_VECTOR_ELT, TVT)) {
+  default: assert(0 && "This action is not supported yet!");
+  case TargetLowering::Custom: {
+    Vec = LegalizeOp(Vec);
+    Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
+    SDOperand Tmp3 = TLI.LowerOperation(Op, DAG);
+    if (Tmp3.Val)
+      return Tmp3;
+    break;
+  }
+  case TargetLowering::Legal:
+    if (isTypeLegal(TVT)) {
+      Vec = LegalizeOp(Vec);
+      Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
+      Op = LegalizeOp(Op);
+    }
+    break;
+  case TargetLowering::Expand:
+    break;
+  }
+
+  if (NumElems == 1) {
     // This must be an access of the only element.  Return it.
-    return PackVectorOp(Vec, EVT);
-  } else if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx)) {
+    Op = ScalarizeVectorOp(Vec);
+  } else if (!TLI.isTypeLegal(TVT) && isa<ConstantSDNode>(Idx)) {
+    ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
     SDOperand Lo, Hi;
     SplitVectorOp(Vec, Lo, Hi);
     if (CIdx->getValue() < NumElems/2) {
       Vec = Lo;
     } else {
       Vec = Hi;
-      Idx = DAG.getConstant(CIdx->getValue() - NumElems/2, Idx.getValueType());
+      Idx = DAG.getConstant(CIdx->getValue() - NumElems/2,
+                            Idx.getValueType());
     }
-    
+  
     // It's now an extract from the appropriate high or low part.  Recurse.
     Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
-    return LowerVEXTRACT_VECTOR_ELT(Op);
+    Op = ExpandEXTRACT_VECTOR_ELT(Op);
   } else {
-    // Variable index case for extract element.
-    // FIXME: IMPLEMENT STORE/LOAD lowering.  Need alignment of stack slot!!
-    assert(0 && "unimp!");
-    return SDOperand();
+    // Store the value to a temporary stack slot, then LOAD the scalar
+    // element back out.
+    SDOperand StackPtr = CreateStackTemporary(Vec.getValueType());
+    SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
+
+    // Add the offset to the index.
+    unsigned EltSize = MVT::getSizeInBits(Op.getValueType())/8;
+    Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
+                      DAG.getConstant(EltSize, Idx.getValueType()));
+    StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
+
+    Op = DAG.getLoad(Op.getValueType(), Ch, StackPtr, NULL, 0);
   }
+  return Op;
 }
 
-/// LowerVEXTRACT_SUBVECTOR - Lower a VEXTRACT_SUBVECTOR operation.  For now
+/// ExpandEXTRACT_SUBVECTOR - Expand a EXTRACT_SUBVECTOR operation.  For now
 /// we assume the operation can be split if it is not already legal.
-SDOperand SelectionDAGLegalize::LowerVEXTRACT_SUBVECTOR(SDOperand Op) {
+SDOperand SelectionDAGLegalize::ExpandEXTRACT_SUBVECTOR(SDOperand Op) {
   // We know that operand #0 is the Vec vector.  For now we assume the index
   // is a constant and that the extracted result is a supported hardware type.
   SDOperand Vec = Op.getOperand(0);
   SDOperand Idx = LegalizeOp(Op.getOperand(1));
   
-  SDNode *InVal = Vec.Val;
-  unsigned NumElems = cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
+  unsigned NumElems = MVT::getVectorNumElements(Vec.getValueType());
   
   if (NumElems == MVT::getVectorNumElements(Op.getValueType())) {
     // This must be an access of the desired vector length.  Return it.
-    return PackVectorOp(Vec, Op.getValueType());
+    return Vec;
   }
 
   ConstantSDNode *CIdx = cast<ConstantSDNode>(Idx);
@@ -3663,29 +3639,8 @@ SDOperand SelectionDAGLegalize::LowerVEXTRACT_SUBVECTOR(SDOperand Op) {
   
   // It's now an extract from the appropriate high or low part.  Recurse.
   Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
-  return LowerVEXTRACT_SUBVECTOR(Op);
+  return ExpandEXTRACT_SUBVECTOR(Op);
 }
-
-/// ExpandEXTRACT_VECTOR_ELT - Expand an EXTRACT_VECTOR_ELT operation into
-/// memory traffic.
-SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
-  SDOperand Vector = Op.getOperand(0);
-  SDOperand Idx    = Op.getOperand(1);
-  
-  // If the target doesn't support this, store the value to a temporary
-  // stack slot, then LOAD the scalar element back out.
-  SDOperand StackPtr = CreateStackTemporary(Vector.getValueType());
-  SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Vector, StackPtr, NULL, 0);
-  
-  // Add the offset to the index.
-  unsigned EltSize = MVT::getSizeInBits(Op.getValueType())/8;
-  Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
-                    DAG.getConstant(EltSize, Idx.getValueType()));
-  StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
-  
-  return DAG.getLoad(Op.getValueType(), Ch, StackPtr, NULL, 0);
-}
-
 
 /// LegalizeSetCCOperands - Attempts to create a legal LHS and RHS for a SETCC
 /// with condition CC on the current target.  This usually involves legalizing
@@ -4748,7 +4703,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   SDNode *Node = Op.Val;
   assert(getTypeAction(VT) == Expand && "Not an expanded type!");
   assert(((MVT::isInteger(NVT) && NVT < VT) || MVT::isFloatingPoint(VT) ||
-         VT == MVT::Vector) &&
+         MVT::isVector(VT)) &&
          "Cannot expand to FP value or to larger int value!");
 
   // See if we already expanded it.
@@ -4870,9 +4825,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand Ch  = LD->getChain();    // Legalize the chain.
     SDOperand Ptr = LD->getBasePtr();  // Legalize the pointer.
     ISD::LoadExtType ExtType = LD->getExtensionType();
+    unsigned SVOffset = LD->getSrcValueOffset();
 
     if (ExtType == ISD::NON_EXTLOAD) {
-      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),LD->getSrcValueOffset());
+      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset);
       if (VT == MVT::f32 || VT == MVT::f64) {
         // f32->i32 or f64->i64 one to one expansion.
         // Remember that we legalized the chain.
@@ -4887,8 +4843,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
-      // FIXME: This creates a bogus srcvalue!
-      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),LD->getSrcValueOffset());
+      SVOffset += IncrementSize;
+      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset);
 
       // Build a factor node to remember that this load is independent of the
       // other one.
@@ -4905,7 +4861,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       if (VT == MVT::f64 && EVT == MVT::f32) {
         // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
         SDOperand Load = DAG.getLoad(EVT, Ch, Ptr, LD->getSrcValue(),
-                                     LD->getSrcValueOffset());
+                                     SVOffset);
         // Remember that we legalized the chain.
         AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Load.getValue(1)));
         ExpandOp(DAG.getNode(ISD::FP_EXTEND, VT, Load), Lo, Hi);
@@ -4914,10 +4870,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     
       if (EVT == NVT)
         Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),
-                         LD->getSrcValueOffset());
+                         SVOffset);
       else
         Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, LD->getSrcValue(),
-                            LD->getSrcValueOffset(), EVT);
+                            SVOffset, EVT);
     
       // Remember that we legalized the chain.
       AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
@@ -5504,17 +5460,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   assert(isNew && "Value already expanded?!?");
 }
 
-/// SplitVectorOp - Given an operand of MVT::Vector type, break it down into
-/// two smaller values of MVT::Vector type.
+/// SplitVectorOp - Given an operand of vector type, break it down into
+/// two smaller values, still of vector type.
 void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
                                          SDOperand &Hi) {
-  assert(Op.getValueType() == MVT::Vector && "Cannot split non-vector type!");
+  assert(MVT::isVector(Op.getValueType()) && "Cannot split non-vector type!");
   SDNode *Node = Op.Val;
-  unsigned NumElements = cast<ConstantSDNode>(*(Node->op_end()-2))->getValue();
+  unsigned NumElements = MVT::getVectorNumElements(Node->getValueType(0));
   assert(NumElements > 1 && "Cannot split a single element vector!");
   unsigned NewNumElts = NumElements/2;
-  SDOperand NewNumEltsNode = DAG.getConstant(NewNumElts, MVT::i32);
-  SDOperand TypeNode = *(Node->op_end()-1);
+  MVT::ValueType NewEltVT = MVT::getVectorElementType(Node->getValueType(0));
+  MVT::ValueType NewVT = MVT::getVectorType(NewEltVT, NewNumElts);
   
   // See if we already split it.
   std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
@@ -5531,64 +5487,73 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Node->dump(&DAG);
 #endif
     assert(0 && "Unhandled operation in SplitVectorOp!");
-  case ISD::VBUILD_VECTOR: {
+  case ISD::BUILD_PAIR:
+    Lo = Node->getOperand(0);
+    Hi = Node->getOperand(1);
+    break;
+  case ISD::BUILD_VECTOR: {
     SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
                                     Node->op_begin()+NewNumElts);
-    LoOps.push_back(NewNumEltsNode);
-    LoOps.push_back(TypeNode);
-    Lo = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &LoOps[0], LoOps.size());
+    Lo = DAG.getNode(ISD::BUILD_VECTOR, NewVT, &LoOps[0], LoOps.size());
 
     SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumElts, 
-                                    Node->op_end()-2);
-    HiOps.push_back(NewNumEltsNode);
-    HiOps.push_back(TypeNode);
-    Hi = DAG.getNode(ISD::VBUILD_VECTOR, MVT::Vector, &HiOps[0], HiOps.size());
+                                    Node->op_end());
+    Hi = DAG.getNode(ISD::BUILD_VECTOR, NewVT, &HiOps[0], HiOps.size());
     break;
   }
-  case ISD::VCONCAT_VECTORS: {
-    unsigned NewNumSubvectors = (Node->getNumOperands() - 2) / 2;
-    SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
-                                    Node->op_begin()+NewNumSubvectors);
-    LoOps.push_back(NewNumEltsNode);
-    LoOps.push_back(TypeNode);
-    Lo = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &LoOps[0], LoOps.size());
+  case ISD::CONCAT_VECTORS: {
+    unsigned NewNumSubvectors = Node->getNumOperands() / 2;
+    if (NewNumSubvectors == 1) {
+      Lo = Node->getOperand(0);
+      Hi = Node->getOperand(1);
+    } else {
+      SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
+                                      Node->op_begin()+NewNumSubvectors);
+      Lo = DAG.getNode(ISD::CONCAT_VECTORS, NewVT, &LoOps[0], LoOps.size());
 
-    SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumSubvectors, 
-                                    Node->op_end()-2);
-    HiOps.push_back(NewNumEltsNode);
-    HiOps.push_back(TypeNode);
-    Hi = DAG.getNode(ISD::VCONCAT_VECTORS, MVT::Vector, &HiOps[0], HiOps.size());
+      SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumSubvectors, 
+                                      Node->op_end());
+      Hi = DAG.getNode(ISD::CONCAT_VECTORS, NewVT, &HiOps[0], HiOps.size());
+    }
     break;
   }
-  case ISD::VADD:
-  case ISD::VSUB:
-  case ISD::VMUL:
-  case ISD::VSDIV:
-  case ISD::VUDIV:
-  case ISD::VAND:
-  case ISD::VOR:
-  case ISD::VXOR: {
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::MUL:
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::FDIV:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR: {
     SDOperand LL, LH, RL, RH;
     SplitVectorOp(Node->getOperand(0), LL, LH);
     SplitVectorOp(Node->getOperand(1), RL, RH);
     
-    Lo = DAG.getNode(Node->getOpcode(), MVT::Vector, LL, RL,
-                     NewNumEltsNode, TypeNode);
-    Hi = DAG.getNode(Node->getOpcode(), MVT::Vector, LH, RH,
-                     NewNumEltsNode, TypeNode);
+    Lo = DAG.getNode(Node->getOpcode(), NewVT, LL, RL);
+    Hi = DAG.getNode(Node->getOpcode(), NewVT, LH, RH);
     break;
   }
-  case ISD::VLOAD: {
-    SDOperand Ch = Node->getOperand(0);   // Legalize the chain.
-    SDOperand Ptr = Node->getOperand(1);  // Legalize the pointer.
-    MVT::ValueType EVT = cast<VTSDNode>(TypeNode)->getVT();
-    
-    Lo = DAG.getVecLoad(NewNumElts, EVT, Ch, Ptr, Node->getOperand(2));
-    unsigned IncrementSize = NewNumElts * MVT::getSizeInBits(EVT)/8;
+  case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(Node);
+    SDOperand Ch = LD->getChain();
+    SDOperand Ptr = LD->getBasePtr();
+    const Value *SV = LD->getSrcValue();
+    int SVOffset = LD->getSrcValueOffset();
+    unsigned Alignment = LD->getAlignment();
+    bool isVolatile = LD->isVolatile();
+
+    Lo = DAG.getLoad(NewVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
+    unsigned IncrementSize = NewNumElts * MVT::getSizeInBits(NewEltVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
-    // FIXME: This creates a bogus srcvalue!
-    Hi = DAG.getVecLoad(NewNumElts, EVT, Ch, Ptr, Node->getOperand(2));
+    SVOffset += IncrementSize;
+    if (Alignment > IncrementSize)
+      Alignment = IncrementSize;
+    Hi = DAG.getLoad(NewVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
     
     // Build a factor node to remember that this load is independent of the
     // other one.
@@ -5599,42 +5564,31 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(TF));
     break;
   }
-  case ISD::VBIT_CONVERT: {
+  case ISD::BIT_CONVERT: {
     // We know the result is a vector.  The input may be either a vector or a
     // scalar value.
-    if (Op.getOperand(0).getValueType() != MVT::Vector) {
+    if (!MVT::isVector(Op.getOperand(0).getValueType())) {
       // Lower to a store/load.  FIXME: this could be improved probably.
       SDOperand Ptr = CreateStackTemporary(Op.getOperand(0).getValueType());
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
                                   Op.getOperand(0), Ptr, NULL, 0);
-      MVT::ValueType EVT = cast<VTSDNode>(TypeNode)->getVT();
-      St = DAG.getVecLoad(NumElements, EVT, St, Ptr, DAG.getSrcValue(0));
+      St = DAG.getLoad(NewVT, St, Ptr, NULL, 0);
       SplitVectorOp(St, Lo, Hi);
     } else {
       // If the input is a vector type, we have to either scalarize it, pack it
       // or convert it based on whether the input vector type is legal.
       SDNode *InVal = Node->getOperand(0).Val;
-      unsigned NumElems =
-        cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-      MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
+      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
 
-      // If the input is from a single element vector, scalarize the vector,
-      // then treat like a scalar.
-      if (NumElems == 1) {
-        SDOperand Scalar = PackVectorOp(Op.getOperand(0), EVT);
-        Scalar = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Scalar,
-                             Op.getOperand(1), Op.getOperand(2));
-        SplitVectorOp(Scalar, Lo, Hi);
-      } else {
+      assert(NumElems > 1);
+      {
         // Split the input vector.
         SplitVectorOp(Op.getOperand(0), Lo, Hi);
 
         // Convert each of the pieces now.
-        Lo = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Lo,
-                         NewNumEltsNode, TypeNode);
-        Hi = DAG.getNode(ISD::VBIT_CONVERT, MVT::Vector, Hi,
-                         NewNumEltsNode, TypeNode);
+        Lo = DAG.getNode(ISD::BIT_CONVERT, NewVT, Lo);
+        Hi = DAG.getNode(ISD::BIT_CONVERT, NewVT, Hi);
       }
       break;
     }
@@ -5648,18 +5602,18 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
 }
 
 
-/// PackVectorOp - Given an operand of MVT::Vector type, convert it into the
-/// equivalent operation that returns a scalar (e.g. MVT::f32) or packed value
-/// (e.g. MVT::v4f32).  When this is called, we know that PackedVT is the right
-/// type for the result.
-SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op, 
-                                             MVT::ValueType NewVT) {
-  assert(Op.getValueType() == MVT::Vector && "Bad PackVectorOp invocation!");
+/// ScalarizeVectorOp - Given an operand of vector type, convert it into the
+/// equivalent operation that returns a scalar (e.g. F32) value.
+SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
+  assert(MVT::isVector(Op.getValueType()) &&
+         "Bad ScalarizeVectorOp invocation!");
   SDNode *Node = Op.Val;
+  MVT::ValueType NewVT = MVT::getVectorElementType(Op.getValueType());
+  assert(MVT::getVectorNumElements(Op.getValueType()) == 1);
   
-  // See if we already packed it.
-  std::map<SDOperand, SDOperand>::iterator I = PackedNodes.find(Op);
-  if (I != PackedNodes.end()) return I->second;
+  // See if we already scalarized it.
+  std::map<SDOperand, SDOperand>::iterator I = ScalarizedNodes.find(Op);
+  if (I != ScalarizedNodes.end()) return I->second;
   
   SDOperand Result;
   switch (Node->getOpcode()) {
@@ -5667,146 +5621,89 @@ SDOperand SelectionDAGLegalize::PackVectorOp(SDOperand Op,
 #ifndef NDEBUG
     Node->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Unknown vector operation in PackVectorOp!");
-  case ISD::VADD:
-  case ISD::VSUB:
-  case ISD::VMUL:
-  case ISD::VSDIV:
-  case ISD::VUDIV:
-  case ISD::VAND:
-  case ISD::VOR:
-  case ISD::VXOR:
-    Result = DAG.getNode(getScalarizedOpcode(Node->getOpcode(), NewVT),
+    assert(0 && "Unknown vector operation in ScalarizeVectorOp!");
+  case ISD::ADD:
+  case ISD::FADD:
+  case ISD::SUB:
+  case ISD::FSUB:
+  case ISD::MUL:
+  case ISD::FMUL:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::FDIV:
+  case ISD::SREM:
+  case ISD::UREM:
+  case ISD::FREM:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+    Result = DAG.getNode(Node->getOpcode(),
                          NewVT, 
-                         PackVectorOp(Node->getOperand(0), NewVT),
-                         PackVectorOp(Node->getOperand(1), NewVT));
+                         ScalarizeVectorOp(Node->getOperand(0)),
+                         ScalarizeVectorOp(Node->getOperand(1)));
     break;
-  case ISD::VLOAD: {
-    SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
-    SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+  case ISD::FNEG:
+  case ISD::FABS:
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS:
+    Result = DAG.getNode(Node->getOpcode(),
+                         NewVT, 
+                         ScalarizeVectorOp(Node->getOperand(0)));
+    break;
+  case ISD::LOAD: {
+    LoadSDNode *LD = cast<LoadSDNode>(Node);
+    SDOperand Ch = LegalizeOp(LD->getChain());     // Legalize the chain.
+    SDOperand Ptr = LegalizeOp(LD->getBasePtr());  // Legalize the pointer.
     
-    SrcValueSDNode *SV = cast<SrcValueSDNode>(Node->getOperand(2));
-    Result = DAG.getLoad(NewVT, Ch, Ptr, SV->getValue(), SV->getOffset());
-    
+    const Value *SV = LD->getSrcValue();
+    int SVOffset = LD->getSrcValueOffset();
+    Result = DAG.getLoad(NewVT, Ch, Ptr, SV, SVOffset,
+                         LD->isVolatile(), LD->getAlignment());
+
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
   }
-  case ISD::VBUILD_VECTOR:
-    if (Node->getOperand(0).getValueType() == NewVT) {
-      // Returning a scalar?
-      Result = Node->getOperand(0);
-    } else {
-      // Returning a BUILD_VECTOR?
-      
-      // If all elements of the build_vector are undefs, return an undef.
-      bool AllUndef = true;
-      for (unsigned i = 0, e = Node->getNumOperands()-2; i != e; ++i)
-        if (Node->getOperand(i).getOpcode() != ISD::UNDEF) {
-          AllUndef = false;
-          break;
-        }
-      if (AllUndef) {
-        Result = DAG.getNode(ISD::UNDEF, NewVT);
-      } else {
-        Result = DAG.getNode(ISD::BUILD_VECTOR, NewVT, Node->op_begin(),
-                             Node->getNumOperands()-2);
-      }
-    }
+  case ISD::BUILD_VECTOR:
+    Result = Node->getOperand(0);
     break;
-  case ISD::VCONCAT_VECTORS:
+  case ISD::INSERT_VECTOR_ELT:
+    // Returning the inserted scalar element.
+    Result = Node->getOperand(1);
+    break;
+  case ISD::CONCAT_VECTORS:
     assert(Node->getOperand(0).getValueType() == NewVT &&
            "Concat of non-legal vectors not yet supported!");
     Result = Node->getOperand(0);
     break;
-  case ISD::VINSERT_VECTOR_ELT:
-    if (!MVT::isVector(NewVT)) {
-      // Returning a scalar?  Must be the inserted element.
-      Result = Node->getOperand(1);
-    } else {
-      Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT,
-                           PackVectorOp(Node->getOperand(0), NewVT),
-                           Node->getOperand(1), Node->getOperand(2));
-    }
+  case ISD::VECTOR_SHUFFLE: {
+    // Figure out if the scalar is the LHS or RHS and return it.
+    SDOperand EltNum = Node->getOperand(2).getOperand(0);
+    if (cast<ConstantSDNode>(EltNum)->getValue())
+      Result = ScalarizeVectorOp(Node->getOperand(1));
+    else
+      Result = ScalarizeVectorOp(Node->getOperand(0));
     break;
-  case ISD::VEXTRACT_SUBVECTOR:
-    Result = PackVectorOp(Node->getOperand(0), NewVT);
+  }
+  case ISD::EXTRACT_SUBVECTOR:
+    Result = Node->getOperand(0);
     assert(Result.getValueType() == NewVT);
     break;
-  case ISD::VVECTOR_SHUFFLE:
-    if (!MVT::isVector(NewVT)) {
-      // Returning a scalar?  Figure out if it is the LHS or RHS and return it.
-      SDOperand EltNum = Node->getOperand(2).getOperand(0);
-      if (cast<ConstantSDNode>(EltNum)->getValue())
-        Result = PackVectorOp(Node->getOperand(1), NewVT);
-      else
-        Result = PackVectorOp(Node->getOperand(0), NewVT);
-    } else {
-      // Otherwise, return a VECTOR_SHUFFLE node.  First convert the index
-      // vector from a VBUILD_VECTOR to a BUILD_VECTOR.
-      std::vector<SDOperand> BuildVecIdx(Node->getOperand(2).Val->op_begin(),
-                                         Node->getOperand(2).Val->op_end()-2);
-      MVT::ValueType BVT = MVT::getIntVectorWithNumElements(BuildVecIdx.size());
-      SDOperand BV = DAG.getNode(ISD::BUILD_VECTOR, BVT,
-                                 Node->getOperand(2).Val->op_begin(),
-                                 Node->getOperand(2).Val->getNumOperands()-2);
-      
-      Result = DAG.getNode(ISD::VECTOR_SHUFFLE, NewVT,
-                           PackVectorOp(Node->getOperand(0), NewVT),
-                           PackVectorOp(Node->getOperand(1), NewVT), BV);
-    }
+  case ISD::BIT_CONVERT:
+    Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, Op.getOperand(0));
     break;
-  case ISD::VBIT_CONVERT:
-    if (Op.getOperand(0).getValueType() != MVT::Vector)
-      Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, Op.getOperand(0));
-    else {
-      // If the input is a vector type, we have to either scalarize it, pack it
-      // or convert it based on whether the input vector type is legal.
-      SDNode *InVal = Node->getOperand(0).Val;
-      unsigned NumElems =
-        cast<ConstantSDNode>(*(InVal->op_end()-2))->getValue();
-      MVT::ValueType EVT = cast<VTSDNode>(*(InVal->op_end()-1))->getVT();
-        
-      // Figure out if there is a Packed type corresponding to this Vector
-      // type.  If so, convert to the vector type.
-      MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-      if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
-        // Turn this into a bit convert of the packed input.
-        Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, 
-                             PackVectorOp(Node->getOperand(0), TVT));
-        break;
-      } else if (NumElems == 1) {
-        // Turn this into a bit convert of the scalar input.
-        Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, 
-                             PackVectorOp(Node->getOperand(0), EVT));
-        break;
-      } else {
-        // If the input vector type isn't legal, then go through memory.
-        SDOperand Ptr = CreateStackTemporary(NewVT);
-        // Get the alignment for the store.
-        const TargetData &TD = *TLI.getTargetData();
-        unsigned Align = 
-          TD.getABITypeAlignment(MVT::getTypeForValueType(NewVT));
-        
-        SDOperand St = DAG.getStore(DAG.getEntryNode(),
-                                    Node->getOperand(0), Ptr, NULL, 0, false,
-                                    Align);
-        Result = DAG.getLoad(NewVT, St, Ptr, 0, 0);
-        break;
-      }
-    }
-    break;
-  case ISD::VSELECT:
+  case ISD::SELECT:
     Result = DAG.getNode(ISD::SELECT, NewVT, Op.getOperand(0),
-                         PackVectorOp(Op.getOperand(1), NewVT),
-                         PackVectorOp(Op.getOperand(2), NewVT));
+                         ScalarizeVectorOp(Op.getOperand(1)),
+                         ScalarizeVectorOp(Op.getOperand(2)));
     break;
   }
 
   if (TLI.isTypeLegal(NewVT))
     Result = LegalizeOp(Result);
-  bool isNew = PackedNodes.insert(std::make_pair(Op, Result)).second;
-  assert(isNew && "Value already packed?");
+  bool isNew = ScalarizedNodes.insert(std::make_pair(Op, Result)).second;
+  assert(isNew && "Value already scalarized?");
   return Result;
 }
 

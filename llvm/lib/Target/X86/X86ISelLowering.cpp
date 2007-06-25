@@ -2493,9 +2493,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     }
   }
 
-  if (NumNonZero == 0)
-    // Must be a mix of zero and undef. Return a zero vector.
-    return getZeroVector(VT, DAG);
+  if (NumNonZero == 0) {
+    if (NumZero == 0)
+      // All undef vector. Return an UNDEF.
+      return DAG.getNode(ISD::UNDEF, VT);
+    else
+      // A mix of zero and undef. Return a zero vector.
+      return getZeroVector(VT, DAG);
+  }
 
   // Splat is obviously ok. Let legalizer expand it to a shuffle.
   if (Values.size() == 1)
@@ -4919,7 +4924,6 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       case MVT::i64:
         return std::make_pair(0U, X86::FR64RegisterClass);
       // Vector types.
-      case MVT::Vector:
       case MVT::v16i8:
       case MVT::v8i16:
       case MVT::v4i32:

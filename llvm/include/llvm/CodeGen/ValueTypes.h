@@ -17,16 +17,17 @@
 #define LLVM_CODEGEN_VALUETYPES_H
 
 #include <cassert>
+#include <string>
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class Type;
 
-/// MVT namespace - This namespace defines the ValueType enum, which contains
-/// the various low-level value types.
+/// MVT namespace - This namespace defines the SimpleValueType enum, which
+/// contains the various low-level value types, and the ValueType typedef.
 ///
 namespace MVT {  // MVT = Machine Value Types
-  enum ValueType {
+  enum SimpleValueType {
     // If you change this numbering, you must change the values in ValueTypes.td
     // well!
     Other          =   0,   // This is a non-standard value
@@ -45,10 +46,6 @@ namespace MVT {  // MVT = Machine Value Types
 
     isVoid         =  12,   // This has no value
     
-    Vector         =  13,   // This is an abstract vector type, which will
-                            // be expanded into a target vector type, or scalars
-                            // if no matching vector type is available.
-
     v8i8           =  14,   //  8 x i8
     v4i16          =  15,   //  4 x i16
     v2i32          =  16,   //  2 x i32
@@ -76,29 +73,101 @@ namespace MVT {  // MVT = Machine Value Types
     iPTR           = 255
   };
 
-  /// MVT::isInteger - Return true if this is a simple integer, or a packed
-  /// vector integer type.
-  static inline bool isInteger(ValueType VT) {
-    return (VT >= i1 && VT <= i128) || (VT >= v8i8 && VT <= v2i64);
+  /// MVT::ValueType - This type holds low-level value types. Valid values
+  /// include any of the values in the SimpleValueType enum, or any value
+  /// returned from a function in the MVT namespace that has a ValueType
+  /// return type. Any value type equal to one of the SimpleValueType enum
+  /// values is a "simple" value type. All other value types are "extended".
+  ///
+  /// Note that simple doesn't necessary mean legal for the target machine.
+  /// All legal value types must be simple, but often there are some simple
+  /// value types that are not legal.
+  typedef uint32_t ValueType;
+
+  static const int SimpleTypeBits = 8;
+
+  static const uint32_t SimpleTypeMask =
+    (~uint32_t(0) << (32 - SimpleTypeBits)) >> (32 - SimpleTypeBits);
+
+  /// MVT::isExtendedValueType - Test if the given ValueType is extended
+  /// (as opposed to being simple).
+  static inline bool isExtendedValueType(ValueType VT) {
+    return VT & ~SimpleTypeMask;
   }
 
-  /// MVT::isFloatingPoint - Return true if this is a simple FP, or a packed
-  /// vector FP type.
+  /// MVT::isInteger - Return true if this is an integer, or a vector integer
+  /// type.
+  static inline bool isInteger(ValueType VT) {
+    ValueType SVT = VT & SimpleTypeMask;
+    return (SVT >= i1 && SVT <= i128) || (SVT >= v8i8 && SVT <= v2i64);
+  }
+  
+  /// MVT::isFloatingPoint - Return true if this is an FP, or a vector FP type.
   static inline bool isFloatingPoint(ValueType VT) {
-    return (VT >= f32 && VT <= f128) || (VT >= v2f32 && VT <= v2f64);
+    ValueType SVT = VT & SimpleTypeMask;
+    return (SVT >= f32 && SVT <= f128) || (SVT >= v2f32 && SVT <= v2f64);
   }
   
-  /// MVT::isVector - Return true if this is a packed vector type (i.e. not 
-  /// MVT::Vector).
+  /// MVT::isVector - Return true if this is a vector value type.
   static inline bool isVector(ValueType VT) {
-    return VT >= FIRST_VECTOR_VALUETYPE && VT <= LAST_VECTOR_VALUETYPE;
+    return (VT >= FIRST_VECTOR_VALUETYPE && VT <= LAST_VECTOR_VALUETYPE) ||
+           isExtendedValueType(VT);
   }
   
-  /// MVT::getSizeInBits - Return the size of the specified value type in bits.
+  /// MVT::getVectorElementType - Given a vector type, return the type of
+  /// each element.
+  static inline ValueType getVectorElementType(ValueType VT) {
+    switch (VT) {
+    default:
+      if (isExtendedValueType(VT))
+        return VT & SimpleTypeMask;
+      assert(0 && "Invalid vector type!");
+    case v8i8 :
+    case v16i8: return i8;
+    case v4i16:
+    case v8i16: return i16; 
+    case v2i32:
+    case v4i32: return i32;
+    case v1i64:
+    case v2i64: return i64;
+    case v2f32:
+    case v4f32: return f32;
+    case v2f64: return f64;
+    }
+  }
+  
+  /// MVT::getVectorNumElements - Given a vector type, return the
+  /// number of elements it contains.
+  static inline unsigned getVectorNumElements(ValueType VT) {
+    switch (VT) {
+    default:
+      if (isExtendedValueType(VT))
+        return ((VT & ~SimpleTypeMask) >> SimpleTypeBits) - 1;
+      assert(0 && "Invalid vector type!");
+    case v16i8: return 16;
+    case v8i8 :
+    case v8i16: return 8;
+    case v4i16:
+    case v4i32: 
+    case v4f32: return 4;
+    case v2i32:
+    case v2i64:
+    case v2f32:
+    case v2f64: return 2;
+    case v1i64: return 1;
+    }
+  }
+  
+  /// MVT::getSizeInBits - Return the size of the specified value type
+  /// in bits.
   ///
   static inline unsigned getSizeInBits(ValueType VT) {
     switch (VT) {
-    default: assert(0 && "ValueType has no known size!");
+    default:
+      if (isExtendedValueType(VT))
+        return getSizeInBits(getVectorElementType(VT)) *
+               getVectorNumElements(VT);
+      assert(0 && "ValueType has no known size!");
     case MVT::i1  :  return 1;
     case MVT::i8  :  return 8;
     case MVT::i16 :  return 16;
@@ -124,54 +193,49 @@ namespace MVT {  // MVT = Machine Value Types
   }
   
   /// MVT::getVectorType - Returns the ValueType that represents a vector
-  /// NumElements in length, where each element is of type VT.  If there is no
-  /// ValueType that represents this vector, a ValueType of Other is returned.
+  /// NumElements in length, where each element is of type VT.
   ///
-  ValueType getVectorType(ValueType VT, unsigned NumElements);
-    
-  /// MVT::getVectorElementType - Given a packed vector type, return the type of
-  /// each element.
-  static inline ValueType getVectorElementType(ValueType VT) {
+  static inline ValueType getVectorType(ValueType VT, unsigned NumElements) {
     switch (VT) {
-    default: assert(0 && "Invalid vector type!");
-    case v8i8 :
-    case v16i8: return i8;
-    case v4i16:
-    case v8i16: return i16; 
-    case v2i32:
-    case v4i32: return i32;
-    case v1i64:
-    case v2i64: return i64;
-    case v2f32:
-    case v4f32: return f32;
-    case v2f64: return f64;
+    default:
+      break;
+    case MVT::i8:
+      if (NumElements == 8)  return MVT::v8i8;
+      if (NumElements == 16) return MVT::v16i8;
+      break;
+    case MVT::i16:
+      if (NumElements == 4)  return MVT::v4i16;
+      if (NumElements == 8)  return MVT::v8i16;
+      break;
+    case MVT::i32:
+      if (NumElements == 2)  return MVT::v2i32;
+      if (NumElements == 4)  return MVT::v4i32;
+      break;
+    case MVT::i64:
+      if (NumElements == 1)  return MVT::v1i64;
+      if (NumElements == 2)  return MVT::v2i64;
+      break;
+    case MVT::f32:
+      if (NumElements == 2)  return MVT::v2f32;
+      if (NumElements == 4)  return MVT::v4f32;
+      break;
+    case MVT::f64:
+      if (NumElements == 2)  return MVT::v2f64;
+      break;
     }
+    ValueType Result = VT | ((NumElements + 1) << SimpleTypeBits);
+    assert(getVectorElementType(Result) == VT &&
+           "Bad vector element type!");
+    assert(getVectorNumElements(Result) == NumElements &&
+           "Bad vector length!");
+    return Result;
   }
-  
-  /// MVT::getVectorNumElements - Given a packed vector type, return the number
-  /// of elements it contains.
-  static inline unsigned getVectorNumElements(ValueType VT) {
-    switch (VT) {
-    default: assert(0 && "Invalid vector type!");
-    case v16i8: return 16;
-    case v8i8 :
-    case v8i16: return 8;
-    case v4i16:
-    case v4i32: 
-    case v4f32: return 4;
-    case v2i32:
-    case v2i64:
-    case v2f32:
-    case v2f64: return 2;
-    case v1i64: return 1;
-    }
-  }
-  
+
   /// MVT::getIntVectorWithNumElements - Return any integer vector type that has
   /// the specified number of elements.
   static inline ValueType getIntVectorWithNumElements(unsigned NumElts) {
     switch (NumElts) {
-    default: assert(0 && "Invalid vector type!");
+    default: return getVectorType(i8, NumElts);
     case  1: return v1i64;
     case  2: return v2i32;
     case  4: return v4i16;
@@ -196,7 +260,7 @@ namespace MVT {  // MVT = Machine Value Types
 
   /// MVT::getValueTypeString - This function returns value type as a string,
   /// e.g. "i32".
-  const char *getValueTypeString(ValueType VT);
+  std::string getValueTypeString(ValueType VT);
 
   /// MVT::getTypeForValueType - This method returns an LLVM type corresponding
   /// to the specified ValueType.  For integer types, this returns an unsigned
@@ -204,9 +268,8 @@ namespace MVT {  // MVT = Machine Value Types
   const Type *getTypeForValueType(ValueType VT);
   
   /// MVT::getValueType - Return the value type corresponding to the specified
-  /// type.  This returns all vectors as MVT::Vector and all pointers as
-  /// MVT::iPTR.  If HandleUnknown is true, unknown types are returned as Other,
-  /// otherwise they are invalid.
+  /// type.  This returns all pointers as MVT::iPTR.  If HandleUnknown is true,
+  /// unknown types are returned as Other, otherwise they are invalid.
   ValueType getValueType(const Type *Ty, bool HandleUnknown = false);
 }
 

@@ -199,7 +199,7 @@ static void SetValueTypeAction(MVT::ValueType VT,
     else if (VT == MVT::f64)
       TransformToType[VT] = MVT::i64;
     else {
-      assert((VT == MVT::Vector || MVT::isInteger(VT)) && VT > MVT::i8 &&
+      assert((MVT::isVector(VT) || MVT::isInteger(VT)) && VT > MVT::i8 &&
              "Cannot expand this type: target must support SOME integer reg!");
       // Expand to the next smaller integer type!
       TransformToType[VT] = (MVT::ValueType)(VT-1);
@@ -265,16 +265,18 @@ void TargetLowering::computeRegisterProperties() {
                        ValueTypeActions);
   }
   
-  // Set MVT::Vector to always be Expanded
-  SetValueTypeAction(MVT::Vector, Expand, *this, TransformToType, 
-                     ValueTypeActions);
-  
   // Loop over all of the legal vector value types, specifying an identity type
   // transformation.
   for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
        i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
     if (isTypeLegal((MVT::ValueType)i))
       TransformToType[i] = (MVT::ValueType)i;
+    else {
+      MVT::ValueType VT1, VT2;
+      NumRegistersForVT[i] = getVectorTypeBreakdown(i, VT1, VT2);
+      SetValueTypeAction(i, Expand, *this, TransformToType,
+                         ValueTypeActions);
+    }
   }
 }
 
@@ -282,38 +284,42 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
 
-/// getVectorTypeBreakdown - Packed types are broken down into some number of
-/// legal first class types. For example, <8 x float> maps to 2 MVT::v4f32
+/// getVectorTypeBreakdown - Vector types are broken down into some number of
+/// legal first class types.  For example, MVT::v8f32 maps to 2 MVT::v4f32
 /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
+/// Similarly, MVT::v2i64 turns into 4 MVT::i32 values with both PPC and X86.
 ///
-/// This method returns the number and type of the resultant breakdown.
+/// This method returns the number of registers needed, and the VT for each
+/// register.  It also returns the VT of the VectorType elements before they
+/// are promoted/expanded.
 ///
-unsigned TargetLowering::getVectorTypeBreakdown(const VectorType *PTy, 
-                                                MVT::ValueType &PTyElementVT,
-                                      MVT::ValueType &PTyLegalElementVT) const {
+unsigned TargetLowering::getVectorTypeBreakdown(MVT::ValueType VT, 
+                                                MVT::ValueType &ElementVT,
+                                      MVT::ValueType &LegalElementVT) const {
   // Figure out the right, legal destination reg to copy into.
-  unsigned NumElts = PTy->getNumElements();
-  MVT::ValueType EltTy = getValueType(PTy->getElementType());
+  unsigned NumElts = MVT::getVectorNumElements(VT);
+  MVT::ValueType EltTy = MVT::getVectorElementType(VT);
   
   unsigned NumVectorRegs = 1;
   
   // Divide the input until we get to a supported size.  This will always
   // end with a scalar if the target doesn't support vectors.
-  while (NumElts > 1 && !isTypeLegal(MVT::getVectorType(EltTy, NumElts))) {
+  while (NumElts > 1 &&
+         !isTypeLegal(MVT::getVectorType(EltTy, NumElts))) {
     NumElts >>= 1;
     NumVectorRegs <<= 1;
   }
   
-  MVT::ValueType VT = MVT::getVectorType(EltTy, NumElts);
-  if (!isTypeLegal(VT))
-    VT = EltTy;
-  PTyElementVT = VT;
+  MVT::ValueType NewVT = MVT::getVectorType(EltTy, NumElts);
+  if (!isTypeLegal(NewVT))
+    NewVT = EltTy;
+  ElementVT = NewVT;
 
-  MVT::ValueType DestVT = getTypeToTransformTo(VT);
-  PTyLegalElementVT = DestVT;
-  if (DestVT < VT) {
+  MVT::ValueType DestVT = getTypeToTransformTo(NewVT);
+  LegalElementVT = DestVT;
+  if (DestVT < NewVT) {
     // Value is expanded, e.g. i64 -> i16.
-    return NumVectorRegs*(MVT::getSizeInBits(VT)/MVT::getSizeInBits(DestVT));
+    return NumVectorRegs*(MVT::getSizeInBits(NewVT)/MVT::getSizeInBits(DestVT));
   } else {
     // Otherwise, promotion or legal types use the same number of registers as
     // the vector decimated to the appropriate level.

@@ -120,6 +120,7 @@ public:
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.  This may only be called on legal types.
   TargetRegisterClass *getRegClassFor(MVT::ValueType VT) const {
+    assert(!MVT::isExtendedValueType(VT));
     TargetRegisterClass *RC = RegClassForVT[VT];
     assert(RC && "This value type is not natively supported!");
     return RC;
@@ -129,7 +130,9 @@ public:
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
   bool isTypeLegal(MVT::ValueType VT) const {
-    return RegClassForVT[VT] != 0;
+    return !MVT::isExtendedValueType(VT) ?
+           RegClassForVT[VT] != 0 :
+           false;
   }
 
   class ValueTypeActionImpl {
@@ -147,9 +150,12 @@ public:
     }
     
     LegalizeAction getTypeAction(MVT::ValueType VT) const {
-      return (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3);
+      return !MVT::isExtendedValueType(VT) ?
+             (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3) :
+             Expand;
     }
     void setTypeAction(MVT::ValueType VT, LegalizeAction Action) {
+      assert(!MVT::isExtendedValueType(VT));
       assert(unsigned(VT >> 4) < 
              sizeof(ValueTypeActions)/sizeof(ValueTypeActions[0]));
       ValueTypeActions[VT>>4] |= Action << ((VT*2) & 31);
@@ -175,6 +181,10 @@ public:
   /// to get to the smaller register. For illegal floating point types, this
   /// returns the integer type to transform to.
   MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) const {
+    if (MVT::isExtendedValueType(VT))
+      return MVT::getVectorType(MVT::getVectorElementType(VT),
+                                MVT::getVectorNumElements(VT) / 2);
+
     return TransformToType[VT];
   }
   
@@ -183,12 +193,13 @@ public:
   /// that are larger than the largest integer register or illegal floating
   /// point types), this returns the largest legal type it will be expanded to.
   MVT::ValueType getTypeToExpandTo(MVT::ValueType VT) const {
+    assert(!MVT::isExtendedValueType(VT));
     while (true) {
       switch (getTypeAction(VT)) {
       case Legal:
         return VT;
       case Expand:
-        VT = TransformToType[VT];
+        VT = getTypeToTransformTo(VT);
         break;
       default:
         assert(false && "Type is not legal nor is it to be expanded!");
@@ -199,17 +210,17 @@ public:
   }
 
   /// getVectorTypeBreakdown - Vector types are broken down into some number of
-  /// legal first class types.  For example, <8 x float> maps to 2 MVT::v4f32
+  /// legal first class types.  For example, MVT::v8f32 maps to 2 MVT::v4f32
   /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.
-  /// Similarly, <2 x long> turns into 4 MVT::i32 values with both PPC and X86.
+  /// Similarly, MVT::v2i64 turns into 4 MVT::i32 values with both PPC and X86.
   ///
   /// This method returns the number of registers needed, and the VT for each
   /// register.  It also returns the VT of the VectorType elements before they
   /// are promoted/expanded.
   ///
-  unsigned getVectorTypeBreakdown(const VectorType *PTy, 
-                                  MVT::ValueType &PTyElementVT,
-                                  MVT::ValueType &PTyLegalElementVT) const;
+  unsigned getVectorTypeBreakdown(MVT::ValueType VT, 
+                                  MVT::ValueType &ElementVT,
+                                  MVT::ValueType &LegalElementVT) const;
   
   typedef std::vector<double>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
@@ -242,7 +253,9 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
-    return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
+    return !MVT::isExtendedValueType(VT) ?
+           (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3) :
+           Expand;
   }
   
   /// isOperationLegal - Return true if the specified operation is legal on this
@@ -257,7 +270,9 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getLoadXAction(unsigned LType, MVT::ValueType VT) const {
-    return (LegalizeAction)((LoadXActions[LType] >> (2*VT)) & 3);
+    return !MVT::isExtendedValueType(VT) ?
+           (LegalizeAction)((LoadXActions[LType] >> (2*VT)) & 3) :
+           Expand;
   }
   
   /// isLoadXLegal - Return true if the specified load with extension is legal
@@ -272,7 +287,9 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getStoreXAction(MVT::ValueType VT) const {
-    return (LegalizeAction)((StoreXActions >> (2*VT)) & 3);
+    return !MVT::isExtendedValueType(VT) ?
+           (LegalizeAction)((StoreXActions >> (2*VT)) & 3) :
+           Expand;
   }
   
   /// isStoreXLegal - Return true if the specified store with truncation is
@@ -287,7 +304,9 @@ public:
   /// for it.
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, MVT::ValueType VT) const {
-    return (LegalizeAction)((IndexedModeActions[0][IdxMode] >> (2*VT)) & 3);
+    return !MVT::isExtendedValueType(VT) ?
+           (LegalizeAction)((IndexedModeActions[0][IdxMode] >> (2*VT)) & 3) :
+           Expand;
   }
 
   /// isIndexedLoadLegal - Return true if the specified indexed load is legal
@@ -303,7 +322,9 @@ public:
   /// for it.
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, MVT::ValueType VT) const {
-    return (LegalizeAction)((IndexedModeActions[1][IdxMode] >> (2*VT)) & 3);
+    return !MVT::isExtendedValueType(VT) ?
+           (LegalizeAction)((IndexedModeActions[1][IdxMode] >> (2*VT)) & 3) :
+           Expand;
   }  
   
   /// isIndexedStoreLegal - Return true if the specified indexed load is legal
@@ -352,7 +373,11 @@ public:
   /// registers, but may be more than one for types (like i64) that are split
   /// into pieces.
   unsigned getNumRegisters(MVT::ValueType VT) const {
-    return NumRegistersForVT[VT];
+    if (!MVT::isExtendedValueType(VT))
+      return NumRegistersForVT[VT];
+           
+    MVT::ValueType VT1, VT2;
+    return getVectorTypeBreakdown(VT, VT1, VT2);
   }
   
   /// hasTargetDAGCombine - If true, the target has custom DAG combine
@@ -648,6 +673,7 @@ protected:
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
   void addRegisterClass(MVT::ValueType VT, TargetRegisterClass *RC) {
+    assert(!MVT::isExtendedValueType(VT));
     AvailableRegClasses.push_back(std::make_pair(VT, RC));
     RegClassForVT[VT] = RC;
   }

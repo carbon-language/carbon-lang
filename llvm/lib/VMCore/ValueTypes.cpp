@@ -14,13 +14,21 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
+#include <sstream>
 using namespace llvm;
 
 /// MVT::getValueTypeString - This function returns value type as a string,
 /// e.g. "i32".
-const char *MVT::getValueTypeString(MVT::ValueType VT) {
+std::string MVT::getValueTypeString(MVT::ValueType VT) {
   switch (VT) {
-  default: assert(0 && "Invalid ValueType!");
+  default:
+    if (isExtendedValueType(VT)) {
+      std::ostringstream OS;
+      OS << "v" << getVectorNumElements(VT)
+         << getValueTypeString(getVectorElementType(VT));
+      return OS.str();
+    }
+    assert(0 && "Invalid ValueType!");
   case MVT::i1:    return "i1";
   case MVT::i8:    return "i8";
   case MVT::i16:   return "i16";
@@ -34,7 +42,6 @@ const char *MVT::getValueTypeString(MVT::ValueType VT) {
   case MVT::isVoid:return "isVoid";
   case MVT::Other: return "ch";
   case MVT::Flag:  return "flag";
-  case MVT::Vector:return "vec";
   case MVT::v8i8:  return "v8i8";
   case MVT::v4i16: return "v4i16";
   case MVT::v2i32: return "v2i32";
@@ -49,47 +56,16 @@ const char *MVT::getValueTypeString(MVT::ValueType VT) {
   }
 }
 
-/// MVT::getVectorType - Returns the ValueType that represents a vector
-/// NumElements in length, where each element is of type VT.  If there is no
-/// ValueType that represents this vector, a ValueType of Other is returned.
-///
-MVT::ValueType MVT::getVectorType(ValueType VT, unsigned NumElements) {
-  switch (VT) {
-  default: 
-    break;
-  case MVT::i8:
-    if (NumElements == 8)  return MVT::v8i8;
-    if (NumElements == 16) return MVT::v16i8;
-    break;
-  case MVT::i16:
-    if (NumElements == 4)  return MVT::v4i16;
-    if (NumElements == 8)  return MVT::v8i16;
-    break;
-  case MVT::i32:
-    if (NumElements == 2)  return MVT::v2i32;
-    if (NumElements == 4)  return MVT::v4i32;
-    break;
-  case MVT::i64:
-    if (NumElements == 1)  return MVT::v1i64;
-    if (NumElements == 2)  return MVT::v2i64;
-    break;
-  case MVT::f32:
-    if (NumElements == 2)  return MVT::v2f32;
-    if (NumElements == 4)  return MVT::v4f32;
-    break;
-  case MVT::f64:
-    if (NumElements == 2)  return MVT::v2f64;
-    break;
-  }
-  return MVT::Other;
-}
-
 /// MVT::getTypeForValueType - This method returns an LLVM type corresponding
 /// to the specified ValueType.  Note that this will abort for types that cannot
 /// be represented.
 const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   switch (VT) {
-  default: assert(0 && "ValueType does not correspond to LLVM type!");
+  default:
+    if (isExtendedValueType(VT))
+      return VectorType::get(getTypeForValueType(getVectorElementType(VT)),
+                             getVectorNumElements(VT));
+    assert(0 && "ValueType does not correspond to LLVM type!");
   case MVT::isVoid:return Type::VoidTy;
   case MVT::i1:    return Type::Int1Ty;
   case MVT::i8:    return Type::Int8Ty;
@@ -114,9 +90,8 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
 }
 
 /// MVT::getValueType - Return the value type corresponding to the specified
-/// type.  This returns all vectors as MVT::Vector and all pointers as
-/// MVT::iPTR.  If HandleUnknown is true, unknown types are returned as Other,
-/// otherwise they are invalid.
+/// type.  This returns all pointers as MVT::iPTR.  If HandleUnknown is true,
+/// unknown types are returned as Other, otherwise they are invalid.
 MVT::ValueType MVT::getValueType(const Type *Ty, bool HandleUnknown) {
   switch (Ty->getTypeID()) {
   default:
@@ -141,6 +116,10 @@ MVT::ValueType MVT::getValueType(const Type *Ty, bool HandleUnknown) {
   case Type::FloatTyID:   return MVT::f32;
   case Type::DoubleTyID:  return MVT::f64;
   case Type::PointerTyID: return MVT::iPTR;
-  case Type::VectorTyID:  return MVT::Vector;
+  case Type::VectorTyID: {
+    const VectorType *VTy = cast<VectorType>(Ty);
+    return getVectorType(getValueType(VTy->getElementType(), false),
+                         VTy->getNumElements());
+  }
   }
 }

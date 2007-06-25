@@ -48,10 +48,10 @@ private:
   LocInfo HTP : 7;
   
   /// ValVT - The type of the value being assigned.
-  MVT::ValueType ValVT : 8;
+  MVT::ValueType ValVT;
 
   /// LocVT - The type of the location being assigned to.
-  MVT::ValueType LocVT : 8;
+  MVT::ValueType LocVT;
 public:
     
   static CCValAssign getReg(unsigned ValNo, MVT::ValueType ValVT,

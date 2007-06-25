@@ -673,7 +673,9 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
 SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
                                       bool isTarget) {
   assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
-  if (VT == MVT::f32)
+  MVT::ValueType EltVT =
+    MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
+  if (EltVT == MVT::f32)
     Val = (float)Val;  // Mask out extra precision.
 
   // Do the map lookup using the actual bit pattern for the floating point
@@ -681,15 +683,21 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
   // we don't have issues with SNANs.
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.AddDouble(Val);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new ConstantFPSDNode(isTarget, Val, VT);
+  SDNode *N = new ConstantFPSDNode(isTarget, Val, EltVT);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  SDOperand Result(N, 0);
+  if (MVT::isVector(VT)) {
+    SmallVector<SDOperand, 8> Ops;
+    Ops.assign(MVT::getVectorNumElements(VT), Result);
+    Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+  }
+  return Result;
 }
 
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
@@ -1952,6 +1960,23 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (EVT == VT) return N1;  // Not actually extending
     break;
   }
+  case ISD::EXTRACT_VECTOR_ELT:
+    assert(N2C && "Bad EXTRACT_VECTOR_ELT!");
+
+    // EXTRACT_VECTOR_ELT of BUILD_PAIR is often formed while lowering is
+    // expanding copies of large vectors from registers.
+    if (N1.getOpcode() == ISD::BUILD_PAIR) {
+      unsigned NewNumElts = MVT::getVectorNumElements(N1.getValueType()) / 2;
+      bool Low = N2C->getValue() < NewNumElts;
+      return getNode(ISD::EXTRACT_VECTOR_ELT, VT, N1.getOperand(!Low),
+                     Low ? N2 : getConstant(N2C->getValue() - NewNumElts,
+                                            N2.getValueType()));
+    }
+    // EXTRACT_VECTOR_ELT of BUILD_VECTOR is often formed while lowering is
+    // expanding large vector constants.
+    if (N1.getOpcode() == ISD::BUILD_VECTOR)
+      return N1.getOperand(N2C->getValue());
+    break;
   case ISD::EXTRACT_ELEMENT:
     assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
     
@@ -2045,14 +2070,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            MVT::getVectorNumElements(VT) == N3.getNumOperands() &&
            "Illegal VECTOR_SHUFFLE node!");
     break;
-  case ISD::VBIT_CONVERT:
-    // Fold vbit_convert nodes from a type to themselves.
-    if (N1.getValueType() == MVT::Vector) {
-      assert(isa<ConstantSDNode>(*(N1.Val->op_end()-2)) &&
-             isa<VTSDNode>(*(N1.Val->op_end()-1)) && "Malformed vector input!");
-      if (*(N1.Val->op_end()-2) == N2 && *(N1.Val->op_end()-1) == N3)
-        return N1;
-    }
+  case ISD::BIT_CONVERT:
+    // Fold bit_convert nodes from a type to themselves.
+    if (N1.getValueType() == VT)
+      return N1;
     break;
   }
 
@@ -2095,7 +2116,7 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 bool isVolatile, unsigned Alignment) {
   if (Alignment == 0) { // Ensure that codegen never sees alignment 0
     const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
+    if (VT != MVT::iPTR) {
       Ty = MVT::getTypeForValueType(VT);
     } else if (SV) {
       const PointerType *PT = dyn_cast<PointerType>(SV->getType());
@@ -2149,7 +2170,7 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
 
   if (Alignment == 0) { // Ensure that codegen never sees alignment 0
     const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
+    if (VT != MVT::iPTR) {
       Ty = MVT::getTypeForValueType(VT);
     } else if (SV) {
       const PointerType *PT = dyn_cast<PointerType>(SV->getType());
@@ -2211,14 +2232,6 @@ SelectionDAG::getIndexedLoad(SDOperand OrigLoad, SDOperand Base,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
-                                   SDOperand Chain, SDOperand Ptr,
-                                   SDOperand SV) {
-  SDOperand Ops[] = { Chain, Ptr, SV, getConstant(Count, MVT::i32), 
-                      getValueType(EVT) };
-  return getNode(ISD::VLOAD, getVTList(MVT::Vector, MVT::Other), Ops, 5);
-}
-
 SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
                                  SDOperand Ptr, const Value *SV, int SVOffset,
                                  bool isVolatile, unsigned Alignment) {
@@ -2226,7 +2239,7 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
 
   if (Alignment == 0) { // Ensure that codegen never sees alignment 0
     const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
+    if (VT != MVT::iPTR) {
       Ty = MVT::getTypeForValueType(VT);
     } else if (SV) {
       const PointerType *PT = dyn_cast<PointerType>(SV->getType());
@@ -2271,7 +2284,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
 
   if (Alignment == 0) { // Ensure that codegen never sees alignment 0
     const Type *Ty = 0;
-    if (VT != MVT::Vector && VT != MVT::iPTR) {
+    if (VT != MVT::iPTR) {
       Ty = MVT::getTypeForValueType(VT);
     } else if (SV) {
       const PointerType *PT = dyn_cast<PointerType>(SV->getType());
@@ -2462,7 +2475,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
 }
 
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT) {
-  return makeVTList(SDNode::getValueTypeList(VT), 1);
+  if (!MVT::isExtendedValueType(VT))
+    return makeVTList(SDNode::getValueTypeList(VT), 1);
+
+  for (std::list<std::vector<MVT::ValueType> >::iterator I = VTList.begin(),
+       E = VTList.end(); I != E; ++I) {
+    if (I->size() == 1 && (*I)[0] == VT)
+      return makeVTList(&(*I)[0], 1);
+  }
+  std::vector<MVT::ValueType> V;
+  V.push_back(VT);
+  VTList.push_front(V);
+  return makeVTList(&(*VTList.begin())[0], 1);
 }
 
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT1, MVT::ValueType VT2) {
@@ -2496,7 +2520,7 @@ SDVTList SelectionDAG::getVTList(MVT::ValueType VT1, MVT::ValueType VT2,
 SDVTList SelectionDAG::getVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
   switch (NumVTs) {
     case 0: assert(0 && "Cannot have nodes without results!");
-    case 1: return makeVTList(SDNode::getValueTypeList(VTs[0]), 1);
+    case 1: return getVTList(VTs[0]);
     case 2: return getVTList(VTs[0], VTs[1]);
     case 3: return getVTList(VTs[0], VTs[1], VTs[2]);
     default: break;
@@ -3394,30 +3418,16 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FDIV:   return "fdiv";
   case ISD::FREM:   return "frem";
   case ISD::FCOPYSIGN: return "fcopysign";
-  case ISD::VADD:   return "vadd";
-  case ISD::VSUB:   return "vsub";
-  case ISD::VMUL:   return "vmul";
-  case ISD::VSDIV:  return "vsdiv";
-  case ISD::VUDIV:  return "vudiv";
-  case ISD::VAND:   return "vand";
-  case ISD::VOR:    return "vor";
-  case ISD::VXOR:   return "vxor";
 
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
   case ISD::SELECT_CC:   return "select_cc";
-  case ISD::VSELECT:     return "vselect";
   case ISD::INSERT_VECTOR_ELT:   return "insert_vector_elt";
-  case ISD::VINSERT_VECTOR_ELT:  return "vinsert_vector_elt";
   case ISD::EXTRACT_VECTOR_ELT:  return "extract_vector_elt";
-  case ISD::VEXTRACT_VECTOR_ELT: return "vextract_vector_elt";
-  case ISD::VCONCAT_VECTORS:     return "vconcat_vectors";
-  case ISD::VEXTRACT_SUBVECTOR:  return "vextract_subvector";
+  case ISD::CONCAT_VECTORS:      return "concat_vectors";
+  case ISD::EXTRACT_SUBVECTOR:   return "extract_subvector";
   case ISD::SCALAR_TO_VECTOR:    return "scalar_to_vector";
-  case ISD::VBUILD_VECTOR:       return "vbuild_vector";
   case ISD::VECTOR_SHUFFLE:      return "vector_shuffle";
-  case ISD::VVECTOR_SHUFFLE:     return "vvector_shuffle";
-  case ISD::VBIT_CONVERT:        return "vbit_convert";
   case ISD::CARRY_FALSE:         return "carry_false";
   case ISD::ADDC:        return "addc";
   case ISD::ADDE:        return "adde";
@@ -3456,7 +3466,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
     // Other operators
   case ISD::LOAD:               return "load";
   case ISD::STORE:              return "store";
-  case ISD::VLOAD:              return "vload";
   case ISD::VAARG:              return "vaarg";
   case ISD::VACOPY:             return "vacopy";
   case ISD::VAEND:              return "vaend";
