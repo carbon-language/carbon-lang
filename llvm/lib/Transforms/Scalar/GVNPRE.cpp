@@ -27,6 +27,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
@@ -935,39 +936,6 @@ unsigned GVNPRE::buildsets(Function& F) {
 
   // Phase 1, Part 2: calculate ANTIC_IN
   
-  DOUT << "Calculating walk\n";
-  // Calculate a postorder CFG walk
-  std::vector<BasicBlock*> walk;
-  std::vector<BasicBlock*> walkStack;
-  SmallPtrSet<BasicBlock*, 16> walkVisited;
-  walkStack.push_back(&F.getEntryBlock());
-  walkVisited.insert(&F.getEntryBlock());
-  
-  while (!walkStack.empty()) {
-    BasicBlock* BB = walkStack.back();
-    walkVisited.insert(BB);
-    
-    bool inserted = false;
-    for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
-      BasicBlock* succ = BB->getTerminator()->getSuccessor(i);
-      if (walkVisited.count(succ) == 0) {
-        walkStack.push_back(succ);
-        inserted = true;
-      }
-    }
-    
-    if (inserted)
-      continue;
-    else {
-      walk.push_back(BB);
-      walkStack.pop_back();
-    }
-  }
-  
-  DOUT << "Finished calculating walk\n";
-  
-  // Perform the ANTIC_IN calculation
-  
   std::set<BasicBlock*> visited;
   
   bool changed = true;
@@ -977,8 +945,8 @@ unsigned GVNPRE::buildsets(Function& F) {
     SmallPtrSet<Value*, 32> anticOut;
     
     // Top-down walk of the postdominator tree
-    for (std::vector<BasicBlock*>::iterator BBI = walk.begin(), BBE = walk.end();
-         BBI != BBE; ++BBI) {
+    for (po_iterator<BasicBlock*> BBI = po_begin(&F.getEntryBlock()),
+         BBE = po_end(&F.getEntryBlock()); BBI != BBE; ++BBI) {
       BasicBlock* BB = *BBI;
       if (BB == 0)
         continue;
