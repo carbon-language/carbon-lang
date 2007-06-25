@@ -24,7 +24,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/PostDominators.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -86,9 +85,6 @@ namespace {
       DenseMap<Value*, uint32_t> valueNumbering;
       std::map<Expression, uint32_t> expressionNumbering;
   
-      std::set<Expression> maximalExpressions;
-      SmallPtrSet<Value*, 32> maximalValues;
-  
       uint32_t nextValueNumber;
     
       Expression::ExpressionOpcode getOpcode(BinaryOperator* BO);
@@ -101,11 +97,6 @@ namespace {
       uint32_t lookup(Value* V);
       void add(Value* V, uint32_t num);
       void clear();
-      std::set<Expression>& getMaximalExpressions() {
-        return maximalExpressions;
-      
-      }
-      SmallPtrSet<Value*, 32>& getMaximalValues() { return maximalValues; }
       void erase(Value* v);
       unsigned size();
   };
@@ -230,8 +221,6 @@ ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
   e.rightVN = lookup_or_add(BO->getOperand(1));
   e.opcode = getOpcode(BO);
   
-  maximalExpressions.insert(e);
-  
   return e;
 }
 
@@ -241,8 +230,6 @@ ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
   e.leftVN = lookup_or_add(C->getOperand(0));
   e.rightVN = lookup_or_add(C->getOperand(1));
   e.opcode = getOpcode(C);
-  
-  maximalExpressions.insert(e);
   
   return e;
 }
@@ -254,8 +241,6 @@ ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
 /// lookup_or_add - Returns the value number for the specified value, assigning
 /// it a new number if it did not have one before.
 uint32_t ValueTable::lookup_or_add(Value* V) {
-  maximalValues.insert(V);
-
   DenseMap<Value*, uint32_t>::iterator VI = valueNumbering.find(V);
   if (VI != valueNumbering.end())
     return VI->second;
@@ -314,23 +299,16 @@ void ValueTable::add(Value* V, uint32_t num) {
   valueNumbering.insert(std::make_pair(V, num));
 }
 
-/// clear - Remove all entries from the ValueTable and the maximal sets
+/// clear - Remove all entries from the ValueTable
 void ValueTable::clear() {
   valueNumbering.clear();
   expressionNumbering.clear();
-  maximalExpressions.clear();
-  maximalValues.clear();
   nextValueNumber = 1;
 }
 
-/// erase - Remove a value from the value numbering and maximal sets
+/// erase - Remove a value from the value numbering
 void ValueTable::erase(Value* V) {
-  maximalValues.erase(V);
   valueNumbering.erase(V);
-  if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V))
-    maximalExpressions.erase(create_expression(BO));
-  else if (CmpInst* C = dyn_cast<CmpInst>(V))
-    maximalExpressions.erase(create_expression(C));
 }
 
 /// size - Return the number of assigned value numbers
@@ -362,7 +340,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTree>();
-      AU.addRequired<PostDominatorTree>();
     }
   
     // Helper fuctions
@@ -467,33 +444,38 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
   
-  if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
+  if (isa<BinaryOperator>(V) || isa<CmpInst>(V)) {
+    User* U = cast<User>(V);
+    
     Value* newOp1 = 0;
-    if (isa<Instruction>(BO->getOperand(0)))
-      newOp1 = phi_translate(find_leader(anticipatedIn[succ],         
-                                         VN.lookup(BO->getOperand(0))),
-                             pred, succ);
+    if (isa<Instruction>(U->getOperand(0)))
+      newOp1 = phi_translate(U->getOperand(0), pred, succ);
     else
-      newOp1 = BO->getOperand(0);
+      newOp1 = U->getOperand(0);
     
     if (newOp1 == 0)
       return 0;
     
     Value* newOp2 = 0;
-    if (isa<Instruction>(BO->getOperand(1)))
-      newOp2 = phi_translate(find_leader(anticipatedIn[succ],         
-                                         VN.lookup(BO->getOperand(1))),
-                             pred, succ);
+    if (isa<Instruction>(U->getOperand(1)))
+      newOp2 = phi_translate(U->getOperand(1), pred, succ);
     else
-      newOp2 = BO->getOperand(1);
+      newOp2 = U->getOperand(1);
     
     if (newOp2 == 0)
       return 0;
     
-    if (newOp1 != BO->getOperand(0) || newOp2 != BO->getOperand(1)) {
-      Instruction* newVal = BinaryOperator::create(BO->getOpcode(),
-                                             newOp1, newOp2,
-                                             BO->getName()+".expr");
+    if (newOp1 != U->getOperand(0) || newOp2 != U->getOperand(1)) {
+      Instruction* newVal = 0;
+      if (BinaryOperator* BO = dyn_cast<BinaryOperator>(U))
+        newVal = BinaryOperator::create(BO->getOpcode(),
+                                        newOp1, newOp2,
+                                        BO->getName()+".expr");
+      else if (CmpInst* C = dyn_cast<CmpInst>(U))
+        newVal = CmpInst::create(C->getOpcode(),
+                                 C->getPredicate(),
+                                 newOp1, newOp2,
+                                 C->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       
@@ -510,47 +492,6 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   } else if (PHINode* P = dyn_cast<PHINode>(V)) {
     if (P->getParent() == succ)
       return P->getIncomingValueForBlock(pred);
-  } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
-    Value* newOp1 = 0;
-    if (isa<Instruction>(C->getOperand(0)))
-      newOp1 = phi_translate(find_leader(anticipatedIn[succ],         
-                                         VN.lookup(C->getOperand(0))),
-                             pred, succ);
-    else
-      newOp1 = C->getOperand(0);
-    
-    if (newOp1 == 0)
-      return 0;
-    
-    Value* newOp2 = 0;
-    if (isa<Instruction>(C->getOperand(1)))
-      newOp2 = phi_translate(find_leader(anticipatedIn[succ],         
-                                         VN.lookup(C->getOperand(1))),
-                             pred, succ);
-    else
-      newOp2 = C->getOperand(1);
-      
-    if (newOp2 == 0)
-      return 0;
-    
-    if (newOp1 != C->getOperand(0) || newOp2 != C->getOperand(1)) {
-      Instruction* newVal = CmpInst::create(C->getOpcode(),
-                                            C->getPredicate(),
-                                             newOp1, newOp2,
-                                             C->getName()+".expr");
-      
-      uint32_t v = VN.lookup_or_add(newVal);
-        
-      Value* leader = find_leader(availableOut[pred], v);
-      if (leader == 0) {
-        createdExpressions.push_back(newVal);
-        return newVal;
-      } else {
-        VN.erase(newVal);
-        delete newVal;
-        return leader;
-      }
-    }
   }
   
   return V;
@@ -728,9 +669,9 @@ bool GVNPRE::elimination() {
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     BasicBlock* BB = DI->getBlock();
     
-    DOUT << "Block: " << BB->getName() << "\n";
-    dump(availableOut[BB]);
-    DOUT << "\n\n";
+    //DOUT << "Block: " << BB->getName() << "\n";
+    //dump(availableOut[BB]);
+    //DOUT << "\n\n";
     
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI) {
@@ -866,11 +807,15 @@ bool GVNPRE::buildsets_anticout(BasicBlock* BB,
                                 SmallPtrSet<Value*, 32>& anticOut,
                                 std::set<BasicBlock*>& visited) {
   if (BB->getTerminator()->getNumSuccessors() == 1) {
-    if (visited.count(BB->getTerminator()->getSuccessor(0)) == 0)
+    if (BB->getTerminator()->getSuccessor(0) != BB &&
+        visited.count(BB->getTerminator()->getSuccessor(0)) == 0) {
+          DOUT << "DEFER: " << BB->getName() << "\n";
       return true;
-    else
+    }
+    else {
       phi_translate_set(anticipatedIn[BB->getTerminator()->getSuccessor(0)],
                         BB,  BB->getTerminator()->getSuccessor(0), anticOut);
+    }
   } else if (BB->getTerminator()->getNumSuccessors() > 1) {
     BasicBlock* first = BB->getTerminator()->getSuccessor(0);
     anticOut.insert(anticipatedIn[first].begin(), anticipatedIn[first].end());
@@ -910,13 +855,17 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
   if (defer)
     return 0;
   
+  
+  
   anticIn.clear();
   
   BitVector numbers(VN.size());
   for (SmallPtrSet<Value*, 32>::iterator I = anticOut.begin(),
        E = anticOut.end(); I != E; ++I) {
     anticIn.insert(*I);
-    numbers.set(VN.lookup_or_add(*I));
+    unsigned num = VN.lookup_or_add(*I);
+    numbers.resize(VN.size());
+    numbers.set(num);
   }
   for (SmallPtrSet<Value*, 32>::iterator I = currExps.begin(),
        E = currExps.end(); I != E; ++I) {
@@ -931,11 +880,15 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
     anticIn.erase(*I);
   
   clean(anticIn);
-  anticOut.clear();
   
-  if (old != anticIn.size())
+  if (old != anticIn.size()) {
+    DOUT << "OLD: " << old << "\n";
+    DOUT << "NEW: " << anticIn.size() << "\n";
+    DOUT << "ANTIC_OUT: " << anticOut.size() << "\n";
+    anticOut.clear();
     return 2;
-  else
+  } else
+    anticOut.clear();
     return 1;
 }
 
@@ -979,21 +932,41 @@ unsigned GVNPRE::buildsets(Function& F) {
                          currTemps, availNumbers, expNumbers);
       
   }
+
+  // Phase 1, Part 2: calculate ANTIC_IN
   
-  // If function has no exit blocks, only perform GVN
-  PostDominatorTree &PDT = getAnalysis<PostDominatorTree>();
-  if (PDT[&F.getEntryBlock()] == 0) {
-    bool changed_function = elimination();
-    cleanup();
+  DOUT << "Calculating walk\n";
+  // Calculate a postorder CFG walk
+  std::vector<BasicBlock*> walk;
+  std::vector<BasicBlock*> walkStack;
+  SmallPtrSet<BasicBlock*, 16> walkVisited;
+  walkStack.push_back(&F.getEntryBlock());
+  walkVisited.insert(&F.getEntryBlock());
+  
+  while (!walkStack.empty()) {
+    BasicBlock* BB = walkStack.back();
+    walkVisited.insert(BB);
     
-    if (changed_function)
-      return 2;  // Bailed early, made changes
-    else
-      return 1;  // Bailed early, no changes
+    bool inserted = false;
+    for (unsigned i = 0; i < BB->getTerminator()->getNumSuccessors(); ++i) {
+      BasicBlock* succ = BB->getTerminator()->getSuccessor(i);
+      if (walkVisited.count(succ) == 0) {
+        walkStack.push_back(succ);
+        inserted = true;
+      }
+    }
+    
+    if (inserted)
+      continue;
+    else {
+      walk.push_back(BB);
+      walkStack.pop_back();
+    }
   }
   
+  DOUT << "Finished calculating walk\n";
   
-  // Phase 1, Part 2: calculate ANTIC_IN
+  // Perform the ANTIC_IN calculation
   
   std::set<BasicBlock*> visited;
   
@@ -1004,29 +977,31 @@ unsigned GVNPRE::buildsets(Function& F) {
     SmallPtrSet<Value*, 32> anticOut;
     
     // Top-down walk of the postdominator tree
-    for (df_iterator<DomTreeNode*> PDI = 
-         df_begin(PDT.getRootNode()), E = df_end(PDT.getRootNode());
-         PDI != E; ++PDI) {
-      BasicBlock* BB = PDI->getBlock();
+    for (std::vector<BasicBlock*>::iterator BBI = walk.begin(), BBE = walk.end();
+         BBI != BBE; ++BBI) {
+      BasicBlock* BB = *BBI;
       if (BB == 0)
         continue;
-      
-      
       
       unsigned ret = buildsets_anticin(BB, anticOut,generatedExpressions[BB],
                                        generatedTemporaries[BB], visited);
       
       if (ret == 0) {
         changed = true;
-        break;
+        continue;
       } else {
         visited.insert(BB);
+        if (ret == 2) {
+          DOUT << "CHANGED: " << BB->getName() << "\n";
+        }
         changed |= (ret == 2);
       }
     }
     
     iterations++;
   }
+  
+  DOUT << "ITERATIONS: " << iterations << "\n";
   
   return 0; // No bail, no changes
 }
@@ -1197,10 +1172,10 @@ bool GVNPRE::insertion(Function& F) {
         workList.reserve(anticIn.size());
         topo_sort(anticIn, workList);
         
-        DOUT << "Merge Block: " << BB->getName() << "\n";
-        DOUT << "ANTIC_IN: ";
-        dump(anticIn);
-        DOUT << "\n";
+        //DOUT << "Merge Block: " << BB->getName() << "\n";
+        //DOUT << "ANTIC_IN: ";
+        //dump(anticIn);
+        //DOUT << "\n";
         
         unsigned result = insertion_mergepoint(workList, DI, new_set);
         if (result & 1)
