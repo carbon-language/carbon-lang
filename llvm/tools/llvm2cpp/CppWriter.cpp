@@ -720,12 +720,18 @@ void CppWriter::printConstant(const Constant *CV) {
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
     if (CA->isString() && CA->getType()->getElementType() == Type::Int8Ty) {
       Out << "Constant* " << constName << " = ConstantArray::get(\"";
-      printEscapedString(CA->getAsString());
+      std::string tmp = CA->getAsString();
+      bool nullTerminate = false;
+      if (tmp[tmp.length()-1] == 0) {
+        tmp.erase(tmp.length()-1);
+        nullTerminate = true;
+      }
+      printEscapedString(tmp);
       // Determine if we want null termination or not.
-      if (CA->getType()->getNumElements() <= CA->getAsString().length())
-        Out << "\", false";// No null terminator
-      else
+      if (nullTerminate)
         Out << "\", true"; // Indicate that the null terminator should be added.
+      else
+        Out << "\", false";// No null terminator
       Out << ");";
     } else { 
       Out << "std::vector<Constant*> " << constName << "_elems;";
