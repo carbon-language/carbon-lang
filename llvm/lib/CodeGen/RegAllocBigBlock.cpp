@@ -40,6 +40,7 @@
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
@@ -69,15 +70,17 @@ namespace {
     const MRegisterInfo *RegInfo;
     LiveVariables *LV;
 
-    // InsnTimes - maps machine instructions to their "execute times"
-    std::map<MachineInstr *, unsigned> InsnTimes;
-    
     // VRegReadTable - maps VRegs in a BB to the set of times they are read
-    DenseMap<unsigned, SmallVector<unsigned, 2>*, VRegKeyInfo> VRegReadTable;
+    // This is a sorted list
+    typedef SmallVector<unsigned, 2> VRegTimes;
+
+    DenseMap<unsigned, VRegTimes*, VRegKeyInfo> VRegReadTable;
+    DenseMap<unsigned, unsigned , VRegKeyInfo> VRegReadIdx;
 
     // StackSlotForVirtReg - Maps virtual regs to the frame index where these
     // values are spilled.
-    std::map<unsigned, int> StackSlotForVirtReg;
+    //DenseMap<unsigned, int, VRegKeyInf> StackSlotForVirtReg;
+    IndexedMap<unsigned, VirtReg2IndexFunctor> StackSlotForVirtReg;
 
     // Virt2PhysRegMap - This map contains entries for each virtual register
     // that is currently available in a physical register.
@@ -86,6 +89,11 @@ namespace {
     unsigned &getVirt2PhysRegMapSlot(unsigned VirtReg) {
       return Virt2PhysRegMap[VirtReg];
     }
+
+    unsigned &getVirt2StackSlot(unsigned VirtReg) {
+      return StackSlotForVirtReg[VirtReg];
+    }
+
 
     // PhysRegsUsed - This array is effectively a map, containing entries for
     // each physical register that currently has a value (ie, it is in
@@ -98,22 +106,19 @@ namespace {
     //
     std::vector<int> PhysRegsUsed;
 
-    // PhysRegsUseOrder - This contains a list of the physical registers that
-    // currently have a virtual register value in them.  This list provides an
-    // ordering of registers, imposing a reallocation order.  This list is only
-    // used if all registers are allocated and we have to spill one, in which
-    // case we spill the least recently used register.  Entries at the front of
-    // the list are the least recently used registers, entries at the back are
-    // the most recently used.
-    //
-    std::vector<unsigned> PhysRegsUseOrder;
 
     // VirtRegModified - This bitset contains information about which virtual
     // registers need to be spilled back to memory when their registers are
     // scavenged.  If a virtual register has simply been rematerialized, there
     // is no reason to spill it to memory when we need the register back.
     //
-    std::vector<bool> VirtRegModified;
+    std::vector<int> VirtRegModified;
+
+    // MBBLastInsnTime - the number of the the last instruction in MBB
+    int MBBLastInsnTime;
+
+    // MBBCurTime - the number of the the instruction being currently processed
+    int MBBCurTime;
 
     void markVirtRegModified(unsigned Reg, bool Val = true) {
       assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
@@ -127,21 +132,6 @@ namespace {
       assert(Reg - MRegisterInfo::FirstVirtualRegister < VirtRegModified.size()
              && "Illegal virtual register!");
       return VirtRegModified[Reg - MRegisterInfo::FirstVirtualRegister];
-    }
-
-    void MarkPhysRegRecentlyUsed(unsigned Reg) {
-      if (PhysRegsUseOrder.empty() ||
-          PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
-
-      for (unsigned i = PhysRegsUseOrder.size(); i != 0; --i)
-        if (areRegsEqual(Reg, PhysRegsUseOrder[i-1])) {
-          unsigned RegMatch = PhysRegsUseOrder[i-1];       // remove from middle
-          PhysRegsUseOrder.erase(PhysRegsUseOrder.begin()+i-1);
-          // Add it to the end of the list
-          PhysRegsUseOrder.push_back(RegMatch);
-          if (RegMatch == Reg)
-            return;    // Found an exact match, exit early
-        }
     }
 
   public:
@@ -256,17 +246,17 @@ namespace {
 /// to be held on the stack.
 int RABigBlock::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
   // Find the location Reg would belong...
-  std::map<unsigned, int>::iterator I =StackSlotForVirtReg.lower_bound(VirtReg);
+  int FrameIdx = getVirt2StackSlot(VirtReg);
 
-  if (I != StackSlotForVirtReg.end() && I->first == VirtReg)
-    return I->second;          // Already has space allocated?
+  if (FrameIdx)
+    return FrameIdx - 1;          // Already has space allocated?
 
   // Allocate a new stack object for this spill location...
-  int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
+  FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment());
 
   // Assign the slot...
-  StackSlotForVirtReg.insert(I, std::make_pair(VirtReg, FrameIdx));
+  getVirt2StackSlot(VirtReg) = FrameIdx + 1;
   return FrameIdx;
 }
 
@@ -276,11 +266,6 @@ int RABigBlock::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC
 ///
 void RABigBlock::removePhysReg(unsigned PhysReg) {
   PhysRegsUsed[PhysReg] = -1;      // PhyReg no longer used
-
-  std::vector<unsigned>::iterator It =
-    std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), PhysReg);
-  if (It != PhysRegsUseOrder.end())
-    PhysRegsUseOrder.erase(It);
 }
 
 
@@ -362,7 +347,6 @@ void RABigBlock::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
   // it holds VirtReg.
   PhysRegsUsed[PhysReg] = VirtReg;
   getVirt2PhysRegMapSlot(VirtReg) = PhysReg;
-  PhysRegsUseOrder.push_back(PhysReg);   // New use of PhysReg
 }
 
 
@@ -426,9 +410,9 @@ unsigned RABigBlock::chooseReg(MachineBasicBlock &MBB, MachineInstr *I,
   // read at the most distant point in time.
   if (PhysReg == 0) {
     unsigned delay=0, longest_delay=0;
-    SmallVector<unsigned, 2> *ReadTimes;
+    VRegTimes* ReadTimes;
 
-    unsigned curTime = InsnTimes[I];
+    unsigned curTime = MBBCurTime;
 
     // for all physical regs in the RC,
     for(TargetRegisterClass::iterator pReg = RC->begin(); 
@@ -436,11 +420,23 @@ unsigned RABigBlock::chooseReg(MachineBasicBlock &MBB, MachineInstr *I,
       // how long until they're read?
       if(PhysRegsUsed[*pReg]>0) { // ignore non-allocatable regs
         ReadTimes = VRegReadTable[PhysRegsUsed[*pReg]];
-	SmallVector<unsigned, 2>::iterator pt = 
-                                         std::lower_bound(ReadTimes->begin(),
-                                                          ReadTimes->end(),
-                                                          curTime);
-        delay = *pt - curTime;
+        if(ReadTimes && !ReadTimes->empty()) {
+            unsigned& pt = VRegReadIdx[PhysRegsUsed[*pReg]];
+            while(pt < ReadTimes->size() && (*ReadTimes)[pt] < curTime) {
+                ++pt;
+            }
+
+            if(pt < ReadTimes->size())
+                delay = (*ReadTimes)[pt] - curTime;
+            else
+                delay = MBBLastInsnTime + 1 - curTime;
+        } else {
+            // This register is only defined, but never
+            // read in this MBB. Therefore the next read
+            // happens after the end of this MBB
+            delay = MBBLastInsnTime + 1 - curTime;
+        }
+
         
         if(delay > longest_delay) {
           longest_delay = delay;
@@ -533,24 +529,33 @@ void RABigBlock::FillVRegReadTable(MachineBasicBlock &MBB) {
   for(ReadTime=0, MII = MBB.begin(); MII != MBB.end(); ++ReadTime, ++MII) {
     MachineInstr *MI = MII;
     
-    InsnTimes[MI] = ReadTime;
-    
     for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
       MachineOperand& MO = MI->getOperand(i);
       // look for vreg reads..
       if (MO.isRegister() && !MO.isDef() && MO.getReg() &&
           MRegisterInfo::isVirtualRegister(MO.getReg())) {
-        // ..and add them to the read table.
-        if(!VRegReadTable[MO.getReg()])
-          VRegReadTable[MO.getReg()] = new SmallVector<unsigned, 2>;
-          
-        VRegReadTable[MO.getReg()]->push_back(ReadTime);
+          // ..and add them to the read table.
+          VRegTimes* &Times = VRegReadTable[MO.getReg()];
+          if(!VRegReadTable[MO.getReg()]) {
+              Times = new VRegTimes;
+              VRegReadIdx[MO.getReg()] = 0;
+          }
+        Times->push_back(ReadTime);
       }
     }
 
   }  
 
+  MBBLastInsnTime = ReadTime;
+
+  for(DenseMap<unsigned, VRegTimes*, VRegKeyInfo>::iterator Reads = VRegReadTable.begin();
+      Reads != VRegReadTable.end(); ++Reads) {
+      if(Reads->second) {
+          DOUT << "Reads[" << Reads->first << "]=" << Reads->second->size() << "\n";
+      }
+  }
 }
+
 
 void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
@@ -568,11 +573,9 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
       unsigned Reg = I->first;
       MF->setPhysRegUsed(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      PhysRegsUseOrder.push_back(Reg);
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {
         if (PhysRegsUsed[*AliasSet] != -2) {
-          PhysRegsUseOrder.push_back(*AliasSet);
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
           MF->setPhysRegUsed(*AliasSet);
         }
@@ -581,24 +584,18 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   }
   
   // Otherwise, sequentially allocate each instruction in the MBB.
+  MBBCurTime = -1;
   while (MII != MBB.end()) {
     MachineInstr *MI = MII++;
+    MBBCurTime++;
     const TargetInstrDescriptor &TID = TII.get(MI->getOpcode());
-    DEBUG(DOUT << "\nStarting RegAlloc of: " << *MI;
+    DEBUG(DOUT << "\nTime=" << MBBCurTime << " Starting RegAlloc of: " << *MI;
           DOUT << "  Regs have values: ";
           for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)
             if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
                DOUT << "[" << RegInfo->getName(i)
                     << ",%reg" << PhysRegsUsed[i] << "] ";
           DOUT << "\n");
-
-    // Loop over the implicit uses, making sure that they are at the head of the
-    // use order list, so they don't get reallocated.
-    if (TID.ImplicitUses) {
-      for (const unsigned *ImplicitUses = TID.ImplicitUses;
-           *ImplicitUses; ++ImplicitUses)
-        MarkPhysRegRecentlyUsed(*ImplicitUses);
-    }
 
     SmallVector<unsigned, 8> Kills;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -667,11 +664,9 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MF->setPhysRegUsed(Reg);
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-        PhysRegsUseOrder.push_back(Reg);
         for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            PhysRegsUseOrder.push_back(*AliasSet);
             PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             MF->setPhysRegUsed(*AliasSet);
           }
@@ -687,7 +682,6 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
         bool IsNonAllocatable = PhysRegsUsed[Reg] == -2;
         if (!IsNonAllocatable) {
           spillPhysReg(MBB, MI, Reg, true);
-          PhysRegsUseOrder.push_back(Reg);
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
         MF->setPhysRegUsed(Reg);
@@ -696,7 +690,6 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             if (!IsNonAllocatable) {
-              PhysRegsUseOrder.push_back(*AliasSet);
               PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             }
             MF->setPhysRegUsed(*AliasSet);
@@ -800,7 +793,6 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // Clear any physical register which appear live at the end of the basic
   // block, but which do not hold any virtual registers.  e.g., the stack
   // pointer.
-  PhysRegsUseOrder.clear();
 }
 
 /// runOnMachineFunction - Register allocate the whole function
@@ -827,6 +819,8 @@ bool RABigBlock::runOnMachineFunction(MachineFunction &Fn) {
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
   Virt2PhysRegMap.grow(MF->getSSARegMap()->getLastVirtReg());
+  StackSlotForVirtReg.grow(MF->getSSARegMap()->getLastVirtReg());
+  VirtRegModified.resize(MF->getSSARegMap()->getLastVirtReg() - MRegisterInfo::FirstVirtualRegister + 1,0);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
@@ -849,4 +843,3 @@ bool RABigBlock::runOnMachineFunction(MachineFunction &Fn) {
 FunctionPass *llvm::createBigBlockRegisterAllocator() {
   return new RABigBlock();
 }
-
