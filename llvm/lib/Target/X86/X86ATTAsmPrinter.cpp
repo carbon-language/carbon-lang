@@ -1,4 +1,4 @@
-//===-- X86ATTAsmPrinter.cpp - Convert X86 LLVM code to Intel assembly ----===//
+//===-- X86ATTAsmPrinter.cpp - Convert X86 LLVM code to AT&T assembly -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -562,7 +562,7 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 /// printMachineInstruction -- Print out a single X86 LLVM instruction
-/// MI in Intel syntax to the current output stream.
+/// MI in AT&T syntax to the current output stream.
 ///
 void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;

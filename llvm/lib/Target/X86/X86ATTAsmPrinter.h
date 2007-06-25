@@ -1,4 +1,4 @@
-//===-- X86ATTAsmPrinter.h - Convert X86 LLVM code to Intel assembly ------===//
+//===-- X86ATTAsmPrinter.h - Convert X86 LLVM code to AT&T assembly -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
