@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
-#include <sstream>
 using namespace llvm;
 
 /// MVT::getValueTypeString - This function returns value type as a string,
@@ -22,12 +22,9 @@ using namespace llvm;
 std::string MVT::getValueTypeString(MVT::ValueType VT) {
   switch (VT) {
   default:
-    if (isExtendedValueType(VT)) {
-      std::ostringstream OS;
-      OS << "v" << getVectorNumElements(VT)
-         << getValueTypeString(getVectorElementType(VT));
-      return OS.str();
-    }
+    if (isExtendedValueType(VT))
+      return "v" + utostr(getVectorNumElements(VT)) +
+             getValueTypeString(getVectorElementType(VT));
     assert(0 && "Invalid ValueType!");
   case MVT::i1:    return "i1";
   case MVT::i8:    return "i8";
