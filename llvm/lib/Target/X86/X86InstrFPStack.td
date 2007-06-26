@@ -413,10 +413,12 @@ def FSTPrr  : FPI<0xD8, AddRegFrm, (ops RST:$op), "fstp $op">, DD;
 def FXCH    : FPI<0xC8, AddRegFrm, (ops RST:$op), "fxch $op">, D9;
 
 // Floating point constant loads.
+let isReMaterializable = 1 in {
 def FpLD0 : FpI<(ops RFP:$dst), ZeroArgFP,
                 [(set RFP:$dst, fp64imm0)]>;
 def FpLD1 : FpI<(ops RFP:$dst), ZeroArgFP,
                 [(set RFP:$dst, fp64imm1)]>;
+}
 
 def FLD0 : FPI<0xEE, RawFrm, (ops), "fldz">, D9;
 def FLD1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;

@@ -112,20 +112,9 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
-bool X86InstrInfo::isTriviallyReMaterializable(MachineInstr *MI) const {
+bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default: break;
-  case X86::FpLD0:
-  case X86::FpLD1:
-  case X86::MOV8ri:
-  case X86::MOV16ri:
-  case X86::MOV32ri:
-  case X86::MMX_V_SET0:
-  case X86::MMX_V_SETALLONES:
-  case X86::V_SET0:
-  case X86::V_SETALLONES:
-    // These instructions are always trivially rematerializable.
-    return true;
   case X86::MOV8rm:
   case X86::MOV16rm:
   case X86::MOV16_rm:
@@ -146,7 +135,9 @@ bool X86InstrInfo::isTriviallyReMaterializable(MachineInstr *MI) const {
            MI->getOperand(2).getImmedValue() == 1 &&
            MI->getOperand(3).getReg() == 0;
   }
-  return false;
+  // All other instructions marked M_REMATERIALIZABLE are always trivially
+  // rematerializable.
+  return true;
 }
 
 /// convertToThreeAddress - This method must be implemented by targets that

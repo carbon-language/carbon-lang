@@ -78,6 +78,10 @@ const unsigned M_VARIABLE_OPS = 1 << 11;
 // controls execution. It may be set to 'always'.
 const unsigned M_PREDICABLE = 1 << 12;
 
+// M_REMATERIALIZIBLE - Set if this instruction can be trivally re-materialized
+// at any time, e.g. constant generation, load from constant pool.
+const unsigned M_REMATERIALIZIBLE = 1 << 13;
+
 // M_CLOBBERS_PRED - Set if this instruction may clobbers the condition code
 // register and / or registers that are used to predicate instructions.
 const unsigned M_CLOBBERS_PRED = 1 << 14;
@@ -268,6 +272,28 @@ public:
     return get(Opcode).Flags & M_NOT_DUPLICABLE;
   }
 
+  /// isTriviallyReMaterializable - Return true if the instruction is trivially
+  /// rematerializable, meaning it has no side effects and requires no operands
+  /// that aren't always available.
+  bool isTriviallyReMaterializable(MachineInstr *MI) const {
+    return (MI->getInstrDescriptor()->Flags & M_REMATERIALIZIBLE) &&
+           isReallyTriviallyReMaterializable(MI);
+  }
+
+protected:
+  /// isReallyTriviallyReMaterializable - For instructions with opcodes for
+  /// which the M_REMATERIALIZABLE flag is set, this function tests whether the
+  /// instruction itself is actually trivially rematerializable, considering
+  /// its operands.  This is used for targets that have instructions that are
+  /// only trivially rematerializable for specific uses.  This predicate must
+  /// return false if the instruction has any side effects other than
+  /// producing a value, or if it requres any address registers that are not
+  /// always available.
+  virtual bool isReallyTriviallyReMaterializable(MachineInstr *MI) const {
+    return true;
+  }
+
+public:
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(MachineOpCode Opcode, unsigned OpNum,
@@ -299,16 +325,6 @@ public:
   /// any side effects other than storing to the stack slot.
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
     return 0;
-  }
-
-  /// isTriviallyReMaterializable - If the specified machine instruction can
-  /// be trivally re-materialized  at any time, e.g. constant generation or
-  /// loads from constant pools. If not, return false.  This predicate must
-  /// return false if the instruction has any side effects other than
-  /// producing the value from the load, or if it requres any address
-  /// registers that are not always available.
-  virtual bool isTriviallyReMaterializable(MachineInstr *MI) const {
-    return false;
   }
 
   /// convertToThreeAddress - This method must be implemented by targets that

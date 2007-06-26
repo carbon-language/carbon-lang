@@ -130,20 +130,6 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
   return 0;
 }
 
-bool ARMInstrInfo::isTriviallyReMaterializable(MachineInstr *MI) const {
-  switch (MI->getOpcode()) {
-  default: break;
-  case ARM::LDRcp:
-  case ARM::MOVi:
-  case ARM::MVNi:
-  case ARM::MOVi2pieces:
-  case ARM::tLDRcp:
-    // These instructions are always trivially rematerializable.
-    return true;
-  }
-  return false;
-}
-
 static unsigned getUnindexedOpcode(unsigned Opc) {
   switch (Opc) {
   default: break;

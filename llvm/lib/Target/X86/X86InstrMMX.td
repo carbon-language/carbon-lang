@@ -503,12 +503,14 @@ def MMX_MASKMOVQ : MMXI<0xF7, MRMDestMem, (ops VR64:$src, VR64:$mask),
 
 // Alias instructions that map zero vector to pxor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def MMX_V_SET0       : MMXI<0xEF, MRMInitReg, (ops VR64:$dst),
-                            "pxor $dst, $dst",
-                            [(set VR64:$dst, (v1i64 immAllZerosV))]>;
-def MMX_V_SETALLONES : MMXI<0x76, MRMInitReg, (ops VR64:$dst),
-                            "pcmpeqd $dst, $dst",
-                            [(set VR64:$dst, (v1i64 immAllOnesV))]>;
+let isReMaterializable = 1 in {
+  def MMX_V_SET0       : MMXI<0xEF, MRMInitReg, (ops VR64:$dst),
+                              "pxor $dst, $dst",
+                              [(set VR64:$dst, (v1i64 immAllZerosV))]>;
+  def MMX_V_SETALLONES : MMXI<0x76, MRMInitReg, (ops VR64:$dst),
+                              "pcmpeqd $dst, $dst",
+                              [(set VR64:$dst, (v1i64 immAllOnesV))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

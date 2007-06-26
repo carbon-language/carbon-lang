@@ -762,6 +762,7 @@ def STMXCSR : PSI<0xAE, MRM3m, (ops i32mem:$dst),
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+let isReMaterializable = 1 in
 def V_SET0 : PSI<0x57, MRMInitReg, (ops VR128:$dst),
                  "xorps $dst, $dst",
                  [(set VR128:$dst, (v4f32 immAllZerosV))]>;
@@ -1821,9 +1822,10 @@ def MFENCE : I<0xAE, MRM6m, (ops),
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def V_SETALLONES : PDI<0x76, MRMInitReg, (ops VR128:$dst),
-                       "pcmpeqd $dst, $dst",
-                       [(set VR128:$dst, (v2f64 immAllOnesV))]>;
+let isReMaterializable = 1 in
+  def V_SETALLONES : PDI<0x76, MRMInitReg, (ops VR128:$dst),
+                         "pcmpeqd $dst, $dst",
+                         [(set VR128:$dst, (v2f64 immAllOnesV))]>;
 
 // FR64 to 128-bit vector conversion.
 def MOVSD2PDrr : SDI<0x10, MRMSrcReg, (ops VR128:$dst, FR64:$src),

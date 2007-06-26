@@ -240,6 +240,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";
   if (Inst.isCommutable) OS << "|M_COMMUTABLE";
   if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
+  if (Inst.isReMaterializable) OS << "|M_REMATERIALIZIBLE";
   if (Inst.clobbersPred) OS << "|M_CLOBBERS_PRED";
   if (Inst.isNotDuplicable) OS << "|M_NOT_DUPLICABLE";
   if (Inst.usesCustomDAGSchedInserter)
