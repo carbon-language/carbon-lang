@@ -2,11 +2,15 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Duraid Madina and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
+// This file implements the RABigBlock class
+//
+//===----------------------------------------------------------------------===//
+
 // This register allocator is derived from RegAllocLocal.cpp. Like it, this
 // allocator works on one basic block at a time, oblivious to others.
 // However, the algorithm used here is suited for long blocks of
@@ -54,37 +58,91 @@ namespace {
     bigBlockRegAlloc("bigblock", "  Big-block register allocator",
                   createBigBlockRegisterAllocator);
 
+/// VRegKeyInfo - Defines magic values required to use VirtRegs as DenseMap
+/// keys.
   struct VRegKeyInfo {
     static inline unsigned getEmptyKey() { return -1U; }
     static inline unsigned getTombstoneKey() { return -2U; }
     static unsigned getHashValue(const unsigned &Key) { return Key; }
   };
 
+
+/// This register allocator is derived from RegAllocLocal.cpp. Like it, this
+/// allocator works on one basic block at a time, oblivious to others.
+/// However, the algorithm used here is suited for long blocks of
+/// instructions - registers are spilled by greedily choosing those holding
+/// values that will not be needed for the longest amount of time. This works
+/// particularly well for blocks with 10 or more times as many instructions
+/// as machine registers, but can be used for general code.
+///
+/// TODO: - automagically invoke linearscan for (groups of) small BBs?
+///       - break ties when picking regs? (probably not worth it in a
+///         JIT context)
+///
   class VISIBILITY_HIDDEN RABigBlock : public MachineFunctionPass {
   public:
     static char ID;
     RABigBlock() : MachineFunctionPass((intptr_t)&ID) {}
   private:
+    /// TM - For getting at TargetMachine info 
+    ///
     const TargetMachine *TM;
+    
+    /// MF - Our generic MachineFunction pointer
+    ///
     MachineFunction *MF;
+    
+    /// RegInfo - For dealing with machine register info (aliases, folds
+    /// etc)
     const MRegisterInfo *RegInfo;
+
+    /// LV - Our generic LiveVariables pointer
+    ///
     LiveVariables *LV;
 
-    // VRegReadTable - maps VRegs in a BB to the set of times they are read
-    // This is a sorted list
     typedef SmallVector<unsigned, 2> VRegTimes;
 
+    /// VRegReadTable - maps VRegs in a BB to the set of times they are read
+    ///
     DenseMap<unsigned, VRegTimes*, VRegKeyInfo> VRegReadTable;
+
+    /// VRegReadIdx - keeps track of the "current time" in terms of
+    /// positions in VRegReadTable
     DenseMap<unsigned, unsigned , VRegKeyInfo> VRegReadIdx;
 
-    // StackSlotForVirtReg - Maps virtual regs to the frame index where these
-    // values are spilled.
-    //DenseMap<unsigned, int, VRegKeyInf> StackSlotForVirtReg;
+    /// StackSlotForVirtReg - Maps virtual regs to the frame index where these
+    /// values are spilled.
     IndexedMap<unsigned, VirtReg2IndexFunctor> StackSlotForVirtReg;
 
-    // Virt2PhysRegMap - This map contains entries for each virtual register
-    // that is currently available in a physical register.
+    /// Virt2PhysRegMap - This map contains entries for each virtual register
+    /// that is currently available in a physical register.
     IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2PhysRegMap;
+
+    /// PhysRegsUsed - This array is effectively a map, containing entries for
+    /// each physical register that currently has a value (ie, it is in
+    /// Virt2PhysRegMap).  The value mapped to is the virtual register
+    /// corresponding to the physical register (the inverse of the
+    /// Virt2PhysRegMap), or 0.  The value is set to 0 if this register is pinned
+    /// because it is used by a future instruction, and to -2 if it is not
+    /// allocatable.  If the entry for a physical register is -1, then the
+    /// physical register is "not in the map".
+    ///
+    std::vector<int> PhysRegsUsed;
+
+    /// VirtRegModified - This bitset contains information about which virtual
+    /// registers need to be spilled back to memory when their registers are
+    /// scavenged.  If a virtual register has simply been rematerialized, there
+    /// is no reason to spill it to memory when we need the register back.
+    ///
+    std::vector<int> VirtRegModified;
+
+    /// MBBLastInsnTime - the number of the the last instruction in MBB
+    ///
+    int MBBLastInsnTime;
+
+    /// MBBCurTime - the number of the the instruction being currently processed
+    ///
+    int MBBCurTime;
 
     unsigned &getVirt2PhysRegMapSlot(unsigned VirtReg) {
       return Virt2PhysRegMap[VirtReg];
@@ -94,39 +152,18 @@ namespace {
       return StackSlotForVirtReg[VirtReg];
     }
 
-
-    // PhysRegsUsed - This array is effectively a map, containing entries for
-    // each physical register that currently has a value (ie, it is in
-    // Virt2PhysRegMap).  The value mapped to is the virtual register
-    // corresponding to the physical register (the inverse of the
-    // Virt2PhysRegMap), or 0.  The value is set to 0 if this register is pinned
-    // because it is used by a future instruction, and to -2 if it is not
-    // allocatable.  If the entry for a physical register is -1, then the
-    // physical register is "not in the map".
-    //
-    std::vector<int> PhysRegsUsed;
-
-
-    // VirtRegModified - This bitset contains information about which virtual
-    // registers need to be spilled back to memory when their registers are
-    // scavenged.  If a virtual register has simply been rematerialized, there
-    // is no reason to spill it to memory when we need the register back.
-    //
-    std::vector<int> VirtRegModified;
-
-    // MBBLastInsnTime - the number of the the last instruction in MBB
-    int MBBLastInsnTime;
-
-    // MBBCurTime - the number of the the instruction being currently processed
-    int MBBCurTime;
-
+    /// markVirtRegModified - Lets us flip bits in the VirtRegModified bitset
+    ///
     void markVirtRegModified(unsigned Reg, bool Val = true) {
       assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
       Reg -= MRegisterInfo::FirstVirtualRegister;
-      if (VirtRegModified.size() <= Reg) VirtRegModified.resize(Reg+1);
+      if (VirtRegModified.size() <= Reg)
+        VirtRegModified.resize(Reg+1);
       VirtRegModified[Reg] = Val;
     }
     
+    /// isVirtRegModified - Lets us query the VirtRegModified bitset
+    ///
     bool isVirtRegModified(unsigned Reg) const {
       assert(MRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
       assert(Reg - MRegisterInfo::FirstVirtualRegister < VirtRegModified.size()
@@ -135,10 +172,14 @@ namespace {
     }
 
   public:
+    /// getPassName - returns the BigBlock allocator's name
+    ///
     virtual const char *getPassName() const {
       return "BigBlock Register Allocator";
     }
 
+    /// getAnalaysisUsage - declares the required analyses
+    ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
@@ -148,12 +189,15 @@ namespace {
 
   private:
     /// runOnMachineFunction - Register allocate the whole function
+    ///
     bool runOnMachineFunction(MachineFunction &Fn);
 
     /// AllocateBasicBlock - Register allocate the specified basic block.
+    ///
     void AllocateBasicBlock(MachineBasicBlock &MBB);
 
     /// FillVRegReadTable - Fill out the table of vreg read times given a BB
+    ///
     void FillVRegReadTable(MachineBasicBlock &MBB);
     
     /// areRegsEqual - This method returns true if the specified registers are
@@ -366,8 +410,7 @@ bool RABigBlock::isPhysRegAvailable(unsigned PhysReg) const {
   return true;
 }
 
-
-//////// FIX THIS:
+  
 /// getFreeReg - Look to see if there is a free register available in the
 /// specified register class.  If not, return 0.
 ///
@@ -777,22 +820,6 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
         spillVirtReg(MBB, MI, VirtReg, i);
       else
         removePhysReg(i);
-
-#if 0
-  // This checking code is very expensive.
-  bool AllOk = true;
-  for (unsigned i = MRegisterInfo::FirstVirtualRegister,
-           e = MF->getSSARegMap()->getLastVirtReg(); i <= e; ++i)
-    if (unsigned PR = Virt2PhysRegMap[i]) {
-      cerr << "Register still mapped: " << i << " -> " << PR << "\n";
-      AllOk = false;
-    }
-  assert(AllOk && "Virtual registers still in phys regs?");
-#endif
-
-  // Clear any physical register which appear live at the end of the basic
-  // block, but which do not hold any virtual registers.  e.g., the stack
-  // pointer.
 }
 
 /// runOnMachineFunction - Register allocate the whole function
@@ -843,3 +870,4 @@ bool RABigBlock::runOnMachineFunction(MachineFunction &Fn) {
 FunctionPass *llvm::createBigBlockRegisterAllocator() {
   return new RABigBlock();
 }
+
