@@ -1195,7 +1195,8 @@ SDOperand ARMTargetLowering::LowerBR_JT(SDOperand Op, SelectionDAG &DAG) {
   Index = DAG.getNode(ISD::MUL, PTy, Index, DAG.getConstant(4, PTy));
   SDOperand Addr = DAG.getNode(ISD::ADD, PTy, Index, Table);
   bool isPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  Addr = DAG.getLoad(isPIC ? MVT::i32 : PTy, Chain, Addr, NULL, 0);
+  Addr = DAG.getLoad(isPIC ? (MVT::ValueType)MVT::i32 : PTy,
+                     Chain, Addr, NULL, 0);
   Chain = Addr.getValue(1);
   if (isPIC)
     Addr = DAG.getNode(ISD::ADD, PTy, Addr, Table);
