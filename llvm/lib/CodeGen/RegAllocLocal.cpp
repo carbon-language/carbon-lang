@@ -106,6 +106,14 @@ namespace {
       return VirtRegModified[Reg - MRegisterInfo::FirstVirtualRegister];
     }
 
+    void AddToPhysRegsUseOrder(unsigned Reg) {
+      std::vector<unsigned>::iterator It =
+        std::find(PhysRegsUseOrder.begin(), PhysRegsUseOrder.end(), Reg);
+      if (It != PhysRegsUseOrder.end())
+        PhysRegsUseOrder.erase(It);
+      PhysRegsUseOrder.push_back(Reg);
+    }
+
     void MarkPhysRegRecentlyUsed(unsigned Reg) {
       if (PhysRegsUseOrder.empty() ||
           PhysRegsUseOrder.back() == Reg) return;  // Already most recently used
@@ -183,13 +191,6 @@ namespace {
     /// register must not be used for anything else when this is called.
     ///
     void assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg);
-
-    /// liberatePhysReg - Make sure the specified physical register is available
-    /// for use.  If there is currently a value in it, it is either moved out of
-    /// the way or spilled to memory.
-    ///
-    void liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-                         unsigned PhysReg);
 
     /// isPhysRegAvailable - Return true if the specified physical register is
     /// free and available for use.  This also includes checking to see if
@@ -314,19 +315,8 @@ void RALocal::spillPhysReg(MachineBasicBlock &MBB, MachineInstr *I,
          *AliasSet; ++AliasSet)
       if (PhysRegsUsed[*AliasSet] != -1 &&     // Spill aliased register.
           PhysRegsUsed[*AliasSet] != -2)       // If allocatable.
-        if (PhysRegsUsed[*AliasSet] == 0) {
-          // This must have been a dead def due to something like this:
-          // %EAX :=
-          //      := op %AL
-          // No more use of %EAX, %AH, etc.
-          // %EAX isn't dead upon definition, but %AH is. However %AH isn't
-          // an operand of definition MI so it's not marked as such.
-          DOUT << "  Register " << RegInfo->getName(*AliasSet)
-               << " [%reg" << *AliasSet
-               << "] is never used, removing it frame live list\n";
-          removePhysReg(*AliasSet);
-        } else
-          spillVirtReg(MBB, I, PhysRegsUsed[*AliasSet], *AliasSet);
+          if (PhysRegsUsed[*AliasSet])
+            spillVirtReg(MBB, I, PhysRegsUsed[*AliasSet], *AliasSet);
   }
 }
 
@@ -341,7 +331,7 @@ void RALocal::assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg) {
   // it holds VirtReg.
   PhysRegsUsed[PhysReg] = VirtReg;
   getVirt2PhysRegMapSlot(VirtReg) = PhysReg;
-  PhysRegsUseOrder.push_back(PhysReg);   // New use of PhysReg
+  AddToPhysRegsUseOrder(PhysReg);   // New use of PhysReg
 }
 
 
@@ -377,17 +367,6 @@ unsigned RALocal::getFreeReg(const TargetRegisterClass *RC) {
       return *RI; // Found an unused register!
     }
   return 0;
-}
-
-
-/// liberatePhysReg - Make sure the specified physical register is available for
-/// use.  If there is currently a value in it, it is either moved out of the way
-/// or spilled to memory.
-///
-void RALocal::liberatePhysReg(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator &I,
-                              unsigned PhysReg) {
-  spillPhysReg(MBB, I, PhysReg);
 }
 
 
@@ -522,7 +501,29 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
   return MI;
 }
 
+/// isReadModWriteImplicitKill - True if this is an implicit kill for a
+/// read/mod/write register, i.e. update partial register.
+static bool isReadModWriteImplicitKill(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand& MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+        MO.isDef() && !MO.isDead())
+      return true;
+  }
+  return false;
+}
 
+/// isReadModWriteImplicitDef - True if this is an implicit def for a
+/// read/mod/write register, i.e. update partial register.
+static bool isReadModWriteImplicitDef(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand& MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+        !MO.isDef() && MO.isKill())
+      return true;
+  }
+  return false;
+}
 
 void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
@@ -540,11 +541,11 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       unsigned Reg = I->first;
       MF->setPhysRegUsed(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      PhysRegsUseOrder.push_back(Reg);
-      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+      AddToPhysRegsUseOrder(Reg); 
+      for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
            *AliasSet; ++AliasSet) {
         if (PhysRegsUsed[*AliasSet] != -2) {
-          PhysRegsUseOrder.push_back(*AliasSet);
+          AddToPhysRegsUseOrder(*AliasSet); 
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
           MF->setPhysRegUsed(*AliasSet);
         }
@@ -575,8 +576,15 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     SmallVector<unsigned, 8> Kills;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isKill())
-        Kills.push_back(MO.getReg());
+      if (MO.isRegister() && MO.isKill()) {
+        if (!MO.isImplicit())
+          Kills.push_back(MO.getReg());
+        else if (!isReadModWriteImplicitKill(MI, MO.getReg()))
+          // These are extra physical register kills when a sub-register
+          // is defined (def of a sub-register is a read/mod/write of the
+          // larger registers). Ignore.
+          Kills.push_back(MO.getReg());
+      }
     }
 
     // Get the used operands into registers.  This has the potential to spill
@@ -609,13 +617,16 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       } else if (PhysRegsUsed[PhysReg] == -2) {
         // Unallocatable register dead, ignore.
         continue;
+      } else {
+        assert(!PhysRegsUsed[PhysReg] || PhysRegsUsed[PhysReg] == -1 &&
+               "Silently clearing a virtual register?");
       }
 
       if (PhysReg) {
         DOUT << "  Last use of " << RegInfo->getName(PhysReg)
              << "[%reg" << VirtReg <<"], removing it from live set\n";
         removePhysReg(PhysReg);
-        for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
+        for (const unsigned *AliasSet = RegInfo->getSubRegisters(PhysReg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             DOUT  << "  Last use of "
@@ -635,17 +646,22 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
           MRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
-            
+        // These are extra physical register defs when a sub-register
+        // is defined (def of a sub-register is a read/mod/write of the
+        // larger registers). Ignore.
+        if (isReadModWriteImplicitDef(MI, MO.getReg())) continue;
+
         MF->setPhysRegUsed(Reg);
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-        PhysRegsUseOrder.push_back(Reg);
-        for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+        AddToPhysRegsUseOrder(Reg); 
+
+        for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            PhysRegsUseOrder.push_back(*AliasSet);
-            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             MF->setPhysRegUsed(*AliasSet);
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+            AddToPhysRegsUseOrder(*AliasSet); 
           }
         }
       }
@@ -656,21 +672,17 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
       for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
            *ImplicitDefs; ++ImplicitDefs) {
         unsigned Reg = *ImplicitDefs;
-        bool IsNonAllocatable = PhysRegsUsed[Reg] == -2;
-        if (!IsNonAllocatable) {
+        if (PhysRegsUsed[Reg] != -2) {
           spillPhysReg(MBB, MI, Reg, true);
-          PhysRegsUseOrder.push_back(Reg);
+          AddToPhysRegsUseOrder(Reg); 
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
         MF->setPhysRegUsed(Reg);
-
-        for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+        for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            if (!IsNonAllocatable) {
-              PhysRegsUseOrder.push_back(*AliasSet);
-              PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            }
+            AddToPhysRegsUseOrder(*AliasSet); 
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             MF->setPhysRegUsed(*AliasSet);
           }
         }
