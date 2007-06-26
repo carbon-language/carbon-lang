@@ -46,22 +46,22 @@ namespace MVT {  // MVT = Machine Value Types
 
     isVoid         =  12,   // This has no value
     
-    v8i8           =  14,   //  8 x i8
-    v4i16          =  15,   //  4 x i16
-    v2i32          =  16,   //  2 x i32
-    v1i64          =  17,   //  1 x i64
-    v16i8          =  18,   // 16 x i8
-    v8i16          =  19,   //  8 x i16
-    v4i32          =  20,   //  4 x i32
-    v2i64          =  21,   //  2 x i64
+    v8i8           =  13,   //  8 x i8
+    v4i16          =  14,   //  4 x i16
+    v2i32          =  15,   //  2 x i32
+    v1i64          =  16,   //  1 x i64
+    v16i8          =  17,   // 16 x i8
+    v8i16          =  18,   //  8 x i16
+    v4i32          =  19,   //  4 x i32
+    v2i64          =  20,   //  2 x i64
 
-    v2f32          =  22,   //  2 x f32
-    v4f32          =  23,   //  4 x f32
-    v2f64          =  24,   //  2 x f64
+    v2f32          =  21,   //  2 x f32
+    v4f32          =  22,   //  4 x f32
+    v2f64          =  23,   //  2 x f64
     FIRST_VECTOR_VALUETYPE = v8i8,
     LAST_VECTOR_VALUETYPE  = v2f64,
 
-    LAST_VALUETYPE =  25,   // This always remains at the end of the list.
+    LAST_VALUETYPE =  24,   // This always remains at the end of the list.
 
     // iAny - An integer value of any bit width. This is used for intrinsics
     // that have overloadings based on integer bit widths. This is only for
