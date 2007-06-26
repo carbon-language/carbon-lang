@@ -48,6 +48,7 @@ struct TargetRegisterDesc {
   const char     *Name;         // Assembly language name for the register
   const unsigned *AliasSet;     // Register Alias Set, described above
   const unsigned *SubRegs;      // Sub-register set, described above
+  const unsigned *ImmSubRegs;   // Immediate sub-register set, described above
   const unsigned *SuperRegs;    // Super-register set, described above
 };
 
@@ -324,6 +325,14 @@ public:
   ///
   const unsigned *getSubRegisters(unsigned RegNo) const {
     return get(RegNo).SubRegs;
+  }
+
+  /// getImmediateSubRegisters - Return the set of registers that are immediate
+  /// sub-registers of the specified register, or a null list of there are none.
+  /// The list returned is zero terminated.
+  ///
+  const unsigned *getImmediateSubRegisters(unsigned RegNo) const {
+    return get(RegNo).ImmSubRegs;
   }
 
   /// getSuperRegisters - Return the set of registers that are super-registers
