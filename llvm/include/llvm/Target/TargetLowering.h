@@ -130,9 +130,7 @@ public:
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
   bool isTypeLegal(MVT::ValueType VT) const {
-    return !MVT::isExtendedValueType(VT) ?
-           RegClassForVT[VT] != 0 :
-           false;
+    return !MVT::isExtendedValueType(VT) && RegClassForVT[VT] != 0;
   }
 
   class ValueTypeActionImpl {
