@@ -92,7 +92,7 @@ namespace MVT {  // MVT = Machine Value Types
   /// MVT::isExtendedValueType - Test if the given ValueType is extended
   /// (as opposed to being simple).
   static inline bool isExtendedValueType(ValueType VT) {
-    return VT & ~SimpleTypeMask;
+    return VT > SimpleTypeMask;
   }
 
   /// MVT::isInteger - Return true if this is an integer, or a vector integer
