@@ -31,6 +31,7 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>
 
@@ -163,6 +164,15 @@ private:   // Intermediate data structures
   bool addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
                        bool AddIfNotFound = false);
 
+  void addRegisterKills(unsigned Reg, MachineInstr *MI,
+                        SmallSet<unsigned, 4> &SubKills);
+
+  /// HandlePhysRegKill - Add kills of Reg and its sub-registers to the
+  /// uses. Pay special attention to the sub-register uses which may come below
+  /// the last use of the whole register.
+  bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI,
+                         SmallSet<unsigned, 4> &SubKills);
+  bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 
