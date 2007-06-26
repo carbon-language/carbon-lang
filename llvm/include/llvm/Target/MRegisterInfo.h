@@ -40,9 +40,11 @@ class Type;
 /// Registers that this does not apply to simply should set this to null.
 /// The SubRegs field is a zero terminated array of registers that are
 /// sub-registers of the specific register, e.g. AL, AH are sub-registers of AX.
-/// The SuperRegs field is a zero terminated array of registers that are
-/// super-registers of the specific register, e.g. RAX, EAX, are super-registers
-/// of AX.
+/// The ImmsubRegs field is a subset of SubRegs. It includes only the immediate
+/// sub-registers. e.g. EAX has only one immediate sub-register of AX, not AH,
+/// AL which are immediate sub-registers of AX. The SuperRegs field is a zero
+/// terminated array of registers that are super-registers of the specific
+/// register, e.g. RAX, EAX, are super-registers of AX.
 ///
 struct TargetRegisterDesc {
   const char     *Name;         // Assembly language name for the register
