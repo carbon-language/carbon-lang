@@ -174,6 +174,13 @@ public:
   /// Set the module-scope inline assembly blocks.
   void setModuleInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
   
+  /// Append to the module-scope inline assembly blocks, automatically
+  /// appending a newline to the end.
+  void appendModuleInlineAsm(const std::string &Asm) {
+    GlobalScopeAsm += Asm;
+    GlobalScopeAsm += '\n';
+  }
+  
 /// @}
 /// @name Function Accessors
 /// @{
