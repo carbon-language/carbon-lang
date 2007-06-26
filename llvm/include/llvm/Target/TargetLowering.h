@@ -148,9 +148,8 @@ public:
     }
     
     LegalizeAction getTypeAction(MVT::ValueType VT) const {
-      return !MVT::isExtendedValueType(VT) ?
-             (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3) :
-             Expand;
+      if (MVT::isExtendedValueType(VT)) return Expand;
+      return (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3);
     }
     void setTypeAction(MVT::ValueType VT, LegalizeAction Action) {
       assert(!MVT::isExtendedValueType(VT));
@@ -251,9 +250,8 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
-    return !MVT::isExtendedValueType(VT) ?
-           (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3) :
-           Expand;
+    if (MVT::isExtendedValueType(VT)) return Expand;
+    return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
   
   /// isOperationLegal - Return true if the specified operation is legal on this
@@ -268,9 +266,8 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getLoadXAction(unsigned LType, MVT::ValueType VT) const {
-    return !MVT::isExtendedValueType(VT) ?
-           (LegalizeAction)((LoadXActions[LType] >> (2*VT)) & 3) :
-           Expand;
+    if (MVT::isExtendedValueType(VT)) return Expand;
+    return (LegalizeAction)((LoadXActions[LType] >> (2*VT)) & 3);
   }
   
   /// isLoadXLegal - Return true if the specified load with extension is legal
@@ -285,9 +282,8 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getStoreXAction(MVT::ValueType VT) const {
-    return !MVT::isExtendedValueType(VT) ?
-           (LegalizeAction)((StoreXActions >> (2*VT)) & 3) :
-           Expand;
+    if (MVT::isExtendedValueType(VT)) return Expand;
+    return (LegalizeAction)((StoreXActions >> (2*VT)) & 3);
   }
   
   /// isStoreXLegal - Return true if the specified store with truncation is
@@ -302,9 +298,8 @@ public:
   /// for it.
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, MVT::ValueType VT) const {
-    return !MVT::isExtendedValueType(VT) ?
-           (LegalizeAction)((IndexedModeActions[0][IdxMode] >> (2*VT)) & 3) :
-           Expand;
+    if (MVT::isExtendedValueType(VT)) return Expand;
+    return (LegalizeAction)((IndexedModeActions[0][IdxMode] >> (2*VT)) & 3);
   }
 
   /// isIndexedLoadLegal - Return true if the specified indexed load is legal
@@ -320,9 +315,8 @@ public:
   /// for it.
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, MVT::ValueType VT) const {
-    return !MVT::isExtendedValueType(VT) ?
-           (LegalizeAction)((IndexedModeActions[1][IdxMode] >> (2*VT)) & 3) :
-           Expand;
+    if (MVT::isExtendedValueType(VT)) return Expand;
+    return (LegalizeAction)((IndexedModeActions[1][IdxMode] >> (2*VT)) & 3);
   }  
   
   /// isIndexedStoreLegal - Return true if the specified indexed load is legal
