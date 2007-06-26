@@ -45,10 +45,10 @@ use Socket;
 #  -gccpath         Path to gcc/g++ used to build LLVM
 #  -cvstag          Check out a specific CVS tag to build LLVM (useful for
 #                   testing release branches)
-#  -usesvn          Check code out from a subversion repository. With no
-#                   argument, use the standard repository. An argument specifies
-#                   the repository URL to use.
-#  -svnurl          Specify the SVN URL where LLVM can be found
+#  -usesvn          Check code out from a subversion repository.
+#  -svnurl          Specify the SVN URL where LLVM can be found. Needs -usesvn
+#                   to be useful. If -svnurl is not used but -usesvn is then
+#                   the standard (UIUC) repository will be used. 
 #  -target          Specify the target triplet
 #  -cflags          Next argument specifies that C compilation options that
 #                   override the default.
@@ -96,7 +96,7 @@ use Socket;
 ##############################################################
 my $HOME       = $ENV{'HOME'};
 my $SVNURL     = $ENV{"SVNURL"};
-$SVNURL        = 'svn://anon@hlvm.org:3691/llvm.svn' unless $SVNURL;
+$SVNURL        = 'https://llvm.org/svn/llvm-project' unless $SVNURL;
 my $CVSRootDir = $ENV{'CVSROOT'};
 $CVSRootDir    = "/home/vadve/shared/PublicCVS" unless $CVSRootDir;
 my $BuildDir   = $ENV{'BUILDDIR'};
@@ -520,9 +520,9 @@ if (!$NOCHECKOUT) {
   if ($USESVN) {
     my $SVNCMD = "$NICE svn co $SVNURL";
     if ($VERBOSE) {
-      print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+      print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/trunk/projects ; " .
             "$SVNCMD/llvm-test/trunk llvm-test ) > $COLog 2>&1\n";
-      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/trunk/projects ; " .
             "$SVNCMD/llvm-test/trunk llvm-test ) > $COLog 2>&1\n";
     }
   } else {
