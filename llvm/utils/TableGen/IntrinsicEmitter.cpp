@@ -141,7 +141,7 @@ static void EmitTypeGenerate(std::ostream &OS, Record *ArgType,
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
     // the index of the "arbitrary" type in the Tys array passed to the
     // Intrinsic::getDeclaration function. Consequently, we only want to
-    // increment it when we actually hit an arbitray integer type which is
+    // increment it when we actually hit an arbitrary integer type which is
     // identified by BitWidth == 0. Getting this wrong leads to very subtle
     // bugs!
     if (BitWidth == 0)
