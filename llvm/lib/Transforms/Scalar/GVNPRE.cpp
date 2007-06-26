@@ -377,7 +377,7 @@ namespace {
                            SmallPtrSet<Value*, 32>& currExps,
                            SmallPtrSet<Value*, 32>& currTemps,
                            std::set<BasicBlock*>& visited);
-    unsigned buildsets(Function& F);
+    void buildsets(Function& F);
     
     void insertion_pre(Value* e, BasicBlock* BB,
                        std::map<BasicBlock*, Value*>& avail,
@@ -895,7 +895,7 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
 
 /// buildsets - Phase 1 of the main algorithm.  Construct the AVAIL_OUT
 /// and the ANTIC_IN sets.
-unsigned GVNPRE::buildsets(Function& F) {
+void GVNPRE::buildsets(Function& F) {
   std::map<BasicBlock*, SmallPtrSet<Value*, 32> > generatedExpressions;
   std::map<BasicBlock*, SmallPtrSet<PHINode*, 32> > generatedPhis;
   std::map<BasicBlock*, SmallPtrSet<Value*, 32> > generatedTemporaries;
@@ -937,32 +937,42 @@ unsigned GVNPRE::buildsets(Function& F) {
   // Phase 1, Part 2: calculate ANTIC_IN
   
   std::set<BasicBlock*> visited;
+  SmallPtrSet<BasicBlock*, 4> block_changed;
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+    block_changed.insert(FI);
   
   bool changed = true;
   unsigned iterations = 0;
+  
   while (changed) {
     changed = false;
     SmallPtrSet<Value*, 32> anticOut;
     
-    // Top-down walk of the postdominator tree
+    // Postorder walk of the CFG
     for (po_iterator<BasicBlock*> BBI = po_begin(&F.getEntryBlock()),
          BBE = po_end(&F.getEntryBlock()); BBI != BBE; ++BBI) {
       BasicBlock* BB = *BBI;
-      if (BB == 0)
-        continue;
       
-      unsigned ret = buildsets_anticin(BB, anticOut,generatedExpressions[BB],
-                                       generatedTemporaries[BB], visited);
+      if (block_changed.count(BB) != 0) {
+        unsigned ret = buildsets_anticin(BB, anticOut,generatedExpressions[BB],
+                                         generatedTemporaries[BB], visited);
       
-      if (ret == 0) {
-        changed = true;
-        continue;
-      } else {
-        visited.insert(BB);
-        if (ret == 2) {
-          DOUT << "CHANGED: " << BB->getName() << "\n";
+        if (ret == 0) {
+          changed = true;
+          continue;
+        } else {
+          visited.insert(BB);
+        
+          if (ret == 2)
+           for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+                 PI != PE; ++PI) {
+              block_changed.insert(*PI);
+           }
+          else
+            block_changed.erase(BB);
+        
+          changed |= (ret == 2);
         }
-        changed |= (ret == 2);
       }
     }
     
@@ -970,8 +980,6 @@ unsigned GVNPRE::buildsets(Function& F) {
   }
   
   DOUT << "ITERATIONS: " << iterations << "\n";
-  
-  return 0; // No bail, no changes
 }
 
 /// insertion_pre - When a partial redundancy has been identified, eliminate it
@@ -1173,10 +1181,7 @@ bool GVNPRE::runOnFunction(Function &F) {
   // This phase calculates the AVAIL_OUT and ANTIC_IN sets
   // NOTE: If full postdom information is no available, this will bail
   // early, performing GVN but not PRE
-  unsigned bail = buildsets(F);
-  //If a bail occurred, terminate early
-  if (bail != 0)
-    return (bail == 2);
+  buildsets(F);
   
   // Phase 2: Insert
   // This phase inserts values to make partially redundant values
