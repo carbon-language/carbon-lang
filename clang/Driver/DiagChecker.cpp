@@ -135,7 +135,7 @@ static bool PrintProblem(SourceManager &SourceMgr,
   fprintf(stderr, "%s\n", Msg);
 
   for (const_diag_iterator I = diag_begin, E = diag_end; I != E; ++I)
-    fprintf(stderr, "  LineNo %d:\n    %s\n",
+    fprintf(stderr, "  Line %d: %s\n",
             SourceMgr.getLineNumber(I->first),
             I->second.c_str());
 
