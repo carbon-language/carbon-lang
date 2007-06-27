@@ -2402,6 +2402,25 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
     MMI->addCatchTypeInfo(MBB, TyInfo);
 }
 
+/// propagateEHRegister - The specified EH register is required in a successor
+/// of the EH landing pad. Propagate it (by adding it to livein) to all the
+/// blocks in the paths between the landing pad and the specified block.
+static void propagateEHRegister(MachineBasicBlock *MBB, unsigned EHReg,
+                                SmallPtrSet<MachineBasicBlock*, 8> Visited) {
+  if (MBB->isLandingPad() || !Visited.insert(MBB))
+    return;
+
+  MBB->addLiveIn(EHReg);
+  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
+         E = MBB->pred_end(); PI != E; ++PI)
+    propagateEHRegister(*PI, EHReg, Visited);
+}
+
+static void propagateEHRegister(MachineBasicBlock *MBB, unsigned EHReg) {
+  SmallPtrSet<MachineBasicBlock*, 8> Visited;
+  propagateEHRegister(MBB, EHReg, Visited);
+}
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -2511,12 +2530,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
     
   case Intrinsic::eh_exception: {
-    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    
-    if (ExceptionHandling && MMI) {
-      // Mark exception register as live in.
-      unsigned Reg = TLI.getExceptionAddressRegister();
-      if (Reg) CurMBB->addLiveIn(Reg);
+    if (ExceptionHandling) {
+      if (!CurMBB->isLandingPad() && TLI.getExceptionAddressRegister())
+          propagateEHRegister(CurMBB, TLI.getExceptionAddressRegister());
 
       // Insert the EXCEPTIONADDR instruction.
       SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
@@ -2538,14 +2554,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (ExceptionHandling && MMI) {
       if (CurMBB->isLandingPad())
         addCatchInfo(I, MMI, CurMBB);
+      else {
 #ifndef NDEBUG
-      else
         FuncInfo.CatchInfoLost.insert(&I);
 #endif
-
-      // Mark exception selector register as live in.
-      unsigned Reg = TLI.getExceptionSelectorRegister();
-      if (Reg) CurMBB->addLiveIn(Reg);
+        if (TLI.getExceptionSelectorRegister())
+          propagateEHRegister(CurMBB, TLI.getExceptionSelectorRegister());
+      }
 
       // Insert the EHSELECTION instruction.
       SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
@@ -4481,6 +4496,14 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     unsigned LabelID = MMI->addLandingPad(BB);
     DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
                             DAG.getConstant(LabelID, MVT::i32)));
+
+    // Mark exception register as live in.
+    unsigned Reg = TLI.getExceptionAddressRegister();
+    if (Reg) BB->addLiveIn(Reg);
+
+    // Mark exception selector register as live in.
+    Reg = TLI.getExceptionSelectorRegister();
+    if (Reg) BB->addLiveIn(Reg);
 
     // FIXME: Hack around an exception handling flaw (PR1508): the personality
     // function and list of typeids logically belong to the invoke (or, if you
