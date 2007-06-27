@@ -133,10 +133,10 @@ static bool PrintProblem(SourceManager &SourceMgr,
 
   fprintf(stderr, "%s\n", Msg);
 
-  for (; diag_begin != diag_end; ++diag_begin)
+  for (const_diag_iterator I = diag_begin, E = diag_end; I != E; ++I)
     fprintf(stderr, "  LineNo %d:\n    %s\n",
-            SourceMgr.getLineNumber(diag_begin->first),
-            diag_begin->second.c_str());
+            SourceMgr.getLineNumber(I->first),
+            I->second.c_str());
 
   return true;
 }
@@ -152,20 +152,22 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
                              const char *Msg) {
   TextDiagnosticBuffer::DiagList DiffList;
 
-  for (; d1_begin != d1_end; ++d1_begin) {
-    const std::string &Diag = d1_begin->second;
+  for (const_diag_iterator I = d1_begin, E = d1_end; I != E; ++I) {
+    const std::string &Diag1 = I->second;
     bool Found = false;
 
-    for (; d2_begin != d2_end; ++d2_begin) {
-      if (d2_begin->second.find(Diag) != std::string::npos ||
-          Diag.find(d2_begin->second) != std::string::npos) {
+    for (const_diag_iterator II = d2_begin, IE = d2_end; II != IE; ++II) {
+      const std::string &Diag2 = II->second;
+
+      if (Diag2.find(Diag1) != std::string::npos ||
+          Diag1.find(Diag2) != std::string::npos) {
         Found = true;
         break;
       }
     }
 
     if (!Found)
-      DiffList.push_back(std::make_pair(d1_begin->first, Diag));
+      DiffList.push_back(std::make_pair(d1_begin->first, Diag1));
   }
 
   return PrintProblem(SourceMgr, DiffList.begin(), DiffList.end(), Msg);
