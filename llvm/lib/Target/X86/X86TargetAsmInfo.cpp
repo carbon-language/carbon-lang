@@ -98,7 +98,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     break;
 
   case X86Subtarget::isELF:
-    ReadOnlySection = "\t.section\t.rodata\n";
+    ReadOnlySection = "\t.section\t.rodata";
     FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
     EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
     SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
