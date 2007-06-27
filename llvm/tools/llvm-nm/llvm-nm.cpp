@@ -68,14 +68,19 @@ namespace {
 }
 
 static char TypeCharForSymbol(GlobalValue &GV) {
-  if (GV.isDeclaration())                                     return 'U';
+  if (GV.isDeclaration())                                  return 'U';
   if (GV.hasLinkOnceLinkage())                             return 'C';
   if (GV.hasWeakLinkage())                                 return 'W';
-  if (isa<Function>(GV) && GV.hasInternalLinkage())       return 't';
+  if (isa<Function>(GV) && GV.hasInternalLinkage())        return 't';
   if (isa<Function>(GV))                                   return 'T';
-  if (isa<GlobalVariable>(GV) && GV.hasInternalLinkage()) return 'd';
+  if (isa<GlobalVariable>(GV) && GV.hasInternalLinkage())  return 'd';
   if (isa<GlobalVariable>(GV))                             return 'D';
-                                                            return '?';
+  if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(&GV)) {
+    const GlobalValue *AliasedGV = GA->getAliasedGlobal();
+    if (isa<Function>(AliasedGV))                          return 'T';
+    if (isa<GlobalVariable>(AliasedGV))                    return 'D';
+  }
+                                                           return '?';
 }
 
 static void DumpSymbolNameForGlobalValue(GlobalValue &GV) {
@@ -115,7 +120,10 @@ static void DumpSymbolNamesFromModule(Module *M) {
               << "         Size   Line  Section\n";
   }
   std::for_each (M->begin (), M->end (), DumpSymbolNameForGlobalValue);
-  std::for_each (M->global_begin (), M->global_end (), DumpSymbolNameForGlobalValue);
+  std::for_each (M->global_begin (), M->global_end (),
+                 DumpSymbolNameForGlobalValue);
+  std::for_each (M->alias_begin (), M->alias_end (),
+                 DumpSymbolNameForGlobalValue);
 }
 
 static void DumpSymbolNamesFromFile(std::string &Filename) {
