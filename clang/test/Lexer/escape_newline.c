@@ -1,3 +1,4 @@
+// RUN: clang -E %s | grep -- ' ->' &&
 // RUN: clang -parse-ast-check %s
 
 // This is an ugly way to spell a -> token.

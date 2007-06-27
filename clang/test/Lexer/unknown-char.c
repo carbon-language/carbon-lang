@@ -1,2 +1,2 @@
-// RUN: clang -parse-ast-check %s
-` ` ` ` // expected-error {{expected identifier or '('}}
+// RUN: clang -E %s 2>&1 | not grep error
+ ` ` ` `

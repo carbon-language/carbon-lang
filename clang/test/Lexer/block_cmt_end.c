@@ -1,4 +1,8 @@
 /*
+  RUN: clang -E %s | grep bar &&
+  RUN: clang -E %s | grep foo &&
+  RUN: clang -E %s | not grep abc &&
+  RUN: clang -E %s | not grep xyz &&
   RUN: clang -parse-ast-check %s
  */
 
