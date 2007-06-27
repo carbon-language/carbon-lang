@@ -1,7 +1,7 @@
-// RUN: clang -E %s | grep -- ' ->' &&
-// RUN: clang -E %s 2>&1 | grep 'backslash and newline separated by space' &&
-// RUN: clang -E %s 2>&1 | grep 'trigraph converted'
+// RUN: clang -parse-ast-check %s
 
 // This is an ugly way to spell a -> token.
- -??/      
+/* expected-warning {{trigraph converted to '\' character}} \
+   expected-warning {{backslash and newline separated by space}} \
+   expected-error {{expected identifier or '('}} */ -??/      
 >

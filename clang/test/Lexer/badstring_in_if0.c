@@ -1,4 +1,4 @@
-// RUN: clang -E %s 2>&1 | not grep error
+// RUN: clang -parse-ast-check %s
 #if 0
 
   "
@@ -6,3 +6,4 @@
   '
 
 #endif
+/* expected-warning {{ISO C forbids an empty source file}} */
