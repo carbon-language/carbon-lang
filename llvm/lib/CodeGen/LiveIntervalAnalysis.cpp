@@ -625,12 +625,14 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 exit:
   // Live-in register might not be used at all.
   if (end == MIIdx) {
-    DOUT << " dead";
-    if (isAlias)
+    if (isAlias) {
+      DOUT << " dead";
       end = getDefIndex(MIIdx) + 1;
+    } else {
+      DOUT << " live through";
+      end = baseIndex;
+    }
   }
-
-  assert(start < end && "did not find end of interval?");
 
   LiveRange LR(start, end, interval.getNextValue(~0U, 0));
   DOUT << " +" << LR << '\n';
@@ -662,7 +664,8 @@ void LiveIntervals::computeIntervals() {
         // Multiple live-ins can alias the same register.
         for (const unsigned* AS = mri_->getSubRegisters(*LI); *AS; ++AS)
           if (!hasInterval(*AS))
-            handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS), true);
+            handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS),
+                                 true);
       }
     }
     
