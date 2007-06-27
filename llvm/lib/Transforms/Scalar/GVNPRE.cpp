@@ -429,7 +429,7 @@ namespace {
     // Helper fuctions
     // FIXME: eliminate or document these better
     void dump(const SmallPtrSet<Value*, 32>& s) const;
-    void clean(SmallPtrSet<Value*, 32>& set);
+    void clean(SmallPtrSet<Value*, 32>& set, BitVector& presentInSet);
     Value* find_leader(SmallPtrSet<Value*, 32>& vals,
                        uint32_t v);
     Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ);
@@ -671,7 +671,7 @@ bool GVNPRE::dependsOnInvoke(Value* V) {
 /// clean - Remove all non-opaque values from the set whose operands are not
 /// themselves in the set, as well as all values that depend on invokes (see 
 /// above)
-void GVNPRE::clean(SmallPtrSet<Value*, 32>& set) {
+void GVNPRE::clean(SmallPtrSet<Value*, 32>& set, BitVector& presentInSet) {
   std::vector<Value*> worklist;
   worklist.reserve(set.size());
   topo_sort(set, worklist);
@@ -685,69 +685,43 @@ void GVNPRE::clean(SmallPtrSet<Value*, 32>& set) {
       User* U = cast<User>(v);
       
       bool lhsValid = !isa<Instruction>(U->getOperand(0));
-      if (!lhsValid)
-        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-             I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(U->getOperand(0))) {
-            lhsValid = true;
-            break;
-          }
+      lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
       if (lhsValid)
         lhsValid = !dependsOnInvoke(U->getOperand(0));
     
       bool rhsValid = !isa<Instruction>(U->getOperand(1));
-      if (!rhsValid)
-        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-             I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(U->getOperand(1))) {
-            rhsValid = true;
-            break;
-          }
+      rhsValid |= presentInSet.test(VN.lookup(U->getOperand(1)));
       if (rhsValid)
         rhsValid = !dependsOnInvoke(U->getOperand(1));
       
-      if (!lhsValid || !rhsValid)
+      if (!lhsValid || !rhsValid) {
         set.erase(U);
+        presentInSet.flip(VN.lookup(U));
+      }
     
     // Handle ternary ops
     } else if (isa<ShuffleVectorInst>(v) || isa<InsertElementInst>(v)) {
       User* U = cast<User>(v);
     
       bool lhsValid = !isa<Instruction>(U->getOperand(0));
-      if (!lhsValid)
-        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-             I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(U->getOperand(0))) {
-            lhsValid = true;
-            break;
-          }
+      lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
       if (lhsValid)
         lhsValid = !dependsOnInvoke(U->getOperand(0));
       
       bool rhsValid = !isa<Instruction>(U->getOperand(1));
-      if (!rhsValid)
-      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(U->getOperand(1))) {
-          rhsValid = true;
-          break;
-        }
+      rhsValid |= presentInSet.test(VN.lookup(U->getOperand(1)));
       if (rhsValid)
         rhsValid = !dependsOnInvoke(U->getOperand(1));
       
       bool thirdValid = !isa<Instruction>(U->getOperand(2));
-      if (!thirdValid)
-      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(U->getOperand(2))) {
-          thirdValid = true;
-          break;
-        }
+      thirdValid |= presentInSet.test(VN.lookup(U->getOperand(2)));
       if (thirdValid)
         thirdValid = !dependsOnInvoke(U->getOperand(2));
     
-      if (!lhsValid || !rhsValid || !thirdValid)
+      if (!lhsValid || !rhsValid || !thirdValid) {
         set.erase(U);
+        presentInSet.flip(VN.lookup(U));
+      }
     }
   }
 }
@@ -1042,17 +1016,18 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
   if (defer)
     return 0;
   
-  
-  
   anticIn.clear();
   
   BitVector numbers(VN.size());
   for (SmallPtrSet<Value*, 32>::iterator I = anticOut.begin(),
        E = anticOut.end(); I != E; ++I) {
-    anticIn.insert(*I);
     unsigned num = VN.lookup_or_add(*I);
     numbers.resize(VN.size());
-    numbers.set(num);
+    
+    if (isa<Instruction>(*I)) {
+      anticIn.insert(*I);
+      numbers.set(num);
+    }
   }
   for (SmallPtrSet<Value*, 32>::iterator I = currExps.begin(),
        E = currExps.end(); I != E; ++I) {
@@ -1063,19 +1038,17 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
   } 
   
   for (SmallPtrSet<Value*, 32>::iterator I = currTemps.begin(),
-       E = currTemps.end(); I != E; ++I)
+       E = currTemps.end(); I != E; ++I) {
     anticIn.erase(*I);
+    numbers.flip(VN.lookup(*I));
+  }
   
-  clean(anticIn);
+  clean(anticIn, numbers);
+  anticOut.clear();
   
-  if (old != anticIn.size()) {
-    DOUT << "OLD: " << old << "\n";
-    DOUT << "NEW: " << anticIn.size() << "\n";
-    DOUT << "ANTIC_OUT: " << anticOut.size() << "\n";
-    anticOut.clear();
+  if (old != anticIn.size())
     return 2;
-  } else
-    anticOut.clear();
+  else
     return 1;
 }
 
@@ -1391,6 +1364,12 @@ bool GVNPRE::runOnFunction(Function &F) {
   // Phase 1: BuildSets
   // This phase calculates the AVAIL_OUT and ANTIC_IN sets
   buildsets(F);
+  
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    DOUT << "ANTIC_IN: " << FI->getName() << "\n";
+    dump(anticipatedIn[FI]);
+    DOUT << "\n\n";
+  }
   
   // Phase 2: Insert
   // This phase inserts values to make partially redundant values
