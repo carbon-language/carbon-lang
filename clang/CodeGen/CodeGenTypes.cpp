@@ -110,7 +110,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     std::vector<const llvm::Type*> ArgTys;
     
     // Struct return passes the struct byref.
-    if (!ResultType->isFirstClassType()) {
+    if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
       ArgTys.push_back(llvm::PointerType::get(ResultType));
       ResultType = llvm::Type::VoidTy;
     }
