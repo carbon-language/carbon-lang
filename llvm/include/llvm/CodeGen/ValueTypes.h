@@ -82,6 +82,12 @@ namespace MVT {  // MVT = Machine Value Types
   /// Note that simple doesn't necessary mean legal for the target machine.
   /// All legal value types must be simple, but often there are some simple
   /// value types that are not legal.
+  ///
+  /// @internal
+  /// Currently extended types are always vector types. Extended types are
+  /// encoded by having the first SimpleTypeBits bits encode the vector
+  /// element type (which must be a scalar type) and the remaining upper
+  /// bits encode the vector length, offset by one.
   typedef uint32_t ValueType;
 
   static const int SimpleTypeBits = 8;
