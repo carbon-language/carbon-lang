@@ -9,9 +9,7 @@
 //
 // This file defines the following classes:
 //  1. DominatorTree: Represent dominators as an explicit tree structure.
-//  2. ETForest: Efficient data structure for dominance comparisons and 
-//     nearest-common-ancestor queries.
-//  3. DominanceFrontier: Calculate and hold the dominance frontier for a
+//  2. DominanceFrontier: Calculate and hold the dominance frontier for a
 //     function.
 //
 //  These data structures are listed in increasing order of complexity.  It
@@ -23,7 +21,6 @@
 #ifndef LLVM_ANALYSIS_DOMINATORS_H
 #define LLVM_ANALYSIS_DOMINATORS_H
 
-#include "llvm/Analysis/ET-Forest.h"
 #include "llvm/Pass.h"
 #include <set>
 
@@ -346,170 +343,6 @@ template <> struct GraphTraits<DominatorTree*>
   }
 };
 
-
-//===-------------------------------------
-/// ET-Forest Class - Class used to construct forwards and backwards 
-/// ET-Forests
-///
-class ETForestBase : public DominatorBase {
-public:
-  ETForestBase(intptr_t ID, bool isPostDom) 
-    : DominatorBase(ID, isPostDom), Nodes(), 
-      DFSInfoValid(false), SlowQueries(0) {}
-  
-  virtual void releaseMemory() { reset(); }
-
-  typedef std::map<BasicBlock*, ETNode*> ETMapType;
-
-  // FIXME : There is no need to make this interface public. 
-  // Fix predicate simplifier.
-  void updateDFSNumbers();
-    
-  /// dominates - Return true if A dominates B.
-  ///
-  inline bool dominates(BasicBlock *A, BasicBlock *B) {
-    if (A == B)
-      return true;
-    
-    ETNode *NodeA = getNode(A);
-    ETNode *NodeB = getNode(B);
-    
-    if (DFSInfoValid)
-      return NodeB->DominatedBy(NodeA);
-    else {
-      // If we end up with too many slow queries, just update the
-      // DFS numbers on the theory that we are going to keep querying.
-      SlowQueries++;
-      if (SlowQueries > 32) {
-        updateDFSNumbers();
-        return NodeB->DominatedBy(NodeA);
-      }
-      return NodeB->DominatedBySlow(NodeA);
-    }
-  }
-
-  // dominates - Return true if A dominates B. This performs the
-  // special checks necessary if A and B are in the same basic block.
-  bool dominates(Instruction *A, Instruction *B);
-
-  /// properlyDominates - Return true if A dominates B and A != B.
-  ///
-  bool properlyDominates(BasicBlock *A, BasicBlock *B) {
-    return dominates(A, B) && A != B;
-  }
-
-  /// isReachableFromEntry - Return true if A is dominated by the entry
-  /// block of the function containing it.
-  const bool isReachableFromEntry(BasicBlock* A);
-  
-  /// Return the nearest common dominator of A and B.
-  BasicBlock *nearestCommonDominator(BasicBlock *A, BasicBlock *B) const  {
-    ETNode *NodeA = getNode(A);
-    ETNode *NodeB = getNode(B);
-    
-    ETNode *Common = NodeA->NCA(NodeB);
-    if (!Common)
-      return NULL;
-    return Common->getData<BasicBlock>();
-  }
-  
-  /// Return the immediate dominator of A.
-  BasicBlock *getIDom(BasicBlock *A) const {
-    ETNode *NodeA = getNode(A);
-    if (!NodeA) return 0;
-    const ETNode *idom = NodeA->getFather();
-    return idom ? idom->getData<BasicBlock>() : 0;
-  }
-  
-  void getETNodeChildren(BasicBlock *A, std::vector<BasicBlock*>& children) const {
-    ETNode *NodeA = getNode(A);
-    if (!NodeA) return;
-    const ETNode* son = NodeA->getSon();
-    
-    if (!son) return;
-    children.push_back(son->getData<BasicBlock>());
-        
-    const ETNode* brother = son->getBrother();
-    while (brother != son) {
-      children.push_back(brother->getData<BasicBlock>());
-      brother = brother->getBrother();
-    }
-  }
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-    AU.addRequired<DominatorTree>();
-  }
-  //===--------------------------------------------------------------------===//
-  // API to update Forest information based on modifications
-  // to the CFG...
-
-  /// addNewBlock - Add a new block to the CFG, with the specified immediate
-  /// dominator.
-  ///
-  void addNewBlock(BasicBlock *BB, BasicBlock *IDom);
-
-  /// setImmediateDominator - Update the immediate dominator information to
-  /// change the current immediate dominator for the specified block
-  /// to another block.  This method requires that BB for NewIDom
-  /// already have an ETNode, otherwise just use addNewBlock.
-  ///
-  void setImmediateDominator(BasicBlock *BB, BasicBlock *NewIDom);
-  /// print - Convert to human readable form
-  ///
-  virtual void print(std::ostream &OS, const Module* = 0) const;
-  void print(std::ostream *OS, const Module* M = 0) const {
-    if (OS) print(*OS, M);
-  }
-  virtual void dump();
-protected:
-  /// getNode - return the (Post)DominatorTree node for the specified basic
-  /// block.  This is the same as using operator[] on this class.
-  ///
-  inline ETNode *getNode(BasicBlock *BB) const {
-    ETMapType::const_iterator i = Nodes.find(BB);
-    return (i != Nodes.end()) ? i->second : 0;
-  }
-
-  inline ETNode *operator[](BasicBlock *BB) const {
-    return getNode(BB);
-  }
-
-  void reset();
-  ETMapType Nodes;
-  bool DFSInfoValid;
-  unsigned int SlowQueries;
-
-};
-
-//==-------------------------------------
-/// ETForest Class - Concrete subclass of ETForestBase that is used to
-/// compute a forwards ET-Forest.
-
-class ETForest : public ETForestBase {
-public:
-  static char ID; // Pass identification, replacement for typeid
-
-  ETForest() : ETForestBase((intptr_t)&ID, false) {}
-
-  BasicBlock *getRoot() const {
-    assert(Roots.size() == 1 && "Should always have entry node!");
-    return Roots[0];
-  }
-
-  virtual bool runOnFunction(Function &F) {
-    reset();     // Reset from the last time we were run...
-    DominatorTree &DT = getAnalysis<DominatorTree>();
-    Roots = DT.getRoots();
-    calculate(DT);
-    return false;
-  }
-
-  void calculate(const DominatorTree &DT);
-  // FIXME : There is no need to make getNodeForBlock public. Fix
-  // predicate simplifier.
-  ETNode *getNodeForBlock(BasicBlock *BB);
-};
 
 //===----------------------------------------------------------------------===//
 /// DominanceFrontierBase - Common base class for computing forward and inverse
