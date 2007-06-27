@@ -633,6 +633,9 @@ DIAG(err_typecheck_cond_incompatible_operands, ERROR,
 DIAG(ext_typecheck_cond_incompatible_pointers, EXTENSION,
      "pointer type mismatch ('%0' and '%1')")
 
+DIAG(warn_unused_expr, WARNING,
+     "expression result unused")
+
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,
      "'continue' statement not in loop statement")

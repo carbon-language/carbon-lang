@@ -42,6 +42,10 @@ public:
   SourceLocation getLocStart() const { return getSourceRange().Begin(); }
   SourceLocation getLocEnd() const { return getSourceRange().End(); }
 
+  /// hasLocalSideEffect - Return true if this immediate expression has side
+  /// effects, not counting any sub-expressions.
+  bool hasLocalSideEffect() const;
+  
   /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or
   /// incomplete type other than void. Nonarray expressions that can be lvalues:
   ///  - name, where name must be a variable
@@ -113,6 +117,7 @@ public:
   Decl *getDecl() { return D; }
   const Decl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -400,6 +405,7 @@ public:
   Expr *getBase() const { return Base; }
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), MemberLoc);
   }
@@ -426,6 +432,7 @@ public:
   
   QualType getDestType() const { return Ty; }
   Expr *getSubExpr() const { return Op; }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, getSubExpr()->getSourceRange().End());
   }
@@ -484,7 +491,6 @@ public:
   bool isLogicalOp() const { return Opc == LAnd || Opc == LOr; }
   bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
   
-
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BinaryOperatorClass; 

@@ -122,6 +122,61 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   }
 }
 
+
+//===----------------------------------------------------------------------===//
+// Generic Expression Routines
+//===----------------------------------------------------------------------===//
+
+/// hasLocalSideEffect - Return true if this immediate expression has side
+/// effects, not counting any sub-expressions.
+bool Expr::hasLocalSideEffect() const {
+  switch (getStmtClass()) {
+  default:
+    return false;
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->hasLocalSideEffect();
+  case UnaryOperatorClass: {
+    const UnaryOperator *UO = cast<UnaryOperator>(this);
+    
+    switch (UO->getOpcode()) {
+    default: return false;
+    case UnaryOperator::PostInc:
+    case UnaryOperator::PostDec:
+    case UnaryOperator::PreInc:
+    case UnaryOperator::PreDec:
+      return true;                     // ++/--
+
+      // FIXME: real/imag volatile
+      // deref volatile;
+    
+    case UnaryOperator::Extension:
+      return UO->getSubExpr()->hasLocalSideEffect();
+    }
+  }
+  case BinaryOperatorClass:
+    return cast<BinaryOperator>(this)->isAssignmentOp();
+
+  case ArraySubscriptExprClass:
+    // volatile
+    return false;
+    
+  case CallExprClass:
+    // TODO: check attributes for pure/const.
+    return true;
+
+  case MemberExprClass:
+    // volatile load.
+    return false;
+    
+  case CastExprClass:
+    // If this is a cast to void, check the operand.  Otherwise, the result of
+    // the cast is unused.
+    if (getType()->isVoidType())
+      return cast<CastExpr>(this)->getSubExpr()->hasLocalSideEffect();
+    return false;
+  }     
+}
+
 /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or an
 /// incomplete type other than void. Nonarray expressions that can be lvalues:
 ///  - name, where name must be a variable
@@ -172,10 +227,10 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
   isLvalueResult lvalResult = isLvalue();
     
   switch (lvalResult) {
-    case LV_Valid: break;
-    case LV_NotObjectType: return MLV_NotObjectType;
-    case LV_IncompleteVoidType: return MLV_IncompleteVoidType;
-    case LV_InvalidExpression: return MLV_InvalidExpression;
+  case LV_Valid: break;
+  case LV_NotObjectType: return MLV_NotObjectType;
+  case LV_IncompleteVoidType: return MLV_IncompleteVoidType;
+  case LV_InvalidExpression: return MLV_InvalidExpression;
   }
   if (TR.isConstQualified())
     return MLV_ConstQualified;

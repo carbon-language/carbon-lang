@@ -20,6 +20,19 @@
 #include "clang/Lex/IdentifierTable.h"
 using namespace clang;
 
+Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
+  Expr *E = static_cast<Expr*>(expr);
+  
+  // Exprs are statements, so there is no need to do a conversion here. However,
+  // diagnose some potentially bad code.
+  if (!E->hasLocalSideEffect())
+    Diag(E->getLocStart()/*
+          getExprLoc()*/, diag::warn_unused_expr, E->getSourceRange());
+  
+  return E;
+}
+
+
 Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {
   return new NullStmt(SemiLoc);
 }

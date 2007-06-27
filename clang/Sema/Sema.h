@@ -157,6 +157,8 @@ private:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
+  virtual StmtResult ParseExprStmt(ExprTy *Expr);
+  
   virtual StmtResult ParseNullStmt(SourceLocation SemiLoc);
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts);
