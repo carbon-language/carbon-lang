@@ -101,7 +101,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       }
       // Otherwise, eat the semicolon.
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Res.Val;
+      return Actions.ParseExprStmt(Res.Val);
     }
     
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -249,7 +249,8 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     return true;
   } else {
     ConsumeToken();
-    return Res.Val;
+    // Convert expr to a stmt.
+    return Actions.ParseExprStmt(Res.Val);
   }
 }
 
@@ -575,7 +576,8 @@ Parser::StmtResult Parser::ParseForStatement() {
   ExprResult Value;
   
   StmtTy *FirstPart = 0;
-  ExprTy *SecondPart = 0, *ThirdPart = 0;
+  ExprTy *SecondPart = 0;
+  StmtTy *ThirdPart = 0;
   
   // Parse the first part of the for specifier.
   if (Tok.getKind() == tok::semi) {  // for (;
@@ -591,8 +593,12 @@ Parser::StmtResult Parser::ParseForStatement() {
   } else {
     Value = ParseExpression();
 
-    if (!Value.isInvalid)
-      FirstPart = Value.Val;
+    // Turn the expression into a stmt.
+    if (!Value.isInvalid) {
+      StmtResult R = Actions.ParseExprStmt(Value.Val);
+      if (!R.isInvalid)
+        FirstPart = R.Val;
+    }
       
     if (Tok.getKind() == tok::semi) {
       ConsumeToken();
@@ -625,8 +631,12 @@ Parser::StmtResult Parser::ParseForStatement() {
     Value = ExprResult();
   } else {
     Value = ParseExpression();
-    if (!Value.isInvalid)
-      ThirdPart = Value.Val;
+    if (!Value.isInvalid) {
+      // Turn the expression into a stmt.
+      StmtResult R = Actions.ParseExprStmt(Value.Val);
+      if (!R.isInvalid)
+        ThirdPart = R.Val;
+    }
   }
   
   // Match the ')'.

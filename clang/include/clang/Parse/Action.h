@@ -192,6 +192,10 @@ public:
     return 0;
   }
   
+  virtual StmtResult ParseExprStmt(ExprTy *Expr) {
+    return StmtResult(Expr);
+  }
+  
   /// ParseCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
   /// which can specify an RHS value.
   virtual StmtResult ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
