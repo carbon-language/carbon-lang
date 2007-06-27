@@ -306,53 +306,20 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
 unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   MVT::ValueType VT = TLI.getValueType(V->getType());
   
-  // The number of multiples of registers that we need, to, e.g., split up
-  // a <2 x int64> -> 4 x i32 registers.
-  unsigned NumVectorRegs = 1;
-  
-  // If this is a vector type, figure out what type it will decompose into
-  // and how many of the elements it will use.
+  unsigned NumRegisters;
+  MVT::ValueType RegisterVT;
   if (MVT::isVector(VT)) {
-    const VectorType *PTy = cast<VectorType>(V->getType());
-    unsigned NumElts = PTy->getNumElements();
-    MVT::ValueType EltTy = TLI.getValueType(PTy->getElementType());
-    MVT::ValueType VecTy = MVT::getVectorType(EltTy, NumElts);
-    
-    // Divide the input until we get to a supported size.  This will always
-    // end with a scalar if the target doesn't support vectors.
-    while (NumElts > 1 && !TLI.isTypeLegal(VecTy)) {
-      NumElts >>= 1;
-      NumVectorRegs <<= 1;
-      VecTy = MVT::getVectorType(EltTy, NumElts);
-    }
-
-    // Check that VecTy isn't a 1-element vector.
-    if (NumElts == 1 && VecTy == MVT::Other)
-      VT = EltTy;
-    else
-      VT = VecTy;
+    MVT::ValueType ElementVT;
+    NumRegisters = TLI.getVectorTypeBreakdown(VT, ElementVT, RegisterVT);
+  } else {
+    RegisterVT = TLI.getTypeToTransformTo(VT);
+    NumRegisters = TLI.getNumRegisters(VT);
   }
 
-  // The common case is that we will only create one register for this
-  // value.  If we have that case, create and return the virtual register.
-  unsigned NV = TLI.getNumRegisters(VT);
-  if (NV == 1) {
-    // If we are promoting this value, pick the next largest supported type.
-    MVT::ValueType PromotedType = TLI.getTypeToTransformTo(VT);
-    unsigned Reg = MakeReg(PromotedType);
-    // If this is a vector of supported or promoted types (e.g. 4 x i16),
-    // create all of the registers.
-    for (unsigned i = 1; i != NumVectorRegs; ++i)
-      MakeReg(PromotedType);
-    return Reg;
-  }
-  
-  // If this value is represented with multiple target registers, make sure
-  // to create enough consecutive registers of the right (smaller) type.
-  VT = TLI.getTypeToExpandTo(VT);
-  unsigned R = MakeReg(VT);
-  for (unsigned i = 1; i != NV*NumVectorRegs; ++i)
-    MakeReg(VT);
+  unsigned R = MakeReg(RegisterVT);
+  for (unsigned i = 1; i != NumRegisters; ++i)
+    MakeReg(RegisterVT);
+
   return R;
 }
 
