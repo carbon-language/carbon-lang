@@ -47,6 +47,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores added");
@@ -243,13 +244,6 @@ namespace {
     ///
     void assignVirtToPhysReg(unsigned VirtReg, unsigned PhysReg);
 
-    /// liberatePhysReg - Make sure the specified physical register is available
-    /// for use.  If there is currently a value in it, it is either moved out of
-    /// the way or spilled to memory.
-    ///
-    void liberatePhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
-                         unsigned PhysReg);
-
     /// isPhysRegAvailable - Return true if the specified physical register is
     /// free and available for use.  This also includes checking to see if
     /// aliased registers are all free...
@@ -364,18 +358,7 @@ void RABigBlock::spillPhysReg(MachineBasicBlock &MBB, MachineInstr *I,
          *AliasSet; ++AliasSet)
       if (PhysRegsUsed[*AliasSet] != -1 &&     // Spill aliased register.
           PhysRegsUsed[*AliasSet] != -2)       // If allocatable.
-        if (PhysRegsUsed[*AliasSet] == 0) {
-          // This must have been a dead def due to something like this:
-          // %EAX :=
-          //      := op %AL
-          // No more use of %EAX, %AH, etc.
-          // %EAX isn't dead upon definition, but %AH is. However %AH isn't
-          // an operand of definition MI so it's not marked as such.
-          DOUT << "  Register " << RegInfo->getName(*AliasSet)
-               << " [%reg" << *AliasSet
-               << "] is never used, removing it frame live list\n";
-          removePhysReg(*AliasSet);
-        } else
+        if (PhysRegsUsed[*AliasSet])
           spillVirtReg(MBB, I, PhysRegsUsed[*AliasSet], *AliasSet);
   }
 }
@@ -429,16 +412,6 @@ unsigned RABigBlock::getFreeReg(const TargetRegisterClass *RC) {
 }
 
 
-/// liberatePhysReg - Make sure the specified physical register is available for
-/// use.  If there is currently a value in it, it is either moved out of the way
-/// or spilled to memory.
-///
-void RABigBlock::liberatePhysReg(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator &I,
-                              unsigned PhysReg) {
-  spillPhysReg(MBB, I, PhysReg);
-}
-
 /// chooseReg - Pick a physical register to hold the specified
 /// virtual register by choosing the one whose value will be read
 /// furthest in the future.
@@ -487,8 +460,8 @@ unsigned RABigBlock::chooseReg(MachineBasicBlock &MBB, MachineInstr *I,
         }
       }
     }
-    
-    assert(PhysReg && "couldn't grab a register from the table?");
+
+    assert(PhysReg && "couldn't assign a physical register :( ");
     // TODO: assert that RC->contains(PhysReg) / handle aliased registers
 
     // since we needed to look in the table we need to spill this register.
@@ -599,6 +572,29 @@ void RABigBlock::FillVRegReadTable(MachineBasicBlock &MBB) {
   }
 }
 
+/// isReadModWriteImplicitKill - True if this is an implicit kill for a
+/// read/mod/write register, i.e. update partial register.
+static bool isReadModWriteImplicitKill(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand& MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+        MO.isDef() && !MO.isDead())
+      return true;
+  }
+  return false;
+}
+
+/// isReadModWriteImplicitDef - True if this is an implicit def for a
+/// read/mod/write register, i.e. update partial register.
+static bool isReadModWriteImplicitDef(MachineInstr *MI, unsigned Reg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand& MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.getReg() == Reg && MO.isImplicit() &&
+        !MO.isDef() && MO.isKill())
+      return true;
+  }
+  return false;
+}
 
 void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
@@ -616,7 +612,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
       unsigned Reg = I->first;
       MF->setPhysRegUsed(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+      for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
            *AliasSet; ++AliasSet) {
         if (PhysRegsUsed[*AliasSet] != -2) {
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
@@ -627,12 +623,10 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   }
   
   // Otherwise, sequentially allocate each instruction in the MBB.
-  MBBCurTime = -1;
   while (MII != MBB.end()) {
     MachineInstr *MI = MII++;
-    MBBCurTime++;
     const TargetInstrDescriptor &TID = TII.get(MI->getOpcode());
-    DEBUG(DOUT << "\nTime=" << MBBCurTime << " Starting RegAlloc of: " << *MI;
+    DEBUG(DOUT << "\nStarting RegAlloc of: " << *MI;
           DOUT << "  Regs have values: ";
           for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)
             if (PhysRegsUsed[i] != -1 && PhysRegsUsed[i] != -2)
@@ -640,11 +634,28 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
                     << ",%reg" << PhysRegsUsed[i] << "] ";
           DOUT << "\n");
 
+/* XXX : 
+    // Loop over the implicit uses, making sure that they are at the head of the
+    // use order list, so they don't get reallocated.
+    if (TID.ImplicitUses) {
+      for (const unsigned *ImplicitUses = TID.ImplicitUses;
+           *ImplicitUses; ++ImplicitUses)
+        MarkPhysRegRecentlyUsed(*ImplicitUses);
+    }
+ XXX */
+
     SmallVector<unsigned, 8> Kills;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand& MO = MI->getOperand(i);
-      if (MO.isRegister() && MO.isKill())
-        Kills.push_back(MO.getReg());
+      if (MO.isRegister() && MO.isKill()) {
+        if (!MO.isImplicit())
+          Kills.push_back(MO.getReg());
+        else if (!isReadModWriteImplicitKill(MI, MO.getReg()))
+          // These are extra physical register kills when a sub-register
+          // is defined (def of a sub-register is a read/mod/write of the
+          // larger registers). Ignore.
+          Kills.push_back(MO.getReg());
+      }
     }
 
     // Get the used operands into registers.  This has the potential to spill
@@ -677,13 +688,16 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
       } else if (PhysRegsUsed[PhysReg] == -2) {
         // Unallocatable register dead, ignore.
         continue;
+      } else {
+        assert(!PhysRegsUsed[PhysReg] || PhysRegsUsed[PhysReg] == -1 &&
+               "Silently clearing a virtual register?");
       }
 
       if (PhysReg) {
         DOUT << "  Last use of " << RegInfo->getName(PhysReg)
              << "[%reg" << VirtReg <<"], removing it from live set\n";
         removePhysReg(PhysReg);
-        for (const unsigned *AliasSet = RegInfo->getAliasSet(PhysReg);
+        for (const unsigned *AliasSet = RegInfo->getSubRegisters(PhysReg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             DOUT  << "  Last use of "
@@ -703,15 +717,20 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
           MRegisterInfo::isPhysicalRegister(MO.getReg())) {
         unsigned Reg = MO.getReg();
         if (PhysRegsUsed[Reg] == -2) continue;  // Something like ESP.
-            
+        // These are extra physical register defs when a sub-register
+        // is defined (def of a sub-register is a read/mod/write of the
+        // larger registers). Ignore.
+        if (isReadModWriteImplicitDef(MI, MO.getReg())) continue;
+
         MF->setPhysRegUsed(Reg);
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-        for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+
+        for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             MF->setPhysRegUsed(*AliasSet);
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
           }
         }
       }
@@ -722,19 +741,15 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
       for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
            *ImplicitDefs; ++ImplicitDefs) {
         unsigned Reg = *ImplicitDefs;
-        bool IsNonAllocatable = PhysRegsUsed[Reg] == -2;
-        if (!IsNonAllocatable) {
+        if (PhysRegsUsed[Reg] != -2) {
           spillPhysReg(MBB, MI, Reg, true);
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
         MF->setPhysRegUsed(Reg);
-
-        for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
+        for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
-            if (!IsNonAllocatable) {
-              PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            }
+            PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
             MF->setPhysRegUsed(*AliasSet);
           }
         }
