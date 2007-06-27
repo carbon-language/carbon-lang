@@ -1714,7 +1714,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;
         case Expand: {
           SDOperand Lo, Hi;
-          assert(!MVT::isExtendedValueType(Node->getOperand(i).getValueType())&&
+          assert(!MVT::isExtendedVT(Node->getOperand(i).getValueType()) &&
                  "FIXME: TODO: implement returning non-legal vector types!");
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);

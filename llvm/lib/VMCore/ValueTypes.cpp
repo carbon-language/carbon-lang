@@ -22,7 +22,7 @@ using namespace llvm;
 std::string MVT::getValueTypeString(MVT::ValueType VT) {
   switch (VT) {
   default:
-    if (isExtendedValueType(VT))
+    if (isExtendedVT(VT))
       return "v" + utostr(getVectorNumElements(VT)) +
              getValueTypeString(getVectorElementType(VT));
     assert(0 && "Invalid ValueType!");
@@ -59,7 +59,7 @@ std::string MVT::getValueTypeString(MVT::ValueType VT) {
 const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   switch (VT) {
   default:
-    if (isExtendedValueType(VT))
+    if (isExtendedVT(VT))
       return VectorType::get(getTypeForValueType(getVectorElementType(VT)),
                              getVectorNumElements(VT));
     assert(0 && "ValueType does not correspond to LLVM type!");

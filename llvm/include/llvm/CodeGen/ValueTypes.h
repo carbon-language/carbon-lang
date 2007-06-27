@@ -95,9 +95,9 @@ namespace MVT {  // MVT = Machine Value Types
   static const uint32_t SimpleTypeMask =
     (~uint32_t(0) << (32 - SimpleTypeBits)) >> (32 - SimpleTypeBits);
 
-  /// MVT::isExtendedValueType - Test if the given ValueType is extended
+  /// MVT::isExtendedVT - Test if the given ValueType is extended
   /// (as opposed to being simple).
-  static inline bool isExtendedValueType(ValueType VT) {
+  static inline bool isExtendedVT(ValueType VT) {
     return VT > SimpleTypeMask;
   }
 
@@ -117,7 +117,7 @@ namespace MVT {  // MVT = Machine Value Types
   /// MVT::isVector - Return true if this is a vector value type.
   static inline bool isVector(ValueType VT) {
     return (VT >= FIRST_VECTOR_VALUETYPE && VT <= LAST_VECTOR_VALUETYPE) ||
-           isExtendedValueType(VT);
+           isExtendedVT(VT);
   }
   
   /// MVT::getVectorElementType - Given a vector type, return the type of
@@ -125,7 +125,7 @@ namespace MVT {  // MVT = Machine Value Types
   static inline ValueType getVectorElementType(ValueType VT) {
     switch (VT) {
     default:
-      if (isExtendedValueType(VT))
+      if (isExtendedVT(VT))
         return VT & SimpleTypeMask;
       assert(0 && "Invalid vector type!");
     case v8i8 :
@@ -147,7 +147,7 @@ namespace MVT {  // MVT = Machine Value Types
   static inline unsigned getVectorNumElements(ValueType VT) {
     switch (VT) {
     default:
-      if (isExtendedValueType(VT))
+      if (isExtendedVT(VT))
         return ((VT & ~SimpleTypeMask) >> SimpleTypeBits) - 1;
       assert(0 && "Invalid vector type!");
     case v16i8: return 16;
@@ -170,7 +170,7 @@ namespace MVT {  // MVT = Machine Value Types
   static inline unsigned getSizeInBits(ValueType VT) {
     switch (VT) {
     default:
-      if (isExtendedValueType(VT))
+      if (isExtendedVT(VT))
         return getSizeInBits(getVectorElementType(VT)) *
                getVectorNumElements(VT);
       assert(0 && "ValueType has no known size!");

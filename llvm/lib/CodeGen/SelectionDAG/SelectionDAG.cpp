@@ -2475,7 +2475,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
 }
 
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT) {
-  if (!MVT::isExtendedValueType(VT))
+  if (!MVT::isExtendedVT(VT))
     return makeVTList(SDNode::getValueTypeList(VT), 1);
 
   for (std::list<std::vector<MVT::ValueType> >::iterator I = VTList.begin(),
