@@ -14,6 +14,7 @@
 #ifndef DRIVER_LLVM_DIAG_CHECKER_H_
 #define DRIVER_LLVM_DIAG_CHECKER_H_
 
+#include "TextDiagnosticBuffer.h"
 #include <string>
 #include <vector>
 
@@ -22,19 +23,20 @@ namespace clang {
 class Preprocessor;
 class SourceLocation;
 class SourceManager;
-class TextDiagnosticBuffer;
-
-typedef std::vector<std::pair<SourceLocation, std::string> > DiagList;
 
 void ProcessFileDiagnosticChecking(TextDiagnosticBuffer &DiagClient,
                                    Preprocessor &PP, const std::string &InFile,
                                    SourceManager &SourceMgr,
                                    unsigned MainFileID,
-                                   DiagList &ExpectedErrors,
-                                   DiagList &ExpectedWarnings);
+                                   TextDiagnosticBuffer::DiagList
+                                     &ExpectedErrors,
+                                   TextDiagnosticBuffer::DiagList
+                                     &ExpectedWarnings);
 bool ReportCheckingResults(TextDiagnosticBuffer &DiagClient,
-                           const DiagList &ExpectedErrors,
-                           const DiagList &ExpectedWarnings,
+                           const TextDiagnosticBuffer::DiagList
+                             &ExpectedErrors,
+                           const TextDiagnosticBuffer::DiagList
+                             &ExpectedWarnings,
                            SourceManager &SourceMgr);
 
 } // end clang namespace

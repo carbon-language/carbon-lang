@@ -13,10 +13,11 @@
 
 #include "LLVMDiagChecker.h"
 #include "ASTStreamers.h"
-#include "TextDiagnosticBuffer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
+
+typedef TextDiagnosticBuffer::DiagList DiagList;
 
 // USING THE DIAGNOSTIC CHECKER:
 //
@@ -150,7 +151,7 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
                              const_diag_iterator d2_begin,
                              const_diag_iterator d2_end,
                              const char *Msg) {
-  TextDiagnosticBuffer::DiagList DiffList;
+  DiagList DiffList;
 
   for (const_diag_iterator I = d1_begin, E = d1_end; I != E; ++I) {
     const std::string &Diag1 = I->second;

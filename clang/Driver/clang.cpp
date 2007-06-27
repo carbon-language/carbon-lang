@@ -25,7 +25,6 @@
 #include "clang.h"
 #include "ASTStreamers.h"
 #include "LLVMDiagChecker.h"
-#include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
@@ -903,8 +902,8 @@ PerformDiagnosticChecking(SourceManager &SourceMgr,
   OurDiagnosticClient.setHeaderSearch(HeaderInfo);
   InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
 
-  DiagList ExpectedErrors;
-  DiagList ExpectedWarnings;
+  TextDiagnosticBuffer::DiagList ExpectedErrors;
+  TextDiagnosticBuffer::DiagList ExpectedWarnings;
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     // Set up the preprocessor with these options.
