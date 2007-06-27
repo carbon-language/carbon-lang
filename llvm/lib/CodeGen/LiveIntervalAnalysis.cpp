@@ -623,10 +623,11 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   }
 
 exit:
-  // Alias of a live-in register might not be used at all.
-  if (isAlias && end == 0) {
+  // Live-in register might not be used at all.
+  if (end == MIIdx) {
     DOUT << " dead";
-    end = getDefIndex(start) + 1;
+    if (isAlias)
+      end = getDefIndex(MIIdx) + 1;
   }
 
   assert(start < end && "did not find end of interval?");
