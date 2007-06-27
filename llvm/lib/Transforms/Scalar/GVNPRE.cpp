@@ -58,24 +58,30 @@ namespace {
                               ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ, 
                               FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE, 
                               FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE, 
-                              FCMPULT, FCMPULE, FCMPUNE };
+                              FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
+                              SHUFFLE };
     
         ExpressionOpcode opcode;
-        uint32_t leftVN;
-        uint32_t rightVN;
+        uint32_t firstVN;
+        uint32_t secondVN;
+        uint32_t thirdVN;
       
         bool operator< (const Expression& other) const {
           if (opcode < other.opcode)
             return true;
           else if (opcode > other.opcode)
             return false;
-          else if (leftVN < other.leftVN)
+          else if (firstVN < other.firstVN)
             return true;
-          else if (leftVN > other.leftVN)
+          else if (firstVN > other.firstVN)
             return false;
-          else if (rightVN < other.rightVN)
+          else if (secondVN < other.secondVN)
             return true;
-          else if (rightVN > other.rightVN)
+          else if (secondVN > other.secondVN)
+            return false;
+          else if (thirdVN < other.thirdVN)
+            return true;
+          else if (thirdVN > other.thirdVN)
             return false;
           else
             return false;
@@ -92,6 +98,9 @@ namespace {
       Expression::ExpressionOpcode getOpcode(CmpInst* C);
       Expression create_expression(BinaryOperator* BO);
       Expression create_expression(CmpInst* C);
+      Expression create_expression(ShuffleVectorInst* V);
+      Expression create_expression(ExtractElementInst* C);
+      Expression create_expression(InsertElementInst* V);
     public:
       ValueTable() { nextValueNumber = 1; }
       uint32_t lookup_or_add(Value* V);
@@ -218,8 +227,9 @@ ValueTable::Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
 ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
   Expression e;
     
-  e.leftVN = lookup_or_add(BO->getOperand(0));
-  e.rightVN = lookup_or_add(BO->getOperand(1));
+  e.firstVN = lookup_or_add(BO->getOperand(0));
+  e.secondVN = lookup_or_add(BO->getOperand(1));
+  e.thirdVN = 0;
   e.opcode = getOpcode(BO);
   
   return e;
@@ -228,9 +238,43 @@ ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
 ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
   Expression e;
     
-  e.leftVN = lookup_or_add(C->getOperand(0));
-  e.rightVN = lookup_or_add(C->getOperand(1));
+  e.firstVN = lookup_or_add(C->getOperand(0));
+  e.secondVN = lookup_or_add(C->getOperand(1));
+  e.thirdVN = 0;
   e.opcode = getOpcode(C);
+  
+  return e;
+}
+
+ValueTable::Expression ValueTable::create_expression(ShuffleVectorInst* S) {
+  Expression e;
+    
+  e.firstVN = lookup_or_add(S->getOperand(0));
+  e.secondVN = lookup_or_add(S->getOperand(1));
+  e.thirdVN = lookup_or_add(S->getOperand(2));
+  e.opcode = Expression::SHUFFLE;
+  
+  return e;
+}
+
+ValueTable::Expression ValueTable::create_expression(ExtractElementInst* E) {
+  Expression e;
+    
+  e.firstVN = lookup_or_add(E->getOperand(0));
+  e.secondVN = lookup_or_add(E->getOperand(1));
+  e.thirdVN = 0;
+  e.opcode = Expression::EXTRACT;
+  
+  return e;
+}
+
+ValueTable::Expression ValueTable::create_expression(InsertElementInst* I) {
+  Expression e;
+    
+  e.firstVN = lookup_or_add(I->getOperand(0));
+  e.secondVN = lookup_or_add(I->getOperand(1));
+  e.thirdVN = lookup_or_add(I->getOperand(2));
+  e.opcode = Expression::INSERT;
   
   return e;
 }
@@ -262,6 +306,45 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
     }
   } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
     Expression e = create_expression(C);
+    
+    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    if (EI != expressionNumbering.end()) {
+      valueNumbering.insert(std::make_pair(V, EI->second));
+      return EI->second;
+    } else {
+      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+      valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      
+      return nextValueNumber++;
+    }
+  } else if (ShuffleVectorInst* U = dyn_cast<ShuffleVectorInst>(V)) {
+    Expression e = create_expression(U);
+    
+    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    if (EI != expressionNumbering.end()) {
+      valueNumbering.insert(std::make_pair(V, EI->second));
+      return EI->second;
+    } else {
+      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+      valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      
+      return nextValueNumber++;
+    }
+  } else if (ExtractElementInst* U = dyn_cast<ExtractElementInst>(V)) {
+    Expression e = create_expression(U);
+    
+    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    if (EI != expressionNumbering.end()) {
+      valueNumbering.insert(std::make_pair(V, EI->second));
+      return EI->second;
+    } else {
+      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+      valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      
+      return nextValueNumber++;
+    }
+  } else if (InsertElementInst* U = dyn_cast<InsertElementInst>(V)) {
+    Expression e = create_expression(U);
     
     std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
@@ -445,7 +528,9 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
   
-  if (isa<BinaryOperator>(V) || isa<CmpInst>(V)) {
+  // Binary Operations
+  if (isa<BinaryOperator>(V) || isa<CmpInst>(V) || 
+      isa<ExtractElementInst>(V)) {
     User* U = cast<User>(V);
     
     Value* newOp1 = 0;
@@ -477,6 +562,8 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
                                  C->getPredicate(),
                                  newOp1, newOp2,
                                  C->getName()+".expr");
+      else if (ExtractElementInst* E = dyn_cast<ExtractElementInst>(U))
+        newVal = new ExtractElementInst(newOp1, newOp2, E->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       
@@ -490,6 +577,63 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
         return leader;
       }
     }
+  
+  // Ternary Operations
+  } else if (isa<ShuffleVectorInst>(V) || isa<InsertElementInst>(V)) {
+    User* U = cast<User>(V);
+    
+    Value* newOp1 = 0;
+    if (isa<Instruction>(U->getOperand(0)))
+      newOp1 = phi_translate(U->getOperand(0), pred, succ);
+    else
+      newOp1 = U->getOperand(0);
+    
+    if (newOp1 == 0)
+      return 0;
+    
+    Value* newOp2 = 0;
+    if (isa<Instruction>(U->getOperand(1)))
+      newOp2 = phi_translate(U->getOperand(1), pred, succ);
+    else
+      newOp2 = U->getOperand(1);
+    
+    if (newOp2 == 0)
+      return 0;
+    
+    Value* newOp3 = 0;
+    if (isa<Instruction>(U->getOperand(2)))
+      newOp3 = phi_translate(U->getOperand(2), pred, succ);
+    else
+      newOp3 = U->getOperand(2);
+    
+    if (newOp3 == 0)
+      return 0;
+    
+    if (newOp1 != U->getOperand(0) ||
+        newOp2 != U->getOperand(1) ||
+        newOp3 != U->getOperand(2)) {
+      Instruction* newVal = 0;
+      if (ShuffleVectorInst* S = dyn_cast<ShuffleVectorInst>(U))
+        newVal = new ShuffleVectorInst(newOp1, newOp2, newOp3,
+                                       S->getName()+".expr");
+      else if (InsertElementInst* I = dyn_cast<InsertElementInst>(U))
+        newVal = new InsertElementInst(newOp1, newOp2, newOp3,
+                                       I->getName()+".expr");
+      
+      uint32_t v = VN.lookup_or_add(newVal);
+      
+      Value* leader = find_leader(availableOut[pred], v);
+      if (leader == 0) {
+        createdExpressions.push_back(newVal);
+        return newVal;
+      } else {
+        VN.erase(newVal);
+        delete newVal;
+        return leader;
+      }
+    }
+  
+  // PHI Nodes
   } else if (PHINode* P = dyn_cast<PHINode>(V)) {
     if (P->getParent() == succ)
       return P->getIncomingValueForBlock(pred);
@@ -585,6 +729,103 @@ void GVNPRE::clean(SmallPtrSet<Value*, 32>& set) {
     
       if (!lhsValid || !rhsValid)
         set.erase(C);
+    } else if (ShuffleVectorInst* S = dyn_cast<ShuffleVectorInst>(v)) {
+      bool lhsValid = !isa<Instruction>(S->getOperand(0));
+      if (!lhsValid)
+        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+             I != E; ++I)
+          if (VN.lookup(*I) == VN.lookup(S->getOperand(0))) {
+            lhsValid = true;
+            break;
+          }
+      if (lhsValid)
+        lhsValid = !dependsOnInvoke(S->getOperand(0));
+      
+      bool rhsValid = !isa<Instruction>(S->getOperand(1));
+      if (!rhsValid)
+      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN.lookup(*I) == VN.lookup(S->getOperand(1))) {
+          rhsValid = true;
+          break;
+        }
+      if (rhsValid)
+        rhsValid = !dependsOnInvoke(S->getOperand(1));
+      
+      bool thirdValid = !isa<Instruction>(S->getOperand(2));
+      if (!thirdValid)
+      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN.lookup(*I) == VN.lookup(S->getOperand(2))) {
+          thirdValid = true;
+          break;
+        }
+      if (thirdValid)
+        thirdValid = !dependsOnInvoke(S->getOperand(2));
+    
+      if (!lhsValid || !rhsValid || !thirdValid)
+        set.erase(C);
+    } else if (InsertElementInst* S = dyn_cast<InsertElementInst>(v)) {
+      bool lhsValid = !isa<Instruction>(S->getOperand(0));
+      if (!lhsValid)
+        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+             I != E; ++I)
+          if (VN.lookup(*I) == VN.lookup(S->getOperand(0))) {
+            lhsValid = true;
+            break;
+          }
+      if (lhsValid)
+        lhsValid = !dependsOnInvoke(S->getOperand(0));
+      
+      bool rhsValid = !isa<Instruction>(S->getOperand(1));
+      if (!rhsValid)
+      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN.lookup(*I) == VN.lookup(S->getOperand(1))) {
+          rhsValid = true;
+          break;
+        }
+      if (rhsValid)
+        rhsValid = !dependsOnInvoke(S->getOperand(1));
+      
+      bool thirdValid = !isa<Instruction>(S->getOperand(2));
+      if (!thirdValid)
+      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN.lookup(*I) == VN.lookup(S->getOperand(2))) {
+          thirdValid = true;
+          break;
+        }
+      if (thirdValid)
+        thirdValid = !dependsOnInvoke(S->getOperand(2));
+    
+      if (!lhsValid || !rhsValid || !thirdValid)
+        set.erase(C);
+    } else if (ExtractElementInst* C = dyn_cast<ExtractElementInst>(v)) {
+      bool lhsValid = !isa<Instruction>(C->getOperand(0));
+      if (!lhsValid)
+        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+             I != E; ++I)
+          if (VN.lookup(*I) == VN.lookup(C->getOperand(0))) {
+            lhsValid = true;
+            break;
+          }
+      if (lhsValid)
+        lhsValid = !dependsOnInvoke(C->getOperand(0));
+      
+      bool rhsValid = !isa<Instruction>(C->getOperand(1));
+      if (!rhsValid)
+      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
+           I != E; ++I)
+        if (VN.lookup(*I) == VN.lookup(C->getOperand(1))) {
+          rhsValid = true;
+          break;
+        }
+      if (rhsValid)
+        rhsValid = !dependsOnInvoke(C->getOperand(1));
+    
+      if (!lhsValid || !rhsValid)
+        set.erase(C);
     }
   }
 }
@@ -626,6 +867,59 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 32>& set, std::vector<Value*>& vec) {
           stack.push_back(l);
         else if (r != 0 && isa<Instruction>(r) &&
                  visited.count(r) == 0)
+          stack.push_back(r);
+        else {
+          vec.push_back(e);
+          visited.insert(e);
+          stack.pop_back();
+        }
+      } else if (ExtractElementInst* C = dyn_cast<ExtractElementInst>(e)) {
+        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
+      
+        if (l != 0 && isa<Instruction>(l) &&
+            visited.count(l) == 0)
+          stack.push_back(l);
+        else if (r != 0 && isa<Instruction>(r) &&
+                 visited.count(r) == 0)
+          stack.push_back(r);
+        else {
+          vec.push_back(e);
+          visited.insert(e);
+          stack.pop_back();
+        }
+      } else if (InsertElementInst* C = dyn_cast<InsertElementInst>(e)) {
+        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
+        Value* m = find_leader(set, VN.lookup(C->getOperand(2)));
+      
+        if (l != 0 && isa<Instruction>(l) &&
+            visited.count(l) == 0)
+          stack.push_back(l);
+        else if (r != 0 && isa<Instruction>(r) &&
+                 visited.count(r) == 0)
+          stack.push_back(r);
+        else if (m != 0 && isa<Instruction>(m) &&
+                 visited.count(m) == 0)
+          stack.push_back(r);
+        else {
+          vec.push_back(e);
+          visited.insert(e);
+          stack.pop_back();
+        }
+      } else if (ShuffleVectorInst* C = dyn_cast<ShuffleVectorInst>(e)) {
+        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
+        Value* m = find_leader(set, VN.lookup(C->getOperand(2)));
+      
+        if (l != 0 && isa<Instruction>(l) &&
+            visited.count(l) == 0)
+          stack.push_back(l);
+        else if (r != 0 && isa<Instruction>(r) &&
+                 visited.count(r) == 0)
+          stack.push_back(r);
+        else if (m != 0 && isa<Instruction>(m) &&
+                 visited.count(m) == 0)
           stack.push_back(r);
         else {
           vec.push_back(e);
@@ -677,7 +971,9 @@ bool GVNPRE::elimination() {
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI) {
 
-      if (isa<BinaryOperator>(BI) || isa<CmpInst>(BI)) {
+      if (isa<BinaryOperator>(BI) || isa<CmpInst>(BI) ||
+          isa<ShuffleVectorInst>(BI) || isa<InsertElementInst>(BI) ||
+          isa<ExtractElementInst>(BI)) {
          Value *leader = find_leader(availableOut[BB], VN.lookup(BI));
   
         if (leader != 0)
@@ -786,8 +1082,101 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
       expNumbers.set(num);
     }
     
+  // Handle extractelemt ops
+  } else if (InsertElementInst* C = dyn_cast<InsertElementInst>(I)) {
+    Value* leftValue = C->getOperand(0);
+    Value* rightValue = C->getOperand(1);
+    Value* thirdValue = C->getOperand(2);
+      
+    VN.lookup_or_add(C);
+    
+    unsigned num = VN.lookup_or_add(C);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+    
+    if (isa<Instruction>(leftValue))
+      if (!expNumbers.test(VN.lookup(leftValue))) {
+        currExps.insert(leftValue);
+        expNumbers.set(VN.lookup(leftValue));
+      }
+    if (isa<Instruction>(rightValue))
+      if (!expNumbers.test(VN.lookup(rightValue))) {
+        currExps.insert(rightValue);
+        expNumbers.set(VN.lookup(rightValue));
+      }
+    if (isa<Instruction>(thirdValue))
+      if (!expNumbers.test(VN.lookup(thirdValue))) {
+        currExps.insert(thirdValue);
+        expNumbers.set(VN.lookup(thirdValue));
+      }
+    
+    if (!expNumbers.test(VN.lookup(C))) {
+      currExps.insert(C);
+      expNumbers.set(num);
+    }
+    
+  // Handle shufflevector ops
+  } else if (ShuffleVectorInst* C = dyn_cast<ShuffleVectorInst>(I)) {
+    Value* leftValue = C->getOperand(0);
+    Value* rightValue = C->getOperand(1);
+    Value* thirdValue = C->getOperand(2);
+      
+    VN.lookup_or_add(C);
+    
+    unsigned num = VN.lookup_or_add(C);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+    
+    if (isa<Instruction>(leftValue))
+      if (!expNumbers.test(VN.lookup(leftValue))) {
+        currExps.insert(leftValue);
+        expNumbers.set(VN.lookup(leftValue));
+      }
+    if (isa<Instruction>(rightValue))
+      if (!expNumbers.test(VN.lookup(rightValue))) {
+        currExps.insert(rightValue);
+        expNumbers.set(VN.lookup(rightValue));
+      }
+    if (isa<Instruction>(thirdValue))
+      if (!expNumbers.test(VN.lookup(thirdValue))) {
+        currExps.insert(thirdValue);
+        expNumbers.set(VN.lookup(thirdValue));
+      }
+    
+    if (!expNumbers.test(VN.lookup(C))) {
+      currExps.insert(C);
+      expNumbers.set(num);
+    }
+    
+  // Handle insertelement ops
+  } else if (ExtractElementInst* C = dyn_cast<ExtractElementInst>(I)) {
+    Value* leftValue = C->getOperand(0);
+    Value* rightValue = C->getOperand(1);
+      
+    VN.lookup_or_add(C);
+    
+    unsigned num = VN.lookup_or_add(C);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+    
+    if (isa<Instruction>(leftValue))
+      if (!expNumbers.test(VN.lookup(leftValue))) {
+        currExps.insert(leftValue);
+        expNumbers.set(VN.lookup(leftValue));
+      }
+    if (isa<Instruction>(rightValue))
+      if (!expNumbers.test(VN.lookup(rightValue))) {
+        currExps.insert(rightValue);
+        expNumbers.set(VN.lookup(rightValue));
+      }
+    
+    if (!expNumbers.test(VN.lookup(C))) {
+      currExps.insert(C);
+      expNumbers.set(num);
+    }
+    
   // Handle unsupported ops
-  } else if (!I->isTerminator()){
+  }else if (!I->isTerminator()){
     VN.lookup_or_add(I);
     expNumbers.resize(VN.size());
     availNumbers.resize(VN.size());
@@ -995,17 +1384,35 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
       
       Value* s1 = 0;
       if (isa<BinaryOperator>(U->getOperand(0)) || 
-          isa<CmpInst>(U->getOperand(0)))
+          isa<CmpInst>(U->getOperand(0)) ||
+          isa<ShuffleVectorInst>(U->getOperand(0)) ||
+          isa<ExtractElementInst>(U->getOperand(0)) ||
+          isa<InsertElementInst>(U->getOperand(0)))
         s1 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(0)));
       else
         s1 = U->getOperand(0);
       
       Value* s2 = 0;
-      if (isa<BinaryOperator>(U->getOperand(1)) ||
-          isa<CmpInst>(U->getOperand(1)))
+      if (isa<BinaryOperator>(U->getOperand(1)) || 
+          isa<CmpInst>(U->getOperand(1)) ||
+          isa<ShuffleVectorInst>(U->getOperand(1)) ||
+          isa<ExtractElementInst>(U->getOperand(1)) ||
+          isa<InsertElementInst>(U->getOperand(1)))
         s2 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(1)));
       else
         s2 = U->getOperand(1);
+        
+      Value* s3 = 0;
+      if (isa<ShuffleVectorInst>(U) ||
+          isa<InsertElementInst>(U))
+        if (isa<BinaryOperator>(U->getOperand(2)) || 
+            isa<CmpInst>(U->getOperand(2)) ||
+            isa<ShuffleVectorInst>(U->getOperand(2)) ||
+            isa<ExtractElementInst>(U->getOperand(2)) ||
+            isa<InsertElementInst>(U->getOperand(2)))
+          s3 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(2)));
+        else
+          s3 = U->getOperand(2);
       
       Value* newVal = 0;
       if (BinaryOperator* BO = dyn_cast<BinaryOperator>(U))
@@ -1016,6 +1423,15 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         newVal = CmpInst::create(C->getOpcode(), C->getPredicate(), s1, s2,
                                  C->getName()+".gvnpre", 
                                  (*PI)->getTerminator());
+      else if (ShuffleVectorInst* S = dyn_cast<ShuffleVectorInst>(U))
+        newVal = new ShuffleVectorInst(s1, s2, s3, S->getName()+".gvnpre",
+                                       (*PI)->getTerminator());
+      else if (InsertElementInst* S = dyn_cast<InsertElementInst>(U))
+        newVal = new InsertElementInst(s1, s2, s3, S->getName()+".gvnpre",
+                                       (*PI)->getTerminator());
+      else if (ExtractElementInst* S = dyn_cast<ExtractElementInst>(U))
+        newVal = new ExtractElementInst(s1, s2, S->getName()+".gvnpre",
+                                        (*PI)->getTerminator());
                   
       VN.add(newVal, VN.lookup(U));
                   
@@ -1059,7 +1475,9 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
   for (unsigned i = 0; i < workList.size(); ++i) {
     Value* e = workList[i];
           
-    if (isa<BinaryOperator>(e) || isa<CmpInst>(e)) {
+    if (isa<BinaryOperator>(e) || isa<CmpInst>(e) ||
+        isa<ExtractElementInst>(e) || isa<InsertElementInst>(e) ||
+        isa<ShuffleVectorInst>(e)) {
       if (find_leader(availableOut[D->getIDom()->getBlock()],
                       VN.lookup(e)) != 0)
         continue;
@@ -1179,8 +1597,6 @@ bool GVNPRE::runOnFunction(Function &F) {
   
   // Phase 1: BuildSets
   // This phase calculates the AVAIL_OUT and ANTIC_IN sets
-  // NOTE: If full postdom information is no available, this will bail
-  // early, performing GVN but not PRE
   buildsets(F);
   
   // Phase 2: Insert
