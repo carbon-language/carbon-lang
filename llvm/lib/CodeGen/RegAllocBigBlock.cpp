@@ -459,9 +459,23 @@ unsigned RABigBlock::chooseReg(MachineBasicBlock &MBB, MachineInstr *I,
         }
       }
     }
+
+    if(PhysReg == 0) { // ok, now we're desperate. We couldn't choose
+                       // a register to spill by looking through the
+                       // read timetable, so now we just spill the
+                       // first allocatable register we find.
+                       
+      // for all physical regs in the RC,
+      for(TargetRegisterClass::iterator pReg = RC->begin(); 
+                                        pReg != RC->end();  ++pReg) {
+        // if we find a register we can spill
+        if(PhysRegsUsed[*pReg]>=-1)
+          PhysReg = *pReg; // choose it to be spilled
+      }
+    }
     
-    assert(PhysReg && "couldn't grab a register from the table?");
-    // TODO: assert that RC->contains(PhysReg) / handle aliased registers
+    assert(PhysReg && "couldn't choose a register to spill :( ");
+    // TODO: assert that RC->contains(PhysReg) / handle aliased registers?
 
     // since we needed to look in the table we need to spill this register.
     spillPhysReg(MBB, I, PhysReg);
