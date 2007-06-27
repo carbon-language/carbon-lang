@@ -76,12 +76,12 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 //===----------------------------------------------------------------------===//
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
-                   SourceLocation l)
+                   SourceLocation rparenloc)
   : Expr(CallExprClass, t), Fn(fn), NumArgs(numargs) {
   Args = new Expr*[numargs];
   for (unsigned i = 0; i != numargs; ++i)
     Args[i] = args[i];
-  Loc = l;
+  RParenLoc = rparenloc;
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it

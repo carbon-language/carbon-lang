@@ -42,6 +42,10 @@ public:
   SourceLocation getLocStart() const { return getSourceRange().Begin(); }
   SourceLocation getLocEnd() const { return getSourceRange().End(); }
 
+  /// getExprLoc - Return the preferred location for the arrow when diagnosing
+  /// a problem with a generic expression.
+  virtual SourceLocation getExprLoc() const { return getLocStart(); }
+  
   /// hasLocalSideEffect - Return true if this immediate expression has side
   /// effects, not counting any sub-expressions.
   bool hasLocalSideEffect() const;
@@ -284,6 +288,7 @@ public:
     else
       return SourceRange(Loc, Val->getLocEnd());
   }
+  virtual SourceLocation getExprLoc() const { return Loc; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -322,11 +327,12 @@ public:
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {
   Expr *Base, *Idx;
-  SourceLocation Loc; // the location of the right bracket
+  SourceLocation RBracketLoc;
 public:
-  ArraySubscriptExpr(Expr *base, Expr *idx, QualType t, SourceLocation l) : 
+  ArraySubscriptExpr(Expr *base, Expr *idx, QualType t,
+                     SourceLocation rbracketloc) : 
     Expr(ArraySubscriptExprClass, t),
-    Base(base), Idx(idx), Loc(l) {}
+    Base(base), Idx(idx), RBracketLoc(rbracketloc) {}
   
   Expr *getBase() { return Base; }
   const Expr *getBase() const { return Base; }
@@ -334,8 +340,10 @@ public:
   const Expr *getIdx() const { return Idx; }
   
   SourceRange getSourceRange() const { 
-    return SourceRange(Base->getLocStart(), Loc);
+    return SourceRange(Base->getLocStart(), RBracketLoc);
   }
+  virtual SourceLocation getExprLoc() const { return RBracketLoc; }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ArraySubscriptExprClass; 
@@ -350,10 +358,10 @@ class CallExpr : public Expr {
   Expr *Fn;
   Expr **Args;
   unsigned NumArgs;
-  SourceLocation Loc; // the location of the right paren
+  SourceLocation RParenLoc;
 public:
   CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
-           SourceLocation l);
+           SourceLocation rparenloc);
   ~CallExpr() {
     delete [] Args;
   }
@@ -380,7 +388,7 @@ public:
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
   SourceRange getSourceRange() const { 
-    return SourceRange(Fn->getLocStart(), Loc);
+    return SourceRange(Fn->getLocStart(), RParenLoc);
   }
   
   virtual void visit(StmtVisitor &Visitor);
@@ -409,6 +417,8 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), MemberLoc);
   }
+  virtual SourceLocation getExprLoc() const { return MemberLoc; }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == MemberExprClass; 

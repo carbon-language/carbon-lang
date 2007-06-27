@@ -26,8 +26,7 @@ Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
   // Exprs are statements, so there is no need to do a conversion here. However,
   // diagnose some potentially bad code.
   if (!E->hasLocalSideEffect())
-    Diag(E->getLocStart()/*
-          getExprLoc()*/, diag::warn_unused_expr, E->getSourceRange());
+    Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
   
   return E;
 }
