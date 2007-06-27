@@ -1,4 +1,4 @@
-//===--- LLVMDiagChecker.cpp - Diagnostic Checking Functions --------------===//
+//===--- DiagChecker.cpp - Diagnostic Checking Functions ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMDiagChecker.h"
+#include "DiagChecker.h"
 #include "ASTStreamers.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"

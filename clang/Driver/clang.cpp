@@ -24,7 +24,7 @@
 
 #include "clang.h"
 #include "ASTStreamers.h"
-#include "LLVMDiagChecker.h"
+#include "DiagChecker.h"
 #include "TextDiagnosticPrinter.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"

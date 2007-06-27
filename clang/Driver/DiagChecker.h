@@ -1,4 +1,4 @@
-//===--- LLVMDiagChecker.h - Diagnostic Checking Functions ------*- C++ -*-===//
+//===--- DiagChecker.h - Diagnostic Checking Functions ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,12 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DRIVER_LLVM_DIAG_CHECKER_H_
-#define DRIVER_LLVM_DIAG_CHECKER_H_
+#ifndef DRIVER_DIAG_CHECKER_H_
+#define DRIVER_DIAG_CHECKER_H_
 
 #include "TextDiagnosticBuffer.h"
 #include <string>
-#include <vector>
 
 namespace clang {
 
