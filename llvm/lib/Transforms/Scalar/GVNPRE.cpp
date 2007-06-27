@@ -679,153 +679,75 @@ void GVNPRE::clean(SmallPtrSet<Value*, 32>& set) {
   for (unsigned i = 0; i < worklist.size(); ++i) {
     Value* v = worklist[i];
     
-    if (BinaryOperator* BO = dyn_cast<BinaryOperator>(v)) {   
-      bool lhsValid = !isa<Instruction>(BO->getOperand(0));
+    // Handle binary ops
+    if (isa<BinaryOperator>(v) || isa<CmpInst>(v) ||
+        isa<ExtractElementInst>(v)) {
+      User* U = cast<User>(v);
+      
+      bool lhsValid = !isa<Instruction>(U->getOperand(0));
       if (!lhsValid)
         for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
              I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(BO->getOperand(0))) {
+          if (VN.lookup(*I) == VN.lookup(U->getOperand(0))) {
             lhsValid = true;
             break;
           }
       if (lhsValid)
-        lhsValid = !dependsOnInvoke(BO->getOperand(0));
+        lhsValid = !dependsOnInvoke(U->getOperand(0));
     
-      bool rhsValid = !isa<Instruction>(BO->getOperand(1));
+      bool rhsValid = !isa<Instruction>(U->getOperand(1));
       if (!rhsValid)
         for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
              I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(BO->getOperand(1))) {
+          if (VN.lookup(*I) == VN.lookup(U->getOperand(1))) {
             rhsValid = true;
             break;
           }
       if (rhsValid)
-        rhsValid = !dependsOnInvoke(BO->getOperand(1));
+        rhsValid = !dependsOnInvoke(U->getOperand(1));
       
       if (!lhsValid || !rhsValid)
-        set.erase(BO);
-    } else if (CmpInst* C = dyn_cast<CmpInst>(v)) {
-      bool lhsValid = !isa<Instruction>(C->getOperand(0));
-      if (!lhsValid)
-        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-             I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(C->getOperand(0))) {
-            lhsValid = true;
-            break;
-          }
-      if (lhsValid)
-        lhsValid = !dependsOnInvoke(C->getOperand(0));
-      
-      bool rhsValid = !isa<Instruction>(C->getOperand(1));
-      if (!rhsValid)
-      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(C->getOperand(1))) {
-          rhsValid = true;
-          break;
-        }
-      if (rhsValid)
-        rhsValid = !dependsOnInvoke(C->getOperand(1));
+        set.erase(U);
     
-      if (!lhsValid || !rhsValid)
-        set.erase(C);
-    } else if (ShuffleVectorInst* S = dyn_cast<ShuffleVectorInst>(v)) {
-      bool lhsValid = !isa<Instruction>(S->getOperand(0));
+    // Handle ternary ops
+    } else if (isa<ShuffleVectorInst>(v) || isa<InsertElementInst>(v)) {
+      User* U = cast<User>(v);
+    
+      bool lhsValid = !isa<Instruction>(U->getOperand(0));
       if (!lhsValid)
         for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
              I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(S->getOperand(0))) {
+          if (VN.lookup(*I) == VN.lookup(U->getOperand(0))) {
             lhsValid = true;
             break;
           }
       if (lhsValid)
-        lhsValid = !dependsOnInvoke(S->getOperand(0));
+        lhsValid = !dependsOnInvoke(U->getOperand(0));
       
-      bool rhsValid = !isa<Instruction>(S->getOperand(1));
+      bool rhsValid = !isa<Instruction>(U->getOperand(1));
       if (!rhsValid)
       for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
            I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(S->getOperand(1))) {
+        if (VN.lookup(*I) == VN.lookup(U->getOperand(1))) {
           rhsValid = true;
           break;
         }
       if (rhsValid)
-        rhsValid = !dependsOnInvoke(S->getOperand(1));
+        rhsValid = !dependsOnInvoke(U->getOperand(1));
       
-      bool thirdValid = !isa<Instruction>(S->getOperand(2));
+      bool thirdValid = !isa<Instruction>(U->getOperand(2));
       if (!thirdValid)
       for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
            I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(S->getOperand(2))) {
+        if (VN.lookup(*I) == VN.lookup(U->getOperand(2))) {
           thirdValid = true;
           break;
         }
       if (thirdValid)
-        thirdValid = !dependsOnInvoke(S->getOperand(2));
+        thirdValid = !dependsOnInvoke(U->getOperand(2));
     
       if (!lhsValid || !rhsValid || !thirdValid)
-        set.erase(C);
-    } else if (InsertElementInst* S = dyn_cast<InsertElementInst>(v)) {
-      bool lhsValid = !isa<Instruction>(S->getOperand(0));
-      if (!lhsValid)
-        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-             I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(S->getOperand(0))) {
-            lhsValid = true;
-            break;
-          }
-      if (lhsValid)
-        lhsValid = !dependsOnInvoke(S->getOperand(0));
-      
-      bool rhsValid = !isa<Instruction>(S->getOperand(1));
-      if (!rhsValid)
-      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(S->getOperand(1))) {
-          rhsValid = true;
-          break;
-        }
-      if (rhsValid)
-        rhsValid = !dependsOnInvoke(S->getOperand(1));
-      
-      bool thirdValid = !isa<Instruction>(S->getOperand(2));
-      if (!thirdValid)
-      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(S->getOperand(2))) {
-          thirdValid = true;
-          break;
-        }
-      if (thirdValid)
-        thirdValid = !dependsOnInvoke(S->getOperand(2));
-    
-      if (!lhsValid || !rhsValid || !thirdValid)
-        set.erase(C);
-    } else if (ExtractElementInst* C = dyn_cast<ExtractElementInst>(v)) {
-      bool lhsValid = !isa<Instruction>(C->getOperand(0));
-      if (!lhsValid)
-        for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-             I != E; ++I)
-          if (VN.lookup(*I) == VN.lookup(C->getOperand(0))) {
-            lhsValid = true;
-            break;
-          }
-      if (lhsValid)
-        lhsValid = !dependsOnInvoke(C->getOperand(0));
-      
-      bool rhsValid = !isa<Instruction>(C->getOperand(1));
-      if (!rhsValid)
-      for (SmallPtrSet<Value*, 32>::iterator I = set.begin(), E = set.end();
-           I != E; ++I)
-        if (VN.lookup(*I) == VN.lookup(C->getOperand(1))) {
-          rhsValid = true;
-          break;
-        }
-      if (rhsValid)
-        rhsValid = !dependsOnInvoke(C->getOperand(1));
-    
-      if (!lhsValid || !rhsValid)
-        set.erase(C);
+        set.erase(U);
     }
   }
 }
@@ -843,9 +765,12 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 32>& set, std::vector<Value*>& vec) {
     while (!stack.empty()) {
       Value* e = stack.back();
   
-      if (BinaryOperator* BO = dyn_cast<BinaryOperator>(e)) {
-        Value* l = find_leader(set, VN.lookup(BO->getOperand(0)));
-        Value* r = find_leader(set, VN.lookup(BO->getOperand(1)));
+      // Handle binary ops
+      if (isa<BinaryOperator>(e) || isa<CmpInst>(e) ||
+          isa<ExtractElementInst>(e)) {
+        User* U = cast<User>(e);
+        Value* l = find_leader(set, VN.lookup(U->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(U->getOperand(1)));
     
         if (l != 0 && isa<Instruction>(l) &&
             visited.count(l) == 0)
@@ -858,40 +783,13 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 32>& set, std::vector<Value*>& vec) {
           visited.insert(e);
           stack.pop_back();
         }
-      } else if (CmpInst* C = dyn_cast<CmpInst>(e)) {
-        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
-        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
       
-        if (l != 0 && isa<Instruction>(l) &&
-            visited.count(l) == 0)
-          stack.push_back(l);
-        else if (r != 0 && isa<Instruction>(r) &&
-                 visited.count(r) == 0)
-          stack.push_back(r);
-        else {
-          vec.push_back(e);
-          visited.insert(e);
-          stack.pop_back();
-        }
-      } else if (ExtractElementInst* C = dyn_cast<ExtractElementInst>(e)) {
-        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
-        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
-      
-        if (l != 0 && isa<Instruction>(l) &&
-            visited.count(l) == 0)
-          stack.push_back(l);
-        else if (r != 0 && isa<Instruction>(r) &&
-                 visited.count(r) == 0)
-          stack.push_back(r);
-        else {
-          vec.push_back(e);
-          visited.insert(e);
-          stack.pop_back();
-        }
-      } else if (InsertElementInst* C = dyn_cast<InsertElementInst>(e)) {
-        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
-        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
-        Value* m = find_leader(set, VN.lookup(C->getOperand(2)));
+      // Handle ternary ops
+      } else if (isa<InsertElementInst>(e) || isa<ShuffleVectorInst>(e)) {
+        User* U = cast<User>(e);
+        Value* l = find_leader(set, VN.lookup(U->getOperand(0)));
+        Value* r = find_leader(set, VN.lookup(U->getOperand(1)));
+        Value* m = find_leader(set, VN.lookup(U->getOperand(2)));
       
         if (l != 0 && isa<Instruction>(l) &&
             visited.count(l) == 0)
@@ -907,25 +805,8 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 32>& set, std::vector<Value*>& vec) {
           visited.insert(e);
           stack.pop_back();
         }
-      } else if (ShuffleVectorInst* C = dyn_cast<ShuffleVectorInst>(e)) {
-        Value* l = find_leader(set, VN.lookup(C->getOperand(0)));
-        Value* r = find_leader(set, VN.lookup(C->getOperand(1)));
-        Value* m = find_leader(set, VN.lookup(C->getOperand(2)));
       
-        if (l != 0 && isa<Instruction>(l) &&
-            visited.count(l) == 0)
-          stack.push_back(l);
-        else if (r != 0 && isa<Instruction>(r) &&
-                 visited.count(r) == 0)
-          stack.push_back(r);
-        else if (m != 0 && isa<Instruction>(m) &&
-                 visited.count(m) == 0)
-          stack.push_back(r);
-        else {
-          vec.push_back(e);
-          visited.insert(e);
-          stack.pop_back();
-        }
+      // Handle opaque ops
       } else {
         visited.insert(e);
         vec.push_back(e);
@@ -1021,7 +902,7 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
                                 SmallPtrSet<Value*, 32>& currTemps,
                                 BitVector& availNumbers,
                                 BitVector& expNumbers) {
-  // Handle PHI nodes...
+  // Handle PHI nodes
   if (PHINode* p = dyn_cast<PHINode>(I)) {
     VN.lookup_or_add(p);
     expNumbers.resize(VN.size());
@@ -1029,12 +910,14 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     
     currPhis.insert(p);
     
-  // Handle binary ops...
-  } else if (BinaryOperator* BO = dyn_cast<BinaryOperator>(I)) {
-    Value* leftValue = BO->getOperand(0);
-    Value* rightValue = BO->getOperand(1);
+  // Handle binary ops
+  } else if (isa<BinaryOperator>(I) || isa<CmpInst>(I) ||
+             isa<ExtractElementInst>(I)) {
+    User* U = cast<User>(I);
+    Value* leftValue = U->getOperand(0);
+    Value* rightValue = U->getOperand(1);
     
-    unsigned num = VN.lookup_or_add(BO);
+    unsigned num = VN.lookup_or_add(U);
     expNumbers.resize(VN.size());
     availNumbers.resize(VN.size());
       
@@ -1050,47 +933,21 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
         expNumbers.set(VN.lookup(rightValue));
       }
     
-    if (!expNumbers.test(VN.lookup(BO))) {
-      currExps.insert(BO);
+    if (!expNumbers.test(VN.lookup(U))) {
+      currExps.insert(U);
       expNumbers.set(num);
     }
     
-  // Handle cmp ops...
-  } else if (CmpInst* C = dyn_cast<CmpInst>(I)) {
-    Value* leftValue = C->getOperand(0);
-    Value* rightValue = C->getOperand(1);
+  // Handle ternary ops
+  } else if (isa<InsertElementInst>(I) || isa<ShuffleVectorInst>(I)) {
+    User* U = cast<User>(I);
+    Value* leftValue = U->getOperand(0);
+    Value* rightValue = U->getOperand(1);
+    Value* thirdValue = U->getOperand(2);
       
-    VN.lookup_or_add(C);
+    VN.lookup_or_add(U);
     
-    unsigned num = VN.lookup_or_add(C);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
-    
-    if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue))) {
-        currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue));
-      }
-    if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue))) {
-        currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue));
-      }
-    
-    if (!expNumbers.test(VN.lookup(C))) {
-      currExps.insert(C);
-      expNumbers.set(num);
-    }
-    
-  // Handle extractelemt ops
-  } else if (InsertElementInst* C = dyn_cast<InsertElementInst>(I)) {
-    Value* leftValue = C->getOperand(0);
-    Value* rightValue = C->getOperand(1);
-    Value* thirdValue = C->getOperand(2);
-      
-    VN.lookup_or_add(C);
-    
-    unsigned num = VN.lookup_or_add(C);
+    unsigned num = VN.lookup_or_add(U);
     expNumbers.resize(VN.size());
     availNumbers.resize(VN.size());
     
@@ -1110,73 +967,13 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
         expNumbers.set(VN.lookup(thirdValue));
       }
     
-    if (!expNumbers.test(VN.lookup(C))) {
-      currExps.insert(C);
+    if (!expNumbers.test(VN.lookup(U))) {
+      currExps.insert(U);
       expNumbers.set(num);
     }
     
-  // Handle shufflevector ops
-  } else if (ShuffleVectorInst* C = dyn_cast<ShuffleVectorInst>(I)) {
-    Value* leftValue = C->getOperand(0);
-    Value* rightValue = C->getOperand(1);
-    Value* thirdValue = C->getOperand(2);
-      
-    VN.lookup_or_add(C);
-    
-    unsigned num = VN.lookup_or_add(C);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
-    
-    if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue))) {
-        currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue));
-      }
-    if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue))) {
-        currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue));
-      }
-    if (isa<Instruction>(thirdValue))
-      if (!expNumbers.test(VN.lookup(thirdValue))) {
-        currExps.insert(thirdValue);
-        expNumbers.set(VN.lookup(thirdValue));
-      }
-    
-    if (!expNumbers.test(VN.lookup(C))) {
-      currExps.insert(C);
-      expNumbers.set(num);
-    }
-    
-  // Handle insertelement ops
-  } else if (ExtractElementInst* C = dyn_cast<ExtractElementInst>(I)) {
-    Value* leftValue = C->getOperand(0);
-    Value* rightValue = C->getOperand(1);
-      
-    VN.lookup_or_add(C);
-    
-    unsigned num = VN.lookup_or_add(C);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
-    
-    if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue))) {
-        currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue));
-      }
-    if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue))) {
-        currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue));
-      }
-    
-    if (!expNumbers.test(VN.lookup(C))) {
-      currExps.insert(C);
-      expNumbers.set(num);
-    }
-    
-  // Handle unsupported ops
-  }else if (!I->isTerminator()){
+  // Handle opaque ops
+  } else if (!I->isTerminator()){
     VN.lookup_or_add(I);
     expNumbers.resize(VN.size());
     availNumbers.resize(VN.size());
@@ -1401,7 +1198,8 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         s2 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(1)));
       else
         s2 = U->getOperand(1);
-        
+      
+      // Ternary Operators
       Value* s3 = 0;
       if (isa<ShuffleVectorInst>(U) ||
           isa<InsertElementInst>(U))
@@ -1565,11 +1363,6 @@ bool GVNPRE::insertion(Function& F) {
         std::vector<Value*> workList;
         workList.reserve(anticIn.size());
         topo_sort(anticIn, workList);
-        
-        //DOUT << "Merge Block: " << BB->getName() << "\n";
-        //DOUT << "ANTIC_IN: ";
-        //dump(anticIn);
-        //DOUT << "\n";
         
         unsigned result = insertion_mergepoint(workList, DI, new_set);
         if (result & 1)
