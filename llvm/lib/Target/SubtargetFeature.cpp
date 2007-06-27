@@ -268,6 +268,13 @@ uint32_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
   if (CPUEntry) {
     // Set base feature bits
     Bits = CPUEntry->Value;
+
+    // Set the feature implied by this CPU feature, if any.
+    for (size_t i = 0; i < FeatureTableSize; ++i) {
+      const SubtargetFeatureKV &FE = FeatureTable[i];
+      if (CPUEntry->Value & FE.Value)
+        SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+    }
   } else {
     cerr << "'" << Features[0]
          << "' is not a recognized processor for this target"
