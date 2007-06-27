@@ -177,8 +177,9 @@ private:
   /// two smaller values.
   void SplitVectorOp(SDOperand O, SDOperand &Lo, SDOperand &Hi);
   
-  /// ScalarizeVectorOp - Given an operand of vector type, convert it into the
-  /// equivalent operation that returns a scalar value.
+  /// ScalarizeVectorOp - Given an operand of single-element vector type
+  /// (e.g. v1f32), convert it into the equivalent operation that returns a
+  /// scalar (e.g. f32) value.
   SDOperand ScalarizeVectorOp(SDOperand O);
   
   /// isShuffleLegal - Return true if a vector shuffle is legal with the
@@ -5602,8 +5603,9 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
 }
 
 
-/// ScalarizeVectorOp - Given an operand of vector type, convert it into the
-/// equivalent operation that returns a scalar (e.g. F32) value.
+/// ScalarizeVectorOp - Given an operand of single-element vector type
+/// (e.g. v1f32), convert it into the equivalent operation that returns a
+/// scalar (e.g. f32) value.
 SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
   assert(MVT::isVector(Op.getValueType()) &&
          "Bad ScalarizeVectorOp invocation!");
