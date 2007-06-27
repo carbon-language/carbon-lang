@@ -146,9 +146,14 @@ bool Expr::hasLocalSideEffect() const {
     case UnaryOperator::PreDec:
       return true;                     // ++/--
 
-      // FIXME: real/imag volatile
-      // deref volatile;
-    
+    case UnaryOperator::Deref:
+      // Dereferencing a volatile pointer is a side-effect.
+      return getType().isVolatileQualified();
+    case UnaryOperator::Real:
+    case UnaryOperator::Imag:
+      // accessing a piece of a volatile complex is a side-effect.
+      return UO->getSubExpr()->getType().isVolatileQualified();
+
     case UnaryOperator::Extension:
       return UO->getSubExpr()->hasLocalSideEffect();
     }
@@ -156,17 +161,16 @@ bool Expr::hasLocalSideEffect() const {
   case BinaryOperatorClass:
     return cast<BinaryOperator>(this)->isAssignmentOp();
 
+  case MemberExprClass:
   case ArraySubscriptExprClass:
-    // volatile
-    return false;
+    // If the base pointer or element is to a volatile pointer/field, accessing
+    // if is a side effect.
+    return getType().isVolatileQualified();
     
   case CallExprClass:
-    // TODO: check attributes for pure/const.
+    // TODO: check attributes for pure/const.   "void foo() { strlen("bar"); }"
+    // should warn.
     return true;
-
-  case MemberExprClass:
-    // volatile load.
-    return false;
     
   case CastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
