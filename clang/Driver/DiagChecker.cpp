@@ -154,12 +154,15 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
   DiagList DiffList;
 
   for (const_diag_iterator I = d1_begin, E = d1_end; I != E; ++I) {
+    unsigned LineNo1 = SourceMgr.getLineNumber(I->first);
     const std::string &Diag1 = I->second;
     bool Found = false;
 
     for (const_diag_iterator II = d2_begin, IE = d2_end; II != IE; ++II) {
-      const std::string &Diag2 = II->second;
+      unsigned LineNo2 = SourceMgr.getLineNumber(II->first);
+      if (LineNo1 != LineNo2) continue;
 
+      const std::string &Diag2 = II->second;
       if (Diag2.find(Diag1) != std::string::npos ||
           Diag1.find(Diag2) != std::string::npos) {
         Found = true;
@@ -168,7 +171,7 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
     }
 
     if (!Found)
-      DiffList.push_back(std::make_pair(d1_begin->first, Diag1));
+      DiffList.push_back(std::make_pair(I->first, Diag1));
   }
 
   return PrintProblem(SourceMgr, DiffList.begin(), DiffList.end(), Msg);
