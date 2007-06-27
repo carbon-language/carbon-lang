@@ -1,7 +1,6 @@
-// RUN: clang -fsyntax-only -fno-caret-diagnostics %s 2>&1 | grep error | wc -l | grep 2 &&
-// RUN: clang -fsyntax-only -fno-caret-diagnostics -pedantic %s 2>&1 | grep warning | wc -l | grep 1
+// RUN: clang -parse-ast-check %s
 
-char ((((*X x  ] ))));   // two errors (start pos and end pos).
+char ((((*X x  ] )))); /* expected-error {{expected ')'}} \
+                          expected-error {{to match this '('}} */
 
-;   // pedantic warning.
-
+;   // expected-warning {{ISO C does not allow an extra ';' outside of a function}}

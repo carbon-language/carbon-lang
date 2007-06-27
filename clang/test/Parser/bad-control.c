@@ -1,9 +1,9 @@
-/* RUN: clang -fsyntax-only %s 2>&1 | grep error: | wc -l | grep 2
+/* RUN: clang -parse-ast-check %s
 */
 int foo() { 
-break;
+  break; /* expected-error {{'break' statement not in loop or switch statement}} */
 }
 
 int foo2() { 
-continue;
+  continue; /* expected-error {{'continue' statement not in loop statement}} */
 }
