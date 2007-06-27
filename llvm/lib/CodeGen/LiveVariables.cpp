@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/alloca.h"
 #include <algorithm>
@@ -424,9 +425,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   // nodes, which are treated as a special case).
   //
   MachineBasicBlock *Entry = MF->begin();
-  std::set<MachineBasicBlock*> Visited;
-  for (df_ext_iterator<MachineBasicBlock*> DFI = df_ext_begin(Entry, Visited),
-         E = df_ext_end(Entry, Visited); DFI != E; ++DFI) {
+  SmallPtrSet<MachineBasicBlock*,16> Visited;
+  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*,16> >
+         DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
+       DFI != E; ++DFI) {
     MachineBasicBlock *MBB = *DFI;
 
     // Mark live-in registers as live-in.
