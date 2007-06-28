@@ -42,7 +42,6 @@ static const char * const ExpectedWarnStr = "expected-warning";
 /// diagnostics. If so, then put them in a diagnostic list.
 /// 
 static void FindDiagnostics(const std::string &Comment,
-                            const TextDiagnosticBuffer &DiagClient,
                             DiagList &ExpectedDiags,
                             SourceManager &SourceMgr,
                             SourceLocation Pos,
@@ -86,8 +85,7 @@ static void FindDiagnostics(const std::string &Comment,
 /// called later to report any discrepencies between the diagnostics expected
 /// and those actually seen.
 /// 
-static void ProcessFileDiagnosticChecking(const TextDiagnosticBuffer&DiagClient,
-                                          Preprocessor &PP,
+static void ProcessFileDiagnosticChecking(Preprocessor &PP,
                                           unsigned MainFileID,
                                           DiagList &ExpectedErrors,
                                           DiagList &ExpectedWarnings) {
@@ -105,12 +103,12 @@ static void ProcessFileDiagnosticChecking(const TextDiagnosticBuffer&DiagClient,
       std::string Comment = PP.getSpelling(Tok);
 
       // Find all expected errors
-      FindDiagnostics(Comment, DiagClient, ExpectedErrors,PP.getSourceManager(),
+      FindDiagnostics(Comment, ExpectedErrors,PP.getSourceManager(),
                       Tok.getLocation(), ExpectedErrStr);
 
       // Find all expected warnings
-      FindDiagnostics(Comment, DiagClient, ExpectedWarnings,
-                      PP.getSourceManager(),Tok.getLocation(), ExpectedWarnStr);
+      FindDiagnostics(Comment, ExpectedWarnings, PP.getSourceManager(),
+                      Tok.getLocation(), ExpectedWarnStr);
     }
   } while (Tok.getKind() != tok::eof);
 
@@ -223,14 +221,13 @@ static bool ReportCheckingResults(const TextDiagnosticBuffer &DiagClient,
 
 /// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
 bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
-  const TextDiagnosticBuffer &Diags =
-    static_cast<const TextDiagnosticBuffer&>(PP.getDiagnostics().getClient());
-
   // Gather the set of expected diagnostics.
   DiagList ExpectedErrors, ExpectedWarnings;
-  ProcessFileDiagnosticChecking(Diags, PP, MainFileID, ExpectedErrors,
+  ProcessFileDiagnosticChecking(PP, MainFileID, ExpectedErrors,
                                 ExpectedWarnings);
     
+  const TextDiagnosticBuffer &Diags =
+    static_cast<const TextDiagnosticBuffer&>(PP.getDiagnostics().getClient());
   
   return ReportCheckingResults(Diags, ExpectedErrors,
                                ExpectedWarnings, PP.getSourceManager());
