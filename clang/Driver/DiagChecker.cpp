@@ -19,6 +19,7 @@
 using namespace clang;
 
 typedef TextDiagnosticBuffer::DiagList DiagList;
+typedef TextDiagnosticBuffer::const_iterator const_diag_iterator;
 
 // USING THE DIAGNOSTIC CHECKER:
 //
@@ -79,16 +80,11 @@ static void FindDiagnostics(const std::string &Comment,
   }
 }
 
-/// ProcessFileDiagnosticChecking - This lexes the file and finds all of the
-/// expected errors and warnings. It then does the actual parsing of the
-/// program. The parsing will report its diagnostics, and a function can be
-/// called later to report any discrepencies between the diagnostics expected
-/// and those actually seen.
-/// 
-static void ProcessFileDiagnosticChecking(Preprocessor &PP,
-                                          unsigned MainFileID,
-                                          DiagList &ExpectedErrors,
-                                          DiagList &ExpectedWarnings) {
+/// FindExpectedDiags - Lex the file to finds all of the expected errors and
+/// warnings.
+static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
+                              DiagList &ExpectedErrors,
+                              DiagList &ExpectedWarnings) {
   // Return comments as tokens, this is how we find expected diagnostics.
   PP.SetCommentRetentionState(true, true);
 
@@ -112,12 +108,8 @@ static void ProcessFileDiagnosticChecking(Preprocessor &PP,
     }
   } while (Tok.getKind() != tok::eof);
 
-  // Parsing the specified input file.
   PP.SetCommentRetentionState(false, false);
-  BuildASTs(PP, MainFileID, false);
 }
-
-typedef TextDiagnosticBuffer::const_iterator const_diag_iterator;
 
 /// PrintProblem - This takes a diagnostic map of the delta between expected and
 /// seen diagnostics. If there's anything in it, then something unexpected
@@ -175,14 +167,17 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
   return PrintProblem(SourceMgr, DiffList.begin(), DiffList.end(), Msg);
 }
 
-/// ReportCheckingResults - This compares the expected results to those that
+/// CheckResults - This compares the expected results to those that
 /// were actually reported. It emits any discrepencies. Return "true" if there
 /// were problems. Return "false" otherwise.
 /// 
-static bool ReportCheckingResults(const TextDiagnosticBuffer &DiagClient,
-                                  const DiagList &ExpectedErrors,
-                                  const DiagList &ExpectedWarnings,
-                                  SourceManager &SourceMgr) {
+static bool CheckResults(Preprocessor &PP,
+                         const DiagList &ExpectedErrors,
+                         const DiagList &ExpectedWarnings) {
+  const TextDiagnosticBuffer &Diags =
+    static_cast<const TextDiagnosticBuffer&>(PP.getDiagnostics().getClient());
+  SourceManager &SourceMgr = PP.getSourceManager();
+
   // We want to capture the delta between what was expected and what was
   // seen.
   //
@@ -193,12 +188,12 @@ static bool ReportCheckingResults(const TextDiagnosticBuffer &DiagClient,
   // See if there were errors that were expected but not seen.
   HadProblem |= CompareDiagLists(SourceMgr,
                                  ExpectedErrors.begin(), ExpectedErrors.end(),
-                                 DiagClient.err_begin(), DiagClient.err_end(),
+                                 Diags.err_begin(), Diags.err_end(),
                                  "Errors expected but not seen:");
 
   // See if there were errors that were seen but not expected.
   HadProblem |= CompareDiagLists(SourceMgr,
-                                 DiagClient.err_begin(), DiagClient.err_end(),
+                                 Diags.err_begin(), Diags.err_end(),
                                  ExpectedErrors.begin(), ExpectedErrors.end(),
                                  "Errors seen but not expected:");
 
@@ -206,12 +201,12 @@ static bool ReportCheckingResults(const TextDiagnosticBuffer &DiagClient,
   HadProblem |= CompareDiagLists(SourceMgr,
                                  ExpectedWarnings.begin(),
                                  ExpectedWarnings.end(),
-                                 DiagClient.warn_begin(), DiagClient.warn_end(),
+                                 Diags.warn_begin(), Diags.warn_end(),
                                  "Warnings expected but not seen:");
 
   // See if there were warnings that were seen but not expected.
   HadProblem |= CompareDiagLists(SourceMgr,
-                                 DiagClient.warn_begin(), DiagClient.warn_end(),
+                                 Diags.warn_begin(), Diags.warn_end(),
                                  ExpectedWarnings.begin(),
                                  ExpectedWarnings.end(),
                                  "Warnings seen but not expected:");
@@ -223,14 +218,13 @@ static bool ReportCheckingResults(const TextDiagnosticBuffer &DiagClient,
 bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
   // Gather the set of expected diagnostics.
   DiagList ExpectedErrors, ExpectedWarnings;
-  ProcessFileDiagnosticChecking(PP, MainFileID, ExpectedErrors,
-                                ExpectedWarnings);
-    
-  const TextDiagnosticBuffer &Diags =
-    static_cast<const TextDiagnosticBuffer&>(PP.getDiagnostics().getClient());
+  FindExpectedDiags(PP, MainFileID, ExpectedErrors, ExpectedWarnings);
   
-  return ReportCheckingResults(Diags, ExpectedErrors,
-                               ExpectedWarnings, PP.getSourceManager());
+  // Parse the specified input file.
+  BuildASTs(PP, MainFileID, false);
+
+  // Check that the expected diagnostics occurred.
+  return CheckResults(PP, ExpectedErrors, ExpectedWarnings);
 }
 
 
