@@ -67,6 +67,7 @@ public:
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
   //
+  const DiagnosticClient &getClient() const { return Client; };
 
   /// setWarningsAsErrors - When set to true, any warnings reported are issued
   /// as errors.
