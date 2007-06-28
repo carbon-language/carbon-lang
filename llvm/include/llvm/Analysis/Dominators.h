@@ -185,7 +185,7 @@ protected:
                                const DomTreeNode *B) const {
     const DomTreeNode *IDom;
     if (A == 0 || B == 0) return false;
-    while ((IDom = B->getIDom()) != 0 && IDom != A)
+    while ((IDom = B->getIDom()) != 0 && IDom != A && IDom != B)
       B = IDom;   // Walk up the tree
     return IDom != 0;
   }
@@ -244,6 +244,9 @@ protected:
   DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
     DomTreeNode *IDomNode = getNode(DomBB);
+    // Check if BB dominates itself.
+    //if (!IDomNode && BB == DomBB) 
+    //  IDomNode = BB;
     assert(IDomNode && "Not immediate dominator specified for block!");
     DFSInfoValid = false;
     return DomTreeNodes[BB] = 
