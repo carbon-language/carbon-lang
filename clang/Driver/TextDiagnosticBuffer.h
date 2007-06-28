@@ -28,19 +28,13 @@ public:
   typedef DiagList::iterator iterator;
   typedef DiagList::const_iterator const_iterator;
 private:
-  DiagList Errors;
-  DiagList Warnings;
+  DiagList Errors, Warnings;
 public:
-  TextDiagnosticBuffer(SourceManager &sourceMgr)
-    : TextDiagnostics(sourceMgr) {}
+  TextDiagnosticBuffer(SourceManager &SM) : TextDiagnostics(SM) {}
 
-  iterator err_begin()              { return Errors.begin(); }
-  iterator err_end()                { return Errors.end(); }
   const_iterator err_begin() const  { return Errors.begin(); }
   const_iterator err_end() const    { return Errors.end(); }
 
-  iterator warn_begin()             { return Warnings.begin(); }
-  iterator warn_end()               { return Warnings.end(); }
   const_iterator warn_begin() const { return Warnings.begin(); }
   const_iterator warn_end() const   { return Warnings.end(); }
 
