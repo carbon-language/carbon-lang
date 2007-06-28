@@ -698,11 +698,11 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
                                        const std::string &InFile,
                                        SourceManager &SourceMgr,
                                        HeaderSearch &HeaderInfo,
-                                       const LangOptions &LangInfo) {
+                                       const LangOptions &LangInfo,
+                                       std::vector<char> &PrologMacros) {
   FileManager &FileMgr = HeaderInfo.getFileMgr();
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
-  std::vector<char> PrologMacros;
   InitializePredefinedMacros(PP, PrologMacros);
   
   // Read any files specified by -imacros or -include.
@@ -731,7 +731,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
 
   // Memory buffer must end with a null byte!
   PrologMacros.push_back(0);
-    
+
   llvm::MemoryBuffer *SB = 
     llvm::MemoryBuffer::getMemBuffer(&PrologMacros.front(),&PrologMacros.back(),
                                      "<predefines>");
@@ -749,7 +749,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
 
   // Once we've read this, we're done.
   return MainFileID;
-}  
+}
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
@@ -854,8 +854,10 @@ PerformNormalFileProcessing(SourceManager &SourceMgr,
     Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
     OurDiagnosticClient.setPreprocessor(PP);
     const std::string &InFile = InputFilenames[i];
+    std::vector<char> PrologMacros;
     unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
-                                                 HeaderInfo, LangInfo);
+                                                 HeaderInfo, LangInfo,
+                                                 PrologMacros);
 
     if (!MainFileID) continue;
 
@@ -910,8 +912,10 @@ PerformDiagnosticChecking(SourceManager &SourceMgr,
     Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
     OurDiagnosticClient.setPreprocessor(PP);
     const std::string &InFile = InputFilenames[i];
+    std::vector<char> PrologMacros;
     unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
-                                                 HeaderInfo, LangInfo);
+                                                 HeaderInfo, LangInfo,
+                                                 PrologMacros);
 
     if (!MainFileID) continue;
 
