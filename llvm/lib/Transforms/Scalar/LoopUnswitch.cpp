@@ -35,6 +35,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -82,6 +83,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
+      AU.addPreserved<DominatorTree>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LCSSAID);
@@ -108,7 +110,12 @@ namespace {
 
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
                                               Constant *Val, bool isEqual);
-    
+
+    void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
+                                        BasicBlock *TrueDest, 
+                                        BasicBlock *FalseDest,
+                                        Instruction *InsertPt);
+
     void SimplifyCode(std::vector<Instruction*> &Worklist);
     void RemoveBlockIfDead(BasicBlock *BB,
                            std::vector<Instruction*> &Worklist);
@@ -135,7 +142,7 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
       return 0;
   if (isa<Argument>(Cond))
     return 0;
-  
+
   // TODO: Handle: br (VARIANT|INVARIANT).
   // TODO: Hoist simple expressions out of loops.
   if (L->isLoopInvariant(Cond)) return Cond;
@@ -413,6 +420,9 @@ BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *Old, Instruction *SplitPt) {
   if (Loop *L = LI->getLoopFor(Old))
     L->addBasicBlockToLoop(New, *LI);
 
+  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>())
+    DT->addNewBlock(New, Old);
+    
   return New;
 }
 
@@ -429,30 +439,8 @@ BasicBlock *LoopUnswitch::SplitEdge(BasicBlock *BB, BasicBlock *Succ) {
   }
   
   // If this is a critical edge, let SplitCriticalEdge do it.
-  Loop *OrigDestBBL = LI->getLoopFor(BB->getTerminator()->getSuccessor(SuccNum));
-  if (SplitCriticalEdge(BB->getTerminator(), SuccNum)) {
-    BasicBlock *NewBB = LatchTerm->getSuccessor(SuccNum);
-
-    Loop *BBL = LI->getLoopFor(BB);
-    if (!BBL || !OrigDestBBL)
-      return NewBB;
-
-    // If edge is inside a loop then NewBB is part of same loop.
-    if (BBL == OrigDestBBL)
-      BBL->addBasicBlockToLoop(NewBB, *LI);
-    // If edge is entering loop then NewBB is part of outer loop.
-    else if (BBL->contains(OrigDestBBL->getHeader()))
-      BBL->addBasicBlockToLoop(NewBB, *LI);
-    // If edge is from an inner loop to outer loop then NewBB is part
-    // of outer loop.
-    else if (OrigDestBBL->contains(BBL->getHeader()))
-      OrigDestBBL->addBasicBlockToLoop(NewBB, *LI);
-    // Else edge is connecting two loops and NewBB is part of their parent loop
-    else if (Loop *PL = OrigDestBBL->getParentLoop())
-      PL->addBasicBlockToLoop(NewBB, *LI);
-
-    return NewBB;
-  }
+  if (SplitCriticalEdge(BB->getTerminator(), SuccNum, this))
+    return LatchTerm->getSuccessor(SuccNum);
 
   // If the edge isn't critical, then BB has a single successor or Succ has a
   // single pred.  Split the block.
@@ -486,6 +474,26 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
+// CloneDomInfo - NewBB is cloned from Orig basic block. Now clone Dominator Info.
+// If Orig is in Loop then find and use Orig dominator's cloned block as NewBB 
+// dominator.
+void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L, 
+                  DominatorTree *DT, 
+                  DenseMap<const Value*, Value*> &VM) {
+
+  DomTreeNode *OrigNode = DT->getNode(Orig);
+  if (!OrigNode)
+    return;
+  BasicBlock *OrigIDom = OrigNode->getBlock();
+  BasicBlock *NewIDom = OrigIDom;
+  if (L->contains(OrigIDom)) {
+    if (!DT->getNode(OrigIDom))
+      CloneDomInfo(NewIDom, OrigIDom, L, DT, VM);
+    NewIDom = cast<BasicBlock>(VM[OrigIDom]);
+  }
+  DT->addNewBlock(NewBB, OrigIDom);
+}
+
 /// CloneLoop - Recursively clone the specified loop and all of its children,
 /// mapping the blocks with the specified map.
 static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
@@ -510,10 +518,10 @@ static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
 /// EmitPreheaderBranchOnCondition - Emit a conditional branch on two values
 /// if LIC == Val, branch to TrueDst, otherwise branch to FalseDest.  Insert the
 /// code immediately before InsertPt.
-static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
-                                           BasicBlock *TrueDest,
-                                           BasicBlock *FalseDest,
-                                           Instruction *InsertPt) {
+void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
+                                                  BasicBlock *TrueDest,
+                                                  BasicBlock *FalseDest,
+                                                  Instruction *InsertPt) {
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
@@ -524,7 +532,15 @@ static void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
     std::swap(TrueDest, FalseDest);
 
   // Insert the new branch.
-  new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
+  BranchInst *BRI = new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
+
+  // Update dominator info.
+  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
+    // BranchVal is a new preheader so it dominates true and false destination
+    // loop headers.
+    DT->changeImmediateDominator(TrueDest, BRI->getParent());
+    DT->changeImmediateDominator(FalseDest, BRI->getParent());
+  }
 }
 
 
@@ -573,7 +589,6 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   RewriteLoopBodyWithConditionConstant(L, Cond, Val, false);
   ++NumTrivial;
 }
-
 
 /// VersionLoop - We determined that the loop is profitable to unswitch when LIC
 /// equal Val.  Split it into loop versions and test the condition outside of
@@ -666,6 +681,14 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     ValueMap[LoopBlocks[i]] = New;  // Keep the BB mapping.
   }
 
+  // Update dominator info
+  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>())
+    for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
+      BasicBlock *LBB = LoopBlocks[i];
+      BasicBlock *NBB = NewBlocks[i];
+      CloneDomInfo(NBB, LBB, L, DT, ValueMap);
+    }
+  
   // Splice the newly inserted blocks into the function right before the
   // original preheader.
   F->getBasicBlockList().splice(LoopBlocks[0], F->getBasicBlockList(),
