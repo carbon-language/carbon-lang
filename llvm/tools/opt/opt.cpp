@@ -14,10 +14,12 @@
 
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/CallGraphSCCPass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/PassNameParser.h"
@@ -93,6 +95,36 @@ AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
 
 // ---------- Define Printers for module and function passes ------------
 namespace {
+
+struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
+  static char ID;
+  const PassInfo *PassToPrint;
+  CallGraphSCCPassPrinter(const PassInfo *PI) : 
+    CallGraphSCCPass((intptr_t)&ID), PassToPrint(PI) {}
+
+  virtual bool runOnSCC(const std::vector<CallGraphNode *>&SCC) {
+    if (!Quiet) {
+      cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+
+      for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+        Function *F = SCC[i]->getFunction();
+        if (F) 
+          getAnalysisID<Pass>(PassToPrint).print(cout, F->getParent());
+      }
+    }
+    // Get and print pass...
+    return false;
+  }
+  
+  virtual const char *getPassName() const { return "'Pass' Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+char CallGraphSCCPassPrinter::ID = 0;
 
 struct ModulePassPrinter : public ModulePass {
   static char ID;
@@ -342,6 +374,8 @@ int main(int argc, char **argv) {
             Passes.add(new BasicBlockPassPrinter(PassInf));
           else if (dynamic_cast<FunctionPass*>(P))
             Passes.add(new FunctionPassPrinter(PassInf));
+          else if (dynamic_cast<CallGraphSCCPass*>(P))
+            Passes.add(new CallGraphSCCPassPrinter(PassInf));
           else
             Passes.add(new ModulePassPrinter(PassInf));
         }
