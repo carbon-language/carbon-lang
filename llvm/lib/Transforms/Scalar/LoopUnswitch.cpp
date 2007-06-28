@@ -128,6 +128,13 @@ LoopPass *llvm::createLoopUnswitchPass(bool Os) {
 static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
   // Constants should be folded, not unswitched on!
   if (isa<Constant>(Cond)) return false;
+
+  // If cond is not in loop then it is not suitable.
+  if (Instruction *I = dyn_cast<Instruction>(Cond))
+    if (!L->contains(I->getParent()))
+      return 0;
+  if (isa<Argument>(Cond))
+    return 0;
   
   // TODO: Handle: br (VARIANT|INVARIANT).
   // TODO: Hoist simple expressions out of loops.
