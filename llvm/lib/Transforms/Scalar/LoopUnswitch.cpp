@@ -136,13 +136,6 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
   // Constants should be folded, not unswitched on!
   if (isa<Constant>(Cond)) return false;
 
-  // If cond is not in loop then it is not suitable.
-  if (Instruction *I = dyn_cast<Instruction>(Cond))
-    if (!L->contains(I->getParent()))
-      return 0;
-  if (isa<Argument>(Cond))
-    return 0;
-
   // TODO: Handle: br (VARIANT|INVARIANT).
   // TODO: Hoist simple expressions out of loops.
   if (L->isLoopInvariant(Cond)) return Cond;
@@ -173,6 +166,8 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   // loop.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
+    if (*I == L->getHeader())
+      continue;
     TerminatorInst *TI = (*I)->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
       // If this isn't branching on an invariant condition, we can't unswitch
@@ -491,7 +486,11 @@ void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L,
       CloneDomInfo(NewIDom, OrigIDom, L, DT, VM);
     NewIDom = cast<BasicBlock>(VM[OrigIDom]);
   }
-  DT->addNewBlock(NewBB, OrigIDom);
+  if (NewBB == NewIDom) {
+    DT->addNewBlock(NewBB, OrigIDom);
+    DT->changeImmediateDominator(NewBB, NewIDom);
+  } else
+    DT->addNewBlock(NewBB, NewIDom);
 }
 
 /// CloneLoop - Recursively clone the specified loop and all of its children,
