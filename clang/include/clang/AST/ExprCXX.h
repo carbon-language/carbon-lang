@@ -38,6 +38,10 @@ namespace clang {
 
     Opcode getOpcode() const { return Op; }
     virtual void visit(StmtVisitor &Visitor);
+    static bool classof(const Stmt *T) { 
+      return T->getStmtClass() == CXXCastExprClass;
+    }
+    static bool classof(const CXXCastExpr *) { return true; }
   private:
     Opcode Op;
   };
@@ -56,6 +60,10 @@ namespace clang {
     virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
       
     virtual void visit(StmtVisitor &Visitor);
+    static bool classof(const Stmt *T) { 
+      return T->getStmtClass() == CXXBoolLiteralExprClass;
+    }
+    static bool classof(const CXXBoolLiteralExpr *) { return true; }
   };
 
 }  // end namespace clang
