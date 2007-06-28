@@ -97,6 +97,8 @@ II. Usage of clang driver:
  * -parse-ast-print prints most expression and statements nodes, but some
    minor things are missing.
 
+ * -parse-ast-check checks that diagnostic messages that are expected are
+   reported and that those which are reported are expected.
 
 III. Current advantages over GCC:
 
