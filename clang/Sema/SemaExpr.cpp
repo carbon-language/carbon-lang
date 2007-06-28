@@ -1158,97 +1158,95 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   assert((lhs != 0) && "ParseBinOp(): missing left expression");
   assert((rhs != 0) && "ParseBinOp(): missing right expression");
 
-  QualType result;
+  QualType ResultTy;  // Result type of the binary operator.
+  QualType CompTy;    // Computation type for compound assignments (e.g. '+=')
   
   switch (Opc) {
   default:
     assert(0 && "Unknown binary expr!");
   case BinaryOperator::Assign:
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, QualType());
+    ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, QualType());
     break;
   case BinaryOperator::Mul: 
   case BinaryOperator::Div:
-    result = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::Rem:
-    result = CheckRemainderOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckRemainderOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::Add:
-    result = CheckAdditionOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckAdditionOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::Sub:
-    result = CheckSubtractionOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckSubtractionOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::Shl: 
   case BinaryOperator::Shr:
-    result = CheckShiftOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckShiftOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::LE:
   case BinaryOperator::LT:
   case BinaryOperator::GE:
   case BinaryOperator::GT:
-    result = CheckRelationalOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckRelationalOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::EQ:
   case BinaryOperator::NE:
-    result = CheckEqualityOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckEqualityOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::And:
   case BinaryOperator::Xor:
   case BinaryOperator::Or:
-    result = CheckBitwiseOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckBitwiseOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::LAnd:
   case BinaryOperator::LOr:
-    result = CheckLogicalOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckLogicalOperands(lhs, rhs, TokLoc);
     break;
   case BinaryOperator::MulAssign:
   case BinaryOperator::DivAssign:
-    result = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
-    if (result.isNull())
-      return true;
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
+    CompTy = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::RemAssign:
-    result = CheckRemainderOperands(lhs, rhs, TokLoc);
-    if (result.isNull())
-      return true;
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
+    CompTy = CheckRemainderOperands(lhs, rhs, TokLoc);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::AddAssign:
-    result = CheckAdditionOperands(lhs, rhs, TokLoc);
-    if (result.isNull())
-      return true;
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
+    CompTy = CheckAdditionOperands(lhs, rhs, TokLoc);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::SubAssign:
-    result = CheckSubtractionOperands(lhs, rhs, TokLoc);
-    if (result.isNull())
-      return true;
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
+    CompTy = CheckSubtractionOperands(lhs, rhs, TokLoc);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::ShlAssign:
   case BinaryOperator::ShrAssign:
-    result = CheckShiftOperands(lhs, rhs, TokLoc);
-    if (result.isNull())
-      return true;
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
+    CompTy = CheckShiftOperands(lhs, rhs, TokLoc);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::AndAssign:
   case BinaryOperator::XorAssign:
   case BinaryOperator::OrAssign:
-    result = CheckBitwiseOperands(lhs, rhs, TokLoc);
-    if (result.isNull())
-      return true;
-    result = CheckAssignmentOperands(lhs, rhs, TokLoc, result);
+    CompTy = CheckBitwiseOperands(lhs, rhs, TokLoc);
+    if (!CompTy.isNull())
+      ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::Comma:
-    result = CheckCommaOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckCommaOperands(lhs, rhs, TokLoc);
     break;
   }
-  if (result.isNull())
+  if (ResultTy.isNull())
     return true;
-  return new BinaryOperator(lhs, rhs, Opc, result);
+  if (CompTy.isNull())
+    return new BinaryOperator(lhs, rhs, Opc, ResultTy);
+  else
+    return new ArithAssignBinaryOperator(lhs, rhs, Opc, ResultTy, CompTy);
 }
 
 // Unary Operators.  'Tok' is the token for the operator.
