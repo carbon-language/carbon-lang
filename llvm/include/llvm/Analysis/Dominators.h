@@ -244,9 +244,6 @@ protected:
   DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
     assert(getNode(BB) == 0 && "Block already in dominator tree!");
     DomTreeNode *IDomNode = getNode(DomBB);
-    // Check if BB dominates itself.
-    //if (!IDomNode && BB == DomBB) 
-    //  IDomNode = BB;
     assert(IDomNode && "Not immediate dominator specified for block!");
     DFSInfoValid = false;
     return DomTreeNodes[BB] = 
