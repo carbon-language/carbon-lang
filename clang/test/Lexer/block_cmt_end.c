@@ -8,25 +8,20 @@
 
 /* abc
 
-ends with normal escaped newline:
-*\  
-/ \
-/* expected-warning {{escaped newline between}} \
-   expected-warning {{backslash and newline separated by space}} */
+next comment ends with normal escaped newline:
+*/
+
+/* expected-warning {{escaped newline}} expected-warning {{backslash and newline}}  *\  
+/
 
 bar
 
 /* xyz
 
+next comment ends with a trigraph escaped newline: */
 
-ends with a trigraph escaped newline:
-*??/    
-/ \
-/* expected-warning {{escaped newline between}} \
-   expected-warning {{backslash and newline separated by space}} \
-   expected-warning {{trigraph ends block comment}} */
+/* expected-warning {{escaped newline between}}   expected-warning {{backslash and newline separated by space}}    expected-warning {{trigraph ends block comment}}   *??/    
+/
 
-foo \
-/* expected-error \
-   {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}} */
+foo /* expected-error {{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}} */
 
