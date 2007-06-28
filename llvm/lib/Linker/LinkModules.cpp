@@ -561,6 +561,31 @@ static bool LinkGlobals(Module *Dest, Module *Src,
   return false;
 }
 
+// LinkAlias - Loop through the alias in the src module and link them into the
+// dest module.
+static bool LinkAlias(Module *Dest, const Module *Src, std::string *Err) {
+  // Loop over all alias in the src module
+  for (Module::const_alias_iterator I = Src->alias_begin(),
+         E = Src->alias_end(); I != E; ++I) {
+    const GlobalAlias *GA = I;
+
+    GlobalValue *NewAliased = NULL;
+    const GlobalValue *Aliased = GA->getAliasedGlobal();
+    if (isa<GlobalVariable>(*Aliased))
+      NewAliased = Dest->getGlobalVariable(Aliased->getName());
+    else if (isa<Function>(*Aliased))
+      NewAliased = Dest->getFunction(Aliased->getName());
+    // FIXME: we should handle the bitcast alias.
+    assert(NewAliased && "Can't find the aliased GV.");
+
+    GlobalAlias *NewGA = new GlobalAlias(GA->getType()->getElementType(),
+                                         GA->getLinkage(), GA->getName(),
+                                         NewAliased, Dest);
+    CopyGVAttributes(NewGA, GA);
+  }
+  return false;
+}
+
 
 // LinkGlobalInits - Update the initializers in the Dest module now that all
 // globals that may be referenced are in Dest.
@@ -1004,6 +1029,9 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
 
   // If there were any appending global variables, link them together now.
   if (LinkAppendingVars(Dest, AppendingVars, ErrorMsg)) return true;
+
+  // If there were any alias, link them now.
+  if (LinkAlias(Dest, Src, ErrorMsg)) return true;
 
   // If the source library's module id is in the dependent library list of the
   // destination library, remove it since that module is now linked in.
