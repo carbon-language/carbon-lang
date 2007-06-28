@@ -564,8 +564,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_dynamic_cast:
   case tok::kw_reinterpret_cast:
   case tok::kw_static_cast:
-    Res = ParseCXXCasts();
-    return Res;
+    return ParseCXXCasts();
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
