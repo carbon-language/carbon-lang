@@ -253,7 +253,7 @@ namespace ISD {
     /// CONCAT_VECTORS(VECTOR0, VECTOR1, ...) - Given a number of values of
     /// vector type with the same length and element type, this produces a
     /// concatenated vector result value, with length equal to the sum of the
-    /// input vectors.
+    /// lengths of the input vectors.
     CONCAT_VECTORS,
     
     /// EXTRACT_SUBVECTOR(VECTOR, IDX) - Returns a subvector from VECTOR (an

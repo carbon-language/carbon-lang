@@ -212,12 +212,13 @@ public:
   /// Similarly, MVT::v2i64 turns into 4 MVT::i32 values with both PPC and X86.
   ///
   /// This method returns the number of registers needed, and the VT for each
-  /// register.  It also returns the VT of the VectorType elements before they
-  /// are promoted/expanded.
+  /// register.  It also returns the VT and quantity of the intermediate values
+  /// before they are promoted/expanded.
   ///
   unsigned getVectorTypeBreakdown(MVT::ValueType VT, 
-                                  MVT::ValueType &ElementVT,
-                                  MVT::ValueType &LegalElementVT) const;
+                                  MVT::ValueType &IntermediateVT,
+                                  unsigned &NumIntermediates,
+                                  MVT::ValueType &RegisterVT) const;
   
   typedef std::vector<double>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
@@ -360,6 +361,18 @@ public:
     return VT == MVT::iPTR ? PointerTy : VT;
   }
 
+  /// getRegisterType - Return the type of registers that this ValueType will
+  /// eventually require.
+  MVT::ValueType getRegisterType(MVT::ValueType VT) const {
+    if (!MVT::isExtendedVT(VT))
+      return RegisterTypeForVT[VT];
+           
+    MVT::ValueType VT1, RegisterVT;
+    unsigned NumIntermediates;
+    (void)getVectorTypeBreakdown(VT, VT1, NumIntermediates, RegisterVT);
+    return RegisterVT;
+  }
+  
   /// getNumRegisters - Return the number of registers that this ValueType will
   /// eventually require.  This is one for any types promoted to live in larger
   /// registers, but may be more than one for types (like i64) that are split
@@ -369,7 +382,8 @@ public:
       return NumRegistersForVT[VT];
            
     MVT::ValueType VT1, VT2;
-    return getVectorTypeBreakdown(VT, VT1, VT2);
+    unsigned NumIntermediates;
+    return getVectorTypeBreakdown(VT, VT1, NumIntermediates, VT2);
   }
   
   /// hasTargetDAGCombine - If true, the target has custom DAG combine
@@ -1034,6 +1048,7 @@ private:
   /// each ValueType the target supports natively.
   TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
   unsigned char NumRegistersForVT[MVT::LAST_VALUETYPE];
+  MVT::ValueType RegisterTypeForVT[MVT::LAST_VALUETYPE];
 
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this

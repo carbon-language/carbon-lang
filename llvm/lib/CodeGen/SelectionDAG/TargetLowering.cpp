@@ -165,58 +165,19 @@ TargetLowering::TargetLowering(TargetMachine &tm)
 
 TargetLowering::~TargetLowering() {}
 
-/// setValueTypeAction - Set the action for a particular value type.  This
-/// assumes an action has not already been set for this value type.
-static void SetValueTypeAction(MVT::ValueType VT,
-                               TargetLowering::LegalizeAction Action,
-                               TargetLowering &TLI,
-                               MVT::ValueType *TransformToType,
-                        TargetLowering::ValueTypeActionImpl &ValueTypeActions) {
-  ValueTypeActions.setTypeAction(VT, Action);
-  if (Action == TargetLowering::Promote) {
-    MVT::ValueType PromoteTo;
-    if (VT == MVT::f32)
-      PromoteTo = MVT::f64;
-    else {
-      unsigned LargerReg = VT+1;
-      while (!TLI.isTypeLegal((MVT::ValueType)LargerReg)) {
-        ++LargerReg;
-        assert(MVT::isInteger((MVT::ValueType)LargerReg) &&
-               "Nothing to promote to??");
-      }
-      PromoteTo = (MVT::ValueType)LargerReg;
-    }
-
-    assert(MVT::isInteger(VT) == MVT::isInteger(PromoteTo) &&
-           MVT::isFloatingPoint(VT) == MVT::isFloatingPoint(PromoteTo) &&
-           "Can only promote from int->int or fp->fp!");
-    assert(VT < PromoteTo && "Must promote to a larger type!");
-    TransformToType[VT] = PromoteTo;
-  } else if (Action == TargetLowering::Expand) {
-    // f32 and f64 is each expanded to corresponding integer type of same size.
-    if (VT == MVT::f32)
-      TransformToType[VT] = MVT::i32;
-    else if (VT == MVT::f64)
-      TransformToType[VT] = MVT::i64;
-    else {
-      assert((MVT::isVector(VT) || MVT::isInteger(VT)) && VT > MVT::i8 &&
-             "Cannot expand this type: target must support SOME integer reg!");
-      // Expand to the next smaller integer type!
-      TransformToType[VT] = (MVT::ValueType)(VT-1);
-    }
-  }
-}
-
-
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
 void TargetLowering::computeRegisterProperties() {
   assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
 
-  // Everything defaults to one.
-  for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i)
+  // Everything defaults to needing one register.
+  for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i) {
     NumRegistersForVT[i] = 1;
+    RegisterTypeForVT[i] = TransformToType[i] = i;
+  }
+  // ...except isVoid, which doesn't need any registers.
+  NumRegistersForVT[MVT::isVoid] = 0;
 
   // Find the largest integer register class.
   unsigned LargestIntReg = MVT::i128;
@@ -225,57 +186,65 @@ void TargetLowering::computeRegisterProperties() {
 
   // Every integer value type larger than this largest register takes twice as
   // many registers to represent as the previous ValueType.
-  unsigned ExpandedReg = LargestIntReg; ++LargestIntReg;
-  for (++ExpandedReg; MVT::isInteger((MVT::ValueType)ExpandedReg);++ExpandedReg)
+  for (MVT::ValueType ExpandedReg = LargestIntReg + 1;
+       MVT::isInteger(ExpandedReg); ++ExpandedReg) {
     NumRegistersForVT[ExpandedReg] = 2*NumRegistersForVT[ExpandedReg-1];
-
-  // Inspect all of the ValueType's possible, deciding how to process them.
-  for (unsigned IntReg = MVT::i1; IntReg <= MVT::i128; ++IntReg)
-    // If we are expanding this type, expand it!
-    if (getNumRegisters((MVT::ValueType)IntReg) != 1)
-      SetValueTypeAction((MVT::ValueType)IntReg, Expand, *this, TransformToType,
-                         ValueTypeActions);
-    else if (!isTypeLegal((MVT::ValueType)IntReg))
-      // Otherwise, if we don't have native support, we must promote to a
-      // larger type.
-      SetValueTypeAction((MVT::ValueType)IntReg, Promote, *this,
-                         TransformToType, ValueTypeActions);
-    else
-      TransformToType[(MVT::ValueType)IntReg] = (MVT::ValueType)IntReg;
-
-  // If the target does not have native f64 support, expand it to i64. We will
-  // be generating soft float library calls. If the target does not have native
-  // support for f32, promote it to f64 if it is legal. Otherwise, expand it to
-  // i32.
-  if (isTypeLegal(MVT::f64))
-    TransformToType[MVT::f64] = MVT::f64;  
-  else {
-    NumRegistersForVT[MVT::f64] = NumRegistersForVT[MVT::i64];
-    SetValueTypeAction(MVT::f64, Expand, *this, TransformToType,
-                       ValueTypeActions);
+    RegisterTypeForVT[ExpandedReg] = LargestIntReg;
+    TransformToType[ExpandedReg] = ExpandedReg - 1;
+    ValueTypeActions.setTypeAction(ExpandedReg, Expand);
   }
-  if (isTypeLegal(MVT::f32))
-    TransformToType[MVT::f32] = MVT::f32;
-  else if (isTypeLegal(MVT::f64))
-    SetValueTypeAction(MVT::f32, Promote, *this, TransformToType,
-                       ValueTypeActions);
-  else {
-    NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
-    SetValueTypeAction(MVT::f32, Expand, *this, TransformToType,
-                       ValueTypeActions);
+
+  // Inspect all of the ValueType's smaller than the largest integer
+  // register to see which ones need promotion.
+  MVT::ValueType LegalIntReg = LargestIntReg;
+  for (MVT::ValueType IntReg = LargestIntReg - 1;
+       IntReg >= MVT::i1; --IntReg) {
+    if (isTypeLegal(IntReg)) {
+      LegalIntReg = IntReg;
+    } else {
+      RegisterTypeForVT[IntReg] = TransformToType[IntReg] = LegalIntReg;
+      ValueTypeActions.setTypeAction(IntReg, Promote);
+    }
+  }
+
+  // Decide how to handle f64. If the target does not have native f64 support,
+  // expand it to i64 and we will be generating soft float library calls.
+  if (!isTypeLegal(MVT::f64)) {
+    NumRegistersForVT[MVT::f64] = NumRegistersForVT[MVT::i64];
+    RegisterTypeForVT[MVT::f64] = RegisterTypeForVT[MVT::i64];
+    TransformToType[MVT::f64] = MVT::i64;
+    ValueTypeActions.setTypeAction(MVT::f64, Expand);
+  }
+
+  // Decide how to handle f32. If the target does not have native support for
+  // f32, promote it to f64 if it is legal. Otherwise, expand it to i32.
+  if (!isTypeLegal(MVT::f32)) {
+    if (isTypeLegal(MVT::f64)) {
+      NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::f64];
+      RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::f64];
+      TransformToType[MVT::f32] = MVT::f64;
+      ValueTypeActions.setTypeAction(MVT::f32, Promote);
+    } else {
+      NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
+      RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::i32];
+      TransformToType[MVT::f32] = MVT::i32;
+      ValueTypeActions.setTypeAction(MVT::f32, Expand);
+    }
   }
   
-  // Loop over all of the legal vector value types, specifying an identity type
-  // transformation.
-  for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
+  // Loop over all of the vector value types to see which need transformations.
+  for (MVT::ValueType i = MVT::FIRST_VECTOR_VALUETYPE;
        i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
-    if (isTypeLegal((MVT::ValueType)i))
-      TransformToType[i] = (MVT::ValueType)i;
-    else {
-      MVT::ValueType VT1, VT2;
-      NumRegistersForVT[i] = getVectorTypeBreakdown(i, VT1, VT2);
-      SetValueTypeAction(i, Expand, *this, TransformToType,
-                         ValueTypeActions);
+    if (!isTypeLegal(i)) {
+      MVT::ValueType IntermediateVT, RegisterVT;
+      unsigned NumIntermediates;
+      NumRegistersForVT[i] =
+        getVectorTypeBreakdown(i,
+                               IntermediateVT, NumIntermediates,
+                               RegisterVT);
+      RegisterTypeForVT[i] = RegisterVT;
+      TransformToType[i] = MVT::Other; // this isn't actually used
+      ValueTypeActions.setTypeAction(i, Expand);
     }
   }
 }
@@ -290,12 +259,13 @@ const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// Similarly, MVT::v2i64 turns into 4 MVT::i32 values with both PPC and X86.
 ///
 /// This method returns the number of registers needed, and the VT for each
-/// register.  It also returns the VT of the VectorType elements before they
-/// are promoted/expanded.
+/// register.  It also returns the VT and quantity of the intermediate values
+/// before they are promoted/expanded.
 ///
 unsigned TargetLowering::getVectorTypeBreakdown(MVT::ValueType VT, 
-                                                MVT::ValueType &ElementVT,
-                                      MVT::ValueType &LegalElementVT) const {
+                                                MVT::ValueType &IntermediateVT,
+                                                unsigned &NumIntermediates,
+                                      MVT::ValueType &RegisterVT) const {
   // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = MVT::getVectorNumElements(VT);
   MVT::ValueType EltTy = MVT::getVectorElementType(VT);
@@ -309,14 +279,16 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT::ValueType VT,
     NumElts >>= 1;
     NumVectorRegs <<= 1;
   }
+
+  NumIntermediates = NumVectorRegs;
   
   MVT::ValueType NewVT = MVT::getVectorType(EltTy, NumElts);
   if (!isTypeLegal(NewVT))
     NewVT = EltTy;
-  ElementVT = NewVT;
+  IntermediateVT = NewVT;
 
   MVT::ValueType DestVT = getTypeToTransformTo(NewVT);
-  LegalElementVT = DestVT;
+  RegisterVT = DestVT;
   if (DestVT < NewVT) {
     // Value is expanded, e.g. i64 -> i16.
     return NumVectorRegs*(MVT::getSizeInBits(NewVT)/MVT::getSizeInBits(DestVT));

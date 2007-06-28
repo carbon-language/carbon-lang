@@ -90,7 +90,7 @@ namespace {
   /// This is needed because values can be promoted into larger registers and
   /// expanded into multiple smaller registers than the value.
   struct VISIBILITY_HIDDEN RegsForValue {
-    /// Regs - This list hold the register (for legal and promoted values)
+    /// Regs - This list holds the register (for legal and promoted values)
     /// or register set (for expanded values) that the value should be assigned
     /// to.
     std::vector<unsigned> Regs;
@@ -117,15 +117,16 @@ namespace {
     /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
     /// this value and returns the result as a ValueVT value.  This uses 
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
+    /// If the Flag pointer is NULL, no flag is used.
     SDOperand getCopyFromRegs(SelectionDAG &DAG,
-                              SDOperand &Chain, SDOperand &Flag) const;
+                              SDOperand &Chain, SDOperand *Flag) const;
 
     /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
     /// specified value into the registers specified by this object.  This uses 
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
+    /// If the Flag pointer is NULL, no flag is used.
     void getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
-                       SDOperand &Chain, SDOperand &Flag,
-                       MVT::ValueType PtrVT) const;
+                       SDOperand &Chain, SDOperand *Flag) const;
     
     /// AddInlineAsmOperands - Add this value to the specified inlineasm node
     /// operand list.  This adds the code marker and includes the number of 
@@ -306,15 +307,8 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
 unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   MVT::ValueType VT = TLI.getValueType(V->getType());
   
-  unsigned NumRegisters;
-  MVT::ValueType RegisterVT;
-  if (MVT::isVector(VT)) {
-    MVT::ValueType ElementVT;
-    NumRegisters = TLI.getVectorTypeBreakdown(VT, ElementVT, RegisterVT);
-  } else {
-    RegisterVT = TLI.getTypeToTransformTo(VT);
-    NumRegisters = TLI.getNumRegisters(VT);
-  }
+  unsigned NumRegisters = TLI.getNumRegisters(VT);
+  MVT::ValueType RegisterVT = TLI.getRegisterType(VT);
 
   unsigned R = MakeReg(RegisterVT);
   for (unsigned i = 1; i != NumRegisters; ++i)
@@ -695,79 +689,17 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   unsigned InReg = FuncInfo.ValueMap[V];
   assert(InReg && "Value not in map!");
   
-  // If this type is not legal, make it so now.
-  if (!MVT::isVector(VT)) {
-    if (TLI.getTypeAction(VT) == TargetLowering::Expand) {
-      // Source must be expanded.  This input value is actually coming from the
-      // register pair InReg and InReg+1.
-      MVT::ValueType DestVT = TLI.getTypeToExpandTo(VT);
-      unsigned NumVals = TLI.getNumRegisters(VT);
-      N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
-      if (NumVals == 1)
-        N = DAG.getNode(ISD::BIT_CONVERT, VT, N);
-      else {
-        assert(NumVals == 2 && "1 to 4 (and more) expansion not implemented!");
-        N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
-                        DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
-      }
-    } else {
-      MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
-      N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
-      if (TLI.getTypeAction(VT) == TargetLowering::Promote) // Promotion case
-        N = MVT::isFloatingPoint(VT)
-          ? DAG.getNode(ISD::FP_ROUND, VT, N)
-          : DAG.getNode(ISD::TRUNCATE, VT, N);
-    }
-  } else {
-    // Otherwise, if this is a vector, make it available as a vector
-    // here.
-    MVT::ValueType ElementVT, LegalElementVT;
-    unsigned NE = TLI.getVectorTypeBreakdown(VT, ElementVT,
-                                             LegalElementVT);
+  MVT::ValueType RegisterVT = TLI.getRegisterType(VT);
+  unsigned NumRegs = TLI.getNumRegisters(VT);
 
-    // Build a BUILD_VECTOR or CONCAT_VECTORS with the input registers.
-    SmallVector<SDOperand, 8> Ops;
-    if (ElementVT == LegalElementVT) {
-      // If the value types are legal, just BUILD the CopyFromReg nodes.
-      for (unsigned i = 0; i != NE; ++i)
-        Ops.push_back(DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                         ElementVT));
-    } else if (ElementVT < LegalElementVT) {
-      // If the register was promoted, use TRUNCATE or FP_ROUND as appropriate.
-      for (unsigned i = 0; i != NE; ++i) {
-        SDOperand Op = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                          LegalElementVT);
-        if (MVT::isFloatingPoint(ElementVT))
-          Op = DAG.getNode(ISD::FP_ROUND, ElementVT, Op);
-        else
-          Op = DAG.getNode(ISD::TRUNCATE, ElementVT, Op);
-        Ops.push_back(Op);
-      }
-    } else {
-      // If the register was expanded, use BUILD_PAIR.
-      assert((NE & 1) == 0 && "Must expand into a multiple of 2 elements!");
-      for (unsigned i = 0; i != NE; ++i) {
-        SDOperand Op0 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                           LegalElementVT);
-        SDOperand Op1 = DAG.getCopyFromReg(DAG.getEntryNode(), InReg++, 
-                                           LegalElementVT);
-        Ops.push_back(DAG.getNode(ISD::BUILD_PAIR, ElementVT, Op0, Op1));
-      }
-    }
-    
-    if (MVT::isVector(ElementVT)) {
-      N = DAG.getNode(ISD::CONCAT_VECTORS,
-                      MVT::getVectorType(MVT::getVectorElementType(ElementVT),
-                                         NE * MVT::getVectorNumElements(ElementVT)),
-                      &Ops[0], Ops.size());
-    } else {
-      N = DAG.getNode(ISD::BUILD_VECTOR,
-                      MVT::getVectorType(ElementVT, NE),
-                      &Ops[0], Ops.size());
-    }
-  }
-  
-  return N;
+  std::vector<unsigned> Regs(NumRegs);
+  for (unsigned i = 0; i != NumRegs; ++i)
+    Regs[i] = InReg + i;
+
+  RegsForValue RFV(Regs, RegisterVT, VT);
+  SDOperand Chain = DAG.getEntryNode();
+
+  return RFV.getCopyFromRegs(DAG, Chain, NULL);
 }
 
 
@@ -2819,88 +2751,239 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 }
 
 
-SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
-                                        SDOperand &Chain, SDOperand &Flag)const{
-  SDOperand Val = DAG.getCopyFromReg(Chain, Regs[0], RegVT, Flag);
-  Chain = Val.getValue(1);
-  Flag  = Val.getValue(2);
-  
-  // If the result was expanded, copy from the top part.
-  if (Regs.size() > 1) {
-    assert(Regs.size() == 2 &&
-           "Cannot expand to more than 2 elts yet!");
-    SDOperand Hi = DAG.getCopyFromReg(Chain, Regs[1], RegVT, Flag);
-    Chain = Hi.getValue(1);
-    Flag  = Hi.getValue(2);
-    if (DAG.getTargetLoweringInfo().isLittleEndian())
+/// getCopyFromParts - Create a value that contains the
+/// specified legal parts combined into the value they represent.
+static SDOperand getCopyFromParts(SelectionDAG &DAG,
+                                  const SDOperand *Parts,
+                                  unsigned NumParts,
+                                  MVT::ValueType PartVT,
+                                  MVT::ValueType ValueVT,
+                                  ISD::NodeType AssertOp = ISD::DELETED_NODE) {
+  if (!MVT::isVector(ValueVT) || NumParts == 1) {
+    SDOperand Val = Parts[0];
+
+    // If the value was expanded, copy from the top part.
+    if (NumParts > 1) {
+      assert(NumParts == 2 &&
+             "Cannot expand to more than 2 elts yet!");
+      SDOperand Hi = Parts[1];
       return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
-    else
-      return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Hi, Val);
+    }
+
+    // Otherwise, if the value was promoted or extended, truncate it to the
+    // appropriate type.
+    if (PartVT == ValueVT)
+      return Val;
+  
+    if (MVT::isVector(PartVT)) {
+      assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
+      return DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+    }
+  
+    if (MVT::isInteger(PartVT) &&
+        MVT::isInteger(ValueVT)) {
+      if (ValueVT < PartVT) {
+        // For a truncate, see if we have any information to
+        // indicate whether the truncated bits will always be
+        // zero or sign-extension.
+        if (AssertOp != ISD::DELETED_NODE)
+          Val = DAG.getNode(AssertOp, PartVT, Val,
+                            DAG.getValueType(ValueVT));
+        return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+      } else {
+        return DAG.getNode(ISD::ANY_EXTEND, ValueVT, Val);
+      }
+    }
+  
+    if (MVT::isFloatingPoint(PartVT) &&
+        MVT::isFloatingPoint(ValueVT))
+      return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
+
+    if (MVT::getSizeInBits(PartVT) == 
+        MVT::getSizeInBits(ValueVT))
+      return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
+
+    assert(0 && "Unknown mismatch!");
   }
 
-  // Otherwise, if the return value was promoted or extended, truncate it to the
-  // appropriate type.
-  if (RegVT == ValueVT)
-    return Val;
-  
-  if (MVT::isVector(RegVT)) {
-    assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
-    return DAG.getNode(ISD::BIT_CONVERT, RegVT, Val);
+  // Handle a multi-element vector.
+  MVT::ValueType IntermediateVT, RegisterVT;
+  unsigned NumIntermediates;
+  unsigned NumRegs =
+    DAG.getTargetLoweringInfo()
+      .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
+                              RegisterVT);
+
+  assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
+  assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
+  assert(RegisterVT == Parts[0].getValueType() &&
+         "Part type doesn't match part!");
+
+  // Assemble the parts into intermediate operands.
+  SmallVector<SDOperand, 8> Ops(NumIntermediates);
+  if (NumIntermediates == NumParts) {
+    // If the register was not expanded, truncate or copy the value,
+    // as appropriate.
+    for (unsigned i = 0; i != NumParts; ++i)
+      Ops[i] = getCopyFromParts(DAG, &Parts[i], 1, PartVT, IntermediateVT);
+  } else if (NumParts > 0) {
+    // If the intermediate type was expanded, build the intermediate operands
+    // from the parts.
+    assert(NumIntermediates % NumParts == 0 &&
+           "Must expand into a divisible number of parts!");
+    unsigned Factor = NumIntermediates / NumParts;
+    for (unsigned i = 0; i != NumIntermediates; ++i)
+      Ops[i] = getCopyFromParts(DAG, &Parts[i * Factor], Factor,
+                                PartVT, IntermediateVT);
   }
   
-  if (MVT::isInteger(RegVT)) {
-    if (ValueVT < RegVT)
-      return DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
+  // Build a vector with BUILD_VECTOR or CONCAT_VECTORS from the intermediate
+  // operands.
+  return DAG.getNode(MVT::isVector(IntermediateVT) ?
+                       ISD::CONCAT_VECTORS :
+                       ISD::BUILD_VECTOR,
+                     ValueVT, &Ops[0], NumParts);
+}
+
+/// getCopyToParts - Create a series of nodes that contain the
+/// specified value split into legal parts.
+static void getCopyToParts(SelectionDAG &DAG,
+                           SDOperand Val,
+                           SDOperand *Parts,
+                           unsigned NumParts,
+                           MVT::ValueType PartVT) {
+  MVT::ValueType ValueVT = Val.getValueType();
+
+  if (!MVT::isVector(ValueVT) || NumParts == 1) {
+    // If the value was expanded, copy from the parts.
+    if (NumParts > 1) {
+      for (unsigned i = 0; i < NumParts; ++i)
+        Parts[i] = DAG.getNode(ISD::EXTRACT_ELEMENT, PartVT, Val,
+                               DAG.getConstant(i, MVT::i32));
+      return;
+    }
+
+    // If there is a single part and the types differ, this must be
+    // a promotion.
+    if (PartVT != ValueVT) {
+      if (MVT::isVector(PartVT)) {
+        assert(MVT::isVector(ValueVT) &&
+               "Not a vector-vector cast?");
+        Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+      } else if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
+        if (PartVT < ValueVT)
+          Val = DAG.getNode(ISD::TRUNCATE, PartVT, Val);
+        else
+          Val = DAG.getNode(ISD::ANY_EXTEND, PartVT, Val);
+      } else if (MVT::isFloatingPoint(PartVT) &&
+                 MVT::isFloatingPoint(ValueVT)) {
+        Val = DAG.getNode(ISD::FP_EXTEND, PartVT, Val);
+      } else if (MVT::getSizeInBits(PartVT) == 
+                 MVT::getSizeInBits(ValueVT)) {
+        Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+      } else {
+        assert(0 && "Unknown mismatch!");
+      }
+    }
+    Parts[0] = Val;
+    return;
+  }
+
+  // Handle a multi-element vector.
+  MVT::ValueType IntermediateVT, RegisterVT;
+  unsigned NumIntermediates;
+  unsigned NumRegs =
+    DAG.getTargetLoweringInfo()
+      .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
+                              RegisterVT);
+  unsigned NumElements = MVT::getVectorNumElements(ValueVT);
+
+  assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
+  assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
+
+  // Split the vector into intermediate operands.
+  SmallVector<SDOperand, 8> Ops(NumIntermediates);
+  for (unsigned i = 0; i != NumIntermediates; ++i)
+    if (MVT::isVector(IntermediateVT))
+      Ops[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR,
+                           IntermediateVT, Val,
+                           DAG.getConstant(i * (NumElements / NumIntermediates),
+                                           MVT::i32));
     else
-      return DAG.getNode(ISD::ANY_EXTEND, ValueVT, Val);
+      Ops[i] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
+                           IntermediateVT, Val, 
+                           DAG.getConstant(i, MVT::i32));
+
+  // Split the intermediate operands into legal parts.
+  if (NumParts == NumIntermediates) {
+    // If the register was not expanded, promote or copy the value,
+    // as appropriate.
+    for (unsigned i = 0; i != NumParts; ++i)
+      getCopyToParts(DAG, Ops[i], &Parts[i], 1, PartVT);
+  } else if (NumParts > 0) {
+    // If the intermediate type was expanded, split each the value into
+    // legal parts.
+    assert(NumParts % NumIntermediates == 0 &&
+           "Must expand into a divisible number of parts!");
+    unsigned Factor = NumParts / NumIntermediates;
+    for (unsigned i = 0; i != NumIntermediates; ++i)
+      getCopyToParts(DAG, Ops[i], &Parts[i * Factor], Factor, PartVT);
+  }
+}
+
+
+/// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
+/// this value and returns the result as a ValueVT value.  This uses 
+/// Chain/Flag as the input and updates them for the output Chain/Flag.
+/// If the Flag pointer is NULL, no flag is used.
+SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
+                                        SDOperand &Chain, SDOperand *Flag)const{
+  // Get the list of registers, in the appropriate order.
+  std::vector<unsigned> R(Regs);
+  if (!DAG.getTargetLoweringInfo().isLittleEndian())
+    std::reverse(R.begin(), R.end());
+
+  // Copy the legal parts from the registers.
+  unsigned NumParts = Regs.size();
+  SmallVector<SDOperand, 8> Parts(NumParts);
+  for (unsigned i = 0; i < NumParts; ++i) {
+    SDOperand Part = Flag ?
+                     DAG.getCopyFromReg(Chain, Regs[i], RegVT, *Flag) :
+                     DAG.getCopyFromReg(Chain, Regs[i], RegVT);
+    Chain = Part.getValue(1);
+    if (Flag)
+      *Flag = Part.getValue(2);
+    Parts[i] = Part;
   }
   
-  assert(MVT::isFloatingPoint(RegVT) && MVT::isFloatingPoint(ValueVT));
-  return DAG.getNode(ISD::FP_ROUND, ValueVT, Val);
+  // Assemble the legal parts into the final value.
+  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT);
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
 /// specified value into the registers specified by this object.  This uses 
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
+/// If the Flag pointer is NULL, no flag is used.
 void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
-                                 SDOperand &Chain, SDOperand &Flag,
-                                 MVT::ValueType PtrVT) const {
-  if (Regs.size() == 1) {
-    // If there is a single register and the types differ, this must be
-    // a promotion.
-    if (RegVT != ValueVT) {
-      if (MVT::isVector(RegVT)) {
-        assert(MVT::isVector(Val.getValueType()) &&
-               "Not a vector-vector cast?");
-        Val = DAG.getNode(ISD::BIT_CONVERT, RegVT, Val);
-      } else if (MVT::isInteger(RegVT) && MVT::isInteger(Val.getValueType())) {
-        if (RegVT < ValueVT)
-          Val = DAG.getNode(ISD::TRUNCATE, RegVT, Val);
-        else
-          Val = DAG.getNode(ISD::ANY_EXTEND, RegVT, Val);
-      } else if (MVT::isFloatingPoint(RegVT) &&
-                 MVT::isFloatingPoint(Val.getValueType())) {
-        Val = DAG.getNode(ISD::FP_EXTEND, RegVT, Val);
-      } else if (MVT::getSizeInBits(RegVT) == 
-                 MVT::getSizeInBits(Val.getValueType())) {
-        Val = DAG.getNode(ISD::BIT_CONVERT, RegVT, Val);
-      } else {
-        assert(0 && "Unknown mismatch!");
-      }
-    }
-    Chain = DAG.getCopyToReg(Chain, Regs[0], Val, Flag);
-    Flag = Chain.getValue(1);
-  } else {
-    std::vector<unsigned> R(Regs);
-    if (!DAG.getTargetLoweringInfo().isLittleEndian())
-      std::reverse(R.begin(), R.end());
-    
-    for (unsigned i = 0, e = R.size(); i != e; ++i) {
-      SDOperand Part = DAG.getNode(ISD::EXTRACT_ELEMENT, RegVT, Val, 
-                                   DAG.getConstant(i, PtrVT));
-      Chain = DAG.getCopyToReg(Chain, R[i], Part, Flag);
-      Flag = Chain.getValue(1);
-    }
+                                 SDOperand &Chain, SDOperand *Flag) const {
+  // Get the list of registers, in the appropriate order.
+  std::vector<unsigned> R(Regs);
+  if (!DAG.getTargetLoweringInfo().isLittleEndian())
+    std::reverse(R.begin(), R.end());
+
+  // Get the list of the values's legal parts.
+  unsigned NumParts = Regs.size();
+  SmallVector<SDOperand, 8> Parts(NumParts);
+  getCopyToParts(DAG, Val, &Parts[0], NumParts, RegVT);
+
+  // Copy the parts into the registers.
+  for (unsigned i = 0; i < NumParts; ++i) {
+    SDOperand Part = Flag ?
+                     DAG.getCopyToReg(Chain, R[i], Parts[i], *Flag) :
+                     DAG.getCopyToReg(Chain, R[i], Parts[i]);
+    Chain = Part.getValue(0);
+    if (Flag)
+      *Flag = Part.getValue(1);
   }
 }
 
@@ -3456,8 +3539,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
           }
         
           // Use the produced MatchedRegs object to 
-          MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag,
-                                    TLI.getPointerTy());
+          MatchedRegs.getCopyToRegs(InOperandVal, DAG, Chain, &Flag);
           MatchedRegs.AddInlineAsmOperands(1 /*REGUSE*/, DAG, AsmNodeOperands);
           break;
         } else {
@@ -3508,8 +3590,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       assert(!OpInfo.AssignedRegs.Regs.empty() &&
              "Couldn't allocate input reg!");
 
-      OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, Chain, Flag, 
-                                        TLI.getPointerTy());
+      OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, Chain, &Flag);
       
       OpInfo.AssignedRegs.AddInlineAsmOperands(1/*REGUSE*/, DAG,
                                                AsmNodeOperands);
@@ -3538,7 +3619,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   // If this asm returns a register value, copy the result from that register
   // and set it as the value of the call.
   if (!RetValRegs.Regs.empty()) {
-    SDOperand Val = RetValRegs.getCopyFromRegs(DAG, Chain, Flag);
+    SDOperand Val = RetValRegs.getCopyFromRegs(DAG, Chain, &Flag);
     
     // If the result of the inline asm is a vector, it may have the wrong
     // width/num elts.  Make sure to convert it to the right type with
@@ -3560,7 +3641,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   for (unsigned i = 0, e = IndirectStoresToEmit.size(); i != e; ++i) {
     RegsForValue &OutRegs = IndirectStoresToEmit[i].first;
     Value *Ptr = IndirectStoresToEmit[i].second;
-    SDOperand OutVal = OutRegs.getCopyFromRegs(DAG, Chain, Flag);
+    SDOperand OutVal = OutRegs.getCopyFromRegs(DAG, Chain, &Flag);
     StoresToEmit.push_back(std::make_pair(OutVal, Ptr));
   }
   
@@ -3733,39 +3814,21 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       RetVals.push_back(getTypeToTransformTo(VT));
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
-    case Expand:
-      if (!MVT::isVector(VT)) {
-        // If this is a large integer, it needs to be broken up into small
-        // integers.  Figure out what the destination type is and how many small
-        // integers it turns into.
-        MVT::ValueType NVT = getTypeToExpandTo(VT);
-        unsigned NumVals = getNumRegisters(VT);
-        for (unsigned i = 0; i != NumVals; ++i) {
-          RetVals.push_back(NVT);
-          // if it isn't first piece, alignment must be 1
-          if (i > 0)
-            Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
-              (1 << ISD::ParamFlags::OrigAlignmentOffs);
-          Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-        }
-      } else {
-        // Otherwise, this is a vector type.  We only support legal vectors
-        // right now.
-        unsigned NumElems = cast<VectorType>(I->getType())->getNumElements();
-        const Type *EltTy = cast<VectorType>(I->getType())->getElementType();
-
-        // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the vector type.
-        MVT::ValueType TVT =
-          MVT::getVectorType(getValueType(EltTy), NumElems);
-        if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          RetVals.push_back(TVT);
-          Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-        } else {
-          assert(0 && "Don't support illegal by-val vector arguments yet!");
-        }
+    case Expand: {
+      // If this is an illegal type, it needs to be broken up to fit into 
+      // registers.
+      MVT::ValueType RegisterVT = getRegisterType(VT);
+      unsigned NumRegs = getNumRegisters(VT);
+      for (unsigned i = 0; i != NumRegs; ++i) {
+        RetVals.push_back(RegisterVT);
+        // if it isn't first piece, alignment must be 1
+        if (i > 0)
+          Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
+            (1 << ISD::ParamFlags::OrigAlignmentOffs);
+        Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       }
       break;
+    }
     }
   }
 
@@ -3979,108 +4042,33 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   }
   
   // Figure out the result value types.
-  SmallVector<MVT::ValueType, 4> RetTys;
-
-  if (RetTy != Type::VoidTy) {
-    MVT::ValueType VT = getValueType(RetTy);
-    switch (getTypeAction(VT)) {
-    default: assert(0 && "Unknown type action!");
-    case Legal:
-      RetTys.push_back(VT);
-      break;
-    case Promote:
-      RetTys.push_back(getTypeToTransformTo(VT));
-      break;
-    case Expand:
-      if (!MVT::isVector(VT)) {
-        // If this is a large integer, it needs to be reassembled from small
-        // integers.  Figure out what the source elt type is and how many small
-        // integers it is.
-        MVT::ValueType NVT = getTypeToExpandTo(VT);
-        unsigned NumVals = getNumRegisters(VT);
-        for (unsigned i = 0; i != NumVals; ++i)
-          RetTys.push_back(NVT);
-      } else {
-        // Otherwise, this is a vector type.  We only support legal vectors
-        // right now.
-        const VectorType *PTy = cast<VectorType>(RetTy);
-        unsigned NumElems = PTy->getNumElements();
-        const Type *EltTy = PTy->getElementType();
-        
-        // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the vector type.
-        MVT::ValueType TVT =
-          MVT::getVectorType(getValueType(EltTy), NumElems);
-        if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          RetTys.push_back(TVT);
-        } else {
-          assert(0 && "Don't support illegal by-val vector call results yet!");
-          abort();
-        }
-      }
-    }    
-  }
+  MVT::ValueType VT = getValueType(RetTy);
+  MVT::ValueType RegisterVT = getRegisterType(VT);
+  unsigned NumRegs = getNumRegisters(VT);
+  SmallVector<MVT::ValueType, 4> RetTys(NumRegs);
+  for (unsigned i = 0; i != NumRegs; ++i)
+    RetTys[i] = RegisterVT;
   
   RetTys.push_back(MVT::Other);  // Always has a chain.
   
-  // Finally, create the CALL node.
+  // Create the CALL node.
   SDOperand Res = DAG.getNode(ISD::CALL,
-                              DAG.getVTList(&RetTys[0], RetTys.size()),
+                              DAG.getVTList(&RetTys[0], NumRegs + 1),
                               &Ops[0], Ops.size());
-  
-  // This returns a pair of operands.  The first element is the
-  // return value for the function (if RetTy is not VoidTy).  The second
-  // element is the outgoing token chain.
-  SDOperand ResVal;
-  if (RetTys.size() != 1) {
-    MVT::ValueType VT = getValueType(RetTy);
-    if (RetTys.size() == 2) {
-      ResVal = Res;
-      
-      // If this value was promoted, truncate it down.
-      if (ResVal.getValueType() != VT) {
-        if (MVT::isVector(VT)) {
-          // Insert a BIT_CONVERT to convert from the packed result type to the
-          // new vector type.
-          unsigned NumElems = cast<VectorType>(RetTy)->getNumElements();
-          const Type *EltTy = cast<VectorType>(RetTy)->getElementType();
-          
-          // Figure out if there is a Packed type corresponding to this Vector
-          // type.  If so, convert to the vector type.
-          MVT::ValueType TVT =
-            MVT::getVectorType(getValueType(EltTy),NumElems);
-          if (TVT != MVT::Other && isTypeLegal(TVT)) {
-            // Insert a BIT_CONVERT of the FORMAL_ARGUMENTS to a
-            // "N x PTyElementVT" vector type.
-            ResVal = DAG.getNode(ISD::BIT_CONVERT, TVT, ResVal);
-          } else {
-            abort();
-          }
-        } else if (MVT::isInteger(VT)) {
-          unsigned AssertOp = ISD::AssertSext;
-          if (!RetTyIsSigned)
-            AssertOp = ISD::AssertZext;
-          ResVal = DAG.getNode(AssertOp, ResVal.getValueType(), ResVal, 
-                               DAG.getValueType(VT));
-          ResVal = DAG.getNode(ISD::TRUNCATE, VT, ResVal);
-        } else {
-          assert(MVT::isFloatingPoint(VT));
-          if (getTypeAction(VT) == Expand)
-            ResVal = DAG.getNode(ISD::BIT_CONVERT, VT, ResVal);
-          else
-            ResVal = DAG.getNode(ISD::FP_ROUND, VT, ResVal);
-        }
-      }
-    } else if (RetTys.size() == 3) {
-      ResVal = DAG.getNode(ISD::BUILD_PAIR, VT, 
-                           Res.getValue(0), Res.getValue(1));
-      
-    } else {
-      assert(0 && "Case not handled yet!");
-    }
+  SDOperand Chain = Res.getValue(NumRegs);
+
+  // Gather up the call result into a single value.
+  if (RetTy != Type::VoidTy) {
+    ISD::NodeType AssertOp = ISD::AssertSext;
+    if (!RetTyIsSigned)
+      AssertOp = ISD::AssertZext;
+    SmallVector<SDOperand, 4> Results(NumRegs);
+    for (unsigned i = 0; i != NumRegs; ++i)
+      Results[i] = Res.getValue(i);
+    Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT, AssertOp);
   }
-  
-  return std::make_pair(ResVal, Res.getValue(Res.Val->getNumValues()-1));
+
+  return std::make_pair(Res, Chain);
 }
 
 SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -4360,75 +4348,17 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
           cast<RegisterSDNode>(Op.getOperand(1))->getReg() != Reg) &&
          "Copy from a reg to the same reg!");
   
-  // If this type is not legal, we must make sure to not create an invalid
-  // register use.
   MVT::ValueType SrcVT = Op.getValueType();
-  MVT::ValueType DestVT = TLI.getTypeToTransformTo(SrcVT);
-  if (SrcVT == DestVT) {
-    return DAG.getCopyToReg(getRoot(), Reg, Op);
-  } else if (MVT::isVector(SrcVT)) {
-    // Handle copies from generic vectors to registers.
-    MVT::ValueType ElementVT, LegalElementVT;
-    unsigned NE = TLI.getVectorTypeBreakdown(SrcVT,
-                                             ElementVT, LegalElementVT);
-    uint64_t SrcVL = MVT::getVectorNumElements(SrcVT);
-    
-    // Loop over all of the elements of the resultant vector,
-    // EXTRACT_VECTOR_ELT'ing or EXTRACT_SUBVECTOR'ing them, converting them
-    // to LegalElementVT, then copying them into output registers.
-    SmallVector<SDOperand, 8> OutChains;
-    SDOperand Root = getRoot();
-    for (unsigned i = 0; i != NE; ++i) {
-      SDOperand Elt = MVT::isVector(ElementVT) ?
-        DAG.getNode(ISD::EXTRACT_SUBVECTOR, ElementVT,
-                    Op, DAG.getConstant(i * (SrcVL / NE), TLI.getPointerTy())) :
-        DAG.getNode(ISD::EXTRACT_VECTOR_ELT, ElementVT,
-                    Op, DAG.getConstant(i, TLI.getPointerTy()));
-      if (ElementVT == LegalElementVT) {
-        // Elements are legal.
-        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
-      } else if (LegalElementVT > ElementVT) {
-        // Elements are promoted.
-        if (MVT::isFloatingPoint(LegalElementVT))
-          Elt = DAG.getNode(ISD::FP_EXTEND, LegalElementVT, Elt);
-        else
-          Elt = DAG.getNode(ISD::ANY_EXTEND, LegalElementVT, Elt);
-        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Elt));
-      } else {
-        // Elements are expanded.
-        // The src value is expanded into multiple registers.
-        SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, LegalElementVT,
-                                   Elt, DAG.getConstant(0, TLI.getPointerTy()));
-        SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, LegalElementVT,
-                                   Elt, DAG.getConstant(1, TLI.getPointerTy()));
-        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Lo));
-        OutChains.push_back(DAG.getCopyToReg(Root, Reg++, Hi));
-      }
-    }
-    return DAG.getNode(ISD::TokenFactor, MVT::Other,
-                       &OutChains[0], OutChains.size());
-  } else if (TLI.getTypeAction(SrcVT) == TargetLowering::Promote) {
-    // The src value is promoted to the register.
-    if (MVT::isFloatingPoint(SrcVT))
-      Op = DAG.getNode(ISD::FP_EXTEND, DestVT, Op);
-    else
-      Op = DAG.getNode(ISD::ANY_EXTEND, DestVT, Op);
-    return DAG.getCopyToReg(getRoot(), Reg, Op);
-  } else  {
-    DestVT = TLI.getTypeToExpandTo(SrcVT);
-    unsigned NumVals = TLI.getNumRegisters(SrcVT);
-    if (NumVals == 1)
-      return DAG.getCopyToReg(getRoot(), Reg,
-                              DAG.getNode(ISD::BIT_CONVERT, DestVT, Op));
-    assert(NumVals == 2 && "1 to 4 (and more) expansion not implemented!");
-    // The src value is expanded into multiple registers.
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
-                               Op, DAG.getConstant(0, TLI.getPointerTy()));
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
-                               Op, DAG.getConstant(1, TLI.getPointerTy()));
-    Op = DAG.getCopyToReg(getRoot(), Reg, Lo);
-    return DAG.getCopyToReg(Op, Reg+1, Hi);
-  }
+  MVT::ValueType RegisterVT = TLI.getRegisterType(SrcVT);
+  unsigned NumRegs = TLI.getNumRegisters(SrcVT);
+  SmallVector<SDOperand, 8> Regs(NumRegs);
+  SmallVector<SDOperand, 8> Chains(NumRegs);
+
+  // Copy the value by legal parts into sequential virtual registers.
+  getCopyToParts(DAG, Op, &Regs[0], NumRegs, RegisterVT);
+  for (unsigned i = 0; i < NumRegs; ++i)
+    Chains[i] = DAG.getCopyToReg(getRoot(), Reg + i, Regs[i]);
+  return DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
 }
 
 void SelectionDAGISel::
