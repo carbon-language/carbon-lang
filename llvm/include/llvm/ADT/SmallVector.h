@@ -442,7 +442,7 @@ public:
   SmallVector() : SmallVectorImpl<T>(NumTsAvailable) {
   }
   
-  SmallVector(unsigned Size, const T &Value)
+  SmallVector(unsigned Size, const T &Value = T())
     : SmallVectorImpl<T>(NumTsAvailable) {
     this->reserve(Size);
     while (Size--)
