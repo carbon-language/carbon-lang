@@ -24,7 +24,7 @@
 
 #include "clang.h"
 #include "ASTStreamers.h"
-#include "DiagChecker.h"
+#include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
@@ -34,6 +34,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
+#include <memory>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -805,6 +806,9 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   case EmitLLVM:
     EmitLLVMFromASTs(PP, MainFileID, Stats);
     break;
+  case ParseASTCheck:
+    exit(CheckDiagnostics(PP, MainFileID));
+    break;
   }
   
   if (Stats) {
@@ -819,119 +823,6 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
-/// PerformNormalFileProcessing - This processes each file in turn, printing out
-/// the diagnostic messages to stderr. It returns a pair: number of diagnostic
-/// messages, number of errors.
-/// 
-static std::pair<unsigned, unsigned>
-PerformNormalFileProcessing(SourceManager &SourceMgr,
-                            FileManager &FileMgr,
-                            LangOptions &LangInfo) {
-  // Print diagnostics to stderr.
-  TextDiagnosticPrinter OurDiagnosticClient(SourceMgr);
-  
-  // Configure our handling of diagnostics.
-  Diagnostic Diags(OurDiagnosticClient);
-  InitializeDiagnostics(Diags);
-  
-  // Get information about the targets being compiled for.  Note that this
-  // pointer and the TargetInfoImpl objects are never deleted by this toy
-  // driver.
-  TargetInfo *Target = CreateTargetInfo(Diags);
-  if (Target == 0) {
-    fprintf(stderr,
-            "Sorry, don't know what target this is, please use -arch.\n");
-    exit(1);
-  }
-  
-  // Process the -I options and set them in the HeaderInfo.
-  HeaderSearch HeaderInfo(FileMgr);
-  OurDiagnosticClient.setHeaderSearch(HeaderInfo);
-  InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
-  
-  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
-    // Set up the preprocessor with these options.
-    Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
-    OurDiagnosticClient.setPreprocessor(PP);
-    const std::string &InFile = InputFilenames[i];
-    std::vector<char> PrologMacros;
-    unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
-                                                 HeaderInfo, LangInfo,
-                                                 PrologMacros);
-
-    if (!MainFileID) continue;
-
-    ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
-                     OurDiagnosticClient, HeaderInfo, LangInfo);
-    HeaderInfo.ClearFileInfo();
-  }
-  
-  unsigned NumDiagnostics = Diags.getNumDiagnostics();
-
-  if (NumDiagnostics)
-    fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
-            (NumDiagnostics == 1 ? "" : "s"));
-
-  return std::make_pair(Diags.getNumDiagnostics(), Diags.getNumErrors());
-}
-
-/// PerformDiagnosticChecking - This processes each file in turn, checking that
-/// each diagnostic message is expect.
-/// 
-static std::pair<unsigned, unsigned>
-PerformDiagnosticChecking(SourceManager &SourceMgr,
-                          FileManager &FileMgr,
-                          LangOptions &LangInfo) {
-  // Check diagnostic messages.
-  TextDiagnosticBuffer OurDiagnosticClient(SourceMgr);
-  
-  // Configure our handling of diagnostics.
-  Diagnostic Diags(OurDiagnosticClient);
-  InitializeDiagnostics(Diags);
-  
-  // Get information about the targets being compiled for.  Note that this
-  // pointer and the TargetInfoImpl objects are never deleted by this toy
-  // driver.
-  TargetInfo *Target = CreateTargetInfo(Diags);
-  if (Target == 0) {
-    fprintf(stderr,
-            "Sorry, don't know what target this is, please use -arch.\n");
-    exit(1);
-  }
-  
-  // Process the -I options and set them in the HeaderInfo.
-  HeaderSearch HeaderInfo(FileMgr);
-  OurDiagnosticClient.setHeaderSearch(HeaderInfo);
-  InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
-
-  TextDiagnosticBuffer::DiagList ExpectedErrors;
-  TextDiagnosticBuffer::DiagList ExpectedWarnings;
-  
-  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
-    // Set up the preprocessor with these options.
-    Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
-    OurDiagnosticClient.setPreprocessor(PP);
-    const std::string &InFile = InputFilenames[i];
-    std::vector<char> PrologMacros;
-    unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
-                                                 HeaderInfo, LangInfo,
-                                                 PrologMacros);
-
-    if (!MainFileID) continue;
-
-    ProcessFileDiagnosticChecking(OurDiagnosticClient, PP, InFile,
-                                  SourceMgr, MainFileID, ExpectedErrors,
-                                  ExpectedWarnings);
-    HeaderInfo.ClearFileInfo();
-  }
-
-  if (ReportCheckingResults(OurDiagnosticClient, ExpectedErrors,
-                            ExpectedWarnings, SourceMgr))
-    // There were errors. Fake it.
-    return std::make_pair(1, 1);
-
-  return std::make_pair(0, 0);
-}
 
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv, " llvm cfe\n");
@@ -955,13 +846,62 @@ int main(int argc, char **argv) {
   InitializeBaseLanguage(LangInfo, InputFilenames[0]);
   InitializeLanguageStandard(LangInfo);
 
-  // Pair to represent the number of diagnostics and number of errors emitted.
-  std::pair<unsigned, unsigned> NumDiagsOutput = std::make_pair(0, 0);
+  std::auto_ptr<TextDiagnostics> DiagClient;
+  if (ProgAction != ParseASTCheck) {
+    // Print diagnostics to stderr by default.
+    DiagClient.reset(new TextDiagnosticPrinter(SourceMgr));
+  } else {
+    // When checking diagnostics, just buffer them up.
+    DiagClient.reset(new TextDiagnosticBuffer(SourceMgr));
+   
+    if (InputFilenames.size() != 1) {
+      fprintf(stderr,
+              "parse-ast-check only works on single input files for now.\n");
+      return 1;
+    }
+  }
+  
+  // Configure our handling of diagnostics.
+  Diagnostic Diags(*DiagClient);
+  InitializeDiagnostics(Diags);
+  
+  // Get information about the targets being compiled for.  Note that this
+  // pointer and the TargetInfoImpl objects are never deleted by this toy
+  // driver.
+  TargetInfo *Target = CreateTargetInfo(Diags);
+  if (Target == 0) {
+    fprintf(stderr,
+            "Sorry, don't know what target this is, please use -arch.\n");
+    exit(1);
+  }
+  
+  // Process the -I options and set them in the HeaderInfo.
+  HeaderSearch HeaderInfo(FileMgr);
+  DiagClient->setHeaderSearch(HeaderInfo);
+  InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
+  
+  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
+    // Set up the preprocessor with these options.
+    Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
+    DiagClient->setPreprocessor(PP);
+    const std::string &InFile = InputFilenames[i];
+    std::vector<char> PrologMacros;
+    unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
+                                                 HeaderInfo, LangInfo,
+                                                 PrologMacros);
+    
+    if (!MainFileID) continue;
 
-  if (ProgAction != ParseASTCheck)
-    NumDiagsOutput = PerformNormalFileProcessing(SourceMgr, FileMgr, LangInfo);
-  else
-    NumDiagsOutput = PerformDiagnosticChecking(SourceMgr, FileMgr, LangInfo);
+    ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
+                     *DiagClient, HeaderInfo, LangInfo);
+    HeaderInfo.ClearFileInfo();
+  }
+  
+  unsigned NumDiagnostics = Diags.getNumDiagnostics();
+  
+  if (NumDiagnostics)
+    fprintf(stderr, "%d diagnostic%s generated.\n", NumDiagnostics,
+            (NumDiagnostics == 1 ? "" : "s"));
   
   if (Stats) {
     // Printed from high-to-low level.
@@ -970,5 +910,5 @@ int main(int argc, char **argv) {
     fprintf(stderr, "\n");
   }
   
-  return NumDiagsOutput.second != 0;
+  return Diags.getNumErrors();
 }

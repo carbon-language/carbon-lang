@@ -11,8 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DiagChecker.h"
+#include "clang.h"
 #include "ASTStreamers.h"
+#include "TextDiagnosticBuffer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
@@ -41,7 +42,7 @@ static const char * const ExpectedWarnStr = "expected-warning";
 /// diagnostics. If so, then put them in a diagnostic list.
 /// 
 static void FindDiagnostics(const std::string &Comment,
-                            TextDiagnosticBuffer &DiagClient,
+                            const TextDiagnosticBuffer &DiagClient,
                             DiagList &ExpectedDiags,
                             SourceManager &SourceMgr,
                             SourceLocation Pos,
@@ -85,19 +86,18 @@ static void FindDiagnostics(const std::string &Comment,
 /// called later to report any discrepencies between the diagnostics expected
 /// and those actually seen.
 /// 
-void clang::ProcessFileDiagnosticChecking(TextDiagnosticBuffer &DiagClient,
+static void ProcessFileDiagnosticChecking(const TextDiagnosticBuffer&DiagClient,
                                           Preprocessor &PP,
-                                          const std::string &InFile,
-                                          SourceManager &SourceMgr,
                                           unsigned MainFileID,
                                           DiagList &ExpectedErrors,
                                           DiagList &ExpectedWarnings) {
-  LexerToken Tok;
+  // Return comments as tokens, this is how we find expected diagnostics.
   PP.SetCommentRetentionState(true, true);
 
   // Enter the cave.
   PP.EnterSourceFile(MainFileID, 0, true);
 
+  LexerToken Tok;
   do {
     PP.Lex(Tok);
 
@@ -105,12 +105,12 @@ void clang::ProcessFileDiagnosticChecking(TextDiagnosticBuffer &DiagClient,
       std::string Comment = PP.getSpelling(Tok);
 
       // Find all expected errors
-      FindDiagnostics(Comment, DiagClient, ExpectedErrors, SourceMgr,
+      FindDiagnostics(Comment, DiagClient, ExpectedErrors,PP.getSourceManager(),
                       Tok.getLocation(), ExpectedErrStr);
 
       // Find all expected warnings
-      FindDiagnostics(Comment, DiagClient, ExpectedWarnings, SourceMgr,
-                      Tok.getLocation(), ExpectedWarnStr);
+      FindDiagnostics(Comment, DiagClient, ExpectedWarnings,
+                      PP.getSourceManager(),Tok.getLocation(), ExpectedWarnStr);
     }
   } while (Tok.getKind() != tok::eof);
 
@@ -181,7 +181,7 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
 /// were actually reported. It emits any discrepencies. Return "true" if there
 /// were problems. Return "false" otherwise.
 /// 
-bool clang::ReportCheckingResults(TextDiagnosticBuffer &DiagClient,
+static bool ReportCheckingResults(const TextDiagnosticBuffer &DiagClient,
                                   const DiagList &ExpectedErrors,
                                   const DiagList &ExpectedWarnings,
                                   SourceManager &SourceMgr) {
@@ -220,3 +220,20 @@ bool clang::ReportCheckingResults(TextDiagnosticBuffer &DiagClient,
 
   return HadProblem;
 }
+
+/// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
+bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
+  const TextDiagnosticBuffer &Diags =
+    static_cast<const TextDiagnosticBuffer&>(PP.getDiagnostics().getClient());
+
+  // Gather the set of expected diagnostics.
+  DiagList ExpectedErrors, ExpectedWarnings;
+  ProcessFileDiagnosticChecking(Diags, PP, MainFileID, ExpectedErrors,
+                                ExpectedWarnings);
+    
+  
+  return ReportCheckingResults(Diags, ExpectedErrors,
+                               ExpectedWarnings, PP.getSourceManager());
+}
+
+

@@ -33,10 +33,13 @@ MinimalAction *CreatePrintParserActionsAction();
 /// the -arch command line option.
 TargetInfo *CreateTargetInfo(Diagnostic &Diags);
 
-
+/// EmitLLVMFromASTs - Implement -emit-llvm, which generates llvm IR from C.
 void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
                       bool PrintStats);
   
+/// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
+bool CheckDiagnostics(Preprocessor &PP, unsigned MainFileID);
+
 }  // end namespace clang
 
 #endif
