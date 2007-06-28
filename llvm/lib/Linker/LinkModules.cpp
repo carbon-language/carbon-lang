@@ -578,9 +578,8 @@ static bool LinkAlias(Module *Dest, const Module *Src, std::string *Err) {
     // FIXME: we should handle the bitcast alias.
     assert(NewAliased && "Can't find the aliased GV.");
 
-    GlobalAlias *NewGA = new GlobalAlias(GA->getType()->getElementType(),
-                                         GA->getLinkage(), GA->getName(),
-                                         NewAliased, Dest);
+    GlobalAlias *NewGA = new GlobalAlias(GA->getType(), GA->getLinkage(),
+                                         GA->getName(), NewAliased, Dest);
     CopyGVAttributes(NewGA, GA);
   }
   return false;
