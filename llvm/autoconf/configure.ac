@@ -274,6 +274,17 @@ else
   AC_SUBST(DISABLE_ASSERTIONS,[[DISABLE_ASSERTIONS=1]])
 fi
 
+dnl --enable-expensive-checks : check whether they want to turn on expensive debug checks:
+AC_ARG_ENABLE(expensive-checks,AS_HELP_STRING(
+  [--enable-expensive-checks,Compile with expensive debug checks enabled (default is NO)]),, enableval="no")
+if test ${enableval} = "yes" ; then
+  AC_SUBST(ENABLE_EXPENSIVE_CHECKS,[[ENABLE_EXPENSIVE_CHECKS=1]])
+  AC_SUBST(EXPENSIVE_CHECKS,[[yes]])
+else
+  AC_SUBST(ENABLE_EXPENSIVE_CHECKS,[[]])
+  AC_SUBST(EXPENSIVE_CHECKS,[[no]])
+fi
+
 dnl --enable-debug-runtime : should runtime libraries have debug symbols?
 AC_ARG_ENABLE(debug-runtime,
    AS_HELP_STRING([--enable-debug-runtime,Build runtime libs with debug symbols (default is NO)]),,enableval=no)

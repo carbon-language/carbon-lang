@@ -209,6 +209,11 @@ OBJ_ROOT := .
 #DISABLE_ASSERTIONS = 1
 @DISABLE_ASSERTIONS@
 
+# When ENABLE_EXPENSIVE_CHECKS is enabled, builds of all of the LLVM
+# code will include expensive checks, otherwise they are excluded.
+#ENABLE_EXPENSIVE_CHECKS = 0
+@ENABLE_EXPENSIVE_CHECKS@
+
 # When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
 # symbols.
 #DEBUG_RUNTIME = 1

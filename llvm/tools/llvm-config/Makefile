@@ -20,6 +20,7 @@ include $(LEVEL)/Makefile.common
 ifeq ($(HAVE_PERL),1)
 
 # Combine preprocessor flags (except for -I) and CXX flags.
+SUB_CPPFLAGS = ${CPP.Defines}
 SUB_CFLAGS = ${CPP.BaseFlags} ${C.Flags}
 SUB_CXXFLAGS = ${CPP.BaseFlags} ${CXX.Flags}
 
@@ -56,7 +57,8 @@ llvm-config.in: $(ConfigInIn) $(ConfigStatusScript)
 # Build our final script.
 $(ToolDir)/llvm-config: llvm-config.in $(FinalLibDeps)
 	$(Echo) "Building llvm-config script."
-	$(Verb) $(ECHO) 's,@LLVM_CFLAGS@,$(SUB_CFLAGS),' > temp.sed
+	$(Verb) $(ECHO) 's,@LLVM_CPPFLAGS@,$(SUB_CPPFLAGS),' > temp.sed
+	$(Verb) $(ECHO) 's,@LLVM_CFLAGS@,$(SUB_CFLAGS),' >> temp.sed
 	$(Verb) $(ECHO) 's,@LLVM_CXXFLAGS@,$(SUB_CXXFLAGS),' >> temp.sed
 	$(Verb) $(ECHO) 's,@LLVM_LDFLAGS@,$(SUB_LDFLAGS),' >> temp.sed
 	$(Verb) $(ECHO) 's,@LLVM_BUILDMODE@,$(BuildMode),' >> temp.sed

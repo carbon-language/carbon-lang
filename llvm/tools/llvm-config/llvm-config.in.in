@@ -42,6 +42,7 @@ my $TARGET_TRIPLE       = q{@target@};
 my $TARGETS_TO_BUILD    = q{@TARGETS_TO_BUILD@};
 my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
+my $EXPENSIVE_CHECKS    = q{@EXPENSIVE_CHECKS@};
 #---- end autoconf values ----
 
 # Must pretend x86_64 architecture is really x86, otherwise the native backend
@@ -49,6 +50,7 @@ my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
 $ARCH = "x86" if $ARCH eq "x86_64";
 
 #---- begin Makefile values ----
+my $CPPFLAGS            = q{@LLVM_CPPFLAGS@};
 my $CFLAGS              = q{@LLVM_CFLAGS@};
 my $CXXFLAGS            = q{@LLVM_CXXFLAGS@};
 my $LDFLAGS             = q{@LLVM_LDFLAGS@};
@@ -112,10 +114,18 @@ foreach my $arg (@ARGV) {
             $has_opt = 1; print "$INCLUDEDIR\n";
         } elsif ($arg eq "--libdir") {
             $has_opt = 1; print "$LIBDIR\n";
+        } elsif ($arg eq "--cppflags") {
+            $has_opt = 1; 
+	    my $cppopts = get_cpp_opts();
+	    print "$cppopts\n";
         } elsif ($arg eq "--cflags") {
-            $has_opt = 1; print "-I$INCLUDEDIR $CFLAGS\n";
+            $has_opt = 1; 
+	    my $cppopts = get_cpp_opts();
+	    print "$cppopts $CFLAGS\n";
         } elsif ($arg eq "--cxxflags") {
-            $has_opt = 1; print "-I$INCLUDEDIR $CXXFLAGS\n";
+            $has_opt = 1; 
+	    my $cppopts = get_cpp_opts();
+	    print "$cppopts $CXXFLAGS\n";
         } elsif ($arg eq "--ldflags") {
             $has_opt = 1; print "-L$LIBDIR $LDFLAGS $SYSTEM_LIBS\n";
         } elsif ($arg eq "--libs") {
@@ -187,6 +197,7 @@ Options:
   --bindir               Directory containing LLVM executables.
   --includedir           Directory containing LLVM headers.
   --libdir               Directory containing LLVM libraries.
+  --cppflags             C preprocessor flags for files that include LLVM headers.
   --cflags               C compiler flags for files that include LLVM headers.
   --cxxflags             C++ compiler flags for files that include LLVM headers.
   --ldflags              Print Linker flags.
@@ -203,6 +214,20 @@ Typical components:
   engine                 Either a native JIT or a bytecode interpreter.
 __EOD__
     exit(1);
+}
+
+# Return cpp flags used to build llvm.
+sub get_cpp_opts {
+    my $opts = "";
+
+    if ($EXPENSIVE_CHECKS eq "yes") {
+	$opts = "-D_GLIBCXX_DEBUG -I$INCLUDEDIR $CPPFLAGS";
+    }
+    else {
+	$opts = "-I$INCLUDEDIR $CPPFLAGS";
+    }
+
+    return $opts;
 }
 
 # Use -lfoo instead of libfoo.a whenever possible, and add directories to
