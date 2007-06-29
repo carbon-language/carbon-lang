@@ -615,9 +615,6 @@ static unsigned calcMaxScratches(const SUnit *SU) {
 
 // Bottom up
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  bool LIsTarget = left->Node->isTargetOpcode();
-  bool RIsTarget = right->Node->isTargetOpcode();
-
   // There used to be a special tie breaker here that looked for
   // two-address instructions and preferred the instruction with a
   // def&use operand.  The special case triggered diagnostics when
