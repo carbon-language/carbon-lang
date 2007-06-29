@@ -60,7 +60,9 @@ namespace {
                               FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE, 
                               FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE, 
                               FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
-                              SHUFFLE, SELECT };
+                              SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
+                              FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT, 
+                              PTRTOINT, INTTOPTR, BITCAST};
     
         ExpressionOpcode opcode;
         const Type* type;
@@ -102,12 +104,14 @@ namespace {
     
       Expression::ExpressionOpcode getOpcode(BinaryOperator* BO);
       Expression::ExpressionOpcode getOpcode(CmpInst* C);
+      Expression::ExpressionOpcode getOpcode(CastInst* C);
       Expression create_expression(BinaryOperator* BO);
       Expression create_expression(CmpInst* C);
       Expression create_expression(ShuffleVectorInst* V);
       Expression create_expression(ExtractElementInst* C);
       Expression create_expression(InsertElementInst* V);
       Expression create_expression(SelectInst* V);
+      Expression create_expression(CastInst* C);
     public:
       ValueTable() { nextValueNumber = 1; }
       uint32_t lookup_or_add(Value* V);
@@ -231,6 +235,41 @@ ValueTable::Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   }
 }
 
+ValueTable::Expression::ExpressionOpcode 
+                             ValueTable::getOpcode(CastInst* C) {
+  switch(C->getOpcode()) {
+    case Instruction::Trunc:
+      return Expression::TRUNC;
+    case Instruction::ZExt:
+      return Expression::ZEXT;
+    case Instruction::SExt:
+      return Expression::SEXT;
+    case Instruction::FPToUI:
+      return Expression::FPTOUI;
+    case Instruction::FPToSI:
+      return Expression::FPTOSI;
+    case Instruction::UIToFP:
+      return Expression::UITOFP;
+    case Instruction::SIToFP:
+      return Expression::SITOFP;
+    case Instruction::FPTrunc:
+      return Expression::FPTRUNC;
+    case Instruction::FPExt:
+      return Expression::FPEXT;
+    case Instruction::PtrToInt:
+      return Expression::PTRTOINT;
+    case Instruction::IntToPtr:
+      return Expression::INTTOPTR;
+    case Instruction::BitCast:
+      return Expression::BITCAST;
+    
+    // THIS SHOULD NEVER HAPPEN
+    default:
+      assert(0 && "Cast operator with unknown opcode?");
+      return Expression::BITCAST;
+  }
+}
+
 ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
   Expression e;
     
@@ -248,6 +287,18 @@ ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
     
   e.firstVN = lookup_or_add(C->getOperand(0));
   e.secondVN = lookup_or_add(C->getOperand(1));
+  e.thirdVN = 0;
+  e.type = C->getType();
+  e.opcode = getOpcode(C);
+  
+  return e;
+}
+
+ValueTable::Expression ValueTable::create_expression(CastInst* C) {
+  Expression e;
+    
+  e.firstVN = lookup_or_add(C->getOperand(0));
+  e.secondVN = 0;
   e.thirdVN = 0;
   e.type = C->getType();
   e.opcode = getOpcode(C);
@@ -381,6 +432,19 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       return nextValueNumber++;
     }
   } else if (SelectInst* U = dyn_cast<SelectInst>(V)) {
+    Expression e = create_expression(U);
+    
+    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    if (EI != expressionNumbering.end()) {
+      valueNumbering.insert(std::make_pair(V, EI->second));
+      return EI->second;
+    } else {
+      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+      valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      
+      return nextValueNumber++;
+    }
+  } else if (CastInst* U = dyn_cast<CastInst>(V)) {
     Expression e = create_expression(U);
     
     std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
