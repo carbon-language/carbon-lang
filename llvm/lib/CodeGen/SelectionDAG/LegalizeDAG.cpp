@@ -5568,38 +5568,30 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   case ISD::BIT_CONVERT: {
     // We know the result is a vector.  The input may be either a vector or a
     // scalar value.
-    if (!MVT::isVector(Op.getOperand(0).getValueType())) {
-      // Lower to a store/load.  FIXME: this could be improved probably.
-      SDOperand Ptr = CreateStackTemporary(Op.getOperand(0).getValueType());
+    SDOperand InOp = Node->getOperand(0);
+    if (!MVT::isVector(InOp.getValueType()) ||
+        MVT::getVectorNumElements(InOp.getValueType()) == 1) {
+      // The input is a scalar or single-element vector.
+      // Lower to a store/load so that it can be split.
+      // FIXME: this could be improved probably.
+      SDOperand Ptr = CreateStackTemporary(InOp.getValueType());
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
-                                  Op.getOperand(0), Ptr, NULL, 0);
-      St = DAG.getLoad(NewVT, St, Ptr, NULL, 0);
-      SplitVectorOp(St, Lo, Hi);
-    } else {
-      // If the input is a vector type, we have to either scalarize it, pack it
-      // or convert it based on whether the input vector type is legal.
-      SDNode *InVal = Node->getOperand(0).Val;
-      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
-
-      assert(NumElems > 1);
-      {
-        // Split the input vector.
-        SplitVectorOp(Op.getOperand(0), Lo, Hi);
-
-        // Convert each of the pieces now.
-        Lo = DAG.getNode(ISD::BIT_CONVERT, NewVT, Lo);
-        Hi = DAG.getNode(ISD::BIT_CONVERT, NewVT, Hi);
-      }
-      break;
+                                  InOp, Ptr, NULL, 0);
+      InOp = DAG.getLoad(Op.getValueType(), St, Ptr, NULL, 0);
     }
+    // Split the vector and convert each of the pieces now.
+    SplitVectorOp(InOp, Lo, Hi);
+    Lo = DAG.getNode(ISD::BIT_CONVERT, NewVT, Lo);
+    Hi = DAG.getNode(ISD::BIT_CONVERT, NewVT, Hi);
+    break;
   }
   }
       
   // Remember in a map if the values will be reused later.
   bool isNew = 
     SplitNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
-  assert(isNew && "Value already expanded?!?");
+  assert(isNew && "Value already split?!?");
 }
 
 
