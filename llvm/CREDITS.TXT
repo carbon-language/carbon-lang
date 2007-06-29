@@ -62,7 +62,7 @@ D: Native Win32 API portability layer
 
 N: John T. Criswell
 E: criswell@uiuc.edu
-D: Autoconf support, QMTest database, documentation improvements
+D: Original Autoconf support, documentation improvements, bug fixes
 
 N: Rafael Avila de Espindola
 E: rafael.espindola@gmail.com
