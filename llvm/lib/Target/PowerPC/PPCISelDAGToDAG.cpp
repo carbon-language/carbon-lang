@@ -1080,7 +1080,10 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     // Op #2 is the CR#
     // Op #3 is the Dest MBB
     AddToISelQueue(N->getOperand(4));  // Op #4 is the Flag.
-    SDOperand Ops[] = { N->getOperand(1), N->getOperand(2), N->getOperand(3),
+    // Prevent PPC::PRED_* from being selected into LI.
+    SDOperand Pred =
+      getI32Imm(cast<ConstantSDNode>(N->getOperand(1))->getValue());
+    SDOperand Ops[] = { Pred, N->getOperand(2), N->getOperand(3),
       N->getOperand(0), N->getOperand(4) };
     return CurDAG->SelectNodeTo(N, PPC::BCC, MVT::Other, Ops, 5);
   }
