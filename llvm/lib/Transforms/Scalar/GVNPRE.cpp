@@ -23,6 +23,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -62,6 +63,7 @@ namespace {
                               SHUFFLE, SELECT };
     
         ExpressionOpcode opcode;
+        const Type* type;
         uint32_t firstVN;
         uint32_t secondVN;
         uint32_t thirdVN;
@@ -70,6 +72,10 @@ namespace {
           if (opcode < other.opcode)
             return true;
           else if (opcode > other.opcode)
+            return false;
+          else if (type < other.type)
+            return true;
+          else if (type > other.type)
             return false;
           else if (firstVN < other.firstVN)
             return true;
@@ -231,6 +237,7 @@ ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
   e.firstVN = lookup_or_add(BO->getOperand(0));
   e.secondVN = lookup_or_add(BO->getOperand(1));
   e.thirdVN = 0;
+  e.type = BO->getType();
   e.opcode = getOpcode(BO);
   
   return e;
@@ -242,6 +249,7 @@ ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
   e.firstVN = lookup_or_add(C->getOperand(0));
   e.secondVN = lookup_or_add(C->getOperand(1));
   e.thirdVN = 0;
+  e.type = C->getType();
   e.opcode = getOpcode(C);
   
   return e;
@@ -253,6 +261,7 @@ ValueTable::Expression ValueTable::create_expression(ShuffleVectorInst* S) {
   e.firstVN = lookup_or_add(S->getOperand(0));
   e.secondVN = lookup_or_add(S->getOperand(1));
   e.thirdVN = lookup_or_add(S->getOperand(2));
+  e.type = S->getType();
   e.opcode = Expression::SHUFFLE;
   
   return e;
@@ -264,6 +273,7 @@ ValueTable::Expression ValueTable::create_expression(ExtractElementInst* E) {
   e.firstVN = lookup_or_add(E->getOperand(0));
   e.secondVN = lookup_or_add(E->getOperand(1));
   e.thirdVN = 0;
+  e.type = E->getType();
   e.opcode = Expression::EXTRACT;
   
   return e;
@@ -275,6 +285,7 @@ ValueTable::Expression ValueTable::create_expression(InsertElementInst* I) {
   e.firstVN = lookup_or_add(I->getOperand(0));
   e.secondVN = lookup_or_add(I->getOperand(1));
   e.thirdVN = lookup_or_add(I->getOperand(2));
+  e.type = I->getType();
   e.opcode = Expression::INSERT;
   
   return e;
@@ -286,6 +297,7 @@ ValueTable::Expression ValueTable::create_expression(SelectInst* I) {
   e.firstVN = lookup_or_add(I->getCondition());
   e.secondVN = lookup_or_add(I->getTrueValue());
   e.thirdVN = lookup_or_add(I->getFalseValue());
+  e.type = I->getType();
   e.opcode = Expression::SELECT;
   
   return e;
