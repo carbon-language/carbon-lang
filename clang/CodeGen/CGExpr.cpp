@@ -724,6 +724,14 @@ EmitCompoundAssignmentOperands(const CompoundAssignOperator *E,
   QualType RHSTy;
   RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSTy);
   
+  // Shift operands do the usual unary conversions, but do not do the binary
+  // conversions.
+  if (E->isShiftAssignOp()) {
+    // FIXME: This is broken.  Implicit conversions should be made explicit,
+    // so that this goes away.  This causes us to reload the LHS.
+    LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), LHSTy);
+  }
+  
   // Convert the LHS and RHS to the common evaluation type.
   LHS = EmitConversion(LHS, LHSTy, E->getComputationType());
   RHS = EmitConversion(RHS, RHSTy, E->getComputationType());
@@ -772,8 +780,12 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     // FIXME: This doesn't handle ptr-int etc yet.
     EmitUsualArithmeticConversions(E, LHS, RHS);
     return EmitSub(LHS, RHS, E->getType());
-  case BinaryOperator::Shl: return EmitBinaryShl(E);
-  case BinaryOperator::Shr: return EmitBinaryShr(E);
+  case BinaryOperator::Shl:
+    EmitShiftOperands(E, LHS, RHS);
+    return EmitShl(LHS, RHS, E->getType());
+  case BinaryOperator::Shr:
+    EmitShiftOperands(E, LHS, RHS);
+    return EmitShr(LHS, RHS, E->getType());
   case BinaryOperator::And:
     EmitUsualArithmeticConversions(E, LHS, RHS);
     return EmitAnd(LHS, RHS, E->getType());
@@ -845,6 +857,20 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     LValue LHSLV;
     EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
     LHS = EmitSub(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::ShlAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitShl(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::ShrAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitShr(LHS, RHS, CAO->getComputationType());
     return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
   }
   case BinaryOperator::AndAssign: {
@@ -932,17 +958,19 @@ RValue CodeGenFunction::EmitSub(RValue LHS, RValue RHS, QualType ResTy) {
   assert(0 && "FIXME: This doesn't handle complex operands yet");
 }
 
-
-RValue CodeGenFunction::EmitBinaryShl(const BinaryOperator *E) {
+void CodeGenFunction::EmitShiftOperands(const BinaryOperator *E,
+                                        RValue &LHS, RValue &RHS) {
   // For shifts, integer promotions are performed, but the usual arithmetic 
   // conversions are not.  The LHS and RHS need not have the same type.
-  
   QualType ResTy;
-  llvm::Value *LHS = 
-    EmitExprWithUsualUnaryConversions(E->getLHS(), ResTy).getVal();
-  llvm::Value *RHS = 
-    EmitExprWithUsualUnaryConversions(E->getRHS(), ResTy).getVal();
+  LHS = EmitExprWithUsualUnaryConversions(E->getLHS(), ResTy);
+  RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), ResTy);
+}
 
+
+RValue CodeGenFunction::EmitShl(RValue LHSV, RValue RHSV, QualType ResTy) {
+  llvm::Value *LHS = LHSV.getVal(), *RHS = RHSV.getVal();
+  
   // LLVM requires the LHS and RHS to be the same type, promote or truncate the
   // RHS to the same size as the LHS.
   if (LHS->getType() != RHS->getType())
@@ -951,22 +979,15 @@ RValue CodeGenFunction::EmitBinaryShl(const BinaryOperator *E) {
   return RValue::get(Builder.CreateShl(LHS, RHS, "shl"));
 }
 
-RValue CodeGenFunction::EmitBinaryShr(const BinaryOperator *E) {
-  // For shifts, integer promotions are performed, but the usual arithmetic 
-  // conversions are not.  The LHS and RHS need not have the same type.
-  
-  QualType ResTy;
-  llvm::Value *LHS = 
-    EmitExprWithUsualUnaryConversions(E->getLHS(), ResTy).getVal();
-  llvm::Value *RHS = 
-    EmitExprWithUsualUnaryConversions(E->getRHS(), ResTy).getVal();
+RValue CodeGenFunction::EmitShr(RValue LHSV, RValue RHSV, QualType ResTy) {
+  llvm::Value *LHS = LHSV.getVal(), *RHS = RHSV.getVal();
   
   // LLVM requires the LHS and RHS to be the same type, promote or truncate the
   // RHS to the same size as the LHS.
   if (LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, LHS->getType(), false, "sh_prom");
   
-  if (E->getType()->isUnsignedIntegerType())
+  if (ResTy->isUnsignedIntegerType())
     return RValue::get(Builder.CreateLShr(LHS, RHS, "shr"));
   else
     return RValue::get(Builder.CreateAShr(LHS, RHS, "shr"));

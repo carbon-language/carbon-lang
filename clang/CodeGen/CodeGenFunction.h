@@ -270,7 +270,8 @@ public:
   RValue EmitExprWithUsualUnaryConversions(const Expr *E, QualType &ResTy);
   QualType EmitUsualArithmeticConversions(const BinaryOperator *E,
                                           RValue &LHS, RValue &RHS);
-  
+  void EmitShiftOperands(const BinaryOperator *E, RValue &LHS, RValue &RHS);
+
   void EmitCompoundAssignmentOperands(const CompoundAssignOperator *CAO,
                                       LValue &LHSLV, RValue &LHS, RValue &RHS);
   RValue EmitCompoundAssignmentResult(const CompoundAssignOperator *E,
@@ -304,8 +305,8 @@ public:
   RValue EmitRem(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitAdd(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitSub(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitBinaryShl(const BinaryOperator *E);
-  RValue EmitBinaryShr(const BinaryOperator *E);
+  RValue EmitShl(RValue LHS, RValue RHS, QualType ResTy);
+  RValue EmitShr(RValue LHS, RValue RHS, QualType ResTy);
   RValue EmitBinaryCompare(const BinaryOperator *E, unsigned UICmpOpc,
                            unsigned SICmpOpc, unsigned FCmpOpc);
   RValue EmitAnd(RValue LHS, RValue RHS, QualType EltTy);

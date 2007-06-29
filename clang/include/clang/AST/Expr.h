@@ -504,6 +504,7 @@ public:
   bool isLogicalOp() const { return Opc == LAnd || Opc == LOr; }
   bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
   bool isCompoundAssignmentOp() const { return Opc > Assign && Opc <= OrAssign;}
+  bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
