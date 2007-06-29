@@ -564,11 +564,12 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
 
   // Scan all of the loop children of L, moving them to OuterLoop if they are
   // not part of the inner loop.
-  for (Loop::iterator I = L->begin(); I != L->end(); )
-    if (BlocksInL.count((*I)->getHeader()))
+  const std::vector<Loop*> &SubLoops = L->getSubLoops();
+  for (size_t I = 0; I != SubLoops.size(); )
+    if (BlocksInL.count(SubLoops[I]->getHeader()))
       ++I;   // Loop remains in L
     else
-      NewOuter->addChildLoop(L->removeChildLoop(I));
+      NewOuter->addChildLoop(L->removeChildLoop(SubLoops.begin() + I));
 
   // Now that we know which blocks are in L and which need to be moved to
   // OuterLoop, move any blocks that need it.
