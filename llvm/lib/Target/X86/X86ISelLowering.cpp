@@ -2959,7 +2959,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     if (N1.getValueType() != MVT::i32)
       N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
     if (N2.getValueType() != MVT::i32)
-      N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(), MVT::i32);
+      N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(),getPointerTy());
     return DAG.getNode(X86ISD::PINSRW, VT, N0, N1, N2);
   } else if (MVT::getSizeInBits(BaseVT) == 32) {
     unsigned Idx = cast<ConstantSDNode>(N2)->getValue();
