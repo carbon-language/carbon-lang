@@ -314,6 +314,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ADD , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::SUB , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::FADD, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FNEG, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::FSUB, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::MUL , (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::FMUL, (MVT::ValueType)VT, Expand);
