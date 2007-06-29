@@ -122,7 +122,7 @@ my $TestStartTime = gmtime() . "GMT<br>" . localtime() . " (local)";
 $CONFIGUREARGS="";
 $nickname="";
 $NOTEST=0;
-$USESVN=0;
+$USESVN=1;
 $NORUNNINGTESTS=0;
 $MAKECMD="make";
 $SUBMITSERVER = "llvm.org";
@@ -170,7 +170,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   else                     { $GCCPATH=""; }
   if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } 
   else                     { $CVSCOOPT="";}
-  if (/^-usesvn/)          { $USESVN = 1; }
   if (/^-svnurl/)          { $SVNURL = $ARGV[0]; shift; next; }
   if (/^-target/)          { $CONFIGUREARGS .= " --target=$ARGV[0]"; 
                              shift; next; }
