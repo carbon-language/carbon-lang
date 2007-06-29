@@ -176,10 +176,10 @@ void MachineBasicBlock::removeSuccessor(MachineBasicBlock *succ) {
   Successors.erase(I);
 }
 
-void MachineBasicBlock::removeSuccessor(succ_iterator I) {
+MachineBasicBlock::succ_iterator MachineBasicBlock::removeSuccessor(succ_iterator I) {
   assert(I != Successors.end() && "Not a current successor!");
   (*I)->removePredecessor(this);
-  Successors.erase(I);
+  return(Successors.erase(I));
 }
 
 void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {
@@ -273,7 +273,7 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
       ++SI;
     } else {
       // Otherwise, this is a superfluous edge, remove it.
-      removeSuccessor(SI);
+      SI = removeSuccessor(SI);
       MadeChange = true;
     }
   }

@@ -211,9 +211,9 @@ public:
 
   /// removeSuccessor - Remove specified successor from the successors list of
   /// this MachineBasicBlock. The Predecessors list of succ is automatically
-  /// updated.
+  /// updated.  Return the iterator to the element after the one removed.
   ///
-  void removeSuccessor(succ_iterator I);
+  succ_iterator removeSuccessor(succ_iterator I);
   
   /// isSuccessor - Return true if the specified MBB is a successor of this
   /// block.

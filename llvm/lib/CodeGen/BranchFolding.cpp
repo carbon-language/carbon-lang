@@ -978,17 +978,18 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
           }
 
           // Iterate through all the predecessors, revectoring each in-turn.
-          MachineBasicBlock::pred_iterator PI = MBB->pred_begin();
+          size_t PI = 0;
           bool DidChange = false;
           bool HasBranchToSelf = false;
-          while (PI != MBB->pred_end()) {
-            if (*PI == MBB) {
+          while(PI != MBB->pred_size()) {
+            MachineBasicBlock *PMBB = *(MBB->pred_begin() + PI);
+            if (PMBB == MBB) {
               // If this block has an uncond branch to itself, leave it.
               ++PI;
               HasBranchToSelf = true;
             } else {
               DidChange = true;
-              (*PI)->ReplaceUsesOfBlockWith(MBB, CurTBB);
+              PMBB->ReplaceUsesOfBlockWith(MBB, CurTBB);
             }
           }
 
