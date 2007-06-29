@@ -166,8 +166,6 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   // loop.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
-    if (*I == L->getHeader())
-      continue;
     TerminatorInst *TI = (*I)->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
       // If this isn't branching on an invariant condition, we can't unswitch
