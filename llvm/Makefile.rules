@@ -38,7 +38,7 @@ InternalTargets  := preconditions distdir dist-hook
 VPATH=$(PROJ_SRC_DIR)
 
 #--------------------------------------------------------------------
-# Reset the list of suffixes we know how to build
+# Reset the list of suffixes we know how to build.
 #--------------------------------------------------------------------
 .SUFFIXES:
 .SUFFIXES: .c .cpp .cc .h .hpp .y .l .lo .o .a .bc .td .ps .dot .ll
