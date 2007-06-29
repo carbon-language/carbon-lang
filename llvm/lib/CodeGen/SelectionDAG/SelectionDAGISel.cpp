@@ -1700,8 +1700,8 @@ unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
 
   // Merge case into clusters
   if (Cases.size()>=2)
-    // Cray [dag]: Must recompute end() each iteration because it may
-    // be invalidated by erase if we hold on to it
+    // Must recompute end() each iteration because it may be
+    // invalidated by erase if we hold on to it
     for (CaseItr I=Cases.begin(), J=++(Cases.begin()); J!=Cases.end(); ) {
       int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
       int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();

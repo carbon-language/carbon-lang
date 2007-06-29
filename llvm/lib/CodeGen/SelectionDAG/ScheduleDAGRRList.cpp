@@ -618,7 +618,7 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   bool LIsTarget = left->Node->isTargetOpcode();
   bool RIsTarget = right->Node->isTargetOpcode();
 
-  // Cray: There used to be a special tie breaker here that looked for
+  // There used to be a special tie breaker here that looked for
   // two-address instructions and preferred the instruction with a
   // def&use operand.  The special case triggered diagnostics when
   // _GLIBCXX_DEBUG was enabled because it broke the strict weak
