@@ -299,22 +299,22 @@ public:
   RValue EmitBinaryMul(const BinaryOperator *E);
   RValue EmitBinaryDiv(const BinaryOperator *E);
   RValue EmitBinaryRem(const BinaryOperator *E);
+  RValue EmitMul(RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitDiv(RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitRem(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitAdd(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitSub(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitBinaryShl(const BinaryOperator *E);
   RValue EmitBinaryShr(const BinaryOperator *E);
   RValue EmitBinaryCompare(const BinaryOperator *E, unsigned UICmpOpc,
                            unsigned SICmpOpc, unsigned FCmpOpc);
-  RValue EmitBinaryAnd(const BinaryOperator *E);
-  RValue EmitBinaryXor(const BinaryOperator *E);
-  RValue EmitBinaryOr (const BinaryOperator *E);
+  RValue EmitAnd(RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitOr (RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitXor(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitBinaryLAnd(const BinaryOperator *E);
   RValue EmitBinaryLOr(const BinaryOperator *E);
   
   RValue EmitBinaryAssign(const BinaryOperator *E);
-  
-  // FIXME: Assignment.
-  
   RValue EmitBinaryComma(const BinaryOperator *E);
 };
 }  // end namespace CodeGen

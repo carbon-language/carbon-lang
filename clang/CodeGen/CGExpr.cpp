@@ -752,12 +752,18 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   RValue LHS, RHS;
   switch (E->getOpcode()) {
   default:
-    fprintf(stderr, "Unimplemented expr!\n");
+    fprintf(stderr, "Unimplemented binary expr!\n");
     E->dump();
     return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
-  case BinaryOperator::Mul: return EmitBinaryMul(E);
-  case BinaryOperator::Div: return EmitBinaryDiv(E);
-  case BinaryOperator::Rem: return EmitBinaryRem(E);
+  case BinaryOperator::Mul:
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitMul(LHS, RHS, E->getType());
+  case BinaryOperator::Div:
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitDiv(LHS, RHS, E->getType());
+  case BinaryOperator::Rem:
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitRem(LHS, RHS, E->getType());
   case BinaryOperator::Add:
     // FIXME: This doesn't handle ptr+int etc yet.
     EmitUsualArithmeticConversions(E, LHS, RHS);
@@ -768,9 +774,15 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     return EmitSub(LHS, RHS, E->getType());
   case BinaryOperator::Shl: return EmitBinaryShl(E);
   case BinaryOperator::Shr: return EmitBinaryShr(E);
-  case BinaryOperator::And: return EmitBinaryAnd(E);
-  case BinaryOperator::Xor: return EmitBinaryXor(E);
-  case BinaryOperator::Or : return EmitBinaryOr(E);
+  case BinaryOperator::And:
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitAnd(LHS, RHS, E->getType());
+  case BinaryOperator::Xor:
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitXor(LHS, RHS, E->getType());
+  case BinaryOperator::Or :
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitOr(LHS, RHS, E->getType());
   case BinaryOperator::LAnd: return EmitBinaryLAnd(E);
   case BinaryOperator::LOr: return EmitBinaryLOr(E);
   case BinaryOperator::LT:
@@ -800,6 +812,27 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Assign:
     return EmitBinaryAssign(E);
     
+  case BinaryOperator::MulAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitMul(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::DivAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitDiv(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::RemAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitRem(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
   case BinaryOperator::AddAssign: {
     const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
     LValue LHSLV;
@@ -814,31 +847,44 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     LHS = EmitSub(LHS, RHS, CAO->getComputationType());
     return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
   }
-    
-    // FIXME: Assignment.
+  case BinaryOperator::AndAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitAnd(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::OrAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitOr(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::XorAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitXor(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
   case BinaryOperator::Comma: return EmitBinaryComma(E);
   }
 }
 
-RValue CodeGenFunction::EmitBinaryMul(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
+RValue CodeGenFunction::EmitMul(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
   
   assert(0 && "FIXME: This doesn't handle complex operands yet");
 }
 
-RValue CodeGenFunction::EmitBinaryDiv(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
+RValue CodeGenFunction::EmitDiv(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar()) {
     llvm::Value *RV;
     if (LHS.getVal()->getType()->isFloatingPoint())
       RV = Builder.CreateFDiv(LHS.getVal(), RHS.getVal(), "div");
-    else if (E->getType()->isUnsignedIntegerType())
+    else if (ResTy->isUnsignedIntegerType())
       RV = Builder.CreateUDiv(LHS.getVal(), RHS.getVal(), "div");
     else
       RV = Builder.CreateSDiv(LHS.getVal(), RHS.getVal(), "div");
@@ -847,14 +893,11 @@ RValue CodeGenFunction::EmitBinaryDiv(const BinaryOperator *E) {
   assert(0 && "FIXME: This doesn't handle complex operands yet");
 }
 
-RValue CodeGenFunction::EmitBinaryRem(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
+RValue CodeGenFunction::EmitRem(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar()) {
     llvm::Value *RV;
     // Rem in C can't be a floating point type: C99 6.5.5p2.
-    if (E->getType()->isUnsignedIntegerType())
+    if (ResTy->isUnsignedIntegerType())
       RV = Builder.CreateURem(LHS.getVal(), RHS.getVal(), "rem");
     else
       RV = Builder.CreateSRem(LHS.getVal(), RHS.getVal(), "rem");
@@ -959,30 +1002,21 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
   return RValue::get(Builder.CreateZExt(Result, LLVMIntTy, "cmp.ext"));
 }
 
-RValue CodeGenFunction::EmitBinaryAnd(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
+RValue CodeGenFunction::EmitAnd(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateAnd(LHS.getVal(), RHS.getVal(), "and"));
   
   assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
 }
 
-RValue CodeGenFunction::EmitBinaryXor(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
+RValue CodeGenFunction::EmitXor(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateXor(LHS.getVal(), RHS.getVal(), "xor"));
   
   assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
 }
 
-RValue CodeGenFunction::EmitBinaryOr(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
+RValue CodeGenFunction::EmitOr(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateOr(LHS.getVal(), RHS.getVal(), "or"));
   
