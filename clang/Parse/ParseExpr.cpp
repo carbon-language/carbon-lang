@@ -413,6 +413,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [OBC]   '@protocol' '(' identifier ')'             [TODO]
 /// [OBC]   '@encode' '(' type-name ')'                [TODO]
 /// [OBC]   objc-string-literal                        [TODO]
+/// [C++]   'const_cast' '<' type-name '>' '(' expression ')'       [C++ 5.2p1]
+/// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
+/// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
+/// [C++]   'static_cast' '<' type-name '>' '(' expression ')'      [C++ 5.2p1]
 ///
 ///       constant: [C99 6.4.4]
 ///         integer-constant

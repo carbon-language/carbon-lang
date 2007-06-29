@@ -63,7 +63,7 @@ STMT(46, ConditionalOperator  , Expr)
 STMT(47, AddrLabel            , Expr)
 
 // C++ Expressions.
-STMT(48, CXXCastExpr          , CastExpr)
+STMT(48, CXXCastExpr          , Expr)
 STMT(49, CXXBoolLiteralExpr   , Expr)
 LAST_EXPR(49)
 

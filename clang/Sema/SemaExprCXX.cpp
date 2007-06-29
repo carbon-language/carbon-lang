@@ -32,7 +32,7 @@ Sema::ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
   case tok::kw_static_cast:      Op = CXXCastExpr::StaticCast;      break;
   }
   
-  return new CXXCastExpr(Op, QualType::getFromOpaquePtr(Ty), (Expr*)E);
+  return new CXXCastExpr(Op, QualType::getFromOpaquePtr(Ty), (Expr*)E, OpLoc);
 }
 
 /// ParseCXXBoolLiteral - Parse {true,false} literals.

@@ -24,7 +24,7 @@ namespace clang {
 
   /// CXXCastExpr - [C++ 5.2.7, 5.2.9, 5.2.10, 5.2.11] C++ Cast Operators.
   /// 
-  class CXXCastExpr : public CastExpr {
+  class CXXCastExpr : public Expr {
   public:
     enum Opcode {
       DynamicCast,
@@ -32,18 +32,28 @@ namespace clang {
       ReinterpretCast,
       ConstCast
     };
+  private:
+    QualType Ty;
+    Opcode Opc;
+    Expr *Op;
+    SourceLocation Loc; // the location of the casting op
+  public:
+    CXXCastExpr(Opcode op, QualType ty, Expr *expr, SourceLocation l)
+      : Expr(CXXCastExprClass, ty), Ty(ty), Opc(op), Op(expr), Loc(l) {}
 
-    CXXCastExpr(Opcode op, QualType ty, Expr *expr)
-      : CastExpr(CXXCastExprClass, ty, expr), Op(op) {}
+    QualType getDestType() const { return Ty; }
+    Expr *getSubExpr() const { return Op; }
+  
+    Opcode getOpcode() const { return Opc; }
 
-    Opcode getOpcode() const { return Op; }
+    virtual SourceRange getSourceRange() const {
+      return SourceRange(Loc, getSubExpr()->getSourceRange().End());
+    }
     virtual void visit(StmtVisitor &Visitor);
     static bool classof(const Stmt *T) { 
       return T->getStmtClass() == CXXCastExprClass;
     }
     static bool classof(const CXXCastExpr *) { return true; }
-  private:
-    Opcode Op;
   };
 
   /// CXXBoolLiteralExpr - [C++ 2.13.5] C++ Boolean Literal.
