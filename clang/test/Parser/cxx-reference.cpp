@@ -1,5 +1,4 @@
-// RUN: clang -parse-ast-check %s &&
-// XFAIL: *
+// RUN: clang -parse-ast-check %s
 
 extern char *bork;
 char *& bar = bork;
