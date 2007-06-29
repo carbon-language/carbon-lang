@@ -519,17 +519,17 @@ protected:
   }
 };
 
-/// CompoundAssignmentOperator - For compound assignments (e.g. +=), we keep
+/// CompoundAssignOperator - For compound assignments (e.g. +=), we keep
 /// track of the type the operation is performed in.  Due to the semantics of
 /// these operators, the operands are promoted, the aritmetic performed, an
 /// implicit conversion back to the result type done, then the assignment takes
 /// place.  This captures the intermediate type which the computation is done
 /// in.
-class ArithAssignBinaryOperator : public BinaryOperator {
+class CompoundAssignOperator : public BinaryOperator {
   QualType ComputationType;
 public:
-  ArithAssignBinaryOperator(Expr *lhs, Expr *rhs, Opcode opc,
-                            QualType ResType, QualType CompType)
+  CompoundAssignOperator(Expr *lhs, Expr *rhs, Opcode opc,
+                         QualType ResType, QualType CompType)
     : BinaryOperator(lhs, rhs, opc, ResType, true), ComputationType(CompType) {
     assert(isCompoundAssignmentOp() && 
            "Only should be used for compound assignments");
@@ -537,7 +537,7 @@ public:
 
   QualType getComputationType() const { return ComputationType; }
   
-  static bool classof(const ArithAssignBinaryOperator *) { return true; }
+  static bool classof(const CompoundAssignOperator *) { return true; }
   static bool classof(const BinaryOperator *B) { 
     return B->isCompoundAssignmentOp(); 
   }

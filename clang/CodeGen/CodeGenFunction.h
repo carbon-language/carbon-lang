@@ -49,6 +49,7 @@ namespace clang {
   class CallExpr;
   class UnaryOperator;
   class BinaryOperator;
+  class CompoundAssignOperator;
   class ArraySubscriptExpr;
   
   class BlockVarDecl;
@@ -250,7 +251,8 @@ public:
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
   RValue EmitLoadOfLValue(const Expr *E);
-  
+  RValue EmitLoadOfLValue(LValue V, QualType LVType);
+
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
@@ -304,6 +306,7 @@ public:
   RValue EmitBinaryLOr(const BinaryOperator *E);
   
   RValue EmitBinaryAssign(const BinaryOperator *E);
+  RValue EmitBinaryAddAssign(const CompoundAssignOperator *E);
   // FIXME: Assignment.
   
   RValue EmitBinaryComma(const BinaryOperator *E);
