@@ -618,16 +618,18 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   bool LIsTarget = left->Node->isTargetOpcode();
   bool RIsTarget = right->Node->isTargetOpcode();
 
-  // Special tie breaker: if two nodes share a operand, the one that use it
-  // as a def&use operand is preferred.
-  if (LIsTarget && RIsTarget) {
-    if (left->isTwoAddress && !right->isTwoAddress)
-      if (SPQ->isDUOperand(left, right))
-        return false;
-    if (!left->isTwoAddress && right->isTwoAddress)
-      if (SPQ->isDUOperand(right, left))
-        return true;
-  }
+  // Cray: There used to be a special tie breaker here that looked for
+  // two-address instructions and preferred the instruction with a
+  // def&use operand.  The special case triggered diagnostics when
+  // _GLIBCXX_DEBUG was enabled because it broke the strict weak
+  // ordering that priority_queue requires. It didn't help much anyway
+  // because AddPseudoTwoAddrDeps already covers many of the cases
+  // where it would have applied.  In addition, it's counter-intuitive
+  // that a tie breaker would be the first thing attempted.  There's a
+  // "real" tie breaker below that is the operation of last resort.
+  // The fact that the "special tie breaker" would trigger when there
+  // wasn't otherwise a tie is what broke the strict weak ordering
+  // constraint.
 
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
