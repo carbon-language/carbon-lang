@@ -84,6 +84,7 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominanceFrontier>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LCSSAID);
@@ -415,6 +416,9 @@ BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *Old, Instruction *SplitPt) {
 
   if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>())
     DT->addNewBlock(New, Old);
+
+  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
+    DF->splitBlock(Old);
     
   return New;
 }
@@ -471,7 +475,7 @@ static inline void RemapInstruction(Instruction *I,
 // If Orig is in Loop then find and use Orig dominator's cloned block as NewBB 
 // dominator.
 void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L, 
-                  DominatorTree *DT, 
+                  DominatorTree *DT, DominanceFrontier *DF,
                   DenseMap<const Value*, Value*> &VM) {
 
   DomTreeNode *OrigNode = DT->getNode(Orig);
@@ -481,7 +485,7 @@ void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L,
   BasicBlock *NewIDom = OrigIDom;
   if (L->contains(OrigIDom)) {
     if (!DT->getNode(OrigIDom))
-      CloneDomInfo(NewIDom, OrigIDom, L, DT, VM);
+      CloneDomInfo(NewIDom, OrigIDom, L, DT, DF, VM);
     NewIDom = cast<BasicBlock>(VM[OrigIDom]);
   }
   if (NewBB == NewIDom) {
@@ -489,6 +493,23 @@ void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L,
     DT->changeImmediateDominator(NewBB, NewIDom);
   } else
     DT->addNewBlock(NewBB, NewIDom);
+
+  DominanceFrontier::DomSetType NewDFSet;
+  if (DF) {
+    DominanceFrontier::iterator DFI = DF->find(Orig);
+    if ( DFI != DF->end()) {
+      DominanceFrontier::DomSetType S = DFI->second;
+      for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
+           I != E; ++I) {
+        BasicBlock *BB = *I;
+        if (L->contains(BB)) 
+          NewDFSet.insert(cast<BasicBlock>(VM[Orig]));
+        else
+          NewDFSet.insert(BB);
+      }
+    }
+    DF->addBasicBlock(NewBB, NewDFSet);
+  }
 }
 
 /// CloneLoop - Recursively clone the specified loop and all of its children,
@@ -532,12 +553,14 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   BranchInst *BRI = new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
 
   // Update dominator info.
+  // BranchVal is a new preheader so it dominates true and false destination
+  // loop headers.
   if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
-    // BranchVal is a new preheader so it dominates true and false destination
-    // loop headers.
     DT->changeImmediateDominator(TrueDest, BRI->getParent());
     DT->changeImmediateDominator(FalseDest, BRI->getParent());
   }
+  // No need to update DominanceFrontier. BRI->getParent() dominated TrueDest
+  // and FalseDest anyway. Now it immediately dominates them.
 }
 
 
@@ -679,11 +702,12 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   }
 
   // Update dominator info
+  DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
   if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>())
     for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
       BasicBlock *LBB = LoopBlocks[i];
       BasicBlock *NBB = NewBlocks[i];
-      CloneDomInfo(NBB, LBB, L, DT, ValueMap);
+      CloneDomInfo(NBB, LBB, L, DT, DF, ValueMap);
     }
   
   // Splice the newly inserted blocks into the function right before the
