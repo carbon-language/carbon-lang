@@ -27,7 +27,7 @@
       <li><a href="#terminology">Terminology and Notation</a>
       <li><a href="#environment">Setting Up Your Environment</a>
       <li><a href="#unpack">Unpacking the LLVM Archives</a>
-      <li><a href="#checkout">Checkout LLVM from CVS</a>
+      <li><a href="#checkout">Checkout LLVM from Subversion</a>
       <li><a href="#installcf">Install the GCC Front End</a>
       <li><a href="#config">Local LLVM Configuration</a>
       <li><a href="#compile">Compiling the LLVM Suite Source Code</a>
@@ -38,7 +38,6 @@
 
   <li><a href="#layout">Program layout</a>
     <ol>
-      <li><a href="#cvsdir"><tt>CVS</tt> directories</a>
       <li><a href="#examples"><tt>llvm/examples</tt></a>
       <li><a href="#include"><tt>llvm/include</tt></a>
       <li><a href="#lib"><tt>llvm/lib</tt></a>
@@ -127,7 +126,7 @@ and performance.
 
   <li>Get the LLVM Source Code
   <ul>
-    <li>With the distributed files (or use <a href="#checkout">CVS</a>):
+    <li>With the distributed files (or use <a href="#checkout">SVN</a>):
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
       <li><tt>gunzip --stdout llvm-<i>version</i>.tar.gz | tar -xvf -</tt>
@@ -137,7 +136,7 @@ and performance.
 
   <li><b>[Optional]</b> Get the Test Suite Source Code 
   <ul>
-    <li>With the distributed files (or use <a href="#checkout">CVS</a>):
+    <li>With the distributed files (or use <a href="#checkout">SVN</a>):
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
       <li><tt>cd llvm/projects</tt>
@@ -385,9 +384,9 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     </tr>
 
     <tr>
-      <td><a href="https://www.cvshome.org/downloads.html">CVS</a></td>
-      <td>&ge;1.11</td>
-      <td>CVS access to LLVM<sup><a href="#sf2">2</a></sup></td>
+      <td><a href="http://subversion.tigris.org/project_packages.html">SVN</a></td>
+      <td>&ge;1.3</td>
+      <td>Subversion access to LLVM<sup><a href="#sf2">2</a></sup></td>
     </tr>
 
     <tr>
@@ -446,9 +445,9 @@ href="CFEBuildInstrs.html">try to compile it</a> on your platform.</p>
     <li><a name="sf1">Only the C and C++ languages are needed so there's no
       need to build the other languages for LLVM's purposes.</a> See 
       <a href="#brokengcc">below</a> for specific version info.</li>
-    <li><a name="sf2">You only need CVS if you intend to build from the 
+    <li><a name="sf2">You only need Subversion if you intend to build from the 
       latest LLVM sources. If you're working from a release distribution, you
-      don't need CVS.</a></li>
+      don't need Subversion.</a></li>
     <li><a name="sf3">Only needed if you want to run the automated test 
       suite in the <tt>llvm/test</tt> directory.</a></li>
     <li><a name="sf4">If you want to make changes to the configure scripts, 
@@ -681,22 +680,22 @@ svn://anonsvn.opensource.apple.com/svn/llvm/trunk. </p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="checkout">Checkout LLVM from CVS</a>
+  <a name="checkout">Checkout LLVM from Subversion</a>
 </div>
 
 <div class="doc_text">
 
-<p>If you have access to our CVS repository, you can get a fresh copy of
-the entire source code.  All you need to do is check it out from CVS as
+<p>If you have access to our Subversion repository, you can get a fresh copy of
+the entire source code.  All you need to do is check it out from Subvresion as
 follows:</p>
 
 <ul>
-<li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-  <li><tt>cvs -d :pserver:anon@llvm.org:/var/cvs/llvm login</tt>
-  <li>Hit the return key when prompted for the password.
-  <li><tt>cvs -z3 -d :pserver:anon@llvm.org:/var/cvs/llvm co
-      llvm</tt>
+  <li><tt>cd <i>where-you-want-llvm-to-live</i></tt></li>
+  <li>Read-Only: <tt>svn co http://llvm.org/svn/llvm-project/trunk/llvm llvm</tt></li>
+  <li>Read-Write:<tt>svn co https://user@llvm.org/svn/llvm-project/trunk/llvm
+    llvm</tt></li>
 </ul>
+
 
 <p>This will create an '<tt>llvm</tt>' directory in the current
 directory and fully populate it with the LLVM source code, Makefiles,
@@ -721,14 +720,14 @@ labels:</p>
 </ul>
 
 <p>If you would like to get the LLVM test suite (a separate package as of 1.4),
-you get it from the CVS repository:</p>
+you get it from the Subversion repository:</p>
 <pre>
   cd llvm/projects
-  cvs -z3 -d :pserver:anon@llvm.org:/var/cvs/llvm co llvm-test
+  svn so http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 </pre>
 <p>By placing it in the <tt>llvm/projects</tt>, it will be automatically
 configured by the LLVM configure script as well as automatically updated when
-you run <tt>cvs update</tt>.</p>
+you run <tt>svn update</tt>.</p>
 
 <p>If you would like to get the GCC front end source code, you can also get it 
 and build it yourself.  Please follow <a href="CFEBuildInstrs.html">these 
@@ -783,7 +782,8 @@ much easier now than it was in the past.</p>
 
 <div class="doc_text">
 
-<p>Once checked out from the CVS repository, the LLVM suite source code must be
+  <p>Once checked out from the Subversion repository, the LLVM suite source 
+  code must be
 configured via the <tt>configure</tt> script.  This script sets variables in the
 various <tt>*.in</tt> files, most notably <tt>llvm/Makefile.config</tt> and 
 <tt>llvm/include/Config/config.h</tt>.  It also populates <i>OBJ_ROOT</i> with 
@@ -1173,13 +1173,6 @@ The following is a brief introduction to code layout:</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="cvsdir"><tt>CVS</tt> directories</a></div>
-<div class="doc_text">
-<p>Every directory checked out of CVS will contain a <tt>CVS</tt> directory; for
-the most part these can just be ignored.</p>
-</div>
-
-<!-- ======================================================================= -->
 <div class="doc_subsection"><a name="examples"><tt>llvm/examples</tt></a></div>
 <div class="doc_text">
   <p>This directory contains some simple examples of how to use the LLVM IR and
@@ -1308,13 +1301,16 @@ end to compile.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="llvmtest"><tt>llvm-test</tt></a></div>
+<div class="doc_subsection"><a name="llvmtest"><tt>test-suite</tt></a></div>
 <div class="doc_text">
-  <p>This is not a directory in the normal llvm module; it is a separate CVS
-  module that must be checked out (usually to <tt>projects/llvm-test</tt>). This
+  <p>This is not a directory in the normal llvm module; it is a separate
+  Subversion
+  module that must be checked out (usually to <tt>projects/test-suite</tt>). 
+  This
   module contains a comprehensive correctness, performance, and benchmarking
   test
-  suite for LLVM. It is a separate CVS module because not every LLVM user is
+  suite for LLVM. It is a separate Subversion module because not every LLVM 
+  user is
   interested in downloading or building such a comprehensive test suite. For
   further details on this test suite, please see the 
   <a href="TestingGuide.html">Testing Guide</a> document.</p>
@@ -1395,7 +1391,7 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   usual machine code output.  It works just like any other GCC compiler, 
   taking the typical <tt>-c, -S, -E, -o</tt> options that are typically used.  
   Additionally, the the source code for <tt>llvm-gcc</tt> is available as a 
-  separate CVS module.</dd>
+  separate Subversion module.</dd>
 
   <dt><tt><b>opt</b></tt></dt>
   <dd><tt>opt</tt> reads LLVM bytecode, applies a series of LLVM to LLVM 
@@ -1422,14 +1418,6 @@ are code generators for parts of LLVM infrastructure.</p>
   generates. This is a useful tool if you are debugging one of them,
   assuming that the other generates correct output. For the full user
   manual, run <tt>`perldoc codegen-diff'</tt>.<br><br>
-
-  <dt><tt><b>cvsupdate</b></tt> <dd><tt>cvsupdate</tt> is a script that will
-  update your CVS tree, but produce a much cleaner and more organized output
-  than simply running <tt>`cvs -z3 up -dP'</tt> will. For example, it will group
-  together all the new and updated files and modified files in separate
-  sections, so you can see at a glance what has changed. If you are at the
-  top of your LLVM CVS tree, running <tt>utils/cvsupdate</tt> is the
-  preferred way of updating the tree.<br><br>
 
   <dt><tt><b>emacs/</b></tt> <dd>The <tt>emacs</tt> directory contains
   syntax-highlighting files which will work with Emacs and XEmacs editors,
