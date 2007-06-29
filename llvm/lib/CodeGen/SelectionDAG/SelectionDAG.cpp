@@ -686,11 +686,16 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.AddDouble(Val);
   void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
-  SDNode *N = new ConstantFPSDNode(isTarget, Val, EltVT);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  SDNode *N = NULL;
+  if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
+    if (!MVT::isVector(VT))
+      return SDOperand(N, 0);
+  if (!N) {
+    N = new ConstantFPSDNode(isTarget, Val, EltVT);
+    CSEMap.InsertNode(N, IP);
+    AllNodes.push_back(N);
+  }
+
   SDOperand Result(N, 0);
   if (MVT::isVector(VT)) {
     SmallVector<SDOperand, 8> Ops;
