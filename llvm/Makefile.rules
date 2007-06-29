@@ -260,8 +260,9 @@ else
   C.Flags   += -D_DEBUG
 endif
 
-# If DISABLE_EXPENSIVE_CHECKS=1 is specified (make command line or configured),
-# then disable expensive checks by defining the appropriate preprocessor symbols.
+# If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or 
+# configured), then enable expensive checks by defining the 
+# appropriate preprocessor symbols.
 ifdef ENABLE_EXPENSIVE_CHECKS
   BuildMode := $(BuildMode)+Checks
   CXX.Flags += -D_GLIBCXX_DEBUG
