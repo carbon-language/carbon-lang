@@ -271,6 +271,12 @@ public:
   QualType EmitUsualArithmeticConversions(const BinaryOperator *E,
                                           RValue &LHS, RValue &RHS);
   
+  void EmitCompoundAssignmentOperands(const CompoundAssignOperator *CAO,
+                                      LValue &LHSLV, RValue &LHS, RValue &RHS);
+  RValue EmitCompoundAssignmentResult(const CompoundAssignOperator *E,
+                                      LValue LHSLV, RValue ResV);
+  
+  
   RValue EmitExpr(const Expr *E);
   RValue EmitIntegerLiteral(const IntegerLiteral *E);
   
@@ -293,8 +299,8 @@ public:
   RValue EmitBinaryMul(const BinaryOperator *E);
   RValue EmitBinaryDiv(const BinaryOperator *E);
   RValue EmitBinaryRem(const BinaryOperator *E);
-  RValue EmitBinaryAdd(const BinaryOperator *E);
-  RValue EmitBinarySub(const BinaryOperator *E);
+  RValue EmitAdd(RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitSub(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitBinaryShl(const BinaryOperator *E);
   RValue EmitBinaryShr(const BinaryOperator *E);
   RValue EmitBinaryCompare(const BinaryOperator *E, unsigned UICmpOpc,
@@ -306,7 +312,7 @@ public:
   RValue EmitBinaryLOr(const BinaryOperator *E);
   
   RValue EmitBinaryAssign(const BinaryOperator *E);
-  RValue EmitBinaryAddAssign(const CompoundAssignOperator *E);
+  
   // FIXME: Assignment.
   
   RValue EmitBinaryComma(const BinaryOperator *E);

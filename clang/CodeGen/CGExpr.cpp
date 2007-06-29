@@ -705,8 +705,51 @@ EmitUsualArithmeticConversions(const BinaryOperator *E, RValue &LHS,
   return ResTy;
 }
 
+/// EmitCompoundAssignmentOperands - Compound assignment operations (like +=)
+/// are strange in that the result of the operation is not the same type as the
+/// intermediate computation.  This function emits the LHS and RHS operands of
+/// the compound assignment, promoting them to their common computation type.
+///
+/// Since the LHS is an lvalue, and the result is stored back through it, we
+/// return the lvalue as well as the LHS/RHS rvalues.  On return, the LHS and
+/// RHS values are both in the computation type for the operator.
+void CodeGenFunction::
+EmitCompoundAssignmentOperands(const CompoundAssignOperator *E,
+                               LValue &LHSLV, RValue &LHS, RValue &RHS) {
+  LHSLV = EmitLValue(E->getLHS());
+  
+  // Load the LHS and RHS operands.
+  QualType LHSTy = E->getLHS()->getType();
+  LHS = EmitLoadOfLValue(LHSLV, LHSTy);
+  QualType RHSTy;
+  RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSTy);
+  
+  // Convert the LHS and RHS to the common evaluation type.
+  LHS = EmitConversion(LHS, LHSTy, E->getComputationType());
+  RHS = EmitConversion(RHS, RHSTy, E->getComputationType());
+}
+
+/// EmitCompoundAssignmentResult - Given a result value in the computation type,
+/// truncate it down to the actual result type, store it through the LHS lvalue,
+/// and return it.
+RValue CodeGenFunction::
+EmitCompoundAssignmentResult(const CompoundAssignOperator *E,
+                             LValue LHSLV, RValue ResV) {
+  
+  // Truncate back to the destination type.
+  if (E->getComputationType() != E->getType())
+    ResV = EmitConversion(ResV, E->getComputationType(), E->getType());
+  
+  // Store the result value into the LHS.
+  EmitStoreThroughLValue(ResV, LHSLV, E->getType());
+  
+  // Return the result.
+  return ResV;
+}
+
 
 RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
+  RValue LHS, RHS;
   switch (E->getOpcode()) {
   default:
     fprintf(stderr, "Unimplemented expr!\n");
@@ -715,8 +758,14 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Mul: return EmitBinaryMul(E);
   case BinaryOperator::Div: return EmitBinaryDiv(E);
   case BinaryOperator::Rem: return EmitBinaryRem(E);
-  case BinaryOperator::Add: return EmitBinaryAdd(E);
-  case BinaryOperator::Sub: return EmitBinarySub(E);
+  case BinaryOperator::Add:
+    // FIXME: This doesn't handle ptr+int etc yet.
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitAdd(LHS, RHS, E->getType());
+  case BinaryOperator::Sub:
+    // FIXME: This doesn't handle ptr-int etc yet.
+    EmitUsualArithmeticConversions(E, LHS, RHS);
+    return EmitSub(LHS, RHS, E->getType());
   case BinaryOperator::Shl: return EmitBinaryShl(E);
   case BinaryOperator::Shr: return EmitBinaryShr(E);
   case BinaryOperator::And: return EmitBinaryAnd(E);
@@ -748,9 +797,24 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_NE,
                              llvm::ICmpInst::ICMP_NE, 
                              llvm::FCmpInst::FCMP_UNE);
-  case BinaryOperator::Assign:     return EmitBinaryAssign(E);
-  case BinaryOperator::AddAssign:
-    return EmitBinaryAddAssign(cast<CompoundAssignOperator>(E));
+  case BinaryOperator::Assign:
+    return EmitBinaryAssign(E);
+    
+  case BinaryOperator::AddAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitAdd(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+  case BinaryOperator::SubAssign: {
+    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
+    LValue LHSLV;
+    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
+    LHS = EmitSub(LHS, RHS, CAO->getComputationType());
+    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
+  }
+    
     // FIXME: Assignment.
   case BinaryOperator::Comma: return EmitBinaryComma(E);
   }
@@ -800,15 +864,10 @@ RValue CodeGenFunction::EmitBinaryRem(const BinaryOperator *E) {
   assert(0 && "FIXME: This doesn't handle complex operands yet");
 }
 
-RValue CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-
-  // FIXME: This doesn't handle ptr+int etc yet.
-  
+RValue CodeGenFunction::EmitAdd(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
-
+  
   // Otherwise, this must be a complex number.
   llvm::Value *LHSR, *LHSI, *RHSR, *RHSI;
   
@@ -818,23 +877,18 @@ RValue CodeGenFunction::EmitBinaryAdd(const BinaryOperator *E) {
   llvm::Value *ResR = Builder.CreateAdd(LHSR, RHSR, "add.r");
   llvm::Value *ResI = Builder.CreateAdd(LHSI, RHSI, "add.i");
   
-  llvm::Value *Res = CreateTempAlloca(ConvertType(E->getType()));
+  llvm::Value *Res = CreateTempAlloca(ConvertType(ResTy));
   EmitStoreOfComplex(ResR, ResI, Res);
   return RValue::getAggregate(Res);
 }
 
-RValue CodeGenFunction::EmitBinarySub(const BinaryOperator *E) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
-  
-  // FIXME: This doesn't handle ptr-int or ptr-ptr, etc yet.
-  
+RValue CodeGenFunction::EmitSub(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateSub(LHS.getVal(), RHS.getVal(), "sub"));
   
   assert(0 && "FIXME: This doesn't handle complex operands yet");
-  
 }
+
 
 RValue CodeGenFunction::EmitBinaryShl(const BinaryOperator *E) {
   // For shifts, integer promotions are performed, but the usual arithmetic 
@@ -1005,43 +1059,6 @@ RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
   return RHS;
 }
 
-/// Compound assignment operations have different promotion rules than the other
-/// binary operators.  In particular, the LHS and RHS are promoted to a new type
-/// (specified by E->getComputationType()), the binary operator is evaluated,
-/// the result is truncated to the type of LHS, then the result is stored back
-/// through the LHS.
-/// 
-RValue CodeGenFunction::EmitBinaryAddAssign(const CompoundAssignOperator *E) {
-  LValue LHSLV = EmitLValue(E->getLHS());
-  
-  // Load the LHS and RHS operands.
-  QualType LHSTy = E->getLHS()->getType();
-  RValue LHS = EmitLoadOfLValue(LHSLV, LHSTy);
-  QualType RHSTy;
-  RValue RHS = EmitExprWithUsualUnaryConversions(E->getRHS(), RHSTy);
-
-  // Convert the LHS and RHS to the common evaluation type.
-  LHS = EmitConversion(LHS, LHSTy, E->getComputationType());
-  RHS = EmitConversion(RHS, RHSTy, E->getComputationType());
-  
-  // Emit the operation itself.
-  RValue Res;
-  if (LHS.isScalar()) {
-    Res = RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
-  } else {
-    assert(0 && "FIXME: Complex add unimp!");
-  }
-  
-  // Truncate back to the destination type.
-  if (E->getComputationType() != E->getType())
-    Res = EmitConversion(Res, E->getComputationType(), E->getType());
-  
-  // Store the result value into the LHS.
-  EmitStoreThroughLValue(Res, LHSLV, E->getType());
-  
-  // Return the result.
-  return Res;
-}
 
 RValue CodeGenFunction::EmitBinaryComma(const BinaryOperator *E) {
   EmitExpr(E->getLHS());
