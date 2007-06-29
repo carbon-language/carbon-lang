@@ -1798,13 +1798,15 @@ void SelectionDAGLowering::visitSub(User &I) {
     if (ConstantVector *CV = dyn_cast<ConstantVector>(I.getOperand(0))) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
       const Type *ElTy = DestTy->getElementType();
-      unsigned VL = DestTy->getNumElements();
-      std::vector<Constant*> NZ(VL, ConstantFP::get(ElTy, -0.0));
-      Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
-      if (CV == CNZ) {
-        SDOperand Op2 = getValue(I.getOperand(1));
-        setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
-        return;
+      if (ElTy->isFloatingPoint()) {
+        unsigned VL = DestTy->getNumElements();
+        std::vector<Constant*> NZ(VL, ConstantFP::get(ElTy, -0.0));
+        Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
+        if (CV == CNZ) {
+          SDOperand Op2 = getValue(I.getOperand(1));
+          setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
+          return;
+        }
       }
     }
   }
