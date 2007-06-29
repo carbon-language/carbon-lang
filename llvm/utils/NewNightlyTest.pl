@@ -520,10 +520,10 @@ if (!$NOCHECKOUT) {
   if ($USESVN) {
     my $SVNCMD = "$NICE svn co $SVNURL";
     if ($VERBOSE) {
-      print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/trunk/projects ; " .
-            "$SVNCMD/llvm-test/trunk llvm-test ) > $COLog 2>&1\n";
-      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/trunk/projects ; " .
-            "$SVNCMD/llvm-test/trunk llvm-test ) > $COLog 2>&1\n";
+      print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+            "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
+      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+            "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
     }
   } else {
     my $CVSOPT = "";
