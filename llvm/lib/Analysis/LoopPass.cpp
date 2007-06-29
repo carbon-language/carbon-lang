@@ -157,6 +157,18 @@ void LPPassManager::getAnalysisUsage(AnalysisUsage &Info) const {
   Info.setPreservesAll();
 }
 
+/// verifyLoopInfo - Verify loop nest.
+void LPPassManager::verifyLoopInfo() {
+  assert (LI && "Loop Info is missing");
+
+  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I) {
+    Loop *L = *I;
+    assert (L->getHeader() && "Loop header is missing");
+    assert (L->getLoopPreheader() && "Loop preheader is missing");
+    assert (L->getLoopLatch() && "Loop latch is missing");
+  }
+}
+
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the function, and if so, return true.
 bool LPPassManager::runOnFunction(Function &F) {
@@ -202,6 +214,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       LoopPass *LP = dynamic_cast<LoopPass *>(P);
       assert (LP && "Invalid LPPassManager member");
       LP->runOnLoop(CurrentLoop, *this);
+      verifyLoopInfo();
       StopPassTimer(P);
 
       if (Changed)
@@ -302,4 +315,3 @@ void LoopPass::assignPassManager(PMStack &PMS,
 
   LPPM->add(this);
 }
-

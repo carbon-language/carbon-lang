@@ -114,6 +114,11 @@ public:
   // queue. This allows LoopPass to change loop nest for the loop. This
   // utility may send LPPassManager into infinite loops so use caution.
   void redoLoop(Loop *L);
+
+private:
+  /// verifyLoopInfo - Verify loop nest.
+  void verifyLoopInfo();
+
 private:
   std::deque<Loop *> LQ;
   bool skipThisLoop;
