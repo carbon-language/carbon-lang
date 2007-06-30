@@ -618,25 +618,32 @@ void *JITResolver::JITCompilerFn(void *Stub) {
          "This is not a known stub!");
   Function *F = (--I)->second;
 
-  // If disabled, emit a useful error message and abort.
-  if (TheJIT->isLazyCompilationDisabled()) {
-    cerr << "LLVM JIT requested to do lazy compilation of function '"
-         << F->getName() << "' when lazy compiles are disabled!\n";
-    abort();
-  }
+  // If we have already code generated the function, just return the address.
+  void *Result = TheJIT->getPointerToGlobalIfAvailable(F);
   
-  // We might like to remove the stub from the StubToFunction map.
-  // We can't do that! Multiple threads could be stuck, waiting to acquire the
-  // lock above. As soon as the 1st function finishes compiling the function,
-  // the next one will be released, and needs to be able to find the function it
-  // needs to call.
-  //JR.state.getStubToFunctionMap(locked).erase(I);
+  if (!Result) {
+    // Otherwise we don't have it, do lazy compilation now.
+    
+    // If lazy compilation is disabled, emit a useful error message and abort.
+    if (TheJIT->isLazyCompilationDisabled()) {
+      cerr << "LLVM JIT requested to do lazy compilation of function '"
+      << F->getName() << "' when lazy compiles are disabled!\n";
+      abort();
+    }
+  
+    // We might like to remove the stub from the StubToFunction map.
+    // We can't do that! Multiple threads could be stuck, waiting to acquire the
+    // lock above. As soon as the 1st function finishes compiling the function,
+    // the next one will be released, and needs to be able to find the function
+    // it needs to call.
+    //JR.state.getStubToFunctionMap(locked).erase(I);
 
-  DOUT << "JIT: Lazily resolving function '" << F->getName()
-       << "' In stub ptr = " << Stub << " actual ptr = "
-       << I->first << "\n";
+    DOUT << "JIT: Lazily resolving function '" << F->getName()
+         << "' In stub ptr = " << Stub << " actual ptr = "
+         << I->first << "\n";
 
-  void *Result = TheJIT->getPointerToFunction(F);
+    Result = TheJIT->getPointerToFunction(F);
+  }
 
   // We don't need to reuse this stub in the future, as F is now compiled.
   JR.state.getFunctionToStubMap(locked).erase(F);
