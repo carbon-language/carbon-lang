@@ -251,8 +251,9 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
   while (size_t ReadBytes = fread(Buffer, 1, 4096*4, stdin))
     FileData.insert(FileData.end(), Buffer, Buffer+ReadBytes);
   
+  FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
   size_t Size = FileData.size();
   MemoryBuffer *B = new STDINBufferFile();
-  B->initCopyOf(&FileData[0], &FileData[Size]);
+  B->initCopyOf(&FileData[0], &FileData[Size-1]);
   return B;
 }
