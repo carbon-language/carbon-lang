@@ -513,24 +513,24 @@ ChangeDir( $BuildDir, "checkout directory" );
 #
 ##############################################################
 if (!$NOCHECKOUT) {
-  if ( $VERBOSE ) { 
-    print "CHECKOUT STAGE:\n"; 
-  }
+  if ( $VERBOSE ) { print "CHECKOUT STAGE:\n"; }
   if ($USESVN) {
     my $SVNCMD = "$NICE svn co $SVNURL";
     if ($VERBOSE) {
       print "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
             "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
-      system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-            "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
     }
+    system "( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
+          "$SVNCMD/test-suite/trunk llvm-test ) > $COLog 2>&1\n";
   } else {
     my $CVSOPT = "";
     $CVSOPT = "-z3" # Use compression if going over ssh.
       if $CVSRootDir =~ /^:ext:/;
     my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co -P $CVSCOOPT";
-    print "( time -p $CVSCMD llvm; cd llvm/projects ; " .
-          "$CVSCMD llvm-test ) > $COLog 2>&1\n";
+    if ($VERBOSE) {
+      print "( time -p $CVSCMD llvm; cd llvm/projects ; " .
+            "$CVSCMD llvm-test ) > $COLog 2>&1\n";
+    }
     system "( time -p $CVSCMD llvm; cd llvm/projects ; " .
           "$CVSCMD llvm-test ) > $COLog 2>&1\n";
   }
