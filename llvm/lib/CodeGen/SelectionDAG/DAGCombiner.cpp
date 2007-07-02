@@ -429,6 +429,11 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros. 
     assert(UnsafeFPMath);
+
+    // -(0-B) -> B
+    if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(Op.getOperand(0)))
+      if (N0CFP->getValue() == 0.0)
+        return Op.getOperand(1);
     
     // -(A-B) -> B-A
     return DAG.getNode(ISD::FSUB, Op.getValueType(), Op.getOperand(1),
@@ -3025,6 +3030,12 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FSUB, VT, N0, N1);
+  // fold (0-B) -> -B
+  if (UnsafeFPMath && N0CFP && N0CFP->getValue() == 0.0) {
+    if (isNegatibleForFree(N1))
+      return GetNegatedExpression(N1, DAG);
+    return DAG.getNode(ISD::FNEG, VT, N1);
+  }
   // fold (A-(-B)) -> A+B
   if (isNegatibleForFree(N1))
     return DAG.getNode(ISD::FADD, VT, N0, GetNegatedExpression(N1, DAG));
@@ -3297,18 +3308,10 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
 
 SDOperand DAGCombiner::visitFNEG(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
-  MVT::ValueType VT = N->getValueType(0);
 
-  // fold (fneg c1) -> -c1
-  if (N0CFP)
-    return DAG.getNode(ISD::FNEG, VT, N0);
-  // fold (fneg (sub x, y)) -> (sub y, x)
-  if (N0.getOpcode() == ISD::SUB)
-    return DAG.getNode(ISD::SUB, VT, N0.getOperand(1), N0.getOperand(0));
-  // fold (fneg (fneg x)) -> x
-  if (N0.getOpcode() == ISD::FNEG)
-    return N0.getOperand(0);
+  if (isNegatibleForFree(N0))
+    return GetNegatedExpression(N0, DAG);
+
   return SDOperand();
 }
 
