@@ -28,9 +28,10 @@ def RetCC_X86Common : CallingConv<[
   CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>,
   CCIfType<[i64], CCAssignToReg<[RAX, RDX]>>,
   
-  // Vector types are always returned in XMM0.  If the target doesn't have XMM0,
-  // it won't have vector types.
-  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToReg<[XMM0]>>,
+  // Vector types are returned in XMM0 and XMM1, when they fit.  If the target
+  // doesn't have XMM registers, it won't have vector types.
+  CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+            CCAssignToReg<[XMM0,XMM1]>>,
 
   // MMX vector types are always returned in MM0. If the target doesn't have
   // MM0, it doesn't support these vector types.
