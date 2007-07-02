@@ -2861,7 +2861,7 @@ static void getCopyToParts(SelectionDAG &DAG,
   if (!MVT::isVector(ValueVT) || NumParts == 1) {
     // If the value was expanded, copy from the parts.
     if (NumParts > 1) {
-      for (unsigned i = 0; i < NumParts; ++i)
+      for (unsigned i = 0; i != NumParts; ++i)
         Parts[i] = DAG.getNode(ISD::EXTRACT_ELEMENT, PartVT, Val,
                                DAG.getConstant(i, MVT::i32));
       return;
@@ -2950,7 +2950,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   // Copy the legal parts from the registers.
   unsigned NumParts = Regs.size();
   SmallVector<SDOperand, 8> Parts(NumParts);
-  for (unsigned i = 0; i < NumParts; ++i) {
+  for (unsigned i = 0; i != NumParts; ++i) {
     SDOperand Part = Flag ?
                      DAG.getCopyFromReg(Chain, Regs[i], RegVT, *Flag) :
                      DAG.getCopyFromReg(Chain, Regs[i], RegVT);
@@ -2981,7 +2981,7 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
   getCopyToParts(DAG, Val, &Parts[0], NumParts, RegVT);
 
   // Copy the parts into the registers.
-  for (unsigned i = 0; i < NumParts; ++i) {
+  for (unsigned i = 0; i != NumParts; ++i) {
     SDOperand Part = Flag ?
                      DAG.getCopyToReg(Chain, R[i], Parts[i], *Flag) :
                      DAG.getCopyToReg(Chain, R[i], Parts[i]);
@@ -3746,32 +3746,6 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
                           DAG.getSrcValue(I.getOperand(2))));
 }
 
-/// ExpandScalarFormalArgs - Recursively expand the formal_argument node, either
-/// bit_convert it or join a pair of them with a BUILD_PAIR when appropriate.
-static SDOperand ExpandScalarFormalArgs(MVT::ValueType VT, SDNode *Arg,
-                                        unsigned &i, SelectionDAG &DAG,
-                                        TargetLowering &TLI) {
-  if (TLI.getTypeAction(VT) != TargetLowering::Expand)
-    return SDOperand(Arg, i++);
-
-  MVT::ValueType EVT = TLI.getTypeToTransformTo(VT);
-  unsigned NumVals = MVT::getSizeInBits(VT) / MVT::getSizeInBits(EVT);
-  if (NumVals == 1) {
-    return DAG.getNode(ISD::BIT_CONVERT, VT,
-                       ExpandScalarFormalArgs(EVT, Arg, i, DAG, TLI));
-  } else if (NumVals == 2) {
-    SDOperand Lo = ExpandScalarFormalArgs(EVT, Arg, i, DAG, TLI);
-    SDOperand Hi = ExpandScalarFormalArgs(EVT, Arg, i, DAG, TLI);
-    if (!TLI.isLittleEndian())
-      std::swap(Lo, Hi);
-    return DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi);
-  } else {
-    // Value scalarized into many values.  Unimp for now.
-    assert(0 && "Cannot expand i64 -> i16 yet!");
-  }
-  return SDOperand();
-}
-
 /// TargetLowering::LowerArguments - This is the default LowerArguments
 /// implementation, which just inserts a FORMAL_ARGUMENTS node.  FIXME: When all
 /// targets are migrated to using FORMAL_ARGUMENTS, this hook should be 
@@ -3842,8 +3816,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   SDNode *Result = DAG.getNode(ISD::FORMAL_ARGUMENTS,
                                DAG.getNodeValueTypes(RetVals), RetVals.size(),
                                &Ops[0], Ops.size()).Val;
-  
-  DAG.setRoot(SDOperand(Result, Result->getNumValues()-1));
+  unsigned NumArgRegs = Result->getNumValues() - 1;
+  DAG.setRoot(SDOperand(Result, NumArgRegs));
 
   // Set up the return result vector.
   Ops.clear();
@@ -3875,78 +3849,21 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Ops.push_back(Op);
       break;
     }
-    case Expand:
-      if (!MVT::isVector(VT)) {
-        // If this is a large integer or a floating point node that needs to be
-        // expanded, it needs to be reassembled from small integers.  Figure out
-        // what the source elt type is and how many small integers it is.
-        Ops.push_back(ExpandScalarFormalArgs(VT, Result, i, DAG, *this));
-      } else {
-        // Otherwise, this is a vector type.  We only support legal vectors
-        // right now.
-        const VectorType *PTy = cast<VectorType>(I->getType());
-        unsigned NumElems = PTy->getNumElements();
-        const Type *EltTy = PTy->getElementType();
-
-        // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the vector type.
-        MVT::ValueType TVT =
-          MVT::getVectorType(getValueType(EltTy), NumElems);
-        if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          SDOperand N = SDOperand(Result, i++);
-          // Handle copies from vectors to registers.
-          N = DAG.getNode(ISD::BIT_CONVERT, TVT, N);
-          Ops.push_back(N);
-        } else {
-          assert(0 && "Don't support illegal by-val vector arguments yet!");
-          abort();
-        }
-      }
+    case Expand: {
+      MVT::ValueType PartVT = getRegisterType(VT);
+      unsigned NumParts = getNumRegisters(VT);
+      SmallVector<SDOperand, 4> Parts(NumParts);
+      for (unsigned j = 0; j != NumParts; ++j)
+        Parts[j] = SDOperand(Result, i++);
+      Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT));
       break;
     }
+    }
   }
+  assert(i == NumArgRegs && "Argument register count mismatch!");
   return Ops;
 }
 
-
-/// ExpandScalarCallArgs - Recursively expand call argument node by
-/// bit_converting it or extract a pair of elements from the larger  node.
-static void ExpandScalarCallArgs(MVT::ValueType VT, SDOperand Arg,
-                                 unsigned Flags,
-                                 SmallVector<SDOperand, 32> &Ops,
-                                 SelectionDAG &DAG,
-                                 TargetLowering &TLI,
-                                 bool isFirst = true) {
-
-  if (TLI.getTypeAction(VT) != TargetLowering::Expand) {
-    // if it isn't first piece, alignment must be 1
-    if (!isFirst)
-      Flags = (Flags & (~ISD::ParamFlags::OrigAlignment)) |
-        (1 << ISD::ParamFlags::OrigAlignmentOffs);
-    Ops.push_back(Arg);
-    Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-    return;
-  }
-
-  MVT::ValueType EVT = TLI.getTypeToTransformTo(VT);
-  unsigned NumVals = MVT::getSizeInBits(VT) / MVT::getSizeInBits(EVT);
-  if (NumVals == 1) {
-    Arg = DAG.getNode(ISD::BIT_CONVERT, EVT, Arg);
-    ExpandScalarCallArgs(EVT, Arg, Flags, Ops, DAG, TLI, isFirst);
-  } else if (NumVals == 2) {
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, EVT, Arg,
-                               DAG.getConstant(0, TLI.getPointerTy()));
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, EVT, Arg,
-                               DAG.getConstant(1, TLI.getPointerTy()));
-    if (!TLI.isLittleEndian())
-      std::swap(Lo, Hi);
-    ExpandScalarCallArgs(EVT, Lo, Flags, Ops, DAG, TLI, isFirst);
-    ExpandScalarCallArgs(EVT, Hi, Flags, Ops, DAG, TLI, false);
-  } else {
-    // Value scalarized into many values.  Unimp for now.
-    assert(0 && "Cannot expand i64 -> i16 yet!");
-  }
-}
 
 /// TargetLowering::LowerCallTo - This is the default LowerCallTo
 /// implementation, which just inserts an ISD::CALL node, which is later custom
@@ -4014,34 +3931,23 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Ops.push_back(Op);
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));
       break;
-    case Expand:
-      if (!MVT::isVector(VT)) {
-        // If this is a large integer, it needs to be broken down into small
-        // integers.  Figure out what the source elt type is and how many small
-        // integers it is.
-        ExpandScalarCallArgs(VT, Op, Flags, Ops, DAG, *this);
-      } else {
-        // Otherwise, this is a vector type.  We only support legal vectors
-        // right now.
-        const VectorType *PTy = cast<VectorType>(Args[i].Ty);
-        unsigned NumElems = PTy->getNumElements();
-        const Type *EltTy = PTy->getElementType();
-        
-        // Figure out if there is a Packed type corresponding to this Vector
-        // type.  If so, convert to the vector type.
-        MVT::ValueType TVT =
-          MVT::getVectorType(getValueType(EltTy), NumElems);
-        if (TVT != MVT::Other && isTypeLegal(TVT)) {
-          // Insert a BIT_CONVERT of the original type to the vector type.
-          Op = DAG.getNode(ISD::BIT_CONVERT, TVT, Op);
-          Ops.push_back(Op);
-          Ops.push_back(DAG.getConstant(Flags, MVT::i32));
-        } else {
-          assert(0 && "Don't support illegal by-val vector call args yet!");
-          abort();
-        }
+    case Expand: {
+      MVT::ValueType PartVT = getRegisterType(VT);
+      unsigned NumParts = getNumRegisters(VT);
+      SmallVector<SDOperand, 4> Parts(NumParts);
+      getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT);
+      for (unsigned i = 0; i != NumParts; ++i) {
+        // if it isn't first piece, alignment must be 1
+        unsigned MyFlags = Flags;
+        if (i != 0)
+          MyFlags = (MyFlags & (~ISD::ParamFlags::OrigAlignment)) |
+            (1 << ISD::ParamFlags::OrigAlignmentOffs);
+
+        Ops.push_back(Parts[i]);
+        Ops.push_back(DAG.getConstant(MyFlags, MVT::i32));
       }
       break;
+    }
     }
   }
   
@@ -4360,7 +4266,7 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
 
   // Copy the value by legal parts into sequential virtual registers.
   getCopyToParts(DAG, Op, &Regs[0], NumRegs, RegisterVT);
-  for (unsigned i = 0; i < NumRegs; ++i)
+  for (unsigned i = 0; i != NumRegs; ++i)
     Chains[i] = DAG.getCopyToReg(getRoot(), Reg + i, Regs[i]);
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
 }
