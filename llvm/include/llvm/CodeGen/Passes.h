@@ -112,12 +112,6 @@ namespace llvm {
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);
 
-  //createModuloSchedulingPass - Creates the Swing Modulo Scheduling Pass
-  FunctionPass *createModuloSchedulingPass(TargetMachine & targ);
-
-  //createModuloSchedulingPass - Creates the Swing Modulo Scheduling Pass
-  FunctionPass *createModuloSchedulingSBPass(TargetMachine & targ);
-
 } // End llvm namespace
 
 #endif
