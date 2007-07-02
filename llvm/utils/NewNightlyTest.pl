@@ -45,10 +45,8 @@ use Socket;
 #  -gccpath         Path to gcc/g++ used to build LLVM
 #  -cvstag          Check out a specific CVS tag to build LLVM (useful for
 #                   testing release branches)
-#  -usesvn          Check code out from a subversion repository.
-#  -svnurl          Specify the SVN URL where LLVM can be found. Needs -usesvn
-#                   to be useful. If -svnurl is not used but -usesvn is then
-#                   the standard (UIUC) repository will be used. 
+#  -usecvs          Check code out from the (old) CVS Repository instead of from
+#                   the standard Subversion repository.
 #  -target          Specify the target triplet
 #  -cflags          Next argument specifies that C compilation options that
 #                   override the default.
@@ -170,7 +168,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   else                     { $GCCPATH=""; }
   if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; } 
   else                     { $CVSCOOPT="";}
-  if (/^-svnurl/)          { $SVNURL = $ARGV[0]; shift; next; }
+  if (/^-usecvs/)          { $USESVN = 0; }
   if (/^-target/)          { $CONFIGUREARGS .= " --target=$ARGV[0]"; 
                              shift; next; }
   if (/^-cflags/)          { $MAKEOPTS = "$MAKEOPTS C.Flags=\'$ARGV[0]\'"; 
