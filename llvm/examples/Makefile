@@ -10,7 +10,7 @@ LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-PARALLEL_DIRS:= Fibonacci HowToUseJIT ModuleMaker BFtoLLVM
+PARALLEL_DIRS:= Fibonacci HowToUseJIT ModuleMaker
 
 ifeq ($(HAVE_PTHREAD),1)
 PARALLEL_DIRS += ParallelJIT 
