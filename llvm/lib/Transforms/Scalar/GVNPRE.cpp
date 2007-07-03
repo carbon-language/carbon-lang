@@ -62,13 +62,14 @@ namespace {
                               FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
                               SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
                               FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT, 
-                              PTRTOINT, INTTOPTR, BITCAST};
+                              PTRTOINT, INTTOPTR, BITCAST, GEP};
     
         ExpressionOpcode opcode;
         const Type* type;
         uint32_t firstVN;
         uint32_t secondVN;
         uint32_t thirdVN;
+        std::vector<uint32_t> varargs;
       
         bool operator< (const Expression& other) const {
           if (opcode < other.opcode)
@@ -91,8 +92,20 @@ namespace {
             return true;
           else if (thirdVN > other.thirdVN)
             return false;
-          else
+          else {
+            if (varargs.size() < other.varargs.size())
+              return true;
+            else if (varargs.size() > other.varargs.size())
+              return false;
+            
+            for (size_t i = 0; i < varargs.size(); ++i)
+              if (varargs[i] < other.varargs[i])
+                return true;
+              else if (varargs[i] > other.varargs[i])
+                return false;
+          
             return false;
+          }
         }
       };
     
@@ -112,6 +125,7 @@ namespace {
       Expression create_expression(InsertElementInst* V);
       Expression create_expression(SelectInst* V);
       Expression create_expression(CastInst* C);
+      Expression create_expression(GetElementPtrInst* G);
     public:
       ValueTable() { nextValueNumber = 1; }
       uint32_t lookup_or_add(Value* V);
@@ -350,6 +364,22 @@ ValueTable::Expression ValueTable::create_expression(SelectInst* I) {
   e.thirdVN = lookup_or_add(I->getFalseValue());
   e.type = I->getType();
   e.opcode = Expression::SELECT;
+  
+  return e;
+}
+
+ValueTable::Expression ValueTable::create_expression(GetElementPtrInst* G) {
+  Expression e;
+    
+  e.firstVN = lookup_or_add(G->getPointerOperand());
+  e.secondVN = 0;
+  e.thirdVN = 0;
+  e.type = G->getType();
+  e.opcode = Expression::SELECT;
+  
+  for (GetElementPtrInst::op_iterator I = G->idx_begin(), E = G->idx_end();
+       I != E; ++I)
+    e.varargs.push_back(lookup_or_add(*I));
   
   return e;
 }
