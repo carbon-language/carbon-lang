@@ -14,7 +14,7 @@ ifdef BUILD_FOR_WEBSITE
 PROJ_OBJ_DIR = .
 DOXYGEN = doxygen
 # Extract version number from the AC_INT line in configure.ac
-# AC_INIT([[llvm]],[[2.0cvs]],[llvmbugs@cs.uiuc.edu])
+# AC_INIT([[llvm]],[[2.1cvs]],[llvmbugs@cs.uiuc.edu])
 PACKAGE_VERSION = $(shell grep AC_INIT ../autoconf/configure.ac | sed -e 's/[^,]*,[[][[]//' -e 's/]],.*//')
 $(warning VERSION=$(VERSION))
 
