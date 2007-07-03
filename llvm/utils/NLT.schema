@@ -5,3 +5,4 @@ CREATE TABLE `Tests` (
   `VALUE` double NOT NULL default '0',
   KEY `name_index` (`NAME`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
+
