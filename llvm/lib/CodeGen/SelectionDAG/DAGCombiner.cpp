@@ -854,6 +854,9 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   SDOperand FoldedVOp = SimplifyVBinOp(N);
   if (FoldedVOp.Val) return FoldedVOp;
   
+  // fold (add x, undef) -> undef
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
     return DAG.getNode(ISD::ADD, VT, N0, N1);
@@ -924,10 +927,6 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
     SDOperand Result = combineSelectAndUse(N, N1, N0, DAG);
     if (Result.Val) return Result;
   }
-
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
 
   return SDOperand();
 }
@@ -1029,7 +1028,7 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
     SDOperand Result = combineSelectAndUse(N, N1, N0, DAG);
     if (Result.Val) return Result;
   }
-  // If either operand is undef, the result is undef
+  // If either operand of a sub is undef, the result is undef
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getNode(ISD::UNDEF, VT);
 
@@ -1047,6 +1046,9 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   SDOperand FoldedVOp = SimplifyVBinOp(N);
   if (FoldedVOp.Val) return FoldedVOp;
   
+  // fold (mul x, undef) -> 0
+  if (N1.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
   // fold (mul c1, c2) -> c1*c2
   if (N0C && N1C)
     return DAG.getNode(ISD::MUL, VT, N0, N1);
@@ -1111,10 +1113,6 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   SDOperand RMUL = ReassociateOps(ISD::MUL, N0, N1);
   if (RMUL.Val != 0)
     return RMUL;
-
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
 
   return SDOperand();
 }
@@ -1185,9 +1183,12 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
     if (Op.Val) return Op;
   }
 
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  // undef / X -> 0
+  if (N0.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
+  // X / undef -> undef
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
 
   return SDOperand();
 }
@@ -1230,9 +1231,12 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
     if (Op.Val) return Op;
   }
 
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  // undef / X -> 0
+  if (N0.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
+  // X / undef -> undef
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
 
   return SDOperand();
 }
@@ -1265,9 +1269,12 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
     return Sub;
   }
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  // undef % X -> 0
+  if (N0.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
+  // X % undef -> undef
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
 
   return SDOperand();
 }
@@ -1307,9 +1314,12 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
     return Sub;
   }
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  // undef % X -> 0
+  if (N0.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
+  // X % undef -> undef
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
 
   return SDOperand();
 }
@@ -1328,9 +1338,9 @@ SDOperand DAGCombiner::visitMULHS(SDNode *N) {
     return DAG.getNode(ISD::SRA, N0.getValueType(), N0, 
                        DAG.getConstant(MVT::getSizeInBits(N0.getValueType())-1,
                                        TLI.getShiftAmountTy()));
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  // fold (mulhs x, undef) -> 0
+  if (N1.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
 
   return SDOperand();
 }
@@ -1347,9 +1357,9 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
   // fold (mulhu x, 1) -> 0
   if (N1C && N1C->getValue() == 1)
     return DAG.getConstant(0, N0.getValueType());
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  // fold (mulhu x, undef) -> 0
+  if (N1.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
 
   return SDOperand();
 }
@@ -1390,10 +1400,6 @@ SDOperand DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
     return DAG.getNode(N0.getOpcode(), VT, ORNode, N0.getOperand(1));
   }
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
-
   return SDOperand();
 }
 
@@ -1409,6 +1415,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   SDOperand FoldedVOp = SimplifyVBinOp(N);
   if (FoldedVOp.Val) return FoldedVOp;
   
+  // fold (and x, undef) -> 0
+  if (N1.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
     return DAG.getNode(ISD::AND, VT, N0, N1);
@@ -1594,6 +1603,9 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   SDOperand FoldedVOp = SimplifyVBinOp(N);
   if (FoldedVOp.Val) return FoldedVOp;
   
+  // fold (or x, undef) -> -1
+  if (N1.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(-1, VT);
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
     return DAG.getNode(ISD::OR, VT, N0, N1);
@@ -1877,6 +1889,9 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   SDOperand FoldedVOp = SimplifyVBinOp(N);
   if (FoldedVOp.Val) return FoldedVOp;
   
+  // fold (xor x, undef) -> undef
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
     return DAG.getNode(ISD::XOR, VT, N0, N1);
@@ -3009,10 +3024,6 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
     return DAG.getNode(ISD::FADD, VT, N0.getOperand(0),
                        DAG.getNode(ISD::FADD, VT, N0.getOperand(1), N1));
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
-
   return SDOperand();
 }
 
@@ -3040,10 +3051,6 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   if (isNegatibleForFree(N1))
     return DAG.getNode(ISD::FADD, VT, N0, GetNegatedExpression(N1, DAG));
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
-
   return SDOperand();
 }
 
@@ -3088,10 +3095,6 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
     return DAG.getNode(ISD::FMUL, VT, N0.getOperand(0),
                        DAG.getNode(ISD::FMUL, VT, N0.getOperand(1), N1));
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
-
   return SDOperand();
 }
 
@@ -3122,10 +3125,6 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
     }
   }
   
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
-
   return SDOperand();
 }
 
@@ -3139,10 +3138,6 @@ SDOperand DAGCombiner::visitFREM(SDNode *N) {
   // fold (frem c1, c2) -> fmod(c1,c2)
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FREM, VT, N0, N1);
-
-  // If either operand is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
 
   return SDOperand();
 }
