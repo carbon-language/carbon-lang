@@ -629,8 +629,41 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
   
+  // Unary Operations
+  if (isa<CastInst>(V)) {
+    User* U = cast<User>(V);
+    
+    Value* newOp1 = 0;
+    if (isa<Instruction>(U->getOperand(0)))
+      newOp1 = phi_translate(U->getOperand(0), pred, succ);
+    else
+      newOp1 = U->getOperand(0);
+    
+    if (newOp1 == 0)
+      return 0;
+    
+    if (newOp1 != U->getOperand(0)) {
+      Instruction* newVal = 0;
+      if (CastInst* C = dyn_cast<CastInst>(U))
+        newVal = CastInst::create(C->getOpcode(),
+                                  newOp1, C->getType(),
+                                  C->getName()+".expr");
+      
+      uint32_t v = VN.lookup_or_add(newVal);
+      
+      Value* leader = find_leader(availableOut[pred], v);
+      if (leader == 0) {
+        createdExpressions.push_back(newVal);
+        return newVal;
+      } else {
+        VN.erase(newVal);
+        delete newVal;
+        return leader;
+      }
+    }
+  
   // Binary Operations
-  if (isa<BinaryOperator>(V) || isa<CmpInst>(V) || 
+  } if (isa<BinaryOperator>(V) || isa<CmpInst>(V) || 
       isa<ExtractElementInst>(V)) {
     User* U = cast<User>(V);
     
@@ -783,8 +816,22 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
   for (unsigned i = 0; i < worklist.size(); ++i) {
     Value* v = worklist[i];
     
+    // Handle unary ops
+    if (isa<CastInst>(v)) {
+      User* U = cast<User>(v);
+      
+      bool lhsValid = !isa<Instruction>(U->getOperand(0));
+      lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
+      if (lhsValid)
+        lhsValid = !dependsOnInvoke(U->getOperand(0));
+      
+      if (!lhsValid) {
+        set.erase(U);
+        presentInSet.flip(VN.lookup(U));
+      }
+    
     // Handle binary ops
-    if (isa<BinaryOperator>(v) || isa<CmpInst>(v) ||
+    } else if (isa<BinaryOperator>(v) || isa<CmpInst>(v) ||
         isa<ExtractElementInst>(v)) {
       User* U = cast<User>(v);
       
@@ -843,9 +890,23 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 16>& set, std::vector<Value*>& vec) {
     
     while (!stack.empty()) {
       Value* e = stack.back();
-  
+      
+      // Handle unary ops
+      if (isa<CastInst>(e)) {
+        User* U = cast<User>(e);
+        Value* l = find_leader(set, VN.lookup(U->getOperand(0)));
+    
+        if (l != 0 && isa<Instruction>(l) &&
+            visited.count(l) == 0)
+          stack.push_back(l);
+        else {
+          vec.push_back(e);
+          visited.insert(e);
+          stack.pop_back();
+        }
+      
       // Handle binary ops
-      if (isa<BinaryOperator>(e) || isa<CmpInst>(e) ||
+      } else if (isa<BinaryOperator>(e) || isa<CmpInst>(e) ||
           isa<ExtractElementInst>(e)) {
         User* U = cast<User>(e);
         Value* l = find_leader(set, VN.lookup(U->getOperand(0)));
@@ -935,7 +996,8 @@ bool GVNPRE::elimination() {
 
       if (isa<BinaryOperator>(BI) || isa<CmpInst>(BI) ||
           isa<ShuffleVectorInst>(BI) || isa<InsertElementInst>(BI) ||
-          isa<ExtractElementInst>(BI) || isa<SelectInst>(BI)) {
+          isa<ExtractElementInst>(BI) || isa<SelectInst>(BI) ||
+          isa<CastInst>(BI)) {
          Value *leader = find_leader(availableOut[BB], VN.lookup(BI));
   
         if (leader != 0)
@@ -990,7 +1052,27 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     availNumbers.resize(VN.size());
     
     currPhis.insert(p);
+  
+  // Handle unary ops
+  } else if (isa<CastInst>(I)) {
+    User* U = cast<User>(I);
+    Value* leftValue = U->getOperand(0);
     
+    unsigned num = VN.lookup_or_add(U);
+    expNumbers.resize(VN.size());
+    availNumbers.resize(VN.size());
+      
+    if (isa<Instruction>(leftValue))
+      if (!expNumbers.test(VN.lookup(leftValue))) {
+        currExps.insert(leftValue);
+        expNumbers.set(VN.lookup(leftValue));
+      }
+    
+    if (!expNumbers.test(VN.lookup(U))) {
+      currExps.insert(U);
+      expNumbers.set(num);
+    }
+  
   // Handle binary ops
   } else if (isa<BinaryOperator>(I) || isa<CmpInst>(I) ||
              isa<ExtractElementInst>(I)) {
@@ -1266,21 +1348,31 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
           isa<ShuffleVectorInst>(U->getOperand(0)) ||
           isa<ExtractElementInst>(U->getOperand(0)) ||
           isa<InsertElementInst>(U->getOperand(0)) ||
-          isa<SelectInst>(U->getOperand(0)))
+          isa<SelectInst>(U->getOperand(0)) ||
+          isa<CastInst>(U->getOperand(0)))
         s1 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(0)));
       else
         s1 = U->getOperand(0);
       
       Value* s2 = 0;
-      if (isa<BinaryOperator>(U->getOperand(1)) || 
-          isa<CmpInst>(U->getOperand(1)) ||
-          isa<ShuffleVectorInst>(U->getOperand(1)) ||
-          isa<ExtractElementInst>(U->getOperand(1)) ||
-          isa<InsertElementInst>(U->getOperand(1)) ||
-          isa<SelectInst>(U->getOperand(1))) 
-        s2 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(1)));
-      else
-        s2 = U->getOperand(1);
+      
+      if (isa<BinaryOperator>(U) || 
+          isa<CmpInst>(U) ||
+          isa<ShuffleVectorInst>(U) ||
+          isa<ExtractElementInst>(U) ||
+          isa<InsertElementInst>(U) ||
+          isa<SelectInst>(U))
+        if (isa<BinaryOperator>(U->getOperand(1)) || 
+            isa<CmpInst>(U->getOperand(1)) ||
+            isa<ShuffleVectorInst>(U->getOperand(1)) ||
+            isa<ExtractElementInst>(U->getOperand(1)) ||
+            isa<InsertElementInst>(U->getOperand(1)) ||
+            isa<SelectInst>(U->getOperand(1)) ||
+            isa<CastInst>(U->getOperand(1))) {
+          s2 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(1)));
+        } else {
+          s2 = U->getOperand(1);
+        }
       
       // Ternary Operators
       Value* s3 = 0;
@@ -1292,10 +1384,12 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
             isa<ShuffleVectorInst>(U->getOperand(2)) ||
             isa<ExtractElementInst>(U->getOperand(2)) ||
             isa<InsertElementInst>(U->getOperand(2)) ||
-            isa<SelectInst>(U->getOperand(2)))
+            isa<SelectInst>(U->getOperand(2)) ||
+            isa<CastInst>(U->getOperand(2))) {
           s3 = find_leader(availableOut[*PI], VN.lookup(U->getOperand(2)));
-        else
+        } else {
           s3 = U->getOperand(2);
+        }
       
       Value* newVal = 0;
       if (BinaryOperator* BO = dyn_cast<BinaryOperator>(U))
@@ -1319,6 +1413,10 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         newVal = new SelectInst(S->getCondition(), S->getTrueValue(),
                                 S->getFalseValue(), S->getName()+".gvnpre",
                                 (*PI)->getTerminator());
+      else if (CastInst* C = dyn_cast<CastInst>(U))
+        newVal = CastInst::create(C->getOpcode(), s1, C->getType(),
+                                  C->getName()+".gvnpre", 
+                                  (*PI)->getTerminator());
                                 
                   
       VN.add(newVal, VN.lookup(U));
@@ -1365,7 +1463,7 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
           
     if (isa<BinaryOperator>(e) || isa<CmpInst>(e) ||
         isa<ExtractElementInst>(e) || isa<InsertElementInst>(e) ||
-        isa<ShuffleVectorInst>(e) || isa<SelectInst>(e)) {
+        isa<ShuffleVectorInst>(e) || isa<SelectInst>(e) || isa<CastInst>(e)) {
       if (find_leader(availableOut[D->getIDom()->getBlock()],
                       VN.lookup(e)) != 0)
         continue;
