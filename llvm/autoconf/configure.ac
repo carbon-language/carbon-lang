@@ -70,7 +70,7 @@ do
       sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
       privbracket)  AC_CONFIG_SUBDIRS([projects/privbracket]) ;;
       llvm-stacker) AC_CONFIG_SUBDIRS([projects/llvm-stacker]) ;;
-      test-suite)   AC_CONFIG_SUBDIRS([projects/test-suite]) ;;
+      llvm-test)    AC_CONFIG_SUBDIRS([projects/llvm-test]) ;;
       llvm-reopt)   AC_CONFIG_SUBDIRS([projects/llvm-reopt]);;
       llvm-gcc)     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
       llvm-java)    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
