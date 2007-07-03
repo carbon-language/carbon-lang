@@ -3016,11 +3016,33 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::FP_ROUND:
+    if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) == 
+        TargetLowering::Expand) {
+      // The only way we can lower this is to turn it into a TRUNCSTORE,
+      // EXTLOAD pair, targetting a temporary location (a stack slot).
+
+      // NOTE: there is a choice here between constantly creating new stack
+      // slots and always reusing the same one.  We currently always create
+      // new ones, as reuse may inhibit scheduling.
+      MVT::ValueType VT = Op.getValueType();    // 32
+      const Type *Ty = MVT::getTypeForValueType(VT);
+      uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+      unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
+      MachineFunction &MF = DAG.getMachineFunction();
+      int SSFI =
+        MF.getFrameInfo()->CreateStackObject(TySize, Align);
+      SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+      Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
+                                 StackSlot, NULL, 0, VT);
+      Result = DAG.getLoad(VT, Result, StackSlot, NULL, 0, VT);
+      break;
+    }
+    // FALL THROUGH
   case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::FP_EXTEND:
-  case ISD::FP_ROUND:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "Shouldn't need to expand other operators here!");
     case Legal:

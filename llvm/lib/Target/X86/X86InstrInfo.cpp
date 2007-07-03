@@ -33,7 +33,8 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   if (oc == X86::MOV8rr || oc == X86::MOV16rr ||
       oc == X86::MOV32rr || oc == X86::MOV64rr ||
       oc == X86::MOV16to16_ || oc == X86::MOV32to32_ ||
-      oc == X86::FpMOV  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
+      oc == X86::FpMOV3232  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
+      oc == X86::FpMOV3264 || oc == X86::FpMOV6432 || oc == X86::FpMOV6464 ||
       oc == X86::FsMOVAPSrr || oc == X86::FsMOVAPDrr ||
       oc == X86::MOVAPSrr || oc == X86::MOVAPDrr ||
       oc == X86::MOVSS2PSrr || oc == X86::MOVSD2PDrr ||

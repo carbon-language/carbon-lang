@@ -17,13 +17,13 @@
 // FPStack specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def SDTX86FpGet   : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
+def SDTX86FpGet   : SDTypeProfile<1, 0, [SDTCisFP<0>]>;
 def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
-def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
+def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
-def SDTX86Fild    : SDTypeProfile<1, 2, [SDTCisVT<0, f64>, SDTCisPtrTy<1>,
+def SDTX86Fild    : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisPtrTy<1>,
                                          SDTCisVT<2, OtherVT>]>;
 def SDTX86FpToIMem: SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
@@ -50,19 +50,19 @@ def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
 // FPStack pattern fragments
 //===----------------------------------------------------------------------===//
 
-def fp64imm0 : PatLeaf<(f64 fpimm), [{
+def fpimm0 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(+0.0);
 }]>;
 
-def fp64immneg0 : PatLeaf<(f64 fpimm), [{
+def fpimmneg0 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(-0.0);
 }]>;
 
-def fp64imm1 : PatLeaf<(f64 fpimm), [{
+def fpimm1 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(+1.0);
 }]>;
 
-def fp64immneg1 : PatLeaf<(f64 fpimm), [{
+def fpimmneg1 : PatLeaf<(fpimm), [{
   return N->isExactlyValue(-1.0);
 }]>;
 
@@ -70,18 +70,30 @@ def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extloadf32 node:$ptr))>;
 
 // Some 'special' instructions
 let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
-  def FP_TO_INT16_IN_MEM : I<0, Pseudo,
-                            (ops i16mem:$dst, RFP:$src),
-                           "#FP_TO_INT16_IN_MEM PSEUDO!",
-                           [(X86fp_to_i16mem RFP:$src, addr:$dst)]>;
-  def FP_TO_INT32_IN_MEM : I<0, Pseudo,
-                            (ops i32mem:$dst, RFP:$src),
-                           "#FP_TO_INT32_IN_MEM PSEUDO!",
-                           [(X86fp_to_i32mem RFP:$src, addr:$dst)]>;
-  def FP_TO_INT64_IN_MEM : I<0, Pseudo,
-                            (ops i64mem:$dst, RFP:$src),
-                           "#FP_TO_INT64_IN_MEM PSEUDO!",
-                           [(X86fp_to_i64mem RFP:$src, addr:$dst)]>;
+  def FP32_TO_INT16_IN_MEM : I<0, Pseudo,
+                            (ops i16mem:$dst, RFP32:$src),
+                            "#FP32_TO_INT16_IN_MEM PSEUDO!",
+                            [(X86fp_to_i16mem RFP32:$src, addr:$dst)]>;
+  def FP32_TO_INT32_IN_MEM : I<0, Pseudo,
+                            (ops i32mem:$dst, RFP32:$src),
+                            "#FP32_TO_INT32_IN_MEM PSEUDO!",
+                            [(X86fp_to_i32mem RFP32:$src, addr:$dst)]>;
+  def FP32_TO_INT64_IN_MEM : I<0, Pseudo,
+                            (ops i64mem:$dst, RFP32:$src),
+                            "#FP32_TO_INT64_IN_MEM PSEUDO!",
+                            [(X86fp_to_i64mem RFP32:$src, addr:$dst)]>;
+  def FP64_TO_INT16_IN_MEM : I<0, Pseudo,
+                            (ops i16mem:$dst, RFP64:$src),
+                            "#FP64_TO_INT16_IN_MEM PSEUDO!",
+                            [(X86fp_to_i16mem RFP64:$src, addr:$dst)]>;
+  def FP64_TO_INT32_IN_MEM : I<0, Pseudo,
+                            (ops i32mem:$dst, RFP64:$src),
+                            "#FP64_TO_INT32_IN_MEM PSEUDO!",
+                            [(X86fp_to_i32mem RFP64:$src, addr:$dst)]>;
+  def FP64_TO_INT64_IN_MEM : I<0, Pseudo,
+                            (ops i64mem:$dst, RFP64:$src),
+                            "#FP64_TO_INT64_IN_MEM PSEUDO!",
+                            [(X86fp_to_i64mem RFP64:$src, addr:$dst)]>;
 }
 
 let isTerminator = 1 in
@@ -111,30 +123,47 @@ class FpI_<dag ops, FPFormat fp, list<dag> pattern>
 }
 
 // Random Pseudo Instructions.
-def FpGETRESULT : FpI_<(ops RFP:$dst), SpecialFP,
-                  [(set RFP:$dst, X86fpget)]>;                    // FPR = ST(0)
+def FpGETRESULT32 : FpI_<(ops RFP32:$dst), SpecialFP,
+                   [(set RFP32:$dst, X86fpget)]>;                    // FPR = ST(0)
 
-let noResults = 1 in 
-  def FpSETRESULT : FpI_<(ops RFP:$src), SpecialFP,
-                        [(X86fpset RFP:$src)]>, Imp<[], [ST0]>;   // ST(0) = FPR
+def FpGETRESULT64 : FpI_<(ops RFP64:$dst), SpecialFP,
+                   [(set RFP64:$dst, X86fpget)]>;                    // FPR = ST(0)
 
+let noResults = 1 in {
+  def FpSETRESULT32 : FpI_<(ops RFP32:$src), SpecialFP,
+                        [(X86fpset RFP32:$src)]>, Imp<[], [ST0]>;   // ST(0) = FPR
+
+  def FpSETRESULT64 : FpI_<(ops RFP64:$src), SpecialFP,
+                        [(X86fpset RFP64:$src)]>, Imp<[], [ST0]>;   // ST(0) = FPR
+}
 // FpI - Floating Point Psuedo Instruction template. Predicated on FPStack.
 class FpI<dag ops, FPFormat fp, list<dag> pattern> :
   FpI_<ops, fp, pattern>, Requires<[FPStack]>;
 
-
-def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP, []>; // f1 = fmov f2
+// Register copies.  Just copies, the 64->32 version does not truncate.
+def FpMOV3232       : FpI<(ops RFP32:$dst, RFP32:$src), SpecialFP, []>; // f1 = fmov f2
+def FpMOV3264       : FpI<(ops RFP64:$dst, RFP32:$src), SpecialFP, []>; // f1 = fmov f2
+def FpMOV6432       : FpI<(ops RFP32:$dst, RFP64:$src), SpecialFP, []>; // f1 = fmov f2
+def FpMOV6464       : FpI<(ops RFP64:$dst, RFP64:$src), SpecialFP, []>; // f1 = fmov f2
 
 // Arithmetic
 // Add, Sub, Mul, Div.
-def FpADD : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fadd RFP:$src1, RFP:$src2))]>;
-def FpSUB : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fsub RFP:$src1, RFP:$src2))]>;
-def FpMUL : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fmul RFP:$src1, RFP:$src2))]>;
-def FpDIV : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fdiv RFP:$src1, RFP:$src2))]>;
+def FpADD32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), TwoArgFP,
+                [(set RFP32:$dst, (fadd RFP32:$src1, RFP32:$src2))]>;
+def FpSUB32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), TwoArgFP,
+                [(set RFP32:$dst, (fsub RFP32:$src1, RFP32:$src2))]>;
+def FpMUL32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), TwoArgFP,
+                [(set RFP32:$dst, (fmul RFP32:$src1, RFP32:$src2))]>;
+def FpDIV32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), TwoArgFP,
+                [(set RFP32:$dst, (fdiv RFP32:$src1, RFP32:$src2))]>;
+def FpADD64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), TwoArgFP,
+                [(set RFP64:$dst, (fadd RFP64:$src1, RFP64:$src2))]>;
+def FpSUB64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), TwoArgFP,
+                [(set RFP64:$dst, (fsub RFP64:$src1, RFP64:$src2))]>;
+def FpMUL64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), TwoArgFP,
+                [(set RFP64:$dst, (fmul RFP64:$src1, RFP64:$src2))]>;
+def FpDIV64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), TwoArgFP,
+                [(set RFP64:$dst, (fdiv RFP64:$src1, RFP64:$src2))]>;
 
 class FPST0rInst<bits<8> o, string asm>
   : FPI<o, AddRegFrm, (ops RST:$op), asm>, D8;
@@ -144,47 +173,41 @@ class FPrST0PInst<bits<8> o, string asm>
   : FPI<o, AddRegFrm, (ops RST:$op), asm>, DE;
 
 // Binary Ops with a memory source.
-def FpADD32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd RFP:$src1,
-                                     (extloadf64f32 addr:$src2)))]>;
+def FpADD32m  : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fadd RFP32:$src1, (loadf32 addr:$src2)))]>;
                 // ST(0) = ST(0) + [mem32]
-def FpADD64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd RFP:$src1, (loadf64 addr:$src2)))]>;
+def FpADD64m  : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fadd RFP64:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) + [mem64]
-def FpMUL32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fmul RFP:$src1,
-                                     (extloadf64f32 addr:$src2)))]>;
+def FpMUL32m  : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fmul RFP32:$src1, (loadf32 addr:$src2)))]>;
                 // ST(0) = ST(0) * [mem32]
-def FpMUL64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fmul RFP:$src1, (loadf64 addr:$src2)))]>;
+def FpMUL64m  : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fmul RFP64:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) * [mem64]
-def FpSUB32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fsub RFP:$src1,
-                                    (extloadf64f32 addr:$src2)))]>;
+def FpSUB32m  : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fsub RFP32:$src1, (loadf32 addr:$src2)))]>;
                 // ST(0) = ST(0) - [mem32]
-def FpSUB64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fsub RFP:$src1, (loadf64 addr:$src2)))]>;
+def FpSUB64m  : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fsub RFP64:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) - [mem64]
-def FpSUBR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fsub (extloadf64f32 addr:$src2),
-                                     RFP:$src1))]>;
+def FpSUBR32m : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fsub (loadf32 addr:$src2), RFP32:$src1))]>;
                 // ST(0) = [mem32] - ST(0)
-def FpSUBR64m : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fsub (loadf64 addr:$src2), RFP:$src1))]>;
+def FpSUBR64m : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fsub (loadf64 addr:$src2), RFP64:$src1))]>;
                 // ST(0) = [mem64] - ST(0)
-def FpDIV32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fdiv RFP:$src1,
-                                    (extloadf64f32 addr:$src2)))]>;
+def FpDIV32m  : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fdiv RFP32:$src1, (loadf32 addr:$src2)))]>;
                 // ST(0) = ST(0) / [mem32]
-def FpDIV64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fdiv RFP:$src1, (loadf64 addr:$src2)))]>;
+def FpDIV64m  : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fdiv RFP64:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) / [mem64]
-def FpDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fdiv (extloadf64f32 addr:$src2),
-                                     RFP:$src1))]>;
+def FpDIVR32m : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fdiv (loadf32 addr:$src2), RFP32:$src1))]>;
                 // ST(0) = [mem32] / ST(0)
-def FpDIVR64m : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fdiv (loadf64 addr:$src2), RFP:$src1))]>;
+def FpDIVR64m : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fdiv (loadf64 addr:$src2), RFP64:$src1))]>;
                 // ST(0) = [mem64] / ST(0)
 
 
@@ -201,53 +224,102 @@ def FDIV64m  : FPI<0xDC, MRM6m, (ops f64mem:$src), "fdiv{l} $src">;
 def FDIVR32m : FPI<0xD8, MRM7m, (ops f32mem:$src), "fdivr{s} $src">;
 def FDIVR64m : FPI<0xDC, MRM7m, (ops f64mem:$src), "fdivr{l} $src">;
 
-def FpIADD16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd RFP:$src1,
+def FpIADD16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fadd RFP32:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) + [mem16int]
-def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd RFP:$src1,
+def FpIADD32m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fadd RFP32:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) + [mem32int]
-def FpIMUL16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fmul RFP:$src1,
+def FpIMUL16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fmul RFP32:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) * [mem16int]
-def FpIMUL32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fmul RFP:$src1,
+def FpIMUL32m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fmul RFP32:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) * [mem32int]
-def FpISUB16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fsub RFP:$src1,
+def FpISUB16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fsub RFP32:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) - [mem16int]
-def FpISUB32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fsub RFP:$src1,
+def FpISUB32m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fsub RFP32:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) - [mem32int]
-def FpISUBR16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
-                     [(set RFP:$dst, (fsub (X86fild addr:$src2, i16),
-                                      RFP:$src1))]>;
+def FpISUBR16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP32:$dst, (fsub (X86fild addr:$src2, i16),
+                                      RFP32:$src1))]>;
                 // ST(0) = [mem16int] - ST(0)
-def FpISUBR32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                     [(set RFP:$dst, (fsub (X86fild addr:$src2, i32),
-                                      RFP:$src1))]>;
+def FpISUBR32m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i32mem:$src2), OneArgFPRW,
+                     [(set RFP32:$dst, (fsub (X86fild addr:$src2, i32),
+                                      RFP32:$src1))]>;
                 // ST(0) = [mem32int] - ST(0)
-def FpIDIV16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fdiv RFP:$src1,
+def FpIDIV16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fdiv RFP32:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) / [mem16int]
-def FpIDIV32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fdiv RFP:$src1,
+def FpIDIV32m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP32:$dst, (fdiv RFP32:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) / [mem32int]
-def FpIDIVR16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
-                     [(set RFP:$dst, (fdiv (X86fild addr:$src2, i16),
-                                      RFP:$src1))]>;
+def FpIDIVR16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP32:$dst, (fdiv (X86fild addr:$src2, i16),
+                                      RFP32:$src1))]>;
                 // ST(0) = [mem16int] / ST(0)
-def FpIDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
-                     [(set RFP:$dst, (fdiv (X86fild addr:$src2, i32),
-                                      RFP:$src1))]>;
+def FpIDIVR32m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i32mem:$src2), OneArgFPRW,
+                     [(set RFP32:$dst, (fdiv (X86fild addr:$src2, i32),
+                                      RFP32:$src1))]>;
+                // ST(0) = [mem32int] / ST(0)
+
+def FpIADD16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fadd RFP64:$src1,
+                                     (X86fild addr:$src2, i16)))]>;
+                // ST(0) = ST(0) + [mem16int]
+def FpIADD32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fadd RFP64:$src1,
+                                     (X86fild addr:$src2, i32)))]>;
+                // ST(0) = ST(0) + [mem32int]
+def FpIMUL16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fmul RFP64:$src1,
+                                     (X86fild addr:$src2, i16)))]>;
+                // ST(0) = ST(0) * [mem16int]
+def FpIMUL32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fmul RFP64:$src1,
+                                     (X86fild addr:$src2, i32)))]>;
+                // ST(0) = ST(0) * [mem32int]
+def FpISUB16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fsub RFP64:$src1,
+                                     (X86fild addr:$src2, i16)))]>;
+                // ST(0) = ST(0) - [mem16int]
+def FpISUB32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fsub RFP64:$src1,
+                                     (X86fild addr:$src2, i32)))]>;
+                // ST(0) = ST(0) - [mem32int]
+def FpISUBR16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP64:$dst, (fsub (X86fild addr:$src2, i16),
+                                      RFP64:$src1))]>;
+                // ST(0) = [mem16int] - ST(0)
+def FpISUBR32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
+                     [(set RFP64:$dst, (fsub (X86fild addr:$src2, i32),
+                                      RFP64:$src1))]>;
+                // ST(0) = [mem32int] - ST(0)
+def FpIDIV16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fdiv RFP64:$src1,
+                                     (X86fild addr:$src2, i16)))]>;
+                // ST(0) = ST(0) / [mem16int]
+def FpIDIV32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
+                    [(set RFP64:$dst, (fdiv RFP64:$src1,
+                                     (X86fild addr:$src2, i32)))]>;
+                // ST(0) = ST(0) / [mem32int]
+def FpIDIVR16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP64:$dst, (fdiv (X86fild addr:$src2, i16),
+                                      RFP64:$src1))]>;
+                // ST(0) = [mem16int] / ST(0)
+def FpIDIVR32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
+                     [(set RFP64:$dst, (fdiv (X86fild addr:$src2, i32),
+                                      RFP64:$src1))]>;
                 // ST(0) = [mem32int] / ST(0)
 
 def FIADD16m  : FPI<0xDE, MRM0m, (ops i16mem:$src), "fiadd{s} $src">;
@@ -285,19 +357,31 @@ def FDIVST0r   : FPST0rInst <0xF0, "fdiv $op">;
 def FDIVRrST0  : FPrST0Inst <0xF0, "fdiv{|r} {%st(0), $op|$op, %ST(0)}">;
 def FDIVRPrST0 : FPrST0PInst<0xF0, "fdiv{|r}p $op">;
 
-
 // Unary operations.
-def FpCHS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fneg RFP:$src))]>;
-def FpABS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fabs RFP:$src))]>;
-def FpSQRT : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fsqrt RFP:$src))]>;
-def FpSIN  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fsin RFP:$src))]>;
-def FpCOS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fcos RFP:$src))]>;
-def FpTST  : FpI<(ops RFP:$src), OneArgFP,
+def FpCHS32  : FpI<(ops RFP32:$dst, RFP32:$src), OneArgFPRW,
+                 [(set RFP32:$dst, (fneg RFP32:$src))]>;
+def FpABS32  : FpI<(ops RFP32:$dst, RFP32:$src), OneArgFPRW,
+                 [(set RFP32:$dst, (fabs RFP32:$src))]>;
+def FpSQRT32 : FpI<(ops RFP32:$dst, RFP32:$src), OneArgFPRW,
+                 [(set RFP32:$dst, (fsqrt RFP32:$src))]>;
+def FpSIN32  : FpI<(ops RFP32:$dst, RFP32:$src), OneArgFPRW,
+                 [(set RFP32:$dst, (fsin RFP32:$src))]>;
+def FpCOS32  : FpI<(ops RFP32:$dst, RFP32:$src), OneArgFPRW,
+                 [(set RFP32:$dst, (fcos RFP32:$src))]>;
+def FpTST32  : FpI<(ops RFP32:$src), OneArgFP,
+                 []>;
+
+def FpCHS64  : FpI<(ops RFP64:$dst, RFP64:$src), OneArgFPRW,
+                 [(set RFP64:$dst, (fneg RFP64:$src))]>;
+def FpABS64  : FpI<(ops RFP64:$dst, RFP64:$src), OneArgFPRW,
+                 [(set RFP64:$dst, (fabs RFP64:$src))]>;
+def FpSQRT64 : FpI<(ops RFP64:$dst, RFP64:$src), OneArgFPRW,
+                 [(set RFP64:$dst, (fsqrt RFP64:$src))]>;
+def FpSIN64  : FpI<(ops RFP64:$dst, RFP64:$src), OneArgFPRW,
+                 [(set RFP64:$dst, (fsin RFP64:$src))]>;
+def FpCOS64  : FpI<(ops RFP64:$dst, RFP64:$src), OneArgFPRW,
+                 [(set RFP64:$dst, (fcos RFP64:$src))]>;
+def FpTST64  : FpI<(ops RFP64:$src), OneArgFP,
                  []>;
 
 def FCHS  : FPI<0xE0, RawFrm, (ops), "fchs">, D9;
@@ -310,29 +394,54 @@ def FTST  : FPI<0xE4, RawFrm, (ops), "ftst">, D9;
 
 // Floating point cmovs.
 let isTwoAddress = 1 in {
-  def FpCMOVB  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVB32  : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_B))]>;
-  def FpCMOVBE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVBE32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_BE))]>;
-  def FpCMOVE  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVE32  : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_E))]>;
-  def FpCMOVP  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVP32  : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_P))]>;
-  def FpCMOVNB : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVNB32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_AE))]>;
-  def FpCMOVNBE: FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVNBE32: FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_A))]>;
-  def FpCMOVNE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVNE32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
                                       X86_COND_NE))]>;
-  def FpCMOVNP : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
-                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+  def FpCMOVNP32 : FpI<(ops RFP32:$dst, RFP32:$src1, RFP32:$src2), CondMovFP,
+                     [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
+                                      X86_COND_NP))]>;
+
+  def FpCMOVB64  : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_B))]>;
+  def FpCMOVBE64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_BE))]>;
+  def FpCMOVE64  : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_E))]>;
+  def FpCMOVP64  : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_P))]>;
+  def FpCMOVNB64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_AE))]>;
+  def FpCMOVNBE64: FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_A))]>;
+  def FpCMOVNE64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
+                                      X86_COND_NE))]>;
+  def FpCMOVNP64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), CondMovFP,
+                     [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
                                       X86_COND_NP))]>;
 }
 
@@ -354,27 +463,39 @@ def FCMOVNP : FPI<0xD8, AddRegFrm, (ops RST:$op),
                   "fcmovnu {$op, %st(0)|%ST(0), $op}">, DB;
 
 // Floating point loads & stores.
-def FpLD32m  : FpI<(ops RFP:$dst, f32mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (extloadf64f32 addr:$src))]>;
-def FpLD64m  : FpI<(ops RFP:$dst, f64mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (loadf64 addr:$src))]>;
-def FpILD16m : FpI<(ops RFP:$dst, i16mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (X86fild addr:$src, i16))]>;
-def FpILD32m : FpI<(ops RFP:$dst, i32mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (X86fild addr:$src, i32))]>;
-def FpILD64m : FpI<(ops RFP:$dst, i64mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (X86fild addr:$src, i64))]>;
+def FpLD32m  : FpI<(ops RFP32:$dst, f32mem:$src), ZeroArgFP,
+                   [(set RFP32:$dst, (loadf32 addr:$src))]>;
+def FpLD64m  : FpI<(ops RFP64:$dst, f64mem:$src), ZeroArgFP,
+                   [(set RFP64:$dst, (loadf64 addr:$src))]>;
+def FpILD16m32 : FpI<(ops RFP32:$dst, i16mem:$src), ZeroArgFP,
+                   [(set RFP32:$dst, (X86fild addr:$src, i16))]>;
+def FpILD32m32 : FpI<(ops RFP32:$dst, i32mem:$src), ZeroArgFP,
+                   [(set RFP32:$dst, (X86fild addr:$src, i32))]>;
+def FpILD64m32 : FpI<(ops RFP32:$dst, i64mem:$src), ZeroArgFP,
+                   [(set RFP32:$dst, (X86fild addr:$src, i64))]>;
+def FpILD16m64 : FpI<(ops RFP64:$dst, i16mem:$src), ZeroArgFP,
+                   [(set RFP64:$dst, (X86fild addr:$src, i16))]>;
+def FpILD32m64 : FpI<(ops RFP64:$dst, i32mem:$src), ZeroArgFP,
+                   [(set RFP64:$dst, (X86fild addr:$src, i32))]>;
+def FpILD64m64 : FpI<(ops RFP64:$dst, i64mem:$src), ZeroArgFP,
+                   [(set RFP64:$dst, (X86fild addr:$src, i64))]>;
 
-def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP,
-                [(truncstoref32 RFP:$src, addr:$op)]>;
-def FpST64m   : FpI<(ops f64mem:$op, RFP:$src), OneArgFP,
-                [(store RFP:$src, addr:$op)]>;
+def FpST32m   : FpI<(ops f32mem:$op, RFP32:$src), OneArgFP,
+                [(store RFP32:$src, addr:$op)]>;
+def FpST64m32 : FpI<(ops f32mem:$op, RFP64:$src), OneArgFP,
+                [(truncstoref32 RFP64:$src, addr:$op)]>;
+def FpST64m   : FpI<(ops f64mem:$op, RFP64:$src), OneArgFP,
+                [(store RFP64:$src, addr:$op)]>;
 
-def FpSTP32m  : FpI<(ops f32mem:$op, RFP:$src), OneArgFP, []>;
-def FpSTP64m  : FpI<(ops f64mem:$op, RFP:$src), OneArgFP, []>;
-def FpIST16m  : FpI<(ops i16mem:$op, RFP:$src), OneArgFP, []>;
-def FpIST32m  : FpI<(ops i32mem:$op, RFP:$src), OneArgFP, []>;
-def FpIST64m  : FpI<(ops i64mem:$op, RFP:$src), OneArgFP, []>;
+def FpSTP32m    : FpI<(ops f32mem:$op, RFP32:$src), OneArgFP, []>;
+def FpSTP64m32  : FpI<(ops f32mem:$op, RFP64:$src), OneArgFP, []>;
+def FpSTP64m    : FpI<(ops f64mem:$op, RFP64:$src), OneArgFP, []>;
+def FpIST16m32  : FpI<(ops i16mem:$op, RFP32:$src), OneArgFP, []>;
+def FpIST32m32  : FpI<(ops i32mem:$op, RFP32:$src), OneArgFP, []>;
+def FpIST64m32  : FpI<(ops i64mem:$op, RFP32:$src), OneArgFP, []>;
+def FpIST16m64  : FpI<(ops i16mem:$op, RFP64:$src), OneArgFP, []>;
+def FpIST32m64  : FpI<(ops i32mem:$op, RFP64:$src), OneArgFP, []>;
+def FpIST64m64  : FpI<(ops i64mem:$op, RFP64:$src), OneArgFP, []>;
 
 def FLD32m   : FPI<0xD9, MRM0m, (ops f32mem:$src), "fld{s} $src">;
 def FLD64m   : FPI<0xDD, MRM0m, (ops f64mem:$src), "fld{l} $src">;
@@ -392,14 +513,23 @@ def FISTP32m : FPI<0xDB, MRM3m, (ops i32mem:$dst), "fistp{l} $dst">;
 def FISTP64m : FPI<0xDF, MRM7m, (ops i64mem:$dst), "fistp{ll} $dst">;
 
 // FISTTP requires SSE3 even though it's a FPStack op.
-def FpISTT16m  : FpI_<(ops i16mem:$op, RFP:$src), OneArgFP,
-                [(X86fp_to_i16mem RFP:$src, addr:$op)]>,
+def FpISTT16m32  : FpI_<(ops i16mem:$op, RFP32:$src), OneArgFP,
+                [(X86fp_to_i16mem RFP32:$src, addr:$op)]>,
                 Requires<[HasSSE3]>;
-def FpISTT32m  : FpI_<(ops i32mem:$op, RFP:$src), OneArgFP,
-                [(X86fp_to_i32mem RFP:$src, addr:$op)]>,
+def FpISTT32m32 : FpI_<(ops i32mem:$op, RFP32:$src), OneArgFP,
+                [(X86fp_to_i32mem RFP32:$src, addr:$op)]>,
                 Requires<[HasSSE3]>;
-def FpISTT64m  : FpI_<(ops i64mem:$op, RFP:$src), OneArgFP,
-                [(X86fp_to_i64mem RFP:$src, addr:$op)]>,
+def FpISTT64m32  : FpI_<(ops i64mem:$op, RFP32:$src), OneArgFP,
+                [(X86fp_to_i64mem RFP32:$src, addr:$op)]>,
+                Requires<[HasSSE3]>;
+def FpISTT16m64  : FpI_<(ops i16mem:$op, RFP64:$src), OneArgFP,
+                [(X86fp_to_i16mem RFP64:$src, addr:$op)]>,
+                Requires<[HasSSE3]>;
+def FpISTT32m64  : FpI_<(ops i32mem:$op, RFP64:$src), OneArgFP,
+                [(X86fp_to_i32mem RFP64:$src, addr:$op)]>,
+                Requires<[HasSSE3]>;
+def FpISTT64m64  : FpI_<(ops i64mem:$op, RFP64:$src), OneArgFP,
+                [(X86fp_to_i64mem RFP64:$src, addr:$op)]>,
                 Requires<[HasSSE3]>;
 
 def FISTTP16m : FPI<0xDF, MRM1m, (ops i16mem:$dst), "fisttp{s} $dst">;
@@ -414,10 +544,14 @@ def FXCH    : FPI<0xC8, AddRegFrm, (ops RST:$op), "fxch $op">, D9;
 
 // Floating point constant loads.
 let isReMaterializable = 1 in {
-def FpLD0 : FpI<(ops RFP:$dst), ZeroArgFP,
-                [(set RFP:$dst, fp64imm0)]>;
-def FpLD1 : FpI<(ops RFP:$dst), ZeroArgFP,
-                [(set RFP:$dst, fp64imm1)]>;
+def FpLD032 : FpI<(ops RFP32:$dst), ZeroArgFP,
+                [(set RFP32:$dst, fpimm0)]>;
+def FpLD132 : FpI<(ops RFP32:$dst), ZeroArgFP,
+                [(set RFP32:$dst, fpimm1)]>;
+def FpLD064 : FpI<(ops RFP64:$dst), ZeroArgFP,
+                [(set RFP64:$dst, fpimm0)]>;
+def FpLD164 : FpI<(ops RFP64:$dst), ZeroArgFP,
+                [(set RFP64:$dst, fpimm1)]>;
 }
 
 def FLD0 : FPI<0xEE, RawFrm, (ops), "fldz">, D9;
@@ -425,10 +559,14 @@ def FLD1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;
 
 
 // Floating point compares.
-def FpUCOMr   : FpI<(ops RFP:$lhs, RFP:$rhs), CompareFP,
+def FpUCOMr32   : FpI<(ops RFP32:$lhs, RFP32:$rhs), CompareFP,
                     []>;  // FPSW = cmp ST(0) with ST(i)
-def FpUCOMIr  : FpI<(ops RFP:$lhs, RFP:$rhs), CompareFP,
-                    [(X86cmp RFP:$lhs, RFP:$rhs)]>; // CC = cmp ST(0) with ST(i)
+def FpUCOMIr32  : FpI<(ops RFP32:$lhs, RFP32:$rhs), CompareFP,
+                    [(X86cmp RFP32:$lhs, RFP32:$rhs)]>; // CC = cmp ST(0) with ST(i)
+def FpUCOMr64   : FpI<(ops RFP64:$lhs, RFP64:$rhs), CompareFP,
+                    []>;  // FPSW = cmp ST(0) with ST(i)
+def FpUCOMIr64  : FpI<(ops RFP64:$lhs, RFP64:$rhs), CompareFP,
+                    [(X86cmp RFP64:$lhs, RFP64:$rhs)]>; // CC = cmp ST(0) with ST(i)
 
 def FUCOMr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (ops RST:$reg),
@@ -446,7 +584,6 @@ def FUCOMIr  : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i)
 def FUCOMIPr : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i), pop
                  (ops RST:$reg),
                  "fucomip {$reg, %st(0)|%ST(0), $reg}">, DF, Imp<[ST0],[]>;
-
 
 // Floating point flag ops.
 def FNSTSW8r  : I<0xE0, RawFrm,                  // AX = fp flags
@@ -466,12 +603,18 @@ def : Pat<(X86fld addr:$src, f32), (FpLD32m addr:$src)>;
 def : Pat<(X86fld addr:$src, f64), (FpLD64m addr:$src)>;
 
 // Required for CALL which return f32 / f64 values.
-def : Pat<(X86fst RFP:$src, addr:$op, f32), (FpST32m addr:$op, RFP:$src)>;
-def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
+def : Pat<(X86fst RFP32:$src, addr:$op, f32), (FpST32m addr:$op, RFP32:$src)>;
+def : Pat<(X86fst RFP64:$src, addr:$op, f32), (FpST64m32 addr:$op, RFP64:$src)>;
+def : Pat<(X86fst RFP64:$src, addr:$op, f64), (FpST64m addr:$op, RFP64:$src)>;
 
 // Floating point constant -0.0 and -1.0
-def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
-def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
+def : Pat<(f32 fpimmneg0), (FpCHS32 (FpLD032))>, Requires<[FPStack]>;
+def : Pat<(f32 fpimmneg1), (FpCHS32 (FpLD132))>, Requires<[FPStack]>;
+def : Pat<(f64 fpimmneg0), (FpCHS64 (FpLD064))>, Requires<[FPStack]>;
+def : Pat<(f64 fpimmneg1), (FpCHS64 (FpLD164))>, Requires<[FPStack]>;
 
 // Used to conv. i64 to f64 since there isn't a SSE version.
-def : Pat<(X86fildflag addr:$src, i64), (FpILD64m addr:$src)>;
+def : Pat<(X86fildflag addr:$src, i64), (FpILD64m64 addr:$src)>;
+
+def : Pat<(extloadf32 addr:$src), (FpMOV3264 (FpLD32m addr:$src))>, Requires<[FPStack]>;
+def : Pat<(fextend RFP32:$src), (FpMOV3264 RFP32:$src)>, Requires<[FPStack]>;

@@ -3918,15 +3918,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         Op = DAG.getNode(ExtOp, getTypeToTransformTo(VT), Op);
       } else {
         assert(MVT::isFloatingPoint(VT) && "Not int or FP?");
-        // A true promotion would change the size of the argument.
-        // Instead, pretend this is an int.  If FP objects are not
-        // passed the same as ints, the original type should be Legal
-        // and we should not get here.
-        Op = DAG.getNode(ISD::BIT_CONVERT, 
-                         VT==MVT::f32 ? MVT::i32 :
-                         (VT==MVT::f64 ? MVT::i64 :
-                          MVT::Other),
-                         Op);
+        Op = DAG.getNode(ISD::FP_EXTEND, getTypeToTransformTo(VT), Op);
       }
       Ops.push_back(Op);
       Ops.push_back(DAG.getConstant(Flags, MVT::i32));

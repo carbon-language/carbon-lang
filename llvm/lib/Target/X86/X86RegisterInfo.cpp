@@ -82,8 +82,10 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opc = X86::MOV32_mr;
   } else if (RC == &X86::GR16_RegClass) {
     Opc = X86::MOV16_mr;
-  } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
+  } else if (RC == &X86::RFP64RegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FpST64m;
+  } else if (RC == &X86::RFP32RegClass) {
+    Opc = X86::FpST32m;
   } else if (RC == &X86::FR32RegClass) {
     Opc = X86::MOVSSmr;
   } else if (RC == &X86::FR64RegClass) {
@@ -117,8 +119,10 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opc = X86::MOV32_rm;
   } else if (RC == &X86::GR16_RegClass) {
     Opc = X86::MOV16_rm;
-  } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
+  } else if (RC == &X86::RFP64RegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FpLD64m;
+  } else if (RC == &X86::RFP32RegClass) {
+    Opc = X86::FpLD32m;
   } else if (RC == &X86::FR32RegClass) {
     Opc = X86::MOVSSrm;
   } else if (RC == &X86::FR64RegClass) {
@@ -151,8 +155,10 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     Opc = X86::MOV32_rr;
   } else if (RC == &X86::GR16_RegClass) {
     Opc = X86::MOV16_rr;
-  } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
-    Opc = X86::FpMOV;
+  } else if (RC == &X86::RFP32RegClass) {
+    Opc = X86::FpMOV3232;
+  } else if (RC == &X86::RFP64RegClass || RC == &X86::RSTRegClass) {
+    Opc = X86::FpMOV6464;
   } else if (RC == &X86::FR32RegClass) {
     Opc = X86::FsMOVAPSrr;
   } else if (RC == &X86::FR64RegClass) {

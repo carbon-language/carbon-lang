@@ -425,7 +425,8 @@ def FR64 : RegisterClass<"X86", [f64], 64,
 // faster on common hardware.  In reality, this should be controlled by a
 // command line option or something.
 
-def RFP : RegisterClass<"X86", [f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP32 : RegisterClass<"X86", [f32], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP64 : RegisterClass<"X86", [f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers (these are not allocatable by the
 // register allocator - the floating point stackifier is responsible

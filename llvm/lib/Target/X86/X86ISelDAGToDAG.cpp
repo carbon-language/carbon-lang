@@ -492,11 +492,13 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
       for (MachineBasicBlock::iterator I = MBBI->begin(), E = MBBI->end();
            !ContainsFPCode && I != E; ++I) {
         if (I->getNumOperands() != 0 && I->getOperand(0).isRegister()) {
+          const TargetRegisterClass *clas;
           for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
             if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
                 MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
-                RegMap->getRegClass(I->getOperand(0).getReg()) == 
-                X86::RFPRegisterClass) {
+                ((clas = RegMap->getRegClass(I->getOperand(0).getReg())) == 
+                   X86::RFP32RegisterClass ||
+                 clas == X86::RFP64RegisterClass)) {
               ContainsFPCode = true;
               break;
             }

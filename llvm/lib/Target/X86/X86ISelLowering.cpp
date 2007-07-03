@@ -289,11 +289,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(+0.0); // xorps / xorpd
   } else {
     // Set up the FP register classes.
-    addRegisterClass(MVT::f64, X86::RFPRegisterClass);
+    addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
+    addRegisterClass(MVT::f32, X86::RFP32RegisterClass);
 
     setOperationAction(ISD::UNDEF,     MVT::f64, Expand);
+    setOperationAction(ISD::UNDEF,     MVT::f32, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+    setOperationAction(ISD::FP_ROUND,  MVT::f32, Expand);
 
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
@@ -301,6 +304,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     }
 
     setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+    setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
     addLegalFPImmediate(+0.0); // FLD0
     addLegalFPImmediate(+1.0); // FLD1
     addLegalFPImmediate(-0.0); // FLD0/FCHS
@@ -553,7 +557,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
         MemLoc = DAG.getFrameIndex(SSFI, getPointerTy());
         Chain = DAG.getStore(Op.getOperand(0), Value, MemLoc, NULL, 0);
       }
-      SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
+      SDVTList Tys = DAG.getVTList(RVLocs[0].getValVT(), MVT::Other);
       SDOperand Ops[] = {Chain, MemLoc, DAG.getValueType(RVLocs[0].getValVT())};
       Value = DAG.getNode(X86ISD::FLD, Tys, Ops, 3);
       Chain = Value.getValue(1);
@@ -604,7 +608,7 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     // before the fp stackifier runs.
     
     // Copy ST0 into an RFP register with FP_GET_RESULT.
-    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
+    SDVTList Tys = DAG.getVTList(RVLocs[0].getValVT(), MVT::Other, MVT::Flag);
     SDOperand GROps[] = { Chain, InFlag };
     SDOperand RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, GROps, 2);
     Chain  = RetVal.getValue(1);
@@ -626,11 +630,6 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
       RetVal = DAG.getLoad(RVLocs[0].getValVT(), Chain, StackSlot, NULL, 0);
       Chain = RetVal.getValue(1);
     }
-    
-    if (RVLocs[0].getValVT() == MVT::f32 && !X86ScalarSSE)
-      // FIXME: we would really like to remember that this FP_ROUND
-      // operation is okay to eliminate if we allow excess FP precision.
-      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
     ResultVals.push_back(RetVal);
   }
   
@@ -3252,7 +3251,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   if (X86ScalarSSE)
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
-    Tys = DAG.getVTList(MVT::f64, MVT::Other);
+    Tys = DAG.getVTList(Op.getValueType(), MVT::Other);
   SmallVector<SDOperand, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(StackSlot);
@@ -3307,7 +3306,7 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   if (X86ScalarSSE) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot, NULL, 0);
-    SDVTList Tys = DAG.getVTList(MVT::f64, MVT::Other);
+    SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
     SDOperand Ops[] = {
       Chain, StackSlot, DAG.getValueType(Op.getOperand(0).getValueType())
     };
@@ -4437,9 +4436,12 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     return BB;
   }
 
-  case X86::FP_TO_INT16_IN_MEM:
-  case X86::FP_TO_INT32_IN_MEM:
-  case X86::FP_TO_INT64_IN_MEM: {
+  case X86::FP32_TO_INT16_IN_MEM:
+  case X86::FP32_TO_INT32_IN_MEM:
+  case X86::FP32_TO_INT64_IN_MEM:
+  case X86::FP64_TO_INT16_IN_MEM:
+  case X86::FP64_TO_INT32_IN_MEM:
+  case X86::FP64_TO_INT64_IN_MEM: {
     // Change the floating point control register to use "round towards zero"
     // mode when truncating to an integer value.
     MachineFunction *F = BB->getParent();
@@ -4466,9 +4468,12 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     unsigned Opc;
     switch (MI->getOpcode()) {
     default: assert(0 && "illegal opcode!");
-    case X86::FP_TO_INT16_IN_MEM: Opc = X86::FpIST16m; break;
-    case X86::FP_TO_INT32_IN_MEM: Opc = X86::FpIST32m; break;
-    case X86::FP_TO_INT64_IN_MEM: Opc = X86::FpIST64m; break;
+    case X86::FP32_TO_INT16_IN_MEM: Opc = X86::FpIST16m32; break;
+    case X86::FP32_TO_INT32_IN_MEM: Opc = X86::FpIST32m32; break;
+    case X86::FP32_TO_INT64_IN_MEM: Opc = X86::FpIST64m32; break;
+    case X86::FP64_TO_INT16_IN_MEM: Opc = X86::FpIST16m64; break;
+    case X86::FP64_TO_INT32_IN_MEM: Opc = X86::FpIST32m64; break;
+    case X86::FP64_TO_INT64_IN_MEM: Opc = X86::FpIST64m64; break;
     }
 
     X86AddressMode AM;

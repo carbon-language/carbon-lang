@@ -964,7 +964,7 @@ def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (ops VR128:$src1, f128mem:$src2),
 
 // Alias instructions that map fld0 to pxor for sse.
 def FsFLD0SD : I<0xEF, MRMInitReg, (ops FR64:$dst),
-                 "pxor $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
+                 "pxor $dst, $dst", [(set FR64:$dst, fpimm0)]>,
                Requires<[HasSSE2]>, TB, OpSize;
 
 // Alias instruction to do FR64 reg-to-reg copy using movapd. Upper bits are
