@@ -630,9 +630,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
     return 0;
   
   // Unary Operations
-  if (isa<CastInst>(V)) {
-    User* U = cast<User>(V);
-    
+  if (CastInst* U = dyn_cast<CastInst>(V)) {
     Value* newOp1 = 0;
     if (isa<Instruction>(U->getOperand(0)))
       newOp1 = phi_translate(U->getOperand(0), pred, succ);
@@ -817,9 +815,7 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
     Value* v = worklist[i];
     
     // Handle unary ops
-    if (isa<CastInst>(v)) {
-      User* U = cast<User>(v);
-      
+    if (CastInst* U = dyn_cast<CastInst>(v)) {
       bool lhsValid = !isa<Instruction>(U->getOperand(0));
       lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
       if (lhsValid)
@@ -892,8 +888,7 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 16>& set, std::vector<Value*>& vec) {
       Value* e = stack.back();
       
       // Handle unary ops
-      if (isa<CastInst>(e)) {
-        User* U = cast<User>(e);
+      if (CastInst* U = dyn_cast<CastInst>(e)) {
         Value* l = find_leader(set, VN.lookup(U->getOperand(0)));
     
         if (l != 0 && isa<Instruction>(l) &&
@@ -1054,8 +1049,7 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     currPhis.insert(p);
   
   // Handle unary ops
-  } else if (isa<CastInst>(I)) {
-    User* U = cast<User>(I);
+  } else if (CastInst* U = dyn_cast<CastInst>(I)) {
     Value* leftValue = U->getOperand(0);
     
     unsigned num = VN.lookup_or_add(U);
