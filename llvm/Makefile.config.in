@@ -83,7 +83,7 @@ PROJ_docsdir    := $(DESTDIR)$(PROJ_prefix)/docs/llvm
 PROJ_etcdir     := $(DESTDIR)$(PROJ_prefix)/etc/llvm
 PROJ_includedir := $(DESTDIR)$(PROJ_prefix)/include
 PROJ_infodir    := $(DESTDIR)$(PROJ_prefix)/info
-PROJ_mandir     := $(DESTDIR)$(PROJ_prefix)/man
+PROJ_mandir     := $(DESTDIR)$(PROJ_prefix)/share/man
 
 # Determine if we're on a unix type operating system
 LLVM_ON_UNIX:=@LLVM_ON_UNIX@
