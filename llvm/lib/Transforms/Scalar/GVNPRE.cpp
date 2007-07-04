@@ -836,7 +836,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
       }
     
     if (newOp1 != U->getPointerOperand() || changed_idx) {
-      Instruction* newVal = new GetElementPtrInst(U->getPointerOperand(),
+      Instruction* newVal = new GetElementPtrInst(newOp1,
                                        &newIdx[0], newIdx.size(),
                                        U->getName()+".expr");
       
