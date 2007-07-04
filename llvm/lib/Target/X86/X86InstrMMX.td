@@ -25,6 +25,8 @@
 // MMXIS  - MMX instructions with XS prefix.
 class MMXI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, Requires<[HasMMX]>;
+class MMXRI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
+      : I<o, F, ops, asm, pattern>, TB, REX_W, Requires<[HasMMX]>;
 class MMX2I<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : I<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasMMX]>;
 class MMXIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
@@ -183,8 +185,8 @@ def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
                         "movd {$src, $dst|$dst, $src}", []>;
 
-def MMX_MOVD64to64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR64:$src),
-                            "movd {$src, $dst|$dst, $src}", []>;
+def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (ops VR64:$dst, GR64:$src),
+                             "movd {$src, $dst|$dst, $src}", []>;
 
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
                         "movq {$src, $dst|$dst, $src}", []>;
