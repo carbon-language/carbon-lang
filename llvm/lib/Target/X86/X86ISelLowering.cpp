@@ -4468,12 +4468,12 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     unsigned Opc;
     switch (MI->getOpcode()) {
     default: assert(0 && "illegal opcode!");
-    case X86::FP32_TO_INT16_IN_MEM: Opc = X86::FpIST16m32; break;
-    case X86::FP32_TO_INT32_IN_MEM: Opc = X86::FpIST32m32; break;
-    case X86::FP32_TO_INT64_IN_MEM: Opc = X86::FpIST64m32; break;
-    case X86::FP64_TO_INT16_IN_MEM: Opc = X86::FpIST16m64; break;
-    case X86::FP64_TO_INT32_IN_MEM: Opc = X86::FpIST32m64; break;
-    case X86::FP64_TO_INT64_IN_MEM: Opc = X86::FpIST64m64; break;
+    case X86::FP32_TO_INT16_IN_MEM: Opc = X86::IST_Fp16m32; break;
+    case X86::FP32_TO_INT32_IN_MEM: Opc = X86::IST_Fp32m32; break;
+    case X86::FP32_TO_INT64_IN_MEM: Opc = X86::IST_Fp64m32; break;
+    case X86::FP64_TO_INT16_IN_MEM: Opc = X86::IST_Fp16m64; break;
+    case X86::FP64_TO_INT32_IN_MEM: Opc = X86::IST_Fp32m64; break;
+    case X86::FP64_TO_INT64_IN_MEM: Opc = X86::IST_Fp64m64; break;
     }
 
     X86AddressMode AM;

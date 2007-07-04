@@ -33,8 +33,8 @@ bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
   if (oc == X86::MOV8rr || oc == X86::MOV16rr ||
       oc == X86::MOV32rr || oc == X86::MOV64rr ||
       oc == X86::MOV16to16_ || oc == X86::MOV32to32_ ||
-      oc == X86::FpMOV3232  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
-      oc == X86::FpMOV3264 || oc == X86::FpMOV6432 || oc == X86::FpMOV6464 ||
+      oc == X86::MOV_Fp3232  || oc == X86::MOVSSrr || oc == X86::MOVSDrr ||
+      oc == X86::MOV_Fp3264 || oc == X86::MOV_Fp6432 || oc == X86::MOV_Fp6464 ||
       oc == X86::FsMOVAPSrr || oc == X86::FsMOVAPDrr ||
       oc == X86::MOVAPSrr || oc == X86::MOVAPDrr ||
       oc == X86::MOVSS2PSrr || oc == X86::MOVSD2PDrr ||
@@ -61,7 +61,7 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOV32rm:
   case X86::MOV32_rm:
   case X86::MOV64rm:
-  case X86::FpLD64m:
+  case X86::LD_Fp64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
   case X86::MOVAPSrm:
@@ -91,7 +91,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MOV32mr:
   case X86::MOV32_mr:
   case X86::MOV64mr:
-  case X86::FpSTP64m:
+  case X86::ST_FpP64m:
   case X86::MOVSSmr:
   case X86::MOVSDmr:
   case X86::MOVAPSmr:
@@ -122,7 +122,7 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   case X86::MOV32rm:
   case X86::MOV32_rm:
   case X86::MOV64rm:
-  case X86::FpLD64m:
+  case X86::LD_Fp64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
   case X86::MOVAPSrm:

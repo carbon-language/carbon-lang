@@ -121,7 +121,7 @@ namespace {
         std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
         // Emit an fxch to update the runtime processors version of the state
-        BuildMI(*MBB, I, TII->get(X86::FXCH)).addReg(STReg);
+        BuildMI(*MBB, I, TII->get(X86::XCH_F)).addReg(STReg);
         NumFXCH++;
       }
     }
@@ -130,7 +130,7 @@ namespace {
       unsigned STReg = getSTReg(RegNo);
       pushReg(AsReg);   // New register on top of stack
 
-      BuildMI(*MBB, I, TII->get(X86::FLDrr)).addReg(STReg);
+      BuildMI(*MBB, I, TII->get(X86::LD_Frr)).addReg(STReg);
     }
 
     // popStackAfter - Pop the current value off of the top of the FP stack
@@ -324,101 +324,101 @@ static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
 // concrete X86 instruction which uses the register stack.
 //
 static const TableEntry OpcodeTable[] = {
-  { X86::FpABS32     , X86::FABS     },
-  { X86::FpABS64     , X86::FABS     },
-  { X86::FpADD32m    , X86::FADD32m  },
-  { X86::FpADD64m    , X86::FADD64m  },
-  { X86::FpCHS32     , X86::FCHS     },
-  { X86::FpCHS64     , X86::FCHS     },
-  { X86::FpCMOVB32   , X86::FCMOVB   },
-  { X86::FpCMOVB64   , X86::FCMOVB  },
-  { X86::FpCMOVBE32  , X86::FCMOVBE  },
-  { X86::FpCMOVBE64  , X86::FCMOVBE  },
-  { X86::FpCMOVE32   , X86::FCMOVE  },
-  { X86::FpCMOVE64   , X86::FCMOVE   },
-  { X86::FpCMOVNB32  , X86::FCMOVNB  },
-  { X86::FpCMOVNB64  , X86::FCMOVNB  },
-  { X86::FpCMOVNBE32 , X86::FCMOVNBE },
-  { X86::FpCMOVNBE64 , X86::FCMOVNBE },
-  { X86::FpCMOVNE32  , X86::FCMOVNE  },
-  { X86::FpCMOVNE64  , X86::FCMOVNE  },
-  { X86::FpCMOVNP32  , X86::FCMOVNP  },
-  { X86::FpCMOVNP64  , X86::FCMOVNP  },
-  { X86::FpCMOVP32   , X86::FCMOVP   },
-  { X86::FpCMOVP64   , X86::FCMOVP   },
-  { X86::FpCOS32     , X86::FCOS     },
-  { X86::FpCOS64     , X86::FCOS     },
-  { X86::FpDIV32m    , X86::FDIV32m  },
-  { X86::FpDIV64m    , X86::FDIV64m  },
-  { X86::FpDIVR32m   , X86::FDIVR32m },
-  { X86::FpDIVR64m   , X86::FDIVR64m },
-  { X86::FpIADD16m32 , X86::FIADD16m },
-  { X86::FpIADD16m64 , X86::FIADD16m },
-  { X86::FpIADD32m32 , X86::FIADD32m },
-  { X86::FpIADD32m64 , X86::FIADD32m },
-  { X86::FpIDIV16m32 , X86::FIDIV16m },
-  { X86::FpIDIV16m64 , X86::FIDIV16m },
-  { X86::FpIDIV32m32 , X86::FIDIV32m },
-  { X86::FpIDIV32m64 , X86::FIDIV32m },
-  { X86::FpIDIVR16m32, X86::FIDIVR16m},
-  { X86::FpIDIVR16m64, X86::FIDIVR16m},
-  { X86::FpIDIVR32m32, X86::FIDIVR32m},
-  { X86::FpIDIVR32m64, X86::FIDIVR32m},
-  { X86::FpILD16m32  , X86::FILD16m  },
-  { X86::FpILD16m64  , X86::FILD16m  },
-  { X86::FpILD32m32  , X86::FILD32m  },
-  { X86::FpILD32m64  , X86::FILD32m  },
-  { X86::FpILD64m32  , X86::FILD64m  },
-  { X86::FpILD64m64  , X86::FILD64m  },
-  { X86::FpIMUL16m32 , X86::FIMUL16m },
-  { X86::FpIMUL16m64 , X86::FIMUL16m },
-  { X86::FpIMUL32m32 , X86::FIMUL32m },
-  { X86::FpIMUL32m64 , X86::FIMUL32m },
-  { X86::FpIST16m32  , X86::FIST16m  },
-  { X86::FpIST16m64  , X86::FIST16m  },
-  { X86::FpIST32m32  , X86::FIST32m  },
-  { X86::FpIST32m64  , X86::FIST32m  },
-  { X86::FpIST64m32  , X86::FISTP64m },
-  { X86::FpIST64m64  , X86::FISTP64m },
-  { X86::FpISTT16m32 , X86::FISTTP16m},
-  { X86::FpISTT16m64 , X86::FISTTP16m},
-  { X86::FpISTT32m32 , X86::FISTTP32m},
-  { X86::FpISTT32m64 , X86::FISTTP32m},
-  { X86::FpISTT64m32 , X86::FISTTP64m},
-  { X86::FpISTT64m64 , X86::FISTTP64m},
-  { X86::FpISUB16m32 , X86::FISUB16m },
-  { X86::FpISUB16m64 , X86::FISUB16m },
-  { X86::FpISUB32m32 , X86::FISUB32m },
-  { X86::FpISUB32m64 , X86::FISUB32m },
-  { X86::FpISUBR16m32, X86::FISUBR16m},
-  { X86::FpISUBR16m64, X86::FISUBR16m},
-  { X86::FpISUBR32m32, X86::FISUBR32m},
-  { X86::FpISUBR32m64, X86::FISUBR32m},
-  { X86::FpLD032     , X86::FLD0     },
-  { X86::FpLD064     , X86::FLD0     },
-  { X86::FpLD132     , X86::FLD1     },
-  { X86::FpLD164     , X86::FLD1     },
-  { X86::FpLD32m     , X86::FLD32m   },
-  { X86::FpLD64m     , X86::FLD64m   },
-  { X86::FpMUL32m    , X86::FMUL32m  },
-  { X86::FpMUL64m    , X86::FMUL64m  },
-  { X86::FpSIN32     , X86::FSIN     },
-  { X86::FpSIN64     , X86::FSIN     },
-  { X86::FpSQRT32    , X86::FSQRT    },
-  { X86::FpSQRT64    , X86::FSQRT    },
-  { X86::FpST32m     , X86::FST32m   },
-  { X86::FpST64m     , X86::FST64m   },
-  { X86::FpST64m32   , X86::FST32m   },
-  { X86::FpSUB32m    , X86::FSUB32m  },
-  { X86::FpSUB64m    , X86::FSUB64m  },
-  { X86::FpSUBR32m   , X86::FSUBR32m },
-  { X86::FpSUBR64m   , X86::FSUBR64m },
-  { X86::FpTST32     , X86::FTST     },
-  { X86::FpTST64     , X86::FTST     },
-  { X86::FpUCOMIr32  , X86::FUCOMIr  },
-  { X86::FpUCOMIr64  , X86::FUCOMIr  },
-  { X86::FpUCOMr32   , X86::FUCOMr   },
-  { X86::FpUCOMr64   , X86::FUCOMr   },
+  { X86::ABS_Fp32     , X86::ABS_F     },
+  { X86::ABS_Fp64     , X86::ABS_F     },
+  { X86::ADD_Fp32m   , X86::ADD_F32m  },
+  { X86::ADD_Fp64m   , X86::ADD_F64m  },
+  { X86::ADD_FpI16m32 , X86::ADD_FI16m },
+  { X86::ADD_FpI16m64 , X86::ADD_FI16m },
+  { X86::ADD_FpI32m32 , X86::ADD_FI32m },
+  { X86::ADD_FpI32m64 , X86::ADD_FI32m },
+  { X86::CHS_Fp32     , X86::CHS_F     },
+  { X86::CHS_Fp64     , X86::CHS_F     },
+  { X86::CMOVBE_Fp32  , X86::CMOVBE_F  },
+  { X86::CMOVBE_Fp64  , X86::CMOVBE_F  },
+  { X86::CMOVB_Fp32   , X86::CMOVB_F   },
+  { X86::CMOVB_Fp64   , X86::CMOVB_F  },
+  { X86::CMOVE_Fp32   , X86::CMOVE_F  },
+  { X86::CMOVE_Fp64   , X86::CMOVE_F   },
+  { X86::CMOVNBE_Fp32 , X86::CMOVNBE_F },
+  { X86::CMOVNBE_Fp64 , X86::CMOVNBE_F },
+  { X86::CMOVNB_Fp32  , X86::CMOVNB_F  },
+  { X86::CMOVNB_Fp64  , X86::CMOVNB_F  },
+  { X86::CMOVNE_Fp32  , X86::CMOVNE_F  },
+  { X86::CMOVNE_Fp64  , X86::CMOVNE_F  },
+  { X86::CMOVNP_Fp32  , X86::CMOVNP_F  },
+  { X86::CMOVNP_Fp64  , X86::CMOVNP_F  },
+  { X86::CMOVP_Fp32   , X86::CMOVP_F   },
+  { X86::CMOVP_Fp64   , X86::CMOVP_F   },
+  { X86::COS_Fp32     , X86::COS_F     },
+  { X86::COS_Fp64     , X86::COS_F     },
+  { X86::DIVR_Fp32m   , X86::DIVR_F32m },
+  { X86::DIVR_Fp64m   , X86::DIVR_F64m },
+  { X86::DIVR_FpI16m32, X86::DIVR_FI16m},
+  { X86::DIVR_FpI16m64, X86::DIVR_FI16m},
+  { X86::DIVR_FpI32m32, X86::DIVR_FI32m},
+  { X86::DIVR_FpI32m64, X86::DIVR_FI32m},
+  { X86::DIV_Fp32m    , X86::DIV_F32m  },
+  { X86::DIV_Fp64m    , X86::DIV_F64m  },
+  { X86::DIV_FpI16m32 , X86::DIV_FI16m },
+  { X86::DIV_FpI16m64 , X86::DIV_FI16m },
+  { X86::DIV_FpI32m32 , X86::DIV_FI32m },
+  { X86::DIV_FpI32m64 , X86::DIV_FI32m },
+  { X86::ILD_Fp16m32  , X86::ILD_F16m  },
+  { X86::ILD_Fp16m64  , X86::ILD_F16m  },
+  { X86::ILD_Fp32m32  , X86::ILD_F32m  },
+  { X86::ILD_Fp32m64  , X86::ILD_F32m  },
+  { X86::ILD_Fp64m32  , X86::ILD_F64m  },
+  { X86::ILD_Fp64m64  , X86::ILD_F64m  },
+  { X86::ISTT_Fp16m32 , X86::ISTT_FP16m},
+  { X86::ISTT_Fp16m64 , X86::ISTT_FP16m},
+  { X86::ISTT_Fp32m32 , X86::ISTT_FP32m},
+  { X86::ISTT_Fp32m64 , X86::ISTT_FP32m},
+  { X86::ISTT_Fp64m32 , X86::ISTT_FP64m},
+  { X86::ISTT_Fp64m64 , X86::ISTT_FP64m},
+  { X86::IST_Fp16m32  , X86::IST_F16m  },
+  { X86::IST_Fp16m64  , X86::IST_F16m  },
+  { X86::IST_Fp32m32  , X86::IST_F32m  },
+  { X86::IST_Fp32m64  , X86::IST_F32m  },
+  { X86::IST_Fp64m32  , X86::IST_FP64m },
+  { X86::IST_Fp64m64  , X86::IST_FP64m },
+  { X86::LD_Fp032     , X86::LD_F0     },
+  { X86::LD_Fp064     , X86::LD_F0     },
+  { X86::LD_Fp132     , X86::LD_F1     },
+  { X86::LD_Fp164     , X86::LD_F1     },
+  { X86::LD_Fp32m     , X86::LD_F32m   },
+  { X86::LD_Fp64m     , X86::LD_F64m   },
+  { X86::MUL_Fp32m    , X86::MUL_F32m  },
+  { X86::MUL_Fp64m    , X86::MUL_F64m  },
+  { X86::MUL_FpI16m32 , X86::MUL_FI16m },
+  { X86::MUL_FpI16m64 , X86::MUL_FI16m },
+  { X86::MUL_FpI32m32 , X86::MUL_FI32m },
+  { X86::MUL_FpI32m64 , X86::MUL_FI32m },
+  { X86::SIN_Fp32     , X86::SIN_F     },
+  { X86::SIN_Fp64     , X86::SIN_F     },
+  { X86::SQRT_Fp32    , X86::SQRT_F    },
+  { X86::SQRT_Fp64    , X86::SQRT_F    },
+  { X86::ST_Fp32m     , X86::ST_F32m   },
+  { X86::ST_Fp64m     , X86::ST_F64m   },
+  { X86::ST_Fp64m32   , X86::ST_F32m   },
+  { X86::SUBR_Fp32m   , X86::SUBR_F32m },
+  { X86::SUBR_Fp64m   , X86::SUBR_F64m },
+  { X86::SUBR_FpI16m32, X86::SUBR_FI16m},
+  { X86::SUBR_FpI16m64, X86::SUBR_FI16m},
+  { X86::SUBR_FpI32m32, X86::SUBR_FI32m},
+  { X86::SUBR_FpI32m64, X86::SUBR_FI32m},
+  { X86::SUB_Fp32m    , X86::SUB_F32m  },
+  { X86::SUB_Fp64m    , X86::SUB_F64m  },
+  { X86::SUB_FpI16m32 , X86::SUB_FI16m },
+  { X86::SUB_FpI16m64 , X86::SUB_FI16m },
+  { X86::SUB_FpI32m32 , X86::SUB_FI32m },
+  { X86::SUB_FpI32m64 , X86::SUB_FI32m },
+  { X86::TST_Fp32     , X86::TST_F     },
+  { X86::TST_Fp64     , X86::TST_F     },
+  { X86::UCOM_FpIr32  , X86::UCOM_FIr  },
+  { X86::UCOM_FpIr64  , X86::UCOM_FIr  },
+  { X86::UCOM_Fpr32   , X86::UCOM_Fr   },
+  { X86::UCOM_Fpr64   , X86::UCOM_Fr   },
 };
 
 static unsigned getConcreteOpcode(unsigned Opcode) {
@@ -436,27 +436,27 @@ static unsigned getConcreteOpcode(unsigned Opcode) {
 // element is an instruction, the second is the version which pops.
 //
 static const TableEntry PopTable[] = {
-  { X86::FADDrST0 , X86::FADDPrST0  },
+  { X86::ADD_FrST0 , X86::ADD_FPrST0  },
 
-  { X86::FDIVRrST0, X86::FDIVRPrST0 },
-  { X86::FDIVrST0 , X86::FDIVPrST0  },
+  { X86::DIVR_FrST0, X86::DIVR_FPrST0 },
+  { X86::DIV_FrST0 , X86::DIV_FPrST0  },
 
-  { X86::FIST16m  , X86::FISTP16m   },
-  { X86::FIST32m  , X86::FISTP32m   },
+  { X86::IST_F16m  , X86::IST_FP16m   },
+  { X86::IST_F32m  , X86::IST_FP32m   },
 
-  { X86::FMULrST0 , X86::FMULPrST0  },
+  { X86::MUL_FrST0 , X86::MUL_FPrST0  },
 
-  { X86::FST32m   , X86::FSTP32m    },
-  { X86::FST64m   , X86::FSTP64m    },
-  { X86::FSTrr    , X86::FSTPrr     },
+  { X86::ST_F32m   , X86::ST_FP32m    },
+  { X86::ST_F64m   , X86::ST_FP64m    },
+  { X86::ST_Frr    , X86::ST_FPrr     },
 
-  { X86::FSUBRrST0, X86::FSUBRPrST0 },
-  { X86::FSUBrST0 , X86::FSUBPrST0  },
+  { X86::SUBR_FrST0, X86::SUBR_FPrST0 },
+  { X86::SUB_FrST0 , X86::SUB_FPrST0  },
 
-  { X86::FUCOMIr  , X86::FUCOMIPr   },
+  { X86::UCOM_FIr  , X86::UCOM_FIPr   },
 
-  { X86::FUCOMPr  , X86::FUCOMPPr   },
-  { X86::FUCOMr   , X86::FUCOMPr    },
+  { X86::UCOM_FPr  , X86::UCOM_FPPr   },
+  { X86::UCOM_Fr   , X86::UCOM_FPr    },
 };
 
 /// popStackAfter - Pop the current value off of the top of the FP stack after
@@ -474,10 +474,10 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   int Opcode = Lookup(PopTable, ARRAY_SIZE(PopTable), I->getOpcode());
   if (Opcode != -1) {
     I->setInstrDescriptor(TII->get(Opcode));
-    if (Opcode == X86::FUCOMPPr)
+    if (Opcode == X86::UCOM_FPPr)
       I->RemoveOperand(0);
   } else {    // Insert an explicit pop
-    I = BuildMI(*MBB, ++I, TII->get(X86::FSTPrr)).addReg(X86::ST0);
+    I = BuildMI(*MBB, ++I, TII->get(X86::ST_FPrr)).addReg(X86::ST0);
   }
 }
 
@@ -501,7 +501,7 @@ void FPS::freeStackSlotAfter(MachineBasicBlock::iterator &I, unsigned FPRegNo) {
   RegMap[TopReg]    = OldSlot;
   RegMap[FPRegNo]   = ~0;
   Stack[--StackTop] = ~0;
-  I = BuildMI(*MBB, ++I, TII->get(X86::FSTPrr)).addReg(STReg);
+  I = BuildMI(*MBB, ++I, TII->get(X86::ST_FPrr)).addReg(STReg);
 }
 
 
@@ -550,14 +550,14 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   // Ditto FISTTP16m, FISTTP32m, FISTTP64m.
   //
   if (!KillsSrc &&
-      (MI->getOpcode() == X86::FpIST64m32 ||
-       MI->getOpcode() == X86::FpISTT16m32 ||
-       MI->getOpcode() == X86::FpISTT32m32 ||
-       MI->getOpcode() == X86::FpISTT64m32 ||
-       MI->getOpcode() == X86::FpIST64m64 ||
-       MI->getOpcode() == X86::FpISTT16m64 ||
-       MI->getOpcode() == X86::FpISTT32m64 ||
-       MI->getOpcode() == X86::FpISTT64m64)) {
+      (MI->getOpcode() == X86::IST_Fp64m32 ||
+       MI->getOpcode() == X86::ISTT_Fp16m32 ||
+       MI->getOpcode() == X86::ISTT_Fp32m32 ||
+       MI->getOpcode() == X86::ISTT_Fp64m32 ||
+       MI->getOpcode() == X86::IST_Fp64m64 ||
+       MI->getOpcode() == X86::ISTT_Fp16m64 ||
+       MI->getOpcode() == X86::ISTT_Fp32m64 ||
+       MI->getOpcode() == X86::ISTT_Fp64m64)) {
     duplicateToTop(Reg, 7 /*temp register*/, I);
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
@@ -567,10 +567,10 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MI->RemoveOperand(NumOps-1);    // Remove explicit ST(0) operand
   MI->setInstrDescriptor(TII->get(getConcreteOpcode(MI->getOpcode())));
 
-  if (MI->getOpcode() == X86::FISTP64m ||
-      MI->getOpcode() == X86::FISTTP16m ||
-      MI->getOpcode() == X86::FISTTP32m ||
-      MI->getOpcode() == X86::FISTTP64m) {
+  if (MI->getOpcode() == X86::IST_FP64m ||
+      MI->getOpcode() == X86::ISTT_FP16m ||
+      MI->getOpcode() == X86::ISTT_FP32m ||
+      MI->getOpcode() == X86::ISTT_FP64m) {
     assert(StackTop > 0 && "Stack empty??");
     --StackTop;
   } else if (KillsSrc) { // Last use of operand?
@@ -622,50 +622,50 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
 
 // ForwardST0Table - Map: A = B op C  into: ST(0) = ST(0) op ST(i)
 static const TableEntry ForwardST0Table[] = {
-  { X86::FpADD32  , X86::FADDST0r },
-  { X86::FpADD64  , X86::FADDST0r },
-  { X86::FpDIV32  , X86::FDIVST0r },
-  { X86::FpDIV64  , X86::FDIVST0r },
-  { X86::FpMUL32  , X86::FMULST0r },
-  { X86::FpMUL64  , X86::FMULST0r },
-  { X86::FpSUB32  , X86::FSUBST0r },
-  { X86::FpSUB64  , X86::FSUBST0r },
+  { X86::ADD_Fp32  , X86::ADD_FST0r },
+  { X86::ADD_Fp64  , X86::ADD_FST0r },
+  { X86::DIV_Fp32  , X86::DIV_FST0r },
+  { X86::DIV_Fp64  , X86::DIV_FST0r },
+  { X86::MUL_Fp32  , X86::MUL_FST0r },
+  { X86::MUL_Fp64  , X86::MUL_FST0r },
+  { X86::SUB_Fp32  , X86::SUB_FST0r },
+  { X86::SUB_Fp64  , X86::SUB_FST0r },
 };
 
 // ReverseST0Table - Map: A = B op C  into: ST(0) = ST(i) op ST(0)
 static const TableEntry ReverseST0Table[] = {
-  { X86::FpADD32  , X86::FADDST0r  },   // commutative
-  { X86::FpADD64  , X86::FADDST0r  },   // commutative
-  { X86::FpDIV32  , X86::FDIVRST0r },
-  { X86::FpDIV64  , X86::FDIVRST0r },
-  { X86::FpMUL32  , X86::FMULST0r  },   // commutative
-  { X86::FpMUL64  , X86::FMULST0r  },   // commutative
-  { X86::FpSUB32  , X86::FSUBRST0r },
-  { X86::FpSUB64  , X86::FSUBRST0r },
+  { X86::ADD_Fp32  , X86::ADD_FST0r  },   // commutative
+  { X86::ADD_Fp64  , X86::ADD_FST0r  },   // commutative
+  { X86::DIV_Fp32  , X86::DIVR_FST0r },
+  { X86::DIV_Fp64  , X86::DIVR_FST0r },
+  { X86::MUL_Fp32  , X86::MUL_FST0r  },   // commutative
+  { X86::MUL_Fp64  , X86::MUL_FST0r  },   // commutative
+  { X86::SUB_Fp32  , X86::SUBR_FST0r },
+  { X86::SUB_Fp64  , X86::SUBR_FST0r },
 };
 
 // ForwardSTiTable - Map: A = B op C  into: ST(i) = ST(0) op ST(i)
 static const TableEntry ForwardSTiTable[] = {
-  { X86::FpADD32  , X86::FADDrST0  },   // commutative
-  { X86::FpADD64  , X86::FADDrST0  },   // commutative
-  { X86::FpDIV32  , X86::FDIVRrST0 },
-  { X86::FpDIV64  , X86::FDIVRrST0 },
-  { X86::FpMUL32  , X86::FMULrST0  },   // commutative
-  { X86::FpMUL64  , X86::FMULrST0  },   // commutative
-  { X86::FpSUB32  , X86::FSUBRrST0 },
-  { X86::FpSUB64  , X86::FSUBRrST0 },
+  { X86::ADD_Fp32  , X86::ADD_FrST0  },   // commutative
+  { X86::ADD_Fp64  , X86::ADD_FrST0  },   // commutative
+  { X86::DIV_Fp32  , X86::DIVR_FrST0 },
+  { X86::DIV_Fp64  , X86::DIVR_FrST0 },
+  { X86::MUL_Fp32  , X86::MUL_FrST0  },   // commutative
+  { X86::MUL_Fp64  , X86::MUL_FrST0  },   // commutative
+  { X86::SUB_Fp32  , X86::SUBR_FrST0 },
+  { X86::SUB_Fp64  , X86::SUBR_FrST0 },
 };
 
 // ReverseSTiTable - Map: A = B op C  into: ST(i) = ST(i) op ST(0)
 static const TableEntry ReverseSTiTable[] = {
-  { X86::FpADD32  , X86::FADDrST0 },
-  { X86::FpADD64  , X86::FADDrST0 },
-  { X86::FpDIV32  , X86::FDIVrST0 },
-  { X86::FpDIV64  , X86::FDIVrST0 },
-  { X86::FpMUL32  , X86::FMULrST0 },
-  { X86::FpMUL64  , X86::FMULrST0 },
-  { X86::FpSUB32  , X86::FSUBrST0 },
-  { X86::FpSUB64  , X86::FSUBrST0 },
+  { X86::ADD_Fp32  , X86::ADD_FrST0 },
+  { X86::ADD_Fp64  , X86::ADD_FrST0 },
+  { X86::DIV_Fp32  , X86::DIV_FrST0 },
+  { X86::DIV_Fp64  , X86::DIV_FrST0 },
+  { X86::MUL_Fp32  , X86::MUL_FrST0 },
+  { X86::MUL_Fp64  , X86::MUL_FrST0 },
+  { X86::SUB_Fp32  , X86::SUB_FrST0 },
+  { X86::SUB_Fp64  , X86::SUB_FrST0 },
 };
 
 
@@ -847,10 +847,10 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     assert(StackTop == 1 && "Stack should have one element on it to return!");
     --StackTop;   // "Forget" we have something on the top of stack!
     break;
-  case X86::FpMOV3232:
-  case X86::FpMOV3264:
-  case X86::FpMOV6432:
-  case X86::FpMOV6464: {
+  case X86::MOV_Fp3232:
+  case X86::MOV_Fp3264:
+  case X86::MOV_Fp6432:
+  case X86::MOV_Fp6464: {
     unsigned SrcReg = getFPReg(MI->getOperand(1));
     unsigned DestReg = getFPReg(MI->getOperand(0));
 
