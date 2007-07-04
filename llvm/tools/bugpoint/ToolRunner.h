@@ -80,7 +80,7 @@ public:
 
 //===---------------------------------------------------------------------===//
 /// AbstractInterpreter Class - Subclasses of this class are used to execute
-/// LLVM bytecode in a variety of ways.  This abstract interface hides this
+/// LLVM bitcode in a variety of ways.  This abstract interface hides this
 /// complexity behind a simple interface.
 ///
 class AbstractInterpreter {
@@ -101,25 +101,25 @@ public:
 
   virtual ~AbstractInterpreter() {}
 
-  /// compileProgram - Compile the specified program from bytecode to executable
+  /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
   /// the code generator.  If the code generator fails, an exception should be
   /// thrown, otherwise, this function will just return.
-  virtual void compileProgram(const std::string &Bytecode) {}
+  virtual void compileProgram(const std::string &Bitcode) {}
 
-  /// OutputCode - Compile the specified program from bytecode to code
+  /// OutputCode - Compile the specified program from bitcode to code
   /// understood by the GCC driver (either C or asm).  If the code generator
   /// fails, an exception should be thrown, otherwise, this function returns the
   /// type of code emitted.
-  virtual GCC::FileType OutputCode(const std::string &Bytecode,
+  virtual GCC::FileType OutputCode(const std::string &Bitcode,
                                    sys::Path &OutFile) {
     throw std::string("OutputCode not supported by this AbstractInterpreter!");
   }
   
-  /// ExecuteProgram - Run the specified bytecode file, emitting output to the
+  /// ExecuteProgram - Run the specified bitcode file, emitting output to the
   /// specified filename.  This returns the exit code of the program.
   ///
-  virtual int ExecuteProgram(const std::string &Bytecode,
+  virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
@@ -146,13 +146,13 @@ public:
   }
   ~CBE() { delete gcc; }
 
-  /// compileProgram - Compile the specified program from bytecode to executable
+  /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
   /// the code generator.  If the code generator fails, an exception should be
   /// thrown, otherwise, this function will just return.
-  virtual void compileProgram(const std::string &Bytecode);
+  virtual void compileProgram(const std::string &Bitcode);
 
-  virtual int ExecuteProgram(const std::string &Bytecode,
+  virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
@@ -163,11 +163,11 @@ public:
                              unsigned Timeout = 0,
                              unsigned MemoryLimit = 0);
 
-  /// OutputCode - Compile the specified program from bytecode to code
+  /// OutputCode - Compile the specified program from bitcode to code
   /// understood by the GCC driver (either C or asm).  If the code generator
   /// fails, an exception should be thrown, otherwise, this function returns the
   /// type of code emitted.
-  virtual GCC::FileType OutputCode(const std::string &Bytecode,
+  virtual GCC::FileType OutputCode(const std::string &Bitcode,
                                    sys::Path &OutFile);
 };
 
@@ -187,13 +187,13 @@ public:
   }
   ~LLC() { delete gcc; }
 
-  /// compileProgram - Compile the specified program from bytecode to executable
+  /// compileProgram - Compile the specified program from bitcode to executable
   /// code.  This does not produce any output, it is only used when debugging
   /// the code generator.  If the code generator fails, an exception should be
   /// thrown, otherwise, this function will just return.
-  virtual void compileProgram(const std::string &Bytecode);
+  virtual void compileProgram(const std::string &Bitcode);
 
-  virtual int ExecuteProgram(const std::string &Bytecode,
+  virtual int ExecuteProgram(const std::string &Bitcode,
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
@@ -204,7 +204,7 @@ public:
                              unsigned Timeout = 0,
                              unsigned MemoryLimit = 0);
 
-  virtual GCC::FileType OutputCode(const std::string &Bytecode,
+  virtual GCC::FileType OutputCode(const std::string &Bitcode,
                                    sys::Path &OutFile);
   
 };

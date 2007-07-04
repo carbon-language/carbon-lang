@@ -59,17 +59,17 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   std::cout << "Checking to see if '" << getPassesString(Suffix)
             << "' compile correctly: ";
 
-  std::string BytecodeResult;
-  if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+  std::string BitcodeResult;
+  if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << " Error running this sequence of passes"
               << " on the input program!\n";
     BD.setPassesToRun(Suffix);
-    BD.EmitProgressBytecode("pass-error",  false);
+    BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
 
   // Check to see if the finished program matches the reference output...
-  if (BD.diffProgram(BytecodeResult, "", true /*delete bytecode*/)) {
+  if (BD.diffProgram(BitcodeResult, "", true /*delete bitcode*/)) {
     std::cout << " nope.\n";
     if (Suffix.empty()) {
       std::cerr << BD.getToolName() << ": I'm confused: the test fails when "
@@ -90,21 +90,21 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // If it is not broken with the kept passes, it's possible that the prefix
   // passes must be run before the kept passes to break it.  If the program
   // WORKS after the prefix passes, but then fails if running the prefix AND
-  // kept passes, we can update our bytecode file to include the result of the
+  // kept passes, we can update our bitcode file to include the result of the
   // prefix passes, then discard the prefix passes.
   //
-  if (BD.runPasses(Prefix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(Prefix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << " Error running this sequence of passes"
               << " on the input program!\n";
     BD.setPassesToRun(Prefix);
-    BD.EmitProgressBytecode("pass-error",  false);
+    BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
 
   // If the prefix maintains the predicate by itself, only keep the prefix!
-  if (BD.diffProgram(BytecodeResult)) {
+  if (BD.diffProgram(BitcodeResult)) {
     std::cout << " nope.\n";
-    sys::Path(BytecodeResult).eraseFromDisk();
+    sys::Path(BitcodeResult).eraseFromDisk();
     return KeepPrefix;
   }
   std::cout << " yup.\n";      // No miscompilation!
@@ -112,13 +112,13 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
   //
-  Module *PrefixOutput = ParseInputFile(BytecodeResult);
+  Module *PrefixOutput = ParseInputFile(BitcodeResult);
   if (PrefixOutput == 0) {
-    std::cerr << BD.getToolName() << ": Error reading bytecode file '"
-              << BytecodeResult << "'!\n";
+    std::cerr << BD.getToolName() << ": Error reading bitcode file '"
+              << BitcodeResult << "'!\n";
     exit(1);
   }
-  sys::Path(BytecodeResult).eraseFromDisk();  // No longer need the file on disk
+  sys::Path(BitcodeResult).eraseFromDisk();  // No longer need the file on disk
 
   // Don't check if there are no passes in the suffix.
   if (Suffix.empty())
@@ -129,16 +129,16 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
             << getPassesString(Prefix) << "' passes: ";
 
   Module *OriginalInput = BD.swapProgramIn(PrefixOutput);
-  if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+  if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
     std::cerr << " Error running this sequence of passes"
               << " on the input program!\n";
     BD.setPassesToRun(Suffix);
-    BD.EmitProgressBytecode("pass-error",  false);
+    BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
 
   // Run the result...
-  if (BD.diffProgram(BytecodeResult, "", true/*delete bytecode*/)) {
+  if (BD.diffProgram(BitcodeResult, "", true/*delete bitcode*/)) {
     std::cout << " nope.\n";
     delete OriginalInput;     // We pruned down the original input...
     return KeepSuffix;
@@ -601,25 +601,25 @@ bool BugDriver::debugMiscompilation() {
   std::cout << "\n*** Found miscompiling pass"
             << (getPassesToRun().size() == 1 ? "" : "es") << ": "
             << getPassesString(getPassesToRun()) << '\n';
-  EmitProgressBytecode("passinput");
+  EmitProgressBitcode("passinput");
 
   std::vector<Function*> MiscompiledFunctions =
     DebugAMiscompilation(*this, TestOptimizer);
 
-  // Output a bunch of bytecode files for the user...
-  std::cout << "Outputting reduced bytecode files which expose the problem:\n";
+  // Output a bunch of bitcode files for the user...
+  std::cout << "Outputting reduced bitcode files which expose the problem:\n";
   Module *ToNotOptimize = CloneModule(getProgram());
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                  MiscompiledFunctions);
 
   std::cout << "  Non-optimized portion: ";
   ToNotOptimize = swapProgramIn(ToNotOptimize);
-  EmitProgressBytecode("tonotoptimize", true);
+  EmitProgressBitcode("tonotoptimize", true);
   setNewProgram(ToNotOptimize);   // Delete hacked module.
 
   std::cout << "  Portion that is input to optimizer: ";
   ToOptimize = swapProgramIn(ToOptimize);
-  EmitProgressBytecode("tooptimize");
+  EmitProgressBitcode("tooptimize");
   setNewProgram(ToOptimize);      // Delete hacked module.
 
   return false;
@@ -795,7 +795,7 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
     exit(1);
   }
   if (BD.writeProgramToFile(TestModuleBC.toString(), Test)) {
-    std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
+    std::cerr << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
   }
   delete Test;
@@ -809,7 +809,7 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   }
 
   if (BD.writeProgramToFile(SafeModuleBC.toString(), Safe)) {
-    std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
+    std::cerr << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
   std::string SharedObject = BD.compileSharedObject(SafeModuleBC.toString());
@@ -865,7 +865,7 @@ bool BugDriver::debugCodeGenerator() {
   }
 
   if (writeProgramToFile(TestModuleBC.toString(), ToCodeGen)) {
-    std::cerr << "Error writing bytecode to `" << TestModuleBC << "'\nExiting.";
+    std::cerr << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
   }
   delete ToCodeGen;
@@ -879,7 +879,7 @@ bool BugDriver::debugCodeGenerator() {
   }
 
   if (writeProgramToFile(SafeModuleBC.toString(), ToNotCodeGen)) {
-    std::cerr << "Error writing bytecode to `" << SafeModuleBC << "'\nExiting.";
+    std::cerr << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
   std::string SharedObject = compileSharedObject(SafeModuleBC.toString());

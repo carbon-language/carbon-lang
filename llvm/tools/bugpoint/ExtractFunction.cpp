@@ -139,7 +139,7 @@ Module *BugDriver::ExtractLoop(Module *M) {
   if (NewM == 0) {
     Module *Old = swapProgramIn(M);
     std::cout << "*** Loop extraction failed: ";
-    EmitProgressBytecode("loopextraction", true);
+    EmitProgressBitcode("loopextraction", true);
     std::cout << "*** Sorry. :(  Please report a bug!\n";
     swapProgramIn(Old);
     return 0;
@@ -361,7 +361,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   if (Ret == 0) {
     std::cout << "*** Basic Block extraction failed, please report a bug!\n";
     M = swapProgramIn(M);
-    EmitProgressBytecode("basicblockextractfail", true);
+    EmitProgressBitcode("basicblockextractfail", true);
     swapProgramIn(M);
   }
   return Ret;

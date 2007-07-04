@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains code used to execute the program utilizing one of the
-// various ways of running LLVM bytecode.
+// various ways of running LLVM bitcode.
 //
 //===----------------------------------------------------------------------===//
 
@@ -181,25 +181,25 @@ bool BugDriver::initializeExecutionEnvironment() {
 /// generation crash testing.
 ///
 void BugDriver::compileProgram(Module *M) {
-  // Emit the program to a bytecode file...
-  sys::Path BytecodeFile ("bugpoint-test-program.bc");
+  // Emit the program to a bitcode file...
+  sys::Path BitcodeFile ("bugpoint-test-program.bc");
   std::string ErrMsg;
-  if (BytecodeFile.makeUnique(true,&ErrMsg)) {
+  if (BitcodeFile.makeUnique(true,&ErrMsg)) {
     std::cerr << ToolName << ": Error making unique filename: " << ErrMsg 
               << "\n";
     exit(1);
   }
-  if (writeProgramToFile(BytecodeFile.toString(), M)) {
-    std::cerr << ToolName << ": Error emitting bytecode to file '"
-              << BytecodeFile << "'!\n";
+  if (writeProgramToFile(BitcodeFile.toString(), M)) {
+    std::cerr << ToolName << ": Error emitting bitcode to file '"
+              << BitcodeFile << "'!\n";
     exit(1);
   }
 
-    // Remove the temporary bytecode file when we are done.
-  FileRemover BytecodeFileRemover(BytecodeFile);
+    // Remove the temporary bitcode file when we are done.
+  FileRemover BitcodeFileRemover(BitcodeFile);
 
   // Actually compile the program!
-  Interpreter->compileProgram(BytecodeFile.toString());
+  Interpreter->compileProgram(BitcodeFile.toString());
 }
 
 
@@ -208,35 +208,35 @@ void BugDriver::compileProgram(Module *M) {
 /// filename may be optionally specified.
 ///
 std::string BugDriver::executeProgram(std::string OutputFile,
-                                      std::string BytecodeFile,
+                                      std::string BitcodeFile,
                                       const std::string &SharedObj,
                                       AbstractInterpreter *AI,
                                       bool *ProgramExitedNonzero) {
   if (AI == 0) AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
-  bool CreatedBytecode = false;
+  bool CreatedBitcode = false;
   std::string ErrMsg;
-  if (BytecodeFile.empty()) {
-    // Emit the program to a bytecode file...
+  if (BitcodeFile.empty()) {
+    // Emit the program to a bitcode file...
     sys::Path uniqueFilename("bugpoint-test-program.bc");
     if (uniqueFilename.makeUnique(true, &ErrMsg)) {
       std::cerr << ToolName << ": Error making unique filename: " 
                 << ErrMsg << "!\n";
       exit(1);
     }
-    BytecodeFile = uniqueFilename.toString();
+    BitcodeFile = uniqueFilename.toString();
 
-    if (writeProgramToFile(BytecodeFile, Program)) {
-      std::cerr << ToolName << ": Error emitting bytecode to file '"
-                << BytecodeFile << "'!\n";
+    if (writeProgramToFile(BitcodeFile, Program)) {
+      std::cerr << ToolName << ": Error emitting bitcode to file '"
+                << BitcodeFile << "'!\n";
       exit(1);
     }
-    CreatedBytecode = true;
+    CreatedBitcode = true;
   }
 
-  // Remove the temporary bytecode file when we are done.
-  sys::Path BytecodePath (BytecodeFile);
-  FileRemover BytecodeFileRemover(BytecodePath, CreatedBytecode);
+  // Remove the temporary bitcode file when we are done.
+  sys::Path BitcodePath (BitcodeFile);
+  FileRemover BitcodeFileRemover(BitcodePath, CreatedBitcode);
 
   if (OutputFile.empty()) OutputFile = "bugpoint-execution-output";
 
@@ -261,11 +261,11 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   int RetVal = 0;
   if (InterpreterSel == RunLLC || InterpreterSel == RunCBE ||
       InterpreterSel == CBE_bug || InterpreterSel == LLC_Safe)
-    RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
+    RetVal = AI->ExecuteProgram(BitcodeFile, InputArgv, InputFile,
                                 OutputFile, AdditionalLinkerArgs, SharedObjs, 
                                 Timeout, MemoryLimit);
   else 
-    RetVal = AI->ExecuteProgram(BytecodeFile, InputArgv, InputFile,
+    RetVal = AI->ExecuteProgram(BitcodeFile, InputArgv, InputFile,
                                 OutputFile, std::vector<std::string>(), 
                                 SharedObjs, Timeout, MemoryLimit);
 
@@ -311,12 +311,12 @@ std::string BugDriver::executeProgramWithCBE(std::string OutputFile) {
   return outFN;
 }
 
-std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
+std::string BugDriver::compileSharedObject(const std::string &BitcodeFile) {
   assert(Interpreter && "Interpreter should have been created already!");
   sys::Path OutputFile;
 
   // Using CBE
-  GCC::FileType FT = cbe->OutputCode(BytecodeFile, OutputFile);
+  GCC::FileType FT = cbe->OutputCode(BitcodeFile, OutputFile);
 
   std::string SharedObjectFile;
   if (gcc->MakeSharedObject(OutputFile.toString(), FT,
@@ -360,20 +360,20 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
 /// is different, true is returned.  If there is a problem with the code
 /// generator (e.g., llc crashes), this will throw an exception.
 ///
-bool BugDriver::diffProgram(const std::string &BytecodeFile,
+bool BugDriver::diffProgram(const std::string &BitcodeFile,
                             const std::string &SharedObject,
-                            bool RemoveBytecode) {
+                            bool RemoveBitcode) {
   bool ProgramExitedNonzero;
 
   // Execute the program, generating an output file...
-  sys::Path Output(executeProgram("", BytecodeFile, SharedObject, 0,
+  sys::Path Output(executeProgram("", BitcodeFile, SharedObject, 0,
                                       &ProgramExitedNonzero));
 
   // If we're checking the program exit code, assume anything nonzero is bad.
   if (CheckProgramExitCode && ProgramExitedNonzero) {
     Output.eraseFromDisk();
-    if (RemoveBytecode)
-      sys::Path(BytecodeFile).eraseFromDisk();
+    if (RemoveBitcode)
+      sys::Path(BitcodeFile).eraseFromDisk();
     return true;
   }
 
@@ -392,9 +392,9 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   // Remove the generated output.
   Output.eraseFromDisk();
 
-  // Remove the bytecode file if we are supposed to.
-  if (RemoveBytecode)
-    sys::Path(BytecodeFile).eraseFromDisk();
+  // Remove the bitcode file if we are supposed to.
+  if (RemoveBitcode)
+    sys::Path(BitcodeFile).eraseFromDisk();
   return FilesDifferent;
 }
 

@@ -107,9 +107,9 @@ public:
                                const std::string &ReferenceOutput);
 
   /// compileSharedObject - This method creates a SharedObject from a given
-  /// BytecodeFile for debugging a code generator.
+  /// BitcodeFile for debugging a code generator.
   ///
-  std::string compileSharedObject(const std::string &BytecodeFile);
+  std::string compileSharedObject(const std::string &BitcodeFile);
 
   /// debugCodeGenerator - This method narrows down a module to a function or
   /// set of functions, using the CBE as a ``safe'' code generator for other
@@ -167,7 +167,7 @@ public:
   /// generator (e.g., llc crashes), this will throw an exception.
   ///
   std::string executeProgram(std::string RequestedOutputFilename = "",
-                             std::string Bytecode = "",
+                             std::string Bitcode = "",
                              const std::string &SharedObjects = "",
                              AbstractInterpreter *AI = 0,
                              bool *ProgramExitedNonzero = 0);
@@ -191,14 +191,14 @@ public:
   /// is different, true is returned.  If there is a problem with the code
   /// generator (e.g., llc crashes), this will throw an exception.
   ///
-  bool diffProgram(const std::string &BytecodeFile = "",
+  bool diffProgram(const std::string &BitcodeFile = "",
                    const std::string &SharedObj = "",
-                   bool RemoveBytecode = false);
+                   bool RemoveBitcode = false);
                    
-  /// EmitProgressBytecode - This function is used to output the current Program
+  /// EmitProgressBitcode - This function is used to output the current Program
   /// to a file named "bugpoint-ID.bc".
   ///
-  void EmitProgressBytecode(const std::string &ID, bool NoFlyer = false);
+  void EmitProgressBitcode(const std::string &ID, bool NoFlyer = false);
 
   /// deleteInstructionFromProgram - This method clones the current Program and
   /// deletes the specified instruction from the cloned module.  It then runs a
@@ -236,10 +236,10 @@ public:
   Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes,
                       bool AutoDebugCrashes = false);
 
-  /// runPasses - Run the specified passes on Program, outputting a bytecode
+  /// runPasses - Run the specified passes on Program, outputting a bitcode
   /// file and writting the filename into OutputFile if successful.  If the
   /// optimizations fail for some reason (optimizer crashes), return true,
-  /// otherwise return false.  If DeleteOutput is set to true, the bytecode is
+  /// otherwise return false.  If DeleteOutput is set to true, the bitcode is
   /// deleted on success, and the filename string is undefined.  This prints to
   /// cout a single line message indicating whether compilation was successful
   /// or failed, unless Quiet is set.
@@ -258,7 +258,7 @@ public:
   bool runManyPasses(const std::vector<const PassInfo*> &AllPasses);
 
   /// writeProgramToFile - This writes the current "Program" to the named
-  /// bytecode file.  If an error occurs, true is returned.
+  /// bitcode file.  If an error occurs, true is returned.
   ///
   bool writeProgramToFile(const std::string &Filename, Module *M = 0) const;
 
@@ -282,7 +282,7 @@ private:
   bool initializeExecutionEnvironment();
 };
 
-/// ParseInputFile - Given a bytecode or assembly input filename, parse and
+/// ParseInputFile - Given a bitcode or assembly input filename, parse and
 /// return it, or return null if not possible.
 ///
 Module *ParseInputFile(const std::string &InputFilename);

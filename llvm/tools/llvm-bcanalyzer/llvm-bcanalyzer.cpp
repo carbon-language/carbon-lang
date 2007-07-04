@@ -1,4 +1,4 @@
-//===-- llvm-bcanalyzer.cpp - Byte Code Analyzer --------------------------===//
+//===-- llvm-bcanalyzer.cpp - Bitcode Analyzer --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,22 +8,22 @@
 //===----------------------------------------------------------------------===//
 //
 // This tool may be invoked in the following manner:
-//  llvm-bcanalyzer [options]      - Read LLVM bytecode from stdin
-//  llvm-bcanalyzer [options] x.bc - Read LLVM bytecode from the x.bc file
+//  llvm-bcanalyzer [options]      - Read LLVM bitcode from stdin
+//  llvm-bcanalyzer [options] x.bc - Read LLVM bitcode from the x.bc file
 //
 //  Options:
 //      --help      - Output information about command line switches
-//      --dump      - Dump low-level bytecode structure in readable format
+//      --dump      - Dump low-level bitcode structure in readable format
 //
-// This tool provides analytical information about a bytecode file. It is
-// intended as an aid to developers of bytecode reading and writing software. It
-// produces on std::out a summary of the bytecode file that shows various
+// This tool provides analytical information about a bitcode file. It is
+// intended as an aid to developers of bitcode reading and writing software. It
+// produces on std::out a summary of the bitcode file that shows various
 // statistics about the contents of the file. By default this information is
-// detailed and contains information about individual bytecode blocks and the
+// detailed and contains information about individual bitcode blocks and the
 // functions in the module. 
-// The tool is also able to print a bytecode file in a straight forward text
+// The tool is also able to print a bitcode file in a straight forward text
 // format that shows the containment and relationships of the information in
-// the bytecode file (-dump option).
+// the bitcode file (-dump option).
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,12 +41,12 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-  InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+  InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
 static cl::opt<std::string>
   OutputFilename("-o", cl::init("-"), cl::desc("<output file>"));
 
-static cl::opt<bool> Dump("dump", cl::desc("Dump low level bytecode trace"));
+static cl::opt<bool> Dump("dump", cl::desc("Dump low level bitcode trace"));
 
 //===----------------------------------------------------------------------===//
 // Bitcode specific analysis.

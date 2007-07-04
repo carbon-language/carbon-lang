@@ -69,7 +69,7 @@ BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
     run_find_bugs(find_bugs), Timeout(timeout), MemoryLimit(memlimit) {}
 
 
-/// ParseInputFile - Given a bytecode or assembly input filename, parse and
+/// ParseInputFile - Given a bitcode or assembly input filename, parse and
 /// return it, or return null if not possible.
 ///
 Module *llvm::ParseInputFile(const std::string &Filename) {
@@ -88,8 +88,8 @@ Module *llvm::ParseInputFile(const std::string &Filename) {
 }
 
 // This method takes the specified list of LLVM input files, attempts to load
-// them, either as assembly or bytecode, then link them together. It returns
-// true on failure (if, for example, an input bytecode file could not be
+// them, either as assembly or bitcode, then link them together. It returns
+// true on failure (if, for example, an input bitcode file could not be
 // parsed), and false on success.
 //
 bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
@@ -153,7 +153,7 @@ bool BugDriver::run() {
   // determine what the problem is. Does the optimization series crash the 
   // compiler, or does it produce illegal code?  We make the top-level 
   // decision by trying to run all of the passes on the the input program, 
-  // which should generate a bytecode file.  If it does generate a bytecode 
+  // which should generate a bitcode file.  If it does generate a bitcode 
   // file, then we know the compiler didn't crash, so try to diagnose a 
   // miscompilation.
   if (!PassesToRun.empty()) {
@@ -162,7 +162,7 @@ bool BugDriver::run() {
       return debugOptimizerCrash();
   }
 
-  // Set up the execution environment, selecting a method to run LLVM bytecode.
+  // Set up the execution environment, selecting a method to run LLVM bitcode.
   if (initializeExecutionEnvironment()) return true;
 
   // Test to see if we have a code generator crash.

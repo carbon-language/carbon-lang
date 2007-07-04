@@ -108,7 +108,7 @@ namespace {
       if (Args) { ToolArgs = *Args; }
     }
 
-    virtual int ExecuteProgram(const std::string &Bytecode,
+    virtual int ExecuteProgram(const std::string &Bitcode,
                                const std::vector<std::string> &Args,
                                const std::string &InputFile,
                                const std::string &OutputFile,
@@ -120,7 +120,7 @@ namespace {
   };
 }
 
-int LLI::ExecuteProgram(const std::string &Bytecode,
+int LLI::ExecuteProgram(const std::string &Bitcode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
@@ -143,7 +143,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
   for (unsigned i = 0, e = ToolArgs.size(); i != e; ++i)
     LLIArgs.push_back(ToolArgs[i].c_str());
 
-  LLIArgs.push_back(Bytecode.c_str());
+  LLIArgs.push_back(Bitcode.c_str());
   // Add optional parameters to the running program from Argv
   for (unsigned i=0, e = Args.size(); i != e; ++i)
     LLIArgs.push_back(Args[i].c_str());
@@ -177,9 +177,9 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
 //===----------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
 //
-GCC::FileType LLC::OutputCode(const std::string &Bytecode, 
+GCC::FileType LLC::OutputCode(const std::string &Bitcode, 
                               sys::Path &OutputAsmFile) {
-  sys::Path uniqueFile(Bytecode+".llc.s");
+  sys::Path uniqueFile(Bitcode+".llc.s");
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
     std::cerr << "Error making unique filename: " << ErrMsg << "\n";
@@ -196,7 +196,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bytecode,
   LLCArgs.push_back ("-o");
   LLCArgs.push_back (OutputAsmFile.c_str()); // Output to the Asm file
   LLCArgs.push_back ("-f");                  // Overwrite as necessary...
-  LLCArgs.push_back (Bytecode.c_str());      // This is the input bytecode
+  LLCArgs.push_back (Bitcode.c_str());      // This is the input bitcode
   LLCArgs.push_back (0);
 
   std::cout << "<llc>" << std::flush;
@@ -212,13 +212,13 @@ GCC::FileType LLC::OutputCode(const std::string &Bytecode,
   return GCC::AsmFile;                              
 }
 
-void LLC::compileProgram(const std::string &Bytecode) {
+void LLC::compileProgram(const std::string &Bitcode) {
   sys::Path OutputAsmFile;
-  OutputCode(Bytecode, OutputAsmFile);
+  OutputCode(Bitcode, OutputAsmFile);
   OutputAsmFile.eraseFromDisk();
 }
 
-int LLC::ExecuteProgram(const std::string &Bytecode,
+int LLC::ExecuteProgram(const std::string &Bitcode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
@@ -228,7 +228,7 @@ int LLC::ExecuteProgram(const std::string &Bytecode,
                         unsigned MemoryLimit) {
 
   sys::Path OutputAsmFile;
-  OutputCode(Bytecode, OutputAsmFile);
+  OutputCode(Bitcode, OutputAsmFile);
   FileRemover OutFileRemover(OutputAsmFile);
 
   std::vector<std::string> GCCArgs(ArgsForGCC);
@@ -274,7 +274,7 @@ namespace {
       if (Args) { ToolArgs = *Args; }
     }
 
-    virtual int ExecuteProgram(const std::string &Bytecode,
+    virtual int ExecuteProgram(const std::string &Bitcode,
                                const std::vector<std::string> &Args,
                                const std::string &InputFile,
                                const std::string &OutputFile,
@@ -287,7 +287,7 @@ namespace {
   };
 }
 
-int JIT::ExecuteProgram(const std::string &Bytecode,
+int JIT::ExecuteProgram(const std::string &Bitcode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
@@ -310,7 +310,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
     JITArgs.push_back("-load");
     JITArgs.push_back(SharedLibs[i].c_str());
   }
-  JITArgs.push_back(Bytecode.c_str());
+  JITArgs.push_back(Bitcode.c_str());
   // Add optional parameters to the running program from Argv
   for (unsigned i=0, e = Args.size(); i != e; ++i)
     JITArgs.push_back(Args[i].c_str());
@@ -342,9 +342,9 @@ AbstractInterpreter *AbstractInterpreter::createJIT(const std::string &ProgPath,
   return 0;
 }
 
-GCC::FileType CBE::OutputCode(const std::string &Bytecode,
+GCC::FileType CBE::OutputCode(const std::string &Bitcode,
                               sys::Path &OutputCFile) {
-  sys::Path uniqueFile(Bytecode+".cbe.c");
+  sys::Path uniqueFile(Bitcode+".cbe.c");
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
     std::cerr << "Error making unique filename: " << ErrMsg << "\n";
@@ -362,7 +362,7 @@ GCC::FileType CBE::OutputCode(const std::string &Bytecode,
   LLCArgs.push_back (OutputCFile.c_str());   // Output to the C file
   LLCArgs.push_back ("-march=c");            // Output C language
   LLCArgs.push_back ("-f");                  // Overwrite as necessary...
-  LLCArgs.push_back (Bytecode.c_str());      // This is the input bytecode
+  LLCArgs.push_back (Bitcode.c_str());      // This is the input bitcode
   LLCArgs.push_back (0);
 
   std::cout << "<cbe>" << std::flush;
@@ -377,13 +377,13 @@ GCC::FileType CBE::OutputCode(const std::string &Bytecode,
   return GCC::CFile;
 }
 
-void CBE::compileProgram(const std::string &Bytecode) {
+void CBE::compileProgram(const std::string &Bitcode) {
   sys::Path OutputCFile;
-  OutputCode(Bytecode, OutputCFile);
+  OutputCode(Bitcode, OutputCFile);
   OutputCFile.eraseFromDisk();
 }
 
-int CBE::ExecuteProgram(const std::string &Bytecode,
+int CBE::ExecuteProgram(const std::string &Bitcode,
                         const std::vector<std::string> &Args,
                         const std::string &InputFile,
                         const std::string &OutputFile,
@@ -392,7 +392,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
                         unsigned Timeout,
                         unsigned MemoryLimit) {
   sys::Path OutputCFile;
-  OutputCode(Bytecode, OutputCFile);
+  OutputCode(Bitcode, OutputCFile);
 
   FileRemover CFileRemove(OutputCFile);
 

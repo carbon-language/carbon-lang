@@ -47,7 +47,7 @@ namespace {
                             cl::desc("Run optimizations through valgrind"));
 }
 
-/// writeProgramToFile - This writes the current "Program" to the named bytecode
+/// writeProgramToFile - This writes the current "Program" to the named bitcode
 /// file.  If an error occurs, true is returned.
 ///
 bool BugDriver::writeProgramToFile(const std::string &Filename,
@@ -62,11 +62,11 @@ bool BugDriver::writeProgramToFile(const std::string &Filename,
 }
 
 
-/// EmitProgressBytecode - This function is used to output the current Program
+/// EmitProgressBitcode - This function is used to output the current Program
 /// to a file named "bugpoint-ID.bc".
 ///
-void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
-  // Output the input to the current pass to a bytecode file, emit a message
+void BugDriver::EmitProgressBitcode(const std::string &ID, bool NoFlyer) {
+  // Output the input to the current pass to a bitcode file, emit a message
   // telling the user how to reproduce it: opt -foo blah.bc
   //
   std::string Filename = "bugpoint-" + ID + ".bc";
@@ -75,7 +75,7 @@ void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
     return;
   }
 
-  cout << "Emitted bytecode to '" << Filename << "'\n";
+  cout << "Emitted bitcode to '" << Filename << "'\n";
   if (NoFlyer || PassesToRun.empty()) return;
   cout << "\n*** You can reproduce the problem with: ";
   cout << "opt " << Filename << " ";
@@ -88,7 +88,7 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
                                std::ios::binary;
   std::ofstream OutFile(ChildOutput.c_str(), io_mode);
   if (!OutFile.good()) {
-    cerr << "Error opening bytecode file: " << ChildOutput << "\n";
+    cerr << "Error opening bitcode file: " << ChildOutput << "\n";
     return 1;
   }
 
@@ -105,7 +105,7 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
   // Check that the module is well formed on completion of optimization
   PM.add(createVerifierPass());
 
-  // Write bytecode out to disk as the last step...
+  // Write bitcode out to disk as the last step...
   PM.add(CreateBitcodeWriterPass(OutFile));
 
   // Run all queued passes.
@@ -114,10 +114,10 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
   return 0;
 }
 
-/// runPasses - Run the specified passes on Program, outputting a bytecode file
+/// runPasses - Run the specified passes on Program, outputting a bitcode file
 /// and writing the filename into OutputFile if successful.  If the
 /// optimizations fail for some reason (optimizer crashes), return true,
-/// otherwise return false.  If DeleteOutput is set to true, the bytecode is
+/// otherwise return false.  If DeleteOutput is set to true, the bitcode is
 /// deleted on success, and the filename string is undefined.  This prints to
 /// cout a single line message indicating whether compilation was successful or
 /// failed.
@@ -147,7 +147,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                                std::ios::binary;
   std::ofstream InFile(inputFilename.c_str(), io_mode);
   if (!InFile.good()) {
-    cerr << "Error opening bytecode file: " << inputFilename << "\n";
+    cerr << "Error opening bitcode file: " << inputFilename << "\n";
     return(1);
   }
   WriteBitcodeToFile(Program, InFile);
@@ -192,7 +192,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   int result = sys::Program::ExecuteAndWait(prog, args, 0, 0,
                                             Timeout, MemoryLimit, &ErrMsg);
 
-  // If we are supposed to delete the bytecode file or if the passes crashed,
+  // If we are supposed to delete the bitcode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
   if (DeleteOutput || result != 0)
     sys::Path(OutputFilename).eraseFromDisk();
@@ -227,13 +227,13 @@ Module *BugDriver::runPassesOn(Module *M,
                                const std::vector<const PassInfo*> &Passes,
                                bool AutoDebugCrashes) {
   Module *OldProgram = swapProgramIn(M);
-  std::string BytecodeResult;
-  if (runPasses(Passes, BytecodeResult, false/*delete*/, true/*quiet*/)) {
+  std::string BitcodeResult;
+  if (runPasses(Passes, BitcodeResult, false/*delete*/, true/*quiet*/)) {
     if (AutoDebugCrashes) {
       cerr << " Error running this sequence of passes"
            << " on the input program!\n";
       delete OldProgram;
-      EmitProgressBytecode("pass-error",  false);
+      EmitProgressBitcode("pass-error",  false);
       exit(debugOptimizerCrash());
     }
     swapProgramIn(OldProgram);
@@ -243,12 +243,12 @@ Module *BugDriver::runPassesOn(Module *M,
   // Restore the current program.
   swapProgramIn(OldProgram);
 
-  Module *Ret = ParseInputFile(BytecodeResult);
+  Module *Ret = ParseInputFile(BitcodeResult);
   if (Ret == 0) {
-    cerr << getToolName() << ": Error reading bytecode file '"
-         << BytecodeResult << "'!\n";
+    cerr << getToolName() << ": Error reading bitcode file '"
+         << BitcodeResult << "'!\n";
     exit(1);
   }
-  sys::Path(BytecodeResult).eraseFromDisk();  // No longer need the file on disk
+  sys::Path(BitcodeResult).eraseFromDisk();  // No longer need the file on disk
   return Ret;
 }

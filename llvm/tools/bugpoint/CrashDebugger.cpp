@@ -70,7 +70,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
 
     BD.Program = ParseInputFile(PrefixOutput.toString());
     if (BD.Program == 0) {
-      std::cerr << BD.getToolName() << ": Error reading bytecode file '"
+      std::cerr << BD.getToolName() << ": Error reading bitcode file '"
                 << PrefixOutput << "'!\n";
       exit(1);
     }
@@ -396,7 +396,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
           ReduceCrashingGlobalVariables(BD, TestFn).reduceList(GVs);
 
           if (GVs.size() < OldSize)
-            BD.EmitProgressBytecode("reduced-global-variables");
+            BD.EmitProgressBitcode("reduced-global-variables");
         }
       }
     }
@@ -417,7 +417,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     ReduceCrashingFunctions(BD, TestFn).reduceList(Functions);
 
     if (Functions.size() < OldSize)
-      BD.EmitProgressBytecode("reduced-function");
+      BD.EmitProgressBitcode("reduced-function");
   }
 
   // Attempt to delete entire basic blocks at a time to speed up
@@ -508,7 +508,7 @@ ExitLoops:
     }
   }
 
-  BD.EmitProgressBytecode("reduced-simplified");
+  BD.EmitProgressBitcode("reduced-simplified");
 
   return false;
 }
@@ -532,7 +532,7 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
             << (PassesToRun.size() == 1 ? ": " : "es: ")
             << getPassesString(PassesToRun) << '\n';
 
-  EmitProgressBytecode(ID);
+  EmitProgressBitcode(ID);
 
   return DebugACrash(*this, TestForOptimizerCrash);
 }
