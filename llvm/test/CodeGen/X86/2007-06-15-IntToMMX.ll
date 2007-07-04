@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep paddusw
-; XFAIL: *
 @R = external global <1 x i64>          ; <<1 x i64>*> [#uses=1]
 
 define void @foo(<1 x i64> %A, <1 x i64> %B) {

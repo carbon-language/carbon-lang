@@ -183,6 +183,9 @@ def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (ops VR64:$dst, i32mem:$src),
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (ops i32mem:$dst, VR64:$src),
                         "movd {$src, $dst|$dst, $src}", []>;
 
+def MMX_MOVD64to64rr : MMXI<0x6E, MRMSrcReg, (ops VR64:$dst, GR64:$src),
+                            "movd {$src, $dst|$dst, $src}", []>;
+
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (ops VR64:$dst, VR64:$src),
                         "movq {$src, $dst|$dst, $src}", []>;
 def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (ops VR64:$dst, i64mem:$src),
@@ -551,6 +554,16 @@ def : Pat<(v2i32 (bitconvert (v8i8  VR64:$src))), (v2i32 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v2i32 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v4i16 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v8i8  VR64:$src))), (v1i64 VR64:$src)>;
+
+// 64-bit bit convert.
+def : Pat<(v1i64 (bitconvert (i64 GR64:$src))),
+          (MMX_MOVD64to64rr GR64:$src)>;
+def : Pat<(v2i32 (bitconvert (i64 GR64:$src))),
+          (MMX_MOVD64to64rr GR64:$src)>;
+def : Pat<(v4i16 (bitconvert (i64 GR64:$src))),
+          (MMX_MOVD64to64rr GR64:$src)>;
+def : Pat<(v8i8  (bitconvert (i64 GR64:$src))),
+          (MMX_MOVD64to64rr GR64:$src)>;
 
 def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 
