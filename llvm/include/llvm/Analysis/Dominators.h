@@ -155,7 +155,7 @@ protected:
     DomTreeNode *N = getNode(BB);
     assert (N && "Missing dominator tree node");
     DomTreeNode *I = N->getIDom();
-    assert (N && "Missing immediate dominator");
+    assert (I && "Missing immediate dominator");
     return I->getBlock();
   }
 
