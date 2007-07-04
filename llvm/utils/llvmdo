@@ -78,6 +78,8 @@ shift;
 paths_to_ignore="\
   -path */CVS -o \
   -path */CVS/* -o \
+  -path */.svn/ -o \
+  -path */.svn/* -o \
   -path docs/doxygen/* -o \
   -path docs/CommandGuide/html/* -o \
   -path docs/CommandGuide/man/* -o \
