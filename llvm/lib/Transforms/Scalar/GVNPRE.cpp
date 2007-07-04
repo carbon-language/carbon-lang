@@ -1586,8 +1586,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         newVal = new ExtractElementInst(s1, s2, S->getName()+".gvnpre",
                                         (*PI)->getTerminator());
       else if (SelectInst* S = dyn_cast<SelectInst>(U))
-        newVal = new SelectInst(S->getCondition(), S->getTrueValue(),
-                                S->getFalseValue(), S->getName()+".gvnpre",
+        newVal = new SelectInst(s1, s2, s3, S->getName()+".gvnpre",
                                 (*PI)->getTerminator());
       else if (CastInst* C = dyn_cast<CastInst>(U))
         newVal = CastInst::create(C->getOpcode(), s1, C->getType(),
