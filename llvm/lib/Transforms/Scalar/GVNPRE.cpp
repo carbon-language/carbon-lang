@@ -1040,7 +1040,7 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 16>& set, std::vector<Value*>& vec) {
           stack.push_back(r);
         else if (m != 0 && isa<Instruction>(m) &&
                  visited.count(m) == 0)
-          stack.push_back(r);
+          stack.push_back(m);
         else {
           vec.push_back(e);
           visited.insert(e);
