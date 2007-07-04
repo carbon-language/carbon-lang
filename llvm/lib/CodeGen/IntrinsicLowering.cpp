@@ -708,7 +708,6 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_declare:
   case Intrinsic::eh_exception:
   case Intrinsic::eh_selector:
-  case Intrinsic::eh_filter:
     break;    // Simply strip out debugging and eh intrinsics
 
   case Intrinsic::var_annotation:

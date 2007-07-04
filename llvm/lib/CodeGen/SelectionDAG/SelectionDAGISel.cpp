@@ -205,12 +205,11 @@ namespace llvm {
   };
 }
 
-/// isFilterOrSelector - Return true if this instruction is a call to the
-/// eh.filter or the eh.selector intrinsic.
-static bool isFilterOrSelector(Instruction *I) {
+/// isSelector - Return true if this instruction is a call to the
+/// eh.selector intrinsic.
+static bool isSelector(Instruction *I) {
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
-    return II->getIntrinsicID() == Intrinsic::eh_selector
-      || II->getIntrinsicID() == Intrinsic::eh_filter;
+    return II->getIntrinsicID() == Intrinsic::eh_selector;
   return false;
 }
 
@@ -2293,12 +2292,12 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   }
 }
 
-/// ExtractGlobalVariable - If C is a global variable, or a bitcast of one
+/// ExtractGlobalVariable - If V is a global variable, or a bitcast of one
 /// (possibly constant folded), return it.  Otherwise return NULL.
-static GlobalVariable *ExtractGlobalVariable (Constant *C) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+static GlobalVariable *ExtractGlobalVariable (Value *V) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return GV;
-  else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+  else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::BitCast)
       return dyn_cast<GlobalVariable>(CE->getOperand(0));
     else if (CE->getOpcode() == Instruction::GetElementPtr) {
@@ -2311,8 +2310,16 @@ static GlobalVariable *ExtractGlobalVariable (Constant *C) {
   return NULL;
 }
 
+/// ExtractTypeInfo - Extracts the type info from a value.
+static GlobalVariable *ExtractTypeInfo (Value *V) {
+  GlobalVariable *GV = ExtractGlobalVariable(V);
+  assert (GV || isa<ConstantPointerNull>(V) &&
+          "TypeInfo must be a global variable or NULL");
+  return GV;
+}
+
 /// addCatchInfo - Extract the personality and type infos from an eh.selector
-/// or eh.filter call, and add them to the specified machine basic block.
+/// call, and add them to the specified machine basic block.
 static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
                          MachineBasicBlock *MBB) {
   // Inform the MachineModuleInfo of the personality for this landing pad.
@@ -2325,17 +2332,38 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   // Gather all the type infos for this landing pad and pass them along to
   // MachineModuleInfo.
   std::vector<GlobalVariable *> TyInfo;
-  for (unsigned i = 3, N = I.getNumOperands(); i < N; ++i) {
-    Constant *C = cast<Constant>(I.getOperand(i));
-    GlobalVariable *GV = ExtractGlobalVariable(C);
-    assert (GV || isa<ConstantPointerNull>(C) &&
-            "TypeInfo must be a global variable or NULL");
-    TyInfo.push_back(GV);
+  unsigned N = I.getNumOperands();
+
+  for (unsigned i = N - 1; i > 2; --i) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i))) {
+      unsigned FilterLength = CI->getZExtValue();
+      unsigned FirstCatch = i + FilterLength + 1;
+      assert (FirstCatch <= N && "Invalid filter length");
+
+      if (FirstCatch < N) {
+        TyInfo.reserve(N - FirstCatch);
+        for (unsigned j = FirstCatch; j < N; ++j)
+          TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
+        MMI->addCatchTypeInfo(MBB, TyInfo);
+        TyInfo.clear();
+      }
+
+      TyInfo.reserve(FilterLength);
+      for (unsigned j = i + 1; j < FirstCatch; ++j)
+        TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
+      MMI->addFilterTypeInfo(MBB, TyInfo);
+      TyInfo.clear();
+
+      N = i;
+    }
   }
-  if (I.getCalledFunction()->getIntrinsicID() == Intrinsic::eh_filter)
-    MMI->addFilterTypeInfo(MBB, TyInfo);
-  else
+
+  if (N > 3) {
+    TyInfo.reserve(N - 3);
+    for (unsigned j = 3; j < N; ++j)
+      TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
     MMI->addCatchTypeInfo(MBB, TyInfo);
+  }
 }
 
 /// propagateEHRegister - The specified EH register is required in a successor
@@ -2483,8 +2511,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
-  case Intrinsic::eh_selector:
-  case Intrinsic::eh_filter:{
+  case Intrinsic::eh_selector:{
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
     if (ExceptionHandling && MMI) {
@@ -2518,10 +2545,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     
     if (MMI) {
       // Find the type id for the given typeinfo.
-      Constant *C = cast<Constant>(I.getOperand(1));
-      GlobalVariable *GV = ExtractGlobalVariable(C);
-      assert (GV || isa<ConstantPointerNull>(C) &&
-              "TypeInfo must be a global variable or NULL");
+      GlobalVariable *GV = ExtractTypeInfo(I.getOperand(1));
 
       unsigned TypeID = MMI->getTypeIDFor(GV);
       setValue(&I, DAG.getConstant(TypeID, MVT::i32));
@@ -4297,7 +4321,7 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
   assert(!FLI.MBBMap[SrcBB]->isLandingPad() &&
          "Copying catch info out of a landing pad!");
   for (BasicBlock::iterator I = SrcBB->begin(), E = --SrcBB->end(); I != E; ++I)
-    if (isFilterOrSelector(I)) {
+    if (isSelector(I)) {
       // Apply the catch info to DestBB.
       addCatchInfo(cast<CallInst>(*I), MMI, FLI.MBBMap[DestBB]);
 #ifndef NDEBUG
@@ -4341,19 +4365,19 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     // function and list of typeids logically belong to the invoke (or, if you
     // like, the basic block containing the invoke), and need to be associated
     // with it in the dwarf exception handling tables.  Currently however the
-    // information is provided by intrinsics (eh.filter and eh.selector) that
-    // can be moved to unexpected places by the optimizers: if the unwind edge
-    // is critical, then breaking it can result in the intrinsics being in the
-    // successor of the landing pad, not the landing pad itself.  This results
-    // in exceptions not being caught because no typeids are associated with
-    // the invoke.  This may not be the only way things can go wrong, but it
-    // is the only way we try to work around for the moment.
+    // information is provided by an intrinsic (eh.selector) that can be moved
+    // to unexpected places by the optimizers: if the unwind edge is critical,
+    // then breaking it can result in the intrinsics being in the successor of
+    // the landing pad, not the landing pad itself.  This results in exceptions
+    // not being caught because no typeids are associated with the invoke.
+    // This may not be the only way things can go wrong, but it is the only way
+    // we try to work around for the moment.
     BranchInst *Br = dyn_cast<BranchInst>(LLVMBB->getTerminator());
 
     if (Br && Br->isUnconditional()) { // Critical edge?
       BasicBlock::iterator I, E;
       for (I = LLVMBB->begin(), E = --LLVMBB->end(); I != E; ++I)
-        if (isFilterOrSelector(I))
+        if (isSelector(I))
           break;
 
       if (I == E)

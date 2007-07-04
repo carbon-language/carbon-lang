@@ -29,7 +29,6 @@
   <ol>
   	<li><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a></li>
   	<li><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a></li>
-  	<li><a href="#llvm_eh_filter"><tt>llvm.eh.filter</tt></a></li>
   	<li><a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a></li>
   </ol></li>
   <li><a href="#asm">Asm Table Formats</a>
@@ -212,13 +211,18 @@ further use in the landing pad and catch code.</p>
 <p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
 three arguments.  The first argument is the reference to the exception
 structure. The second argument is a reference to the personality function to be
-used for this try catch sequence. The remaining arguments are references to the
-type infos for each of the catch statements in the order they should be tested.
+used for this try catch sequence. Each of the remaining arguments is either a
+reference to the type info for a catch statement, or a non-negative integer
+followed by that many type info references, representing a
+<a href="#throw_filters">filter</a>.
+The exception is tested against the arguments sequentially from first to last.
 The <i>catch all</i> (...) is represented with a <tt>null i8*</tt>.  The result
-of the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is the index of
-the type info in the corresponding exception table. The LLVM C++ front end
-generates code to save this value in an alloca location for further use in the
-landing pad and catch code.</p>
+of the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a positive
+number if the exception matched a type info, a negative number if it matched a
+filter, and zero if it didn't match anything.  If a type info matched then the
+returned value is the index of the type info in the exception table.
+The LLVM C++ front end generates code to save this value in an alloca location
+for further use in the landing pad and catch code.</p>
 
 <p>Once the landing pad has the type info selector, the code branches to the
 code for the first catch.  The catch then checks the value of the type info
@@ -268,12 +272,12 @@ constructor), there may be several landing pads for a given try.</p>
 <p>C++ allows the specification of which exception types that can be thrown from
 a function.  To represent this a top level landing pad may exist to filter out
 invalid types.  To express this in LLVM code the landing pad will call <a
-href="#llvm_eh_filter"><tt>llvm.eh.filter</tt></a> instead of <a
 href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The arguments are the
-same, but what gets created in the exception table is different. <a
-href="#llvm_eh_filter"><tt>llvm.eh.filter</tt></a>  will return a negative value
-if it doesn't find a match. If no match is found then a call to
-<tt>__cxa_call_unexpected</tt> should be made, otherwise
+number of different type infos the function may throw, followed by the type
+infos themselves.
+<a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> will return a negative
+value if the exception does not match any of the type infos.  If no match is
+found then a call to <tt>__cxa_call_unexpected</tt> should be made, otherwise
 <tt>_Unwind_Resume</tt>.  Each of these functions require a reference to the
 exception structure.</p>
 
@@ -326,32 +330,16 @@ exception selector.</p>
 <p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
 three arguments.  The first argument is the reference to the exception
 structure. The second argument is a reference to the personality function to be
-used for this try catch sequence. The remaining arguments are references to the
-type infos for each of the catch statements in the order they should be tested.
-The <i>catch all</i> (...) is represented with a <tt>null i8*</tt>.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsubsection">
-  <a name="llvm_eh_filter">llvm.eh.filter</a>
-</div>
-
-<div class="doc_text">
-<pre>
-  i32 %<a href="#llvm_eh_filter">llvm.eh.filter</a>(i8*, i8*, i8*, ...)
-</pre>
-
-<p>This intrinsic indicates that the exception selector is available at this
-point in the code.  The backend will replace this intrinsic with code to fetch
-the second argument of a call.  The effect is that the intrinsic result is the
-exception selector.</p>
-
-<p><a href="#llvm_eh_filter"><tt>llvm.eh.filter</tt></a> takes a minimum of
-three arguments.  The first argument is the reference to the exception
-structure. The second argument is a reference to the personality function to be
-used for this function. The remaining arguments are references to the type infos
-for each type that can be thrown by the current function.</p>
+used for this try catch sequence.  Each of the remaining arguments is either a
+reference to the type info for a catch statement, or a non-negative integer
+followed by that many type info references, representing a
+<a href="#throw_filters">filter</a>.
+The exception is tested against the arguments sequentially from first to last.
+The <i>catch all</i> (...) is represented with a <tt>null i8*</tt>.  The result
+of the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a positive
+number if the exception matched a type info, a negative number if it matched a
+filter, and zero if it didn't match anything.  If a type info matched then the
+returned value is the index of the type info in the exception table.</p>
 
 </div>
 
@@ -426,15 +414,6 @@ only calls to non-throwing functions will not need an exception table.</p>
 <div class="doc_text">
 
 <ol>
-
-<li><p>Need to create landing pads for code in between explicit landing pads. 
-The landing pads will have a zero action and a NULL landing pad address and are
-used to inform the runtime that the exception should be rethrown.</li></p>
-
-<li><p>Actions for a given function should be folded to save space.</p></li>
-
-<li><p>Filters for inlined functions need to be handled more extensively.
-Currently it&apos;s hardwired for one filter per function.</li></p>
 
 <li><p>Testing/Testing/Testing.</li></p>
 
