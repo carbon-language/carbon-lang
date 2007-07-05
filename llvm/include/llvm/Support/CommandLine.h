@@ -202,7 +202,7 @@ public:
   void setMiscFlag(enum MiscFlags M) { setFlag(M, M); }
   void setPosition(unsigned pos) { Position = pos; }
 protected:
-  Option(unsigned DefaultFlags)
+  explicit Option(unsigned DefaultFlags)
     : NumOccurrences(0), Flags(DefaultFlags | NormalFormatting), Position(0),
       NextRegistered(0), ArgStr(""), HelpStr(""), ValueStr("") {
     assert(getNumOccurrencesFlag() != 0 &&

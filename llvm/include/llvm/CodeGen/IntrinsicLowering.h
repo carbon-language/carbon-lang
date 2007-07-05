@@ -26,7 +26,7 @@ namespace llvm {
   class IntrinsicLowering {
     const TargetData& TD;
   public:
-    IntrinsicLowering(const TargetData &td) : TD(td) {}
+    explicit IntrinsicLowering(const TargetData &td) : TD(td) {}
 
     /// AddPrototypes - This method, if called, causes all of the prototypes
     /// that might be needed by an intrinsic lowering implementation to be

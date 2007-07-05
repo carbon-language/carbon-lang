@@ -57,7 +57,7 @@ public:
     : MBB(NULL), NumPhysRegs(0), Tracking(false),
       ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {};
 
-  RegScavenger(MachineBasicBlock *mbb)
+  explicit RegScavenger(MachineBasicBlock *mbb)
     : MBB(mbb), NumPhysRegs(0), Tracking(false),
       ScavengingFrameIndex(-1), ScavengedReg(0), ScavengedRC(NULL) {};
 

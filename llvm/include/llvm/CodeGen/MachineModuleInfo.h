@@ -97,7 +97,7 @@ private:
                                         // Dwarf writers.
   
 protected:
-  DebugInfoDesc(unsigned T) : Tag(T | LLVMDebugVersion) {}
+  explicit DebugInfoDesc(unsigned T) : Tag(T | LLVMDebugVersion) {}
   
 public:
   virtual ~DebugInfoDesc() {}
