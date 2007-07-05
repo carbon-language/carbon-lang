@@ -116,6 +116,8 @@ D: Support for packed types
 N: Dale Johannesen
 E: dalej@apple.com
 D: ARM constant islands improvements
+D: Tail merging improvements
+D: Rewrite X87 back end
 
 N: Eric Kidd
 W: http://randomhacks.net/
