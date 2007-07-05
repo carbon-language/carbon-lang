@@ -78,6 +78,9 @@ def D13 : ARMReg<13, "d13", [S26, S27]>;
 def D14 : ARMReg<14, "d14", [S28, S29]>;
 def D15 : ARMReg<15, "d15", [S30, S31]>;
 
+// Current Program Status Register.
+def CPSR : ARMReg<0, "cpsr">;
+
 // Register classes.
 //
 // pc  == Program Counter
@@ -188,3 +191,6 @@ def SPR : RegisterClass<"ARM", [f32], 32, [S0, S1, S2, S3, S4, S5, S6, S7, S8,
 // is double-word alignment though.
 def DPR : RegisterClass<"ARM", [f64], 64, [D0, D1, D2, D3, D4, D5, D6, D7, D8,
   D9, D10, D11, D12, D13, D14, D15]>;
+
+// Condition code registers.
+def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
