@@ -3384,7 +3384,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
   case ISD::UNDEF:         return "undef";
-  case ISD::MERGE_VALUES:  return "mergevalues";
+  case ISD::MERGE_VALUES:  return "merge_values";
   case ISD::INLINEASM:     return "inlineasm";
   case ISD::LABEL:         return "label";
   case ISD::HANDLENODE:    return "handlenode";
