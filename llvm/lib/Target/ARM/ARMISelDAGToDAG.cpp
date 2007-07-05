@@ -524,8 +524,8 @@ bool ARMDAGToDAGISel::SelectShifterOperandReg(SDOperand Op,
   return true;
 }
 
-/// getDefaultPred - Returns a ARMCC::AL immediate node.
-static inline SDOperand getDefaultPred(SelectionDAG *CurDAG) {
+/// getAL - Returns a ARMCC::AL immediate node.
+static inline SDOperand getAL(SelectionDAG *CurDAG) {
   return CurDAG->getTargetConstant((uint64_t)ARMCC::AL, MVT::i32);
 }
 
@@ -564,10 +564,11 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
           CPIdx, 
           CurDAG->getRegister(0, MVT::i32),
           CurDAG->getTargetConstant(0, MVT::i32),
-          getDefaultPred(CurDAG),
+          getAL(CurDAG),
+          CurDAG->getRegister(0, MVT::i32),
           CurDAG->getEntryNode()
         };
-        ResNode=CurDAG->getTargetNode(ARM::LDRcp, MVT::i32, MVT::Other, Ops, 5);
+        ResNode=CurDAG->getTargetNode(ARM::LDRcp, MVT::i32, MVT::Other, Ops, 6);
       }
       ReplaceUses(Op, SDOperand(ResNode, 0));
       return NULL;
@@ -583,10 +584,11 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
     if (Subtarget->isThumb())
       return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, TFI,
                                   CurDAG->getTargetConstant(0, MVT::i32));
-    else
-      return CurDAG->SelectNodeTo(N, ARM::ADDri, MVT::i32, TFI,
-                                  CurDAG->getTargetConstant(0, MVT::i32),
-                                  getDefaultPred(CurDAG));
+    else {
+      SDOperand Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
+                          getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->SelectNodeTo(N, ARM::ADDri, MVT::i32, Ops, 4);
+    }
   }
   case ISD::ADD: {
     // Select add sp, c to tADDhirr.
@@ -617,9 +619,10 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
         unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV-1));
         SDOperand Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
-                            getDefaultPred(CurDAG)
+                            getAL(CurDAG), CurDAG->getRegister(0, MVT::i32)
+
         };
-        return CurDAG->SelectNodeTo(N, ARM::ADDrs, MVT::i32, Ops, 5);
+        return CurDAG->SelectNodeTo(N, ARM::ADDrs, MVT::i32, Ops, 6);
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
         SDOperand V = Op.getOperand(0);
@@ -627,28 +630,31 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
         unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV+1));
         SDOperand Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
-                            getDefaultPred(CurDAG)
+                            getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
         };
-        return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 5);
+        return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 6);
       }
     }
     break;
   case ARMISD::FMRRD:
     AddToISelQueue(Op.getOperand(0));
     return CurDAG->getTargetNode(ARM::FMRRD, MVT::i32, MVT::i32,
-                                 Op.getOperand(0), getDefaultPred(CurDAG));
-  case ARMISD::MULHILOU:
+                                 Op.getOperand(0), getAL(CurDAG),
+                                 CurDAG->getRegister(0, MVT::i32));
+  case ARMISD::MULHILOU: {
     AddToISelQueue(Op.getOperand(0));
     AddToISelQueue(Op.getOperand(1));
-    return CurDAG->getTargetNode(ARM::UMULL, MVT::i32, MVT::i32,
-                                 Op.getOperand(0), Op.getOperand(1),
-                                 getDefaultPred(CurDAG));
-  case ARMISD::MULHILOS:
+    SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1),
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
+    return CurDAG->getTargetNode(ARM::UMULL, MVT::i32, MVT::i32, Ops, 4);
+  }
+  case ARMISD::MULHILOS: {
     AddToISelQueue(Op.getOperand(0));
     AddToISelQueue(Op.getOperand(1));
-    return CurDAG->getTargetNode(ARM::SMULL, MVT::i32, MVT::i32,
-                                 Op.getOperand(0), Op.getOperand(1),
-                                 getDefaultPred(CurDAG));
+    SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1),
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
+    return CurDAG->getTargetNode(ARM::SMULL, MVT::i32, MVT::i32, Ops, 4);
+  }
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Op);
     ISD::MemIndexedMode AM = LD->getAddressingMode();
@@ -688,16 +694,158 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
         AddToISelQueue(Chain);
         AddToISelQueue(Base);
         AddToISelQueue(Offset);
-        SDOperand Ops[]= { Base, Offset, AMOpc, getDefaultPred(CurDAG), Chain };
+        SDOperand Ops[]= { Base, Offset, AMOpc, getAL(CurDAG),
+                           CurDAG->getRegister(0, MVT::i32), Chain };
         return CurDAG->getTargetNode(Opcode, MVT::i32, MVT::i32,
-                                     MVT::Other, Ops, 5);
+                                     MVT::Other, Ops, 6);
       }
     }
     // Other cases are autogenerated.
     break;
   }
-  }
+  case ARMISD::BRCOND: {
+    // Pattern: (ARMbrcond:void (bb:Other):$dst, (imm:i32):$cc)
+    // Emits: (Bcc:void (bb:Other):$dst, (imm:i32):$cc)
+    // Pattern complexity = 6  cost = 1  size = 0
 
+    // Pattern: (ARMbrcond:void (bb:Other):$dst, (imm:i32):$cc)
+    // Emits: (tBcc:void (bb:Other):$dst, (imm:i32):$cc)
+    // Pattern complexity = 6  cost = 1  size = 0
+
+    unsigned Opc = Subtarget->isThumb() ? ARM::tBcc : ARM::Bcc;
+    SDOperand Chain = Op.getOperand(0);
+    SDOperand N1 = Op.getOperand(1);
+    SDOperand N2 = Op.getOperand(2);
+    SDOperand N3 = Op.getOperand(3);
+    SDOperand InFlag = Op.getOperand(4);
+    assert(N1.getOpcode() == ISD::BasicBlock);
+    assert(N2.getOpcode() == ISD::Constant);
+    assert(N3.getOpcode() == ISD::Register);
+
+    AddToISelQueue(Chain);
+    AddToISelQueue(N1);
+    AddToISelQueue(InFlag);
+    SDOperand Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+    SDOperand Ops[] = { N1, Tmp2, N3, Chain, InFlag };
+    SDNode *ResNode = CurDAG->getTargetNode(Opc, MVT::Other, MVT::Flag, Ops, 5);
+    Chain = SDOperand(ResNode, 0);
+    InFlag = SDOperand(ResNode, 1);
+    ReplaceUses(SDOperand(Op.Val, 1), InFlag);
+    ReplaceUses(SDOperand(Op.Val, 0), SDOperand(Chain.Val, Chain.ResNo));
+    return NULL;
+  }
+  case ARMISD::CMOV: {
+    bool isThumb = Subtarget->isThumb();
+    MVT::ValueType VT = Op.getValueType();
+    SDOperand N0 = Op.getOperand(0);
+    SDOperand N1 = Op.getOperand(1);
+    SDOperand N2 = Op.getOperand(2);
+    SDOperand N3 = Op.getOperand(3);
+    SDOperand InFlag = Op.getOperand(4);
+    assert(N2.getOpcode() == ISD::Constant);
+    assert(N3.getOpcode() == ISD::Register);
+
+    // Pattern: (ARMcmov:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
+    // Emits: (MOVCCs:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
+    // Pattern complexity = 18  cost = 1  size = 0
+    SDOperand CPTmp0;
+    SDOperand CPTmp1;
+    SDOperand CPTmp2;
+    if (!isThumb && VT == MVT::i32 &&
+        SelectShifterOperandReg(Op, N1, CPTmp0, CPTmp1, CPTmp2)) {
+      AddToISelQueue(N0);
+      AddToISelQueue(CPTmp0);
+      AddToISelQueue(CPTmp1);
+      AddToISelQueue(CPTmp2);
+      AddToISelQueue(InFlag);
+      SDOperand Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+      SDOperand Ops[] = { N0, CPTmp0, CPTmp1, CPTmp2, Tmp2, N3, InFlag };
+      return CurDAG->SelectNodeTo(Op.Val, ARM::MOVCCs, MVT::i32, Ops, 7);
+    }
+
+    // Pattern: (ARMcmov:i32 GPR:i32:$false,
+    //             (imm:i32)<<P:Predicate_so_imm>><<X:so_imm_XFORM>>:$true,
+    //             (imm:i32):$cc)
+    // Emits: (MOVCCi:i32 GPR:i32:$false,
+    //           (so_imm_XFORM:i32 (imm:i32):$true), (imm:i32):$cc)
+    // Pattern complexity = 10  cost = 1  size = 0
+    if (VT == MVT::i32 &&
+        N3.getOpcode() == ISD::Constant &&
+        Predicate_so_imm(N3.Val)) {
+      AddToISelQueue(N0);
+      AddToISelQueue(InFlag);
+      SDOperand Tmp1 = CurDAG->getTargetConstant(((unsigned)
+                               cast<ConstantSDNode>(N1)->getValue()), MVT::i32);
+      Tmp1 = Transform_so_imm_XFORM(Tmp1.Val);
+      SDOperand Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+      SDOperand Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
+      return CurDAG->SelectNodeTo(Op.Val, ARM::MOVCCi, MVT::i32, Ops, 5);
+    }
+
+    // Pattern: (ARMcmov:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
+    // Emits: (MOVCCr:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
+    // Pattern complexity = 6  cost = 1  size = 0
+    //
+    // Pattern: (ARMcmov:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
+    // Emits: (tMOVCCr:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
+    // Pattern complexity = 6  cost = 11  size = 0
+    //
+    // Also FCPYScc and FCPYDcc.
+    AddToISelQueue(N0);
+    AddToISelQueue(N1);
+    AddToISelQueue(InFlag);
+    SDOperand Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+    SDOperand Ops[] = { N0, N1, Tmp2, N3, InFlag };
+    unsigned Opc = 0;
+    switch (VT) {
+    default: assert(false && "Illegal conditional move type!");
+      break;
+    case MVT::i32:
+      Opc = isThumb ? ARM::tMOVCCr : ARM::MOVCCr;
+      break;
+    case MVT::f32:
+      Opc = ARM::FCPYScc;
+      break;
+    case MVT::f64:
+      Opc = ARM::FCPYDcc;
+      break; 
+    }
+    return CurDAG->SelectNodeTo(Op.Val, Opc, VT, Ops, 5);
+  }
+  case ARMISD::CNEG: {
+    MVT::ValueType VT = Op.getValueType();
+    SDOperand N0 = Op.getOperand(0);
+    SDOperand N1 = Op.getOperand(1);
+    SDOperand N2 = Op.getOperand(2);
+    SDOperand N3 = Op.getOperand(3);
+    SDOperand InFlag = Op.getOperand(4);
+    assert(N2.getOpcode() == ISD::Constant);
+    assert(N3.getOpcode() == ISD::Register);
+
+    AddToISelQueue(N0);
+    AddToISelQueue(N1);
+    AddToISelQueue(InFlag);
+    SDOperand Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                               cast<ConstantSDNode>(N2)->getValue()), MVT::i32);
+    SDOperand Ops[] = { N0, N1, Tmp2, N3, InFlag };
+    unsigned Opc = 0;
+    switch (VT) {
+    default: assert(false && "Illegal conditional move type!");
+      break;
+    case MVT::f32:
+      Opc = ARM::FNEGScc;
+      break;
+    case MVT::f64:
+      Opc = ARM::FNEGDcc;
+      break; 
+    }
+    return CurDAG->SelectNodeTo(Op.Val, Opc, VT, Ops, 5);
+  }
+  }
   return SelectCode(Op);
 }
 
