@@ -176,6 +176,33 @@ struct FunctionPassPrinter : public FunctionPass {
 };
 
 char FunctionPassPrinter::ID = 0;
+
+struct LoopPassPrinter : public LoopPass {
+  static char ID;
+  const PassInfo *PassToPrint;
+  LoopPassPrinter(const PassInfo *PI) : 
+    LoopPass((intptr_t)&ID), PassToPrint(PI) {}
+
+  virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
+    if (!Quiet) {
+      cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      getAnalysisID<Pass>(PassToPrint).print(cout, 
+                                  L->getHeader()->getParent()->getParent());
+    }
+    // Get and print pass...
+    return false;
+  }
+  
+  virtual const char *getPassName() const { return "'Pass' Printer"; }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequiredID(PassToPrint);
+    AU.setPreservesAll();
+  }
+};
+
+char LoopPassPrinter::ID = 0;
+
 struct BasicBlockPassPrinter : public BasicBlockPass {
   const PassInfo *PassToPrint;
   static char ID;
@@ -372,6 +399,8 @@ int main(int argc, char **argv) {
         if (AnalyzeOnly) {
           if (dynamic_cast<BasicBlockPass*>(P))
             Passes.add(new BasicBlockPassPrinter(PassInf));
+          else if (dynamic_cast<LoopPass*>(P))
+            Passes.add(new  LoopPassPrinter(PassInf));
           else if (dynamic_cast<FunctionPass*>(P))
             Passes.add(new FunctionPassPrinter(PassInf));
           else if (dynamic_cast<CallGraphSCCPass*>(P))
