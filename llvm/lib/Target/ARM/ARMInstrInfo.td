@@ -294,7 +294,7 @@ def ccop : ImmutablePredicateOperand<OtherVT, (ops i32imm, CCR), (ops)> {
 
 // Conditional code result for cmp, etc.
 //
-def cc_out : PredicateResultOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
+def cc_out : PredicateDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
   let PrintMethod = "printPredicateOperand";
 }
 
