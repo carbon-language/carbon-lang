@@ -15,14 +15,13 @@ PROJ_OBJ_DIR = .
 DOXYGEN = doxygen
 # Extract version number from the AC_INT line in configure.ac
 # AC_INIT([[llvm]],[[2.1cvs]],[llvmbugs@cs.uiuc.edu])
-PACKAGE_VERSION = $(shell grep AC_INIT ../autoconf/configure.ac | sed -e 's/[^,]*,[[][[]//' -e 's/]],.*//')
-$(warning VERSION=$(VERSION))
+PACKAGE_VERSION = $(shell grep AC_INIT ../autoconf/configure.ac | sed -e 's/^[^0-9]*\([0-9_.a-zA-Z-]*\).*/\1/' )
 
 $(PROJ_OBJ_DIR)/doxygen.cfg: doxygen.cfg.in
 	cat $< | sed \
 	  -e 's/@abs_top_srcdir@/../g' \
 	  -e 's/@DOT@/dot/g' \
-	  -e 's/@PACKAGE_VERSION@/$(PACKAGE_VERSION)/g' \
+	  -e 's/@PACKAGE_VERSION@/$(PACKAGE_VERSION)/' \
 	  -e 's/@abs_top_builddir@/../g' > $@
 endif
 
