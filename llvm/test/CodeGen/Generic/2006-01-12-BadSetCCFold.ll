@@ -1,7 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc
 
-target endian = little
-target pointersize = 32
 	%struct.node_t = type { double*, %struct.node_t*, %struct.node_t**, double**, double*, int, int }
 
 implementation   ; Functions:
