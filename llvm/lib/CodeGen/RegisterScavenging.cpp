@@ -110,7 +110,7 @@ void RegScavenger::forward() {
     if (!isUsed(Reg)) {
       // Register has been scavenged. Restore it!
       if (Reg != ScavengedReg)
-        assert(false);
+        assert(false && "Using an undefined register!");
       else
         restoreScavengedReg();
     }
@@ -135,10 +135,11 @@ void RegScavenger::forward() {
     }
     // Skip two-address destination operand.
     if (TID->findTiedToSrcOperand(i) != -1) {
-      assert(isUsed(Reg));
+      assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
-    assert(isUnused(Reg) || isReserved(Reg));
+    assert((isUnused(Reg) || isReserved(Reg)) &&
+           "Re-defining a live register!");
     setUsed(Reg);
   }
 }
