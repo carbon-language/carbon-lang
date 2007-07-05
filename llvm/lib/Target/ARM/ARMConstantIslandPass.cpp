@@ -1192,6 +1192,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   // L2:
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(1).getImmedValue();
   CC = ARMCC::getOppositeCondition(CC);
+  unsigned CCReg = MI->getOperand(2).getReg();
 
   // If the branch is at the end of its MBB and that has a fall-through block,
   // direct the updated conditional branch to the fall-through block. Otherwise,
@@ -1241,7 +1242,8 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
 
   // Insert a new conditional branch and a new unconditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
-  BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB).addImm(CC);
+  BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB)
+    .addImm(CC).addReg(CCReg);
   Br.MI = &MBB->back();
   BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);

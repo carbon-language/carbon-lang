@@ -1127,8 +1127,9 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG,
 
   if (LHS.getValueType() == MVT::i32) {
     SDOperand ARMCC;
+    SDOperand CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
     SDOperand Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb());
-    return DAG.getNode(ARMISD::CMOV, VT, FalseVal, TrueVal, ARMCC, Cmp);
+    return DAG.getNode(ARMISD::CMOV, VT, FalseVal, TrueVal, ARMCC, CCR, Cmp);
   }
 
   ARMCC::CondCodes CondCode, CondCode2;
@@ -1136,14 +1137,15 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG,
     std::swap(TrueVal, FalseVal);
 
   SDOperand ARMCC = DAG.getConstant(CondCode, MVT::i32);
+  SDOperand CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   SDOperand Cmp = getVFPCmp(LHS, RHS, DAG);
   SDOperand Result = DAG.getNode(ARMISD::CMOV, VT, FalseVal, TrueVal,
-                                 ARMCC, Cmp);
+                                 ARMCC, CCR, Cmp);
   if (CondCode2 != ARMCC::AL) {
     SDOperand ARMCC2 = DAG.getConstant(CondCode2, MVT::i32);
     // FIXME: Needs another CMP because flag can have but one use.
     SDOperand Cmp2 = getVFPCmp(LHS, RHS, DAG);
-    Result = DAG.getNode(ARMISD::CMOV, VT, Result, TrueVal, ARMCC2, Cmp2);
+    Result = DAG.getNode(ARMISD::CMOV, VT, Result, TrueVal, ARMCC2, CCR, Cmp2);
   }
   return Result;
 }
@@ -1158,8 +1160,9 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG,
 
   if (LHS.getValueType() == MVT::i32) {
     SDOperand ARMCC;
+    SDOperand CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
     SDOperand Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb());
-    return DAG.getNode(ARMISD::BRCOND, MVT::Other, Chain, Dest, ARMCC, Cmp);
+    return DAG.getNode(ARMISD::BRCOND, MVT::Other, Chain, Dest, ARMCC, CCR,Cmp);
   }
 
   assert(LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64);
@@ -1170,13 +1173,14 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG,
   
   SDOperand Cmp = getVFPCmp(LHS, RHS, DAG);
   SDOperand ARMCC = DAG.getConstant(CondCode, MVT::i32);
+  SDOperand CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
   SDVTList VTList = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDOperand Ops[] = { Chain, Dest, ARMCC, Cmp };
-  SDOperand Res = DAG.getNode(ARMISD::BRCOND, VTList, Ops, 4);
+  SDOperand Ops[] = { Chain, Dest, ARMCC, CCR, Cmp };
+  SDOperand Res = DAG.getNode(ARMISD::BRCOND, VTList, Ops, 5);
   if (CondCode2 != ARMCC::AL) {
     ARMCC = DAG.getConstant(CondCode2, MVT::i32);
-    SDOperand Ops[] = { Res, Dest, ARMCC, Res.getValue(1) };
-    Res = DAG.getNode(ARMISD::BRCOND, VTList, Ops, 4);
+    SDOperand Ops[] = { Res, Dest, ARMCC, CCR, Res.getValue(1) };
+    Res = DAG.getNode(ARMISD::BRCOND, VTList, Ops, 5);
   }
   return Res;
 }
@@ -1228,7 +1232,8 @@ static SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   SDOperand AbsVal = DAG.getNode(ISD::FABS, VT, Tmp0);
   SDOperand Cmp = getVFPCmp(Tmp1, DAG.getConstantFP(0.0, SrcVT), DAG);
   SDOperand ARMCC = DAG.getConstant(ARMCC::LT, MVT::i32);
-  return DAG.getNode(ARMISD::CNEG, VT, AbsVal, AbsVal, ARMCC, Cmp);
+  SDOperand CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
+  return DAG.getNode(ARMISD::CNEG, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
 }
 
 static SDOperand LowerBIT_CONVERT(SDOperand Op, SelectionDAG &DAG) {
@@ -1472,7 +1477,7 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
     MachineBasicBlock *sinkMBB  = new MachineBasicBlock(LLVM_BB);
     BuildMI(BB, TII->get(ARM::tBcc)).addMBB(sinkMBB)
-      .addImm(MI->getOperand(3).getImm());
+      .addImm(MI->getOperand(3).getImm()).addReg(MI->getOperand(4).getReg());
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);

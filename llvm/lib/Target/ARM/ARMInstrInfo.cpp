@@ -322,6 +322,7 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       // Block ends with fall-through condbranch.
       TBB = LastInst->getOperand(0).getMachineBasicBlock();
       Cond.push_back(LastInst->getOperand(1));
+      Cond.push_back(LastInst->getOperand(2));
       return false;
     }
     return true;  // Can't handle indirect branch.
@@ -341,6 +342,7 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       (SecondLastOpc == ARM::tBcc && LastOpc == ARM::tB)) {
     TBB =  SecondLastInst->getOperand(0).getMachineBasicBlock();
     Cond.push_back(SecondLastInst->getOperand(1));
+    Cond.push_back(SecondLastInst->getOperand(2));
     FBB = LastInst->getOperand(0).getMachineBasicBlock();
     return false;
   }
@@ -397,19 +399,21 @@ unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *T
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
-  assert((Cond.size() == 1 || Cond.size() == 0) &&
+  assert((Cond.size() == 2 || Cond.size() == 0) &&
          "ARM branch conditions have two components!");
   
   if (FBB == 0) {
     if (Cond.empty()) // Unconditional branch?
       BuildMI(&MBB, get(BOpc)).addMBB(TBB);
     else
-      BuildMI(&MBB, get(BccOpc)).addMBB(TBB).addImm(Cond[0].getImm());
+      BuildMI(&MBB, get(BccOpc)).addMBB(TBB)
+        .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
     return 1;
   }
   
   // Two-way conditional branch.
-  BuildMI(&MBB, get(BccOpc)).addMBB(TBB).addImm(Cond[0].getImm());
+  BuildMI(&MBB, get(BccOpc)).addMBB(TBB)
+    .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
   BuildMI(&MBB, get(BOpc)).addMBB(FBB);
   return 2;
 }
@@ -452,6 +456,7 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setInstrDescriptor(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
     MI->addImmOperand(Pred[0].getImmedValue());
+    MI->addRegOperand(Pred[1].getReg(), false);
     return true;
   }
 
@@ -459,6 +464,7 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
   if (PIdx != -1) {
     MachineOperand &PMO = MI->getOperand(PIdx);
     PMO.setImm(Pred[0].getImmedValue());
+    MI->getOperand(PIdx+1).setReg(Pred[1].getReg());
     return true;
   }
   return false;
@@ -467,7 +473,7 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
 bool
 ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
                                 const std::vector<MachineOperand> &Pred2) const{
-  if (Pred1.size() > 1 || Pred2.size() > 1)
+  if (Pred1.size() > 2 || Pred2.size() > 2)
     return false;
 
   ARMCC::CondCodes CC1 = (ARMCC::CondCodes)Pred1[0].getImmedValue();
