@@ -303,7 +303,6 @@ static std::string getTypeDescription(const Type *Ty,
     }
     break;
   }
-  case Type::PackedStructTyID:
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
     if (STy->isPacked())
