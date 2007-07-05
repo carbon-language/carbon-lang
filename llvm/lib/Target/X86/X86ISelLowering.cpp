@@ -3602,8 +3602,9 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 // bytes in one go. Touching the stack at 4K increments is necessary to ensure
 // that the guard pages used by the OS virtual memory manager are allocated in
 // correct sequence.
-SDOperand X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
-                                                     SelectionDAG &DAG) {
+SDOperand
+X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
+                                           SelectionDAG &DAG) {
   assert(Subtarget->isTargetCygMing() &&
          "This should be used only on Cygwin/Mingw targets");
   
@@ -3612,27 +3613,29 @@ SDOperand X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
   SDOperand Size  = Op.getOperand(1);
   // FIXME: Ensure alignment here
 
-  TargetLowering::ArgListTy Args; 
-  TargetLowering::ArgListEntry Entry;
+  SDOperand Flag;
+  
   MVT::ValueType IntPtr = getPointerTy();
   MVT::ValueType SPTy = (Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
-  const Type *IntPtrTy = getTargetData()->getIntPtrType();
-  
-  Entry.Node    = Size;
-  Entry.Ty      = IntPtrTy;
-  Entry.isInReg = true; // Should pass in EAX
-  Args.push_back(Entry);
-  std::pair<SDOperand, SDOperand> CallResult =
-    LowerCallTo(Chain, IntPtrTy, false, false, CallingConv::C, false,
-                DAG.getExternalSymbol("_alloca", IntPtr), Args, DAG);
 
-  SDOperand SP = DAG.getCopyFromReg(CallResult.second, X86StackPtr, SPTy);
+  Chain = DAG.getCopyToReg(Chain, X86::EAX, Size, Flag);
+  Flag = Chain.getValue(1);
+
+  SDVTList  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDOperand Ops[] = { Chain,
+                      DAG.getTargetExternalSymbol("_alloca", IntPtr),
+                      DAG.getRegister(X86::EAX, IntPtr),
+                      Flag };
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops, 4);
+  Flag = Chain.getValue(1);
+
+  Chain = DAG.getCopyFromReg(Chain, X86StackPtr, SPTy).getValue(1);
   
   std::vector<MVT::ValueType> Tys;
   Tys.push_back(SPTy);
   Tys.push_back(MVT::Other);
-  SDOperand Ops[2] = { SP, CallResult.second };
-  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2);
+  SDOperand Ops1[2] = { Chain.getValue(0), Chain };
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops1, 2);
 }
 
 SDOperand
