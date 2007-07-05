@@ -183,7 +183,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     unsigned Code = 0;
     
     switch (T->getTypeID()) {
-    case Type::PackedStructTyID: // FIXME: Delete Type::PackedStructTyID.
     default: assert(0 && "Unknown type!");
     case Type::VoidTyID:   Code = bitc::TYPE_CODE_VOID;   break;
     case Type::FloatTyID:  Code = bitc::TYPE_CODE_FLOAT;  break;
