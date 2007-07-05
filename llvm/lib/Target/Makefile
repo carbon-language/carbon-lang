@@ -15,7 +15,5 @@ BUILD_ARCHIVE = 1
 # value for PARALLEL_DIRS which must be set before Makefile.rules is included
 include $(LEVEL)/Makefile.config
 
-PARALLEL_DIRS := $(filter-out ARM, $(TARGETS_TO_BUILD))
-
 include $(LLVM_SRC_ROOT)/Makefile.rules
 
