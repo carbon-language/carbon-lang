@@ -28,17 +28,20 @@ struct MachineFunctionPass : public FunctionPass {
 
   explicit MachineFunctionPass(intptr_t ID) : FunctionPass(ID) {}
 
+protected:
   /// runOnMachineFunction - This method must be overloaded to perform the
   /// desired machine code transformation or analysis.
   ///
   virtual bool runOnMachineFunction(MachineFunction &MF) = 0;
 
+public:
   // FIXME: This pass should declare that the pass does not invalidate any LLVM
   // passes.
-  virtual bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) {
     return runOnMachineFunction(MachineFunction::get(&F));
   }
   
+private:
   virtual void virtfn();  // out of line virtual fn to give class a home.
 };
 
