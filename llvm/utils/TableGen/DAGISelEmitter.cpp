@@ -622,7 +622,8 @@ static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
   } else if (R->getName() == "ptr_rc") {
     Other[0] = MVT::iPTR;
     return Other;
-  } else if (R->getName() == "node" || R->getName() == "srcvalue") {
+  } else if (R->getName() == "node" || R->getName() == "srcvalue" ||
+             R->getName() == "zero_reg") {
     // Placeholder.
     return Unknown;
   }
@@ -2708,6 +2709,12 @@ public:
         if (DI->getDef()->isSubClassOf("Register")) {
           emitCode("SDOperand Tmp" + utostr(ResNo) + " = CurDAG->getRegister(" +
                    ISE.getQualifiedName(DI->getDef()) + ", " +
+                   getEnumName(N->getTypeNum(0)) + ");");
+          NodeOps.push_back("Tmp" + utostr(ResNo));
+          return NodeOps;
+        } else if (DI->getDef()->getName() == "zero_reg") {
+          emitCode("SDOperand Tmp" + utostr(ResNo) +
+                   " = CurDAG->getRegister(0, " +
                    getEnumName(N->getTypeNum(0)) + ");");
           NodeOps.push_back("Tmp" + utostr(ResNo));
           return NodeOps;
