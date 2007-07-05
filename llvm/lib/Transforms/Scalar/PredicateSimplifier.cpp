@@ -148,7 +148,7 @@ namespace {
         unsigned   spread =   DFSout -   DFSin;
         unsigned N_spread = N.DFSout - N.DFSin;
         if (spread == N_spread) return DFSin < N.DFSin;
-        else return DFSout - DFSin < N.DFSout - N.DFSin;
+        return spread < N_spread;
       }
       bool operator>(const Node &N) const { return N < *this; }
 
@@ -215,7 +215,7 @@ namespace {
 
     Node *getNodeForBlock(BasicBlock *BB) const {
       if (!NodeMap.count(BB)) return 0;
-      else return const_cast<DomTreeDFS*>(this)->NodeMap[BB];
+      return const_cast<DomTreeDFS*>(this)->NodeMap[BB];
     }
 
     bool dominates(Instruction *I1, Instruction *I2) {
@@ -236,8 +236,7 @@ namespace {
       } else {
         Node *Node1 = getNodeForBlock(BB1),
              *Node2 = getNodeForBlock(BB2);
-        if (!Node1 || !Node2) return false;
-        return Node1->dominates(Node2);
+        return Node1 && Node2 && Node1->dominates(Node2);
       }
     }
   private:
@@ -361,6 +360,163 @@ namespace {
     return Rev;
   }
 
+  /// ValueNumbering stores the scope-specific value numbers for a given Value.
+  class VISIBILITY_HIDDEN ValueNumbering {
+    class VISIBILITY_HIDDEN VNPair {
+    public:
+      Value *V;
+      unsigned index;
+      DomTreeDFS::Node *Subtree;
+
+      VNPair(Value *V, unsigned index, DomTreeDFS::Node *Subtree)
+        : V(V), index(index), Subtree(Subtree) {}
+
+      bool operator==(const VNPair &RHS) const {
+        return V == RHS.V && Subtree == RHS.Subtree;
+      }
+
+      bool operator<(const VNPair &RHS) const {
+        if (V != RHS.V) return V < RHS.V;
+        return *Subtree < *RHS.Subtree;
+      }
+
+      bool operator<(Value *RHS) const {
+        return V < RHS;
+      }
+    };
+
+    typedef std::vector<VNPair> VNMapType;
+    VNMapType VNMap;
+
+    std::vector<Value *> Values;
+
+    DomTreeDFS *DTDFS;
+
+  public:
+    /// compare - returns true if V1 is a better canonical value than V2.
+    bool compare(Value *V1, Value *V2) const {
+      if (isa<Constant>(V1))
+        return !isa<Constant>(V2);
+      else if (isa<Constant>(V2))
+        return false;
+      else if (isa<Argument>(V1))
+        return !isa<Argument>(V2);
+      else if (isa<Argument>(V2))
+        return false;
+
+      Instruction *I1 = dyn_cast<Instruction>(V1);
+      Instruction *I2 = dyn_cast<Instruction>(V2);
+
+      if (!I1 || !I2)
+        return V1->getNumUses() < V2->getNumUses();
+
+      return DTDFS->dominates(I1, I2);
+    }
+
+    ValueNumbering(DomTreeDFS *DTDFS) : DTDFS(DTDFS) {}
+
+    /// valueNumber - finds the value number for V under the Subtree. If
+    /// there is no value number, returns zero.
+    unsigned valueNumber(Value *V, DomTreeDFS::Node *Subtree) {
+      VNMapType::iterator E = VNMap.end();
+      VNPair pair(V, 0, Subtree);
+      VNMapType::iterator I = std::lower_bound(VNMap.begin(), E, pair);
+      while (I != E && I->V == V) {
+        if (I->Subtree->dominates(Subtree))
+          return I->index;
+        ++I;
+      }
+      return 0;
+    }
+
+    /// newVN - creates a new value number. Value V must not already have a
+    /// value number assigned.
+    unsigned newVN(Value *V) {
+      Values.push_back(V);
+
+      VNPair pair = VNPair(V, Values.size(), DTDFS->getRootNode());
+      assert(!std::binary_search(VNMap.begin(), VNMap.end(), pair) &&
+             "Attempt to create a duplicate value number.");
+      VNMap.insert(std::lower_bound(VNMap.begin(), VNMap.end(), pair), pair);
+
+      return Values.size();
+    }
+
+    /// value - returns the Value associated with a value number.
+    Value *value(unsigned index) const {
+      assert(index != 0 && "Zero index is reserved for not found.");
+      assert(index <= Values.size() && "Index out of range.");
+      return Values[index-1];
+    }
+
+    /// canonicalize - return a Value that is equal to V under Subtree.
+    Value *canonicalize(Value *V, DomTreeDFS::Node *Subtree) {
+      if (isa<Constant>(V)) return V;
+
+      if (unsigned n = valueNumber(V, Subtree))
+        return value(n);
+      else
+        return V;
+    }
+
+    /// addEquality - adds that value V belongs to the set of equivalent
+    /// values defined by value number n under Subtree.
+    void addEquality(unsigned n, Value *V, DomTreeDFS::Node *Subtree) {
+      assert(canonicalize(value(n), Subtree) == value(n) &&
+             "Node's 'canonical' choice isn't best within this subtree.");
+
+      // Suppose that we are given "%x -> node #1 (%y)". The problem is that
+      // we may already have "%z -> node #2 (%x)" somewhere above us in the
+      // graph. We need to find those edges and add "%z -> node #1 (%y)"
+      // to keep the lookups canonical.
+
+      std::vector<Value *> ToRepoint(1, V);
+
+      if (unsigned Conflict = valueNumber(V, Subtree)) {
+        for (VNMapType::iterator I = VNMap.begin(), E = VNMap.end();
+             I != E; ++I) {
+          if (I->index == Conflict && I->Subtree->dominates(Subtree))
+            ToRepoint.push_back(I->V);
+        }
+      }
+
+      for (std::vector<Value *>::iterator VI = ToRepoint.begin(),
+           VE = ToRepoint.end(); VI != VE; ++VI) {
+        Value *V = *VI;
+
+        VNPair pair(V, n, Subtree);
+        VNMapType::iterator B = VNMap.begin(), E = VNMap.end();
+        VNMapType::iterator I = std::lower_bound(B, E, pair);
+        if (I != E && I->V == V && I->Subtree == Subtree)
+          I->index = n; // Update best choice
+	else
+          VNMap.insert(I, pair); // New Value
+
+        // XXX: we currently don't have to worry about updating values with
+        // more specific Subtrees, but we will need to for PHI node support.
+
+#ifndef NDEBUG
+        Value *V_n = value(n);
+        if (isa<Constant>(V) && isa<Constant>(V_n)) {
+          assert(V == V_n && "Constant equals different constant?");
+        }
+#endif
+      }
+    }
+
+    /// remove - removes all references to value V.
+    void remove(Value *V) {
+      VNMapType::iterator B = VNMap.begin();
+      VNPair pair(V, 0, DTDFS->getRootNode());
+      VNMapType::iterator J = std::upper_bound(B, VNMap.end(), pair);
+      VNMapType::iterator I = J;
+
+      while (I != B && I->V == V) --I;
+
+      VNMap.erase(I, J);
+    }
+  };
+
   /// The InequalityGraph stores the relationships between values.
   /// Each Value in the graph is assigned to a Node. Nodes are pointer
   /// comparable for equality. The caller is expected to maintain the logical
@@ -369,12 +525,14 @@ namespace {
   /// The InequalityGraph class may invalidate Node*s after any mutator call.
   /// @brief The InequalityGraph stores the relationships between values.
   class VISIBILITY_HIDDEN InequalityGraph {
+    ValueNumbering &VN;
     DomTreeDFS::Node *TreeRoot;
 
     InequalityGraph();                  // DO NOT IMPLEMENT
     InequalityGraph(InequalityGraph &); // DO NOT IMPLEMENT
   public:
-    explicit InequalityGraph(DomTreeDFS::Node *TreeRoot) : TreeRoot(TreeRoot){}
+    InequalityGraph(ValueNumbering &VN, DomTreeDFS::Node *TreeRoot)
+      : VN(VN), TreeRoot(TreeRoot) {}
 
     class Node;
 
@@ -393,7 +551,7 @@ namespace {
 
       bool operator<(const Edge &edge) const {
         if (To != edge.To) return To < edge.To;
-        else return *Subtree < *edge.Subtree;
+        return *Subtree < *edge.Subtree;
       }
 
       bool operator<(unsigned to) const {
@@ -419,8 +577,6 @@ namespace {
       typedef SmallVector<Edge, 4> RelationsType;
       RelationsType Relations;
 
-      Value *Canonical;
-
       // TODO: can this idea improve performance?
       //friend class std::vector<Node>;
       //Node(Node &N) { RelationsType.swap(N.RelationsType); }
@@ -429,33 +585,29 @@ namespace {
       typedef RelationsType::iterator       iterator;
       typedef RelationsType::const_iterator const_iterator;
 
-      Node(Value *V) : Canonical(V) {}
-
-    private:
 #ifndef NDEBUG
-    public:
       virtual ~Node() {}
       virtual void dump() const {
         dump(*cerr.stream());
       }
     private:
-      void dump(std::ostream &os) const  {
-        os << *getValue() << ":\n";
+      void dump(std::ostream &os) const {
+        static const std::string names[32] =
+          { "000000", "000001", "000002", "000003", "000004", "000005",
+            "000006", "000007", "000008", "000009", "     >", "    >=",
+            "  s>u<", "s>=u<=", "    s>", "   s>=", "000016", "000017",
+            "  s<u>", "s<=u>=", "     <", "    <=", "    s<", "   s<=",
+            "000024", "000025", "    u>", "   u>=", "    u<", "   u<=",
+            "    !=", "000031" };
         for (Node::const_iterator NI = begin(), NE = end(); NI != NE; ++NI) {
-          static const std::string names[32] =
-            { "000000", "000001", "000002", "000003", "000004", "000005",
-              "000006", "000007", "000008", "000009", "     >", "    >=",
-              "  s>u<", "s>=u<=", "    s>", "   s>=", "000016", "000017",
-              "  s<u>", "s<=u>=", "     <", "    <=", "    s<", "   s<=",
-              "000024", "000025", "    u>", "   u>=", "    u<", "   u<=",
-              "    !=", "000031" };
-          os << "  " << names[NI->LV] << " " << NI->To
-             << " (" << NI->Subtree->getDFSNumIn() << ")\n";
+          os << names[NI->LV] << " " << NI->To
+             << " (" << NI->Subtree->getDFSNumIn() << ")";
+          if (NI != NE) os << ", ";
         }
       }
+    public:
 #endif
 
-    public:
       iterator begin()             { return Relations.begin(); }
       iterator end()               { return Relations.end();   }
       const_iterator begin() const { return Relations.begin(); }
@@ -479,11 +631,6 @@ namespace {
             return I;
         }
         return E;
-      }
-
-      Value *getValue() const
-      {
-        return Canonical;
       }
 
       /// Updates the lattice value for a given node. Create a new entry if
@@ -525,31 +672,6 @@ namespace {
     };
 
   private:
-    struct VISIBILITY_HIDDEN NodeMapEdge {
-      Value *V;
-      unsigned index;
-      DomTreeDFS::Node *Subtree;
-
-      NodeMapEdge(Value *V, unsigned index, DomTreeDFS::Node *Subtree)
-        : V(V), index(index), Subtree(Subtree) {}
-
-      bool operator==(const NodeMapEdge &RHS) const {
-        return V == RHS.V &&
-               Subtree == RHS.Subtree;
-      }
-
-      bool operator<(const NodeMapEdge &RHS) const {
-        if (V != RHS.V) return V < RHS.V;
-        else return *Subtree < *RHS.Subtree;
-      }
-
-      bool operator<(Value *RHS) const {
-        return V < RHS;
-      }
-    };
-
-    typedef std::vector<NodeMapEdge> NodeMapType;
-    NodeMapType NodeMap;
 
     std::vector<Node> Nodes;
 
@@ -563,53 +685,15 @@ namespace {
       return &Nodes[index-1];
     }
 
-    /// Returns the node currently representing Value V, or zero if no such
-    /// node exists.
-    unsigned getNode(Value *V, DomTreeDFS::Node *Subtree) {
-      NodeMapType::iterator E = NodeMap.end();
-      NodeMapEdge Edge(V, 0, Subtree);
-      NodeMapType::iterator I = std::lower_bound(NodeMap.begin(), E, Edge);
-      while (I != E && I->V == V) {
-        if (Subtree->DominatedBy(I->Subtree))
-          return I->index;
-        ++I;
-      }
-      return 0;
-    }
-
-    /// getOrInsertNode - always returns a valid node index, creating a node
-    /// to match the Value if needed.
-    unsigned getOrInsertNode(Value *V, DomTreeDFS::Node *Subtree) {
-      if (unsigned n = getNode(V, Subtree))
-        return n;
-      else
-        return newNode(V);
-    }
-
     /// newNode - creates a new node for a given Value and returns the index.
     unsigned newNode(Value *V) {
-      assert(!isa<BasicBlock>(V) && "BBs may not be nodes.");
+      assert((isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) &&
+             "Bad Value for node.");
       assert(V->getType() != Type::VoidTy && "Void node?");
 
-      Nodes.push_back(Node(V));
-
-      NodeMapEdge MapEntry = NodeMapEdge(V, Nodes.size(), TreeRoot);
-      assert(!std::binary_search(NodeMap.begin(), NodeMap.end(), MapEntry) &&
-             "Attempt to create a duplicate Node.");
-      NodeMap.insert(std::lower_bound(NodeMap.begin(), NodeMap.end(),
-                                      MapEntry), MapEntry);
-      return MapEntry.index;
-    }
-
-    /// If the Value is in the graph, return the canonical form. Otherwise,
-    /// return the original Value.
-    Value *canonicalize(Value *V, DomTreeDFS::Node *Subtree) {
-      if (isa<Constant>(V)) return V;
-
-      if (unsigned n = getNode(V, Subtree))
-        return node(n)->getValue();
-      else 
-        return V;
+      unsigned n = VN.newVN(V);
+      if (Nodes.size() < n) Nodes.resize(n);
+      return n;
     }
 
     /// isRelatedBy - true iff n1 op n2
@@ -626,53 +710,6 @@ namespace {
 
     // The add* methods assume that your input is logically valid and may 
     // assertion-fail or infinitely loop if you attempt a contradiction.
-
-    void addEquality(unsigned n, Value *V, DomTreeDFS::Node *Subtree) {
-      assert(canonicalize(node(n)->getValue(), Subtree) == node(n)->getValue()
-             && "Node's 'canonical' choice isn't best within this subtree.");
-
-      // Suppose that we are given "%x -> node #1 (%y)". The problem is that
-      // we may already have "%z -> node #2 (%x)" somewhere above us in the
-      // graph. We need to find those edges and add "%z -> node #1 (%y)"
-      // to keep the lookups canonical.
-
-      std::vector<Value *> ToRepoint;
-      ToRepoint.push_back(V);
-
-      if (unsigned Conflict = getNode(V, Subtree)) {
-        for (NodeMapType::iterator I = NodeMap.begin(), E = NodeMap.end();
-             I != E; ++I) {
-          if (I->index == Conflict && Subtree->DominatedBy(I->Subtree))
-            ToRepoint.push_back(I->V);
-        }
-      }
-
-      for (std::vector<Value *>::iterator VI = ToRepoint.begin(),
-           VE = ToRepoint.end(); VI != VE; ++VI) {
-        Value *V = *VI;
-
-        // XXX: review this code. This may be doing too many insertions.
-        NodeMapEdge Edge(V, n, Subtree);
-        NodeMapType::iterator E = NodeMap.end();
-        NodeMapType::iterator I = std::lower_bound(NodeMap.begin(), E, Edge);
-        if (I == E || I->V != V || I->Subtree != Subtree) {
-          // New Value
-          NodeMap.insert(I, Edge);
-        } else if (I != E && I->V == V && I->Subtree == Subtree) {
-          // Update best choice
-          I->index = n;
-        }
-
-#ifndef NDEBUG
-        Node *N = node(n);
-        if (isa<Constant>(V)) {
-          if (isa<Constant>(N->getValue())) {
-            assert(V == N->getValue() && "Constant equals different constant?");
-          }
-        }
-#endif
-      }
-    }
 
     /// addInequality - Sets n1 op n2.
     /// It is also an error to call this on an inequality that is already true.
@@ -776,28 +813,18 @@ namespace {
       N2->update(n1, reversePredicate(LV1), Subtree);
     }
 
-    /// remove - Removes a Value from the graph. If the value is the canonical
-    /// choice for a Node, destroys the Node from the graph deleting all edges
-    /// to and from it. This method does not renumber the nodes.
-    void remove(Value *V) {
-      for (unsigned i = 0; i < NodeMap.size();) {
-        NodeMapType::iterator I = NodeMap.begin()+i;
-        if (I->V == V) {
-          Node *N = node(I->index);
-          if (node(I->index)->getValue() == V) {
-            for (Node::iterator NI = N->begin(), NE = N->end(); NI != NE; ++NI){
-              Node::iterator Iter = node(NI->To)->find(I->index, TreeRoot);
-              do {
-                node(NI->To)->Relations.erase(Iter);
-                Iter = node(NI->To)->find(I->index, TreeRoot);
-              } while (Iter != node(NI->To)->end());
-            }
-            N->Canonical = NULL;
-          }
-          N->Relations.clear();
-          NodeMap.erase(I);
-        } else ++i;
+    /// remove - removes a node from the graph by removing all references to
+    /// and from it.
+    void remove(unsigned n) {
+      Node *N = node(n);
+      for (Node::iterator NI = N->begin(), NE = N->end(); NI != NE; ++NI) {
+        Node::iterator Iter = node(NI->To)->find(n, TreeRoot);
+        do {
+          node(NI->To)->Relations.erase(Iter);
+          Iter = node(NI->To)->find(n, TreeRoot);
+        } while (Iter != node(NI->To)->end());
       }
+      N->Relations.clear();
     }
 
 #ifndef NDEBUG
@@ -807,19 +834,12 @@ namespace {
     }
 
     void dump(std::ostream &os) {
-    std::set<Node *> VisitedNodes;
-    for (NodeMapType::const_iterator I = NodeMap.begin(), E = NodeMap.end();
-         I != E; ++I) {
-      Node *N = node(I->index);
-      os << *I->V << " == " << I->index
-         << "(" << I->Subtree->getDFSNumIn() << ")\n";
-      if (VisitedNodes.insert(N).second) {
-        os << I->index << ". ";
-        if (!N->getValue()) os << "(deleted node)\n";
-        else N->dump(os);
+      for (unsigned i = 1; i <= Nodes.size(); ++i) {
+        os << i << " = {";
+        node(i)->dump(os);
+        os << "}\n";
       }
     }
-  }
 #endif
   };
 
@@ -842,7 +862,7 @@ namespace {
 
       bool operator<(const ScopedRange &range) const {
         if (V != range.V) return V < range.V;
-        else return *Subtree < *range.Subtree;
+        return *Subtree < *range.Subtree;
       }
 
       bool operator<(const Value *value) const {
@@ -1303,6 +1323,7 @@ namespace {
     };
     std::deque<Operation> WorkList;
 
+    ValueNumbering &VN;
     InequalityGraph &IG;
     UnreachableBlocks &UB;
     ValueRanges &VR;
@@ -1313,26 +1334,6 @@ namespace {
     bool &modified;
 
     typedef InequalityGraph::Node Node;
-
-    /// Returns true if V1 is a better canonical value than V2.
-    bool compare(Value *V1, Value *V2) const {
-      if (isa<Constant>(V1))
-        return !isa<Constant>(V2);
-      else if (isa<Constant>(V2))
-        return false;
-      else if (isa<Argument>(V1))
-        return !isa<Argument>(V2);
-      else if (isa<Argument>(V2))
-        return false;
-
-      Instruction *I1 = dyn_cast<Instruction>(V1);
-      Instruction *I2 = dyn_cast<Instruction>(V2);
-
-      if (!I1 || !I2)
-        return V1->getNumUses() < V2->getNumUses();
-
-      return DTDFS->dominates(I1, I2);
-    }
 
     // below - true if the Instruction is dominated by the current context
     // block or instruction
@@ -1382,17 +1383,17 @@ namespace {
       if (isa<Constant>(V1) && isa<Constant>(V2))
         return false;
 
-      unsigned n1 = IG.getNode(V1, Top), n2 = IG.getNode(V2, Top);
+      unsigned n1 = VN.valueNumber(V1, Top), n2 = VN.valueNumber(V2, Top);
 
       if (n1 && n2) {
         if (n1 == n2) return true;
         if (IG.isRelatedBy(n1, n2, Top, NE)) return false;
       }
 
-      if (n1) assert(V1 == IG.node(n1)->getValue() && "Value isn't canonical.");
-      if (n2) assert(V2 == IG.node(n2)->getValue() && "Value isn't canonical.");
+      if (n1) assert(V1 == VN.value(n1) && "Value isn't canonical.");
+      if (n2) assert(V2 == VN.value(n2) && "Value isn't canonical.");
 
-      assert(!compare(V2, V1) && "Please order parameters to makeEqual.");
+      assert(!VN.compare(V2, V1) && "Please order parameters to makeEqual.");
 
       assert(!isa<Constant>(V2) && "Tried to remove a constant.");
 
@@ -1436,8 +1437,8 @@ namespace {
         for (SetVector<unsigned>::iterator I = Remove.begin()+1 /* skip n2 */,
              E = Remove.end(); I != E; ++I) {
           unsigned n = *I;
-          Value *V = IG.node(n)->getValue();
-          if (compare(V, V1)) {
+          Value *V = VN.value(n);
+          if (VN.compare(V, V1)) {
             V1 = V;
             n1 = n;
             DontRemove = I;
@@ -1459,7 +1460,7 @@ namespace {
       bool mergeIGNode = false;
       unsigned i = 0;
       for (Value *R = V2; i == 0 || i < Remove.size(); ++i) {
-        if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
+        if (i) R = VN.value(Remove[i]); // skip n2.
 
         // Try to replace the whole instruction. If we can, we're done.
         Instruction *I2 = dyn_cast<Instruction>(R);
@@ -1524,7 +1525,7 @@ namespace {
 
           for (SetVector<unsigned>::iterator I = Remove.begin(),
                E = Remove.end(); I != E; ++I) {
-            Value *V = IG.node(*I)->getValue();
+            Value *V = VN.value(*I);
             if (!V->use_empty())
               RemoveVals.push_back(V);
           }
@@ -1559,11 +1560,11 @@ namespace {
 
         // Point V2 (and all items in Remove) to N1.
         if (!n2)
-          IG.addEquality(n1, V2, Top);
+          VN.addEquality(n1, V2, Top);
         else {
           for (SetVector<unsigned>::iterator I = Remove.begin(),
                E = Remove.end(); I != E; ++I) {
-            IG.addEquality(n1, IG.node(*I)->getValue(), Top);
+            VN.addEquality(n1, VN.value(*I), Top);
           }
         }
 
@@ -1571,7 +1572,7 @@ namespace {
         // Even when Remove is empty, we still want to process V2.
         i = 0;
         for (Value *R = V2; i == 0 || i < Remove.size(); ++i) {
-          if (i) R = IG.node(Remove[i])->getValue(); // skip n2.
+          if (i) R = VN.value(Remove[i]); // skip n2.
 
           if (Instruction *I2 = dyn_cast<Instruction>(R)) {
             if (aboveOrBelow(I2))
@@ -1639,9 +1640,11 @@ namespace {
     }
 
   public:
-    VRPSolver(InequalityGraph &IG, UnreachableBlocks &UB, ValueRanges &VR,
-              DomTreeDFS *DTDFS, bool &modified, BasicBlock *TopBB)
-      : IG(IG),
+    VRPSolver(ValueNumbering &VN, InequalityGraph &IG, UnreachableBlocks &UB,
+              ValueRanges &VR, DomTreeDFS *DTDFS, bool &modified,
+              BasicBlock *TopBB)
+      : VN(VN),
+        IG(IG),
         UB(UB),
         VR(VR),
         DTDFS(DTDFS),
@@ -1653,9 +1656,11 @@ namespace {
       assert(Top && "VRPSolver created for unreachable basic block.");
     }
 
-    VRPSolver(InequalityGraph &IG, UnreachableBlocks &UB, ValueRanges &VR,
-              DomTreeDFS *DTDFS, bool &modified, Instruction *TopInst)
-      : IG(IG),
+    VRPSolver(ValueNumbering &VN, InequalityGraph &IG, UnreachableBlocks &UB,
+              ValueRanges &VR, DomTreeDFS *DTDFS, bool &modified,
+              Instruction *TopInst)
+      : VN(VN),
+        IG(IG),
         UB(UB),
         VR(VR),
         DTDFS(DTDFS),
@@ -1674,8 +1679,8 @@ namespace {
           return ConstantExpr::getCompare(Pred, C1, C2) ==
                  ConstantInt::getTrue();
 
-      if (unsigned n1 = IG.getNode(V1, Top))
-        if (unsigned n2 = IG.getNode(V2, Top)) {
+      if (unsigned n1 = VN.valueNumber(V1, Top))
+        if (unsigned n2 = VN.valueNumber(V2, Top)) {
           if (n1 == n2) return Pred == ICmpInst::ICMP_EQ ||
                                Pred == ICmpInst::ICMP_ULE ||
                                Pred == ICmpInst::ICMP_UGE ||
@@ -1710,14 +1715,14 @@ namespace {
     /// new about, find any new relationships between its operands.
     void defToOps(Instruction *I) {
       Instruction *NewContext = below(I) ? I : TopInst;
-      Value *Canonical = IG.canonicalize(I, Top);
+      Value *Canonical = VN.canonicalize(I, Top);
 
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
         const Type *Ty = BO->getType();
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
-        Value *Op0 = IG.canonicalize(BO->getOperand(0), Top);
-        Value *Op1 = IG.canonicalize(BO->getOperand(1), Top);
+        Value *Op0 = VN.canonicalize(BO->getOperand(0), Top);
+        Value *Op1 = VN.canonicalize(BO->getOperand(1), Top);
 
         // TODO: "and i32 -1, %x" EQ %y then %x EQ %y.
 
@@ -1786,11 +1791,11 @@ namespace {
         Value *True  = SI->getTrueValue();
         Value *False = SI->getFalseValue();
         if (isRelatedBy(True, False, ICmpInst::ICMP_NE)) {
-          if (Canonical == IG.canonicalize(True, Top) ||
+          if (Canonical == VN.canonicalize(True, Top) ||
               isRelatedBy(Canonical, False, ICmpInst::ICMP_NE))
             add(SI->getCondition(), ConstantInt::getTrue(),
                 ICmpInst::ICMP_EQ, NewContext);
-          else if (Canonical == IG.canonicalize(False, Top) ||
+          else if (Canonical == VN.canonicalize(False, Top) ||
                    isRelatedBy(Canonical, True, ICmpInst::ICMP_NE))
             add(SI->getCondition(), ConstantInt::getFalse(),
                 ICmpInst::ICMP_EQ, NewContext);
@@ -1798,7 +1803,7 @@ namespace {
       } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         for (GetElementPtrInst::op_iterator OI = GEPI->idx_begin(),
              OE = GEPI->idx_end(); OI != OE; ++OI) {
-          ConstantInt *Op = dyn_cast<ConstantInt>(IG.canonicalize(*OI, Top));
+          ConstantInt *Op = dyn_cast<ConstantInt>(VN.canonicalize(*OI, Top));
           if (!Op || !Op->isZero()) return;
         }
         // TODO: The GEPI indices are all zero. Copy from definition to operand,
@@ -1812,7 +1817,7 @@ namespace {
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
         const Type *SrcTy = CI->getSrcTy();
 
-        Value *TheCI = IG.canonicalize(CI, Top);
+        Value *TheCI = VN.canonicalize(CI, Top);
         uint32_t W = VR.typeToWidth(SrcTy);
         if (!W) return;
         ConstantRange CR = VR.rangeFromValue(TheCI, Top, W);
@@ -1823,11 +1828,11 @@ namespace {
           default: break;
           case Instruction::ZExt:
           case Instruction::SExt:
-            VR.applyRange(IG.canonicalize(CI->getOperand(0), Top),
+            VR.applyRange(VN.canonicalize(CI->getOperand(0), Top),
                           CR.truncate(W), Top, this);
             break;
           case Instruction::BitCast:
-            VR.applyRange(IG.canonicalize(CI->getOperand(0), Top),
+            VR.applyRange(VN.canonicalize(CI->getOperand(0), Top),
                           CR, Top, this);
             break;
         }
@@ -1841,8 +1846,8 @@ namespace {
       Instruction *NewContext = below(I) ? I : TopInst;
 
       if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
-        Value *Op0 = IG.canonicalize(BO->getOperand(0), Top);
-        Value *Op1 = IG.canonicalize(BO->getOperand(1), Top);
+        Value *Op0 = VN.canonicalize(BO->getOperand(0), Top);
+        Value *Op1 = VN.canonicalize(BO->getOperand(1), Top);
 
         if (ConstantInt *CI0 = dyn_cast<ConstantInt>(Op0))
           if (ConstantInt *CI1 = dyn_cast<ConstantInt>(Op1)) {
@@ -1912,7 +1917,7 @@ namespace {
         // "%x = udiv i32 %y, %z" and %x EQ %y then %z EQ 1
 
         Value *Known = Op0, *Unknown = Op1,
-              *TheBO = IG.canonicalize(BO, Top);
+              *TheBO = VN.canonicalize(BO, Top);
         if (Known != TheBO) std::swap(Known, Unknown);
         if (Known == TheBO) {
           switch (Opcode) {
@@ -1947,8 +1952,8 @@ namespace {
         // "%a = icmp ult i32 %b, %c" and %b u>= %c then %a EQ false
         // etc.
 
-        Value *Op0 = IG.canonicalize(IC->getOperand(0), Top);
-        Value *Op1 = IG.canonicalize(IC->getOperand(1), Top);
+        Value *Op0 = VN.canonicalize(IC->getOperand(0), Top);
+        Value *Op1 = VN.canonicalize(IC->getOperand(1), Top);
 
         ICmpInst::Predicate Pred = IC->getPredicate();
         if (isRelatedBy(Op0, Op1, Pred)) {
@@ -1965,20 +1970,20 @@ namespace {
         // %x EQ false then %a EQ %c
         // %b EQ %c then %a EQ %b
 
-        Value *Canonical = IG.canonicalize(SI->getCondition(), Top);
+        Value *Canonical = VN.canonicalize(SI->getCondition(), Top);
         if (Canonical == ConstantInt::getTrue()) {
           add(SI, SI->getTrueValue(), ICmpInst::ICMP_EQ, NewContext);
         } else if (Canonical == ConstantInt::getFalse()) {
           add(SI, SI->getFalseValue(), ICmpInst::ICMP_EQ, NewContext);
-        } else if (IG.canonicalize(SI->getTrueValue(), Top) ==
-                   IG.canonicalize(SI->getFalseValue(), Top)) {
+        } else if (VN.canonicalize(SI->getTrueValue(), Top) ==
+                   VN.canonicalize(SI->getFalseValue(), Top)) {
           add(SI, SI->getTrueValue(), ICmpInst::ICMP_EQ, NewContext);
         }
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
         const Type *DestTy = CI->getDestTy();
         if (DestTy->isFPOrFPVector()) return;
 
-        Value *Op = IG.canonicalize(CI->getOperand(0), Top);
+        Value *Op = VN.canonicalize(CI->getOperand(0), Top);
         Instruction::CastOps Opcode = CI->getOpcode();
 
         if (Constant *C = dyn_cast<Constant>(Op)) {
@@ -1987,7 +1992,7 @@ namespace {
         }
 
         uint32_t W = VR.typeToWidth(DestTy);
-        Value *TheCI = IG.canonicalize(CI, Top);
+        Value *TheCI = VN.canonicalize(CI, Top);
         ConstantRange CR = VR.rangeFromValue(Op, Top, W);
 
         if (!CR.isFullSet()) {
@@ -2013,7 +2018,7 @@ namespace {
       } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
         for (GetElementPtrInst::op_iterator OI = GEPI->idx_begin(),
              OE = GEPI->idx_end(); OI != OE; ++OI) {
-          ConstantInt *Op = dyn_cast<ConstantInt>(IG.canonicalize(*OI, Top));
+          ConstantInt *Op = dyn_cast<ConstantInt>(VN.canonicalize(*OI, Top));
           if (!Op || !Op->isZero()) return;
         }
         // TODO: The GEPI indices are all zero. Copy from operand to definition,
@@ -2038,11 +2043,11 @@ namespace {
         TopBB = O.ContextBB;
         Top = DTDFS->getNodeForBlock(TopBB); // XXX move this into Context
 
-        O.LHS = IG.canonicalize(O.LHS, Top);
-        O.RHS = IG.canonicalize(O.RHS, Top);
+        O.LHS = VN.canonicalize(O.LHS, Top);
+        O.RHS = VN.canonicalize(O.RHS, Top);
 
-        assert(O.LHS == IG.canonicalize(O.LHS, Top) && "Canonicalize isn't.");
-        assert(O.RHS == IG.canonicalize(O.RHS, Top) && "Canonicalize isn't.");
+        assert(O.LHS == VN.canonicalize(O.LHS, Top) && "Canonicalize isn't.");
+        assert(O.RHS == VN.canonicalize(O.RHS, Top) && "Canonicalize isn't.");
 
         DOUT << "solving " << *O.LHS << " " << O.Op << " " << *O.RHS;
         if (O.ContextInst) DOUT << " context inst: " << *O.ContextInst;
@@ -2064,7 +2069,7 @@ namespace {
           }
         }
 
-        if (compare(O.LHS, O.RHS)) {
+        if (VN.compare(O.LHS, O.RHS)) {
           std::swap(O.LHS, O.RHS);
           O.Op = ICmpInst::getSwappedPredicate(O.Op);
         }
@@ -2086,8 +2091,8 @@ namespace {
               continue;
             }
 
-            unsigned n1 = IG.getNode(O.LHS, Top);
-            unsigned n2 = IG.getNode(O.RHS, Top);
+            unsigned n1 = VN.valueNumber(O.LHS, Top);
+            unsigned n2 = VN.valueNumber(O.RHS, Top);
 
             if (n1 && n1 == n2) {
               if (O.Op != ICmpInst::ICMP_UGE && O.Op != ICmpInst::ICMP_ULE &&
@@ -2161,7 +2166,7 @@ namespace {
 #ifndef NDEBUG
   bool ValueRanges::isCanonical(Value *V, DomTreeDFS::Node *Subtree,
                                 VRPSolver *VRP) {
-    return V == VRP->IG.canonicalize(V, Subtree);
+    return V == VRP->VN.canonicalize(V, Subtree);
   }
 #endif
 
@@ -2172,6 +2177,7 @@ namespace {
   class VISIBILITY_HIDDEN PredicateSimplifier : public FunctionPass {
     DomTreeDFS *DTDFS;
     bool modified;
+    ValueNumbering *VN;
     InequalityGraph *IG;
     UnreachableBlocks UB;
     ValueRanges *VR;
@@ -2204,12 +2210,14 @@ namespace {
       DomTreeDFS::Node *DTNode;
 
     public:
+      ValueNumbering &VN;
       InequalityGraph &IG;
       UnreachableBlocks &UB;
       ValueRanges &VR;
 
       Forwards(PredicateSimplifier *PS, DomTreeDFS::Node *DTNode)
-        : PS(PS), DTNode(DTNode), IG(*PS->IG), UB(PS->UB), VR(*PS->VR) {}
+        : PS(PS), DTNode(DTNode), VN(*PS->VN), IG(*PS->IG), UB(PS->UB),
+          VR(*PS->VR) {}
 
       void visitTerminatorInst(TerminatorInst &TI);
       void visitBranchInst(BranchInst &BI);
@@ -2260,20 +2268,24 @@ namespace {
       if (isInstructionTriviallyDead(I)) {
         ++NumSimple;
         modified = true;
-        IG->remove(I);
+        if (unsigned n = VN->valueNumber(I, DTDFS->getRootNode()))
+          if (VN->value(n) == I) IG->remove(n);
+        VN->remove(I);
         I->eraseFromParent();
         return;
       }
 
 #ifndef NDEBUG
       // Try to replace the whole instruction.
-      Value *V = IG->canonicalize(I, DT);
+      Value *V = VN->canonicalize(I, DT);
       assert(V == I && "Late instruction canonicalization.");
       if (V != I) {
         modified = true;
         ++NumInstruction;
         DOUT << "Removing " << *I << ", replacing with " << *V << "\n";
-        IG->remove(I);
+        if (unsigned n = VN->valueNumber(I, DTDFS->getRootNode()))
+          if (VN->value(n) == I) IG->remove(n);
+        VN->remove(I);
         I->replaceAllUsesWith(V);
         I->eraseFromParent();
         return;
@@ -2282,7 +2294,7 @@ namespace {
       // Try to substitute operands.
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
         Value *Oper = I->getOperand(i);
-        Value *V = IG->canonicalize(Oper, DT);
+        Value *V = VN->canonicalize(Oper, DT);
         assert(V == Oper && "Late operand canonicalization.");
         if (V != Oper) {
           modified = true;
@@ -2311,7 +2323,8 @@ namespace {
 
     modified = false;
     DomTreeDFS::Node *Root = DTDFS->getRootNode();
-    IG = new InequalityGraph(Root);
+    VN = new ValueNumbering(DTDFS);
+    IG = new InequalityGraph(*VN, Root);
     VR = new ValueRanges(TD);
     WorkList.push_back(Root);
 
@@ -2357,13 +2370,13 @@ namespace {
 
       if (Dest == TrueDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, Dest);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(ConstantInt::getTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
       } else if (Dest == FalseDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, Dest);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(ConstantInt::getFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(IG.dump());
@@ -2385,7 +2398,7 @@ namespace {
       DOUT << "Switch thinking about BB %" << BB->getName()
            << "(" << PS->DTDFS->getNodeForBlock(BB)->getDFSNumIn() << ")\n";
 
-      VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, BB);
+      VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, BB);
       if (BB == SI.getDefaultDest()) {
         for (unsigned i = 1, e = SI.getNumCases(); i < e; ++i)
           if (SI.getSuccessor(i) != BB)
@@ -2400,7 +2413,7 @@ namespace {
   }
 
   void PredicateSimplifier::Forwards::visitAllocaInst(AllocaInst &AI) {
-    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &AI);
+    VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &AI);
     VRP.add(Constant::getNullValue(AI.getType()), &AI, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2410,7 +2423,7 @@ namespace {
     // avoid "load uint* null" -> null NE null.
     if (isa<Constant>(Ptr)) return;
 
-    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &LI);
+    VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &LI);
     VRP.add(Constant::getNullValue(Ptr->getType()), Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2419,13 +2432,13 @@ namespace {
     Value *Ptr = SI.getPointerOperand();
     if (isa<Constant>(Ptr)) return;
 
-    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &SI);
+    VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
     VRP.add(Constant::getNullValue(Ptr->getType()), Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
 
   void PredicateSimplifier::Forwards::visitSExtInst(SExtInst &SI) {
-    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &SI);
+    VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
     uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
     APInt Min(APInt::getHighBitsSet(DstBitWidth, DstBitWidth-SrcBitWidth+1));
@@ -2436,7 +2449,7 @@ namespace {
   }
 
   void PredicateSimplifier::Forwards::visitZExtInst(ZExtInst &ZI) {
-    VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &ZI);
+    VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &ZI);
     uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth));
@@ -2454,7 +2467,7 @@ namespace {
       case Instruction::UDiv:
       case Instruction::SDiv: {
         Value *Divisor = BO.getOperand(1);
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(Constant::getNullValue(Divisor->getType()), Divisor,
                 ICmpInst::ICMP_NE);
         VRP.solve();
@@ -2465,34 +2478,34 @@ namespace {
     switch (ops) {
       default: break;
       case Instruction::Shl: {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_UGE);
         VRP.solve();
       } break;
       case Instruction::AShr: {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_SLE);
         VRP.solve();
       } break;
       case Instruction::LShr:
       case Instruction::UDiv: {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_ULE);
         VRP.solve();
       } break;
       case Instruction::URem: {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(1), ICmpInst::ICMP_ULE);
         VRP.solve();
       } break;
       case Instruction::And: {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_ULE);
         VRP.add(&BO, BO.getOperand(1), ICmpInst::ICMP_ULE);
         VRP.solve();
       } break;
       case Instruction::Or: {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &BO);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
         VRP.add(&BO, BO.getOperand(0), ICmpInst::ICMP_UGE);
         VRP.add(&BO, BO.getOperand(1), ICmpInst::ICMP_UGE);
         VRP.solve();
@@ -2518,7 +2531,7 @@ namespace {
       case ICmpInst::ICMP_SGE: Pred = ICmpInst::ICMP_SGT; break;
     }
     if (Pred != IC.getPredicate()) {
-      VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &IC);
+      VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &IC);
       if (VRP.isRelatedBy(IC.getOperand(1), IC.getOperand(0),
                           ICmpInst::ICMP_NE)) {
         ++NumSnuggle;
@@ -2546,14 +2559,19 @@ namespace {
 
       }
       if (NextVal) {
-        VRPSolver VRP(IG, UB, VR, PS->DTDFS, PS->modified, &IC);
+        VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &IC);
         if (VRP.isRelatedBy(IC.getOperand(0), NextVal,
                             ICmpInst::getInversePredicate(Pred))) {
           ICmpInst *NewIC = new ICmpInst(ICmpInst::ICMP_EQ, IC.getOperand(0),
                                          NextVal, "", &IC);
           NewIC->takeName(&IC);
           IC.replaceAllUsesWith(NewIC);
-          IG.remove(&IC); // XXX: prove this isn't necessary
+
+          // XXX: prove this isn't necessary
+          if (unsigned n = VN.valueNumber(&IC, PS->DTDFS->getRootNode()))
+            if (VN.value(n) == &IC) IG.remove(n);
+          VN.remove(&IC);
+
           IC.eraseFromParent();
           ++NumSnuggle;
           PS->modified = true;
