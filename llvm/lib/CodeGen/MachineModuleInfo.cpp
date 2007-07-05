@@ -1522,6 +1522,7 @@ void MachineModuleInfo::EndFunction() {
   LandingPads.clear();
   TypeInfos.clear();
   FilterIds.clear();
+  FilterEnds.clear();
 }
 
 /// getDescFor - Convert a Value to a debug information descriptor.
@@ -1772,13 +1773,30 @@ unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
 /// getFilterIDFor - Return the filter id for the specified typeinfos.  This is
 /// function wide.
 int MachineModuleInfo::getFilterIDFor(std::vector<unsigned> &TyIds) {
-  // TODO: map duplicate filters to the same filter id; a filter equal to the
-  // tail of an existing filter also need not be added; re-order filters and
-  // filter elements to maximize this kind of sharing.
+  // If the new filter coincides with the tail of an existing filter, then
+  // re-use the existing filter.  Folding filters more than this requires
+  // re-ordering filters and/or their elements - probably not worth it.
+  for (std::vector<unsigned>::iterator I = FilterEnds.begin(),
+       E = FilterEnds.end(); I != E; ++I) {
+    unsigned i = *I, j = TyIds.size();
+
+    while (i && j)
+      if (FilterIds[--i] != TyIds[--j])
+        goto try_next;
+
+    if (!j)
+      // The new filter coincides with range [i, end) of the existing filter.
+      return -(1 + i);
+
+try_next:;
+  }
+
+  // Add the new filter.
   int FilterID = -(1 + FilterIds.size());
   FilterIds.reserve(FilterIds.size() + TyIds.size() + 1);
   for (unsigned I = 0, N = TyIds.size(); I != N; ++I)
     FilterIds.push_back(TyIds[I]);
+  FilterEnds.push_back(FilterIds.size());
   FilterIds.push_back(0); // terminator
   return FilterID;
 }

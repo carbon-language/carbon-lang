@@ -1022,6 +1022,11 @@ private:
   //
   std::vector<unsigned> FilterIds;
 
+  // FilterEnds - List of the indices in FilterIds corresponding to filter
+  // terminators.
+  //
+  std::vector<unsigned> FilterEnds;
+
   // Personalities - Vector of all personality functions ever seen. Used to emit
   // common EH frames.
   std::vector<Function *> Personalities;
