@@ -65,9 +65,9 @@ void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
   DumpAction(&cd->Linker);
 }
 
-static bool GetBytecodeDependentLibraries(const std::string &fname,
-                                          Module::LibraryListType& deplibs,
-                                          std::string* ErrMsg) {
+static bool GetBitcodeDependentLibraries(const std::string &fname,
+                                         Module::LibraryListType& deplibs,
+                                         std::string* ErrMsg) {
   ModuleProvider *MP = 0;
   if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(fname)) {
     MP = getBitcodeModuleProvider(Buffer);
@@ -558,8 +558,8 @@ private:
   }
 
   /// This method processes a linkage item. The item could be a
-  /// Bytecode file needing translation to native code and that is
-  /// dependent on other bytecode libraries, or a native code
+  /// Bitcode file needing translation to native code and that is
+  /// dependent on other bitcode libraries, or a native code
   /// library that should just be linked into the program.
   bool ProcessLinkageItem(const llvm::sys::Path& link_item,
                           SetVector<sys::Path>& set,
@@ -586,11 +586,11 @@ private:
     // If we got here fullpath is the path to the file, and its readable.
     set.insert(fullpath);
 
-    // If its an LLVM bytecode file ...
-    if (fullpath.isBytecodeFile()) {
+    // If its an LLVM bitcode file ...
+    if (fullpath.isBitcodeFile()) {
       // Process the dependent libraries recursively
       Module::LibraryListType modlibs;
-      if (GetBytecodeDependentLibraries(fullpath.toString(),modlibs, &err)) {
+      if (GetBitcodeDependentLibraries(fullpath.toString(),modlibs, &err)) {
         // Traverse the dependent libraries list
         Module::lib_iterator LI = modlibs.begin();
         Module::lib_iterator LE = modlibs.end();
@@ -675,7 +675,7 @@ public:
         // Get the suffix of the file name
         const std::string& ftype = I->second;
 
-        // If its a library, bytecode file, or object file, save
+        // If its a library, bitcode file, or object file, save
         // it for linking below and short circuit the
         // pre-processing/translation/assembly phases
         if (ftype.empty() ||  ftype == "o" || ftype == "bc" || ftype=="a") {
@@ -771,7 +771,7 @@ public:
             // ll -> bc Helper
             if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
               /// The output of the translator is an LLVM Assembly program
-              /// We need to translate it to bytecode
+              /// We need to translate it to bitcode
               Action* action = new Action();
               action->program.set("llvm-as");
               action->args.push_back(InFile.toString());
@@ -816,7 +816,7 @@ public:
               // ll -> bc Helper
               if (action.isSet(OUTPUT_IS_ASM_FLAG)) {
                 /// The output of the optimizer is an LLVM Assembly program
-                /// We need to translate it to bytecode with llvm-as
+                /// We need to translate it to bitcode with llvm-as
                 Action* action = new Action();
                 action->program.set("llvm-as");
                 action->args.push_back(InFile.toString());

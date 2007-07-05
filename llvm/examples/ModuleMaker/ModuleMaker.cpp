@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This programs is a simple example that creates an LLVM module "from scratch",
-// emitting it as a bytecode file to standard out.  This is just to show how
+// emitting it as a bitcode file to standard out.  This is just to show how
 // LLVM projects work and to demonstrate some of the LLVM APIs.
 //
 //===----------------------------------------------------------------------===//
@@ -52,7 +52,7 @@ int main() {
   // Create the return instruction and add it to the basic block
   BB->getInstList().push_back(new ReturnInst(Add));
 
-  // Output the bytecode file to stdout
+  // Output the bitcode file to stdout
   WriteBitcodeToFile(M, std::cout);
 
   // Delete the module and all of its contents.

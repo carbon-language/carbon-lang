@@ -28,7 +28,7 @@ using namespace llvm;
 
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
-               cl::desc("<input bytecode files>"));
+               cl::desc("<input bitcode files>"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"), cl::init("-"),
@@ -42,7 +42,7 @@ Verbose("v", cl::desc("Print information about actions taken"));
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 
-// LoadFile - Read the specified bytecode file in and return it.  This routine
+// LoadFile - Read the specified bitcode file in and return it.  This routine
 // searches the link path for the specified file to try to find it...
 //
 static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
@@ -66,12 +66,12 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
-      cerr << "Error opening bytecode file: '" << Filename.c_str() << "'";
+      cerr << "Error opening bitcode file: '" << Filename.c_str() << "'";
       if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
       cerr << "\n";
     }
   } else {
-    cerr << "Bytecode file: '" << Filename.c_str() << "' does not exist.\n";
+    cerr << "Bitcode file: '" << Filename.c_str() << "' does not exist.\n";
   }
 
   return std::auto_ptr<Module>();
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (Verbose) cerr << "Writing bytecode...\n";
+  if (Verbose) cerr << "Writing bitcode...\n";
   WriteBitcodeToFile(Composite.get(), *Out);
 
   if (Out != &std::cout) delete Out;

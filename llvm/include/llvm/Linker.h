@@ -28,7 +28,7 @@ class Module;
 /// In this case the Linker still retains ownership of the Module. If the
 /// releaseModule() method is used, the ownership of the Module is transferred
 /// to the caller and the Linker object is only suitable for destruction.
-/// The Linker can link Modules from memory, bytecode files, or bytecode
+/// The Linker can link Modules from memory, bitcode files, or bitcode
 /// archives.  It retains a set of search paths in which to find any libraries
 /// presented to it. By default, the linker will generate error and warning
 /// messages to std::cerr but this capability can be turned off with the
@@ -162,10 +162,10 @@ class Linker {
       ItemList& NativeItems  ///< Output list of native files/libs
     );
 
-    /// This function links the bytecode \p Files into the composite module.
+    /// This function links the bitcode \p Files into the composite module.
     /// Note that this does not do any linking of unresolved symbols. The \p
     /// Files are all completely linked into \p HeadModule regardless of
-    /// unresolved symbols. This function just loads each bytecode file and
+    /// unresolved symbols. This function just loads each bitcode file and
     /// calls LinkInModule on them.
     /// @returns true if an error occurs, false otherwise
     /// @see getLastError
@@ -174,9 +174,9 @@ class Linker {
       const std::vector<sys::Path> & Files ///< Files to link in
     );
 
-    /// This function links a single bytecode file, \p File, into the composite
+    /// This function links a single bitcode file, \p File, into the composite
     /// module. Note that this does not attempt to resolve symbols. This method
-    /// just loads the bytecode file and calls LinkInModule on it. If an error
+    /// just loads the bitcode file and calls LinkInModule on it. If an error
     /// occurs, the Linker's error string is set.
     /// @returns true if an error occurs, false otherwise
     /// @see getLastError
@@ -216,7 +216,7 @@ class Linker {
       bool& is_native             ///< Indicates if lib a native library
     );
 
-    /// This function links one bytecode archive, \p Filename, into the module.
+    /// This function links one bitcode archive, \p Filename, into the module.
     /// The archive is searched to resolve outstanding symbols. Any modules in
     /// the archive that resolve outstanding symbols will be linked in. The
     /// library is searched repeatedly until no more modules that resolve
@@ -271,7 +271,7 @@ class Linker {
   /// @name Implementation
   /// @{
   private:
-    /// Read in and parse the bytecode file named by FN and return the
+    /// Read in and parse the bitcode file named by FN and return the
     /// Module it contains (wrapped in an auto_ptr), or 0 if an error occurs.
     std::auto_ptr<Module> LoadObject(const sys::Path& FN);
 

@@ -143,7 +143,7 @@ static cl::opt<std::string> OutputMachine("m", cl::Prefix,
   cl::desc("Specify a target machine"), cl::value_desc("machine"));
 
 static cl::opt<bool> Native("native", cl::init(false),
-  cl::desc("Generative native code instead of bytecode"));
+  cl::desc("Generative native code instead of bitcode"));
 
 static cl::opt<bool> DebugOutput("g", cl::init(false),
   cl::desc("Generate objects that include debug symbols"));

@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (Force || !CheckBytecodeOutputToConsole(Out,true))
+    if (Force || !CheckBitcodeOutputToConsole(Out,true))
       WriteBitcodeToFile(M.get(), *Out);
   } catch (const std::string& msg) {
     cerr << argv[0] << ": " << msg << "\n";

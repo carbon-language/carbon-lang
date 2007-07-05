@@ -1,4 +1,4 @@
-//===-- lib/Bytecode/ArchiveInternals.h -------------------------*- C++ -*-===//
+//===-- lib/Archive/ArchiveInternals.h -------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LIB_BYTECODE_ARCHIVEINTERNALS_H
-#define LIB_BYTECODE_ARCHIVEINTERNALS_H
+#ifndef LIB_ARCHIVE_ARCHIVEINTERNALS_H
+#define LIB_ARCHIVE_ARCHIVEINTERNALS_H
 
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/System/TimeValue.h"
@@ -29,7 +29,7 @@
 
 namespace llvm {
 
-  /// The ArchiveMemberHeader structure is used internally for bytecode
+  /// The ArchiveMemberHeader structure is used internally for bitcode
   /// archives.
   /// The header precedes each file member in the archive. This structure is
   /// defined using character arrays for direct and correct interpretation
@@ -67,15 +67,15 @@ namespace llvm {
     }
   };
   
-  // Get just the externally visible defined symbols from the bytecode
-  bool GetBytecodeSymbols(const sys::Path& fName,
+  // Get just the externally visible defined symbols from the bitcode
+  bool GetBitcodeSymbols(const sys::Path& fName,
                           std::vector<std::string>& symbols,
                           std::string* ErrMsg);
   
-  ModuleProvider* GetBytecodeSymbols(const unsigned char*Buffer,unsigned Length,
-                                     const std::string& ModuleID,
-                                     std::vector<std::string>& symbols,
-                                     std::string* ErrMsg);
+  ModuleProvider* GetBitcodeSymbols(const unsigned char*Buffer,unsigned Length,
+                                    const std::string& ModuleID,
+                                    std::vector<std::string>& symbols,
+                                    std::string* ErrMsg);
 }
 
 #endif

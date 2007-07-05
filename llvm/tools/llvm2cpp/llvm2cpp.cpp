@@ -31,7 +31,7 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input LLVM bytecode file>"), 
+InputFilename(cl::Positional, cl::desc("<input LLVM bitcode file>"), 
   cl::init("-"));
 
 static cl::opt<std::string>
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     if (ErrorMessage.size())
       std::cerr << ErrorMessage << "\n";
     else
-      std::cerr << "bytecode didn't read correctly.\n";
+      std::cerr << "bitcode didn't read correctly.\n";
     return 1;
   }
 

@@ -80,7 +80,7 @@ Linker::addPaths(const std::vector<std::string>& paths) {
 
 void
 Linker::addSystemPaths() {
-  sys::Path::GetBytecodeLibraryPaths(LibPaths);
+  sys::Path::GetBitcodeLibraryPaths(LibPaths);
   LibPaths.insert(LibPaths.begin(),sys::Path("./"));
 }
 
@@ -94,7 +94,7 @@ Linker::releaseModule() {
   return result;
 }
 
-// LoadObject - Read in and parse the bytecode file named by FN and return the
+// LoadObject - Read in and parse the bitcode file named by FN and return the
 // module it contains (wrapped in an auto_ptr), or auto_ptr<Module>() and set
 // Error if an error occurs.
 std::auto_ptr<Module>
@@ -112,7 +112,7 @@ Linker::LoadObject(const sys::Path &FN) {
     
   if (Result)
     return std::auto_ptr<Module>(Result);
-  Error = "Bytecode file '" + FN.toString() + "' could not be loaded";
+  Error = "Bitcode file '" + FN.toString() + "' could not be loaded";
   if (ParseErrorMessage.size())
     Error += ": " + ParseErrorMessage;
   return std::auto_ptr<Module>();

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains routines to handle linking together LLVM bytecode files,
+// This file contains routines to handle linking together LLVM bitcode files,
 // and to handle annoying things like static libraries.
 //
 //===----------------------------------------------------------------------===//
@@ -20,7 +20,7 @@ using namespace llvm;
 // LinkItems - This function is the main entry point into linking. It takes a
 // list of LinkItem which indicates the order the files should be linked and
 // how each file should be treated (plain file or with library search). The
-// function only links bytecode and produces a result list of items that are
+// function only links bitcode and produces a result list of items that are
 // native objects. 
 bool
 Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
@@ -109,7 +109,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
 }
 
 /// LinkLibraries - takes the specified library files and links them into the
-/// main bytecode object file.
+/// main bitcode object file.
 ///
 /// Inputs:
 ///  Libraries  - The list of libraries to link into the module.
@@ -140,11 +140,11 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
   return false;
 }
 
-/// LinkInFile - opens a bytecode file and links in all objects which
+/// LinkInFile - opens a bitcode file and links in all objects which
 /// provide symbols that are currently undefined.
 ///
 /// Inputs:
-///  File - The pathname of the bytecode file.
+///  File - The pathname of the bitcode file.
 ///
 /// Outputs:
 ///  ErrorMessage - A C++ string detailing what error occurred, if any.
@@ -179,7 +179,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
     case sys::Bitcode_FileType:
     case sys::Bytecode_FileType:
     case sys::CompressedBytecode_FileType: {
-      verbose("Linking bytecode file '" + File.toString() + "'");
+      verbose("Linking bitcode file '" + File.toString() + "'");
       std::auto_ptr<Module> M(LoadObject(File));
       if (M.get() == 0)
         return error("Cannot load file '" + File.toString() + "'" + Error);
@@ -208,9 +208,9 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
 /// or relative pathname, or as a file somewhere in LLVM_LIB_SEARCH_PATH.
 ///
 /// Inputs:
-///  Files      - A vector of sys::Path indicating the LLVM bytecode filenames
+///  Files      - A vector of sys::Path indicating the LLVM bitcode filenames
 ///               to be linked.  The names can refer to a mixture of pure LLVM
-///               bytecode files and archive (ar) formatted files.
+///               bitcode files and archive (ar) formatted files.
 ///
 /// Return value:
 ///  FALSE - No errors.

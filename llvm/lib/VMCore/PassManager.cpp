@@ -1037,7 +1037,7 @@ void FunctionPassManager::add(Pass *P) {
 bool FunctionPassManager::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
-    cerr << "Error reading bytecode file: " << errstr << "\n";
+    cerr << "Error reading bitcode file: " << errstr << "\n";
     abort();
   }
   return FPM->run(F);

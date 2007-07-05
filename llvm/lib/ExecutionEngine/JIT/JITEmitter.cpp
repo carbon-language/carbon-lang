@@ -543,7 +543,7 @@ void *JITResolver::getFunctionStub(Function *F) {
   // Call the lazy resolver function unless we already KNOW it is an external
   // function, in which case we just skip the lazy resolution step.
   void *Actual = (void*)(intptr_t)LazyResolverFn;
-  if (F->isDeclaration() && !F->hasNotBeenReadFromBytecode())
+  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode())
     Actual = TheJIT->getPointerToFunction(F);
 
   // Otherwise, codegen a new stub.  For now, the stub will call the lazy
@@ -762,7 +762,7 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   void *ResultPtr = TheJIT->getPointerToGlobalIfAvailable(F);
   if (ResultPtr) return ResultPtr;
 
-  if (F->isDeclaration() && !F->hasNotBeenReadFromBytecode()) {
+  if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode()) {
     // If this is an external function pointer, we can force the JIT to
     // 'compile' it, which really just adds it to the map.
     if (DoesntNeedStub)

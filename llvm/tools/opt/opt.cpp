@@ -46,7 +46,7 @@ PassList(cl::desc("Optimizations available:"));
 // Other command line options...
 //
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode file>"), 
+InputFilename(cl::Positional, cl::desc("<input bitcode file>"), 
     cl::init("-"), cl::value_desc("filename"));
 
 static cl::opt<std::string>
@@ -61,7 +61,7 @@ PrintEachXForm("p", cl::desc("Print module after each transformation"));
 
 static cl::opt<bool>
 NoOutput("disable-output",
-         cl::desc("Do not write result bytecode file"), cl::Hidden);
+         cl::desc("Do not write result bitcode file"), cl::Hidden);
 
 static cl::opt<bool>
 NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
@@ -330,7 +330,7 @@ int main(int argc, char **argv) {
       if (ErrorMessage.size())
         cerr << ErrorMessage << "\n";
       else
-        cerr << "bytecode didn't read correctly.\n";
+        cerr << "bitcode didn't read correctly.\n";
       return 1;
     }
 
@@ -362,7 +362,7 @@ int main(int argc, char **argv) {
     // If the output is set to be emitted to standard out, and standard out is a
     // console, print out a warning message and refuse to do it.  We don't
     // impress anyone by spewing tons of binary goo to a terminal.
-    if (!Force && !NoOutput && CheckBytecodeOutputToConsole(Out,!Quiet)) {
+    if (!Force && !NoOutput && CheckBitcodeOutputToConsole(Out,!Quiet)) {
       NoOutput = true;
     }
 
@@ -418,7 +418,7 @@ int main(int argc, char **argv) {
     if (!NoVerify && !VerifyEach)
       Passes.add(createVerifierPass());
 
-    // Write bytecode out to disk or cout as the last step...
+    // Write bitcode out to disk or cout as the last step...
     if (!NoOutput && !AnalyzeOnly)
       Passes.add(CreateBitcodeWriterPass(*Out));
 

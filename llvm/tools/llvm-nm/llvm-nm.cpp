@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This program is a utility that works like traditional Unix "nm",
-// that is, it prints out the names of symbols in a bytecode file,
+// that is, it prints out the names of symbols in a bitcode file,
 // along with some information about each symbol.
 //
 // This "nm" does not print symbols' addresses. It supports many of
@@ -43,7 +43,7 @@ namespace {
                           cl::aliasopt(OutputFormat));
 
   cl::list<std::string>
-  InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
+  InputFilenames(cl::Positional, cl::desc("<input bitcode files>"),
                  cl::ZeroOrMore);
 
   cl::opt<bool> UndefinedOnly("undefined-only",

@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   // like --help and --version.
   cl::ParseCommandLineOptions(argc, argv,
     " LLVM Archive Index Generator (llvm-ranlib)\n\n"
-    "  This program adds or updates an index of bytecode symbols\n"
+    "  This program adds or updates an index of bitcode symbols\n"
     "  to an LLVM archive file."
   );
 

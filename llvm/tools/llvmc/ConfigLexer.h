@@ -56,7 +56,7 @@ enum ConfigLexerTokens {
   BINDIR_SUBST,      ///< The substitution item %bindir%
   ASSEMBLY,          ///< The value "assembly" (and variants)
   ASSEMBLER,         ///< The name "assembler" (and variants)
-  BYTECODE,          ///< The value "bytecode" (and variants)
+  BITCODE,           ///< The value "bitcode" (and variants)
   COMMAND,           ///< The name "command" (and variants)
   DEFS_SUBST,        ///< The substitution item %defs%
   EQUALS,            ///< The equals sign, =

@@ -117,7 +117,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
   if (!arch)
     return error("Cannot read archive '" + Filename.toString() +
                  "': " + ErrMsg);
-  if (!arch->isBytecodeArchive()) {
+  if (!arch->isBitcodeArchive()) {
     is_native = true;
     return false;
   }

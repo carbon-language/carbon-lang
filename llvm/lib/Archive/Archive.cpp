@@ -210,10 +210,10 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
         symbols.push_back(FI->getName());
 }
 
-// Get just the externally visible defined symbols from the bytecode
-bool llvm::GetBytecodeSymbols(const sys::Path& fName,
-                              std::vector<std::string>& symbols,
-                              std::string* ErrMsg) {
+// Get just the externally visible defined symbols from the bitcode
+bool llvm::GetBitcodeSymbols(const sys::Path& fName,
+                             std::vector<std::string>& symbols,
+                             std::string* ErrMsg) {
   std::auto_ptr<MemoryBuffer> Buffer(
                        MemoryBuffer::getFileOrSTDIN(&fName.toString()[0],
                                                     fName.toString().size()));
@@ -242,10 +242,10 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
 }
 
 ModuleProvider*
-llvm::GetBytecodeSymbols(const unsigned char *BufPtr, unsigned Length,
-                         const std::string& ModuleID,
-                         std::vector<std::string>& symbols,
-                         std::string* ErrMsg) {
+llvm::GetBitcodeSymbols(const unsigned char *BufPtr, unsigned Length,
+                        const std::string& ModuleID,
+                        std::vector<std::string>& symbols,
+                        std::string* ErrMsg) {
   // Get the module provider
   MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str());
   memcpy((char*)Buffer->getBufferStart(), BufPtr, Length);

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Builds up standard unix archive files (.a) containing LLVM bytecode.
+// Builds up standard unix archive files (.a) containing LLVM bitcode.
 //
 //===----------------------------------------------------------------------===//
 
@@ -109,7 +109,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   // it will accept them. If the name starts with #1/ and the remainder is
   // digits, then those digits specify the length of the name that is
   // stored immediately following the header. The special name
-  // __LLVM_SYM_TAB__ identifies the symbol table for LLVM bytecode.
+  // __LLVM_SYM_TAB__ identifies the symbol table for LLVM bitcode.
   // Anything else is a regular, short filename that is terminated with
   // a '/' and blanks.
 
@@ -344,7 +344,7 @@ Archive::OpenAndLoad(const sys::Path& file, std::string* ErrorMessage)
   return result.release();
 }
 
-// Get all the bytecode modules from the archive
+// Get all the bitcode modules from the archive
 bool
 Archive::getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage) {
 
@@ -487,7 +487,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
   if (!mbr)
     return 0;
 
-  // Now, load the bytecode module to get the ModuleProvider
+  // Now, load the bitcode module to get the ModuleProvider
   std::string FullMemberName = archPath.toString() + "(" +
     mbr->getPath().toString() + ")";
   MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(mbr->getSize(),
@@ -541,8 +541,8 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
         std::string FullMemberName = archPath.toString() + "(" +
           mbr->getPath().toString() + ")";
         ModuleProvider* MP = 
-          GetBytecodeSymbols((const unsigned char*)At, mbr->getSize(),
-                             FullMemberName, symbols, error);
+          GetBitcodeSymbols((const unsigned char*)At, mbr->getSize(),
+                            FullMemberName, symbols, error);
 
         if (MP) {
           // Insert the module's symbols into the symbol table
@@ -555,7 +555,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
           modules.insert(std::make_pair(offset, std::make_pair(MP, mbr)));
         } else {
           if (error)
-            *error = "Can't parse bytecode member: " + 
+            *error = "Can't parse bitcode member: " + 
               mbr->getPath().toString() + ": " + *error;
           delete mbr;
           return false;
@@ -591,7 +591,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
   return true;
 }
 
-bool Archive::isBytecodeArchive() {
+bool Archive::isBitcodeArchive() {
   // Make sure the symTab has been loaded. In most cases this should have been
   // done when the archive was constructed, but still,  this is just in case.
   if (!symTab.size())
@@ -602,14 +602,14 @@ bool Archive::isBytecodeArchive() {
   // if it has a size
   if (symTab.size()) return true;
 
-  //We still can't be sure it isn't a bytecode archive
+  // We still can't be sure it isn't a bitcode archive
   if (!loadArchive(0))
     return false;
 
   std::vector<Module *> Modules;
   std::string ErrorMessage;
 
-  // Scan the archive, trying to load a bytecode member.  We only load one to
+  // Scan the archive, trying to load a bitcode member.  We only load one to
   // see if this works.
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (!I->isBytecode() && !I->isCompressedBytecode())
@@ -624,7 +624,7 @@ bool Archive::isBytecodeArchive() {
     Module *M = ParseBitcodeFile(Buffer);
     delete Buffer;
     if (!M)
-      return false;  // Couldn't parse bytecode, not a bytecode archive.
+      return false;  // Couldn't parse bitcode, not a bitcode archive.
     delete M;
     return true;
   }

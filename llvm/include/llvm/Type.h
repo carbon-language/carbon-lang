@@ -52,7 +52,7 @@ class TypeMapBase;
 ///
 /// Opaque types are also kinda weird and scary and different because they have
 /// to keep a list of uses of the type.  When, through linking, parsing, or
-/// bytecode reading, they become resolved, they need to find and update all
+/// bitcode reading, they become resolved, they need to find and update all
 /// users of the unknown type, causing them to reference a new, more concrete
 /// type.  Opaque types are deleted when their use list dwindles to zero users.
 ///
@@ -77,7 +77,7 @@ public:
     IntegerTyID,     ///<  4: Arbitrary bit width integers
     FunctionTyID,    ///<  5: Functions
     StructTyID,      ///<  6: Structures
-    PackedStructTyID,///<  7: Packed Structure. This is for bytecode only
+    PackedStructTyID,///<  7: Packed Structure. This is for bitcode only
     ArrayTyID,       ///<  8: Arrays
     PointerTyID,     ///<  9: Pointers
     OpaqueTyID,      ///< 10: Opaque: type with unknown structure

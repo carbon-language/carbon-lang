@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_BITECODE_ARCHIVE_H
-#define LLVM_BITECODE_ARCHIVE_H
+#ifndef LLVM_BITCODE_ARCHIVE_H
+#define LLVM_BITCODE_ARCHIVE_H
 
 #include "llvm/ADT/ilist"
 #include "llvm/System/Path.h"
@@ -377,13 +377,13 @@ class Archive {
     /// @brief Get the offset to the first "real" file member  in the archive.
     unsigned getFirstFileOffset() { return firstFileOffset; }
 
-    /// This method will scan the archive for bytecode modules, interpret them
+    /// This method will scan the archive for bitcode modules, interpret them
     /// and return a vector of the instantiated modules in \p Modules. If an
     /// error occurs, this method will return true. If \p ErrMessage is not null
     /// and an error occurs, \p *ErrMessage will be set to a string explaining
     /// the error that occurred.
     /// @returns true if an error occurred
-    /// @brief Instantiate all the bytecode modules located in the archive
+    /// @brief Instantiate all the bitcode modules located in the archive
     bool getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage);
 
     /// This accessor looks up the \p symbol in the archive's symbol table and
@@ -418,13 +418,13 @@ class Archive {
     );
 
     /// This method determines whether the archive is a properly formed llvm
-    /// bytecode archive.  It first makes sure the symbol table has been loaded
+    /// bitcode archive.  It first makes sure the symbol table has been loaded
     /// and has a non-zero size.  If it does, then it is an archive.  If not,
-    /// then it tries to load all the bytecode modules of the archive.  Finally,
+    /// then it tries to load all the bitcode modules of the archive.  Finally,
     /// it returns whether it was successfull.
-    /// @returns true if the archive is a proper llvm bytecode archive
-    /// @brief Determine whether the archive is a proper llvm bytecode archive.
-    bool isBytecodeArchive();
+    /// @returns true if the archive is a proper llvm bitcode archive
+    /// @brief Determine whether the archive is a proper llvm bitcode archive.
+    bool isBitcodeArchive();
 
   /// @}
   /// @name Mutators
@@ -433,7 +433,7 @@ class Archive {
     /// This method is the only way to get the archive written to disk. It
     /// creates or overwrites the file specified when \p this was created
     /// or opened. The arguments provide options for writing the archive. If
-    /// \p CreateSymbolTable is true, the archive is scanned for bytecode files
+    /// \p CreateSymbolTable is true, the archive is scanned for bitcode files
     /// and a symbol table of the externally visible function and global
     /// variable names is created. If \p TruncateNames is true, the names of the
     /// archive members will have their path component stripped and the file
@@ -525,7 +525,7 @@ class Archive {
     /// @brief Frees all the members and unmaps the archive file.
     void cleanUpMemory();
 
-    /// This type is used to keep track of bytecode modules loaded from the
+    /// This type is used to keep track of bitcode modules loaded from the
     /// symbol table. It maps the file offset to a pair that consists of the
     /// associated ArchiveMember and the ModuleProvider.
     /// @brief Module mapping type

@@ -90,7 +90,7 @@ namespace llvm {
 
   private:
     // The buffer we accumulate the file header into.  Note that this should be
-    // changed into something much more efficient later (and the bytecode writer
+    // changed into something much more efficient later (and the bitcode writer
     // as well!).
     DataBuffer FileHeader;
 

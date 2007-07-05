@@ -28,7 +28,7 @@ using namespace llvm;
 
 // InputFilename - The filename to read from.
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode file>"),
+InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
               cl::init("-"), cl::value_desc("filename"));
 
 static cl::opt<std::string>
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   delete Buffer;
   
   if (M.get() == 0) {
-    cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    cerr << argv[0] << ": bitcode didn't read correctly.\n";
     return 1;
   }
 

@@ -33,7 +33,7 @@ using namespace llvm;
 
 namespace {
   cl::opt<std::string>
-  InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
+  InputFile(cl::desc("<input bitcode>"), cl::Positional, cl::init("-"));
 
   cl::list<std::string>
   InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
@@ -74,7 +74,7 @@ int main(int argc, char **argv, char * const *envp) {
   if (DisableCoreFiles)
     sys::Process::PreventCoreFiles();
   
-  // Load the bytecode...
+  // Load the bitcode...
   std::string ErrorMsg;
   ModuleProvider *MP = 0;
   if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){

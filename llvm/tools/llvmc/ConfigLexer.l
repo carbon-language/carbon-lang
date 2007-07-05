@@ -79,7 +79,7 @@ ASSEMBLER       assembler|Assembler|ASSEMBLER
 COMMAND         command|Command|COMMAND
 LANG            lang|Lang|LANG
 LIBS            libs|Libs|LIBS
-LINKER		linker|Linker|LINKER
+LINKER          linker|Linker|LINKER
 NAME            name|Name|NAME
 OPT1            opt1|Opt1|OPT1
 OPT2            opt2|Opt2|OPT2
@@ -97,7 +97,7 @@ VERSION         version|Version|VERSION
 
 True            true|True|TRUE|on|On|ON|yes|Yes|YES
 False           false|False|FALSE|off|Off|OFF|no|No|NO
-Bytecode        bc|BC|bytecode|Bytecode|BYTECODE
+Bitcode         bc|BC|bitcode|Bitcode|BITCODE
 Assembly        asm|ASM|assembly|Assembly|ASSEMBLY
 
 BadSubst        \%[a-zA-Z]*\%
@@ -186,7 +186,7 @@ White           [ \t]*
 %WOpts%         { return handleSubstitution(WOPTS_SUBST); }
 
 {Assembly}      { return handleValueContext(ASSEMBLY); }
-{Bytecode}      { return handleValueContext(BYTECODE); }
+{Bitcode}       { return handleValueContext(BITCODE); }
 {True}          { return handleValueContext(TRUETOK); }
 {False}         { return handleValueContext(FALSETOK); }
 

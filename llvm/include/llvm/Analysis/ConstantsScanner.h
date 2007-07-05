@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This class implements an iterator to walk through the constants referenced by
-// a method.  This is used by the Bytecode & Assembly writers to build constant
+// a method.  This is used by the Bitcode & Assembly writers to build constant
 // pools.
 //
 //===----------------------------------------------------------------------===//

@@ -107,7 +107,7 @@ LTO::removeModule (const std::string &InputFilename)
   delete m;
 }
 
-/// InputFilename is a LLVM bytecode file. If Module with InputFilename is
+/// InputFilename is a LLVM bitcode file. If Module with InputFilename is
 /// available then return it. Otherwise parseInputFilename.
 Module *
 LTO::getModule(const std::string &InputFilename)
@@ -128,7 +128,7 @@ LTO::getModule(const std::string &InputFilename)
   return m;
 }
 
-/// InputFilename is a LLVM bytecode file. Reade this bytecode file and 
+/// InputFilename is a LLVM bitcode file. Reade this bitcode file and 
 /// set corresponding target triplet string.
 void
 LTO::getTargetTriple(const std::string &InputFilename, 
@@ -139,7 +139,7 @@ LTO::getTargetTriple(const std::string &InputFilename,
     targetTriple = m->getTargetTriple();
 }
 
-/// InputFilename is a LLVM bytecode file. Read it using bytecode reader.
+/// InputFilename is a LLVM bitcode file. Read it using bitcode reader.
 /// Collect global functions and symbol names in symbols vector.
 /// Collect external references in references vector.
 /// Return LTO_READ_SUCCESS if there is no error.

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Builds up (relatively) standard unix archive files (.a) containing LLVM
-// bytecode or other files.
+// bitcode or other files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,7 +54,7 @@ static cl::extrahelp MoreHelp(
   "  [b] - put file(s) before [relpos] (same as [i])\n"
   "  [f] - truncate inserted file names\n"
   "  [i] - put file(s) before [relpos] (same as [b])\n"
-  "  [k] - always print bytecode files (default is to skip them)\n"
+  "  [k] - always print bitcode files (default is to skip them)\n"
   "  [N] - use instance [count] of name\n"
   "  [o] - preserve original dates\n"
   "  [P] - use full path names when matching\n"
@@ -88,7 +88,7 @@ bool AddBefore = false;          ///< 'b' modifier
 bool Create = false;             ///< 'c' modifier
 bool TruncateNames = false;      ///< 'f' modifier
 bool InsertBefore = false;       ///< 'i' modifier
-bool DontSkipBytecode = false;   ///< 'k' modifier
+bool DontSkipBitcode = false;    ///< 'k' modifier
 bool UseCount = false;           ///< 'N' modifier
 bool OriginalDates = false;      ///< 'o' modifier
 bool FullPath = false;           ///< 'P' modifier
@@ -193,7 +193,7 @@ ArchiveOperation parseCommandLine() {
     case 'x': ++NumOperations; Operation = Extract; break;
     case 'c': Create = true; break;
     case 'f': TruncateNames = true; break;
-    case 'k': DontSkipBytecode = true; break;
+    case 'k': DontSkipBitcode = true; break;
     case 'l': /* accepted but unused */ break;
     case 'o': OriginalDates = true; break;
     case 'P': FullPath = true; break;
@@ -341,7 +341,7 @@ void printSymbolTable() {
 
 // doPrint - Implements the 'p' operation. This function traverses the archive
 // looking for members that match the path list. It is careful to uncompress
-// things that should be and to skip bytecode files unless the 'k' modifier was
+// things that should be and to skip bitcode files unless the 'k' modifier was
 // given.
 bool doPrint(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
@@ -356,7 +356,7 @@ bool doPrint(std::string* ErrMsg) {
 
         // Skip things that don't make sense to print
         if (I->isLLVMSymbolTable() || I->isSVR4SymbolTable() ||
-            I->isBSD4SymbolTable() || (!DontSkipBytecode &&
+            I->isBSD4SymbolTable() || (!DontSkipBitcode &&
              (I->isBytecode() || I->isCompressedBytecode())))
           continue;
 
@@ -694,7 +694,7 @@ int main(int argc, char **argv) {
   // like --help and --version.
   cl::ParseCommandLineOptions(argc, argv,
     " LLVM Archiver (llvm-ar)\n\n"
-    "  This program archives bytecode files into single libraries\n"
+    "  This program archives bitcode files into single libraries\n"
   );
 
   // Print a stack trace if we signal out.

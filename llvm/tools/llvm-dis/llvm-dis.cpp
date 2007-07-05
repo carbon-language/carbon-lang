@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This utility may be invoked in the following manner:
-//  llvm-dis [options]      - Read LLVM bytecode from stdin, write asm to stdout
-//  llvm-dis [options] x.bc - Read LLVM bytecode from the x.bc file, write asm
+//  llvm-dis [options]      - Read LLVM bitcode from stdin, write asm to stdout
+//  llvm-dis [options] x.bc - Read LLVM bitcode from the x.bc file, write asm
 //                            to the x.ll file.
 //  Options:
 //      --help   - Output information about command line switches
@@ -31,7 +31,7 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
       if (ErrorMessage.size())
         cerr << ErrorMessage << "\n";
       else
-        cerr << "bytecode didn't read correctly.\n";
+        cerr << "bitcode didn't read correctly.\n";
       return 1;
     }
     

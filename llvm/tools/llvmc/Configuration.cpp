@@ -291,8 +291,8 @@ namespace {
           case ASSEMBLY:
             str += "assembly";
             break;
-          case BYTECODE:
-            str += "bytecode";
+          case BITCODE:
+            str += "bitcode";
             break;
           case TRUETOK:
             str += "true";
@@ -340,8 +340,8 @@ namespace {
               case ASSEMBLY:
                 anOption += "assembly";
                 break;
-              case BYTECODE:
-                anOption += "bytecode";
+              case BITCODE:
+                anOption += "bitcode";
                 break;
               case TRUETOK:
                 anOption += "true";
@@ -392,7 +392,7 @@ namespace {
           next();
         if (token == ASSEMBLY) {
           return true;
-        } else if (token == BYTECODE) {
+        } else if (token == BITCODE) {
           return false;
         } else {
           error("Expecting output type value");

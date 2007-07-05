@@ -41,7 +41,7 @@ class DerivedType;
 ///
 /// Classes must implement this interface so that they may be notified when an
 /// abstract type is resolved.  Abstract types may be resolved into more 
-/// concrete types through: linking, parsing, and bytecode reading.  When this 
+/// concrete types through: linking, parsing, and bitcode reading.  When this 
 /// happens, all of the users of the type must be updated to reference the new,
 /// more concrete type.  They are notified through the AbstractTypeUser 
 /// interface.

@@ -32,8 +32,8 @@ using namespace llvm;
 
 namespace {
   cl::opt<std::string>
-  BytecodeFile(cl::Positional, cl::desc("<program bytecode file>"),
-               cl::Required);
+  BitcodeFile(cl::Positional, cl::desc("<program bitcode file>"),
+              cl::Required);
 
   cl::opt<std::string>
   ProfileDataFile(cl::Positional, cl::desc("<llvmprof.out file>"),
@@ -115,16 +115,16 @@ int main(int argc, char **argv) {
     cl::ParseCommandLineOptions(argc, argv, " llvm profile dump decoder\n");
     sys::PrintStackTraceOnErrorSignal();
 
-    // Read in the bytecode file...
+    // Read in the bitcode file...
     std::string ErrorMessage;
     Module *M = 0;
-    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BytecodeFile,
+    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile,
                                                             &ErrorMessage)) {
       M = ParseBitcodeFile(Buffer, &ErrorMessage);
       delete Buffer;
     }
     if (M == 0) {
-      std::cerr << argv[0] << ": " << BytecodeFile << ": " 
+      std::cerr << argv[0] << ": " << BitcodeFile << ": " 
         << ErrorMessage << "\n";
       return 1;
     }

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Builds up an LLVM archive file (.a) containing LLVM bytecode.
+// Builds up an LLVM archive file (.a) containing LLVM bitcode.
 //
 //===----------------------------------------------------------------------===//
 
@@ -222,7 +222,7 @@ Archive::writeMember(
   }
 
   // Now that we have the data in memory, update the
-  // symbol table if its a bytecode file.
+  // symbol table if its a bitcode file.
   if (CreateSymbolTable &&
       (member.isBytecode() || member.isCompressedBytecode())) {
     std::vector<std::string> symbols;
@@ -230,10 +230,10 @@ Archive::writeMember(
       member.getPath().toString()
       + ")";
     ModuleProvider* MP = 
-      GetBytecodeSymbols((const unsigned char*)data,fSize,
-                         FullMemberName, symbols, ErrMsg);
+      GetBitcodeSymbols((const unsigned char*)data,fSize,
+                        FullMemberName, symbols, ErrMsg);
 
-    // If the bytecode parsed successfully
+    // If the bitcode parsed successfully
     if ( MP ) {
       for (std::vector<std::string>::iterator SI = symbols.begin(),
            SE = symbols.end(); SI != SE; ++SI) {
@@ -255,7 +255,7 @@ Archive::writeMember(
         delete mFile;
       }
       if (ErrMsg)
-        *ErrMsg = "Can't parse bytecode member: " + member.getPath().toString()
+        *ErrMsg = "Can't parse bitcode member: " + member.getPath().toString()
           + ": " + *ErrMsg;
       return true;
     }

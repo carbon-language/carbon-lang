@@ -30,7 +30,7 @@ void llvm_destroy_optimizer(llvm_lto_t lto) {
   delete (llvm::LTO*)lto;
 }
 
-/// Read an LLVM bytecode file using LTO::readLLVMObjectFile.
+/// Read an LLVM bitcode file using LTO::readLLVMObjectFile.
 extern "C"
 llvm_lto_status
 llvm_read_object_file(llvm_lto_t lto, const char *input_filename) {

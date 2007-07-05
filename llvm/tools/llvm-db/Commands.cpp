@@ -219,7 +219,7 @@ void CLIDebugger::parseProgramOptions(std::string &Options) {
 
 
 /// file command - If the user specifies an option, search the PATH for the
-/// specified program/bytecode file and load it.  If the user does not specify
+/// specified program/bitcode file and load it.  If the user does not specify
 /// an option, unload the current program.
 void CLIDebugger::fileCommand(std::string &Options) {
   std::string Prog = getToken(Options);

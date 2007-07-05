@@ -112,15 +112,15 @@ namespace sys {
       /// @brief Construct a path to the system library directory
       static void GetSystemLibraryPaths(std::vector<sys::Path>& Paths);
 
-      /// Construct a vector of sys::Path that contains the "standard" bytecode
+      /// Construct a vector of sys::Path that contains the "standard" bitcode
       /// library paths suitable for linking into an llvm program. This function
       /// *must* return the value of LLVM_LIB_SEARCH_PATH as well as the value
       /// of LLVM_LIBDIR. It also must provide the System library paths as
       /// returned by GetSystemLibraryPaths.
       /// @see GetSystemLibraryPaths
-      /// @brief Construct a list of directories in which bytecode could be
+      /// @brief Construct a list of directories in which bitcode could be
       /// found.
-      static void GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths);
+      static void GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths);
 
       /// Find the path to a library using its short name. Use the system
       /// dependent library paths to locate the library.

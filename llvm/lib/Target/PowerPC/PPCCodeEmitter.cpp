@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the PowerPC 32-bit CodeEmitter and associated machinery to
-// JIT-compile bytecode to native PowerPC.
+// JIT-compile bitcode to native PowerPC.
 //
 //===----------------------------------------------------------------------===//
 

@@ -43,10 +43,10 @@ namespace llvm {
       /// @brief The phases of processing that llvmc understands
       enum Phases {
         PREPROCESSING, ///< Source language combining, filtering, substitution
-        TRANSLATION,   ///< Translate source -> LLVM bytecode/assembly
+        TRANSLATION,   ///< Translate source -> LLVM bitcode/assembly
         OPTIMIZATION,  ///< Optimize translation result
         ASSEMBLY,      ///< Convert program to executable
-        LINKING,       ///< Link bytecode and native code
+        LINKING,       ///< Link bitcode and native code
         NUM_PHASES     ///< Always last!
       };
 
@@ -129,7 +129,7 @@ namespace llvm {
         TIME_ACTIONS_FLAG    = 0x0010, ///< Time the actions as they execute
         SHOW_STATS_FLAG      = 0x0020, ///< Show pass statistics
         EMIT_NATIVE_FLAG     = 0x0040, ///< Emit native code instead of bc
-        EMIT_RAW_FLAG        = 0x0080, ///< Emit raw, unoptimized bytecode
+        EMIT_RAW_FLAG        = 0x0080, ///< Emit raw, unoptimized bitcode
         KEEP_TEMPS_FLAG      = 0x0100, ///< Don't delete temporary files
         STRIP_OUTPUT_FLAG    = 0x0200, ///< Strip symbols from linked output
         DRIVER_FLAGS_MASK    = 0x03FF  ///< Union of the above flags

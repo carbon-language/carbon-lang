@@ -21,10 +21,10 @@ namespace llvm {
 
 /// Determine if the ostream provided is connected to the std::cout and
 /// displayed or not (to a console window). If so, generate a warning message
-/// advising against display of bytecode and return true. Otherwise just return
+/// advising against display of bitcode and return true. Otherwise just return
 /// false
 /// @brief Check for output written to a console
-bool CheckBytecodeOutputToConsole(
+bool CheckBitcodeOutputToConsole(
   std::ostream* stream_to_check, ///< The stream to be checked
   bool print_warning = true ///< Control whether warnings are printed
 );

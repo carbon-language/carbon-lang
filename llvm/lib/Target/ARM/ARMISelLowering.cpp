@@ -824,7 +824,7 @@ SDOperand ARMTargetLowering::LowerGlobalAddressELF(SDOperand Op,
 static bool GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) {
   return RelocM != Reloc::Static &&
     (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
-     (GV->isDeclaration() && !GV->hasNotBeenReadFromBytecode()));
+     (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode()));
 }
 
 SDOperand ARMTargetLowering::LowerGlobalAddressDarwin(SDOperand Op,

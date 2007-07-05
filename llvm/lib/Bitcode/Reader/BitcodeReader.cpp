@@ -1564,7 +1564,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
 bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
   // If it already is material, ignore the request.
-  if (!F->hasNotBeenReadFromBytecode()) return false;
+  if (!F->hasNotBeenReadFromBitcode()) return false;
   
   DenseMap<Function*, std::pair<uint64_t, unsigned> >::iterator DFII = 
     DeferredFunctionInfo.find(F);
@@ -1585,7 +1585,7 @@ bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
 
 void BitcodeReader::dematerializeFunction(Function *F) {
   // If this function isn't materialized, or if it is a proto, this is a noop.
-  if (F->hasNotBeenReadFromBytecode() || F->isDeclaration())
+  if (F->hasNotBeenReadFromBitcode() || F->isDeclaration())
     return;
   
   assert(DeferredFunctionInfo.count(F) && "No info to read function later?");
@@ -1601,7 +1601,7 @@ Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
        DeferredFunctionInfo.begin(), E = DeferredFunctionInfo.end(); I != E;
        ++I) {
     Function *F = I->first;
-    if (F->hasNotBeenReadFromBytecode() &&
+    if (F->hasNotBeenReadFromBitcode() &&
         materializeFunction(F, ErrInfo))
       return 0;
   }

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This tool implements a just-in-time compiler for LLVM, allowing direct
-// execution of LLVM bytecode in an efficient manner.
+// execution of LLVM bitcode in an efficient manner.
 //
 //===----------------------------------------------------------------------===//
 
@@ -258,7 +258,7 @@ void *JIT::getPointerToFunction(Function *F) {
     return Addr;   // Check if function already code gen'd
 
   // Make sure we read in the function if it exists in this Module.
-  if (F->hasNotBeenReadFromBytecode()) {
+  if (F->hasNotBeenReadFromBitcode()) {
     // Determine the module provider this function is provided by.
     Module *M = F->getParent();
     ModuleProvider *MP = 0;
@@ -273,7 +273,7 @@ void *JIT::getPointerToFunction(Function *F) {
     std::string ErrorMsg;
     if (MP->materializeFunction(F, &ErrorMsg)) {
       cerr << "Error reading function '" << F->getName()
-           << "' from bytecode file: " << ErrorMsg << "\n";
+           << "' from bitcode file: " << ErrorMsg << "\n";
       abort();
     }
   }

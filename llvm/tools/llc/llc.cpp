@@ -9,7 +9,7 @@
 //
 // This is the llc code generator driver. It provides a convenient
 // command-line interface for generating native assembly-language code
-// or C code, given LLVM bytecode.
+// or C code, given LLVM bitcode.
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,7 +44,7 @@ using namespace llvm;
 // and back-end code generation options are specified with the target machine.
 //
 static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
+InputFilename(cl::Positional, cl::desc("<input bitcode>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
   if (Buffer.get())
     M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
   if (M.get() == 0) {
-    std::cerr << argv[0] << ": bytecode didn't read correctly.\n";
+    std::cerr << argv[0] << ": bitcode didn't read correctly.\n";
     std::cerr << "Reason: " << ErrorMessage << "\n";
     return 1;
   }
