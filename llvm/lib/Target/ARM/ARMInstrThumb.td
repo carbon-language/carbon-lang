@@ -223,9 +223,11 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
   }
 }
 
+// FIXME: should be able to write a pattern for ARMBrcond, but can't use
+// a two-value operand where a dag node expects two operands. :( 
 let isBranch = 1, isTerminator = 1, noResults = 1 in
   def tBcc : TI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
-                 [(ARMbrcond bb:$dst, imm:$cc)]>;
+                 [/*(ARMbrcond bb:$dst, imm:$cc)*/]>;
 
 //===----------------------------------------------------------------------===//
 //  Load Store Instructions.
@@ -522,7 +524,7 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
   def tMOVCCr :
   PseudoInst<(ops GPR:$dst, GPR:$false, GPR:$true, ccop:$cc),
               "@ tMOVCCr $cc",
-              [(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc))]>;
+              [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc))*/]>;
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.

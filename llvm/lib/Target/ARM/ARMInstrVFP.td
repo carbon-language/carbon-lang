@@ -216,12 +216,10 @@ def FCVTSD : ADI<(ops SPR:$dst, DPR:$a),
                  [(set SPR:$dst, (fround DPR:$a))]>;
 
 def FCPYD  : ADI<(ops DPR:$dst, DPR:$a),
-                 "fcpyd", " $dst, $a",
-                 [/*(set DPR:$dst, DPR:$a)*/]>;
+                 "fcpyd", " $dst, $a", []>;
 
 def FCPYS  : ASI<(ops SPR:$dst, SPR:$a),
-                 "fcpys", " $dst, $a",
-                 [/*(set SPR:$dst, SPR:$a)*/]>;
+                 "fcpys", " $dst, $a", []>;
 
 def FNEGD  : ADI<(ops DPR:$dst, DPR:$a),
                  "fnegd", " $dst, $a",
@@ -278,7 +276,7 @@ def FMDRR : ADI<(ops DPR:$dst, GPR:$src1, GPR:$src2),
 // FMSRR: GPR -> SPR
 
 let clobbersPred = 1 in
-def FMSTAT : ASI<(ops), "fmstat", "", [(arm_fmstat)]>;
+def FMSTAT : ASI<(ops), "fmstat", "", [(arm_fmstat)]>, Imp<[], [CPSR]>;
 
 // FMXR: GPR -> VFP Sstem reg
 
@@ -369,21 +367,21 @@ def FNMSCS : ASI<(ops SPR:$dst, SPR:$dstin, SPR:$a, SPR:$b),
 //
 
 def FCPYDcc  : AXDI<(ops DPR:$dst, DPR:$false, DPR:$true, ccop:$cc),
-                   "fcpyd$cc $dst, $true",
-                   [(set DPR:$dst, (ARMcmov DPR:$false, DPR:$true, imm:$cc))]>,
-                   RegConstraint<"$false = $dst">;
+                    "fcpyd$cc $dst, $true",
+                [/*(set DPR:$dst, (ARMcmov DPR:$false, DPR:$true, imm:$cc))*/]>,
+                    RegConstraint<"$false = $dst">;
 
 def FCPYScc  : AXSI<(ops SPR:$dst, SPR:$false, SPR:$true, ccop:$cc),
-                   "fcpys$cc $dst, $true",
-                   [(set SPR:$dst, (ARMcmov SPR:$false, SPR:$true, imm:$cc))]>,
-                   RegConstraint<"$false = $dst">;
+                    "fcpys$cc $dst, $true",
+                [/*(set SPR:$dst, (ARMcmov SPR:$false, SPR:$true, imm:$cc))*/]>,
+                    RegConstraint<"$false = $dst">;
 
 def FNEGDcc  : AXDI<(ops DPR:$dst, DPR:$false, DPR:$true, ccop:$cc),
-                   "fnegd$cc $dst, $true",
-                   [(set DPR:$dst, (ARMcneg DPR:$false, DPR:$true, imm:$cc))]>,
-                   RegConstraint<"$false = $dst">;
+                    "fnegd$cc $dst, $true",
+                [/*(set DPR:$dst, (ARMcneg DPR:$false, DPR:$true, imm:$cc))*/]>,
+                    RegConstraint<"$false = $dst">;
 
 def FNEGScc  : AXSI<(ops SPR:$dst, SPR:$false, SPR:$true, ccop:$cc),
-                   "fnegs$cc $dst, $true",
-                   [(set SPR:$dst, (ARMcneg SPR:$false, SPR:$true, imm:$cc))]>,
-                   RegConstraint<"$false = $dst">;
+                    "fnegs$cc $dst, $true",
+                [/*(set SPR:$dst, (ARMcneg SPR:$false, SPR:$true, imm:$cc))*/]>,
+                    RegConstraint<"$false = $dst">;
