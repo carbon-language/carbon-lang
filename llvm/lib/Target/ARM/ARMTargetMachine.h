@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "ARMInstrInfo.h"
 #include "ARMFrameInfo.h"
+#include "ARMJITInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMISelLowering.h"
 
@@ -32,6 +33,7 @@ class ARMTargetMachine : public LLVMTargetMachine {
   const TargetData  DataLayout;       // Calculates type size & alignment
   ARMInstrInfo      InstrInfo;
   ARMFrameInfo      FrameInfo;
+  ARMJITInfo        JITInfo;
   ARMTargetLowering TLInfo;
 
 public:
@@ -39,6 +41,7 @@ public:
 
   virtual const ARMInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
@@ -48,6 +51,7 @@ public:
     return const_cast<ARMTargetLowering*>(&TLInfo); 
   }
   static unsigned getModuleMatchQuality(const Module &M);
+  static unsigned getJITMatchQuality();
 
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
   
@@ -56,6 +60,10 @@ public:
   virtual bool addPreEmitPass(FunctionPassManager &PM, bool Fast);
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);
+  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                              MachineCodeEmitter &MCE);
+  virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                    MachineCodeEmitter &MCE);
 };
 
 /// ThumbTargetMachine - Thumb target machine.
@@ -64,6 +72,7 @@ class ThumbTargetMachine : public ARMTargetMachine {
 public:
   ThumbTargetMachine(const Module &M, const std::string &FS);
 
+  static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);
 };
 

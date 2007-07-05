@@ -36,12 +36,26 @@ namespace {
 
 /// ThumbTargetMachine - Create an Thumb architecture model.
 ///
+unsigned ThumbTargetMachine::getJITMatchQuality() {
+#if defined(__arm__)
+  return 10;
+#endif
+  return 0;
+}
+
 unsigned ThumbTargetMachine::getModuleMatchQuality(const Module &M) {
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "thumb-")
     return 20;
 
-  return M.getPointerSize() == Module::Pointer32;
+  if (M.getEndianness()  == Module::LittleEndian &&
+      M.getPointerSize() == Module::Pointer32)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
 }
 
 ThumbTargetMachine::ThumbTargetMachine(const Module &M, const std::string &FS) 
@@ -66,14 +80,29 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
            std::string("e-p:32:32-f64:64:64-i64:64:64"))),
     InstrInfo(Subtarget),
     FrameInfo(Subtarget),
+    JITInfo(*this),
     TLInfo(*this) {}
+
+unsigned ARMTargetMachine::getJITMatchQuality() {
+#if defined(__thumb__)
+  return 10;
+#endif
+  return 0;
+}
 
 unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 4 && std::string(TT.begin(), TT.begin()+4) == "arm-")
     return 20;
 
-  return M.getPointerSize() == Module::Pointer32;
+  if (M.getEndianness()  == Module::LittleEndian &&
+      M.getPointerSize() == Module::Pointer32)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+
+  return getJITMatchQuality()/2;
 }
 
 
@@ -104,5 +133,23 @@ bool ARMTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
                                           std::ostream &Out) {
   // Output assembly language.
   PM.add(createARMCodePrinterPass(Out, *this));
+  return false;
+}
+
+
+bool ARMTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                      MachineCodeEmitter &MCE) {
+  // FIXME: Move this to TargetJITInfo!
+  setRelocationModel(Reloc::Static);
+
+  // Machine code emitter pass for ARM.
+  PM.add(createARMCodeEmitterPass(*this, MCE));
+  return false;
+}
+
+bool ARMTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
+                                            MachineCodeEmitter &MCE) {
+  // Machine code emitter pass for ARM.
+  PM.add(createARMCodeEmitterPass(*this, MCE));
   return false;
 }
