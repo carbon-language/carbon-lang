@@ -87,7 +87,10 @@ bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
 
 bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
-  if (TID->Flags & M_TERMINATOR_FLAG)
+  if (TID->Flags & M_TERMINATOR_FLAG) {
+    if ((TID->Flags & M_PREDICABLE) == 0)
+      return true;
     return !isPredicated(MI);
+}
   return false;
 }
