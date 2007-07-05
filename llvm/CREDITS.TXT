@@ -203,7 +203,7 @@ D: MSIL backend
 
 N: Duncan Sands
 E: baldrick@free.fr
-D: Ada front-end
+D: Ada front-end, exception handling improvements
 
 N: Ruchira Sasanka
 E: sasanka@uiuc.edu
