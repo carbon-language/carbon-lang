@@ -193,6 +193,7 @@ Show the version number of this program.
 
 =back
 
+
 =head1 EXIT STATUS
 
 If B<llvm2cpp> succeeds, it will exit with 0.  Otherwise, if an error
@@ -201,6 +202,13 @@ occurs, it will exit with a non-zero value.
 =head1 SEE ALSO
 
 L<llvm-as|llvm-as> L<tblgen|tblgen>
+
+=head1 NOTES
+
+This tool may be removed from a future version of LLVM. Instead, its
+functionality may be incorporated into the llc tool. It would then act similarly
+to other targets except its output would be C++ source that could be compiled to
+construct the input program.
 
 =head1 AUTHORS
 
