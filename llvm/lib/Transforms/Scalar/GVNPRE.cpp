@@ -31,6 +31,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -567,6 +568,7 @@ namespace {
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<UnifyFunctionExitNodes>();
       AU.addRequired<DominatorTree>();
     }
   
@@ -608,10 +610,10 @@ namespace {
     
     void insertion_pre(Value* e, BasicBlock* BB,
                        std::map<BasicBlock*, Value*>& avail,
-                       SmallPtrSet<Value*, 16>& new_set);
+                      std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_set);
     unsigned insertion_mergepoint(std::vector<Value*>& workList,
                                   df_iterator<DomTreeNode*>& D,
-                                  SmallPtrSet<Value*, 16>& new_set);
+                      std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_set);
     bool insertion(Function& F);
   
   };
@@ -1331,7 +1333,7 @@ bool GVNPRE::buildsets_anticout(BasicBlock* BB,
       
       for (SmallPtrSet<Value*, 16>::iterator I = anticOut.begin(),
            E = anticOut.end(); I != E; ++I)
-        if (succAnticIn.count(*I) == 0)
+        if (find_leader(succAnticIn, VN.lookup(*I)) == 0)
           temp.push_back(*I);
 
       for (std::vector<Value*>::iterator I = temp.begin(), E = temp.end();
@@ -1488,8 +1490,9 @@ void GVNPRE::buildsets(Function& F) {
 /// the main block
 void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                            std::map<BasicBlock*, Value*>& avail,
-                           SmallPtrSet<Value*, 16>& new_set) {
+                    std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_sets) {
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
+    DOUT << "PRED: " << (*PI)->getName() << "\n";
     Value* e2 = avail[*PI];
     if (!find_leader(availableOut[*PI], VN.lookup(e2))) {
       User* U = cast<User>(e2);
@@ -1602,6 +1605,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                   
       SmallPtrSet<Value*, 16>& predAvail = availableOut[*PI];
       val_replace(predAvail, newVal);
+      val_replace(new_sets[*PI], newVal);
             
       std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
       if (av != avail.end())
@@ -1617,13 +1621,13 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     if (p == 0)
       p = new PHINode(avail[*PI]->getType(), "gvnpre-join", BB->begin());
-                
+    
     p->addIncoming(avail[*PI], *PI);
   }
 
   VN.add(p, VN.lookup(e));
   val_replace(availableOut[BB], p);
-  new_set.insert(p);
+  new_sets[BB].insert(p);
               
   ++NumInsertedPhis;
 }
@@ -1632,7 +1636,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
 /// block for the possibility of a partial redundancy.  If present, eliminate it
 unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
                                       df_iterator<DomTreeNode*>& D,
-                                      SmallPtrSet<Value*, 16>& new_set) {
+                    std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_sets) {
   bool changed_function = false;
   bool new_stuff = false;
   
@@ -1655,6 +1659,11 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
       for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;
            ++PI) {
         Value *e2 = phi_translate(e, *PI, BB);
+        if (find_leader(anticipatedIn[*PI], VN.lookup(e2)) == 0) {
+          by_some = false;
+          break;
+        }
+        
         Value *e3 = find_leader(availableOut[*PI], VN.lookup(e2));
               
         if (e3 == 0) {
@@ -1674,7 +1683,7 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
       }
             
       if (by_some && num_avail < std::distance(pred_begin(BB), pred_end(BB))) {
-        insertion_pre(e, BB, avail, new_set);
+        insertion_pre(e, BB, avail, new_sets);
               
         changed_function = true;
         new_stuff = true;
@@ -1710,18 +1719,15 @@ bool GVNPRE::insertion(Function& F) {
       if (BB == 0)
         continue;
       
-      SmallPtrSet<Value*, 16>& new_set = new_sets[BB];
       SmallPtrSet<Value*, 16>& availOut = availableOut[BB];
       SmallPtrSet<Value*, 16>& anticIn = anticipatedIn[BB];
-      
-      new_set.clear();
       
       // Replace leaders with leaders inherited from dominator
       if (DI->getIDom() != 0) {
         SmallPtrSet<Value*, 16>& dom_set = new_sets[DI->getIDom()->getBlock()];
         for (SmallPtrSet<Value*, 16>::iterator I = dom_set.begin(),
              E = dom_set.end(); I != E; ++I) {
-          new_set.insert(*I);
+          val_replace(new_sets[BB], *I);
           val_replace(availOut, *I);
         }
       }
@@ -1732,7 +1738,7 @@ bool GVNPRE::insertion(Function& F) {
         workList.reserve(anticIn.size());
         topo_sort(anticIn, workList);
         
-        unsigned result = insertion_mergepoint(workList, DI, new_set);
+        unsigned result = insertion_mergepoint(workList, DI, new_sets);
         if (result & 1)
           changed_function = true;
         if (result & 2)
@@ -1761,9 +1767,6 @@ bool GVNPRE::runOnFunction(Function &F) {
   buildsets(F);
   
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
-    DOUT << "AVAIL_OUT: " << FI->getName() << "\n";
-    dump(availableOut[FI]);
-    DOUT << "\n";
     DOUT << "ANTIC_IN: " << FI->getName() << "\n";
     dump(anticipatedIn[FI]);
     DOUT << "\n\n";
