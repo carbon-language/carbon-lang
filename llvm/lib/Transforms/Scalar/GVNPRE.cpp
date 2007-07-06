@@ -564,6 +564,7 @@ namespace {
     
     std::map<BasicBlock*, SmallPtrSet<Value*, 16> > availableOut;
     std::map<BasicBlock*, SmallPtrSet<Value*, 16> > anticipatedIn;
+    std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedPhis;
     
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -594,7 +595,7 @@ namespace {
     bool dependsOnInvoke(Value* V);
     void buildsets_availout(BasicBlock::iterator I,
                             SmallPtrSet<Value*, 16>& currAvail,
-                            SmallPtrSet<PHINode*, 16>& currPhis,
+                            SmallPtrSet<Value*, 16>& currPhis,
                             SmallPtrSet<Value*, 16>& currExps,
                             SmallPtrSet<Value*, 16>& currTemps,
                             BitVector& availNumbers,
@@ -1168,7 +1169,7 @@ void GVNPRE::cleanup() {
 /// by inserting it into the appropriate sets
 void GVNPRE::buildsets_availout(BasicBlock::iterator I,
                                 SmallPtrSet<Value*, 16>& currAvail,
-                                SmallPtrSet<PHINode*, 16>& currPhis,
+                                SmallPtrSet<Value*, 16>& currPhis,
                                 SmallPtrSet<Value*, 16>& currExps,
                                 SmallPtrSet<Value*, 16>& currTemps,
                                 BitVector& availNumbers,
@@ -1401,7 +1402,6 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
 /// and the ANTIC_IN sets.
 void GVNPRE::buildsets(Function& F) {
   std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedExpressions;
-  std::map<BasicBlock*, SmallPtrSet<PHINode*, 16> > generatedPhis;
   std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedTemporaries;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();   
@@ -1414,7 +1414,7 @@ void GVNPRE::buildsets(Function& F) {
     
     // Get the sets to update for this block
     SmallPtrSet<Value*, 16>& currExps = generatedExpressions[DI->getBlock()];
-    SmallPtrSet<PHINode*, 16>& currPhis = generatedPhis[DI->getBlock()];
+    SmallPtrSet<Value*, 16>& currPhis = generatedPhis[DI->getBlock()];
     SmallPtrSet<Value*, 16>& currTemps = generatedTemporaries[DI->getBlock()];
     SmallPtrSet<Value*, 16>& currAvail = availableOut[DI->getBlock()];     
     
@@ -1628,6 +1628,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
 
   VN.add(p, VN.lookup(e));
   val_replace(availableOut[BB], p);
+  generatedPhis[BB].insert(p);
   new_sets[BB].insert(p);
               
   ++NumInsertedPhis;
@@ -1655,7 +1656,8 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
             
       std::map<BasicBlock*, Value*> avail;
       bool by_some = false;
-      int num_avail = 0;
+      bool all_same = true;
+      Value * first_s = 0;
             
       for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;
            ++PI) {
@@ -1667,6 +1669,7 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
           if (av != avail.end())
             avail.erase(av);
           avail.insert(std::make_pair(*PI, e2));
+          all_same = false;
         } else {
           std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
           if (av != avail.end())
@@ -1674,11 +1677,15 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
           avail.insert(std::make_pair(*PI, e3));
                 
           by_some = true;
-          num_avail++;
+          if (first_s == 0)
+            first_s = e3;
+          else if (first_s != e3)
+            all_same = false;
         }
       }
             
-      if (by_some && num_avail < std::distance(pred_begin(BB), pred_end(BB))) {
+      if (by_some && !all_same &&
+          !find_leader(generatedPhis[BB], VN.lookup(e))) {
         insertion_pre(e, BB, avail, new_sets);
               
         changed_function = true;
@@ -1755,7 +1762,8 @@ bool GVNPRE::runOnFunction(Function &F) {
   createdExpressions.clear();
   availableOut.clear();
   anticipatedIn.clear();
-  
+  generatedPhis.clear();
+ 
   bool changed_function = false;
   
   // Phase 1: BuildSets
