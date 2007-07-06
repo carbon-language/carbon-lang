@@ -2716,7 +2716,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       unsigned TypeID = MMI->getTypeIDFor(GV);
       setValue(&I, DAG.getConstant(TypeID, MVT::i32));
     } else {
-      setValue(&I, DAG.getConstant(0, MVT::i32));
+      // Return something different to eh_selector.
+      setValue(&I, DAG.getConstant(1, MVT::i32));
     }
 
     return 0;

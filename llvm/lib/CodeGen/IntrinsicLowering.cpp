@@ -706,9 +706,17 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::dbg_region_end:
   case Intrinsic::dbg_func_start:
   case Intrinsic::dbg_declare:
+    break;    // Simply strip out debugging intrinsics
+
   case Intrinsic::eh_exception:
   case Intrinsic::eh_selector:
-    break;    // Simply strip out debugging and eh intrinsics
+    CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+    break;
+
+  case Intrinsic::eh_typeid_for:
+    // Return something different to eh_selector.
+    CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
+    break;
 
   case Intrinsic::var_annotation:
     break;   // Strip out annotate intrinsic
