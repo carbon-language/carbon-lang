@@ -3789,6 +3789,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags |= ISD::ParamFlags::InReg;
     if (Attrs && Attrs->paramHasAttr(j, ParamAttr::StructRet))
       Flags |= ISD::ParamFlags::StructReturn;
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ByVal))
+      Flags |= ISD::ParamFlags::ByVal;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
     
     switch (getTypeAction(VT)) {

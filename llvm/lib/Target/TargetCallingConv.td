@@ -32,6 +32,11 @@ class CCIf<string predicate, CCAction A> : CCPredicateAction<A> {
   string Predicate = predicate;
 }
 
+/// CCIfStruct - If the current argument is a struct, apply
+/// Action A.
+class CCIfStruct<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::ByVal", A> {
+}
+
 /// CCIfCC - Match of the current calling convention is 'CC'.
 class CCIfCC<string CC, CCAction A>
   : CCIf<!strconcat("State.getCallingConv() == ", CC), A> {}
@@ -57,6 +62,12 @@ class CCAssignToStack<int size, int align> : CCAction {
   int Align = align;
 }
 
+/// CCStructAssign - This action always matches: it will use the C ABI and
+/// the register availability to decided whether to assign to a set of
+/// registers or to a stack slot.
+class CCStructAssign<list<Register> regList> : CCAction {
+  list<Register> RegList = regList;
+}
 
 /// CCPromoteToType - If applied, this promotes the specified current value to
 /// the specified type.
@@ -75,4 +86,3 @@ class CCDelegateTo<CallingConv cc> : CCAction {
 class CallingConv<list<CCAction> actions> {
   list<CCAction> Actions = actions;
 }
-

@@ -36,7 +36,8 @@ enum Attributes {
   InReg      = 1 << 3, ///< force argument to be passed in register
   StructRet  = 1 << 4, ///< hidden pointer to structure to return
   NoUnwind   = 1 << 5, ///< Function doesn't unwind stack
-  NoAlias    = 1 << 6  ///< Considered to not alias after call.
+  NoAlias    = 1 << 6, ///< Considered to not alias after call.
+  ByVal      = 1 << 7  ///< Pass structure by value
 };
 
 }

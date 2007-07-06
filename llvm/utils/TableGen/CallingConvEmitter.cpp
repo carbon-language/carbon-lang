@@ -129,10 +129,11 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << IndentStr << IndentStr << "LocInfo = CCValAssign::ZExt;\n"
         << IndentStr << "else\n"
         << IndentStr << IndentStr << "LocInfo = CCValAssign::AExt;\n";
+    } else if (Action->isSubClassOf("CCStructAssign")) {
+      O << "assert(0 && \"Not Implemented\");\n";
     } else {
       Action->dump();
       throw "Unknown CCAction!";
     }
   }
 }
-

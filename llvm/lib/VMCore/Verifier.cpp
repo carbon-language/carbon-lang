@@ -370,6 +370,9 @@ void Verifier::visitFunction(Function &F) {
       if (Attrs->paramHasAttr(Idx, ParamAttr::NoAlias))
         Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
                 "Attribute NoAlias should only apply to Pointer type!", &F);
+      if (Attrs->paramHasAttr(Idx, ParamAttr::ByVal))
+        Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
+                "Attribute ByVal should only apply to Pointer type!", &F);
     }
   }
 

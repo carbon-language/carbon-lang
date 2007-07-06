@@ -230,6 +230,7 @@ sret            { return SRET;  }
 nounwind        { return NOUNWIND; }
 noreturn        { return NORETURN; }
 noalias         { return NOALIAS; }
+byval           { return BYVAL; }
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }

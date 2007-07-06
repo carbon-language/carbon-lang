@@ -63,6 +63,8 @@ namespace ISD {
     InRegOffs         = 2,
     StructReturn      = 1<<3,  ///< Hidden struct-return pointer
     StructReturnOffs  = 3,
+    ByVal             = 1<<4,  ///< Struct passed by value
+    ByValOffs         = 4,
     OrigAlignment     = 0x1F<<27,
     OrigAlignmentOffs = 27
   };

@@ -103,6 +103,8 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
     Result += "noalias ";
   if (Attrs & ParamAttr::StructRet)
     Result += "sret ";  
+  if (Attrs & ParamAttr::ByVal)
+    Result += "byval ";
   return Result;
 }
 

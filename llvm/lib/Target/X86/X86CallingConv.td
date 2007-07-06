@@ -94,6 +94,8 @@ def CC_X86_64_C : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
   
+  CCIfStruct<CCStructAssign<[RDI, RSI, RDX, RCX, R8, R9 ]>>,
+
   // The first 6 integer arguments are passed in integer registers.
   CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
   CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
@@ -168,5 +170,3 @@ def CC_X86_32_FastCall : CallingConv<[
   // Otherwise, same as everything else.
   CCDelegateTo<CC_X86_32_Common>
 ]>;
-
-
