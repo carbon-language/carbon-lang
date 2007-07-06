@@ -179,11 +179,7 @@ Archive::addFileBefore(const sys::Path& filePath, iterator where,
   mbr->path.getMagicNumber(magic,4);
   switch (sys::IdentifyFileType(magic.c_str(),4)) {
     case sys::Bitcode_FileType:
-    case sys::Bytecode_FileType:
-      flags |= ArchiveMember::BytecodeFlag;
-      break;
-    case sys::CompressedBytecode_FileType:
-      flags |= ArchiveMember::CompressedBytecodeFlag;
+      flags |= ArchiveMember::BitcodeFlag;
       break;
     default:
       break;
@@ -223,8 +219,7 @@ Archive::writeMember(
 
   // Now that we have the data in memory, update the
   // symbol table if its a bitcode file.
-  if (CreateSymbolTable &&
-      (member.isBytecode() || member.isCompressedBytecode())) {
+  if (CreateSymbolTable && member.isBitcode()) {
     std::vector<std::string> symbols;
     std::string FullMemberName = archPath.toString() + "(" +
       member.getPath().toString()

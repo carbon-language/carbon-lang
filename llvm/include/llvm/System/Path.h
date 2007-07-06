@@ -307,13 +307,6 @@ namespace sys {
       bool isArchive() const;
 
       /// This function determines if the path name in the object references an
-      /// LLVM Bytecode file by looking at its magic number.
-      /// @returns true if the file starts with the magic number for LLVM
-      /// bytecode files.
-      /// @brief Determine if the path references a bytecode file.
-      bool isBytecodeFile() const;
-
-      /// This function determines if the path name in the object references an
       /// LLVM Bitcode file by looking at its magic number.
       /// @returns true if the file starts with the magic number for LLVM
       /// bitcode files.
@@ -621,9 +614,7 @@ namespace sys {
   /// This enumeration delineates the kinds of files that LLVM knows about.
   enum LLVMFileType {
     Unknown_FileType = 0,              ///< Unrecognized file
-    Bytecode_FileType,                 ///< Uncompressed bytecode file
     Bitcode_FileType,                  ///< Bitcode file
-    CompressedBytecode_FileType,       ///< Compressed bytecode file
     Archive_FileType,                  ///< ar style archive file
     ELF_Relocatable_FileType,          ///< ELF Relocatable object file
     ELF_Executable_FileType,           ///< ELF Executable image

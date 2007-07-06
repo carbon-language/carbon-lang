@@ -47,14 +47,6 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
       if (magic[1] == 'C' && magic[2] == (char)0xC0 && magic[3] == (char)0xDE)
         return Bitcode_FileType;
       break;
-    case 'l':
-      if (magic[1] == 'l' && magic[2] == 'v') {
-        if (magic[3] == 'c')
-          return CompressedBytecode_FileType;
-        else if (magic[3] == 'm')
-          return Bytecode_FileType;
-      }
-      break;
     case '!':
       if (length >= 8)
         if (memcmp(magic,"!<arch>\n",8) == 0)
@@ -162,14 +154,6 @@ Path::FindLibrary(std::string& name) {
 
 std::string Path::GetDLLSuffix() {
   return LTDL_SHLIB_EXT;
-}
-
-bool
-Path::isBytecodeFile() const {
-  std::string actualMagic;
-  if (!getMagicNumber(actualMagic, 4))
-    return false;
-  return actualMagic == "llvc" || actualMagic == "llvm";
 }
 
 bool

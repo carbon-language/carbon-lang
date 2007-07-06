@@ -126,15 +126,8 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
 
   // Determine what kind of file it is
   switch (sys::IdentifyFileType(signature,4)) {
-    case sys::Bytecode_FileType:
-      flags |= BytecodeFlag;
-      break;
-    case sys::CompressedBytecode_FileType:
-      flags |= CompressedBytecodeFlag;
-      flags &= ~CompressedFlag;
-      break;
     default:
-      flags &= ~(BytecodeFlag|CompressedBytecodeFlag);
+      flags &= ~BitcodeFlag;
       break;
   }
   return false;

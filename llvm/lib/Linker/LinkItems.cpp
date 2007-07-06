@@ -82,9 +82,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
     case sys::Unknown_FileType:
       return warning("Supposed library '" + Lib + "' isn't a library.");
 
-    case sys::Bytecode_FileType:
     case sys::Bitcode_FileType:
-    case sys::CompressedBytecode_FileType:
       // LLVM ".so" file.
       if (LinkInFile(Pathname, is_native))
         return error("Cannot link file '" + Pathname.toString() + "'");
@@ -176,9 +174,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
         return error("Cannot link archive '" + File.toString() + "'");
       break;
 
-    case sys::Bitcode_FileType:
-    case sys::Bytecode_FileType:
-    case sys::CompressedBytecode_FileType: {
+    case sys::Bitcode_FileType: {
       verbose("Linking bitcode file '" + File.toString() + "'");
       std::auto_ptr<Module> M(LoadObject(File));
       if (M.get() == 0)

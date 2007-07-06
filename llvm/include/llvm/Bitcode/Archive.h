@@ -51,8 +51,7 @@ class ArchiveMember {
       SVR4SymbolTableFlag = 2,     ///< Member is a SVR4 symbol table
       BSD4SymbolTableFlag = 4,     ///< Member is a BSD4 symbol table
       LLVMSymbolTableFlag = 8,     ///< Member is an LLVM symbol table
-      BytecodeFlag = 16,           ///< Member is uncompressed bytecode
-      CompressedBytecodeFlag = 32, ///< Member is compressed bytecode
+      BitcodeFlag = 16,            ///< Member is uncompressed bytecode
       HasPathFlag = 64,            ///< Member has a full or partial path
       HasLongFilenameFlag = 128,   ///< Member uses the long filename syntax
       StringTableFlag = 256        ///< Member is an ar(1) format string table
@@ -112,7 +111,6 @@ class ArchiveMember {
 
     /// This method determines if the member is a regular compressed file. Note
     /// that compressed bytecode files will yield "false" for this method.
-    /// @see isCompressedBytecode()
     /// @returns true iff the archive member is a compressed regular file.
     /// @brief Determine if the member is a compressed regular file.
     bool isCompressed() const { return flags&CompressedFlag; }
@@ -135,11 +133,7 @@ class ArchiveMember {
 
     /// @returns true iff the archive member is an uncompressed bytecode file.
     /// @brief Determine if this member is a bytecode file.
-    bool isBytecode() const { return flags&BytecodeFlag; }
-
-    /// @returns true iff the archive member is a compressed bytecode file.
-    /// @brief Determine if the member is a compressed bytecode file.
-    bool isCompressedBytecode() const { return flags&CompressedBytecodeFlag;}
+    bool isBitcode() const { return flags&BitcodeFlag; }
 
     /// @returns true iff the file name contains a path (directory) component.
     /// @brief Determine if the member has a path

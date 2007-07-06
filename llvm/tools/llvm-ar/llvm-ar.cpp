@@ -356,8 +356,7 @@ bool doPrint(std::string* ErrMsg) {
 
         // Skip things that don't make sense to print
         if (I->isLLVMSymbolTable() || I->isSVR4SymbolTable() ||
-            I->isBSD4SymbolTable() || (!DontSkipBitcode &&
-             (I->isBytecode() || I->isCompressedBytecode())))
+            I->isBSD4SymbolTable() || (!DontSkipBitcode && I->isBitcode()))
           continue;
 
         if (Verbose)
@@ -406,10 +405,8 @@ doDisplayTable(std::string* ErrMsg) {
       if (Verbose) {
         // FIXME: Output should be this format:
         // Zrw-r--r--  500/ 500    525 Nov  8 17:42 2004 Makefile
-        if (I->isBytecode())
+        if (I->isBitcode())
           std::cout << "b";
-        else if (I->isCompressedBytecode())
-          std::cout << "B";
         else if (I->isCompressed())
           std::cout << "Z";
         else

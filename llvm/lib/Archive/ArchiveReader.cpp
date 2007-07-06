@@ -207,16 +207,10 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
   // Determine if this is a bytecode file
   switch (sys::IdentifyFileType(At, 4)) {
     case sys::Bitcode_FileType:
-    case sys::Bytecode_FileType:
-      flags |= ArchiveMember::BytecodeFlag;
-      break;
-    case sys::CompressedBytecode_FileType:
-      flags |= ArchiveMember::CompressedBytecodeFlag;
-      flags &= ~ArchiveMember::CompressedFlag;
+      flags |= ArchiveMember::BitcodeFlag;
       break;
     default:
-      flags &= ~(ArchiveMember::BytecodeFlag|
-                 ArchiveMember::CompressedBytecodeFlag);
+      flags &= ~ArchiveMember::BitcodeFlag;
       break;
   }
 
@@ -349,7 +343,7 @@ bool
 Archive::getAllModules(std::vector<Module*>& Modules, std::string* ErrMessage) {
 
   for (iterator I=begin(), E=end(); I != E; ++I) {
-    if (I->isBytecode() || I->isCompressedBytecode()) {
+    if (I->isBitcode()) {
       std::string FullMemberName = archPath.toString() +
         "(" + I->getPath().toString() + ")";
       MemoryBuffer *Buffer =
@@ -535,7 +529,7 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
         return false;
 
       // If it contains symbols
-      if (mbr->isBytecode() || mbr->isCompressedBytecode()) {
+      if (mbr->isBitcode()) {
         // Get the symbols
         std::vector<std::string> symbols;
         std::string FullMemberName = archPath.toString() + "(" +
@@ -612,7 +606,7 @@ bool Archive::isBitcodeArchive() {
   // Scan the archive, trying to load a bitcode member.  We only load one to
   // see if this works.
   for (iterator I = begin(), E = end(); I != E; ++I) {
-    if (!I->isBytecode() && !I->isCompressedBytecode())
+    if (!I->isBitcode())
       continue;
     
     std::string FullMemberName = 
