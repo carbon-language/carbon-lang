@@ -366,22 +366,22 @@ def FNMSCS : ASI<(ops SPR:$dst, SPR:$dstin, SPR:$a, SPR:$b),
 // FP Conditional moves.
 //
 
-def FCPYDcc  : AXDI<(ops DPR:$dst, DPR:$false, DPR:$true, ccop:$cc),
-                    "fcpyd$cc $dst, $true",
+def FCPYDcc  : ADI<(ops DPR:$dst, DPR:$false, DPR:$true),
+                    "fcpyd", " $dst, $true",
                 [/*(set DPR:$dst, (ARMcmov DPR:$false, DPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
-def FCPYScc  : AXSI<(ops SPR:$dst, SPR:$false, SPR:$true, ccop:$cc),
-                    "fcpys$cc $dst, $true",
+def FCPYScc  : ASI<(ops SPR:$dst, SPR:$false, SPR:$true),
+                    "fcpys", " $dst, $true",
                 [/*(set SPR:$dst, (ARMcmov SPR:$false, SPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
-def FNEGDcc  : AXDI<(ops DPR:$dst, DPR:$false, DPR:$true, ccop:$cc),
-                    "fnegd$cc $dst, $true",
+def FNEGDcc  : ADI<(ops DPR:$dst, DPR:$false, DPR:$true),
+                    "fnegd", " $dst, $true",
                 [/*(set DPR:$dst, (ARMcneg DPR:$false, DPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;
 
-def FNEGScc  : AXSI<(ops SPR:$dst, SPR:$false, SPR:$true, ccop:$cc),
-                    "fnegs$cc $dst, $true",
+def FNEGScc  : ASI<(ops SPR:$dst, SPR:$false, SPR:$true),
+                    "fnegs", " $dst, $true",
                 [/*(set SPR:$dst, (ARMcneg SPR:$false, SPR:$true, imm:$cc))*/]>,
                     RegConstraint<"$false = $dst">;

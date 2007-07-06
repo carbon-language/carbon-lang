@@ -286,12 +286,6 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
   let PrintMethod = "printPredicateOperand";
 }
 
-// Conditional code operand for conditional branches and conditional moves.
-// No AlwaysVal value.
-def ccop : PredicateOperand<OtherVT, (ops i32imm, CCR), (ops)> {
-  let PrintMethod = "printPredicateOperand";
-}
-
 // Conditional code result for instructions whose 's' bit is set, e.g. subs.
 //
 def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
@@ -702,7 +696,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def Bcc : AXI<(ops brtarget:$dst, ccop:$cc), "b$cc $dst",
+  def Bcc : AI<(ops brtarget:$dst), "b", " $dst",
                  [/*(ARMbrcond bb:$dst, imm:$cc, CCR:$ccr)*/]>;
 }
 
@@ -1192,18 +1186,18 @@ def : ARMPat<(ARMcmpNZ GPR:$src, so_imm_neg:$imm),
 // Conditional moves
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :( 
-def MOVCCr : AXI<(ops GPR:$dst, GPR:$false, GPR:$true, ccop:$cc),
-                "mov$cc $dst, $true",
+def MOVCCr : AI<(ops GPR:$dst, GPR:$false, GPR:$true),
+                "mov", " $dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">;
 
-def MOVCCs : AXI<(ops GPR:$dst, GPR:$false, so_reg:$true, ccop:$cc),
-                "mov$cc $dst, $true",
+def MOVCCs : AI<(ops GPR:$dst, GPR:$false, so_reg:$true),
+                "mov", " $dst, $true",
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">;
 
-def MOVCCi : AXI<(ops GPR:$dst, GPR:$false, so_imm:$true, ccop:$cc),
-                "mov$cc $dst, $true",
+def MOVCCi : AI<(ops GPR:$dst, GPR:$false, so_imm:$true),
+                "mov", " $dst, $true",
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">;
 
