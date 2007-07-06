@@ -263,14 +263,13 @@ def zero_reg;
 /// PredicateOperand - This can be used to define a predicate operand for an
 /// instruction.  OpTypes specifies the MIOperandInfo for the operand, and
 /// AlwaysVal specifies the value of this predicate when set to "always
-/// execute". If isOutput is true, then this is output operand. If isImmutable
-/// is true, then the operand should not change after instruction selection.
+/// execute". If isImmutable is true, then the operand should not change
+/// after instruction selection.
 class PredicateOperand<ValueType ty, dag OpTypes, dag AlwaysVal>
   : Operand<ty> {
   let MIOperandInfo = OpTypes;
-  bit isOutput = 0;
   bit isImmutable = 0;
-  dag ExecuteAlways = AlwaysVal;
+  dag DefaultOps = AlwaysVal;
 }
 
 class ImmutablePredicateOperand<ValueType ty, dag OpTypes, dag AlwaysVal>
@@ -278,9 +277,13 @@ class ImmutablePredicateOperand<ValueType ty, dag OpTypes, dag AlwaysVal>
   let isImmutable = 1;
 }
 
-class PredicateDefOperand<ValueType ty, dag OpTypes, dag AlwaysVal>
-  : PredicateOperand<ty, OpTypes, AlwaysVal> {
-  let isOutput = 1;
+/// OptionalDefOperand - This is used to define a optional definition operand
+/// for an instruction. DefaultOps is the register the operand represents if none
+/// is supplied, e.g. zero_reg.
+class OptionalDefOperand<ValueType ty, dag OpTypes, dag defaultops>
+  : Operand<ty> {
+  let MIOperandInfo = OpTypes;
+  dag DefaultOps = defaultops;
 }
 
 
