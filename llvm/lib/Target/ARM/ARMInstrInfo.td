@@ -292,10 +292,10 @@ def ccop : ImmutablePredicateOperand<OtherVT, (ops i32imm, CCR), (ops)> {
   let PrintMethod = "printPredicateOperand";
 }
 
-// Conditional code result for cmp, etc.
+// Conditional code result for instructions whose 's' bit is set, e.g. subs.
 //
-def cc_out : PredicateDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
-  let PrintMethod = "printPredicateOperand";
+def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
+  let PrintMethod = "printSBitModifierOperand";
 }
 
 //===----------------------------------------------------------------------===//
