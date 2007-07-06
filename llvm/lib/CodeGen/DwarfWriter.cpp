@@ -2894,6 +2894,26 @@ private:
       O << UsedDirective << EHFrameInfo.FnName << ".eh\n\n";
   }
 
+  /// EmitExceptionTable - Emit landpads and actions.
+  ///
+  /// The general organization of the table is complex, but the basic concepts
+  /// are easy.  First there is a header which describes the location and
+  /// organization of the three components that follow.
+  ///  1. The landing pad site information describes the range of code covered
+  ///     by the try.  In our case it's an accumulation of the ranges covered
+  ///     by the invokes in the try.  There is also a reference to the landing
+  ///     pad that handles the exception once processed.  Finally an index into
+  ///     the actions table.
+  ///  2. The action table, in our case, is composed of pairs of type ids
+  ///     and next action offset.  Starting with the action index from the
+  ///     landing pad site, each type Id is checked for a match to the current
+  ///     exception.  If it matches then the exception and type id are passed
+  ///     on to the landing pad.  Otherwise the next action is looked up.  This
+  ///     chain is terminated with a next action of zero.  If no type id is
+  ///     found the the frame is unwound and handling continues.
+  ///  3. Type id table contains references to all the C++ typeinfo for all
+  ///     catches in the function.  This tables is reversed indexed base 1.
+
   /// SharedTypeIds - How many leading type ids two landing pads have in common.
   static unsigned SharedTypeIds(const LandingPadInfo *L,
                                 const LandingPadInfo *R) {
@@ -2922,26 +2942,6 @@ private:
     return LSize < RSize;
   }
 
-  /// EmitExceptionTable - Emit landpads and actions.
-  ///
-  /// The general organization of the table is complex, but the basic concepts
-  /// are easy.  First there is a header which describes the location and
-  /// organization of the three components that follow.
-  ///  1. The landing pad site information describes the range of code covered
-  ///     by the try.  In our case it's an accumulation of the ranges covered
-  ///     by the invokes in the try.  There is also a reference to the landing
-  ///     pad that handles the exception once processed.  Finally an index into
-  ///     the actions table.
-  ///  2. The action table, in our case, is composed of pairs of type ids
-  ///     and next action offset.  Starting with the action index from the
-  ///     landing pad site, each type Id is checked for a match to the current
-  ///     exception.  If it matches then the exception and type id are passed
-  ///     on to the landing pad.  Otherwise the next action is looked up.  This
-  ///     chain is terminated with a next action of zero.  If no type id is
-  ///     found the the frame is unwound and handling continues.
-  ///  3. Type id table contains references to all the C++ typeinfo for all
-  ///     catches in the function.  This tables is reversed indexed base 1.
-
   struct KeyInfo {
     static inline unsigned getEmptyKey() { return -1U; }
     static inline unsigned getTombstoneKey() { return -2U; }
@@ -2957,7 +2957,7 @@ private:
   typedef DenseMap<unsigned, PadSite, KeyInfo> PadMapType;
 
   struct ActionEntry {
-    int TypeID;
+    int ValueForTypeID; // The value to write - may not be equal to the type id.
     int NextAction;
     struct ActionEntry *Previous;
   };
@@ -2974,7 +2974,6 @@ private:
     // Sort the landing pads in order of their type ids.  This is used to fold
     // duplicate actions.
     SmallVector<const LandingPadInfo *, 64> LandingPads;
-
     LandingPads.reserve(PadInfos.size());
     for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
       LandingPads.push_back(&PadInfos[i]);
@@ -2986,6 +2985,25 @@ private:
 
     // The actions table.
     SmallVector<ActionEntry, 32> Actions;
+
+    // Negative type ids index into FilterIds, positive type ids index into
+    // TypeInfos.  The value written for a positive type id is just the type
+    // id itself.  For a negative type id, however, the value written is the
+    // (negative) byte offset of the corresponding FilterIds entry.  The byte
+    // offset is usually equal to the type id, because the FilterIds entries
+    // are written using a variable width encoding which outputs one byte per
+    // entry as long as the value written is not too large, but can differ.
+    // This kind of complication does not occur for positive type ids because
+    // type infos are output using a fixed width encoding.
+    // FilterOffsets[i] holds the byte offset corresponding to FilterIds[i].
+    SmallVector<int, 16> FilterOffsets;
+    FilterOffsets.reserve(FilterIds.size());
+    int Offset = -1;
+    for(std::vector<unsigned>::const_iterator I = FilterIds.begin(),
+        E = FilterIds.end(); I != E; ++I) {
+      FilterOffsets.push_back(Offset);
+      Offset -= Asm->SizeSLEB128(*I);
+    }
 
     // Compute sizes for exception table.
     unsigned SizeSites = 0;
@@ -3010,9 +3028,9 @@ private:
           assert(Actions.size());
           PrevAction = &Actions.back();
           SizeAction = Asm->SizeSLEB128(PrevAction->NextAction) +
-            Asm->SizeSLEB128(PrevAction->TypeID);
+            Asm->SizeSLEB128(PrevAction->ValueForTypeID);
           for (unsigned j = NumShared; j != SizePrevIds; ++j) {
-            SizeAction -= Asm->SizeSLEB128(PrevAction->TypeID);
+            SizeAction -= Asm->SizeSLEB128(PrevAction->ValueForTypeID);
             SizeAction += -PrevAction->NextAction;
             PrevAction = PrevAction->Previous;
           }
@@ -3021,13 +3039,15 @@ private:
         // Compute the actions.
         for (unsigned I = NumShared, M = TypeIds.size(); I != M; ++I) {
           int TypeID = TypeIds[I];
-          unsigned SizeTypeID = Asm->SizeSLEB128(TypeID);
+          assert(-1-TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
+          int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
+          unsigned SizeTypeID = Asm->SizeSLEB128(ValueForTypeID);
 
           int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
           SizeAction = SizeTypeID + Asm->SizeSLEB128(NextAction);
           SizeSiteActions += SizeAction;
 
-          ActionEntry Action = {TypeID, NextAction, PrevAction};
+          ActionEntry Action = {ValueForTypeID, NextAction, PrevAction};
           Actions.push_back(Action);
 
           PrevAction = &Actions.back();
@@ -3145,7 +3165,7 @@ private:
     for (unsigned I = 0, N = Actions.size(); I != N; ++I) {
       ActionEntry &Action = Actions[I];
 
-      Asm->EmitSLEB128Bytes(Action.TypeID);
+      Asm->EmitSLEB128Bytes(Action.ValueForTypeID);
       Asm->EOL("TypeInfo index");
       Asm->EmitSLEB128Bytes(Action.NextAction);
       Asm->EOL("Next action");
