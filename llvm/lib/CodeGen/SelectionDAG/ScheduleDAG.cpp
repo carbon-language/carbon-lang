@@ -179,35 +179,41 @@ void ScheduleDAG::BuildSchedUnits() {
   return;
 }
 
-static void CalculateDepths(SUnit &SU, unsigned Depth) {
-  if (SU.Depth == 0 || Depth > SU.Depth) {
-    SU.Depth = Depth;
-    for (SUnit::succ_iterator I = SU.Succs.begin(), E = SU.Succs.end();
-         I != E; ++I)
-      CalculateDepths(*I->first, Depth+1);
-  }
-}
-
 void ScheduleDAG::CalculateDepths() {
-  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
-  ::CalculateDepths(*Entry, 0U);
+  std::vector<std::pair<SUnit*, unsigned> > WorkList;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i)
-    if (SUnits[i].Preds.size() == 0 && &SUnits[i] != Entry) {
-      ::CalculateDepths(SUnits[i], 0U);
-    }
-}
+    if (SUnits[i].Preds.size() == 0/* && &SUnits[i] != Entry*/)
+      WorkList.push_back(std::make_pair(&SUnits[i], 0U));
 
-static void CalculateHeights(SUnit &SU, unsigned Height) {
-  if (SU.Height == 0 || Height > SU.Height) {
-    SU.Height = Height;
-    for (SUnit::pred_iterator I = SU.Preds.begin(), E = SU.Preds.end();
-         I != E; ++I)
-      CalculateHeights(*I->first, Height+1);
+  while (!WorkList.empty()) {
+    SUnit *SU = WorkList.back().first;
+    unsigned Depth = WorkList.back().second;
+    WorkList.pop_back();
+    if (SU->Depth == 0 || Depth > SU->Depth) {
+      SU->Depth = Depth;
+      for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+           I != E; ++I)
+        WorkList.push_back(std::make_pair(I->first, Depth+1));
+    }
   }
 }
+
 void ScheduleDAG::CalculateHeights() {
+  std::vector<std::pair<SUnit*, unsigned> > WorkList;
   SUnit *Root = SUnitMap[DAG.getRoot().Val];
-  ::CalculateHeights(*Root, 0U);
+  WorkList.push_back(std::make_pair(Root, 0U));
+
+  while (!WorkList.empty()) {
+    SUnit *SU = WorkList.back().first;
+    unsigned Height = WorkList.back().second;
+    WorkList.pop_back();
+    if (SU->Height == 0 || Height > SU->Height) {
+      SU->Height = Height;
+      for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+           I != E; ++I)
+        WorkList.push_back(std::make_pair(I->first, Height+1));
+    }
+  }
 }
 
 /// CountResults - The results of target nodes have register or immediate
