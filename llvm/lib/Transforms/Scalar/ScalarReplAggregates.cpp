@@ -79,7 +79,7 @@ namespace {
       /// isMemCpySrc - This is true if this aggregate is memcpy'd from.
       bool isMemCpySrc : 1;
 
-      /// isMemCpyDst - This is true if this aggregate is memcpy'd info.
+      /// isMemCpyDst - This is true if this aggregate is memcpy'd into.
       bool isMemCpyDst : 1;
 
       AllocaInfo()
