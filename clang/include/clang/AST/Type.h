@@ -179,7 +179,8 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Complex, Pointer, Reference, Array, FunctionNoProto, FunctionProto,
+    Builtin, Complex, Pointer, Reference, Array, Vector,
+    FunctionNoProto, FunctionProto,
     TypeName, Tagged
   };
 private:
@@ -303,6 +304,9 @@ public:
   
   Kind getKind() const { return TypeKind; }
   const char *getName() const;
+  
+  // the number of bits to represent the builtin type.
+  unsigned getSize() const;
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
@@ -442,6 +446,37 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Array; }
   static bool classof(const ArrayType *) { return true; }
+};
+
+/// VectorType - 
+///
+class VectorType : public Type, public llvm::FoldingSetNode {
+  /// ElementType - The element type of the vector.
+  QualType ElementType;
+  
+  /// NumElements - The number of elements in the vector.
+  unsigned NumElements;
+  
+  VectorType(QualType vecType, unsigned vectorSize, QualType canonType) :
+    Type(Vector, canonType), ElementType(vecType), NumElements(vectorSize) {} 
+  friend class ASTContext;  // ASTContext creates these.
+public:
+    
+  QualType getElementType() const { return ElementType; }
+  unsigned getNumElements() const { return NumElements; } 
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getElementType(), getNumElements());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      QualType ElementType, unsigned NumElements) {
+    ID.AddPointer(ElementType.getAsOpaquePtr());
+    ID.AddInteger(NumElements);
+  }
+  static bool classof(const Type *T) { return T->getTypeClass() == Vector; }
+  static bool classof(const VectorType *) { return true; }
 };
 
 /// FunctionType - C99 6.7.5.3 - Function Declarators.  This is the common base

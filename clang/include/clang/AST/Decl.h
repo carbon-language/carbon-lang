@@ -128,6 +128,11 @@ protected:
             Decl *PrevDecl) : Decl(DK, L, Id, PrevDecl), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
+  QualType setType(QualType newType) {
+    QualType oldType = DeclType;
+    DeclType = newType;
+    return oldType;
+  }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   // Implement isa/cast/dyncast/etc.
@@ -325,7 +330,12 @@ public:
     : TypeDecl(Typedef, L, Id, PrevDecl), UnderlyingType(T) {}
   
   QualType getUnderlyingType() const { return UnderlyingType; }
-  
+  QualType setUnderlyingType(QualType newType) {
+    QualType oldType = UnderlyingType;
+    UnderlyingType = newType;
+    return oldType;
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
   static bool classof(const TypedefDecl *D) { return true; }

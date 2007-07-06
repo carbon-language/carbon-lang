@@ -304,8 +304,9 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     baseExpr = static_cast<Expr *>(Idx);
     indexExpr = static_cast<Expr *>(Base);
   } else {
-    return Diag(baseExpr->getLocStart(), diag::err_typecheck_subscript_value, 
-                baseExpr->getSourceRange());
+    return Diag(static_cast<Expr *>(Base)->getLocStart(), 
+                diag::err_typecheck_subscript_value, 
+                static_cast<Expr *>(Base)->getSourceRange());
   }              
   // C99 6.5.2.1p1
   if (!indexType->isIntegerType()) {
@@ -762,7 +763,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
   QualType resType = UsualArithmeticConversions(lhsType, rhsType);
-  
+
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
     return resType;

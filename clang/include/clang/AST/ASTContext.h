@@ -30,6 +30,7 @@ class ASTContext {
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
   llvm::FoldingSet<ArrayType> ArrayTypes;
+  llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
 public:
@@ -70,6 +71,11 @@ public:
   /// specified element type.
   QualType getArrayType(QualType EltTy, ArrayType::ArraySizeModifier ASM,
                         unsigned EltTypeQuals, Expr *NumElts);
+                        
+  /// convertToVectorType - Return the unique reference to a vector type of
+  /// the specified element type and size. VectorType can be a pointer, array,
+  /// function, or built-in type (i.e. _Bool, integer, or float).
+  QualType convertToVectorType(QualType VectorType, unsigned NumElts);
 
   /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
   ///

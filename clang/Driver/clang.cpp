@@ -301,7 +301,7 @@ static llvm::cl::opt<bool>
 WarningsAsErrors("Werror", llvm::cl::desc("Treat all warnings as errors"));
 
 static llvm::cl::opt<bool>
-WarnOnExtensions("pedantic", llvm::cl::init(true),
+WarnOnExtensions("pedantic", llvm::cl::init(false),
                  llvm::cl::desc("Issue a warning on uses of GCC extensions"));
 
 static llvm::cl::opt<bool>

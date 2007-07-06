@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
 Type::~Type() {}
@@ -378,6 +379,31 @@ const char *BuiltinType::getName() const {
   }
 }
 
+// FIXME: need to use TargetInfo to derive the target specific sizes. This
+// implementation will suffice for play with vector support.
+unsigned BuiltinType::getSize() const {
+  switch (getKind()) {
+  default: assert(0 && "Unknown builtin type!");
+  case Void:              return 0;
+  case Bool:
+  case Char_S:
+  case Char_U:            return sizeof(char) * 8;
+  case SChar:             return sizeof(signed char) * 8;
+  case Short:             return sizeof(short) * 8;
+  case Int:               return sizeof(int) * 8;
+  case Long:              return sizeof(long) * 8;
+  case LongLong:          return sizeof(long long) * 8;
+  case UChar:             return sizeof(unsigned char) * 8;
+  case UShort:            return sizeof(unsigned short) * 8;
+  case UInt:              return sizeof(unsigned int) * 8;
+  case ULong:             return sizeof(unsigned long) * 8;
+  case ULongLong:         return sizeof(unsigned long long) * 8;
+  case Float:             return sizeof(float) * 8;
+  case Double:            return sizeof(double) * 8;
+  case LongDouble:        return sizeof(long double) * 8;
+  }
+}
+
 void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 QualType* ArgTys,
                                 unsigned NumArgs, bool isVariadic) {
@@ -494,6 +520,14 @@ void ArrayType::getAsStringInternal(std::string &S) const {
   
   S += ']';
   
+  ElementType.getAsStringInternal(S);
+}
+
+void VectorType::getAsStringInternal(std::string &S) const {
+  S += " __attribute__(( vector_size(";
+  // FIXME: handle types that are != 32 bits.
+  S += llvm::utostr_32(NumElements*4); // convert back to bytes.
+  S += ") ))";
   ElementType.getAsStringInternal(S);
 }
 

@@ -430,11 +430,15 @@ DIAG(err_invalid_reference_qualifier_application, ERROR,
 
 // Attributes
 DIAG(err_attribute_wrong_number_arguments, ERROR,
-     "attribute requires precisely %0 argument")
+     "attribute requires %0 argument(s)")
 DIAG(err_attribute_invalid_vector_type, ERROR,
      "invalid vector type '%0'")
 DIAG(err_attribute_vector_size_not_int, ERROR,
-     "vector_size requires integer constant (attribute ignored)")
+     "vector_size requires integer constant")
+DIAG(err_attribute_invalid_size, ERROR,
+     "vector size not an integral multiple of component size")
+DIAG(err_attribute_zero_size, ERROR,
+     "zero vector size")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_void_param_with_identifier, ERROR,

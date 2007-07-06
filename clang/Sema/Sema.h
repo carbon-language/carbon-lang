@@ -152,7 +152,7 @@ private:
   // The raw attribute should contain precisely 1 argument, the vector size 
   // for the variable, measured in bytes. If curType and rawAttr are well
   // formed, this routine will return a new vector type.
-  void *HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
+  QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

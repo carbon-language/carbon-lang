@@ -254,6 +254,39 @@ QualType ASTContext::getArrayType(QualType EltTy,ArrayType::ArraySizeModifier AS
   return QualType(New, 0);
 }
 
+/// convertToVectorType - Return the unique reference to a vector type of
+/// the specified element type and size. VectorType can be a pointer, array,
+/// function, or built-in type (i.e. _Bool, integer, or float).
+QualType ASTContext::convertToVectorType(QualType vecType, unsigned NumElts) {
+  BuiltinType *baseType;
+  
+  baseType = dyn_cast<BuiltinType>(vecType.getCanonicalType().getTypePtr());
+  assert(baseType != 0 && 
+         "convertToVectorType(): Complex vector types unimplemented");
+         
+  // Check if we've already instantiated a vector of this type.
+  llvm::FoldingSetNodeID ID;
+  VectorType::Profile(ID, vecType, NumElts);      
+  void *InsertPos = 0;
+  if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(VTP, 0);
+
+  // If the element type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
+  QualType Canonical;
+  if (!vecType->isCanonical()) {
+    Canonical = convertToVectorType(vecType.getCanonicalType(), NumElts);
+    
+    // Get the new insert position for the node we care about.
+    VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
+  VectorType *New = new VectorType(vecType, NumElts, Canonical);
+  VectorTypes.InsertNode(New, InsertPos);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
 /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
 ///
 QualType ASTContext::getFunctionTypeNoProto(QualType ResultTy) {

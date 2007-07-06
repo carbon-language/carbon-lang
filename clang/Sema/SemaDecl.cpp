@@ -941,12 +941,17 @@ void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
   if (strcmp(rawAttr->getAttributeName()->getName(), "vector_size") == 0) {
     if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
-      HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
+      QualType newType = HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
       // install the new vector type into the decl
+      QualType oldType = vDecl->setType(newType);
+      // FIXME: deal with memory management for oldType!
     } 
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
-      HandleVectorTypeAttribute(tDecl->getUnderlyingType(), rawAttr);
+      QualType newType = HandleVectorTypeAttribute(tDecl->getUnderlyingType(), 
+                                                   rawAttr);
       // install the new vector type into the decl
+      QualType oldType = tDecl->setUnderlyingType(newType);
+      // FIXME: deal with memory management for oldType!
     }
   }
   // FIXME: add other attributes...
@@ -964,20 +969,20 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
   }
 }
 
-void *Sema::HandleVectorTypeAttribute(QualType curType, 
+QualType Sema::HandleVectorTypeAttribute(QualType curType, 
                                       AttributeList *rawAttr) {
-  // check the attribute arugments
+  // check the attribute arugments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
-    return 0;
+    return QualType();
   }
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize)) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
          sizeExpr->getSourceRange());
-    return 0;
+    return QualType();
   }
   // navigate to the base type - we need to provide for vector pointers, 
   // vector arrays, and functions returning vectors.
@@ -996,11 +1001,27 @@ void *Sema::HandleVectorTypeAttribute(QualType curType,
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_vector_type,
          curType.getCanonicalType().getAsString());
-    return 0;
+    return QualType();
   }
-  // FIXME: check that the vector size is a multiple of the type size (and
-  // not 0). check that the vector components are a power of two. Last, and
-  // certainly not least, instantiate a vector type AST node!
-  return 0;
+  BuiltinType *baseType = cast<BuiltinType>(canonType);
+  unsigned typeSize = baseType->getSize();
+  // vecSize is specified in bytes - convert to bits.
+  unsigned vectorSize = vecSize.getZExtValue() * 8; 
+  
+  // the vector size needs to be an integral multiple of the type size.
+  if (vectorSize % typeSize) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_size,
+         sizeExpr->getSourceRange());
+    return QualType();
+  }
+  if (vectorSize == 0) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_zero_size,
+         sizeExpr->getSourceRange());
+    return QualType();
+  }
+  // Since OpenCU requires 3 element vectors (OpenCU 5.1.2), we don't restrict
+  // the number of elements to be a power of two (unlike GCC).
+  // Instantiate the vector type, the number of elements is > 0.
+  return Context.convertToVectorType(curType, vectorSize/typeSize);
 }
 
