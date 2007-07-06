@@ -119,7 +119,7 @@ static void SetMemoryLimits (unsigned size)
   getrlimit (RLIMIT_DATA, &r);
   r.rlim_cur = limit;
   setrlimit (RLIMIT_DATA, &r);
-#ifndef __CYGWIN__
+#ifdef RLIMIT_RSS
   // Resident set size.
   getrlimit (RLIMIT_RSS, &r);
   r.rlim_cur = limit;
