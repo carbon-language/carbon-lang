@@ -107,6 +107,17 @@ inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0,
     ++i;
   }
 }
+
+/// SplitEdge -  Split the edge connecting specified block. Pass P must 
+/// not be NULL. 
+BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
+
+/// SplitBlock - Split the specified block at the specified instruction - every
+/// thing before SplitPt stays in Old and everything starting with SplitPt moves
+/// to a new block.  The two blocks are joined by an unconditional branch and
+/// the loop info is updated.
+///
+BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P);
 } // End llvm namespace
 
 #endif

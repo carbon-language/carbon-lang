@@ -17,6 +17,8 @@
 #include "llvm/Instructions.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/Dominators.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -112,3 +114,62 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
     ReplaceInstWithInst(TI, NewTI);
 }
 
+/// SplitEdge -  Split the edge connecting specified block. Pass P must 
+/// not be NULL. 
+BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
+  TerminatorInst *LatchTerm = BB->getTerminator();
+  unsigned SuccNum = 0;
+  for (unsigned i = 0, e = LatchTerm->getNumSuccessors(); ; ++i) {
+    assert(i != e && "Didn't find edge?");
+    if (LatchTerm->getSuccessor(i) == Succ) {
+      SuccNum = i;
+      break;
+    }
+  }
+  
+  // If this is a critical edge, let SplitCriticalEdge do it.
+  if (SplitCriticalEdge(BB->getTerminator(), SuccNum, P))
+    return LatchTerm->getSuccessor(SuccNum);
+
+  // If the edge isn't critical, then BB has a single successor or Succ has a
+  // single pred.  Split the block.
+  BasicBlock::iterator SplitPoint;
+  if (BasicBlock *SP = Succ->getSinglePredecessor()) {
+    // If the successor only has a single pred, split the top of the successor
+    // block.
+    assert(SP == BB && "CFG broken");
+    return SplitBlock(Succ, Succ->begin(), P);
+  } else {
+    // Otherwise, if BB has a single successor, split it at the bottom of the
+    // block.
+    assert(BB->getTerminator()->getNumSuccessors() == 1 &&
+           "Should have a single succ!"); 
+    return SplitBlock(BB, BB->getTerminator(), P);
+  }
+}
+
+/// SplitBlock - Split the specified block at the specified instruction - every
+/// thing before SplitPt stays in Old and everything starting with SplitPt moves
+/// to a new block.  The two blocks are joined by an unconditional branch and
+/// the loop info is updated.
+///
+BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
+
+  LoopInfo &LI = P->getAnalysis<LoopInfo>();
+  BasicBlock::iterator SplitIt = SplitPt;
+  while (isa<PHINode>(SplitIt))
+    ++SplitIt;
+  BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
+
+  // The new block lives in whichever loop the old one did.
+  if (Loop *L = LI.getLoopFor(Old))
+    L->addBasicBlockToLoop(New, LI);
+
+  if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>())
+    DT->addNewBlock(New, Old);
+
+  if (DominanceFrontier *DF = P->getAnalysisToUpdate<DominanceFrontier>())
+    DF->splitBlock(Old);
+    
+  return New;
+}
