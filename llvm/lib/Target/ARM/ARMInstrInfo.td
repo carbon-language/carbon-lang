@@ -288,7 +288,7 @@ def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
 
 // Conditional code operand for conditional branches and conditional moves.
 // No AlwaysVal value.
-def ccop : ImmutablePredicateOperand<OtherVT, (ops i32imm, CCR), (ops)> {
+def ccop : PredicateOperand<OtherVT, (ops i32imm, CCR), (ops)> {
   let PrintMethod = "printPredicateOperand";
 }
 
