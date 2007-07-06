@@ -529,6 +529,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   if (BBI.IsDone)
     return;
 
+  bool AlreadyPredicated = BBI.Predicate.size() > 0;
   // First analyze the end of BB branches.
   BBI.TrueBB = BBI.FalseBB = NULL;
   BBI.BrCond.clear();
@@ -558,8 +559,18 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     bool isCondBr = BBI.IsBrAnalyzable &&
       (TID->Flags & M_BRANCH_FLAG) != 0 && (TID->Flags & M_BARRIER_FLAG) == 0;
 
-    if (!isPredicated && !isCondBr)
-      BBI.NonPredSize++;
+    if (!isCondBr) {
+      if (!isPredicated)
+        BBI.NonPredSize++;
+      else if (!AlreadyPredicated) {
+        // FIXME: This instruction is already predicated before the
+        // if-conversion pass. It's probably something like a conditional move.
+        // Mark this block unpredicable for now.
+        BBI.IsUnpredicable = true;
+        return;
+      }
+        
+    }
 
     if (BBI.ClobbersPred && !isPredicated) {
       // Predicate modification instruction should end the block (except for
@@ -572,7 +583,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
       }
 
       // Predicate may have been modified, the subsequent (currently)
-      // unpredocated instructions cannot be correctly predicated.
+      // unpredicated instructions cannot be correctly predicated.
       BBI.IsUnpredicable = true;
       return;
     }
