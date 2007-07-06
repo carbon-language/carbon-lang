@@ -568,6 +568,7 @@ namespace {
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequired<UnifyFunctionExitNodes>();
       AU.addRequired<DominatorTree>();
     }
@@ -1760,12 +1761,6 @@ bool GVNPRE::runOnFunction(Function &F) {
   // Phase 1: BuildSets
   // This phase calculates the AVAIL_OUT and ANTIC_IN sets
   buildsets(F);
-  
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
-    DOUT << "ANTIC_IN: " << FI->getName() << "\n";
-    dump(anticipatedIn[FI]);
-    DOUT << "\n\n";
-  }
   
   // Phase 2: Insert
   // This phase inserts values to make partially redundant values
