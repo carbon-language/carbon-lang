@@ -1659,11 +1659,6 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
       for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;
            ++PI) {
         Value *e2 = phi_translate(e, *PI, BB);
-        if (find_leader(anticipatedIn[*PI], VN.lookup(e2)) == 0) {
-          by_some = false;
-          break;
-        }
-        
         Value *e3 = find_leader(availableOut[*PI], VN.lookup(e2));
               
         if (e3 == 0) {
