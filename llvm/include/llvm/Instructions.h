@@ -191,6 +191,10 @@ public:
   FreeInst(Value *Ptr, BasicBlock *InsertAfter);
 
   virtual FreeInst *clone() const;
+  
+  // Accessor methods for consistency with other memory operations
+  Value *getPointerOperand() { return getOperand(0); }
+  const Value *getPointerOperand() const { return getOperand(0); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FreeInst *) { return true; }
