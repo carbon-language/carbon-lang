@@ -189,7 +189,7 @@ Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
 }
 
 void
-Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
+Path::GetBitcodeLibraryPaths(std::vector<sys::Path>& Paths) {
   char * env_var = getenv("LLVM_LIB_SEARCH_PATH");
   if (env_var != 0) {
     getPathList(env_var,Paths);

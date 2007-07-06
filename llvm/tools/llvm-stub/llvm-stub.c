@@ -1,4 +1,4 @@
-/*===- llvm-stub.c - Stub executable to run llvm bytecode files -----------===//
+/*===- llvm-stub.c - Stub executable to run llvm bitcode files -----------===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This tool is used by the gccld program to enable transparent execution of
-// bytecode files by the user.  Specifically, gccld outputs two files when asked
+// bitcode files by the user.  Specifically, gccld outputs two files when asked
 // to compile a <program> file:
-//    1. It outputs the LLVM bytecode file to <program>.bc
+//    1. It outputs the LLVM bitcode file to <program>.bc
 //    2. It outputs a stub executable that runs lli on <program>.bc
 //
 // This allows the end user to just say ./<program> and have the JIT executed

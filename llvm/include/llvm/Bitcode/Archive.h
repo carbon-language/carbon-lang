@@ -51,7 +51,7 @@ class ArchiveMember {
       SVR4SymbolTableFlag = 2,     ///< Member is a SVR4 symbol table
       BSD4SymbolTableFlag = 4,     ///< Member is a BSD4 symbol table
       LLVMSymbolTableFlag = 8,     ///< Member is an LLVM symbol table
-      BitcodeFlag = 16,            ///< Member is uncompressed bytecode
+      BitcodeFlag = 16,            ///< Member is bitcode
       HasPathFlag = 64,            ///< Member has a full or partial path
       HasLongFilenameFlag = 128,   ///< Member uses the long filename syntax
       StringTableFlag = 256        ///< Member is an ar(1) format string table
@@ -109,8 +109,7 @@ class ArchiveMember {
     /// @brief Get the data content of the archive member
     const void* getData() const { return data; }
 
-    /// This method determines if the member is a regular compressed file. Note
-    /// that compressed bytecode files will yield "false" for this method.
+    /// This method determines if the member is a regular compressed file.
     /// @returns true iff the archive member is a compressed regular file.
     /// @brief Determine if the member is a compressed regular file.
     bool isCompressed() const { return flags&CompressedFlag; }
@@ -131,8 +130,8 @@ class ArchiveMember {
     /// @brief Determine if this member is the ar(1) string table.
     bool isStringTable() const { return flags&StringTableFlag; }
 
-    /// @returns true iff the archive member is an uncompressed bytecode file.
-    /// @brief Determine if this member is a bytecode file.
+    /// @returns true iff the archive member is a bitcode file.
+    /// @brief Determine if this member is a bitcode file.
     bool isBitcode() const { return flags&BitcodeFlag; }
 
     /// @returns true iff the file name contains a path (directory) component.

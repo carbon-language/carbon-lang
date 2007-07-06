@@ -204,7 +204,7 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
       break;
   }
 
-  // Determine if this is a bytecode file
+  // Determine if this is a bitcode file
   switch (sys::IdentifyFileType(At, 4)) {
     case sys::Bitcode_FileType:
       flags |= ArchiveMember::BitcodeFlag;
