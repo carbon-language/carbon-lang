@@ -63,6 +63,11 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreserved<DominatorTree>();
+      // Request DominanceFrontier now, even though Loop Rotate does
+      // not use it. This allows Pass Manager to schedule Dominance
+      // Frontier early enough such that one LPPassManager can handle
+      // loop rotate as well as licm pass.
+      AU.addRequired<DominanceFrontier>(); 
       AU.addPreserved<DominanceFrontier>();
     }
 
