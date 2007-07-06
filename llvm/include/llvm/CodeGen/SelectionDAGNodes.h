@@ -239,7 +239,7 @@ namespace ISD {
     // FCOPYSIGN(f32, f64) is allowed.
     FCOPYSIGN,
 
-    /// BUILD_VECTOR(ELT1, ELT2, ELT3, ELT4,...) - Return a vector
+    /// BUILD_VECTOR(ELT0, ELT1, ELT2, ELT3,...) - Return a vector
     /// with the specified, possibly variable, elements.  The number of elements
     /// is required to be a power of two.
     BUILD_VECTOR,
