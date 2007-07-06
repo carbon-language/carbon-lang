@@ -2548,25 +2548,6 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   }
 }
 
-/// propagateEHRegister - The specified EH register is required in a successor
-/// of the EH landing pad. Propagate it (by adding it to livein) to all the
-/// blocks in the paths between the landing pad and the specified block.
-static void propagateEHRegister(MachineBasicBlock *MBB, unsigned EHReg,
-                                SmallPtrSet<MachineBasicBlock*, 8> Visited) {
-  if (MBB->isLandingPad() || !Visited.insert(MBB))
-    return;
-
-  MBB->addLiveIn(EHReg);
-  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-         E = MBB->pred_end(); PI != E; ++PI)
-    propagateEHRegister(*PI, EHReg, Visited);
-}
-
-static void propagateEHRegister(MachineBasicBlock *MBB, unsigned EHReg) {
-  SmallPtrSet<MachineBasicBlock*, 8> Visited;
-  propagateEHRegister(MBB, EHReg, Visited);
-}
-
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -2677,9 +2658,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     
   case Intrinsic::eh_exception: {
     if (ExceptionHandling) {
-      if (!CurMBB->isLandingPad() && TLI.getExceptionAddressRegister())
-          propagateEHRegister(CurMBB, TLI.getExceptionAddressRegister());
-
+      if (!CurMBB->isLandingPad()) {
+        // FIXME: Mark exception register as live in.  Hack for PR1508.
+        unsigned Reg = TLI.getExceptionAddressRegister();
+        if (Reg) CurMBB->addLiveIn(Reg);
+      }
       // Insert the EXCEPTIONADDR instruction.
       SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
       SDOperand Ops[1];
@@ -2703,8 +2686,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 #ifndef NDEBUG
         FuncInfo.CatchInfoLost.insert(&I);
 #endif
-        if (TLI.getExceptionSelectorRegister())
-          propagateEHRegister(CurMBB, TLI.getExceptionSelectorRegister());
+        // FIXME: Mark exception selector register as live in.  Hack for PR1508.
+        unsigned Reg = TLI.getExceptionSelectorRegister();
+        if (Reg) CurMBB->addLiveIn(Reg);
       }
 
       // Insert the EHSELECTION instruction.
