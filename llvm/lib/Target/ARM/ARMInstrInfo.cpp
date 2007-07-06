@@ -312,8 +312,7 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
-  if (I == MBB.begin() ||
-      isPredicated(--I) || !isUnpredicatedTerminator(I)) {
+  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (LastOpc == ARM::B || LastOpc == ARM::tB) {
       TBB = LastInst->getOperand(0).getMachineBasicBlock();
       return false;
@@ -332,8 +331,7 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   MachineInstr *SecondLastInst = I;
   
   // If there are three terminators, we don't know what sort of block this is.
-  if (SecondLastInst && I != MBB.begin() &&
-      !isPredicated(--I) && isUnpredicatedTerminator(I))
+  if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
     return true;
   
   // If the block ends with ARM::B/ARM::tB and a ARM::Bcc/ARM::tBcc, handle it.
