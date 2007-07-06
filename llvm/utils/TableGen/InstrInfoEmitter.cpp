@@ -107,8 +107,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
 
       // Predicate operands.  Check to see if the original unexpanded operand
       // was of type PredicateOperand.
-      if (Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand") &&
-          !Inst.OperandList[i].Rec->getValueAsBit("isImmutable"))
+      if (Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
         Res += "|M_PREDICATE_OPERAND";
         
       // Fill in constraint info.

@@ -412,8 +412,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
         NumOps = NumArgs;
 
       if (Rec->isSubClassOf("PredicateOperand")) {
-        if (!Rec->getValueAsBit("isImmutable"))
-          isPredicable = true;
+        isPredicable = true;
       }
     } else if (Rec->getName() == "variable_ops") {
       hasVariableNumberOfOperands = true;
