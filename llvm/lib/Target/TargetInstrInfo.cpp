@@ -88,9 +88,12 @@ bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
 bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   if (TID->Flags & M_TERMINATOR_FLAG) {
+    // Conditional branch is a special case.
+    if ((TID->Flags & M_BRANCH_FLAG) != 0 && (TID->Flags & M_BARRIER_FLAG) == 0)
+      return true;
     if ((TID->Flags & M_PREDICABLE) == 0)
       return true;
     return !isPredicated(MI);
-}
+  }
   return false;
 }
