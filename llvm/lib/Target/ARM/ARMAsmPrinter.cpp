@@ -102,6 +102,7 @@ namespace {
     void printThumbAddrModeS4Operand(const MachineInstr *MI, int OpNo);
     void printThumbAddrModeSPOperand(const MachineInstr *MI, int OpNo);
     void printPredicateOperand(const MachineInstr *MI, int opNum);
+    void printSBitModifierOperand(const MachineInstr *MI, int opNum);
     void printPCLabel(const MachineInstr *MI, int opNum);
     void printRegisterList(const MachineInstr *MI, int opNum);
     void printCPInstOperand(const MachineInstr *MI, int opNum,
@@ -619,6 +620,14 @@ void ARMAsmPrinter::printPredicateOperand(const MachineInstr *MI, int opNum) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(opNum).getImmedValue();
   if (CC != ARMCC::AL)
     O << ARMCondCodeToString(CC);
+}
+
+void ARMAsmPrinter::printSBitModifierOperand(const MachineInstr *MI, int opNum){
+  unsigned Reg = MI->getOperand(opNum).getReg();
+  if (Reg) {
+    assert(Reg == ARM::CPSR && "Expect ARM CPSR register!");
+    O << 's';
+  }
 }
 
 void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int opNum) {
