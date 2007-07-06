@@ -2491,27 +2491,10 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   }
 }
 
-/// ExtractGlobalVariable - If V is a global variable, or a bitcast of one
-/// (possibly constant folded), return it.  Otherwise return NULL.
-static GlobalVariable *ExtractGlobalVariable (Value *V) {
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-    return GV;
-  else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::BitCast)
-      return dyn_cast<GlobalVariable>(CE->getOperand(0));
-    else if (CE->getOpcode() == Instruction::GetElementPtr) {
-      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-        if (!CE->getOperand(i)->isNullValue())
-          return NULL;
-      return dyn_cast<GlobalVariable>(CE->getOperand(0));
-    }
-  }
-  return NULL;
-}
-
-/// ExtractTypeInfo - Extracts the type info from a value.
+/// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.
 static GlobalVariable *ExtractTypeInfo (Value *V) {
-  GlobalVariable *GV = ExtractGlobalVariable(V);
+  V = IntrinsicInst::StripPointerCasts(V);
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
   assert (GV || isa<ConstantPointerNull>(V) &&
           "TypeInfo must be a global variable or NULL");
   return GV;
