@@ -226,7 +226,7 @@ strategy.</p>
 <div class="doc_text">
 
 <p>The LLVM code representation is designed to be used in three
-different forms: as an in-memory compiler IR, as an on-disk bytecode
+different forms: as an in-memory compiler IR, as an on-disk bitcode
 representation (suitable for fast loading by a Just-In-Time compiler),
 and as a human readable assembly language representation.  This allows
 LLVM to provide a powerful intermediate representation for efficient
@@ -268,7 +268,7 @@ following instruction is syntactically okay, but not well formed:</p>
 its uses. The LLVM infrastructure provides a verification pass that may
 be used to verify that an LLVM module is well formed.  This pass is
 automatically run by the parser after parsing input assembly and by
-the optimizer before it outputs bytecode.  The violations pointed out
+the optimizer before it outputs bitcode.  The violations pointed out
 by the verifier pass indicate bugs in transformation passes or input to
 the parser.</p>
 </div>
@@ -3690,7 +3690,7 @@ argument.</p>
 well known names and semantics and are required to follow certain restrictions.
 Overall, these intrinsics represent an extension mechanism for the LLVM 
 language that does not require changing all of the transformations in LLVM when 
-adding to the language (or the bytecode reader/writer, the parser, etc...).</p>
+adding to the language (or the bitcode reader/writer, the parser, etc...).</p>
 
 <p>Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix. This
 prefix is reserved in LLVM for intrinsic names; thus, function names may not

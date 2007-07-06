@@ -242,7 +242,7 @@ JIT, or LLC) and optionally a series of LLVM passes to run.  For example:</p>
 </div>
 
 <p><tt>bugpoint</tt> will try to narrow down your list of passes to the one pass
-that causes an error, and simplify the bytecode file as much as it can to assist
+that causes an error, and simplify the bitcode file as much as it can to assist
 you. It will print a message letting you know how to reproduce the resulting
 error.</p>
 
@@ -268,7 +268,7 @@ Backend, and then link in the shared object it generates.</p>
 
 <div class="doc_code">
 <pre>
-bugpoint -run-jit -output=[correct output file] [bytecode file]  \
+bugpoint -run-jit -output=[correct output file] [bitcode file]  \
          --tool-args -- [arguments to pass to lli]               \
          --args -- [program arguments]
 </pre>
@@ -278,7 +278,7 @@ bugpoint -run-jit -output=[correct output file] [bytecode file]  \
 
 <div class="doc_code">
 <pre>
-bugpoint -run-llc -output=[correct output file] [bytecode file]  \
+bugpoint -run-llc -output=[correct output file] [bitcode file]  \
          --tool-args -- [arguments to pass to llc]               \
          --args -- [program arguments]
 </pre>
@@ -297,7 +297,7 @@ make bugpoint-jit
 </div>
 
 <p>At the end of a successful <tt>bugpoint</tt> run, you will be presented
-with two bytecode files: a <em>safe</em> file which can be compiled with the C
+with two bitcode files: a <em>safe</em> file which can be compiled with the C
 backend and the <em>test</em> file which either LLC or the JIT
 mis-codegenerates, and thus causes the error.</p>
 
@@ -306,7 +306,7 @@ the following:</p>
 
 <ol>
 
-<li><p>Regenerate the shared object from the safe bytecode file:</p>
+<li><p>Regenerate the shared object from the safe bitcode file:</p>
 
 <div class="doc_code">
 <p><tt>
@@ -315,7 +315,7 @@ the following:</p>
 </tt></p>
 </div></li>
 
-<li><p>If debugging LLC, compile test bytecode native and link with the shared
+<li><p>If debugging LLC, compile test bitcode native and link with the shared
     object:</p>
 
 <div class="doc_code">
@@ -327,7 +327,7 @@ the following:</p>
 </div></li>
     
 <li><p>If debugging the JIT, load the shared object and supply the test
-    bytecode:</p>
+    bitcode:</p>
 
 <div class="doc_code">
 <p><tt><b>lli</b> -load=safe.so test.bc [program options]</tt></p>

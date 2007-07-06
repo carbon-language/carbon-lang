@@ -57,7 +57,7 @@
   <p>To emphasize, there is no C/C++ front end currently available.
   <tt>llvm-gcc</tt> is based on GCC, which cannot be bootstrapped using VC++.
   Eventually there should be a <tt>llvm-gcc</tt> based on Cygwin or MinGW that
-  is usable.  There is also the option of generating bytecode files on Unix and
+  is usable.  There is also the option of generating bitcode files on Unix and
   copying them over to Windows.  But be aware the odds of linking C++ code
   compiled with <tt>llvm-gcc</tt> with code compiled with VC++ is essentially
   zero.</p>
@@ -257,11 +257,11 @@ All these paths are absolute:</p>
    }
        </pre></li>
 
-  <li><p>Next, compile the C file into a LLVM bytecode file:</p>
+  <li><p>Next, compile the C file into a LLVM bitcode file:</p>
       <p><tt>% llvm-gcc -c hello.c -emit-llvm -o hello.bc</tt></p>
 
       <p>This will create the result file <tt>hello.bc</tt> which is the LLVM 
-      bytecode that corresponds the the compiled program and the library 
+      bitcode that corresponds the the compiled program and the library 
       facilities that it required.  You can execute this file directly using
       <tt>lli</tt> tool, compile it to native assembly with the <tt>llc</tt>, 
       optimize or analyze it further with the <tt>opt</tt> tool, etc.</p> 

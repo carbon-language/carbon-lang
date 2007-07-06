@@ -347,8 +347,8 @@ use the <tt>opt</tt> tool to access it, once loaded.</p>
 
 <p>To test it, follow the example at the end of the <a
 href="GettingStarted.html">Getting Started Guide</a> to compile "Hello World" to
-LLVM.  We can now run the bytecode file (<tt>hello.bc</tt>) for the program
-through our transformation like this (or course, any bytecode file will
+LLVM.  We can now run the bitcode file (<tt>hello.bc</tt>) for the program
+through our transformation like this (or course, any bitcode file will
 work):</p>
 
 <div class="doc_code"><pre>
@@ -372,7 +372,7 @@ interesting way, we just throw away the result of <tt>opt</tt> (sending it to
 $ opt -load ../../../Debug/lib/Hello.so --help
 OVERVIEW: llvm .bc -&gt; .bc modular optimizer
 
-USAGE: opt [options] &lt;input bytecode&gt;
+USAGE: opt [options] &lt;input bitcode&gt;
 
 OPTIONS:
   Optimizations available:
@@ -407,7 +407,7 @@ Hello: main
   Total Execution Time: 0.02 seconds (0.0479059 wall clock)
 
    ---User Time---   --System Time--   --User+System--   ---Wall Time---  --- Pass Name ---
-   0.0100 (100.0%)   0.0000 (  0.0%)   0.0100 ( 50.0%)   0.0402 ( 84.0%)  Bytecode Writer
+   0.0100 (100.0%)   0.0000 (  0.0%)   0.0100 ( 50.0%)   0.0402 ( 84.0%)  Bitcode Writer
    0.0000 (  0.0%)   0.0100 (100.0%)   0.0100 ( 50.0%)   0.0031 (  6.4%)  Dominator Set Construction
    0.0000 (  0.0%)   0.0000 (  0.0%)   0.0000 (  0.0%)   0.0013 (  2.7%)  Module Verifier
  <b>  0.0000 (  0.0%)   0.0000 (  0.0%)   0.0000 (  0.0%)   0.0033 (  6.9%)  Hello World Pass</b>
@@ -1413,8 +1413,8 @@ Module Pass Manager
     Module Verifier
 --  Dominator Set Construction
 --  Module Verifier
-  Bytecode Writer
---Bytecode Writer
+  Bitcode Writer
+--Bitcode Writer
 </pre></div>
 
 <p>This output shows us when passes are constructed and when the analysis
@@ -1454,8 +1454,8 @@ Module Pass Manager
     Module Verifier
 --  Dominator Set Construction
 --  Module Verifier
-  Bytecode Writer
---Bytecode Writer
+  Bitcode Writer
+--Bitcode Writer
 Hello: __main
 Hello: puts
 Hello: main
@@ -1494,8 +1494,8 @@ Module Pass Manager
     Module Verifier
 --  Dominator Set Construction
 --  Module Verifier
-  Bytecode Writer
---Bytecode Writer
+  Bitcode Writer
+--Bitcode Writer
 Hello: __main
 Hello: puts
 Hello: main

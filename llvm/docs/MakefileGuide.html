@@ -30,7 +30,7 @@
     <ol>
       <li><a href="#libraries">Libraries</a>
         <ol>
-	  <li><a href="#BCModules">Bytecode Modules</a></li>
+	  <li><a href="#BCModules">Bitcode Modules</a></li>
 	  <li><a href="#LoadableModules">Loadable Modules</a></li>
 	</ol>
       </li>
@@ -260,11 +260,11 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsubsection"><a name="BCModules">Bytecode Modules</a></div>
+<div class="doc_subsubsection"><a name="BCModules">Bitcode Modules</a></div>
 <div class="doc_text">
-  <p>In some situations, it is desireable to build a single bytecode module from
-  a variety of sources, instead of an archive, shared library, or bytecode 
-  library. Bytecode modules can be specified in addition to any of the other
+  <p>In some situations, it is desireable to build a single bitcode module from
+  a variety of sources, instead of an archive, shared library, or bitcode 
+  library. Bitcode modules can be specified in addition to any of the other
   types of libraries by defining the <a href="#MODULE_NAME">MODULE_NAME</a>
   variable. For example:</p>
   <pre><tt>
@@ -273,9 +273,9 @@
       MODULE_NAME = mymod
   </tt></pre>
   <p>will build a module named <tt>mymod.bc</tt> from the sources in the
-  directory. This module will be an aggregation of all the bytecode modules 
-  derived from the sources. The example will also build a bytecode archive 
-  containing a bytecode module for each compiled source file. The difference is
+  directory. This module will be an aggregation of all the bitcode modules 
+  derived from the sources. The example will also build a bitcode archive 
+  containing a bitcode module for each compiled source file. The difference is
   subtle, but important depending on how the module or library is to be linked.
   </p>
 </div>
@@ -626,7 +626,7 @@
     files. These sources will be built before any other target processing to 
     ensure they are present.</dd>
     <dt><a name="BYTECODE_LIBRARY"><tt>BYTECODE_LIBRARY</tt></a></dt>
-    <dd>If set to any value, causes a bytecode library (.bc) to be built.</dd>
+    <dd>If set to any value, causes a bitcode library (.bc) to be built.</dd>
     <dt><a name="CONFIG_FILES"><tt>CONFIG_FILES</tt></a></dt>
     <dd>Specifies a set of configuration files to be installed.</dd>
     <dt><a name="DIRS"><tt>DIRS</tt></a></dt>
@@ -709,9 +709,9 @@
     setting this variable without also setting <tt>SHARED_LIBRARY</tt> will have
     no effect.</dd>
     <dt><a name="MODULE_NAME"><tt>MODULE_NAME</tt></a></dt>
-    <dd>Specifies the name of a bytecode module to be created. A bytecode 
+    <dd>Specifies the name of a bitcode module to be created. A bitcode 
     module can be specified in conjunction with other kinds of library builds 
-    or by itself. It constructs from the sources a single linked bytecode 
+    or by itself. It constructs from the sources a single linked bitcode 
     file.</dd>
     <dt><a name="NO_INSTALL"><tt>NO_INSTALL</tt></a></dt>
     <dd>Specifies that the build products of the directory should not be
@@ -835,7 +835,7 @@
     <dt><a name="LLVMGXX"><tt>LLVMGXX</tt></a><small>(defaulted)</small></dt>
     <dd>Specifies the path to the LLVM version of the GCC C++ Compiler</dd>
     <dt><a name="LLVMLD"><tt>LLVMLD</tt></a><small>(defaulted)</small></dt>
-    <dd>Specifies the path to the LLVM bytecode linker tool</dd>
+    <dd>Specifies the path to the LLVM bitcode linker tool</dd>
     <dt><a name="LLVM_OBJ_ROOT"><tt>LLVM_OBJ_ROOT</tt></a><small>(configured)
     </small></dt>
     <dd>Specifies the top directory into which the output of the build is
@@ -884,8 +884,8 @@
     <dt><a name="BuildMode"><tt>BuildMode</tt></a></dt>
     <dd>The name of the type of build being performed: Debug, Release, or 
     Profile</dd>
-    <dt><a name="bytecode_libdir"><tt>bytecode_libdir</tt></a></dt>
-    <dd>The directory into which bytecode libraries will ultimately be 
+    <dt><a name="bitcode_libdir"><tt>bytecode_libdir</tt></a></dt>
+    <dd>The directory into which bitcode libraries will ultimately be 
     installed.  This value is derived from the <tt>--prefix</tt> option given to
     <tt>configure</tt>.</dd>
     <dt><a name="ConfigureScriptFLAGS"><tt>ConfigureScriptFLAGS</tt></a></dt>
@@ -965,7 +965,7 @@
     CXX.Flags
     DependFiles
     DestArchiveLib
-    DestBytecodeLib
+    DestBitcodeLib
     DestModule
     DestRelinkedLib
     DestSharedLib

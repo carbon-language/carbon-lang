@@ -67,9 +67,9 @@ intermodular optimization, in the compiler tool chain. Its main goal is to let
 the developer take advantage of intermodular optimizations without making any 
 significant changes to the developer's makefiles or build system. This is 
 achieved through tight integration with the linker. In this model, the linker 
-treates LLVM bytecode files like native object files and allows mixing and 
+treates LLVM bitcode files like native object files and allows mixing and 
 matching among them. The linker uses <a href="#lto">LLVMlto</a>, a dynamically 
-loaded library, to handle LLVM bytecode files. This tight integration between 
+loaded library, to handle LLVM bitcode files. This tight integration between 
 the linker and LLVM optimizer helps to do optimizations that are not possible 
 in other models. The linker input allows the optimizer to avoid relying on 
 conservative escape analysis.
@@ -87,7 +87,7 @@ conservative escape analysis.
   supports LTO through the interface described in this document.  Here,
   llvm-gcc4 transparently invokes system linker. </p>
   <ul>
-    <li> Input source file <tt>a.c</tt> is compiled into LLVM byte code form.
+    <li> Input source file <tt>a.c</tt> is compiled into LLVM bitcode form.
     <li> Input source file <tt>main.c</tt> is compiled into native object code.
   </ul>
 <div class="doc_code"><pre>
@@ -131,12 +131,12 @@ int main() {
 }
 
 --- command lines ---
-$ llvm-gcc4 --emit-llvm -c a.c -o a.o  # &lt;-- a.o is LLVM bytecode file
+$ llvm-gcc4 --emit-llvm -c a.c -o a.o  # &lt;-- a.o is LLVM bitcode file
 $ llvm-gcc4 -c main.c -o main.o # &lt;-- main.o is native object file
 $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifications
 </pre></div>
   <p>In this example, the linker recognizes that <tt>foo2()</tt> is an 
-  externally visible symbol defined in LLVM byte code file. This information 
+  externally visible symbol defined in LLVM bitcode file. This information 
   is collected using <a href="#readllvmobjectfile"> readLLVMObjectFile()</a>. 
   Based on this information, the linker completes its usual symbol resolution 
   pass and finds that <tt>foo2()</tt> is not used anywhere. This information 
@@ -202,15 +202,15 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="phase1">Phase 1 : Read LLVM Bytecode Files</a>
+  <a name="phase1">Phase 1 : Read LLVM Bitcode Files</a>
 </div>
 
 <div class="doc_text">
   <p>The linker first reads all object files in natural order and collects 
-  symbol information. This includes native object files as well as LLVM byte 
-  code files.  In this phase, the linker uses 
+  symbol information. This includes native object files as well as LLVM bitcode 
+  files.  In this phase, the linker uses 
   <a href="#readllvmobjectfile"> readLLVMObjectFile() </a>  to collect symbol
-  information from each LLVM bytecode files and updates its internal global 
+  information from each LLVM bitcode files and updates its internal global 
   symbol table accordingly. The intent of this interface is to avoid overhead 
   in the non LLVM case, where all input object files are native object files, 
   by putting this code in the error path of the linker. When the linker sees 
@@ -228,7 +228,7 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
   <p>In this stage, the linker resolves symbols using global symbol table 
   information to report undefined symbol errors, read archive members, resolve 
   weak symbols, etc. The linker is able to do this seamlessly even though it 
-  does not know the exact content of input LLVM bytecode files because it uses 
+  does not know the exact content of input LLVM bitcode files because it uses 
   symbol information provided by 
   <a href="#readllvmobjectfile">readLLVMObjectFile()</a>.  If dead code 
   stripping is enabled then the linker collects the list of live symbols.
@@ -237,12 +237,12 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="phase3">Phase 3 : Optimize Bytecode Files</a>
+  <a name="phase3">Phase 3 : Optimize Bitcode Files</a>
 </div>
 <div class="doc_text">
   <p>After symbol resolution, the linker updates symbol information supplied 
-  by LLVM bytecode files appropriately. For example, whether certain LLVM 
-  bytecode supplied symbols are used or not. In the example above, the linker 
+  by LLVM bitcode files appropriately. For example, whether certain LLVM 
+  bitcode supplied symbols are used or not. In the example above, the linker 
   reports that <tt>foo2()</tt> is not used anywhere in the program, including 
   native <tt>.o</tt> files. This information is used by the LLVM interprocedural
   optimizer. The linker uses <a href="#optimizemodules">optimizeModules()</a> 
@@ -260,12 +260,12 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
   <p>In this phase, the linker reads optimized a native object file and 
   updates the internal global symbol table to reflect any changes. The linker 
   also collects information about any changes in use of external symbols by 
-  LLVM bytecode files. In the examle above, the linker notes that 
+  LLVM bitcode files. In the examle above, the linker notes that 
   <tt>foo4()</tt> is not used any more. If dead code stripping is enabled then 
   the linker refreshes the live symbol information appropriately and performs 
   dead code stripping.</p>
   <p>After this phase, the linker continues linking as if it never saw LLVM 
-  bytecode files.</p>
+  bitcode files.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -288,10 +288,10 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 
 <div class="doc_text">
   <p>The <tt>LLVMSymbol</tt> class is used to describe the externally visible 
-  functions and global variables, defined in LLVM bytecode files, to the linker.
+  functions and global variables, defined in LLVM bitcode files, to the linker.
   This includes symbol visibility information. This information is used by 
   the linker to do symbol resolution. For example: function <tt>foo2()</tt> is 
-  defined inside an LLVM bytecode module and it is an externally visible symbol.
+  defined inside an LLVM bitcode module and it is an externally visible symbol.
   This helps the linker connect the use of <tt>foo2()</tt> in native object 
   files with a future definition of the symbol <tt>foo2()</tt>. The linker 
   will see the actual definition of <tt>foo2()</tt> when it receives the 
@@ -310,12 +310,12 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 
 <div class="doc_text">
   <p>The <tt>readLLVMObjectFile()</tt> function is used by the linker to read 
-  LLVM bytecode files and collect LLVMSymbol information. This routine also
-  supplies a list of externally defined symbols that are used by LLVM bytecode
+  LLVM bitcode files and collect LLVMSymbol information. This routine also
+  supplies a list of externally defined symbols that are used by LLVM bitcode
   files. The linker uses this symbol information to do symbol resolution. 
-  Internally, <a href="#lto">LLVMlto</a> maintains LLVM bytecode modules in 
+  Internally, <a href="#lto">LLVMlto</a> maintains LLVM bitcode modules in 
   memory. This function also provides a list of external references used by 
-  bytecode files.</p>
+  bitcode files.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -325,7 +325,7 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 
 <div class="doc_text">
   <p>The linker invokes <tt>optimizeModules</tt> to optimize already read 
-  LLVM bytecode files by applying LLVM intermodular optimization techniques. 
+  LLVM bitcode files by applying LLVM intermodular optimization techniques. 
   This function runs the LLVM intermodular optimizer and generates native 
   object code as <tt>.o</tt> files at the name and location provided by the 
   linker.</p>
@@ -338,7 +338,7 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 
 <div class="doc_text">
   <p>The linker may use <tt>getTargetTriple()</tt> to query target architecture
-  while validating LLVM bytecode file.</p>
+  while validating LLVM bitcode file.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -347,7 +347,7 @@ $ llvm-gcc4 a.o main.o -o main # &lt;-- standard link command without any modifi
 </div>
 
 <div class="doc_text">
-  <p>Internally, <a href="#lto">LLVMlto</a> maintains LLVM bytecode modules in 
+  <p>Internally, <a href="#lto">LLVMlto</a> maintains LLVM bitcode modules in 
   memory. The linker may use <tt>removeModule()</tt> method to remove desired
   modules from memory. </p>
 </div>

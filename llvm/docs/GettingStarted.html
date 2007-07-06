@@ -82,14 +82,14 @@ basic information.</p>
 
 <p>First, LLVM comes in two pieces. The first piece is the LLVM suite. This
 contains all of the tools, libraries, and header files needed to use the low
-level virtual machine.  It contains an assembler, disassembler, bytecode
-analyzer and bytecode optimizer.  It also contains a test suite that can be
+level virtual machine.  It contains an assembler, disassembler, bitcode
+analyzer and bitcode optimizer.  It also contains a test suite that can be
 used to test the LLVM tools and the GCC front end.</p>
 
 <p>The second piece is the GCC front end.  This component provides a version of
-GCC that compiles C and C++ code into LLVM bytecode.  Currently, the GCC front
+GCC that compiles C and C++ code into LLVM bitcode.  Currently, the GCC front
 end uses the GCC parser to convert code to LLVM.  Once
-compiled into LLVM bytecode, a program can be manipulated with the LLVM tools
+compiled into LLVM bitcode, a program can be manipulated with the LLVM tools
 from the LLVM suite.</p>
 
 <p>
@@ -332,7 +332,7 @@ build requires considerably less space.</p>
 
 <p>The LLVM suite <i>may</i> compile on other platforms, but it is not
 guaranteed to do so.  If compilation is successful, the LLVM utilities should be
-able to assemble, disassemble, analyze, and optimize LLVM bytecode.  Code
+able to assemble, disassemble, analyze, and optimize LLVM bitcode.  Code
 generation should work as well, although the generated native code may not work
 on your platform.</p>
 
@@ -629,11 +629,11 @@ In order to compile and use LLVM, you may need to set some environment
 variables.
 
 <dl>
-  <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt>/path/to/your/bytecode/libs</tt></dt>
+  <dt><tt>LLVM_LIB_SEARCH_PATH</tt>=<tt>/path/to/your/bitcode/libs</tt></dt>
   <dd>[Optional] This environment variable helps LLVM linking tools find the
-  locations of your bytecode libraries. It is provided only as a
+  locations of your bitcode libraries. It is provided only as a
   convenience since you can specify the paths using the -L options of the
-  tools and the C/C++ front-end will automatically use the bytecode files
+  tools and the C/C++ front-end will automatically use the bitcode files
   installed in its
   <tt>lib</tt> directory.</dd>
 </dl>
@@ -974,8 +974,8 @@ source code:</p>
   <dt><tt>gmake -C runtime install-bytecode</tt>
   <dd>
   Assuming you built LLVM into $OBJDIR, when this command is run, it will 
-  install bytecode libraries into the GCC front end's bytecode library 
-  directory.  If you need to update your bytecode libraries,
+  install bitcode libraries into the GCC front end's bitcode library 
+  directory.  If you need to update your bitcode libraries,
   this is the target to use once you've built them.
   <br><br>
 </dl>
@@ -1138,7 +1138,7 @@ If you're running on a Linux system that supports the "<a
   href="http://www.tat.physik.uni-tuebingen.de/~rguenth/linux/binfmt_misc.html">
   binfmt_misc</a>"
 module, and you have root access on the system, you can set your system up to
-execute LLVM bytecode files directly.  To do this, use commands like this (the
+execute LLVM bitcode files directly.  To do this, use commands like this (the
 first command may not be required if you are already using the module):</p>
 
 <div class="doc_code">
@@ -1151,7 +1151,7 @@ first command may not be required if you are already using the module):</p>
 </div>
 
 <p>
-This allows you to execute LLVM bytecode files directly.  Thanks to Jack
+This allows you to execute LLVM bitcode files directly.  Thanks to Jack
 Cummings for pointing this out!
 </p>
 
@@ -1225,8 +1225,8 @@ different <a href="#tools">tools</a>.</p>
   <dd>This directory holds the source code for the LLVM assembly language parser 
   library.</dd>
 
-  <dt><tt><b>llvm/lib/ByteCode/</b></tt></dt>
-  <dd>This directory holds code for reading and write LLVM bytecode.</dd>
+  <dt><tt><b>llvm/lib/BitCode/</b></tt></dt>
+  <dd>This directory holds code for reading and write LLVM bitcode.</dd>
 
   <dt><tt><b>llvm/lib/Analysis/</b></tt><dd>This directory contains a variety of
   different program analyses, such as Dominator Information, Call Graphs,
@@ -1255,7 +1255,7 @@ different <a href="#tools">tools</a>.</p>
   source code locations at which the program is executing.</dd>
 
   <dt><tt><b>llvm/lib/ExecutionEngine/</b></tt></dt>
-  <dd> This directory contains libraries for executing LLVM bytecode directly 
+  <dd> This directory contains libraries for executing LLVM bitcode directly 
   at runtime in both interpreted and JIT compiled fashions.</dd>
 
   <dt><tt><b>llvm/lib/Support/</b></tt></dt>
@@ -1283,7 +1283,7 @@ different <a href="#tools">tools</a>.</p>
 <div class="doc_subsection"><a name="runtime"><tt>llvm/runtime</tt></a></div>
 <div class="doc_text">
 
-<p>This directory contains libraries which are compiled into LLVM bytecode and
+<p>This directory contains libraries which are compiled into LLVM bitcode and
 used when linking programs with the GCC front end.  Most of these libraries are
 skeleton versions of real libraries; for example, libc is a stripped down
 version of glibc.</p>
@@ -1342,22 +1342,22 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   be configured to utilize both LLVM and non-LLVM compilation tools to enable
   pre-processing, translation, optimization, assembly, and linking of programs
   all from one command line. <tt>llvmc</tt> also takes care of processing the
-  dependent libraries found in bytecode. This reduces the need to get the
+  dependent libraries found in bitcode. This reduces the need to get the
   traditional <tt>-l&lt;name&gt;</tt> options right on the command line. Please
   note that this tool, while functional, is still experimental and not feature
   complete.</dd>
 
   <dt><tt><b>llvm-ar</b></tt></dt>
   <dd>The archiver produces an archive containing
-  the given LLVM bytecode files, optionally with an index for faster
+  the given LLVM bitcode files, optionally with an index for faster
   lookup.</dd>
   
   <dt><tt><b>llvm-as</b></tt></dt>
   <dd>The assembler transforms the human readable LLVM assembly to LLVM 
-  bytecode.</dd>
+  bitcode.</dd>
 
   <dt><tt><b>llvm-dis</b></tt></dt>
-  <dd>The disassembler transforms the LLVM bytecode to human readable 
+  <dd>The disassembler transforms the LLVM bitcode to human readable 
   LLVM assembly.</dd>
 
   <dt><tt><b>llvm-ld</b></tt></dt>
@@ -1372,7 +1372,7 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
   
   <dt><tt><b>lli</b></tt></dt>
   <dd><tt>lli</tt> is the LLVM interpreter, which
-  can directly execute LLVM bytecode (although very slowly...). In addition
+  can directly execute LLVM bitcode (although very slowly...). In addition
   to a simple interpreter, <tt>lli</tt> also has a tracing mode (entered by
   specifying <tt>-trace</tt> on the command line). Finally, for
   architectures that support it (currently x86, Sparc, and PowerPC), by default,
@@ -1382,25 +1382,25 @@ information is in the <a href="CommandGuide/index.html">Command Guide</a>.</p>
 
   <dt><tt><b>llc</b></tt></dt>
   <dd> <tt>llc</tt> is the LLVM backend compiler, which
-  translates LLVM bytecode to a native code assembly file or to C code (with
+  translates LLVM bitcode to a native code assembly file or to C code (with
   the -march=c option).</dd>
 
   <dt><tt><b>llvm-gcc</b></tt></dt>
   <dd><tt>llvm-gcc</tt> is a GCC-based C frontend that has been retargeted to 
   use LLVM as its backend instead of GCC's RTL backend. It can also emit LLVM 
-  byte code or assembly (with the <tt>-emit-llvm</tt> option) instead of the
+  bitcode or assembly (with the <tt>-emit-llvm</tt> option) instead of the
   usual machine code output.  It works just like any other GCC compiler, 
   taking the typical <tt>-c, -S, -E, -o</tt> options that are typically used.  
   Additionally, the the source code for <tt>llvm-gcc</tt> is available as a 
   separate Subversion module.</dd>
 
   <dt><tt><b>opt</b></tt></dt>
-  <dd><tt>opt</tt> reads LLVM bytecode, applies a series of LLVM to LLVM 
+  <dd><tt>opt</tt> reads LLVM bitcode, applies a series of LLVM to LLVM 
   transformations (which are specified on the command line), and then outputs 
-  the resultant bytecode.  The '<tt>opt --help</tt>' command is a good way to 
+  the resultant bitcode.  The '<tt>opt --help</tt>' command is a good way to 
   get a list of the program transformations available in LLVM.<br/>
   <dd><tt>opt</tt> can also be used to run a specific analysis on an input 
-  LLVM bytecode file and print out the results.  It is primarily useful for 
+  LLVM bitcode file and print out the results.  It is primarily useful for 
   debugging analyses, or familiarizing yourself with what an analysis does.</dd>
 </dl>
 </div>
@@ -1490,9 +1490,9 @@ so we only include instructiosn for llvm-gcc4.
 
 <p><b>Note:</b> The <i>gcc4</i> frontend's invocation is <b><i>considerably different</i></b>
 from the previous <i>gcc3</i> frontend. In particular, the <i>gcc4</i> frontend <b><i>does not</i></b>
-create bytecode by default: <i>gcc4</i> produces native code. As the example below illustrates,
-the '--emit-llvm' flag is needed to produce LLVM bytecode output. For <i>makefiles</i> and
-<i>configure</i> scripts, the CFLAGS variable needs '--emit-llvm' to produce bytecode
+create bitcode by default: <i>gcc4</i> produces native code. As the example below illustrates,
+the '--emit-llvm' flag is needed to produce LLVM bitcode output. For <i>makefiles</i> and
+<i>configure</i> scripts, the CFLAGS variable needs '--emit-llvm' to produce bitcode
 output.</p>
 </div>
 
@@ -1519,13 +1519,13 @@ output.</p>
         -c arguments work as usual (producing a native .s or .o file,
         respectively). </p>
 
-  <li><p>Next, compile the C file into a LLVM bytecode file:</p>
+  <li><p>Next, compile the C file into a LLVM bitcode file:</p>
       <p><tt>% llvm-gcc -O3 -emit-llvm hello.c -c -o hello.bc</tt></p>
 
       <p>The -emit-llvm option can be used with the -S or -c options to emit an
          LLVM ".ll" or ".bc" file (respectively) for the code.  This allows you
          to use the <a href="CommandGuide/index.html">standard LLVM tools</a> on
-         the bytecode file.</p>
+         the bitcode file.</p>
 
       <p>Unlike llvm-gcc3, llvm-gcc4 correctly responds to -O[0123] arguments.
          </p></li>

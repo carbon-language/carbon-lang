@@ -199,7 +199,7 @@
       </ul></td>
       <td class="td_left"><ul>
           <li>LLVM Assembly</li>
-          <li>LLVM Bytecode</li>
+          <li>LLVM Bitcode</li>
           <li>LLVM C++ IR</li>
       </ul></td>
       <td class="td_left"><dl>
@@ -215,10 +215,10 @@
       <td><b>Optimization</b></td>
       <td class="td_left"><ul>
           <li>LLVM Assembly</li>
-          <li>LLVM Bytecode</li>
+          <li>LLVM Bitcode</li>
       </ul></td>
       <td class="td_left"><ul>
-          <li>LLVM Bytecode</li>
+          <li>LLVM Bitcode</li>
       </ul></td>
       <td class="td_left"><dl>
           <dt><tt>-Ox</tt>
@@ -229,13 +229,13 @@
     <tr>
       <td><b>Linking</b></td>
       <td class="td_left"><ul>
-          <li>LLVM Bytecode</li>
+          <li>LLVM Bitcode</li>
           <li>Native Object Code</li>
           <li>LLVM Library</li>
           <li>Native Library</li>
       </ul></td>
       <td class="td_left"><ul>
-          <li>LLVM Bytecode Executable</li>
+          <li>LLVM Bitcode Executable</li>
           <li>Native Executable</li>
       </ul></td>
       <td class="td_left"><dl>
@@ -291,7 +291,7 @@ should be invoked. Users may but are not advised to alter the compiler's
 available command line options for those programs regardless of whether they
 were written for LLVM or not. Furthermore, not all compiler tools will
 have the same capabilities. Some compiler tools will simply generate LLVM assembly
-code, others will be able to generate fully optimized byte code. In general,
+code, others will be able to generate fully optimized bitcode. In general,
 <tt>llvmc</tt> doesn't make any assumptions about the capabilities or command 
 line options of a sub-tool. It simply uses the details found in the 
 configuration files and leaves it to the compiler writer to specify the 
@@ -299,9 +299,9 @@ configuration correctly.</p>
 
 <p>This approach means that new compiler tools can be up and working very
 quickly. As a first cut, a tool can simply compile its source to raw
-(unoptimized) bytecode or LLVM assembly and <tt>llvmc</tt> can be configured 
-to pick up the slack (translate LLVM assembly to bytecode, optimize the 
-bytecode, generate native assembly, link, etc.).   In fact, the compiler tools 
+(unoptimized) bitcode or LLVM assembly and <tt>llvmc</tt> can be configured 
+to pick up the slack (translate LLVM assembly to bitcode, optimize the 
+bitcode, generate native assembly, link, etc.).   In fact, the compiler tools 
 need not use any LLVM libraries, and it could be written in any language 
 (instead of C++).  The configuration data will allow the full range of 
 optimization, assembly, and linking capabilities that LLVM provides to be added 
@@ -309,7 +309,7 @@ to these kinds of tools.  Enabling the rapid development of front-ends is one
 of the primary goals of <tt>llvmc</tt>.</p>
 
 <p>As a compiler tool matures, it may utilize the LLVM libraries and tools 
-to more efficiently produce optimized bytecode directly in a single compilation 
+to more efficiently produce optimized bitcode directly in a single compilation 
 and optimization program. In these cases, multiple tools would not be needed 
 and the configuration data for the compiler would change.</p>
 
@@ -532,10 +532,10 @@ optimization.</p>
       </tr>
       <tr>
         <td><b>translator.output</b></td>
-        <td><tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td><tt>bitcode</tt> or <tt>assembly</tt></td>
         <td class="td_left">This item specifies the kind of output the language's 
           translator generates.</td>
-        <td><tt>bytecode</tt></td>
+        <td><tt>bitcode</tt></td>
       </tr>
       <tr>
         <td><b>translator.preprocesses</b></td>
@@ -556,10 +556,10 @@ optimization.</p>
       </tr>
       <tr>
         <td><b>optimizer.output</b></td>
-        <td><tt>bytecode</tt> or <tt>assembly</tt></td>
+        <td><tt>bitcode</tt> or <tt>assembly</tt></td>
         <td class="td_left">This item specifies the kind of output the language's 
-          optimizer generates. Valid values are "assembly" and "bytecode"</td>
-        <td><tt>bytecode</tt></td>
+          optimizer generates. Valid values are "assembly" and "bitcode"</td>
+        <td><tt>bitcode</tt></td>
       </tr>
       <tr>
         <td><b>optimizer.preprocesses</b></td>
@@ -724,7 +724,7 @@ optimization.</p>
   translator.required=true
 
   # stkrc doesn't handle the -On options
-  translator.output=bytecode
+  translator.output=bitcode
 
 ##########################################################
 # Optimizer definitions
@@ -742,7 +742,7 @@ optimization.</p>
   # opt doesn't preprocess
   optimizer.preprocesses=no
 
-  # opt produces bytecode
+  # opt produces bitcode
   optimizer.output = bc
 
 ##########################################################
@@ -761,7 +761,7 @@ optimization.</p>
   defined below.</p>
   <dl>
     <dt><a name="def_assembly"><b>assembly</b></a></dt> 
-    <dd>A compilation <a href="#def_phase">phase</a> in which LLVM bytecode or 
+    <dd>A compilation <a href="#def_phase">phase</a> in which LLVM bitcode or 
     LLVM assembly code is assembled to a native code format (either target 
     specific aseembly language or the platform's native object file format).
     </dd>
@@ -774,12 +774,12 @@ optimization.</p>
     <dd>Refers to <tt>llvmc</tt> itself.</dd>
 
     <dt><a name="def_linking"><b>linking</b></a></dt>
-    <dd>A compilation <a href="#def_phase">phase</a> in which LLVM bytecode files 
+    <dd>A compilation <a href="#def_phase">phase</a> in which LLVM bitcode files 
     and (optionally) native system libraries are combined to form a complete 
     executable program.</dd>
 
     <dt><a name="def_optimization"><b>optimization</b></a></dt>
-    <dd>A compilation <a href="#def_phase">phase</a> in which LLVM bytecode is 
+    <dd>A compilation <a href="#def_phase">phase</a> in which LLVM bitcode is 
     optimized.</dd>
 
     <dt><a name="def_phase"><b>phase</b></a></dt>
@@ -804,7 +804,7 @@ optimization.</p>
     <dt><a name="def_translation"><b>translation</b></a></dt>
     <dd>A compilation <a href="#def_phase">phase</a> in which 
     <a href="#def_sourcelanguage">source language</a> code is translated into 
-    either LLVM assembly language or LLVM bytecode.</dd>
+    either LLVM assembly language or LLVM bitcode.</dd>
   </dl>
 </div>
 <!-- *********************************************************************** -->

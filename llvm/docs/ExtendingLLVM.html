@@ -228,7 +228,7 @@ complicated behavior in a single node (rotate).</p>
 
 <div class="doc_text">
 
-<p><span class="doc_warning">WARNING: adding instructions changes the bytecode
+<p><span class="doc_warning">WARNING: adding instructions changes the bitcode
 format, and it will take some effort to maintain compatibility with
 the previous version.</span> Only add an instruction if it is absolutely
 necessary.</p>
@@ -251,8 +251,8 @@ necessary.</p>
     add the grammar on how your instruction can be read and what it will
     construct as a result</li>
 
-<li><tt>llvm/lib/Bytecode/Reader/Reader.cpp</tt>:
-    add a case for your instruction and how it will be parsed from bytecode</li>
+<li><tt>llvm/lib/Bitcode/Reader/Reader.cpp</tt>:
+    add a case for your instruction and how it will be parsed from bitcode</li>
 
 <li><tt>llvm/lib/VMCore/Instruction.cpp</tt>:
     add a case for how your instruction will be printed out to assembly</li>
@@ -285,7 +285,7 @@ to understand this new instruction.</p>
 
 <div class="doc_text">
 
-<p><span class="doc_warning">WARNING: adding new types changes the bytecode
+<p><span class="doc_warning">WARNING: adding new types changes the bitcode
 format, and will break compatibility with currently-existing LLVM
 installations.</span> Only add new types if it is absolutely necessary.</p>
 
@@ -348,12 +348,12 @@ bool TypesEqual(const Type *Ty, const Type *Ty2,
 <li><tt>llvm/lib/AsmReader/Lexer.l</tt>:
     add ability to parse in the type from text assembly</li>
 
-<li><tt>llvm/lib/ByteCode/Writer/Writer.cpp</tt>:
-    modify <tt>void BytecodeWriter::outputType(const Type *T)</tt> to serialize
+<li><tt>llvm/lib/BitCode/Writer/Writer.cpp</tt>:
+    modify <tt>void BitcodeWriter::outputType(const Type *T)</tt> to serialize
     your type</li>
 
-<li><tt>llvm/lib/ByteCode/Reader/Reader.cpp</tt>:
-    modify <tt>const Type *BytecodeReader::ParseType()</tt> to read your data
+<li><tt>llvm/lib/BitCode/Reader/Reader.cpp</tt>:
+    modify <tt>const Type *BitcodeReader::ParseType()</tt> to read your data
     type</li> 
 
 <li><tt>llvm/lib/VMCore/AsmWriter.cpp</tt>:

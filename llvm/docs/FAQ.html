@@ -584,7 +584,7 @@ relatively slow.
 <p>Also note: this specific sequence of commands won't work if you use a 
 function defined in the C++ runtime library (or any other C++ library).  To 
 access an external C++ library, you must manually 
-compile libstdc++ to LLVM bytecode, statically link it into your program, then
+compile libstdc++ to LLVM bitcode, statically link it into your program, then
 use the commands above to convert the whole result into C code.  Alternatively,
 you can compile the libraries and your application into two different chunks
 of C code and link them.</p>

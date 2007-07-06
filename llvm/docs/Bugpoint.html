@@ -123,7 +123,7 @@ functions has been reduced, it attempts to delete various edges in the control
 flow graph, to reduce the size of the function as much as possible.  Finally,
 <tt>bugpoint</tt> deletes any individual LLVM instructions whose absence does
 not eliminate the failure.  At the end, <tt>bugpoint</tt> should tell you what
-passes crash, give you a bytecode file, and give you instructions on how to
+passes crash, give you a bitcode file, and give you instructions on how to
 reproduce the failure with <tt>opt</tt> or <tt>llc</tt>.</p>
 
 </div>
@@ -141,7 +141,7 @@ test program and partitions it into two pieces: one piece which it compiles
 with the C backend (into a shared object), and one piece which it runs with
 either the JIT or the static LLC compiler.  It uses several techniques to
 reduce the amount of code pushed through the LLVM code generator, to reduce the
-potential scope of the problem.  After it is finished, it emits two bytecode
+potential scope of the problem.  After it is finished, it emits two bitcode
 files (called "test" [to be compiled with the code generator] and "safe" [to be
 compiled with the C backend], respectively), and instructions for reproducing
 the problem.  The code generator debugger assumes that the C backend produces

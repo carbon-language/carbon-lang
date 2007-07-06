@@ -581,9 +581,9 @@ suite, it gives a report that looks like this:</p>
 
 <div class="doc_code">
 <pre>
-   7646 bytecodewriter  - Number of normal instructions
-    725 bytecodewriter  - Number of oversized instructions
- 129996 bytecodewriter  - Number of bytecode bytes written
+   7646 bitcodewriter   - Number of normal instructions
+    725 bitcodewriter   - Number of oversized instructions
+ 129996 bitcodewriter   - Number of bitcode bytes written
    2817 raise           - Number of insts DCEd or constprop'd
    3213 raise           - Number of cast-of-self removed
    5046 raise           - Number of expression trees converted
@@ -1935,7 +1935,7 @@ recursive types and late resolution of opaque types makes the situation very
 difficult to handle.  Fortunately, for the most part, our implementation makes
 most clients able to be completely unaware of the nasty internal details.  The
 primary case where clients are exposed to the inner workings of it are when
-building a recursive type.  In addition to this case, the LLVM bytecode reader,
+building a recursive type.  In addition to this case, the LLVM bitcode reader,
 assembly parser, and linker also have to be aware of the inner workings of this
 system.
 </p>
