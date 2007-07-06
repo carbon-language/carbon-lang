@@ -2984,8 +2984,10 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 /// If the Flag pointer is NULL, no flag is used.
 SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
                                         SDOperand &Chain, SDOperand *Flag)const{
-  // Get the list of registers.
+  // Get the list of registers, in the appropriate order.
   std::vector<unsigned> R(Regs);
+  if (!DAG.getTargetLoweringInfo().isLittleEndian())
+    std::reverse(R.begin(), R.end());
 
   // Copy the legal parts from the registers.
   unsigned NumParts = Regs.size();
@@ -3001,7 +3003,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   }
   
   // Assemble the legal parts into the final value.
-  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT, true);
+  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT, false);
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -3010,13 +3012,15 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
 /// If the Flag pointer is NULL, no flag is used.
 void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
                                  SDOperand &Chain, SDOperand *Flag) const {
-  // Get the list of registers.
+  // Get the list of registers, in the appropriate order.
   std::vector<unsigned> R(Regs);
+  if (!DAG.getTargetLoweringInfo().isLittleEndian())
+    std::reverse(R.begin(), R.end());
 
   // Get the list of the values's legal parts.
   unsigned NumParts = Regs.size();
   SmallVector<SDOperand, 8> Parts(NumParts);
-  getCopyToParts(DAG, Val, &Parts[0], NumParts, RegVT, true);
+  getCopyToParts(DAG, Val, &Parts[0], NumParts, RegVT, false);
 
   // Copy the parts into the registers.
   for (unsigned i = 0; i != NumParts; ++i) {
