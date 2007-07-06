@@ -59,12 +59,6 @@ namespace llvm {
   extern bool HonorSignDependentRoundingFPMathOption;
   extern bool HonorSignDependentRoundingFPMath();
   
-  /// option is specified on the command line. If this returns false (default),
-  /// the code generator is not allowed to assume that FP arithmetic arguments
-  /// and results are never NaNs or +-Infs.
-  extern bool FiniteOnlyFPMathOption;
-  extern bool FiniteOnlyFPMath();
-  
   /// UseSoftFloat - This flag is enabled when the -soft-float flag is specified
   /// on the command line.  When this flag is on, the code generator will
   /// generate libcalls to the software floating point library instead of
