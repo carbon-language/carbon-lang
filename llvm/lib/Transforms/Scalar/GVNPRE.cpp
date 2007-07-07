@@ -1370,7 +1370,7 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
     unsigned num = VN.lookup_or_add(*I);
     numbers.resize(VN.size());
     
-    if (isa<Instruction>(*I)) {
+    if (isa<Instruction>(*I) && !numbers.test(num)) {
       anticIn.insert(*I);
       numbers.set(num);
     }
