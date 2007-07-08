@@ -128,4 +128,12 @@ show-footprint:
 	$(Verb) du -sk $(ExmplDir)
 	$(Verb) du -sk $(ObjDir)
 
+build-for-llvm-top:
+	$(Verb) if test ! -f ./config.status ; then \
+	  ./configure --prefix="$(LLVM_TOP)/install" \
+	    --with-llvm-gcc="$(LLVM_TOP)/llvm-gcc" ; \
+	fi
+	$(Verb) $(MAKE) tools-only
+
 .PHONY: srpm rpm
+

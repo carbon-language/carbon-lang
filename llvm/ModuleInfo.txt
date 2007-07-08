@@ -1,2 +1,2 @@
-BuildTarget: tools-only
 DepModule:
+BuildTarget: build-for-llvm-top
