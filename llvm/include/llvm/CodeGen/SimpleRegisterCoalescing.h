@@ -86,7 +86,7 @@ namespace llvm {
     /// joinIntervals - join compatible live intervals
     void joinIntervals();
 
-    /// CopyCoalesceInMBB - Coallesce copies in the specified MBB, putting
+    /// CopyCoalesceInMBB - Coalesce copies in the specified MBB, putting
     /// copies that cannot yet be coalesced into the "TryAgain" list.
     void CopyCoalesceInMBB(MachineBasicBlock *MBB,
                          std::vector<CopyRec> *TryAgain, bool PhysOnly = false);
