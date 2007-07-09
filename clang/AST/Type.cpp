@@ -279,13 +279,17 @@ bool Type::isComplexType() const {
   return isa<ComplexType>(CanonicalType);
 }
 
+bool Type::isVectorType() const {
+  return isa<VectorType>(CanonicalType);
+}
+
 bool Type::isArithmeticType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() != BuiltinType::Void;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
-  return isa<ComplexType>(CanonicalType);
+  return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
 }
 
 bool Type::isScalarType() const {

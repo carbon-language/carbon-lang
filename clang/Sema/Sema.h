@@ -303,6 +303,7 @@ private:
     
   /// type checking binary operators (subroutines of ParseBinOp).
   inline void InvalidOperands(SourceLocation l, Expr *lex, Expr *rex);
+  inline QualType CheckVectorOperands(SourceLocation l, Expr *lex, Expr *rex);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *lex, Expr *rex, SourceLocation OpLoc); 
   inline QualType CheckRemainderOperands( // C99 6.5.5

@@ -439,6 +439,8 @@ DIAG(err_attribute_invalid_size, ERROR,
      "vector size not an integral multiple of component size")
 DIAG(err_attribute_zero_size, ERROR,
      "zero vector size")
+DIAG(err_typecheck_vector_not_convertable, ERROR,
+     "can't convert between vector values of different size ('%0' and '%1')")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_void_param_with_identifier, ERROR,

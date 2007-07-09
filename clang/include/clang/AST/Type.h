@@ -227,6 +227,9 @@ public:
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
   
+  /// Vector types
+  bool isVectorType() const;       // GCC vector type.
+  
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
   bool isPointerType() const;

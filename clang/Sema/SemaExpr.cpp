@@ -703,9 +703,11 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   // expressions that surpress this implicit conversion (&, sizeof).
   rhsType = DefaultFunctionArrayConversion(rhsType);
     
-  if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
+  if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
+    if (lhsType->isVectorType() || rhsType->isVectorType())
+      return lhsType == rhsType ? Compatible : Incompatible;
     return Compatible;
-  else if (lhsType->isPointerType()) {
+  } else if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType())
       return PointerFromInt;
       
@@ -734,10 +736,27 @@ inline void Sema::InvalidOperands(SourceLocation loc, Expr *lex, Expr *rex) {
        lex->getSourceRange(), rex->getSourceRange());
 }
 
+inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *lex, 
+                                                              Expr *rex) {
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+  
+  // make sure the vector types are identical. 
+  if (lhsType == rhsType)
+    return lhsType;
+  // You cannot convert between vector values of different size.
+  Diag(loc, diag::err_typecheck_vector_not_convertable, 
+       lex->getType().getAsString(), rex->getType().getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
+  return QualType();
+}    
+
 inline QualType Sema::CheckMultiplyDivideOperands(
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
+  
+  if (lhsType->isVectorType() || rhsType->isVectorType())
+    return CheckVectorOperands(loc, lex, rex);
   QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   if (resType->isArithmeticType())
@@ -762,6 +781,9 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
+
+  if (lhsType->isVectorType() || rhsType->isVectorType())
+    return CheckVectorOperands(loc, lex, rex);    
   QualType resType = UsualArithmeticConversions(lhsType, rhsType);
 
   // handle the common case first (both operands are arithmetic).
@@ -779,6 +801,9 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
+
+  if (lhsType->isVectorType() || rhsType->isVectorType())
+    return CheckVectorOperands(loc, lex, rex);
   QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   // handle the common case first (both operands are arithmetic).
@@ -869,6 +894,9 @@ inline QualType Sema::CheckBitwiseOperands(
   Expr *lex, Expr *rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
+  
+  if (lhsType->isVectorType() || rhsType->isVectorType())
+    return CheckVectorOperands(loc, lex, rex);
   QualType resType = UsualArithmeticConversions(lhsType, rhsType);
   
   if (resType->isIntegerType())
