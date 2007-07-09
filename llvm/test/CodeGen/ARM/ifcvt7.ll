@@ -1,7 +1,14 @@
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep cmpeq | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep moveq | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep ldmeq | wc -l | grep 1
+; RUN: llvm-as < %s | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion
+; RUN: llvm-as < %s | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
+; RUN:   grep cmpeq | wc -l | grep 1
+; RUN: llvm-as < %s | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
+; RUN:   grep moveq | wc -l | grep 1
+; RUN: llvm-as < %s | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
+; RUN:   grep ldmeq | wc -l | grep 1
 ; FIXME: Need post-ifcvt branch folding to get rid of the extra br at end of BB1.
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }
