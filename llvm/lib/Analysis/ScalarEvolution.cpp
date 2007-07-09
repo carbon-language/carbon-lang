@@ -183,6 +183,10 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
   return R;
 }
 
+SCEVHandle SCEVConstant::get(const APInt& Val) {
+  return get(ConstantInt::get(Val));
+}
+
 ConstantRange SCEVConstant::getValueRange() const {
   return ConstantRange(V->getValue());
 }
@@ -487,10 +491,6 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
   return SCEVUnknown::get(C);
 }
 
-SCEVHandle SCEVUnknown::getIntegerSCEV(const APInt& Val) {
-  return SCEVUnknown::get(ConstantInt::get(Val));
-}
-
 /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion of the
 /// input value to the specified type.  If the type must be extended, it is zero
 /// extended.
@@ -531,7 +531,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
     APInt Result(Val.getBitWidth(), 1);
     for (; NumSteps; --NumSteps)
       Result *= Val-(NumSteps-1);
-    return SCEVUnknown::get(ConstantInt::get(Result));
+    return SCEVConstant::get(Result);
   }
 
   const Type *Ty = V->getType();
@@ -1716,8 +1716,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
 }
 
 static ConstantInt *
-EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, Constant *C) {
-  SCEVHandle InVal = SCEVConstant::get(cast<ConstantInt>(C));
+EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, ConstantInt *C) {
+  SCEVHandle InVal = SCEVConstant::get(C);
   SCEVHandle Val = AddRec->evaluateAtIteration(InVal);
   assert(isa<SCEVConstant>(Val) &&
          "Evaluation of SCEV at constant didn't fold correctly?");
@@ -2199,8 +2199,8 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
     ConstantInt *Solution1 = ConstantInt::get((NegB + SqrtVal).sdiv(TwoA));
     ConstantInt *Solution2 = ConstantInt::get((NegB - SqrtVal).sdiv(TwoA));
 
-    return std::make_pair(SCEVUnknown::get(Solution1), 
-                          SCEVUnknown::get(Solution2));
+    return std::make_pair(SCEVConstant::get(Solution1), 
+                          SCEVConstant::get(Solution2));
     } // end APIntOps namespace
 }
 
@@ -2468,15 +2468,14 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
            EvaluateConstantChrecAtConstant(this, 
            ConstantInt::get(ExitVal - One))->getValue()) &&
            "Linear scev computation is off in a bad way!");
-    return SCEVConstant::get(cast<ConstantInt>(ExitValue));
+    return SCEVConstant::get(ExitValue);
   } else if (isQuadratic()) {
     // If this is a quadratic (3-term) AddRec {L,+,M,+,N}, find the roots of the
     // quadratic equation to solve it.  To do this, we must frame our problem in
     // terms of figuring out when zero is crossed, instead of when
     // Range.getUpper() is crossed.
     std::vector<SCEVHandle> NewOps(op_begin(), op_end());
-    NewOps[0] = SCEV::getNegativeSCEV(SCEVUnknown::get(
-                                           ConstantInt::get(Range.getUpper())));
+    NewOps[0] = SCEV::getNegativeSCEV(SCEVConstant::get(Range.getUpper()));
     SCEVHandle NewAddRec = SCEVAddRecExpr::get(NewOps, getLoop());
 
     // Next, solve the constructed addrec
@@ -2499,17 +2498,17 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
                                                              R1->getValue());
         if (Range.contains(R1Val->getValue())) {
           // The next iteration must be out of the range...
-          Constant *NextVal = ConstantInt::get(R1->getValue()->getValue()+1);
+          ConstantInt *NextVal = ConstantInt::get(R1->getValue()->getValue()+1);
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
           if (!Range.contains(R1Val->getValue()))
-            return SCEVUnknown::get(NextVal);
+            return SCEVConstant::get(NextVal);
           return new SCEVCouldNotCompute();  // Something strange happened
         }
 
         // If R1 was not in the range, then it is a good return value.  Make
         // sure that R1-1 WAS in the range though, just in case.
-        Constant *NextVal = ConstantInt::get(R1->getValue()->getValue()-1);
+        ConstantInt *NextVal = ConstantInt::get(R1->getValue()->getValue()-1);
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
         if (Range.contains(R1Val->getValue()))
           return R1;

@@ -33,13 +33,14 @@ namespace llvm {
   ///
   class SCEVConstant : public SCEV {
     ConstantInt *V;
-    SCEVConstant(ConstantInt *v) : SCEV(scConstant), V(v) {}
+    explicit SCEVConstant(ConstantInt *v) : SCEV(scConstant), V(v) {}
 
     virtual ~SCEVConstant();
   public:
     /// get method - This just gets and returns a new SCEVConstant object.
     ///
     static SCEVHandle get(ConstantInt *V);
+    static SCEVHandle get(const APInt& Val);
 
     ConstantInt *getValue() const { return V; }
 
@@ -511,7 +512,6 @@ namespace llvm {
     /// getIntegerSCEV - Given an integer or FP type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
     static SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
-    static SCEVHandle getIntegerSCEV(const APInt& Val);
 
     Value *getValue() const { return V; }
 
