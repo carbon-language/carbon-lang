@@ -574,7 +574,8 @@ class ValueNumberedSet {
       numbers.set(i);
     }
     
-    void copyNumbers(ValueNumberedSet& other) {
+    void operator=(const ValueNumberedSet& other) {
+      contents = other.contents;
       numbers = other.numbers;
     }
     
@@ -710,11 +711,10 @@ void GVNPRE::val_insert(ValueNumberedSet& s, Value* v) {
 void GVNPRE::val_replace(ValueNumberedSet& s, Value* v) {
   uint32_t num = VN.lookup(v);
   Value* leader = find_leader(s, num);
-  while (leader != 0) {
+  if (leader != 0)
     s.erase(leader);
-    leader = find_leader(s, num);
-  }
   s.insert(v);
+  s.set(num);
 }
 
 /// phi_translate - Given a value, its parent block, and a predecessor of its
@@ -1154,8 +1154,6 @@ void GVNPRE::dump(ValueNumberedSet& s) const {
 /// elimination by walking the dominator tree and removing any instruction that 
 /// is dominated by another instruction with the same value number.
 bool GVNPRE::elimination() {
-  DOUT << "\n\nPhase 3: Elimination\n\n";
-  
   bool changed_function = false;
   
   std::vector<std::pair<Instruction*, Value*> > replace;
@@ -1166,10 +1164,6 @@ bool GVNPRE::elimination() {
   for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     BasicBlock* BB = DI->getBlock();
-    
-    //DOUT << "Block: " << BB->getName() << "\n";
-    //dump(availableOut[BB]);
-    //DOUT << "\n\n";
     
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI) {
@@ -1354,7 +1348,6 @@ bool GVNPRE::buildsets_anticout(BasicBlock* BB,
   if (BB->getTerminator()->getNumSuccessors() == 1) {
     if (BB->getTerminator()->getSuccessor(0) != BB &&
         visited.count(BB->getTerminator()->getSuccessor(0)) == 0) {
-          DOUT << "DEFER: " << BB->getName() << "\n";
       return true;
     }
     else {
@@ -1459,12 +1452,8 @@ void GVNPRE::buildsets(Function& F) {
     BasicBlock* BB = DI->getBlock();
   
     // A block inherits AVAIL_OUT from its dominator
-    if (DI->getIDom() != 0) {
-      currAvail.insert(availableOut[DI->getIDom()->getBlock()].begin(),
-                       availableOut[DI->getIDom()->getBlock()].end());
-    
-      currAvail.copyNumbers(availableOut[DI->getIDom()->getBlock()]);
-    }
+    if (DI->getIDom() != 0)
+      currAvail = availableOut[DI->getIDom()->getBlock()];
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI)
@@ -1517,8 +1506,6 @@ void GVNPRE::buildsets(Function& F) {
     
     iterations++;
   }
-  
-  DOUT << "ITERATIONS: " << iterations << "\n";
 }
 
 /// insertion_pre - When a partial redundancy has been identified, eliminate it
@@ -1528,7 +1515,6 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                            std::map<BasicBlock*, Value*>& avail,
                     std::map<BasicBlock*, ValueNumberedSet>& new_sets) {
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
-    DOUT << "PRED: " << (*PI)->getName() << "\n";
     Value* e2 = avail[*PI];
     if (!availableOut[*PI].test(VN.lookup(e2))) {
       User* U = cast<User>(e2);
