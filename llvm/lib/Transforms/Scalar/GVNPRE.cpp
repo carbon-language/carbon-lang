@@ -547,6 +547,52 @@ unsigned ValueTable::size() {
 }
 
 //===----------------------------------------------------------------------===//
+//                         ValueTable Class
+//===----------------------------------------------------------------------===//
+
+class ValueNumberedSet {
+  private:
+    SmallPtrSet<Value*, 8> contents;
+    BitVector numbers;
+  public:
+    ValueNumberedSet() { numbers.resize(1); }
+    
+    typedef SmallPtrSet<Value*, 8>::iterator iterator;
+    
+    iterator begin() { return contents.begin(); }
+    iterator end() { return contents.end(); }
+    
+    bool insert(Value* v) { return contents.insert(v); }
+    void insert(iterator I, iterator E) { contents.insert(I, E); }
+    void erase(Value* v) { contents.erase(v); }
+    size_t size() { return contents.size(); }
+    
+    void set(unsigned i) {
+      if (i >= numbers.size())
+        numbers.resize(i+1);
+      
+      numbers.set(i);
+    }
+    
+    void reset(unsigned i) {
+      if (i < numbers.size())
+        numbers.reset(i);
+    }
+    
+    bool test(unsigned i) {
+      if (i >= numbers.size())
+        return false;
+      
+      return numbers.test(i);
+    }
+    
+    void clear() {
+      contents.clear();
+      numbers.clear();
+    }
+};
+
+//===----------------------------------------------------------------------===//
 //                         GVNPRE Pass
 //===----------------------------------------------------------------------===//
 
@@ -562,9 +608,9 @@ namespace {
     ValueTable VN;
     std::vector<Instruction*> createdExpressions;
     
-    std::map<BasicBlock*, SmallPtrSet<Value*, 16> > availableOut;
-    std::map<BasicBlock*, SmallPtrSet<Value*, 16> > anticipatedIn;
-    std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedPhis;
+    std::map<BasicBlock*, ValueNumberedSet> availableOut;
+    std::map<BasicBlock*, ValueNumberedSet> anticipatedIn;
+    std::map<BasicBlock*, ValueNumberedSet> generatedPhis;
     
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -576,46 +622,43 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(const SmallPtrSet<Value*, 16>& s) const;
-    void clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet);
-    Value* find_leader(SmallPtrSet<Value*, 16>& vals,
-                       uint32_t v);
+    void dump(ValueNumberedSet& s) const;
+    void clean(ValueNumberedSet& set);
+    Value* find_leader(ValueNumberedSet& vals, uint32_t v);
     Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ);
-    void phi_translate_set(SmallPtrSet<Value*, 16>& anticIn, BasicBlock* pred,
-                           BasicBlock* succ, SmallPtrSet<Value*, 16>& out);
+    void phi_translate_set(ValueNumberedSet& anticIn, BasicBlock* pred,
+                           BasicBlock* succ, ValueNumberedSet& out);
     
-    void topo_sort(SmallPtrSet<Value*, 16>& set,
+    void topo_sort(ValueNumberedSet& set,
                    std::vector<Value*>& vec);
     
     void cleanup();
     bool elimination();
     
-    void val_insert(SmallPtrSet<Value*, 16>& s, Value* v);
-    void val_replace(SmallPtrSet<Value*, 16>& s, Value* v);
+    void val_insert(ValueNumberedSet& s, Value* v);
+    void val_replace(ValueNumberedSet& s, Value* v);
     bool dependsOnInvoke(Value* V);
     void buildsets_availout(BasicBlock::iterator I,
-                            SmallPtrSet<Value*, 16>& currAvail,
-                            SmallPtrSet<Value*, 16>& currPhis,
-                            SmallPtrSet<Value*, 16>& currExps,
-                            SmallPtrSet<Value*, 16>& currTemps,
-                            BitVector& availNumbers,
-                            BitVector& expNumbers);
+                            ValueNumberedSet& currAvail,
+                            ValueNumberedSet& currPhis,
+                            ValueNumberedSet& currExps,
+                            SmallPtrSet<Value*, 16>& currTemps);
     bool buildsets_anticout(BasicBlock* BB,
-                            SmallPtrSet<Value*, 16>& anticOut,
+                            ValueNumberedSet& anticOut,
                             std::set<BasicBlock*>& visited);
     unsigned buildsets_anticin(BasicBlock* BB,
-                           SmallPtrSet<Value*, 16>& anticOut,
-                           SmallPtrSet<Value*, 16>& currExps,
+                           ValueNumberedSet& anticOut,
+                           ValueNumberedSet& currExps,
                            SmallPtrSet<Value*, 16>& currTemps,
                            std::set<BasicBlock*>& visited);
     void buildsets(Function& F);
     
     void insertion_pre(Value* e, BasicBlock* BB,
                        std::map<BasicBlock*, Value*>& avail,
-                      std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_set);
+                      std::map<BasicBlock*,ValueNumberedSet>& new_set);
     unsigned insertion_mergepoint(std::vector<Value*>& workList,
                                   df_iterator<DomTreeNode*>& D,
-                      std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_set);
+                      std::map<BasicBlock*, ValueNumberedSet>& new_set);
     bool insertion(Function& F);
   
   };
@@ -638,8 +681,11 @@ STATISTIC(NumEliminated, "Number of redundant instructions eliminated");
 /// find_leader - Given a set and a value number, return the first
 /// element of the set with that value number, or 0 if no such element
 /// is present
-Value* GVNPRE::find_leader(SmallPtrSet<Value*, 16>& vals, uint32_t v) {
-  for (SmallPtrSet<Value*, 16>::iterator I = vals.begin(), E = vals.end();
+Value* GVNPRE::find_leader(ValueNumberedSet& vals, uint32_t v) {
+  if (!vals.test(v))
+    return 0;
+  
+  for (ValueNumberedSet::iterator I = vals.begin(), E = vals.end();
        I != E; ++I)
     if (v == VN.lookup(*I))
       return *I;
@@ -649,16 +695,15 @@ Value* GVNPRE::find_leader(SmallPtrSet<Value*, 16>& vals, uint32_t v) {
 
 /// val_insert - Insert a value into a set only if there is not a value
 /// with the same value number already in the set
-void GVNPRE::val_insert(SmallPtrSet<Value*, 16>& s, Value* v) {
+void GVNPRE::val_insert(ValueNumberedSet& s, Value* v) {
   uint32_t num = VN.lookup(v);
-  Value* leader = find_leader(s, num);
-  if (leader == 0)
+  if (!s.test(num))
     s.insert(v);
 }
 
 /// val_replace - Insert a value into a set, replacing any values already in
 /// the set that have the same value number
-void GVNPRE::val_replace(SmallPtrSet<Value*, 16>& s, Value* v) {
+void GVNPRE::val_replace(ValueNumberedSet& s, Value* v) {
   uint32_t num = VN.lookup(v);
   Value* leader = find_leader(s, num);
   while (leader != 0) {
@@ -867,14 +912,16 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
 }
 
 /// phi_translate_set - Perform phi translation on every element of a set
-void GVNPRE::phi_translate_set(SmallPtrSet<Value*, 16>& anticIn,
+void GVNPRE::phi_translate_set(ValueNumberedSet& anticIn,
                               BasicBlock* pred, BasicBlock* succ,
-                              SmallPtrSet<Value*, 16>& out) {
-  for (SmallPtrSet<Value*, 16>::iterator I = anticIn.begin(),
+                              ValueNumberedSet& out) {
+  for (ValueNumberedSet::iterator I = anticIn.begin(),
        E = anticIn.end(); I != E; ++I) {
     Value* V = phi_translate(*I, pred, succ);
-    if (V != 0)
+    if (V != 0 && !out.test(VN.lookup_or_add(V))) {
       out.insert(V);
+      out.set(VN.lookup(V));
+    }
   }
 }
 
@@ -895,7 +942,7 @@ bool GVNPRE::dependsOnInvoke(Value* V) {
 /// clean - Remove all non-opaque values from the set whose operands are not
 /// themselves in the set, as well as all values that depend on invokes (see 
 /// above)
-void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
+void GVNPRE::clean(ValueNumberedSet& set) {
   std::vector<Value*> worklist;
   worklist.reserve(set.size());
   topo_sort(set, worklist);
@@ -906,13 +953,13 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
     // Handle unary ops
     if (CastInst* U = dyn_cast<CastInst>(v)) {
       bool lhsValid = !isa<Instruction>(U->getOperand(0));
-      lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
+      lhsValid |= set.test(VN.lookup(U->getOperand(0)));
       if (lhsValid)
         lhsValid = !dependsOnInvoke(U->getOperand(0));
       
       if (!lhsValid) {
         set.erase(U);
-        presentInSet.flip(VN.lookup(U));
+        set.reset(VN.lookup(U));
       }
     
     // Handle binary ops
@@ -921,18 +968,18 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
       User* U = cast<User>(v);
       
       bool lhsValid = !isa<Instruction>(U->getOperand(0));
-      lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
+      lhsValid |= set.test(VN.lookup(U->getOperand(0)));
       if (lhsValid)
         lhsValid = !dependsOnInvoke(U->getOperand(0));
     
       bool rhsValid = !isa<Instruction>(U->getOperand(1));
-      rhsValid |= presentInSet.test(VN.lookup(U->getOperand(1)));
+      rhsValid |= set.test(VN.lookup(U->getOperand(1)));
       if (rhsValid)
         rhsValid = !dependsOnInvoke(U->getOperand(1));
       
       if (!lhsValid || !rhsValid) {
         set.erase(U);
-        presentInSet.flip(VN.lookup(U));
+        set.reset(VN.lookup(U));
       }
     
     // Handle ternary ops
@@ -941,29 +988,29 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
       User* U = cast<User>(v);
     
       bool lhsValid = !isa<Instruction>(U->getOperand(0));
-      lhsValid |= presentInSet.test(VN.lookup(U->getOperand(0)));
+      lhsValid |= set.test(VN.lookup(U->getOperand(0)));
       if (lhsValid)
         lhsValid = !dependsOnInvoke(U->getOperand(0));
       
       bool rhsValid = !isa<Instruction>(U->getOperand(1));
-      rhsValid |= presentInSet.test(VN.lookup(U->getOperand(1)));
+      rhsValid |= set.test(VN.lookup(U->getOperand(1)));
       if (rhsValid)
         rhsValid = !dependsOnInvoke(U->getOperand(1));
       
       bool thirdValid = !isa<Instruction>(U->getOperand(2));
-      thirdValid |= presentInSet.test(VN.lookup(U->getOperand(2)));
+      thirdValid |= set.test(VN.lookup(U->getOperand(2)));
       if (thirdValid)
         thirdValid = !dependsOnInvoke(U->getOperand(2));
     
       if (!lhsValid || !rhsValid || !thirdValid) {
         set.erase(U);
-        presentInSet.flip(VN.lookup(U));
+        set.reset(VN.lookup(U));
       }
     
     // Handle varargs ops
     } else if (GetElementPtrInst* U = dyn_cast<GetElementPtrInst>(v)) {
       bool ptrValid = !isa<Instruction>(U->getPointerOperand());
-      ptrValid |= presentInSet.test(VN.lookup(U->getPointerOperand()));
+      ptrValid |= set.test(VN.lookup(U->getPointerOperand()));
       if (ptrValid)
         ptrValid = !dependsOnInvoke(U->getPointerOperand());
       
@@ -971,13 +1018,13 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
       for (GetElementPtrInst::op_iterator I = U->idx_begin(), E = U->idx_end();
            I != E; ++I)
         if (varValid) {
-          varValid &= !isa<Instruction>(*I) || presentInSet.test(VN.lookup(*I));
+          varValid &= !isa<Instruction>(*I) || set.test(VN.lookup(*I));
           varValid &= !dependsOnInvoke(*I);
         }
     
       if (!ptrValid || !varValid) {
         set.erase(U);
-        presentInSet.flip(VN.lookup(U));
+        set.reset(VN.lookup(U));
       }
     }
   }
@@ -985,10 +1032,10 @@ void GVNPRE::clean(SmallPtrSet<Value*, 16>& set, BitVector& presentInSet) {
 
 /// topo_sort - Given a set of values, sort them by topological
 /// order into the provided vector.
-void GVNPRE::topo_sort(SmallPtrSet<Value*, 16>& set, std::vector<Value*>& vec) {
+void GVNPRE::topo_sort(ValueNumberedSet& set, std::vector<Value*>& vec) {
   SmallPtrSet<Value*, 16> visited;
   std::vector<Value*> stack;
-  for (SmallPtrSet<Value*, 16>::iterator I = set.begin(), E = set.end();
+  for (ValueNumberedSet::iterator I = set.begin(), E = set.end();
        I != E; ++I) {
     if (visited.count(*I) == 0)
       stack.push_back(*I);
@@ -1089,9 +1136,9 @@ void GVNPRE::topo_sort(SmallPtrSet<Value*, 16>& set, std::vector<Value*>& vec) {
 }
 
 /// dump - Dump a set of values to standard error
-void GVNPRE::dump(const SmallPtrSet<Value*, 16>& s) const {
+void GVNPRE::dump(ValueNumberedSet& s) const {
   DOUT << "{ ";
-  for (SmallPtrSet<Value*, 16>::iterator I = s.begin(), E = s.end();
+  for (ValueNumberedSet::iterator I = s.begin(), E = s.end();
        I != E; ++I) {
     DOUT << "" << VN.lookup(*I) << ": ";
     DEBUG((*I)->dump());
@@ -1168,37 +1215,32 @@ void GVNPRE::cleanup() {
 /// buildsets_availout - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 void GVNPRE::buildsets_availout(BasicBlock::iterator I,
-                                SmallPtrSet<Value*, 16>& currAvail,
-                                SmallPtrSet<Value*, 16>& currPhis,
-                                SmallPtrSet<Value*, 16>& currExps,
-                                SmallPtrSet<Value*, 16>& currTemps,
-                                BitVector& availNumbers,
-                                BitVector& expNumbers) {
+                                ValueNumberedSet& currAvail,
+                                ValueNumberedSet& currPhis,
+                                ValueNumberedSet& currExps,
+                                SmallPtrSet<Value*, 16>& currTemps) {
   // Handle PHI nodes
   if (PHINode* p = dyn_cast<PHINode>(I)) {
-    VN.lookup_or_add(p);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
+    unsigned num = VN.lookup_or_add(p);
     
     currPhis.insert(p);
+    currPhis.set(num);
   
   // Handle unary ops
   } else if (CastInst* U = dyn_cast<CastInst>(I)) {
     Value* leftValue = U->getOperand(0);
     
     unsigned num = VN.lookup_or_add(U);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
       
     if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue))) {
+      if (!currExps.test(VN.lookup(leftValue))) {
         currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue));
+        currExps.set(VN.lookup(leftValue));
       }
     
-    if (!expNumbers.test(VN.lookup(U))) {
+    if (!currExps.test(num)) {
       currExps.insert(U);
-      expNumbers.set(num);
+      currExps.set(num);
     }
   
   // Handle binary ops
@@ -1209,24 +1251,22 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     Value* rightValue = U->getOperand(1);
     
     unsigned num = VN.lookup_or_add(U);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
       
     if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue))) {
+      if (!currExps.test(VN.lookup(leftValue))) {
         currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue));
+        currExps.set(VN.lookup(leftValue));
       }
     
     if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue))) {
+      if (!currExps.test(VN.lookup(rightValue))) {
         currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue));
+        currExps.set(VN.lookup(rightValue));
       }
     
-    if (!expNumbers.test(VN.lookup(U))) {
+    if (!currExps.test(num)) {
       currExps.insert(U);
-      expNumbers.set(num);
+      currExps.set(num);
     }
     
   // Handle ternary ops
@@ -1240,28 +1280,26 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     VN.lookup_or_add(U);
     
     unsigned num = VN.lookup_or_add(U);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
     
     if (isa<Instruction>(leftValue))
-      if (!expNumbers.test(VN.lookup(leftValue))) {
+      if (!currExps.test(VN.lookup(leftValue))) {
         currExps.insert(leftValue);
-        expNumbers.set(VN.lookup(leftValue));
+        currExps.set(VN.lookup(leftValue));
       }
     if (isa<Instruction>(rightValue))
-      if (!expNumbers.test(VN.lookup(rightValue))) {
+      if (!currExps.test(VN.lookup(rightValue))) {
         currExps.insert(rightValue);
-        expNumbers.set(VN.lookup(rightValue));
+        currExps.set(VN.lookup(rightValue));
       }
     if (isa<Instruction>(thirdValue))
-      if (!expNumbers.test(VN.lookup(thirdValue))) {
+      if (!currExps.test(VN.lookup(thirdValue))) {
         currExps.insert(thirdValue);
-        expNumbers.set(VN.lookup(thirdValue));
+        currExps.set(VN.lookup(thirdValue));
       }
     
-    if (!expNumbers.test(VN.lookup(U))) {
+    if (!currExps.test(num)) {
       currExps.insert(U);
-      expNumbers.set(num);
+      currExps.set(num);
     }
     
   // Handle vararg ops
@@ -1271,47 +1309,43 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
     VN.lookup_or_add(U);
     
     unsigned num = VN.lookup_or_add(U);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
     
     if (isa<Instruction>(ptrValue))
-      if (!expNumbers.test(VN.lookup(ptrValue))) {
+      if (!currExps.test(VN.lookup(ptrValue))) {
         currExps.insert(ptrValue);
-        expNumbers.set(VN.lookup(ptrValue));
+        currExps.set(VN.lookup(ptrValue));
       }
     
     for (GetElementPtrInst::op_iterator OI = U->idx_begin(), OE = U->idx_end();
          OI != OE; ++OI)
-      if (isa<Instruction>(*OI) && !expNumbers.test(VN.lookup(*OI))) {
+      if (isa<Instruction>(*OI) && !currExps.test(VN.lookup(*OI))) {
         currExps.insert(*OI);
-        expNumbers.set(VN.lookup(*OI));
+        currExps.set(VN.lookup(*OI));
       }
     
-    if (!expNumbers.test(VN.lookup(U))) {
+    if (!currExps.test(VN.lookup(U))) {
       currExps.insert(U);
-      expNumbers.set(num);
+      currExps.set(num);
     }
     
   // Handle opaque ops
   } else if (!I->isTerminator()){
     VN.lookup_or_add(I);
-    expNumbers.resize(VN.size());
-    availNumbers.resize(VN.size());
     
     currTemps.insert(I);
   }
     
   if (!I->isTerminator())
-    if (!availNumbers.test(VN.lookup(I))) {
+    if (!currAvail.test(VN.lookup(I))) {
       currAvail.insert(I);
-      availNumbers.set(VN.lookup(I));
+      currAvail.set(VN.lookup(I));
     }
 }
 
 /// buildsets_anticout - When walking the postdom tree, calculate the ANTIC_OUT
 /// set as a function of the ANTIC_IN set of the block's predecessors
 bool GVNPRE::buildsets_anticout(BasicBlock* BB,
-                                SmallPtrSet<Value*, 16>& anticOut,
+                                ValueNumberedSet& anticOut,
                                 std::set<BasicBlock*>& visited) {
   if (BB->getTerminator()->getNumSuccessors() == 1) {
     if (BB->getTerminator()->getSuccessor(0) != BB &&
@@ -1325,22 +1359,28 @@ bool GVNPRE::buildsets_anticout(BasicBlock* BB,
     }
   } else if (BB->getTerminator()->getNumSuccessors() > 1) {
     BasicBlock* first = BB->getTerminator()->getSuccessor(0);
-    anticOut.insert(anticipatedIn[first].begin(), anticipatedIn[first].end());
+    for (ValueNumberedSet::iterator I = anticipatedIn[first].begin(),
+         E = anticipatedIn[first].end(); I != E; ++I) {
+      anticOut.insert(*I);
+      anticOut.set(VN.lookup(*I));
+    }
     
     for (unsigned i = 1; i < BB->getTerminator()->getNumSuccessors(); ++i) {
       BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
-      SmallPtrSet<Value*, 16>& succAnticIn = anticipatedIn[currSucc];
+      ValueNumberedSet& succAnticIn = anticipatedIn[currSucc];
       
       std::vector<Value*> temp;
       
-      for (SmallPtrSet<Value*, 16>::iterator I = anticOut.begin(),
+      for (ValueNumberedSet::iterator I = anticOut.begin(),
            E = anticOut.end(); I != E; ++I)
-        if (find_leader(succAnticIn, VN.lookup(*I)) == 0)
+        if (!succAnticIn.test(VN.lookup(*I)))
           temp.push_back(*I);
 
       for (std::vector<Value*>::iterator I = temp.begin(), E = temp.end();
-           I != E; ++I)
+           I != E; ++I) {
         anticOut.erase(*I);
+        anticOut.reset(VN.lookup(*I));
+      }
     }
   }
   
@@ -1351,11 +1391,11 @@ bool GVNPRE::buildsets_anticout(BasicBlock* BB,
 /// each block.  ANTIC_IN is then a function of ANTIC_OUT and the GEN
 /// sets populated in buildsets_availout
 unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
-                               SmallPtrSet<Value*, 16>& anticOut,
-                               SmallPtrSet<Value*, 16>& currExps,
+                               ValueNumberedSet& anticOut,
+                               ValueNumberedSet& currExps,
                                SmallPtrSet<Value*, 16>& currTemps,
                                std::set<BasicBlock*>& visited) {
-  SmallPtrSet<Value*, 16>& anticIn = anticipatedIn[BB];
+  ValueNumberedSet& anticIn = anticipatedIn[BB];
   unsigned old = anticIn.size();
       
   bool defer = buildsets_anticout(BB, anticOut, visited);
@@ -1364,32 +1404,26 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
   
   anticIn.clear();
   
-  BitVector numbers(VN.size());
-  for (SmallPtrSet<Value*, 16>::iterator I = anticOut.begin(),
+  for (ValueNumberedSet::iterator I = anticOut.begin(),
        E = anticOut.end(); I != E; ++I) {
-    unsigned num = VN.lookup_or_add(*I);
-    numbers.resize(VN.size());
-    
-    if (isa<Instruction>(*I) && !numbers.test(num)) {
-      anticIn.insert(*I);
-      numbers.set(num);
-    }
+    anticIn.insert(*I);
+    anticIn.set(VN.lookup(*I));
   }
-  for (SmallPtrSet<Value*, 16>::iterator I = currExps.begin(),
+  for (ValueNumberedSet::iterator I = currExps.begin(),
        E = currExps.end(); I != E; ++I) {
-    if (!numbers.test(VN.lookup_or_add(*I))) {
+    if (!anticIn.test(VN.lookup(*I))) {
       anticIn.insert(*I);
-      numbers.set(VN.lookup(*I));
+      anticIn.set(VN.lookup(*I));
     }
   } 
   
   for (SmallPtrSet<Value*, 16>::iterator I = currTemps.begin(),
        E = currTemps.end(); I != E; ++I) {
     anticIn.erase(*I);
-    numbers.flip(VN.lookup(*I));
+    anticIn.reset(VN.lookup(*I));
   }
   
-  clean(anticIn, numbers);
+  clean(anticIn);
   anticOut.clear();
   
   if (old != anticIn.size())
@@ -1401,7 +1435,7 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
 /// buildsets - Phase 1 of the main algorithm.  Construct the AVAIL_OUT
 /// and the ANTIC_IN sets.
 void GVNPRE::buildsets(Function& F) {
-  std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedExpressions;
+  std::map<BasicBlock*, ValueNumberedSet> generatedExpressions;
   std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedTemporaries;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();   
@@ -1413,10 +1447,10 @@ void GVNPRE::buildsets(Function& F) {
          E = df_end(DT.getRootNode()); DI != E; ++DI) {
     
     // Get the sets to update for this block
-    SmallPtrSet<Value*, 16>& currExps = generatedExpressions[DI->getBlock()];
-    SmallPtrSet<Value*, 16>& currPhis = generatedPhis[DI->getBlock()];
+    ValueNumberedSet& currExps = generatedExpressions[DI->getBlock()];
+    ValueNumberedSet& currPhis = generatedPhis[DI->getBlock()];
     SmallPtrSet<Value*, 16>& currTemps = generatedTemporaries[DI->getBlock()];
-    SmallPtrSet<Value*, 16>& currAvail = availableOut[DI->getBlock()];     
+    ValueNumberedSet& currAvail = availableOut[DI->getBlock()];     
     
     BasicBlock* BB = DI->getBlock();
   
@@ -1425,16 +1459,14 @@ void GVNPRE::buildsets(Function& F) {
     currAvail.insert(availableOut[DI->getIDom()->getBlock()].begin(),
                      availableOut[DI->getIDom()->getBlock()].end());
     
-    BitVector availNumbers(VN.size());
-    for (SmallPtrSet<Value*, 16>::iterator I = currAvail.begin(),
+    for (ValueNumberedSet::iterator I = currAvail.begin(),
         E = currAvail.end(); I != E; ++I)
-      availNumbers.set(VN.lookup(*I));
-    
-    BitVector expNumbers(VN.size());
+      currAvail.set(VN.lookup(*I));
+
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI)
       buildsets_availout(BI, currAvail, currPhis, currExps,
-                         currTemps, availNumbers, expNumbers);
+                         currTemps);
       
   }
 
@@ -1450,7 +1482,7 @@ void GVNPRE::buildsets(Function& F) {
   
   while (changed) {
     changed = false;
-    SmallPtrSet<Value*, 16> anticOut;
+    ValueNumberedSet anticOut;
     
     // Postorder walk of the CFG
     for (po_iterator<BasicBlock*> BBI = po_begin(&F.getEntryBlock()),
@@ -1491,11 +1523,11 @@ void GVNPRE::buildsets(Function& F) {
 /// the main block
 void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                            std::map<BasicBlock*, Value*>& avail,
-                    std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_sets) {
+                    std::map<BasicBlock*, ValueNumberedSet>& new_sets) {
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     DOUT << "PRED: " << (*PI)->getName() << "\n";
     Value* e2 = avail[*PI];
-    if (!find_leader(availableOut[*PI], VN.lookup(e2))) {
+    if (!availableOut[*PI].test(VN.lookup(e2))) {
       User* U = cast<User>(e2);
       
       Value* s1 = 0;
@@ -1604,9 +1636,10 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                   
       VN.add(newVal, VN.lookup(U));
                   
-      SmallPtrSet<Value*, 16>& predAvail = availableOut[*PI];
+      ValueNumberedSet& predAvail = availableOut[*PI];
       val_replace(predAvail, newVal);
       val_replace(new_sets[*PI], newVal);
+      predAvail.set(VN.lookup(newVal));
             
       std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
       if (av != avail.end())
@@ -1628,8 +1661,11 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
 
   VN.add(p, VN.lookup(e));
   val_replace(availableOut[BB], p);
+  availableOut[BB].set(VN.lookup(e));
   generatedPhis[BB].insert(p);
+  generatedPhis[BB].set(VN.lookup(e));
   new_sets[BB].insert(p);
+  new_sets[BB].set(VN.lookup(e));
               
   ++NumInsertedPhis;
 }
@@ -1638,7 +1674,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
 /// block for the possibility of a partial redundancy.  If present, eliminate it
 unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
                                       df_iterator<DomTreeNode*>& D,
-                    std::map<BasicBlock*, SmallPtrSet<Value*, 16> >& new_sets) {
+                    std::map<BasicBlock*, ValueNumberedSet >& new_sets) {
   bool changed_function = false;
   bool new_stuff = false;
   
@@ -1650,8 +1686,7 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
         isa<ExtractElementInst>(e) || isa<InsertElementInst>(e) ||
         isa<ShuffleVectorInst>(e) || isa<SelectInst>(e) || isa<CastInst>(e) ||
         isa<GetElementPtrInst>(e)) {
-      if (find_leader(availableOut[D->getIDom()->getBlock()],
-                      VN.lookup(e)) != 0)
+      if (availableOut[D->getIDom()->getBlock()].test(VN.lookup(e)))
         continue;
             
       std::map<BasicBlock*, Value*> avail;
@@ -1685,7 +1720,7 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
       }
             
       if (by_some && !all_same &&
-          !find_leader(generatedPhis[BB], VN.lookup(e))) {
+          !generatedPhis[BB].test(VN.lookup(e))) {
         insertion_pre(e, BB, avail, new_sets);
               
         changed_function = true;
@@ -1711,7 +1746,7 @@ bool GVNPRE::insertion(Function& F) {
 
   DominatorTree &DT = getAnalysis<DominatorTree>();  
   
-  std::map<BasicBlock*, SmallPtrSet<Value*, 16> > new_sets;
+  std::map<BasicBlock*, ValueNumberedSet> new_sets;
   bool new_stuff = true;
   while (new_stuff) {
     new_stuff = false;
@@ -1722,13 +1757,13 @@ bool GVNPRE::insertion(Function& F) {
       if (BB == 0)
         continue;
       
-      SmallPtrSet<Value*, 16>& availOut = availableOut[BB];
-      SmallPtrSet<Value*, 16>& anticIn = anticipatedIn[BB];
+      ValueNumberedSet& availOut = availableOut[BB];
+      ValueNumberedSet& anticIn = anticipatedIn[BB];
       
       // Replace leaders with leaders inherited from dominator
       if (DI->getIDom() != 0) {
-        SmallPtrSet<Value*, 16>& dom_set = new_sets[DI->getIDom()->getBlock()];
-        for (SmallPtrSet<Value*, 16>::iterator I = dom_set.begin(),
+        ValueNumberedSet& dom_set = new_sets[DI->getIDom()->getBlock()];
+        for (ValueNumberedSet::iterator I = dom_set.begin(),
              E = dom_set.end(); I != E; ++I) {
           val_replace(new_sets[BB], *I);
           val_replace(availOut, *I);
