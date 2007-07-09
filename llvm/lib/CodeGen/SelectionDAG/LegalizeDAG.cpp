@@ -1500,7 +1500,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), VT);
 
         Tmp1 = DAG.getLoad(NVT, Tmp1, Tmp2, LD->getSrcValue(),
-                           LD->getSrcValueOffset());
+                           LD->getSrcValueOffset(),
+                           LD->isVolatile(), LD->getAlignment());
         Tmp3 = LegalizeOp(DAG.getNode(ISD::BIT_CONVERT, VT, Tmp1));
         Tmp4 = LegalizeOp(Tmp1.getValue(1));
         break;
@@ -1520,7 +1521,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                "Can only promote extending LOAD from i1 -> i8!");
         Result = DAG.getExtLoad(ExtType, Node->getValueType(0), Tmp1, Tmp2,
                                 LD->getSrcValue(), LD->getSrcValueOffset(),
-                                MVT::i8);
+                                MVT::i8, LD->isVolatile(), LD->getAlignment());
       Tmp1 = Result.getValue(0);
       Tmp2 = Result.getValue(1);
       break;
@@ -1544,7 +1545,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
         if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
           SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, LD->getSrcValue(),
-                                       LD->getSrcValueOffset());
+                                       LD->getSrcValueOffset(),
+                                       LD->isVolatile(), LD->getAlignment());
           Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
           Tmp1 = LegalizeOp(Result);  // Relegalize new nodes.
           Tmp2 = LegalizeOp(Load.getValue(1));
@@ -1555,7 +1557,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // zero/sign extend inreg.
         Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
                                 Tmp1, Tmp2, LD->getSrcValue(),
-                                LD->getSrcValueOffset(), SrcVT);
+                                LD->getSrcValueOffset(), SrcVT,
+                                LD->isVolatile(), LD->getAlignment());
         SDOperand ValRes;
         if (ExtType == ISD::SEXTLOAD)
           ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
@@ -1753,6 +1756,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     StoreSDNode *ST = cast<StoreSDNode>(Node);
     Tmp1 = LegalizeOp(ST->getChain());    // Legalize the chain.
     Tmp2 = LegalizeOp(ST->getBasePtr());  // Legalize the pointer.
+    int SVOffset = ST->getSrcValueOffset();
+    unsigned Alignment = ST->getAlignment();
+    bool isVolatile = ST->isVolatile();
 
     if (!ST->isTruncatingStore()) {
       // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
@@ -1769,7 +1775,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
         }
         Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                              ST->getSrcValueOffset());
+                              SVOffset, isVolatile, Alignment);
         break;
       }
       
@@ -1792,7 +1798,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp3 = DAG.getNode(ISD::BIT_CONVERT, 
                              TLI.getTypeToPromoteTo(ISD::STORE, VT), Tmp3);
           Result = DAG.getStore(Tmp1, Tmp3, Tmp2,
-                                ST->getSrcValue(), ST->getSrcValueOffset());
+                                ST->getSrcValue(), SVOffset, isVolatile,
+                                Alignment);
           break;
         }
         break;
@@ -1801,7 +1808,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Truncate the value and store the result.
         Tmp3 = PromoteOp(ST->getValue());
         Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                   ST->getSrcValueOffset(), ST->getStoredVT());
+                                   SVOffset, ST->getStoredVT(),
+                                   isVolatile, Alignment);
         break;
 
       case Expand:
@@ -1823,18 +1831,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             // Turn this into a normal store of the vector type.
             Tmp3 = LegalizeOp(Node->getOperand(1));
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                  ST->getSrcValueOffset(),
-                                  ST->isVolatile(),
-                                  ST->getAlignment());
+                                  SVOffset, isVolatile, Alignment);
             Result = LegalizeOp(Result);
             break;
           } else if (NumElems == 1) {
             // Turn this into a normal store of the scalar type.
             Tmp3 = ScalarizeVectorOp(Node->getOperand(1));
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                  ST->getSrcValueOffset(),
-                                  ST->isVolatile(),
-                                  ST->getAlignment());
+                                  SVOffset, isVolatile, Alignment);
             // The scalarized value type may not be legal, e.g. it might require
             // promotion or expansion.  Relegalize the scalar store.
             Result = LegalizeOp(Result);
@@ -1852,8 +1856,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
 
         Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
-                          ST->getSrcValueOffset(), ST->isVolatile(),
-                          ST->getAlignment());
+                          SVOffset, isVolatile, Alignment);
 
         if (Hi.Val == NULL) {
           // Must be int <-> float one-to-one expansion.
@@ -1865,11 +1868,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                            getIntPtrConstant(IncrementSize));
         assert(isTypeLegal(Tmp2.getValueType()) &&
                "Pointers must be legal!");
-        // FIXME: This sets the srcvalue of both halves to be the same, which is
-        // wrong.
+        SVOffset += IncrementSize;
+        if (Alignment > IncrementSize)
+          Alignment = IncrementSize;
         Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(),
-                          ST->getSrcValueOffset(), ST->isVolatile(),
-                          std::min(ST->getAlignment(), IncrementSize));
+                          SVOffset, isVolatile, Alignment);
         Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
         break;
       }
@@ -1887,7 +1890,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp3 = DAG.getNode(ISD::AND, Tmp3.getValueType(), Tmp3,
                            DAG.getConstant(1, Tmp3.getValueType()));
         Result = DAG.getTruncStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                   ST->getSrcValueOffset(), MVT::i8);
+                                   SVOffset, MVT::i8,
+                                   isVolatile, Alignment);
       } else if (Tmp1 != ST->getChain() || Tmp3 != ST->getValue() ||
                  Tmp2 != ST->getBasePtr()) {
         Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp3, Tmp2,
@@ -3494,7 +3498,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getExtLoad(ExtType, NVT,
                             LD->getChain(), LD->getBasePtr(),
                             LD->getSrcValue(), LD->getSrcValueOffset(),
-                            LD->getLoadedVT());
+                            LD->getLoadedVT(),
+                            LD->isVolatile(),
+                            LD->getAlignment());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
@@ -4848,10 +4854,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     SDOperand Ch  = LD->getChain();    // Legalize the chain.
     SDOperand Ptr = LD->getBasePtr();  // Legalize the pointer.
     ISD::LoadExtType ExtType = LD->getExtensionType();
-    unsigned SVOffset = LD->getSrcValueOffset();
+    int SVOffset = LD->getSrcValueOffset();
+    unsigned Alignment = LD->getAlignment();
+    bool isVolatile = LD->isVolatile();
 
     if (ExtType == ISD::NON_EXTLOAD) {
-      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset);
+      Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset,
+                       isVolatile, Alignment);
       if (VT == MVT::f32 || VT == MVT::f64) {
         // f32->i32 or f64->i64 one to one expansion.
         // Remember that we legalized the chain.
@@ -4867,7 +4876,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
       SVOffset += IncrementSize;
-      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset);
+      if (Alignment > IncrementSize)
+        Alignment = IncrementSize;
+      Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset,
+                       isVolatile, Alignment);
 
       // Build a factor node to remember that this load is independent of the
       // other one.
@@ -4884,7 +4896,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       if (VT == MVT::f64 && EVT == MVT::f32) {
         // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
         SDOperand Load = DAG.getLoad(EVT, Ch, Ptr, LD->getSrcValue(),
-                                     SVOffset);
+                                     SVOffset, isVolatile, Alignment);
         // Remember that we legalized the chain.
         AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Load.getValue(1)));
         ExpandOp(DAG.getNode(ISD::FP_EXTEND, VT, Load), Lo, Hi);
@@ -4893,10 +4905,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     
       if (EVT == NVT)
         Lo = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(),
-                         SVOffset);
+                         SVOffset, isVolatile, Alignment);
       else
         Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, LD->getSrcValue(),
-                            SVOffset, EVT);
+                            SVOffset, EVT, isVolatile,
+                            Alignment);
     
       // Remember that we legalized the chain.
       AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));

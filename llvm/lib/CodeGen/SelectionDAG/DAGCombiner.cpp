@@ -2394,7 +2394,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                                        LN0->getBasePtr(), LN0->getSrcValue(),
                                        LN0->getSrcValueOffset(),
                                        N0.getValueType(), 
-                                       LN0->isVolatile());
+                                       LN0->isVolatile(),
+                                       LN0->getAlignment());
     CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
@@ -2872,7 +2873,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     if (Align <= OrigAlign) {
       SDOperand Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
                                    LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                                   LN0->isVolatile(), LN0->getAlignment());
+                                   LN0->isVolatile(), Align);
       AddToWorkList(N);
       CombineTo(N0.Val, DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
                 Load.getValue(1));
@@ -3739,7 +3740,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       getABITypeAlignment(MVT::getTypeForValueType(SVT));
     if (Align <= OrigAlign && TLI.isOperationLegal(ISD::STORE, SVT))
       return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
-                          ST->getSrcValueOffset());
+                          ST->getSrcValueOffset(), ST->isVolatile(), Align);
   }
   
   // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
@@ -3752,14 +3753,16 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i32)) {
           Tmp = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
-                              ST->getSrcValueOffset());
+                              ST->getSrcValueOffset(), ST->isVolatile(),
+                              ST->getAlignment());
         }
         break;
       case MVT::f64:
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i64)) {
           Tmp = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
-                              ST->getSrcValueOffset());
+                              ST->getSrcValueOffset(), ST->isVolatile(),
+                              ST->getAlignment());
         } else if (TLI.isTypeLegal(MVT::i32)) {
           // Many FP stores are not make apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
@@ -3769,12 +3772,20 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
           SDOperand Hi = DAG.getConstant(Val >> 32, MVT::i32);
           if (!TLI.isLittleEndian()) std::swap(Lo, Hi);
 
+          int SVOffset = ST->getSrcValueOffset();
+          unsigned Alignment = ST->getAlignment();
+          bool isVolatile = ST->isVolatile();
+
           SDOperand St0 = DAG.getStore(Chain, Lo, Ptr, ST->getSrcValue(),
-                                       ST->getSrcValueOffset());
+                                       ST->getSrcValueOffset(),
+                                       isVolatile, ST->getAlignment());
           Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                             DAG.getConstant(4, Ptr.getValueType()));
+          SVOffset += 4;
+          if (Alignment > 4)
+            Alignment = 4;
           SDOperand St1 = DAG.getStore(Chain, Hi, Ptr, ST->getSrcValue(),
-                                       ST->getSrcValueOffset()+4);
+                                       SVOffset, isVolatile, Alignment);
           return DAG.getNode(ISD::TokenFactor, MVT::Other, St0, St1);
         }
         break;
@@ -3792,10 +3803,12 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       SDOperand ReplStore;
       if (ST->isTruncatingStore()) {
         ReplStore = DAG.getTruncStore(BetterChain, Value, Ptr,
-          ST->getSrcValue(),ST->getSrcValueOffset(), ST->getStoredVT());
+          ST->getSrcValue(), ST->getSrcValueOffset(), ST->getStoredVT(),
+          ST->isVolatile(), ST->getAlignment());
       } else {
         ReplStore = DAG.getStore(BetterChain, Value, Ptr,
-          ST->getSrcValue(), ST->getSrcValueOffset());
+          ST->getSrcValue(), ST->getSrcValueOffset(),
+          ST->isVolatile(), ST->getAlignment());
       }
       
       // Create token to keep both nodes around.
