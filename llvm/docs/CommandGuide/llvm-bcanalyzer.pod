@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvm-bcanalyzer - LLVM bytecode analyzer
+llvm-bcanalyzer - LLVM bitcode analyzer
 
 =head1 SYNOPSIS
 
@@ -10,12 +10,12 @@ B<llvm-bcanalyzer> [I<options>] [F<filename>]
 
 =head1 DESCRIPTION
 
-The B<llvm-bcanalyzer> command is a small utility for analyzing bytecode files.
-The tool reads a bytecode file (such as generated with the B<llvm-as> tool) and
-produces a statistical report on the contents of the byteocde file.  The tool
-can also dump a low level but human readable version of the bytecode file. 
+The B<llvm-bcanalyzer> command is a small utility for analyzing bitcode files.
+The tool reads a bitcode file (such as generated with the B<llvm-as> tool) and
+produces a statistical report on the contents of the bitcode file.  The tool
+can also dump a low level but human readable version of the bitcode file. 
 This tool is probably not of much interest or utility except for those working 
-directly with the bytecode file format. Most LLVM users can just ignore
+directly with the bitcode file format. Most LLVM users can just ignore
 this tool.
 
 If F<filename> is omitted or is C<->, then B<llvm-bcanalyzer> reads its input 
@@ -33,14 +33,14 @@ level summary. The details for individual functions are not displayed.
 
 =item B<-dump>
 
-Causes B<llvm-bcanalyzer> to dump the bytecode in a human readable format. This 
+Causes B<llvm-bcanalyzer> to dump the bitcode in a human readable format. This 
 format is significantly different from LLVM assembly and provides details about 
-the encoding of the bytecode file.
+the encoding of the bitcode file.
 
 =item B<-verify>
 
 Causes B<llvm-bcanalyzer> to verify the module produced by reading the 
-bytecode. This ensures that the statistics generated are based on a consistent
+bitcode. This ensures that the statistics generated are based on a consistent
 module.
 
 =item B<--help>
@@ -61,18 +61,18 @@ summary output.
 
 =over
 
-=item B<Bytecode Analysis Of Module>
+=item B<Bitcode Analysis Of Module>
 
-This just provides the name of the module for which bytecode analysis is being
+This just provides the name of the module for which bitcode analysis is being
 generated.
 
-=item B<Bytecode Version Number>
+=item B<Bitcode Version Number>
 
-The bytecode version (not LLVM version) of the file read by the analyzer.
+The bitcode version (not LLVM version) of the file read by the analyzer.
 
 =item B<File Size>
 
-The size, in bytes, of the entire bytecode file.
+The size, in bytes, of the entire bitcode file.
 
 =item B<Module Bytes>
 
@@ -86,7 +86,7 @@ Size.
 =item B<Global Types Bytes>
 
 The size, in bytes, of the Global Types Pool. Percentage is relative to File
-Size. This is the size of the definitions of all types in the bytecode file.
+Size. This is the size of the definitions of all types in the bitcode file.
 
 =item B<Constant Pool Bytes>
 
@@ -122,13 +122,13 @@ The size, in bytes, of the list of dependent libraries in the module. Percentage
 is relative to File Size. Note that this value is also included in the Module
 Global Bytes.
 
-=item B<Number Of Bytecode Blocks>
+=item B<Number Of Bitcode Blocks>
 
-The total number of blocks of any kind in the bytecode file.
+The total number of blocks of any kind in the bitcode file.
 
 =item B<Number Of Functions>
 
-The total number of function definitions in the bytecode file.
+The total number of function definitions in the bitcode file.
 
 =item B<Number Of Types>
 
@@ -140,42 +140,42 @@ The total number of constants (of any type) defined in the Constant Pool.
 
 =item B<Number Of Basic Blocks>
 
-The total number of basic blocks defined in all functions in the bytecode file.
+The total number of basic blocks defined in all functions in the bitcode file.
 
 =item B<Number Of Instructions>
 
-The total number of instructions defined in all functions in the bytecode file.
+The total number of instructions defined in all functions in the bitcode file.
 
 =item B<Number Of Long Instructions>
 
-The total number of long instructions defined in all functions in the bytecode
+The total number of long instructions defined in all functions in the bitcode
 file. Long instructions are those taking greater than 4 bytes. Typically long
 instructions are GetElementPtr with several indices, PHI nodes, and calls to
 functions with large numbers of arguments.
 
 =item B<Number Of Operands>
 
-The total number of operands used in all instructions in the bytecode file.
+The total number of operands used in all instructions in the bitcode file.
 
 =item B<Number Of Compaction Tables>
 
-The total number of compaction tables in all functions in the bytecode file.
+The total number of compaction tables in all functions in the bitcode file.
 
 =item B<Number Of Symbol Tables>
 
-The total number of symbol tables in all functions in the bytecode file.
+The total number of symbol tables in all functions in the bitcode file.
 
 =item B<Number Of Dependent Libs>
 
-The total number of dependent libraries found in the bytecode file.
+The total number of dependent libraries found in the bitcode file.
 
 =item B<Total Instruction Size>
 
-The total size of the instructions in all functions in the bytecode file.
+The total size of the instructions in all functions in the bitcode file.
 
 =item B<Average Instruction Size>
 
-The average number of bytes per instruction across all functions in the bytecode
+The average number of bytes per instruction across all functions in the bitcode
 file. This value is computed by dividing Total Instruction Size by Number Of
 Instructions.
 
@@ -306,7 +306,7 @@ Rate encoding scheme. The percentage is relative to # of VBR Expanded Bytes.
 
 =head1 SEE ALSO
 
-L<llvm-dis|llvm-dis>, L<http://llvm.org/docs/BytecodeFormat.html>
+L<llvm-dis|llvm-dis>, L<http://llvm.org/docs/BitcodeFormat.html>
 
 =head1 AUTHORS
 
