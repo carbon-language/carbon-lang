@@ -164,7 +164,7 @@ SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
     CurArray[CurArraySize] = 0;
 
     // Copy over all valid entries.
-    for (void **BucketPtr = that.CurArray, **E = that.CurArray+CurArraySize;
+    for (void **BucketPtr = that.CurArray, **E = that.CurArray+that.CurArraySize;
          BucketPtr != E; ++BucketPtr) {
       // Copy over the element if it is valid.
       void *Elt = *BucketPtr;
