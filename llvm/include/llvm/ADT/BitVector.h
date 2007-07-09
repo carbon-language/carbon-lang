@@ -185,6 +185,11 @@ public:
       grow(N);
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
     }
+    
+    // If we previously had no size, initialize the low word
+    if (Size == 0)
+      Bits[0] = t;
+    
     Size = N;
     clear_unused_bits();
   }
