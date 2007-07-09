@@ -145,7 +145,7 @@ this is the default level of optimization.
 This level of optimization specifies a balance between generating good code 
 that will execute reasonably quickly and not spending too much time optimizing
 the code to get there. For example, this level of optimization may include 
-things like global common subexpression elimination, aggressive dead code 
+things like global common sub-expression elimination, aggressive dead code 
 elimination, and scalar replication.
 
 =item B<-O3> (aggressive optimization)
@@ -173,7 +173,7 @@ aggressive inter-procedural optimization.
 
 This is the same as B<-O5> except that it employs profile-guided
 re-optimization of the program after it has executed. Note that this implies
-a single level of re-optimization based on runtime profile analysis. Once
+a single level of re-optimization based on run time profile analysis. Once
 the re-optimization has completed, the profiling instrumentation is
 removed and final optimizations are employed.
 
