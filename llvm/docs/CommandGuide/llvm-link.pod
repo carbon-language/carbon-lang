@@ -27,14 +27,14 @@ in the order they were specified on the command line.
 =item B<-L> F<directory>
 
 Add the specified F<directory> to the library search path.  When looking for
-libraries, B<llvm-link> will look in pathname for libraries.  This option can be
+libraries, B<llvm-link> will look in path name for libraries.  This option can be
 specified multiple times; B<llvm-link> will search inside these directories in
 the order in which they were specified on the command line.
 
 =item B<-f>
 
 Overwrite output files.  By default, B<llvm-link> will not overwrite an output
-file if it alreadys exists.
+file if it already exists.
 
 =item B<-o> F<filename>
 
