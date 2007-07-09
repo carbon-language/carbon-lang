@@ -139,8 +139,7 @@ fix <em>for the release</em>.
     The Release Manager tags his/her llvm, llvm-test, and llvm-gcc working
     directories with
     "ROOT_RELEASE_XX" where XX is the major and minor
-    release numbers (you can't have . in a cvs tag name). So, for Release 1.2,
-    XX=12 and for Release 1.10, XX=110.
+    release numbers. So, for Release 1.2, XX=12 and for Release 1.10, XX=110.
 	  
     <p>
     <tt>cvs tag ROOT_RELEASE_XX</tt><br>
@@ -180,8 +179,8 @@ fix <em>for the release</em>.
 <div class="doc_text">
   <p>
   After creating the llvm release branch, update the release branch's autoconf/configure.ac 
-  version from X.Xcvs to just X.X. Update it on mainline as well to be the next version 
-  (X.X+1cvs). 
+  version from X.Xsvn to just X.X. Update it on mainline as well to be the next version 
+  (X.X+1svn). 
   </p>
 
 </div>
@@ -316,8 +315,9 @@ fix <em>for the release</em>.
 <div class="doc_subsection"><a name="webupdates">Update the LLVM Website</a></div>
 <div class="doc_text">
   <p>
-  Check out the llvm-www module from cvs. Create a new subdirectory X.X in the 
-  releases directory. Place the llvm, llvm-test, llvm-gcc source, and llvm-gcc 
+  Check out the <tt>website</tt> module from Subversion. Create a new 
+  subdirectory X.X in the releases directory. Place the llvm, llvm-test, 
+  llvm-gcc source, and llvm-gcc 
   binaries in this new directory. Copy the llvm/docs and LICENSE.txt files 
   into this new directory. Update the releases/download.html file with  the new release. 
   Update the releases/index.html with the new release. Finally, update the main page (

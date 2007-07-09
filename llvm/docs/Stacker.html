@@ -1303,8 +1303,9 @@ the <tt>projects</tt> directory so that it will auto-configure. To do that, make
 sure you have the llvm sources in <tt><i>llvm</i></tt> 
 (see <a href="GettingStarted.html">Getting Started</a>) and then use these 
 commands:<pre>
-    cd <i>llvm</i>/projects
-    cvs co llvm-stacker</pre>
+    svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
+    cd llvm-top
+    make build MODULE=stacker
 </p>
 <p>Under the <tt>projects/llvm-stacker</tt> directory you will find the
 implementation of the Stacker compiler, as follows:</p>

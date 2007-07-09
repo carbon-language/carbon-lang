@@ -99,16 +99,13 @@
       <li><tt>cd llvm</tt></li>
     </ol></li>
 
-    <li>With anonymous CVS access:
+    <li>With anonymous Subversion access:
     <ol>
       <li><tt>cd <i>where-you-want-llvm-to-live</i></tt></li>
-      <li><tt>cvs -d
-          :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm login</tt></li>
-      <li>Hit the return key when prompted for the password.
-      <li><tt>cvs -z3 -d :pserver:anon@llvm-cvs.cs.uiuc.edu:/var/cvs/llvm 
-          co llvm</tt></li>
+      <li><tt>svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
+      </tt></li>
+      <li><tt>make checkout MODULE=llvm</tt>
       <li><tt>cd llvm</tt></li>
-      <li><tt>cvs up -P -d</tt></li>
     </ol></li>
   </ul></li>
 
@@ -128,8 +125,8 @@
 
 </ol>
 
-<p>It is strongly encouraged that you get the latest version from CVS.  Much
-progress has been made since the 1.4 release.</p>
+<p>It is strongly encouraged that you get the latest version from Subversion as
+changes are continually making the VS support better.</p>
 
 </div>
 

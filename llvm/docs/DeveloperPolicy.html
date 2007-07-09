@@ -46,7 +46,7 @@
   <ol>
     <li>Attract both users and developers to the LLVM project.</li>
     <li>Make life as simple and easy for contributors as possible.</li>
-    <li>Keep the top of tree CVS/SVN trees as stable as possible.</li>
+    <li>Keep the top of Subversion trees as stable as possible.</li>
   </ol>
   
   <p>This policy is aimed at frequent contributors to LLVM. People interested in
@@ -93,16 +93,15 @@
 <p>When making a patch for review, the goal is to make it as easy for the
    reviewer to read it as possible.  As such, we recommend that you:</p>
   <ol>
-    <li>Make your patch against the CVS HEAD (main development trunk), 
-        not a branch, and not an old version of LLVM.  This makes it easy to
-        apply the patch.</li>
+    <li>Make your patch against the Subversion trunk, not a branch, and not an 
+    old version of LLVM.  This makes it easy to apply the patch.</li>
         
     <li>Similarly, patches should be submitted soon after they are generated.
     Old patches may not apply correctly if the underlying code changes between
     the time the patch was created and the time it is applied.</li>
         
     <li>Patches should be made with this command:
-    <pre>cvs diff -Ntdup -5</pre>
+    <pre>svn diff -x -u</pre>
      or with the utility <tt>utils/mkpatch</tt>, which makes it easy to read the
      diff.</li>
      
@@ -141,8 +140,8 @@
   <p>Developers should participate in code reviews as both reviewers and 
     reviewees. If someone is kind enough to review your code, you should
     return the favor for someone else.  Note that anyone is welcome to review
-    and give feedback on a patch, but only people with CVS write access can 
-    approve it.</p>
+    and give feedback on a patch, but only people with Subversion write access 
+    can approve it.</p>
 
 </div>
 
@@ -367,7 +366,7 @@ Changes</a></div>
     changes.  Despite this, once set, the attribution of a file never changes.
     Revision control keeps an accurate history of contributions.</li>
     <li>Developers should maintain their entry in the 
-    <a href="http://llvm.org/cvsweb/cvsweb.cgi/llvm/CREDITS.TXT?rev=HEAD&amp;content-type=text/x-cvsweb-markup">CREDITS.txt</a> 
+    <a href="http://llvm.org/svn/llvm-project/llvm/trunk/CREDITS.TXT">CREDITS.txt</a> 
     file to summarize their contributions.</li>
     <li>Commit comments should contain correct attribution of the person who
     submitted the patch if that person is not the committer (i.e. when a 

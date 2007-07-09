@@ -39,8 +39,8 @@
   <li>The <tt>configure</tt> script finds the right C compiler, but it uses the
   LLVM linker from a previous build.  What do I do?</li>
   <li>When creating a dynamic library, I get a strange GLIBC error.</li>
-  <li>I've updated my source tree from CVS, and now my build is trying to use a
-  file/directory that doesn't exist.</li>
+  <li>I've updated my source tree from Subversion, and now my build is trying 
+  to use a file/directory that doesn't exist.</li>
   <li>I've modified a Makefile in my source tree, but my build tree keeps using
   the old version.  What do I do?</li>
   <li>I've upgraded to a new version of LLVM, and I get strange build
@@ -50,7 +50,7 @@
   <li>Compiling LLVM with GCC 3.3.2 fails, what should I do?</li>
   <li>When I use the test suite, all of the C Backend tests fail.  What is
       wrong?</li>
-  <li>After CVS update, rebuilding gives the error "No rule to make
+  <li>After Subversion update, rebuilding gives the error "No rule to make
       target".</li>
   <li><a href="#llvmc">The <tt>llvmc</tt> program gives me errors/doesn't
       work.</li></a>
@@ -257,8 +257,8 @@ your own version of GCC that has shared libraries enabled by default.</p>
 </div>
 
 <div class="question">
-<p>I've updated my source tree from CVS, and now my build is trying to use a
-file/directory that doesn't exist.</p>
+  <p>I've updated my source tree from Subversion, and now my build is trying to 
+  use a file/directory that doesn't exist.</p>
 </div>
 
 <div class="answer">
@@ -358,7 +358,8 @@ build.</p>
 </div>
 
 <div class="question">
-<p>After CVS update, rebuilding gives the error "No rule to make target".</p>
+  <p>After Subversion update, rebuilding gives the error 
+  "No rule to make target".</p>
 </div>
 
 <div class="answer">
@@ -372,9 +373,9 @@ Stop.
 </pre>
 </div>
 
-<p>This may occur anytime files are moved within the CVS repository or removed
-entirely.  In this case, the best solution is to erase all <tt>.d</tt> files,
-which list dependencies for source files, and rebuild:</p>
+<p>This may occur anytime files are moved within the Subversion repository or 
+removed entirely.  In this case, the best solution is to erase all 
+<tt>.d</tt> files, which list dependencies for source files, and rebuild:</p>
 
 <div class="doc_code">
 <pre>
@@ -409,11 +410,9 @@ rebuilding.</p>
   available through a special version of GCC that LLVM calls the 
   <a href="#cfe">C Front End</a></p>
   <p>There is an incomplete version of a Java front end available in the
-  <tt>llvm-java</tt> CVS repository. There is no documentation on this yet so
+  <tt>java</tt> module. There is no documentation on this yet so
   you'll need to download the code, compile it, and try it.</p>
-  <p>In the <tt>examples/BFtoLLVM</tt> directory is a translator for the 
-  BrainF*** language (2002 Language Specification).</p>
-  <p>In the <tt>projects/Stacker</tt> directory is a compiler and runtime
+  <p>In the <tt>stacker</tt> module is a compiler and runtime
   library for the Stacker language, a "toy" language loosely based on Forth.</p>
   <p>The PyPy developers are working on integrating LLVM into the PyPy backend
   so that PyPy language can translate to LLVM.</p>

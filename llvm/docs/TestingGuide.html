@@ -106,14 +106,14 @@ and tcl.</p>
 
 <div class="doc_text">
 
-<p>The tests are located in two separate CVS modules. The basic feature and 
-regression tests are in the main "llvm" module under the directory 
-<tt>llvm/test</tt>. A more comprehensive test suite that includes whole 
-programs in C and C++ is in the <tt>llvm-test</tt> module. This module should 
-be checked out to the <tt>llvm/projects</tt> directory. When you
-<tt>configure</tt> the <tt>llvm</tt> module, the <tt>llvm-test</tt> module
-will be automatically configured. Alternatively, you can configure the
- <tt>llvm-test</tt> module manually.</p>
+  <p>The tests are located in two separate Subversion modules. The basic feature
+  and regression tests are in the main "llvm" module under the directory 
+  <tt>llvm/test</tt>. A more comprehensive test suite that includes whole 
+programs in C and C++ is in the <tt>test-suite</tt> module. This module should 
+be checked out to the <tt>llvm/projects</tt> directory as llvm-test (for
+historical purpose).  When you <tt>configure</tt> the <tt>llvm</tt> module, 
+the <tt>llvm-test</tt> directory will be automatically configured. 
+Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 <p>To run all of the simple tests in LLVM using DejaGNU, use the master Makefile
  in the <tt>llvm/test</tt> directory:</p>
 <pre>
@@ -140,7 +140,7 @@ programs), run the <tt>llvm-test</tt> tests:</p>
 
 <pre>
 % cd llvm/projects
-% cvs co llvm-test
+% svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
 % cd llvm-test
 % ./configure --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT
 % gmake
@@ -201,7 +201,7 @@ a way of benchmarking LLVM performance, both in terms of the efficiency of the
 programs generated as well as the speed with which LLVM compiles, optimizes, and
 generates code.</p>
 
-<p>All "whole program" tests are located in the <tt>llvm-test</tt> CVS
+<p>All "whole program" tests are located in the <tt>test-suite</tt> Subversion
 module.</p> 
 
 </div>
@@ -238,8 +238,8 @@ subtrees of the test suite directory tree are as follows:</p>
   piece of LLVM assembly language code, often distilled from an actual 
   application or benchmark.</p></li>
 
-<li><tt>llvm-test</tt>
-<p>The <tt>llvm-test</tt> CVS module contains programs that can be compiled 
+<li><tt>test-suite</tt>
+<p>The <tt>test-suite</tt> module contains programs that can be compiled 
 with LLVM and executed.  These programs are compiled using the native compiler
 and various LLVM backends.  The output from the program compiled with the 
 native compiler is assumed correct; the results from the other programs are
@@ -617,8 +617,8 @@ directory to run them.</p>
 </p>
 <ol>
   <li>cd into the llvm/projects directory</li>
-  <li>check out the <tt>llvm-test</tt> module with:<br/>
-  <tt>cvs -d :pserver:anon@llvm.org:/var/cvs/llvm co -PR llvm-test</tt><br> 
+  <li>check out the <tt>test-suite</tt> module with:<br/>
+  <tt>svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test<br/>
   This will get the test suite into <tt>llvm/projects/llvm-test</tt></li>
   <li>configure the test suite. You can do this one of two ways:
   <ol>
@@ -760,24 +760,15 @@ as keep track of LLVM's progress over time.</p>
 machine, take a look at the comments at the top of the 
 <tt>utils/NewNightlyTest.pl</tt> file. If you decide to set up a nightly tester 
 please choose a unique nickname and invoke <tt>utils/NewNightlyTest.pl</tt> 
-with the "-nickname [yournickname]" command line option. We usually run it 
-from a crontab entry that looks like this:</p>
+with the "-nickname [yournickname]" command line option. 
 
-<div class="doc_code">
-<pre>
-5 3 * * *  $HOME/llvm/utils/NewNightlyTest.pl -parallel -nickname Nickname \
-           $CVSROOT $HOME/buildtest $HOME/cvs/testresults
-</pre>
-</div>
-
-<p>Or, you can create a shell script to encapsulate the running of the script.
+<p>You can create a shell script to encapsulate the running of the script.
 The optimized x86 Linux nightly test is run from just such a script:</p>
 
 <div class="doc_code">
 <pre>
 #!/bin/bash
 BASE=/proj/work/llvm/nightlytest
-export CVSROOT=:pserver:anon@llvm.org:/var/cvs/llvm
 export BUILDDIR=$BASE/build 
 export WEBDIR=$BASE/testresults 
 export LLVMGCCDIR=/proj/work/llvm/cfrontend/install
@@ -786,7 +777,7 @@ export LD_LIBRARY_PATH=/proj/install/lib
 cd $BASE
 cp /proj/work/llvm/llvm/utils/NewNightlyTest.pl .
 nice ./NewNightlyTest.pl -nice -release -verbose -parallel -enable-linscan \
-   -nickname NightlyTester -noexternals 2&gt;&amp;1 &gt; output.log
+   -nickname NightlyTester -noexternals &gt; output.log 2&gt;&amp;1 
 </pre>
 </div>
 
