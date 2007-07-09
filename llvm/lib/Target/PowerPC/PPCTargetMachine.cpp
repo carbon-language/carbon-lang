@@ -55,6 +55,9 @@ unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
     return 20;
   
+  // If the target triple is something non-powerpc, we don't match.
+  if (!TT.empty()) return 0;
+  
   if (M.getEndianness()  == Module::BigEndian &&
       M.getPointerSize() == Module::Pointer32)
     return 10;                                   // Weak match

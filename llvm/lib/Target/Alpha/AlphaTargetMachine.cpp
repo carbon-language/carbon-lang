@@ -35,6 +35,8 @@ unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
   if (TT.size() >= 5 && TT[0] == 'a' && TT[1] == 'l' && TT[2] == 'p' &&
       TT[3] == 'h' && TT[4] == 'a')
     return 20;
+  // If the target triple is something non-alpha, we don't match.
+  if (!TT.empty()) return 0;
 
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer64)

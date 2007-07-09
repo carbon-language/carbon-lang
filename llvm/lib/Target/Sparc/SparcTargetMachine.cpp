@@ -39,6 +39,9 @@ unsigned SparcTargetMachine::getModuleMatchQuality(const Module &M) {
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "sparc-")
     return 20;
+  
+  // If the target triple is something non-sparc, we don't match.
+  if (!TT.empty()) return 0;
 
   if (M.getEndianness()  == Module::BigEndian &&
       M.getPointerSize() == Module::Pointer32)

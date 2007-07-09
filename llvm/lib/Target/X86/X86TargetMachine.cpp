@@ -62,6 +62,8 @@ unsigned X86_32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
       TT[4] == '-' && TT[1] - '3' < 6)
     return 20;
+  // If the target triple is something non-X86, we don't match.
+  if (!TT.empty()) return 0;
 
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer32)
@@ -85,6 +87,9 @@ unsigned X86_64TargetMachine::getModuleMatchQuality(const Module &M) {
       TT[3] == '6' && TT[4] == '4' && TT[5] == '-')
     return 20;
   
+  // If the target triple is something non-X86-64, we don't match.
+  if (!TT.empty()) return 0;
+
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer64)
     return 10;                                   // Weak match

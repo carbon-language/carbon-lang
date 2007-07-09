@@ -40,13 +40,14 @@ MipsTargetMachine(const Module &M, const std::string &FS):
 
 // return 0 and must specify -march to gen MIPS code.
 unsigned MipsTargetMachine::
-getModuleMatchQuality(const Module &M) 
-{
+getModuleMatchQuality(const Module &M) {
   // We strongly match "mips-*".
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 5 && std::string(TT.begin(), TT.begin()+5) == "mips-")
     return 20;
-  
+  // If the target triple is something non-mips, we don't match.
+  if (!TT.empty()) return 0;
+
   return 0;
 }
 

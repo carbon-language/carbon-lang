@@ -50,6 +50,8 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
     if (seenIA64)
       return 20; // strong match
   }
+  // If the target triple is something non-ia64, we don't match.
+  if (!TT.empty()) return 0;
 
 #if defined(__ia64__) || defined(__IA64__)
   return 5;

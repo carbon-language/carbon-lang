@@ -48,6 +48,9 @@ unsigned ThumbTargetMachine::getModuleMatchQuality(const Module &M) {
   if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "thumb-")
     return 20;
 
+  // If the target triple is something non-thumb, we don't match.
+  if (!TT.empty()) return 0;
+
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer32)
     return 10;                                   // Weak match
@@ -94,6 +97,8 @@ unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 4 && std::string(TT.begin(), TT.begin()+4) == "arm-")
     return 20;
+  // If the target triple is something non-arm, we don't match.
+  if (!TT.empty()) return 0;
 
   if (M.getEndianness()  == Module::LittleEndian &&
       M.getPointerSize() == Module::Pointer32)
