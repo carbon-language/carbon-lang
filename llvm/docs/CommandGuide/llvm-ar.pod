@@ -13,7 +13,7 @@ B<llvm-ar> [-]{dmpqrtx}[Rabfikouz] [relpos] [count] <archive> [files...]
 
 The B<llvm-ar> command is similar to the common Unix utility, C<ar>. It 
 archives several files together into a single file. The intent for this is
-to produce archive libraries by LLVM bytecode that can be linked into an
+to produce archive libraries by LLVM bitcode that can be linked into an
 LLVM program. However, the archive can contain any kind of file. By default,
 B<llvm-ar> generates a symbol table that makes linking faster because
 only the symbol table needs to be consulted, not each individual file member
@@ -44,7 +44,7 @@ Here's where B<llvm-ar> departs from previous C<ar> implementations:
 
 =item I<Symbol Table>
 
-Since B<llvm-ar> is intended to archive bytecode files, the symbol table
+Since B<llvm-ar> is intended to archive bitcode files, the symbol table
 won't make much sense to anything but LLVM. Consequently, the symbol table's
 format has been simplified. It consists simply of a sequence of pairs
 of a file member index number as an LSB 4byte integer and a null-terminated 
@@ -78,7 +78,7 @@ add all the files under a directory, if requested.
 When B<llvm-ar> prints out the verbose table of contents (C<tv> option), it
 precedes the usual output with a character indicating the basic kind of 
 content in the file. A blank means the file is a regular file. A 'Z' means
-the file is compressed. A 'B' means the file is an LLVM bytecode file. An
+the file is compressed. A 'B' means the file is an LLVM bitcode file. An
 'S' means the file is the symbol table.
 
 =back
@@ -123,7 +123,7 @@ archive is not modified.
 Print files to the standard output. The F<k> modifier applies to this
 operation. This operation simply prints the F<files> indicated to the
 standard output. If no F<files> are specified, the entire archive is printed.
-Printing bytecode files is ill-advised as they might confuse your terminal
+Printing bitcode files is ill-advised as they might confuse your terminal
 settings. The F<p> operation never modifies the archive.
 
 =item q[Rfz]
@@ -146,7 +146,7 @@ F<files> are specified, the archive is not modified.
 
 Print the table of contents. Without any modifiers, this operation just prints
 the names of the members to the standard output. With the F<v> modifier,
-B<llvm-ar> also prints out the file type (B=bytecode, Z=compressed, S=symbol
+B<llvm-ar> also prints out the file type (B=bitcode, Z=compressed, S=symbol
 table, blank=regular file), the permission mode, the owner and group, the
 size, and the date. If any F<files> are specified, the listing is only for
 those files. If no F<files> are specified, the table of contents for the
@@ -196,9 +196,9 @@ A synonym for the F<b> option.
 
 =item [k] 
 
-Normally, B<llvm-ar> will not print the contents of bytecode files when the 
+Normally, B<llvm-ar> will not print the contents of bitcode files when the 
 F<p> operation is used. This modifier defeats the default and allows the 
-bytecode members to be printed.
+bitcode members to be printed.
 
 =item [N] 
 
@@ -230,8 +230,8 @@ a time stamp than the time stamp of the member in the archive.
 
 When inserting or replacing any file in the archive, compress the file first.
 This
-modifier is safe to use when (previously) compressed bytecode files are added to
-the archive; the compressed bytecode files will not be doubly compressed.
+modifier is safe to use when (previously) compressed bitcode files are added to
+the archive; the compressed bitcode files will not be doubly compressed.
 
 =back
 
@@ -252,7 +252,7 @@ archive is being created. Using this modifier turns off that warning.
 This modifier requests that an archive index (or symbol table) be added to the
 archive. This is the default mode of operation. The symbol table will contain
 all the externally visible functions and global variables defined by all the
-bytecode files in the archive. Using this modifier is more efficient that using
+bitcode files in the archive. Using this modifier is more efficient that using
 L<llvm-ranlib|llvm-ranlib> which also creates the symbol table.
 
 =item [S]
@@ -363,7 +363,7 @@ the details on each of these items:
 
 =item offset - vbr encoded 32-bit integer
 
-The offset item provides the offset into the archive file where the bytecode
+The offset item provides the offset into the archive file where the bitcode
 member is stored that is associated with the symbol. The offset value is 0
 based at the start of the first "normal" file member. To derive the actual
 file offset of the member, you must add the number of bytes occupied by the file

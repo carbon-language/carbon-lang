@@ -11,7 +11,7 @@ B<llvm-as> [I<options>] [I<filename>]
 =head1 DESCRIPTION
 
 B<llvm-as> is the LLVM assembler.  It reads a file containing human-readable
-LLVM assembly language, translates it to LLVM bytecode, and writes the result
+LLVM assembly language, translates it to LLVM bitcode, and writes the result
 into a file or to standard output.
 
 If F<filename> is omitted or is C<->, then B<llvm-as> reads its input from
@@ -48,7 +48,7 @@ suffix is appended.
 
 Force overwrite.  Normally, B<llvm-as> will refuse to overwrite an
 output file that already exists.  With this option, B<llvm-as>
-will overwrite the output file and replace it with new bytecode.
+will overwrite the output file and replace it with new bitcode.
 
 =item B<--help>
 

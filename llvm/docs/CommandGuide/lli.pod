@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-lli - directly execute programs from LLVM bytecode
+lli - directly execute programs from LLVM bitcode
 
 =head1 SYNOPSIS
 
@@ -10,13 +10,13 @@ B<lli> [I<options>] [I<filename>] [I<program args>]
 
 =head1 DESCRIPTION
 
-B<lli> directly executes programs in LLVM bytecode format.  It takes a program
-in LLVM bytecode format and executes it using a just-in-time compiler, if one is
+B<lli> directly executes programs in LLVM bitcode format.  It takes a program
+in LLVM bitcode format and executes it using a just-in-time compiler, if one is
 available for the current architecture, or an interpreter.  B<lli> takes all of
 the same code generator options as L<llc|llc>, but they are only effective when
 B<lli> is using the just-in-time compiler.
 
-If I<filename> is not specified, then B<lli> reads the LLVM bytecode for the
+If I<filename> is not specified, then B<lli> reads the LLVM bitcode for the
 program from standard input.
 
 The optional I<args> specified on the command line are passed to the program as
@@ -42,14 +42,14 @@ standard error.
 
 =item B<-mtriple>=I<target triple>
 
-Override the target triple specified in the input bytecode file with the 
+Override the target triple specified in the input bitcode file with the 
 specified string.  This may result in a crash if you pick an
 architecture which is not compatible with the current system.
 
 =item B<-march>=I<arch>
 
 Specify the architecture for which to generate assembly, overriding the target
-encoded in the bytecode file.  See the output of B<llc --help> for a list of
+encoded in the bitcode file.  See the output of B<llc --help> for a list of
 valid architectures.  By default this is inferred from the target triple or
 autodetected to the current architecture.
 

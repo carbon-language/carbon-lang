@@ -14,8 +14,8 @@ The B<stkrc> command is the compiler for the Stacker language. Stacker is a
 simple stack based, Forth-like language that was written as a demonstration
 language for LLVM. For details on the language, please see
 L<http://llvm.org/docs/Stacker.html> . The B<stkrc> compiler is fairly 
-minimal. It compiles to bytecode only and doesn't perform any optimizations.
-The output of stkrc (a bytecode file) can be piped through other LLVM tools
+minimal. It compiles to bitcode only and doesn't perform any optimizations.
+The output of stkrc (a bitcode file) can be piped through other LLVM tools
 for optimization and linking.
 
 If F<filename> is omitted or is C<->, then B<stkrc> reads its input 
@@ -65,7 +65,7 @@ error.
 =item B<-f>
 
 Force the output to be written. Normally, B<stkrc> won't overwrite an existing
-bytecode file. This option overrides that behavior. 
+bitcode file. This option overrides that behavior. 
 
 =item B<-s> F<stacksize>
 

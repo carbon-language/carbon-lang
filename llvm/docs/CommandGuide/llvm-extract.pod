@@ -11,10 +11,10 @@ B<llvm-extract> [I<options>] B<--func> I<function-name> [I<filename>]
 =head1 DESCRIPTION
 
 The B<llvm-extract> command takes the name of a function and extracts it from
-the specified LLVM bytecode file.  It is primarily used as a debugging tool to
+the specified LLVM bitcode file.  It is primarily used as a debugging tool to
 reduce test cases from larger programs that are triggering a bug.
 
-In addition to extracting the bytecode of the specified function,
+In addition to extracting the bitcode of the specified function,
 B<llvm-extract> will also remove unreachable global variables, prototypes, and
 unused types.
 
@@ -30,11 +30,11 @@ unless the B<-o> option is specified (see below).
 
 Force overwrite.  Normally, B<llvm-extract> will refuse to overwrite an
 output file that already exists.  With this option, B<llvm-extract>
-will overwrite the output file and replace it with new bytecode.
+will overwrite the output file and replace it with new bitcode.
 
 =item B<--func> I<function-name>
 
-Extract the function named I<function-name> from the LLVM bytecode.
+Extract the function named I<function-name> from the LLVM bitcode.
 
 =item B<--help>
 

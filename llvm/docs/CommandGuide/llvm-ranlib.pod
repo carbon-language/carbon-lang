@@ -14,7 +14,7 @@ The B<llvm-ranlib> command is similar to the common Unix utility, C<ranlib>. It
 adds or updates the symbol table in an LLVM archive file. Note that using the
 B<llvm-ar> modifier F<s> is usually more efficient than running B<llvm-ranlib>
 which is only provided only for completness and compatibility. Unlike other 
-implementations of C<ranlib>, B<llvm-ranlib> indexes LLVM bytecode files, not
+implementations of C<ranlib>, B<llvm-ranlib> indexes LLVM bitcode files, not
 native object modules. You can list the contents of the symbol table with the
 C<llvm-nm -s> command.
 

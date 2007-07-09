@@ -115,7 +115,7 @@ Includes either a native backend or the C backend.
 
 =item B<engine>
 
-Includes either a native JIT or the bytecode interpreter.
+Includes either a native JIT or the bitcode interpreter.
 
 =back
 

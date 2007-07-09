@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvm-nm - list LLVM bytecode file's symbol table
+llvm-nm - list LLVM bitcode file's symbol table
 
 =head1 SYNOPSIS
 
@@ -10,11 +10,11 @@ B<llvm-nm> [I<options>] [I<filenames...>]
 
 =head1 DESCRIPTION
 
-The B<llvm-nm> utility lists the names of symbols from the LLVM bytecode files,
-or B<ar> archives containing LLVM bytecode files, named on the command line.
+The B<llvm-nm> utility lists the names of symbols from the LLVM bitcode files,
+or B<ar> archives containing LLVM bitcode files, named on the command line.
 Each symbol is listed along with some simple information about its provenance.
 If no file name is specified, or I<-> is used as a file name, B<llvm-nm> will
-process a bytecode file on its standard input stream.
+process a bitcode file on its standard input stream.
 
 B<llvm-nm>'s default output format is the traditional BSD B<nm> output format.
 Each such output record consists of an (optional) 8-digit hexadecimal address,
@@ -28,7 +28,7 @@ Type code characters currently supported, and their meanings, are as follows:
 
 =item U
 
-Named object is referenced but undefined in this bytecode file
+Named object is referenced but undefined in this bitcode file
 
 =item C
 
@@ -60,10 +60,10 @@ Something unrecognizable
 
 =back
 
-Because LLVM bytecode files typically contain objects that are not considered to
+Because LLVM bitcode files typically contain objects that are not considered to
 have addresses until they are linked into an executable image or dynamically
 compiled "just-in-time", B<llvm-nm> does not print an address for any symbol,
-even symbols which are defined in the bytecode file.
+even symbols which are defined in the bitcode file.
 
 =head1 OPTIONS
 
@@ -83,18 +83,18 @@ Print a summary of command-line options and their meanings.
 
 =item B<--defined-only>
 
-Print only symbols defined in this bytecode file (as opposed to
+Print only symbols defined in this bitcode file (as opposed to
 symbols which may be referenced by objects in this file, but not
 defined in this file.)
 
 =item B<--extern-only>, B<-g>
 
 Print only symbols whose definitions are external; that is, accessible
-from other bytecode files.
+from other bitcode files.
 
 =item B<--undefined-only>, B<-u>
 
-Print only symbols referenced but not defined in this bytecode file.
+Print only symbols referenced but not defined in this bitcode file.
 
 =item B<--format=>I<fmt>, B<-f>
 

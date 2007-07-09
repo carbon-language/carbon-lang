@@ -10,8 +10,8 @@ B<llvm-link> [I<options>] I<filename ...>
 
 =head1 DESCRIPTION
 
-B<llvm-link> takes several LLVM bytecode files and links them together into a
-single LLVM bytecode file.  It writes the output file to standard output, unless
+B<llvm-link> takes several LLVM bitcode files and links them together into a
+single LLVM bitcode file.  It writes the output file to standard output, unless
 the B<-o> option is used to specify a filename.
 
 B<llvm-link> attempts to load the input files from the current directory.  If
@@ -44,7 +44,7 @@ write its output to standard output.
 =item B<-d>
 
 If specified, B<llvm-link> prints a human-readable version of the output
-bytecode file to standard error.
+bitcode file to standard error.
 
 =item B<--help>
 
@@ -53,7 +53,7 @@ Print a summary of command line options.
 =item B<-v>
 
 Verbose mode.  Print information about what B<llvm-link> is doing.  This
-typically includes a message for each bytecode file linked in and for each
+typically includes a message for each bitcode file linked in and for each
 library found.
 
 =back

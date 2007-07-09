@@ -69,13 +69,13 @@ into a set of basic actions to be done:
 
 =item * Pre-processing: gathering/filtering compiler input (optional).
 
-=item * Translation: source language to bytecode conversion.
+=item * Translation: source language to bitcode conversion.
 
-=item * Assembly: bytecode to native code conversion.
+=item * Assembly: bitcode to native code conversion.
 
-=item * Optimization: conversion of bytecode to something that runs faster.
+=item * Optimization: conversion of bitcode to something that runs faster.
 
-=item * Linking: combining multiple bytecodes to produce executable program.
+=item * Linking: combining multiple bitcode files to produce executable program.
 
 =back
 
@@ -99,7 +99,7 @@ following control options are defined:
 
 This option specifies that the linking phase is not to be run. All
 previous phases, if applicable will run. This is generally how a given
-bytecode file is compiled and optimized for a source language module.
+bitcode file is compiled and optimized for a source language module.
 
 =item B<-k> or B<--link> or default
 
@@ -220,7 +220,7 @@ of the option names the back end to use.
 
 =item B<--native>
 
-Normally, B<llvmc> produces bytecode files at most stages of compilation.
+Normally, B<llvmc> produces bitcode files at most stages of compilation.
 With this option, B<llvmc> will arrange for native object files to be
 generated with the B<-c> option, native assembly files to be generated
 with the B<-S> option, and native executables to be generated with the

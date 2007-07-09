@@ -6,12 +6,12 @@ llvm-prof - print execution profile of LLVM program
 
 =head1 SYNOPSIS
 
-B<llvm-prof> [I<options>] [I<bytecode file>] [I<llvmprof.out>]
+B<llvm-prof> [I<options>] [I<bitcode file>] [I<llvmprof.out>]
 
 =head1 DESCRIPTION
 
 The B<llvm-prof> tool reads in an F<llvmprof.out> file (which can
-optionally use a specific file with the third program argument), a bytecode file
+optionally use a specific file with the third program argument), a bitcode file
 for the program, and produces a human readable report, suitable for determining
 where the program hotspots are.
 
@@ -47,7 +47,7 @@ error.
 
 =head1 EXIT STATUS
 
-B<llvm-prof> returns 1 if it cannot load the bytecode file or the profile
+B<llvm-prof> returns 1 if it cannot load the bitcode file or the profile
 information. Otherwise, it exits with zero.
 
 =head1 AUTHOR

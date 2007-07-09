@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvm2xpp - LLVM bytecode to LLVM C++ IR translator
+llvm2xpp - LLVM bitcode to LLVM C++ IR translator
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ B<llvm2cpp> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
-B<llvm2cpp> translates from LLVM bytecode (.bc files) to a 
+B<llvm2cpp> translates from LLVM bitcode (.bc files) to a 
 corresponding C++ source file that will make calls against the LLVM C++ API to
 build the same module as the input. By default, the C++ output is a complete
 program that builds the module, verifies it and then emits the module as

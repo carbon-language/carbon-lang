@@ -10,9 +10,9 @@ B<llvm-ld> <options> <files>
 
 =head1 DESCRIPTION
 
-The B<llvm-ld> tool takes a set of LLVM bytecode files and links them
-together into a single LLVM bytecode file.  The output bytecode file can be
-another bytecode file or an executable bytecode program.  Using additional
+The B<llvm-ld> tool takes a set of LLVM bitcode files and links them
+together into a single LLVM bitcode file.  The output bitcode file can be
+another bitcode file or an executable bitcode program.  Using additional
 options, B<llvm-ld> is able to produce native code executables.
 
 The B<llvm-ld> tool is the main linker for LLVM. It is used to link together
@@ -47,13 +47,13 @@ and is applied to all libraries, preceding or succeeding, in the command line.
 
 =head2 Link order
 
-All object and bytecode files are linked first in the order they were 
+All object and bitcode files are linked first in the order they were 
 specified on the command line.  All library files are linked next.  
 Some libraries may not be linked into the object program; see below.
 
 =head2 Library Linkage
 
-Object files and static bytecode objects are always linked into the output
+Object files and static bitcode objects are always linked into the output
 file.  Library archives (.a files) load only the objects within the archive
 that define symbols needed by the output file.  Hence, libraries should be
 listed after the object files and libraries which need them; otherwise, the
@@ -64,7 +64,7 @@ undefined symbols defined.
 
 The B<llvm-ld> program has limited support for native code generation, when
 using the B<-native> or B<-native-cbe> options. Native code generation is
-performed by converting the linked bytecode into native assembly (.s) or C code
+performed by converting the linked bitcode into native assembly (.s) or C code
 and running the system compiler (typically gcc) on the result.
 
 =head1 OPTIONS
@@ -121,7 +121,7 @@ will not search the paths given by the B<-L> options following it.
 
 =item B<-link-as-library>
 
-Link the bytecode files together as a library, not an executable. In this mode,
+Link the bitcode files together as a library, not an executable. In this mode,
 undefined symbols will be permitted.
 
 =item B<-r>
@@ -136,14 +136,14 @@ Specifies the kind of machine for which code or assembly should be generated.
 
 Generate a native machine code executable.
 
-When generating native executables, B<llvm-ld> first checks for a bytecode
+When generating native executables, B<llvm-ld> first checks for a bitcode
 version of the library and links it in, if necessary.  If the library is
 missing, B<llvm-ld> skips it.  Then, B<llvm-ld> links in the same
 libraries as native code.
 
-In this way, B<llvm-ld> should be able to link in optimized bytecode
+In this way, B<llvm-ld> should be able to link in optimized bitcode
 subsets of common libraries and then link in any part of the library that
-hasn't been converted to bytecode.
+hasn't been converted to bitcode.
 
 =item B<-native-cbe>
 
@@ -236,7 +236,7 @@ run. This feature allows the optimization passes of B<llvm-ld> to be extended.
 
 =item B<-post-link-opt>F<Path>
 
-Run post-link optimization program. After linking is completed a bytecode file
+Run post-link optimization program. After linking is completed a bitcode file
 will be generated. It will be passed to the program specified by F<Path> as the
 first argument. The second argument to the program will be the name of a
 temporary file into which the program should place its optimized output. For
@@ -254,7 +254,7 @@ it will exit with a non-zero return code.
 
 =head1 ENVIRONMENT
 
-The C<LLVM_LIB_SEARCH_PATH> environment variable is used to find bytecode
+The C<LLVM_LIB_SEARCH_PATH> environment variable is used to find bitcode
 libraries. Any paths specified in this variable will be searched after the C<-L>
 options.
 
