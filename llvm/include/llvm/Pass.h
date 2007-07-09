@@ -130,8 +130,14 @@ public:
   }
 
   // Access AnalysisResolver
-  inline void setResolver(AnalysisResolver *AR) { Resolver = AR; }
-  inline AnalysisResolver *getResolver() { return Resolver; }
+  inline void setResolver(AnalysisResolver *AR) { 
+    assert (!Resolver && "Resolver is already set");
+    Resolver = AR; 
+  }
+  inline AnalysisResolver *getResolver() { 
+    assert (Resolver && "Resolver is not set");
+    return Resolver; 
+  }
 
   /// getAnalysisUsage - This function should be overriden by passes that need
   /// analysis information to do their job.  If a pass specifies that it uses a

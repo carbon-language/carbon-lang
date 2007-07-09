@@ -1380,9 +1380,6 @@ void PMStack::push(Pass *P) {
     PM->setTopLevelManager(TPM);
   }
 
-  AnalysisResolver *AR = new AnalysisResolver(*Top);
-  P->setResolver(AR);
-
   S.push_back(PM);
 }
 
