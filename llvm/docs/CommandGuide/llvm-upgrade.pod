@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-llvm-upgrade - LLVM assembly upgrader
+llvm-upgrade - LLVM assembly upgrade tool
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ B<llvm-upgrade> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
-B<llvm-upgrade> is the LLVM assembly upgrader.  It reads a file containing 
+B<llvm-upgrade> is the LLVM assembly upgrade tool.  It reads a file containing 
 human-readable LLVM assembly language, and upgrades that assembly to the current
 version of LLVM. If the input is in the form currently accepted by LLVM, then
 no upgrades are performed. 
