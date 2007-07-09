@@ -1605,7 +1605,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   
   // fold (or x, undef) -> -1
   if (N1.getOpcode() == ISD::UNDEF)
-    return DAG.getConstant(-1, VT);
+    return DAG.getConstant(~0ULL, VT);
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
     return DAG.getNode(ISD::OR, VT, N0, N1);
