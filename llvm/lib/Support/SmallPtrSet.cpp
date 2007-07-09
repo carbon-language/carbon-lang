@@ -182,6 +182,8 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
     if (!isSmall())
       delete [] CurArray;
     
+    NumElements = NumTombstones = 0;
+    
     // Get a power of two larger than twice the RHS size.
     CurArraySize = 1 << Log2_32(RHS.size()*4);
     
@@ -199,12 +201,18 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   
   // Now that we know we have enough space, and that the current array is empty,
   // copy over all the elements from the RHS.
-  
   for (void **BucketPtr = RHS.CurArray, **E = RHS.CurArray+RHS.CurArraySize;
        BucketPtr != E; ++BucketPtr) {
     // Copy over the element if it is valid.
     void *Elt = *BucketPtr;
-    if (Elt != getTombstoneMarker() && Elt != getEmptyMarker())
-      *const_cast<void**>(FindBucketFor(Elt)) = Elt;
+    if (Elt != getTombstoneMarker() && Elt != getEmptyMarker()) {
+      if (isSmall())
+        SmallArray[NumElements++] = Elt;
+      else
+        *const_cast<void**>(FindBucketFor(Elt)) = Elt;
+    }
   }
+  
+  if (!isSmall())
+    NumElements = RHS.NumElements;
 }
