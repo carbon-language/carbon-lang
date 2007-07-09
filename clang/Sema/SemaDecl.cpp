@@ -942,16 +942,14 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
   if (strcmp(rawAttr->getAttributeName()->getName(), "vector_size") == 0) {
     if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
       QualType newType = HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
-      // install the new vector type into the decl
-      QualType oldType = vDecl->setType(newType);
-      // FIXME: deal with memory management for oldType!
+      if (!newType.isNull()) // install the new vector type into the decl
+        vDecl->setType(newType);
     } 
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
       QualType newType = HandleVectorTypeAttribute(tDecl->getUnderlyingType(), 
                                                    rawAttr);
-      // install the new vector type into the decl
-      QualType oldType = tDecl->setUnderlyingType(newType);
-      // FIXME: deal with memory management for oldType!
+      if (!newType.isNull()) // install the new vector type into the decl
+        tDecl->setUnderlyingType(newType);
     }
   }
   // FIXME: add other attributes...
