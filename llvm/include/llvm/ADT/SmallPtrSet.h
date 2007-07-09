@@ -240,9 +240,8 @@ public:
   
   // Allow assignment from any smallptrset with the same element type even if it
   // doesn't have the same smallsize.
-  template<unsigned RHSSize>
   const SmallPtrSet<PtrType, SmallSize>
-  operator=(const SmallPtrSet<PtrType, RHSSize> &RHS) {
+  operator=(const SmallPtrSet<PtrType, SmallSize> &RHS) {
     CopyFrom(RHS);
     return *this;
   }
