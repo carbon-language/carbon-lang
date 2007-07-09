@@ -432,6 +432,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
   // Leaf expressions.
   case Expr::IntegerLiteralClass:
     return EmitIntegerLiteral(cast<IntegerLiteral>(E)); 
+  case Expr::FloatingLiteralClass:
+    return EmitFloatingLiteral(cast<FloatingLiteral>(E));
     
   // Operators.  
   case Expr::ParenExprClass:
@@ -450,6 +452,10 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
 
 RValue CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
   return RValue::get(llvm::ConstantInt::get(E->getValue()));
+}
+RValue CodeGenFunction::EmitFloatingLiteral(const FloatingLiteral *E) {
+  return RValue::get(llvm::ConstantFP::get(ConvertType(E->getType()),
+                                           E->getValue()));
 }
 
 RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
