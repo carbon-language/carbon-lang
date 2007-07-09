@@ -48,7 +48,12 @@ STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 namespace {
   struct VISIBILITY_HIDDEN SROA : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    SROA() : FunctionPass((intptr_t)&ID) {}
+    SROA(signed T = -1) : FunctionPass((intptr_t)&ID) {
+      if (T == -1)
+        SRThreshold = 128;
+      else
+        SRThreshold = T;
+    }
 
     bool runOnFunction(Function &F);
 
@@ -87,6 +92,8 @@ namespace {
           isMemCpySrc(false), isMemCpyDst(false) {}
     };
     
+    unsigned SRThreshold;
+
     void MarkUnsafe(AllocaInfo &I) { I.isUnsafe = true; }
 
     int isSafeAllocaToScalarRepl(AllocationInst *AI);
@@ -119,7 +126,9 @@ namespace {
 }
 
 // Public interface to the ScalarReplAggregates pass
-FunctionPass *llvm::createScalarReplAggregatesPass() { return new SROA(); }
+FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) { 
+  return new SROA(Threshold);
+}
 
 
 bool SROA::runOnFunction(Function &F) {
@@ -211,7 +220,7 @@ bool SROA::performScalarRepl(Function &F) {
         (isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType())) &&
         AI->getAllocatedType()->isSized() &&
-        TD.getTypeSize(AI->getAllocatedType()) < 128) {
+        TD.getTypeSize(AI->getAllocatedType()) < SRThreshold) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
       switch (isSafeAllocaToScalarRepl(AI)) {

@@ -76,7 +76,7 @@ FunctionPass *createAggressiveDCEPass();
 // ScalarReplAggregates - Break up alloca's of aggregates into multiple allocas
 // if possible.
 //
-FunctionPass *createScalarReplAggregatesPass();
+FunctionPass *createScalarReplAggregatesPass(signed Threshold = -1);
 
 //===----------------------------------------------------------------------===//
 //
