@@ -64,7 +64,7 @@ undefined symbols defined.
 
 The B<llvm-ld> program has limited support for native code generation, when
 using the B<-native> or B<-native-cbe> options. Native code generation is
-perfomed by converting the linked bytecode into native assembly (.s) or C code
+performed by converting the linked bytecode into native assembly (.s) or C code
 and running the system compiler (typically gcc) on the result.
 
 =head1 OPTIONS
