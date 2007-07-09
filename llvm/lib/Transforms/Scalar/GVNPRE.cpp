@@ -567,19 +567,23 @@ class ValueNumberedSet {
     void erase(Value* v) { contents.erase(v); }
     size_t size() { return contents.size(); }
     
-    void set(unsigned i) {
+    void set(unsigned i)  {
       if (i >= numbers.size())
         numbers.resize(i+1);
       
       numbers.set(i);
     }
     
-    void reset(unsigned i) {
+    void copyNumbers(ValueNumberedSet& other) {
+      numbers = other.numbers;
+    }
+    
+    void reset(unsigned i)  {
       if (i < numbers.size())
         numbers.reset(i);
     }
     
-    bool test(unsigned i) {
+    bool test(unsigned i)  {
       if (i >= numbers.size())
         return false;
       
@@ -622,44 +626,44 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    void dump(ValueNumberedSet& s) const;
-    void clean(ValueNumberedSet& set);
-    Value* find_leader(ValueNumberedSet& vals, uint32_t v);
-    Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ);
+    void dump(ValueNumberedSet& s) const ;
+    void clean(ValueNumberedSet& set) ;
+    Value* find_leader(ValueNumberedSet& vals, uint32_t v) ;
+    Value* phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) ;
     void phi_translate_set(ValueNumberedSet& anticIn, BasicBlock* pred,
-                           BasicBlock* succ, ValueNumberedSet& out);
+                           BasicBlock* succ, ValueNumberedSet& out) ;
     
     void topo_sort(ValueNumberedSet& set,
-                   std::vector<Value*>& vec);
+                   std::vector<Value*>& vec) ;
     
-    void cleanup();
-    bool elimination();
+    void cleanup() ;
+    bool elimination() ;
     
-    void val_insert(ValueNumberedSet& s, Value* v);
-    void val_replace(ValueNumberedSet& s, Value* v);
-    bool dependsOnInvoke(Value* V);
+    void val_insert(ValueNumberedSet& s, Value* v) ;
+    void val_replace(ValueNumberedSet& s, Value* v) ;
+    bool dependsOnInvoke(Value* V) ;
     void buildsets_availout(BasicBlock::iterator I,
                             ValueNumberedSet& currAvail,
                             ValueNumberedSet& currPhis,
                             ValueNumberedSet& currExps,
-                            SmallPtrSet<Value*, 16>& currTemps);
+                            SmallPtrSet<Value*, 16>& currTemps) ;
     bool buildsets_anticout(BasicBlock* BB,
                             ValueNumberedSet& anticOut,
-                            std::set<BasicBlock*>& visited);
+                            std::set<BasicBlock*>& visited) ;
     unsigned buildsets_anticin(BasicBlock* BB,
                            ValueNumberedSet& anticOut,
                            ValueNumberedSet& currExps,
                            SmallPtrSet<Value*, 16>& currTemps,
-                           std::set<BasicBlock*>& visited);
-    void buildsets(Function& F);
+                           std::set<BasicBlock*>& visited) ;
+    void buildsets(Function& F) ;
     
     void insertion_pre(Value* e, BasicBlock* BB,
                        std::map<BasicBlock*, Value*>& avail,
-                      std::map<BasicBlock*,ValueNumberedSet>& new_set);
+                      std::map<BasicBlock*,ValueNumberedSet>& new_set) ;
     unsigned insertion_mergepoint(std::vector<Value*>& workList,
                                   df_iterator<DomTreeNode*>& D,
-                      std::map<BasicBlock*, ValueNumberedSet>& new_set);
-    bool insertion(Function& F);
+                      std::map<BasicBlock*, ValueNumberedSet>& new_set) ;
+    bool insertion(Function& F) ;
   
   };
   
@@ -1455,13 +1459,12 @@ void GVNPRE::buildsets(Function& F) {
     BasicBlock* BB = DI->getBlock();
   
     // A block inherits AVAIL_OUT from its dominator
-    if (DI->getIDom() != 0)
-    currAvail.insert(availableOut[DI->getIDom()->getBlock()].begin(),
-                     availableOut[DI->getIDom()->getBlock()].end());
+    if (DI->getIDom() != 0) {
+      currAvail.insert(availableOut[DI->getIDom()->getBlock()].begin(),
+                       availableOut[DI->getIDom()->getBlock()].end());
     
-    for (ValueNumberedSet::iterator I = currAvail.begin(),
-        E = currAvail.end(); I != E; ++I)
-      currAvail.set(VN.lookup(*I));
+      currAvail.copyNumbers(availableOut[DI->getIDom()->getBlock()]);
+    }
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI)
