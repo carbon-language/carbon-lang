@@ -19,7 +19,7 @@ The B<llvm-ld> tool is the main linker for LLVM. It is used to link together
 the output of LLVM front-end compilers and run "link time" optimizations (mostly
 the inter-procedural kind).
 
-The B<llvm-ld> tools attemps to mimic the interface provided by the default
+The B<llvm-ld> tools attempts to mimic the interface provided by the default
 system linker so that it can act as a I<drop-in> replacement.
 
 =head2 Search Order
