@@ -43,7 +43,7 @@ char SimpleRegisterCoalescing::ID = 0;
 namespace {
   static cl::opt<bool>
   EnableJoining("join-liveintervals",
-                cl::desc("Coallesce copies (default=true)"),
+                cl::desc("Coalesce copies (default=true)"),
                 cl::init(true));
 
   RegisterPass<SimpleRegisterCoalescing> 
@@ -64,7 +64,7 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-/// AdjustCopiesBackFrom - We found a non-trivially-coallescable copy with IntA
+/// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy with IntA
 /// being the source and IntB being the dest, thus this defines a value number
 /// in IntB.  If the source value number (in IntA) is defined by a copy from B,
 /// see if we can merge these two pieces of B into a single value number,
@@ -171,10 +171,10 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
 
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
-/// if the copy was successfully coallesced away, or if it is never possible
-/// to coallesce this copy, due to register constraints.  It returns
-/// false if it is not currently possible to coallesce this interval, but
-/// it may be possible if other things get coallesced.
+/// if the copy was successfully coalesced away, or if it is never possible
+/// to coalesce this copy, due to register constraints.  It returns
+/// false if it is not currently possible to coalesce this interval, but
+/// it may be possible if other things get coalesced.
 bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
                              unsigned SrcReg, unsigned DstReg, bool PhysOnly) {
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
@@ -185,8 +185,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   
   // If they are already joined we continue.
   if (repSrcReg == repDstReg) {
-    DOUT << "\tCopy already coallesced.\n";
-    return true;  // Not coallescable.
+    DOUT << "\tCopy already coalesced.\n";
+    return true;  // Not coalescable.
   }
   
   bool SrcIsPhys = MRegisterInfo::isPhysicalRegister(repSrcReg);
@@ -197,24 +197,24 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 
   // If they are both physical registers, we cannot join them.
   if (SrcIsPhys && DstIsPhys) {
-    DOUT << "\tCan not coallesce physregs.\n";
-    return true;  // Not coallescable.
+    DOUT << "\tCan not coalesce physregs.\n";
+    return true;  // Not coalescable.
   }
   
   // We only join virtual registers with allocatable physical registers.
   if (SrcIsPhys && !allocatableRegs_[repSrcReg]) {
     DOUT << "\tSrc reg is unallocatable physreg.\n";
-    return true;  // Not coallescable.
+    return true;  // Not coalescable.
   }
   if (DstIsPhys && !allocatableRegs_[repDstReg]) {
     DOUT << "\tDst reg is unallocatable physreg.\n";
-    return true;  // Not coallescable.
+    return true;  // Not coalescable.
   }
   
   // If they are not of the same register class, we cannot join them.
   if (differingRegisterClasses(repSrcReg, repDstReg)) {
     DOUT << "\tSrc/Dest are different register classes.\n";
-    return true;  // Not coallescable.
+    return true;  // Not coalescable.
   }
   
   LiveInterval &SrcInt = li_->getInterval(repSrcReg);
@@ -320,7 +320,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
       LiveInInt.removeRange(RemoveStart, RemoveEnd);
     }
   } else {
-    // Coallescing failed.
+    // Coalescing failed.
     
     // If we can eliminate the copy without merging the live ranges, do so now.
     if (AdjustCopiesBackFrom(SrcInt, DstInt, CopyMI))
@@ -448,7 +448,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
   // interval may be defined as copies from the RHS.  Scan the overlapping
   // portions of the LHS and RHS, keeping track of this and looking for
   // overlapping live ranges that are NOT defined as copies.  If these exist, we
-  // cannot coallesce.
+  // cannot coalesce.
   
   LiveInterval::iterator LHSIt = LHS.begin(), LHSEnd = LHS.end();
   LiveInterval::iterator RHSIt = RHS.begin(), RHSEnd = RHS.end();
@@ -474,7 +474,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
     // If the live intervals overlap, there are two interesting cases: if the
     // LHS interval is defined by a copy from the RHS, it's ok and we record
     // that the LHS value # is the same as the RHS.  If it's not, then we cannot
-    // coallesce these live ranges and we bail out.
+    // coalesce these live ranges and we bail out.
     if (Overlaps) {
       // If we haven't already recorded that this value # is safe, check it.
       if (!InVector(LHSIt->ValId, EliminatedLHSVals)) {
@@ -497,12 +497,12 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
       // One interesting case to check here.  It's possible that we have
       // something like "X3 = Y" which defines a new value number in the LHS,
       // and is the last use of this liverange of the RHS.  In this case, we
-      // want to notice this copy (so that it gets coallesced away) even though
+      // want to notice this copy (so that it gets coalesced away) even though
       // the live ranges don't actually overlap.
       if (LHSIt->start == RHSIt->end) {
         if (InVector(LHSIt->ValId, EliminatedLHSVals)) {
           // We already know that this value number is going to be merged in
-          // if coallescing succeeds.  Just skip the liverange.
+          // if coalescing succeeds.  Just skip the liverange.
           if (++LHSIt == LHSEnd) break;
         } else {
           // Otherwise, if this is a copy from the RHS, mark it as being merged
@@ -520,7 +520,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
     }
   }
   
-  // If we got here, we know that the coallescing will be successful and that
+  // If we got here, we know that the coalescing will be successful and that
   // the value numbers in EliminatedLHSVals will all be merged together.  Since
   // the most common case is that EliminatedLHSVals has a single number, we
   // optimize for it: if there is more than one value, we merge them all into
@@ -569,7 +569,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
 /// below to update aliases.
 bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
   // Compute the final value assignment, assuming that the live ranges can be
-  // coallesced.
+  // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
   SmallVector<std::pair<unsigned,unsigned>, 16> ValueNumberInfo;
@@ -607,7 +607,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
     unsigned RHSSrcReg = RHS.getSrcRegForValNum(0);
     if ((RHSSrcReg == 0 || rep(RHSSrcReg) != LHS.reg)) {
       // If RHS is not defined as a copy from the LHS, we can use simpler and
-      // faster checks to see if the live ranges are coallescable.  This joiner
+      // faster checks to see if the live ranges are coalescable.  This joiner
       // can't swap the LHS/RHS intervals though.
       if (!MRegisterInfo::isPhysicalRegister(RHS.reg)) {
         return SimpleJoin(LHS, RHS);
@@ -631,7 +631,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
       if (unsigned LHSSrcReg = LHS.getSrcRegForValNum(VN)) {
         if (rep(LHSSrcReg) != RHS.reg) {
           // If this is not a copy from the RHS, its value number will be
-          // unmodified by the coallescing.
+          // unmodified by the coalescing.
           ValueNumberInfo[VN] = LHS.getValNumInfo(VN);
           LHSValNoAssignments[VN] = VN;
         } else if (RHSValID == -1) {
@@ -723,7 +723,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
   }
   
   // Armed with the mappings of LHS/RHS values to ultimate values, walk the
-  // interval lists to see if these intervals are coallescable.
+  // interval lists to see if these intervals are coalescable.
   LiveInterval::const_iterator I = LHS.begin();
   LiveInterval::const_iterator IE = LHS.end();
   LiveInterval::const_iterator J = RHS.begin();
@@ -750,7 +750,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
     // If so, check value # info to determine if they are really different.
     if (Overlaps) {
       // If the live range overlap will map to the same value number in the
-      // result liverange, we can still coallesce them.  If not, we can't.
+      // result liverange, we can still coalesce them.  If not, we can't.
       if (LHSValNoAssignments[I->ValId] != RHSValNoAssignments[J->ValId])
         return false;
     }
@@ -764,8 +764,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
     }
   }
 
-  // If we get here, we know that we can coallesce the live ranges.  Ask the
-  // intervals to coallesce themselves now.
+  // If we get here, we know that we can coalesce the live ranges.  Ask the
+  // intervals to coalesce themselves now.
   LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0],
            ValueNumberInfo);
   return true;
@@ -784,7 +784,7 @@ namespace {
   };
 }
 
-void SimpleRegisterCoalescing::CopyCoallesceInMBB(MachineBasicBlock *MBB,
+void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                 std::vector<CopyRec> *TryAgain, bool PhysOnly) {
   DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
   
@@ -813,7 +813,7 @@ void SimpleRegisterCoalescing::joinIntervals() {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
-      CopyCoallesceInMBB(I, &TryAgainList);
+      CopyCoalesceInMBB(I, &TryAgainList);
   } else {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
@@ -830,9 +830,9 @@ void SimpleRegisterCoalescing::joinIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoallesceInMBB(MBBs[i].second, NULL, true);
+      CopyCoalesceInMBB(MBBs[i].second, NULL, true);
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoallesceInMBB(MBBs[i].second, &TryAgainList, false);
+      CopyCoalesceInMBB(MBBs[i].second, &TryAgainList, false);
   }
   
   // Joining intervals can allow other intervals to be joined.  Iteratively join
@@ -1037,7 +1037,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
   r2rMap_.grow(mf_->getSSARegMap()->getLastVirtReg());
 
-  // Join (coallesce) intervals if requested.
+  // Join (coalesce) intervals if requested.
   if (EnableJoining) {
     joinIntervals();
     DOUT << "********** INTERVALS POST JOINING **********\n";

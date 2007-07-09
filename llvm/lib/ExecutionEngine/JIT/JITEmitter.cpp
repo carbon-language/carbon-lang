@@ -146,7 +146,7 @@ FreeRangeHeader *FreeRangeHeader::AllocateBlock() {
 
 /// FreeBlock - Turn an allocated block into a free block, adjusting
 /// bits in the object headers, and adding an end of region memory block.
-/// If possible, coallesce this block with neighboring blocks.  Return the
+/// If possible, coalesce this block with neighboring blocks.  Return the
 /// FreeRangeHeader to allocate from.
 FreeRangeHeader *MemoryRangeHeader::FreeBlock(FreeRangeHeader *FreeList) {
   MemoryRangeHeader *FollowingBlock = &getBlockAfter();
@@ -159,7 +159,7 @@ FreeRangeHeader *MemoryRangeHeader::FreeBlock(FreeRangeHeader *FreeList) {
   if (!FollowingBlock->ThisAllocated) {
     FreeRangeHeader &FollowingFreeBlock = *(FreeRangeHeader *)FollowingBlock;
     // "FreeList" always needs to be a valid free block.  If we're about to
-    // coallesce with it, update our notion of what the free list is.
+    // coalesce with it, update our notion of what the free list is.
     if (&FollowingFreeBlock == FreeList) {
       FreeList = FollowingFreeBlock.Next;
       FreeListToReturn = 0;
@@ -171,12 +171,12 @@ FreeRangeHeader *MemoryRangeHeader::FreeBlock(FreeRangeHeader *FreeList) {
     BlockSize += FollowingFreeBlock.BlockSize;
     FollowingBlock = &FollowingFreeBlock.getBlockAfter();
     
-    // Tell the block after the block we are coallescing that this block is
+    // Tell the block after the block we are coalescing that this block is
     // allocated.
     FollowingBlock->PrevAllocated = 1;
   }
   
-  assert(FollowingBlock->ThisAllocated && "Missed coallescing?");
+  assert(FollowingBlock->ThisAllocated && "Missed coalescing?");
   
   if (FreeRangeHeader *PrevFreeBlock = getFreeBlockBefore()) {
     PrevFreeBlock->GrowBlock(PrevFreeBlock->BlockSize + BlockSize);
@@ -369,7 +369,7 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
   Mem2->Prev = Mem2;   // Mem2 *is* the free list for now.
   Mem2->Next = Mem2;
 
-  /// Add a tiny allocated region so that Mem2 is never coallesced away.
+  /// Add a tiny allocated region so that Mem2 is never coalesced away.
   MemoryRangeHeader *Mem1 = (MemoryRangeHeader*)Mem2-1;
   Mem1->ThisAllocated = 1;
   Mem1->PrevAllocated = 0;
