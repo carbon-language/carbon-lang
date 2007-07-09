@@ -1,6 +1,5 @@
 ; Test that vectors are scalarized/lowered correctly.
 ; RUN: llvm-upgrade < %s | llvm-as | llc
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple a-b-c
 
 %f1 = type <1 x float>
 %f2 = type <2 x float>
