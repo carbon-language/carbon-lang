@@ -71,6 +71,10 @@ public:
   /// value read is larger than the APInt's bits will hold), set Val to the low
   /// bits of the result and return true.  Otherwise, return false.
   bool GetIntegerValue(llvm::APInt &Val);
+  
+  /// GetFloatValue - Convert this numeric literal to a float.
+  /// FIXME: the return value is fixed size - make more general.
+  float GetFloatValue();
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 
