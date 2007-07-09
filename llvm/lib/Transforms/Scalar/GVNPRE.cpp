@@ -695,6 +695,7 @@ Value* GVNPRE::find_leader(ValueNumberedSet& vals, uint32_t v) {
     if (v == VN.lookup(*I))
       return *I;
   
+  assert(0 && "No leader found, but present bit is set?");
   return 0;
 }
 
