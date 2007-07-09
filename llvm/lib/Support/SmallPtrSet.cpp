@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 bool SmallPtrSetImpl::insert(void *Ptr) {
@@ -170,5 +171,40 @@ SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
       if (Elt != getTombstoneMarker() && Elt != getEmptyMarker())
         *const_cast<void**>(FindBucketFor(Elt)) = Elt;
     }
+  }
+}
+
+/// CopyFrom - implement operator= from a smallptrset that has the same pointer
+/// type, but may have a different small size.
+void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
+  // Allocate space if needed or clear the current elements out of the array.
+  if (CurArraySize < RHS.size()*2) {
+    if (!isSmall())
+      delete [] CurArray;
+    
+    // Get a power of two larger than twice the RHS size.
+    CurArraySize = 1 << Log2_32(RHS.size()*4);
+    
+    // Install the new array.  Clear all the buckets to empty.
+    CurArray = new void*[CurArraySize+1];
+    memset(CurArray, -1, CurArraySize*sizeof(void*));
+    
+    // The end pointer, always valid, is set to a valid element to help the
+    // iterator.
+    CurArray[CurArraySize] = 0;
+    
+  } else if (!empty()) {
+    clear();
+  }
+  
+  // Now that we know we have enough space, and that the current array is empty,
+  // copy over all the elements from the RHS.
+  
+  for (void **BucketPtr = RHS.CurArray, **E = RHS.CurArray+RHS.CurArraySize;
+       BucketPtr != E; ++BucketPtr) {
+    // Copy over the element if it is valid.
+    void *Elt = *BucketPtr;
+    if (Elt != getTombstoneMarker() && Elt != getEmptyMarker())
+      *const_cast<void**>(FindBucketFor(Elt)) = Elt;
   }
 }

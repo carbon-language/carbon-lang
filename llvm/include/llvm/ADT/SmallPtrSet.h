@@ -127,6 +127,10 @@ private:
   
   /// Grow - Allocate a larger backing store for the buckets and move it over.
   void Grow();
+  
+  void operator=(const SmallPtrSetImpl &RHS);  // DO NOT IMPLEMENT.
+protected:
+  void CopyFrom(const SmallPtrSetImpl &RHS);
 };
 
 /// SmallPtrSetIteratorImpl - This is the common base class shared between all
@@ -233,6 +237,16 @@ public:
   inline iterator end() const {
     return iterator(CurArray+CurArraySize);
   }
+  
+  // Allow assignment from any smallptrset with the same element type even if it
+  // doesn't have the same smallsize.
+  template<unsigned RHSSize>
+  const SmallPtrSet<PtrType, SmallSize>
+  operator=(const SmallPtrSet<PtrType, RHSSize> &RHS) {
+    CopyFrom(RHS);
+    return *this;
+  }
+
 };
 
 }
