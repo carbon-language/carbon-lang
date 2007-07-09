@@ -13,7 +13,7 @@ B<llvm-nm> [I<options>] [I<filenames...>]
 The B<llvm-nm> utility lists the names of symbols from the LLVM bytecode files,
 or B<ar> archives containing LLVM bytecode files, named on the command line.
 Each symbol is listed along with some simple information about its provenance.
-If no filename is specified, or I<-> is used as a filename, B<llvm-nm> will
+If no file name is specified, or I<-> is used as a file name, B<llvm-nm> will
 process a bytecode file on its standard input stream.
 
 B<llvm-nm>'s default output format is the traditional BSD B<nm> output format.
@@ -32,11 +32,11 @@ Named object is referenced but undefined in this bytecode file
 
 =item C
 
-Common (multiple defs link together into one def)
+Common (multiple definitions link together into one def)
 
 =item W
 
-Weak reference (multiple defs link together into zero or one defs)
+Weak reference (multiple definitions link together into zero or one definitions)
 
 =item t
 
