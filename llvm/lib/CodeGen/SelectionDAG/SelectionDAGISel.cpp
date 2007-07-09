@@ -621,7 +621,6 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
                                   unsigned NumParts,
                                   MVT::ValueType PartVT,
                                   MVT::ValueType ValueVT,
-                                  bool EndianOrder,
                                   ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   if (!MVT::isVector(ValueVT) || NumParts == 1) {
     SDOperand Val = Parts[0];
@@ -631,7 +630,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
       assert(NumParts == 2 &&
              "Cannot expand to more than 2 elts yet!");
       SDOperand Hi = Parts[1];
-      if (EndianOrder && !DAG.getTargetLoweringInfo().isLittleEndian())
+      if (!DAG.getTargetLoweringInfo().isLittleEndian())
         std::swap(Val, Hi);
       return DAG.getNode(ISD::BUILD_PAIR, ValueVT, Val, Hi);
     }
@@ -692,7 +691,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     // as appropriate.
     for (unsigned i = 0; i != NumParts; ++i)
       Ops[i] = getCopyFromParts(DAG, &Parts[i], 1,
-                                PartVT, IntermediateVT, EndianOrder);
+                                PartVT, IntermediateVT);
   } else if (NumParts > 0) {
     // If the intermediate type was expanded, build the intermediate operands
     // from the parts.
@@ -701,7 +700,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     unsigned Factor = NumIntermediates / NumParts;
     for (unsigned i = 0; i != NumIntermediates; ++i)
       Ops[i] = getCopyFromParts(DAG, &Parts[i * Factor], Factor,
-                                PartVT, IntermediateVT, EndianOrder);
+                                PartVT, IntermediateVT);
   }
   
   // Build a vector with BUILD_VECTOR or CONCAT_VECTORS from the intermediate
@@ -718,8 +717,7 @@ static void getCopyToParts(SelectionDAG &DAG,
                            SDOperand Val,
                            SDOperand *Parts,
                            unsigned NumParts,
-                           MVT::ValueType PartVT,
-                           bool EndianOrder) {
+                           MVT::ValueType PartVT) {
   MVT::ValueType ValueVT = Val.getValueType();
 
   if (!MVT::isVector(ValueVT) || NumParts == 1) {
@@ -728,7 +726,7 @@ static void getCopyToParts(SelectionDAG &DAG,
       for (unsigned i = 0; i != NumParts; ++i)
         Parts[i] = DAG.getNode(ISD::EXTRACT_ELEMENT, PartVT, Val,
                                DAG.getConstant(i, MVT::i32));
-      if (EndianOrder && !DAG.getTargetLoweringInfo().isLittleEndian())
+      if (!DAG.getTargetLoweringInfo().isLittleEndian())
         std::reverse(Parts, Parts + NumParts);
       return;
     }
@@ -789,7 +787,7 @@ static void getCopyToParts(SelectionDAG &DAG,
     // If the register was not expanded, promote or copy the value,
     // as appropriate.
     for (unsigned i = 0; i != NumParts; ++i)
-      getCopyToParts(DAG, Ops[i], &Parts[i], 1, PartVT, EndianOrder);
+      getCopyToParts(DAG, Ops[i], &Parts[i], 1, PartVT);
   } else if (NumParts > 0) {
     // If the intermediate type was expanded, split each the value into
     // legal parts.
@@ -797,7 +795,7 @@ static void getCopyToParts(SelectionDAG &DAG,
            "Must expand into a divisible number of parts!");
     unsigned Factor = NumParts / NumIntermediates;
     for (unsigned i = 0; i != NumIntermediates; ++i)
-      getCopyToParts(DAG, Ops[i], &Parts[i * Factor], Factor, PartVT, EndianOrder);
+      getCopyToParts(DAG, Ops[i], &Parts[i * Factor], Factor, PartVT);
   }
 }
 
@@ -928,7 +926,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       unsigned NumParts = TLI.getNumRegisters(VT);
       MVT::ValueType PartVT = TLI.getRegisterType(VT);
       SmallVector<SDOperand, 4> Parts(NumParts);
-      getCopyToParts(DAG, RetOp, &Parts[0], NumParts, PartVT, true);
+      getCopyToParts(DAG, RetOp, &Parts[0], NumParts, PartVT);
       for (unsigned i = 0; i < NumParts; ++i) {
         NewValues.push_back(Parts[i]);
         NewValues.push_back(DAG.getConstant(false, MVT::i32));
@@ -2952,11 +2950,6 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 /// If the Flag pointer is NULL, no flag is used.
 SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
                                         SDOperand &Chain, SDOperand *Flag)const{
-  // Get the list of registers, in the appropriate order.
-  std::vector<unsigned> R(Regs);
-  if (!DAG.getTargetLoweringInfo().isLittleEndian())
-    std::reverse(R.begin(), R.end());
-
   // Copy the legal parts from the registers.
   unsigned NumParts = Regs.size();
   SmallVector<SDOperand, 8> Parts(NumParts);
@@ -2971,7 +2964,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   }
   
   // Assemble the legal parts into the final value.
-  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT, false);
+  return getCopyFromParts(DAG, &Parts[0], NumParts, RegVT, ValueVT);
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -2980,21 +2973,16 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
 /// If the Flag pointer is NULL, no flag is used.
 void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
                                  SDOperand &Chain, SDOperand *Flag) const {
-  // Get the list of registers, in the appropriate order.
-  std::vector<unsigned> R(Regs);
-  if (!DAG.getTargetLoweringInfo().isLittleEndian())
-    std::reverse(R.begin(), R.end());
-
   // Get the list of the values's legal parts.
   unsigned NumParts = Regs.size();
   SmallVector<SDOperand, 8> Parts(NumParts);
-  getCopyToParts(DAG, Val, &Parts[0], NumParts, RegVT, false);
+  getCopyToParts(DAG, Val, &Parts[0], NumParts, RegVT);
 
   // Copy the parts into the registers.
   for (unsigned i = 0; i != NumParts; ++i) {
     SDOperand Part = Flag ?
-                     DAG.getCopyToReg(Chain, R[i], Parts[i], *Flag) :
-                     DAG.getCopyToReg(Chain, R[i], Parts[i]);
+                     DAG.getCopyToReg(Chain, Regs[i], Parts[i], *Flag) :
+                     DAG.getCopyToReg(Chain, Regs[i], Parts[i]);
     Chain = Part.getValue(0);
     if (Flag)
       *Flag = Part.getValue(1);
@@ -3867,7 +3855,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       SmallVector<SDOperand, 4> Parts(NumParts);
       for (unsigned j = 0; j != NumParts; ++j)
         Parts[j] = SDOperand(Result, i++);
-      Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT, true));
+      Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT));
       break;
     }
     }
@@ -3939,7 +3927,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       MVT::ValueType PartVT = getRegisterType(VT);
       unsigned NumParts = getNumRegisters(VT);
       SmallVector<SDOperand, 4> Parts(NumParts);
-      getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT, true);
+      getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT);
       for (unsigned i = 0; i != NumParts; ++i) {
         // if it isn't first piece, alignment must be 1
         unsigned MyFlags = Flags;
@@ -3979,7 +3967,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     SmallVector<SDOperand, 4> Results(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i)
       Results[i] = Res.getValue(i);
-    Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT, false, AssertOp);
+    Res = getCopyFromParts(DAG, &Results[0], NumRegs, RegisterVT, VT, AssertOp);
   }
 
   return std::make_pair(Res, Chain);
@@ -4269,7 +4257,7 @@ SDOperand SelectionDAGLowering::CopyValueToVirtualRegister(Value *V,
   SmallVector<SDOperand, 8> Chains(NumRegs);
 
   // Copy the value by legal parts into sequential virtual registers.
-  getCopyToParts(DAG, Op, &Regs[0], NumRegs, RegisterVT, false);
+  getCopyToParts(DAG, Op, &Regs[0], NumRegs, RegisterVT);
   for (unsigned i = 0; i != NumRegs; ++i)
     Chains[i] = DAG.getCopyToReg(getRoot(), Reg + i, Regs[i]);
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
@@ -4406,8 +4394,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   if (TI->getNumSuccessors())
     SuccsHandled.resize(BB->getParent()->getNumBlockIDs());
     
-  // Check successor nodes PHI nodes that expect a constant to be available from
-  // this block.
+  // Check successor nodes' PHI nodes that expect a constant to be available
+  // from this block.
   for (unsigned succ = 0, e = TI->getNumSuccessors(); succ != e; ++succ) {
     BasicBlock *SuccBB = TI->getSuccessor(succ);
     if (!isa<PHINode>(SuccBB->begin())) continue;

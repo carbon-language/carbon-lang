@@ -1774,9 +1774,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   case MVT::Other: break;
   case MVT::i32:
     if (Op.Val->getValueType(1) == MVT::i32) {
-      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32, InFlag).getValue(1);
+      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
-      Chain = DAG.getCopyFromReg(Chain, PPC::R3, MVT::i32,
+      Chain = DAG.getCopyFromReg(Chain, PPC::R4, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
       ResultVals[1] = Chain.getValue(0);
       NumResults = 2;
