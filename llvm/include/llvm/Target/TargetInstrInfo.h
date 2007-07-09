@@ -329,7 +329,7 @@ public:
 
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
-  /// may be able to convert a two-address instruction into one or moretrue
+  /// may be able to convert a two-address instruction into one or more true
   /// three-address instructions on demand.  This allows the X86 target (for
   /// example) to convert ADD and SHL instructions into LEA instructions if they
   /// would require register copies due to two-addressness.
