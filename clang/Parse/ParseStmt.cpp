@@ -233,9 +233,8 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     Declarator DeclaratorInfo(DS, Declarator::BlockContext);
     ParseDeclarator(DeclaratorInfo);
     
-    ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
-    // FIXME: Return this as a declstmt.
-    return 0;
+    DeclTy *Decl = ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
+    return Decl ? Actions.ParseDeclStmt(Decl) : 0;
   }
   
   // Otherwise, this is an expression.  Seed it with II and parse it.
