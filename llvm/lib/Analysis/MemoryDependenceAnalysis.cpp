@@ -64,7 +64,7 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, bool lo
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue();
+        pointerSize = C->getZExtValue() * TD.getTypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
@@ -180,7 +180,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue();
+        pointerSize = C->getZExtValue() * TD.getTypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
