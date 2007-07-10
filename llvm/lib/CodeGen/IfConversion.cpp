@@ -84,7 +84,7 @@ namespace {
     /// IsBrAnalyzable  - True if AnalyzeBranch() returns false.
     /// HasFallThrough  - True if BB may fallthrough to the following BB.
     /// IsUnpredicable  - True if BB is known to be unpredicable.
-    /// ClobbersPredicate- True if BB would modify the predicate (e.g. has
+    /// ClobbersPred    - True if BB could modify predicates (e.g. has
     ///                   cmp, call, etc.)
     /// NonPredSize     - Number of non-predicated instructions.
     /// BB              - Corresponding MachineBasicBlock.
@@ -588,7 +588,10 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
       return;
     }
 
-    if (TID->Flags & M_CLOBBERS_PRED)
+    // FIXME: Make use of PredDefs? e.g. ADDC, SUBC sets predicates but are
+    // still potentially predicable.
+    std::vector<MachineOperand> PredDefs;
+    if (TII->DefinesPredicate(I, PredDefs))
       BBI.ClobbersPred = true;
 
     if ((TID->Flags & M_PREDICABLE) == 0) {
