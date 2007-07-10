@@ -18,6 +18,7 @@
 #define LLVM_ANALYSIS_MEMORY_DEPENDENCE_H
 
 #include "llvm/Pass.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Compiler.h"
 #include <map>
@@ -34,6 +35,7 @@ class MemoryDependenceAnalysis : public FunctionPass {
     DenseMap<Instruction*, std::pair<Instruction*, bool> > depGraphLocal;
     std::multimap<Instruction*, Instruction*> reverseDep;
   
+    Instruction* getCallSiteDependency(CallSite C, bool local = true);
   public:
     
     static Instruction* NonLocal;

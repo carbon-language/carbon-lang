@@ -40,6 +40,61 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<TargetData>();
 }
 
+// Find the dependency of a CallSite
+Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, bool local) {
+  assert(local && "Non-local memory dependence analysis not yet implemented");
+  
+  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+  TargetData& TD = getAnalysis<TargetData>();
+  BasicBlock::iterator blockBegin = C.getInstruction()->getParent()->begin();
+  BasicBlock::iterator QI = C.getInstruction();
+  
+  while (QI != blockBegin) {
+    --QI;
+    
+    // If this inst is a memory op, get the pointer it accessed
+    Value* pointer = 0;
+    uint64_t pointerSize = 0;
+    if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
+      pointer = S->getPointerOperand();
+      pointerSize = TD.getTypeSize(S->getOperand(0)->getType());
+    } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
+      pointer = L->getPointerOperand();
+      pointerSize = TD.getTypeSize(L->getType());
+    } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
+      pointer = AI;
+      if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        pointerSize = C->getZExtValue();
+      else
+        pointerSize = ~0UL;
+    } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
+      pointer = F->getPointerOperand();
+      
+      // FreeInsts erase the entire structure
+      pointerSize = ~0UL;
+    } else if (CallSite::get(QI).getInstruction() != 0) {
+      if (AA.getModRefInfo(C, CallSite::get(QI)) != AliasAnalysis::NoModRef) {
+        depGraphLocal.insert(std::make_pair(C.getInstruction(), std::make_pair(QI, true)));
+        reverseDep.insert(std::make_pair(QI, C.getInstruction()));
+        return QI;
+      } else {
+        continue;
+      }
+    }
+    
+    if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef) {
+      depGraphLocal.insert(std::make_pair(C.getInstruction(), std::make_pair(QI, true)));
+      reverseDep.insert(std::make_pair(QI, C.getInstruction()));
+      return QI;
+    }
+  }
+  
+  // No dependence found
+  depGraphLocal.insert(std::make_pair(C.getInstruction(), std::make_pair(NonLocal, true)));
+  reverseDep.insert(std::make_pair(NonLocal, C.getInstruction()));
+  return NonLocal;
+}
+
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local paramter indicates if the query should only
 /// evaluate dependencies within the same basic block.
@@ -77,12 +132,12 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     
     // FreeInsts erase the entire structure, not just a field
     dependeeSize = ~0UL;
-  } else if (isa<AllocationInst>(query))
+  } else if (CallSite::get(QI).getInstruction() != 0)
+    return getCallSiteDependency(CallSite::get(QI));
+  else if (isa<AllocationInst>(query))
     return None;
   else
-    // FIXME: Call/InvokeInsts need proper handling
     return None;
-  
   
   BasicBlock::iterator blockBegin = query->getParent()->begin();
   
@@ -109,21 +164,13 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
-    } else if (CallInst* C = dyn_cast<CallInst>(QI)) {
+    } else if (CallSite::get(QI).getInstruction() != 0) {
       // Call insts need special handling.  Check is they can modify our pointer
-      if (AA.getModRefInfo(C, dependee, dependeeSize) != AliasAnalysis::NoModRef) {
-        depGraphLocal.insert(std::make_pair(query, std::make_pair(C, true)));
-        reverseDep.insert(std::make_pair(C, query));
-        return C;
-      } else {
-        continue;
-      }
-    } else if (InvokeInst* I = dyn_cast<InvokeInst>(QI)) {
-      // Invoke insts need special handling.  Check is they can modify our pointer
-      if (AA.getModRefInfo(I, dependee, dependeeSize) != AliasAnalysis::NoModRef) {
-        depGraphLocal.insert(std::make_pair(query, std::make_pair(I, true)));
-        reverseDep.insert(std::make_pair(I, query));
-        return I;
+      if (AA.getModRefInfo(CallSite::get(QI), dependee, dependeeSize) !=
+          AliasAnalysis::NoModRef) {
+        depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
+        reverseDep.insert(std::make_pair(QI, query));
+        return QI;
       } else {
         continue;
       }
