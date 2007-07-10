@@ -572,3 +572,29 @@ swizzle:
         ret
 
 //===---------------------------------------------------------------------===//
+
+This code:
+
+#include <emmintrin.h>
+__m128i test(long long i) { return _mm_cvtsi64x_si128(i); }
+
+Should turn into a single 'movq %rdi, %xmm0' instruction.  Instead, we 
+get this (on x86-64):
+
+_test:
+	movd %rdi, %xmm1
+	xorps %xmm0, %xmm0
+	movsd %xmm1, %xmm0
+	ret
+
+The LLVM IR is:
+
+target triple = "x86_64-apple-darwin8"
+define <2 x i64> @test(i64 %i) {
+entry:
+	%tmp10 = insertelement <2 x i64> undef, i64 %i, i32 0	
+	%tmp11 = insertelement <2 x i64> %tmp10, i64 0, i32 1
+	ret <2 x i64> %tmp11
+}
+
+//===---------------------------------------------------------------------===//
