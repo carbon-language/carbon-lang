@@ -556,6 +556,10 @@ class ValueNumberedSet {
     BitVector numbers;
   public:
     ValueNumberedSet() { numbers.resize(1); }
+    ValueNumberedSet(const ValueNumberedSet& other) {
+      numbers = other.numbers;
+      contents = other.contents;
+    }
     
     typedef SmallPtrSet<Value*, 8>::iterator iterator;
     
@@ -614,9 +618,9 @@ namespace {
     ValueTable VN;
     std::vector<Instruction*> createdExpressions;
     
-    std::map<BasicBlock*, ValueNumberedSet> availableOut;
-    std::map<BasicBlock*, ValueNumberedSet> anticipatedIn;
-    std::map<BasicBlock*, ValueNumberedSet> generatedPhis;
+    DenseMap<BasicBlock*, ValueNumberedSet> availableOut;
+    DenseMap<BasicBlock*, ValueNumberedSet> anticipatedIn;
+    DenseMap<BasicBlock*, ValueNumberedSet> generatedPhis;
     
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -1175,7 +1179,7 @@ bool GVNPRE::elimination() {
           isa<ExtractElementInst>(BI) || isa<SelectInst>(BI) ||
           isa<CastInst>(BI) || isa<GetElementPtrInst>(BI)) {
         
-        if (availableOut[BB].test(VN.lookup(BI)) && ! availableOut[BB].count(BI)) {
+        if (availableOut[BB].test(VN.lookup(BI)) && !availableOut[BB].count(BI)) {
           Value *leader = find_leader(availableOut[BB], VN.lookup(BI));
           if (Instruction* Instr = dyn_cast<Instruction>(leader))
             if (Instr->getParent() != 0 && Instr != BI) {
