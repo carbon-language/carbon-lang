@@ -20,8 +20,8 @@ include $(LEVEL)/Makefile.common
 ifeq ($(HAVE_PERL),1)
 
 # Combine preprocessor flags (except for -I) and CXX flags.
-SUB_CPPFLAGS = ${CPP.Defines}
-SUB_CFLAGS = ${CPP.BaseFlags} ${C.Flags}
+SUB_CPPFLAGS = ${CPP.BaseFlags}
+SUB_CFLAGS   = ${CPP.BaseFlags} ${C.Flags}
 SUB_CXXFLAGS = ${CPP.BaseFlags} ${CXX.Flags}
 
 # This is blank for now.  We need to be careful about adding stuff here:
