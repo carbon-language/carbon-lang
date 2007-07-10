@@ -312,6 +312,7 @@ public:
   
   RValue EmitCastExpr(const CastExpr *E);
   RValue EmitCallExpr(const CallExpr *E);
+  RValue EmitArraySubscriptExprRV(const ArraySubscriptExpr *E);
 
   // Unary Operators.
   RValue EmitUnaryOperator(const UnaryOperator *E);

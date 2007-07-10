@@ -453,10 +453,9 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     if (const EnumConstantDecl *EC = 
           dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
       return RValue::get(llvm::ConstantInt::get(EC->getInitVal()));
-    
-    // FALLTHROUGH
-  case Expr::ArraySubscriptExprClass:
     return EmitLoadOfLValue(E);
+  case Expr::ArraySubscriptExprClass:
+    return EmitArraySubscriptExprRV(cast<ArraySubscriptExpr>(E));
   case Expr::StringLiteralClass:
     return RValue::get(EmitLValue(E).getAddress());
     
@@ -488,6 +487,29 @@ RValue CodeGenFunction::EmitFloatingLiteral(const FloatingLiteral *E) {
   return RValue::get(llvm::ConstantFP::get(ConvertType(E->getType()),
                                            E->getValue()));
 }
+
+
+RValue CodeGenFunction::EmitArraySubscriptExprRV(const ArraySubscriptExpr *E) {
+  // Emit subscript expressions in rvalue context's.  For most cases, this just
+  // loads the lvalue formed by the subscript expr.  However, we have to be
+  // careful, because the base of a vector subscript is occasionally an rvalue,
+  // so we can't get it as an lvalue.
+  if (!E->getBase()->getType()->isVectorType())
+    return EmitLoadOfLValue(E);
+
+  // Handle the vector case.  The base must be a vector, the index must be an
+  // integer value.
+  QualType BaseTy, IdxTy;
+  llvm::Value *Base =
+    EmitExprWithUsualUnaryConversions(E->getBase(), BaseTy).getVal();
+  llvm::Value *Idx = 
+    EmitExprWithUsualUnaryConversions(E->getIdx(), IdxTy).getVal();
+  
+  // FIXME: Convert Idx to i32 type.
+  
+  return RValue::get(Builder.CreateExtractElement(Base, Idx, "vecext"));
+}
+
 
 RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
   QualType SrcTy;
