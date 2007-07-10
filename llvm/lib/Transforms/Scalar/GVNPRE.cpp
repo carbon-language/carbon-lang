@@ -565,6 +565,7 @@ class ValueNumberedSet {
     bool insert(Value* v) { return contents.insert(v); }
     void insert(iterator I, iterator E) { contents.insert(I, E); }
     void erase(Value* v) { contents.erase(v); }
+    unsigned count(Value* v) { return contents.count(v); }
     size_t size() { return contents.size(); }
     
     void set(unsigned i)  {
@@ -1173,15 +1174,16 @@ bool GVNPRE::elimination() {
           isa<ShuffleVectorInst>(BI) || isa<InsertElementInst>(BI) ||
           isa<ExtractElementInst>(BI) || isa<SelectInst>(BI) ||
           isa<CastInst>(BI) || isa<GetElementPtrInst>(BI)) {
-         Value *leader = find_leader(availableOut[BB], VN.lookup(BI));
-  
-        if (leader != 0)
+        
+        if (availableOut[BB].test(VN.lookup(BI)) && ! availableOut[BB].count(BI)) {
+          Value *leader = find_leader(availableOut[BB], VN.lookup(BI));
           if (Instruction* Instr = dyn_cast<Instruction>(leader))
             if (Instr->getParent() != 0 && Instr != BI) {
               replace.push_back(std::make_pair(BI, leader));
               erase.push_back(BI);
               ++NumEliminated;
             }
+        }
       }
     }
   }
