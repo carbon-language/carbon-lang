@@ -42,7 +42,6 @@ my $TARGET_TRIPLE       = q{@target@};
 my $TARGETS_TO_BUILD    = q{@TARGETS_TO_BUILD@};
 my $TARGET_HAS_JIT      = q{@TARGET_HAS_JIT@};
 my @TARGETS_BUILT       = map { lc($_) } qw{@TARGETS_TO_BUILD@};
-my $EXPENSIVE_CHECKS    = q{@EXPENSIVE_CHECKS@};
 #---- end autoconf values ----
 
 # Must pretend x86_64 architecture is really x86, otherwise the native backend
@@ -115,17 +114,11 @@ foreach my $arg (@ARGV) {
         } elsif ($arg eq "--libdir") {
             $has_opt = 1; print "$LIBDIR\n";
         } elsif ($arg eq "--cppflags") {
-            $has_opt = 1; 
-	    my $cppopts = get_cpp_opts();
-	    print "$cppopts\n";
+            $has_opt = 1; print "-I$INCLUDEDIR $CPPFLAGS\n";
         } elsif ($arg eq "--cflags") {
-            $has_opt = 1; 
-	    my $cppopts = get_cpp_opts();
-	    print "$cppopts $CFLAGS\n";
+            $has_opt = 1; print "-I$INCLUDEDIR $CFLAGS\n";
         } elsif ($arg eq "--cxxflags") {
-            $has_opt = 1; 
-	    my $cppopts = get_cpp_opts();
-	    print "$cppopts $CXXFLAGS\n";
+            $has_opt = 1; print "-I$INCLUDEDIR $CXXFLAGS\n";
         } elsif ($arg eq "--ldflags") {
             $has_opt = 1; print "-L$LIBDIR $LDFLAGS $SYSTEM_LIBS\n";
         } elsif ($arg eq "--libs") {
@@ -190,44 +183,30 @@ LLVM.  Typically called from 'configure' scripts.  Examples:
   llvm-config --libs engine bcreader scalaropts
 
 Options:
-  --version              Print LLVM version.
-  --prefix               Print the installation prefix.
-  --src-root             Print the source root LLVM was built from.
-  --obj-root             Print the object root used to build LLVM.
-  --bindir               Directory containing LLVM executables.
-  --includedir           Directory containing LLVM headers.
-  --libdir               Directory containing LLVM libraries.
-  --cppflags             C preprocessor flags for files that include LLVM headers.
-  --cflags               C compiler flags for files that include LLVM headers.
-  --cxxflags             C++ compiler flags for files that include LLVM headers.
-  --ldflags              Print Linker flags.
-  --libs                 Libraries needed to link against LLVM components.
-  --libnames             Bare library names for in-tree builds.
-  --libfiles             Fully qualified library filenames for makefile depends.
-  --components           List of all possible components.
-  --targets-built        List of all targets currently built.
-  --host-target          Target triple used to configure LLVM.
-  --build-mode           Print build mode of LLVM tree (e.g. Debug or Release).
+  --version          Print LLVM version.
+  --prefix           Print the installation prefix.
+  --src-root         Print the source root LLVM was built from.
+  --obj-root         Print the object root used to build LLVM.
+  --bindir           Directory containing LLVM executables.
+  --includedir       Directory containing LLVM headers.
+  --libdir           Directory containing LLVM libraries.
+  --cppflags         C preprocessor flags for files that include LLVM headers.
+  --cflags           C compiler flags for files that include LLVM headers.
+  --cxxflags         C++ compiler flags for files that include LLVM headers.
+  --ldflags          Print Linker flags.
+  --libs             Libraries needed to link against LLVM components.
+  --libnames         Bare library names for in-tree builds.
+  --libfiles         Fully qualified library filenames for makefile depends.
+  --components       List of all possible components.
+  --targets-built    List of all targets currently built.
+  --host-target      Target triple used to configure LLVM.
+  --build-mode       Print build mode of LLVM tree (e.g. Debug or Release).
 Typical components:
-  all                    All LLVM libraries (default).
-  backend                Either a native backend or the C backend.
-  engine                 Either a native JIT or a bytecode interpreter.
+  all                All LLVM libraries (default).
+  backend            Either a native backend or the C backend.
+  engine             Either a native JIT or a bytecode interpreter.
 __EOD__
     exit(1);
-}
-
-# Return cpp flags used to build llvm.
-sub get_cpp_opts {
-    my $opts = "";
-
-    if ($EXPENSIVE_CHECKS eq "yes") {
-	$opts = "-D_GLIBCXX_DEBUG -I$INCLUDEDIR $CPPFLAGS";
-    }
-    else {
-	$opts = "-I$INCLUDEDIR $CPPFLAGS";
-    }
-
-    return $opts;
 }
 
 # Use -lfoo instead of libfoo.a whenever possible, and add directories to
