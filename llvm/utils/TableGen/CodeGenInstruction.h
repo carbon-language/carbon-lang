@@ -97,8 +97,8 @@ namespace llvm {
     bool hasVariableNumberOfOperands;
     bool hasCtrlDep;
     bool noResults;
-    bool clobbersPred;
     bool isNotDuplicable;
+    bool hasOptionalDef;
     
     /// ParseOperandName - Parse an operand name like "$foo" or "$foo.bar",
     /// where $foo is a whole operand and $foo.bar refers to a suboperand.

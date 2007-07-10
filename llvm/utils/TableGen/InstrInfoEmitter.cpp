@@ -110,6 +110,11 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       if (Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
         Res += "|M_PREDICATE_OPERAND";
         
+      // Optional def operands.  Check to see if the original unexpanded operand
+      // was of type OptionalDefOperand.
+      if (Inst.OperandList[i].Rec->isSubClassOf("OptionalDefOperand"))
+        Res += "|M_OPTIONAL_DEF_OPERAND";
+
       // Fill in constraint info.
       Res += ", " + Inst.OperandList[i].Constraints[j];
       Result.push_back(Res);
@@ -241,8 +246,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isCommutable) OS << "|M_COMMUTABLE";
   if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
   if (Inst.isReMaterializable) OS << "|M_REMATERIALIZIBLE";
-  if (Inst.clobbersPred) OS << "|M_CLOBBERS_PRED";
   if (Inst.isNotDuplicable) OS << "|M_NOT_DUPLICABLE";
+  if (Inst.hasOptionalDef) OS << "|M_HAS_OPTIONAL_DEF";
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|M_USES_CUSTOM_DAG_SCHED_INSERTION";
   if (Inst.hasVariableNumberOfOperands)

@@ -370,8 +370,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   noResults    = R->getValueAsBit("noResults");
-  clobbersPred = R->getValueAsBit("clobbersPred");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
+  hasOptionalDef = false;
   hasVariableNumberOfOperands = false;
   
   DagInit *DI;
@@ -411,9 +411,10 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       if (unsigned NumArgs = MIOpInfo->getNumArgs())
         NumOps = NumArgs;
 
-      if (Rec->isSubClassOf("PredicateOperand")) {
+      if (Rec->isSubClassOf("PredicateOperand"))
         isPredicable = true;
-      }
+      else if (Rec->isSubClassOf("OptionalDefOperand"))
+        hasOptionalDef = true;
     } else if (Rec->getName() == "variable_ops") {
       hasVariableNumberOfOperands = true;
       continue;
