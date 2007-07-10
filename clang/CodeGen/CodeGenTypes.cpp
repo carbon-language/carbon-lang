@@ -95,6 +95,11 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       assert(0 && "FIXME: VLAs not implemented yet!");
     }
   }
+  case Type::Vector: {
+    const VectorType &VT = cast<VectorType>(Ty);
+    return llvm::VectorType::get(ConvertType(VT.getElementType()),
+                                 VT.getNumElements());
+  }
   case Type::FunctionNoProto:
   case Type::FunctionProto: {
     const FunctionType &FP = cast<FunctionType>(Ty);
