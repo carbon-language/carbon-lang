@@ -92,6 +92,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConstantRange.h"
@@ -393,6 +394,28 @@ namespace {
     DomTreeDFS *DTDFS;
 
   public:
+#ifndef NDEBUG
+    virtual ~ValueNumbering() {}
+    virtual void dump() {
+      dump(*cerr.stream());
+    }
+
+    void dump(std::ostream &os) {
+      for (unsigned i = 1; i <= Values.size(); ++i) {
+        os << i << " = ";
+        WriteAsOperand(os, Values[i-1]);
+        os << " {";
+        for (unsigned j = 0; j < VNMap.size(); ++j) {
+          if (VNMap[j].index == i) {
+            WriteAsOperand(os, VNMap[j].V);
+            os << " (" << VNMap[j].Subtree->getDFSNumIn() << ")  ";
+          }
+        }
+        os << "}\n";
+      }
+    }
+#endif
+
     /// compare - returns true if V1 is a better canonical value than V2.
     bool compare(Value *V1, Value *V2) const {
       if (isa<Constant>(V1))
@@ -418,6 +441,9 @@ namespace {
     /// valueNumber - finds the value number for V under the Subtree. If
     /// there is no value number, returns zero.
     unsigned valueNumber(Value *V, DomTreeDFS::Node *Subtree) {
+      if (!(isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V))
+          || V->getType() == Type::VoidTy) return 0;
+
       VNMapType::iterator E = VNMap.end();
       VNPair pair(V, 0, Subtree);
       VNMapType::iterator I = std::lower_bound(VNMap.begin(), E, pair);
@@ -429,15 +455,28 @@ namespace {
       return 0;
     }
 
+    /// getOrInsertVN - always returns a value number, creating it if necessary.
+    unsigned getOrInsertVN(Value *V, DomTreeDFS::Node *Subtree) {
+      if (unsigned n = valueNumber(V, Subtree))
+        return n;
+      else
+        return newVN(V);
+    }
+
     /// newVN - creates a new value number. Value V must not already have a
     /// value number assigned.
     unsigned newVN(Value *V) {
+      assert((isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) &&
+             "Bad Value for value numbering.");
+      assert(V->getType() != Type::VoidTy && "Won't value number a void value");
+
       Values.push_back(V);
 
       VNPair pair = VNPair(V, Values.size(), DTDFS->getRootNode());
-      assert(!std::binary_search(VNMap.begin(), VNMap.end(), pair) &&
+      VNMapType::iterator I = std::lower_bound(VNMap.begin(), VNMap.end(), pair);
+      assert((I == VNMap.end() || value(I->index) != V) &&
              "Attempt to create a duplicate value number.");
-      VNMap.insert(std::lower_bound(VNMap.begin(), VNMap.end(), pair), pair);
+      VNMap.insert(I, pair);
 
       return Values.size();
     }
@@ -489,7 +528,7 @@ namespace {
         VNMapType::iterator I = std::lower_bound(B, E, pair);
         if (I != E && I->V == V && I->Subtree == Subtree)
           I->index = n; // Update best choice
-	else
+        else
           VNMap.insert(I, pair); // New Value
 
         // XXX: we currently don't have to worry about updating values with
@@ -506,12 +545,12 @@ namespace {
 
     /// remove - removes all references to value V.
     void remove(Value *V) {
-      VNMapType::iterator B = VNMap.begin();
+      VNMapType::iterator B = VNMap.begin(), E = VNMap.end();
       VNPair pair(V, 0, DTDFS->getRootNode());
-      VNMapType::iterator J = std::upper_bound(B, VNMap.end(), pair);
+      VNMapType::iterator J = std::upper_bound(B, E, pair);
       VNMapType::iterator I = J;
 
-      while (I != B && I->V == V) --I;
+      while (I != B && (I == E || I->V == V)) --I;
 
       VNMap.erase(I, J);
     }
@@ -601,8 +640,7 @@ namespace {
             "    !=", "000031" };
         for (Node::const_iterator NI = begin(), NE = end(); NI != NE; ++NI) {
           os << names[NI->LV] << " " << NI->To
-             << " (" << NI->Subtree->getDFSNumIn() << ")";
-          if (NI != NE) os << ", ";
+             << " (" << NI->Subtree->getDFSNumIn() << "), ";
         }
       }
     public:
@@ -676,24 +714,12 @@ namespace {
     std::vector<Node> Nodes;
 
   public:
-    /// node - returns the node object at a given index retrieved from getNode.
-    /// Index zero is reserved and may not be passed in here. The pointer
-    /// returned is valid until the next call to newNode or getOrInsertNode.
+    /// node - returns the node object at a given value number. The pointer
+    /// returned may be invalidated on the next call to node().
     Node *node(unsigned index) {
-      assert(index != 0 && "Zero index is reserved for not found.");
-      assert(index <= Nodes.size() && "Index out of range.");
+      assert(VN.value(index)); // This triggers the necessary checks.
+      if (Nodes.size() < index) Nodes.resize(index);
       return &Nodes[index-1];
-    }
-
-    /// newNode - creates a new node for a given Value and returns the index.
-    unsigned newNode(Value *V) {
-      assert((isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) &&
-             "Bad Value for node.");
-      assert(V->getType() != Type::VoidTy && "Void node?");
-
-      unsigned n = VN.newVN(V);
-      if (Nodes.size() < n) Nodes.resize(n);
-      return n;
     }
 
     /// isRelatedBy - true iff n1 op n2
@@ -721,9 +747,6 @@ namespace {
         assert(!isRelatedBy(n1, n2, Subtree, reversePredicate(LV1)) &&
                "Contradictory inequality.");
 
-      Node *N1 = node(n1);
-      Node *N2 = node(n2);
-
       // Suppose we're adding %n1 < %n2. Find all the %a < %n1 and
       // add %a < %n2 too. This keeps the graph fully connected.
       if (LV1 != NE) {
@@ -735,7 +758,7 @@ namespace {
         unsigned LV1_s = LV1 & (SLT_BIT|SGT_BIT);
         unsigned LV1_u = LV1 & (ULT_BIT|UGT_BIT);
 
-        for (Node::iterator I = N1->begin(), E = N1->end(); I != E; ++I) {
+        for (Node::iterator I = node(n1)->begin(), E = node(n1)->end(); I != E; ++I) {
           if (I->LV != NE && I->To != n2) {
 
             DomTreeDFS::Node *Local_Subtree = NULL;
@@ -766,13 +789,13 @@ namespace {
                 LatticeVal NewLV = static_cast<LatticeVal>(new_relationship);
 
                 node(I->To)->update(n2, NewLV, Local_Subtree);
-                N2->update(I->To, reversePredicate(NewLV), Local_Subtree);
+                node(n2)->update(I->To, reversePredicate(NewLV), Local_Subtree);
               }
             }
           }
         }
 
-        for (Node::iterator I = N2->begin(), E = N2->end(); I != E; ++I) {
+        for (Node::iterator I = node(n2)->begin(), E = node(n2)->end(); I != E; ++I) {
           if (I->LV != NE && I->To != n1) {
             DomTreeDFS::Node *Local_Subtree = NULL;
             if (Subtree->DominatedBy(I->Subtree))
@@ -801,7 +824,7 @@ namespace {
 
                 LatticeVal NewLV = static_cast<LatticeVal>(new_relationship);
 
-                N1->update(I->To, NewLV, Local_Subtree);
+                node(n1)->update(I->To, NewLV, Local_Subtree);
                 node(I->To)->update(n1, reversePredicate(NewLV), Local_Subtree);
               }
             }
@@ -809,8 +832,8 @@ namespace {
         }
       }
 
-      N1->update(n2, LV1, Subtree);
-      N2->update(n1, reversePredicate(LV1), Subtree);
+      node(n1)->update(n2, LV1, Subtree);
+      node(n2)->update(n1, reversePredicate(LV1), Subtree);
     }
 
     /// remove - removes a node from the graph by removing all references to
@@ -848,101 +871,130 @@ namespace {
   /// ValueRanges tracks the known integer ranges and anti-ranges of the nodes
   /// in the InequalityGraph.
   class VISIBILITY_HIDDEN ValueRanges {
+    ValueNumbering &VN;
+    TargetData *TD;
 
-    /// A ScopedRange ties an InequalityGraph node with a ConstantRange under
-    /// the scope of a rooted subtree in the dominator tree.
     class VISIBILITY_HIDDEN ScopedRange {
+      typedef std::vector<std::pair<DomTreeDFS::Node *, ConstantRange> >
+              RangeListType;
+      RangeListType RangeList;
+
+      static bool swo(const std::pair<DomTreeDFS::Node *, ConstantRange> &LHS,
+                      const std::pair<DomTreeDFS::Node *, ConstantRange> &RHS) {
+        return *LHS.first < *RHS.first;
+      }
+
     public:
-      ScopedRange(Value *V, ConstantRange CR, DomTreeDFS::Node *ST)
-        : V(V), CR(CR), Subtree(ST) {}
-
-      Value *V;
-      ConstantRange CR;
-      DomTreeDFS::Node *Subtree;
-
-      bool operator<(const ScopedRange &range) const {
-        if (V != range.V) return V < range.V;
-        return *Subtree < *range.Subtree;
+#ifndef NDEBUG
+      virtual ~ScopedRange() {}
+      virtual void dump() const {
+        dump(*cerr.stream());
       }
 
-      bool operator<(const Value *value) const {
-        return V < value;
+      void dump(std::ostream &os) const {
+        os << "{";
+        for (const_iterator I = begin(), E = end(); I != E; ++I) {
+          os << I->second << " (" << I->first->getDFSNumIn() << "), ";
+        }
+        os << "}";
+      }
+#endif
+
+      typedef RangeListType::iterator       iterator;
+      typedef RangeListType::const_iterator const_iterator;
+
+      iterator begin() { return RangeList.begin(); }
+      iterator end()   { return RangeList.end(); }
+      const_iterator begin() const { return RangeList.begin(); }
+      const_iterator end()   const { return RangeList.end(); }
+
+      iterator find(DomTreeDFS::Node *Subtree) {
+        static ConstantRange empty(1, false);
+        iterator E = end();
+        iterator I = std::lower_bound(begin(), E,
+                                      std::make_pair(Subtree, empty), swo);
+
+        while (I != E && !I->first->dominates(Subtree)) ++I;
+        return I;
       }
 
-      bool operator>(const Value *value) const {
-          return V > value;
+      const_iterator find(DomTreeDFS::Node *Subtree) const {
+        static const ConstantRange empty(1, false);
+        const_iterator E = end();
+        const_iterator I = std::lower_bound(begin(), E,
+                                            std::make_pair(Subtree, empty), swo);
+
+        while (I != E && !I->first->dominates(Subtree)) ++I;
+        return I;
       }
 
-      friend bool operator<(const Value *value, const ScopedRange &range) {
-          return range.operator>(value);
+      void update(const ConstantRange &CR, DomTreeDFS::Node *Subtree) {
+        assert(!CR.isEmptySet() && "Empty ConstantRange.");
+        assert(!CR.isSingleElement() && "Won't store single element.");
+
+        static ConstantRange empty(1, false);
+        iterator E = end();
+        iterator I =
+            std::lower_bound(begin(), E, std::make_pair(Subtree, empty), swo);
+
+        if (I != end() && I->first == Subtree) {
+          ConstantRange CR2 = I->second.intersectWith(CR);
+          assert(!CR2.isEmptySet() && !CR2.isSingleElement() &&
+                 "Invalid union of ranges.");
+          I->second = CR2;
+        } else
+          RangeList.insert(I, std::make_pair(Subtree, CR));
       }
     };
 
-    TargetData *TD;
-
     std::vector<ScopedRange> Ranges;
-    typedef std::vector<ScopedRange>::iterator iterator;
 
-    // XXX: this is a copy of the code in InequalityGraph::Node. Perhaps a
-    // intrusive domtree-scoped container is in order?
-
-    iterator begin() { return Ranges.begin(); }
-    iterator end()   { return Ranges.end();   }
-
-    iterator find(Value *V, DomTreeDFS::Node *Subtree) {
-      iterator E = end();
-      for (iterator I = std::lower_bound(begin(), E, V);
-           I != E && I->V == V; ++I) {
-        if (Subtree->DominatedBy(I->Subtree))
-          return I;
-      }
-      return E;
-    }
-
-    void update(Value *V, ConstantRange CR, DomTreeDFS::Node *Subtree) {
-      assert(!CR.isEmptySet() && "Empty ConstantRange!");
+    void update(unsigned n, const ConstantRange &CR, DomTreeDFS::Node *Subtree){
       if (CR.isFullSet()) return;
-
-      iterator I = find(V, Subtree);
-      if (I == end()) {
-        ScopedRange range(V, CR, Subtree);
-        iterator Insert = std::lower_bound(begin(), end(), range);
-        Ranges.insert(Insert, range);
-      } else {
-        CR = CR.intersectWith(I->CR);
-        assert(!CR.isEmptySet() && "Empty intersection of ConstantRanges!");
-
-        if (CR != I->CR) {
-          if (Subtree != I->Subtree) {
-            assert(Subtree->DominatedBy(I->Subtree) &&
-                   "Find returned subtree that doesn't apply.");
-
-            ScopedRange range(V, CR, Subtree);
-            iterator Insert = std::lower_bound(begin(), end(), range);
-            Ranges.insert(Insert, range); // invalidates I
-            I = find(V, Subtree);
-          }
-
-          // Also, we have to tighten any edge that Subtree dominates.
-          for (iterator B = begin(); I->V == V; --I) {
-            if (I->Subtree->DominatedBy(Subtree)) {
-              I->CR = CR.intersectWith(I->CR);
-              assert(!I->CR.isEmptySet() &&
-                     "Empty intersection of ConstantRanges!");
-            }
-            if (I == B) break;
-          }
-        }
-      }
+      if (Ranges.size() < n) Ranges.resize(n);
+      Ranges[n-1].update(CR, Subtree);
     }
 
-    /// range - Creates a ConstantRange representing the set of all values
-    /// that match the ICmpInst::Predicate with any of the values in CR.
-    ConstantRange range(ICmpInst::Predicate ICmpOpcode,
-                        const ConstantRange &CR) {
+    /// create - Creates a ConstantRange that matches the given LatticeVal
+    /// relation with a given integer.
+    ConstantRange create(LatticeVal LV, const ConstantRange &CR) {
+      assert(!CR.isEmptySet() && "Can't deal with empty set.");
+
+      if (LV == NE)
+        return makeConstantRange(ICmpInst::ICMP_NE, CR);
+
+      unsigned LV_s = LV & (SGT_BIT|SLT_BIT);
+      unsigned LV_u = LV & (UGT_BIT|ULT_BIT);
+      bool hasEQ = LV & EQ_BIT;
+
+      ConstantRange Range(CR.getBitWidth());
+
+      if (LV_s == SGT_BIT) {
+        Range = Range.intersectWith(makeConstantRange(
+                    hasEQ ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_SGT, CR));
+      } else if (LV_s == SLT_BIT) {
+        Range = Range.intersectWith(makeConstantRange(
+                    hasEQ ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_SLT, CR));
+      }
+
+      if (LV_u == UGT_BIT) {
+        Range = Range.intersectWith(makeConstantRange(
+                    hasEQ ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_UGT, CR));
+      } else if (LV_u == ULT_BIT) {
+        Range = Range.intersectWith(makeConstantRange(
+                    hasEQ ? ICmpInst::ICMP_ULE : ICmpInst::ICMP_ULT, CR));
+      }
+
+      return Range;
+    }
+
+    /// makeConstantRange - Creates a ConstantRange representing the set of all
+    /// value that match the ICmpInst::Predicate with any of the values in CR.
+    ConstantRange makeConstantRange(ICmpInst::Predicate ICmpOpcode,
+                                    const ConstantRange &CR) {
       uint32_t W = CR.getBitWidth();
       switch (ICmpOpcode) {
-        default: assert(!"Invalid ICmp opcode to range()");
+        default: assert(!"Invalid ICmp opcode to makeConstantRange()");
         case ICmpInst::ICMP_EQ:
           return ConstantRange(CR.getLower(), CR.getUpper());
         case ICmpInst::ICMP_NE:
@@ -985,63 +1037,54 @@ namespace {
       }
     }
 
-    /// create - Creates a ConstantRange that matches the given LatticeVal
-    /// relation with a given integer.
-    ConstantRange create(LatticeVal LV, const ConstantRange &CR) {
-      assert(!CR.isEmptySet() && "Can't deal with empty set.");
-
-      if (LV == NE)
-        return range(ICmpInst::ICMP_NE, CR);
-
-      unsigned LV_s = LV & (SGT_BIT|SLT_BIT);
-      unsigned LV_u = LV & (UGT_BIT|ULT_BIT);
-      bool hasEQ = LV & EQ_BIT;
-
-      ConstantRange Range(CR.getBitWidth());
-
-      if (LV_s == SGT_BIT) {
-        Range = Range.intersectWith(range(
-                    hasEQ ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_SGT, CR));
-      } else if (LV_s == SLT_BIT) {
-        Range = Range.intersectWith(range(
-                    hasEQ ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_SLT, CR));
-      }
-
-      if (LV_u == UGT_BIT) {
-        Range = Range.intersectWith(range(
-                    hasEQ ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_UGT, CR));
-      } else if (LV_u == ULT_BIT) {
-        Range = Range.intersectWith(range(
-                    hasEQ ? ICmpInst::ICMP_ULE : ICmpInst::ICMP_ULT, CR));
-      }
-
-      return Range;
-    }
-
 #ifndef NDEBUG
-    bool isCanonical(Value *V, DomTreeDFS::Node *Subtree, VRPSolver *VRP);
+    bool isCanonical(Value *V, DomTreeDFS::Node *Subtree) {
+      return V == VN.canonicalize(V, Subtree);
+    }
 #endif
 
   public:
 
-    explicit ValueRanges(TargetData *TD) : TD(TD) {}
+    ValueRanges(ValueNumbering &VN, TargetData *TD) : VN(VN), TD(TD) {}
 
-    // rangeFromValue - converts a Value into a range. If the value is a
-    // constant it constructs the single element range, otherwise it performs
-    // a lookup. The width W must be retrieved from typeToWidth and may not
-    // be zero.
-    ConstantRange rangeFromValue(Value *V, DomTreeDFS::Node *Subtree,
-                                 uint32_t W) {
-      if (ConstantInt *C = dyn_cast<ConstantInt>(V)) {
-        return ConstantRange(C->getValue());
-      } else if (isa<ConstantPointerNull>(V)) {
-        return ConstantRange(APInt::getNullValue(W));
-      } else {
-        iterator I = find(V, Subtree);
-        if (I != end())
-          return I->CR;
+#ifndef NDEBUG
+    virtual ~ValueRanges() {}
+
+    virtual void dump() const {
+      dump(*cerr.stream());
+    }
+
+    void dump(std::ostream &os) const {
+      for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
+        os << (i+1) << " = ";
+        Ranges[i].dump(os);
+        os << "\n";
       }
-      return ConstantRange(W);
+    }
+#endif
+
+    /// range - looks up the ConstantRange associated with a value number.
+    ConstantRange range(unsigned n, DomTreeDFS::Node *Subtree) {
+      assert(VN.value(n)); // performs range checks
+
+      if (n <= Ranges.size()) {
+        ScopedRange::iterator I = Ranges[n-1].find(Subtree);
+        if (I != Ranges[n-1].end()) return I->second;
+      }
+
+      Value *V = VN.value(n);
+      ConstantRange CR = range(V);
+      return CR;
+    }
+
+    /// range - determine a range from a Value without performing any lookups.
+    ConstantRange range(Value *V) const {
+      if (ConstantInt *C = dyn_cast<ConstantInt>(V))
+        return ConstantRange(C->getValue());
+      else if (isa<ConstantPointerNull>(V))
+        return ConstantRange(APInt::getNullValue(typeToWidth(V->getType())));
+      else
+        return typeToWidth(V->getType());
     }
 
     // typeToWidth - returns the number of bits necessary to store a value of
@@ -1056,15 +1099,8 @@ namespace {
       return 0;
     }
 
-    bool isRelatedBy(Value *V1, Value *V2, DomTreeDFS::Node *Subtree,
-                     LatticeVal LV) {
-      uint32_t W = typeToWidth(V1->getType());
-      if (!W) return false;
-
-      ConstantRange CR1 = rangeFromValue(V1, Subtree, W);
-      ConstantRange CR2 = rangeFromValue(V2, Subtree, W);
-
-      // True iff all values in CR1 are LV to all values in CR2.
+    static bool isRelatedBy(const ConstantRange &CR1, const ConstantRange &CR2,
+                            LatticeVal LV) {
       switch (LV) {
       default: assert(!"Impossible lattice value!");
       case NE:
@@ -1112,22 +1148,27 @@ namespace {
       }
     }
 
+    bool isRelatedBy(unsigned n1, unsigned n2, DomTreeDFS::Node *Subtree,
+                     LatticeVal LV) {
+      ConstantRange CR1 = range(n1, Subtree);
+      ConstantRange CR2 = range(n2, Subtree);
+
+      // True iff all values in CR1 are LV to all values in CR2.
+      return isRelatedBy(CR1, CR2, LV);
+    }
+
     void addToWorklist(Value *V, Constant *C, ICmpInst::Predicate Pred,
                        VRPSolver *VRP);
     void markBlock(VRPSolver *VRP);
 
-    void mergeInto(Value **I, unsigned n, Value *New,
+    void mergeInto(Value **I, unsigned n, unsigned New,
                    DomTreeDFS::Node *Subtree, VRPSolver *VRP) {
-      assert(isCanonical(New, Subtree, VRP) && "Best choice not canonical?");
-
-      uint32_t W = typeToWidth(New->getType());
-      if (!W) return;
-
-      ConstantRange CR_New = rangeFromValue(New, Subtree, W);
+      ConstantRange CR_New = range(New, Subtree);
       ConstantRange Merged = CR_New;
 
       for (; n != 0; ++I, --n) {
-        ConstantRange CR_Kill = rangeFromValue(*I, Subtree, W);
+        unsigned i = VN.valueNumber(*I, Subtree);
+        ConstantRange CR_Kill = i ? range(i, Subtree) : range(*I);
         if (CR_Kill.isFullSet()) continue;
         Merged = Merged.intersectWith(CR_Kill);
       }
@@ -1137,11 +1178,16 @@ namespace {
       applyRange(New, Merged, Subtree, VRP);
     }
 
-    void applyRange(Value *V, const ConstantRange &CR,
+    void applyRange(unsigned n, const ConstantRange &CR,
                     DomTreeDFS::Node *Subtree, VRPSolver *VRP) {
-      assert(isCanonical(V, Subtree, VRP) && "Value not canonical.");
+      ConstantRange Merged = CR.intersectWith(range(n, Subtree));
+      if (Merged.isEmptySet()) {
+        markBlock(VRP);
+        return;
+      }
 
-      if (const APInt *I = CR.getSingleElement()) {
+      if (const APInt *I = Merged.getSingleElement()) {
+        Value *V = VN.value(n); // XXX: redesign worklist.
         const Type *Ty = V->getType();
         if (Ty->isInteger()) {
           addToWorklist(V, ConstantInt::get(*I), ICmpInst::ICMP_EQ, VRP);
@@ -1149,33 +1195,25 @@ namespace {
         } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
           assert(*I == 0 && "Pointer is null but not zero?");
           addToWorklist(V, ConstantPointerNull::get(PTy),
-                      ICmpInst::ICMP_EQ, VRP);
+                        ICmpInst::ICMP_EQ, VRP);
           return;
         }
       }
 
-      ConstantRange Merged = CR.intersectWith(
-                                rangeFromValue(V, Subtree, CR.getBitWidth()));
-      if (Merged.isEmptySet()) {
-        markBlock(VRP);
-        return;
-      }
-
-      update(V, Merged, Subtree);
+      update(n, Merged, Subtree);
     }
 
-    void addNotEquals(Value *V1, Value *V2, DomTreeDFS::Node *Subtree,
+    void addNotEquals(unsigned n1, unsigned n2, DomTreeDFS::Node *Subtree,
                       VRPSolver *VRP) {
-      uint32_t W = typeToWidth(V1->getType());
-      if (!W) return;
+      ConstantRange CR1 = range(n1, Subtree);
+      ConstantRange CR2 = range(n2, Subtree);
 
-      ConstantRange CR1 = rangeFromValue(V1, Subtree, W);
-      ConstantRange CR2 = rangeFromValue(V2, Subtree, W);
+      uint32_t W = CR1.getBitWidth();
 
       if (const APInt *I = CR1.getSingleElement()) {
         if (CR2.isFullSet()) {
           ConstantRange NewCR2(CR1.getUpper(), CR1.getLower());
-          applyRange(V2, NewCR2, Subtree, VRP);
+          applyRange(n2, NewCR2, Subtree, VRP);
         } else if (*I == CR2.getLower()) {
           APInt NewLower(CR2.getLower() + 1),
                 NewUpper(CR2.getUpper());
@@ -1183,7 +1221,7 @@ namespace {
             NewLower = NewUpper = APInt::getMinValue(W);
 
           ConstantRange NewCR2(NewLower, NewUpper);
-          applyRange(V2, NewCR2, Subtree, VRP);
+          applyRange(n2, NewCR2, Subtree, VRP);
         } else if (*I == CR2.getUpper() - 1) {
           APInt NewLower(CR2.getLower()),
                 NewUpper(CR2.getUpper() - 1);
@@ -1191,14 +1229,14 @@ namespace {
             NewLower = NewUpper = APInt::getMinValue(W);
 
           ConstantRange NewCR2(NewLower, NewUpper);
-          applyRange(V2, NewCR2, Subtree, VRP);
+          applyRange(n2, NewCR2, Subtree, VRP);
         }
       }
 
       if (const APInt *I = CR2.getSingleElement()) {
         if (CR1.isFullSet()) {
           ConstantRange NewCR1(CR2.getUpper(), CR2.getLower());
-          applyRange(V1, NewCR1, Subtree, VRP);
+          applyRange(n1, NewCR1, Subtree, VRP);
         } else if (*I == CR1.getLower()) {
           APInt NewLower(CR1.getLower() + 1),
                 NewUpper(CR1.getUpper());
@@ -1206,7 +1244,7 @@ namespace {
             NewLower = NewUpper = APInt::getMinValue(W);
 
           ConstantRange NewCR1(NewLower, NewUpper);
-          applyRange(V1, NewCR1, Subtree, VRP);
+          applyRange(n1, NewCR1, Subtree, VRP);
         } else if (*I == CR1.getUpper() - 1) {
           APInt NewLower(CR1.getLower()),
                 NewUpper(CR1.getUpper() - 1);
@@ -1214,40 +1252,34 @@ namespace {
             NewLower = NewUpper = APInt::getMinValue(W);
 
           ConstantRange NewCR1(NewLower, NewUpper);
-          applyRange(V1, NewCR1, Subtree, VRP);
+          applyRange(n1, NewCR1, Subtree, VRP);
         }
       }
     }
 
-    void addInequality(Value *V1, Value *V2, DomTreeDFS::Node *Subtree,
+    void addInequality(unsigned n1, unsigned n2, DomTreeDFS::Node *Subtree,
                        LatticeVal LV, VRPSolver *VRP) {
-      assert(!isRelatedBy(V1, V2, Subtree, LV) && "Asked to do useless work.");
-
-      assert(isCanonical(V1, Subtree, VRP) && "Value not canonical.");
-      assert(isCanonical(V2, Subtree, VRP) && "Value not canonical.");
+      assert(!isRelatedBy(n1, n2, Subtree, LV) && "Asked to do useless work.");
 
       if (LV == NE) {
-        addNotEquals(V1, V2, Subtree, VRP);
+        addNotEquals(n1, n2, Subtree, VRP);
         return;
       }
 
-      uint32_t W = typeToWidth(V1->getType());
-      if (!W) return;
-
-      ConstantRange CR1 = rangeFromValue(V1, Subtree, W);
-      ConstantRange CR2 = rangeFromValue(V2, Subtree, W);
+      ConstantRange CR1 = range(n1, Subtree);
+      ConstantRange CR2 = range(n2, Subtree);
 
       if (!CR1.isSingleElement()) {
         ConstantRange NewCR1 = CR1.intersectWith(create(LV, CR2));
         if (NewCR1 != CR1)
-          applyRange(V1, NewCR1, Subtree, VRP);
+          applyRange(n1, NewCR1, Subtree, VRP);
       }
 
       if (!CR2.isSingleElement()) {
         ConstantRange NewCR2 = CR2.intersectWith(create(reversePredicate(LV),
                                                         CR1));
         if (NewCR2 != CR2)
-          applyRange(V2, NewCR2, Subtree, VRP);
+          applyRange(n2, NewCR2, Subtree, VRP);
       }
     }
   };
@@ -1406,19 +1438,18 @@ namespace {
         // be EQ and that's invalid. What we're doing is looking for any nodes
         // %z such that %x <= %z and %y >= %z, and vice versa.
 
-        Node *N1 = IG.node(n1);
-        Node *N2 = IG.node(n2);
-        Node::iterator end = N2->end();
+        Node::iterator end = IG.node(n2)->end();
 
         // Find the intersection between N1 and N2 which is dominated by
         // Top. If we find %x where N1 <= %x <= N2 (or >=) then add %x to
         // Remove.
-        for (Node::iterator I = N1->begin(), E = N1->end(); I != E; ++I) {
+        for (Node::iterator I = IG.node(n1)->begin(), E = IG.node(n1)->end();
+             I != E; ++I) {
           if (!(I->LV & EQ_BIT) || !Top->DominatedBy(I->Subtree)) continue;
 
           unsigned ILV_s = I->LV & (SLT_BIT|SGT_BIT);
           unsigned ILV_u = I->LV & (ULT_BIT|UGT_BIT);
-          Node::iterator NI = N2->find(I->To, Top);
+          Node::iterator NI = IG.node(n2)->find(I->To, Top);
           if (NI != end) {
             LatticeVal NILV = reversePredicate(NI->LV);
             unsigned NILV_s = NILV & (SLT_BIT|SGT_BIT);
@@ -1518,7 +1549,7 @@ namespace {
 
       if (!isa<Constant>(V1)) {
         if (Remove.empty()) {
-          VR.mergeInto(&V2, 1, V1, Top, this);
+          VR.mergeInto(&V2, 1, VN.getOrInsertVN(V1, Top), Top, this);
         } else {
           std::vector<Value*> RemoveVals;
           RemoveVals.reserve(Remove.size());
@@ -1529,21 +1560,21 @@ namespace {
             if (!V->use_empty())
               RemoveVals.push_back(V);
           }
-          VR.mergeInto(&RemoveVals[0], RemoveVals.size(), V1, Top, this);
+          VR.mergeInto(&RemoveVals[0], RemoveVals.size(), 
+                       VN.getOrInsertVN(V1, Top), Top, this);
         }
       }
 
       if (mergeIGNode) {
         // Create N1.
-        if (!n1) n1 = IG.newNode(V1);
+        if (!n1) n1 = VN.getOrInsertVN(V1, Top);
 
         // Migrate relationships from removed nodes to N1.
-        Node *N1 = IG.node(n1);
         for (SetVector<unsigned>::iterator I = Remove.begin(), E = Remove.end();
              I != E; ++I) {
           unsigned n = *I;
-          Node *N = IG.node(n);
-          for (Node::iterator NI = N->begin(), NE = N->end(); NI != NE; ++NI) {
+          for (Node::iterator NI = IG.node(n)->begin(), NE = IG.node(n)->end();
+               NI != NE; ++NI) {
             if (NI->Subtree->DominatedBy(Top)) {
               if (NI->To == n1) {
                 assert((NI->LV & EQ_BIT) && "Node inequal to itself.");
@@ -1553,7 +1584,7 @@ namespace {
                 continue;
 
               IG.node(NI->To)->update(n1, reversePredicate(NI->LV), Top);
-              N1->update(NI->To, NI->LV, Top);
+              IG.node(n1)->update(NI->To, NI->LV, Top);
             }
           }
         }
@@ -1679,19 +1710,33 @@ namespace {
           return ConstantExpr::getCompare(Pred, C1, C2) ==
                  ConstantInt::getTrue();
 
-      if (unsigned n1 = VN.valueNumber(V1, Top))
-        if (unsigned n2 = VN.valueNumber(V2, Top)) {
-          if (n1 == n2) return Pred == ICmpInst::ICMP_EQ ||
-                               Pred == ICmpInst::ICMP_ULE ||
-                               Pred == ICmpInst::ICMP_UGE ||
-                               Pred == ICmpInst::ICMP_SLE ||
-                               Pred == ICmpInst::ICMP_SGE;
-          if (Pred == ICmpInst::ICMP_EQ) return false;
-          if (IG.isRelatedBy(n1, n2, Top, cmpInstToLattice(Pred))) return true;
-        }
+      unsigned n1 = VN.valueNumber(V1, Top);
+      unsigned n2 = VN.valueNumber(V2, Top);
 
+      if (n1 && n2) {
+        if (n1 == n2) return Pred == ICmpInst::ICMP_EQ ||
+                             Pred == ICmpInst::ICMP_ULE ||
+                             Pred == ICmpInst::ICMP_UGE ||
+                             Pred == ICmpInst::ICMP_SLE ||
+                             Pred == ICmpInst::ICMP_SGE;
+        if (Pred == ICmpInst::ICMP_EQ) return false;
+        if (IG.isRelatedBy(n1, n2, Top, cmpInstToLattice(Pred))) return true;
+        if (VR.isRelatedBy(n1, n2, Top, cmpInstToLattice(Pred))) return true;
+      }
+
+      if ((n1 && !n2 && isa<Constant>(V2)) ||
+          (n2 && !n1 && isa<Constant>(V1))) {
+        ConstantRange CR1 = n1 ? VR.range(n1, Top) : VR.range(V1);
+        ConstantRange CR2 = n2 ? VR.range(n2, Top) : VR.range(V2);
+
+        if (Pred == ICmpInst::ICMP_EQ)
+          return CR1.isSingleElement() &&
+                 CR1.getSingleElement() == CR2.getSingleElement();
+
+        return VR.isRelatedBy(CR1, CR2, cmpInstToLattice(Pred));
+      }
       if (Pred == ICmpInst::ICMP_EQ) return V1 == V2;
-      return VR.isRelatedBy(V1, V2, Top, cmpInstToLattice(Pred));
+      return false;
     }
 
     /// add - adds a new property to the work queue
@@ -1817,10 +1862,10 @@ namespace {
       } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
         const Type *SrcTy = CI->getSrcTy();
 
-        Value *TheCI = VN.canonicalize(CI, Top);
+        unsigned ci = VN.getOrInsertVN(CI, Top);
         uint32_t W = VR.typeToWidth(SrcTy);
         if (!W) return;
-        ConstantRange CR = VR.rangeFromValue(TheCI, Top, W);
+        ConstantRange CR = VR.range(ci, Top);
 
         if (CR.isFullSet()) return;
 
@@ -1828,11 +1873,11 @@ namespace {
           default: break;
           case Instruction::ZExt:
           case Instruction::SExt:
-            VR.applyRange(VN.canonicalize(CI->getOperand(0), Top),
+            VR.applyRange(VN.getOrInsertVN(CI->getOperand(0), Top),
                           CR.truncate(W), Top, this);
             break;
           case Instruction::BitCast:
-            VR.applyRange(VN.canonicalize(CI->getOperand(0), Top),
+            VR.applyRange(VN.getOrInsertVN(CI->getOperand(0), Top),
                           CR, Top, this);
             break;
         }
@@ -1956,11 +2001,10 @@ namespace {
         Value *Op1 = VN.canonicalize(IC->getOperand(1), Top);
 
         ICmpInst::Predicate Pred = IC->getPredicate();
-        if (isRelatedBy(Op0, Op1, Pred)) {
+        if (isRelatedBy(Op0, Op1, Pred))
           add(IC, ConstantInt::getTrue(), ICmpInst::ICMP_EQ, NewContext);
-        } else if (isRelatedBy(Op0, Op1, ICmpInst::getInversePredicate(Pred))) {
+        else if (isRelatedBy(Op0, Op1, ICmpInst::getInversePredicate(Pred)))
           add(IC, ConstantInt::getFalse(), ICmpInst::ICMP_EQ, NewContext);
-        }
 
       } else if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
         if (I->getType()->isFPOrFPVector()) return;
@@ -1992,25 +2036,25 @@ namespace {
         }
 
         uint32_t W = VR.typeToWidth(DestTy);
-        Value *TheCI = VN.canonicalize(CI, Top);
-        ConstantRange CR = VR.rangeFromValue(Op, Top, W);
+        unsigned ci = VN.getOrInsertVN(CI, Top);
+        ConstantRange CR = VR.range(VN.getOrInsertVN(Op, Top), Top);
 
         if (!CR.isFullSet()) {
           switch (Opcode) {
             default: break;
             case Instruction::ZExt:
-              VR.applyRange(TheCI, CR.zeroExtend(W), Top, this);
+              VR.applyRange(ci, CR.zeroExtend(W), Top, this);
               break;
             case Instruction::SExt:
-              VR.applyRange(TheCI, CR.signExtend(W), Top, this);
+              VR.applyRange(ci, CR.signExtend(W), Top, this);
               break;
             case Instruction::Trunc: {
               ConstantRange Result = CR.truncate(W);
               if (!Result.isFullSet())
-                VR.applyRange(TheCI, Result, Top, this);
+                VR.applyRange(ci, Result, Top, this);
             } break;
             case Instruction::BitCast:
-              VR.applyRange(TheCI, CR, Top, this);
+              VR.applyRange(ci, CR, Top, this);
               break;
             // TODO: other casts?
           }
@@ -2054,7 +2098,9 @@ namespace {
         else DOUT << " context block: " << O.ContextBB->getName();
         DOUT << "\n";
 
+        DEBUG(VN.dump());
         DEBUG(IG.dump());
+        DEBUG(VR.dump());
 
         // If they're both Constant, skip it. Check for contradiction and mark
         // the BB as unreachable if so.
@@ -2091,10 +2137,10 @@ namespace {
               continue;
             }
 
-            unsigned n1 = VN.valueNumber(O.LHS, Top);
-            unsigned n2 = VN.valueNumber(O.RHS, Top);
+            unsigned n1 = VN.getOrInsertVN(O.LHS, Top);
+            unsigned n2 = VN.getOrInsertVN(O.RHS, Top);
 
-            if (n1 && n1 == n2) {
+            if (n1 == n2) {
               if (O.Op != ICmpInst::ICMP_UGE && O.Op != ICmpInst::ICMP_ULE &&
                   O.Op != ICmpInst::ICMP_SGE && O.Op != ICmpInst::ICMP_SLE)
                 UB.mark(TopBB);
@@ -2103,19 +2149,16 @@ namespace {
               continue;
             }
 
-            if (VR.isRelatedBy(O.LHS, O.RHS, Top, LV) ||
-                (n1 && n2 && IG.isRelatedBy(n1, n2, Top, LV))) {
+            if (VR.isRelatedBy(n1, n2, Top, LV) ||
+                IG.isRelatedBy(n1, n2, Top, LV)) {
               WorkList.pop_front();
               continue;
             }
 
-            VR.addInequality(O.LHS, O.RHS, Top, LV, this);
+            VR.addInequality(n1, n2, Top, LV, this);
             if ((!isa<ConstantInt>(O.RHS) && !isa<ConstantInt>(O.LHS)) ||
-                LV == NE) {
-              if (!n1) n1 = IG.newNode(O.LHS);
-              if (!n2) n2 = IG.newNode(O.RHS);
+                LV == NE)
               IG.addInequality(n1, n2, Top, LV);
-            }
 
             if (Instruction *I1 = dyn_cast<Instruction>(O.LHS)) {
               if (aboveOrBelow(I1))
@@ -2162,13 +2205,6 @@ namespace {
   void ValueRanges::markBlock(VRPSolver *VRP) {
     VRP->UB.mark(VRP->TopBB);
   }
-
-#ifndef NDEBUG
-  bool ValueRanges::isCanonical(Value *V, DomTreeDFS::Node *Subtree,
-                                VRPSolver *VRP) {
-    return V == VRP->VN.canonicalize(V, Subtree);
-  }
-#endif
 
   /// PredicateSimplifier - This class is a simplifier that replaces
   /// one equivalent variable with another. It also tracks what
@@ -2262,7 +2298,9 @@ namespace {
     // the PropertySet.
     void visitInstruction(Instruction *I, DomTreeDFS::Node *DT) {
       DOUT << "Considering instruction " << *I << "\n";
+      DEBUG(VN->dump());
       DEBUG(IG->dump());
+      DEBUG(VR->dump());
 
       // Sometimes instructions are killed in earlier analysis.
       if (isInstructionTriviallyDead(I)) {
@@ -2325,7 +2363,7 @@ namespace {
     DomTreeDFS::Node *Root = DTDFS->getRootNode();
     VN = new ValueNumbering(DTDFS);
     IG = new InequalityGraph(*VN, Root);
-    VR = new ValueRanges(TD);
+    VR = new ValueRanges(*VN, TD);
     WorkList.push_back(Root);
 
     do {
@@ -2373,13 +2411,17 @@ namespace {
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(ConstantInt::getTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
+        DEBUG(VN.dump());
         DEBUG(IG.dump());
+        DEBUG(VR.dump());
       } else if (Dest == FalseDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(ConstantInt::getFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
+        DEBUG(VN.dump());
         DEBUG(IG.dump());
+        DEBUG(VR.dump());
       }
 
       PS->proceedToSuccessor(*I);
