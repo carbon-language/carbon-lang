@@ -177,6 +177,12 @@ namespace llvm {
       /// FMAX, FMIN - Floating point max and min.
       ///
       FMAX, FMIN,
+
+      /// FRSQRT, FRCP - Floating point reciprocal-sqrt and reciprocal
+      /// approximation.  Note that these typically require refinement
+      /// in order to obtain suitable precision.
+      FRSQRT, FRCP,
+
       // Thread Local Storage
       TLSADDR, THREAD_POINTER
     };

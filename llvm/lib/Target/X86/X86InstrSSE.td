@@ -31,6 +31,8 @@ def X86for     : SDNode<"X86ISD::FOR",       SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
+def X86frsqrt  : SDNode<"X86ISD::FRSQRT",    SDTFPUnaryOp>;
+def X86frcp    : SDNode<"X86ISD::FRCP",      SDTFPUnaryOp>;
 def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
                         [SDNPHasChain, SDNPOutFlag]>;
@@ -247,16 +249,6 @@ class PSI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 class PSIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : Ii8<o, F, ops, asm, pattern>, TB, Requires<[HasSSE1]>;
 
-// Helpers for defining instructions that directly correspond to intrinsics.
-multiclass SS_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
-  def r : SSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-              [(set VR128:$dst, (v4f32 (IntId VR128:$src)))]>;
-  def m : SSI<o, MRMSrcMem, (ops VR128:$dst, ssmem:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-              [(set VR128:$dst, (v4f32 (IntId sse_load_f32:$src)))]>;
-}
-
 // Move Instructions
 def MOVSSrr : SSI<0x10, MRMSrcReg, (ops FR32:$dst, FR32:$src),
                   "movss {$src, $dst|$dst, $src}", []>;
@@ -266,18 +258,6 @@ def MOVSSrm : SSI<0x10, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
 def MOVSSmr : SSI<0x11, MRMDestMem, (ops f32mem:$dst, FR32:$src),
                   "movss {$src, $dst|$dst, $src}",
                   [(store FR32:$src, addr:$dst)]>;
-
-def SQRTSSr : SSI<0x51, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                  "sqrtss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (fsqrt FR32:$src))]>;
-def SQRTSSm : SSI<0x51, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                  "sqrtss {$src, $dst|$dst, $src}",
-                  [(set FR32:$dst, (fsqrt (loadf32 addr:$src)))]>;
-
-// Aliases to match intrinsics which expect XMM operand(s).
-defm SQRTSS_Int  : SS_IntUnary<0x51, "sqrtss" , int_x86_sse_sqrt_ss>;
-defm RSQRTSS_Int : SS_IntUnary<0x52, "rsqrtss", int_x86_sse_rsqrt_ss>;
-defm RCPSS_Int   : SS_IntUnary<0x53, "rcpss"  , int_x86_sse_rcp_ss>;
 
 // Conversion instructions
 def CVTTSS2SIrr : SSI<0x2C, MRMSrcReg, (ops GR32:$dst, FR32:$src),
@@ -425,20 +405,20 @@ def FsANDNPSrm : PSI<0x55, MRMSrcMem,
                      "andnps {$src2, $dst|$dst, $src2}", []>;
 }
 
-/// scalar_sse1_fp_binop_rm - Scalar SSE1 binops come in three basic forms:
-///  
-///  1. f32 - This comes in SSE1 form for floats.
-///  2. rr vs rm - They include a reg+reg form and a reg+mem form.
+/// basic_sse1_fp_binop_rm - SSE1 binops come in both scalar and vector forms.
 ///
-/// In addition, scalar SSE ops have an intrinsic form.  This form is unlike the
-/// normal form, in that they take an entire vector (instead of a scalar) and
-/// leave the top elements undefined.  This adds another two variants of the
-/// above permutations, giving us 8 forms for 'instruction'.
+/// In addition, we also have a special variant of the scalar form here to
+/// represent the associated intrinsic operation.  This form is unlike the
+/// plain scalar form, in that it takes an entire vector (instead of a scalar)
+/// and leaves the top elements undefined.
+///
+/// These three forms can each be reg+reg or reg+mem, so there are a total of
+/// six "instructions".
 ///
 let isTwoAddress = 1 in {
-multiclass scalar_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                   SDNode OpNode, Intrinsic F32Int,
-                                   bit Commutable = 0> {
+multiclass basic_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
+                                  SDNode OpNode, Intrinsic F32Int,
+                                  bit Commutable = 0> {
   // Scalar operation, reg+reg.
   def SSrr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                  !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
@@ -451,14 +431,26 @@ multiclass scalar_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
                  !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                  [(set FR32:$dst, (OpNode FR32:$src1, (load addr:$src2)))]>;
                  
-  // Vector intrinsic operation, reg+reg.
+  // Vector operation, reg+reg.
+  def PSrr : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
+               [(set VR128:$dst, (v4f32 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector operation, reg+mem.
+  def PSrm : PSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                 !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
+                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv4f32 addr:$src2)))]>;
+
+  // Intrinsic operation, reg+reg.
   def SSrr_Int : SSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                      !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2))]> {
     let isCommutable = Commutable;
   }
 
-  // Vector intrinsic operation, reg+mem.
+  // Intrinsic operation, reg+mem.
   def SSrm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, ssmem:$src2),
                      !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F32Int VR128:$src1,
@@ -467,13 +459,82 @@ multiclass scalar_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
 }
 
 // Arithmetic instructions
-defm ADD : scalar_sse1_fp_binop_rm<0x58, "add", fadd, int_x86_sse_add_ss, 1>;
-defm MUL : scalar_sse1_fp_binop_rm<0x59, "mul", fmul, int_x86_sse_mul_ss, 1>;
-defm SUB : scalar_sse1_fp_binop_rm<0x5C, "sub", fsub, int_x86_sse_sub_ss>;
-defm DIV : scalar_sse1_fp_binop_rm<0x5E, "div", fdiv, int_x86_sse_div_ss>;
+defm ADD : basic_sse1_fp_binop_rm<0x58, "add", fadd, int_x86_sse_add_ss, 1>;
+defm MUL : basic_sse1_fp_binop_rm<0x59, "mul", fmul, int_x86_sse_mul_ss, 1>;
+defm SUB : basic_sse1_fp_binop_rm<0x5C, "sub", fsub, int_x86_sse_sub_ss>;
+defm DIV : basic_sse1_fp_binop_rm<0x5E, "div", fdiv, int_x86_sse_div_ss>;
 
-defm MAX : scalar_sse1_fp_binop_rm<0x5F, "max", X86fmax, int_x86_sse_max_ss>;
-defm MIN : scalar_sse1_fp_binop_rm<0x5D, "min", X86fmin, int_x86_sse_min_ss>;
+/// sse1_fp_binop_rm - Other SSE1 binops
+///
+/// This multiclass is like basic_sse1_fp_binop_rm, with the addition of
+/// instructions for a full-vector intrinsic form.  Operations that map
+/// onto C operators don't use this form since they just use the plain
+/// vector form instead of having a separate vector intrinsic form.
+///
+/// This provides a total of eight "instructions".
+///
+let isTwoAddress = 1 in {
+multiclass sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
+                            SDNode OpNode,
+                            Intrinsic F32Int,
+                            Intrinsic V4F32Int,
+                            bit Commutable = 0> {
+
+  // Scalar operation, reg+reg.
+  def SSrr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                 !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
+                 [(set FR32:$dst, (OpNode FR32:$src1, FR32:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Scalar operation, reg+mem.
+  def SSrm : SSI<opc, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                 !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
+                 [(set FR32:$dst, (OpNode FR32:$src1, (load addr:$src2)))]>;
+                 
+  // Vector operation, reg+reg.
+  def PSrr : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
+               [(set VR128:$dst, (v4f32 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector operation, reg+mem.
+  def PSrm : PSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                 !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
+                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv4f32 addr:$src2)))]>;
+
+  // Intrinsic operation, reg+reg.
+  def SSrr_Int : SSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Intrinsic operation, reg+mem.
+  def SSrm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, ssmem:$src2),
+                     !strconcat(OpcodeStr, "ss {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (F32Int VR128:$src1,
+                                               sse_load_f32:$src2))]>;
+
+  // Vector intrinsic operation, reg+reg.
+  def PSrr_Int : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                     !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (V4F32Int VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector intrinsic operation, reg+mem.
+  def PSrm_Int : PSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
+                     !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (V4F32Int VR128:$src1, (load addr:$src2)))]>;
+}
+}
+
+defm MAX : sse1_fp_binop_rm<0x5F, "max", X86fmax,
+                            int_x86_sse_max_ss, int_x86_sse_max_ps>;
+defm MIN : sse1_fp_binop_rm<0x5D, "min", X86fmin,
+                            int_x86_sse_min_ss, int_x86_sse_min_ps>;
 
 //===----------------------------------------------------------------------===//
 // SSE packed FP Instructions
@@ -550,69 +611,84 @@ def MOVHLPSrr : PSI<0x12, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
 
 
 
-/// packed_sse1_fp_binop_rm - Packed SSE binops come in three basic forms:
-///  1. v4f32    - This comes in SSE1 form for float.
-///  2. rr vs rm - They include a reg+reg form and a ref+mem form.
+// Arithmetic
+
+/// sse1_fp_unop_rm - SSE1 unops come in both scalar and vector forms.
 ///
-let isTwoAddress = 1 in {
-multiclass packed_sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                   SDNode OpNode, bit Commutable = 0> {
-  // Packed operation, reg+reg.
-  def PSrr : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (v4f32 (OpNode VR128:$src1, VR128:$src2)))]> {
+/// In addition, we also have a special variant of the scalar form here to
+/// represent the associated intrinsic operation.  This form is unlike the
+/// plain scalar form, in that it takes an entire vector (instead of a
+/// scalar) and leaves the top elements undefined.
+///
+/// And, we have a special variant form for a full-vector intrinsic form.
+///
+/// These four forms can each have a reg or a mem operand, so there are a
+/// total of eight "instructions".
+///
+multiclass sse1_fp_unop_rm<bits<8> opc, string OpcodeStr,
+                           SDNode OpNode,
+                           Intrinsic F32Int,
+                           Intrinsic V4F32Int,
+                           bit Commutable = 0> {
+  // Scalar operation, reg.
+  def SSr : SSI<opc, MRMSrcReg, (ops FR32:$dst, FR32:$src),
+                !strconcat(OpcodeStr, "ss {$src, $dst|$dst, $src}"),
+                [(set FR32:$dst, (OpNode FR32:$src))]> {
     let isCommutable = Commutable;
   }
 
-  // Packed operation, reg+mem.
-  def PSrm : PSI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                 !strconcat(OpcodeStr, "ps {$src2, $dst|$dst, $src2}"),
-                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv4f32 addr:$src2)))]>;
-}
-}
-
-defm ADD : packed_sse1_fp_binop_rm<0x58, "add", fadd, 1>;
-defm MUL : packed_sse1_fp_binop_rm<0x59, "mul", fmul, 1>;
-defm DIV : packed_sse1_fp_binop_rm<0x5E, "div", fdiv>;
-defm SUB : packed_sse1_fp_binop_rm<0x5C, "sub", fsub>;
-
-// Arithmetic
-
-class PS_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-        [(set VR128:$dst, (IntId VR128:$src))]>;
-class PS_Intm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PSI<o, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
-        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-        [(set VR128:$dst, (IntId (load addr:$src)))]>;
-
-class PS_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PSI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
-class PS_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PSI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f32mem:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (IntId VR128:$src1, (load addr:$src2)))]>;
-
-def SQRTPSr  : PS_Intr<0x51, "sqrtps", int_x86_sse_sqrt_ps>;
-def SQRTPSm  : PS_Intm<0x51, "sqrtps", int_x86_sse_sqrt_ps>;
-
-def RSQRTPSr : PS_Intr<0x52, "rsqrtps", int_x86_sse_rsqrt_ps>;
-def RSQRTPSm : PS_Intm<0x52, "rsqrtps", int_x86_sse_rsqrt_ps>;
-def RCPPSr   : PS_Intr<0x53, "rcpps", int_x86_sse_rcp_ps>;
-def RCPPSm   : PS_Intm<0x53, "rcpps", int_x86_sse_rcp_ps>;
-
-let isTwoAddress = 1 in {
-  let isCommutable = 1 in {
-    def MAXPSrr  : PS_Intrr<0x5F, "maxps", int_x86_sse_max_ps>;
-    def MINPSrr  : PS_Intrr<0x5D, "minps", int_x86_sse_min_ps>;
+  // Scalar operation, mem.
+  def SSm : SSI<opc, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
+                !strconcat(OpcodeStr, "ss {$src, $dst|$dst, $src}"),
+                [(set FR32:$dst, (OpNode (load addr:$src)))]>;
+                 
+  // Vector operation, reg.
+  def PSr : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+              !strconcat(OpcodeStr, "ps {$src, $dst|$dst, $src}"),
+              [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))]> {
+    let isCommutable = Commutable;
   }
 
-  def MAXPSrm  : PS_Intrm<0x5F, "maxps", int_x86_sse_max_ps>;
-  def MINPSrm  : PS_Intrm<0x5D, "minps", int_x86_sse_min_ps>;
+  // Vector operation, mem.
+  def PSm : PSI<opc, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+                !strconcat(OpcodeStr, "ps {$src, $dst|$dst, $src}"),
+                [(set VR128:$dst, (OpNode (loadv4f32 addr:$src)))]>;
+
+  // Intrinsic operation, reg.
+  def SSr_Int : SSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                    !strconcat(OpcodeStr, "ss {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (F32Int VR128:$src))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Intrinsic operation, mem.
+  def SSm_Int : SSI<opc, MRMSrcMem, (ops VR128:$dst, ssmem:$src),
+                    !strconcat(OpcodeStr, "ss {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (F32Int sse_load_f32:$src))]>;
+
+  // Vector intrinsic operation, reg
+  def PSr_Int : PSI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                    !strconcat(OpcodeStr, "ps {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (V4F32Int VR128:$src))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector intrinsic operation, mem
+  def PSm_Int : PSI<opc, MRMSrcMem, (ops VR128:$dst, f32mem:$src),
+                    !strconcat(OpcodeStr, "ps {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (V4F32Int (load addr:$src)))]>;
 }
+
+// Square root.
+defm SQRT  : sse1_fp_unop_rm<0x51, "sqrt",  fsqrt,
+                             int_x86_sse_sqrt_ss, int_x86_sse_sqrt_ps>;
+
+// Reciprocal approximations. Note that these typically require refinement
+// in order to obtain suitable precision.
+defm RSQRT : sse1_fp_unop_rm<0x52, "rsqrt", X86frsqrt,
+                             int_x86_sse_rsqrt_ss, int_x86_sse_rsqrt_ps>;
+defm RCP   : sse1_fp_unop_rm<0x53, "rcp",   X86frcp,
+                             int_x86_sse_rcp_ss, int_x86_sse_rcp_ps>;
 
 // Logical
 let isTwoAddress = 1 in {
@@ -835,16 +911,6 @@ class PDI<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
 class PDIi8<bits<8> o, Format F, dag ops, string asm, list<dag> pattern>
       : Ii8<o, F, ops, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
 
-// Helpers for defining instructions that directly correspond to intrinsics.
-multiclass SD_IntUnary<bits<8> o, string OpcodeStr, Intrinsic IntId> {
-  def r : SDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-              [(set VR128:$dst, (v2f64 (IntId VR128:$src)))]>;
-  def m : SDI<o, MRMSrcMem, (ops VR128:$dst, sdmem:$src),
-              !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-              [(set VR128:$dst, (v2f64 (IntId sse_load_f64:$src)))]>;
-}
-
 // Move Instructions
 def MOVSDrr : SDI<0x10, MRMSrcReg, (ops FR64:$dst, FR64:$src),
                   "movsd {$src, $dst|$dst, $src}", []>;
@@ -854,16 +920,6 @@ def MOVSDrm : SDI<0x10, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
 def MOVSDmr : SDI<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                   "movsd {$src, $dst|$dst, $src}",
                   [(store FR64:$src, addr:$dst)]>;
-
-def SQRTSDr : SDI<0x51, MRMSrcReg, (ops FR64:$dst, FR64:$src),
-                  "sqrtsd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (fsqrt FR64:$src))]>;
-def SQRTSDm : SDI<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
-                  "sqrtsd {$src, $dst|$dst, $src}",
-                  [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>;
-
-// Aliases to match intrinsics which expect XMM operand(s).
-defm SQRTSD_Int : SD_IntUnary<0x51, "sqrtsd" , int_x86_sse2_sqrt_sd>;
 
 // Conversion instructions
 def CVTTSD2SIrr : SDI<0x2C, MRMSrcReg, (ops GR32:$dst, FR64:$src),
@@ -1013,20 +1069,20 @@ def FsANDNPDrm : PDI<0x55, MRMSrcMem,
                      "andnpd {$src2, $dst|$dst, $src2}", []>;
 }
 
-/// scalar_sse2_fp_binop_rm - Scalar SSE2 binops come in three basic forms:
-///  
-///  1. f64 - This comes in SSE2 form for doubles.
-///  2. rr vs rm - They include a reg+reg form and a reg+mem form.
+/// basic_sse2_fp_binop_rm - SSE2 binops come in both scalar and vector forms.
 ///
-/// In addition, scalar SSE ops have an intrinsic form.  This form is unlike the
-/// normal form, in that they take an entire vector (instead of a scalar) and
-/// leave the top elements undefined.  This adds another two variants of the
-/// above permutations, giving us 8 forms for 'instruction'.
+/// In addition, we also have a special variant of the scalar form here to
+/// represent the associated intrinsic operation.  This form is unlike the
+/// plain scalar form, in that it takes an entire vector (instead of a scalar)
+/// and leaves the top elements undefined.
+///
+/// These three forms can each be reg+reg or reg+mem, so there are a total of
+/// six "instructions".
 ///
 let isTwoAddress = 1 in {
-multiclass scalar_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                   SDNode OpNode, Intrinsic F64Int,
-                                   bit Commutable = 0> {
+multiclass basic_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
+                                  SDNode OpNode, Intrinsic F64Int,
+                                  bit Commutable = 0> {
   // Scalar operation, reg+reg.
   def SDrr : SDI<opc, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                  !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
@@ -1039,14 +1095,26 @@ multiclass scalar_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
                  !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                  [(set FR64:$dst, (OpNode FR64:$src1, (load addr:$src2)))]>;
                  
-  // Vector intrinsic operation, reg+reg.
+  // Vector operation, reg+reg.
+  def PDrr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
+               [(set VR128:$dst, (v2f64 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector operation, reg+mem.
+  def PDrm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                 !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
+                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv2f64 addr:$src2)))]>;
+
+  // Intrinsic operation, reg+reg.
   def SDrr_Int : SDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
                      !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2))]> {
     let isCommutable = Commutable;
   }
 
-  // Vector intrinsic operation, reg+mem.
+  // Intrinsic operation, reg+mem.
   def SDrm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, sdmem:$src2),
                      !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (F64Int VR128:$src1,
@@ -1055,13 +1123,82 @@ multiclass scalar_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
 }
 
 // Arithmetic instructions
-defm ADD : scalar_sse2_fp_binop_rm<0x58, "add", fadd, int_x86_sse2_add_sd, 1>;
-defm MUL : scalar_sse2_fp_binop_rm<0x59, "mul", fmul, int_x86_sse2_mul_sd, 1>;
-defm SUB : scalar_sse2_fp_binop_rm<0x5C, "sub", fsub, int_x86_sse2_sub_sd>;
-defm DIV : scalar_sse2_fp_binop_rm<0x5E, "div", fdiv, int_x86_sse2_div_sd>;
+defm ADD : basic_sse2_fp_binop_rm<0x58, "add", fadd, int_x86_sse2_add_sd, 1>;
+defm MUL : basic_sse2_fp_binop_rm<0x59, "mul", fmul, int_x86_sse2_mul_sd, 1>;
+defm SUB : basic_sse2_fp_binop_rm<0x5C, "sub", fsub, int_x86_sse2_sub_sd>;
+defm DIV : basic_sse2_fp_binop_rm<0x5E, "div", fdiv, int_x86_sse2_div_sd>;
 
-defm MAX : scalar_sse2_fp_binop_rm<0x5F, "max", X86fmax, int_x86_sse2_max_sd>;
-defm MIN : scalar_sse2_fp_binop_rm<0x5D, "min", X86fmin, int_x86_sse2_min_sd>;
+/// sse2_fp_binop_rm - Other SSE2 binops
+///
+/// This multiclass is like basic_sse2_fp_binop_rm, with the addition of
+/// instructions for a full-vector intrinsic form.  Operations that map
+/// onto C operators don't use this form since they just use the plain
+/// vector form instead of having a separate vector intrinsic form.
+///
+/// This provides a total of eight "instructions".
+///
+let isTwoAddress = 1 in {
+multiclass sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
+                            SDNode OpNode,
+                            Intrinsic F64Int,
+                            Intrinsic V2F64Int,
+                            bit Commutable = 0> {
+
+  // Scalar operation, reg+reg.
+  def SDrr : SDI<opc, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                 !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
+                 [(set FR64:$dst, (OpNode FR64:$src1, FR64:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Scalar operation, reg+mem.
+  def SDrm : SDI<opc, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                 !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
+                 [(set FR64:$dst, (OpNode FR64:$src1, (load addr:$src2)))]>;
+                 
+  // Vector operation, reg+reg.
+  def PDrr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+               !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
+               [(set VR128:$dst, (v2f64 (OpNode VR128:$src1, VR128:$src2)))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector operation, reg+mem.
+  def PDrm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
+                 !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
+                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv2f64 addr:$src2)))]>;
+
+  // Intrinsic operation, reg+reg.
+  def SDrr_Int : SDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                     !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Intrinsic operation, reg+mem.
+  def SDrm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, sdmem:$src2),
+                     !strconcat(OpcodeStr, "sd {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (F64Int VR128:$src1,
+                                               sse_load_f64:$src2))]>;
+
+  // Vector intrinsic operation, reg+reg.
+  def PDrr_Int : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
+                     !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (V2F64Int VR128:$src1, VR128:$src2))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector intrinsic operation, reg+mem.
+  def PDrm_Int : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
+                     !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
+                     [(set VR128:$dst, (V2F64Int VR128:$src1, (load addr:$src2)))]>;
+}
+}
+
+defm MAX : sse2_fp_binop_rm<0x5F, "max", X86fmax,
+                            int_x86_sse2_max_sd, int_x86_sse2_max_pd>;
+defm MIN : sse2_fp_binop_rm<0x5D, "min", X86fmin,
+                            int_x86_sse2_min_sd, int_x86_sse2_min_pd>;
 
 //===----------------------------------------------------------------------===//
 // SSE packed FP Instructions
@@ -1234,64 +1371,79 @@ def Int_CVTSS2SDrm: I<0x5A, MRMSrcMem,
                     Requires<[HasSSE2]>;
 }
 
-/// packed_sse2_fp_binop_rm - Packed SSE binops come in three basic forms:
-///  1. v2f64    - This comes in SSE2 form for doubles.
-///  2. rr vs rm - They include a reg+reg form and a ref+mem form.
+// Arithmetic
+
+/// sse2_fp_unop_rm - SSE2 unops come in both scalar and vector forms.
 ///
-let isTwoAddress = 1 in {
-multiclass packed_sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
-                                   SDNode OpNode, bit Commutable = 0> {
-  // Packed operation, reg+reg.
-  def PDrr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-               !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
-               [(set VR128:$dst, (v2f64 (OpNode VR128:$src1, VR128:$src2)))]> {
+/// In addition, we also have a special variant of the scalar form here to
+/// represent the associated intrinsic operation.  This form is unlike the
+/// plain scalar form, in that it takes an entire vector (instead of a
+/// scalar) and leaves the top elements undefined.
+///
+/// And, we have a special variant form for a full-vector intrinsic form.
+///
+/// These four forms can each have a reg or a mem operand, so there are a
+/// total of eight "instructions".
+///
+multiclass sse2_fp_unop_rm<bits<8> opc, string OpcodeStr,
+                           SDNode OpNode,
+                           Intrinsic F64Int,
+                           Intrinsic V2F64Int,
+                           bit Commutable = 0> {
+  // Scalar operation, reg.
+  def SDr : SDI<opc, MRMSrcReg, (ops FR64:$dst, FR64:$src),
+                !strconcat(OpcodeStr, "sd {$src, $dst|$dst, $src}"),
+                [(set FR64:$dst, (OpNode FR64:$src))]> {
     let isCommutable = Commutable;
   }
 
-  // Packed operation, reg+mem.
-  def PDrm : PDI<opc, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f128mem:$src2),
-                 !strconcat(OpcodeStr, "pd {$src2, $dst|$dst, $src2}"),
-                 [(set VR128:$dst, (OpNode VR128:$src1, (loadv2f64 addr:$src2)))]>;
-}
-}
-
-defm ADD : packed_sse2_fp_binop_rm<0x58, "add", fadd, 1>;
-defm MUL : packed_sse2_fp_binop_rm<0x59, "mul", fmul, 1>;
-defm DIV : packed_sse2_fp_binop_rm<0x5E, "div", fdiv>;
-defm SUB : packed_sse2_fp_binop_rm<0x5C, "sub", fsub>;
-
-// Arithmetic
-
-class PD_Intr<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src),
-        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-        [(set VR128:$dst, (IntId VR128:$src))]>;
-class PD_Intm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PDI<o, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
-        !strconcat(OpcodeStr, " {$src, $dst|$dst, $src}"),
-        [(set VR128:$dst, (IntId (load addr:$src)))]>;
-
-class PD_Intrr<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PDI<o, MRMSrcReg, (ops VR128:$dst, VR128:$src1, VR128:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]>;
-class PD_Intrm<bits<8> o, string OpcodeStr, Intrinsic IntId>
-  : PDI<o, MRMSrcMem, (ops VR128:$dst, VR128:$src1, f64mem:$src2),
-        !strconcat(OpcodeStr, " {$src2, $dst|$dst, $src2}"),
-        [(set VR128:$dst, (IntId VR128:$src1, (load addr:$src2)))]>;
-
-def SQRTPDr  : PD_Intr<0x51, "sqrtpd", int_x86_sse2_sqrt_pd>;
-def SQRTPDm  : PD_Intm<0x51, "sqrtpd", int_x86_sse2_sqrt_pd>;
-
-let isTwoAddress = 1 in {
-  let isCommutable = 1 in {
-    def MAXPDrr  : PD_Intrr<0x5F, "maxpd", int_x86_sse2_max_pd>;
-    def MINPDrr  : PD_Intrr<0x5D, "minpd", int_x86_sse2_min_pd>;
+  // Scalar operation, mem.
+  def SDm : SDI<opc, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
+                !strconcat(OpcodeStr, "sd {$src, $dst|$dst, $src}"),
+                [(set FR64:$dst, (OpNode (load addr:$src)))]>;
+                 
+  // Vector operation, reg.
+  def PDr : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+              !strconcat(OpcodeStr, "pd {$src, $dst|$dst, $src}"),
+              [(set VR128:$dst, (v2f64 (OpNode VR128:$src)))]> {
+    let isCommutable = Commutable;
   }
 
-  def MAXPDrm  : PD_Intrm<0x5F, "maxpd", int_x86_sse2_max_pd>;
-  def MINPDrm  : PD_Intrm<0x5D, "minpd", int_x86_sse2_min_pd>;
+  // Vector operation, mem.
+  def PDm : PDI<opc, MRMSrcMem, (ops VR128:$dst, f128mem:$src),
+                !strconcat(OpcodeStr, "pd {$src, $dst|$dst, $src}"),
+                [(set VR128:$dst, (OpNode (loadv2f64 addr:$src)))]>;
+
+  // Intrinsic operation, reg.
+  def SDr_Int : SDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                    !strconcat(OpcodeStr, "sd {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (F64Int VR128:$src))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Intrinsic operation, mem.
+  def SDm_Int : SDI<opc, MRMSrcMem, (ops VR128:$dst, sdmem:$src),
+                    !strconcat(OpcodeStr, "sd {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (F64Int sse_load_f64:$src))]>;
+
+  // Vector intrinsic operation, reg
+  def PDr_Int : PDI<opc, MRMSrcReg, (ops VR128:$dst, VR128:$src),
+                    !strconcat(OpcodeStr, "pd {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (V2F64Int VR128:$src))]> {
+    let isCommutable = Commutable;
+  }
+
+  // Vector intrinsic operation, mem
+  def PDm_Int : PDI<opc, MRMSrcMem, (ops VR128:$dst, f64mem:$src),
+                    !strconcat(OpcodeStr, "pd {$src, $dst|$dst, $src}"),
+                    [(set VR128:$dst, (V2F64Int (load addr:$src)))]>;
 }
+
+// Square root.
+defm SQRT  : sse2_fp_unop_rm<0x51, "sqrt",  fsqrt,
+                             int_x86_sse2_sqrt_sd, int_x86_sse2_sqrt_pd>;
+
+// There is no f64 version of the reciprocal approximation instructions.
 
 // Logical
 let isTwoAddress = 1 in {

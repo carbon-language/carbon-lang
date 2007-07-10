@@ -331,6 +331,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FABS, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FSIN, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FCOS, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FREM, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FPOWI, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FSQRT, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FCOPYSIGN, (MVT::ValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {
@@ -408,6 +415,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FSUB,               MVT::v4f32, Legal);
     setOperationAction(ISD::FMUL,               MVT::v4f32, Legal);
     setOperationAction(ISD::FDIV,               MVT::v4f32, Legal);
+    setOperationAction(ISD::FSQRT,              MVT::v4f32, Legal);
+    setOperationAction(ISD::FNEG,               MVT::v4f32, Custom);
+    setOperationAction(ISD::FABS,               MVT::v4f32, Custom);
     setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
@@ -435,6 +445,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FSUB,               MVT::v2f64, Legal);
     setOperationAction(ISD::FMUL,               MVT::v2f64, Legal);
     setOperationAction(ISD::FDIV,               MVT::v2f64, Legal);
+    setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
+    setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
+    setOperationAction(ISD::FABS,               MVT::v2f64, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
@@ -3326,16 +3339,21 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
-  const Type *OpNTy =  MVT::getTypeForValueType(VT);
+  MVT::ValueType EltVT = VT;
+  if (MVT::isVector(VT))
+    EltVT = MVT::getVectorElementType(VT);
+  const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
-  if (VT == MVT::f64) {
-    CV.push_back(ConstantFP::get(OpNTy, BitsToDouble(~(1ULL << 63))));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
+  if (EltVT == MVT::f64) {
+    Constant *C = ConstantFP::get(OpNTy, BitsToDouble(~(1ULL << 63)));
+    CV.push_back(C);
+    CV.push_back(C);
   } else {
-    CV.push_back(ConstantFP::get(OpNTy, BitsToFloat(~(1U << 31))));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
+    Constant *C = ConstantFP::get(OpNTy, BitsToFloat(~(1U << 31)));
+    CV.push_back(C);
+    CV.push_back(C);
+    CV.push_back(C);
+    CV.push_back(C);
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
@@ -3350,16 +3368,21 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
-  const Type *OpNTy =  MVT::getTypeForValueType(VT);
+  MVT::ValueType EltVT = VT;
+  if (MVT::isVector(VT))
+    EltVT = MVT::getVectorElementType(VT);
+  const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
-  if (VT == MVT::f64) {
-    CV.push_back(ConstantFP::get(OpNTy, BitsToDouble(1ULL << 63)));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
+  if (EltVT == MVT::f64) {
+    Constant *C = ConstantFP::get(OpNTy, BitsToDouble(1ULL << 63));
+    CV.push_back(C);
+    CV.push_back(C);
   } else {
-    CV.push_back(ConstantFP::get(OpNTy, BitsToFloat(1U << 31)));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
-    CV.push_back(ConstantFP::get(OpNTy, 0.0));
+    Constant *C = ConstantFP::get(OpNTy, BitsToFloat(1U << 31));
+    CV.push_back(C);
+    CV.push_back(C);
+    CV.push_back(C);
+    CV.push_back(C);
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
@@ -4284,6 +4307,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PINSRW:             return "X86ISD::PINSRW";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
+  case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
+  case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
   }
