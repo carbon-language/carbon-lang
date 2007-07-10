@@ -199,8 +199,8 @@ void ARMConstantIslands::verify(MachineFunction &Fn) {
 /// print block size and offset information - debugging
 void ARMConstantIslands::dumpBBs() {
   for (unsigned J = 0, E = BBOffsets.size(); J !=E; ++J) {
-    DOUT << "block " << J << " offset " << BBOffsets[J] << 
-                            " size " << BBSizes[J] << "\n";
+    DOUT << "block" << J << " offset" << BBOffsets[J] << 
+                            " size" << BBSizes[J] << "\n";
   }
 }
 
@@ -255,10 +255,10 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
     bool Change = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       Change |= HandleConstantPoolUser(Fn, i);
-    //DEBUG(dumpBBs());
+    DEBUG(dumpBBs());
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
       Change |= FixUpImmediateBr(Fn, ImmBranches[i]);
-    //DEBUG(dumpBBs());
+    DEBUG(dumpBBs());
     if (!Change)
       break;
     MadeChange = true;
@@ -798,8 +798,8 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
   MachineInstr *CPEMI  = U.CPEMI;
 
   // Check to see if the CPE is already in-range.
-  if (CPEIsInRange(UserMI, UserOffset, CPEMI, U.MaxDisp, false /*true*/)) {
-    //DOUT << "In range\n";
+  if (CPEIsInRange(UserMI, UserOffset, CPEMI, U.MaxDisp, true)) {
+    DOUT << "In range\n";
     return 1;
   }
 
@@ -1120,13 +1120,11 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
   unsigned BrOffset   = GetOffsetOf(MI) + PCAdj;
   unsigned DestOffset = BBOffsets[DestBB->getNumber()];
 
-#if 0
   DOUT << "Branch of destination BB#" << DestBB->getNumber()
        << " from BB#" << MI->getParent()->getNumber()
        << " max delta=" << MaxDisp
        << " from " << GetOffsetOf(MI) << " to " << DestOffset
        << " offset " << int(DestOffset-BrOffset) << "\t" << *MI;
-#endif
 
   if (BrOffset <= DestOffset) {
     // Branch before the Dest.
