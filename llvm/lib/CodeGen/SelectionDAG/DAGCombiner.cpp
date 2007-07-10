@@ -855,7 +855,9 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (add x, undef) -> undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF)
+    return N0;
+  if (N1.getOpcode() == ISD::UNDEF)
     return N1;
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
@@ -1029,8 +1031,10 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
     if (Result.Val) return Result;
   }
   // If either operand of a sub is undef, the result is undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(ISD::UNDEF, VT);
+  if (N0.getOpcode() == ISD::UNDEF)
+    return N0;
+  if (N1.getOpcode() == ISD::UNDEF)
+    return N1;
 
   return SDOperand();
 }
@@ -1890,7 +1894,9 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (xor x, undef) -> undef
-  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF)
+    return N0;
+  if (N1.getOpcode() == ISD::UNDEF)
     return N1;
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
