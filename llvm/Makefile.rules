@@ -199,6 +199,7 @@ install-bytecode:: install-bytecode-local
 # Variables derived from configuration we are building
 #--------------------------------------------------------------------
 
+CPP.Defines :=
 # OPTIMIZE_OPTION - The optimization level option we want to build LLVM with
 # this can be overridden on the make command line.
 ifneq ($(OS),MingW)
@@ -253,11 +254,9 @@ endif
 # then disable assertions by defining the appropriate preprocessor symbols.
 ifdef DISABLE_ASSERTIONS
   BuildMode := $(BuildMode)-Asserts
-  CXX.Flags += -DNDEBUG
-  C.Flags   += -DNDEBUG
+  CPP.Defines += -DNDEBUG
 else
-  CXX.Flags += -D_DEBUG
-  C.Flags   += -D_DEBUG
+  CPP.Defines += -D_DEBUG
 endif
 
 # If ENABLE_EXPENSIVE_CHECKS=1 is specified (make command line or 
@@ -265,7 +264,7 @@ endif
 # appropriate preprocessor symbols.
 ifdef ENABLE_EXPENSIVE_CHECKS
   BuildMode := $(BuildMode)+Checks
-  CXX.Flags += -D_GLIBCXX_DEBUG
+  CPP.Defines += -D_GLIBCXX_DEBUG
 endif
 
 ifeq ($(ENABLE_PIC),1)
