@@ -269,7 +269,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
       Builder.CreateRet(RetVal.getVal());
     } else {
       llvm::Value *SRetPtr = CurFn->arg_begin();
-      EmitStoreThroughLValue(RetVal, LValue::getAddr(SRetPtr), FnRetTy);
+      EmitStoreThroughLValue(RetVal, LValue::MakeAddr(SRetPtr), FnRetTy);
     }
   }
   

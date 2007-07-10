@@ -238,7 +238,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   default:
     fprintf(stderr, "Unimplemented lvalue expr!\n");
     E->dump();
-    return LValue::getAddr(llvm::UndefValue::get(
+    return LValue::MakeAddr(llvm::UndefValue::get(
                               llvm::PointerType::get(llvm::Type::Int32Ty)));
 
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
@@ -259,18 +259,26 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   ExprType = ExprType.getCanonicalType();
   
-  // FIXME: this is silly and obviously wrong for non-scalars.
-  assert(!LV.isBitfield());
-  llvm::Value *Ptr = LV.getAddress();
-  const llvm::Type *EltTy =
-    cast<llvm::PointerType>(Ptr->getType())->getElementType();
+  if (LV.isSimple()) {
+    llvm::Value *Ptr = LV.getAddress();
+    const llvm::Type *EltTy =
+      cast<llvm::PointerType>(Ptr->getType())->getElementType();
+    
+    // Simple scalar l-value.
+    if (EltTy->isFirstClassType())
+      return RValue::get(Builder.CreateLoad(Ptr, "tmp"));
+    
+    // Otherwise, we have an aggregate lvalue.
+    return RValue::getAggregate(Ptr);
+  }
   
-  // Simple scalar l-value.
-  if (EltTy->isFirstClassType())
-    return RValue::get(Builder.CreateLoad(Ptr, "tmp"));
+  if (LV.isVectorElt()) {
+    llvm::Value *Vec = Builder.CreateLoad(LV.getVectorAddr(), "tmp");
+    return RValue::get(Builder.CreateExtractElement(Vec, LV.getVectorIdx(),
+                                                    "vecext"));
+  }
   
-  // Otherwise, we have an aggregate lvalue.
-  return RValue::getAggregate(Ptr);
+  assert(0 && "Bitfield ref not impl!");
 }
 
 RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
@@ -283,7 +291,17 @@ RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
 /// is 'Ty'.
 void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
                                              QualType Ty) {
-  assert(!Dst.isBitfield() && "FIXME: Don't support store to bitfield yet");
+  if (Dst.isVectorElt()) {
+    // Read/modify/write the vector, inserting the new element.
+    // FIXME: Volatility.
+    llvm::Value *Vec = Builder.CreateLoad(Dst.getVectorAddr(), "tmp");
+    Vec = Builder.CreateInsertElement(Vec, Src.getVal(),
+                                      Dst.getVectorIdx(), "vecins");
+    Builder.CreateStore(Vec, Dst.getVectorAddr());
+    return;
+  }
+  
+  assert(Dst.isSimple() && "FIXME: Don't support store to bitfield yet");
   
   llvm::Value *DstAddr = Dst.getAddress();
   if (Src.isScalar()) {
@@ -336,9 +354,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   if (isa<BlockVarDecl>(D) || isa<ParmVarDecl>(D)) {
     llvm::Value *V = LocalDeclMap[D];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
-    return LValue::getAddr(V);
+    return LValue::MakeAddr(V);
   } else if (isa<FunctionDecl>(D) || isa<FileVarDecl>(D)) {
-    return LValue::getAddr(CGM.GetAddrOfGlobalDecl(D));
+    return LValue::MakeAddr(CGM.GetAddrOfGlobalDecl(D));
   }
   assert(0 && "Unimp declref");
 }
@@ -350,7 +368,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   
   assert(E->getOpcode() == UnaryOperator::Deref &&
          "'*' is the only unary operator that produces an lvalue");
-  return LValue::getAddr(EmitExpr(E->getSubExpr()).getVal());
+  return LValue::MakeAddr(EmitExpr(E->getSubExpr()).getVal());
 }
 
 LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
@@ -368,18 +386,31 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
   C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
-  return LValue::getAddr(C);
+  return LValue::MakeAddr(C);
 }
 
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
-  // The base and index must be pointers or integers, neither of which are
-  // aggregates.  Emit them.
-  QualType BaseTy;
-  llvm::Value *Base =
-    EmitExprWithUsualUnaryConversions(E->getBase(), BaseTy).getVal();
+  // The index must always be a pointer or integer, neither of which is an
+  // aggregate.  Emit it.
   QualType IdxTy;
   llvm::Value *Idx = 
     EmitExprWithUsualUnaryConversions(E->getIdx(), IdxTy).getVal();
+  
+  // If the base is a vector type, then we are forming a vector element lvalue
+  // with this subscript.
+  if (E->getBase()->getType()->isVectorType()) {
+    // Emit the vector as an lvalue to get its address.
+    LValue Base = EmitLValue(E->getBase());
+    assert(Base.isSimple() && "Can only subscript lvalue vectors here!");
+    // FIXME: This should properly sign/zero/extend or truncate Idx to i32.
+    return LValue::MakeVectorElt(Base.getAddress(), Idx);
+  }
+  
+  // At this point, the base must be a pointer or integer, neither of which are
+  // aggregates.  Emit it.
+  QualType BaseTy;
+  llvm::Value *Base =
+    EmitExprWithUsualUnaryConversions(E->getBase(), BaseTy).getVal();
   
   // Usually the base is the pointer type, but sometimes it is the index.
   // Canonicalize to have the pointer as the base.
@@ -400,7 +431,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // size is a VLA.
   if (!E->getType()->isConstantSizeType())
     assert(0 && "VLA idx not implemented");
-  return LValue::getAddr(Builder.CreateGEP(Base, Idx, "arrayidx"));
+  return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"));
 }
 
 //===--------------------------------------------------------------------===//

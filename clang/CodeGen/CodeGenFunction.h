@@ -110,17 +110,44 @@ public:
 class LValue {
   // FIXME: Volatility.  Restrict?
   // alignment?
+  
+  enum {
+    Simple,    // This is a normal l-value, use getAddress().
+    VectorElt, // This is a vector element l-value (V[i]), use getVector*
+    BitField   // This is a bitfield l-value, use getBitfield*.
+  } LVType;
+  
   llvm::Value *V;
+  
+  union {
+    llvm::Value *VectorIdx;
+  };
 public:
-  bool isBitfield() const { return false; }
+  bool isSimple() const { return LVType == Simple; }
+  bool isVectorElt() const { return LVType == VectorElt; }
+  bool isBitfield() const { return LVType == BitField; }
   
-  llvm::Value *getAddress() const { assert(!isBitfield()); return V; }
+  // simple lvalue
+  llvm::Value *getAddress() const { assert(isSimple()); return V; }
+  // vector elt lvalue
+  llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
+  llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
   
-  static LValue getAddr(llvm::Value *V) {
+  static LValue MakeAddr(llvm::Value *V) {
     LValue R;
+    R.LVType = Simple;
     R.V = V;
     return R;
   }
+  
+  static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx) {
+    LValue R;
+    R.LVType = VectorElt;
+    R.V = Vec;
+    R.VectorIdx = Idx;
+    return R;
+  }
+  
 };
 
 /// CodeGenFunction - This class organizes the per-function state that is used
