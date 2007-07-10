@@ -855,7 +855,7 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (add x, undef) -> undef
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return N1;
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
@@ -1047,7 +1047,7 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (mul x, undef) -> 0
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
   // fold (mul c1, c2) -> c1*c2
   if (N0C && N1C)
@@ -1339,7 +1339,7 @@ SDOperand DAGCombiner::visitMULHS(SDNode *N) {
                        DAG.getConstant(MVT::getSizeInBits(N0.getValueType())-1,
                                        TLI.getShiftAmountTy()));
   // fold (mulhs x, undef) -> 0
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
 
   return SDOperand();
@@ -1358,7 +1358,7 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
   if (N1C && N1C->getValue() == 1)
     return DAG.getConstant(0, N0.getValueType());
   // fold (mulhu x, undef) -> 0
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
 
   return SDOperand();
@@ -1416,7 +1416,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (and x, undef) -> 0
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
@@ -1604,7 +1604,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (or x, undef) -> -1
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(~0ULL, VT);
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
@@ -1890,7 +1890,7 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   if (FoldedVOp.Val) return FoldedVOp;
   
   // fold (xor x, undef) -> undef
-  if (N1.getOpcode() == ISD::UNDEF)
+  if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return N1;
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
