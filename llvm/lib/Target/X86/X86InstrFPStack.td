@@ -20,9 +20,11 @@
 def SDTX86FpGet     : SDTypeProfile<1, 0, [SDTCisFP<0>]>;
 def SDTX86FpSet     : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 def SDTX86Fld       : SDTypeProfile<1, 2, [SDTCisFP<0>,
-                                           SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
+                                           SDTCisPtrTy<1>, 
+                                           SDTCisVT<2, OtherVT>]>;
 def SDTX86Fst       : SDTypeProfile<0, 3, [SDTCisFP<0>,
-                                           SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
+                                           SDTCisPtrTy<1>, 
+                                           SDTCisVT<2, OtherVT>]>;
 def SDTX86Fild      : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisPtrTy<1>,
                                            SDTCisVT<2, OtherVT>]>;
 def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
@@ -129,27 +131,27 @@ class FpI_<dag ops, FPFormat fp, list<dag> pattern>
 
 // Random Pseudo Instructions.
 def FpGETRESULT32 : FpI_<(ops RFP32:$dst), SpecialFP,
-                      [(set RFP32:$dst, X86fpget)]>;                    // FPR = ST(0)
+                      [(set RFP32:$dst, X86fpget)]>;           // FPR = ST(0)
 
 def FpGETRESULT64 : FpI_<(ops RFP64:$dst), SpecialFP,
-                      [(set RFP64:$dst, X86fpget)]>;                    // FPR = ST(0)
+                      [(set RFP64:$dst, X86fpget)]>;           // FPR = ST(0)
 
 let noResults = 1 in {
   def FpSETRESULT32 : FpI_<(ops RFP32:$src), SpecialFP,
-                        [(X86fpset RFP32:$src)]>, Imp<[], [ST0]>;   // ST(0) = FPR
+                        [(X86fpset RFP32:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
 
   def FpSETRESULT64 : FpI_<(ops RFP64:$src), SpecialFP,
-                        [(X86fpset RFP64:$src)]>, Imp<[], [ST0]>;   // ST(0) = FPR
+                        [(X86fpset RFP64:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
 }
 // FpI - Floating Point Psuedo Instruction template. Predicated on FPStack.
 class FpI<dag ops, FPFormat fp, list<dag> pattern> :
   FpI_<ops, fp, pattern>, Requires<[FPStack]>;
 
 // Register copies.  Just copies, the 64->32 version does not truncate.
-def MOV_Fp3232       : FpI<(ops RFP32:$dst, RFP32:$src), SpecialFP, []>; // f1 = fmov f2
-def MOV_Fp3264       : FpI<(ops RFP64:$dst, RFP32:$src), SpecialFP, []>; // f1 = fmov f2
-def MOV_Fp6432       : FpI<(ops RFP32:$dst, RFP64:$src), SpecialFP, []>; // f1 = fmov f2
-def MOV_Fp6464       : FpI<(ops RFP64:$dst, RFP64:$src), SpecialFP, []>; // f1 = fmov f2
+def MOV_Fp3232       : FpI<(ops RFP32:$dst, RFP32:$src), SpecialFP, []>; 
+def MOV_Fp3264       : FpI<(ops RFP64:$dst, RFP32:$src), SpecialFP, []>; 
+def MOV_Fp6432       : FpI<(ops RFP32:$dst, RFP64:$src), SpecialFP, []>; 
+def MOV_Fp6464       : FpI<(ops RFP64:$dst, RFP64:$src), SpecialFP, []>; 
 
 // Factoring for arithmetic.
 multiclass FPBinary_rr<SDNode OpNode> {
@@ -165,11 +167,15 @@ def _Fp64 : FpI<(ops RFP64:$dst, RFP64:$src1, RFP64:$src2), TwoArgFP,
 multiclass FPBinary<SDNode OpNode, Format fp, string asmstring> {
 // ST(0) = ST(0) + [mem]
 def _Fp32m  : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
-                  [(set RFP32:$dst, (OpNode RFP32:$src1, (loadf32 addr:$src2)))]>;
+                  [(set RFP32:$dst, 
+                    (OpNode RFP32:$src1, (loadf32 addr:$src2)))]>;
 def _Fp64m  : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
-                  [(set RFP64:$dst, (OpNode RFP64:$src1, (loadf64 addr:$src2)))]>;
-def _F32m  : FPI<0xD8, fp, (ops f32mem:$src), !strconcat("f", !strconcat(asmstring, "{s} $src"))>;
-def _F64m  : FPI<0xDC, fp, (ops f64mem:$src), !strconcat("f", !strconcat(asmstring, "{l} $src"))>;
+                  [(set RFP64:$dst, 
+                    (OpNode RFP64:$src1, (loadf64 addr:$src2)))]>;
+def _F32m  : FPI<0xD8, fp, (ops f32mem:$src), 
+                 !strconcat("f", !strconcat(asmstring, "{s} $src"))>;
+def _F64m  : FPI<0xDC, fp, (ops f64mem:$src), 
+                 !strconcat("f", !strconcat(asmstring, "{l} $src"))>;
 // ST(0) = ST(0) + [memint]
 def _FpI16m32 : FpI<(ops RFP32:$dst, RFP32:$src1, i16mem:$src2), OneArgFPRW,
                     [(set RFP32:$dst, (OpNode RFP32:$src1,
@@ -183,8 +189,10 @@ def _FpI16m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i16mem:$src2), OneArgFPRW,
 def _FpI32m64 : FpI<(ops RFP64:$dst, RFP64:$src1, i32mem:$src2), OneArgFPRW,
                     [(set RFP64:$dst, (OpNode RFP64:$src1,
                                        (X86fild addr:$src2, i32)))]>;
-def _FI16m  : FPI<0xDE, fp, (ops i16mem:$src), !strconcat("fi", !strconcat(asmstring, "{s} $src"))>;
-def _FI32m  : FPI<0xDA, fp, (ops i32mem:$src), !strconcat("fi", !strconcat(asmstring, "{l} $src"))>;
+def _FI16m  : FPI<0xDE, fp, (ops i16mem:$src), 
+                  !strconcat("fi", !strconcat(asmstring, "{s} $src"))>;
+def _FI32m  : FPI<0xDA, fp, (ops i32mem:$src), 
+                  !strconcat("fi", !strconcat(asmstring, "{l} $src"))>;
 }
 
 defm ADD : FPBinary_rr<fadd>;
@@ -386,11 +394,11 @@ def LD_F1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;
 def UCOM_Fpr32 : FpI<(ops RFP32:$lhs, RFP32:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr32: FpI<(ops RFP32:$lhs, RFP32:$rhs), CompareFP,
-                  [(X86cmp RFP32:$lhs, RFP32:$rhs)]>; // CC = cmp ST(0) with ST(i)
+                  [(X86cmp RFP32:$lhs, RFP32:$rhs)]>; // CC = ST(0) cmp ST(i)
 def UCOM_Fpr64 : FpI<(ops RFP64:$lhs, RFP64:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr64: FpI<(ops RFP64:$lhs, RFP64:$rhs), CompareFP,
-                  [(X86cmp RFP64:$lhs, RFP64:$rhs)]>; // CC = cmp ST(0) with ST(i)
+                  [(X86cmp RFP64:$lhs, RFP64:$rhs)]>; // CC = ST(0) cmp ST(i)
 
 def UCOM_Fr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (ops RST:$reg),
@@ -440,5 +448,6 @@ def : Pat<(f64 fpimmneg1), (CHS_Fp64 (LD_Fp164))>, Requires<[FPStack]>;
 // Used to conv. i64 to f64 since there isn't a SSE version.
 def : Pat<(X86fildflag addr:$src, i64), (ILD_Fp64m64 addr:$src)>;
 
-def : Pat<(extloadf32 addr:$src), (MOV_Fp3264 (LD_Fp32m addr:$src))>, Requires<[FPStack]>;
+def : Pat<(extloadf32 addr:$src), 
+           (MOV_Fp3264 (LD_Fp32m addr:$src))>, Requires<[FPStack]>;
 def : Pat<(fextend RFP32:$src), (MOV_Fp3264 RFP32:$src)>, Requires<[FPStack]>;
