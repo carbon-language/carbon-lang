@@ -83,7 +83,8 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, bool lo
       } else {
         continue;
       }
-    }
+    } else
+      continue;
     
     if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef) {
       depGraphLocal.insert(std::make_pair(C.getInstruction(), std::make_pair(QI, true)));
