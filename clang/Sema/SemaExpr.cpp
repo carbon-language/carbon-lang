@@ -294,7 +294,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   
   Expr *baseExpr, *indexExpr;
   QualType baseType, indexType;
-  if (isa<PointerType>(canonT1)) {
+  if (isa<PointerType>(canonT1) || isa<VectorType>(canonT1)) {
     baseType = canonT1;
     indexType = canonT2;
     baseExpr = static_cast<Expr *>(Base);
@@ -314,16 +314,20 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     return Diag(indexExpr->getLocStart(), diag::err_typecheck_subscript,
                 indexExpr->getSourceRange());
   }
-  // FIXME: need to deal with const...
-  PointerType *ary = cast<PointerType>(baseType);
-  QualType resultType = ary->getPointeeType();
-  // in practice, the following check catches trying to index a pointer
-  // to a function (e.g. void (*)(int)). Functions are not objects in c99.
-  if (!resultType->isObjectType()) {
-    return Diag(baseExpr->getLocStart(), 
-                diag::err_typecheck_subscript_not_object,
-                baseType.getAsString(), baseExpr->getSourceRange());
-  }
+  QualType resultType;
+  if (PointerType *ary = dyn_cast<PointerType>(baseType)) {
+    // FIXME: need to deal with const...
+    resultType = ary->getPointeeType();
+    // in practice, the following check catches trying to index a pointer
+    // to a function (e.g. void (*)(int)). Functions are not objects in c99.
+    if (!resultType->isObjectType()) {
+      return Diag(baseExpr->getLocStart(), 
+                  diag::err_typecheck_subscript_not_object,
+                  baseType.getAsString(), baseExpr->getSourceRange());
+    }
+  } else if (VectorType *vec = dyn_cast<VectorType>(baseType))
+    resultType = vec->getElementType();
+
   return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType, RLoc);
 }
 
@@ -1306,10 +1310,14 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                   resultType.getAsString());
     break;
   case UnaryOperator::Not: // bitwise complement
-    resultType = UsualUnaryConversions(Input->getType());
-    if (!resultType->isIntegerType())  // C99 6.5.3.3p1
-      return Diag(OpLoc, diag::err_typecheck_unary_expr,
-                  resultType.getAsString());
+    if (Input->getType()->isVectorType())
+      resultType = Input->getType();
+    else {
+      resultType = UsualUnaryConversions(Input->getType());
+      if (!resultType->isIntegerType())  // C99 6.5.3.3p1
+        return Diag(OpLoc, diag::err_typecheck_unary_expr,
+                    resultType.getAsString());
+    }
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
