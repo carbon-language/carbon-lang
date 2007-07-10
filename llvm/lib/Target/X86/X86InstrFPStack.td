@@ -172,6 +172,9 @@ def _Fp32m  : FpI<(ops RFP32:$dst, RFP32:$src1, f32mem:$src2), OneArgFPRW,
 def _Fp64m  : FpI<(ops RFP64:$dst, RFP64:$src1, f64mem:$src2), OneArgFPRW,
                   [(set RFP64:$dst, 
                     (OpNode RFP64:$src1, (loadf64 addr:$src2)))]>;
+def _Fp64m32: FpI<(ops RFP64:$dst, RFP64:$src1, f32mem:$src2), OneArgFPRW,
+                  [(set RFP64:$dst, 
+                    (OpNode RFP64:$src1, (extloadf32 addr:$src2)))]>;
 def _F32m  : FPI<0xD8, fp, (ops f32mem:$src), 
                  !strconcat("f", !strconcat(asmstring, "{s} $src"))>;
 def _F64m  : FPI<0xDC, fp, (ops f64mem:$src), 
