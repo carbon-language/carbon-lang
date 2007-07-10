@@ -69,6 +69,12 @@ Module *llvm::CloneModule(const Module *M,
     ValueMap[I]= NF;
   }
 
+  // Loop over the aliases in the module
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I)
+    ValueMap[I] = new GlobalAlias(I->getType(), GlobalAlias::ExternalLinkage,
+                                  I->getName(), NULL, New);
+  
   // Now that all of the things that global variable initializer can refer to
   // have been created, loop through and copy the global variable referrers
   // over...  We also set the attributes on the global now.
@@ -103,6 +109,15 @@ Module *llvm::CloneModule(const Module *M,
     F->setLinkage(I->getLinkage());
   }
 
+  // And aliases
+  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
+       I != E; ++I) {
+    GlobalAlias *GA = cast<GlobalAlias>(ValueMap[I]);
+    GA->setLinkage(I->getLinkage());
+    if (const Constant* C = I->getAliasee())
+      GA->setAliasee(cast<Constant>(MapValue(C, ValueMap)));
+  }
+  
   return New;
 }
 
