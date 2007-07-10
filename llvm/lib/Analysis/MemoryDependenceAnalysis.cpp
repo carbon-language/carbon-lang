@@ -67,6 +67,9 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, bool lo
         pointerSize = C->getZExtValue();
       else
         pointerSize = ~0UL;
+    } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
+      pointer = V->getOperand(0);
+      pointerSize = TD.getTypeSize(V->getType());
     } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
       pointer = F->getPointerOperand();
       
@@ -130,6 +133,9 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     dependee = L->getPointerOperand();
     dependeeSize = TD.getTypeSize(L->getType());
     queryIsVolatile = L->isVolatile();
+  } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
+    dependee = V->getOperand(0);
+    dependeeSize = TD.getTypeSize(V->getType());
   } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
     dependee = F->getPointerOperand();
     
@@ -176,6 +182,9 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
         pointerSize = C->getZExtValue();
       else
         pointerSize = ~0UL;
+    } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
+      pointer = V->getOperand(0);
+      pointerSize = TD.getTypeSize(V->getType());
     } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
       pointer = F->getPointerOperand();
       
