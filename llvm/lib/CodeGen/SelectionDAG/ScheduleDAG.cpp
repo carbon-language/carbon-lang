@@ -323,7 +323,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     
     // Get/emit the operand.
     unsigned VReg = getVR(Op, VRBaseMap);
-    MI->addRegOperand(VReg, false);
+    const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+    bool isOptDef = (IIOpNum < TID->numOperands)
+      ? (TID->OpInfo[IIOpNum].Flags & M_OPTIONAL_DEF_OPERAND) : false;
+    MI->addRegOperand(VReg, isOptDef);
     
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
