@@ -213,6 +213,7 @@ ifdef ENABLE_PROFILING
   CXX.Flags := $(OPTIMIZE_OPTION) -pg -g
   C.Flags   := $(OPTIMIZE_OPTION) -pg -g
   LD.Flags  := $(OPTIMIZE_OPTION) -pg -g
+  KEEP_SYMBOLS := 1
 else
   ifeq ($(ENABLE_OPTIMIZED),1)
     BuildMode := Release
