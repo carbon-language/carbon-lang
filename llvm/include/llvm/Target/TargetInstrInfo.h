@@ -82,13 +82,13 @@ const unsigned M_PREDICABLE = 1 << 12;
 // at any time, e.g. constant generation, load from constant pool.
 const unsigned M_REMATERIALIZIBLE = 1 << 13;
 
-// M_CLOBBERS_PRED - Set if this instruction may clobbers the condition code
-// register and / or registers that are used to predicate instructions.
-const unsigned M_CLOBBERS_PRED = 1 << 14;
-
 // M_NOT_DUPLICABLE - Set if this instruction cannot be safely duplicated.
 // (e.g. instructions with unique labels attached).
-const unsigned M_NOT_DUPLICABLE = 1 << 15;
+const unsigned M_NOT_DUPLICABLE = 1 << 14;
+
+// M_HAS_OPTIONAL_DEF - Set if this instruction has an optional definition, e.g.
+// ARM instructions which can set condition code if 's' bit is set.
+const unsigned M_HAS_OPTIONAL_DEF = 1 << 15;
 
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
@@ -98,6 +98,10 @@ const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
 /// M_PREDICATE_OPERAND - Set if this is one of the operands that made up of the
 /// predicate operand that controls an M_PREDICATED instruction.
 const unsigned M_PREDICATE_OPERAND = 1 << 1;
+
+/// M_OPTIONAL_DEF_OPERAND - Set if this operand is a optional def.
+///
+const unsigned M_OPTIONAL_DEF_OPERAND = 1 << 2;
 
 namespace TOI {
   // Operand constraints: only "tied_to" for now.
@@ -264,12 +268,12 @@ public:
     return get(Opcode).Flags & M_PREDICABLE;
   }
 
-  bool clobbersPredicate(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_CLOBBERS_PRED;
-  }
-
   bool isNotDuplicable(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_NOT_DUPLICABLE;
+  }
+
+  bool hasOptionalDef(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_HAS_OPTIONAL_DEF;
   }
 
   /// isTriviallyReMaterializable - Return true if the instruction is trivially
@@ -449,6 +453,14 @@ public:
   virtual
   bool SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
                          const std::vector<MachineOperand> &Pred2) const {
+    return false;
+  }
+
+  /// DefinesPredicate - If the specified instruction defines any predicate
+  /// or condition code register(s) used for predication, returns true as well
+  /// as the definition predicate(s) by reference.
+  virtual bool DefinesPredicate(MachineInstr *MI,
+                                std::vector<MachineOperand> &Pred) const {
     return false;
   }
 
