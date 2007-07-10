@@ -214,15 +214,18 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         // add more than 1 instruction. Abandon!
         return NULL;
       UpdateMI = BuildMI(get(isSub ? ARM::SUBri : ARM::ADDri), WBReg)
-        .addReg(BaseReg).addImm(SOImmVal).addImm(Pred);
+        .addReg(BaseReg).addImm(SOImmVal)
+        .addImm(Pred).addReg(0).addReg(0);
     } else if (Amt != 0) {
       ARM_AM::ShiftOpc ShOpc = ARM_AM::getAM2ShiftOpc(OffImm);
       unsigned SOOpc = ARM_AM::getSORegOpc(ShOpc, Amt);
       UpdateMI = BuildMI(get(isSub ? ARM::SUBrs : ARM::ADDrs), WBReg)
-        .addReg(BaseReg).addReg(OffReg).addReg(0).addImm(SOOpc).addImm(Pred);
+        .addReg(BaseReg).addReg(OffReg).addReg(0).addImm(SOOpc)
+        .addImm(Pred).addReg(0).addReg(0);
     } else 
       UpdateMI = BuildMI(get(isSub ? ARM::SUBrr : ARM::ADDrr), WBReg)
-        .addReg(BaseReg).addReg(OffReg).addImm(Pred);
+        .addReg(BaseReg).addReg(OffReg)
+        .addImm(Pred).addReg(0).addReg(0);
     break;
   }
   case ARMII::AddrMode3 : {
@@ -231,10 +234,12 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (OffReg == 0)
       // Immediate is 8-bits. It's guaranteed to fit in a so_imm operand.
       UpdateMI = BuildMI(get(isSub ? ARM::SUBri : ARM::ADDri), WBReg)
-        .addReg(BaseReg).addImm(Amt).addImm(Pred);
+        .addReg(BaseReg).addImm(Amt)
+        .addImm(Pred).addReg(0).addReg(0);
     else
       UpdateMI = BuildMI(get(isSub ? ARM::SUBrr : ARM::ADDrr), WBReg)
-        .addReg(BaseReg).addReg(OffReg).addImm(Pred);
+        .addReg(BaseReg).addReg(OffReg)
+        .addImm(Pred).addReg(0).addReg(0);
     break;
   }
   }
@@ -494,6 +499,25 @@ ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
     return CC2 == ARMCC::LT;
   }
 }
+
+bool ARMInstrInfo::DefinesPredicate(MachineInstr *MI,
+                                    std::vector<MachineOperand> &Pred) const {
+  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  if (!TID->ImplicitDefs && (TID->Flags & M_HAS_OPTIONAL_DEF) == 0)
+    return false;
+
+  bool Found = false;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.getReg() == ARM::CPSR) {
+      Pred.push_back(MO);
+      Found = true;
+    }
+  }
+
+  return Found;
+}
+
 
 /// FIXME: Works around a gcc miscompilation with -fstrict-aliasing
 static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,

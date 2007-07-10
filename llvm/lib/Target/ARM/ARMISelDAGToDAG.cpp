@@ -586,8 +586,9 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
                                   CurDAG->getTargetConstant(0, MVT::i32));
     else {
       SDOperand Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
-                          getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->SelectNodeTo(N, ARM::ADDri, MVT::i32, Ops, 4);
+                          getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
+                          CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->SelectNodeTo(N, ARM::ADDri, MVT::i32, Ops, 5);
     }
   }
   case ISD::ADD: {
@@ -619,10 +620,9 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
         unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV-1));
         SDOperand Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
-                            getAL(CurDAG), CurDAG->getRegister(0, MVT::i32)
-
-        };
-        return CurDAG->SelectNodeTo(N, ARM::ADDrs, MVT::i32, Ops, 6);
+                            getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
+                            CurDAG->getRegister(0, MVT::i32) };
+        return CurDAG->SelectNodeTo(N, ARM::ADDrs, MVT::i32, Ops, 7);
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
         SDOperand V = Op.getOperand(0);
@@ -631,8 +631,8 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
         SDOperand Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
                             getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
-        };
-        return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 6);
+                            CurDAG->getRegister(0, MVT::i32) };
+        return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 7);
       }
     }
     break;
@@ -645,15 +645,17 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(Op.getOperand(0));
     AddToISelQueue(Op.getOperand(1));
     SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1),
-                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
-    return CurDAG->getTargetNode(ARM::UMULL, MVT::i32, MVT::i32, Ops, 4);
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
+                        CurDAG->getRegister(0, MVT::i32) };
+    return CurDAG->getTargetNode(ARM::UMULL, MVT::i32, MVT::i32, Ops, 5);
   }
   case ARMISD::MULHILOS: {
     AddToISelQueue(Op.getOperand(0));
     AddToISelQueue(Op.getOperand(1));
     SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1),
-                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
-    return CurDAG->getTargetNode(ARM::SMULL, MVT::i32, MVT::i32, Ops, 4);
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
+                        CurDAG->getRegister(0, MVT::i32) };
+    return CurDAG->getTargetNode(ARM::SMULL, MVT::i32, MVT::i32, Ops, 5);
   }
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Op);

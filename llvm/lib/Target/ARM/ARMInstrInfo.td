@@ -380,10 +380,25 @@ class I<dag oprnds, AddrMode am, SizeFlagVal sz, IndexMode im,
   list<Predicate> Predicates = [IsARM];
 }
 
+// Same as I except it can optionally modify CPSR.
+class sI<dag oprnds, AddrMode am, SizeFlagVal sz, IndexMode im,
+        string opc, string asm, string cstr, list<dag> pattern>
+  // FIXME: Set all opcodes to 0 for now.
+  : InstARM<0, am, sz, im, cstr> {
+  let OperandList = !con(oprnds, (ops pred:$p, cc_out:$s));
+  let AsmString   = !strconcat(opc, !strconcat("${p}${s}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsARM];
+}
+
 class AI<dag ops, string opc, string asm, list<dag> pattern>
   : I<ops, AddrModeNone, Size4Bytes, IndexModeNone, opc, asm, "", pattern>;
+class AsI<dag ops, string opc, string asm, list<dag> pattern>
+  : sI<ops, AddrModeNone, Size4Bytes, IndexModeNone, opc, asm, "", pattern>;
 class AI1<dag ops, string opc, string asm, list<dag> pattern>
   : I<ops, AddrMode1, Size4Bytes, IndexModeNone, opc, asm, "", pattern>;
+class AsI1<dag ops, string opc, string asm, list<dag> pattern>
+  : sI<ops, AddrMode1, Size4Bytes, IndexModeNone, opc, asm, "", pattern>;
 class AI2<dag ops, string opc, string asm, list<dag> pattern>
   : I<ops, AddrMode2, Size4Bytes, IndexModeNone, opc, asm, "", pattern>;
 class AI3<dag ops, string opc, string asm, list<dag> pattern>
@@ -412,21 +427,21 @@ class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
 
 /// AI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
-multiclass AI1_bin_irs<string opc, PatFrag opnode> {
-  def ri : AI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
+multiclass AsI1_bin_irs<string opc, PatFrag opnode> {
+  def ri : AsI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
-  def rr : AI1<(ops GPR:$dst, GPR:$a, GPR:$b),
+  def rr : AsI1<(ops GPR:$dst, GPR:$a, GPR:$b),
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
-  def rs : AI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
+  def rs : AsI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
 }
 
-/// AI1_bin_s_irs - Similar to AI1_bin_irs except it sets the 's' bit so the
+/// ASI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CSPR register.
-multiclass AI1_bin_s_irs<string opc, PatFrag opnode> {
+multiclass ASI1_bin_s_irs<string opc, PatFrag opnode> {
   def ri : AI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>, Imp<[], [CPSR]>;
@@ -439,7 +454,7 @@ multiclass AI1_bin_s_irs<string opc, PatFrag opnode> {
 }
 
 /// AI1_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
-/// patterns. Similar to AI1_bin_irs except the instruction does not produce
+/// patterns. Similar to AsI1_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
 multiclass AI1_cmp_irs<string opc, PatFrag opnode> {
   def ri : AI1<(ops GPR:$a, so_imm:$b),
@@ -451,30 +466,6 @@ multiclass AI1_cmp_irs<string opc, PatFrag opnode> {
   def rs : AI1<(ops GPR:$a, so_reg:$b),
                opc, " $a, $b",
                [(opnode GPR:$a, so_reg:$b)]>, Imp<[], [CPSR]>;
-}
-
-/// AI1_bin_is - Defines a set of (op r, {so_imm|so_reg}) patterns for a binop.
-multiclass AI1_bin_is<string opc, PatFrag opnode> {
-  def ri : AI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
-               opc, " $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
-  def rs : AI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
-               opc, " $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
-}
-
-/// AI1_unary_irs - Defines a set of (op {so_imm|r|so_reg}) patterns for unary
-/// ops.
-multiclass AI1_unary_irs<string opc, PatFrag opnode> {
-  def i : AI1<(ops GPR:$dst, so_imm:$a),
-              opc, " $dst, $a",
-              [(set GPR:$dst, (opnode so_imm:$a))]>;
-  def r : AI1<(ops GPR:$dst, GPR:$a),
-              opc, " $dst, $a",
-              [(set GPR:$dst, (opnode GPR:$a))]>;
-  def s : AI1<(ops GPR:$dst, so_reg:$a),
-              opc, " $dst, $a",
-              [(set GPR:$dst, (opnode so_reg:$a))]>;
 }
 
 /// AI_unary_rrot - A unary operation with two forms: one whose operand is a
@@ -536,17 +527,17 @@ class JTI1<dag ops, string asm, list<dag> pattern>
 class JTI2<dag ops, string asm, list<dag> pattern>
   : XI<ops, AddrMode2, SizeSpecial, IndexModeNone, asm, "", pattern>;
 
-/// AXI1_bin_c_irs - Same as AI1_bin_irs but without the predicate operand and
-/// setting carry bit.
-multiclass AXI1_bin_c_irs<string opc, PatFrag opnode> {
-  def ri : AXI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
-               !strconcat(opc, " $dst, $a, $b"),
+/// AsXI1_bin_c_irs - Same as AsI1_bin_irs but without the predicate operand and
+/// setting carry bit. But it can optionally set CPSR.
+multiclass AsXI1_bin_c_irs<string opc, PatFrag opnode> {
+  def ri : AXI1<(ops GPR:$dst, GPR:$a, so_imm:$b, cc_out:$s),
+               !strconcat(opc, "${s} $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>, Imp<[CPSR], []>;
-  def rr : AXI1<(ops GPR:$dst, GPR:$a, GPR:$b),
-               !strconcat(opc, " $dst, $a, $b"),
+  def rr : AXI1<(ops GPR:$dst, GPR:$a, GPR:$b, cc_out:$s),
+               !strconcat(opc, "${s} $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>, Imp<[CPSR], []>;
-  def rs : AXI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
-               !strconcat(opc, " $dst, $a, $b"),
+  def rs : AXI1<(ops GPR:$dst, GPR:$a, so_reg:$b, cc_out:$s),
+               !strconcat(opc, "${s} $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>, Imp<[CPSR], []>;
 }
 
@@ -649,7 +640,7 @@ let isLoad = 1, isReturn = 1, isTerminator = 1 in
                     "ldm${p}${addr:submode} $addr, $dst1",
                     []>;
 
-let isCall = 1, noResults = 1, clobbersPred = 1,
+let isCall = 1, noResults = 1,
   Defs = [R0, R1, R2, R3, R12, LR,
           D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
   def BL  : AXI<(ops i32imm:$func, variable_ops),
@@ -697,7 +688,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :( 
   def Bcc : AI<(ops brtarget:$dst), "b", " $dst",
-                 [/*(ARMbrcond bb:$dst, imm:$cc, CCR:$ccr)*/]>;
+                [/*(ARMbrcond bb:$dst, imm:$cc, CCR:$ccr)*/]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -840,29 +831,28 @@ def STM : AXI4<(ops addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
 //  Move Instructions.
 //
 
-def MOVr : AI1<(ops GPR:$dst, GPR:$src),
-                "mov", " $dst, $src", []>;
-def MOVs : AI1<(ops GPR:$dst, so_reg:$src),
-                "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
+def MOVr : AsI1<(ops GPR:$dst, GPR:$src),
+                 "mov", " $dst, $src", []>;
+def MOVs : AsI1<(ops GPR:$dst, so_reg:$src),
+                 "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>;
 
 let isReMaterializable = 1 in
-def MOVi : AI1<(ops GPR:$dst, so_imm:$src),
-                "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
+def MOVi : AsI1<(ops GPR:$dst, so_imm:$src),
+                 "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>;
+
+def MOVrx       : AsI1<(ops GPR:$dst, GPR:$src),
+                      "mov", " $dst, $src, rrx",
+                      [(set GPR:$dst, (ARMrrx GPR:$src))]>;
 
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.
 
-let clobbersPred = 1 in {
 def MOVsrl_flag : AI1<(ops GPR:$dst, GPR:$src),
                       "mov", "s $dst, $src, lsr #1",
                       [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, Imp<[], [CPSR]>;
 def MOVsra_flag : AI1<(ops GPR:$dst, GPR:$src),
                       "mov", "s $dst, $src, asr #1",
                       [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, Imp<[], [CPSR]>;
-}
-def MOVrx       : AI1<(ops GPR:$dst, GPR:$src),
-                      "mov", " $dst, $src, rrx",
-                      [(set GPR:$dst, (ARMrrx GPR:$src))]>;
 
 //===----------------------------------------------------------------------===//
 //  Extend Instructions.
@@ -907,38 +897,40 @@ defm UXTAH : AI_bin_rrot<"uxtah",
 //  Arithmetic Instructions.
 //
 
-defm ADD  : AI1_bin_irs<"add", BinOpFrag<(add  node:$LHS, node:$RHS)>>;
-defm SUB  : AI1_bin_irs<"sub", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
+defm ADD  : AsI1_bin_irs<"add", BinOpFrag<(add  node:$LHS, node:$RHS)>>;
+defm SUB  : AsI1_bin_irs<"sub", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 
 // ADD and SUB with 's' bit set.
-let clobbersPred = 1 in {
-defm ADDS : AI1_bin_s_irs<"add", BinOpFrag<(addc node:$LHS, node:$RHS)>>;
-defm SUBS : AI1_bin_s_irs<"sub", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
-}
+defm ADDS : ASI1_bin_s_irs<"add", BinOpFrag<(addc node:$LHS, node:$RHS)>>;
+defm SUBS : ASI1_bin_s_irs<"sub", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 
 // FIXME: Do not allow ADC / SBC to be predicated for now.
-defm ADC  : AXI1_bin_c_irs<"adc", BinOpFrag<(adde node:$LHS, node:$RHS)>>;
-defm SBC  : AXI1_bin_c_irs<"sbc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
+defm ADC  : AsXI1_bin_c_irs<"adc", BinOpFrag<(adde node:$LHS, node:$RHS)>>;
+defm SBC  : AsXI1_bin_c_irs<"sbc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // These don't define reg/reg forms, because they are handled above.
-defm RSB  : AI1_bin_is <"rsb", BinOpFrag<(sub  node:$RHS, node:$LHS)>>;
+def RSBri : AsI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
+                  "rsb", " $dst, $a, $b",
+                  [(set GPR:$dst, (sub so_imm:$b, GPR:$a))]>;
+
+def RSBrs : AsI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
+                  "rsb", " $dst, $a, $b",
+                  [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]>;
 
 // RSB with 's' bit set.
-let clobbersPred = 1 in {
 def RSBSri : AI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
                  "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]>, Imp<[], [CPSR]>;
 def RSBSrs : AI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
                  "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>, Imp<[], [CPSR]>;
-}
 
-// FIXME: Do not allow RSC to be predicated for now.
-def RSCri : AXI1<(ops GPR:$dst, GPR:$a, so_imm:$b),
-                 "rsc $dst, $a, $b",
+// FIXME: Do not allow RSC to be predicated for now. But they can set CPSR.
+def RSCri : AXI1<(ops GPR:$dst, GPR:$a, so_imm:$b, cc_out:$s),
+                 "rsc${s} $dst, $a, $b",
                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>, Imp<[CPSR], []>;
-def RSCrs : AXI1<(ops GPR:$dst, GPR:$a, so_reg:$b),
-                 "rsc $dst, $a, $b",
+def RSCrs : AXI1<(ops GPR:$dst, GPR:$a, so_reg:$b, cc_out:$s),
+                 "rsc${s} $dst, $a, $b",
                  [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>, Imp<[CPSR], []>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
@@ -961,18 +953,18 @@ def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),
 //  Bitwise Instructions.
 //
 
-defm AND   : AI1_bin_irs<"and", BinOpFrag<(and node:$LHS, node:$RHS)>>;
-defm ORR   : AI1_bin_irs<"orr", BinOpFrag<(or  node:$LHS, node:$RHS)>>;
-defm EOR   : AI1_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
-defm BIC   : AI1_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
+defm AND   : AsI1_bin_irs<"and", BinOpFrag<(and node:$LHS, node:$RHS)>>;
+defm ORR   : AsI1_bin_irs<"orr", BinOpFrag<(or  node:$LHS, node:$RHS)>>;
+defm EOR   : AsI1_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
+defm BIC   : AsI1_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def  MVNr  : AI<(ops GPR:$dst, GPR:$src),
-                "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
-def  MVNs  : AI<(ops GPR:$dst, so_reg:$src),
-                "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
+def  MVNr  : AsI<(ops GPR:$dst, GPR:$src),
+                 "mvn", " $dst, $src", [(set GPR:$dst, (not GPR:$src))]>;
+def  MVNs  : AsI<(ops GPR:$dst, so_reg:$src),
+                 "mvn", " $dst, $src", [(set GPR:$dst, (not so_reg:$src))]>;
 let isReMaterializable = 1 in
-def  MVNi  : AI<(ops GPR:$dst, so_imm:$imm),
-                "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
+def  MVNi  : AsI<(ops GPR:$dst, so_imm:$imm),
+                 "mvn", " $dst, $imm", [(set GPR:$dst, so_imm_not:$imm)]>;
 
 def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
              (BICri GPR:$src, so_imm_not:$imm)>;
@@ -981,46 +973,42 @@ def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
 //  Multiply Instructions.
 //
 
-// AI_orr - Defines a (op r, r) pattern.
-class AI_orr<string opc, SDNode opnode>
-  : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
-       opc, " $dst, $a, $b",
-       [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
+def MUL  : AsI<(ops GPR:$dst, GPR:$a, GPR:$b),
+                "mul", " $dst, $a, $b",
+                [(set GPR:$dst, (mul GPR:$a, GPR:$b))]>;
 
-// AI_oorr - Defines a (op (op r, r), r) pattern.
-class AI_oorr<string opc, SDNode opnode1, SDNode opnode2>
-  : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$c),
-       opc, " $dst, $a, $b, $c",
-       [(set GPR:$dst, (opnode1 (opnode2 GPR:$a, GPR:$b), GPR:$c))]>;
-
-def MUL  : AI_orr<"mul", mul>;
-def MLA  : AI_oorr<"mla", add, mul>;
+def MLA  : AsI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$c),
+                "mla", " $dst, $a, $b, $c",
+                [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
 
 // Extra precision multiplies with low / high results
-def SMULL : AI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
-               "smull", " $ldst, $hdst, $a, $b",
-               []>;
+def SMULL : AsI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
+                "smull", " $ldst, $hdst, $a, $b", []>;
 
-def UMULL : AI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
-               "umull", " $ldst, $hdst, $a, $b",
-               []>;
+def UMULL : AsI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
+                "umull", " $ldst, $hdst, $a, $b", []>;
 
 // Multiply + accumulate
-def SMLAL : AI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
-               "smlal", " $ldst, $hdst, $a, $b",
-               []>;
+def SMLAL : AsI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
+                "smlal", " $ldst, $hdst, $a, $b", []>;
 
-def UMLAL : AI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
-               "umlal", " $ldst, $hdst, $a, $b",
-               []>;
+def UMLAL : AsI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
+                "umlal", " $ldst, $hdst, $a, $b", []>;
 
 def UMAAL : AI<(ops GPR:$ldst, GPR:$hdst, GPR:$a, GPR:$b),
-               "umaal", " $ldst, $hdst, $a, $b",
-               []>, Requires<[IsARM, HasV6]>;
+               "umaal", " $ldst, $hdst, $a, $b", []>,
+            Requires<[IsARM, HasV6]>;
 
 // Most significant word multiply
-def SMMUL : AI_orr<"smmul", mulhs>, Requires<[IsARM, HasV6]>;
-def SMMLA : AI_oorr<"smmla", add, mulhs>, Requires<[IsARM, HasV6]>;
+def SMMUL : AI<(ops GPR:$dst, GPR:$a, GPR:$b),
+               "smmul", " $dst, $a, $b",
+               [(set GPR:$dst, (mulhs GPR:$a, GPR:$b))]>,
+            Requires<[IsARM, HasV6]>;
+
+def SMMLA : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$c),
+               "smmla", " $dst, $a, $b, $c",
+               [(set GPR:$dst, (add (mulhs GPR:$a, GPR:$b), GPR:$c))]>,
+            Requires<[IsARM, HasV6]>;
 
 
 def SMMLS : AI<(ops GPR:$dst, GPR:$a, GPR:$b, GPR:$c),
@@ -1164,7 +1152,6 @@ def : ARMV6Pat<(or (and GPR:$src1, 0xFFFF0000),
 //  Comparison Instructions...
 //
 
-let clobbersPred = 1 in {
 defm CMP  : AI1_cmp_irs<"cmp", BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 defm CMN  : AI1_cmp_irs<"cmn", BinOpFrag<(ARMcmp node:$LHS,(ineg node:$RHS))>>;
 
@@ -1174,7 +1161,6 @@ defm TEQ  : AI1_cmp_irs<"teq", BinOpFrag<(ARMcmpNZ (xor node:$LHS, node:$RHS), 0
 
 defm CMPnz : AI1_cmp_irs<"cmp", BinOpFrag<(ARMcmpNZ node:$LHS, node:$RHS)>>;
 defm CMNnz : AI1_cmp_irs<"cmn", BinOpFrag<(ARMcmpNZ node:$LHS,(ineg node:$RHS))>>;
-}
 
 def : ARMPat<(ARMcmp GPR:$src, so_imm_neg:$imm),
              (CMNri  GPR:$src, so_imm_neg:$imm)>;
@@ -1223,8 +1209,8 @@ def LEApcrelJT : AXI1<(ops GPR:$dst, i32imm:$label, i32imm:$id, pred:$p),
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-let isCall = 1, clobbersPred = 1,
-  Defs = [R0, R12, LR] in {
+let isCall = 1,
+  Defs = [R0, R12, LR, CPSR] in {
   def TPsoft : AXI<(ops),
                "bl __aeabi_read_tp",
                [(set R0, ARMthread_pointer)]>;

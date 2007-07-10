@@ -191,7 +191,7 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
       BuildMI(MBB, I, TII.get(ARM::tMOVr), DestReg).addReg(SrcReg);
     else
       BuildMI(MBB, I, TII.get(ARM::MOVr), DestReg).addReg(SrcReg)
-        .addImm((int64_t)ARMCC::AL).addReg(0);
+        .addImm((int64_t)ARMCC::AL).addReg(0).addReg(0);
   } else if (RC == ARM::SPRRegisterClass)
     BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg).addReg(SrcReg)
       .addImm((int64_t)ARMCC::AL).addReg(0);
@@ -258,6 +258,9 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   switch (Opc) {
   default: break;
   case ARM::MOVr: {
+    if (MI->getOperand(4).getReg() == ARM::CPSR)
+      // If it is updating CPSR, then it cannot be foled.
+      break;
     unsigned Pred = MI->getOperand(2).getImmedValue();
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
@@ -454,7 +457,7 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     // Build the new ADD / SUB.
     BuildMI(MBB, MBBI, TII.get(isSub ? ARM::SUBri : ARM::ADDri), DestReg)
       .addReg(BaseReg, false, false, true).addImm(SOImmVal)
-      .addImm((unsigned)Pred).addReg(PredReg, false);
+      .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
     BaseReg = DestReg;
   }
 }
@@ -1380,7 +1383,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri),FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
-    if (!isThumb) MIB.addImm(ARMCC::AL).addReg(0);
+    if (!isThumb) MIB.addImm(ARMCC::AL).addReg(0).addReg(0);
   }
 
   if (!isThumb) {
@@ -1496,10 +1499,11 @@ void ARMRegisterInfo::emitEpilogue(MachineFunction &MF,
             hasFP(MF))
           if (NumBytes)
             BuildMI(MBB, MBBI, TII.get(ARM::SUBri), ARM::SP).addReg(FramePtr)
-              .addImm(NumBytes).addImm((unsigned)ARMCC::AL).addReg(0);
+              .addImm(NumBytes)
+              .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
           else
             BuildMI(MBB, MBBI, TII.get(ARM::MOVr), ARM::SP).addReg(FramePtr)
-              .addImm((unsigned)ARMCC::AL).addReg(0);
+              .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
       } else if (NumBytes) {
         emitSPUpdate(MBB, MBBI, NumBytes, ARMCC::AL, 0, false, TII);
       }

@@ -158,7 +158,7 @@ static bool mergeOps(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
 
     BuildMI(MBB, MBBI, TII->get(BaseOpc), NewBase)
       .addReg(Base, false, false, BaseKill).addImm(ImmedOffset)
-      .addImm(Pred).addReg(PredReg);
+      .addImm(Pred).addReg(PredReg).addReg(0);
     Base = NewBase;
     BaseKill = true;  // New base is always killed right its use.
   }
