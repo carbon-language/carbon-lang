@@ -188,7 +188,8 @@ public:
     
     // If we previously had no size, initialize the low word
     if (Size == 0)
-      Bits[0] = t;
+      for (unsigned i = 0; i < Capacity; ++i)
+        Bits[i] = 0 - (unsigned)t;
     
     Size = N;
     clear_unused_bits();
