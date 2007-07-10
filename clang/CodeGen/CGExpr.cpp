@@ -523,15 +523,46 @@ RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
 }
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
-  QualType Ty;
+  QualType CalleeTy;
   llvm::Value *Callee =
-    EmitExprWithUsualUnaryConversions(E->getCallee(), Ty).getVal();
+    EmitExprWithUsualUnaryConversions(E->getCallee(), CalleeTy).getVal();
+  
+  // The callee type will always be a pointer to function type, get the function
+  // type.
+  CalleeTy = cast<PointerType>(CalleeTy.getCanonicalType())->getPointeeType();
+  
+  // Get information about the argument types.
+  FunctionTypeProto::arg_type_iterator ArgTyIt = 0, ArgTyEnd = 0;
+  
+  // Calling unprototyped functions provides no argument info.
+  if (const FunctionTypeProto *FTP = dyn_cast<FunctionTypeProto>(CalleeTy)) {
+    ArgTyIt  = FTP->arg_type_begin();
+    ArgTyEnd = FTP->arg_type_end();
+  }
   
   llvm::SmallVector<llvm::Value*, 16> Args;
   
   // FIXME: Handle struct return.
   for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
-    RValue ArgVal = EmitExprWithUsualUnaryConversions(E->getArg(i), Ty);
+    QualType ArgTy;
+    RValue ArgVal = EmitExprWithUsualUnaryConversions(E->getArg(i), ArgTy);
+    
+    // If this argument has prototype information, convert it.
+    if (ArgTyIt != ArgTyEnd) {
+      ArgVal = EmitConversion(ArgVal, ArgTy, *ArgTyIt++);
+    } else {
+      // Otherwise, if passing through "..." or to a function with no prototype,
+      // perform the "default argument promotions" (C99 6.5.2.2p6), which
+      // includes the usual unary conversions, but also promotes float to
+      // double.
+      if (const BuiltinType *BT = 
+          dyn_cast<BuiltinType>(ArgTy.getCanonicalType())) {
+        if (BT->getKind() == BuiltinType::Float)
+          ArgVal = RValue::get(Builder.CreateFPExt(ArgVal.getVal(),
+                                                   llvm::Type::DoubleTy,"tmp"));
+      }
+    }
+    
     
     if (ArgVal.isScalar())
       Args.push_back(ArgVal.getVal());
