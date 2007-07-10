@@ -34,6 +34,7 @@ class GlobalValue;
 class MachineBasicBlock;
 class MachineConstantPoolValue;
 class SDNode;
+template <typename T> struct DenseMapKeyInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
 template<typename NodeTy, typename Traits> class iplist;
@@ -727,6 +728,16 @@ public:
   inline bool hasOneUse() const;
 };
 
+
+template<> struct DenseMapKeyInfo<SDOperand> {
+  static inline SDOperand getEmptyKey() { return SDOperand((SDNode*)-1, -1U); }
+  static inline SDOperand getTombstoneKey() { return SDOperand((SDNode*)-1, 0);}
+  static unsigned getHashValue(const SDOperand &Val) {
+    return (unsigned)((uintptr_t)Val.Val >> 4) ^
+           (unsigned)((uintptr_t)Val.Val >> 9) + Val.ResNo;
+  }
+  static bool isPod() { return true; }
+};
 
 /// simplify_type specializations - Allow casting operators to work directly on
 /// SDOperands as if they were SDNode*'s.

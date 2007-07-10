@@ -39,18 +39,6 @@ ViewLegalizeDAGs("view-legalize-dags", cl::Hidden,
 static const bool ViewLegalizeDAGs = 0;
 #endif
 
-namespace llvm {
-template<>
-struct DenseMapKeyInfo<SDOperand> {
-  static inline SDOperand getEmptyKey() { return SDOperand((SDNode*)-1, -1U); }
-  static inline SDOperand getTombstoneKey() { return SDOperand((SDNode*)-1, 0);}
-  static unsigned getHashValue(const SDOperand &Val) {
-    return DenseMapKeyInfo<void*>::getHashValue(Val.Val) + Val.ResNo;
-  }
-  static bool isPod() { return true; }
-};
-}
-
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
 /// hacks on it until the target machine can handle it.  This involves
