@@ -28,7 +28,7 @@ class Function;
 class FunctionPass;
 class Instruction;
 
-class VISIBILITY_HIDDEN MemoryDependenceAnalysis : public FunctionPass {
+class MemoryDependenceAnalysis : public FunctionPass {
   private:
     
     DenseMap<Instruction*, std::pair<Instruction*, bool> > depGraphLocal;
@@ -44,10 +44,12 @@ class VISIBILITY_HIDDEN MemoryDependenceAnalysis : public FunctionPass {
 
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///
-    bool runOnFunction(Function &) { 
+    bool runOnFunction(Function &) {return false; }
+    
+    /// Clean up memory in between runs
+    void releaseMemory() {
       depGraphLocal.clear();
       reverseDep.clear();
-      return false;
     }
 
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
