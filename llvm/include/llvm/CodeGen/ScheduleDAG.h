@@ -240,7 +240,7 @@ namespace llvm {
     /// VRBaseMap contains, for each already emitted node, the first virtual
     /// register number for the results of the node.
     ///
-    void EmitNode(SDNode *Node, DenseMap<SDNode*, unsigned> &VRBaseMap);
+    void EmitNode(SDNode *Node, DenseMap<SDOperand, unsigned> &VRBaseMap);
     
     /// EmitNoop - Emit a noop instruction.
     ///
@@ -257,7 +257,7 @@ namespace llvm {
   private:
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
                     const TargetInstrDescriptor *II,
-                    DenseMap<SDNode*, unsigned> &VRBaseMap);
+                    DenseMap<SDOperand, unsigned> &VRBaseMap);
   };
 
   /// createBFS_DAGScheduler - This creates a simple breadth first instruction

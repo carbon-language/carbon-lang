@@ -682,7 +682,7 @@ void ScheduleDAGSimple::EmitAll() {
                           LI->first, RegMap->getRegClass(LI->second));
   }
   
-  DenseMap<SDNode*, unsigned> VRBaseMap;
+  DenseMap<SDOperand, unsigned> VRBaseMap;
   
   // For each node in the ordering
   for (unsigned i = 0, N = Ordering.size(); i < N; i++) {

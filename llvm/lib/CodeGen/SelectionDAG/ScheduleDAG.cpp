@@ -254,31 +254,54 @@ static const TargetRegisterClass *getInstrOperandRegClass(
          ? TII->getPointerRegClass() : MRI->getRegClass(toi.RegClass);
 }
 
-static unsigned CreateVirtualRegisters(const MRegisterInfo *MRI,
-                                       MachineInstr *MI,
-                                       unsigned NumResults,
-                                       SSARegMap *RegMap,
-                                       const TargetInstrInfo *TII,
-                                       const TargetInstrDescriptor &II) {
-  // Create the result registers for this node and add the result regs to
-  // the machine instruction.
-  unsigned ResultReg =
-    RegMap->createVirtualRegister(getInstrOperandRegClass(MRI, TII, &II, 0));
-  MI->addRegOperand(ResultReg, true);
-  for (unsigned i = 1; i != NumResults; ++i) {
-    const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
-    assert(RC && "Isn't a register operand!");
-    MI->addRegOperand(RegMap->createVirtualRegister(RC), true);
+static void CreateVirtualRegisters(SDNode *Node,
+                                   unsigned NumResults, 
+                                   const MRegisterInfo *MRI,
+                                   MachineInstr *MI,
+                                   SSARegMap *RegMap,
+                                   const TargetInstrInfo *TII,
+                                   const TargetInstrDescriptor &II,
+                                   DenseMap<SDOperand, unsigned> &VRBaseMap) {
+  for (unsigned i = 0; i < NumResults; ++i) {
+    // If the specific node value is only used by a CopyToReg and the dest reg
+    // is a vreg, use the CopyToReg'd destination register instead of creating
+    // a new vreg.
+    unsigned VRBase = 0;
+    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+         UI != E; ++UI) {
+      SDNode *Use = *UI;
+      if (Use->getOpcode() == ISD::CopyToReg && 
+          Use->getOperand(2).Val == Node &&
+          Use->getOperand(2).ResNo == i) {
+        unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+        if (MRegisterInfo::isVirtualRegister(Reg)) {
+          VRBase = Reg;
+          MI->addRegOperand(Reg, true);
+          break;
+        }
+      }
+    }
+
+    if (VRBase == 0) {
+      // Create the result registers for this node and add the result regs to
+      // the machine instruction.
+      const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
+      assert(RC && "Isn't a register operand!");
+      VRBase = RegMap->createVirtualRegister(RC);
+      MI->addRegOperand(VRBase, true);
+    }
+
+    bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,i), VRBase));
+    assert(isNew && "Node emitted out of order - early");
   }
-  return ResultReg;
 }
 
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
-static unsigned getVR(SDOperand Op, DenseMap<SDNode*, unsigned> &VRBaseMap) {
-  DenseMap<SDNode*, unsigned>::iterator I = VRBaseMap.find(Op.Val);
+static unsigned getVR(SDOperand Op, DenseMap<SDOperand, unsigned> &VRBaseMap) {
+  DenseMap<SDOperand, unsigned>::iterator I = VRBaseMap.find(Op);
   assert(I != VRBaseMap.end() && "Node emitted out of order - late");
-  return I->second + Op.ResNo;
+  return I->second;
 }
 
 
@@ -289,7 +312,7 @@ static unsigned getVR(SDOperand Op, DenseMap<SDNode*, unsigned> &VRBaseMap) {
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
                              const TargetInstrDescriptor *II,
-                             DenseMap<SDNode*, unsigned> &VRBaseMap) {
+                             DenseMap<SDOperand, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -406,9 +429,7 @@ static const TargetRegisterClass *getPhysicalRegisterRegClass(
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(SDNode *Node, 
-                           DenseMap<SDNode*, unsigned> &VRBaseMap) {
-  unsigned VRBase = 0;                 // First virtual register for node
-  
+                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isTargetOpcode()) {
     unsigned Opc = Node->getTargetOpcode();
@@ -428,28 +449,9 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     
     // Add result register values for things that are defined by this
     // instruction.
-    
-    // If the node is only used by a CopyToReg and the dest reg is a vreg, use
-    // the CopyToReg'd destination register instead of creating a new vreg.
-    if (NumResults == 1) {
-      for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-           UI != E; ++UI) {
-        SDNode *Use = *UI;
-        if (Use->getOpcode() == ISD::CopyToReg && 
-            Use->getOperand(2).Val == Node) {
-          unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-          if (MRegisterInfo::isVirtualRegister(Reg)) {
-            VRBase = Reg;
-            MI->addRegOperand(Reg, true);
-            break;
-          }
-        }
-      }
-    }
-    
-    // Otherwise, create new virtual registers.
-    if (NumResults && VRBase == 0)
-      VRBase = CreateVirtualRegisters(MRI, MI, NumResults, RegMap, TII, II);
+    if (NumResults)
+      CreateVirtualRegisters(Node, NumResults, MRI, MI, RegMap,
+                             TII, II, VRBaseMap);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
@@ -510,9 +512,12 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       break;
     }
     case ISD::CopyFromReg: {
+      unsigned VRBase = 0;
       unsigned SrcReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
       if (MRegisterInfo::isVirtualRegister(SrcReg)) {
-        VRBase = SrcReg;  // Just use the input register directly!
+        // Just use the input register directly!
+        bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0),SrcReg));
+        assert(isNew && "Node emitted out of order - early");
         break;
       }
 
@@ -542,6 +547,9 @@ void ScheduleDAG::EmitNode(SDNode *Node,
         VRBase = RegMap->createVirtualRegister(TRC);
       }
       MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC);
+
+      bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0), VRBase));
+      assert(isNew && "Node emitted out of order - early");
       break;
     }
     case ISD::INLINEASM: {
@@ -604,9 +612,6 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     }
     }
   }
-
-  assert(!VRBaseMap.count(Node) && "Node emitted out of order - early");
-  VRBaseMap[Node] = VRBase;
 }
 
 void ScheduleDAG::EmitNoop() {
@@ -629,7 +634,7 @@ void ScheduleDAG::EmitSchedule() {
   
   
   // Finally, emit the code for all of the scheduled instructions.
-  DenseMap<SDNode*, unsigned> VRBaseMap;
+  DenseMap<SDOperand, unsigned> VRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {
       for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; j++)
