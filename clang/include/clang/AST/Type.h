@@ -297,8 +297,7 @@ public:
     Long,
     LongLong,
     
-    Float, Double, LongDouble//,
-//    FloatComplex, DoubleComplex, LongDoubleComplex
+    Float, Double, LongDouble
   };
 private:
   Kind TypeKind;
@@ -560,6 +559,10 @@ public:
   }
     
   bool isVariadic() const { return getSubClassData(); }
+  
+  typedef const QualType *arg_type_iterator;
+  arg_type_iterator arg_type_begin() const { return ArgInfo; }
+  arg_type_iterator arg_type_end() const { return ArgInfo+NumArgs; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
 
