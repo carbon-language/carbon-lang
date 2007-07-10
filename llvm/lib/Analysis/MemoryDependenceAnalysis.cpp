@@ -29,8 +29,8 @@ Instruction* MemoryDependenceAnalysis::NonLocal = (Instruction*)0;
 Instruction* MemoryDependenceAnalysis::None = (Instruction*)~0;
   
 // Register this pass...
-RegisterPass<MemoryDependenceAnalysis> X("memdep",
-                                           "Memory Dependence Analysis");
+static RegisterPass<MemoryDependenceAnalysis> X("memdep",
+                                                "Memory Dependence Analysis");
 
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
 ///
