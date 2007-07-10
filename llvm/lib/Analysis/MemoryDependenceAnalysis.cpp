@@ -121,12 +121,15 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   // Get the pointer value for which dependence will be determined
   Value* dependee = 0;
   uint64_t dependeeSize = 0;
+  bool queryIsVolatile = false;
   if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
     dependee = S->getPointerOperand();
     dependeeSize = TD.getTypeSize(S->getOperand(0)->getType());
+    queryIsVolatile = S->isVolatile();
   } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
     dependee = L->getPointerOperand();
     dependeeSize = TD.getTypeSize(L->getType());
+    queryIsVolatile = L->isVolatile();
   } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
     dependee = F->getPointerOperand();
     
@@ -148,9 +151,23 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     Value* pointer = 0;
     uint64_t pointerSize = 0;
     if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
+      // All volatile loads/stores depend on each other
+      if (queryIsVolatile && S->isVolatile()) {
+        depGraphLocal.insert(std::make_pair(query, std::make_pair(S, true)));
+        reverseDep.insert(std::make_pair(S, query));
+        return S;
+      }
+      
       pointer = S->getPointerOperand();
       pointerSize = TD.getTypeSize(S->getOperand(0)->getType());
     } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
+      // All volatile loads/stores depend on each other
+      if (queryIsVolatile && L->isVolatile()) {
+        depGraphLocal.insert(std::make_pair(query, std::make_pair(L, true)));
+        reverseDep.insert(std::make_pair(L, query));
+        return L;
+      }
+      
       pointer = L->getPointerOperand();
       pointerSize = TD.getTypeSize(L->getType());
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
