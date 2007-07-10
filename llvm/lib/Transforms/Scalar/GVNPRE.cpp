@@ -680,8 +680,8 @@ namespace {
 // createGVNPREPass - The public interface to this file...
 FunctionPass *llvm::createGVNPREPass() { return new GVNPRE(); }
 
-RegisterPass<GVNPRE> X("gvnpre",
-                       "Global Value Numbering/Partial Redundancy Elimination");
+static RegisterPass<GVNPRE> X("gvnpre",
+                              "Global Value Numbering/Partial Redundancy Elimination");
 
 
 STATISTIC(NumInsertedVals, "Number of values inserted");
