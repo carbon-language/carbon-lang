@@ -7,7 +7,6 @@ Reimplement 'select' in terms of 'SEL'.
 * We would really like to support UXTAB16, but we need to prove that the
   add doesn't need to overflow between the two 16-bit chunks.
 
-* implement predication support
 * Implement pre/post increment support.  (e.g. PR935)
 * Coalesce stack slots!
 * Implement smarter constant generation for binops with large immediates.
@@ -44,16 +43,12 @@ consecutive islands as a single block rather than multiple blocks.
 
 //===---------------------------------------------------------------------===//
 
-We need to start generating predicated instructions.  The .td files have a way
-to express this now (see the PPC conditional return instruction), but the 
-branch folding pass (or a new if-cvt pass) should start producing these, at
-least in the trivial case.
+Eliminate copysign custom expansion. We are still generating crappy code with
+default expansion + if-conversion.
 
-Among the obvious wins, doing so can eliminate the need to custom expand 
-copysign (i.e. we won't need to custom expand it to get the conditional
-negate).
+//===---------------------------------------------------------------------===//
 
-This allows us to eliminate one instruction from:
+Eliminate one instruction from:
 
 define i32 @_Z6slow4bii(i32 %x, i32 %y) {
         %tmp = icmp sgt i32 %x, %y
@@ -65,6 +60,12 @@ __Z6slow4bii:
         cmp r0, r1
         movgt r1, r0
         mov r0, r1
+        bx lr
+=>
+
+__Z6slow4bii:
+        cmp r0, r1
+        movle r0, r1
         bx lr
 
 //===---------------------------------------------------------------------===//
