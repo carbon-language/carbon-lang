@@ -429,8 +429,15 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
       return true;
     else if (p.second->getNumber() > q.second->getNumber())
       return false;
-    else
+    else {
+      // _GLIBCXX_DEBUG needs to check strict weak ordering and it
+      // does it by doing a compare on the same object.
+#ifdef _GLIBCXX_DEBUG
+      return(false);
+#else
       assert(0 && "Predecessor appears twice");
+#endif
+    }
 }
 
 // See if any of the blocks in MergePotentials (which all have a common single
