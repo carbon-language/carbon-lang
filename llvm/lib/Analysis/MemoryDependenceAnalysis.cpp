@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -67,22 +68,18 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   uint64_t dependeeSize = 0;
   if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
     dependee = S->getPointerOperand();
-    dependeeSize = TD.getTypeSize(dependee->getType());
+    dependeeSize = TD.getTypeSize(S->getOperand(0)->getType());
   } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
     dependee = L->getPointerOperand();
-    dependeeSize = TD.getTypeSize(dependee->getType());
+    dependeeSize = TD.getTypeSize(L->getType());
   } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
     dependee = F->getPointerOperand();
     
     // FreeInsts erase the entire structure, not just a field
     dependeeSize = ~0UL;
-  } else if (isa<AllocationInst>(query)) {
-    // Allocations don't depend on anything
-    depGraphLocal.insert(std::make_pair(query, std::make_pair(None,
-                                                              true)));
-    reverseDep.insert(std::make_pair(None, query));
+  } else if (isa<AllocationInst>(query))
     return None;
-  } else
+  else
     // FIXME: Call/InvokeInsts need proper handling
     return None;
   
@@ -92,26 +89,19 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   while (QI != blockBegin) {
     --QI;
     
-    // If we've reached the pointer's definition...
-    if (QI == dependee) {
-      depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
-      reverseDep.insert(std::make_pair(QI, query));
-      return QI;
-    }
-    
     // If this inst is a memory op, get the pointer it accessed
     Value* pointer = 0;
     uint64_t pointerSize = 0;
     if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
       pointer = S->getPointerOperand();
-      pointerSize = TD.getTypeSize(pointer->getType());
+      pointerSize = TD.getTypeSize(S->getOperand(0)->getType());
     } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
       pointer = L->getPointerOperand();
-      pointerSize = TD.getTypeSize(pointer->getType());
+      pointerSize = TD.getTypeSize(L->getType());
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
-      if (isa<ConstantInt>(AI->getArraySize()))
-        pointerSize = AI->getZExtValue();
+      if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
+        pointerSize = C->getZExtValue();
       else
         pointerSize = ~0UL;
     } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
@@ -119,12 +109,21 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
-    } else if (CallSite* C = dyn_cast<CallSite>(QI)) {
+    } else if (CallInst* C = dyn_cast<CallInst>(QI)) {
       // Call insts need special handling.  Check is they can modify our pointer
       if (AA.getModRefInfo(C, dependee, dependeeSize) != AliasAnalysis::NoModRef) {
         depGraphLocal.insert(std::make_pair(query, std::make_pair(C, true)));
         reverseDep.insert(std::make_pair(C, query));
         return C;
+      } else {
+        continue;
+      }
+    } else if (InvokeInst* I = dyn_cast<InvokeInst>(QI)) {
+      // Invoke insts need special handling.  Check is they can modify our pointer
+      if (AA.getModRefInfo(I, dependee, dependeeSize) != AliasAnalysis::NoModRef) {
+        depGraphLocal.insert(std::make_pair(query, std::make_pair(I, true)));
+        reverseDep.insert(std::make_pair(I, query));
+        return I;
       } else {
         continue;
       }
