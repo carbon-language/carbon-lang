@@ -709,8 +709,10 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   rhsType = DefaultFunctionArrayConversion(rhsType);
     
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
-    if (lhsType->isVectorType() || rhsType->isVectorType())
-      return lhsType == rhsType ? Compatible : Incompatible;
+    if (lhsType->isVectorType() || rhsType->isVectorType()) {
+      if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
+        return Incompatible;
+    }
     return Compatible;
   } else if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType())

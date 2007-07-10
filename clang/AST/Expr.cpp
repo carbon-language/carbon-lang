@@ -195,13 +195,17 @@ Expr::isLvalueResult Expr::isLvalue() {
   // first, check the type (C99 6.3.2.1)
   if (isa<FunctionType>(TR.getCanonicalType())) // from isObjectType()
     return LV_NotObjectType;
+
   if (TR->isIncompleteType() && TR->isVoidType())
     return LV_IncompleteVoidType;
-  
+    
   // the type looks fine, now check the expression
   switch (getStmtClass()) {
   case StringLiteralClass: // C99 6.5.1p4
   case ArraySubscriptExprClass: // C99 6.5.3p4 (e1[e2] == (*((e1)+(e2))))
+    // For vectors, make sure base is an lvalue (i.e. not a function call).
+    if (cast<ArraySubscriptExpr>(this)->getBase()->getType()->isVectorType())
+      return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue();
     return LV_Valid;
   case DeclRefExprClass: // C99 6.5.1p2
     if (isa<VarDecl>(cast<DeclRefExpr>(this)->getDecl()))
