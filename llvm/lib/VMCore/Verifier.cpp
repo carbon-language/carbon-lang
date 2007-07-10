@@ -361,6 +361,10 @@ void Verifier::visitFunction(Function &F) {
 
   if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
     unsigned Idx = 1;
+
+    Assert(!Attrs->paramHasAttr(0, ParamAttr::ByVal),
+           "Attribute ByVal should not apply to functions!");
+
     for (FunctionType::param_iterator I = FT->param_begin(), 
          E = FT->param_end(); I != E; ++I, ++Idx) {
       if (Attrs->paramHasAttr(Idx, ParamAttr::ZExt) ||
@@ -370,9 +374,14 @@ void Verifier::visitFunction(Function &F) {
       if (Attrs->paramHasAttr(Idx, ParamAttr::NoAlias))
         Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
                 "Attribute NoAlias should only apply to Pointer type!", &F);
-      if (Attrs->paramHasAttr(Idx, ParamAttr::ByVal))
+      if (Attrs->paramHasAttr(Idx, ParamAttr::ByVal)) {
         Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
-                "Attribute ByVal should only apply to Pointer type!", &F);
+                "Attribute ByVal should only apply to pointer to structs!", &F);
+        const PointerType *Ty =
+            cast<PointerType>(FT->getParamType(Idx-1));
+        Assert1(isa<StructType>(Ty->getElementType()),
+                "Attribute ByVal should only apply to pointer to structs!", &F);
+      }
     }
   }
 
