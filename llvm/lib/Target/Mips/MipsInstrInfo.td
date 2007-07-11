@@ -73,7 +73,7 @@ def HI16 : SDNodeXForm<imm, [{
 def immSExt16  : PatLeaf<(imm), [{
   if (N->getValueType(0) == MVT::i32)
     return (int32_t)N->getValue() == (short)N->getValue();
-  else
+  else    
     return (int64_t)N->getValue() == (short)N->getValue();
 }]>;
 
@@ -82,16 +82,11 @@ def immSExt16  : PatLeaf<(imm), [{
 // immediate are caught.
 // e.g. addiu, sltiu
 def immZExt16  : PatLeaf<(imm), [{
-  return (uint64_t)N->getValue() == (unsigned short)N->getValue();
+  if (N->getValueType(0) == MVT::i32)
+    return (uint32_t)N->getValue() == (unsigned short)N->getValue();
+  else    
+    return (uint64_t)N->getValue() == (unsigned short)N->getValue();
 }], LO16>;
-
-// Node immediate must have only it's 16 high bits set.
-// The HI16 param means that only the higher 16 bits of the node
-// immediate are caught.
-// e.g. lui
-def imm16ShiftedZExt : PatLeaf<(imm), [{
-  return (N->getValue() & ~uint64_t(0xFFFF0000)) == 0;
-}], HI16>;
 
 // shamt field must fit in 5 bits.
 def immZExt5 : PatLeaf<(imm), [{
@@ -183,7 +178,7 @@ class LoadUpper<bits<6> op, string instr_asm>:
   FI< op,
       (ops CPURegs:$dst, uimm16:$imm),
       !strconcat(instr_asm, " $dst, $imm"),
-      [(set CPURegs:$dst, imm16ShiftedZExt:$imm)]>;
+      []>;
 
 // Memory Load/Store 
 let isLoad = 1 in
@@ -308,8 +303,8 @@ def IMPLICIT_DEF_CPURegs : Pseudo<(ops CPURegs:$dst),
 //===----------------------------------------------------------------------===//
 
 // Arithmetic
-def ADDi    : ArithI<0x08, "addi",  add, simm16, immZExt16>;
 def ADDiu   : ArithI<0x09, "addiu", add, uimm16, immSExt16>;
+def ADDi    : ArithI<0x08, "addi",  add, simm16, immZExt16>;
 def MUL     : ArithR<0x1c, 0x02, "mul", mul>;
 def ADDu    : ArithR<0x00, 0x21, "addu", add>;
 def SUBu    : ArithR<0x00, 0x23, "subu", sub>;
@@ -403,6 +398,8 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1, noResults=1,
 
 // Small immediates
 def : Pat<(i32 immSExt16:$in), 
+          (ADDiu ZERO, imm:$in)>;
+def : Pat<(i32 immZExt16:$in), 
           (ORi ZERO, imm:$in)>;
 
 // Arbitrary immediates
@@ -433,6 +430,10 @@ def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
 def : Pat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 def : Pat<(truncstorei1 CPURegs:$src, addr:$addr), 
            (SB CPURegs:$src, addr:$src)>;
+
+def : Pat<(brcond (setne CPURegs:$lhs, (add ZERO, 0)), bb:$dst),
+          (BNE CPURegs:$lhs, ZERO, bb:$dst)>;
+
 
 // Conditional branch patterns.
 // cond branches patterns, 2 register operands signed.
