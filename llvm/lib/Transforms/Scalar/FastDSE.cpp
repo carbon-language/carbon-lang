@@ -2,7 +2,7 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
+// This file was developed by Owen Anderson and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
@@ -64,7 +64,9 @@ FunctionPass *llvm::createFastDeadStoreEliminationPass() { return new FDSE(); }
 bool FDSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
+  // Record the last-seen store to this pointer
   DenseMap<Value*, StoreInst*> lastStore;
+  // Record instructions possibly made dead by deleting a store
   SetVector<Instruction*> possiblyDead;
   
   bool MadeChange = false;
@@ -73,10 +75,10 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ++BBI) {
     // If we find a store...
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
+      StoreInst*& last = lastStore[S->getPointerOperand()];
       
       // ... to a pointer that has been stored to before...
-      if (lastStore.count(S->getPointerOperand())) {
-        StoreInst* last = lastStore[S->getPointerOperand()];
+      if (last) {
         
         // ... and no other memory dependencies are between them....
         if (MD.getDependency(S) == last) {
@@ -94,7 +96,7 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
       }
       
       // Update our most-recent-store map
-      lastStore.insert(std::make_pair(S->getPointerOperand(), S));
+      last =  S;
     }
   }
   
@@ -120,8 +122,10 @@ void FDSE::DeleteDeadInstructionChains(Instruction *I,
   // instruction uses the same operand twice.  We don't want to delete a
   // value then reference it.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-    if (Instruction *Op = dyn_cast<Instruction>(I->getOperand(i)))
-      DeadInsts.insert(Op);      // Attempt to nuke it later.
+    if (I->getOperand(i)->hasOneUse())
+      if (Instruction* Op = dyn_cast<Instruction>(I->getOperand(i)))
+        DeadInsts.insert(Op);      // Attempt to nuke it later.
+    
     I->setOperand(i, 0);         // Drop from the operand list.
   }
 
