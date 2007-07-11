@@ -73,7 +73,7 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
   
   // Do a top-down walk on the BB
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ++BBI) {
-    // If we find a store...
+    // If we find a store or a free...
     if (isa<StoreInst>(BBI) || isa<FreeInst>(BBI)) {
       Value* pointer = 0;
       if (StoreInst* S = dyn_cast<StoreInst>(BBI))
@@ -108,6 +108,50 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
         last = S;
       else
         last = 0;
+    }
+  }
+  
+  // If this block ends in a return, unwind, unreachable, and eventually
+  // tailcall, then all allocas are dead at its end.
+  if (BB.getTerminator()->getNumSuccessors() == 0) {
+    // Pointers alloca'd in this function are dead in the end block
+    SmallPtrSet<AllocaInst*, 4> deadPointers;
+    
+    // Find all of the alloca'd pointers in the entry block
+    BasicBlock *Entry = BB.getParent()->begin();
+    for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
+        deadPointers.insert(AI);
+    
+    // Scan the basic block backwards
+    for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ){
+      --BBI;
+      
+      if (deadPointers.empty())
+        break;
+      
+      // If we find a store whose pointer is dead...
+      if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
+        if (deadPointers.count(S->getPointerOperand())){
+          // Remove it!
+          MD.removeInstruction(S);
+          
+          // DCE instructions only used to calculate that store
+          if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
+            possiblyDead.insert(D);
+          
+          BBI++;
+          S->eraseFromParent();
+          NumFastStores++;
+          MadeChange = true;
+        }
+      
+      // If we encounter a use of the pointer, it is no longer considered dead
+      } else if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
+        deadPointers.erase(L->getPointerOperand());
+      } else if (VAArgInst* V = dyn_cast<VAArgInst>(BBI)) {
+        deadPointers.erase(V->getOperand(0));
+    }
     }
   }
   
