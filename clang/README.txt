@@ -50,14 +50,14 @@ I. Introduction:
    clang       - An example driver, client of the libraries at various levels.
                  This depends on all these libraries, and on LLVM VMCore.
 
- This front-end has been intentionally built as a DAG, making it easy to
- reuse individual parts or replace pieces if desired. For example, to build a
- preprocessor, you take the Basic and Lexer libraries. If you want an indexer,
- you take those plus the Parser library and provide some actions for indexing.
- If you want a refactoring, static analysis, or source-to-source compiler tool,
- it makes sense to take those plus the AST building and semantic analyzer
- library.  Finally, if you want to use this with the LLVM backend, you'd take
- these components plus the AST to LLVM lowering code.
+ This front-end has been intentionally built as a DAG of libraries, making it
+ easy to  reuse individual parts or replace pieces if desired. For example, to
+ build a preprocessor, you take the Basic and Lexer libraries. If you want an
+ indexer, you take those plus the Parser library and provide some actions for
+ indexing.  If you want a refactoring, static analysis, or source-to-source
+ compiler tool, it makes sense to take those plus the AST building and semantic
+ analyzer library.  Finally, if you want to use this with the LLVM backend,
+ you'd take these components plus the AST to LLVM lowering code.
  
  In the future I hope this toolkit will grow to include new and interesting
  components, including a C++ front-end, ObjC support, and a whole lot of other
@@ -77,28 +77,27 @@ II. Usage of clang driver:
    - To make diagnostics more gcc-like: -fno-caret-diagnostics -fno-show-column
    - Enable metric printing: -stats
 
- * -fsyntax-only is the default mode.
+ * -fsyntax-only is currently the default mode.
 
- * -E mode gives output nearly identical to GCC, though not all bugs in
-   whitespace calculation have been emulated (e.g. the number of blank lines
-   emitted).
-
- * -fsyntax-only is currently partially implemented, lacking some semantic
-   analysis.
+ * -E mode works the same way as GCC.
 
  * -Eonly mode does all preprocessing, but does not print the output, useful for
    timing the preprocessor.
  
- * -parse-print-callbacks prints almost no callbacks so far.
+ * -fsyntax-only is currently partially implemented, lacking some semantic
+   analysis (some errors and warnings are not produced).
+
+ * -parse-noop parses code without building an AST.  This is useful for timing
+   the cost of the parser without including AST building time.
  
  * -parse-ast builds ASTs, but doesn't print them.  This is most useful for
    timing AST building vs -parse-noop.
  
- * -parse-ast-print prints most expression and statements nodes, but some
-   minor things are missing.
+ * -parse-ast-print pretty prints most expression and statements nodes.
 
  * -parse-ast-check checks that diagnostic messages that are expected are
    reported and that those which are reported are expected.
+
 
 III. Current advantages over GCC:
 
@@ -128,15 +127,16 @@ Potential Future Features:
  * Fast #import with a module system.
  * Dependency tracking: change to header file doesn't recompile every function
    that texually depends on it: recompile only those functions that need it.
+   This is aka 'incremental parsing'.
 
 
 IV. Missing Functionality / Improvements
 
 clang driver:
- * Include search paths are hard-coded into the driver.
+ * Include search paths are hard-coded into the driver.  Doh.
 
 File Manager:
- * Reduce syscalls, see NOTES.txt.
+ * Reduce syscalls for reduced compile time, see NOTES.txt.
 
 Lexer:
  * Source character mapping.  GCC supports ASCII and UTF-8.
@@ -156,16 +156,16 @@ Preprocessor:
  * Add support for -M*
 
 Traditional Preprocessor:
- * All.
+ * Currently, we have none. :)
 
 Parser:
  * C90/K&R modes are only partially implemented.
- * __extension__, __attribute__ [currently just skipped and ignored].
+ * __extension__ is currently just skipped and ignored.
  * "initializers", GCC inline asm.
  
 Semantic Analysis:
  * Perhaps 75% done.
 
-Code Gen:
- * Mostly missing.
+LLVM Code Gen:
+ * Still very early.
 
