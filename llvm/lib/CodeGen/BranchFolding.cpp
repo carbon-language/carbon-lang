@@ -430,13 +430,12 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
     else if (p.second->getNumber() > q.second->getNumber())
       return false;
     else {
-      // _GLIBCXX_DEBUG needs to check strict weak ordering and it
-      // does it by doing a compare on the same object.
-#ifdef _GLIBCXX_DEBUG
-      return(false);
-#else
+      // _GLIBCXX_DEBUG checks strict weak ordering, which involves comparing
+      // an object with itself.
+#ifndef _GLIBCXX_DEBUG
       assert(0 && "Predecessor appears twice");
 #endif
+      return(false);
     }
 }
 
