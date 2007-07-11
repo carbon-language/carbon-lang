@@ -93,3 +93,41 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads) {
 
   return Slot;
 }
+
+
+/// DemotePHIToStack - This function takes a virtual register computed by a phi
+/// node and replaces it with a slot in the stack frame, allocated via alloca.
+/// The phi node is deleted and it returns the pointer to the alloca inserted.
+AllocaInst* llvm::DemotePHIToStack(PHINode *P) {
+  if (P->use_empty()) {
+    P->eraseFromParent();    
+    return 0;                
+  }
+  
+  // Create a stack slot to hold the value.
+  Function *F = P->getParent()->getParent();
+  AllocaInst *Slot = new AllocaInst(P->getType(), 0, P->getName(),
+                                    F->getEntryBlock().begin());
+  
+  // Iterate over each operand, insert store in each predecessor.
+  for (unsigned i = 0, e = P->getNumIncomingValues(); i < e; ++i) {
+    if (InvokeInst *II = dyn_cast<InvokeInst>(P->getIncomingValue(i))) {
+      assert(II->getParent() != P->getIncomingBlock(i) && 
+             "Invoke edge not supported yet");
+    }
+    new StoreInst(P->getIncomingValue(i), Slot, 
+                  P->getIncomingBlock(i)->getTerminator());
+  }
+  
+  // Insert load in place of the phi and replace all uses.
+  BasicBlock::iterator InsertPt;
+  for (InsertPt = P->getParent()->getInstList().begin(); 
+       isa<PHINode>(InsertPt); ++InsertPt);
+  Value *V = new LoadInst(Slot, P->getName()+".reload", P);
+  P->replaceAllUsesWith(V);
+  
+  // Delete phi.
+  P->eraseFromParent();
+  
+  return Slot;
+}
