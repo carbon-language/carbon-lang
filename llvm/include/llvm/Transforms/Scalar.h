@@ -325,6 +325,13 @@ FunctionPass *createGVNPREPass();
 
 //===----------------------------------------------------------------------===//
 //
+// FastDeadStoreElimination - This pass deletes stores that are post-dominated by
+// must-aliased stores and are not loaded used between the stores.
+//
+FunctionPass *createFastDeadStoreEliminationPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
