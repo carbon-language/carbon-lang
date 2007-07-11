@@ -19,7 +19,7 @@ LEVEL := .
 #
 DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
         tools runtime docs
-        
+
 OPTIONAL_DIRS := examples projects
 EXTRA_DIST := test llvm.spec include win32 Xcode
 
