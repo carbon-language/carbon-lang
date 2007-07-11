@@ -31,23 +31,24 @@ createTargetAsmInfo() const
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
-// FrameInfo  --> StackGrowsDown, 8 bytes aligned, LOA : -4 (Ra : 0)
+//
+// FrameInfo  --> StackGrowsDown, 8 bytes aligned, 
+//                LOA : 0
 MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS): 
   Subtarget(*this, M, FS), DataLayout("E-p:32:32:32"), 
-  InstrInfo(*this), FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4),
+  InstrInfo(*this), FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0),
   TLInfo(*this) {}
 
 // return 0 and must specify -march to gen MIPS code.
 unsigned MipsTargetMachine::
-getModuleMatchQuality(const Module &M) {
+getModuleMatchQuality(const Module &M) 
+{
   // We strongly match "mips-*".
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 5 && std::string(TT.begin(), TT.begin()+5) == "mips-")
     return 20;
-  // If the target triple is something non-mips, we don't match.
-  if (!TT.empty()) return 0;
-
+  
   return 0;
 }
 
