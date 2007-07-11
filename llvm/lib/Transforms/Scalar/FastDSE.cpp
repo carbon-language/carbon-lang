@@ -74,14 +74,22 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
   // Do a top-down walk on the BB
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ++BBI) {
     // If we find a store...
-    if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
-      StoreInst*& last = lastStore[S->getPointerOperand()];
+    if (isa<StoreInst>(BBI) || isa<FreeInst>(BBI)) {
+      Value* pointer = 0;
+      if (StoreInst* S = dyn_cast<StoreInst>(BBI))
+        pointer = S->getPointerOperand();
+      else if (FreeInst* F = dyn_cast<FreeInst>(BBI))
+        pointer = F->getPointerOperand();
+      assert(pointer && "Not a free or a store?");
+      
+      StoreInst*& last = lastStore[pointer];
       
       // ... to a pointer that has been stored to before...
       if (last) {
         
         // ... and no other memory dependencies are between them....
-        if (MD.getDependency(S) == last) {
+        if (MD.getDependency(BBI) == last) {
+          
           // Remove it!
           MD.removeInstruction(last);
           
@@ -96,7 +104,10 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
       }
       
       // Update our most-recent-store map
-      last =  S;
+      if (StoreInst* S = dyn_cast<StoreInst>(BBI))
+        last = S;
+      else
+        last = 0;
     }
   }
   
