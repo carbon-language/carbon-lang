@@ -54,7 +54,11 @@ unsigned SparcTargetMachine::getModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
+#if defined(__sparc__)
+  return 10;
+#else
   return 0;
+#endif
 }
 
 bool SparcTargetMachine::addInstSelector(FunctionPassManager &PM, bool Fast) {
