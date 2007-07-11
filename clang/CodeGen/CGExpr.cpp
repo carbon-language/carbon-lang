@@ -632,17 +632,61 @@ RValue CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
     printf("Unimplemented unary expr!\n");
     E->dump();
     return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
-  // FIXME: pre/post inc/dec
-  case UnaryOperator::AddrOf: return EmitUnaryAddrOf(E);
-  case UnaryOperator::Deref : return EmitLoadOfLValue(E);
-  case UnaryOperator::Plus  : return EmitUnaryPlus(E);
-  case UnaryOperator::Minus : return EmitUnaryMinus(E);
-  case UnaryOperator::Not   : return EmitUnaryNot(E);
-  case UnaryOperator::LNot  : return EmitUnaryLNot(E);
+  case UnaryOperator::PostInc:
+  case UnaryOperator::PostDec:
+  case UnaryOperator::PreInc :
+  case UnaryOperator::PreDec : return EmitUnaryIncDec(E);
+  case UnaryOperator::AddrOf : return EmitUnaryAddrOf(E);
+  case UnaryOperator::Deref  : return EmitLoadOfLValue(E);
+  case UnaryOperator::Plus   : return EmitUnaryPlus(E);
+  case UnaryOperator::Minus  : return EmitUnaryMinus(E);
+  case UnaryOperator::Not    : return EmitUnaryNot(E);
+  case UnaryOperator::LNot   : return EmitUnaryLNot(E);
   // FIXME: SIZEOF/ALIGNOF(expr).
   // FIXME: real/imag
   case UnaryOperator::Extension: return EmitExpr(E->getSubExpr());
   }
+}
+
+RValue CodeGenFunction::EmitUnaryIncDec(const UnaryOperator *E) {
+  LValue LV = EmitLValue(E->getSubExpr());
+  RValue InVal = EmitLoadOfLValue(LV, E->getSubExpr()->getType());
+  
+  // We know the operand is real or pointer type, so it must be an LLVM scalar.
+  assert(InVal.isScalar() && "Unknown thing to increment");
+  llvm::Value *InV = InVal.getVal();
+
+  int AmountVal = 1;
+  if (E->getOpcode() == UnaryOperator::PreDec ||
+      E->getOpcode() == UnaryOperator::PostDec)
+    AmountVal = -1;
+  
+  llvm::Value *NextVal;
+  if (isa<llvm::IntegerType>(InV->getType())) {
+    NextVal = llvm::ConstantInt::get(InV->getType(), AmountVal);
+    NextVal = Builder.CreateAdd(InV, NextVal, AmountVal == 1 ? "inc" : "dec");
+  } else if (InV->getType()->isFloatingPoint()) {
+    NextVal = llvm::ConstantFP::get(InV->getType(), AmountVal);
+    NextVal = Builder.CreateAdd(InV, NextVal, AmountVal == 1 ? "inc" : "dec");
+  } else {
+    // FIXME: This is not right for pointers to VLA types.
+    assert(isa<llvm::PointerType>(InV->getType()));
+    NextVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
+    NextVal = Builder.CreateGEP(InV, NextVal, AmountVal == 1 ? "inc" : "dec");
+  }
+
+  RValue NextValToStore = RValue::get(NextVal);
+
+  // Store the updated result through the lvalue.
+  EmitStoreThroughLValue(NextValToStore, LV, E->getSubExpr()->getType());
+                         
+  // If this is a postinc, return the value read from memory, otherwise use the
+  // updated value.
+  if (E->getOpcode() == UnaryOperator::PreDec ||
+      E->getOpcode() == UnaryOperator::PreInc)
+    return NextValToStore;
+  else
+    return InVal;
 }
 
 /// C99 6.5.3.2

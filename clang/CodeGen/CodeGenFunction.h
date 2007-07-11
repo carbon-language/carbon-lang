@@ -316,7 +316,7 @@ public:
 
   // Unary Operators.
   RValue EmitUnaryOperator(const UnaryOperator *E);
-  // FIXME: pre/post inc/dec
+  RValue EmitUnaryIncDec  (const UnaryOperator *E);
   RValue EmitUnaryAddrOf  (const UnaryOperator *E);
   RValue EmitUnaryPlus    (const UnaryOperator *E);
   RValue EmitUnaryMinus   (const UnaryOperator *E);
