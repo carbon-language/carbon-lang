@@ -161,7 +161,7 @@ namespace {
                       MachineInstr *CPEMI, unsigned Disp,
                       bool DoDump);
     bool WaterIsInRange(unsigned UserOffset, MachineBasicBlock *Water,
-                        unsigned Disp);
+                        CPUser &U);
     bool OffsetIsInRange(unsigned UserOffset, unsigned TrialOffset,
                         unsigned Disp, bool NegativeOK);
     bool BBIsInRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned Disp);
@@ -199,8 +199,8 @@ void ARMConstantIslands::verify(MachineFunction &Fn) {
 /// print block size and offset information - debugging
 void ARMConstantIslands::dumpBBs() {
   for (unsigned J = 0, E = BBOffsets.size(); J !=E; ++J) {
-    DOUT << "block" << J << " offset" << BBOffsets[J] << 
-                            " size" << BBSizes[J] << "\n";
+    DOUT << "block " << J << " offset " << BBOffsets[J] << 
+                            " size " << BBSizes[J] << "\n";
   }
 }
 
@@ -668,8 +668,9 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
 /// Water (a basic block) will be in range for the specific MI.
 
 bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
-                         MachineBasicBlock* Water, unsigned MaxDisp)
+                         MachineBasicBlock* Water, CPUser &U)
 {
+  unsigned MaxDisp = U.MaxDisp;
   MachineFunction::iterator I = next(MachineFunction::iterator(Water));
   unsigned CPEOffset = BBOffsets[Water->getNumber()] + 
                        BBSizes[Water->getNumber()];
@@ -678,7 +679,7 @@ bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
   // the offset of the instruction.  (Currently applies only to ARM, so
   // no alignment compensation attempted here.)
   if (CPEOffset < UserOffset)
-    UserOffset += 4;
+    UserOffset += U.CPEMI->getOperand(2).getImm();
 
   return OffsetIsInRange (UserOffset, CPEOffset, MaxDisp, !isThumb);
 }
@@ -869,7 +870,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
     for (std::vector<MachineBasicBlock*>::iterator IP = prior(WaterList.end()),
         B = WaterList.begin();; --IP) {
       MachineBasicBlock* WaterBB = *IP;
-      if (WaterIsInRange(UserOffset, WaterBB, U.MaxDisp)) {
+      if (WaterIsInRange(UserOffset, WaterBB, U)) {
         if (isThumb &&
             (BBOffsets[WaterBB->getNumber()] + 
              BBSizes[WaterBB->getNumber()])%4 != 0) {
