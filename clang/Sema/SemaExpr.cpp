@@ -573,7 +573,7 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
 }
 
-inline QualType Sema::DefaultFunctionArrayConversion(QualType t) {
+QualType Sema::DefaultFunctionArrayConversion(QualType t) {
   if (t->isFunctionType()) // C99 6.3.2.1p4
     return Context.getPointerType(t);
   if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
