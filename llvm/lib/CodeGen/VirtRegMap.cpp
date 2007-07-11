@@ -277,10 +277,8 @@ class VISIBILITY_HIDDEN AvailableSpills {
 
   // SpillSlotsAvailable - This map keeps track of all of the spilled virtual
   // register values that are still available, due to being loaded or stored to,
-  // but not invalidated yet. It also tracks the instructions that defined
-  // or used the register.
-  typedef std::pair<unsigned, std::vector<MachineInstr*> > SSInfo;
-  std::map<int, SSInfo> SpillSlotsAvailable;
+  // but not invalidated yet.
+  std::map<int, unsigned> SpillSlotsAvailable;
     
   // PhysRegsAvailable - This is the inverse of SpillSlotsAvailable, indicating
   // which stack slot values are currently held by a physreg.  This is used to
@@ -298,56 +296,15 @@ public:
   const MRegisterInfo *getRegInfo() const { return MRI; }
 
   /// getSpillSlotPhysReg - If the specified stack slot is available in a 
-  /// physical register, return that PhysReg, otherwise return 0. It also
-  /// returns by reference the instruction that either defines or last uses
-  /// the register.
-  unsigned getSpillSlotPhysReg(int Slot, MachineInstr *&SSMI) const {
-    std::map<int, SSInfo>::const_iterator I = SpillSlotsAvailable.find(Slot);
+  /// physical register, return that PhysReg, otherwise return 0.
+  unsigned getSpillSlotPhysReg(int Slot) const {
+    std::map<int, unsigned>::const_iterator I = SpillSlotsAvailable.find(Slot);
     if (I != SpillSlotsAvailable.end()) {
-      if (!I->second.second.empty())
-        SSMI = I->second.second.back();
-      return I->second.first >> 1;  // Remove the CanClobber bit.
+      return I->second >> 1;  // Remove the CanClobber bit.
     }
     return 0;
   }
 
-  /// addLastUse - Add the last use information of all stack slots whose
-  /// values are available in the specific register.
-  void addLastUse(unsigned PhysReg, MachineInstr *Use) {
-    std::multimap<unsigned, int>::iterator I =
-      PhysRegsAvailable.lower_bound(PhysReg);
-    while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
-      int Slot = I->second;
-      I++;
-
-      std::map<int, SSInfo>::iterator II = SpillSlotsAvailable.find(Slot);
-      assert(II != SpillSlotsAvailable.end() && "Slot not available!");
-      unsigned Val = II->second.first;
-      assert((Val >> 1) == PhysReg && "Bidirectional map mismatch!");
-      // This can be true if there are multiple uses of the same register.
-      if (II->second.second.back() != Use)
-        II->second.second.push_back(Use);
-    }
-  }
-  
-  /// removeLastUse - Remove the last use information of all stack slots whose
-  /// values are available in the specific register.
-  void removeLastUse(unsigned PhysReg, MachineInstr *Use) {
-    std::multimap<unsigned, int>::iterator I =
-      PhysRegsAvailable.lower_bound(PhysReg);
-    while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
-      int Slot = I->second;
-      I++;
-
-      std::map<int, SSInfo>::iterator II = SpillSlotsAvailable.find(Slot);
-      assert(II != SpillSlotsAvailable.end() && "Slot not available!");
-      unsigned Val = II->second.first;
-      assert((Val >> 1) == PhysReg && "Bidirectional map mismatch!");
-      if (II->second.second.back() == Use)
-        II->second.second.pop_back();
-    }
-  }
-  
   /// addAvailable - Mark that the specified stack slot is available in the
   /// specified physreg.  If CanClobber is true, the physreg can be modified at
   /// any time without changing the semantics of the program.
@@ -358,10 +315,7 @@ public:
     ModifyStackSlot(Slot);
     
     PhysRegsAvailable.insert(std::make_pair(Reg, Slot));
-    std::vector<MachineInstr*> DefUses;
-    DefUses.push_back(MI);
-    SpillSlotsAvailable[Slot] =
-      std::make_pair((Reg << 1) | (unsigned)CanClobber, DefUses);
+    SpillSlotsAvailable[Slot] = (Reg << 1) | (unsigned)CanClobber;
   
     if (Slot > VirtRegMap::MAX_STACK_SLOT)
       DOUT << "Remembering RM#" << Slot-VirtRegMap::MAX_STACK_SLOT-1;
@@ -375,7 +329,7 @@ public:
   /// stack slot must be available in a physreg for this query to make sense.
   bool canClobberPhysReg(int Slot) const {
     assert(SpillSlotsAvailable.count(Slot) && "Slot not available!");
-    return SpillSlotsAvailable.find(Slot)->second.first & 1;
+    return SpillSlotsAvailable.find(Slot)->second & 1;
   }
   
   /// disallowClobberPhysReg - Unset the CanClobber bit of the specified
@@ -404,9 +358,9 @@ void AvailableSpills::disallowClobberPhysRegOnly(unsigned PhysReg) {
   while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
     int Slot = I->second;
     I++;
-    assert((SpillSlotsAvailable[Slot].first >> 1) == PhysReg &&
+    assert((SpillSlotsAvailable[Slot] >> 1) == PhysReg &&
            "Bidirectional map mismatch!");
-    SpillSlotsAvailable[Slot].first &= ~1;
+    SpillSlotsAvailable[Slot] &= ~1;
     DOUT << "PhysReg " << MRI->getName(PhysReg)
          << " copied, it is available for use but can no longer be modified\n";
   }
@@ -429,7 +383,7 @@ void AvailableSpills::ClobberPhysRegOnly(unsigned PhysReg) {
   while (I != PhysRegsAvailable.end() && I->first == PhysReg) {
     int Slot = I->second;
     PhysRegsAvailable.erase(I++);
-    assert((SpillSlotsAvailable[Slot].first >> 1) == PhysReg &&
+    assert((SpillSlotsAvailable[Slot] >> 1) == PhysReg &&
            "Bidirectional map mismatch!");
     SpillSlotsAvailable.erase(Slot);
     DOUT << "PhysReg " << MRI->getName(PhysReg)
@@ -454,9 +408,9 @@ void AvailableSpills::ClobberPhysReg(unsigned PhysReg) {
 /// changes.  This removes information about which register the previous value
 /// for this slot lives in (as the previous value is dead now).
 void AvailableSpills::ModifyStackSlot(int Slot) {
-  std::map<int, SSInfo>::iterator It = SpillSlotsAvailable.find(Slot);
+  std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(Slot);
   if (It == SpillSlotsAvailable.end()) return;
-  unsigned Reg = It->second.first >> 1;
+  unsigned Reg = It->second >> 1;
   SpillSlotsAvailable.erase(It);
   
   // This register may hold the value of multiple stack slots, only remove this
@@ -794,8 +748,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       unsigned PhysReg;
 
       // Check to see if this stack slot is available.
-      MachineInstr *SSMI = NULL;
-      if ((PhysReg = Spills.getSpillSlotPhysReg(StackSlot, SSMI))) {
+      if ((PhysReg = Spills.getSpillSlotPhysReg(StackSlot))) {
         // This spilled operand might be part of a two-address operand.  If this
         // is the case, then changing it will necessarily require changing the 
         // def part of the instruction as well.  However, in some cases, we
@@ -824,9 +777,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                << VirtReg <<" instead of reloading into physreg "
                << MRI->getName(VRM.getPhys(VirtReg)) << "\n";
           MI.getOperand(i).setReg(PhysReg);
-
-          if (ti == -1)
-            Spills.addLastUse(PhysReg, &MI);
 
           // The only technical detail we have is that we don't know that
           // PhysReg won't be clobbered by a reloaded stack slot that occurs
@@ -894,11 +844,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         ReusedOperands.markClobbered(DesignatedReg);
         MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC);
 
-        // Extend the live range of the MI that last kill the register if
-        // necessary.
         MachineInstr *CopyMI = prior(MII);
         UpdateKills(*CopyMI, RegKills, KillOps);
-        Spills.addLastUse(PhysReg, CopyMI);
 
         // This invalidates DesignatedReg.
         Spills.ClobberPhysReg(DesignatedReg);
@@ -973,8 +920,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           if (FrameIdx == SS) {
             // If this spill slot is available, turn it into a copy (or nothing)
             // instead of leaving it as a load!
-            MachineInstr *SSMI = NULL;
-            if (unsigned InReg = Spills.getSpillSlotPhysReg(SS, SSMI)) {
+            if (unsigned InReg = Spills.getSpillSlotPhysReg(SS)) {
               DOUT << "Promoted Load To Copy: " << MI;
               if (DestReg != InReg) {
                 MRI->copyRegToReg(MBB, &MI, DestReg, InReg,
@@ -987,14 +933,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                 BackTracked = true;
               } else
                 DOUT << "Removing now-noop copy: " << MI;
-
-              if (NextMII != MBB.end()) {
-                // If NextMII uses InReg and the use is not a two address
-                // operand, mark it killed.
-                int UIdx = NextMII->findRegisterUseOperandIdx(InReg);
-                if (UIdx != -1)
-                  Spills.addLastUse(InReg, &(*NextMII));
-              }
 
               VRM.RemoveFromFoldedVirtMap(&MI);
               MBB.erase(&MI);
@@ -1065,7 +1003,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
-            Spills.removeLastUse(Src, &MI);
             MBB.erase(&MI);
             Erased = true;
             VRM.RemoveFromFoldedVirtMap(&MI);
@@ -1143,7 +1080,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
-            Spills.removeLastUse(Src, &MI);
             MBB.erase(&MI);
             Erased = true;
             VRM.RemoveFromFoldedVirtMap(&MI);
