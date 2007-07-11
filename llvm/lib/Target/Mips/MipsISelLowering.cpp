@@ -139,14 +139,14 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
 }
 
 // Set up a frame object for the return address.
-SDOperand MipsTargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
-  if (ReturnAddrIndex == 0) {
-    MachineFunction &MF = DAG.getMachineFunction();
-    ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, 0);
-  }
-
-  return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());
-}
+//SDOperand MipsTargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
+//  if (ReturnAddrIndex == 0) {
+//    MachineFunction &MF = DAG.getMachineFunction();
+//    ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, 0);
+//  }
+//
+//  return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());
+//}
 
 
 //===----------------------------------------------------------------------===//
@@ -168,17 +168,6 @@ SDOperand MipsTargetLowering::
 LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG)
 {
   assert(0 && "TLS not implemented for MIPS.");
-}
-
-SDOperand MipsTargetLowering::
-LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG) {
-  // Depths > 0 not supported yet!
-  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
-    return SDOperand();
-  
-  // Just load the return address
-  SDOperand RetAddrFI = getReturnAddressFrameIndex(DAG);
-  return DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI, NULL, 0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -222,17 +211,28 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG)
 SDOperand MipsTargetLowering::
 LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC) 
 {
+  MachineFunction &MF = DAG.getMachineFunction();
+  unsigned StackReg   = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
+
   SDOperand Chain  = Op.getOperand(0);
   SDOperand Callee = Op.getOperand(4);
+  bool isVarArg    = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+
+  // To meet ABI, Mips must always allocate 16 bytes on
+  // the stack (even if less than 4 are used as arguments)
+  int VTsize = MVT::getSizeInBits(MVT::i32)/8;
+  MFI->CreateFixedObject(VTsize, -(VTsize*3));
+
   CCInfo.AnalyzeCallOperands(Op.Val, CC_Mips);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
-
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, 
                                  getPointerTy()));
 
@@ -268,17 +268,19 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
+
       assert(VA.isMemLoc());
-      // Mips::SP holds our stack pointer
+
       if (StackPtr.Val == 0)
-        StackPtr = DAG.getRegister(Mips::SP, getPointerTy());
+        StackPtr = DAG.getRegister(StackReg, getPointerTy());
      
-      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), 
-                                         getPointerTy());
-      
-      // emit a ISD::ADD which emits the final 
-      // stack location to place the parameter
-      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      // Create the frame index object for this incoming parameter
+      // This guarantees that when allocating Local Area our room
+      // will not be overwritten.
+      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                      -(16 + VA.getLocMemOffset()) );
+
+      SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
       // emit ISD::STORE whichs stores the 
       // parameter value to a stack Location
@@ -287,7 +289,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   }
 
   // Transform all store nodes into one single node because
-  // all store nodes ar independent of each other.
+  // all store nodes are independent of each other.
   if (!MemOpChains.empty())     
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, 
                         &MemOpChains[0], MemOpChains.size());
@@ -356,13 +358,16 @@ SDNode *MipsTargetLowering::
 LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall, 
         unsigned CallingConv, SelectionDAG &DAG) {
   
+  bool isVarArg = cast<ConstantSDNode>(TheCall->getOperand(2))->getValue() != 0;
+
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallingConv, getTargetMachine(), RVLocs);
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
+
   CCInfo.AnalyzeCallResult(TheCall, RetCC_Mips);
   SmallVector<SDOperand, 8> ResultVals;
 
-  // returns void
+  // Returns void
   if (!RVLocs.size())
     return Chain.Val;
 
@@ -405,16 +410,22 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG)
 SDOperand MipsTargetLowering::
 LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
 {
+  SDOperand Root        = Op.getOperand(0);
   MachineFunction &MF   = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  SDOperand Root        = Op.getOperand(0);
+
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
+
+  unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(MF.getFunction()->getCallingConv(), 
-                 getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+
   CCInfo.AnalyzeFormalArguments(Op.Val, CC_Mips);
   SmallVector<SDOperand, 8> ArgValues;
+  SDOperand StackPtr;
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
 
@@ -430,10 +441,10 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
       else
         assert(0 && "support only Mips::CPURegsRegisterClass");
       
-      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
 
       // Transform the arguments stored on 
       // physical registers into virtual ones
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);
       SDOperand ArgValue = DAG.getCopyFromReg(Root, Reg, RegVT);
       
       // If this is an 8 or 16-bit value, it is really passed promoted 
@@ -451,13 +462,32 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
 
       ArgValues.push_back(ArgValue);
 
+      // To meet ABI, when VARARGS are passed on registers, the registers
+      // containt must be written to the their always reserved home location 
+      // on the stack.
+      if (isVarArg) {
+
+        if (StackPtr.Val == 0)
+          StackPtr = DAG.getRegister(StackReg, getPointerTy());
+     
+        // Create the frame index object for this incoming parameter
+        // The first 16 bytes are reserved.
+        int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                        i*4);
+        SDOperand PtrOff = DAG.getFrameIndex(FI, getPointerTy());
+      
+        // emit ISD::STORE whichs stores the 
+        // parameter value to a stack Location
+        ArgValues.push_back(DAG.getStore(Root, ArgValue, PtrOff, NULL, 0));
+      }
+
     } else {
       // sanity check
       assert(VA.isMemLoc());
       
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      VA.getLocMemOffset());
+                                      (16 + VA.getLocMemOffset()));
 
       // Create load nodes to retrieve arguments from the stack
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
@@ -465,8 +495,6 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
     }
   }
   ArgValues.push_back(Root);
-
-  ReturnAddrIndex = 0;
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
@@ -483,10 +511,11 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
   // CCValAssign - represent the assignment of
   // the return value to a location
   SmallVector<CCValAssign, 16> RVLocs;
-  unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
+  unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
+  bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CC, getTargetMachine(), RVLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
 
   // Analize return values of ISD::RET
   CCInfo.AnalyzeReturn(Op.Val, RetCC_Mips);
@@ -495,7 +524,8 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
   // the regs to the liveout set for the function.
   if (DAG.getMachineFunction().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
-      DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
+      if (RVLocs[i].isRegLoc())
+        DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
   }
 
   // The chain is always operand #0
