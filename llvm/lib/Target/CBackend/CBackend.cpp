@@ -466,7 +466,10 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
       printType(Out, *I, false, "field" + utostr(Idx++));
       Out << ";\n";
     }
-    return Out << '}';
+    Out << '}';
+    if (STy->isPacked())
+      Out << " __attribute__ ((packed))";
+    return Out;
   }
 
   case Type::PointerTyID: {
