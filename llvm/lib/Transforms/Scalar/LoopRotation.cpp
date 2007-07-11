@@ -18,7 +18,10 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -55,6 +58,17 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
+      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<LoopInfo>();
+      AU.addRequiredID(LoopSimplifyID);
+      AU.addPreservedID(LoopSimplifyID);
+      AU.addPreserved<DominatorTree>();
+      // Request DominanceFrontier now, even though Loop Rotate does
+      // not use it. This allows Pass Manager to schedule Dominance
+      // Frontier early enough such that one LPPassManager can handle
+      // loop rotate as well as licm pass.
+      AU.addRequired<DominanceFrontier>(); 
+      AU.addPreserved<DominanceFrontier>();
     }
 
     // Helper functions
@@ -90,7 +104,7 @@ namespace {
     BasicBlock *OrigLatch;
     BasicBlock *NewHeader;
     BasicBlock *Exit;
-
+    LPPassManager *LPM_Ptr;
     SmallVector<RenameData, MAX_HEADER_SIZE> LoopHeaderInfo;
   };
   
@@ -103,9 +117,10 @@ LoopPass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 /// Rotate Loop L as many times as possible. Return true if
 /// loop is rotated at least once.
 bool LoopRotate::runOnLoop(Loop *Lp, LPPassManager &LPM) {
-  
+
   bool RotatedOneLoop = false;
   initialize();
+  LPM_Ptr = &LPM;
 
   // One loop can be rotated multiple times.
   while (rotateLoop(Lp,LPM)) {
@@ -152,6 +167,13 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   if (ExitBlocks.size() > 1)
     return false;
 
+  // Check size of original header and reject
+  // loop if it is very big.
+  if (OrigHeader->getInstList().size() > MAX_HEADER_SIZE)
+    return false;
+
+  // Now, this loop is suitable for rotation.
+
   // Find new Loop header. NewHeader is a Header's one and only successor
   // that is inside loop.  Header's other successor is out side the
   // loop. Otherwise loop is not suitable for rotation.
@@ -162,13 +184,6 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   assert (NewHeader && "Unable to determine new loop header");
   assert(L->contains(NewHeader) && !L->contains(Exit) && 
          "Unable to determine loop header and exit blocks");
-
-  // Check size of original header and reject
-  // loop if it is very big.
-  if (OrigHeader->getInstList().size() > MAX_HEADER_SIZE)
-    return false;
-
-  // Now, this loop is suitable for rotation.
 
   // Copy PHI nodes and other instructions from original header
   // into original pre-header. Unlike original header, original pre-header is
@@ -314,18 +329,24 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
           U->replaceUsesOfWith(OldPhi, NewPhi);
         continue;
       }
-
-      // Used inside Exit Block. Since we are in LCSSA form, U must be PHINode.
-      assert (U->getParent() == Exit 
-              && "Need to propagate new PHI into Exit blocks");
-      assert (isa<PHINode>(U) && "Use in Exit Block that is not PHINode");
-
-      PHINode *UPhi = cast<PHINode>(U);
-
-      // UPhi already has one incoming argument from original header. 
-      // Add second incoming argument from new Pre header.
       
-      UPhi->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
+      // Used inside Exit Block. Since we are in LCSSA form, U must be PHINode.
+      if (U->getParent() == Exit) {
+        assert (isa<PHINode>(U) && "Use in Exit Block that is not PHINode");
+        
+        PHINode *UPhi = cast<PHINode>(U);
+        // UPhi already has one incoming argument from original header. 
+        // Add second incoming argument from new Pre header.
+        UPhi->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
+      } else {
+        // Used outside Exit block. Create a new PHI node from exit block
+        // to receive value from ne new header ane pre header.
+        PHINode *PN = new PHINode(U->getType(), U->getName());
+        PN->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
+        PN->addIncoming(OldPhi, OrigHeader);
+        Exit->getInstList().push_front(PN);
+        U->replaceUsesOfWith(OldPhi, PN);
+      }
     }
   }
   
@@ -461,10 +482,105 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
             "Expected only one incoming value from Original PreHeader");
   }
 
+  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
+    DT->addNewBlock(NewPreHeader, OrigPreHeader);
+    DT->changeImmediateDominator(L->getHeader(), NewPreHeader);
+    DT->changeImmediateDominator(Exit, OrigPreHeader);
+    for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
+         BI != BE; ++BI) {
+      BasicBlock *B = *BI;
+      if (L->getHeader() != B) {
+        DomTreeNode *Node = DT->getNode(B);
+        if (Node && Node->getBlock() == OrigHeader)
+          DT->changeImmediateDominator(*BI, L->getHeader());
+      }
+    }
+    DT->changeImmediateDominator(OrigHeader, OrigLatch);
+  }
+
+  if(DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
+
+    // New Preheader's dominance frontier is Exit block.
+    DominanceFrontier::DomSetType NewPHSet;
+    NewPHSet.insert(Exit);
+    DF->addBasicBlock(NewPreHeader, NewPHSet);
+
+    // New Header's dominance frontier now includes itself and Exit block
+    DominanceFrontier::iterator HeadI = DF->find(L->getHeader());
+    if (HeadI != DF->end()) {
+      DominanceFrontier::DomSetType & HeaderSet = HeadI->second;
+      HeaderSet.clear();
+      HeaderSet.insert(L->getHeader());
+      HeaderSet.insert(Exit);
+    } else {
+      DominanceFrontier::DomSetType HeaderSet;
+      HeaderSet.insert(L->getHeader());
+      HeaderSet.insert(Exit);
+      DF->addBasicBlock(L->getHeader(), HeaderSet);
+    }
+
+    // Original header (new Loop Latch)'s dominance frontier is Exit.
+    DominanceFrontier::iterator LatchI = DF->find(L->getLoopLatch());
+    if (LatchI != DF->end()) {
+      DominanceFrontier::DomSetType &LatchSet = LatchI->second;
+      LatchSet = LatchI->second;
+      LatchSet.clear();
+      LatchSet.insert(Exit);
+    } else {
+      DominanceFrontier::DomSetType LatchSet;
+      LatchSet.insert(Exit);
+      DF->addBasicBlock(L->getHeader(), LatchSet);
+    }
+
+    // If a loop block dominates new loop latch then its frontier is
+    // new header and Exit.
+    BasicBlock *NewLatch = L->getLoopLatch();
+    DominatorTree *DT = getAnalysisToUpdate<DominatorTree>();
+    for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
+         BI != BE; ++BI) {
+      BasicBlock *B = *BI;
+      if (DT->dominates(B, NewLatch)) {
+        DominanceFrontier::iterator BDFI = DF->find(B);
+        if (BDFI != DF->end()) {
+          DominanceFrontier::DomSetType &BSet = BDFI->second;
+          BSet = BDFI->second;
+          BSet.clear();
+          BSet.insert(L->getHeader());
+          BSet.insert(Exit);
+        } else {
+          DominanceFrontier::DomSetType BSet;
+          BSet.insert(L->getHeader());
+          BSet.insert(Exit);
+          DF->addBasicBlock(B, BSet);
+        }
+      }
+    }
+  }
+
+  // Preserve canonical loop form, which means Exit block should
+  // have only one predecessor.
+  BasicBlock *NExit = SplitEdge(L->getLoopLatch(), Exit, this);
+
+  // Preserve LCSSA.
+  BasicBlock::iterator I = Exit->begin(), E = Exit->end();
+  PHINode *PN = NULL;
+  for (; (PN = dyn_cast<PHINode>(I)); ++I) {
+    PHINode *NewPN = new PHINode(PN->getType(), PN->getName());
+    unsigned N = PN->getNumIncomingValues();
+    for (unsigned index = 0; index < N; ++index)
+      if (PN->getIncomingBlock(index) == NExit) {
+        NewPN->addIncoming(PN->getIncomingValue(index), L->getLoopLatch());
+        PN->setIncomingValue(index, NewPN);
+        PN->setIncomingBlock(index, NExit);
+        NExit->getInstList().push_front(NewPN);
+      }
+  }
+
   assert (NewHeader && L->getHeader() == NewHeader 
           && "Invalid loop header after loop rotation");
   assert (NewPreHeader && L->getLoopPreheader() == NewPreHeader
           && "Invalid loop preheader after loop rotation");
   assert (L->getLoopLatch() 
           && "Invalid loop latch after loop rotation");
+
 }
