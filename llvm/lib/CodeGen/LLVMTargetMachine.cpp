@@ -43,11 +43,10 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
-  
-  // FIXME: Implement the invoke/unwind instructions!
+
   if (!ExceptionHandling)
     PM.add(createLowerInvokePass(getTargetLowering()));
-  
+
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
