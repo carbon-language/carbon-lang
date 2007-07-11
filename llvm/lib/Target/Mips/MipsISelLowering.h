@@ -75,6 +75,7 @@ namespace llvm {
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
 
   };

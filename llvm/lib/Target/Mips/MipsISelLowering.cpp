@@ -59,6 +59,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 
   // Custom
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
 
   // Load extented operations for i1 types must be promoted 
@@ -115,6 +116,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG)
     case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
     case ISD::RET:              return LowerRET(Op, DAG);
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
+    case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
     case ISD::RETURNADDR:       return LowerRETURNADDR(Op, DAG);
   }
   return SDOperand();
@@ -160,6 +162,12 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG)
   SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
 
   return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
+}
+
+SDOperand MipsTargetLowering::
+LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG)
+{
+  assert(0 && "TLS not implemented for MIPS.");
 }
 
 SDOperand MipsTargetLowering::

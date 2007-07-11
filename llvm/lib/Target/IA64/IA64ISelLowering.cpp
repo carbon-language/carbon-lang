@@ -108,6 +108,9 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
       setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
+      // Thread Local Storage
+      setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
+
       setStackPointerRegisterToSaveRestore(IA64::r12);
 
       setJumpBufSize(704); // on ia64-linux, jmp_bufs are 704 bytes..
@@ -538,6 +541,8 @@ SDOperand IA64TargetLowering::
 LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
+  case ISD::GlobalTLSAddress:
+    assert(0 && "TLS not implemented for IA64.");
   case ISD::RET: {
     SDOperand AR_PFSVal, Copy;
     

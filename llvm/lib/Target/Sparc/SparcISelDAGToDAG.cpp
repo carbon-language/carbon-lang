@@ -141,6 +141,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   
   // Custom legalize GlobalAddress nodes into LO/HI parts.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool , MVT::i32, Custom);
   
   // Sparc doesn't have sext_inreg, replace them with shl/sra
@@ -700,6 +701,8 @@ SDOperand SparcTargetLowering::
 LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
+  case ISD::GlobalTLSAddress:
+    assert(0 && "TLS not implemented for Sparc.");
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);

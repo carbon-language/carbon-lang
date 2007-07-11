@@ -159,9 +159,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // We want to legalize GlobalAddress and ConstantPool nodes into the 
   // appropriate instructions to materialize the address.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
   setOperationAction(ISD::JumpTable,     MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i64, Custom);
   setOperationAction(ISD::JumpTable,     MVT::i64, Custom);
   
@@ -1012,6 +1014,10 @@ static SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   
   Lo = DAG.getNode(ISD::ADD, PtrVT, Hi, Lo);
   return Lo;
+}
+
+static SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG) {
+  assert(0 && "TLS not implemented for PPC.");
 }
 
 static SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
@@ -2862,6 +2868,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VASTART:            

@@ -122,6 +122,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::GlobalAddress,  MVT::i64, Custom);
   setOperationAction(ISD::ConstantPool,   MVT::i64, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
 
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::VAEND,   MVT::Other, Expand);
@@ -424,6 +425,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, CPI, Hi);
     return Lo;
   }
+  case ISD::GlobalTLSAddress:
+    assert(0 && "TLS not implemented for Alpha.");
   case ISD::GlobalAddress: {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
     GlobalValue *GV = GSDN->getGlobal();
