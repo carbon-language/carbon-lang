@@ -1,2 +1,4 @@
 DepModule:
-BuildTarget: build-for-llvm-top
+ConfigCmd: ./configure --prefix=@INSTALL_PREFIX@ --with-llvmgccdir=@LLVM_TOP@/install
+ConfigFile: ./config.status
+BuildCmd: make build-for-llvm-top LLVM_TOP=@LLVM_TOP@
