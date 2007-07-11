@@ -426,6 +426,63 @@ void AvailableSpills::ModifyStackSlot(int Slot) {
 
 
 
+/// InvalidateKills - MI is going to be deleted. If any of its operands are
+/// marked kill, then invalidate the information.
+static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps) {
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (KillOps[Reg] == &MO) {
+      RegKills.reset(Reg);
+      KillOps[Reg] = NULL;
+    }
+  }
+}
+
+/// UpdateKills - Track and update kill info. If a MI reads a register that is
+/// marked kill, then it must be due to register reuse. Transfer the kill info
+/// over.
+static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
+                        std::vector<MachineOperand*> &KillOps) {
+  const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isUse())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0)
+      continue;
+    
+    if (RegKills[Reg]) {
+      // That can't be right. Register is killed but not re-defined and it's
+      // being reused. Let's fix that.
+      KillOps[Reg]->unsetIsKill();
+      if (i < TID->numOperands &&
+          TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
+        // Unless it's a two-address operand, this is the new kill.
+        MO.setIsKill();
+    }
+
+    if (MO.isKill()) {
+      RegKills.set(Reg);
+      KillOps[Reg] = &MO;
+    }
+  }
+
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isDef())
+      continue;
+    unsigned Reg = MO.getReg();
+    RegKills.reset(Reg);
+    KillOps[Reg] = NULL;
+  }
+}
+
+
 // ReusedOp - For each reused operand, we keep track of a bit of information, in
 // case we need to rollback upon processing a new operand.  See comments below.
 namespace {
@@ -494,7 +551,9 @@ namespace {
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
                              std::map<int, MachineInstr*> &MaybeDeadStores,
-                             SmallSet<unsigned, 8> &Rejected) {
+                             SmallSet<unsigned, 8> &Rejected,
+                             BitVector &RegKills,
+                             std::vector<MachineOperand*> &KillOps) {
       if (Reuses.empty()) return PhysReg;  // This is most often empty.
 
       for (unsigned ro = 0, e = Reuses.size(); ro != e; ++ro) {
@@ -509,7 +568,8 @@ namespace {
           // Yup, use the reload register that we didn't use before.
           unsigned NewReg = Op.AssignedPhysReg;
           Rejected.insert(PhysReg);
-          return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores, Rejected);
+          return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores, Rejected,
+                                 RegKills, KillOps);
         } else {
           // Otherwise, we might also have a problem if a previously reused
           // value aliases the new register.  If so, codegen the previous reload
@@ -534,7 +594,8 @@ namespace {
             // register could hold a reuse.  Check to see if it conflicts or
             // would prefer us to use a different register.
             unsigned NewPhysReg = GetRegForReload(NewOp.AssignedPhysReg,
-                                         MI, Spills, MaybeDeadStores, Rejected);
+                                                  MI, Spills, MaybeDeadStores,
+                                                  Rejected, RegKills, KillOps);
             
             MRI->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
                                       NewOp.StackSlot, AliasRC);
@@ -548,8 +609,10 @@ namespace {
             
             Spills.addAvailable(NewOp.StackSlot, MI, NewPhysReg);
             ++NumLoads;
-            DEBUG(MachineBasicBlock::iterator MII = MI;
-                  DOUT << '\t' << *prior(MII));
+            MachineBasicBlock::iterator MII = MI;
+            --MII;
+            UpdateKills(*MII, RegKills, KillOps);
+            DOUT << '\t' << *MII;
             
             DOUT << "Reuse undone!\n";
             --NumReused;
@@ -575,68 +638,14 @@ namespace {
     ///       sees r1 is taken by t2, tries t2's reload register r0 ...
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
-                             std::map<int, MachineInstr*> &MaybeDeadStores) {
+                             std::map<int, MachineInstr*> &MaybeDeadStores,
+                             BitVector &RegKills,
+                             std::vector<MachineOperand*> &KillOps) {
       SmallSet<unsigned, 8> Rejected;
-      return GetRegForReload(PhysReg, MI, Spills, MaybeDeadStores, Rejected);
+      return GetRegForReload(PhysReg, MI, Spills, MaybeDeadStores, Rejected,
+                             RegKills, KillOps);
     }
   };
-}
-
-
-/// InvalidateKills - MI is going to be deleted. If any of its operands are
-/// marked kill, then invalidate the information.
-static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
-                           std::vector<MachineOperand*> &KillOps) {
-  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (KillOps[Reg] == &MO) {
-      RegKills.reset(Reg);
-      KillOps[Reg] = NULL;
-    }
-  }
-}
-
-/// UpdateKills - Track and update kill info. If a MI reads a register that is
-/// marked kill, then it must be due to register reuse. Transfer the kill info
-/// over.
-static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
-                        std::vector<MachineOperand*> &KillOps) {
-  const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
-  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (Reg == 0)
-      continue;
-    
-    if (RegKills[Reg]) {
-      // That can't be right. Register is killed but not re-defined and it's
-      // being reused. Let's fix that.
-      KillOps[Reg]->unsetIsKill();
-      if (i < TID->numOperands &&
-          TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
-        // Unless it's a two-address operand, this is the new kill.
-        MO.setIsKill();
-    }
-
-    if (MO.isKill()) {
-      RegKills.set(Reg);
-      KillOps[Reg] = &MO;
-    }
-  }
-
-  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
-      continue;
-    unsigned Reg = MO.getReg();
-    RegKills.reset(Reg);
-    KillOps[Reg] = NULL;
-  }
 }
 
 
@@ -820,7 +829,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         // reuser.
         if (ReusedOperands.hasReuses())
           DesignatedReg = ReusedOperands.GetRegForReload(DesignatedReg, &MI, 
-                                                      Spills, MaybeDeadStores);
+                                    Spills, MaybeDeadStores, RegKills, KillOps);
         
         // If the mapped designated register is actually the physreg we have
         // incoming, we don't need to inserted a dead copy.
@@ -868,7 +877,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       // reuser.
       if (ReusedOperands.hasReuses())
         PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
-                                                 Spills, MaybeDeadStores);
+                                    Spills, MaybeDeadStores, RegKills, KillOps);
       
       MF.setPhysRegUsed(PhysReg);
       ReusedOperands.markClobbered(PhysReg);
@@ -1044,7 +1053,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             // Another def has taken the assigned physreg. It must have been a
             // use&def which got it due to reuse. Undo the reuse!
             PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
-                                                     Spills, MaybeDeadStores);
+                                    Spills, MaybeDeadStores, RegKills, KillOps);
           }
         }
 
@@ -1083,6 +1092,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             MBB.erase(&MI);
             Erased = true;
             VRM.RemoveFromFoldedVirtMap(&MI);
+            UpdateKills(*LastStore, RegKills, KillOps);
             goto ProcessNextInst;
           }
         }        
