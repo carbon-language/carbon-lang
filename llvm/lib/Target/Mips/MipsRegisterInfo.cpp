@@ -15,6 +15,7 @@
 
 #include "Mips.h"
 #include "MipsRegisterInfo.h"
+#include "MipsMachineFunction.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/Function.h"
@@ -46,8 +47,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
           const TargetRegisterClass *RC) const 
 {
   if (RC == Mips::CPURegsRegisterClass)
-    BuildMI(MBB, I, TII.get(Mips::SW)).addFrameIndex(FI)
-          .addImm(0).addReg(SrcReg, false, false, true);
+    BuildMI(MBB, I, TII.get(Mips::SW)).addReg(SrcReg, false, false, true)
+          .addImm(0).addFrameIndex(FI);
   else
     assert(0 && "Can't store this register to stack slot");
 }
@@ -154,13 +155,62 @@ getReservedRegs(const MachineFunction &MF) const
 }
 
 //===----------------------------------------------------------------------===//
+//
 // Stack Frame Processing methods
+// +----------------------------+
+//
+// Too meet ABI, we construct the frame on the reverse
+// of natural order.
+//
+// The LLVM Frame will look like this:
+//
+// As the stack grows down, we start at 0, and the reference
+// is decrement.
+//
+//  0          ----------
+// -4          Args to pass
+//  .          saved "Callee Saved" Registers
+//  .          Local Area
+//  .          saved FP
+//  .          saved RA
+// -StackSize  -----------
+//
+// On the EliminateFrameIndex we just negate the address above
+// and we get the stack frame required by the ABI, which is:
+//
+// sp + stacksize  -------------
+//                 saved $RA  (only on non-leaf functions)
+//                 saved $FP  (only with frame pointer)
+//                 saved "Callee Saved" Registers
+//                 Local Area
+//                 saved $GP  (used in PIC - not supported yet)
+//                 Args to pass area
+// sp              -------------
+//
+// The sp is the stack pointer subtracted/added from the stack size
+// at the Prologue/Epilogue
+//
+// References to the previous stack (to obtain arguments) are done
+// with fixed location stack frames using positive stack offsets.
+//
+// Examples:
+// - reference to the actual stack frame
+//   for any local area var there is smt like : FI >= 0, StackOffset: -4
+//     sw REGX, 4(REGY)
+//
+// - reference to previous stack frame
+//   suppose there's a store to the 5th arguments : FI < 0, StackOffset: 16.
+//   The emitted instruction will be something like:
+//     sw REGX, 16+StackSize (REGY)
+//
 //===----------------------------------------------------------------------===//
 
-// True if target has frame pointer
+// hasFP - Return true if the specified function should have a dedicated frame
+// pointer register.  This is true if the function has variable sized allocas or
+// if frame pointer elimination is disabled.
 bool MipsRegisterInfo::
 hasFP(const MachineFunction &MF) const {
-  return false;
+  return (NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects());
 }
 
 // This function eliminate ADJCALLSTACKDOWN, 
@@ -179,35 +229,30 @@ void MipsRegisterInfo::
 eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, 
                     RegScavenger *RS) const 
 {
-  unsigned i = 0;
   MachineInstr &MI    = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
 
+  unsigned i = 0;
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && 
            "Instr doesn't have FrameIndex operand!");
   }
 
-  // FrameInfo addressable stack objects are accessed 
-  // using neg. offsets, so we must add with the stack
-  // size to obtain $sp relative address.
   int FrameIndex = MI.getOperand(i).getFrameIndex();
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   #ifndef NDEBUG
-  DOUT << "\n<--------->\n";
+  DOUT << "\nFunction : " << MF.getFunction()->getName() << "\n";
+  DOUT << "<--------->\n";
   MI.print(DOUT);
   DOUT << "FrameIndex : " << FrameIndex << "\n";
   DOUT << "spOffset   : " << spOffset << "\n";
   DOUT << "stackSize  : " << stackSize << "\n";
   #endif
 
-  // If the FrameIndex points to a positive SPOffset this
-  // means we are inside the callee and getting the arguments 
-  // from the caller stack
-  int Offset = (-(stackSize)) + spOffset; 
+  int Offset = ( (spOffset >= 0) ? (stackSize + spOffset) : (-spOffset));
 
   #ifndef NDEBUG
   DOUT << "Offset     : " << Offset << "\n";
@@ -215,51 +260,141 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   #endif
 
   MI.getOperand(i-1).ChangeToImmediate(Offset);
-  MI.getOperand(i).ChangeToRegister(Mips::SP,false);
+  MI.getOperand(i).ChangeToRegister(getFrameRegister(MF),false);
 }
 
 void MipsRegisterInfo::
 emitPrologue(MachineFunction &MF) const 
 {
-  MachineBasicBlock &MBB = MF.front();
-  MachineFrameInfo *MFI  = MF.getFrameInfo();
+  MachineBasicBlock &MBB   = MF.front();
+  MachineFrameInfo *MFI    = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
 
   // Get the number of bytes to allocate from the FrameInfo
   int NumBytes = (int) MFI->getStackSize();
 
+  #ifndef NDEBUG
+  DOUT << "\n<--- EMIT PROLOGUE --->";
+  DOUT << "Stack size :" << NumBytes << "\n";
+  #endif
+
   // Do we need to allocate space on the stack?
   if (NumBytes == 0) return;
 
-  // FIXME: is Stack Align needed here ?? (maybe it's done before...)
-  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-  NumBytes = -((NumBytes+Align-1)/Align*Align);
+  int FPOffset, RAOffset;
+  
+  // Always allocate space for saved RA and FP,
+  // even if FramePointer is not used. When not
+  // using FP, the last stack slot becomes empty
+  // and RA is saved before it.
+  if ((hasFP(MF)) && (MFI->hasCalls())) {
+    FPOffset = NumBytes;
+    RAOffset = (NumBytes+4);
+  } else if ((!hasFP(MF)) && (MFI->hasCalls())) {
+    FPOffset = 0;
+    RAOffset = NumBytes;
+  } else if ((hasFP(MF)) && (!MFI->hasCalls())) {
+    FPOffset = NumBytes;
+    RAOffset = 0;
+  }
 
-  // Update frame info to pretend that this is part of the stack...
+  MFI->setObjectOffset(MFI->CreateStackObject(4,4), -FPOffset);
+  MFI->setObjectOffset(MFI->CreateStackObject(4,4), -RAOffset);
+  MipsFI->setFPStackOffset(FPOffset);
+  MipsFI->setRAStackOffset(RAOffset);
+
+  #ifndef NDEBUG
+  DOUT << "FPOffset :" << FPOffset << "\n";
+  DOUT << "RAOffset :" << RAOffset << "\n";
+  #endif
+
+  // Align stack. 
+  NumBytes += 8;
+  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+  NumBytes = ((NumBytes+Align-1)/Align*Align);
+
+  #ifndef NDEBUG
+  DOUT << "New stack size :" << NumBytes << "\n\n";
+  #endif
+
+  // Update frame info
   MFI->setStackSize(NumBytes);
 
-  // adjust stack : addi sp, sp, (-imm)
-  BuildMI(MBB, MBB.begin(), TII.get(Mips::ADDi), Mips::SP)
-      .addReg(Mips::SP).addImm(NumBytes);
+  // Adjust stack : addi sp, sp, (-imm)
+  BuildMI(MBB, MBBI, TII.get(Mips::ADDiu), Mips::SP)
+      .addReg(Mips::SP).addImm(-NumBytes);
+
+  // Save the return address only if the function isnt a leaf one.
+  // sw  $ra, stack_loc($sp)
+  if (MFI->hasCalls()) { 
+    BuildMI(MBB, MBBI, TII.get(Mips::SW))
+        .addReg(Mips::RA).addImm(RAOffset).addReg(Mips::SP);
+  }
+
+  // if framepointer enabled, save it and set it
+  // to point to the stack pointer
+  if (hasFP(MF)) {
+    // sw  $fp,stack_loc($sp)
+    BuildMI(MBB, MBBI, TII.get(Mips::SW))
+      .addReg(Mips::FP).addImm(FPOffset).addReg(Mips::SP);
+
+    // move $fp, $sp
+    BuildMI(MBB, MBBI, TII.get(Mips::ADDu), Mips::FP)
+      .addReg(Mips::SP).addReg(Mips::ZERO);
+  }
 }
 
 void MipsRegisterInfo::
 emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const 
 {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineFrameInfo *MFI            = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI         = MF.getInfo<MipsFunctionInfo>();
 
   // Get the number of bytes from FrameInfo
   int NumBytes = (int) MFI->getStackSize();
 
+  // Get the FI's where RA and FP are saved.
+  int FPOffset = MipsFI->getFPStackOffset();
+  int RAOffset = MipsFI->getRAStackOffset();
+
+  #ifndef NDEBUG
+  DOUT << "\n<--- EMIT EPILOGUE --->" << "\n";
+  DOUT << "Stack size :" << NumBytes << "\n";
+  DOUT << "FPOffset :" << FPOffset << "\n";
+  DOUT << "RAOffset :" << RAOffset << "\n\n";
+  #endif
+
+  // if framepointer enabled, restore it and restore the
+  // stack pointer
+  if (hasFP(MF)) {
+    // move $sp, $fp
+    BuildMI(MBB, MBBI, TII.get(Mips::ADDu), Mips::SP)
+      .addReg(Mips::FP).addReg(Mips::ZERO);
+
+    // lw  $fp,stack_loc($sp)
+    BuildMI(MBB, MBBI, TII.get(Mips::LW))
+      .addReg(Mips::FP).addImm(FPOffset).addReg(Mips::SP);
+  }
+
+  // Restore the return address only if the function isnt a leaf one.
+  // lw  $ra, stack_loc($sp)
+  if (MFI->hasCalls()) { 
+    BuildMI(MBB, MBBI, TII.get(Mips::LW))
+        .addReg(Mips::RA).addImm(RAOffset).addReg(Mips::SP);
+  }
+
   // adjust stack  : insert addi sp, sp, (imm)
   if (NumBytes) {
-    BuildMI(MBB, MBBI, TII.get(Mips::ADDi), Mips::SP)
-      .addReg(Mips::SP).addImm(-NumBytes);
+    BuildMI(MBB, MBBI, TII.get(Mips::ADDiu), Mips::SP)
+      .addReg(Mips::SP).addImm(NumBytes);
   }
 }
 
 void MipsRegisterInfo::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {}
+processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+}
 
 unsigned MipsRegisterInfo::
 getRARegister() const {
@@ -268,8 +403,7 @@ getRARegister() const {
 
 unsigned MipsRegisterInfo::
 getFrameRegister(MachineFunction &MF) const {
-  assert(0 && "What is the frame register");
-  return Mips::FP;
+  return hasFP(MF) ? Mips::FP : Mips::SP;
 }
 
 unsigned MipsRegisterInfo::
