@@ -163,7 +163,7 @@ SelectAddr(SDOperand Op, SDOperand Addr, SDOperand &Offset, SDOperand &Base)
     }
   }
 
-  Base = Addr;
+  Base   = Addr;
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }
