@@ -629,6 +629,63 @@ namespace {
 }
 
 
+/// InvalidateKills - MI is going to be deleted. If any of its operands are
+/// marked kill, then invalidate the information.
+static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps) {
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (KillOps[Reg] == &MO) {
+      RegKills.reset(Reg);
+      KillOps[Reg] = NULL;
+    }
+  }
+}
+
+/// UpdateKills - Track and update kill info. If a MI reads a register that is
+/// marked kill, then it must be due to register reuse. Transfer the kill info
+/// over.
+static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
+                        std::vector<MachineOperand*> &KillOps) {
+  const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isUse())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0)
+      continue;
+    
+    if (RegKills[Reg]) {
+      // That can't be right. Register is killed but not re-defined and it's
+      // being reused. Let's fix that.
+      KillOps[Reg]->unsetIsKill();
+      if (i < TID->numOperands &&
+          TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
+        // Unless it's a two-address operand, this is the new kill.
+        MO.setIsKill();
+    }
+
+    if (MO.isKill()) {
+      RegKills.set(Reg);
+      KillOps[Reg] = &MO;
+    }
+  }
+
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isReg() || !MO.isDef())
+      continue;
+    unsigned Reg = MO.getReg();
+    RegKills.reset(Reg);
+    KillOps[Reg] = NULL;
+  }
+}
+
+
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avoid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
@@ -647,11 +704,20 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
   // same stack slot, the original store is deleted.
   std::map<int, MachineInstr*> MaybeDeadStores;
 
+  // Keep track of kill information.
+  BitVector RegKills(MRI->getNumRegs());
+  std::vector<MachineOperand*>  KillOps;
+  KillOps.resize(MRI->getNumRegs(), NULL);
+
   MachineFunction &MF = *MBB.getParent();
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
+    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
+
+    bool Erased = false;
+    bool BackTracked = false;
 
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
     /// reuse.
@@ -665,26 +731,25 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
     int FrameIdx;
     if (TII->isTriviallyReMaterializable(&MI) ||
         TII->isLoadFromStackSlot(&MI, FrameIdx)) {
-      bool Remove = true;
+      Erased = true;
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         MachineOperand &MO = MI.getOperand(i);
         if (!MO.isRegister() || MO.getReg() == 0)
           continue;   // Ignore non-register operands.
         if (MO.isDef() && !VRM.isReMaterialized(MO.getReg())) {
-          Remove = false;
+          Erased = false;
           break;
         }
       }
-      if (Remove) {
+      if (Erased) {
         VRM.RemoveFromFoldedVirtMap(&MI);
         ReMatedMIs.push_back(MI.removeFromParent());
-        MII = NextMII;
-        continue;
+        goto ProcessNextInst;
       }
     }
 
-    const unsigned *ImpDef = TID->ImplicitDefs;
-    if (ImpDef) {
+    if (TID->ImplicitDefs) {
+      const unsigned *ImpDef = TID->ImplicitDefs;
       for ( ; *ImpDef; ++ImpDef) {
         MF.setPhysRegUsed(*ImpDef);
         ReusedOperands.markClobbered(*ImpDef);
@@ -760,24 +825,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                << MRI->getName(VRM.getPhys(VirtReg)) << "\n";
           MI.getOperand(i).setReg(PhysReg);
 
-          // Extend the live range of the MI that last kill the register if
-          // necessary.
-          bool WasKill = false;
-          if (SSMI) {
-            int UIdx = SSMI->findRegisterUseOperandIdx(PhysReg, true);
-            if (UIdx != -1) {
-              MachineOperand &MOK = SSMI->getOperand(UIdx);
-              WasKill = MOK.isKill();
-              MOK.unsetIsKill();
-            }
-          }
-          if (ti == -1) {
-            // Unless it's the use of a two-address code, transfer the kill
-            // of the reused register to this use.
-            if (WasKill)
-              MI.getOperand(i).setIsKill();
+          if (ti == -1)
             Spills.addLastUse(PhysReg, &MI);
-          }
 
           // The only technical detail we have is that we don't know that
           // PhysReg won't be clobbered by a reloaded stack slot that occurs
@@ -847,23 +896,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
 
         // Extend the live range of the MI that last kill the register if
         // necessary.
-        bool WasKill = false;
-        if (SSMI) {
-          int UIdx = SSMI->findRegisterUseOperandIdx(PhysReg, true);
-          if (UIdx != -1) {
-            MachineOperand &MOK = SSMI->getOperand(UIdx);
-            WasKill = MOK.isKill();
-            MOK.unsetIsKill();
-          }
-        }
         MachineInstr *CopyMI = prior(MII);
-        if (WasKill) {
-          // Transfer kill to the next use.
-          int UIdx = CopyMI->findRegisterUseOperandIdx(PhysReg);
-          assert(UIdx != -1);
-          MachineOperand &MOU = CopyMI->getOperand(UIdx);
-          MOU.setIsKill();
-        }
+        UpdateKills(*CopyMI, RegKills, KillOps);
         Spills.addLastUse(PhysReg, CopyMI);
 
         // This invalidates DesignatedReg.
@@ -910,6 +944,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       if (TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
         MI.getOperand(i).setIsKill();
       MI.getOperand(i).setReg(PhysReg);
+      UpdateKills(*prior(MII), RegKills, KillOps);
       DOUT << '\t' << *prior(MII);
     }
 
@@ -918,7 +953,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
     // If we have folded references to memory operands, make sure we clear all
     // physical registers that may contain the value of the spilled virtual
     // register
-    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
     for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
       DOUT << "Folded vreg: " << I->second.first << "  MR: "
            << I->second.second;
@@ -950,39 +984,21 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
                 // virtual or needing to clobber any values if it's physical).
                 NextMII = &MI;
                 --NextMII;  // backtrack to the copy.
+                BackTracked = true;
               } else
                 DOUT << "Removing now-noop copy: " << MI;
 
-              // Either way, the live range of the last kill of InReg has been
-              // extended. Remove its kill.
-              bool WasKill = false;
-              if (SSMI) {
-                int UIdx = SSMI->findRegisterUseOperandIdx(InReg, true);
-                if (UIdx != -1) {
-                  MachineOperand &MOK = SSMI->getOperand(UIdx);
-                  WasKill = MOK.isKill();
-                  MOK.unsetIsKill();
-                }
-              }
               if (NextMII != MBB.end()) {
                 // If NextMII uses InReg and the use is not a two address
                 // operand, mark it killed.
                 int UIdx = NextMII->findRegisterUseOperandIdx(InReg);
-                if (UIdx != -1) {
-                  MachineOperand &MOU = NextMII->getOperand(UIdx);
-                  if (WasKill) {
-                    const TargetInstrDescriptor *NTID =
-                      NextMII->getInstrDescriptor();
-                    if (UIdx >= NTID->numOperands ||
-                        NTID->getOperandConstraint(UIdx, TOI::TIED_TO) == -1)
-                      MOU.setIsKill();
-                  }
+                if (UIdx != -1)
                   Spills.addLastUse(InReg, &(*NextMII));
-                }
               }
 
               VRM.RemoveFromFoldedVirtMap(&MI);
               MBB.erase(&MI);
+              Erased = true;
               goto ProcessNextInst;
             }
           }
@@ -999,6 +1015,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
           // If we get here, the store is dead, nuke it now.
           assert(VirtRegMap::isMod && "Can't be modref!");
           DOUT << "Removed dead store:\t" << *MDSI->second;
+          InvalidateKills(*MDSI->second, RegKills, KillOps);
           MBB.erase(MDSI->second);
           VRM.RemoveFromFoldedVirtMap(MDSI->second);
           MaybeDeadStores.erase(MDSI);
@@ -1050,6 +1067,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             DOUT << "Removing now-noop copy: " << MI;
             Spills.removeLastUse(Src, &MI);
             MBB.erase(&MI);
+            Erased = true;
             VRM.RemoveFromFoldedVirtMap(&MI);
             Spills.disallowClobberPhysReg(VirtReg);
             goto ProcessNextInst;
@@ -1104,6 +1122,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
         if (LastStore) {
           DOUT << "Removed dead store:\t" << *LastStore;
           ++NumDSE;
+          InvalidateKills(*LastStore, RegKills, KillOps);
           MBB.erase(LastStore);
           VRM.RemoveFromFoldedVirtMap(LastStore);
         }
@@ -1126,6 +1145,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
             DOUT << "Removing now-noop copy: " << MI;
             Spills.removeLastUse(Src, &MI);
             MBB.erase(&MI);
+            Erased = true;
             VRM.RemoveFromFoldedVirtMap(&MI);
             goto ProcessNextInst;
           }
@@ -1133,10 +1153,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM,
       }
     }
   ProcessNextInst:
+    if (!Erased && !BackTracked)
+      for (MachineBasicBlock::iterator II = MI; II != NextMII; ++II)
+        UpdateKills(*II, RegKills, KillOps);
     MII = NextMII;
   }
 }
-
 
 
 llvm::Spiller* llvm::createSpiller() {
