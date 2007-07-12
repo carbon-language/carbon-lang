@@ -740,14 +740,11 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
             delta -= 2;
           }
         }
-        // Thumb jump tables require padding.  They can be at the end, or
-        // followed by an unconditional branch.
+        // Thumb jump tables require padding.  They should be at the end;
+        // following unconditional branches are removed by AnalyzeBranch.
         MachineInstr *ThumbJTMI = NULL;
         if (prior(MBB->end())->getOpcode() == ARM::tBR_JTr)
           ThumbJTMI = prior(MBB->end());
-        else if (prior(MBB->end()) != MBB->begin() &&
-                prior(prior(MBB->end()))->getOpcode() == ARM::tBR_JTr)
-          ThumbJTMI = prior(prior(MBB->end()));
         if (ThumbJTMI) {
           unsigned newMIOffset = GetOffsetOf(ThumbJTMI);
           unsigned oldMIOffset = newMIOffset - delta;

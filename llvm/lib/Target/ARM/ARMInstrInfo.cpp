@@ -350,8 +350,8 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     return false;
   }
   
-  // If the block ends with two B's or tB's, handle it.  The second one is not
-  // executed, so remove it.
+  // If the block ends with two unconditional branches, handle it.  The second 
+  // one is not executed, so remove it.
   if ((SecondLastOpc == ARM::B || SecondLastOpc==ARM::tB) &&
       (LastOpc == ARM::B || LastOpc == ARM::tB)) {
     TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
@@ -359,6 +359,17 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
     I->eraseFromParent();
     return false;
   }
+
+  // Likewise if it ends with a branch table followed by an unconditional branch.
+  // The branch folder can create these, and we must get rid of them for
+  // correctness of Thumb constant islands.
+  if ((SecondLastOpc == ARM::BR_JTr || SecondLastOpc==ARM::BR_JTm ||
+       SecondLastOpc == ARM::BR_JTadd || SecondLastOpc==ARM::tBR_JTr) &&
+      (LastOpc == ARM::B || LastOpc == ARM::tB)) {
+    I = LastInst;
+    I->eraseFromParent();
+    return true;
+  } 
 
   // Otherwise, can't handle this.
   return true;
