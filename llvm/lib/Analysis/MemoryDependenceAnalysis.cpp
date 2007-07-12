@@ -255,4 +255,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     reverseDep.erase(I);
     I = reverseDep.find(rem);
   }
+  
+  getAnalysis<AliasAnalysis>().deleteValue(rem);
 }

@@ -70,7 +70,6 @@ namespace {
 FunctionPass *llvm::createFastDeadStoreEliminationPass() { return new FDSE(); }
 
 bool FDSE::runOnBasicBlock(BasicBlock &BB) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   // Record the last-seen store to this pointer
@@ -101,7 +100,6 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
           
           // Remove it!
           MD.removeInstruction(last);
-          AA.deleteValue(last);
           
           // DCE instructions only used to calculate that store
           if (Instruction* D = dyn_cast<Instruction>(last->getOperand(0)))
@@ -157,7 +155,6 @@ bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, StoreInst* dependency
   if (A == AliasAnalysis::MustAlias) {
     // Remove it!
     MD.removeInstruction(dependency);
-    AA.deleteValue(dependency);
 
     // DCE instructions only used to calculate that store
     if (Instruction* D = dyn_cast<Instruction>(dependency->getOperand(0)))
@@ -200,7 +197,6 @@ bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead)
       if (deadPointers.count(S->getPointerOperand())){
         // Remove it!
         MD.removeInstruction(S);
-        AA.deleteValue(S);
         
         // DCE instructions only used to calculate that store
         if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
@@ -230,7 +226,6 @@ void FDSE::DeleteDeadInstructionChains(Instruction *I,
 
   // Let the memory dependence know
   getAnalysis<MemoryDependenceAnalysis>().removeInstruction(I);
-  getAnalysis<AliasAnalysis>().deleteValue(I);
 
   // See if this made any operands dead.  We do it this way in case the
   // instruction uses the same operand twice.  We don't want to delete a
