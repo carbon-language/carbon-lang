@@ -46,9 +46,8 @@ namespace {
     }
 
     bool runOnBasicBlock(BasicBlock &BB);
-    bool handleFreeWithNonTrivialDependency(FreeInst* F, StoreInst* dependency,
+    bool handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dependency,
                                             SetVector<Instruction*>& possiblyDead);
-    bool handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
 
@@ -91,6 +90,7 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
       assert(pointer && "Not a free or a store?");
       
       StoreInst*& last = lastStore[pointer];
+      bool deletedStore = false;
       
       // ... to a pointer that has been stored to before...
       if (last) {
@@ -107,12 +107,16 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
           
           last->eraseFromParent();
           NumFastStores++;
+          deletedStore = true;
           MadeChange = true;
-        
-        // If this is a free, check for a non-trivial dependency
-        } else if (FreeInst* F = dyn_cast<FreeInst>(BBI))
-          MadeChange |= handleFreeWithNonTrivialDependency(F, last, possiblyDead);
+        }
       }
+      
+      // Handle frees whose dependencies are non-trivial
+      if (FreeInst* F = dyn_cast<FreeInst>(BBI))
+        if (!deletedStore)
+          MadeChange |= handleFreeWithNonTrivialDependency(F, MD.getDependency(F),
+                                                           possiblyDead);
       
       // Update our most-recent-store map
       if (StoreInst* S = dyn_cast<StoreInst>(BBI))
@@ -134,11 +138,19 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
 
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure
-bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, StoreInst* dependency,
+bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
                                               SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  
+  if (dep == MemoryDependenceAnalysis::None ||
+      dep == MemoryDependenceAnalysis::NonLocal)
+    return false;
+  
+  StoreInst* dependency = dyn_cast<StoreInst>(dep);
+  if (!dependency)
+    return false;
   
   Value* depPointer = dependency->getPointerOperand();
   unsigned depPointerSize = TD.getTypeSize(dependency->getOperand(0)->getType());
