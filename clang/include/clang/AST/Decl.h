@@ -147,6 +147,10 @@ public:
   };
   StorageClass getStorageClass() const { return SClass; }
 
+  const Expr *getInit() const { return Init; }
+  Expr *getInit() { return Init; }
+  void setInit(Expr *I) { Init = I; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
     return D->getKind() >= BlockVariable && D->getKind() <= ParmVariable; 
@@ -158,7 +162,7 @@ protected:
     : ValueDecl(DK, L, Id, T, PrevDecl) { SClass = SC; }
 private:
   StorageClass SClass;
-  // TODO: Initializer.
+  Expr *Init;
 };
 
 /// BlockVarDecl - Represent a local variable declaration.

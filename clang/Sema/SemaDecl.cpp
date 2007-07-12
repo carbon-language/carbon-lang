@@ -272,9 +272,10 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 }
 
 Sema::DeclTy *
-Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init, 
+Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
                       DeclTy *lastDeclarator) {
   Decl *LastDeclarator = (Decl*)lastDeclarator;
+  Expr *Init = static_cast<Expr*>(init);
   IdentifierInfo *II = D.getIdentifier();
   
   // See if this is a redefinition of a variable in the same scope.
@@ -285,6 +286,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
 
   Decl *New;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+    assert(Init == 0 && "Can't have initializer for a typedef!");
     TypedefDecl *NewTD = ParseTypedefDecl(S, D, LastDeclarator);
     if (!NewTD) return 0;
 
@@ -306,6 +308,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       }
     }
   } else if (D.isFunctionDeclarator()) {
+    assert(Init == 0 && "Can't have an initializer for a functiondecl!");
     QualType R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0; // FIXME: "auto func();" passes through...
     
@@ -404,6 +407,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
+    
+    NewVD->setInit(Init);
     New = NewVD;
   }
   

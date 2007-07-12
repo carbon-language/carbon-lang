@@ -111,7 +111,13 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
     VD->getType().getAsStringInternal(Name);
     OS << Name;
     
-    // FIXME: Initializer for vardecl
+    // If this is a vardecl with an initializer, emit it.
+    if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
+      if (V->getInit()) {
+        OS << " = ";
+        PrintExpr(V->getInit());
+      }
+    }
   } else {
     // FIXME: "struct x;"
     assert(0 && "Unexpected decl");
