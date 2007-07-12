@@ -17,6 +17,7 @@
 
 #define DEBUG_TYPE "fdse"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
@@ -48,6 +49,11 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
     bool handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dependency,
                                             SetVector<Instruction*>& possiblyDead);
+    bool handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead);
+    bool RemoveUndeadPointers(Value* pointer, unsigned pointerSize,
+                              BasicBlock::iterator& BBI,
+                              SmallPtrSet<AllocaInst*, 4>& deadPointers, 
+                              SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
 
@@ -126,6 +132,11 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
     }
   }
   
+  // If this block ends in a return, unwind, unreachable, and eventually
+  // tailcall, then all allocas are dead at its end.
+  if (BB.getTerminator()->getNumSuccessors() == 0)
+    MadeChange |= handleEndBlock(BB, possiblyDead);
+  
   // Do a trivial DCE
   while (!possiblyDead.empty()) {
     Instruction *I = possiblyDead.back();
@@ -173,6 +184,155 @@ bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
   }
   
   return false;
+}
+
+/// handleEndBlock - Remove dead stores to stack-allocated locations in the function
+/// end block
+bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead) {
+  TargetData &TD = getAnalysis<TargetData>();
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  
+  bool MadeChange = false;
+  
+  // Pointers alloca'd in this function are dead in the end block
+  SmallPtrSet<AllocaInst*, 4> deadPointers;
+  
+  // Find all of the alloca'd pointers in the entry block
+  BasicBlock *Entry = BB.getParent()->begin();
+  for (BasicBlock::iterator I = Entry->begin(), E = Entry->end(); I != E; ++I)
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
+      deadPointers.insert(AI);
+  
+  // Scan the basic block backwards
+  for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ){
+    --BBI;
+    
+    if (deadPointers.empty())
+      break;
+    
+    Value* killPointer = 0;
+    unsigned killPointerSize = 0;
+    
+    // If we find a store whose pointer is dead...
+    if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
+      if (deadPointers.count(S->getPointerOperand())){
+        // Remove it!
+        MD.removeInstruction(S);
+        
+        // DCE instructions only used to calculate that store
+        if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
+          possiblyDead.insert(D);
+        
+        BBI++;
+        S->eraseFromParent();
+        NumFastStores++;
+        MadeChange = true;
+      
+      // If we can't trivially delete this store, consider it undead
+      } else {
+        killPointer = S->getPointerOperand();
+        killPointerSize = TD.getTypeSize(S->getOperand(0)->getType());
+      }
+    
+    // If we encounter a use of the pointer, it is no longer considered dead
+    } else if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
+      killPointer = L->getPointerOperand();
+      killPointerSize = TD.getTypeSize(L->getType());
+    } else if (VAArgInst* V = dyn_cast<VAArgInst>(BBI)) {
+      killPointer = V->getOperand(0);
+      killPointerSize = TD.getTypeSize(V->getType());
+    } else if (FreeInst* F = dyn_cast<FreeInst>(BBI)) {
+      killPointer = F->getPointerOperand();
+      killPointerSize = ~0UL;
+    } else if (AllocaInst* A = dyn_cast<AllocaInst>(BBI)) {
+      deadPointers.erase(A);
+      continue;
+    } else if (CallSite::get(BBI).getInstruction() != 0) {
+      // Remove any pointers made undead by the call from the dead set
+      std::vector<Instruction*> dead;
+      for (SmallPtrSet<AllocaInst*, 4>::iterator I = deadPointers.begin(),
+           E = deadPointers.end(); I != E; ++I) {
+        // Get size information for the alloca
+        unsigned pointerSize = ~0UL;
+        if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
+          pointerSize = C->getZExtValue() * TD.getTypeSize((*I)->getAllocatedType());     
+        
+        // See if the call site touches it
+        AliasAnalysis::ModRefResult A = AA.getModRefInfo(CallSite::get(BBI),
+                                                         *I, pointerSize);
+        if (A != AliasAnalysis::NoModRef)
+          dead.push_back(*I);
+      }
+
+      for (std::vector<Instruction*>::iterator I = dead.begin(), E = dead.end();
+           I != E; ++I)
+        deadPointers.erase(*I);
+      
+      continue;
+    }
+    
+    if (!killPointer)
+      continue;
+    
+    // Deal with undead pointers
+    MadeChange |= RemoveUndeadPointers(killPointer, killPointerSize, BBI,
+                                       deadPointers, possiblyDead);
+  }
+  
+  return MadeChange;
+}
+
+bool FDSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
+                                BasicBlock::iterator& BBI,
+                                SmallPtrSet<AllocaInst*, 4>& deadPointers, 
+                                SetVector<Instruction*>& possiblyDead) {
+  TargetData &TD = getAnalysis<TargetData>();
+  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+                                  
+  bool MadeChange = false;
+  
+  std::vector<Instruction*> undead;
+    
+  for (SmallPtrSet<AllocaInst*, 4>::iterator I = deadPointers.begin(),
+      E = deadPointers.end(); I != E; ++I) {
+    // Get size information for the alloca
+    unsigned pointerSize = ~0UL;
+    if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
+      pointerSize = C->getZExtValue() * TD.getTypeSize((*I)->getAllocatedType());     
+      
+    // See if this pointer could alias it
+    AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize, killPointer, killPointerSize);
+
+    // If it must-alias and a store, we can delete it
+    if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
+      StoreInst* S = cast<StoreInst>(BBI);
+
+      // Remove it!
+      MD.removeInstruction(S);
+
+      // DCE instructions only used to calculate that store
+      if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
+        possiblyDead.insert(D);
+
+      BBI++;
+      S->eraseFromParent();
+      NumFastStores++;
+      MadeChange = true;
+
+      continue;
+
+      // Otherwise, it is undead
+      } else if (A != AliasAnalysis::NoAlias)
+        undead.push_back(*I);
+  }
+
+  for (std::vector<Instruction*>::iterator I = undead.begin(), E = undead.end();
+       I != E; ++I)
+    deadPointers.erase(*I);
+  
+  return MadeChange;
 }
 
 void FDSE::DeleteDeadInstructionChains(Instruction *I,
