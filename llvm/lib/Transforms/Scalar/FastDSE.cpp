@@ -171,7 +171,6 @@ bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, StoreInst* dependency
 /// handleEndBlock - Remove dead stores to stack-allocated locations in the function
 /// end block
 bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead) {
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis &MD = getAnalysis<MemoryDependenceAnalysis>();
   
   bool MadeChange = false;
