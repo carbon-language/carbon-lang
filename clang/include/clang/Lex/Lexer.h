@@ -19,6 +19,7 @@
 #include "clang/Basic/LangOptions.h"
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace llvm {
   class MemoryBuffer;

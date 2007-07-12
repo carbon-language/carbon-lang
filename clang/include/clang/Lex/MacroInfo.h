@@ -16,6 +16,7 @@
 
 #include "clang/Lex/LexerToken.h"
 #include <vector>
+#include <cassert>
 
 namespace clang {
   class Preprocessor;

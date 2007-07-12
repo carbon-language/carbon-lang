@@ -17,6 +17,7 @@
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
 #include <string> 
+#include <cassert> 
 
 namespace clang {
   class MacroInfo;
