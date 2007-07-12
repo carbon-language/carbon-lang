@@ -84,7 +84,9 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   DMEntry = DeclPtr;
   
-  // FIXME: Evaluate initializer.
+  // If this local has an initializer, emit it now.
+  if (const Expr *Init = D.getInit())
+    EmitStoreThroughLValue(EmitExpr(Init), LValue::MakeAddr(DeclPtr), Ty);
 }
 
 /// Emit an alloca for the specified parameter and set up LocalDeclMap.
