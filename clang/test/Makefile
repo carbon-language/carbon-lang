@@ -1,3 +1,3 @@
 
 all:
-	find Lexer Preprocessor Parser -name '*.c*' -print -exec ./TestRunner.sh {} \;
+	find Lexer Preprocessor Parser \( -name '*.c' -or -name '*.cpp' \) -print -exec ./TestRunner.sh {} \;
