@@ -15,6 +15,7 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include <string>
+#include <cassert>
 
 namespace clang {
   class DiagnosticClient;
