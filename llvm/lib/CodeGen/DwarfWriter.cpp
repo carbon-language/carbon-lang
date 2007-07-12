@@ -3002,7 +3002,7 @@ private:
     for(std::vector<unsigned>::const_iterator I = FilterIds.begin(),
         E = FilterIds.end(); I != E; ++I) {
       FilterOffsets.push_back(Offset);
-      Offset -= Asm->SizeSLEB128(*I);
+      Offset -= Asm->SizeULEB128(*I);
     }
 
     // Compute sizes for exception table.
@@ -3191,7 +3191,7 @@ private:
     // Emit the filter typeids.
     for (unsigned j = 0, M = FilterIds.size(); j < M; ++j) {
       unsigned TypeID = FilterIds[j];
-      Asm->EmitSLEB128Bytes(TypeID);
+      Asm->EmitULEB128Bytes(TypeID);
       Asm->EOL("Filter TypeInfo index");
     }
     
