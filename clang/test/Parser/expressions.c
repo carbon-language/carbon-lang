@@ -1,4 +1,6 @@
 // RUN: clang -fsyntax-only %s
+// XFAIL: *
+// FIXME: This is xfailed because we're not analyzing brace initializers yet.
 
 void test1() {
   if (sizeof (int){ 1});   // sizeof compound literal
