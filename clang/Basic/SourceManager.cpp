@@ -17,6 +17,8 @@
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <iostream>
+#include <fcntl.h>
+
 using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
