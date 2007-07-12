@@ -211,9 +211,10 @@ Expr::isLvalueResult Expr::isLvalue() {
     if (isa<VarDecl>(cast<DeclRefExpr>(this)->getDecl()))
       return LV_Valid;
     break;
-  case MemberExprClass: // C99 6.5.2.3p4
+  case MemberExprClass: { // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
     return m->isArrow() ? LV_Valid : m->getBase()->isLvalue();
+  }
   case UnaryOperatorClass: // C99 6.5.3p4
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
       return LV_Valid;
