@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc | not grep ori
-; RUN: llvm-upgrade < %s | llvm-as | llc | not grep rlwimi
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=powerpc-apple-darwin8 | not grep ori
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=powerpc-apple-darwin8 | not grep rlwimi
 
 int %test1(sbyte* %P) {  ;; or -> lwzx
         %tmp.2.i = cast sbyte* %P to uint

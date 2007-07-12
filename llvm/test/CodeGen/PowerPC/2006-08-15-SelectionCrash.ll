@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=powerpc-apple-darwin8
 
 	%struct..0anon = type { int }
 	%struct.rtx_def = type { ushort, ubyte, ubyte, [1 x %struct..0anon] }

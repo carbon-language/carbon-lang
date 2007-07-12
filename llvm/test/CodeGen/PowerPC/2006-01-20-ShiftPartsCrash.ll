@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=powerpc-apple-darwin8
 
 void %iterative_hash_host_wide_int() {
 	%zero = alloca int		        ; <int*> [#uses=2]
