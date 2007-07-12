@@ -231,6 +231,8 @@ bool Type::isIntegerType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     if (TT->getDecl()->getKind() == Decl::Enum)
       return true;
+  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
+    return VT->getElementType()->isIntegerType();
   return false;
 }
 
@@ -239,6 +241,8 @@ bool Type::isSignedIntegerType() const {
     return BT->getKind() >= BuiltinType::Char_S &&
            BT->getKind() <= BuiltinType::LongLong;
   }
+  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
+    return VT->getElementType()->isSignedIntegerType();
   return false;
 }
 
@@ -247,6 +251,8 @@ bool Type::isUnsignedIntegerType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::ULongLong;
   }
+  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
+    return VT->getElementType()->isUnsignedIntegerType();
   return false;
 }
 
@@ -256,6 +262,8 @@ bool Type::isFloatingType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->isFloatingType();
+  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
+    return VT->getElementType()->isFloatingType();
   return false;
 }
 
@@ -263,6 +271,8 @@ bool Type::isRealFloatingType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() >= BuiltinType::Float &&
            BT->getKind() <= BuiltinType::LongDouble;
+  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
+    return VT->getElementType()->isRealFloatingType();
   return false;
 }
 
@@ -272,6 +282,8 @@ bool Type::isRealType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->getKind() == Decl::Enum;
+  if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
+    return VT->getElementType()->isRealType();
   return false;
 }
 
@@ -300,7 +312,8 @@ bool Type::isScalarType() const {
       return true;
     return false;
   }
-  return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType);
+  return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType) ||
+         isa<VectorType>(CanonicalType);
 }
 
 bool Type::isAggregateType() const {

@@ -1312,14 +1312,10 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                   resultType.getAsString());
     break;
   case UnaryOperator::Not: // bitwise complement
-    if (Input->getType()->isVectorType())
-      resultType = Input->getType();
-    else {
-      resultType = UsualUnaryConversions(Input->getType());
-      if (!resultType->isIntegerType())  // C99 6.5.3.3p1
-        return Diag(OpLoc, diag::err_typecheck_unary_expr,
-                    resultType.getAsString());
-    }
+    resultType = UsualUnaryConversions(Input->getType());
+    if (!resultType->isIntegerType())  // C99 6.5.3.3p1
+      return Diag(OpLoc, diag::err_typecheck_unary_expr,
+                  resultType.getAsString());
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
