@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -sched=none | grep leaq
-; RUN: llvm-as < %s | llc -march=x86-64 -sched=none | not grep {,%rsp)}
+; RUN: llvm-as < %s | llc -march=x86-64 -pre-RA-sched=none | grep leaq
+; RUN: llvm-as < %s | llc -march=x86-64 -pre-RA-sched=none | not grep {,%rsp)}
 ; PR1103
 
 target datalayout = "e-p:64:64"

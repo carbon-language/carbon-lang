@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sched"
+#define DEBUG_TYPE "pre-RA-sched"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"

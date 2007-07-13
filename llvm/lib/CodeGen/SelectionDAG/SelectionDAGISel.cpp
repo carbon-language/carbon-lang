@@ -73,9 +73,9 @@ MachinePassRegistry RegisterScheduler::Registry;
 namespace {
   cl::opt<RegisterScheduler::FunctionPassCtor, false,
           RegisterPassParser<RegisterScheduler> >
-  ISHeuristic("sched",
+  ISHeuristic("pre-RA-sched",
               cl::init(&createDefaultScheduler),
-              cl::desc("Instruction schedulers available:"));
+              cl::desc("Instruction schedulers available (before register allocation):"));
 
   static RegisterScheduler
   defaultListDAGScheduler("default", "  Best scheduler for the target",

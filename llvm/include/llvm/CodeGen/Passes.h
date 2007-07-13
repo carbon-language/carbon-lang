@@ -89,6 +89,9 @@ namespace llvm {
   ///
   FunctionPass *createPrologEpilogCodeInserter();
 
+  /// createPostRAScheduler - under development.
+  FunctionPass *createPostRAScheduler();
+
   /// BranchFolding Pass - This pass performs machine code CFG based
   /// optimizations to delete branches to branches, eliminate branches to
   /// successor blocks (creating fall throughs), and eliminating branches over

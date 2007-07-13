@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sched"
+#define DEBUG_TYPE "pre-RA-sched"
 #include "PPCHazardRecognizers.h"
 #include "PPC.h"
 #include "PPCInstrInfo.h"
