@@ -270,13 +270,13 @@ public:
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1)
-  QualType UsualUnaryConversions(QualType t); 
+  QualType UsualUnaryConversions(Expr *&expr); 
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
-  QualType UsualArithmeticConversions(QualType &t1, QualType &t2);
+  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr);
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). If the type isn't a function
   // or array, this routine simply returns the input type (unmodified).
@@ -302,35 +302,35 @@ private:
   /// or a null QualType (indicating an error diagnostic was issued).
     
   /// type checking binary operators (subroutines of ParseBinOp).
-  inline void InvalidOperands(SourceLocation l, Expr *lex, Expr *rex);
-  inline QualType CheckVectorOperands(SourceLocation l, Expr *lex, Expr *rex);
+  inline void InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
-    Expr *lex, Expr *rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
   inline QualType CheckRemainderOperands( // C99 6.5.5
-    Expr *lex, Expr *rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
   inline QualType CheckAdditionOperands( // C99 6.5.6
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckSubtractionOperands( // C99 6.5.6
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckShiftOperands( // C99 6.5.7
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckRelationalOperands( // C99 6.5.8
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckEqualityOperands( // C99 6.5.9
-    Expr *lex, Expr *rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
   inline QualType CheckBitwiseOperands( // C99 6.5.[10...12]
-    Expr *lex, Expr *rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
   inline QualType CheckLogicalOperands( // C99 6.5.[13,14]
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   // CheckAssignmentOperands is used for both simple and compound assignment.
   // For simple assignment, pass both expressions and a null converted type.
   // For compound assignment, pass both expressions and the converted type.
   inline QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
     Expr *lex, Expr *rex, SourceLocation OpLoc, QualType convertedType);
   inline QualType CheckCommaOperands( // C99 6.5.17
-    Expr *lex, Expr *rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckConditionalOperands( // C99 6.5.15
-    Expr *cond, Expr *lhs, Expr *rhs, SourceLocation questionLoc);
+    Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
   
   /// type checking unary operators (subroutines of ParseUnaryOp).
   /// C99 6.5.3.1, 6.5.3.2, 6.5.3.4

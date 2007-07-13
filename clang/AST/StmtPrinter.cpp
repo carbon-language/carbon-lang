@@ -386,6 +386,9 @@ void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   OS << "(" << Node->getDestType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }
+void StmtPrinter::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
+  // No need to print anything.
+}
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
   PrintExpr(Node->getLHS());
   OS << " " << BinaryOperator::getOpcodeStr(Node->getOpcode()) << " ";

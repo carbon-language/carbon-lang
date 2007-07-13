@@ -311,7 +311,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
     assert(Init == 0 && "Can't have an initializer for a functiondecl!");
     QualType R = GetTypeForDeclarator(D, S);
     if (R.isNull()) return 0; // FIXME: "auto func();" passes through...
-    
+
     FunctionDecl::StorageClass SC;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");

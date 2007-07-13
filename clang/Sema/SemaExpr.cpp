@@ -375,7 +375,7 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
   Expr *funcExpr = (Expr *)Fn;
   assert(funcExpr && "no function call expression");
   
-  QualType qType = UsualUnaryConversions(funcExpr->getType());
+  QualType qType = UsualUnaryConversions(funcExpr);
   assert(!qType.isNull() && "no type for function call expression");
 
   // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
@@ -482,62 +482,62 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 }
 
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
-  Expr *Cond, Expr *LHS, Expr *RHS, SourceLocation questionLoc) {
-  QualType cond = Cond->getType();
-  QualType lhs = LHS->getType();
-  QualType rhs = RHS->getType();
+  Expr *&cond, Expr *&lex, Expr *&rex, SourceLocation questionLoc) {
+  QualType condT = cond->getType();
+  QualType lexT = lex->getType();
+  QualType rexT = rex->getType();
   
-  assert(!cond.isNull() && "ParseConditionalOp(): no conditional type");
-  assert(!lhs.isNull() && "ParseConditionalOp(): no lhs type");
-  assert(!rhs.isNull() && "ParseConditionalOp(): no rhs type");
+  assert(!condT.isNull() && "ParseConditionalOp(): no conditional type");
+  assert(!lexT.isNull() && "ParseConditionalOp(): no lhs type");
+  assert(!rexT.isNull() && "ParseConditionalOp(): no rhs type");
 
-  cond = UsualUnaryConversions(cond);
-  lhs = UsualUnaryConversions(lhs);
-  rhs = UsualUnaryConversions(rhs);
+  condT = UsualUnaryConversions(cond);
+  lexT = UsualUnaryConversions(lex);
+  rexT = UsualUnaryConversions(rex);
   
   // first, check the condition.
-  if (!cond->isScalarType()) { // C99 6.5.15p2
-    Diag(Cond->getLocStart(), diag::err_typecheck_cond_expect_scalar, 
-         cond.getAsString());
+  if (!condT->isScalarType()) { // C99 6.5.15p2
+    Diag(cond->getLocStart(), diag::err_typecheck_cond_expect_scalar, 
+         condT.getAsString());
     return QualType();
   }
   // now check the two expressions.
-  if (lhs->isArithmeticType() && rhs->isArithmeticType()) // C99 6.5.15p3,5
-    return UsualArithmeticConversions(lhs, rhs);
+  if (lexT->isArithmeticType() && rexT->isArithmeticType()) // C99 6.5.15p3,5
+    return UsualArithmeticConversions(lex, rex);
     
-  if ((lhs->isStructureType() && rhs->isStructureType()) || // C99 6.5.15p3
-      (lhs->isUnionType() && rhs->isUnionType())) {
-    TagType *lTag = cast<TagType>(lhs.getCanonicalType());
-    TagType *rTag = cast<TagType>(rhs.getCanonicalType());
+  if ((lexT->isStructureType() && rexT->isStructureType()) || // C99 6.5.15p3
+      (lexT->isUnionType() && rexT->isUnionType())) {
+    TagType *lTag = cast<TagType>(lexT.getCanonicalType());
+    TagType *rTag = cast<TagType>(rexT.getCanonicalType());
     
     if (lTag->getDecl()->getIdentifier() == rTag->getDecl()->getIdentifier()) 
-      return lhs;
+      return lexT;
     else {
       Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-           lhs.getAsString(), rhs.getAsString(),
-           LHS->getSourceRange(), RHS->getSourceRange());
+           lexT.getAsString(), rexT.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
       return QualType();
     }
   }
-  if (lhs->isPointerType() && RHS->isNullPointerConstant()) // C99 6.5.15p3
-    return lhs;
-  if (rhs->isPointerType() && LHS->isNullPointerConstant())
-    return rhs;
+  if (lexT->isPointerType() && rex->isNullPointerConstant()) // C99 6.5.15p3
+    return lexT;
+  if (rexT->isPointerType() && lex->isNullPointerConstant())
+    return rexT;
     
-  if (lhs->isPointerType() && rhs->isPointerType()) { // C99 6.5.15p3,6
+  if (lexT->isPointerType() && rexT->isPointerType()) { // C99 6.5.15p3,6
     QualType lhptee, rhptee;
     
     // get the "pointed to" type
-    lhptee = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
-    rhptee = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
+    lhptee = cast<PointerType>(lexT.getCanonicalType())->getPointeeType();
+    rhptee = cast<PointerType>(rexT.getCanonicalType())->getPointeeType();
 
     // ignore qualifiers on void (C99 6.5.15p3, clause 6)
     if (lhptee.getUnqualifiedType()->isVoidType() &&
         (rhptee->isObjectType() || rhptee->isIncompleteType()))
-      return lhs;
+      return lexT;
     if (rhptee.getUnqualifiedType()->isVoidType() &&
         (lhptee->isObjectType() || lhptee->isIncompleteType()))
-      return rhs;
+      return rexT;
 
     // FIXME: C99 6.5.15p6: If both operands are pointers to compatible types
     // *or* to differently qualified versions of compatible types, the result
@@ -546,17 +546,17 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
                                   rhptee.getUnqualifiedType())) {
       Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
-           lhs.getAsString(), rhs.getAsString(),
-           LHS->getSourceRange(), RHS->getSourceRange());
-      return lhs; // FIXME: this is an _ext - is this return o.k?
+           lexT.getAsString(), rexT.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      return lexT; // FIXME: this is an _ext - is this return o.k?
     }
   }
-  if (lhs->isVoidType() && rhs->isVoidType()) // C99 6.5.15p3
-    return lhs;
+  if (lexT->isVoidType() && rexT->isVoidType()) // C99 6.5.15p3
+    return lexT;
     
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-       lhs.getAsString(), rhs.getAsString(),
-       LHS->getSourceRange(), RHS->getSourceRange());
+       lexT.getAsString(), rexT.getAsString(),
+       lex->getSourceRange(), rex->getSourceRange());
   return QualType();
 }
 
@@ -566,8 +566,8 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
                                             SourceLocation ColonLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
-  QualType result = CheckConditionalOperands((Expr *)Cond, (Expr *)LHS, 
-                                             (Expr *)RHS, QuestionLoc);
+  QualType result = CheckConditionalOperands((Expr *&)Cond, (Expr *&)LHS, 
+                                             (Expr *&)RHS, QuestionLoc);
   if (result.isNull())
     return true;
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
@@ -586,7 +586,8 @@ QualType Sema::DefaultFunctionArrayConversion(QualType t) {
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
 /// apply if the array is an argument to the sizeof or address (&) operators.
 /// In these instances, this routine should *not* be called.
-QualType Sema::UsualUnaryConversions(QualType t) {
+QualType Sema::UsualUnaryConversions(Expr *&expr) {
+  QualType t = expr->getType();
   assert(!t.isNull() && "UsualUnaryConversions - missing type");
   
   if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
@@ -598,9 +599,9 @@ QualType Sema::UsualUnaryConversions(QualType t) {
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
-QualType Sema::UsualArithmeticConversions(QualType &lhs, QualType &rhs) {
-  lhs = UsualUnaryConversions(lhs);
-  rhs = UsualUnaryConversions(rhs);
+QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
+  QualType lhs = UsualUnaryConversions(lhsExpr);
+  QualType rhs = UsualUnaryConversions(rhsExpr);
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs) 
@@ -737,14 +738,14 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return Incompatible;
 }
 
-inline void Sema::InvalidOperands(SourceLocation loc, Expr *lex, Expr *rex) {
+inline void Sema::InvalidOperands(SourceLocation loc, Expr *&lex, Expr *&rex) {
   Diag(loc, diag::err_typecheck_invalid_operands, 
        lex->getType().getAsString(), rex->getType().getAsString(),
        lex->getSourceRange(), rex->getSourceRange());
 }
 
-inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *lex, 
-                                                              Expr *rex) {
+inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex, 
+                                                              Expr *&rex) {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
   
   // make sure the vector types are identical. 
@@ -758,13 +759,12 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *lex,
 }    
 
 inline QualType Sema::CheckMultiplyDivideOperands(
-  Expr *lex, Expr *rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
-  QualType lhsType = lex->getType(), rhsType = rex->getType();
-  
-  if (lhsType->isVectorType() || rhsType->isVectorType())
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+    
+  QualType resType = UsualArithmeticConversions(lex, rex);
   
   if (resType->isArithmeticType())
     return resType;
@@ -773,10 +773,9 @@ inline QualType Sema::CheckMultiplyDivideOperands(
 }
 
 inline QualType Sema::CheckRemainderOperands(
-  Expr *lex, Expr *rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
-  QualType lhsType = lex->getType(), rhsType = rex->getType();
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  QualType resType = UsualArithmeticConversions(lex, rex);
   
   if (resType->isIntegerType())
     return resType;
@@ -785,13 +784,14 @@ inline QualType Sema::CheckRemainderOperands(
 }
 
 inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
-  Expr *lex, Expr *rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
   if (lhsType->isVectorType() || rhsType->isVectorType())
-    return CheckVectorOperands(loc, lex, rex);    
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+    return CheckVectorOperands(loc, lex, rex);
+
+  QualType resType = UsualArithmeticConversions(lex, rex);
 
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
@@ -805,13 +805,13 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
 }
 
 inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
-  Expr *lex, Expr *rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  QualType resType = UsualArithmeticConversions(lex, rex);
   
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
@@ -825,12 +825,12 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
 }
 
 inline QualType Sema::CheckShiftOperands( // C99 6.5.7
-  Expr *lex, Expr *rex, SourceLocation loc)
+  Expr *&lex, Expr *&rex, SourceLocation loc)
 {
   // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
   // for int << longlong -> the result type should be int, not long long.
   QualType lhsType = lex->getType(), rhsType = rex->getType();
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  QualType resType = UsualArithmeticConversions(lex, rex);
   
   if (resType->isIntegerType())
     return resType;
@@ -839,10 +839,10 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
 }
 
 inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
-  Expr *lex, Expr *rex, SourceLocation loc)
+  Expr *&lex, Expr *&rex, SourceLocation loc)
 {
-  QualType lType = UsualUnaryConversions(lex->getType());
-  QualType rType = UsualUnaryConversions(rex->getType());
+  QualType lType = UsualUnaryConversions(lex);
+  QualType rType = UsualUnaryConversions(rex);
   
   if (lType->isRealType() && rType->isRealType())
     return Context.IntTy;
@@ -869,10 +869,10 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
 }
 
 inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
-  Expr *lex, Expr *rex, SourceLocation loc)
+  Expr *&lex, Expr *&rex, SourceLocation loc)
 {
-  QualType lType = UsualUnaryConversions(lex->getType());
-  QualType rType = UsualUnaryConversions(rex->getType());
+  QualType lType = UsualUnaryConversions(lex);
+  QualType rType = UsualUnaryConversions(rex);
   
   if (lType->isArithmeticType() && rType->isArithmeticType())
     return Context.IntTy;
@@ -899,13 +899,13 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
 }
 
 inline QualType Sema::CheckBitwiseOperands(
-  Expr *lex, Expr *rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
   
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  QualType resType = UsualArithmeticConversions(lex, rex);
   
   if (resType->isIntegerType())
     return resType;
@@ -914,10 +914,10 @@ inline QualType Sema::CheckBitwiseOperands(
 }
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
-  Expr *lex, Expr *rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
-  QualType lhsType = UsualUnaryConversions(lex->getType());
-  QualType rhsType = UsualUnaryConversions(rex->getType());
+  QualType lhsType = UsualUnaryConversions(lex);
+  QualType rhsType = UsualUnaryConversions(rex);
   
   if (lhsType->isScalarType() || rhsType->isScalarType())
     return Context.IntTy;
@@ -1007,13 +1007,14 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 }
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17
-  Expr *lex, Expr *rex, SourceLocation loc) {
-  return UsualUnaryConversions(rex->getType());
+  Expr *&lex, Expr *&rex, SourceLocation loc) {
+  return UsualUnaryConversions(rex);
 }
 
+/// CheckIncrementDecrementOperand - unlike most "Check" methods, this routine
+/// doesn't need to call UsualUnaryConversions or UsualArithmeticConversions.
 QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
-  QualType lhsType = op->getType(), rhsType = Context.IntTy;
-  QualType resType = UsualArithmeticConversions(lhsType, rhsType);
+  QualType resType = op->getType();
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1
@@ -1100,7 +1101,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
 }
 
 QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
-  QualType qType = UsualUnaryConversions(op->getType());
+  QualType qType = UsualUnaryConversions(op);
   
   assert(!qType.isNull() && "no type for * expression");
 
@@ -1307,13 +1308,13 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     break;
   case UnaryOperator::Plus:
   case UnaryOperator::Minus:
-    resultType = UsualUnaryConversions(Input->getType());
+    resultType = UsualUnaryConversions(Input);
     if (!resultType->isArithmeticType())  // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr, 
                   resultType.getAsString());
     break;
   case UnaryOperator::Not: // bitwise complement
-    resultType = UsualUnaryConversions(Input->getType());
+    resultType = UsualUnaryConversions(Input);
     if (!resultType->isIntegerType())  // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());

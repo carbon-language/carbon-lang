@@ -426,6 +426,24 @@ public:
   static bool classof(const MemberExpr *) { return true; }
 };
 
+/// ImplicitCastExpr - Allows us to explicitly represent implicit type 
+/// conversions. For example: converting T[]->T*, void f()->void (*f)(), 
+/// float->double, short->int, etc.
+///
+class ImplicitCastExpr : public Expr {
+  QualType Ty;
+  Expr *Op;
+public:
+  ImplicitCastExpr(QualType ty, Expr *op) : 
+    Expr(ImplicitCastExprClass, ty), Ty(ty), Op(op) {}
+    
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ImplicitCastExprClass; 
+  }
+  static bool classof(const ImplicitCastExpr *) { return true; }
+};
+
 /// CastExpr - [C99 6.5.4] Cast Operators.
 ///
 class CastExpr : public Expr {
@@ -435,9 +453,7 @@ class CastExpr : public Expr {
 public:
   CastExpr(QualType ty, Expr *op, SourceLocation l) : 
     Expr(CastExprClass, ty), Ty(ty), Op(op), Loc(l) {}
-  CastExpr(StmtClass SC, QualType ty, Expr *op) : 
-    Expr(SC, QualType()), Ty(ty), Op(op), Loc(SourceLocation()) {}
-  
+
   SourceLocation getLParenLoc() const { return Loc; }
   
   QualType getDestType() const { return Ty; }
