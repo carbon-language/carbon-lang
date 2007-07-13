@@ -196,9 +196,6 @@ protected:
   virtual ~Type();
   friend class ASTContext;
 public:
-  /// getSize - the number of bits to represent the type.
-  unsigned getSize() const;
-  
   TypeClass getTypeClass() const { return TC; }
   
   bool isCanonical() const { return CanonicalType.getTypePtr() == this; }

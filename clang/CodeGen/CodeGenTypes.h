@@ -41,6 +41,7 @@ public:
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                            std::vector<const llvm::Type*> &ArgTys);
 };
+
 }  // end namespace CodeGen
 }  // end namespace clang
 

@@ -972,7 +972,7 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
 }
 
 QualType Sema::HandleVectorTypeAttribute(QualType curType, 
-                                      AttributeList *rawAttr) {
+                                         AttributeList *rawAttr) {
   // check the attribute arugments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
@@ -1005,8 +1005,7 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
          curType.getCanonicalType().getAsString());
     return QualType();
   }
-  BuiltinType *baseType = cast<BuiltinType>(canonType);
-  unsigned typeSize = baseType->getSize();
+  unsigned typeSize = Context.getTypeSize(curType);
   // vecSize is specified in bytes - convert to bits.
   unsigned vectorSize = vecSize.getZExtValue() * 8; 
   

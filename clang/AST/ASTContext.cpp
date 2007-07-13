@@ -137,6 +137,59 @@ void ASTContext::InitBuiltinTypes() {
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
 }
 
+
+/// getTypeSize - Return the size of the specified type, in bits.  This method
+/// does not work on incomplete types.
+unsigned ASTContext::getTypeSize(QualType T) {
+  T = T.getCanonicalType();
+  switch (T->getTypeClass()) {
+  case Type::Builtin: {
+    // FIXME: need to use TargetInfo to derive the target specific sizes. This
+    // implementation will suffice for play with vector support.
+    switch (cast<BuiltinType>(T)->getKind()) {
+    case BuiltinType::Void:       return 0;
+    case BuiltinType::Bool:       
+    case BuiltinType::Char_S:     
+    case BuiltinType::Char_U:     return sizeof(char) * 8;
+    case BuiltinType::SChar:      return sizeof(signed char) * 8;
+    case BuiltinType::Short:      return sizeof(short) * 8;
+    case BuiltinType::Int:        return sizeof(int) * 8;
+    case BuiltinType::Long:       return sizeof(long) * 8;
+    case BuiltinType::LongLong:   return sizeof(long long) * 8;
+    case BuiltinType::UChar:      return sizeof(unsigned char) * 8;
+    case BuiltinType::UShort:     return sizeof(unsigned short) * 8;
+    case BuiltinType::UInt:       return sizeof(unsigned int) * 8;
+    case BuiltinType::ULong:      return sizeof(unsigned long) * 8;
+    case BuiltinType::ULongLong:  return sizeof(unsigned long long) * 8;
+    case BuiltinType::Float:      return sizeof(float) * 8;
+    case BuiltinType::Double:     return sizeof(double) * 8;
+    case BuiltinType::LongDouble: return sizeof(long double) * 8;
+    }
+    assert(0 && "Can't get here");
+  }
+  case Type::Pointer:
+    // FIXME: need to use TargetInfo again
+    return sizeof(void *) * 8;
+  case Type::Reference:
+    // seems that sizeof(T&) == sizeof(T) -- spec reference?
+    return getTypeSize(cast<ReferenceType>(T)->getReferenceeType());
+  case Type::Complex:
+  case Type::Array:
+  case Type::Vector:
+  case Type::FunctionNoProto:
+  case Type::FunctionProto:
+  case Type::TypeName:
+  case Type::Tagged:
+    assert(0 && "Type sizes are not yet known, in general");
+  }
+  assert(0 && "Can't get here");
+}
+
+//===----------------------------------------------------------------------===//
+//                   Type creation/memoization methods
+//===----------------------------------------------------------------------===//
+
+
 /// getComplexType - Return the uniqued reference to the type for a complex
 /// number with the specified element type.
 QualType ASTContext::getComplexType(QualType T) {

@@ -1152,7 +1152,7 @@ RValue CodeGenFunction::EmitPointerSub(RValue LHS, QualType LHSTy,
     QualType LHSElementType = LHSPtrType->getPointeeType();
     assert(LHSElementType == RHSPtrType->getPointeeType() &&
       "can't subtract pointers with differing element types");
-    unsigned ElementSize = LHSElementType->getSize() / 8;
+    unsigned ElementSize = getContext().getTypeSize(LHSElementType) / 8;
     const llvm::Type *ResultType = ConvertType(ResTy);
     llvm::Value *CastLHS = Builder.CreatePtrToInt(LHSValue, ResultType,
                                                   "sub.ptr.lhs.cast");

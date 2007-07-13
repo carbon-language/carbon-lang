@@ -54,6 +54,11 @@ public:
   ~ASTContext();
   
   void PrintStats() const;
+  
+  /// getTypeSize - Return the size of the specified type, in bits.  This method
+  /// does not work on incomplete types.
+  unsigned getTypeSize(QualType T);
+  //TODO: unsigned getTypeAlign(QualType T);
 
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
