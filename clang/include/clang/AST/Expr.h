@@ -431,12 +431,14 @@ public:
 /// float->double, short->int, etc.
 ///
 class ImplicitCastExpr : public Expr {
-  QualType Ty;
   Expr *Op;
 public:
   ImplicitCastExpr(QualType ty, Expr *op) : 
-    Expr(ImplicitCastExprClass, ty), Ty(ty), Op(op) {}
+    Expr(ImplicitCastExprClass, ty), Op(op) {}
     
+  Expr *getSubExpr() { return Op; }
+  const Expr *getSubExpr() const { return Op; }
+  
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImplicitCastExprClass; 
