@@ -564,10 +564,10 @@ void ArrayType::getAsStringInternal(std::string &S) const {
 }
 
 void VectorType::getAsStringInternal(std::string &S) const {
-  S += " __attribute__(( vector_size(";
-  // FIXME: handle types that are != 32 bits.
+  S += " __attribute__((vector_size(";
+  // FIXME: should multiply by element size somehow.
   S += llvm::utostr_32(NumElements*4); // convert back to bytes.
-  S += ") ))";
+  S += ")))";
   ElementType.getAsStringInternal(S);
 }
 
