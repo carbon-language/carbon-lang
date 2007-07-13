@@ -483,17 +483,9 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   Expr *&cond, Expr *&lex, Expr *&rex, SourceLocation questionLoc) {
-  QualType condT = cond->getType();
-  QualType lexT = lex->getType();
-  QualType rexT = rex->getType();
-  
-  assert(!condT.isNull() && "ParseConditionalOp(): no conditional type");
-  assert(!lexT.isNull() && "ParseConditionalOp(): no lhs type");
-  assert(!rexT.isNull() && "ParseConditionalOp(): no rhs type");
-
-  condT = UsualUnaryConversions(cond);
-  lexT = UsualUnaryConversions(lex);
-  rexT = UsualUnaryConversions(rex);
+  QualType condT = UsualUnaryConversions(cond);
+  QualType lexT = UsualUnaryConversions(lex);
+  QualType rexT = UsualUnaryConversions(rex);
   
   // first, check the condition.
   if (!condT->isScalarType()) { // C99 6.5.15p2
