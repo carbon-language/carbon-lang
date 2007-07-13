@@ -115,6 +115,9 @@
 /* Define to 1 if you have the `floorf' function. */
 #undef HAVE_FLOORF
 
+/* Define to 1 if you have the `fmodf' function. */
+#undef HAVE_FMODF
+
 /* Does not have forward iterator */
 #undef HAVE_FWD_ITERATOR
 
@@ -270,6 +273,9 @@
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
 
+/* Define to 1 if you have the `powf' function. */
+#undef HAVE_POWF
+
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
 
@@ -293,6 +299,9 @@
 
 /* Define to 1 if you have the `rintf' function. */
 #undef HAVE_RINTF
+
+/* Define to 1 if you have the `round' function. */
+#undef HAVE_ROUND
 
 /* Define to 1 if you have the `roundf' function. */
 #undef HAVE_ROUNDF
@@ -368,6 +377,9 @@
 
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
+
+/* Define to 1 if you have the `strtof' function. */
+#undef HAVE_STRTOF
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
