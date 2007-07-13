@@ -551,9 +551,10 @@ SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
 }
 
 
-/// LegalizeOp - We know that the specified value has a legal type.
-/// Recursively ensure that the operands have legal types, then return the
-/// result.
+/// LegalizeOp - We know that the specified value has a legal type, and
+/// that its operands are legal.  Now ensure that the operation itself
+/// is legal, recursively ensuring that the operands' operations remain
+/// legal.
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   assert(isTypeLegal(Op.getValueType()) &&
          "Caller should expand or promote operands that are not legal!");
