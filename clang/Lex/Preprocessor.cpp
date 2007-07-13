@@ -37,7 +37,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iostream>
-#include <alloca.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -908,7 +907,9 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(LexerToken &Identifier,
     II = getIdentifierInfo(BufPtr, BufPtr+Identifier.getLength());
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-    const char *TmpBuf = (char*)alloca(Identifier.getLength());
+    llvm::SmallVector<char, 64> IdentifierBuffer;
+    IdentifierBuffer.resize(Identifier.getLength());
+    const char *TmpBuf = &IdentifierBuffer[0];
     unsigned Size = getSpelling(Identifier, TmpBuf);
     II = getIdentifierInfo(TmpBuf, TmpBuf+Size);
   }
