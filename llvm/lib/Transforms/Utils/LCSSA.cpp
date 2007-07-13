@@ -36,7 +36,8 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
@@ -46,17 +47,17 @@ using namespace llvm;
 STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 
 namespace {
-  struct VISIBILITY_HIDDEN LCSSA : public FunctionPass {
+  struct VISIBILITY_HIDDEN LCSSA : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
-    LCSSA() : FunctionPass((intptr_t)&ID) {}
+    LCSSA() : LoopPass((intptr_t)&ID) {}
 
     // Cached analysis information for the current function.
     LoopInfo *LI;
     DominatorTree *DT;
     std::vector<BasicBlock*> LoopBlocks;
     
-    virtual bool runOnFunction(Function &F);
-    bool visitSubloop(Loop* L);
+    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+
     void ProcessInstruction(Instruction* Instr,
                             const std::vector<BasicBlock*>& exitBlocks);
     
@@ -69,7 +70,9 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
+      AU.addPreserved<LoopInfo>();
       AU.addRequired<DominatorTree>();
+      AU.addPreserved<ScalarEvolution>();
     }
   private:
     void getLoopValuesUsedOutsideLoop(Loop *L,
@@ -88,27 +91,14 @@ namespace {
   RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 }
 
-FunctionPass *llvm::createLCSSAPass() { return new LCSSA(); }
+LoopPass *llvm::createLCSSAPass() { return new LCSSA(); }
 const PassInfo *llvm::LCSSAID = X.getPassInfo();
 
 /// runOnFunction - Process all loops in the function, inner-most out.
-bool LCSSA::runOnFunction(Function &F) {
-  bool changed = false;
+bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
   
-  LI = &getAnalysis<LoopInfo>();
+  LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
-    
-  for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-    changed |= visitSubloop(*I);
-      
-  return changed;
-}
-
-/// visitSubloop - Recursively process all subloops, and then process the given
-/// loop if it has live-out values.
-bool LCSSA::visitSubloop(Loop* L) {
-  for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
-    visitSubloop(*I);
     
   // Speed up queries by creating a sorted list of blocks
   LoopBlocks.clear();

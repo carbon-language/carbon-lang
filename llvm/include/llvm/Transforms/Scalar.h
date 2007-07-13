@@ -306,7 +306,7 @@ FunctionPass *createBlockPlacementPass();
 // LCSSA - This pass inserts phi nodes at loop boundaries to simplify other loop
 // optimizations.
 //
-FunctionPass *createLCSSAPass();
+LoopPass *createLCSSAPass();
 extern const PassInfo *LCSSAID;
 
 //===----------------------------------------------------------------------===//
