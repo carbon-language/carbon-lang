@@ -171,7 +171,8 @@ unsigned ASTContext::getTypeSize(QualType T) {
     // FIXME: need to use TargetInfo again
     return sizeof(void *) * 8;
   case Type::Reference:
-    // seems that sizeof(T&) == sizeof(T) -- spec reference?
+    // "When applied to a reference or a reference type, the result is the size
+    // of the referenced type." C++98 5.3.3p2: expr.sizeof
     return getTypeSize(cast<ReferenceType>(T)->getReferenceeType());
   case Type::Complex:
   case Type::Array:
