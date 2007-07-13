@@ -473,7 +473,8 @@ void QualType::getAsStringInternal(std::string &S) const {
   }
   
   // Print qualifiers as appropriate.
-  if (unsigned TQ = getQualifiers()) {
+  unsigned TQ = getQualifiers();
+  if (TQ) {
     std::string TQS;
     AppendTypeQualList(TQS, TQ);
     if (!S.empty())
