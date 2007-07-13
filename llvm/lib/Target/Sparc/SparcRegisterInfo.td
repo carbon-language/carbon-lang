@@ -26,9 +26,9 @@ class Rf<bits<5> num, string n> : SparcReg<n> {
   let Num = num;
 }
 // Rd - Slots in the FP register file for 64-bit floating-point values.
-class Rd<bits<5> num, string n, list<Register> aliases> : SparcReg<n> {
+class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
   let Num = num;
-  let Aliases = aliases;
+  let SubRegs = subregs;
 }
 
 // Integer registers
