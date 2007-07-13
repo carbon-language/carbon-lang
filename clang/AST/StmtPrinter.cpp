@@ -387,7 +387,8 @@ void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
-  // No need to print anything.
+  // No need to print anything, simply forward to the sub expression.
+  PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
   PrintExpr(Node->getLHS());

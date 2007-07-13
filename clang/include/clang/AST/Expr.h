@@ -438,7 +438,9 @@ public:
     
   Expr *getSubExpr() { return Op; }
   const Expr *getSubExpr() const { return Op; }
-  
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImplicitCastExprClass; 

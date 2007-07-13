@@ -271,16 +271,19 @@ private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1)
   QualType UsualUnaryConversions(Expr *&expr); 
+  
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
-  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr);
+  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
+                                      QualType &lhs, QualType &rhs);
+                                      
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). If the type isn't a function
   // or array, this routine simply returns the input type (unmodified).
-  QualType DefaultFunctionArrayConversion(QualType t);
+  QualType DefaultFunctionArrayConversion(Expr *&expr);
   
   enum AssignmentCheckResult {
     Compatible,
@@ -290,10 +293,22 @@ private:
     IncompatiblePointer,
     CompatiblePointerDiscardsQualifiers
   };
-  // CheckAssignmentConstraints - conversions for assignment, argument passing, 
-  // variable initialization, and function return values. Currently used by 
-  // CheckAssignmentOperands, ParseCallExpr, and ParseReturnStmt.  C99 6.5.16.
+  // CheckAssignmentConstraints - Perform type checking for assignment, 
+  // argument passing, variable initialization, and function return values. 
+  // This routine is only used by the following two methods. C99 6.5.16.
   AssignmentCheckResult CheckAssignmentConstraints(QualType lhs, QualType rhs);
+  
+  // CheckSingleAssignmentConstraints - Currently used by ParseCallExpr,
+  // CheckAssignmentOperands, and ParseReturnStmt. Prior to type checking, 
+  // this routine performs the default function/array converions.
+  AssignmentCheckResult CheckSingleAssignmentConstraints(QualType lhs, 
+                                                         Expr *&rExpr);
+  // CheckCompoundAssignmentConstraints - Type check without performing any 
+  // conversions. For compound assignments, the "Check...Operands" methods 
+  // perform the necessary conversions. 
+  AssignmentCheckResult CheckCompoundAssignmentConstraints(QualType lhs, 
+                                                           QualType rhs);
+  
   // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
   AssignmentCheckResult CheckPointerTypesForAssignment(QualType lhsType, 
                                                        QualType rhsType);

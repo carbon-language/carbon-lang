@@ -107,7 +107,7 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
   Expr *condExpr = (Expr *)CondVal;
   assert(condExpr && "ParseIfStmt(): missing expression");
   
-  QualType condType = DefaultFunctionArrayConversion(condExpr->getType());
+  QualType condType = DefaultFunctionArrayConversion(condExpr);
   assert(!condType.isNull() && "ParseIfStmt(): missing expression type");
   
   if (!condType->isScalarType()) // C99 6.8.4.1p1
@@ -127,7 +127,7 @@ Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
   Expr *condExpr = (Expr *)Cond;
   assert(condExpr && "ParseWhileStmt(): missing expression");
   
-  QualType condType = DefaultFunctionArrayConversion(condExpr->getType());
+  QualType condType = DefaultFunctionArrayConversion(condExpr);
   assert(!condType.isNull() && "ParseWhileStmt(): missing expression type");
   
   if (!condType->isScalarType()) // C99 6.8.5p2
@@ -143,7 +143,7 @@ Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
   Expr *condExpr = (Expr *)Cond;
   assert(condExpr && "ParseDoStmt(): missing expression");
   
-  QualType condType = DefaultFunctionArrayConversion(condExpr->getType());
+  QualType condType = DefaultFunctionArrayConversion(condExpr);
   assert(!condType.isNull() && "ParseDoStmt(): missing expression type");
   
   if (!condType->isScalarType()) // C99 6.8.5p2
@@ -164,7 +164,7 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   }
   if (Second) {
     Expr *testExpr = (Expr *)Second;
-    QualType testType = DefaultFunctionArrayConversion(testExpr->getType());
+    QualType testType = DefaultFunctionArrayConversion(testExpr);
     assert(!testType.isNull() && "ParseForStmt(): missing test expression type");
     
     if (!testType->isScalarType()) // C99 6.8.5p2
@@ -224,15 +224,16 @@ Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 
 
 Action::StmtResult
-Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
+Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
+  Expr *RetValExp = static_cast<Expr *>(rex);
   QualType lhsType = CurFunctionDecl->getResultType();
 
   if (lhsType->isVoidType()) {
     if (RetValExp) // C99 6.8.6.4p1 (ext_ since GCC warns)
       Diag(ReturnLoc, diag::ext_return_has_expr, 
            CurFunctionDecl->getIdentifier()->getName(),
-           ((Expr *)RetValExp)->getSourceRange());
-    return new ReturnStmt((Expr*)RetValExp);
+           RetValExp->getSourceRange());
+    return new ReturnStmt(RetValExp);
   } else {
     if (!RetValExp) {
       const char *funcName = CurFunctionDecl->getIdentifier()->getName();
@@ -244,15 +245,16 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
     }
   }
   // we have a non-void function with an expression, continue checking
-  QualType rhsType = ((Expr *)RetValExp)->getType();
+  QualType rhsType = RetValExp->getType();
 
   if (lhsType == rhsType) // common case, fast path...
-    return new ReturnStmt((Expr*)RetValExp);
+    return new ReturnStmt(RetValExp);
 
   // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
   // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
   // function return.  
-  AssignmentCheckResult result = CheckAssignmentConstraints(lhsType, rhsType);
+  AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType, 
+                                                                  RetValExp);
   bool hadError = false;
   
   // decode the result (notice that extensions still return a type).
@@ -262,31 +264,31 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *RetValExp) {
   case Incompatible:
     Diag(ReturnLoc, diag::err_typecheck_return_incompatible, 
          lhsType.getAsString(), rhsType.getAsString(),
-         ((Expr *)RetValExp)->getSourceRange());
+         RetValExp->getSourceRange());
     hadError = true;
     break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
-    if (!((Expr *)RetValExp)->isNullPointerConstant()) {
+    if (!RetValExp->isNullPointerConstant()) {
       Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
            lhsType.getAsString(), rhsType.getAsString(),
-           ((Expr *)RetValExp)->getSourceRange());
+           RetValExp->getSourceRange());
     }
     break;
   case IntFromPointer:
     Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
          lhsType.getAsString(), rhsType.getAsString(),
-         ((Expr *)RetValExp)->getSourceRange());
+         RetValExp->getSourceRange());
     break;
   case IncompatiblePointer:
     Diag(ReturnLoc, diag::ext_typecheck_return_incompatible_pointer,
          lhsType.getAsString(), rhsType.getAsString(),
-         ((Expr *)RetValExp)->getSourceRange());
+         RetValExp->getSourceRange());
     break;
   case CompatiblePointerDiscardsQualifiers:
     Diag(ReturnLoc, diag::ext_typecheck_return_discards_qualifiers,
          lhsType.getAsString(), rhsType.getAsString(),
-         ((Expr *)RetValExp)->getSourceRange());
+         RetValExp->getSourceRange());
     break;
   }
   return new ReturnStmt((Expr*)RetValExp);

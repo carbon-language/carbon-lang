@@ -278,14 +278,16 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
 Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
-  QualType t1 = ((Expr *)Base)->getType();
-  QualType t2 = ((Expr *)Idx)->getType();
+  Expr *lex = (Expr *)Base;
+  Expr *rex = (Expr *)Idx;
+  QualType t1 = lex->getType();
+  QualType t2 = rex->getType();
 
   assert(!t1.isNull() && "no type for array base expression");
   assert(!t2.isNull() && "no type for array index expression");
 
-  QualType canonT1 = DefaultFunctionArrayConversion(t1).getCanonicalType();
-  QualType canonT2 = DefaultFunctionArrayConversion(t2).getCanonicalType();
+  QualType canonT1 = DefaultFunctionArrayConversion(lex).getCanonicalType();
+  QualType canonT2 = DefaultFunctionArrayConversion(rex).getCanonicalType();
   
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
   // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
@@ -297,17 +299,16 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   if (isa<PointerType>(canonT1) || isa<VectorType>(canonT1)) {
     baseType = canonT1;
     indexType = canonT2;
-    baseExpr = static_cast<Expr *>(Base);
-    indexExpr = static_cast<Expr *>(Idx);
+    baseExpr = lex;
+    indexExpr = rex;
   } else if (isa<PointerType>(canonT2)) { // uncommon
     baseType = canonT2;
     indexType = canonT1;
-    baseExpr = static_cast<Expr *>(Idx);
-    indexExpr = static_cast<Expr *>(Base);
+    baseExpr = rex;
+    indexExpr = lex;
   } else {
-    return Diag(static_cast<Expr *>(Base)->getLocStart(), 
-                diag::err_typecheck_subscript_value, 
-                static_cast<Expr *>(Base)->getSourceRange());
+    return Diag(lex->getLocStart(), diag::err_typecheck_subscript_value, 
+                rex->getSourceRange());
   }              
   // C99 6.5.2.1p1
   if (!indexType->isIntegerType()) {
@@ -427,8 +428,8 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
       if (lhsType == rhsType) // common case, fast path...
         continue;
         
-      AssignmentCheckResult result = CheckAssignmentConstraints(lhsType,
-                                                                rhsType);
+      AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
+                                                                      argExpr);
       SourceLocation l = argExpr->getLocStart();
 
       // decode the result (notice that AST's are still created for extensions).
@@ -495,7 +496,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   }
   // now check the two expressions.
   if (lexT->isArithmeticType() && rexT->isArithmeticType()) // C99 6.5.15p3,5
-    return UsualArithmeticConversions(lex, rex);
+    return UsualArithmeticConversions(lex, rex, lexT, rexT);
     
   if ((lexT->isStructureType() && rexT->isStructureType()) || // C99 6.5.15p3
       (lexT->isUnionType() && rexT->isUnionType())) {
@@ -565,7 +566,10 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
 }
 
-QualType Sema::DefaultFunctionArrayConversion(QualType t) {
+QualType Sema::DefaultFunctionArrayConversion(Expr *&expr) {
+  QualType t = expr->getType();
+  assert(!t.isNull() && "DefaultFunctionArrayConversion - missing type");
+  
   if (t->isFunctionType()) // C99 6.3.2.1p4
     return Context.getPointerType(t);
   if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
@@ -582,18 +586,21 @@ QualType Sema::UsualUnaryConversions(Expr *&expr) {
   QualType t = expr->getType();
   assert(!t.isNull() && "UsualUnaryConversions - missing type");
   
-  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
+  if (t->isPromotableIntegerType()) { // C99 6.3.1.1p2
+    // expr = new ImplicitCastExpr(Context.IntTy, expr);
     return Context.IntTy;
-  return DefaultFunctionArrayConversion(t);
+  }
+  return DefaultFunctionArrayConversion(expr);
 }
 
 /// UsualArithmeticConversions - Performs various conversions that are common to 
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
-QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
-  QualType lhs = UsualUnaryConversions(lhsExpr);
-  QualType rhs = UsualUnaryConversions(rhsExpr);
+QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
+                                          QualType &lhs, QualType &rhs) {
+  lhs = UsualUnaryConversions(lhsExpr);
+  rhs = UsualUnaryConversions(rhsExpr);
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs) 
@@ -695,12 +702,6 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 Sema::AssignmentCheckResult
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
-  // This check seems unnatural, however it is necessary to insure the proper
-  // conversion of functions/arrays. If the conversion were done for all
-  // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
-  // expressions that surpress this implicit conversion (&, sizeof).
-  rhsType = DefaultFunctionArrayConversion(rhsType);
-    
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
       if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
@@ -730,6 +731,22 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return Incompatible;
 }
 
+Sema::AssignmentCheckResult
+Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
+  // This check seems unnatural, however it is necessary to insure the proper
+  // conversion of functions/arrays. If the conversion were done for all
+  // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
+  // expressions that surpress this implicit conversion (&, sizeof).
+  QualType rhsType = DefaultFunctionArrayConversion(rExpr);
+  
+  return CheckAssignmentConstraints(lhsType, rhsType);
+}
+
+Sema::AssignmentCheckResult
+Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
+  return CheckAssignmentConstraints(lhsType, rhsType);
+}
+
 inline void Sema::InvalidOperands(SourceLocation loc, Expr *&lex, Expr *&rex) {
   Diag(loc, diag::err_typecheck_invalid_operands, 
        lex->getType().getAsString(), rex->getType().getAsString(),
@@ -753,10 +770,12 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
 inline QualType Sema::CheckMultiplyDivideOperands(
   Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
-  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+
+  if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
     
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  QualType resType = UsualArithmeticConversions(lex, rex, lhsType, rhsType);
   
   if (resType->isArithmeticType())
     return resType;
@@ -767,7 +786,9 @@ inline QualType Sema::CheckMultiplyDivideOperands(
 inline QualType Sema::CheckRemainderOperands(
   Expr *&lex, Expr *&rex, SourceLocation loc) 
 {
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  QualType lhsType = lex->getType(), rhsType = rex->getType();
+
+  QualType resType = UsualArithmeticConversions(lex, rex, lhsType, rhsType);
   
   if (resType->isIntegerType())
     return resType;
@@ -783,7 +804,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
 
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  QualType resType = UsualArithmeticConversions(lex, rex, lhsType, rhsType);
 
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
@@ -803,7 +824,8 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
 
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
-  QualType resType = UsualArithmeticConversions(lex, rex);
+    
+  QualType resType = UsualArithmeticConversions(lex, rex, lhsType, rhsType);
   
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
@@ -822,7 +844,7 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
   // for int << longlong -> the result type should be int, not long long.
   QualType lhsType = lex->getType(), rhsType = rex->getType();
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  QualType resType = UsualArithmeticConversions(lex, rex, lhsType, rhsType);
   
   if (resType->isIntegerType())
     return resType;
@@ -897,7 +919,8 @@ inline QualType Sema::CheckBitwiseOperands(
   
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
-  QualType resType = UsualArithmeticConversions(lex, rex);
+
+  QualType resType = UsualArithmeticConversions(lex, rex, lhsType, rhsType);
   
   if (resType->isIntegerType())
     return resType;
@@ -953,8 +976,13 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   if (lhsType == rhsType) // common case, fast path...
     return lhsType;
   
-  AssignmentCheckResult result = CheckAssignmentConstraints(lhsType, rhsType);
-
+  AssignmentCheckResult result;
+  
+  if (compoundType.isNull())
+    result = CheckSingleAssignmentConstraints(lhsType, rex);
+  else
+    result = CheckCompoundAssignmentConstraints(lhsType, rhsType);
+    
   // decode the result (notice that extensions still return a type).
   switch (result) {
   case Compatible:
@@ -1313,7 +1341,7 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
-    resultType = DefaultFunctionArrayConversion(Input->getType());
+    resultType = DefaultFunctionArrayConversion(Input);
     if (!resultType->isScalarType()) // C99 6.5.3.3p1
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
