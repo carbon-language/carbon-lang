@@ -97,7 +97,7 @@ RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
     if (isa<llvm::PointerType>(Val.getVal()->getType()))
       return RValue::get(Builder.CreateBitCast(Val.getVal(), DestTy, "conv"));
     assert(ValTy->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
-    return RValue::get(Builder.CreatePtrToInt(Val.getVal(), DestTy, "conv"));
+    return RValue::get(Builder.CreateIntToPtr(Val.getVal(), DestTy, "conv"));
   }
   
   if (isa<PointerType>(ValTy)) {
