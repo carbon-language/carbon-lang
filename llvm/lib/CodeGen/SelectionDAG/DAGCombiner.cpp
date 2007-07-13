@@ -851,8 +851,10 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   MVT::ValueType VT = N0.getValueType();
 
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (add x, undef) -> undef
   if (N0.getOpcode() == ISD::UNDEF)
@@ -1007,8 +1009,10 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   MVT::ValueType VT = N0.getValueType();
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (sub x, x) -> 0
   if (N0 == N1)
@@ -1047,8 +1051,10 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   MVT::ValueType VT = N0.getValueType();
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (mul x, undef) -> 0
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
@@ -1129,8 +1135,10 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (sdiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
@@ -1205,8 +1213,10 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (udiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
@@ -1416,8 +1426,10 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   MVT::ValueType VT = N1.getValueType();
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (and x, undef) -> 0
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
@@ -1604,8 +1616,10 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   unsigned OpSizeInBits = MVT::getSizeInBits(VT);
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (or x, undef) -> -1
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
@@ -1890,8 +1904,10 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   MVT::ValueType VT = N0.getValueType();
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (xor x, undef) -> undef
   if (N0.getOpcode() == ISD::UNDEF)
@@ -3009,8 +3025,10 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (fadd c1, c2) -> c1+c2
   if (N0CFP && N1CFP)
@@ -3042,8 +3060,10 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP)
@@ -3069,8 +3089,10 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (fmul c1, c2) -> c1*c2
   if (N0CFP && N1CFP)
@@ -3113,8 +3135,10 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold vector ops
-  SDOperand FoldedVOp = SimplifyVBinOp(N);
-  if (FoldedVOp.Val) return FoldedVOp;
+  if (MVT::isVector(VT)) {
+    SDOperand FoldedVOp = SimplifyVBinOp(N);
+    if (FoldedVOp.Val) return FoldedVOp;
+  }
   
   // fold (fdiv c1, c2) -> c1/c2
   if (N0CFP && N1CFP)
@@ -4146,7 +4170,7 @@ SDOperand DAGCombiner::SimplifyVBinOp(SDNode *N) {
   if (AfterLegalize) return SDOperand();
 
   MVT::ValueType VT = N->getValueType(0);
-  if (!MVT::isVector(VT)) return SDOperand();
+  assert(MVT::isVector(VT) && "SimplifyVBinOp only works on vectors!");
 
   MVT::ValueType EltType = MVT::getVectorElementType(VT);
   SDOperand LHS = N->getOperand(0);
