@@ -247,6 +247,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   const Expr *RV = S.getRetValue();
   if (RV)
     RetVal = EmitExpr(RV);
+  else  // Silence a bogus GCC warning. 
+    RetVal = RValue::get(0);
   
   QualType FnRetTy = CurFuncDecl->getType().getCanonicalType();
   FnRetTy = cast<FunctionType>(FnRetTy)->getResultType();
