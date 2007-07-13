@@ -313,7 +313,7 @@ public:
   RValue EmitFloatingLiteral(const FloatingLiteral *E);
   RValue EmitCharacterLiteral(const CharacterLiteral *E);
    
-  RValue EmitCastExpr(const CastExpr *E);
+  RValue EmitCastExpr(const Expr *Op, QualType DestTy);
   RValue EmitCallExpr(const CallExpr *E);
   RValue EmitArraySubscriptExprRV(const ArraySubscriptExpr *E);
 

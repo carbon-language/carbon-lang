@@ -472,8 +472,10 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
   case Expr::UnaryOperatorClass:
     return EmitUnaryOperator(cast<UnaryOperator>(E));
+  case Expr::ImplicitCastExprClass:
+    return EmitCastExpr(cast<ImplicitCastExpr>(E)->getSubExpr(), E->getType());
   case Expr::CastExprClass: 
-    return EmitCastExpr(cast<CastExpr>(E));
+    return EmitCastExpr(cast<CastExpr>(E)->getSubExpr(), E->getType());
   case Expr::CallExprClass:
     return EmitCallExpr(cast<CallExpr>(E));
   case Expr::BinaryOperatorClass:
@@ -518,16 +520,18 @@ RValue CodeGenFunction::EmitArraySubscriptExprRV(const ArraySubscriptExpr *E) {
   return RValue::get(Builder.CreateExtractElement(Base, Idx, "vecext"));
 }
 
-
-RValue CodeGenFunction::EmitCastExpr(const CastExpr *E) {
+// EmitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
+// have to handle a more broad range of conversions than explicit casts, as they
+// handle things like function to ptr-to-function decay etc.
+RValue CodeGenFunction::EmitCastExpr(const Expr *Op, QualType DestTy) {
   QualType SrcTy;
-  RValue Src = EmitExprWithUsualUnaryConversions(E->getSubExpr(), SrcTy);
+  RValue Src = EmitExprWithUsualUnaryConversions(Op, SrcTy);
   
   // If the destination is void, just evaluate the source.
-  if (E->getType()->isVoidType())
+  if (DestTy->isVoidType())
     return RValue::getAggregate(0);
   
-  return EmitConversion(Src, SrcTy, E->getType());
+  return EmitConversion(Src, SrcTy, DestTy);
 }
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
