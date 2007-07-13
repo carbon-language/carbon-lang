@@ -667,7 +667,7 @@ a power of 2.</p>
 
 <div class="doc_code">
 <pre>
-%G = constant float 1.0, section "foo", align 4
+@G = constant float 1.0, section "foo", align 4
 </pre>
 </div>
 
@@ -1382,7 +1382,7 @@ and smaller aggregate constants.</p>
   <dd>Structure constants are represented with notation similar to structure
   type definitions (a comma separated list of elements, surrounded by braces
   (<tt>{}</tt>)).  For example: "<tt>{ i32 4, float 17.0, i32* %G }</tt>",
-  where "<tt>%G</tt>" is declared as "<tt>%G = external global i32</tt>".  Structure constants
+  where "<tt>%G</tt>" is declared as "<tt>@G = external global i32</tt>".  Structure constants
   must have <a href="#t_struct">structure type</a>, and the number and
   types of elements must match those specified by the type.
   </dd>
