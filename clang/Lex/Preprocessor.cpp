@@ -37,6 +37,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iostream>
+#include <alloca.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
