@@ -37,6 +37,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
              "Unknown TSS value");
       return Ctx.UnsignedCharTy;
     }
+  case DeclSpec::TST_unspecified:  // Unspecific typespec defaults to int.
   case DeclSpec::TST_int:
     if (DS.getTypeSpecSign() != DeclSpec::TSS_unsigned) {
       switch (DS.getTypeSpecWidth()) {
