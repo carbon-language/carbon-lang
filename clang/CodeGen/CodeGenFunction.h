@@ -46,12 +46,14 @@ namespace clang {
   class StringLiteral;
   class IntegerLiteral;
   class FloatingLiteral;
+  class CharacterLiteral;
   class CastExpr;
   class CallExpr;
   class UnaryOperator;
   class BinaryOperator;
   class CompoundAssignOperator;
   class ArraySubscriptExpr;
+  class ConditionalOperator;
   
   class BlockVarDecl;
   class EnumConstantDecl;
@@ -309,7 +311,8 @@ public:
   RValue EmitExpr(const Expr *E);
   RValue EmitIntegerLiteral(const IntegerLiteral *E);
   RValue EmitFloatingLiteral(const FloatingLiteral *E);
-  
+  RValue EmitCharacterLiteral(const CharacterLiteral *E);
+   
   RValue EmitCastExpr(const CastExpr *E);
   RValue EmitCallExpr(const CallExpr *E);
   RValue EmitArraySubscriptExprRV(const ArraySubscriptExpr *E);
@@ -351,6 +354,9 @@ public:
   
   RValue EmitBinaryAssign(const BinaryOperator *E);
   RValue EmitBinaryComma(const BinaryOperator *E);
+  
+  // Conditional Operator.
+  RValue EmitConditionalOperator(const ConditionalOperator *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

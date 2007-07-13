@@ -17,6 +17,7 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include <iostream>
+#include <iomanip>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -291,8 +292,14 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
 }
 
 void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
-  // FIXME: print value.
-  OS << "x";
+  unsigned value = Node->getValue();
+  if (isprint(value)) {
+    OS << "'" << (char)value << "'";
+  } else {
+    // FIXME something to indicate this is a character literal?
+    OS << std::hex << std::setiosflags(std::ios_base::showbase) << value
+       << std::dec << std::resetiosflags(std::ios_base::showbase);
+  }
 }
 
 void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {

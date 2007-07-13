@@ -464,6 +464,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitIntegerLiteral(cast<IntegerLiteral>(E)); 
   case Expr::FloatingLiteralClass:
     return EmitFloatingLiteral(cast<FloatingLiteral>(E));
+  case Expr::CharacterLiteralClass:
+    return EmitCharacterLiteral(cast<CharacterLiteral>(E));
     
   // Operators.  
   case Expr::ParenExprClass:
@@ -476,6 +478,9 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitCallExpr(cast<CallExpr>(E));
   case Expr::BinaryOperatorClass:
     return EmitBinaryOperator(cast<BinaryOperator>(E));
+  
+  case Expr::ConditionalOperatorClass:
+    return EmitConditionalOperator(cast<ConditionalOperator>(E));
   }
   
 }
@@ -487,7 +492,10 @@ RValue CodeGenFunction::EmitFloatingLiteral(const FloatingLiteral *E) {
   return RValue::get(llvm::ConstantFP::get(ConvertType(E->getType()),
                                            E->getValue()));
 }
-
+RValue CodeGenFunction::EmitCharacterLiteral(const CharacterLiteral *E) {
+  return RValue::get(llvm::ConstantInt::get(ConvertType(E->getType()),
+                                            E->getValue()));
+}
 
 RValue CodeGenFunction::EmitArraySubscriptExprRV(const ArraySubscriptExpr *E) {
   // Emit subscript expressions in rvalue context's.  For most cases, this just
@@ -1321,4 +1329,42 @@ RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
 RValue CodeGenFunction::EmitBinaryComma(const BinaryOperator *E) {
   EmitExpr(E->getLHS());
   return EmitExpr(E->getRHS());
+}
+
+RValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator *E) {
+  llvm::BasicBlock *LHSBlock = new llvm::BasicBlock("cond.?");
+  llvm::BasicBlock *RHSBlock = new llvm::BasicBlock("cond.:");
+  llvm::BasicBlock *ContBlock = new llvm::BasicBlock("cond.cont");
+  
+  llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
+  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+  
+  // FIXME: LHS & RHS need the "usual arithmetic conversions" but
+  // that's not possible with the current design.
+  
+  EmitBlock(LHSBlock);
+  QualType LHSTy;
+  llvm::Value *LHSValue = E->getLHS() ? // GNU extension
+      EmitExprWithUsualUnaryConversions(E->getLHS(), LHSTy).getVal() :
+      Cond;
+  Builder.CreateBr(ContBlock);
+  LHSBlock = Builder.GetInsertBlock();
+  
+  EmitBlock(RHSBlock);
+  QualType RHSTy;
+  llvm::Value *RHSValue =
+    EmitExprWithUsualUnaryConversions(E->getRHS(), RHSTy).getVal();
+  Builder.CreateBr(ContBlock);
+  RHSBlock = Builder.GetInsertBlock();
+  
+  const llvm::Type *LHSType = LHSValue->getType();
+  assert(LHSType == RHSValue->getType() && "?: LHS & RHS must have same type");
+  
+  EmitBlock(ContBlock);
+  llvm::PHINode *PN = Builder.CreatePHI(LHSType, "cond");
+  PN->reserveOperandSpace(2);
+  PN->addIncoming(LHSValue, LHSBlock);
+  PN->addIncoming(RHSValue, RHSBlock);
+  
+  return RValue::get(PN);
 }
