@@ -1,4 +1,4 @@
-//===----- SchedulePostRAList.cpp - list scheduler ----===//
+//===----- SchedulePostRAList.cpp - list scheduler ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

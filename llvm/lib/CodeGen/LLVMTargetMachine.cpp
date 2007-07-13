@@ -79,7 +79,8 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   PM.add(createPrologEpilogCodeInserter());
   
   // Second pass scheduler.
-  PM.add(createPostRAScheduler());
+  if (!Fast)
+    PM.add(createPostRAScheduler());
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
@@ -185,7 +186,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
   
   // Second pass scheduler.
-  PM.add(createPostRAScheduler());
+  if (!Fast)
+    PM.add(createPostRAScheduler());
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
