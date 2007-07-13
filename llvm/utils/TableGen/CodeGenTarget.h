@@ -35,7 +35,7 @@ enum SDNP { SDNPCommutative, SDNPAssociative, SDNPHasChain,
 
 /// getValueType - Return the MVT::ValueType that the specified TableGen record
 /// corresponds to.
-MVT::ValueType getValueType(Record *Rec, const CodeGenTarget *CGT = 0);
+MVT::ValueType getValueType(Record *Rec);
 
 std::string getName(MVT::ValueType T);
 std::string getEnumName(MVT::ValueType T);

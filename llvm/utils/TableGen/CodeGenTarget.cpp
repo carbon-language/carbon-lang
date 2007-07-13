@@ -30,7 +30,7 @@ AsmWriterNum("asmwriternum", cl::init(0),
 
 /// getValueType - Return the MCV::ValueType that the specified TableGen record
 /// corresponds to.
-MVT::ValueType llvm::getValueType(Record *Rec, const CodeGenTarget *CGT) {
+MVT::ValueType llvm::getValueType(Record *Rec) {
   return (MVT::ValueType)Rec->getValueAsInt("Value");
 }
 
@@ -623,7 +623,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
-    MVT::ValueType VT = getValueType(TyEl->getValueAsDef("VT"), CGT);
+    MVT::ValueType VT = getValueType(TyEl->getValueAsDef("VT"));
     isOverloaded |= VT == MVT::iAny;
     ArgVTs.push_back(VT);
     ArgTypeDefs.push_back(TyEl);
