@@ -56,6 +56,14 @@ namespace {
                               SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
+    void TranslatePointerBitCasts(Value*& v) {
+      assert(isa<PointerType>(v->getType()) && "Translating a non-pointer type?");
+      
+      // See through pointer-to-pointer bitcasts
+      while (BitCastInst* C = dyn_cast<BitCastInst>(v))
+        if (isa<PointerType>(C->getSrcTy()))
+          v = C->getOperand(0);
+    }
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
     // Dependence Graph)
@@ -93,6 +101,7 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
         pointer = S->getPointerOperand();
       else if (FreeInst* F = dyn_cast<FreeInst>(BBI))
         pointer = F->getPointerOperand();
+      
       assert(pointer && "Not a free or a store?");
       
       StoreInst*& last = lastStore[pointer];
@@ -109,6 +118,8 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
           
           // DCE instructions only used to calculate that store
           if (Instruction* D = dyn_cast<Instruction>(last->getOperand(0)))
+            possiblyDead.insert(D);
+          if (Instruction* D = dyn_cast<Instruction>(last->getOperand(1)))
             possiblyDead.insert(D);
           
           last->eraseFromParent();
@@ -165,7 +176,7 @@ bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
   
   Value* depPointer = dependency->getPointerOperand();
   unsigned depPointerSize = TD.getTypeSize(dependency->getOperand(0)->getType());
-    
+  
   // Check for aliasing
   AliasAnalysis::AliasResult A = AA.alias(F->getPointerOperand(), ~0UL,
                                           depPointer, depPointerSize);
@@ -176,6 +187,8 @@ bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
 
     // DCE instructions only used to calculate that store
     if (Instruction* D = dyn_cast<Instruction>(dependency->getOperand(0)))
+      possiblyDead.insert(D);
+    if (Instruction* D = dyn_cast<Instruction>(dependency->getOperand(1)))
       possiblyDead.insert(D);
 
     dependency->eraseFromParent();
@@ -216,23 +229,24 @@ bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead)
     
     // If we find a store whose pointer is dead...
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
-      if (deadPointers.count(S->getPointerOperand())){
+      Value* pointerOperand = S->getPointerOperand();
+      // See through pointer-to-pointer bitcasts
+      TranslatePointerBitCasts(pointerOperand);
+      
+      if (deadPointers.count(pointerOperand)){
         // Remove it!
         MD.removeInstruction(S);
         
         // DCE instructions only used to calculate that store
         if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
           possiblyDead.insert(D);
+        if (Instruction* D = dyn_cast<Instruction>(S->getOperand(1)))
+          possiblyDead.insert(D);
         
         BBI++;
         S->eraseFromParent();
         NumFastStores++;
         MadeChange = true;
-      
-      // If we can't trivially delete this store, consider it undead
-      } else {
-        killPointer = S->getPointerOperand();
-        killPointerSize = TD.getTypeSize(S->getOperand(0)->getType());
       }
     
     // If we encounter a use of the pointer, it is no longer considered dead
@@ -261,7 +275,7 @@ bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead)
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = AA.getModRefInfo(CallSite::get(BBI),
                                                          *I, pointerSize);
-        if (A != AliasAnalysis::NoModRef)
+        if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
           dead.push_back(*I);
       }
 
@@ -314,6 +328,8 @@ bool FDSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
 
       // DCE instructions only used to calculate that store
       if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
+        possiblyDead.insert(D);
+      if (Instruction* D = dyn_cast<Instruction>(S->getOperand(1)))
         possiblyDead.insert(D);
 
       BBI++;
