@@ -45,10 +45,12 @@ void clang::EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
     
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       CodeGen::CodeGenFunction(Builder, FD);
-    } else if (isa<TypedefDecl>(D)) {
-      std::cerr << "Read top-level typedef decl: '" << D->getName() << "'\n";
+    } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
+      CodeGen::CodeGenGlobalVar(Builder, FVD);
     } else {
-      std::cerr << "Read top-level variable decl: '" << D->getName() << "'\n";
+      assert(isa<TypedefDecl>(D) && "Only expected typedefs here");
+      // don't codegen for now, eventually pass down for debug info.
+      //std::cerr << "Read top-level typedef decl: '" << D->getName() << "'\n";
     }
   }
   

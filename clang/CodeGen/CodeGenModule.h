@@ -27,6 +27,7 @@ namespace clang {
   class ASTContext;
   class FunctionDecl;
   class Decl;
+  class FileVarDecl;
     
 namespace CodeGen {
 
@@ -50,7 +51,8 @@ public:
   
   llvm::Function *getMemCpyFn();
   
-  void EmitFunction(FunctionDecl *FD);
+  void EmitFunction(const FunctionDecl *FD);
+  void EmitGlobalVar(const FileVarDecl *D);
   
   void PrintStats() {}
 };

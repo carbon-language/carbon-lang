@@ -19,7 +19,6 @@ using namespace CodeGen;
 
 
 void CodeGenFunction::EmitDecl(const Decl &D) {
-
   switch (D.getKind()) {
   default: assert(0 && "Unknown decl kind!");
   case Decl::FileVariable:

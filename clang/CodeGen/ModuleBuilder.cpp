@@ -32,6 +32,12 @@ void clang::CodeGen::CodeGenFunction(BuilderTy *B, FunctionDecl *D) {
   static_cast<CodeGenModule*>(B)->EmitFunction(D);
 }
 
+/// CodeGenGlobalVar - Emit the specified global variable to LLVM.
+void clang::CodeGen::CodeGenGlobalVar(BuilderTy *Builder, FileVarDecl *D) {
+  static_cast<CodeGenModule*>(Builder)->EmitGlobalVar(D);
+}
+
+
 /// PrintStats - Emit statistic information to stderr.
 ///
 void clang::CodeGen::PrintStats(BuilderTy *B) {

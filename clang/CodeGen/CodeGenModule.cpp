@@ -48,12 +48,45 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const Decl *D) {
                                           0, D->getName(), &getModule());
 }
 
-void CodeGenModule::EmitFunction(FunctionDecl *FD) {
+void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
   // If this is not a prototype, emit the body.
   if (FD->getBody())
     CodeGenFunction(*this).GenerateCode(FD);
 }
 
+void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
+  llvm::GlobalVariable *GV = cast<llvm::GlobalVariable>(GetAddrOfGlobalDecl(D));
+  
+  // If the storage class is external and there is no initializer, just leave it
+  // as a declaration.
+  if (D->getStorageClass() == VarDecl::Extern && D->getInit() == 0)
+    return;
+
+  // Otherwise, convert the initializer, or use zero if appropriate.
+  llvm::Constant *Init;
+  if (D->getInit() == 0)
+    Init = llvm::Constant::getNullValue(GV->getType()->getElementType());
+  else
+    assert(D->getInit() == 0 && "FIXME: Global variable initializers unimp!");
+    
+  GV->setInitializer(Init);
+  
+  // Set the llvm linkage type as appropriate.
+  // FIXME: This isn't right.  This should handle common linkage and other
+  // stuff.
+  switch (D->getStorageClass()) {
+  case VarDecl::Auto:
+  case VarDecl::Register:
+    assert(0 && "Can't have auto or register globals");
+  case VarDecl::None:
+  case VarDecl::Extern:
+    // todo: common
+    break;
+  case VarDecl::Static:
+    GV->setLinkage(llvm::GlobalVariable::InternalLinkage);
+    break;
+  }
+}
 
 
 llvm::Function *CodeGenModule::getMemCpyFn() {
