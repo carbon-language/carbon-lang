@@ -292,13 +292,50 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
 }
 
 void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
+  // FIXME should print an L for wchar_t constants
   unsigned value = Node->getValue();
-  if (isprint(value)) {
-    OS << "'" << (char)value << "'";
-  } else {
-    // FIXME something to indicate this is a character literal?
-    OS << std::hex << std::setiosflags(std::ios_base::showbase) << value
-       << std::dec << std::resetiosflags(std::ios_base::showbase);
+  switch (value) {
+  case '\\':
+    OS << "'\\\\'";
+    break;
+  case '\'':
+    OS << "'\\''";
+    break;
+  case '\a':
+    // TODO: K&R: the meaning of '\\a' is different in traditional C
+    OS << "'\\a'";
+    break;
+  case '\b':
+    OS << "'\\b'";
+    break;
+  // Nonstandard escape sequence.
+  /*case '\e':
+    OS << "'\\e'";
+    break;*/
+  case '\f':
+    OS << "'\\f'";
+    break;
+  case '\n':
+    OS << "'\\n'";
+    break;
+  case '\r':
+    OS << "'\\r'";
+    break;
+  case '\t':
+    OS << "'\\t'";
+    break;
+  case '\v':
+    OS << "'\\v'";
+    break;
+  default:
+    if (isprint(value) && value < 256) {
+      OS << "'" << (char)value << "'";
+    } else if (value < 256) {
+      OS << "'\\x" << std::hex << value << std::dec << "'";
+    } else {
+      // FIXME what to really do here?
+      OS << value;
+    }
   }
 }
 
