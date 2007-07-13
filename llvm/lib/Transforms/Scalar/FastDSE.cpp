@@ -60,9 +60,18 @@ namespace {
       assert(isa<PointerType>(v->getType()) && "Translating a non-pointer type?");
       
       // See through pointer-to-pointer bitcasts
-      while (BitCastInst* C = dyn_cast<BitCastInst>(v))
-        if (isa<PointerType>(C->getSrcTy()))
-          v = C->getOperand(0);
+      while (isa<BitCastInst>(v) || isa<GetElementPtrInst>(v))
+        if (BitCastInst* C = dyn_cast<BitCastInst>(v)) {
+          if (isa<PointerType>(C->getSrcTy()))
+            v = C->getOperand(0);
+          else
+            break;
+        } else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(v)) {
+          if (G->hasAllZeroIndices())
+            v = G->getOperand(0);
+          else
+            break;
+        }
     }
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
