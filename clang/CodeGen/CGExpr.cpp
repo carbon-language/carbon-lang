@@ -1070,7 +1070,23 @@ RValue CodeGenFunction::EmitMul(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
   
-  assert(0 && "FIXME: This doesn't handle complex operands yet");
+  // Otherwise, this must be a complex number.
+  llvm::Value *LHSR, *LHSI, *RHSR, *RHSI;
+  
+  EmitLoadOfComplex(LHS, LHSR, LHSI);
+  EmitLoadOfComplex(RHS, RHSR, RHSI);
+  
+  llvm::Value *ResRl = Builder.CreateMul(LHSR, RHSR, "mul.rl");
+  llvm::Value *ResRr = Builder.CreateMul(LHSI, RHSI, "mul.rr");
+  llvm::Value *ResR = Builder.CreateSub(ResRl, ResRr, "mul.r");
+
+  llvm::Value *ResIl = Builder.CreateMul(LHSI, RHSR, "mul.il");
+  llvm::Value *ResIr = Builder.CreateMul(LHSR, RHSI, "mul.ir");
+  llvm::Value *ResI = Builder.CreateAdd(ResIl, ResIr, "mul.i");
+  
+  llvm::Value *Res = CreateTempAlloca(ConvertType(ResTy));
+  EmitStoreOfComplex(ResR, ResI, Res);
+  return RValue::getAggregate(Res);
 }
 
 RValue CodeGenFunction::EmitDiv(RValue LHS, RValue RHS, QualType ResTy) {
@@ -1231,9 +1247,23 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
     }
   } else {
     // Struct/union/complex
-    assert(0 && "Aggregate comparisons not implemented yet!");
+    llvm::Value *LHSR, *LHSI, *RHSR, *RHSI, *ResultR, *ResultI;
+    EmitLoadOfComplex(LHS, LHSR, LHSI);
+    EmitLoadOfComplex(RHS, RHSR, RHSI);
+
+    ResultR = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
+				 LHSR, RHSR, "cmp.r");
+    ResultI = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
+				 LHSI, RHSI, "cmp.i");
+    if (BinaryOperator::EQ == E->getOpcode()) {
+      Result = Builder.CreateAnd(ResultR, ResultI, "and.ri");
+    } else if (BinaryOperator::NE == E->getOpcode()) {
+      Result = Builder.CreateOr(ResultR, ResultI, "or.ri");
+    } else {
+      assert(0 && "Complex comparison other than == or != ?");
+    }
   }
-  
+
   // ZExt result to int.
   return RValue::get(Builder.CreateZExt(Result, LLVMIntTy, "cmp.ext"));
 }
