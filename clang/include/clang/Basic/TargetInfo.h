@@ -145,6 +145,22 @@ public:
     return 64; // FIXME: implement correctly.
   }
   
+  /// getFloatWidth - Return the size of 'float' for this target, in bits.  
+  unsigned getFloatWidth(SourceLocation Loc) {
+    return 32;  // FIXME: implement correctly.
+  }
+
+  /// getDoubleWidth - Return the size of 'double' for this target, in bits.  
+  unsigned getDoubleWidth(SourceLocation Loc) {
+    return 64;  // FIXME: implement correctly.
+  }
+
+  /// getLongDoubleWidth - Return the size of 'long double' for this target, in
+  /// bits.  
+  unsigned getLongDoubleWidth(SourceLocation Loc) {
+    return 64;  // FIXME: implement correctly.
+  }
+  
   /// getWCharWidth - Return the size of wchar_t in bits.
   ///
   unsigned getWCharWidth(SourceLocation Loc) {

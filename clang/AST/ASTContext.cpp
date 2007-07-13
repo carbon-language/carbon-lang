@@ -143,47 +143,48 @@ void ASTContext::InitBuiltinTypes() {
 unsigned ASTContext::getTypeSize(QualType T) {
   T = T.getCanonicalType();
   switch (T->getTypeClass()) {
+  default:
+  case Type::Complex:
+  case Type::Array:
+  case Type::Vector:
+  case Type::TypeName:
+  case Type::Tagged:
+    assert(0 && "Unimplemented type sizes!");
+  case Type::FunctionNoProto:
+  case Type::FunctionProto:
+    assert(0 && "Incomplete types have no size!");
   case Type::Builtin: {
     // FIXME: need to use TargetInfo to derive the target specific sizes. This
     // implementation will suffice for play with vector support.
     switch (cast<BuiltinType>(T)->getKind()) {
-    case BuiltinType::Void:       return 0;
-    case BuiltinType::Bool:       
-    case BuiltinType::Char_S:     
-    case BuiltinType::Char_U:     return sizeof(char) * 8;
-    case BuiltinType::SChar:      return sizeof(signed char) * 8;
-    case BuiltinType::Short:      return sizeof(short) * 8;
-    case BuiltinType::Int:        return sizeof(int) * 8;
-    case BuiltinType::Long:       return sizeof(long) * 8;
-    case BuiltinType::LongLong:   return sizeof(long long) * 8;
-    case BuiltinType::UChar:      return sizeof(unsigned char) * 8;
-    case BuiltinType::UShort:     return sizeof(unsigned short) * 8;
-    case BuiltinType::UInt:       return sizeof(unsigned int) * 8;
-    case BuiltinType::ULong:      return sizeof(unsigned long) * 8;
-    case BuiltinType::ULongLong:  return sizeof(unsigned long long) * 8;
-    case BuiltinType::Float:      return sizeof(float) * 8;
-    case BuiltinType::Double:     return sizeof(double) * 8;
-    case BuiltinType::LongDouble: return sizeof(long double) * 8;
+    default: assert(0 && "Unknown builtin type!");
+    case BuiltinType::Void:       assert(0 && "Incomplete types have no size!");
+    case BuiltinType::Bool:       return Target.getBoolWidth(SourceLocation());
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
+    case BuiltinType::UChar:
+    case BuiltinType::SChar:      return Target.getCharWidth(SourceLocation());
+    case BuiltinType::UShort:
+    case BuiltinType::Short:      return Target.getShortWidth(SourceLocation());
+    case BuiltinType::UInt:
+    case BuiltinType::Int:        return Target.getIntWidth(SourceLocation());
+    case BuiltinType::ULong:
+    case BuiltinType::Long:       return Target.getLongWidth(SourceLocation());
+    case BuiltinType::ULongLong:
+    case BuiltinType::LongLong:return Target.getLongLongWidth(SourceLocation());
+    case BuiltinType::Float:    return Target.getFloatWidth(SourceLocation());
+    case BuiltinType::Double:   return Target.getDoubleWidth(SourceLocation());
+    case BuiltinType::LongDouble:
+      return Target.getLongDoubleWidth(SourceLocation());
     }
-    assert(0 && "Can't get here");
   }
   case Type::Pointer:
-    // FIXME: need to use TargetInfo again
-    return sizeof(void *) * 8;
+    return Target.getPointerWidth(SourceLocation());
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
     // of the referenced type." C++98 5.3.3p2: expr.sizeof
     return getTypeSize(cast<ReferenceType>(T)->getReferenceeType());
-  case Type::Complex:
-  case Type::Array:
-  case Type::Vector:
-  case Type::FunctionNoProto:
-  case Type::FunctionProto:
-  case Type::TypeName:
-  case Type::Tagged:
-    assert(0 && "Type sizes are not yet known, in general");
   }
-  assert(0 && "Can't get here");
 }
 
 //===----------------------------------------------------------------------===//
