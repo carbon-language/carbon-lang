@@ -22,6 +22,52 @@ using namespace clang;
 
 Type::~Type() {}
 
+/// getSize - the number of bits to represent the type.
+unsigned Type::getSize() const
+{
+  switch (CanonicalType->getTypeClass()) {
+  case Builtin: {
+    // FIXME: need to use TargetInfo to derive the target specific sizes. This
+    // implementation will suffice for play with vector support.
+    switch (cast<BuiltinType>(this)->getKind()) {
+    case BuiltinType::Void:       return 0;
+    case BuiltinType::Bool:       
+    case BuiltinType::Char_S:     
+    case BuiltinType::Char_U:     return sizeof(char) * 8;
+    case BuiltinType::SChar:      return sizeof(signed char) * 8;
+    case BuiltinType::Short:      return sizeof(short) * 8;
+    case BuiltinType::Int:        return sizeof(int) * 8;
+    case BuiltinType::Long:       return sizeof(long) * 8;
+    case BuiltinType::LongLong:   return sizeof(long long) * 8;
+    case BuiltinType::UChar:      return sizeof(unsigned char) * 8;
+    case BuiltinType::UShort:     return sizeof(unsigned short) * 8;
+    case BuiltinType::UInt:       return sizeof(unsigned int) * 8;
+    case BuiltinType::ULong:      return sizeof(unsigned long) * 8;
+    case BuiltinType::ULongLong:  return sizeof(unsigned long long) * 8;
+    case BuiltinType::Float:      return sizeof(float) * 8;
+    case BuiltinType::Double:     return sizeof(double) * 8;
+    case BuiltinType::LongDouble: return sizeof(long double) * 8;
+    }
+    assert(0 && "Can't get here");
+  }
+  case Pointer:
+    // FIXME: need to use TargetInfo again
+    return sizeof(void *) * 8;
+  case Reference:
+    // seems that sizeof(T&) == sizeof(T) -- spec reference?
+    return (cast<ReferenceType>(this)->getReferenceeType()->getSize());
+  case Complex:
+  case Array:
+  case Vector:
+  case FunctionNoProto:
+  case FunctionProto:
+  case TypeName:
+  case Tagged:
+    assert(0 && "Type sizes are not yet known, in general");
+  }
+  assert(0 && "Can't get here");
+}
+
 /// isVoidType - Helper method to determine if this is the 'void' type.
 bool Type::isVoidType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
@@ -330,8 +376,9 @@ bool Type::isAggregateType() const {
 // the structure is still constant size (C99 6.7.2.1p16).
 bool Type::isConstantSizeType(SourceLocation *loc) const {
   if (const ArrayType *Ary = dyn_cast<ArrayType>(CanonicalType)) {
-    assert(Ary->getSize() && "Incomplete types don't have a size at all!");
-    return Ary->getSize()->isIntegerConstantExpr(loc); // Variable Length Array?
+    assert(Ary->getSizeExpr() && "Incomplete types don't have a size at all!");
+    // Variable Length Array?
+    return Ary->getSizeExpr()->isIntegerConstantExpr(loc);
   }
   return true;
 }
@@ -352,7 +399,7 @@ bool Type::isIncompleteType() const {
     return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
   case Array:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
-    return cast<ArrayType>(CanonicalType)->getSize() == 0;
+    return cast<ArrayType>(CanonicalType)->getSizeExpr() == 0;
   }
 }
 
@@ -393,31 +440,6 @@ const char *BuiltinType::getName() const {
   case Float:             return "float";
   case Double:            return "double";
   case LongDouble:        return "long double";
-  }
-}
-
-// FIXME: need to use TargetInfo to derive the target specific sizes. This
-// implementation will suffice for play with vector support.
-unsigned BuiltinType::getSize() const {
-  switch (getKind()) {
-  default: assert(0 && "Unknown builtin type!");
-  case Void:              return 0;
-  case Bool:
-  case Char_S:
-  case Char_U:            return sizeof(char) * 8;
-  case SChar:             return sizeof(signed char) * 8;
-  case Short:             return sizeof(short) * 8;
-  case Int:               return sizeof(int) * 8;
-  case Long:              return sizeof(long) * 8;
-  case LongLong:          return sizeof(long long) * 8;
-  case UChar:             return sizeof(unsigned char) * 8;
-  case UShort:            return sizeof(unsigned short) * 8;
-  case UInt:              return sizeof(unsigned int) * 8;
-  case ULong:             return sizeof(unsigned long) * 8;
-  case ULongLong:         return sizeof(unsigned long long) * 8;
-  case Float:             return sizeof(float) * 8;
-  case Double:            return sizeof(double) * 8;
-  case LongDouble:        return sizeof(long double) * 8;
   }
 }
 

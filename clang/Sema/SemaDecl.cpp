@@ -29,7 +29,7 @@ using namespace clang;
 // a constant expression of type int with a value greater than zero.
 bool Sema::VerifyConstantArrayType(const ArrayType *Array,
                                    SourceLocation DeclLoc) { 
-  const Expr *Size = Array->getSize();
+  const Expr *Size = Array->getSizeExpr();
   if (Size == 0) return false;  // incomplete type.
   
   if (!Size->getType()->isIntegerType()) {
@@ -450,7 +450,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
   // among each other.  Here they can only shadow globals, which is ok.
-  if (Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
+  if (/*Decl *PrevDecl = */LookupScopedDecl(II, Decl::IDNS_Ordinary,
                                         PI.IdentLoc, FnScope)) {
     
   }

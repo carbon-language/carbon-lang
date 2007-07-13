@@ -397,6 +397,14 @@ QualType ASTContext::getSizeType() const {
   return UnsignedLongTy; 
 }
 
+/// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
+/// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
+QualType ASTContext::getPointerDiffType() const {
+  // On Darwin, ptrdiff_t is defined as a "int". This seems like a bug...
+  // FIXME: should derive from "Target".
+  return IntTy; 
+}
+
 /// getIntegerBitwidth - Return the bitwidth of the specified integer type
 /// according to the target.  'Loc' specifies the source location that
 /// requires evaluation of this property.

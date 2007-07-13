@@ -334,7 +334,11 @@ public:
   RValue EmitDiv(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitRem(RValue LHS, RValue RHS, QualType EltTy);
   RValue EmitAdd(RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitPointerAdd(RValue LHS, QualType LHSTy,
+                        RValue RHS, QualType RHSTy, QualType EltTy);
   RValue EmitSub(RValue LHS, RValue RHS, QualType EltTy);
+  RValue EmitPointerSub(RValue LHS, QualType LHSTy,
+                        RValue RHS, QualType RHSTy, QualType EltTy);
   RValue EmitShl(RValue LHS, RValue RHS, QualType ResTy);
   RValue EmitShr(RValue LHS, RValue RHS, QualType ResTy);
   RValue EmitBinaryCompare(const BinaryOperator *E, unsigned UICmpOpc,

@@ -195,7 +195,10 @@ protected:
     : CanonicalType(Canonical.isNull() ? QualType(this,0) : Canonical), TC(tc){}
   virtual ~Type();
   friend class ASTContext;
-public:  
+public:
+  /// getSize - the number of bits to represent the type.
+  unsigned getSize() const;
+  
   TypeClass getTypeClass() const { return TC; }
   
   bool isCanonical() const { return CanonicalType.getTypePtr() == this; }
@@ -306,9 +309,6 @@ public:
   
   Kind getKind() const { return TypeKind; }
   const char *getName() const;
-  
-  // the number of bits to represent the builtin type.
-  unsigned getSize() const;
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
@@ -428,13 +428,13 @@ public:
   QualType getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
-  Expr *getSize() const { return SizeExpr; }
+  Expr *getSizeExpr() const { return SizeExpr; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType(),
-            getSize());
+            getSizeExpr());
   }
   static void Profile(llvm::FoldingSetNodeID &ID,
                       ArraySizeModifier SizeModifier,

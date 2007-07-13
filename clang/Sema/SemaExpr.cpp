@@ -816,9 +816,10 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   // handle the common case first (both operands are arithmetic).
   if (resType->isArithmeticType())
     return resType;
-  if ((lhsType->isPointerType() && rhsType->isIntegerType()) ||
-      (lhsType->isPointerType() && rhsType->isPointerType()))
+  if (lhsType->isPointerType() && rhsType->isIntegerType())
     return resType;
+  if (lhsType->isPointerType() && rhsType->isPointerType())
+    return Context.getPointerDiffType();
   InvalidOperands(loc, lex, rex);
   return QualType();
 }

@@ -98,6 +98,10 @@ public:
   /// in <stddef.h>. The sizeof operator requires this (C99 6.5.3.4p4).
   QualType getSizeType() const;
   
+  /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
+  /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
+  QualType getPointerDiffType() const;
+  
   /// getIntegerBitwidth - Return the bitwidth of the specified integer type
   /// according to the target.  'Loc' specifies the source location that
   /// requires evaluation of this property.

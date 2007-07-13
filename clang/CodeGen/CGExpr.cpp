@@ -906,14 +906,36 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
   case BinaryOperator::Rem:
     EmitUsualArithmeticConversions(E, LHS, RHS);
     return EmitRem(LHS, RHS, E->getType());
-  case BinaryOperator::Add:
-    // FIXME: This doesn't handle ptr+int etc yet.
-    EmitUsualArithmeticConversions(E, LHS, RHS);
-    return EmitAdd(LHS, RHS, E->getType());
-  case BinaryOperator::Sub:
-    // FIXME: This doesn't handle ptr-int etc yet.
-    EmitUsualArithmeticConversions(E, LHS, RHS);
-    return EmitSub(LHS, RHS, E->getType());
+  case BinaryOperator::Add: {
+    QualType ExprTy = E->getType();
+    if (ExprTy->isPointerType()) {
+      Expr *LHSExpr = E->getLHS();
+      QualType LHSTy;
+      LHS = EmitExprWithUsualUnaryConversions(LHSExpr, LHSTy);
+      Expr *RHSExpr = E->getRHS();
+      QualType RHSTy;
+      RHS = EmitExprWithUsualUnaryConversions(RHSExpr, RHSTy);
+      return EmitPointerAdd(LHS, LHSTy, RHS, RHSTy, ExprTy);
+    } else {
+      EmitUsualArithmeticConversions(E, LHS, RHS);
+      return EmitAdd(LHS, RHS, ExprTy);
+    }
+  }
+  case BinaryOperator::Sub: {
+    QualType ExprTy = E->getType();
+    Expr *LHSExpr = E->getLHS();
+    if (LHSExpr->getType()->isPointerType()) {
+      QualType LHSTy;
+      LHS = EmitExprWithUsualUnaryConversions(LHSExpr, LHSTy);
+      Expr *RHSExpr = E->getRHS();
+      QualType RHSTy;
+      RHS = EmitExprWithUsualUnaryConversions(RHSExpr, RHSTy);
+      return EmitPointerSub(LHS, LHSTy, RHS, RHSTy, ExprTy);
+    } else {
+      EmitUsualArithmeticConversions(E, LHS, RHS);
+      return EmitSub(LHS, RHS, ExprTy);
+    }
+  }
   case BinaryOperator::Shl:
     EmitShiftOperands(E, LHS, RHS);
     return EmitShl(LHS, RHS, E->getType());
@@ -1085,11 +1107,58 @@ RValue CodeGenFunction::EmitAdd(RValue LHS, RValue RHS, QualType ResTy) {
   return RValue::getAggregate(Res);
 }
 
+RValue CodeGenFunction::EmitPointerAdd(RValue LHS, QualType LHSTy,
+                                       RValue RHS, QualType RHSTy,
+                                       QualType ResTy) {
+  llvm::Value *LHSValue = LHS.getVal();
+  llvm::Value *RHSValue = RHS.getVal();
+  if (LHSTy->isPointerType()) {
+    // pointer + int
+    return RValue::get(Builder.CreateGEP(LHSValue, RHSValue, "add.ptr"));
+  } else {
+    // int + pointer
+    return RValue::get(Builder.CreateGEP(RHSValue, LHSValue, "add.ptr"));
+  }
+}
+
 RValue CodeGenFunction::EmitSub(RValue LHS, RValue RHS, QualType ResTy) {
   if (LHS.isScalar())
     return RValue::get(Builder.CreateSub(LHS.getVal(), RHS.getVal(), "sub"));
   
   assert(0 && "FIXME: This doesn't handle complex operands yet");
+}
+
+RValue CodeGenFunction::EmitPointerSub(RValue LHS, QualType LHSTy,
+                                       RValue RHS, QualType RHSTy,
+                                       QualType ResTy) {
+  llvm::Value *LHSValue = LHS.getVal();
+  llvm::Value *RHSValue = RHS.getVal();
+  if (const PointerType *RHSPtrType =
+        dyn_cast<PointerType>(RHSTy.getTypePtr())) {
+    // pointer - pointer
+    const PointerType *LHSPtrType = cast<PointerType>(LHSTy.getTypePtr());
+    QualType LHSElementType = LHSPtrType->getPointeeType();
+    assert(LHSElementType == RHSPtrType->getPointeeType() &&
+      "can't subtract pointers with differing element types");
+    unsigned ElementSize = LHSElementType->getSize() / 8;
+    const llvm::Type *ResultType = ConvertType(ResTy);
+    llvm::Value *CastLHS = Builder.CreatePtrToInt(LHSValue, ResultType,
+                                                  "sub.ptr.lhs.cast");
+    llvm::Value *CastRHS = Builder.CreatePtrToInt(RHSValue, ResultType,
+                                                  "sub.ptr.rhs.cast");
+    llvm::Value *BytesBetween = Builder.CreateSub(CastLHS, CastRHS,
+                                                  "sub.ptr.sub");
+    llvm::Value *BytesPerElement = llvm::ConstantInt::get(ResultType,
+                                                          ElementSize);
+    llvm::Value *ElementsBetween = Builder.CreateSDiv(BytesBetween,
+                                                      BytesPerElement,
+                                                      "sub.ptr.div");
+    return RValue::get(ElementsBetween);
+  } else {
+    // pointer - int
+    llvm::Value *NegatedRHS = Builder.CreateNeg(RHSValue, "sub.ptr.neg");
+    return RValue::get(Builder.CreateGEP(LHSValue, NegatedRHS, "sub.ptr"));
+  }
 }
 
 void CodeGenFunction::EmitShiftOperands(const BinaryOperator *E,
