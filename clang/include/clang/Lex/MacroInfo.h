@@ -34,7 +34,8 @@ class MacroInfo {
   /// Arguments - The list of arguments for a function-like macro.  This can be
   /// empty, for, e.g. "#define X()".  In a C99-style variadic macro, this
   /// includes the __VA_ARGS__ identifier on the list.
-  std::vector<IdentifierInfo*> Arguments;
+  IdentifierInfo **ArgumentList;
+  unsigned NumArguments;
   
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
@@ -77,6 +78,10 @@ private:
 public:
   MacroInfo(SourceLocation DefLoc);
   
+  ~MacroInfo() {
+    delete[] ArgumentList;
+  }
+  
   /// getDefinitionLoc - Return the location that the macro was defined at.
   ///
   SourceLocation getDefinitionLoc() const { return Location; }
@@ -105,26 +110,33 @@ public:
     IsUsed = Val;
   }
 
-  /// addArgument - Add an argument to the list of formal arguments for this
-  /// function-like macro.
-  void addArgument(IdentifierInfo *Arg) {
-    Arguments.push_back(Arg);
+  /// setArgumentList - Set the specified list of identifiers as the argument
+  /// list for this macro.
+  template<typename ItTy>
+  void setArgumentList(ItTy ArgBegin, ItTy ArgEnd) {
+    assert(ArgumentList == 0 && "Argument list already set!");
+    unsigned NumArgs = ArgEnd-ArgBegin;
+    if (NumArgs == 0) return;
+    NumArguments = NumArgs;
+    ArgumentList = new IdentifierInfo*[NumArgs];
+    for (unsigned i = 0; ArgBegin != ArgEnd; ++i, ++ArgBegin)
+      ArgumentList[i] = *ArgBegin;
   }
+  
+  /// Arguments - The list of arguments for a function-like macro.  This can be
+  /// empty, for, e.g. "#define X()".
+  typedef IdentifierInfo* const *arg_iterator;
+  arg_iterator arg_begin() const { return ArgumentList; }
+  arg_iterator arg_end() const { return ArgumentList+NumArguments; }
+  unsigned getNumArgs() const { return NumArguments; }
   
   /// getArgumentNum - Return the argument number of the specified identifier,
   /// or -1 if the identifier is not a formal argument identifier.
-  int getArgumentNum(IdentifierInfo *Arg) {
-    for (unsigned i = 0, e = Arguments.size(); i != e; ++i)
-      if (Arguments[i] == Arg) return i;
+  int getArgumentNum(IdentifierInfo *Arg) const {
+    for (arg_iterator I = arg_begin(), E = arg_end(); I != E; ++I)
+      if (*I == Arg) return I-arg_begin();
     return -1;
   }
-
-  /// Arguments - The list of arguments for a function-like macro.  This can be
-  /// empty, for, e.g. "#define X()".
-  typedef std::vector<IdentifierInfo*>::const_iterator arg_iterator;
-  arg_iterator arg_begin() const { return Arguments.begin(); }
-  arg_iterator arg_end() const { return Arguments.end(); }
-  unsigned getNumArgs() const { return Arguments.size(); }
   
   /// Function/Object-likeness.  Keep track of whether this macro has formal
   /// parameters.

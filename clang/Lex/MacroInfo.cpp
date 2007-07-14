@@ -23,6 +23,9 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsTargetSpecific = false;
   IsDisabled = false;
   IsUsed = true;
+  
+  ArgumentList = 0;
+  NumArguments = 0;
 }
 
 /// isIdenticalTo - Return true if the specified macro definition is equal to
@@ -34,7 +37,7 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
 bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
   // Check # tokens in replacement, number of args, and various flags all match.
   if (ReplacementTokens.size() != Other.ReplacementTokens.size() ||
-      Arguments.size() != Other.Arguments.size() ||
+      getNumArgs() != Other.getNumArgs() ||
       isFunctionLike() != Other.isFunctionLike() ||
       isC99Varargs() != Other.isC99Varargs() ||
       isGNUVarargs() != Other.isGNUVarargs())
