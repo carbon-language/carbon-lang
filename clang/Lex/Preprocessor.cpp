@@ -1789,36 +1789,48 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
     Ident__VA_ARGS__->setIsPoisoned(false);
   
   // Read the rest of the macro body.
-  while (Tok.getKind() != tok::eom) {
-    MI->AddTokenToBody(Tok);
-
-    // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
-    // parameters in function-like macro expansions.
-    if (Tok.getKind() != tok::hash || MI->isObjectLike()) {
+  if (MI->isObjectLike()) {
+    // Object-like macros are very simple, just read their body.
+    while (Tok.getKind() != tok::eom) {
+      MI->AddTokenToBody(Tok);
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
-      continue;
     }
     
-    // Get the next token of the macro.
-    LexUnexpandedToken(Tok);
-   
-    // Not a macro arg identifier?
-    if (!Tok.getIdentifierInfo() ||
-        MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
-      Diag(Tok, diag::err_pp_stringize_not_parameter);
-      delete MI;
-      
-      // Disable __VA_ARGS__ again.
-      Ident__VA_ARGS__->setIsPoisoned(true);
-      return;
-    }
-    
-    // Things look ok, add the param name token to the macro.
-    MI->AddTokenToBody(Tok);
+  } else {
+    // Otherwise, read the body of a function-like macro.  This has to validate
+    // the # (stringize) operator.
+    while (Tok.getKind() != tok::eom) {
+      MI->AddTokenToBody(Tok);
 
-    // Get the next token of the macro.
-    LexUnexpandedToken(Tok);
+      // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
+      // parameters in function-like macro expansions.
+      if (Tok.getKind() != tok::hash) {
+        // Get the next token of the macro.
+        LexUnexpandedToken(Tok);
+        continue;
+      }
+      
+      // Get the next token of the macro.
+      LexUnexpandedToken(Tok);
+     
+      // Not a macro arg identifier?
+      if (!Tok.getIdentifierInfo() ||
+          MI->getArgumentNum(Tok.getIdentifierInfo()) == -1) {
+        Diag(Tok, diag::err_pp_stringize_not_parameter);
+        delete MI;
+        
+        // Disable __VA_ARGS__ again.
+        Ident__VA_ARGS__->setIsPoisoned(true);
+        return;
+      }
+      
+      // Things look ok, add the param name token to the macro.
+      MI->AddTokenToBody(Tok);
+
+      // Get the next token of the macro.
+      LexUnexpandedToken(Tok);
+    }
   }
   
   // Disable __VA_ARGS__ again.
