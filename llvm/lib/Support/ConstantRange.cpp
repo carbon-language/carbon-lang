@@ -246,6 +246,87 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
   return *this;
 }
 
+/// maximalIntersectWith - Return the range that results from the intersection
+/// of this range with another range.  The resultant range is guaranteed to
+/// include all elements contained in both input ranges, and is also guaranteed
+/// to be the smallest possible set that does so.
+ConstantRange ConstantRange::maximalIntersectWith(const ConstantRange &CR) const {
+  assert(getBitWidth() == CR.getBitWidth() && 
+         "ConstantRange types don't agree!");
+
+  // Handle common cases.
+  if (   isEmptySet() || CR.isFullSet()) return *this;
+  if (CR.isEmptySet() ||    isFullSet()) return CR;
+
+  if (!isWrappedSet() && CR.isWrappedSet())
+    return CR.maximalIntersectWith(*this);
+
+  if (!isWrappedSet() && !CR.isWrappedSet()) {
+    if (Lower.ult(CR.Lower)) {
+      if (Upper.ule(CR.Lower))
+        return ConstantRange(getBitWidth(), false);
+
+      if (Upper.ult(CR.Upper))
+        return ConstantRange(CR.Lower, Upper);
+
+      return CR;
+    } else {
+      if (Upper.ult(CR.Upper))
+        return *this;
+
+      if (Lower.ult(CR.Upper))
+        return ConstantRange(Lower, CR.Upper);
+
+      return ConstantRange(getBitWidth(), false);
+    }
+  }
+
+  if (isWrappedSet() && !CR.isWrappedSet()) {
+    if (CR.Lower.ult(Upper)) {
+      if (CR.Upper.ult(Upper))
+        return CR;
+
+      if (CR.Upper.ult(Lower))
+        return ConstantRange(CR.Lower, Upper);
+
+      if (getSetSize().ult(CR.getSetSize()))
+        return *this;
+      else
+        return CR;
+    } else if (CR.Lower.ult(Lower)) {
+      if (CR.Upper.ule(Lower))
+        return ConstantRange(getBitWidth(), false);
+
+      return ConstantRange(Lower, CR.Upper);
+    }
+    return CR;
+  }
+
+  if (CR.Upper.ult(Upper)) {
+    if (CR.Lower.ult(Upper)) {
+      if (getSetSize().ult(CR.getSetSize()))
+        return *this;
+      else
+        return CR;
+    }
+
+    if (CR.Lower.ult(Lower))
+      return ConstantRange(Lower, CR.Upper);
+
+    return CR;
+  } else if (CR.Upper.ult(Lower)) {
+    if (CR.Lower.ult(Lower))
+      return *this;
+
+    return ConstantRange(CR.Lower, Upper);
+  }
+  if (getSetSize().ult(CR.getSetSize()))
+    return *this;
+  else
+    return CR;
+}
+
+
 /// unionWith - Return the range that results from the union of this range with
 /// another range.  The resultant range is guaranteed to include the elements of
 /// both sets, but may contain more.  For example, [3, 9) union [12,15) is

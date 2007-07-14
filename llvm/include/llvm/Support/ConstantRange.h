@@ -143,6 +143,12 @@ class ConstantRange {
   ///
   ConstantRange intersectWith(const ConstantRange &CR) const;
 
+  /// maximalIntersectWith - Return the range that results from the intersection
+  /// of this range with another range.  The resultant range is guaranteed to
+  /// include all elements contained in both input ranges, and is also
+  /// guaranteed to be the smallest possible set that does so.
+  ConstantRange maximalIntersectWith(const ConstantRange &CR) const;
+
   /// unionWith - Return the range that results from the union of this range
   /// with another range.  The resultant range is guaranteed to include the
   /// elements of both sets, but may contain more.  For example, [3, 9) union
