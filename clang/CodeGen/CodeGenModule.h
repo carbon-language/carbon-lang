@@ -53,6 +53,7 @@ public:
   
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
+  void EmitGlobalVarDeclarator(const FileVarDecl *D);
   
   void PrintStats() {}
 };

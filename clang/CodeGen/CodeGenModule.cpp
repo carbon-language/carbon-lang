@@ -88,6 +88,12 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   }
 }
 
+/// EmitGlobalVarDeclarator - Emit all the global vars attached to the specified
+/// declarator chain.
+void CodeGenModule::EmitGlobalVarDeclarator(const FileVarDecl *D) {
+  for (; D; D = cast_or_null<FileVarDecl>(D->getNextDeclarator()))
+    EmitGlobalVar(D);
+}
 
 llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
