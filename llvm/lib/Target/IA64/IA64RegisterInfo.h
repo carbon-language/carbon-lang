@@ -47,9 +47,10 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 
-  const unsigned *getCalleeSavedRegs() const;
+  const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
-  const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
+  const TargetRegisterClass* const* getCalleeSavedRegClasses(
+                                     const MachineFunction *MF = 0) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 

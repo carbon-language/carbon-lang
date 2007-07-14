@@ -164,7 +164,8 @@ void AlphaRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
-const unsigned* AlphaRegisterInfo::getCalleeSavedRegs() const {
+const unsigned* AlphaRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
+                                                                         const {
   static const unsigned CalleeSavedRegs[] = {
     Alpha::R9, Alpha::R10,
     Alpha::R11, Alpha::R12,
@@ -178,7 +179,7 @@ const unsigned* AlphaRegisterInfo::getCalleeSavedRegs() const {
 }
 
 const TargetRegisterClass* const*
-AlphaRegisterInfo::getCalleeSavedRegClasses() const {
+AlphaRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,
     &Alpha::GPRCRegClass, &Alpha::GPRCRegClass,

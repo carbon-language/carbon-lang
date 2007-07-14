@@ -1030,6 +1030,9 @@ private:
   // Personalities - Vector of all personality functions ever seen. Used to emit
   // common EH frames.
   std::vector<Function *> Personalities;
+
+  bool CallsEHReturn;
+  bool CallsUnwindInit;
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -1072,6 +1075,12 @@ public:
   /// needsFrameInfo - Returns true if we need to gather callee-saved register
   /// move info for the frame.
   bool needsFrameInfo() const;
+
+  bool callsEHReturn() const { return CallsEHReturn; }
+  void setCallsEHReturn(bool b) { CallsEHReturn = b; }
+
+  bool callsUnwindInit() const { return CallsUnwindInit; }
+  void setCallsUnwindInit(bool b) { CallsUnwindInit = b; }
   
   /// NextLabelID - Return the next unique label id.
   ///

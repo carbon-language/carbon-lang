@@ -51,6 +51,8 @@ def SDT_X86TLSADDR : SDTypeProfile<1, 1, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
 
 def SDT_X86TLSTP : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
+def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
@@ -94,6 +96,9 @@ def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
 def X86tlsaddr : SDNode<"X86ISD::TLSADDR", SDT_X86TLSADDR,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86TLStp : SDNode<"X86ISD::THREAD_POINTER", SDT_X86TLSTP, []>;
+
+def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
+                        [SDNPHasChain]>;
 
 
 //===----------------------------------------------------------------------===//
@@ -2490,6 +2495,17 @@ def DWARF_LOC   : I<0, Pseudo, (ops i32imm:$line, i32imm:$col, i32imm:$file),
                     "; .loc $file, $line, $col",
                     [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
                       (i32 imm:$file))]>;
+
+//===----------------------------------------------------------------------===//
+// EH Pseudo Instructions
+//
+let isTerminator = 1, isReturn = 1, isBarrier = 1,
+    hasCtrlDep = 1, noResults = 1 in {
+def EH_RETURN   : I<0xC3, RawFrm, (ops GR32:$addr),
+                    "ret #eh_return, addr: $addr",
+                    [(X86ehret GR32:$addr)]>;
+
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

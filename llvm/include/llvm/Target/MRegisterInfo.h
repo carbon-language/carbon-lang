@@ -396,12 +396,14 @@ public:
   /// callee saved registers on this target. The register should be in the
   /// order of desired callee-save stack frame offset. The first register is
   /// closed to the incoming stack pointer if stack grows down, and vice versa.
-  virtual const unsigned* getCalleeSavedRegs() const = 0;
+  virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF = 0)
+                                                                      const = 0;
 
   /// getCalleeSavedRegClasses - Return a null-terminated list of the preferred
   /// register classes to spill each callee saved register with.  The order and
   /// length of this list match the getCalleeSaveRegs() list.
-  virtual const TargetRegisterClass* const *getCalleeSavedRegClasses() const =0;
+  virtual const TargetRegisterClass* const *getCalleeSavedRegClasses(
+                                            const MachineFunction *MF) const =0;
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses and

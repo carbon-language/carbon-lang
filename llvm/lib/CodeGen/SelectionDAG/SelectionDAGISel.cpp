@@ -2721,6 +2721,53 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
+  case Intrinsic::eh_return: {
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+
+    if (MMI && ExceptionHandling) {
+      MMI->setCallsEHReturn(true);
+      DAG.setRoot(DAG.getNode(ISD::EH_RETURN,
+                              MVT::Other,
+                              getRoot(),
+                              getValue(I.getOperand(1)),
+                              getValue(I.getOperand(2))));
+    } else {
+      setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
+    }
+
+    return 0;
+  }
+
+   case Intrinsic::eh_unwind_init: {    
+     if (MachineModuleInfo *MMI = DAG.getMachineModuleInfo()) {
+       MMI->setCallsUnwindInit(true);
+     }
+
+     return 0;
+   }
+
+   case Intrinsic::eh_dwarf_cfa: {
+     if (ExceptionHandling) {
+       MVT::ValueType VT = getValue(I.getOperand(1)).getValueType();
+       SDOperand Offset = DAG.getNode(ISD::ADD,
+                                      TLI.getPointerTy(),
+                                      DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET,
+                                                  VT),
+                                      getValue(I.getOperand(1)));
+       setValue(&I, DAG.getNode(ISD::ADD,
+                                TLI.getPointerTy(),
+                                DAG.getNode(ISD::FRAMEADDR,
+                                            TLI.getPointerTy(),
+                                            DAG.getConstant(0,
+                                                            TLI.getPointerTy())),
+                                Offset));
+     } else {
+       setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
+     }
+
+     return 0;
+  }
+
   case Intrinsic::sqrt_f32:
   case Intrinsic::sqrt_f64:
     setValue(&I, DAG.getNode(ISD::FSQRT,

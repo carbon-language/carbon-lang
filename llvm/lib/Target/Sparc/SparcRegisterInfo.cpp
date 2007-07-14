@@ -121,7 +121,8 @@ MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
   return NewMI;
 }
 
-const unsigned* SparcRegisterInfo::getCalleeSavedRegs() const {
+const unsigned* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
+                                                                         const {
   static const unsigned CalleeSavedRegs[] = { 0 };
   return CalleeSavedRegs;
 }
@@ -143,7 +144,7 @@ BitVector SparcRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 
 const TargetRegisterClass* const*
-SparcRegisterInfo::getCalleeSavedRegClasses() const {
+SparcRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = { 0 };
   return CalleeSavedRegClasses;
 }

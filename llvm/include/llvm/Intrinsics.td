@@ -233,6 +233,14 @@ def int_eh_selector   : Intrinsic<[llvm_i32_ty, llvm_ptr_ty, llvm_ptr_ty,
                                                 llvm_vararg_ty]>;
 def int_eh_typeid_for : Intrinsic<[llvm_i32_ty, llvm_ptr_ty]>;
 
+def int_eh_return     : Intrinsic<[llvm_void_ty, llvm_i32_ty, llvm_ptr_ty]>,
+                        GCCBuiltin<"__builtin_eh_return">;
+
+def int_eh_unwind_init: Intrinsic<[llvm_void_ty]>,
+                        GCCBuiltin<"__builtin_unwind_init">;
+
+def int_eh_dwarf_cfa  : Intrinsic<[llvm_ptr_ty, llvm_i32_ty]>;
+
 //===---------------- Generic Variable Attribute Intrinsics----------------===//
 //
 def int_var_annotation : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,

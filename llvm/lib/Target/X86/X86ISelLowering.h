@@ -16,6 +16,7 @@
 #define X86ISELLOWERING_H
 
 #include "X86Subtarget.h"
+#include "X86RegisterInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 
@@ -184,7 +185,10 @@ namespace llvm {
       FRSQRT, FRCP,
 
       // Thread Local Storage
-      TLSADDR, THREAD_POINTER
+      TLSADDR, THREAD_POINTER,
+
+      // Exception Handling helpers
+      EH_RETURN
     };
   }
 
@@ -370,6 +374,7 @@ namespace llvm {
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
+    const MRegisterInfo *RegInfo;
 
     /// X86StackPtr - X86 physical register used as stack ptr.
     unsigned X86StackPtr;
@@ -424,6 +429,8 @@ namespace llvm {
     SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFRAME_TO_ARGS_OFFSET(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
   };
 }
 

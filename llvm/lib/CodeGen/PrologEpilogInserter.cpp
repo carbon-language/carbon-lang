@@ -121,7 +121,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
 
   // Get the callee saved register list...
-  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
+  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs(&Fn);
 
   // Get the function call frame set-up and tear-down instruction opcode
   int FrameSetupOpcode   = RegInfo->getCallFrameSetupOpcode();
@@ -170,7 +170,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   // function, thus needing to be saved and restored in the prolog/epilog.
   //
   const TargetRegisterClass* const *CSRegClasses =
-    RegInfo->getCalleeSavedRegClasses();
+    RegInfo->getCalleeSavedRegClasses(&Fn);
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];

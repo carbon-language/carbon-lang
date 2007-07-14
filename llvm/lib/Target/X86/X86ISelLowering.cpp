@@ -42,6 +42,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   X86ScalarSSE = Subtarget->hasSSE2();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
+  RegInfo = TM.getRegisterInfo();
+
   // Set up the TargetLowering object.
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
@@ -197,6 +199,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   }
   // X86 ret instruction may pop stack.
   setOperationAction(ISD::RET             , MVT::Other, Custom);
+  if (!Subtarget->is64Bit())
+    setOperationAction(ISD::EH_RETURN       , MVT::Other, Custom);
+
   // Darwin ABI issue.
   setOperationAction(ISD::ConstantPool    , MVT::i32  , Custom);
   setOperationAction(ISD::JumpTable       , MVT::i32  , Custom);
@@ -4226,6 +4231,39 @@ SDOperand X86TargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG) {
                      DAG.getConstant(4, getPointerTy()));
 }
 
+SDOperand X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDOperand Op,
+                                                       SelectionDAG &DAG) {
+  // Is not yet supported on x86-64
+  if (Subtarget->is64Bit())
+    return SDOperand();
+  
+  return DAG.getConstant(8, getPointerTy());
+}
+
+SDOperand X86TargetLowering::LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG)
+{
+  assert(!Subtarget->is64Bit() &&
+         "Lowering of eh_return builtin is not supported yet on x86-64");
+    
+  MachineFunction &MF = DAG.getMachineFunction();
+  SDOperand Chain     = Op.getOperand(0);
+  SDOperand Offset    = Op.getOperand(1);
+  SDOperand Handler   = Op.getOperand(2);
+
+  SDOperand Frame = DAG.getRegister(RegInfo->getFrameRegister(MF),
+                                    getPointerTy());
+
+  SDOperand StoreAddr = DAG.getNode(ISD::SUB, getPointerTy(), Frame,
+                                    DAG.getConstant(-4UL, getPointerTy()));
+  StoreAddr = DAG.getNode(ISD::ADD, getPointerTy(), StoreAddr, Offset);
+  Chain = DAG.getStore(Chain, Handler, StoreAddr, NULL, 0);
+  Chain = DAG.getCopyToReg(Chain, X86::ECX, StoreAddr);
+  MF.addLiveOut(X86::ECX);
+
+  return DAG.getNode(X86ISD::EH_RETURN, MVT::Other,
+                     Chain, DAG.getRegister(X86::ECX, getPointerTy()));
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -4263,7 +4301,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
+  case ISD::FRAME_TO_ARGS_OFFSET:
+                                return LowerFRAME_TO_ARGS_OFFSET(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
+  case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
   }
   return SDOperand();
 }
@@ -4311,6 +4352,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FRCP:               return "X86ISD::FRCP";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
+  case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   }
 }
 

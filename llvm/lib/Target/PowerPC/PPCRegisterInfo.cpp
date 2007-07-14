@@ -248,7 +248,8 @@ void PPCRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
-const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
+const unsigned* PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
+                                                                         const {
   // 32-bit Darwin calling convention. 
   static const unsigned Macho32_CalleeSavedRegs[] = {
               PPC::R13, PPC::R14, PPC::R15,
@@ -324,7 +325,7 @@ const unsigned* PPCRegisterInfo::getCalleeSavedRegs() const {
 }
 
 const TargetRegisterClass* const*
-PPCRegisterInfo::getCalleeSavedRegClasses() const {
+PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   // 32-bit Macho calling convention. 
   static const TargetRegisterClass * const Macho32_CalleeSavedRegClasses[] = {
                        &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,

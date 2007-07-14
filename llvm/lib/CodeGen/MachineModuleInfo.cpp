@@ -1476,6 +1476,8 @@ MachineModuleInfo::MachineModuleInfo()
 , FrameMoves()
 , LandingPads()
 , Personalities()
+, CallsEHReturn(0)
+, CallsUnwindInit(0)
 {
   // Always emit "no personality" info
   Personalities.push_back(NULL);
@@ -1523,6 +1525,8 @@ void MachineModuleInfo::EndFunction() {
   TypeInfos.clear();
   FilterIds.clear();
   FilterEnds.clear();
+  CallsEHReturn = 0;
+  CallsUnwindInit = 0;
 }
 
 /// getDescFor - Convert a Value to a debug information descriptor.

@@ -74,12 +74,13 @@ public:
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
-  const unsigned *getCalleeSavedRegs() const;
+  const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
 
   /// getCalleeSavedRegClasses - Return a null-terminated list of the preferred
   /// register classes to spill each callee-saved register with.  The order and
   /// length of this list match the getCalleeSavedRegs() list.
-  const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
+  const TargetRegisterClass* const* getCalleeSavedRegClasses(
+                                     const MachineFunction *MF = 0) const;
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses and

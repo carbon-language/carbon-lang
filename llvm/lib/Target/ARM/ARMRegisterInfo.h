@@ -66,9 +66,10 @@ public:
   MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
                                   int FrameIndex) const;
 
-  const unsigned *getCalleeSavedRegs() const;
+  const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
-  const TargetRegisterClass* const* getCalleeSavedRegClasses() const;
+  const TargetRegisterClass* const* getCalleeSavedRegClasses(
+                                     const MachineFunction *MF = 0) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 

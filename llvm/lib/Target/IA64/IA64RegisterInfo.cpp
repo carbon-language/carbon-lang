@@ -102,7 +102,8 @@ void IA64RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
-const unsigned* IA64RegisterInfo::getCalleeSavedRegs() const {
+const unsigned* IA64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
+                                                                         const {
   static const unsigned CalleeSavedRegs[] = {
     IA64::r5,  0
   };
@@ -110,7 +111,7 @@ const unsigned* IA64RegisterInfo::getCalleeSavedRegs() const {
 }
 
 const TargetRegisterClass* const*
-IA64RegisterInfo::getCalleeSavedRegClasses() const {
+IA64RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &IA64::GRRegClass,  0
   };

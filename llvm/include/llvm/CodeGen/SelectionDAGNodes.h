@@ -110,6 +110,11 @@ namespace ISD {
     // to the current function's frame or return address, an index of one to the
     // parent's frame or return address, and so on.
     FRAMEADDR, RETURNADDR,
+
+    // FRAME_TO_ARGS_OFFSET - This node represents offset from frame pointer to
+    // first (possible) on-stack argument. This is needed for correct stack
+    // adjustment during unwind.
+    FRAME_TO_ARGS_OFFSET,
     
     // RESULT, OUTCHAIN = EXCEPTIONADDR(INCHAIN) - This node represents the
     // address of the exception block on entry to an landing pad block.
@@ -118,6 +123,12 @@ namespace ISD {
     // RESULT, OUTCHAIN = EHSELECTION(INCHAIN, EXCEPTION) - This node represents
     // the selection index of the exception thrown.
     EHSELECTION,
+
+    // OUTCHAIN = EH_RETURN(INCHAIN, OFFSET, HANDLER) - This node represents
+    // 'eh_return' gcc dwarf builtin, which is used to return from
+    // exception. The general meaning is: adjust stack by OFFSET and pass
+    // execution to HANDLER. Many platform-related details also :)
+    EH_RETURN,
 
     // TargetConstant* - Like Constant*, but the DAG does not do any folding or
     // simplification of the constant.
