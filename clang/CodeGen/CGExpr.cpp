@@ -1373,6 +1373,8 @@ RValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator *E) {
   llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
   Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
   
+  // FIXME: Implement this for aggregate values.
+  
   // FIXME: LHS & RHS need the "usual arithmetic conversions" but
   // that's not possible with the current design.
   
