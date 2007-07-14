@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
@@ -63,12 +64,16 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
     return;
 
   // Otherwise, convert the initializer, or use zero if appropriate.
-  llvm::Constant *Init;
-  if (D->getInit() == 0)
+  llvm::Constant *Init = 0;
+  if (D->getInit() == 0) {
     Init = llvm::Constant::getNullValue(GV->getType()->getElementType());
-  else
-    assert(D->getInit() == 0 && "FIXME: Global variable initializers unimp!");
-    
+  } else if (D->getType()->isIntegerType()) {
+    llvm::APSInt Value(getContext().getTypeSize(D->getInit()->getType()));
+    if (D->getInit()->isIntegerConstantExpr(Value))
+      Init = llvm::ConstantInt::get(Value);
+  }
+  assert(Init && "FIXME: Global variable initializers unimp!");
+
   GV->setInitializer(Init);
   
   // Set the llvm linkage type as appropriate.
