@@ -15,6 +15,7 @@
 #define LLVM_CLANG_MACROINFO_H
 
 #include "clang/Lex/LexerToken.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <cassert>
 
@@ -37,7 +38,7 @@ class MacroInfo {
   
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
-  std::vector<LexerToken> ReplacementTokens;
+  llvm::SmallVector<LexerToken, 8> ReplacementTokens;
 
   /// IsFunctionLike - True if this macro is a function-like macro, false if it
   /// is an object-like macro.
@@ -157,7 +158,7 @@ public:
     return ReplacementTokens[Tok];
   }
   
-  typedef std::vector<LexerToken>::const_iterator tokens_iterator;
+  typedef llvm::SmallVector<LexerToken, 8>::const_iterator tokens_iterator;
   tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
   
