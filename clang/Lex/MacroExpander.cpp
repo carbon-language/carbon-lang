@@ -240,8 +240,8 @@ MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
     InstantiateLoc(Tok.getLocation()),
     AtStartOfLine(Tok.isAtStartOfLine()),
     HasLeadingSpace(Tok.hasLeadingSpace()) {
-  MacroTokens = &Macro->getReplacementTokens()[0];
-  NumMacroTokens = Macro->getReplacementTokens().size();
+  MacroTokens = &*Macro->tokens_begin();
+  NumMacroTokens = Macro->tokens_end()-Macro->tokens_begin();
 
   // If this is a function-like macro, expand the arguments and change
   // MacroTokens to point to the expanded tokens.
@@ -275,7 +275,7 @@ MacroExpander::MacroExpander(const LexerToken *TokArray, unsigned NumToks,
 MacroExpander::~MacroExpander() {
   // If this was a function-like macro that actually uses its arguments, delete
   // the expanded tokens.
-  if (Macro && MacroTokens != &Macro->getReplacementTokens()[0])
+  if (Macro && MacroTokens != &*Macro->tokens_begin())
     delete [] MacroTokens;
   
   // MacroExpander owns its formal arguments.

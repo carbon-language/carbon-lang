@@ -157,10 +157,10 @@ public:
     return ReplacementTokens[Tok];
   }
   
-  const std::vector<LexerToken> &getReplacementTokens() const {
-    return ReplacementTokens;
-  }
-
+  typedef std::vector<LexerToken>::const_iterator tokens_iterator;
+  tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
+  tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
+  
   /// AddTokenToBody - Add the specified token to the replacement text for the
   /// macro.
   void AddTokenToBody(const LexerToken &Tok) {

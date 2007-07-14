@@ -1729,7 +1729,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
   // Error reading macro name?  If so, diagnostic already issued.
   if (MacroNameTok.getKind() == tok::eom)
     return;
-  
+
   // If we are supposed to keep comments in #defines, reenable comment saving
   // mode.
   CurLexer->KeepCommentMode = KeepMacroComments;
@@ -1832,6 +1832,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
       LexUnexpandedToken(Tok);
     }
   }
+  
   
   // Disable __VA_ARGS__ again.
   Ident__VA_ARGS__->setIsPoisoned(true);
