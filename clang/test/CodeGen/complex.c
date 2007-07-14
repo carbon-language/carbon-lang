@@ -1,5 +1,4 @@
 // RUN: clang -emit-llvm %s
-// XFAIL: *
 
 int main(void)
 {

@@ -1252,6 +1252,8 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
     EmitLoadOfComplex(LHS, LHSR, LHSI);
     EmitLoadOfComplex(RHS, RHSR, RHSI);
 
+    // FIXME: need to consider _Complex over integers too!
+
     ResultR = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
 				 LHSR, RHSR, "cmp.r");
     ResultI = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
