@@ -696,7 +696,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     }
     break;
-  case ISD::EH_RETURN:
+  case ISD::EH_RETURN: {
     MVT::ValueType VT = Node->getValueType(0);
     // The only "good" option for this node is to custom lower it.
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
@@ -709,6 +709,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Target does not know, how to lower this, lower to noop
       Result = LegalizeOp(Node->getOperand(0));
       break;
+    }
     }
     break;
   case ISD::AssertSext:
