@@ -19,6 +19,9 @@
 using namespace clang;
 using namespace CodeGen;
 
+CodeGenTypes::CodeGenTypes(ASTContext &Ctx)
+  : Context(Ctx), Target(Ctx.Target) {
+}
 
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
@@ -31,32 +34,26 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::Void:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
-    case BuiltinType::Char_S:
-    case BuiltinType::Char_U:
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-      return llvm::IntegerType::get(Target.getCharWidth(SourceLocation()));
+      return llvm::IntegerType::get(8);
 
     case BuiltinType::Bool:
       // FIXME: This is very strange.  We want scalars to be i1, but in memory
       // they can be i1 or i32.  Should the codegen handle this issue?
       return llvm::Type::Int1Ty;
       
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
     case BuiltinType::Short:
     case BuiltinType::UShort:
-      return llvm::IntegerType::get(Target.getShortWidth(SourceLocation()));
-      
     case BuiltinType::Int:
     case BuiltinType::UInt:
-      return llvm::IntegerType::get(Target.getIntWidth(SourceLocation()));
-
     case BuiltinType::Long:
     case BuiltinType::ULong:
-      return llvm::IntegerType::get(Target.getLongWidth(SourceLocation()));
-
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
-      return llvm::IntegerType::get(Target.getLongLongWidth(SourceLocation()));
+      return llvm::IntegerType::get(Context.getTypeSize(T, SourceLocation()));
       
     case BuiltinType::Float:      return llvm::Type::FloatTy;
     case BuiltinType::Double:     return llvm::Type::DoubleTy;

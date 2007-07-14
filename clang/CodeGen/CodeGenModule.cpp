@@ -26,7 +26,7 @@ using namespace CodeGen;
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M)
-  : Context(C), TheModule(M), Types(C.Target) {}
+  : Context(C), TheModule(M), Types(C) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const Decl *D) {
   // See if it is already in the map.
@@ -68,7 +68,8 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   if (D->getInit() == 0) {
     Init = llvm::Constant::getNullValue(GV->getType()->getElementType());
   } else if (D->getType()->isIntegerType()) {
-    llvm::APSInt Value(getContext().getTypeSize(D->getInit()->getType()));
+    llvm::APSInt Value(getContext().getTypeSize(D->getInit()->getType(),
+                                                SourceLocation()));
     if (D->getInit()->isIntegerConstantExpr(Value))
       Init = llvm::ConstantInt::get(Value);
   }
@@ -103,7 +104,9 @@ void CodeGenModule::EmitGlobalVarDeclarator(const FileVarDecl *D) {
 llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
   llvm::Intrinsic::ID IID;
-  switch (Context.Target.getPointerWidth(SourceLocation())) {
+  uint64_t Size; unsigned Align;
+  Context.Target.getPointerInfo(Size, Align, SourceLocation());
+  switch (Size) {
   default: assert(0 && "Unknown ptr width");
   case 32: IID = llvm::Intrinsic::memcpy_i32; break;
   case 64: IID = llvm::Intrinsic::memcpy_i64; break;

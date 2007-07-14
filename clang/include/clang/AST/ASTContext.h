@@ -54,12 +54,23 @@ public:
   ~ASTContext();
   
   void PrintStats() const;
-  
+
+  /// getTypeInfo - Get the size and alignment of the specified complete type in
+  /// bits.
+  std::pair<uint64_t, unsigned> getTypeInfo(QualType T, SourceLocation L);
+
   /// getTypeSize - Return the size of the specified type, in bits.  This method
   /// does not work on incomplete types.
-  unsigned getTypeSize(QualType T);
-  //TODO: unsigned getTypeAlign(QualType T);
-
+  uint64_t getTypeSize(QualType T, SourceLocation L) {
+    return getTypeInfo(T, L).first;
+  }
+  
+  /// getTypeAlign - Return the alignment of the specified type, in bits.  This
+  /// method does not work on incomplete types.
+  unsigned getTypeAlign(QualType T, SourceLocation L) {
+    return getTypeInfo(T, L).second;
+  }    
+  
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T);

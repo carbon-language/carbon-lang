@@ -1005,7 +1005,7 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
          curType.getCanonicalType().getAsString());
     return QualType();
   }
-  unsigned typeSize = Context.getTypeSize(curType);
+  unsigned typeSize = Context.getTypeSize(curType, rawAttr->getAttributeLoc());
   // vecSize is specified in bytes - convert to bits.
   unsigned vectorSize = vecSize.getZExtValue() * 8; 
   

@@ -21,6 +21,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class ASTContext;
   class TargetInfo;
   class QualType;
   class FunctionTypeProto;
@@ -30,10 +31,11 @@ namespace CodeGen {
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
 class CodeGenTypes {
+  ASTContext &Context;
   TargetInfo &Target;
   
 public:
-  CodeGenTypes(TargetInfo &target) : Target(target) {}
+  CodeGenTypes(ASTContext &Ctx);
   
   TargetInfo &getTarget() const { return Target; }
   

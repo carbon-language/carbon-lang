@@ -55,7 +55,7 @@ class TargetInfo {
   bool NonPortable;
 
   /// These are all caches for target values.
-  unsigned WCharWidth;
+  unsigned WCharWidth, WCharAlign;
   
 public:
   TargetInfo(const TargetInfoImpl *Primary, Diagnostic *D = 0) {
@@ -105,67 +105,71 @@ public:
   
   /// getPointerWidth - Return the width of pointers on this target, we
   /// currently assume one pointer type.
-  unsigned getPointerWidth(SourceLocation Loc) {
-    return 32;   // FIXME: implement correctly.
+  void getPointerInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = 32;  // FIXME: implement correctly.
+    Align = 32;
   }
   
-  /// getBoolWidth - Return the size of '_Bool' and C++ 'bool' for this target,
+  /// getBoolInfo - Return the size of '_Bool' and C++ 'bool' for this target,
   /// in bits.  
-  unsigned getBoolWidth(SourceLocation Loc) {
-    return 8;    // FIXME: implement correctly: wrong for ppc32.
+  void getBoolInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = Align = 8;    // FIXME: implement correctly: wrong for ppc32.
   }
   
-  /// getCharWidth - Return the size of 'char', 'signed char' and
+  /// getCharInfo - Return the size of 'char', 'signed char' and
   /// 'unsigned char' for this target, in bits.  
-  unsigned getCharWidth(SourceLocation Loc) {
-    return 8; // FIXME: implement correctly.
+  void getCharInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = Align = 8; // FIXME: implement correctly.
   }
   
-  /// getShortWidth - Return the size of 'signed short' and 'unsigned short' for
+  /// getShortInfo - Return the size of 'signed short' and 'unsigned short' for
   /// this target, in bits.  
-  unsigned getShortWidth(SourceLocation Loc) {
-    return 16; // FIXME: implement correctly.
+  void getShortInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = Align = 16; // FIXME: implement correctly.
   }
   
-  /// getIntWidth - Return the size of 'signed int' and 'unsigned int' for this
+  /// getIntInfo - Return the size of 'signed int' and 'unsigned int' for this
   /// target, in bits.  
-  unsigned getIntWidth(SourceLocation Loc) {
-    return 32; // FIXME: implement correctly.
+  void getIntInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = Align = 32; // FIXME: implement correctly.
   }
   
-  /// getLongWidth - Return the size of 'signed long' and 'unsigned long' for
+  /// getLongInfo - Return the size of 'signed long' and 'unsigned long' for
   /// this target, in bits.  
-  unsigned getLongWidth(SourceLocation Loc) {
-    return 32;  // FIXME: implement correctly: wrong for ppc64/x86-64
+  void getLongInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = Align = 32;  // FIXME: implement correctly: wrong for ppc64/x86-64
   }
 
-  /// getLongLongWidth - Return the size of 'signed long long' and
+  /// getLongLongInfo - Return the size of 'signed long long' and
   /// 'unsigned long long' for this target, in bits.  
-  unsigned getLongLongWidth(SourceLocation Loc) {
-    return 64; // FIXME: implement correctly.
+  void getLongLongInfo(uint64_t &Size, unsigned &Align, 
+                            SourceLocation Loc) {
+    Size = Align = 64; // FIXME: implement correctly.
   }
   
-  /// getFloatWidth - Return the size of 'float' for this target, in bits.  
-  unsigned getFloatWidth(SourceLocation Loc) {
-    return 32;  // FIXME: implement correctly.
+  /// getFloatInfo - Return the size of 'float' for this target, in bits.  
+  void getFloatInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Align = Size = 32;  // FIXME: implement correctly.
   }
 
-  /// getDoubleWidth - Return the size of 'double' for this target, in bits.  
-  unsigned getDoubleWidth(SourceLocation Loc) {
-    return 64;  // FIXME: implement correctly.
+  /// getDoubleInfo - Return the size of 'double' for this target, in bits.  
+  void getDoubleInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    Size = Align = 64;  // FIXME: implement correctly.
   }
 
-  /// getLongDoubleWidth - Return the size of 'long double' for this target, in
+  /// getLongDoubleInfo - Return the size of 'long double' for this target, in
   /// bits.  
-  unsigned getLongDoubleWidth(SourceLocation Loc) {
-    return 64;  // FIXME: implement correctly.
+  void getLongDoubleInfo(uint64_t &Size, unsigned &Align,
+                             SourceLocation Loc) {
+    Size = Align = 64;  // FIXME: implement correctly.
   }
   
-  /// getWCharWidth - Return the size of wchar_t in bits.
+  /// getWCharInfo - Return the size of wchar_t in bits.
   ///
-  unsigned getWCharWidth(SourceLocation Loc) {
-    if (!WCharWidth) ComputeWCharWidth(Loc);
-    return WCharWidth;
+  void getWCharInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+    if (!WCharWidth) ComputeWCharInfo(Loc);
+    Size = WCharWidth;
+    Align = WCharAlign;
   }
   
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
@@ -181,8 +185,28 @@ public:
   void getTargetBuiltins(const Builtin::Info *&Records, unsigned &NumRecords,
                          std::vector<const char *> &NonPortableBuiltins) const;
 
+  ///===---- Some helper methods ------------------------------------------===//
+
+  unsigned getCharWidth(SourceLocation Loc) {
+    uint64_t Size; unsigned Align;
+    getCharInfo(Size, Align, Loc);
+    return Size;
+  }
+  
+  unsigned getWCharWidth(SourceLocation Loc) {
+    uint64_t Size; unsigned Align;
+    getWCharInfo(Size, Align, Loc);
+    return Size;
+  }
+  
+  unsigned getIntWidth(SourceLocation Loc) {
+    uint64_t Size; unsigned Align;
+    getIntInfo(Size, Align, Loc);
+    return Size;
+  }
+  
 private:
-  void ComputeWCharWidth(SourceLocation Loc);
+  void ComputeWCharInfo(SourceLocation Loc);
 };
 
 
@@ -195,8 +219,9 @@ private:
 class TargetInfoImpl {
 protected:
   unsigned WCharWidth;    /// sizeof(wchar_t) in bits.  Default value is 32.
+  unsigned WCharAlign;    /// alignof(wchar_t) in bits.  Default value is 32.
 public:
-  TargetInfoImpl() : WCharWidth(32) {}
+  TargetInfoImpl() : WCharWidth(32), WCharAlign(32) {}
   virtual ~TargetInfoImpl() {}
   
   /// getTargetDefines - Return a list of the target-specific #define values set
@@ -206,7 +231,10 @@ public:
 
   /// getWCharWidth - Return the size of wchar_t in bits.
   ///
-  unsigned getWCharWidth() const { return WCharWidth; }
+  void getWCharInfo(unsigned &Size, unsigned &Align) const {
+    Size = WCharWidth;
+    Align = WCharAlign;
+  }
   
   /// getTargetBuiltins - Return information about target-specific builtins for
   /// the target.

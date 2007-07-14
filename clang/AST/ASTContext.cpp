@@ -140,8 +140,11 @@ void ASTContext::InitBuiltinTypes() {
 
 /// getTypeSize - Return the size of the specified type, in bits.  This method
 /// does not work on incomplete types.
-unsigned ASTContext::getTypeSize(QualType T) {
+std::pair<uint64_t, unsigned>
+ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   T = T.getCanonicalType();
+  uint64_t Size;
+  unsigned Align;
   switch (T->getTypeClass()) {
   default:
   case Type::Complex:
@@ -158,33 +161,34 @@ unsigned ASTContext::getTypeSize(QualType T) {
     // implementation will suffice for play with vector support.
     switch (cast<BuiltinType>(T)->getKind()) {
     default: assert(0 && "Unknown builtin type!");
-    case BuiltinType::Void:       assert(0 && "Incomplete types have no size!");
-    case BuiltinType::Bool:       return Target.getBoolWidth(SourceLocation());
+    case BuiltinType::Void:
+      assert(0 && "Incomplete types have no size!");
+    case BuiltinType::Bool:       Target.getBoolInfo(Size, Align, L); break;
     case BuiltinType::Char_S:
     case BuiltinType::Char_U:
     case BuiltinType::UChar:
-    case BuiltinType::SChar:      return Target.getCharWidth(SourceLocation());
+    case BuiltinType::SChar:      Target.getCharInfo(Size, Align, L); break;
     case BuiltinType::UShort:
-    case BuiltinType::Short:      return Target.getShortWidth(SourceLocation());
+    case BuiltinType::Short:      Target.getShortInfo(Size, Align, L); break;
     case BuiltinType::UInt:
-    case BuiltinType::Int:        return Target.getIntWidth(SourceLocation());
+    case BuiltinType::Int:        Target.getIntInfo(Size, Align, L); break;
     case BuiltinType::ULong:
-    case BuiltinType::Long:       return Target.getLongWidth(SourceLocation());
+    case BuiltinType::Long:       Target.getLongInfo(Size, Align, L); break;
     case BuiltinType::ULongLong:
-    case BuiltinType::LongLong:return Target.getLongLongWidth(SourceLocation());
-    case BuiltinType::Float:    return Target.getFloatWidth(SourceLocation());
-    case BuiltinType::Double:   return Target.getDoubleWidth(SourceLocation());
-    case BuiltinType::LongDouble:
-      return Target.getLongDoubleWidth(SourceLocation());
+    case BuiltinType::LongLong:   Target.getLongLongInfo(Size, Align, L); break;
+    case BuiltinType::Float:      Target.getFloatInfo(Size, Align, L); break;
+    case BuiltinType::Double:     Target.getDoubleInfo(Size, Align, L); break;
+    case BuiltinType::LongDouble: Target.getLongDoubleInfo(Size, Align,L);break;
     }
   }
-  case Type::Pointer:
-    return Target.getPointerWidth(SourceLocation());
+  case Type::Pointer: Target.getPointerInfo(Size, Align, L); break;
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
     // of the referenced type." C++98 5.3.3p2: expr.sizeof
-    return getTypeSize(cast<ReferenceType>(T)->getReferenceeType());
+    return getTypeInfo(cast<ReferenceType>(T)->getReferenceeType(), L);
   }
+  
+  return std::make_pair(Size, Align);
 }
 
 //===----------------------------------------------------------------------===//
@@ -458,34 +462,6 @@ QualType ASTContext::getPointerDiffType() const {
   // On Darwin, ptrdiff_t is defined as a "int". This seems like a bug...
   // FIXME: should derive from "Target".
   return IntTy; 
-}
-
-/// getIntegerBitwidth - Return the bitwidth of the specified integer type
-/// according to the target.  'Loc' specifies the source location that
-/// requires evaluation of this property.
-unsigned ASTContext::getIntegerBitwidth(QualType T, SourceLocation Loc) {
-  if (const TagType *TT = dyn_cast<TagType>(T.getCanonicalType())) {
-    assert(TT->getDecl()->getKind() == Decl::Enum && "not an int or enum");
-    assert(0 && "FIXME: getIntegerBitwidth(enum) unimplemented!");
-  }
-  
-  const BuiltinType *BT = cast<BuiltinType>(T.getCanonicalType());
-  switch (BT->getKind()) {
-  default: assert(0 && "getIntegerBitwidth(): not a built-in integer");
-  case BuiltinType::Bool:      return Target.getBoolWidth(Loc);
-  case BuiltinType::Char_S:
-  case BuiltinType::Char_U:
-  case BuiltinType::SChar:
-  case BuiltinType::UChar:     return Target.getCharWidth(Loc);
-  case BuiltinType::Short:
-  case BuiltinType::UShort:    return Target.getShortWidth(Loc);
-  case BuiltinType::Int:
-  case BuiltinType::UInt:      return Target.getIntWidth(Loc);
-  case BuiltinType::Long:
-  case BuiltinType::ULong:     return Target.getLongWidth(Loc);
-  case BuiltinType::LongLong:
-  case BuiltinType::ULongLong: return Target.getLongLongWidth(Loc);
-  }
 }
 
 /// getIntegerRank - Return an integer conversion rank (C99 6.3.1.1p1). This

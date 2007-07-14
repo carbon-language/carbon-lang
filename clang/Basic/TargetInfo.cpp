@@ -157,14 +157,17 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
 /// ComputeWCharWidth - Determine the width of the wchar_t type for the primary
 /// target, diagnosing whether this is non-portable across the secondary
 /// targets.
-void TargetInfo::ComputeWCharWidth(SourceLocation Loc) {
-  WCharWidth = PrimaryTarget->getWCharWidth();
+void TargetInfo::ComputeWCharInfo(SourceLocation Loc) {
+  PrimaryTarget->getWCharInfo(WCharWidth, WCharAlign);
   
   // Check whether this is portable across the secondary targets if the T-U is
   // portable so far.
-  for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i)
-    if (SecondaryTargets[i]->getWCharWidth() != WCharWidth)
+  for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i) {
+    unsigned Width, Align;
+    SecondaryTargets[i]->getWCharInfo(Width, Align);
+    if (Width != WCharWidth || Align != WCharAlign)
       return DiagnoseNonPortability(Loc, diag::port_wchar_t);
+  }
 }
 
 

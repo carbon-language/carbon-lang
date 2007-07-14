@@ -115,7 +115,7 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
   if (Tok.getLength() == 1) {
     const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
     
-    unsigned IntSize = Context.Target.getIntWidth(Tok.getLocation());
+    unsigned IntSize = Context.getTypeSize(Context.IntTy, Tok.getLocation());
     return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *t-'0'),
                                          Context.IntTy, 
                                          Tok.getLocation()));
@@ -141,7 +141,7 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
       // If this value didn't fit into uintmax_t, warn and force to ull.
       Diag(Tok.getLocation(), diag::warn_integer_too_large);
       t = Context.UnsignedLongLongTy;
-      assert(Context.getIntegerBitwidth(t, Tok.getLocation()) == 
+      assert(Context.getTypeSize(t, Tok.getLocation()) == 
              ResultVal.getBitWidth() && "long long is not intmax_t?");
     } else {
       // If this value fits into a ULL, try to figure out what else it fits into
@@ -153,7 +153,7 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
 
       // Check from smallest to largest, picking the smallest type we can.
       if (!Literal.isLong) {  // Are int/unsigned possibilities?
-        unsigned IntSize = Context.Target.getIntWidth(Tok.getLocation());
+        unsigned IntSize = Context.getTypeSize(Context.IntTy,Tok.getLocation());
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
           // Does it fit in a signed int?
@@ -169,7 +169,8 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
       
       // Are long/unsigned long possibilities?
       if (t.isNull() && !Literal.isLongLong) {
-        unsigned LongSize = Context.Target.getLongWidth(Tok.getLocation());
+        unsigned LongSize = Context.getTypeSize(Context.LongTy,
+                                                Tok.getLocation());
      
         // Does it fit in a unsigned long?
         if (ResultVal.isIntN(LongSize)) {
@@ -186,7 +187,7 @@ Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
       // Finally, check long long if needed.
       if (t.isNull()) {
         unsigned LongLongSize =
-          Context.Target.getLongLongWidth(Tok.getLocation());
+          Context.getTypeSize(Context.LongLongTy, Tok.getLocation());
         
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
