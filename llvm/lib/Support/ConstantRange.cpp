@@ -248,8 +248,10 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
 
 /// maximalIntersectWith - Return the range that results from the intersection
 /// of this range with another range.  The resultant range is guaranteed to
-/// include all elements contained in both input ranges, and is also guaranteed
-/// to be the smallest possible set that does so.
+/// include all elements contained in both input ranges, and to have the
+/// smallest possible set size that does so.  Because there may be two
+/// intersections with the same set size, A.maximalIntersectWith(B) might not
+/// be equal to B.maximalIntersect(A).
 ConstantRange ConstantRange::maximalIntersectWith(const ConstantRange &CR) const {
   assert(getBitWidth() == CR.getBitWidth() && 
          "ConstantRange types don't agree!");
