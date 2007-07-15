@@ -180,6 +180,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     case BuiltinType::Double:     Target.getDoubleInfo(Size, Align, L); break;
     case BuiltinType::LongDouble: Target.getLongDoubleInfo(Size, Align,L);break;
     }
+    break;
   }
   case Type::Pointer: Target.getPointerInfo(Size, Align, L); break;
   case Type::Reference:
