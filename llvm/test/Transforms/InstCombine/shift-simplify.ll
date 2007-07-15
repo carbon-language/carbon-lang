@@ -21,3 +21,10 @@ define i32 @test2(i32 %A, i32 %B, i32 %C) {
 	%Z = xor i32 %X, %Y
 	ret i32 %Z
 }
+
+define i1 @test3(i32 %X) {
+        %tmp1 = shl i32 %X, 7
+        %tmp2 = icmp slt i32 %tmp1, 0
+        ret i1 %tmp2
+}
+
