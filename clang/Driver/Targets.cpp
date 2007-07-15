@@ -417,8 +417,8 @@ TargetInfo *clang::CreateTargetInfo(Diagnostic &Diags) {
   // current host.  TODO: This is a hack. :)
   if (Archs.empty()) {
 #ifndef __APPLE__
-    // Assume non-apple = linux.
-    Archs.push_back(target_linux_i386);
+    // Assume non-apple = i386 for now.
+    Archs.push_back(target_i386);
 #elif (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
       defined(__ppc64__)
     Archs.push_back(target_ppc64);
