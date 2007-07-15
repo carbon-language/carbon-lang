@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Expr.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
 using namespace clang;
@@ -287,11 +288,13 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case IntegerLiteralClass:
     Result = cast<IntegerLiteral>(this)->getValue();
     break;
-  case CharacterLiteralClass:
-    // FIXME: This doesn't set the right width etc.
-    Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
-    Result = cast<CharacterLiteral>(this)->getValue();
+  case CharacterLiteralClass: {
+    const CharacterLiteral *CL = cast<CharacterLiteral>(this);
+    Result.zextOrTrunc(Ctx.getTypeSize(getType(), CL->getLoc()));                              
+    Result = CL->getValue();
+    Result.setIsSigned(getType()->isSignedIntegerType());
     break;
+  }
   case DeclRefExprClass:
     if (const EnumConstantDecl *D = 
           dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl())) {

@@ -161,6 +161,8 @@ public:
   CharacterLiteral(unsigned value, QualType type, SourceLocation l)
     : Expr(CharacterLiteralClass, type), Value(value), Loc(l) {
   }
+  SourceLocation getLoc() const { return Loc; }
+  
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   unsigned getValue() const { return Value; }
