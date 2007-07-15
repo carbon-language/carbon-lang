@@ -279,16 +279,13 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
 Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
-  Expr *lex = (Expr *)Base;
-  Expr *rex = (Expr *)Idx;
-  QualType t1 = lex->getType();
-  QualType t2 = rex->getType();
+  Expr *LHSExp = static_cast<Expr*>(Base), *RHSExp = static_cast<Expr*>(Idx);
+  QualType LHSTy = LHSExp->getType(), RHSTy = RHSExp->getType();
+  
+  assert(!LHSTy.isNull() && !RHSTy.isNull() && "missing types");
 
-  assert(!t1.isNull() && "no type for array base expression");
-  assert(!t2.isNull() && "no type for array index expression");
-
-  QualType canonT1 = DefaultFunctionArrayConversion(lex).getCanonicalType();
-  QualType canonT2 = DefaultFunctionArrayConversion(rex).getCanonicalType();
+  QualType canonT1 = DefaultFunctionArrayConversion(LHSExp).getCanonicalType();
+  QualType canonT2 = DefaultFunctionArrayConversion(RHSExp).getCanonicalType();
   
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
   // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
@@ -300,16 +297,16 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   if (isa<PointerType>(canonT1) || isa<VectorType>(canonT1)) {
     baseType = canonT1;
     indexType = canonT2;
-    baseExpr = lex;
-    indexExpr = rex;
+    baseExpr = LHSExp;
+    indexExpr = RHSExp;
   } else if (isa<PointerType>(canonT2)) { // uncommon
     baseType = canonT2;
     indexType = canonT1;
-    baseExpr = rex;
-    indexExpr = lex;
+    baseExpr = RHSExp;
+    indexExpr = LHSExp;
   } else {
-    return Diag(lex->getLocStart(), diag::err_typecheck_subscript_value, 
-                rex->getSourceRange());
+    return Diag(LHSExp->getLocStart(), diag::err_typecheck_subscript_value, 
+                RHSExp->getSourceRange());
   }              
   // C99 6.5.2.1p1
   if (!indexType->isIntegerType()) {
