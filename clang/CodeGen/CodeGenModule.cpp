@@ -70,7 +70,7 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   } else if (D->getType()->isIntegerType()) {
     llvm::APSInt Value(getContext().getTypeSize(D->getInit()->getType(),
                                                 SourceLocation()));
-    if (D->getInit()->isIntegerConstantExpr(Value))
+    if (D->getInit()->isIntegerConstantExpr(Value, Context))
       Init = llvm::ConstantInt::get(Value);
   }
   assert(Init && "FIXME: Global variable initializers unimp!");

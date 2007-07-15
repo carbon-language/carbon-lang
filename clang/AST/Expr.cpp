@@ -272,18 +272,18 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
 ///
 /// FIXME: This should ext-warn on overflow during evaluation!  ISO C does not
 /// permit this.
-bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
-                                 bool isEvaluated) const {
+bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
+                                 SourceLocation *Loc, bool isEvaluated) const {
   switch (getStmtClass()) {
   default:
     if (Loc) *Loc = getLocStart();
     return false;
   case ImplicitCastExprClass:
     return cast<ImplicitCastExpr>(this)->getSubExpr()->
-                     isIntegerConstantExpr(Result, Loc, isEvaluated);
+                     isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->
-                     isIntegerConstantExpr(Result, Loc, isEvaluated);
+                     isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
   case IntegerLiteralClass:
     Result = cast<IntegerLiteral>(this)->getValue();
     break;
@@ -306,7 +306,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
     if (Exp->isSizeOfAlignOfOp()) isEvaluated = false;
-    if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+    if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx,Loc, isEvaluated))
       return false;
 
     switch (Exp->getOpcode()) {
@@ -320,7 +320,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Loc))
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx, Loc))
         return false;
       
       // FIXME: Evaluate sizeof/alignof.
@@ -350,7 +350,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Loc))
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx,Loc))
       return false;
 
     // FIXME: Evaluate sizeof/alignof.
@@ -362,7 +362,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
     const BinaryOperator *Exp = cast<BinaryOperator>(this);
     
     // The LHS of a constant expr is always evaluated and needed.
-    if (!Exp->getLHS()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+    if (!Exp->getLHS()->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
     
     llvm::APSInt RHS(Result);
@@ -378,11 +378,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
         RHSEval = Result == 0;
       }
       
-      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Loc,
+      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Ctx, Loc,
                                                 isEvaluated & RHSEval))
         return false;
     } else {
-      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Loc, isEvaluated))
+      if (!Exp->getRHS()->isIntegerConstantExpr(RHS, Ctx, Loc, isEvaluated))
         return false;
     }
     
@@ -463,7 +463,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
       
     // Handle simple integer->integer casts.
     if (Exp->getSubExpr()->getType()->isIntegerType()) {
-      if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+      if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx,
+                                                    Loc, isEvaluated))
         return false;
       // FIXME: do the conversion on Result.
       break;
@@ -486,7 +487,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
   case ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
     
-    if (!Exp->getCond()->isIntegerConstantExpr(Result, Loc, isEvaluated))
+    if (!Exp->getCond()->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
     
     const Expr *TrueExp  = Exp->getLHS();
@@ -494,10 +495,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
     if (Result == 0) std::swap(TrueExp, FalseExp);
     
     // Evaluate the false one first, discard the result.
-    if (!FalseExp->isIntegerConstantExpr(Result, Loc, false))
+    if (!FalseExp->isIntegerConstantExpr(Result, Ctx, Loc, false))
       return false;
     // Evalute the true one, capture the result.
-    if (!TrueExp->isIntegerConstantExpr(Result, Loc, isEvaluated))
+    if (!TrueExp->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
     // FIXME: promotions on result.
     break;
@@ -513,7 +514,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
 /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
 /// integer constant expression with the value zero, or if this is one that is
 /// cast to void*.
-bool Expr::isNullPointerConstant() const {
+bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   // Strip off a cast to void*, if it exists.
   if (const CastExpr *CE = dyn_cast<CastExpr>(this)) {
     // Check that it is a cast to void*.
@@ -521,12 +522,12 @@ bool Expr::isNullPointerConstant() const {
       QualType Pointee = PT->getPointeeType();
       if (Pointee.getQualifiers() == 0 && Pointee->isVoidType() && // to void*
           CE->getSubExpr()->getType()->isIntegerType())            // from int.
-        return CE->getSubExpr()->isNullPointerConstant();
+        return CE->getSubExpr()->isNullPointerConstant(Ctx);
     }
   } else if (const ParenExpr *PE = dyn_cast<ParenExpr>(this)) {
     // Accept ((void*)0) as a null pointer constant, as many other
     // implementations do.
-    return PE->getSubExpr()->isNullPointerConstant();
+    return PE->getSubExpr()->isNullPointerConstant(Ctx);
   }
   
   // This expression must be an integer type.
@@ -536,5 +537,5 @@ bool Expr::isNullPointerConstant() const {
   // If we have an integer constant expression, we need to *evaluate* it and
   // test for the value 0.
   llvm::APSInt Val(32);
-  return isIntegerConstantExpr(Val, 0, true) && Val == 0;
+  return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }

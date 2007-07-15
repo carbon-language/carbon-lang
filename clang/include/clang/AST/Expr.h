@@ -22,6 +22,7 @@
 namespace clang {
   class IdentifierInfo;
   class Decl;
+  class ASTContext;
   
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -85,17 +86,18 @@ public:
   };
   isModifiableLvalueResult isModifiableLvalue();
   
-  bool isNullPointerConstant() const;
+  bool isNullPointerConstant(ASTContext &Ctx) const;
 
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
   /// of the invalid expression.
-  bool isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc = 0,
+  bool isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
+                             SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
-  bool isIntegerConstantExpr(SourceLocation *Loc = 0) const {
+  bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const {
     llvm::APSInt X(32);
-    return isIntegerConstantExpr(X, Loc);
+    return isIntegerConstantExpr(X, Ctx, Loc);
   }
   
   virtual void visit(StmtVisitor &Visitor);

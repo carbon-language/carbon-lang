@@ -85,7 +85,8 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
            "FIXME: We only handle trivial array types so far!");
     
     llvm::APSInt Size(32);
-    if (A.getSizeExpr() && A.getSizeExpr()->isIntegerConstantExpr(Size)) {
+    if (A.getSizeExpr() &&
+        A.getSizeExpr()->isIntegerConstantExpr(Size, Context)) {
       const llvm::Type *EltTy = ConvertType(A.getElementType());
       return llvm::ArrayType::get(EltTy, Size.getZExtValue());
     } else {

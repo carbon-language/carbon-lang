@@ -58,7 +58,7 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
     
   SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
-  if (!LHSVal->isIntegerConstantExpr(&ExpLoc))
+  if (!LHSVal->isIntegerConstantExpr(Context, &ExpLoc))
     return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
                 LHSVal->getSourceRange());
 
@@ -269,7 +269,7 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
     break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
-    if (!RetValExp->isNullPointerConstant()) {
+    if (!RetValExp->isNullPointerConstant(Context)) {
       Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
            lhsType.getAsString(), rhsType.getAsString(),
            RetValExp->getSourceRange());

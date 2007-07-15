@@ -41,7 +41,7 @@ bool Sema::VerifyConstantArrayType(const ArrayType *Array,
   // Verify that the size of the array is an integer constant expr.
   SourceLocation Loc;
   llvm::APSInt SizeVal(32);
-  if (!Size->isIntegerConstantExpr(SizeVal, &Loc)) {
+  if (!Size->isIntegerConstantExpr(SizeVal, Context, &Loc)) {
     // FIXME: This emits the diagnostic to enforce 6.7.2.1p8, but the message
     // is wrong.  It is also wrong for static variables.
     // FIXME: This is also wrong for:
@@ -879,7 +879,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
   if (Val) {
     // C99 6.7.2.2p2: Make sure we have an integer constant expression.
     SourceLocation ExpLoc;
-    if (!Val->isIntegerConstantExpr(EnumVal, &ExpLoc)) {
+    if (!Val->isIntegerConstantExpr(EnumVal, Context, &ExpLoc)) {
       Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr, 
            Id->getName());
       // FIXME: Don't leak memory: delete Val;
@@ -981,7 +981,7 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   }
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
-  if (!sizeExpr->isIntegerConstantExpr(vecSize)) {
+  if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
          sizeExpr->getSourceRange());
     return QualType();

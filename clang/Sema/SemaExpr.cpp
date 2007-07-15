@@ -439,7 +439,7 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
         break;
       case PointerFromInt:
         // check for null pointer constant (C99 6.3.2.3p3)
-        if (!argExpr->isNullPointerConstant()) {
+        if (!argExpr->isNullPointerConstant(Context)) {
           Diag(l, diag::ext_typecheck_passing_pointer_int, 
                lhsType.getAsString(), rhsType.getAsString(),
                funcExpr->getSourceRange(), argExpr->getSourceRange());
@@ -513,9 +513,10 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       return QualType();
     }
   }
-  if (lexT->isPointerType() && rex->isNullPointerConstant()) // C99 6.5.15p3
+  // C99 6.5.15p3
+  if (lexT->isPointerType() && rex->isNullPointerConstant(Context))
     return lexT;
-  if (rexT->isPointerType() && lex->isNullPointerConstant())
+  if (rexT->isPointerType() && lex->isNullPointerConstant(Context))
     return rexT;
     
   if (lexT->isPointerType() && rexT->isPointerType()) { // C99 6.5.15p3,6
@@ -885,14 +886,14 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
     if (rType->isPointerType())
       return Context.IntTy;
     if (rType->isIntegerType()) {
-      if (!rex->isNullPointerConstant())
+      if (!rex->isNullPointerConstant(Context))
         Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
              lex->getSourceRange(), rex->getSourceRange());
       return Context.IntTy; // the previous diagnostic is a GCC extension.
     }
   } else if (rType->isPointerType()) {
     if (lType->isIntegerType()) {
-      if (!lex->isNullPointerConstant())
+      if (!lex->isNullPointerConstant(Context))
         Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
              lex->getSourceRange(), rex->getSourceRange());
       return Context.IntTy; // the previous diagnostic is a GCC extension.
@@ -915,14 +916,14 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
     if (rType->isPointerType())
       return Context.IntTy;
     if (rType->isIntegerType()) {
-      if (!rex->isNullPointerConstant())
+      if (!rex->isNullPointerConstant(Context))
         Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
              lex->getSourceRange(), rex->getSourceRange());
       return Context.IntTy; // the previous diagnostic is a GCC extension.
     }
   } else if (rType->isPointerType()) {
     if (lType->isIntegerType()) {
-      if (!lex->isNullPointerConstant())
+      if (!lex->isNullPointerConstant(Context))
         Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
              lex->getSourceRange(), rex->getSourceRange());
       return Context.IntTy; // the previous diagnostic is a GCC extension.
@@ -1015,7 +1016,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
-    if (compoundType.isNull() && !rex->isNullPointerConstant()) {
+    if (compoundType.isNull() && !rex->isNullPointerConstant(Context)) {
       Diag(loc, diag::ext_typecheck_assign_pointer_int,
            lhsType.getAsString(), rhsType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
