@@ -166,11 +166,12 @@ unsigned SourceManager::createFileID(const InfoRec *File,
 /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
 /// that a token from physloc PhysLoc should actually be referenced from
 /// InstantiationLoc.
-SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
+SourceLocation SourceManager::getInstantiationLoc(SourceLocation VirtLoc,
                                                   SourceLocation InstantLoc) {
-  assert(getFIDInfo(PhysLoc.getFileID())->IDType !=
-         SrcMgr::FileIDInfo::MacroExpansion &&
-         "Location instantiated in a macro?");
+  // The specified source location may be a mapped location, due to a macro
+  // instantiation or #line directive.  Strip off this information to find out
+  // where the characters are actually located.
+  SourceLocation PhysLoc = getPhysicalLoc(VirtLoc);
   
   // Resolve InstantLoc down to a real logical location.
   InstantLoc = getLogicalLoc(InstantLoc);

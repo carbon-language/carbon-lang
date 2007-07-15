@@ -499,8 +499,8 @@ void MacroExpander::Lex(LexerToken &Tok) {
     // The token could have come from a prior macro expansion.  In that case,
     // ignore the macro expand part to get to the physloc.  This happens for
     // stuff like:  #define A(X) X    A(A(X))    A(1)
-    SourceLocation PhysLoc = SrcMgr.getPhysicalLoc(Tok.getLocation());
-    Tok.setLocation(SrcMgr.getInstantiationLoc(PhysLoc, InstantiateLoc));
+    Tok.setLocation(SrcMgr.getInstantiationLoc(Tok.getLocation(), 
+                                               InstantiateLoc));
   }
   
   // If this is the first token, set the lexical properties of the token to

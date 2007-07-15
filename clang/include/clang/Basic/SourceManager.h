@@ -195,9 +195,8 @@ public:
   }
   
   /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
-  /// that a token from physloc PhysLoc should actually be referenced from
-  /// InstantiationLoc.
-  SourceLocation getInstantiationLoc(SourceLocation PhysLoc,
+  /// that a token at Loc should actually be referenced from InstantiationLoc.
+  SourceLocation getInstantiationLoc(SourceLocation Loc,
                                      SourceLocation InstantiationLoc);
   
   /// getBuffer - Return the buffer for the specified FileID.
