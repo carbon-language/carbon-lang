@@ -20,7 +20,7 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   : PP(pp), Actions(actions), Diags(PP.getDiagnostics()) {
   Tok.setKind(tok::eof);
   CurScope = 0;
-  
+  NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
 }
 
@@ -172,15 +172,10 @@ bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
 // Scope manipulation
 //===----------------------------------------------------------------------===//
 
-/// ScopeCache - Cache scopes to avoid malloc traffic.
-/// FIXME: eliminate this static ctor
-static llvm::SmallVector<Scope*, 16> ScopeCache;
-
 /// EnterScope - Start a new scope.
 void Parser::EnterScope(unsigned ScopeFlags) {
-  if (!ScopeCache.empty()) {
-    Scope *N = ScopeCache.back();
-    ScopeCache.pop_back();
+  if (NumCachedScopes) {
+    Scope *N = ScopeCache[--NumCachedScopes];
     N->Init(CurScope, ScopeFlags);
     CurScope = N;
   } else {
@@ -195,13 +190,13 @@ void Parser::ExitScope() {
   // Inform the actions module that this scope is going away.
   Actions.PopScope(Tok.getLocation(), CurScope);
   
-  Scope *Old = CurScope;
-  CurScope = Old->getParent();
+  Scope *OldScope = CurScope;
+  CurScope = OldScope->getParent();
   
-  if (ScopeCache.size() == 16)
-    delete Old;
+  if (NumCachedScopes == ScopeCacheSize)
+    delete OldScope;
   else
-    ScopeCache.push_back(Old);
+    ScopeCache[NumCachedScopes++] = OldScope;
 }
 
 
@@ -216,10 +211,8 @@ Parser::~Parser() {
   delete CurScope;
   
   // Free the scope cache.
-  while (!ScopeCache.empty()) {
-    delete ScopeCache.back();
-    ScopeCache.pop_back();
-  }
+  for (unsigned i = 0, e = NumCachedScopes; i != e; ++i)
+    delete ScopeCache[i];
 }
 
 /// Initialize - Warm up the parser.

@@ -43,6 +43,11 @@ class Parser {
   
   Scope *CurScope;
   Diagnostic &Diags;
+  
+  /// ScopeCache - Cache scopes to reduce malloc traffic.
+  enum { ScopeCacheSize = 16 };
+  unsigned NumCachedScopes;
+  Scope *ScopeCache[ScopeCacheSize];
 public:
   Parser(Preprocessor &PP, Action &Actions);
   ~Parser();
