@@ -50,6 +50,7 @@ public:
   bool isSigned() const { return !IsUnsigned; }
   bool isUnsigned() const { return IsUnsigned; }
   void setIsUnsigned(bool Val) { IsUnsigned = Val; }
+  void setIsSigned(bool Val) { IsUnsigned = !Val; }
   
   
   const APSInt &operator%=(const APSInt &RHS) {
