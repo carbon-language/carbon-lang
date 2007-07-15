@@ -278,6 +278,9 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, SourceLocation *Loc,
   default:
     if (Loc) *Loc = getLocStart();
     return false;
+  case ImplicitCastExprClass:
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->
+                     isIntegerConstantExpr(Result, Loc, isEvaluated);
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->
                      isIntegerConstantExpr(Result, Loc, isEvaluated);

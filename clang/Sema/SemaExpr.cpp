@@ -567,14 +567,25 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
   return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
 }
 
-QualType Sema::DefaultFunctionArrayConversion(Expr *&expr) {
-  QualType t = expr->getType();
+// promoteExprToType - a helper function to ensure we create exactly one 
+// ImplicitCastExpr. As a convenience (to the caller), we return the type.
+static QualType promoteExprToType(Expr *&expr, QualType type) {
+  if (ImplicitCastExpr *impCast = dyn_cast<ImplicitCastExpr>(expr))
+    impCast->setType(type);
+  else 
+    expr = new ImplicitCastExpr(type, expr);
+  return type;
+}
+
+/// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
+QualType Sema::DefaultFunctionArrayConversion(Expr *&e) {
+  QualType t = e->getType();
   assert(!t.isNull() && "DefaultFunctionArrayConversion - missing type");
   
-  if (t->isFunctionType()) // C99 6.3.2.1p4
-    return Context.getPointerType(t);
+  if (t->isFunctionType())
+    return promoteExprToType(e, Context.getPointerType(t));
   if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
-    return Context.getPointerType(ary->getElementType()); // C99 6.3.2.1p3
+    return promoteExprToType(e, Context.getPointerType(ary->getElementType())); 
   return t;
 }
 
@@ -587,10 +598,8 @@ QualType Sema::UsualUnaryConversions(Expr *&expr) {
   QualType t = expr->getType();
   assert(!t.isNull() && "UsualUnaryConversions - missing type");
   
-  if (t->isPromotableIntegerType()) { // C99 6.3.1.1p2
-    // expr = new ImplicitCastExpr(Context.IntTy, expr);
-    return Context.IntTy;
-  }
+  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
+    return promoteExprToType(expr, Context.IntTy);
   return DefaultFunctionArrayConversion(expr);
 }
 
@@ -619,26 +628,36 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   // Handle complex types first (C99 6.3.1.8p1).
   if (lhs->isComplexType() || rhs->isComplexType()) {
     // if we have an integer operand, the result is the complex type.
-    if (rhs->isIntegerType())
-      return lhs;
-    if (lhs->isIntegerType())
-      return rhs;
+    if (rhs->isIntegerType()) // convert the rhs to the lhs complex type.
+      return promoteExprToType(rhsExpr, lhs);
 
-    return Context.maxComplexType(lhs, rhs);
+    if (lhs->isIntegerType()) // convert the lhs to the rhs complex type.
+      return promoteExprToType(lhsExpr, rhs);
+
+    // Two complex types. Convert the smaller operand to the bigger result.
+    if (Context.maxComplexType(lhs, rhs) == lhs) // convert the rhs
+      return promoteExprToType(rhsExpr, lhs);
+    return promoteExprToType(lhsExpr, rhs); // convert the lhs
   }
-  
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
-    if (rhs->isIntegerType())
-      return lhs;
-    if (lhs->isIntegerType())
-      return rhs;
+    if (rhs->isIntegerType()) // convert the rhs to the lhs floating point type.
+      return promoteExprToType(rhsExpr, lhs);
 
-    // we have two real floating types, float/complex combos were handled above.
-    return Context.maxFloatingType(lhs, rhs);
+    if (lhs->isIntegerType()) // convert the lhs to the rhs floating point type.
+      return promoteExprToType(lhsExpr, rhs);
+
+    // We have two real floating types, float/complex combos were handled above.
+    // Convert the smaller operand to the bigger result.
+    if (Context.maxFloatingType(lhs, rhs) == lhs) // convert the rhs
+      return promoteExprToType(rhsExpr, lhs);
+    return promoteExprToType(lhsExpr, rhs); // convert the lhs
   }
-  return Context.maxIntegerType(lhs, rhs);
+  // Finally, we have two differing integer types.
+  if (Context.maxIntegerType(lhs, rhs) == lhs) // convert the rhs
+    return promoteExprToType(rhsExpr, lhs);
+  return promoteExprToType(lhsExpr, rhs); // convert the lhs
 }
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite

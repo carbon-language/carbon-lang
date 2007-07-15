@@ -34,6 +34,7 @@ protected:
   ~Expr() {}
 public:  
   QualType getType() const { return TR; }
+  void setType(QualType t) { TR = t; }
   
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
