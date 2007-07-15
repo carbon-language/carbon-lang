@@ -28,3 +28,15 @@ define i1 @test3(i32 %X) {
         ret i1 %tmp2
 }
 
+define i1 @test4(i32 %X) {
+        %tmp1 = lshr i32 %X, 7
+        %tmp2 = icmp slt i32 %tmp1, 0
+        ret i1 %tmp2
+}
+
+define i1 @test5(i32 %X) {
+        %tmp1 = ashr i32 %X, 7
+        %tmp2 = icmp slt i32 %tmp1, 0
+        ret i1 %tmp2
+}
+
