@@ -48,7 +48,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     SourceMgr(SM), HeaderInfo(Headers), Identifiers(opts),
     CurLexer(0), CurDirLookup(0), CurMacroExpander(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
-      
+
   // Clear stats.
   NumDirectives = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
@@ -65,6 +65,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   InMacroArgs = false;
+  NumCachedMacroExpanders = 0;
 
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
@@ -87,6 +88,10 @@ Preprocessor::~Preprocessor() {
     delete IncludeMacroStack.back().TheMacroExpander;
     IncludeMacroStack.pop_back();
   }
+  
+  // Free any cached macro expanders.
+  for (unsigned i = 0, e = NumCachedMacroExpanders; i != e; ++i)
+    delete MacroExpanderCache[i];
   
   // Release pragma information.
   delete PragmaHandlers;
@@ -386,7 +391,12 @@ void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
   CurLexer     = 0;
   CurDirLookup = 0;
   
-  CurMacroExpander = new MacroExpander(Tok, Args, *this);
+  if (NumCachedMacroExpanders == 0) {
+    CurMacroExpander = new MacroExpander(Tok, Args, *this);
+  } else {
+    CurMacroExpander = MacroExpanderCache[--NumCachedMacroExpanders];
+    CurMacroExpander->Init(Tok, Args);
+  }
 }
 
 /// EnterTokenStream - Add a "macro" context to the top of the include stack,
@@ -402,7 +412,12 @@ void Preprocessor::EnterTokenStream(const LexerToken *Toks, unsigned NumToks) {
   CurDirLookup = 0;
 
   // Create a macro expander to expand from the specified token stream.
-  CurMacroExpander = new MacroExpander(Toks, NumToks, *this);
+  if (NumCachedMacroExpanders == 0) {
+    CurMacroExpander = new MacroExpander(Toks, NumToks, *this);
+  } else {
+    CurMacroExpander = MacroExpanderCache[--NumCachedMacroExpanders];
+    CurMacroExpander->Init(Toks, NumToks);
+  }
 }
 
 /// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
@@ -410,8 +425,16 @@ void Preprocessor::EnterTokenStream(const LexerToken *Toks, unsigned NumToks) {
 /// state of the top-of-stack lexer is known.
 void Preprocessor::RemoveTopOfLexerStack() {
   assert(!IncludeMacroStack.empty() && "Ran out of stack entries to load");
-  delete CurLexer;
-  delete CurMacroExpander;
+  
+  if (CurMacroExpander) {
+    // Delete or cache the now-dead macro expander.
+    if (NumCachedMacroExpanders == MacroExpanderCacheSize)
+      delete CurMacroExpander;
+    else
+      MacroExpanderCache[NumCachedMacroExpanders++] = CurMacroExpander;
+  } else {
+    delete CurLexer;
+  }
   CurLexer         = IncludeMacroStack.back().TheLexer;
   CurDirLookup     = IncludeMacroStack.back().TheDirLookup;
   CurMacroExpander = IncludeMacroStack.back().TheMacroExpander;
@@ -1047,7 +1070,11 @@ bool Preprocessor::HandleEndOfMacro(LexerToken &Result) {
   assert(CurMacroExpander && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
-  delete CurMacroExpander;
+  // Delete or cache the now-dead macro expander.
+  if (NumCachedMacroExpanders == MacroExpanderCacheSize)
+    delete CurMacroExpander;
+  else
+    MacroExpanderCache[NumCachedMacroExpanders++] = CurMacroExpander;
 
   // Handle this like a #include file being popped off the stack.
   CurMacroExpander = 0;

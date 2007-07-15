@@ -233,13 +233,17 @@ const LexerToken &MacroArgs::getStringifiedArgument(unsigned ArgNo,
 
 /// Create a macro expander for the specified macro with the specified actual
 /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
-                             Preprocessor &pp)
-  : Macro(Tok.getIdentifierInfo()->getMacroInfo()),
-    ActualArgs(Actuals), PP(pp), CurToken(0),
-    InstantiateLoc(Tok.getLocation()),
-    AtStartOfLine(Tok.isAtStartOfLine()),
-    HasLeadingSpace(Tok.hasLeadingSpace()) {
+void MacroExpander::Init(LexerToken &Tok, MacroArgs *Actuals) {
+  // If the client is reusing a macro expander, make sure to free any memory
+  // associated with it.
+  destroy();
+  
+  Macro = Tok.getIdentifierInfo()->getMacroInfo();
+  ActualArgs = Actuals;
+  CurToken = 0;
+  InstantiateLoc = Tok.getLocation();
+  AtStartOfLine = Tok.isAtStartOfLine();
+  HasLeadingSpace = Tok.hasLeadingSpace();
   MacroTokens = &*Macro->tokens_begin();
   NumMacroTokens = Macro->tokens_end()-Macro->tokens_begin();
 
@@ -254,14 +258,23 @@ MacroExpander::MacroExpander(LexerToken &Tok, MacroArgs *Actuals,
   Macro->DisableMacro();
 }
 
+
+
 /// Create a macro expander for the specified token stream.  This does not
 /// take ownership of the specified token vector.
-MacroExpander::MacroExpander(const LexerToken *TokArray, unsigned NumToks,
-                             Preprocessor &pp)
-  : Macro(0), ActualArgs(0), PP(pp), MacroTokens(TokArray),
-    NumMacroTokens(NumToks), CurToken(0),
-    InstantiateLoc(SourceLocation()), AtStartOfLine(false), 
-    HasLeadingSpace(false) {
+void MacroExpander::Init(const LexerToken *TokArray, unsigned NumToks) {
+  // If the client is reusing a macro expander, make sure to free any memory
+  // associated with it.
+  destroy();
+  
+  Macro = 0;
+  ActualArgs = 0;
+  MacroTokens = TokArray;
+  NumMacroTokens = NumToks;
+  CurToken = 0;
+  InstantiateLoc = SourceLocation();
+  AtStartOfLine = false;
+  HasLeadingSpace = false;
       
   // Set HasLeadingSpace/AtStartOfLine so that the first token will be
   // returned unmodified.
@@ -272,7 +285,7 @@ MacroExpander::MacroExpander(const LexerToken *TokArray, unsigned NumToks,
 }
 
 
-MacroExpander::~MacroExpander() {
+void MacroExpander::destroy() {
   // If this was a function-like macro that actually uses its arguments, delete
   // the expanded tokens.
   if (Macro && MacroTokens != &*Macro->tokens_begin())

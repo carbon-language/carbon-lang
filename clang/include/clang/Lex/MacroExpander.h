@@ -141,12 +141,28 @@ class MacroExpander {
 public:
   /// Create a macro expander for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-  MacroExpander(LexerToken &Tok, MacroArgs *ActualArgs, Preprocessor &PP);
+  MacroExpander(LexerToken &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
+    : Macro(0), ActualArgs(0), PP(pp) {
+    Init(Tok, ActualArgs);
+  }
+  
+  /// Init - Initialize this macro expander to expand from the specified macro
+  /// with the specified argument information.  Note that this ctor takes
+  /// ownership of the ActualArgs pointer.
+  void Init(LexerToken &Tok, MacroArgs *ActualArgs);
   
   /// Create a macro expander for the specified token stream.  This does not
   /// take ownership of the specified token vector.
-  MacroExpander(const LexerToken *TokArray, unsigned NumToks, Preprocessor &PP);
-  ~MacroExpander();
+  MacroExpander(const LexerToken *TokArray, unsigned NumToks, Preprocessor &pp)
+    : Macro(0), ActualArgs(0), PP(pp) {
+    Init(TokArray, NumToks);
+  }
+  
+  /// Init - Initialize this macro expander with the specified token stream.
+  /// This does not take ownership of the specified token vector.
+  void Init(const LexerToken *TokArray, unsigned NumToks);
+  
+  ~MacroExpander() { destroy(); }
   
   /// isNextTokenLParen - If the next token lexed will pop this macro off the
   /// expansion stack, return 2.  If the next unexpanded token is a '(', return
@@ -157,6 +173,8 @@ public:
   void Lex(LexerToken &Tok);
   
 private:
+  void destroy();
+  
   /// isAtEnd - Return true if the next lex call will pop this macro off the
   /// include stack.
   bool isAtEnd() const {

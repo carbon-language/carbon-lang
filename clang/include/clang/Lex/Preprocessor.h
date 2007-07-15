@@ -114,6 +114,11 @@ class Preprocessor {
   unsigned NumMacroExpanded, NumFnMacroExpanded, NumBuiltinMacroExpanded;
   unsigned NumFastMacroExpanded, NumTokenPaste, NumFastTokenPaste;
   unsigned NumSkipped;
+  
+  /// MacroExpanderCache - Cache macro expanders to reduce malloc traffic.
+  enum { MacroExpanderCacheSize = 8 };
+  unsigned NumCachedMacroExpanders;
+  MacroExpander *MacroExpanderCache[MacroExpanderCacheSize];
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers);
