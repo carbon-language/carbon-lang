@@ -279,9 +279,6 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   default:
     if (Loc) *Loc = getLocStart();
     return false;
-  case ImplicitCastExprClass:
-    return cast<ImplicitCastExpr>(this)->getSubExpr()->
-                     isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->
                      isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated);
@@ -455,27 +452,44 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     assert(!Exp->isAssignmentOp() && "LHS can't be a constant expr!");
     break;
   }
+  case ImplicitCastExprClass:
   case CastExprClass: {
-    const CastExpr *Exp = cast<CastExpr>(this);    
+    const Expr *SubExpr;
+    SourceLocation CastLoc;
+    if (const CastExpr *C = dyn_cast<CastExpr>(this)) {
+      SubExpr = C->getSubExpr();
+      CastLoc = C->getLParenLoc();
+    } else {
+      SubExpr = cast<ImplicitCastExpr>(this)->getSubExpr();
+      CastLoc = getLocStart();
+    }
+    
     // C99 6.6p6: shall only convert arithmetic types to integer types.
-    if (!Exp->getSubExpr()->getType()->isArithmeticType() ||
-        !Exp->getDestType()->isIntegerType()) {
-      if (Loc) *Loc = Exp->getSubExpr()->getLocStart();
+    if (!SubExpr->getType()->isArithmeticType() ||
+        !getType()->isIntegerType()) {
+      if (Loc) *Loc = SubExpr->getLocStart();
       return false;
     }
       
     // Handle simple integer->integer casts.
-    if (Exp->getSubExpr()->getType()->isIntegerType()) {
-      if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx,
-                                                    Loc, isEvaluated))
+    if (SubExpr->getType()->isIntegerType()) {
+      if (!SubExpr->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
         return false;
-      // FIXME: do the conversion on Result.
+      
+      // Figure out if this is a truncate, extend or noop cast.
+      unsigned DestWidth = Ctx.getTypeSize(getType(), CastLoc);
+      
+      // If the input is signed, do a sign extend, noop, or truncate.
+      if (SubExpr->getType()->isSignedIntegerType())
+        Result.sextOrTrunc(DestWidth);
+      else  // If the input is unsigned, do a zero extend, noop, or truncate.
+        Result.zextOrTrunc(DestWidth);
       break;
     }
     
     // Allow floating constants that are the immediate operands of casts or that
     // are parenthesized.
-    const Expr *Operand = Exp->getSubExpr();
+    const Expr *Operand = SubExpr;
     while (const ParenExpr *PE = dyn_cast<ParenExpr>(Operand))
       Operand = PE->getSubExpr();
     

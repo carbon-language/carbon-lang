@@ -456,16 +456,14 @@ public:
 /// CastExpr - [C99 6.5.4] Cast Operators.
 ///
 class CastExpr : public Expr {
-  QualType Ty;
   Expr *Op;
   SourceLocation Loc; // the location of the left paren
 public:
   CastExpr(QualType ty, Expr *op, SourceLocation l) : 
-    Expr(CastExprClass, ty), Ty(ty), Op(op), Loc(l) {}
+    Expr(CastExprClass, ty), Op(op), Loc(l) {}
 
   SourceLocation getLParenLoc() const { return Loc; }
   
-  QualType getDestType() const { return Ty; }
   Expr *getSubExpr() const { return Op; }
   
   virtual SourceRange getSourceRange() const {

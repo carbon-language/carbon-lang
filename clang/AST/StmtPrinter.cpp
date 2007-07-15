@@ -420,7 +420,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   OS << Field->getName();
 }
 void StmtPrinter::VisitCastExpr(CastExpr *Node) {
-  OS << "(" << Node->getDestType().getAsString() << ")";
+  OS << "(" << Node->getType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }
 void StmtPrinter::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
