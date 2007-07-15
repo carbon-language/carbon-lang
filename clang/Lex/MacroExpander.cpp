@@ -496,9 +496,6 @@ void MacroExpander::Lex(LexerToken &Tok) {
   // that captures all of this.
   if (InstantiateLoc.isValid()) {   // Don't do this for token streams.
     SourceManager &SrcMgr = PP.getSourceManager();
-    // The token could have come from a prior macro expansion.  In that case,
-    // ignore the macro expand part to get to the physloc.  This happens for
-    // stuff like:  #define A(X) X    A(A(X))    A(1)
     Tok.setLocation(SrcMgr.getInstantiationLoc(Tok.getLocation(), 
                                                InstantiateLoc));
   }
