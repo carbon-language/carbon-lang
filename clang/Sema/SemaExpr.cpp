@@ -558,11 +558,13 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
                                             SourceLocation ColonLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
-  QualType result = CheckConditionalOperands((Expr *&)Cond, (Expr *&)LHS, 
-                                             (Expr *&)RHS, QuestionLoc);
+  Expr *CondExpr = (Expr *) Cond;
+  Expr *LHSExpr = (Expr *) LHS, *RHSExpr = (Expr *) RHS;
+  QualType result = CheckConditionalOperands(CondExpr, LHSExpr, 
+                                             RHSExpr, QuestionLoc);
   if (result.isNull())
     return true;
-  return new ConditionalOperator((Expr*)Cond, (Expr*)LHS, (Expr*)RHS, result);
+  return new ConditionalOperator(CondExpr, LHSExpr, RHSExpr, result);
 }
 
 // promoteExprToType - a helper function to ensure we create exactly one 
