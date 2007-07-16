@@ -69,7 +69,7 @@ public:
   }
   ~SmallPtrSetImpl() {
     if (!isSmall())
-      delete[] CurArray;
+      free(CurArray);
   }
   
   bool empty() const { return size() == 0; }

@@ -114,7 +114,8 @@ void SmallPtrSetImpl::Grow() {
   bool WasSmall = isSmall();
   
   // Install the new array.  Clear all the buckets to empty.
-  CurArray = new void*[NewSize+1];
+  CurArray = (void**)malloc(sizeof(void*) * (NewSize+1));
+  assert(CurArray && "Failed to allocate memory?");
   CurArraySize = NewSize;
   memset(CurArray, -1, NewSize*sizeof(void*));
   
@@ -140,7 +141,7 @@ void SmallPtrSetImpl::Grow() {
         *const_cast<void**>(FindBucketFor(Elt)) = Elt;
     }
     
-    delete [] OldBuckets;
+    free(OldBuckets);
     NumTombstones = 0;
   }
 }
@@ -156,7 +157,8 @@ SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
     memcpy(CurArray, that.CurArray, sizeof(void*)*(CurArraySize+1));
   } else {
     CurArraySize = that.NumElements < 64 ? 128 : that.CurArraySize*2;
-    CurArray = new void*[CurArraySize+1];
+    CurArray = (void**)malloc(sizeof(void*) * (CurArraySize+1));
+    assert(CurArray && "Failed to allocate memory?");
     memset(CurArray, -1, CurArraySize*sizeof(void*));
     
     // The end pointer, always valid, is set to a valid element to help the
@@ -183,17 +185,14 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   NumElements = RHS.NumElements;
   NumTombstones = RHS.NumTombstones;
   
-  // If we're not currently small, and we don't have the same heap size,
-  // free our heap allocated storage
-  if (!isSmall() && CurArraySize != RHS.CurArraySize)
-    delete [] CurArray;
-  
   // If we're becoming small, prepare to insert into our stack space
   if (RHS.isSmall())
     CurArray = &SmallArray[0];
   // Otherwise, allocate new heap space (unless we were the same size)
-  else if (CurArraySize != RHS.CurArraySize)
-    CurArray = new void*[RHS.CurArraySize+1];
+  else if (CurArraySize != RHS.CurArraySize) {
+    CurArray = (void**)realloc(CurArray, sizeof(void*)*(RHS.CurArraySize+1));
+    assert(CurArray && "Failed to allocate memory?");
+  }
   
   // Copy over the new array size
   CurArraySize = RHS.CurArraySize;
