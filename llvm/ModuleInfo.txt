@@ -1,4 +1,2 @@
-DepModule:
-ConfigCmd: ./configure --prefix=@INSTALL_PREFIX@ --with-llvmgccdir=@LLVM_TOP@/install
-ConfigFile: ./config.status
-BuildCmd: make build-for-llvm-top LLVM_TOP=@LLVM_TOP@
+DepModule: llvm-gcc-4-0
+BuildCmd: build-for-llvm-top.sh
