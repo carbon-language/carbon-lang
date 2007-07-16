@@ -221,7 +221,7 @@ KEYWORD(void                        , 0)
 KEYWORD(volatile                    , 0)
 KEYWORD(while                       , 0)
 KEYWORD(_Bool                       , EXTC90|EXTCPP|EXTCPP0x)  // C99 only
-KEYWORD(_Complex                    , EXTC90)         // C99/C++
+KEYWORD(_Complex                    , EXTC90|EXTCPP|EXTCPP0x)  // C99 only
 KEYWORD(_Imaginary                  , EXTC90|NOTCPP|NOTCPP0x)  // C90 only
 
 // Special tokens to the compiler.
