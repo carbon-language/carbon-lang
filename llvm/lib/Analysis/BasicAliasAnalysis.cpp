@@ -574,7 +574,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
           }
           
           if (G1OC != G2OC) {
-            // Handle the "be careful" case above: if this is an array/packed
+            // Handle the "be careful" case above: if this is an array/vector
             // subscript, scan for a subsequent variable array index.
             if (isa<SequentialType>(BasePtr1Ty))  {
               const Type *NextTy =

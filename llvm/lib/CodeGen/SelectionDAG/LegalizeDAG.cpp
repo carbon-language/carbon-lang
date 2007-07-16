@@ -2846,7 +2846,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // type.  If so, convert to the vector type.
       MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
       if (TLI.isTypeLegal(TVT)) {
-        // Turn this into a bit convert of the packed input.
+        // Turn this into a bit convert of the vector input.
         Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), 
                              LegalizeOp(Node->getOperand(0)));
         break;
@@ -3935,7 +3935,7 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 
 
 /// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
-/// support the operation, but do support the resultant packed vector type.
+/// support the operation, but do support the resultant vector type.
 SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   // If the only non-undef value is the low element, turn this into a 

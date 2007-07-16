@@ -267,7 +267,7 @@ public:
 };
 
 
-/// SequentialType - This is the superclass of the array, pointer and packed
+/// SequentialType - This is the superclass of the array, pointer and vector
 /// type classes.  All of these represent "arrays" in memory.  The array type
 /// represents a specifically sized array, pointer types are unsized/unknown
 /// size arrays, vector types represent specifically sized arrays that

@@ -37,7 +37,7 @@ using namespace llvm;
 
 /// CastConstantVector - Convert the specified ConstantVector node to the
 /// specified vector type.  At this point, we know that the elements of the
-/// input packed constant are all simple integer or FP values.
+/// input vector constant are all simple integer or FP values.
 static Constant *CastConstantVector(ConstantVector *CV,
                                     const VectorType *DstTy) {
   unsigned SrcNumElts = CV->getType()->getNumElements();
@@ -258,7 +258,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
               const_cast<Constant*>(V), &IdxList[0], IdxList.size());
       }
         
-    // Handle casts from one packed constant to another.  We know that the src 
+    // Handle casts from one vector constant to another.  We know that the src 
     // and dest type have the same size (otherwise its an illegal cast).
     if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
       if (const VectorType *SrcTy = dyn_cast<VectorType>(V->getType())) {
@@ -308,7 +308,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
         assert(DestTy == Type::DoubleTy && "Unknown FP type!");
         return ConstantFP::get(DestTy, CI->getValue().bitsToDouble());
       }
-      // Otherwise, can't fold this (packed?)
+      // Otherwise, can't fold this (vector?)
       return 0;
     }
       
@@ -373,7 +373,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
   if (!CIdx) return 0;
   APInt idxVal = CIdx->getValue();
   if (isa<UndefValue>(Val)) { 
-    // Insertion of scalar constant into packed undef
+    // Insertion of scalar constant into vector undef
     // Optimize away insertion of undef
     if (isa<UndefValue>(Elt))
       return const_cast<Constant*>(Val);
@@ -391,7 +391,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     return ConstantVector::get(Ops);
   }
   if (isa<ConstantAggregateZero>(Val)) {
-    // Insertion of scalar constant into packed aggregate zero
+    // Insertion of scalar constant into vector aggregate zero
     // Optimize away insertion of zero
     if (Elt->isNullValue())
       return const_cast<Constant*>(Val);
@@ -409,7 +409,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     return ConstantVector::get(Ops);
   }
   if (const ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
-    // Insertion of scalar constant into packed constant
+    // Insertion of scalar constant into vector constant
     std::vector<Constant*> Ops; 
     Ops.reserve(CVal->getNumOperands());
     for (unsigned i = 0; i < CVal->getNumOperands(); ++i) {
@@ -429,7 +429,7 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
   return 0;
 }
 
-/// EvalVectorOp - Given two packed constants and a function pointer, apply the
+/// EvalVectorOp - Given two vector constants and a function pointer, apply the
 /// function pointer to each element pair, producing a new ConstantVector
 /// constant.
 static Constant *EvalVectorOp(const ConstantVector *V1, 

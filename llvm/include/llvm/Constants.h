@@ -412,7 +412,7 @@ public:
   static ConstantVector *getAllOnesValue(const VectorType *Ty);
   
   /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because zero arrays are always
+  /// getNullValue.  This always returns false because zero vectors are always
   /// created as ConstantAggregateZero objects.
   virtual bool isNullValue() const { return false; }
 

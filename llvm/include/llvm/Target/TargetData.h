@@ -43,7 +43,7 @@ enum AlignTypeEnum {
 /// Target alignment element.
 ///
 /// Stores the alignment data associated with a given alignment type (pointer,
-/// integer, packed/vector, float) and type bit width.
+/// integer, vector, float) and type bit width.
 ///
 /// @note The unusual order of elements in the structure attempts to reduce
 /// padding and make the structure slightly more cache friendly.

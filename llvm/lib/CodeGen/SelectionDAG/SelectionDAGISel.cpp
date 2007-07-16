@@ -840,13 +840,13 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       
       // Now that we know the number and type of the elements, push a
       // Constant or ConstantFP node onto the ops list for each element of
-      // the packed constant.
+      // the vector constant.
       SmallVector<SDOperand, 8> Ops;
       if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
         for (unsigned i = 0; i != NumElements; ++i)
           Ops.push_back(getValue(CP->getOperand(i)));
       } else {
-        assert(isa<ConstantAggregateZero>(C) && "Unknown packed constant!");
+        assert(isa<ConstantAggregateZero>(C) && "Unknown vector constant!");
         SDOperand Op;
         if (MVT::isFloatingPoint(PVT))
           Op = DAG.getConstantFP(0, PVT);

@@ -82,8 +82,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
         Value *MV = MapValue(CP->getOperand(i), VM);
         if (MV != CP->getOperand(i)) {
-          // This packed value must contain a reference to a global, make a new
-          // packed constant and return it.
+          // This vector value must contain a reference to a global, make a new
+          // vector constant and return it.
           //
           std::vector<Constant*> Values;
           Values.reserve(CP->getNumOperands());

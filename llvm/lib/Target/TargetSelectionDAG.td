@@ -52,7 +52,7 @@ class SDTCisOpSmallerThanOp<int SmallOp, int BigOp> : SDTypeConstraint<SmallOp>{
 }
 
 /// SDTCisIntVectorOfSameSize - This indicates that ThisOp and OtherOp are
-/// packed vector types, and that ThisOp is the result of 
+/// vector types, and that ThisOp is the result of 
 /// MVT::getIntVectorWithNumElements with the number of elements that ThisOp
 /// has.
 class SDTCisIntVectorOfSameSize<int ThisOp, int OtherOp>

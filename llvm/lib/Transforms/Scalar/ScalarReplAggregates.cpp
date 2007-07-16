@@ -652,7 +652,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
             if (CI->isZero()) {
               StoreVal = Constant::getNullValue(EltTy);  // 0.0, null, 0, <0,0>
             } else {
-              // If EltTy is a packed type, get the element type.
+              // If EltTy is a vector type, get the element type.
               const Type *ValTy = EltTy;
               if (const VectorType *VTy = dyn_cast<VectorType>(ValTy))
                 ValTy = VTy->getElementType();
@@ -989,7 +989,7 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
         if (const ArrayType *ATy = dyn_cast<ArrayType>(AggTy)) {
           if (Idx >= ATy->getNumElements()) return 0;  // Out of range.
         } else if (const VectorType *VectorTy = dyn_cast<VectorType>(AggTy)) {
-          // Getting an element of the packed vector.
+          // Getting an element of the vector.
           if (Idx >= VectorTy->getNumElements()) return 0;  // Out of range.
 
           // Merge in the vector type.

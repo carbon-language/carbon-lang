@@ -1109,7 +1109,7 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...) {
           break;
       }
     } else if (TypeID == Type::VectorTyID) {
-      // If this is a packed argument, verify the number and type of elements.
+      // If this is a vector argument, verify the number and type of elements.
       const VectorType *PTy = cast<VectorType>(Ty);
       int ElemTy = va_arg(VA, int);
       if (ElemTy != PTy->getElementType()->getTypeID()) {

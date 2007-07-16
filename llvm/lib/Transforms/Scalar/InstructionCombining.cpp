@@ -1506,7 +1506,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     break;
   }
   case Instruction::BitCast: {
-    // Packed->packed casts only.
+    // Vector->vector casts only.
     const VectorType *VTy = dyn_cast<VectorType>(I->getOperand(0)->getType());
     if (!VTy) break;
     unsigned InVWidth = VTy->getNumElements();
@@ -1514,7 +1514,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
     unsigned Ratio;
 
     if (VWidth == InVWidth) {
-      // If we are converting from <4x i32> -> <4 x f32>, we demand the same
+      // If we are converting from <4 x i32> -> <4 x f32>, we demand the same
       // elements as are demanded of us.
       Ratio = 1;
       InputDemandedElts = DemandedElts;
@@ -9354,16 +9354,16 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
 
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
 
-  // If packed val is undef, replace extract with scalar undef.
+  // If vector val is undef, replace extract with scalar undef.
   if (isa<UndefValue>(EI.getOperand(0)))
     return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
 
-  // If packed val is constant 0, replace extract with scalar 0.
+  // If vector val is constant 0, replace extract with scalar 0.
   if (isa<ConstantAggregateZero>(EI.getOperand(0)))
     return ReplaceInstUsesWith(EI, Constant::getNullValue(EI.getType()));
   
   if (ConstantVector *C = dyn_cast<ConstantVector>(EI.getOperand(0))) {
-    // If packed val is constant with uniform operands, replace EI
+    // If vector val is constant with uniform operands, replace EI
     // with that operand
     Constant *op0 = C->getOperand(0);
     for (unsigned i = 1; i < C->getNumOperands(); ++i)
