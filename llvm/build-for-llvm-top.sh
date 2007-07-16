@@ -20,8 +20,7 @@ done
 
 # See if we have previously been configured by sensing the presense
 # of the config.status scripts
-config_status="$build_dir/config.status"
-if test ! -d "$config_status" ; then
+if test ! -x "config.status" ; then
   # We must configure so build a list of configure options
   config_options="--prefix=$PREFIX --with-llvmgccdir=$PREFIX"
   config_options="$config_options $config_opts"
