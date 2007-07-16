@@ -200,6 +200,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Lexer character reading interfaces.
+public:
   
   // This lexer is built on two interfaces for reading characters, both of which
   // automatically provide phase 1/2 translation.  getAndAdvanceChar is used
@@ -239,6 +240,7 @@ private:
     return C;
   }
   
+private:
   /// ConsumeChar - When a character (identified by PeekCharAndSize) is consumed
   /// and added to a given token, check to see if there are diagnostics that
   /// need to be emitted or flags that need to be set on the token.  If so, do

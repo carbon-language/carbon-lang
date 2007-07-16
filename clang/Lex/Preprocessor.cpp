@@ -36,6 +36,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <iostream>
 using namespace clang;
 
@@ -251,6 +252,42 @@ CreateString(const char *Buf, unsigned Len, SourceLocation SLoc) {
     return ScratchBuf->getToken(Buf, Len, SLoc);
   return ScratchBuf->getToken(Buf, Len);
 }
+
+
+/// AdvanceToTokenCharacter - Given a location that specifies the start of a
+/// token, return a new location that specifies a character within the token.
+SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart, 
+                                                     unsigned CharNo) {
+  // If they request the first char of the token, we're trivially done.
+  if (CharNo == 0) return TokStart;
+  
+  // Figure out how many physical characters away the specified logical
+  // character is.  This needs to take into consideration newlines and
+  // trigraphs.
+  const char *TokStartPtr = SourceMgr.getCharacterData(TokStart);
+  const char *TokPtr = TokStartPtr;
+  
+  // The usual case is that tokens don't contain anything interesting.  Skip
+  // over the uninteresting characters.  If a token only consists of simple
+  // chars, this method is extremely fast.
+  while (CharNo && Lexer::isObviouslySimpleCharacter(*TokPtr))
+    ++TokPtr, --CharNo;
+  
+  // If we have a character that may be a trigraph or escaped newline, create a
+  // lexer to parse it correctly.
+  unsigned FileID = TokStart.getFileID();
+  const llvm::MemoryBuffer *SrcBuf = SourceMgr.getBuffer(FileID);
+  if (CharNo != 0) {
+    // Create a lexer starting at this token position.
+    Lexer TheLexer(SrcBuf, FileID, *this, TokPtr);
+    LexerToken Tok;
+    // Skip over characters the remaining characters.
+    for (; CharNo; --CharNo)
+      TheLexer.getAndAdvanceChar(TokPtr, Tok);
+  }
+  return SourceLocation(FileID, TokPtr-SrcBuf->getBufferStart());
+}
+
 
 
 //===----------------------------------------------------------------------===//

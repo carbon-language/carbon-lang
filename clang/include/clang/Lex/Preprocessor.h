@@ -279,6 +279,10 @@ public:
   void DumpToken(const LexerToken &Tok, bool DumpFlags = false) const;
   void DumpMacro(const MacroInfo &MI) const;
   
+  /// AdvanceToTokenCharacter - Given a location that specifies the start of a
+  /// token, return a new location that specifies a character within the token.
+  SourceLocation AdvanceToTokenCharacter(SourceLocation TokStart,unsigned Char);
+  
   /// IncrementPasteCounter - Increment the counters for the number of token
   /// paste operations performed.  If fast was specified, this is a 'fast paste'
   /// case we handled.
