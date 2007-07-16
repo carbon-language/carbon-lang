@@ -280,54 +280,53 @@ Action::ExprResult Sema::
 ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
   Expr *LHSExp = static_cast<Expr*>(Base), *RHSExp = static_cast<Expr*>(Idx);
-  QualType LHSTy = LHSExp->getType(), RHSTy = RHSExp->getType();
+
+  // Perform default conversions.
+  DefaultFunctionArrayConversion(LHSExp);
+  DefaultFunctionArrayConversion(RHSExp);
   
+  QualType LHSTy = LHSExp->getType(), RHSTy = RHSExp->getType();
   assert(!LHSTy.isNull() && !RHSTy.isNull() && "missing types");
 
-  QualType canonT1 = DefaultFunctionArrayConversion(LHSExp).getCanonicalType();
-  QualType canonT2 = DefaultFunctionArrayConversion(RHSExp).getCanonicalType();
-  
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
   // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
   // in the subscript position. As a result, we need to derive the array base 
   // and index from the expression types.
-  
-  Expr *baseExpr, *indexExpr;
-  QualType baseType, indexType;
-  if (isa<PointerType>(canonT1) || isa<VectorType>(canonT1)) {
-    baseType = canonT1;
-    indexType = canonT2;
-    baseExpr = LHSExp;
-    indexExpr = RHSExp;
-  } else if (isa<PointerType>(canonT2)) { // uncommon
-    baseType = canonT2;
-    indexType = canonT1;
-    baseExpr = RHSExp;
-    indexExpr = LHSExp;
+  Expr *BaseExpr, *IndexExpr;
+  QualType ResultType;
+  if (PointerType *PTy = LHSTy->isPointerType()) {
+    BaseExpr = LHSExp;
+    IndexExpr = RHSExp;
+    // FIXME: need to deal with const...
+    ResultType = PTy->getPointeeType();
+  } else if (PointerType *PTy = RHSTy->isPointerType()) { // uncommon:  123[Ptr]
+    BaseExpr = RHSExp;
+    IndexExpr = LHSExp;
+    // FIXME: need to deal with const...
+    ResultType = PTy->getPointeeType();
+  } else if (VectorType *VTy = LHSTy->isVectorType()) {  // vectors: V[123]
+    BaseExpr = LHSExp;
+    IndexExpr = RHSExp;
+    // FIXME: need to deal with const...
+    ResultType = VTy->getElementType();
   } else {
     return Diag(LHSExp->getLocStart(), diag::err_typecheck_subscript_value, 
                 RHSExp->getSourceRange());
   }              
   // C99 6.5.2.1p1
-  if (!indexType->isIntegerType()) {
-    return Diag(indexExpr->getLocStart(), diag::err_typecheck_subscript,
-                indexExpr->getSourceRange());
-  }
-  QualType resultType;
-  if (PointerType *ary = dyn_cast<PointerType>(baseType)) {
-    // FIXME: need to deal with const...
-    resultType = ary->getPointeeType();
-    // in practice, the following check catches trying to index a pointer
-    // to a function (e.g. void (*)(int)). Functions are not objects in c99.
-    if (!resultType->isObjectType()) {
-      return Diag(baseExpr->getLocStart(), 
-                  diag::err_typecheck_subscript_not_object,
-                  baseType.getAsString(), baseExpr->getSourceRange());
-    }
-  } else if (VectorType *vec = dyn_cast<VectorType>(baseType))
-    resultType = vec->getElementType();
+  if (!IndexExpr->getType()->isIntegerType())
+    return Diag(IndexExpr->getLocStart(), diag::err_typecheck_subscript,
+                IndexExpr->getSourceRange());
 
-  return new ArraySubscriptExpr((Expr*)Base, (Expr*)Idx, resultType, RLoc);
+  // C99 6.5.2.1p1: "shall have type "pointer to *object* type".  In practice,
+  // the following check catches trying to index a pointer to a function (e.g.
+  // void (*)(int)). Functions are not objects in C99.
+  if (!ResultType->isObjectType())
+    return Diag(BaseExpr->getLocStart(), 
+                diag::err_typecheck_subscript_not_object,
+                BaseExpr->getType().getAsString(), BaseExpr->getSourceRange());
+
+  return new ArraySubscriptExpr(LHSExp, RHSExp, ResultType, RLoc);
 }
 
 Action::ExprResult Sema::
