@@ -101,12 +101,14 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 /// GetTokenLength - Given the source location of a token, determine its length.
 /// This is a fully general function that uses a lexer to relex the token.
 unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
-  const char *StrData = 
-    SourceMgr.getCharacterData(SourceMgr.getLogicalLoc(Loc));
+  // If this comes from a macro expansion, we really do want the macro name, not
+  // the token this macro expanded to.
+  Loc = SourceMgr.getLogicalLoc(Loc);
+  const char *StrData = SourceMgr.getCharacterData(Loc);
   
-  // Note, this could be special cased for common tokens like identifiers, ')',
-  // etc to make this faster, if it mattered.
-
+  // TODO: this could be special cased for common tokens like identifiers, ')',
+  // etc to make this faster, if it mattered.  This could use 
+  // Lexer::isObviouslySimpleCharacter for example.
   unsigned FileID = Loc.getFileID();
   
   // Create a lexer starting at the beginning of this token.
