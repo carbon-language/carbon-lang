@@ -1,2 +1,2 @@
-DepModule: llvm-gcc-4-0
+DepModule: 
 BuildCmd: build-for-llvm-top.sh
