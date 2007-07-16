@@ -339,7 +339,6 @@ unsigned SourceManager::getSourceFilePos(SourceLocation Loc) const {
   return getFilePos(Loc);
 }
 
-
 /// PrintStats - Print statistics to stderr.
 ///
 void SourceManager::PrintStats() const {

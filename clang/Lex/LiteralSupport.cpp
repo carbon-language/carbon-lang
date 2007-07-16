@@ -14,8 +14,9 @@
 
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
@@ -261,6 +262,7 @@ NumericLiteralParser(const char *begin, const char *end,
       if (s == ThisTokEnd) {
         // Done.
       } else if (isxdigit(*s)) {
+        TokLoc = PP.AdvanceToTokenCharacter(TokLoc, s-begin);
         Diag(TokLoc, diag::err_invalid_octal_digit, std::string(s, s+1));
         return;
       } else if (*s == '.') {
