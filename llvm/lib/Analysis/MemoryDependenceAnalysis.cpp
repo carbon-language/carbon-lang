@@ -41,7 +41,8 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 // Find the dependency of a CallSite
-Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, bool local) {
+Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, Instruction* start,
+                                                             bool local) {
   assert(local && "Non-local memory dependence analysis not yet implemented");
   
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
@@ -103,6 +104,7 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, bool lo
 /// depends.  The local paramter indicates if the query should only
 /// evaluate dependencies within the same basic block.
 Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
+                                                     Instruction* start,
                                                      bool local) {
   if (!local)
     assert(0 && "Non-local memory dependence is not yet supported.");
@@ -119,6 +121,9 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   // If we have an unconfirmed cached entry, we can start our search from there
     QI = cachedResult.first;
   
+  if (start)
+    QI = start;
+  
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   TargetData& TD = getAnalysis<TargetData>();
   
@@ -126,24 +131,24 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   Value* dependee = 0;
   uint64_t dependeeSize = 0;
   bool queryIsVolatile = false;
-  if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
+  if (StoreInst* S = dyn_cast<StoreInst>(query)) {
     dependee = S->getPointerOperand();
     dependeeSize = TD.getTypeSize(S->getOperand(0)->getType());
     queryIsVolatile = S->isVolatile();
-  } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
+  } else if (LoadInst* L = dyn_cast<LoadInst>(query)) {
     dependee = L->getPointerOperand();
     dependeeSize = TD.getTypeSize(L->getType());
     queryIsVolatile = L->isVolatile();
-  } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
+  } else if (VAArgInst* V = dyn_cast<VAArgInst>(query)) {
     dependee = V->getOperand(0);
     dependeeSize = TD.getTypeSize(V->getType());
-  } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
+  } else if (FreeInst* F = dyn_cast<FreeInst>(query)) {
     dependee = F->getPointerOperand();
     
     // FreeInsts erase the entire structure, not just a field
     dependeeSize = ~0UL;
-  } else if (CallSite::get(QI).getInstruction() != 0)
-    return getCallSiteDependency(CallSite::get(QI));
+  } else if (CallSite::get(query).getInstruction() != 0)
+    return getCallSiteDependency(CallSite::get(query), start);
   else if (isa<AllocationInst>(query))
     return None;
   else
@@ -160,8 +165,11 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && S->isVolatile()) {
-        depGraphLocal.insert(std::make_pair(query, std::make_pair(S, true)));
-        reverseDep.insert(std::make_pair(S, query));
+        if (!start) {
+          depGraphLocal.insert(std::make_pair(query, std::make_pair(S, true)));
+          reverseDep.insert(std::make_pair(S, query));
+        }
+        
         return S;
       }
       
@@ -170,8 +178,11 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && L->isVolatile()) {
-        depGraphLocal.insert(std::make_pair(query, std::make_pair(L, true)));
-        reverseDep.insert(std::make_pair(L, query));
+        if (!start) {
+          depGraphLocal.insert(std::make_pair(query, std::make_pair(L, true)));
+          reverseDep.insert(std::make_pair(L, query));
+        }
+        
         return L;
       }
       
@@ -195,8 +206,11 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       // Call insts need special handling.  Check is they can modify our pointer
       if (AA.getModRefInfo(CallSite::get(QI), dependee, dependeeSize) !=
           AliasAnalysis::NoModRef) {
-        depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
-        reverseDep.insert(std::make_pair(QI, query));
+        if (!start) {
+          depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
+          reverseDep.insert(std::make_pair(QI, query));
+        }
+        
         return QI;
       } else {
         continue;
@@ -209,17 +223,22 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
                                               dependee, dependeeSize);
       
       if (R != AliasAnalysis::NoAlias) {
-        depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
-        reverseDep.insert(std::make_pair(QI, query));
+        if (!start) {
+          depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
+          reverseDep.insert(std::make_pair(QI, query));
+        }
+        
         return QI;
       }
     }
   }
   
   // If we found nothing, return the non-local flag
-  depGraphLocal.insert(std::make_pair(query,
-                                      std::make_pair(NonLocal, true)));
-  reverseDep.insert(std::make_pair(NonLocal, query));
+  if (!start) {
+    depGraphLocal.insert(std::make_pair(query,
+                                        std::make_pair(NonLocal, true)));
+    reverseDep.insert(std::make_pair(NonLocal, query));
+  }
   
   return NonLocal;
 }

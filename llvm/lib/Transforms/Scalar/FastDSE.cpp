@@ -119,22 +119,32 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
       // ... to a pointer that has been stored to before...
       if (last) {
         
+        Instruction* dep = MD.getDependency(BBI);
+        
         // ... and no other memory dependencies are between them....
-        if (MD.getDependency(BBI) == last) {
+        while (dep != MemoryDependenceAnalysis::None &&
+               dep != MemoryDependenceAnalysis::NonLocal &&
+               isa<StoreInst>(dep)) {
+          if (dep == last) {
+            
+            // Remove it!
+            MD.removeInstruction(last);
           
-          // Remove it!
-          MD.removeInstruction(last);
+            // DCE instructions only used to calculate that store
+            if (Instruction* D = dyn_cast<Instruction>(last->getOperand(0)))
+              possiblyDead.insert(D);
+            if (Instruction* D = dyn_cast<Instruction>(last->getOperand(1)))
+              possiblyDead.insert(D);
           
-          // DCE instructions only used to calculate that store
-          if (Instruction* D = dyn_cast<Instruction>(last->getOperand(0)))
-            possiblyDead.insert(D);
-          if (Instruction* D = dyn_cast<Instruction>(last->getOperand(1)))
-            possiblyDead.insert(D);
-          
-          last->eraseFromParent();
-          NumFastStores++;
-          deletedStore = true;
-          MadeChange = true;
+            last->eraseFromParent();
+            NumFastStores++;
+            deletedStore = true;
+            MadeChange = true;
+            
+            break;
+          } else {
+            dep = MD.getDependency(BBI, dep);
+          }
         }
       }
       

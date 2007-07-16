@@ -35,7 +35,8 @@ class MemoryDependenceAnalysis : public FunctionPass {
     DenseMap<Instruction*, std::pair<Instruction*, bool> > depGraphLocal;
     std::multimap<Instruction*, Instruction*> reverseDep;
   
-    Instruction* getCallSiteDependency(CallSite C, bool local = true);
+    Instruction* getCallSiteDependency(CallSite C, Instruction* start,
+                                       bool local = true);
   public:
     
     static Instruction* NonLocal;
@@ -60,8 +61,9 @@ class MemoryDependenceAnalysis : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     
     /// getDependency - Return the instruction on which a memory operation
-    /// depends.
-    Instruction* getDependency(Instruction* query, bool local = true);
+    /// depends, starting with start.
+    Instruction* getDependency(Instruction* query, Instruction* start = 0,
+                               bool local = true);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
