@@ -294,17 +294,18 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   // and index from the expression types.
   Expr *BaseExpr, *IndexExpr;
   QualType ResultType;
-  if (PointerType *PTy = LHSTy->isPointerType()) {
+  if (const PointerType *PTy = LHSTy->isPointerType()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     // FIXME: need to deal with const...
     ResultType = PTy->getPointeeType();
-  } else if (PointerType *PTy = RHSTy->isPointerType()) { // uncommon:  123[Ptr]
+  } else if (const PointerType *PTy = RHSTy->isPointerType()) {
+     // Handle the uncommon case of "123[Ptr]".
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
     // FIXME: need to deal with const...
     ResultType = PTy->getPointeeType();
-  } else if (VectorType *VTy = LHSTy->isVectorType()) {  // vectors: V[123]
+  } else if (const VectorType *VTy = LHSTy->isVectorType()) { // vectors: V[123]
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     // FIXME: need to deal with const...

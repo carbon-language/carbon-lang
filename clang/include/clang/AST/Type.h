@@ -230,11 +230,11 @@ public:
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
   
   /// Vector types
-  VectorType *isVectorType() const; // GCC vector type.
+  const VectorType *isVectorType() const; // GCC vector type.
   
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
-  PointerType *isPointerType() const;
+  const PointerType *isPointerType() const;
   bool isReferenceType() const;
   bool isArrayType() const;
   bool isStructureType() const;   

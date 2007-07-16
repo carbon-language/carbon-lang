@@ -60,8 +60,12 @@ bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType);
 }
 
-PointerType *Type::isPointerType() const {
-  if (PointerType *PTy = dyn_cast<PointerType>(CanonicalType))
+const PointerType *Type::isPointerType() const {
+  // If this is directly a pointer type, return it.
+  if (const PointerType *PTy = dyn_cast<PointerType>(this))
+    return PTy;
+  // If this is a typedef for a pointer type, strip the typedef off.
+  if (const PointerType *PTy = dyn_cast<PointerType>(CanonicalType))
     return PTy;
   return 0;
 }
@@ -89,6 +93,21 @@ bool Type::isUnionType() const {
   }
   return false;
 }
+
+bool Type::isComplexType() const {
+  return isa<ComplexType>(CanonicalType);
+}
+
+const VectorType *Type::isVectorType() const {
+  // Are we directly a vector type?
+  if (const VectorType *VTy = dyn_cast<VectorType>(this))
+    return VTy;
+  // If this is a typedef for a vector type, strip the typedef off.
+  if (const VectorType *VTy = dyn_cast<VectorType>(CanonicalType))
+    return VTy;
+  return 0;
+}
+
 
 // C99 6.2.7p1: If both are complete types, then the following additional
 // requirements apply...FIXME (handle compatibility across source files).
@@ -287,16 +306,6 @@ bool Type::isRealType() const {
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
   return false;
-}
-
-bool Type::isComplexType() const {
-  return isa<ComplexType>(CanonicalType);
-}
-
-VectorType *Type::isVectorType() const {
-  if (VectorType *VTy = dyn_cast<VectorType>(CanonicalType))
-    return VTy;
-  return 0;
 }
 
 bool Type::isArithmeticType() const {
