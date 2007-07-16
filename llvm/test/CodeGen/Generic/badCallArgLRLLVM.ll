@@ -10,7 +10,7 @@
 ;
 implementation   ; Functions:
 
-declare int %getInt(int);
+declare int %getInt(int)
 
 int %main(int %argc, sbyte** %argv) {
 bb0:					;[#uses=0]

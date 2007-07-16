@@ -3,7 +3,7 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 -mtriple=powerpc-unknown-linux-gnu | \
 ; RUN:   grep {addze 3, 3}
 
-declare i64 @foo();
+declare i64 @foo()
 
 define i64 @bar()
 {
