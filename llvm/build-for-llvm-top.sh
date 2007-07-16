@@ -24,8 +24,9 @@ config_status="$build_dir/config.status"
 if test ! -d "$config_status" ; then
   # We must configure so build a list of configure options
   config_options="--prefix=$PREFIX --with-llvmgccdir=$PREFIX"
-  echo ./configure $config_options $config_opts
-  ./configure $config_options $config_opts
+  config_options="$config_options $config_opts"
+  echo ./configure $config_options
+  ./configure $config_options || (echo "Can't configure llvm" ; exit 1)
 fi
 
 echo make $build_opts '&&' make install $build_opts

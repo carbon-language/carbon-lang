@@ -1,2 +1,2 @@
 DepModule: 
-BuildCmd: build-for-llvm-top.sh
+BuildCmd: ./build-for-llvm-top.sh
