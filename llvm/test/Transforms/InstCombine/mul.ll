@@ -65,7 +65,7 @@ uint %test11(int %a, uint %b) {
 	ret uint %e
 }
 
-uint %test11(ubyte %a, uint %b) {
+uint %test12(ubyte %a, uint %b) {
 	%c = setgt ubyte %a, 127
 	%d = cast bool %c to uint
 	%e = mul uint %d, %b           ; e = b & (a >> 31)
