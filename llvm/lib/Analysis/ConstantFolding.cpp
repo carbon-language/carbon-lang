@@ -363,6 +363,17 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
   return 0;
 }
 
+static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
+                                      double V, double W,
+                                      const Type *Ty) {
+  errno = 0;
+  V = NativeFP(V, W);
+  if (errno == 0)
+    return ConstantFP::get(Ty, V);
+  errno = 0;
+  return 0;
+}
+
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.
 Constant *
@@ -381,19 +392,19 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
           else if (Name == "asin")
             return ConstantFoldFP(asin, V, Ty);
           else if (Name == "atan")
-            return ConstantFP::get(Ty, atan(V));
+            return ConstantFoldFP(atan, V, Ty);
           break;
         case 'c':
           if (Name == "ceil")
             return ConstantFoldFP(ceil, V, Ty);
           else if (Name == "cos")
-            return ConstantFP::get(Ty, cos(V));
+            return ConstantFoldFP(cos, V, Ty);
           else if (Name == "cosh")
-            return ConstantFP::get(Ty, cosh(V));
+            return ConstantFoldFP(cosh, V, Ty);
           break;
         case 'e':
           if (Name == "exp")
-            return ConstantFP::get(Ty, exp(V));
+            return ConstantFoldFP(exp, V, Ty);
           break;
         case 'f':
           if (Name == "fabs")
@@ -403,7 +414,7 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
           break;
         case 'l':
           if (Name == "log" && V > 0)
-            return ConstantFP::get(Ty, log(V));
+            return ConstantFoldFP(log, V, Ty);
           else if (Name == "log10" && V > 0)
             return ConstantFoldFP(log10, V, Ty);
           else if (Name == "llvm.sqrt.f32" || Name == "llvm.sqrt.f64") {
@@ -415,19 +426,19 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
           break;
         case 's':
           if (Name == "sin")
-            return ConstantFP::get(Ty, sin(V));
+            return ConstantFoldFP(sin, V, Ty);
           else if (Name == "sinh")
-            return ConstantFP::get(Ty, sinh(V));
+            return ConstantFoldFP(sinh, V, Ty);
           else if (Name == "sqrt" && V >= 0)
-            return ConstantFP::get(Ty, sqrt(V));
+            return ConstantFoldFP(sqrt, V, Ty);
           else if (Name == "sqrtf" && V >= 0)
-            return ConstantFP::get(Ty, sqrt((float)V));
+            return ConstantFoldFP(sqrt, V, Ty);
           break;
         case 't':
           if (Name == "tan")
-            return ConstantFP::get(Ty, tan(V));
+            return ConstantFoldFP(tan, V, Ty);
           else if (Name == "tanh")
-            return ConstantFP::get(Ty, tanh(V));
+            return ConstantFoldFP(tanh, V, Ty);
           break;
         default:
           break;
@@ -453,17 +464,11 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
         double Op2V = Op2->getValue();
 
         if (Name == "pow") {
-          errno = 0;
-          double V = pow(Op1V, Op2V);
-          if (errno == 0)
-            return ConstantFP::get(Ty, V);
+          return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty);
         } else if (Name == "fmod") {
-          errno = 0;
-          double V = fmod(Op1V, Op2V);
-          if (errno == 0)
-            return ConstantFP::get(Ty, V);
+          return ConstantFoldBinaryFP(fmod, Op1V, Op2V, Ty);
         } else if (Name == "atan2") {
-          return ConstantFP::get(Ty, atan2(Op1V,Op2V));
+          return ConstantFoldBinaryFP(atan2, Op1V, Op2V, Ty);
         }
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
         if (Name == "llvm.powi.f32") {
