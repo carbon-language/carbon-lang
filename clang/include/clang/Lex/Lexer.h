@@ -216,6 +216,13 @@ private:
   // trigraphs), knowing that they only are emitted if the character is
   // consumed.
   
+  /// isObviouslySimpleCharacter - Return true if the specified character is
+  /// obviously the same in translation phase 1 and translation phase 3.  This
+  /// can return false for characters that end up being the same, but it will
+  /// never return true for something that needs to be mapped.
+  static bool isObviouslySimpleCharacter(char C) {
+    return C != '?' && C != '\\';
+  }
   
   /// getAndAdvanceChar - Read a single 'character' from the specified buffer,
   /// advance over it, and return it.  This is tricky in several cases.  Here we
@@ -224,7 +231,7 @@ private:
   inline char getAndAdvanceChar(const char *&Ptr, LexerToken &Tok) {
     // If this is not a trigraph and not a UCN or escaped newline, return
     // quickly.
-    if (Ptr[0] != '?' && Ptr[0] != '\\') return *Ptr++;
+    if (isObviouslySimpleCharacter(Ptr[0])) return *Ptr++;
     
     unsigned Size = 0;
     char C = getCharAndSizeSlow(Ptr, Size, &Tok);
@@ -255,7 +262,7 @@ private:
   inline char getCharAndSize(const char *Ptr, unsigned &Size) {
     // If this is not a trigraph and not a UCN or escaped newline, return
     // quickly.
-    if (Ptr[0] != '?' && Ptr[0] != '\\') {
+    if (isObviouslySimpleCharacter(Ptr[0])) {
       Size = 1;
       return *Ptr;
     }
@@ -274,7 +281,7 @@ private:
                                           const LangOptions &Features) {
     // If this is not a trigraph and not a UCN or escaped newline, return
     // quickly.
-    if (Ptr[0] != '?' && Ptr[0] != '\\') {
+    if (isObviouslySimpleCharacter(Ptr[0])) {
       Size = 1;
       return *Ptr;
     }
