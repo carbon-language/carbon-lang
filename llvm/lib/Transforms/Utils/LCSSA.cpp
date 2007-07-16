@@ -231,6 +231,10 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
 
   DomTreeNode *IDom = BB->getIDom();
 
+  // If the block has no dominator, bail
+  if (!IDom)
+    return V = UndefValue::get(OrigInst->getType());
+
   // Otherwise, there are two cases: we either have to insert a PHI node or we
   // don't.  We need to insert a PHI node if this block is not dominated by one
   // of the exit nodes from the loop (the loop could have multiple exits, and
