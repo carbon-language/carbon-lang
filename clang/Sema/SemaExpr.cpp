@@ -473,10 +473,22 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
 Action::ExprResult Sema::
 ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
-  // If error parsing type, ignore.
-  assert((Ty != 0) && "ParseCastExpr(): missing type");
-  // FIXME: Sema for cast is completely missing.
-  return new CastExpr(QualType::getFromOpaquePtr(Ty), (Expr*)Op, LParenLoc);
+  assert((Ty != 0) && (Op != 0) && "ParseCastExpr(): missing type or expr");
+
+  Expr *castExpr = static_cast<Expr*>(Op);
+  QualType castType = QualType::getFromOpaquePtr(Ty);
+
+  // C99 6.5.4p2: both the cast type and expression type need to be scalars.
+  if (!castType->isScalarType()) { 
+    return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
+                castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
+  }
+  if (!castExpr->getType()->isScalarType()) {
+    return Diag(castExpr->getLocStart(), 
+                diag::err_typecheck_expect_scalar_operand, 
+                castExpr->getType().getAsString(), castExpr->getSourceRange());
+  }
+  return new CastExpr(castType, castExpr, LParenLoc);
 }
 
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15

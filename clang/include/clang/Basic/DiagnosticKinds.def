@@ -634,6 +634,8 @@ DIAG(ext_typecheck_passing_discards_qualifiers, EXTENSION,
      "passing '%0' to '%1' discards qualifiers")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
+DIAG(err_typecheck_expect_scalar_operand, ERROR,
+     "operand of type '%0' where arithmetic or pointer type is required")
 DIAG(err_typecheck_cond_incompatible_operands, ERROR,
      "incompatible operand types ('%0' and '%1')")
 DIAG(ext_typecheck_cond_incompatible_pointers, EXTENSION,
