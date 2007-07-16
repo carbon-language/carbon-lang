@@ -722,10 +722,14 @@ revision), you can checkout it from the '<tt>tags</tt>' directory (instead of
 
 <p>If you would like to get the LLVM test suite (a separate package as of 1.4),
 you get it from the Subversion repository:</p>
+
+<div class="doc_code">
 <pre>
-  cd llvm/projects
-  svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
+% cd llvm/projects
+% svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
 </pre>
+</div>
+
 <p>By placing it in the <tt>llvm/projects</tt>, it will be automatically
 configured by the LLVM configure script as well as automatically updated when
 you run <tt>svn update</tt>.</p>
@@ -882,15 +886,16 @@ script to configure the build system:</p>
 <p>To configure LLVM, follow these steps:</p>
 
 <ol>
-    <li>Change directory into the object root directory:
-    <br>
-    <tt>cd <i>OBJ_ROOT</i></tt>
-    <br><br>
+    <li><p>Change directory into the object root directory:</p>
 
-    <li>Run the <tt>configure</tt> script located in the LLVM source tree:
-    <br>
-    <tt><i>SRC_ROOT</i>/configure --prefix=/install/path [other options]</tt>
-    <br><br>
+    <div class="doc_code"><pre>% cd <i>OBJ_ROOT</i></pre></div></li>
+
+    <li><p>Run the <tt>configure</tt> script located in the LLVM source
+    tree:</p>
+
+    <div class="doc_code">
+    <pre>% <i>SRC_ROOT</i>/configure --prefix=/install/path [other options]</pre>
+    </div></li>
 </ol>
 
 </div>
@@ -934,7 +939,7 @@ builds:</p>
 <p>Once you have LLVM configured, you can build it by entering the
 <i>OBJ_ROOT</i> directory and issuing the following command:</p>
 
-<p><tt>gmake</tt></p>
+<div class="doc_code"><pre>% gmake</pre></div>
 
 <p>If the build fails, please <a href="#brokengcc">check here</a> to see if you
 are using a version of GCC that is known not to compile LLVM.</p>
@@ -944,7 +949,7 @@ If you have multiple processors in your machine, you may wish to use some of
 the parallel build options provided by GNU Make.  For example, you could use the
 command:</p>
 
-<p><tt>gmake -j2</tt></p>
+<div class="doc_code"><pre>% gmake -j2</pre></div>
 
 <p>There are several special targets which are useful when working with the LLVM
 source code:</p>
@@ -1082,12 +1087,12 @@ platforms or configurations using the same source tree.</p>
 <ul>
   <li><p>Change directory to where the LLVM object files should live:</p>
 
-      <p><tt>cd <i>OBJ_ROOT</i></tt></p></li>
+      <div class="doc_code"><pre>% cd <i>OBJ_ROOT</i></pre></div></li>
 
   <li><p>Run the <tt>configure</tt> script found in the LLVM source
       directory:</p>
 
-      <p><tt><i>SRC_ROOT</i>/configure</tt></p></li>
+      <div class="doc_code"><pre>% <i>SRC_ROOT</i>/configure</pre></div></li>
 </ul>
 
 <p>The LLVM build will place files underneath <i>OBJ_ROOT</i> in directories
@@ -1143,10 +1148,10 @@ first command may not be required if you are already using the module):</p>
 
 <div class="doc_code">
 <pre>
-   $ mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
-   $ echo ':llvm:M::llvm::/path/to/lli:' &gt; /proc/sys/fs/binfmt_misc/register
-   $ chmod u+x hello.bc                (if needed)
-   $ ./hello.bc
+$ mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
+$ echo ':llvm:M::llvm::/path/to/lli:' &gt; /proc/sys/fs/binfmt_misc/register
+$ chmod u+x hello.bc   (if needed)
+$ ./hello.bc
 </pre>
 </div>
 
@@ -1502,25 +1507,30 @@ output.</p>
 <div class="doc_text">
 
 <ol>
-  <li>First, create a simple C file, name it 'hello.c':
-       <pre>
-   #include &lt;stdio.h&gt;
-   int main() {
-     printf("hello world\n");
-     return 0;
-   }
-       </pre></li>
+  <li><p>First, create a simple C file, name it 'hello.c':</p>
+
+<div class="doc_code">
+<pre>
+#include &lt;stdio.h&gt;
+
+int main() {
+  printf("hello world\n");
+  return 0;
+}
+</pre></div></li>
 
   <li><p>Next, compile the C file into a native executable:</p>
 
-      <p><tt>% llvm-gcc hello.c -o hello</tt></p>
+      <div class="doc_code"><pre>% llvm-gcc hello.c -o hello</pre></div>
 
       <p>Note that llvm-gcc works just like GCC by default.  The standard -S and
         -c arguments work as usual (producing a native .s or .o file,
-        respectively). </p>
+        respectively).</p></li>
 
   <li><p>Next, compile the C file into a LLVM bitcode file:</p>
-      <p><tt>% llvm-gcc -O3 -emit-llvm hello.c -c -o hello.bc</tt></p>
+
+      <div class="doc_code">
+      <pre>% llvm-gcc -O3 -emit-llvm hello.c -c -o hello.bc</pre></div>
 
       <p>The -emit-llvm option can be used with the -S or -c options to emit an
          LLVM ".ll" or ".bc" file (respectively) for the code.  This allows you
@@ -1532,11 +1542,11 @@ output.</p>
 
   <li><p>Run the program in both forms. To run the program, use:</p>
       
-      <p><tt>% ./hello</tt></p>
+      <div class="doc_code"><pre>% ./hello</pre></div>
  
       <p>and</p>
 
-      <p><tt>% lli hello.bc</tt></p>
+      <div class="doc_code"><pre>% lli hello.bc</pre></div>
 
       <p>The second examples shows how to invoke the LLVM JIT, <a
        href="CommandGuide/html/lli.html">lli</a>.</p></li>
@@ -1544,21 +1554,28 @@ output.</p>
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
 
-      <p><tt>% llvm-dis &lt; hello.bc | less</tt><br><br></li>
+<div class="doc_code">
+<pre>llvm-dis &lt; hello.bc | less</pre>
+</div></li>
 
   <li><p>Compile the program to native assembly using the LLC code
       generator:</p>
 
-      <p><tt>% llc hello.bc -o hello.s</tt></p>
+      <div class="doc_code"><pre>% llc hello.bc -o hello.s</pre></div></li>
 
   <li><p>Assemble the native assembly language file into a program:</p>
 
-      <p><b>Solaris:</b><tt>% /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.native</tt></p>
-      <p><b>Others:</b><tt>% gcc hello.s -o hello.native</tt></p>
+<div class="doc_code">
+<pre>
+<b>Solaris:</b> % /opt/SUNWspro/bin/cc -xarch=v9 hello.s -o hello.native
+
+<b>Others:</b>  % gcc hello.s -o hello.native
+</pre>
+</div></li>
 
   <li><p>Execute the native code program:</p>
 
-      <p><tt>% ./hello.native</tt></p>
+      <div class="doc_code"><pre>% ./hello.native</pre></div>
 
       <p>Note that using llvm-gcc to compile directly to native code (i.e. when
          the -emit-llvm option is not present) does steps 6/7/8 for you.</p>
