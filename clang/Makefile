@@ -3,6 +3,9 @@ DIRS := Basic Lex Parse AST Sema CodeGen Driver
 
 include $(LEVEL)/Makefile.common
 
+check::
+	cd test; $(MAKE)
+
 test::
 	cd test; $(MAKE)
 
