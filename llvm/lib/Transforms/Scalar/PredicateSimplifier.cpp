@@ -212,13 +212,19 @@ namespace {
       }
     }
 
+    /// getRootNode - This returns the entry node for the CFG of the function.
     Node *getRootNode() const { return Entry; }
 
+    /// getNodeForBlock - return the node for the specified basic block.
     Node *getNodeForBlock(BasicBlock *BB) const {
       if (!NodeMap.count(BB)) return 0;
       return const_cast<DomTreeDFS*>(this)->NodeMap[BB];
     }
 
+    /// dominates - returns true if the basic block for I1 dominates that of
+    /// the basic block for I2. If the instructions belong to the same basic
+    /// block, the instruction first instruction sequentially in the block is
+    /// considered dominating.
     bool dominates(Instruction *I1, Instruction *I2) {
       BasicBlock *BB1 = I1->getParent(),
                  *BB2 = I2->getParent();
@@ -240,7 +246,10 @@ namespace {
         return Node1 && Node2 && Node1->dominates(Node2);
       }
     }
+
   private:
+    /// renumber - calculates the depth first search numberings and applies
+    /// them onto the nodes.
     void renumber() {
       std::stack<std::pair<Node *, Node::iterator> > S;
       unsigned n = 0;
@@ -2234,11 +2243,11 @@ namespace {
     }
 
   private:
-    /// Forwards - Adds new properties into PropertySet and uses them to
+    /// Forwards - Adds new properties to VRPSolver and uses them to
     /// simplify instructions. Because new properties sometimes apply to
     /// a transition from one BasicBlock to another, this will use the
     /// PredicateSimplifier::proceedToSuccessor(s) interface to enter the
-    /// basic block with the new PropertySet.
+    /// basic block.
     /// @brief Performs abstract execution of the program.
     class VISIBILITY_HIDDEN Forwards : public InstVisitor<Forwards> {
       friend class InstVisitor<Forwards>;
@@ -2294,8 +2303,7 @@ namespace {
       }
     }
 
-    // Tries to simplify each Instruction and add new properties to
-    // the PropertySet.
+    // Tries to simplify each Instruction and add new properties.
     void visitInstruction(Instruction *I, DomTreeDFS::Node *DT) {
       DOUT << "Considering instruction " << *I << "\n";
       DEBUG(VN->dump());
