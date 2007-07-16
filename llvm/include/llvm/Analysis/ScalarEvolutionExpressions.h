@@ -475,10 +475,8 @@ namespace llvm {
     /// looking at this is that it returns the first iteration number where the
     /// value is not in the condition, thus computing the exit count.  If the
     /// iteration count can't be computed, an instance of SCEVCouldNotCompute is
-    /// returned. The isSigned parameter indicates whether the ConstantRange
-    /// should be treated as signed or unsigned.
-    SCEVHandle getNumIterationsInRange(ConstantRange Range, 
-                                       bool isSigned) const;
+    /// returned.
+    SCEVHandle getNumIterationsInRange(ConstantRange Range) const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc) const;

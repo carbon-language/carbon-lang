@@ -1671,8 +1671,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
           ConstantRange CompRange(
               ICmpInst::makeConstantRange(Cond, CompVal->getValue()));
 
-          SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange, 
-              false /*Always treat as unsigned range*/);
+          SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange);
           if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
         }
       }
@@ -1696,7 +1695,8 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   }
   case ICmpInst::ICMP_SGT: {
-    SCEVHandle TC = HowManyLessThans(RHS, LHS, L);
+    SCEVHandle TC = HowManyLessThans(SCEV::getNegativeSCEV(LHS),
+                                     SCEV::getNegativeSCEV(RHS), L);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
@@ -2406,8 +2406,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
 /// this is that it returns the first iteration number where the value is not in
 /// the condition, thus computing the exit count. If the iteration count can't
 /// be computed, an instance of SCEVCouldNotCompute is returned.
-SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range, 
-                                                   bool isSigned) const {
+SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
   if (Range.isFullSet())  // Infinite loop.
     return new SCEVCouldNotCompute();
 
@@ -2419,7 +2418,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       SCEVHandle Shifted = SCEVAddRecExpr::get(Operands, getLoop());
       if (SCEVAddRecExpr *ShiftedAddRec = dyn_cast<SCEVAddRecExpr>(Shifted))
         return ShiftedAddRec->getNumIterationsInRange(
-                           Range.subtract(SC->getValue()->getValue()),isSigned);
+                           Range.subtract(SC->getValue()->getValue()));
       // This is strange and shouldn't happen.
       return new SCEVCouldNotCompute();
     }
@@ -2443,17 +2442,16 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // If this is an affine expression then we have this situation:
     //   Solve {0,+,A} in Range  ===  Ax in Range
 
-    // Since we know that zero is in the range, we know that the upper value of
-    // the range must be the first possible exit value.  Also note that we
-    // already checked for a full range.
-    const APInt &Upper = Range.getUpper();
-    APInt A     = cast<SCEVConstant>(getOperand(1))->getValue()->getValue();
+    // We know that zero is in the range.  If A is positive then we know that
+    // the upper value of the range must be the first possible exit value.
+    // If A is negative then the lower of the range is the last possible loop
+    // value.  Also note that we already checked for a full range.
     APInt One(getBitWidth(),1);
+    APInt A     = cast<SCEVConstant>(getOperand(1))->getValue()->getValue();
+    APInt End = A.sge(One) ? (Range.getUpper() - One) : Range.getLower();
 
-    // The exit value should be (Upper+A-1)/A.
-    APInt ExitVal(Upper);
-    if (A != One)
-      ExitVal = (Upper + A - One).sdiv(A);
+    // The exit value should be (End+A)/A.
+    APInt ExitVal = (End + A).sdiv(A);
     ConstantInt *ExitValue = ConstantInt::get(ExitVal);
 
     // Evaluate at the exit value.  If we really did fall out of the valid
