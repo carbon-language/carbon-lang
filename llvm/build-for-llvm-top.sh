@@ -29,4 +29,4 @@ if test ! -x "config.status" ; then
 fi
 
 echo make $build_opts '&&' make install $build_opts
-make $build_opts && make install $build_opts
+make $build_opts tools-only
