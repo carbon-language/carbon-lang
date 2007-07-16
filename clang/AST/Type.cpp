@@ -64,9 +64,11 @@ const PointerType *Type::isPointerType() const {
   // If this is directly a pointer type, return it.
   if (const PointerType *PTy = dyn_cast<PointerType>(this))
     return PTy;
-  // If this is a typedef for a pointer type, strip the typedef off.
-  if (const PointerType *PTy = dyn_cast<PointerType>(CanonicalType))
-    return PTy;
+  
+  // If this is a typedef for a pointer type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<PointerType>(CanonicalType))
+    return cast<PointerType>(cast<TypedefType>(this)->LookThroughTypedefs());
   return 0;
 }
 
@@ -102,9 +104,12 @@ const VectorType *Type::isVectorType() const {
   // Are we directly a vector type?
   if (const VectorType *VTy = dyn_cast<VectorType>(this))
     return VTy;
-  // If this is a typedef for a vector type, strip the typedef off.
-  if (const VectorType *VTy = dyn_cast<VectorType>(CanonicalType))
-    return VTy;
+  
+  // If this is a typedef for a vector type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<VectorType>(CanonicalType))
+    return cast<VectorType>(cast<TypedefType>(this)->LookThroughTypedefs());
+
   return 0;
 }
 
@@ -423,6 +428,31 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), ArgInfo, NumArgs, isVariadic());
 }
 
+/// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
+/// potentially looking through *all* consequtive typedefs.  This returns the
+/// sum of the type qualifiers, so if you have:
+///   typedef const int A;
+///   typedef volatile A B;
+/// looking through the typedefs for B will give you "const volatile A".
+///
+QualType TypedefType::LookThroughTypedefs() const {
+  // Usually, there is only a single level of typedefs, be fast in that case.
+  QualType FirstType = getDecl()->getUnderlyingType();
+  if (!isa<TypedefType>(FirstType))
+    return FirstType;
+  
+  // Otherwise, do the fully general loop.
+  unsigned TypeQuals = 0;
+  const TypedefType *TDT = this;
+  while (1) {
+    QualType CurType = TDT->getDecl()->getUnderlyingType();
+    TypeQuals |= CurType.getQualifiers();
+
+    TDT = dyn_cast<TypedefType>(CurType);
+    if (TDT == 0)
+      return QualType(CurType.getTypePtr(), TypeQuals);
+  }
+}
 
 bool RecordType::classof(const Type *T) {
   if (const TagType *TT = dyn_cast<TagType>(T))

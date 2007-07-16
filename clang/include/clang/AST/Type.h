@@ -585,6 +585,14 @@ class TypedefType : public Type {
 public:
   
   TypedefDecl *getDecl() const { return Decl; }
+  
+  /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
+  /// potentially looking through *all* consequtive typedefs.  This returns the
+  /// sum of the type qualifiers, so if you have:
+  ///   typedef const int A;
+  ///   typedef volatile A B;
+  /// looking through the typedefs for B will give you "const volatile A".
+  QualType LookThroughTypedefs() const;
     
   virtual void getAsStringInternal(std::string &InnerString) const;
 
