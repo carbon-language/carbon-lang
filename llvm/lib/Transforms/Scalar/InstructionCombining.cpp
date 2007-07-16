@@ -2286,9 +2286,22 @@ static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS,
   case ICmpInst::ICMP_SLT:   // True if LHS s< 0
     TrueIfSigned = true;
     return RHS->isZero();
+  case ICmpInst::ICMP_SLE:   // True if LHS s<= RHS and RHS == -1
+    TrueIfSigned = true;
+    return RHS->isAllOnesValue();
   case ICmpInst::ICMP_SGT:   // True if LHS s> -1
     TrueIfSigned = false;
     return RHS->isAllOnesValue();
+  case ICmpInst::ICMP_UGT:
+    // True if LHS u> RHS and RHS == high-bit-mask - 1
+    TrueIfSigned = true;
+    return RHS->getValue() ==
+      APInt::getSignedMaxValue(RHS->getType()->getPrimitiveSizeInBits());
+  case ICmpInst::ICMP_UGE: 
+    // True if LHS u>= RHS and RHS == high-bit-mask (2^7, 2^15, 2^31, etc)
+    TrueIfSigned = true;
+    return RHS->getValue() == 
+      APInt::getSignBit(RHS->getType()->getPrimitiveSizeInBits());
   default:
     return false;
   }
