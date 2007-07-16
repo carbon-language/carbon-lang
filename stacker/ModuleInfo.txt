@@ -1,8 +1,2 @@
-# This file defines the relationship of this module to other modules and 
-# tells llvm-top how to drive it.
-
-# Declare that stacker depends on llvm.
 DepModule: llvm
-ConfigCmd: ./configure --prefix=@INSTALL_PREFIX@ --with-llvmsrc=@LLVM_TOP@/llvm --with-llvmobj=@LLVM_TOP@/llvm
-ConfigFile: ./config.status
-BuildCmd: make build-for-llvm-top LLVM_TOP=@LLVM_TOP@
+BuildCmd: ./build-for-llvm-top.sh
