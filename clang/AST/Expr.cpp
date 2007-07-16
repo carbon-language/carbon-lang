@@ -192,7 +192,7 @@ bool Expr::hasLocalSideEffect() const {
 ///  - *e, the type of e cannot be a function type
 ///  - string-constant
 ///
-Expr::isLvalueResult Expr::isLvalue() {
+Expr::isLvalueResult Expr::isLvalue() const {
   // first, check the type (C99 6.3.2.1)
   if (isa<FunctionType>(TR.getCanonicalType())) // from isObjectType()
     return LV_NotObjectType;
@@ -233,7 +233,7 @@ Expr::isLvalueResult Expr::isLvalue() {
 /// if it is a structure or union, does not have any member (including, 
 /// recursively, any member or element of all contained aggregates or unions)
 /// with a const-qualified type.
-Expr::isModifiableLvalueResult Expr::isModifiableLvalue() {
+Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   isLvalueResult lvalResult = isLvalue();
     
   switch (lvalResult) {

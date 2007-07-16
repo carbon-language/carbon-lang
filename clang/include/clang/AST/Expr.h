@@ -68,7 +68,7 @@ public:
     LV_IncompleteVoidType,
     LV_InvalidExpression
   };
-  isLvalueResult isLvalue();
+  isLvalueResult isLvalue() const;
   
   /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
   /// does not have an incomplete type, does not have a const-qualified type,
@@ -84,7 +84,7 @@ public:
     MLV_ConstQualified,
     MLV_ArrayType
   };
-  isModifiableLvalueResult isModifiableLvalue();
+  isModifiableLvalueResult isModifiableLvalue() const;
   
   bool isNullPointerConstant(ASTContext &Ctx) const;
 
