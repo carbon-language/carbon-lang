@@ -61,17 +61,10 @@ namespace {
       
       // See through pointer-to-pointer bitcasts
       while (isa<BitCastInst>(v) || isa<GetElementPtrInst>(v))
-        if (BitCastInst* C = dyn_cast<BitCastInst>(v)) {
-          if (isa<PointerType>(C->getSrcTy()))
-            v = C->getOperand(0);
-          else
-            break;
-        } else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(v)) {
-          if (G->hasAllZeroIndices())
-            v = G->getOperand(0);
-          else
-            break;
-        }
+        if (BitCastInst* C = dyn_cast<BitCastInst>(v))
+          v = C->getOperand(0);
+        else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(v))
+          v = G->getOperand(0);
     }
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
