@@ -281,8 +281,8 @@ private:
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
-  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
-                                      QualType &lhs, QualType &rhs);                                      
+  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr);
+                                     
   enum AssignmentCheckResult {
     Compatible,
     Incompatible,
