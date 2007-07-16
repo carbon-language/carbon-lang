@@ -32,6 +32,8 @@ namespace clang {
   class EnumDecl;
   class Expr;
   class SourceLocation;
+  class PointerType;
+  class VectorType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -228,11 +230,11 @@ public:
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
   
   /// Vector types
-  bool isVectorType() const;       // GCC vector type.
+  VectorType *isVectorType() const; // GCC vector type.
   
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
-  bool isPointerType() const;
+  PointerType *isPointerType() const;
   bool isReferenceType() const;
   bool isArrayType() const;
   bool isStructureType() const;   

@@ -60,8 +60,10 @@ bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType);
 }
 
-bool Type::isPointerType() const {
-  return isa<PointerType>(CanonicalType);
+PointerType *Type::isPointerType() const {
+  if (PointerType *PTy = dyn_cast<PointerType>(CanonicalType))
+    return PTy;
+  return 0;
 }
 
 bool Type::isReferenceType() const {
@@ -291,8 +293,10 @@ bool Type::isComplexType() const {
   return isa<ComplexType>(CanonicalType);
 }
 
-bool Type::isVectorType() const {
-  return isa<VectorType>(CanonicalType);
+VectorType *Type::isVectorType() const {
+  if (VectorType *VTy = dyn_cast<VectorType>(CanonicalType))
+    return VTy;
+  return 0;
 }
 
 bool Type::isArithmeticType() const {
