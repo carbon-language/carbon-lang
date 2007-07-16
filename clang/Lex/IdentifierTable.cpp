@@ -59,14 +59,16 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
 /// identifiers because they are language keywords.  This causes the lexer to
 /// automatically map matching identifiers to specialized token codes.
 ///
-/// The C90/C99/CPP flags are set to 0 if the token should be enabled in the
-/// specified langauge, set to 1 if it is an extension in the specified
-/// language, and set to 2 if disabled in the specified language.
+/// The C90/C99/CPP/CPP0x flags are set to 0 if the token should be
+/// enabled in the specified langauge, set to 1 if it is an extension
+/// in the specified language, and set to 2 if disabled in the
+/// specified language.
 static void AddKeyword(const char *Keyword, unsigned KWLen,
                        tok::TokenKind TokenCode,
-                       int C90, int C99, int CXX,
+                       int C90, int C99, int CXX, int CXX0x,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
-  int Flags = LangOpts.CPlusPlus ? CXX : (LangOpts.C99 ? C99 : C90);
+  int Flags = LangOpts.CPlusPlus ? (LangOpts.CPlusPlus0x? CXX0x : CXX)
+                                 : (LangOpts.C99 ? C99 : C90);
   
   // Don't add this keyword if disabled in this language or if an extension
   // and extensions are disabled.
@@ -126,6 +128,9 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
     CPPShift = 4,
     EXTCPP   = 1 << CPPShift,
     NOTCPP   = 2 << CPPShift,
+    CPP0xShift = 6,
+    EXTCPP0x   = 1 << CPP0xShift,
+    NOTCPP0x   = 2 << CPP0xShift,
     Mask     = 3
   };
   
@@ -134,7 +139,8 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
   AddKeyword(#NAME, strlen(#NAME), tok::kw_ ## NAME,  \
              ((FLAGS) >> C90Shift) & Mask, \
              ((FLAGS) >> C99Shift) & Mask, \
-             ((FLAGS) >> CPPShift) & Mask, LangOpts, *this);
+             ((FLAGS) >> CPPShift) & Mask, \
+             ((FLAGS) >> CPP0xShift) & Mask, LangOpts, *this);
 #define ALIAS(NAME, TOK) \
   AddAlias(NAME, strlen(NAME), #TOK, strlen(#TOK), LangOpts, *this);
 #define PPKEYWORD(NAME) \

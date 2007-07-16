@@ -207,7 +207,8 @@ enum LangStds {
   lang_unspecified,  
   lang_c89, lang_c94, lang_c99,
   lang_gnu89, lang_gnu99,
-  lang_cxx98, lang_gnucxx98
+  lang_cxx98, lang_gnucxx98,
+  lang_cxx0x, lang_gnucxx0x
 };
 
 static llvm::cl::opt<LangStds>
@@ -232,6 +233,11 @@ LangStd("std", llvm::cl::desc("Language standard to compile for"),
                               "ISO C++ 1998 with amendments"),
                    clEnumValN(lang_gnucxx98, "gnu++98",
                               "ISO C++ 1998 with amendments and GNU "
+                              "extensions (default for C++)"),
+                   clEnumValN(lang_cxx0x,    "c++0x",
+                              "Upcoming ISO C++ 200x with amendments"),
+                   clEnumValN(lang_gnucxx0x, "gnu++0x",
+                              "Upcoming ISO C++ 200x with amendments and GNU "
                               "extensions (default for C++)"),
                    clEnumValEnd));
 
@@ -269,6 +275,10 @@ static void InitializeLanguageStandard(LangOptions &Options) {
 
   // Fall through from newer standards to older ones.  This isn't really right.
   // FIXME: Enable specifically the right features based on the language stds.
+  case lang_gnucxx0x:
+  case lang_cxx0x:
+    Options.CPlusPlus0x = 1;
+    // FALL THROUGH
   case lang_gnucxx98:
   case lang_cxx98:
     Options.CPlusPlus = 1;

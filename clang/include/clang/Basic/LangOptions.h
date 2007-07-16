@@ -27,6 +27,7 @@ struct LangOptions {
   unsigned C99               : 1;  // C99 Support
   unsigned Microsoft         : 1;  // Microsoft extensions.
   unsigned CPlusPlus         : 1;  // C++ Support
+  unsigned CPlusPlus0x       : 1;  // C++0x Support
   unsigned NoExtensions      : 1;  // All extensions are disabled, strict mode.
   unsigned CXXOperatorNames  : 1;  // Treat C++ operator names as keywords.
     
@@ -35,7 +36,8 @@ struct LangOptions {
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = ObjC1 = ObjC2 = 0;
-    C99 = Microsoft = CPlusPlus = NoExtensions = CXXOperatorNames = 0;
+    C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
+    CXXOperatorNames = 0;
   }
 };
 
