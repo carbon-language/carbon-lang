@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Support/MathExtras.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -1168,7 +1169,7 @@ RValue CodeGenFunction::EmitPointerSub(RValue LHS, QualType LHSTy,
     QualType LHSElementType = LHSPtrType->getPointeeType();
     assert(LHSElementType == RHSPtrType->getPointeeType() &&
       "can't subtract pointers with differing element types");
-    unsigned ElementSize = getContext().getTypeSize(LHSElementType,
+    uint64_t ElementSize = getContext().getTypeSize(LHSElementType,
                                                     SourceLocation()) / 8;
     const llvm::Type *ResultType = ConvertType(ResTy);
     llvm::Value *CastLHS = Builder.CreatePtrToInt(LHSValue, ResultType,
@@ -1177,12 +1178,21 @@ RValue CodeGenFunction::EmitPointerSub(RValue LHS, QualType LHSTy,
                                                   "sub.ptr.rhs.cast");
     llvm::Value *BytesBetween = Builder.CreateSub(CastLHS, CastRHS,
                                                   "sub.ptr.sub");
-    llvm::Value *BytesPerElement = llvm::ConstantInt::get(ResultType,
-                                                          ElementSize);
-    llvm::Value *ElementsBetween = Builder.CreateSDiv(BytesBetween,
-                                                      BytesPerElement,
-                                                      "sub.ptr.div");
-    return RValue::get(ElementsBetween);
+    
+    // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
+    // remainder.  As such, we handle common power-of-two cases here to generate
+    // better code.
+    if (llvm::isPowerOf2_64(ElementSize)) {
+      llvm::Value *ShAmt =
+        llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
+      return RValue::get(Builder.CreateAShr(BytesBetween, ShAmt,"sub.ptr.shr"));
+    } else {
+      // Otherwise, do a full sdiv.
+      llvm::Value *BytesPerElement =
+        llvm::ConstantInt::get(ResultType, ElementSize);
+      return RValue::get(Builder.CreateSDiv(BytesBetween, BytesPerElement,
+                                            "sub.ptr.div"));
+    }
   } else {
     // pointer - int
     llvm::Value *NegatedRHS = Builder.CreateNeg(RHSValue, "sub.ptr.neg");
