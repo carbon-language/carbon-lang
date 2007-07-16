@@ -94,6 +94,9 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   else
     Builder.CreateRet(llvm::UndefValue::get(CurFn->getReturnType()));
   
+  assert(BreakContinueStack.empty() &&
+         "mismatched push/pop in break/continue stack!");
+  
   // Verify that the function is well formed.
   assert(!verifyFunction(*CurFn));
 }

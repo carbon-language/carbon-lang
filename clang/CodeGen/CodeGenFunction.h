@@ -15,6 +15,7 @@
 #define CODEGEN_CODEGENFUNCTION_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/LLVMBuilder.h"
 #include <vector>
 
@@ -175,6 +176,18 @@ class CodeGenFunction {
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
   llvm::DenseMap<const LabelStmt*, llvm::BasicBlock*> LabelMap;
+  
+  // BreakContinueStack - This keeps track of where break and continue 
+  // statements should jump to.
+  struct BreakContinue {
+    BreakContinue(llvm::BasicBlock *bb, llvm::BasicBlock *cb)
+      : BreakBlock(bb), ContinueBlock(cb) {}
+      
+    llvm::BasicBlock *BreakBlock;
+    llvm::BasicBlock *ContinueBlock;
+  }; 
+  llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
+  
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
@@ -254,7 +267,9 @@ public:
   void EmitForStmt(const ForStmt &S);
   void EmitReturnStmt(const ReturnStmt &S);
   void EmitDeclStmt(const DeclStmt &S);
-
+  void EmitBreakStmt();
+  void EmitContinueStmt();
+  
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//

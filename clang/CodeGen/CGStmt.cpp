@@ -49,6 +49,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
   case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
+      
+  case Stmt::BreakStmtClass:    EmitBreakStmt();                          break;
+  case Stmt::ContinueStmtClass: EmitContinueStmt();                       break;
   }
 }
 
@@ -126,8 +129,6 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
 }
 
 void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
-  // FIXME: Handle continue/break.
-  
   // Emit the header for the loop, insert it, which will create an uncond br to
   // it.
   llvm::BasicBlock *LoopHeader = new llvm::BasicBlock("whilecond");
@@ -148,10 +149,15 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // As long as the condition is true, go to the loop body.
   Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
+
+  // Store the blocks to use for break and continue.
+  BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader));
   
   // Emit the loop body.
   EmitBlock(LoopBody);
   EmitStmt(S.getBody());
+
+  BreakContinueStack.pop_back();
   
   // Cycle to the condition.
   Builder.CreateBr(LoopHeader);
@@ -161,7 +167,6 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
 }
 
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
-  // FIXME: Handle continue/break.
   // TODO: "do {} while (0)" is common in macros, avoid extra blocks.  Be sure
   // to correctly handle break/continue though.
 
@@ -170,9 +175,18 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   llvm::BasicBlock *LoopBody = new llvm::BasicBlock("dobody");
   llvm::BasicBlock *AfterDo = new llvm::BasicBlock("afterdo");
   EmitBlock(LoopBody);
+
+  llvm::BasicBlock *DoCond = new llvm::BasicBlock("docond");
+  
+  // Store the blocks to use for break and continue.
+  BreakContinueStack.push_back(BreakContinue(AfterDo, DoCond));
   
   // Emit the body of the loop into the block.
   EmitStmt(S.getBody());
+  
+  BreakContinueStack.pop_back();
+  
+  EmitBlock(DoCond);
   
   // C99 6.8.5.2: "The evaluation of the controlling expression takes place
   // after each execution of the loop body."
@@ -190,17 +204,20 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
 }
 
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
-  // FIXME: Handle continue/break.
   // FIXME: What do we do if the increment (f.e.) contains a stmt expression,
   // which contains a continue/break?
-  
+  // TODO: We could keep track of whether the loop body contains any
+  // break/continue statements and not create unnecessary blocks (like
+  // "afterfor" for a condless loop) if it doesn't.
+
   // Evaluate the first part before the loop.
   if (S.getInit())
     EmitStmt(S.getInit());
 
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = new llvm::BasicBlock("forcond");
-  llvm::BasicBlock *AfterFor = 0;
+  llvm::BasicBlock *AfterFor = new llvm::BasicBlock("afterfor");
+
   EmitBlock(CondBlock);
 
   // Evaluate the condition if present.  If not, treat it as a non-zero-constant
@@ -212,7 +229,6 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     
     // As long as the condition is true, iterate the loop.
     llvm::BasicBlock *ForBody = new llvm::BasicBlock("forbody");
-    AfterFor = new llvm::BasicBlock("afterfor");
     Builder.CreateCondBr(BoolCondVal, ForBody, AfterFor);
     EmitBlock(ForBody);    
   } else {
@@ -220,8 +236,24 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
     // body, just fall into it.
   }
 
+  // If the for loop doesn't have an increment we can just use the 
+  // condition as the continue block.
+  llvm::BasicBlock *ContinueBlock;
+  if (S.getInc())
+    ContinueBlock = new llvm::BasicBlock("forinc");
+  else
+    ContinueBlock = CondBlock;  
+  
+  // Store the blocks to use for break and continue.
+  BreakContinueStack.push_back(BreakContinue(AfterFor, ContinueBlock));
+  
   // If the condition is true, execute the body of the for stmt.
   EmitStmt(S.getBody());
+
+  BreakContinueStack.pop_back();
+  
+  if (S.getInc())
+    EmitBlock(ContinueBlock);
   
   // If there is an increment, emit it next.
   if (S.getInc())
@@ -230,11 +262,8 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   // Finally, branch back up to the condition for the next iteration.
   Builder.CreateBr(CondBlock);
 
-  // Emit the fall-through block if there is any.
-  if (AfterFor) 
-    EmitBlock(AfterFor);
-  else
-    EmitBlock(new llvm::BasicBlock());
+  // Emit the fall-through block.
+  EmitBlock(AfterFor);
 }
 
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
@@ -283,4 +312,20 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
   for (const Decl *Decl = S.getDecl(); Decl; Decl = Decl->getNextDeclarator())
     EmitDecl(*Decl);
+}
+
+void CodeGenFunction::EmitBreakStmt() {
+  assert(!BreakContinueStack.empty() && "break stmt not in a loop or switch!");
+
+  llvm::BasicBlock *Block = BreakContinueStack.back().BreakBlock;
+  Builder.CreateBr(Block);
+  EmitBlock(new llvm::BasicBlock());
+}
+
+void CodeGenFunction::EmitContinueStmt() {
+  assert(!BreakContinueStack.empty() && "continue stmt not in a loop!");
+
+  llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
+  Builder.CreateBr(Block);
+  EmitBlock(new llvm::BasicBlock());
 }
