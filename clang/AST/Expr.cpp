@@ -289,7 +289,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     const CharacterLiteral *CL = cast<CharacterLiteral>(this);
     Result.zextOrTrunc(Ctx.getTypeSize(getType(), CL->getLoc()));                              
     Result = CL->getValue();
-    Result.setIsSigned(getType()->isSignedIntegerType());
+    Result.setIsUnsigned(!getType()->isSignedIntegerType());
     break;
   }
   case DeclRefExprClass:
