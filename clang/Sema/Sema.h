@@ -269,8 +269,12 @@ public:
                                          tok::TokenKind Kind);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
-  // functions and arrays to their respective pointers (C99 6.3.2.1)
-  QualType UsualUnaryConversions(Expr *&expr); 
+  // functions and arrays to their respective pointers (C99 6.3.2.1). 
+  void UsualUnaryConversions(Expr *&expr); 
+  
+  // DefaultFunctionArrayConversion - converts functions and arrays
+  // to their respective pointers (C99 6.3.2.1). 
+  void DefaultFunctionArrayConversion(Expr *&expr);
   
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
@@ -278,13 +282,7 @@ private:
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
   QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
-                                      QualType &lhs, QualType &rhs);
-                                      
-  // DefaultFunctionArrayConversion - converts functions and arrays
-  // to their respective pointers (C99 6.3.2.1). If the type isn't a function
-  // or array, this routine simply returns the input type (unmodified).
-  QualType DefaultFunctionArrayConversion(Expr *&expr);
-  
+                                      QualType &lhs, QualType &rhs);                                      
   enum AssignmentCheckResult {
     Compatible,
     Incompatible,

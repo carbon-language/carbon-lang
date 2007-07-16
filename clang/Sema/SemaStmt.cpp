@@ -107,8 +107,8 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
   Expr *condExpr = (Expr *)CondVal;
   assert(condExpr && "ParseIfStmt(): missing expression");
   
-  QualType condType = DefaultFunctionArrayConversion(condExpr);
-  assert(!condType.isNull() && "ParseIfStmt(): missing expression type");
+  DefaultFunctionArrayConversion(condExpr);
+  QualType condType = condExpr->getType();
   
   if (!condType->isScalarType()) // C99 6.8.4.1p1
     return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar,
@@ -127,8 +127,8 @@ Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
   Expr *condExpr = (Expr *)Cond;
   assert(condExpr && "ParseWhileStmt(): missing expression");
   
-  QualType condType = DefaultFunctionArrayConversion(condExpr);
-  assert(!condType.isNull() && "ParseWhileStmt(): missing expression type");
+  DefaultFunctionArrayConversion(condExpr);
+  QualType condType = condExpr->getType();
   
   if (!condType->isScalarType()) // C99 6.8.5p2
     return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar,
@@ -143,8 +143,8 @@ Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
   Expr *condExpr = (Expr *)Cond;
   assert(condExpr && "ParseDoStmt(): missing expression");
   
-  QualType condType = DefaultFunctionArrayConversion(condExpr);
-  assert(!condType.isNull() && "ParseDoStmt(): missing expression type");
+  DefaultFunctionArrayConversion(condExpr);
+  QualType condType = condExpr->getType();
   
   if (!condType->isScalarType()) // C99 6.8.5p2
     return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar,
@@ -164,8 +164,8 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   }
   if (Second) {
     Expr *testExpr = (Expr *)Second;
-    QualType testType = DefaultFunctionArrayConversion(testExpr);
-    assert(!testType.isNull() && "ParseForStmt(): missing test expression type");
+    DefaultFunctionArrayConversion(testExpr);
+    QualType testType = testExpr->getType();
     
     if (!testType->isScalarType()) // C99 6.8.5p2
       return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
