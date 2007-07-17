@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -enable-eh -disable-fp-elim |&\
-; RUN:      grep {addl .12, %esp} | wc -l | grep 1
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -enable-eh -disable-fp-elim | not grep {addl .8, %esp}
 ; PR1398
 
 	%struct.S = type { i32, i32 }
