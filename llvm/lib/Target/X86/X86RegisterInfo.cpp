@@ -1236,7 +1236,28 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         MBB.insert(MBBI, MI);
       }
     } else {
-      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+      // If there is an ADD32ri or SUB32ri of ESP immediately after this
+      // instruction, merge the two instructions.
+      if (MBBI != MBB.end()) {
+        MachineBasicBlock::iterator NI = next(MBBI);
+        unsigned Opc = MBBI->getOpcode();
+        if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
+             Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+            MBBI->getOperand(0).getReg() == StackPtr) {
+          NumBytes -= MBBI->getOperand(2).getImm();
+          MBB.erase(MBBI);
+          MBBI = NI;
+        } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+                    Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
+                   MBBI->getOperand(0).getReg() == StackPtr) {
+          NumBytes += MBBI->getOperand(2).getImm();
+          MBB.erase(MBBI);
+          MBBI = NI;
+        }
+      }
+
+      if (NumBytes)
+        emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
     }
   }
 
