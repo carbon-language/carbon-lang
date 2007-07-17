@@ -950,6 +950,7 @@ projects/llvm-gcc
 projects/llvm-java
 projects/llvm-tv
 projects/llvm-poolalloc
+projects/poolalloc
 projects/llvm-kernel'
 
 # Initialize some variables set by options.
@@ -2085,6 +2086,8 @@ do
       llvm-tv)      subdirs="$subdirs projects/llvm-tv"
    ;;
       llvm-poolalloc) subdirs="$subdirs projects/llvm-poolalloc"
+ ;;
+      poolalloc) subdirs="$subdirs projects/poolalloc"
  ;;
       llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
  ;;
