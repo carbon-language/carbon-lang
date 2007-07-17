@@ -150,9 +150,7 @@ int foo (unsigned long j) {
 
 //===---------------------------------------------------------------------===//
 
-Use push/pop instructions in prolog/epilog sequences instead of stores off 
-ESP (certain code size win, perf win on some [which?] processors).
-Also, it appears icc use push for parameter passing. Need to investigate.
+It appears icc use push for parameter passing. Need to investigate.
 
 //===---------------------------------------------------------------------===//
 
