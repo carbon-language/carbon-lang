@@ -356,7 +356,6 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
           if (PhysRegPartUse[SubReg])
             addRegisterKilled(SubReg, PhysRegPartUse[SubReg], true);
         }
-        //addRegisterKilled(SubReg, LastRef);
       } else if (PhysRegPartUse[SubReg])
         // Add implicit use / kill to last use of a sub-register.
         addRegisterKilled(SubReg, PhysRegPartUse[SubReg], true);
