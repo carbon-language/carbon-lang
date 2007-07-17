@@ -377,6 +377,10 @@ void Verifier::visitFunction(Function &F) {
       if (Attrs->paramHasAttr(Idx, ParamAttr::ByVal)) {
         Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
                 "Attribute ByVal should only apply to pointer to structs!", &F);
+
+        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::StructRet),
+                "Attributes ByVal and StructRet are incompatible!", &F);
+
         const PointerType *Ty =
             cast<PointerType>(FT->getParamType(Idx-1));
         Assert1(isa<StructType>(Ty->getElementType()),
