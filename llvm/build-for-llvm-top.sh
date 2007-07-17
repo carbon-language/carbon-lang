@@ -1,32 +1,25 @@
 #!/bin/sh
 
-is_debug=1
-for arg in "$@" ; do
-  case "$arg" in
-    LLVM_TOP=*)
-      LLVM_TOP=`echo "$arg" | sed -e 's/LLVM_TOP=//'`
-      ;;
-    PREFIX=*)
-      PREFIX=`echo "$arg" | sed -e 's/PREFIX=//'`
-      ;;
-    *=*)
-      build_opts="$build_opts $arg"
-      ;;
-    --*)
-      config_opts="$config_opts $arg"
-      ;;
-  esac
-done
+# This includes the Bourne shell library from llvm-top. Since this file is
+# generally only used when building from llvm-top, it is safe to assume that
+# llvm is checked out into llvm-top in which case .. just works.
+. ../library.sh
+
+# Process the options passed in to us by the build script into standard
+# variables. 
+process_builder_args "$@"
 
 # See if we have previously been configured by sensing the presense
 # of the config.status scripts
 if test ! -x "config.status" ; then
   # We must configure so build a list of configure options
   config_options="--prefix=$PREFIX --with-llvmgccdir=$PREFIX"
-  config_options="$config_options $config_opts"
-  echo ./configure $config_options
+  config_options="$config_options $OPTIONS_DASH $OPTIONS_DASH_DASH"
+  msg 0 Configuring $module with:
+  msg 0 "  ./configure" $config_options
   ./configure $config_options || (echo "Can't configure llvm" ; exit 1)
 fi
 
-echo make $build_opts '&&' make install $build_opts
-make $build_opts tools-only
+msg 0 Building $module with:
+msg 0 "  make" $OPTIONS_ASSIGN tools-only
+make $OPTIONS_ASSIGN tools-only
