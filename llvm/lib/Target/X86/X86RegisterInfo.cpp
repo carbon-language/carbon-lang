@@ -1340,25 +1340,25 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       addReg(DestAddr.getReg());
   }
 
+  // Skip the callee-saved pop instructions.
+  while (MBBI != MBB.begin()) {
+    MachineBasicBlock::iterator PI = prior(MBBI);      
+    if (PI->getOpcode() != X86::POP32r && PI->getOpcode() != X86::POP64r)
+      break;
+    --MBBI;
+  }
+
+  // If dynamic alloca is used, then reset esp to point to the last
+  // callee-saved slot before popping them off!
+  if (MFI->hasVarSizedObjects()) {
+    unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
+    MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
+                                    FramePtr, -CSSize);
+    MBB.insert(MBBI, MI);
+    return;
+  }
+
   if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-    // Skip the callee-saved pop instructions.
-    while (MBBI != MBB.begin()) {
-      MachineBasicBlock::iterator PI = prior(MBBI);      
-      if (PI->getOpcode() != X86::POP32r && PI->getOpcode() != X86::POP64r)
-        break;
-      --MBBI;
-    }
-
-    // If dynamic alloca is used, then reset esp to point to the last
-    // callee-saved slot before popping them off!
-    if (MFI->hasVarSizedObjects()) {
-      unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
-      MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
-                                      FramePtr, -CSSize);
-      MBB.insert(MBBI, MI);
-      return;
-    }
-
     // If there is an ADD32ri or SUB32ri of ESP immediately before this
     // instruction, merge the two instructions.
     if (MBBI != MBB.begin()) {
