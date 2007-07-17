@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc
-; XFAIL: sparc-sun-solaris2.*
+; XFAIL: sparc-sun-solaris2
 ; PR1557
 
 ; Test that we can have an "X" output constraint.
