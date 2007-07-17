@@ -33,6 +33,10 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// contains stack pointer re-alignment code which requires FP.
   bool ForceFramePointer;
 
+  /// CalleeSavedFrameSize - Size of the callee-saved register portion of the
+  /// stack frame in bytes.
+  unsigned CalleeSavedFrameSize;
+
   /// BytesToPopOnReturn - amount of bytes function pops on return.
   /// Used on windows platform for stdcall & fastcall name decoration
   unsigned BytesToPopOnReturn;
@@ -43,15 +47,20 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
+                             CalleeSavedFrameSize(0),
                              BytesToPopOnReturn(0),
                              DecorationStyle(None) {}
   
   X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
+                                                CalleeSavedFrameSize(0),
                                                 BytesToPopOnReturn(0),
                                                 DecorationStyle(None) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
+
+  unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
+  void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }
 
   unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
   void setBytesToPopOnReturn (unsigned bytes) { BytesToPopOnReturn = bytes;}

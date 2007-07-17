@@ -65,6 +65,39 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   }
 }
 
+bool X86RegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+
+  MachineFunction &MF = *MBB.getParent();
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  X86FI->setCalleeSavedFrameSize(CSI.size() * SlotSize);
+  unsigned Opc = Is64Bit ? X86::PUSH64r : X86::PUSH32r;
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    BuildMI(MBB, MI, TII.get(Opc)).addReg(Reg);
+  }
+  return true;
+}
+
+bool X86RegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                 MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+
+  unsigned Opc = Is64Bit ? X86::POP64r : X86::POP32r;
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    BuildMI(MBB, MI, TII.get(Opc), Reg);
+  }
+  return true;
+}
+
 void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned SrcReg, int FrameIdx,
@@ -1114,25 +1147,61 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
-  MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
   const Function* Fn = MF.getFunction();
   const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
-  MachineInstr *MI;
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
   
   // Prepare for frame info.
   unsigned FrameLabelId = 0, StartLabelId = 0;
   
   // Get the number of bytes to allocate from the FrameInfo
-  uint64_t NumBytes = MFI->getStackSize();
+  uint64_t StackSize = MFI->getStackSize();
+  uint64_t NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
   if (MMI && MMI->needsFrameInfo()) {
     // Mark function start
     StartLabelId = MMI->NextLabelID();
     BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(StartLabelId);
   }
+
+  if (hasFP(MF)) {
+    // Get the offset of the stack slot for the EBP register... which is
+    // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
+    // Update the frame offset adjustment.
+    MFI->setOffsetAdjustment(SlotSize-NumBytes);
+
+    // Save EBP into the appropriate stack slot...
+    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
+      .addReg(FramePtr);
+    NumBytes -= SlotSize;
+
+    if (MMI && MMI->needsFrameInfo()) {
+      // Mark effective beginning of when frame pointer becomes valid.
+      FrameLabelId = MMI->NextLabelID();
+      BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId);
+    }
+
+    // Update EBP with the new base value...
+    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
+      .addReg(StackPtr);
+  }
+  
+  unsigned ReadyLabelId = 0;
+  if (MMI && MMI->needsFrameInfo()) {
+    // Mark effective beginning of when frame pointer is ready.
+    ReadyLabelId = MMI->NextLabelID();
+    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId);
+  }
+
+  // Skip the callee-saved push instructions.
+  while (MBBI != MBB.end() &&
+         (MBBI->getOpcode() == X86::PUSH32r ||
+          MBBI->getOpcode() == X86::PUSH64r))
+    ++MBBI;
 
   if (NumBytes) {   // adjust stack pointer: ESP -= numbytes
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
@@ -1150,59 +1219,25 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
       if (!isEAXAlive) {
-        MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
-        MBB.insert(MBBI, MI);
-        MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
-        MBB.insert(MBBI, MI);
+        BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes);
+        BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32))
+          .addExternalSymbol("_alloca");
       } else {
         // Save EAX
-        MI = BuildMI(TII.get(X86::PUSH32r), X86::EAX);
-        MBB.insert(MBBI, MI);
+        BuildMI(MBB, MBBI, TII.get(X86::PUSH32r), X86::EAX);
         // Allocate NumBytes-4 bytes on stack. We'll also use 4 already
         // allocated bytes for EAX.
-        MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
-        MBB.insert(MBBI, MI);
-        MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
-        MBB.insert(MBBI, MI);
+        BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(NumBytes-4);
+        BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32))
+          .addExternalSymbol("_alloca");
         // Restore EAX
-        MI = addRegOffset(BuildMI(TII.get(X86::MOV32rm), X86::EAX),
-                          StackPtr, NumBytes-4);
+        MachineInstr *MI = addRegOffset(BuildMI(TII.get(X86::MOV32rm),X86::EAX),
+                                        StackPtr, NumBytes-4);
         MBB.insert(MBBI, MI);
       }
     } else {
       emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
     }
-  }
-
-  if (MMI && MMI->needsFrameInfo()) {
-    // Mark effective beginning of when frame pointer becomes valid.
-    FrameLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId);
-  }
-  
-  if (hasFP(MF)) {
-    // Get the offset of the stack slot for the EBP register... which is
-    // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
-    int64_t EBPOffset =
-      MFI->getObjectOffset(MFI->getObjectIndexBegin())+SlotSize;
-    // Update the frame offset adjustment.
-    MFI->setOffsetAdjustment(SlotSize-NumBytes);
-    
-    // Save EBP into the appropriate stack slot...
-    // mov [ESP-<offset>], EBP
-    MI = addRegOffset(BuildMI(TII.get(Is64Bit ? X86::MOV64mr : X86::MOV32mr)),
-                      StackPtr, EBPOffset+NumBytes).addReg(FramePtr);
-    MBB.insert(MBBI, MI);
-
-    // Update EBP with the new base value...
-    if (NumBytes == SlotSize)    // mov EBP, ESP
-      MI = BuildMI(TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr).
-        addReg(StackPtr);
-    else                  // lea EBP, [ESP+StackSize]
-      MI = addRegOffset(BuildMI(TII.get(Is64Bit ? X86::LEA64r : X86::LEA32r),
-                                FramePtr), StackPtr, NumBytes-SlotSize);
-
-    MBB.insert(MBBI, MI);
   }
 
   if (MMI && MMI->needsFrameInfo()) {
@@ -1215,7 +1250,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
        TargetFrameInfo::StackGrowsUp ?
        TAI->getAddressSize() : -TAI->getAddressSize());
 
-    if (NumBytes) {
+    if (StackSize) {
       // Show update of SP.
       if (hasFP(MF)) {
         // Adjust SP
@@ -1224,7 +1259,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
       } else {
         MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP, -NumBytes+stackGrowth);
+        MachineLocation SPSrc(MachineLocation::VirtualFP, -StackSize+stackGrowth);
         Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
       }
     } else {
@@ -1244,10 +1279,6 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
     }
     
-    // Mark effective beginning of when frame pointer is ready.
-    unsigned ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId);
-
     if (hasFP(MF)) {
       // Save FP
       MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
@@ -1263,21 +1294,19 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->isTargetCygMing()) {
-    MI= BuildMI(TII.get(X86::AND32ri), X86::ESP)
+    BuildMI(MBB, MBBI, TII.get(X86::AND32ri), X86::ESP)
                 .addReg(X86::ESP).addImm(-Align);
-    MBB.insert(MBBI, MI);
 
     // Probe the stack
-    MI = BuildMI(TII.get(X86::MOV32ri), X86::EAX).addImm(Align);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(Align);
+    BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
   }
 }
 
 void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
 
@@ -1292,39 +1321,15 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     assert(0 && "Can only insert epilog into returning blocks");
   }
 
+  // Get the number of bytes to allocate from the FrameInfo
+  uint64_t StackSize = MFI->getStackSize();
+  unsigned CSSize = X86FI->getCalleeSavedFrameSize();
+  uint64_t NumBytes = StackSize - CSSize;
+
   if (hasFP(MF)) {
-    // mov ESP, EBP
-    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
-      addReg(FramePtr);
-
-    // pop EBP
+    // pop EBP.
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
-  } else {
-    // Get the number of bytes allocated from the FrameInfo.
-    uint64_t NumBytes = MFI->getStackSize();
-
-    if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-      // If there is an ADD32ri or SUB32ri of ESP immediately before this
-      // instruction, merge the two instructions.
-      if (MBBI != MBB.begin()) {
-        MachineBasicBlock::iterator PI = prior(MBBI);
-        unsigned Opc = PI->getOpcode();
-        if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-             Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
-            PI->getOperand(0).getReg() == StackPtr) {
-          NumBytes += PI->getOperand(2).getImm();
-          MBB.erase(PI);
-        } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-                    Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
-                   PI->getOperand(0).getReg() == StackPtr) {
-          NumBytes -= PI->getOperand(2).getImm();
-          MBB.erase(PI);
-        }
-      }
-
-      if (NumBytes)
-        emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
-    }
+    NumBytes -= SlotSize;
   }
 
   // We're returning from function via eh_return.
@@ -1333,6 +1338,47 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     assert(DestAddr.isReg() && "Offset should be in register!");
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
       addReg(DestAddr.getReg());
+  }
+
+  if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
+    // Skip the callee-saved pop instructions.
+    while (MBBI != MBB.begin()) {
+      MachineBasicBlock::iterator PI = prior(MBBI);      
+      if (PI->getOpcode() != X86::POP32r && PI->getOpcode() != X86::POP64r)
+        break;
+      --MBBI;
+    }
+
+    // If dynamic alloca is used, then reset esp to point to the last
+    // callee-saved slot before popping them off!
+    if (MFI->hasVarSizedObjects()) {
+      unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
+      MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
+                                      FramePtr, -CSSize);
+      MBB.insert(MBBI, MI);
+      return;
+    }
+
+    // If there is an ADD32ri or SUB32ri of ESP immediately before this
+    // instruction, merge the two instructions.
+    if (MBBI != MBB.begin()) {
+      MachineBasicBlock::iterator PI = prior(MBBI);
+      unsigned Opc = PI->getOpcode();
+      if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
+           Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+          PI->getOperand(0).getReg() == StackPtr) {
+        NumBytes += PI->getOperand(2).getImm();
+        MBB.erase(PI);
+      } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+                  Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
+                 PI->getOperand(0).getReg() == StackPtr) {
+        NumBytes -= PI->getOperand(2).getImm();
+        MBB.erase(PI);
+      }
+    }
+
+    if (NumBytes)
+      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
   }
 }
 

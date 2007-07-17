@@ -44,6 +44,14 @@ public:
   X86RegisterInfo(X86TargetMachine &tm, const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI) const;
+
+  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                 const std::vector<CalleeSavedInfo> &CSI) const;
+
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
                            unsigned SrcReg, int FrameIndex,

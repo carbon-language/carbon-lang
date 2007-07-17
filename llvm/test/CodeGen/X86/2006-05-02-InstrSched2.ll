@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -stats |& \
-; RUN:   grep asm-printer | grep 18
+; RUN:   grep asm-printer | grep 16
 
 void %_ZN9__gnu_cxx9hashtableISt4pairIKPKciES3_NS_4hashIS3_EESt10_Select1stIS5_E5eqstrSaIiEE14find_or_insertERKS5__cond_true456.i(sbyte* %tmp435.i, uint* %tmp449.i.out) {
 newFuncRoot:
