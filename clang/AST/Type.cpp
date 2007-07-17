@@ -73,7 +73,15 @@ const PointerType *Type::isPointerType() const {
 }
 
 bool Type::isReferenceType() const {
-  return isa<ReferenceType>(CanonicalType);
+  // If this is directly a reference type, return it.
+  if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
+    return RTy;
+  
+  // If this is a typedef for a reference type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<ReferenceType>(CanonicalType))
+    return cast<ReferenceType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
 }
 
 bool Type::isArrayType() const {

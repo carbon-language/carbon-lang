@@ -597,8 +597,10 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
   QualType t = e->getType();
   assert(!t.isNull() && "DefaultFunctionArrayConversion - missing type");
 
-  if (const ReferenceType *ref = dyn_cast<ReferenceType>(t.getCanonicalType()))
-    t = promoteExprToType(e, ref->getReferenceeType()); // C++ [expr]
+  if (const ReferenceType *ref = dyn_cast<ReferenceType>(t)) {
+    promoteExprToType(e, ref->getReferenceeType()); // C++ [expr]
+    t = e->getType();
+  }
   if (t->isFunctionType())
     promoteExprToType(e, Context.getPointerType(t));
   else if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
@@ -614,8 +616,10 @@ void Sema::UsualUnaryConversions(Expr *&expr) {
   QualType t = expr->getType();
   assert(!t.isNull() && "UsualUnaryConversions - missing type");
   
-  if (const ReferenceType *ref = dyn_cast<ReferenceType>(t.getCanonicalType()))
-    t = promoteExprToType(expr, ref->getReferenceeType()); // C++ [expr]
+  if (const ReferenceType *ref = dyn_cast<ReferenceType>(t)) {
+    promoteExprToType(expr, ref->getReferenceeType()); // C++ [expr]
+    t = expr->getType();
+  }
   if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
     promoteExprToType(expr, Context.IntTy);
   else
