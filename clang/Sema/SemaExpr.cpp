@@ -597,7 +597,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
   QualType t = e->getType();
   assert(!t.isNull() && "DefaultFunctionArrayConversion - missing type");
 
-  if (const ReferenceType *ref = dyn_cast<ReferenceType>(t)) {
+  if (const ReferenceType *ref = t->isReferenceType()) {
     promoteExprToType(e, ref->getReferenceeType()); // C++ [expr]
     t = e->getType();
   }
@@ -616,7 +616,7 @@ void Sema::UsualUnaryConversions(Expr *&expr) {
   QualType t = expr->getType();
   assert(!t.isNull() && "UsualUnaryConversions - missing type");
   
-  if (const ReferenceType *ref = dyn_cast<ReferenceType>(t)) {
+  if (const ReferenceType *ref = t->isReferenceType()) {
     promoteExprToType(expr, ref->getReferenceeType()); // C++ [expr]
     t = expr->getType();
   }
