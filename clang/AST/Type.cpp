@@ -72,7 +72,7 @@ const PointerType *Type::isPointerType() const {
   return 0;
 }
 
-bool Type::isReferenceType() const {
+const ReferenceType *Type::isReferenceType() const {
   // If this is directly a reference type, return it.
   if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
     return RTy;

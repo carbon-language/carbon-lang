@@ -33,6 +33,7 @@ namespace clang {
   class Expr;
   class SourceLocation;
   class PointerType;
+  class ReferenceType;
   class VectorType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
@@ -235,7 +236,7 @@ public:
   /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
   bool isDerivedType() const;
   const PointerType *isPointerType() const;
-  bool isReferenceType() const;
+  const ReferenceType *isReferenceType() const;
   bool isArrayType() const;
   bool isStructureType() const;   
   bool isUnionType() const;
