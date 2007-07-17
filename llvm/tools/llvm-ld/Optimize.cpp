@@ -168,7 +168,7 @@ void Optimize(Module* M) {
     addPass(Passes, createLICMPass());               // Hoist loop invariants
     addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
     addPass(Passes, createGCSEPass());               // Remove common subexprs
-    addPass(Passes, createDeadStoreEliminationPass()); // Nuke dead stores
+    addPass(Passes, createFastDeadStoreEliminationPass()); // Nuke dead stores
 
     // Cleanup and simplify the code after the scalar optimizations.
     addPass(Passes, createInstructionCombiningPass());

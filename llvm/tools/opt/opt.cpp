@@ -291,7 +291,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createInstructionCombiningPass());
   addPass(PM, createCondPropagationPass());      // Propagate conditionals
 
-  addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
+  addPass(PM, createFastDeadStoreEliminationPass()); // Delete dead stores
   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
