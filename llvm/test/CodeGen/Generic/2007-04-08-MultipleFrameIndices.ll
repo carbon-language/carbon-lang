@@ -1,5 +1,7 @@
-; RUN: llvm-as < %s | llc 
+; RUN: llvm-as < %s | llc
+; XFAIL: sparc-sun-solaris2.*
 ; PR1308
+; PR1557
 
 define i32 @stuff(i32, ...) {
         %foo = alloca i8*
