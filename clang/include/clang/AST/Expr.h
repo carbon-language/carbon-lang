@@ -61,6 +61,7 @@ public:
   ///  - e->name
   ///  - *e, the type of e cannot be a function type
   ///  - string-constant
+  ///  - reference type [C++ [expr]]
   ///
   enum isLvalueResult {
     LV_Valid,

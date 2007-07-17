@@ -191,6 +191,7 @@ bool Expr::hasLocalSideEffect() const {
 ///  - e->name
 ///  - *e, the type of e cannot be a function type
 ///  - string-constant
+///  - reference type [C++ [expr]]
 ///
 Expr::isLvalueResult Expr::isLvalue() const {
   // first, check the type (C99 6.3.2.1)
@@ -199,7 +200,10 @@ Expr::isLvalueResult Expr::isLvalue() const {
 
   if (TR->isIncompleteType() && TR->isVoidType())
     return LV_IncompleteVoidType;
-    
+
+  if (isa<ReferenceType>(TR.getCanonicalType())) // C++ [expr]
+    return LV_Valid;
+
   // the type looks fine, now check the expression
   switch (getStmtClass()) {
   case StringLiteralClass: // C99 6.5.1p4
