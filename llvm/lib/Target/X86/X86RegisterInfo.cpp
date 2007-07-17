@@ -1332,14 +1332,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     NumBytes -= SlotSize;
   }
 
-  // We're returning from function via eh_return.
-  if (RetOpcode == X86::EH_RETURN) {
-    MachineOperand &DestAddr  = MBBI->getOperand(0);
-    assert(DestAddr.isReg() && "Offset should be in register!");
-    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
-      addReg(DestAddr.getReg());
-  }
-
   // Skip the callee-saved pop instructions.
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = prior(MBBI);      
@@ -1355,7 +1347,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
                                     FramePtr, -CSSize);
     MBB.insert(MBBI, MI);
-    return;
+    NumBytes = 0;
   }
 
   if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
@@ -1379,6 +1371,15 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
     if (NumBytes)
       emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
+  }
+
+  // We're returning from function via eh_return.
+  if (RetOpcode == X86::EH_RETURN) {
+    MBBI = prior(MBB.end());
+    MachineOperand &DestAddr  = MBBI->getOperand(0);
+    assert(DestAddr.isReg() && "Offset should be in register!");
+    BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
+      addReg(DestAddr.getReg());
   }
 }
 
