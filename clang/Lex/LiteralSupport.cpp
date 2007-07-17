@@ -19,6 +19,12 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/config.h"
+#if HAVE_STRTOF
+#else
+# define strtof strtod
+#endif
+
 using namespace clang;
 
 /// HexDigitValue - Return the value of the specified hex digit, or -1 if it's
