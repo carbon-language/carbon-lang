@@ -2,9 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the Raul Herbster (raulherbster [at] gmail [dot]
-// com) and is distributed under the University of Illinois Open Source License.
-// See LICENSE.TXT for details.
+// This file was developed by the Raul Herbster and is distributed under the 
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
