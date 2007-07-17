@@ -507,9 +507,10 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     return QualType();
   }
   // now check the two expressions.
-  if (lexT->isArithmeticType() && rexT->isArithmeticType()) // C99 6.5.15p3,5
-    return UsualArithmeticConversions(lex, rex);
-    
+  if (lexT->isArithmeticType() && rexT->isArithmeticType()) { // C99 6.5.15p3,5
+    UsualArithmeticConversions(lex, rex);
+    return lex->getType();
+  }
   if ((lexT->isStructureType() && rexT->isStructureType()) || // C99 6.5.15p3
       (lexT->isUnionType() && rexT->isUnionType())) {
     TagType *lTag = cast<TagType>(lexT.getCanonicalType());
@@ -583,12 +584,12 @@ Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc,
 
 // promoteExprToType - a helper function to ensure we create exactly one 
 // ImplicitCastExpr. As a convenience (to the caller), we return the type.
-static QualType promoteExprToType(Expr *&expr, QualType type) {
+static void promoteExprToType(Expr *&expr, QualType type) {
   if (ImplicitCastExpr *impCast = dyn_cast<ImplicitCastExpr>(expr))
     impCast->setType(type);
   else 
     expr = new ImplicitCastExpr(type, expr);
-  return type;
+  return;
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
@@ -621,7 +622,7 @@ void Sema::UsualUnaryConversions(Expr *&expr) {
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
-QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
+void Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
   UsualUnaryConversions(lhsExpr);
   UsualUnaryConversions(rhsExpr);
   
@@ -630,50 +631,61 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs) 
-    return lhs;
+    return;
   
   // If either side is a non-arithmetic type (e.g. a pointer), we are done.
   // The caller can deal with this (e.g. pointer + int).
-  if (!lhs->isArithmeticType())
-    return lhs;
-  if (!rhs->isArithmeticType())
-    return rhs;
+  if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
+    return;
     
   // At this point, we have two different arithmetic types. 
   
   // Handle complex types first (C99 6.3.1.8p1).
   if (lhs->isComplexType() || rhs->isComplexType()) {
     // if we have an integer operand, the result is the complex type.
-    if (rhs->isIntegerType()) // convert the rhs to the lhs complex type.
-      return promoteExprToType(rhsExpr, lhs);
-
-    if (lhs->isIntegerType()) // convert the lhs to the rhs complex type.
-      return promoteExprToType(lhsExpr, rhs);
-
+    if (rhs->isIntegerType()) { // convert the rhs to the lhs complex type.
+      promoteExprToType(rhsExpr, lhs);
+      return;
+    }
+    if (lhs->isIntegerType()) { // convert the lhs to the rhs complex type.
+      promoteExprToType(lhsExpr, rhs);
+      return;
+    }
     // Two complex types. Convert the smaller operand to the bigger result.
-    if (Context.maxComplexType(lhs, rhs) == lhs) // convert the rhs
-      return promoteExprToType(rhsExpr, lhs);
-    return promoteExprToType(lhsExpr, rhs); // convert the lhs
+    if (Context.maxComplexType(lhs, rhs) == lhs) { // convert the rhs
+      promoteExprToType(rhsExpr, lhs);
+      return;
+    }
+    promoteExprToType(lhsExpr, rhs); // convert the lhs
+    return;
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
-    if (rhs->isIntegerType()) // convert the rhs to the lhs floating point type.
-      return promoteExprToType(rhsExpr, lhs);
-
-    if (lhs->isIntegerType()) // convert the lhs to the rhs floating point type.
-      return promoteExprToType(lhsExpr, rhs);
-
+    if (rhs->isIntegerType()) { // convert rhs to the lhs floating point type.
+      promoteExprToType(rhsExpr, lhs);
+      return;
+    }
+    if (lhs->isIntegerType()) { // convert lhs to the rhs floating point type.
+      promoteExprToType(lhsExpr, rhs);
+      return;
+    }
     // We have two real floating types, float/complex combos were handled above.
     // Convert the smaller operand to the bigger result.
-    if (Context.maxFloatingType(lhs, rhs) == lhs) // convert the rhs
-      return promoteExprToType(rhsExpr, lhs);
-    return promoteExprToType(lhsExpr, rhs); // convert the lhs
+    if (Context.maxFloatingType(lhs, rhs) == lhs) { // convert the rhs
+      promoteExprToType(rhsExpr, lhs);
+      return;
+    }
+    promoteExprToType(lhsExpr, rhs); // convert the lhs
+    return;
   }
   // Finally, we have two differing integer types.
-  if (Context.maxIntegerType(lhs, rhs) == lhs) // convert the rhs
-    return promoteExprToType(rhsExpr, lhs);
-  return promoteExprToType(lhsExpr, rhs); // convert the lhs
+  if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs
+    promoteExprToType(rhsExpr, lhs);
+    return;
+  }
+  promoteExprToType(lhsExpr, rhs); // convert the lhs
+  return;
 }
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite
@@ -811,10 +823,11 @@ inline QualType Sema::CheckMultiplyDivideOperands(
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
     
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  UsualArithmeticConversions(lex, rex);
   
-  if (resType->isArithmeticType())
-    return resType;
+  // handle the common case first (both operands are arithmetic).
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+    return lex->getType();
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -824,10 +837,11 @@ inline QualType Sema::CheckRemainderOperands(
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  UsualArithmeticConversions(lex, rex);
   
-  if (resType->isIntegerType())
-    return resType;
+  // handle the common case first (both operands are arithmetic).
+  if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
+    return lex->getType();
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -838,15 +852,16 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
 
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  UsualArithmeticConversions(lex, rex);
   
   // handle the common case first (both operands are arithmetic).
-  if (resType->isArithmeticType())
-    return resType;
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+    return lex->getType();
 
-  if ((lex->getType()->isPointerType() && rex->getType()->isIntegerType()) ||
-      (lex->getType()->isIntegerType() && rex->getType()->isPointerType()))
-    return resType;
+  if (lex->getType()->isPointerType() && rex->getType()->isIntegerType())
+    return lex->getType();
+  if (lex->getType()->isIntegerType() && rex->getType()->isPointerType())
+    return rex->getType();
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -857,14 +872,14 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
     
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  UsualArithmeticConversions(lex, rex);
   
   // handle the common case first (both operands are arithmetic).
-  if (resType->isArithmeticType())
-    return resType;
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+    return lex->getType();
     
   if (lex->getType()->isPointerType() && rex->getType()->isIntegerType())
-    return resType;
+    return lex->getType();
   if (lex->getType()->isPointerType() && rex->getType()->isPointerType())
     return Context.getPointerDiffType();
   InvalidOperands(loc, lex, rex);
@@ -876,10 +891,11 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
 {
   // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
   // for int << longlong -> the result type should be int, not long long.
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  UsualArithmeticConversions(lex, rex);
   
-  if (resType->isIntegerType())
-    return resType;
+  // handle the common case first (both operands are arithmetic).
+  if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
+    return lex->getType();
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -954,10 +970,10 @@ inline QualType Sema::CheckBitwiseOperands(
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
 
-  QualType resType = UsualArithmeticConversions(lex, rex);
+  UsualArithmeticConversions(lex, rex);
   
-  if (resType->isIntegerType())
-    return resType;
+  if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
+    return lex->getType();
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -967,10 +983,8 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
 {
   UsualUnaryConversions(lex);
   UsualUnaryConversions(rex);
-  QualType lhsType = lex->getType();
-  QualType rhsType = rex->getType();
   
-  if (lhsType->isScalarType() || rhsType->isScalarType())
+  if (lex->getType()->isScalarType() || rex->getType()->isScalarType())
     return Context.IntTy;
   InvalidOperands(loc, lex, rex);
   return QualType();
