@@ -67,10 +67,7 @@ public:
     CurArray[SmallSize] = 0;
     clear();
   }
-  ~SmallPtrSetImpl() {
-    if (!isSmall())
-      free(CurArray);
-  }
+  ~SmallPtrSetImpl();
   
   bool empty() const { return size() == 0; }
   unsigned size() const { return NumElements; }

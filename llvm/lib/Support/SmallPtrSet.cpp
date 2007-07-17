@@ -14,6 +14,8 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/MathExtras.h"
+#include <cstdlib>
+
 using namespace llvm;
 
 bool SmallPtrSetImpl::insert(void *Ptr) {
@@ -199,4 +201,9 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
 
   // Copy over the contents from the other set
   memcpy(CurArray, RHS.CurArray, sizeof(void*)*(CurArraySize+1));
+}
+
+SmallPtrSetImpl::~SmallPtrSetImpl() {
+  if (!isSmall())
+    free(CurArray);
 }
