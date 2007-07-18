@@ -403,7 +403,7 @@ LTO::optimizeModules(const std::string &OutputFilename,
     TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
   }
-  if (tmpAsmFilePath.createTemporaryFileOnDisk(&ErrMsg)) {
+  if (tmpAsmFilePath.createTemporaryFileOnDisk(true, &ErrMsg)) {
     cerr << "lto: " << ErrMsg << "\n";
     TempDir.eraseFromDisk(true);
     return LTO_WRITE_FAILURE;
