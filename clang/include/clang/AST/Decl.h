@@ -424,6 +424,12 @@ public:
   
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
   void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
+  
+  /// getNumMembers - Return the number of members, or -1 if this is a forward
+  /// definition.
+  int getNumMembers() const { return NumMembers; }
+  const FieldDecl *getMember(unsigned i) const { return Members[i]; }
+  FieldDecl *getMember(unsigned i) { return Members[i]; }
 
   /// defineBody - When created, RecordDecl's correspond to a forward declared
   /// record.  This method is used to mark the decl as being defined, with the
