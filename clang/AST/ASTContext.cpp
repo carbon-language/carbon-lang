@@ -40,6 +40,7 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "*** AST Context Stats:\n");
   fprintf(stderr, "  %d types total.\n", (int)Types.size());
   unsigned NumBuiltin = 0, NumPointer = 0, NumArray = 0, NumFunctionP = 0;
+  unsigned NumVector = 0, NumComplex = 0;
   unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
@@ -52,8 +53,12 @@ void ASTContext::PrintStats() const {
       ++NumPointer;
     else if (isa<ReferenceType>(T))
       ++NumReference;
+    else if (isa<ComplexType>(T))
+      ++NumComplex;
     else if (isa<ArrayType>(T))
       ++NumArray;
+    else if (isa<VectorType>(T))
+      ++NumVector;
     else if (isa<FunctionTypeNoProto>(T))
       ++NumFunctionNP;
     else if (isa<FunctionTypeProto>(T))
@@ -77,7 +82,9 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "    %d builtin types\n", NumBuiltin);
   fprintf(stderr, "    %d pointer types\n", NumPointer);
   fprintf(stderr, "    %d reference types\n", NumReference);
+  fprintf(stderr, "    %d complex types\n", NumComplex);
   fprintf(stderr, "    %d array types\n", NumArray);
+  fprintf(stderr, "    %d vector types\n", NumVector);
   fprintf(stderr, "    %d function types with proto\n", NumFunctionP);
   fprintf(stderr, "    %d function types with no proto\n", NumFunctionNP);
   fprintf(stderr, "    %d typename (typedef) types\n", NumTypeName);
@@ -88,6 +95,7 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "      %d enum types\n", NumTagEnum);
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
+    NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
     NumFunctionP*sizeof(FunctionTypeProto)+
     NumFunctionNP*sizeof(FunctionTypeNoProto)+
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)));
