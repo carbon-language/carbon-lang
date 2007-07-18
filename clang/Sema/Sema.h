@@ -153,6 +153,7 @@ private:
   // for the variable, measured in bytes. If curType and rawAttr are well
   // formed, this routine will return a new vector type.
   QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
+  QualType HandleOCUVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

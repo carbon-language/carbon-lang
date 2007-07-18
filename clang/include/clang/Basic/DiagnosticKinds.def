@@ -441,6 +441,8 @@ DIAG(err_attribute_zero_size, ERROR,
      "zero vector size")
 DIAG(err_typecheck_vector_not_convertable, ERROR,
      "can't convert between vector values of different size ('%0' and '%1')")
+DIAG(err_typecheck_ocu_vector_not_typedef, ERROR,
+     "ocu_vector_type only applies to types, not variables")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_void_param_with_identifier, ERROR,

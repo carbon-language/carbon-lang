@@ -182,7 +182,7 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Complex, Pointer, Reference, Array, Vector,
+    Builtin, Complex, Pointer, Reference, Array, Vector, OCUVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged
   };
@@ -450,17 +450,23 @@ public:
   static bool classof(const ArrayType *) { return true; }
 };
 
-/// VectorType - 
-///
+/// VectorType - GCC generic vector type. This type is created using
+/// __attribute__((vector_size(n)), where "n" specifies the vector size in 
+/// bytes. Since the constructor takes the number of vector elements, the 
+/// client is responsible for converting the size into the number of elements.
 class VectorType : public Type, public llvm::FoldingSetNode {
+protected:
   /// ElementType - The element type of the vector.
   QualType ElementType;
   
   /// NumElements - The number of elements in the vector.
   unsigned NumElements;
   
-  VectorType(QualType vecType, unsigned vectorSize, QualType canonType) :
-    Type(Vector, canonType), ElementType(vecType), NumElements(vectorSize) {} 
+  VectorType(QualType vecType, unsigned nElements, QualType canonType) :
+    Type(Vector, canonType), ElementType(vecType), NumElements(nElements) {} 
+  VectorType(TypeClass tc, QualType vecType, unsigned nElements, 
+    QualType canonType) : Type(tc, canonType), ElementType(vecType), 
+    NumElements(nElements) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
     
@@ -470,15 +476,33 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getElementType(), getNumElements());
+    Profile(ID, getElementType(), getNumElements(), getTypeClass());
   }
-  static void Profile(llvm::FoldingSetNodeID &ID,
-                      QualType ElementType, unsigned NumElements) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ElementType, 
+                      unsigned NumElements, TypeClass TypeClass) {
     ID.AddPointer(ElementType.getAsOpaquePtr());
     ID.AddInteger(NumElements);
+    ID.AddInteger(TypeClass);
   }
-  static bool classof(const Type *T) { return T->getTypeClass() == Vector; }
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
+  }
   static bool classof(const VectorType *) { return true; }
+};
+
+/// OCUVectorType - Extended vector type. This type is created using
+/// __attribute__((ocu_vector_type(n)), where "n" is the number of elements.
+/// Unlike vector_size, ocu_vector_type is only allowed on typedef's.
+/// This class will enable syntactic extensions, like C++ style initializers.
+class OCUVectorType : public VectorType {
+  OCUVectorType(QualType vecType, unsigned nElements, QualType canonType) :
+    VectorType(OCUVector, vecType, nElements, canonType) {} 
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  static bool classof(const VectorType *T) { 
+    return T->getTypeClass() == OCUVector; 
+  }
+  static bool classof(const OCUVectorType *) { return true; }
 };
 
 /// FunctionType - C99 6.7.5.3 - Function Declarators.  This is the common base

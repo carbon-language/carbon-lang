@@ -392,19 +392,17 @@ QualType ASTContext::getArrayType(QualType EltTy,ArrayType::ArraySizeModifier AS
   return QualType(New, 0);
 }
 
-/// convertToVectorType - Return the unique reference to a vector type of
-/// the specified element type and size. VectorType can be a pointer, array,
-/// function, or built-in type (i.e. _Bool, integer, or float).
-QualType ASTContext::convertToVectorType(QualType vecType, unsigned NumElts) {
+/// getVectorType - Return the unique reference to a vector type of
+/// the specified element type and size. VectorType must be a built-in type.
+QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
   BuiltinType *baseType;
   
   baseType = dyn_cast<BuiltinType>(vecType.getCanonicalType().getTypePtr());
-  assert(baseType != 0 && 
-         "convertToVectorType(): Complex vector types unimplemented");
+  assert(baseType != 0 && "getVectorType(): Expecting a built-in type");
          
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
-  VectorType::Profile(ID, vecType, NumElts);      
+  VectorType::Profile(ID, vecType, NumElts, Type::Vector);      
   void *InsertPos = 0;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
@@ -413,13 +411,44 @@ QualType ASTContext::convertToVectorType(QualType vecType, unsigned NumElts) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!vecType->isCanonical()) {
-    Canonical = convertToVectorType(vecType.getCanonicalType(), NumElts);
+    Canonical = getVectorType(vecType.getCanonicalType(), NumElts);
     
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
   VectorType *New = new VectorType(vecType, NumElts, Canonical);
+  VectorTypes.InsertNode(New, InsertPos);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
+/// getOCUVectorType - Return the unique reference to an OCU vector type of
+/// the specified element type and size. VectorType must be a built-in type.
+QualType ASTContext::getOCUVectorType(QualType vecType, unsigned NumElts) {
+  BuiltinType *baseType;
+  
+  baseType = dyn_cast<BuiltinType>(vecType.getCanonicalType().getTypePtr());
+  assert(baseType != 0 && "getOCUVectorType(): Expecting a built-in type");
+         
+  // Check if we've already instantiated a vector of this type.
+  llvm::FoldingSetNodeID ID;
+  VectorType::Profile(ID, vecType, NumElts, Type::OCUVector);      
+  void *InsertPos = 0;
+  if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(VTP, 0);
+
+  // If the element type isn't canonical, this won't be a canonical type either,
+  // so fill in the canonical type field.
+  QualType Canonical;
+  if (!vecType->isCanonical()) {
+    Canonical = getOCUVectorType(vecType.getCanonicalType(), NumElts);
+    
+    // Get the new insert position for the node we care about.
+    VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewIP == 0 && "Shouldn't be in the map!");
+  }
+  OCUVectorType *New = new OCUVectorType(vecType, NumElts, Canonical);
   VectorTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);

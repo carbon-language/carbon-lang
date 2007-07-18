@@ -956,6 +956,17 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
         tDecl->setUnderlyingType(newType);
     }
   }
+  if (strcmp(rawAttr->getAttributeName()->getName(), "ocu_vector_type") == 0) {
+    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
+      QualType newType = HandleOCUVectorTypeAttribute(tDecl->getUnderlyingType(), 
+                                                      rawAttr);
+      if (!newType.isNull()) // install the new vector type into the decl
+        tDecl->setUnderlyingType(newType);
+    } else {
+      Diag(rawAttr->getAttributeLoc(), 
+           diag::err_typecheck_ocu_vector_not_typedef);
+    }
+  }
   // FIXME: add other attributes...
 }
 
@@ -969,6 +980,42 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
     HandleDeclAttribute(New, declarator_postfix);
     declarator_postfix = declarator_postfix->getNext();
   }
+}
+
+QualType Sema::HandleOCUVectorTypeAttribute(QualType curType, 
+                                            AttributeList *rawAttr) {
+  // check the attribute arugments.
+  if (rawAttr->getNumArgs() != 1) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return QualType();
+  }
+  Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
+  llvm::APSInt vecSize(32);
+  if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
+         sizeExpr->getSourceRange());
+    return QualType();
+  }
+  // unlike gcc's vector_size attribute, we do not allow vectors to be defined
+  // in conjunction with complex types (pointers, arrays, functions, etc.).
+  Type *canonType = curType.getCanonicalType().getTypePtr();
+  if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_vector_type,
+         curType.getCanonicalType().getAsString());
+    return QualType();
+  }
+  // unlike gcc's vector_size attribute, the size is specified as the 
+  // number of elements, not the number of bytes.
+  unsigned vectorSize = vecSize.getZExtValue(); 
+  
+  if (vectorSize == 0) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_zero_size,
+         sizeExpr->getSourceRange());
+    return QualType();
+  }
+  // Instantiate the vector type, the number of elements is > 0.
+  return Context.getOCUVectorType(curType, vectorSize);
 }
 
 QualType Sema::HandleVectorTypeAttribute(QualType curType, 
@@ -990,14 +1037,20 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   // vector arrays, and functions returning vectors.
   Type *canonType = curType.getCanonicalType().getTypePtr();
   
-  while (canonType->isPointerType() || canonType->isArrayType() ||
-         canonType->isFunctionType()) {
-    if (PointerType *PT = dyn_cast<PointerType>(canonType))
-      canonType = PT->getPointeeType().getTypePtr();
-    else if (ArrayType *AT = dyn_cast<ArrayType>(canonType))
-      canonType = AT->getElementType().getTypePtr();
-    else if (FunctionType *FT = dyn_cast<FunctionType>(canonType))
-      canonType = FT->getResultType().getTypePtr();
+  if (canonType->isPointerType() || canonType->isArrayType() ||
+      canonType->isFunctionType()) {
+    assert(1 && "HandleVector(): Complex type construction unimplemented");
+    /* FIXME: rebuild the type from the inside out, vectorizing the inner type.
+        do {
+          if (PointerType *PT = dyn_cast<PointerType>(canonType))
+            canonType = PT->getPointeeType().getTypePtr();
+          else if (ArrayType *AT = dyn_cast<ArrayType>(canonType))
+            canonType = AT->getElementType().getTypePtr();
+          else if (FunctionType *FT = dyn_cast<FunctionType>(canonType))
+            canonType = FT->getResultType().getTypePtr();
+        } while (canonType->isPointerType() || canonType->isArrayType() ||
+                 canonType->isFunctionType());
+    */
   }
   // the base type must be integer or float.
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
@@ -1023,6 +1076,6 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   // Since OpenCU requires 3 element vectors (OpenCU 5.1.2), we don't restrict
   // the number of elements to be a power of two (unlike GCC).
   // Instantiate the vector type, the number of elements is > 0.
-  return Context.convertToVectorType(curType, vectorSize/typeSize);
+  return Context.getVectorType(curType, vectorSize/typeSize);
 }
 

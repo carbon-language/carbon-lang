@@ -79,10 +79,13 @@ public:
   QualType getArrayType(QualType EltTy, ArrayType::ArraySizeModifier ASM,
                         unsigned EltTypeQuals, Expr *NumElts);
                         
-  /// convertToVectorType - Return the unique reference to a vector type of
-  /// the specified element type and size. VectorType can be a pointer, array,
-  /// function, or built-in type (i.e. _Bool, integer, or float).
-  QualType convertToVectorType(QualType VectorType, unsigned NumElts);
+  /// getVectorType - Return the unique reference to a vector type of
+  /// the specified element type and size. VectorType must be a built-in type.
+  QualType getVectorType(QualType VectorType, unsigned NumElts);
+
+  /// getOCUVectorType - Return the unique reference to an OCU vector type of
+  /// the specified element type and size. VectorType must be a built-in type.
+  QualType getOCUVectorType(QualType VectorType, unsigned NumElts);
 
   /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
   ///
