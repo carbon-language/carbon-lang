@@ -277,6 +277,10 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
 ///
 /// FIXME: This should ext-warn on overflow during evaluation!  ISO C does not
 /// permit this.
+///
+/// FIXME: Handle offsetof.  Two things to do:  Handle GCC's __builtin_offsetof
+/// to support gcc 4.0+  and handle the idiom GCC recognizes with a null pointer
+/// cast+dereference.
 bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                  SourceLocation *Loc, bool isEvaluated) const {
   switch (getStmtClass()) {
