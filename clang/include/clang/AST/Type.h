@@ -646,9 +646,13 @@ class RecordType : public TagType {
   RecordType(); // DO NOT IMPLEMENT
 public:
     
-  RecordDecl *getDecl() const {
+  const RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
+  RecordDecl *getDecl() {
+    return reinterpret_cast<RecordDecl*>(TagType::getDecl());
+  }
+  
   // FIXME: This predicate is a helper to QualType/Type. It needs to 
   // recursively check all fields for const-ness. If any field is declared
   // const, it needs to return false. 

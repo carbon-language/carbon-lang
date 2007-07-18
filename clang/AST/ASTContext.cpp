@@ -157,16 +157,15 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   uint64_t Size;
   unsigned Align;
   switch (T->getTypeClass()) {
-  default:
-  case Type::Complex:
-  case Type::Array:
-  case Type::Vector:
-  case Type::TypeName:
-  case Type::Tagged:
-    assert(0 && "Unimplemented type sizes!");
   case Type::FunctionNoProto:
   case Type::FunctionProto:
     assert(0 && "Incomplete types have no size!");
+  default:
+  case Type::Array:
+  case Type::Vector:
+  case Type::TypeName:
+    assert(0 && "Unimplemented type sizes!");
+
   case Type::Builtin: {
     // FIXME: need to use TargetInfo to derive the target specific sizes. This
     // implementation will suffice for play with vector support.
@@ -196,8 +195,28 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::Pointer: Target.getPointerInfo(Size, Align, L); break;
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
-    // of the referenced type." C++98 5.3.3p2: expr.sizeof
+    // of the referenced type." C++98 5.3.3p2: expr.sizeof.
+    // FIXME: This is wrong for struct layout!
     return getTypeInfo(cast<ReferenceType>(T)->getReferenceeType(), L);
+    
+  case Type::Complex: {
+    // Complex types have the same alignment as their elements, but twice the
+    // size.
+    std::pair<uint64_t, unsigned> EltInfo = 
+      getTypeInfo(cast<ComplexType>(T)->getElementType(), L);
+    Size = EltInfo.first*2;
+    Align = EltInfo.second;
+    break;
+  }
+  case Type::Tagged:
+    if (RecordType *RT = dyn_cast<RecordType>(cast<TagType>(T))) {
+      const RecordLayout &Layout = getRecordLayout(RT->getDecl(), L);
+      Size = Layout.getSize();
+      Align = Layout.getAlignment();
+      break;
+    }
+    // FIXME: Handle enums.
+    assert(0 && "Unimplemented type sizes!");
   }
   
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
@@ -267,6 +286,9 @@ const RecordLayout &ASTContext::getRecordLayout(const RecordDecl *D,
       RecordAlign = std::max(RecordAlign, FieldAlign);
     }
   }
+  
+  NewEntry->SetLayout(RecordSize, RecordAlign, FieldOffsets);
+  return *NewEntry;
 }
 
 

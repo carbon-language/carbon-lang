@@ -35,7 +35,7 @@ class RecordLayout {
   }
   
   void SetLayout(uint64_t size, unsigned alignment, uint64_t *fieldOffsets) {
-    Size = Size; Alignment = alignment;
+    Size = size; Alignment = alignment;
     FieldOffsets = fieldOffsets;
   }
   
