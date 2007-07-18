@@ -1,4 +1,4 @@
-// RUN: llvm-gcc %s -o - -S -emit-llvm -O3 | grep {i8 sext}
+// RUN: %llvmgcc %s -o - -S -emit-llvm -O3 | grep {i8 sext}
 // PR1513
 
 struct s{
