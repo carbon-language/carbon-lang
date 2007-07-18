@@ -1361,17 +1361,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     --MBBI;
   }
 
-  // If dynamic alloca is used, then reset esp to point to the last
-  // callee-saved slot before popping them off!
-  if (MFI->hasVarSizedObjects()) {
-    unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
-    MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
-                                    FramePtr, -CSSize);
-    MBB.insert(MBBI, MI);
-    NumBytes = 0;
-  }
-
-  if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
+  if (NumBytes || MFI->hasVarSizedObjects()) {
     // If there is an ADD32ri or SUB32ri of ESP immediately before this
     // instruction, merge the two instructions.
     if (MBBI != MBB.begin()) {
@@ -1389,10 +1379,26 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
         MBB.erase(PI);
       }
     }
-
-    if (NumBytes)
-      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
   }
+
+  // If dynamic alloca is used, then reset esp to point to the last
+  // callee-saved slot before popping them off!
+  if (MFI->hasVarSizedObjects()) {
+    unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
+    if (CSSize) {
+      MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
+                                      FramePtr, -CSSize);
+      MBB.insert(MBBI, MI);
+    } else
+      BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
+        addReg(FramePtr);
+
+    NumBytes = 0;
+  }
+
+  // adjust stack pointer back: ESP += numbytes
+  if (NumBytes)
+    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
 
   // We're returning from function via eh_return.
   if (RetOpcode == X86::EH_RETURN) {
