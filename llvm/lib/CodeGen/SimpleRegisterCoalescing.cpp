@@ -369,6 +369,9 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   // If the intervals were swapped by Join, swap them back so that the register
   // mapping (in the r2i map) is correct.
   if (Swapped) SrcInt.swap(DstInt);
+
+  // repSrcReg is guarateed to be the register whose live interval that is
+  // being merged.
   li_->removeInterval(repSrcReg);
   r2rMap_[repSrcReg] = repDstReg;
 
