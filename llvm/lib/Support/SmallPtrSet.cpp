@@ -184,15 +184,16 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   if (isSmall() && RHS.isSmall())
     assert(CurArraySize == RHS.CurArraySize &&
            "Cannot assign sets with different small sizes");
-  NumElements = RHS.NumElements;
-  NumTombstones = RHS.NumTombstones;
-  
+           
   // If we're becoming small, prepare to insert into our stack space
   if (RHS.isSmall())
     CurArray = &SmallArray[0];
   // Otherwise, allocate new heap space (unless we were the same size)
   else if (CurArraySize != RHS.CurArraySize) {
-    CurArray = (void**)realloc(CurArray, sizeof(void*)*(RHS.CurArraySize+1));
+    if (isSmall())
+      CurArray = (void**)malloc(sizeof(void*) * (RHS.CurArraySize+1));
+    else
+      CurArray = (void**)realloc(CurArray, sizeof(void*)*(RHS.CurArraySize+1));
     assert(CurArray && "Failed to allocate memory?");
   }
   
@@ -201,6 +202,9 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
 
   // Copy over the contents from the other set
   memcpy(CurArray, RHS.CurArray, sizeof(void*)*(CurArraySize+1));
+  
+  NumElements = RHS.NumElements;
+  NumTombstones = RHS.NumTombstones;
 }
 
 SmallPtrSetImpl::~SmallPtrSetImpl() {
