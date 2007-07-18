@@ -15,8 +15,10 @@
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
 #include "clang/AST/Builtins.h"
-#include "clang/AST/Type.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/RecordLayout.h"
+#include "clang/AST/Type.h"
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
 
 namespace clang {
@@ -33,6 +35,7 @@ class ASTContext {
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
+  llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
 public:
   TargetInfo &Target;
   Builtin::Context BuiltinInfo;
@@ -55,21 +58,9 @@ public:
   
   void PrintStats() const;
 
-  /// getTypeInfo - Get the size and alignment of the specified complete type in
-  /// bits.
-  std::pair<uint64_t, unsigned> getTypeInfo(QualType T, SourceLocation L);
-
-  /// getTypeSize - Return the size of the specified type, in bits.  This method
-  /// does not work on incomplete types.
-  uint64_t getTypeSize(QualType T, SourceLocation L) {
-    return getTypeInfo(T, L).first;
-  }
-  
-  /// getTypeAlign - Return the alignment of the specified type, in bits.  This
-  /// method does not work on incomplete types.
-  unsigned getTypeAlign(QualType T, SourceLocation L) {
-    return getTypeInfo(T, L).second;
-  }    
+  //===--------------------------------------------------------------------===//
+  //                           Type Constructors
+  //===--------------------------------------------------------------------===//
   
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
@@ -118,21 +109,50 @@ public:
   /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
   QualType getPointerDiffType() const;
   
+  //===--------------------------------------------------------------------===//
+  //                         Type Sizing and Analysis
+  //===--------------------------------------------------------------------===//
+  
+  /// getTypeInfo - Get the size and alignment of the specified complete type in
+  /// bits.
+  std::pair<uint64_t, unsigned> getTypeInfo(QualType T, SourceLocation L);
+  
+  /// getTypeSize - Return the size of the specified type, in bits.  This method
+  /// does not work on incomplete types.
+  uint64_t getTypeSize(QualType T, SourceLocation L) {
+    return getTypeInfo(T, L).first;
+  }
+  
+  /// getTypeAlign - Return the alignment of the specified type, in bits.  This
+  /// method does not work on incomplete types.
+  unsigned getTypeAlign(QualType T, SourceLocation L) {
+    return getTypeInfo(T, L).second;
+  }
+  
+  /// getRecordLayout - Get or compute information about the layout of the
+  /// specified record (struct/union/class), which indicates its size and field
+  /// position information.
+  const RecordLayout &getRecordLayout(const RecordDecl *D, SourceLocation L);
+  
+  //===--------------------------------------------------------------------===//
+  //                            Type Operators
+  //===--------------------------------------------------------------------===//
+  
   /// getIntegerBitwidth - Return the bitwidth of the specified integer type
   /// according to the target.  'Loc' specifies the source location that
   /// requires evaluation of this property.
   unsigned getIntegerBitwidth(QualType T, SourceLocation Loc);
-
-  // maxIntegerType - Returns the highest ranked integer type. Handles 3
-  // different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
+  
+  /// maxIntegerType - Returns the highest ranked integer type. Handles 3
+  /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
   static QualType maxIntegerType(QualType lhs, QualType rhs);
   
-  // maxFloatingType - Returns the highest ranked float type. Both input 
-  // types are required to be floats.
+  /// maxFloatingType - Returns the highest ranked float type. Both input 
+  /// types are required to be floats.
   static QualType maxFloatingType(QualType lt, QualType rt);
 
-  // maxComplexType - Returns the highest ranked complex type. Handles 3
-  // different type combos: complex/complex, complex/float, float/complex. 
+  /// maxComplexType - Returns the highest ranked complex type. Handles 3
+  /// different type combos: complex/complex, complex/float, float/complex. 
   QualType maxComplexType(QualType lt, QualType rt) const;
   
 private:

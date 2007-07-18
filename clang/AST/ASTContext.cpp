@@ -145,6 +145,9 @@ void ASTContext::InitBuiltinTypes() {
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
 }
 
+//===----------------------------------------------------------------------===//
+//                         Type Sizing and Analysis
+//===----------------------------------------------------------------------===//
 
 /// getTypeSize - Return the size of the specified type, in bits.  This method
 /// does not work on incomplete types.
@@ -197,8 +200,75 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     return getTypeInfo(cast<ReferenceType>(T)->getReferenceeType(), L);
   }
   
+  assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
   return std::make_pair(Size, Align);
 }
+
+/// getRecordLayout - Get or compute information about the layout of the
+/// specified record (struct/union/class), which indicates its size and field
+/// position information.
+const RecordLayout &ASTContext::getRecordLayout(const RecordDecl *D,
+                                                SourceLocation L) {
+  assert(D->isDefinition() && "Cannot get layout of forward declarations!");
+  
+  // Look up this layout, if already laid out, return what we have.
+  const RecordLayout *&Entry = RecordLayoutInfo[D];
+  if (Entry) return *Entry;
+  
+  // Allocate and assign into RecordLayoutInfo here.  The "Entry" reference can
+  // be invalidated (dangle) if the RecordLayoutInfo hashtable is inserted into.
+  RecordLayout *NewEntry = new RecordLayout();
+  Entry = NewEntry;
+  
+  uint64_t *FieldOffsets = new uint64_t[D->getNumMembers()];
+  uint64_t RecordSize = 0;
+  unsigned RecordAlign = 8;  // Default alignment = 1 byte = 8 bits.
+
+  if (D->getKind() != Decl::Union) {
+    // Layout each field, for now, just sequentially, respecting alignment.  In
+    // the future, this will need to be tweakable by targets.
+    for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
+      const FieldDecl *FD = D->getMember(i);
+      std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
+      uint64_t FieldSize = FieldInfo.first;
+      unsigned FieldAlign = FieldInfo.second;
+      
+      // Round up the current record size to the field's alignment boundary.
+      RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
+      
+      // Place this field at the current location.
+      FieldOffsets[i] = RecordSize;
+      
+      // Reserve space for this field.
+      RecordSize += FieldSize;
+      
+      // Remember max struct/class alignment.
+      RecordAlign = std::max(RecordAlign, FieldAlign);
+    }
+    
+    // Finally, round the size of the total struct up to the alignment of the
+    // struct itself.
+    RecordSize = (RecordSize+RecordAlign-1) & ~(RecordAlign-1);
+  } else {
+    // Union layout just puts each member at the start of the record.
+    for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
+      const FieldDecl *FD = D->getMember(i);
+      std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType(), L);
+      uint64_t FieldSize = FieldInfo.first;
+      unsigned FieldAlign = FieldInfo.second;
+      
+      // Round up the current record size to the field's alignment boundary.
+      RecordSize = std::max(RecordSize, FieldSize);
+      
+      // Place this field at the start of the record.
+      FieldOffsets[i] = 0;
+      
+      // Remember max struct/class alignment.
+      RecordAlign = std::max(RecordAlign, FieldAlign);
+    }
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                   Type creation/memoization methods
