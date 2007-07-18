@@ -324,32 +324,36 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
     case UnaryOperator::Extension:
-      return true;
+      return true;  // FIXME: this is wrong.
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
       if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx, Loc))
         return false;
       
-      // FIXME: Evaluate sizeof/alignof.
-      Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
-      Result = 1;  // FIXME: Obviously bogus
+      // Return the result in the right width.
+      Result.zextOrTrunc(Ctx.getTypeSize(getType(), Exp->getOperatorLoc()));
+
+      // Get information about the size or align.
+      if (Exp->getOpcode() == UnaryOperator::SizeOf)
+        Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
+                                 Exp->getOperatorLoc());
+      else
+        Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
+                                  Exp->getOperatorLoc());
       break;
     case UnaryOperator::LNot: {
       bool Val = Result != 0;
-      Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
+      Result.zextOrTrunc(Ctx.getTypeSize(getType(), Exp->getOperatorLoc()));
       Result = Val;
       break;
     }
     case UnaryOperator::Plus:
-      // FIXME: Do usual unary promotions here!
       break;
     case UnaryOperator::Minus:
-      // FIXME: Do usual unary promotions here!
       Result = -Result;
       break;
     case UnaryOperator::Not:
-      // FIXME: Do usual unary promotions here!
       Result = ~Result;
       break;
     }
@@ -361,9 +365,14 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx,Loc))
       return false;
 
-    // FIXME: Evaluate sizeof/alignof.
-    Result.zextOrTrunc(32);  // FIXME: NOT RIGHT IN GENERAL.
-    Result = 1;  // FIXME: Obviously bogus
+    // Return the result in the right width.
+    Result.zextOrTrunc(Ctx.getTypeSize(getType(), Exp->getOperatorLoc()));
+    
+    // Get information about the size or align.
+    if (Exp->isSizeOf())
+      Result = Ctx.getTypeSize(Exp->getArgumentType(), Exp->getOperatorLoc());
+    else
+      Result = Ctx.getTypeAlign(Exp->getArgumentType(), Exp->getOperatorLoc());
     break;
   }
   case BinaryOperatorClass: {
@@ -394,7 +403,6 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
         return false;
     }
     
-    // FIXME: These should all do the standard promotions, etc.
     switch (Exp->getOpcode()) {
     default:
       if (Loc) *Loc = getLocStart();
@@ -525,7 +533,6 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     // Evalute the true one, capture the result.
     if (!TrueExp->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
-    // FIXME: promotions on result.
     break;
   }
   }

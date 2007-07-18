@@ -317,6 +317,8 @@ public:
   
   bool isSizeOf() const { return isSizeof; }
   QualType getArgumentType() const { return Ty; }
+  
+  SourceLocation getOperatorLoc() const { return OpLoc; }
   SourceRange getSourceRange() const { return SourceRange(OpLoc, RParenLoc); }
 
   virtual void visit(StmtVisitor &Visitor);
