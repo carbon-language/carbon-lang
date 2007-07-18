@@ -28,7 +28,8 @@ static bool isIdentChar(char C) {
          C == '_';
 }
 
-namespace {
+// This should be an anon namespace, this works around a GCC warning.
+namespace llvm {  
   struct AsmWriterOperand {
     enum { isLiteralTextOperand, isMachineInstrOperand } OperandType;
 
