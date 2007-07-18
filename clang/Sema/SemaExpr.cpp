@@ -478,8 +478,9 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   Expr *castExpr = static_cast<Expr*>(Op);
   QualType castType = QualType::getFromOpaquePtr(Ty);
 
-  // C99 6.5.4p2: both the cast type and expression type need to be scalars.
-  if (!castType->isScalarType()) { 
+  // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
+  // type needs to be scalar.
+  if (!castType->isScalarType() && !castType->isVoidType()) { 
     return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
                 castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
   }
