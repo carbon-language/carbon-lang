@@ -167,7 +167,8 @@ public:
                                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                                    SourceLocation ColonLoc, StmtTy *SubStmt);
   virtual StmtResult ParseDefaultStmt(SourceLocation DefaultLoc,
-                                      SourceLocation ColonLoc, StmtTy *SubStmt);
+                                      SourceLocation ColonLoc, StmtTy *SubStmt,
+                                      Scope *CurScope);
   virtual StmtResult ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                                     SourceLocation ColonLoc, StmtTy *SubStmt);
   virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,

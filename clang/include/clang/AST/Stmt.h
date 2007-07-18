@@ -23,6 +23,7 @@ namespace clang {
   class Decl;
   class IdentifierInfo;
   class StmtVisitor;
+  class SwitchStmt;
   
 /// Stmt - This represents one statement.
 ///
@@ -127,9 +128,11 @@ class CaseStmt : public Stmt {
   Expr *LHSVal;
   Expr *RHSVal;  // Non-null for GNU "case 1 ... 4" extension
   Stmt *SubStmt;
+  SwitchStmt *Switch;
 public:
   CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
-    : Stmt(CaseStmtClass), LHSVal(lhs), RHSVal(rhs), SubStmt(substmt) {}
+    : Stmt(CaseStmtClass), LHSVal(lhs), RHSVal(rhs), SubStmt(substmt), 
+    Switch(0) {}
   
   Expr *getLHS() { return LHSVal; }
   Expr *getRHS() { return RHSVal; }
@@ -143,10 +146,13 @@ public:
 };
 
 class DefaultStmt : public Stmt {
+  SourceLocation DefaultLoc;
   Stmt *SubStmt;
 public:
-  DefaultStmt(Stmt *substmt) : Stmt(DefaultStmtClass), SubStmt(substmt) {}
+  DefaultStmt(SourceLocation DL, Stmt *substmt) : Stmt(DefaultStmtClass), 
+    DefaultLoc(DL), SubStmt(substmt) {}
   
+  SourceLocation getDefaultLoc() const { return DefaultLoc; }
   Stmt *getSubStmt() { return SubStmt; }
 
   virtual void visit(StmtVisitor &Visitor);

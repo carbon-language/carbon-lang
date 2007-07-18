@@ -204,7 +204,8 @@ public:
     return 0;
   }
   virtual StmtResult ParseDefaultStmt(SourceLocation DefaultLoc,
-                                      SourceLocation ColonLoc, StmtTy *SubStmt){
+                                      SourceLocation ColonLoc, StmtTy *SubStmt,
+                                      Scope *CurScope){
     return 0;
   }
   

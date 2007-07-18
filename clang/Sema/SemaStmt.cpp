@@ -51,7 +51,7 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
 
 Action::StmtResult
 Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
-                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
+                    SourceLocation DotDotDotLoc, ExprTy *rhsval,
                     SourceLocation ColonLoc, StmtTy *SubStmt) {
   Expr *LHSVal = ((Expr *)lhsval);
   assert((LHSVal != 0) && "missing expression in case statement");
@@ -62,15 +62,34 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
     return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
                 LHSVal->getSourceRange());
 
-  // FIXME: SEMA for RHS of case range.
+  // GCC extension: The expression shall be an integer constant.
+  Expr *RHSVal = ((Expr *)rhsval);
+  if (RHSVal) {
+    if (!RHSVal->isIntegerConstantExpr(Context, &ExpLoc))
+      return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
+                  RHSVal->getSourceRange());
+  }
 
   return new CaseStmt(LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
 }
 
 Action::StmtResult
-Sema::ParseDefaultStmt(SourceLocation DefaultLoc,
-                       SourceLocation ColonLoc, StmtTy *SubStmt) {
-  return new DefaultStmt((Stmt*)SubStmt);
+Sema::ParseDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
+                       StmtTy *SubStmt, Scope *CurScope) {
+  Scope *S = CurScope->getBreakParent();
+  
+  if (S->getDefaultStmt()) {
+    Diag(DefaultLoc, diag::err_multiple_default_labels_defined);
+    Diag(((DefaultStmt *)S->getDefaultStmt())->getDefaultLoc(), 
+         diag::err_first_label);
+
+    return true;
+  }
+  
+  DefaultStmt *DS = new DefaultStmt(DefaultLoc, (Stmt*)SubStmt);
+  S->setDefaultStmt(DS);
+  
+  return DS;
 }
 
 Action::StmtResult
@@ -119,6 +138,14 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
 
 Action::StmtResult
 Sema::ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond, StmtTy *Body) {
+  Expr *condExpr = (Expr *)Cond;
+
+  QualType condType = condExpr->getType();
+  
+  if (!condType->isIntegerType()) // C99 6.8.4.2p1
+    return Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer,
+                condType.getAsString(), condExpr->getSourceRange());
+
   return new SwitchStmt((Expr*)Cond, (Stmt*)Body);
 }
 
@@ -205,7 +232,6 @@ Sema::ParseContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
     return true;
   }
   
-  // FIXME: Remember that this continue goes with this loop.
   return new ContinueStmt();
 }
 
@@ -218,7 +244,6 @@ Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
     return true;
   }
   
-  // FIXME: Remember that this break goes with this loop/switch.
   return new BreakStmt();
 }
 

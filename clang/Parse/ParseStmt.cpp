@@ -338,7 +338,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
     return true;
   
   // TODO: look up enclosing switch stmt.
-  return Actions.ParseDefaultStmt(DefaultLoc, ColonLoc, SubStmt.Val);
+  return Actions.ParseDefaultStmt(DefaultLoc, ColonLoc, SubStmt.Val, CurScope);
 }
 
 

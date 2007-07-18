@@ -464,6 +464,8 @@ DIAG(err_previous_definition, ERROR,
      "previous definition is here")
 DIAG(err_previous_use, ERROR,
      "previous use is here")
+DIAG(err_first_label, ERROR,
+    "first label is here")
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%0': expected expression")
@@ -659,6 +661,10 @@ DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
      "returning '%1' from function expecting '%0' discards qualifiers")
 DIAG(err_typecheck_statement_requires_scalar, ERROR,
      "statement requires expression of scalar type ('%0' invalid)")
+DIAG(err_typecheck_statement_requires_integer, ERROR,
+    "statement requires expression of integer type ('%0' invalid)")
+DIAG(err_multiple_default_labels_defined, ERROR,
+    "multiple default labels in one switch")
      
 DIAG(warn_return_missing_expr, WARNING,
      "non-void function '%0' should return a value")
