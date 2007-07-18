@@ -1131,3 +1131,20 @@ _test:
         subl 4(%esp), %eax
         ret
 
+//===---------------------------------------------------------------------===//
+
+For code like:
+phi (undef, x)
+
+We get an implicit def on the undef side. If the phi is spilled, we then get:
+implicitdef xmm1
+store xmm1 -> stack
+
+It should be possible to teach the x86 backend to "fold" the store into the
+implicitdef, which just deletes the implicit def.
+
+These instructions should go away:
+#IMPLICIT_DEF %xmm1 
+movaps %xmm1, 192(%esp) 
+movaps %xmm1, 224(%esp) 
+movaps %xmm1, 176(%esp)
