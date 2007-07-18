@@ -340,7 +340,7 @@ public:
   RValue EmitUnaryMinus   (const UnaryOperator *E);
   RValue EmitUnaryNot     (const UnaryOperator *E);
   RValue EmitUnaryLNot    (const UnaryOperator *E);
-  // FIXME: SIZEOF/ALIGNOF(expr).
+  RValue EmitSizeAlignOf  (QualType TypeToSize, QualType RetType,bool isSizeOf);
   // FIXME: real/imag
   
   // Binary Operators.

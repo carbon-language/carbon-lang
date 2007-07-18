@@ -473,6 +473,10 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
   case Expr::UnaryOperatorClass:
     return EmitUnaryOperator(cast<UnaryOperator>(E));
+  case Expr::SizeOfAlignOfTypeExprClass:
+    return EmitSizeAlignOf(cast<SizeOfAlignOfTypeExpr>(E)->getArgumentType(),
+                           E->getType(),
+                           cast<SizeOfAlignOfTypeExpr>(E)->isSizeOf());
   case Expr::ImplicitCastExprClass:
     return EmitCastExpr(cast<ImplicitCastExpr>(E)->getSubExpr(), E->getType());
   case Expr::CastExprClass: 
@@ -655,7 +659,10 @@ RValue CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
   case UnaryOperator::Minus  : return EmitUnaryMinus(E);
   case UnaryOperator::Not    : return EmitUnaryNot(E);
   case UnaryOperator::LNot   : return EmitUnaryLNot(E);
-  // FIXME: SIZEOF/ALIGNOF(expr).
+  case UnaryOperator::SizeOf :
+    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), true);
+  case UnaryOperator::AlignOf :
+    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), false);
   // FIXME: real/imag
   case UnaryOperator::Extension: return EmitExpr(E->getSubExpr());
   }
@@ -749,6 +756,23 @@ RValue CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
   
   // ZExt result to int.
   return RValue::get(Builder.CreateZExt(BoolVal, LLVMIntTy, "lnot.ext"));
+}
+
+/// EmitSizeAlignOf - Return the size or alignment of the 'TypeToSize' type as
+/// an integer (RetType).
+RValue CodeGenFunction::EmitSizeAlignOf(QualType TypeToSize,
+                                        QualType RetType, bool isSizeOf) {
+  /// FIXME: This doesn't handle VLAs yet!
+  std::pair<uint64_t, unsigned> Info =
+    getContext().getTypeInfo(TypeToSize, SourceLocation());
+  
+  uint64_t Val = isSizeOf ? Info.first : Info.second;
+  Val /= 8;  // Return size in bytes, not bits.
+  
+  assert(RetType->isIntegerType() && "Result type must be an integer!");
+
+  unsigned ResultWidth = getContext().getTypeSize(RetType, SourceLocation());
+  return RValue::get(llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val)));
 }
 
 
