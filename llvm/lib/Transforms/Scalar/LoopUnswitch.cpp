@@ -408,26 +408,70 @@ static inline void RemapInstruction(Instruction *I,
 }
 
 // CloneDomInfo - NewBB is cloned from Orig basic block. Now clone Dominator Info.
-// If Orig is in Loop then find and use Orig dominator's cloned block as NewBB 
-// dominator.
-void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L, 
+//
+// If Orig block's immediate dominator is mapped in VM then use corresponding
+// immediate dominator from the map. Otherwise Orig block's dominator is also
+// NewBB's dominator.
+//
+// OrigPreheader is loop pre-header before this patch started
+// updating CFG. NewPrehader is loops new pre-header. However, after CFG
+// manipulation, loop L may not exist. So rely in input parameter NewPreheader.
+void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, 
+                  BasicBlock *NewPreheader, BasicBlock *OrigPreheader, 
+                  BasicBlock *OrigHeader,
                   DominatorTree *DT, DominanceFrontier *DF,
                   DenseMap<const Value*, Value*> &VM) {
 
+  // If NewBB alreay has found its place in domiantor tree then no need to do
+  // anything.
+  if (DT->getNode(NewBB))
+    return;
+
+  // If Orig does not have any immediate domiantor then its clone, NewBB, does 
+  // not need any immediate dominator.
   DomTreeNode *OrigNode = DT->getNode(Orig);
   if (!OrigNode)
     return;
-  BasicBlock *OrigIDom = OrigNode->getBlock();
-  BasicBlock *NewIDom = OrigIDom;
-  if (L->contains(OrigIDom)) {
-    if (!DT->getNode(OrigIDom))
-      CloneDomInfo(NewIDom, OrigIDom, L, DT, DF, VM);
-    NewIDom = cast<BasicBlock>(VM[OrigIDom]);
+  DomTreeNode *OrigIDomNode = OrigNode->getIDom();
+  if (!OrigIDomNode)
+    return;
+
+  BasicBlock *OrigIDom = NULL; 
+
+  // If Orig is original loop header then its immediate dominator is
+  // NewPreheader.
+  if (Orig == OrigHeader)
+    OrigIDom = NewPreheader;
+
+  // If Orig is new pre-header then its immediate dominator is
+  // original pre-header.
+  else if (Orig == NewPreheader)
+    OrigIDom = OrigPreheader;
+
+  // Other as DT to find Orig's immediate dominator.
+  else
+     OrigIDom = OrigIDomNode->getBlock();
+
+   // Initially use Orig's immediate dominator as NewBB's immediate dominator.
+   BasicBlock *NewIDom = OrigIDom;
+   DenseMap<const Value*, Value*>::iterator I = VM.find(OrigIDom);
+   if (I != VM.end()) {
+     //    if (!DT->getNode(OrigIDom))
+     // CloneDomInfo(NewIDom, OrigIDom, NewPreheader, OrigPreheader, 
+     //              OrigHeader, DT, DF, VM);
+
+     NewIDom = cast<BasicBlock>(I->second);
+
+     // If NewIDom does not have corresponding dominatore tree node then
+     // get one.
+     if (!DT->getNode(NewIDom))
+      CloneDomInfo(NewIDom, OrigIDom, NewPreheader, OrigPreheader, 
+                   OrigHeader, DT, DF, VM);
   }
-  if (NewBB == NewIDom) {
-    DT->addNewBlock(NewBB, OrigIDom);
-    DT->changeImmediateDominator(NewBB, NewIDom);
-  } else
+   //  if (NewBB == NewIDom) {
+   // DT->addNewBlock(NewBB, OrigIDom);
+   // DT->changeImmediateDominator(NewBB, NewIDom);
+   //} else
     DT->addNewBlock(NewBB, NewIDom);
 
   DominanceFrontier::DomSetType NewDFSet;
@@ -438,8 +482,9 @@ void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, Loop *L,
       for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
            I != E; ++I) {
         BasicBlock *BB = *I;
-        if (L->contains(BB)) 
-          NewDFSet.insert(cast<BasicBlock>(VM[Orig]));
+        DenseMap<const Value*, Value*>::iterator I = VM.find(BB);
+        if (I != VM.end())
+          NewDFSet.insert(cast<BasicBlock>(I->second));
         else
           NewDFSet.insert(BB);
       }
@@ -564,8 +609,10 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // First step, split the preheader and exit blocks, and add these blocks to
   // the LoopBlocks list.
+  BasicBlock *OrigHeader = L->getHeader();
   BasicBlock *OrigPreheader = L->getLoopPreheader();
-  LoopBlocks.push_back(SplitEdge(OrigPreheader, L->getHeader(), this));
+  BasicBlock *NewPreheader = SplitEdge(OrigPreheader, L->getHeader(), this);
+  LoopBlocks.push_back(NewPreheader);
 
   // We want the loop to come after the preheader, but before the exit blocks.
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
@@ -643,7 +690,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
       BasicBlock *LBB = LoopBlocks[i];
       BasicBlock *NBB = NewBlocks[i];
-      CloneDomInfo(NBB, LBB, L, DT, DF, ValueMap);
+      CloneDomInfo(NBB, LBB, NewPreheader, OrigPreheader, 
+                   OrigHeader, DT, DF, ValueMap);
     }
   
   // Splice the newly inserted blocks into the function right before the
