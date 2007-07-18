@@ -740,6 +740,16 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
   setName(Name);
 }
 
+LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, 
+                   unsigned Align, BasicBlock *InsertAE)
+  : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
+                     Load, Ptr, InsertAE) {
+  setVolatile(isVolatile);
+  setAlignment(Align);
+  AssertOK();
+  setName(Name);
+}
+
 LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
                    BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
@@ -839,6 +849,16 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
 StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      unsigned Align, Instruction *InsertBefore)
   : Instruction(Type::VoidTy, Store, Ops, 2, InsertBefore) {
+  Ops[0].init(val, this);
+  Ops[1].init(addr, this);
+  setVolatile(isVolatile);
+  setAlignment(Align);
+  AssertOK();
+}
+
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
+                     unsigned Align, BasicBlock *InsertAtEnd)
+  : Instruction(Type::VoidTy, Store, Ops, 2, InsertAtEnd) {
   Ops[0].init(val, this);
   Ops[1].init(addr, this);
   setVolatile(isVolatile);

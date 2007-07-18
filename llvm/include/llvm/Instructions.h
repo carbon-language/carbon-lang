@@ -235,6 +235,8 @@ public:
            Instruction *InsertBefore = 0);
   LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
            BasicBlock *InsertAtEnd);
+  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, unsigned Align,
+           BasicBlock *InsertAtEnd);
 
   LoadInst(Value *Ptr, const char *Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAtEnd);
@@ -307,6 +309,8 @@ public:
   StoreInst(Value *Val, Value *Ptr, bool isVolatile,
             unsigned Align, Instruction *InsertBefore = 0);
   StoreInst(Value *Val, Value *Ptr, bool isVolatile, BasicBlock *InsertAtEnd);
+  StoreInst(Value *Val, Value *Ptr, bool isVolatile,
+            unsigned Align, BasicBlock *InsertAtEnd);
 
 
   /// isVolatile - Return true if this is a load from a volatile memory
