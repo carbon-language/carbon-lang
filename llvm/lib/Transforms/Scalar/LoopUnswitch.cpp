@@ -413,9 +413,9 @@ static inline void RemapInstruction(Instruction *I,
 // immediate dominator from the map. Otherwise Orig block's dominator is also
 // NewBB's dominator.
 //
-// OrigPreheader is loop pre-header before this patch started
+// OrigPreheader is loop pre-header before this pass started
 // updating CFG. NewPrehader is loops new pre-header. However, after CFG
-// manipulation, loop L may not exist. So rely in input parameter NewPreheader.
+// manipulation, loop L may not exist. So rely on input parameter NewPreheader.
 void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, 
                   BasicBlock *NewPreheader, BasicBlock *OrigPreheader, 
                   BasicBlock *OrigHeader,
