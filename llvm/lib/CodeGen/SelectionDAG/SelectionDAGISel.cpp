@@ -2327,13 +2327,13 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   AllocSize = DAG.getNode(ISD::MUL, IntPtr, AllocSize,
                           getIntPtrConstant(TySize));
 
-  // Handle alignment.  If the requested alignment is less than or equal to the
-  // stack alignment, ignore it and round the size of the allocation up to the
-  // stack alignment size.  If the size is greater than the stack alignment, we
-  // note this in the DYNAMIC_STACKALLOC node.
+  // Handle alignment.  If the requested alignment is less than the stack
+  // alignment, ignore it and round the size of the allocation up to the stack
+  // alignment size.  If the size is greater than or equal to the stack
+  // alignment, we note this in the DYNAMIC_STACKALLOC node.
   unsigned StackAlign =
     TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
-  if (Align <= StackAlign) {
+  if (Align < StackAlign) {
     Align = 0;
     // Add SA-1 to the size.
     AllocSize = DAG.getNode(ISD::ADD, AllocSize.getValueType(), AllocSize,
