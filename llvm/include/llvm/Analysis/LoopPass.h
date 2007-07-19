@@ -116,10 +116,6 @@ public:
   void redoLoop(Loop *L);
 
 private:
-  /// verifyLoopInfo - Verify loop nest.
-  void verifyLoopInfo();
-
-private:
   std::deque<Loop *> LQ;
   bool skipThisLoop;
   bool redoThisLoop;

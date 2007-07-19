@@ -594,22 +594,30 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
   return true;
 }
 
-/// Remove Analyss not preserved by Pass P
-void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
+/// verifyPreservedAnalysis -- Verify analysis presreved by pass P.
+void PMDataManager::verifyPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
   const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
 
   // Verify preserved analysis
-  for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
-         E = AvailableAnalysis.end(); I != E; ++I) {
-    Pass *AP = I->second;
-    AP->verifyAnalysis();
+  for (std::vector<AnalysisID>::const_iterator I = PreservedSet.begin(),
+         E = PreservedSet.end(); I != E; ++I) {
+    AnalysisID AID = *I;
+    Pass *AP = findAnalysisPass(AID, true);
+    if (AP)
+      AP->verifyAnalysis();
   }
-  
+}
+
+/// Remove Analyss not preserved by Pass P
+void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
+  AnalysisUsage AnUsage;
+  P->getAnalysisUsage(AnUsage);
   if (AnUsage.getPreservesAll())
     return;
 
+  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
     std::map<AnalysisID, Pass*>::iterator Info = I++;
@@ -954,6 +962,7 @@ BBPassManager::runOnFunction(Function &F) {
         dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG, (*I).getName());
       dumpAnalysisSetInfo("Preserved", BP, AnUsage.getPreservedSet());
 
+      verifyPreservedAnalysis(BP);
       removeNotPreservedAnalysis(BP);
       recordAvailableAnalysis(BP);
       removeDeadPasses(BP, (*I).getName(), ON_BASICBLOCK_MSG);
@@ -1151,6 +1160,7 @@ bool FPPassManager::runOnFunction(Function &F) {
       dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpAnalysisSetInfo("Preserved", FP, AnUsage.getPreservedSet());
 
+    verifyPreservedAnalysis(FP);
     removeNotPreservedAnalysis(FP);
     recordAvailableAnalysis(FP);
     removeDeadPasses(FP, F.getName(), ON_FUNCTION_MSG);
@@ -1220,6 +1230,7 @@ MPPassManager::runOnModule(Module &M) {
                    M.getModuleIdentifier());
     dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
       
+    verifyPreservedAnalysis(MP);
     removeNotPreservedAnalysis(MP);
     recordAvailableAnalysis(MP);
     removeDeadPasses(MP, M.getModuleIdentifier(), ON_MODULE_MSG);

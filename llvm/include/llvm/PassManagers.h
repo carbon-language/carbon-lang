@@ -211,6 +211,9 @@ public:
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
   void recordAvailableAnalysis(Pass *P);
 
+  /// verifyPreservedAnalysis -- Verify analysis presreved by pass P.
+  void verifyPreservedAnalysis(Pass *P);
+
   /// Remove Analysis that is not preserved by the pass
   void removeNotPreservedAnalysis(Pass *P);
   

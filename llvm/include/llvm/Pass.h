@@ -163,7 +163,7 @@ public:
 
   /// verifyAnalysis() - This member can be implemented by a analysis pass to
   /// check state of analysis information. 
-  virtual void verifyAnalysis() {}
+  virtual void verifyAnalysis() const {}
 
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
   virtual void dumpPassStructure(unsigned Offset = 0);

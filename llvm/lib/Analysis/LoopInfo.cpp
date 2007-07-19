@@ -81,6 +81,18 @@ void Loop::print(std::ostream &OS, unsigned Depth) const {
     (*I)->print(OS, Depth+2);
 }
 
+/// verifyLoop - Verify loop structure
+void Loop::verifyLoop() const {
+#ifndef NDEBUG
+  assert (getHeader() && "Loop header is missing");
+  assert (getLoopPreheader() && "Loop preheader is missing");
+  assert (getLoopLatch() && "Loop latch is missing");
+  for (std::vector<Loop*>::const_iterator I = SubLoops.begin(), E = SubLoops.end();
+       I != E; ++I)
+    (*I)->verifyLoop();
+#endif
+}
+
 void Loop::dump() const {
   print(cerr);
 }
@@ -103,7 +115,6 @@ void LoopInfo::releaseMemory() {
   BBMap.clear();                             // Reset internal state of analysis
   TopLevelLoops.clear();
 }
-
 
 void LoopInfo::Calculate(DominatorTree &DT) {
   BasicBlock *RootNode = DT.getRootNode()->getBlock();

@@ -117,7 +117,8 @@ bool CGPassManager::runOnModule(Module &M) {
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_CG_MSG, "");
       dumpAnalysisSetInfo("Preserved", P, AnUsage.getPreservedSet());
-      
+
+      verifyPreservedAnalysis(P);      
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
       removeDeadPasses(P, "", ON_CG_MSG);

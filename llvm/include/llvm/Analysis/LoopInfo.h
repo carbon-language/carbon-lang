@@ -217,6 +217,9 @@ public:
   /// the mapping in the LoopInfo class.
   void removeBlockFromLoop(BasicBlock *BB);
 
+  /// verifyLoop - Verify loop structure
+  void verifyLoop() const;
+
   void print(std::ostream &O, unsigned Depth = 0) const;
   void print(std::ostream *O, unsigned Depth = 0) const {
     if (O) print(*O, Depth);

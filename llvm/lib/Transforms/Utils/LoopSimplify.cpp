@@ -74,6 +74,16 @@ namespace {
       AU.addPreserved<DominanceFrontier>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
     }
+
+    /// verifyAnalysis() - Verify loop nest.
+    void verifyAnalysis() const {
+#ifndef NDEBUG
+      LoopInfo *NLI = &getAnalysis<LoopInfo>();
+      for (LoopInfo::iterator I = NLI->begin(), E = NLI->end(); I != E; ++I) 
+        (*I)->verifyLoop();
+#endif  
+    }
+
   private:
     bool ProcessLoop(Loop *L);
     BasicBlock *SplitBlockPredecessors(BasicBlock *BB, const char *Suffix,
