@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse | grep {movq (%rdi), %rax} &&
+; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse | grep {movq (%rdi), %rax}
 ; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse | grep {movq 8(%rdi), %rax}
 define i64 @foo_0(<2 x i64>* %val) {
 entry:
