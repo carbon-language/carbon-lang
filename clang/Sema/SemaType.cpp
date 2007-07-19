@@ -103,9 +103,6 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   QualType T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
 
-  // If there was an error parsing declspecs, return a null type pointer.
-  if (T.isNull()) return T;
-  
   // Apply const/volatile/restrict qualifiers to T.
   T = T.getQualifiedType(D.getDeclSpec().getTypeQualifiers());
   
@@ -120,19 +117,19 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_pointer_to_reference,
              D.getIdentifier()->getName());
-        return QualType();
+        T = Context.IntTy;
       }
 
       // Apply the pointer typequals to the pointer object.
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
     case DeclaratorChunk::Reference:
-      if (isa<ReferenceType>(T.getCanonicalType().getTypePtr())) {
+      if (const ReferenceType *RT = T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no references to references ...
         Diag(D.getIdentifierLoc(),
              diag::err_illegal_decl_reference_to_reference,
              D.getIdentifier()->getName());
-        return QualType();
+        T = RT->getReferenceeType();
       }
 
       T = Context.getReferenceType(T);
@@ -146,31 +143,29 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         ASM = ArrayType::Static;
       else
         ASM = ArrayType::Normal;
-      
-      Type *CanonicalT = T.getCanonicalType().getTypePtr();
-      
+
       // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
       // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
       if (T->isIncompleteType()) { 
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
              T.getAsString());
-        return QualType();
-      } else if (isa<FunctionType>(CanonicalT)) {
+        T = Context.IntTy;
+      } else if (T->isFunctionType()) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
              D.getIdentifier()->getName());
-        return QualType();
-      } else if (isa<ReferenceType>(CanonicalT)) {
+        T = Context.getPointerType(T);
+      } else if (const ReferenceType *RT = T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier()->getName());
-        return QualType();
-      } else if (RecordType *EltTy = dyn_cast<RecordType>(CanonicalT)) {
+        T = RT->getReferenceeType();
+      } else if (RecordType *EltTy =dyn_cast<RecordType>(T.getCanonicalType())){
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
           Diag(DeclType.Loc, diag::err_flexible_array_in_array,
                T.getAsString());
-          return QualType();
+          T = Context.IntTy;
         }
       }
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
