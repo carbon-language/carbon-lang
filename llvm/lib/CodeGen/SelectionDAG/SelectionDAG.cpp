@@ -3642,7 +3642,7 @@ void SDNode::dump(const SelectionDAG *G) const {
       cerr << MVT::getValueTypeString(LD->getLoadedVT()) << ">";
 
     const char *AM = getIndexedModeName(LD->getAddressingMode());
-    if (AM != "")
+    if (*AM)
       cerr << " " << AM;
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
     if (ST->isTruncatingStore())
@@ -3650,7 +3650,7 @@ void SDNode::dump(const SelectionDAG *G) const {
            << MVT::getValueTypeString(ST->getStoredVT()) << ">";
 
     const char *AM = getIndexedModeName(ST->getAddressingMode());
-    if (AM != "")
+    if (*AM)
       cerr << " " << AM;
   }
 }
