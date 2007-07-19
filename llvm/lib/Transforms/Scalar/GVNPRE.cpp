@@ -39,7 +39,6 @@
 #include <algorithm>
 #include <deque>
 #include <map>
-#include <vector>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -659,7 +658,7 @@ namespace {
 
   private:
     ValueTable VN;
-    std::vector<Instruction*> createdExpressions;
+    SmallVector<Instruction*, 8> createdExpressions;
     
     DenseMap<BasicBlock*, ValueNumberedSet> availableOut;
     DenseMap<BasicBlock*, ValueNumberedSet> anticipatedIn;
@@ -683,7 +682,7 @@ namespace {
                            BasicBlock* succ, ValueNumberedSet& out) ;
     
     void topo_sort(ValueNumberedSet& set,
-                   std::vector<Value*>& vec) ;
+                   SmallVector<Value*, 8>& vec) ;
     
     void cleanup() ;
     bool elimination() ;
@@ -695,23 +694,23 @@ namespace {
                             ValueNumberedSet& currAvail,
                             ValueNumberedSet& currPhis,
                             ValueNumberedSet& currExps,
-                            SmallPtrSet<Value*, 16>& currTemps) ;
+                            SmallPtrSet<Value*, 16>& currTemps);
     bool buildsets_anticout(BasicBlock* BB,
                             ValueNumberedSet& anticOut,
-                            SmallPtrSet<BasicBlock*, 8>& visited) ;
+                            SmallPtrSet<BasicBlock*, 8>& visited);
     unsigned buildsets_anticin(BasicBlock* BB,
                            ValueNumberedSet& anticOut,
                            ValueNumberedSet& currExps,
                            SmallPtrSet<Value*, 16>& currTemps,
-                           SmallPtrSet<BasicBlock*, 8>& visited) ;
+                           SmallPtrSet<BasicBlock*, 8>& visited);
     void buildsets(Function& F) ;
     
     void insertion_pre(Value* e, BasicBlock* BB,
-                       std::map<BasicBlock*, Value*>& avail,
-                      std::map<BasicBlock*,ValueNumberedSet>& new_set) ;
-    unsigned insertion_mergepoint(std::vector<Value*>& workList,
+                       DenseMap<BasicBlock*, Value*>& avail,
+                       std::map<BasicBlock*,ValueNumberedSet>& new_set);
+    unsigned insertion_mergepoint(SmallVector<Value*, 8>& workList,
                                   df_iterator<DomTreeNode*>& D,
-                      std::map<BasicBlock*, ValueNumberedSet>& new_set) ;
+                      std::map<BasicBlock*, ValueNumberedSet>& new_set);
     bool insertion(Function& F) ;
   
   };
@@ -925,7 +924,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
       return 0;
     
     bool changed_idx = false;
-    std::vector<Value*> newIdx;
+    SmallVector<Value*, 4> newIdx;
     for (GetElementPtrInst::op_iterator I = U->idx_begin(), E = U->idx_end();
          I != E; ++I)
       if (isa<Instruction>(*I)) {
@@ -996,7 +995,7 @@ bool GVNPRE::dependsOnInvoke(Value* V) {
 /// themselves in the set, as well as all values that depend on invokes (see 
 /// above)
 void GVNPRE::clean(ValueNumberedSet& set) {
-  std::vector<Value*> worklist;
+  SmallVector<Value*, 8> worklist;
   worklist.reserve(set.size());
   topo_sort(set, worklist);
   
@@ -1085,9 +1084,9 @@ void GVNPRE::clean(ValueNumberedSet& set) {
 
 /// topo_sort - Given a set of values, sort them by topological
 /// order into the provided vector.
-void GVNPRE::topo_sort(ValueNumberedSet& set, std::vector<Value*>& vec) {
+void GVNPRE::topo_sort(ValueNumberedSet& set, SmallVector<Value*, 8>& vec) {
   SmallPtrSet<Value*, 16> visited;
-  std::vector<Value*> stack;
+  SmallVector<Value*, 8> stack;
   for (ValueNumberedSet::iterator I = set.begin(), E = set.end();
        I != E; ++I) {
     if (visited.count(*I) == 0)
@@ -1205,8 +1204,8 @@ void GVNPRE::dump(ValueNumberedSet& s) const {
 bool GVNPRE::elimination() {
   bool changed_function = false;
   
-  std::vector<std::pair<Instruction*, Value*> > replace;
-  std::vector<Instruction*> erase;
+  SmallVector<std::pair<Instruction*, Value*>, 8> replace;
+  SmallVector<Instruction*, 8> erase;
   
   DominatorTree& DT = getAnalysis<DominatorTree>();
   
@@ -1242,7 +1241,7 @@ bool GVNPRE::elimination() {
     changed_function = true;
   }
     
-  for (std::vector<Instruction*>::iterator I = erase.begin(), E = erase.end();
+  for (SmallVector<Instruction*, 8>::iterator I = erase.begin(), E = erase.end();
        I != E; ++I)
      (*I)->eraseFromParent();
   
@@ -1416,14 +1415,14 @@ bool GVNPRE::buildsets_anticout(BasicBlock* BB,
       BasicBlock* currSucc = BB->getTerminator()->getSuccessor(i);
       ValueNumberedSet& succAnticIn = anticipatedIn[currSucc];
       
-      std::vector<Value*> temp;
+      SmallVector<Value*, 16> temp;
       
       for (ValueNumberedSet::iterator I = anticOut.begin(),
            E = anticOut.end(); I != E; ++I)
         if (!succAnticIn.test(VN.lookup(*I)))
           temp.push_back(*I);
 
-      for (std::vector<Value*>::iterator I = temp.begin(), E = temp.end();
+      for (SmallVector<Value*, 16>::iterator I = temp.begin(), E = temp.end();
            I != E; ++I) {
         anticOut.erase(*I);
         anticOut.reset(VN.lookup(*I));
@@ -1562,7 +1561,7 @@ void GVNPRE::buildsets(Function& F) {
 /// by inserting appropriate values into the predecessors and a phi node in
 /// the main block
 void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
-                           std::map<BasicBlock*, Value*>& avail,
+                           DenseMap<BasicBlock*, Value*>& avail,
                     std::map<BasicBlock*, ValueNumberedSet>& new_sets) {
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     Value* e2 = avail[*PI];
@@ -1622,7 +1621,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         }
       
       // Vararg operators
-      std::vector<Value*> sVarargs;
+      SmallVector<Value*, 4> sVarargs;
       if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(U)) {
         for (GetElementPtrInst::op_iterator OI = G->idx_begin(),
              OE = G->idx_end(); OI != OE; ++OI) {
@@ -1680,7 +1679,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
       val_replace(new_sets[*PI], newVal);
       predAvail.set(VN.lookup(newVal));
             
-      std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
+      DenseMap<BasicBlock*, Value*>::iterator av = avail.find(*PI);
       if (av != avail.end())
         avail.erase(av);
       avail.insert(std::make_pair(*PI, newVal));
@@ -1711,7 +1710,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
 
 /// insertion_mergepoint - When walking the dom tree, check at each merge
 /// block for the possibility of a partial redundancy.  If present, eliminate it
-unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
+unsigned GVNPRE::insertion_mergepoint(SmallVector<Value*, 8>& workList,
                                       df_iterator<DomTreeNode*>& D,
                     std::map<BasicBlock*, ValueNumberedSet >& new_sets) {
   bool changed_function = false;
@@ -1728,7 +1727,7 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
       if (availableOut[D->getIDom()->getBlock()].test(VN.lookup(e)))
         continue;
             
-      std::map<BasicBlock*, Value*> avail;
+      DenseMap<BasicBlock*, Value*> avail;
       bool by_some = false;
       bool all_same = true;
       Value * first_s = 0;
@@ -1739,13 +1738,13 @@ unsigned GVNPRE::insertion_mergepoint(std::vector<Value*>& workList,
         Value *e3 = find_leader(availableOut[*PI], VN.lookup(e2));
               
         if (e3 == 0) {
-          std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
+          DenseMap<BasicBlock*, Value*>::iterator av = avail.find(*PI);
           if (av != avail.end())
             avail.erase(av);
           avail.insert(std::make_pair(*PI, e2));
           all_same = false;
         } else {
-          std::map<BasicBlock*, Value*>::iterator av = avail.find(*PI);
+          DenseMap<BasicBlock*, Value*>::iterator av = avail.find(*PI);
           if (av != avail.end())
             avail.erase(av);
           avail.insert(std::make_pair(*PI, e3));
@@ -1811,7 +1810,7 @@ bool GVNPRE::insertion(Function& F) {
       
       // If there is more than one predecessor...
       if (pred_begin(BB) != pred_end(BB) && ++pred_begin(BB) != pred_end(BB)) {
-        std::vector<Value*> workList;
+        SmallVector<Value*, 8> workList;
         workList.reserve(anticIn.size());
         topo_sort(anticIn, workList);
         
