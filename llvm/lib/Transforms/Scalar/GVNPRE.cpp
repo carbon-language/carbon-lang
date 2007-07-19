@@ -757,6 +757,8 @@ void GVNPRE::val_insert(ValueNumberedSet& s, Value* v) {
 /// val_replace - Insert a value into a set, replacing any values already in
 /// the set that have the same value number
 void GVNPRE::val_replace(ValueNumberedSet& s, Value* v) {
+  if (s.count(v)) return;
+  
   uint32_t num = VN.lookup(v);
   Value* leader = find_leader(s, num);
   if (leader != 0)
