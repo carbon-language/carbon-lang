@@ -554,14 +554,24 @@ bool Preprocessor::isNextPPTokenLParen() {
     Val = CurMacroExpander->isNextTokenLParen();
   
   if (Val == 2) {
-    // If we ran off the end of the lexer or macro expander, walk the include
-    // stack, looking for whatever will return the next token.
-    for (unsigned i = IncludeMacroStack.size(); Val == 2 && i != 0; --i) {
+    // We have run off the end.  If it's a source file we don't
+    // examine enclosing ones (C99 5.1.1.2p4).  Otherwise walk up the
+    // macro stack.
+    if (CurLexer)
+      return false;
+    for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
       IncludeStackInfo &Entry = IncludeMacroStack[i-1];
       if (Entry.TheLexer)
         Val = Entry.TheLexer->isNextPPTokenLParen();
       else
         Val = Entry.TheMacroExpander->isNextTokenLParen();
+      
+      if (Val != 2)
+        break;
+      
+      // Ran off the end of a source file?
+      if (Entry.TheLexer)
+        return false;
     }
   }
 
