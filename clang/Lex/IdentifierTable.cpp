@@ -31,6 +31,7 @@ IdentifierInfo::IdentifierInfo() {
   IsPoisoned = false;
   IsOtherTargetMacro = false;
   IsCPPOperatorKeyword = false;
+  IsNonPortableBuiltin = false;
   FETokenInfo = 0;
 }
 
