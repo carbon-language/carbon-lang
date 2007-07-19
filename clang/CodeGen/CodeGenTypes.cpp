@@ -93,6 +93,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       assert(0 && "FIXME: VLAs not implemented yet!");
     }
   }
+  case Type::OCUVector:
   case Type::Vector: {
     const VectorType &VT = cast<VectorType>(Ty);
     return llvm::VectorType::get(ConvertType(VT.getElementType()),
