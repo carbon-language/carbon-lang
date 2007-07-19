@@ -30,6 +30,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 #include "llvm/Support/CFG.h"
@@ -49,69 +50,86 @@ using namespace llvm;
 /// as an efficient mechanism to determine the expression-wise equivalence of
 /// two values.
 
+struct Expression {
+  enum ExpressionOpcode { ADD, SUB, MUL, UDIV, SDIV, FDIV, UREM, SREM, 
+                          FREM, SHL, LSHR, ASHR, AND, OR, XOR, ICMPEQ, 
+                          ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE, 
+                          ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ, 
+                          FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE, 
+                          FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE, 
+                          FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
+                          SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
+                          FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT, 
+                          PTRTOINT, INTTOPTR, BITCAST, GEP, EMPTY,
+                          TOMBSTONE };
+
+  ExpressionOpcode opcode;
+  const Type* type;
+  uint32_t firstVN;
+  uint32_t secondVN;
+  uint32_t thirdVN;
+  SmallVector<uint32_t, 4> varargs;
+  
+  Expression() { }
+  Expression(ExpressionOpcode o) : opcode(o) { }
+  
+  bool operator==(const Expression &other) const {
+    if (opcode != other.opcode)
+      return false;
+    else if (opcode == EMPTY || opcode == TOMBSTONE)
+      return true;
+    else if (type != other.type)
+      return false;
+    else if (firstVN != other.firstVN)
+      return false;
+    else if (secondVN != other.secondVN)
+      return false;
+    else if (thirdVN != other.thirdVN)
+      return false;
+    else {
+      if (varargs.size() != other.varargs.size())
+        return false;
+      
+      for (size_t i = 0; i < varargs.size(); ++i)
+        if (varargs[i] != other.varargs[i])
+          return false;
+    
+      return true;
+    }
+  }
+  
+  bool operator!=(const Expression &other) const {
+    if (opcode != other.opcode)
+      return true;
+    else if (opcode == EMPTY || opcode == TOMBSTONE)
+      return false;
+    else if (type != other.type)
+      return true;
+    else if (firstVN != other.firstVN)
+      return true;
+    else if (secondVN != other.secondVN)
+      return true;
+    else if (thirdVN != other.thirdVN)
+      return true;
+    else {
+      if (varargs.size() != other.varargs.size())
+        return true;
+      
+      for (size_t i = 0; i < varargs.size(); ++i)
+        if (varargs[i] != other.varargs[i])
+          return true;
+    
+      return false;
+    }
+  }
+};
+
+
 namespace {
   class VISIBILITY_HIDDEN ValueTable {
-    public:
-      struct Expression {
-        enum ExpressionOpcode { ADD, SUB, MUL, UDIV, SDIV, FDIV, UREM, SREM, 
-                              FREM, SHL, LSHR, ASHR, AND, OR, XOR, ICMPEQ, 
-                              ICMPNE, ICMPUGT, ICMPUGE, ICMPULT, ICMPULE, 
-                              ICMPSGT, ICMPSGE, ICMPSLT, ICMPSLE, FCMPOEQ, 
-                              FCMPOGT, FCMPOGE, FCMPOLT, FCMPOLE, FCMPONE, 
-                              FCMPORD, FCMPUNO, FCMPUEQ, FCMPUGT, FCMPUGE, 
-                              FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
-                              SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
-                              FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT, 
-                              PTRTOINT, INTTOPTR, BITCAST, GEP};
-    
-        ExpressionOpcode opcode;
-        const Type* type;
-        uint32_t firstVN;
-        uint32_t secondVN;
-        uint32_t thirdVN;
-        std::vector<uint32_t> varargs;
-      
-        bool operator< (const Expression& other) const {
-          if (opcode < other.opcode)
-            return true;
-          else if (opcode > other.opcode)
-            return false;
-          else if (type < other.type)
-            return true;
-          else if (type > other.type)
-            return false;
-          else if (firstVN < other.firstVN)
-            return true;
-          else if (firstVN > other.firstVN)
-            return false;
-          else if (secondVN < other.secondVN)
-            return true;
-          else if (secondVN > other.secondVN)
-            return false;
-          else if (thirdVN < other.thirdVN)
-            return true;
-          else if (thirdVN > other.thirdVN)
-            return false;
-          else {
-            if (varargs.size() < other.varargs.size())
-              return true;
-            else if (varargs.size() > other.varargs.size())
-              return false;
-            
-            for (size_t i = 0; i < varargs.size(); ++i)
-              if (varargs[i] < other.varargs[i])
-                return true;
-              else if (varargs[i] > other.varargs[i])
-                return false;
-          
-            return false;
-          }
-        }
-      };
-    
     private:
       DenseMap<Value*, uint32_t> valueNumbering;
-      std::map<Expression, uint32_t> expressionNumbering;
+      DenseMap<Expression, uint32_t> expressionNumbering;
   
       uint32_t nextValueNumber;
     
@@ -137,10 +155,36 @@ namespace {
   };
 }
 
+namespace llvm {
+template <> struct DenseMapKeyInfo<Expression> {
+  static inline Expression getEmptyKey() { return Expression(Expression::EMPTY); }
+  static inline Expression getTombstoneKey() { return Expression(Expression::TOMBSTONE); }
+  
+  static unsigned getHashValue(const Expression e) {
+    unsigned hash = e.opcode;
+    
+    hash = e.firstVN + hash * 37;
+    hash = e.secondVN + hash * 37;
+    hash = e.thirdVN + hash * 37;
+    
+    hash = (unsigned)((uintptr_t)e.type >> 4) ^
+            (unsigned)((uintptr_t)e.type >> 9) +
+            hash * 37;
+    
+    for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(), E = e.varargs.end();
+         I != E; ++I)
+      hash = *I + hash * 37;
+    
+    return hash;
+  }
+  static bool isPod() { return true; }
+};
+}
+
 //===----------------------------------------------------------------------===//
 //                     ValueTable Internal Functions
 //===----------------------------------------------------------------------===//
-ValueTable::Expression::ExpressionOpcode 
+Expression::ExpressionOpcode 
                              ValueTable::getOpcode(BinaryOperator* BO) {
   switch(BO->getOpcode()) {
     case Instruction::Add:
@@ -181,7 +225,7 @@ ValueTable::Expression::ExpressionOpcode
   }
 }
 
-ValueTable::Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
+Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   if (C->getOpcode() == Instruction::ICmp) {
     switch (C->getPredicate()) {
       case ICmpInst::ICMP_EQ:
@@ -249,7 +293,7 @@ ValueTable::Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   }
 }
 
-ValueTable::Expression::ExpressionOpcode 
+Expression::ExpressionOpcode 
                              ValueTable::getOpcode(CastInst* C) {
   switch(C->getOpcode()) {
     case Instruction::Trunc:
@@ -284,7 +328,7 @@ ValueTable::Expression::ExpressionOpcode
   }
 }
 
-ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
+Expression ValueTable::create_expression(BinaryOperator* BO) {
   Expression e;
     
   e.firstVN = lookup_or_add(BO->getOperand(0));
@@ -296,7 +340,7 @@ ValueTable::Expression ValueTable::create_expression(BinaryOperator* BO) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
+Expression ValueTable::create_expression(CmpInst* C) {
   Expression e;
     
   e.firstVN = lookup_or_add(C->getOperand(0));
@@ -308,7 +352,7 @@ ValueTable::Expression ValueTable::create_expression(CmpInst* C) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(CastInst* C) {
+Expression ValueTable::create_expression(CastInst* C) {
   Expression e;
     
   e.firstVN = lookup_or_add(C->getOperand(0));
@@ -320,7 +364,7 @@ ValueTable::Expression ValueTable::create_expression(CastInst* C) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(ShuffleVectorInst* S) {
+Expression ValueTable::create_expression(ShuffleVectorInst* S) {
   Expression e;
     
   e.firstVN = lookup_or_add(S->getOperand(0));
@@ -332,7 +376,7 @@ ValueTable::Expression ValueTable::create_expression(ShuffleVectorInst* S) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(ExtractElementInst* E) {
+Expression ValueTable::create_expression(ExtractElementInst* E) {
   Expression e;
     
   e.firstVN = lookup_or_add(E->getOperand(0));
@@ -344,7 +388,7 @@ ValueTable::Expression ValueTable::create_expression(ExtractElementInst* E) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(InsertElementInst* I) {
+Expression ValueTable::create_expression(InsertElementInst* I) {
   Expression e;
     
   e.firstVN = lookup_or_add(I->getOperand(0));
@@ -356,7 +400,7 @@ ValueTable::Expression ValueTable::create_expression(InsertElementInst* I) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(SelectInst* I) {
+Expression ValueTable::create_expression(SelectInst* I) {
   Expression e;
     
   e.firstVN = lookup_or_add(I->getCondition());
@@ -368,7 +412,7 @@ ValueTable::Expression ValueTable::create_expression(SelectInst* I) {
   return e;
 }
 
-ValueTable::Expression ValueTable::create_expression(GetElementPtrInst* G) {
+Expression ValueTable::create_expression(GetElementPtrInst* G) {
   Expression e;
     
   e.firstVN = lookup_or_add(G->getPointerOperand());
@@ -399,7 +443,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
     Expression e = create_expression(BO);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -412,7 +456,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
     Expression e = create_expression(C);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -425,7 +469,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (ShuffleVectorInst* U = dyn_cast<ShuffleVectorInst>(V)) {
     Expression e = create_expression(U);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -438,7 +482,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (ExtractElementInst* U = dyn_cast<ExtractElementInst>(V)) {
     Expression e = create_expression(U);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -451,7 +495,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (InsertElementInst* U = dyn_cast<InsertElementInst>(V)) {
     Expression e = create_expression(U);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -464,7 +508,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (SelectInst* U = dyn_cast<SelectInst>(V)) {
     Expression e = create_expression(U);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -477,7 +521,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (CastInst* U = dyn_cast<CastInst>(V)) {
     Expression e = create_expression(U);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
@@ -490,7 +534,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   } else if (GetElementPtrInst* U = dyn_cast<GetElementPtrInst>(V)) {
     Expression e = create_expression(U);
     
-    std::map<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
+    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
     if (EI != expressionNumbering.end()) {
       valueNumbering.insert(std::make_pair(V, EI->second));
       return EI->second;
