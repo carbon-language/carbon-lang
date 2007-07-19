@@ -613,7 +613,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
   // If this is a function-like macro, read the arguments.
   if (MI->isFunctionLike()) {
     // C99 6.10.3p10: If the preprocessing token immediately after the the macro
-    // name isn't a '(', this macro should not be expanded.
+    // name isn't a '(', this macro should not be expanded.  Otherwise, consume
+    // it.
     if (!isNextPPTokenLParen())
       return true;
     
@@ -731,7 +732,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
 
   unsigned NumActuals = 0;
   while (Tok.getKind() == tok::comma) {
-    // C99 6.10.3p11: Keep track of the number of l_parens we have seen.
+    // C99 6.10.3p11: Keep track of the number of l_parens we have seen.  Note
+    // that we already consumed the first one.
     unsigned NumParens = 0;
     
     while (1) {

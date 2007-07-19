@@ -153,7 +153,7 @@ static LexerToken StringifyArgument(const LexerToken *ArgToks,
   bool isFirst = true;
   for (; ArgToks->getKind() != tok::eof; ++ArgToks) {
     const LexerToken &Tok = *ArgToks;
-    if (!isFirst && Tok.hasLeadingSpace())
+    if (!isFirst && (Tok.hasLeadingSpace() || Tok.isAtStartOfLine()))
       Result += ' ';
     isFirst = false;
     
