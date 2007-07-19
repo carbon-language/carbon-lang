@@ -598,11 +598,18 @@ bool PMDataManager::preserveHigherLevelAnalysis(Pass *P) {
 void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
+  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
 
+  // Verify preserved analysis
+  for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
+         E = AvailableAnalysis.end(); I != E; ++I) {
+    Pass *AP = I->second;
+    AP->verifyAnalysis();
+  }
+  
   if (AnUsage.getPreservesAll())
     return;
 
-  const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
   for (std::map<AnalysisID, Pass*>::iterator I = AvailableAnalysis.begin(),
          E = AvailableAnalysis.end(); I != E; ) {
     std::map<AnalysisID, Pass*>::iterator Info = I++;
