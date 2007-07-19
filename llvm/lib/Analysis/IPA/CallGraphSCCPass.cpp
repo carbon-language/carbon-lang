@@ -153,12 +153,9 @@ bool CGPassManager::doFinalization(CallGraph &CG) {
 void CallGraphSCCPass::assignPassManager(PMStack &PMS,
                                          PassManagerType PreferredType) {
   // Find CGPassManager 
-  while (!PMS.empty()) {
-    if (PMS.top()->getPassManagerType() > PMT_CallGraphPassManager)
-      PMS.pop();
-    else;
-    break;
-  }
+  while (!PMS.empty() &&
+         PMS.top()->getPassManagerType() > PMT_CallGraphPassManager)
+    PMS.pop();
 
   CGPassManager *CGP = dynamic_cast<CGPassManager *>(PMS.top());
 

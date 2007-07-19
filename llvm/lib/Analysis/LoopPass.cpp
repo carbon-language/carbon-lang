@@ -261,12 +261,9 @@ bool LPPassManager::runOnFunction(Function &F) {
 void LoopPass::preparePassManager(PMStack &PMS) {
 
   // Find LPPassManager 
-  while (!PMS.empty()) {
-    if (PMS.top()->getPassManagerType() > PMT_LoopPassManager)
-      PMS.pop();
-    else;
-    break;
-  }
+  while (!PMS.empty() &&
+         PMS.top()->getPassManagerType() > PMT_LoopPassManager)
+    PMS.pop();
 
   LPPassManager *LPPM = dynamic_cast<LPPassManager *>(PMS.top());
 
@@ -281,12 +278,9 @@ void LoopPass::preparePassManager(PMStack &PMS) {
 void LoopPass::assignPassManager(PMStack &PMS,
                                  PassManagerType PreferredType) {
   // Find LPPassManager 
-  while (!PMS.empty()) {
-    if (PMS.top()->getPassManagerType() > PMT_LoopPassManager)
-      PMS.pop();
-    else;
-    break;
-  }
+  while (!PMS.empty() &&
+         PMS.top()->getPassManagerType() > PMT_LoopPassManager)
+    PMS.pop();
 
   LPPassManager *LPPM = dynamic_cast<LPPassManager *>(PMS.top());
 
