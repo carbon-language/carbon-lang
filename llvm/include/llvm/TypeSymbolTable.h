@@ -43,7 +43,7 @@ public:
 /// @{
 public:
 
-  TypeSymbolTable() {}
+  TypeSymbolTable():LastUnique(0) {}
   ~TypeSymbolTable();
 
 /// @}
