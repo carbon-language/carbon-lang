@@ -245,7 +245,14 @@ public:
   
   virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op);
+                                   
+  virtual ExprResult ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
+                                          SourceLocation RParenLoc, ExprTy *Op);
   
+  virtual ExprResult ParseInitList(SourceLocation LParenLoc, 
+                                   ExprTy **InitList, unsigned NumInit,
+                                   SourceLocation RParenLoc);
+                                   
   virtual ExprResult ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
                                 ExprTy *LHS,ExprTy *RHS);
   

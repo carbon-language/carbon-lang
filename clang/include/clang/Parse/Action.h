@@ -332,6 +332,15 @@ public:
     return 0;
   }
   
+  virtual ExprResult ParseCompoundLiteral(SourceLocation LParen, TypeTy *Ty,
+                                          SourceLocation RParen, ExprTy *Op) {
+    return 0;
+  }
+  virtual ExprResult ParseInitList(SourceLocation LParenLoc,
+                                   ExprTy **InitList, unsigned NumInit,
+                                   SourceLocation RParenLoc) {
+    return 0;
+  }
   virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op) {
     return 0;

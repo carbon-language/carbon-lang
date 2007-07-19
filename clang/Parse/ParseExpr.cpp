@@ -880,7 +880,8 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
         Diag(OpenLoc, diag::ext_c99_compound_literal);
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
-      // TODO: Build AST for compound literal.
+      if (!Result.isInvalid)
+        return Actions.ParseCompoundLiteral(OpenLoc, Ty, RParenLoc, Result.Val);
     } else if (ExprType == CastExpr) {
       // Note that this doesn't parse the subsequence cast-expression, it just
       // returns the parsed type to the callee.

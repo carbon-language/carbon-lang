@@ -471,6 +471,28 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
 }
 
 Action::ExprResult Sema::
+ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
+                     SourceLocation RParenLoc, ExprTy *Op) {
+  assert((Ty != 0) && "ParseCompoundLiteral(): missing type");
+  QualType literalType = QualType::getFromOpaquePtr(Ty);
+  assert((Op != 0) && "ParseCompoundLiteral(): missing expression");
+  Expr *literalExpr = static_cast<Expr*>(Op);
+  
+  // FIXME: add semantic analysis (C99 6.5.2.5).
+  return false; // FIXME: instantiate a CompoundLiteralExpr
+}
+
+Action::ExprResult Sema::
+ParseInitList(SourceLocation LParenLoc, ExprTy **InitList, unsigned NumInit,
+              SourceLocation RParenLoc) {
+  // FIXME: add semantic analysis (C99 6.7.8). This involves 
+  // knowledge of the object being intialized. As a result, the code for
+  // doing the semantic analysis will likely be located elsewhere (i.e. in 
+  // consumers of InitListExpr (e.g. ParseDeclarator, ParseCompoundLiteral).
+  return false; // FIXME instantiate an InitListExpr.
+}
+
+Action::ExprResult Sema::
 ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
   assert((Ty != 0) && (Op != 0) && "ParseCastExpr(): missing type or expr");

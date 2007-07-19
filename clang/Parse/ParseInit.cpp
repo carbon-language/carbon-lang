@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 
@@ -152,37 +153,47 @@ Parser::ExprResult Parser::ParseInitializer() {
   
   // We support empty initializers, but tell the user that they aren't using
   // C99-clean code.
-  if (Tok.getKind() == tok::r_brace)
+  if (Tok.getKind() == tok::r_brace) {
     Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
-  else {
-    while (1) {
-      // Parse: designation[opt] initializer
-      
-      // If we know that this cannot be a designation, just parse the nested
-      // initializer directly.
-      ExprResult SubElt;
-      if (!MayBeDesignationStart(Tok.getKind()))
-        SubElt = ParseInitializer();
-      else
-        SubElt = ParseInitializerWithPotentialDesignator();
-      
-      // If we couldn't parse the subelement, bail out.
-      if (SubElt.isInvalid) {
-        SkipUntil(tok::r_brace);
-        return SubElt;
-      }
-    
-      // If we don't have a comma continued list, we're done.
-      if (Tok.getKind() != tok::comma) break;
-      ConsumeToken();
-      
-      // Handle trailing comma.
-      if (Tok.getKind() == tok::r_brace) break;
-    }    
+    // Match the '}'.
+    return Actions.ParseInitList(LBraceLoc, 0, 0, ConsumeBrace());
   }
+  llvm::SmallVector<ExprTy*, 8> InitExprs;
+  bool InitExprsOk = true;
   
+  while (1) {
+    // Parse: designation[opt] initializer
+    
+    // If we know that this cannot be a designation, just parse the nested
+    // initializer directly.
+    ExprResult SubElt;
+    if (!MayBeDesignationStart(Tok.getKind()))
+      SubElt = ParseInitializer();
+    else
+      SubElt = ParseInitializerWithPotentialDesignator();
+
+    // If we couldn't parse the subelement, bail out.
+    if (SubElt.isInvalid) {
+      InitExprsOk = false;
+      SkipUntil(tok::r_brace);
+      break;
+    } else
+      InitExprs.push_back(SubElt.Val);
+      
+    // If we don't have a comma continued list, we're done.
+    if (Tok.getKind() != tok::comma) break;
+    
+    // FIXME: save comma locations.
+    ConsumeToken();
+    
+    // Handle trailing comma.
+    if (Tok.getKind() == tok::r_brace) break;
+  }
+  if (InitExprsOk && Tok.getKind() == tok::r_brace)
+    return Actions.ParseInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
+                                 ConsumeBrace());
   // Match the '}'.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
-  return ExprResult(false);
+  return ExprResult(true); // an error occurred.
 }
 
