@@ -764,18 +764,18 @@ let isTwoAddress = 1 in {
   def ANDPSrm : PSI<0x54, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                     "andps {$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (and VR128:$src1,
-                                       (bc_v2i64 (memopv4f32 addr:$src2))))]>;
+                    [(set VR128:$dst, (and (bc_v2i64 (v4f32 VR128:$src1)),
+                                       (memopv2i64 addr:$src2)))]>;
   def ORPSrm  : PSI<0x56, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                     "orps {$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (or VR128:$src1,
-                                       (bc_v2i64 (memopv4f32 addr:$src2))))]>;
+                    [(set VR128:$dst, (or (bc_v2i64 (v4f32 VR128:$src1)),
+                                       (memopv2i64 addr:$src2)))]>;
   def XORPSrm : PSI<0x57, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                     "xorps {$src2, $dst|$dst, $src2}",
-                    [(set VR128:$dst, (xor VR128:$src1,
-                                       (bc_v2i64 (memopv4f32 addr:$src2))))]>;
+                    [(set VR128:$dst, (xor (bc_v2i64 (v4f32 VR128:$src1)),
+                                       (memopv2i64 addr:$src2)))]>;
   def ANDNPSrr : PSI<0x55, MRMSrcReg,
                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                      "andnps {$src2, $dst|$dst, $src2}",
@@ -787,9 +787,9 @@ let isTwoAddress = 1 in {
                      (outs VR128:$dst), (ins VR128:$src1,f128mem:$src2),
                      "andnps {$src2, $dst|$dst, $src2}",
                      [(set VR128:$dst,
-                       (v2i64 (and (xor VR128:$src1,
+                       (v2i64 (and (xor (bc_v2i64 (v4f32 VR128:$src1)),
                                     (bc_v2i64 (v4i32 immAllOnesV))),
-                               (bc_v2i64 (memopv4f32 addr:$src2)))))]>;
+                               (memopv2i64 addr:$src2))))]>;
 }
 
 let isTwoAddress = 1 in {
@@ -1533,19 +1533,19 @@ let isTwoAddress = 1 in {
                     "andpd {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
                       (and (bc_v2i64 (v2f64 VR128:$src1)),
-                       (bc_v2i64 (memopv2f64 addr:$src2))))]>;
+                       (memopv2i64 addr:$src2)))]>;
   def ORPDrm  : PDI<0x56, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                     "orpd {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
                       (or (bc_v2i64 (v2f64 VR128:$src1)),
-                       (bc_v2i64 (memopv2f64 addr:$src2))))]>;
+                       (memopv2i64 addr:$src2)))]>;
   def XORPDrm : PDI<0x57, MRMSrcMem,
                     (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                     "xorpd {$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst,
                       (xor (bc_v2i64 (v2f64 VR128:$src1)),
-                       (bc_v2i64 (memopv2f64 addr:$src2))))]>;
+                       (memopv2i64 addr:$src2)))]>;
   def ANDNPDrr : PDI<0x55, MRMSrcReg,
                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                      "andnpd {$src2, $dst|$dst, $src2}",
@@ -1557,7 +1557,7 @@ let isTwoAddress = 1 in {
                      "andnpd {$src2, $dst|$dst, $src2}",
                      [(set VR128:$dst,
                        (and (vnot (bc_v2i64 (v2f64 VR128:$src1))),
-                        (bc_v2i64 (memopv2f64 addr:$src2))))]>;
+                        (memopv2i64 addr:$src2)))]>;
 }
 
 let isTwoAddress = 1 in {
