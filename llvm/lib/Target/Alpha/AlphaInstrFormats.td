@@ -57,7 +57,8 @@ class MfcForm<bits<6> opcode, bits<16> fc, string asmstr, InstrItinClass itin>
         : InstAlpha<opcode, asmstr, itin> {    
   bits<5> Ra;
 
-  let OperandList = (ops GPRC:$RA);
+  let OutOperandList = (ops GPRC:$RA);
+  let InOperandList = (ops);
   let Inst{25-21} = Ra;
   let Inst{20-16} = 0;
   let Inst{15-0} = fc;
@@ -69,7 +70,8 @@ class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, InstrItinClass 
   bits<5> Rb;
   bits<14> disp;
 
-  let OperandList = OL;
+  let OutOperandList = (ops);
+  let InOperandList = OL;
 
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
@@ -83,7 +85,8 @@ class MbrpForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, list<dag> patt
   bits<5> Rb;
   bits<14> disp;
 
-  let OperandList = OL;
+  let OutOperandList = (ops);
+  let InOperandList = OL;
 
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
@@ -97,7 +100,8 @@ def target : Operand<OtherVT> {}
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, noResults = 1 in {
 class BFormN<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
    : InstAlpha<opcode, asmstr, itin> {
-  let OperandList = OL;
+  let OutOperandList = (ops);
+  let InOperandList = OL;
   bits<64> Opc; //dummy
   bits<5> Ra;
   bits<21> disp;
@@ -111,7 +115,8 @@ let isBranch = 1, isTerminator = 1 in
 class BFormD<bits<6> opcode, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops target:$DISP);
+  let OutOperandList = (ops);
+  let InOperandList = (ops target:$DISP);
   bits<5> Ra;
   bits<21> disp;
 
@@ -123,7 +128,8 @@ class BFormD<bits<6> opcode, string asmstr, list<dag> pattern, InstrItinClass it
 class OForm<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RC, GPRC:$RA, GPRC:$RB);
+  let OutOperandList = (outs GPRC:$RC);
+  let InOperandList = (ins GPRC:$RA, GPRC:$RB);
 
   bits<5> Rc;
   bits<5> Ra;
@@ -141,7 +147,8 @@ class OForm<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Instr
 class OForm2<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RC, GPRC:$RB);
+  let OutOperandList = (outs GPRC:$RC);
+  let InOperandList = (ins GPRC:$RB);
 
   bits<5> Rc;
   bits<5> Rb;
@@ -158,7 +165,8 @@ class OForm2<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Inst
 class OForm4<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RDEST, GPRC:$RCOND, GPRC:$RTRUE, GPRC:$RFALSE);
+  let OutOperandList = (outs GPRC:$RDEST);
+  let InOperandList = (ins GPRC:$RCOND, GPRC:$RTRUE, GPRC:$RFALSE);
   let Constraints = "$RFALSE = $RDEST";
   let DisableEncoding = "$RFALSE";
 
@@ -180,7 +188,8 @@ class OForm4<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Inst
 class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RC, GPRC:$RA, u8imm:$L);
+  let OutOperandList = (outs GPRC:$RC);
+  let InOperandList = (ins GPRC:$RA, u8imm:$L);
 
   bits<5> Rc;
   bits<5> Ra;
@@ -197,7 +206,8 @@ class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, Inst
 class OForm4L<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let OperandList = (ops GPRC:$RDEST, GPRC:$RCOND, s64imm:$RTRUE, GPRC:$RFALSE);
+  let OutOperandList = (outs GPRC:$RDEST);
+  let InOperandList = (ins GPRC:$RCOND, s64imm:$RTRUE, GPRC:$RFALSE);
   let Constraints = "$RFALSE = $RDEST";
   let DisableEncoding = "$RFALSE";
 
@@ -233,7 +243,8 @@ class FPForm<bits<6> opcode, bits<11> fun, string asmstr, list<dag> pattern, Ins
 //3.3.5
 class PALForm<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
     : InstAlpha<opcode, asmstr, itin> {
-  let OperandList = OL;
+  let OutOperandList = (ops);
+  let InOperandList = OL;
   bits<26> Function;
 
   let Inst{25-0} = Function;
@@ -241,9 +252,10 @@ class PALForm<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
 
 
 // Pseudo instructions.
-class PseudoInstAlpha<dag OL, string nm, list<dag> pattern, InstrItinClass itin> 
+class PseudoInstAlpha<dag OOL, dag IOL, string nm, list<dag> pattern, InstrItinClass itin> 
     : InstAlpha<0, nm, itin>  {
-  let OperandList = OL;
+  let OutOperandList = OOL;
+  let InOperandList = IOL;
   let Pattern = pattern;
 
 }

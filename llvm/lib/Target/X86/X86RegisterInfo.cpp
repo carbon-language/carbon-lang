@@ -936,8 +936,8 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
 }
 
 
-const unsigned *X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
-                                                                         const {
+const unsigned *
+X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs32Bit[] = {
     X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
   };

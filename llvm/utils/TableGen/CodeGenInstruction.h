@@ -76,6 +76,10 @@ namespace llvm {
           MINumOperands(MINO), MIOperandInfo(MIOI) {}
     };
 
+    /// NumDefs - Number of def operands declared.
+    ///
+    unsigned NumDefs;
+
     /// OperandList - The list of declared operands, along with their declared
     /// type (which is a record).
     std::vector<OperandInfo> OperandList;

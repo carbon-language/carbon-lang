@@ -22,7 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 // Generic Mips Format
-class MipsInst<dag ops, string asmstr, list<dag> pattern>: 
+class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern>: 
       Instruction 
 {
   field bits<32> Inst;
@@ -34,7 +34,8 @@ class MipsInst<dag ops, string asmstr, list<dag> pattern>:
   // Top 5 bits are the 'opcode' field
   let Inst{31-26} = opcode;   
   
-  dag OperandList = ops;
+  dag OutOperandList = outs;
+  dag InOperandList = ins;
   let AsmString   = asmstr;
   let Pattern     = pattern;
 }
@@ -44,8 +45,9 @@ class MipsInst<dag ops, string asmstr, list<dag> pattern>:
 // Format R instruction class in Mips : <|opcode|rs|rt|rd|shamt|funct|>
 //===----------------------------------------------------------------------===//
 
-class FR<bits<6> op, bits<6> _funct, dag ops, string asmstr, list<dag> pattern>:
-      MipsInst<ops, asmstr, pattern> 
+class FR<bits<6> op, bits<6> _funct, dag outs, dag ins, string asmstr,
+         list<dag> pattern>:
+      MipsInst<outs, ins, asmstr, pattern> 
 {
   bits<5>  rd;
   bits<5>  rs;
@@ -67,8 +69,8 @@ class FR<bits<6> op, bits<6> _funct, dag ops, string asmstr, list<dag> pattern>:
 // Format I instruction class in Mips : <|opcode|rs|rt|immediate|>
 //===----------------------------------------------------------------------===//
 
-class FI<bits<6> op, dag ops, string asmstr, list<dag> pattern>: 
-      MipsInst<ops, asmstr, pattern> 
+class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>: 
+      MipsInst<outs, ins, asmstr, pattern> 
 {
   bits<5>  rt;
   bits<5>  rs;
@@ -85,8 +87,8 @@ class FI<bits<6> op, dag ops, string asmstr, list<dag> pattern>:
 // Format J instruction class in Mips : <|opcode|address|>
 //===----------------------------------------------------------------------===//
 
-class FJ<bits<6> op, dag ops, string asmstr, list<dag> pattern>: 
-      MipsInst<ops, asmstr, pattern> 
+class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern>: 
+      MipsInst<outs, ins, asmstr, pattern> 
 {
   bits<26> addr;
 

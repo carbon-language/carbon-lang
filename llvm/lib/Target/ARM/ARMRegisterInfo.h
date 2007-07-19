@@ -68,8 +68,8 @@ public:
 
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
-  const TargetRegisterClass* const* getCalleeSavedRegClasses(
-                                     const MachineFunction *MF = 0) const;
+  const TargetRegisterClass* const*
+  getCalleeSavedRegClasses(const MachineFunction *MF = 0) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 

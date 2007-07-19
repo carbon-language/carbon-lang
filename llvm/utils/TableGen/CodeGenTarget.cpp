@@ -376,13 +376,25 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   
   DagInit *DI;
   try {
-    DI = R->getValueAsDag("OperandList");
+    DI = R->getValueAsDag("OutOperandList");
   } catch (...) {
     // Error getting operand list, just ignore it (sparcv9).
     AsmString.clear();
     OperandList.clear();
     return;
   }
+  NumDefs = DI->getNumArgs();
+
+  DagInit *IDI;
+  try {
+    IDI = R->getValueAsDag("InOperandList");
+  } catch (...) {
+    // Error getting operand list, just ignore it (sparcv9).
+    AsmString.clear();
+    OperandList.clear();
+    return;
+  }
+  DI = (DagInit*)(new BinOpInit(BinOpInit::CONCAT, DI, IDI))->Fold();
 
   unsigned MIOperandNo = 0;
   std::set<std::string> OperandNames;

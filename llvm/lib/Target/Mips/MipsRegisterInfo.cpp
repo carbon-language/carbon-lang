@@ -116,7 +116,7 @@ foldMemoryOperand(MachineInstr* MI, unsigned OpNum, int FI) const
 
 /// Mips Callee Saved Registers
 const unsigned* MipsRegisterInfo::
-getCalleeSavedRegs() const 
+getCalleeSavedRegs(const MachineFunction *MF) const 
 {
   // Mips calle-save register range is $16-$26(s0-s7)
   static const unsigned CalleeSavedRegs[] = {  
@@ -128,7 +128,7 @@ getCalleeSavedRegs() const
 
 /// Mips Callee Saved Register Classes
 const TargetRegisterClass* const* 
-MipsRegisterInfo::getCalleeSavedRegClasses() const 
+MipsRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const 
 {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &Mips::CPURegsRegClass, &Mips::CPURegsRegClass,

@@ -327,8 +327,8 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   return NewMI;
 }
 
-const unsigned* ARMRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
-                                                                         const {
+const unsigned*
+ARMRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
     ARM::LR, ARM::R11, ARM::R10, ARM::R9, ARM::R8,
     ARM::R7, ARM::R6,  ARM::R5,  ARM::R4,

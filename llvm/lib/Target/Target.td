@@ -151,7 +151,8 @@ class Instruction {
   string Name = "";         // The opcode string for this instruction
   string Namespace = "";
 
-  dag OperandList;          // An dag containing the MI operand list.
+  dag OutOperandList;       // An dag containing the MI def operand list.
+  dag InOperandList;        // An dag containing the MI use operand list.
   string AsmString = "";    // The .s format to print the instruction with.
 
   // Pattern - Set to the DAG pattern for this instruction, if we know of one,
@@ -226,9 +227,13 @@ class Requires<list<Predicate> preds> {
 }
 
 /// ops definition - This is just a simple marker used to identify the operands
-/// list for an instruction.  This should be used like this:
-///     (ops R32:$dst, R32:$src) or something similar.
+/// list for an instruction. outs and ins are identical both syntatically and
+/// semantically, they are used to define def operands and use operands to
+/// improve readibility. This should be used like this:
+///     (outs R32:$dst), (ins R32:$src1, R32:$src2) or something similar.
 def ops;
+def outs;
+def ins;
 
 /// variable_ops definition - Mark this instruction as taking a variable number
 /// of operands.
@@ -299,17 +304,20 @@ class InstrInfo {
 
 // Standard Instructions.
 def PHI : Instruction {
-  let OperandList = (ops variable_ops);
+  let OutOperandList = (ops);
+  let InOperandList = (ops variable_ops);
   let AsmString = "PHINODE";
   let Namespace = "TargetInstrInfo";
 }
 def INLINEASM : Instruction {
-  let OperandList = (ops variable_ops);
+  let OutOperandList = (ops);
+  let InOperandList = (ops variable_ops);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
 }
 def LABEL : Instruction {
-  let OperandList = (ops i32imm:$id);
+  let OutOperandList = (ops);
+  let InOperandList = (ops i32imm:$id);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;

@@ -1171,7 +1171,12 @@ void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
     // Parse the operands list.
     DagInit *OpsList = Fragments[i]->getValueAsDag("Operands");
     DefInit *OpsOp = dynamic_cast<DefInit*>(OpsList->getOperator());
-    if (!OpsOp || OpsOp->getDef()->getName() != "ops")
+    // Special cases: ops == outs == ins. Different names are used to
+    // improve readibility.
+    if (!OpsOp ||
+        (OpsOp->getDef()->getName() != "ops" &&
+         OpsOp->getDef()->getName() != "outs" &&
+         OpsOp->getDef()->getName() != "ins"))
       P->error("Operands list should start with '(ops ... '!");
     
     // Copy over the arguments.       

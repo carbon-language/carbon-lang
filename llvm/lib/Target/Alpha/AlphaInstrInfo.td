@@ -138,24 +138,24 @@ class CmpOpFrag<dag res> : PatFrag<(ops node:$R), res>;
 
 //Pseudo ops for selection
 
-def IDEF_I : PseudoInstAlpha<(ops GPRC:$RA), ";#idef $RA",
+def IDEF_I : PseudoInstAlpha<(outs GPRC:$RA), (ins), ";#idef $RA",
              [(set GPRC:$RA, (undef))], s_pseudo>;
-def IDEF_F32 : PseudoInstAlpha<(ops F4RC:$RA), ";#idef $RA",
+def IDEF_F32 : PseudoInstAlpha<(outs F4RC:$RA), (ins), ";#idef $RA",
              [(set F4RC:$RA, (undef))], s_pseudo>;
-def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), ";#idef $RA",
+def IDEF_F64 : PseudoInstAlpha<(outs F8RC:$RA), (ins), ";#idef $RA",
              [(set F8RC:$RA, (undef))], s_pseudo>;
 
-def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", [], s_pseudo>;
+def WTF : PseudoInstAlpha<(outs), (ins variable_ops), "#wtf", [], s_pseudo>;
 
 let isLoad = 1, hasCtrlDep = 1 in {
-def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "; ADJUP $amt", 
+def ADJUSTSTACKUP : PseudoInstAlpha<(outs), (ins s64imm:$amt), "; ADJUP $amt", 
                 [(callseq_start imm:$amt)], s_pseudo>, Imp<[R30],[R30]>;
-def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "; ADJDOWN $amt", 
+def ADJUSTSTACKDOWN : PseudoInstAlpha<(outs), (ins s64imm:$amt), "; ADJDOWN $amt", 
                 [(callseq_end imm:$amt)], s_pseudo>, Imp<[R30],[R30]>;
 }
-def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$$$TARGET..ng:\n", [], s_pseudo>;
-def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[], s_pseudo>;
-def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
+def ALTENT : PseudoInstAlpha<(outs), (ins s64imm:$TARGET), "$$$TARGET..ng:\n", [], s_pseudo>;
+def PCLABEL : PseudoInstAlpha<(outs), (ins s64imm:$num), "PCMARKER_$num:\n",[], s_pseudo>;
+def MEMLABEL : PseudoInstAlpha<(outs), (ins s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
          "LSMARKER$$$i$$$j$$$k$$$m:", [], s_pseudo>;
 
 
@@ -404,7 +404,7 @@ let isCall = 1, noResults = 1, Ra = 23, Rb = 27, disp = 0,
 def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr_coroutine $RD,($RS),$DISP", s_jsr>; //Jump to subroutine return
 
 
-let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in {
+let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
 def LDQ   : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)",
                  [(set GPRC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
 def LDQr  : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!gprellow",
@@ -421,8 +421,10 @@ def LDWU  : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (zextloadi16 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
 def LDWUr : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (zextloadi16 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
+}
 
 
+let OutOperandList = (ops), InOperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def STB   : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)",
 		 [(truncstorei8 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STBr  : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
@@ -439,8 +441,10 @@ def STQ   : MForm<0x2D, 1, 0, "stq $RA,$DISP($RB)",
 		 [(store GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
 def STQr  : MForm<0x2D, 1, 0, "stq $RA,$DISP($RB)\t\t!gprellow",
 		 [(store GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
+}
 
 //Load address
+let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
 def LDA   : MForm<0x08, 0, 0, "lda $RA,$DISP($RB)",
                  [(set GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_lda>;
 def LDAr  : MForm<0x08, 0, 0, "lda $RA,$DISP($RB)\t\t!gprellow",
@@ -451,21 +455,25 @@ def LDAHr : MForm<0x09, 0, 0, "ldah $RA,$DISP($RB)\t\t!gprelhigh",
                  [(set GPRC:$RA, (Alpha_gprelhi tglobaladdr:$DISP, GPRC:$RB))], s_lda>;  //Load address high
 }
 
-let OperandList = (ops F4RC:$RA, s64imm:$DISP, GPRC:$RB) in {
+let OutOperandList = (ops), InOperandList = (ops F4RC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def STS  : MForm<0x26, 1, 0, "sts $RA,$DISP($RB)",
 		[(store F4RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
 def STSr : MForm<0x26, 1, 0, "sts $RA,$DISP($RB)\t\t!gprellow",
 		[(store F4RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
+}
+let OutOperandList = (ops F4RC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
 def LDS  : MForm<0x22, 0, 1, "lds $RA,$DISP($RB)",
 		[(set F4RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
 def LDSr : MForm<0x22, 0, 1, "lds $RA,$DISP($RB)\t\t!gprellow",
 		[(set F4RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
 }
-let OperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB) in {
+let OutOperandList = (ops), InOperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def STT  : MForm<0x27, 1, 0, "stt $RA,$DISP($RB)",
 		[(store F8RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
 def STTr : MForm<0x27, 1, 0, "stt $RA,$DISP($RB)\t\t!gprellow",
 		[(store F8RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
+}
+let OutOperandList = (ops F8RC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
 def LDT  : MForm<0x23, 0, 1, "ldt $RA,$DISP($RB)",
 		[(set F8RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
 def LDTr : MForm<0x23, 0, 1, "ldt $RA,$DISP($RB)\t\t!gprellow",
@@ -541,13 +549,13 @@ def : Pat<(truncstorei8 GPRC:$DATA, GPRC:$addr),
 
 
 //load address, rellocated gpdist form
-let OperandList = (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB, s16imm:$NUM) in {
+let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s16imm:$DISP, GPRC:$RB, s16imm:$NUM) in {
 def LDAg  : MForm<0x08, 0, 1, "lda $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
 def LDAHg : MForm<0x09, 0, 1, "ldah $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
 }
 
 //Load quad, rellocated literal form
-let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in 
+let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in 
 def LDQl : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!literal",
                  [(set GPRC:$RA, (Alpha_rellit tglobaladdr:$DISP, GPRC:$RB))], s_ild>;
 def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
@@ -560,11 +568,11 @@ def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA", s_rpcc>; //Read process cycle count
 
 //Floats
 
-let OperandList = (ops F4RC:$RC, F4RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F4RC:$RC), InOperandList = (ops F4RC:$RB), Fa = 31 in 
 def SQRTS : FPForm<0x14, 0x58B, "sqrts/su $RB,$RC",
                    [(set F4RC:$RC, (fsqrt F4RC:$RB))], s_fsqrts>;
 
-let OperandList = (ops F4RC:$RC, F4RC:$RA, F4RC:$RB) in {
+let OutOperandList = (ops F4RC:$RC), InOperandList = (ops F4RC:$RA, F4RC:$RB) in {
 def ADDS  : FPForm<0x16, 0x580, "adds/su $RA,$RB,$RC",
                    [(set F4RC:$RC, (fadd F4RC:$RA, F4RC:$RB))], s_fadd>;
 def SUBS  : FPForm<0x16, 0x581, "subs/su $RA,$RB,$RC",
@@ -583,11 +591,11 @@ def CPYSNS : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
 
 //Doubles
 
-let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops F8RC:$RB), Fa = 31 in 
 def SQRTT : FPForm<0x14, 0x5AB, "sqrtt/su $RB,$RC",
                    [(set F8RC:$RC, (fsqrt F8RC:$RB))], s_fsqrtt>;
 
-let OperandList = (ops F8RC:$RC, F8RC:$RA, F8RC:$RB) in {
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops F8RC:$RA, F8RC:$RB) in {
 def ADDT  : FPForm<0x16, 0x5A0, "addt/su $RA,$RB,$RC",
                    [(set F8RC:$RC, (fadd F8RC:$RA, F8RC:$RB))], s_fadd>;
 def SUBT  : FPForm<0x16, 0x5A1, "subt/su $RA,$RB,$RC",
@@ -614,13 +622,13 @@ def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC", [], s_fadd>;
 }
 
 //More CPYS forms:
-let OperandList = (ops F8RC:$RC, F4RC:$RA, F8RC:$RB) in {
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops F4RC:$RA, F8RC:$RB) in {
 def CPYSTs  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
                    [(set F8RC:$RC, (fcopysign F8RC:$RB, F4RC:$RA))], s_fadd>;
 def CPYSNTs : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
                    [(set F8RC:$RC, (fneg (fcopysign F8RC:$RB, F4RC:$RA)))], s_fadd>;
 }
-let OperandList = (ops F4RC:$RC, F8RC:$RA, F4RC:$RB) in {
+let OutOperandList = (ops F4RC:$RC), InOperandList = (ops F8RC:$RA, F4RC:$RB) in {
 def CPYSSt  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",
                    [(set F4RC:$RC, (fcopysign F4RC:$RB, F8RC:$RA))], s_fadd>;
 def CPYSESt : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[], s_fadd>; //Copy sign and exponent
@@ -629,7 +637,7 @@ def CPYSNSt : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",
 }
 
 //conditional moves, floats
-let OperandList = (ops F4RC:$RDEST, F4RC:$RFALSE, F4RC:$RTRUE, F8RC:$RCOND),
+let OutOperandList = (ops F4RC:$RDEST), InOperandList = (ops F4RC:$RFALSE, F4RC:$RTRUE, F8RC:$RCOND),
     isTwoAddress = 1 in {
 def FCMOVEQS : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if = zero
 def FCMOVGES : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if >= zero
@@ -639,7 +647,7 @@ def FCMOVLTS : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RTRUE,$RDEST",[], s_fcmov>; 
 def FCMOVNES : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST",[], s_fcmov>; //FCMOVE if != zero
 }
 //conditional moves, doubles
-let OperandList = (ops F8RC:$RDEST, F8RC:$RFALSE, F8RC:$RTRUE, F8RC:$RCOND),
+let OutOperandList = (ops F8RC:$RDEST), InOperandList = (ops F8RC:$RFALSE, F8RC:$RTRUE, F8RC:$RCOND),
     isTwoAddress = 1 in {
 def FCMOVEQT : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
 def FCMOVGET : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RTRUE,$RDEST", [], s_fcmov>;
@@ -739,31 +747,31 @@ def : Pat<(select (setule F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
 
 
 
-let OperandList = (ops GPRC:$RC, F4RC:$RA), Fb = 31 in 
+let OutOperandList = (ops GPRC:$RC), InOperandList = (ops F4RC:$RA), Fb = 31 in 
 def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC",[], s_ftoi>; //Floating to integer move, S_floating
-let OperandList = (ops GPRC:$RC, F8RC:$RA), Fb = 31 in 
+let OutOperandList = (ops GPRC:$RC), InOperandList = (ops F8RC:$RA), Fb = 31 in 
 def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC",
         [(set GPRC:$RC, (bitconvert F8RC:$RA))], s_ftoi>; //Floating to integer move
-let OperandList = (ops F4RC:$RC, GPRC:$RA), Fb = 31 in 
+let OutOperandList = (ops F4RC:$RC), InOperandList = (ops GPRC:$RA), Fb = 31 in 
 def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC",[], s_itof>; //Integer to floating move, S_floating
-let OperandList = (ops F8RC:$RC, GPRC:$RA), Fb = 31 in 
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops GPRC:$RA), Fb = 31 in 
 def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC",
         [(set F8RC:$RC, (bitconvert GPRC:$RA))], s_itof>; //Integer to floating move
 
 
-let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F4RC:$RC), InOperandList = (ops F8RC:$RB), Fa = 31 in 
 def CVTQS : FPForm<0x16, 0x7BC, "cvtqs/sui $RB,$RC",
         [(set F4RC:$RC, (Alpha_cvtqs F8RC:$RB))], s_fadd>;
-let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops F8RC:$RB), Fa = 31 in 
 def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC",
         [(set F8RC:$RC, (Alpha_cvtqt F8RC:$RB))], s_fadd>;
-let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops F8RC:$RB), Fa = 31 in 
 def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC",
         [(set F8RC:$RC, (Alpha_cvttq F8RC:$RB))], s_fadd>;
-let OperandList = (ops F8RC:$RC, F4RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F8RC:$RC), InOperandList = (ops F4RC:$RB), Fa = 31 in 
 def CVTST : FPForm<0x16, 0x6AC, "cvtst/s $RB,$RC",
                    [(set F8RC:$RC, (fextend F4RC:$RB))], s_fadd>;
-let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in 
+let OutOperandList = (ops F4RC:$RC), InOperandList = (ops F8RC:$RB), Fa = 31 in 
 def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
                    [(set F4RC:$RC, (fround F8RC:$RB))], s_fadd>;
 

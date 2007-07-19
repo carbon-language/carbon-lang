@@ -297,69 +297,72 @@ def FPContractions : Predicate<"!NoExcessFPPrecision">;
 // Pseudo-instructions:
 
 let hasCtrlDep = 1 in {
-def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt),
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm:$amt),
                               "${:comment} ADJCALLSTACKDOWN",
                               [(callseq_start imm:$amt)]>, Imp<[R1],[R1]>;
-def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
+def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt),
                               "${:comment} ADJCALLSTACKUP",
                               [(callseq_end imm:$amt)]>, Imp<[R1],[R1]>;
 
-def UPDATE_VRSAVE    : Pseudo<(ops GPRC:$rD, GPRC:$rS),
+def UPDATE_VRSAVE    : Pseudo<(outs GPRC:$rD), (ins GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
 
-def DYNALLOC : Pseudo<(ops GPRC:$result, GPRC:$negsize, memri:$fpsi),
+def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi),
                        "${:comment} DYNALLOC $result, $negsize, $fpsi",
                        [(set GPRC:$result,
                              (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>,
                         Imp<[R1],[R1]>;
                          
-def IMPLICIT_DEF_GPRC: Pseudo<(ops GPRC:$rD),"${:comment}IMPLICIT_DEF_GPRC $rD",
+def IMPLICIT_DEF_GPRC: Pseudo<(outs GPRC:$rD), (ins),
+                              "${:comment}IMPLICIT_DEF_GPRC $rD",
                               [(set GPRC:$rD, (undef))]>;
-def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "${:comment} IMPLICIT_DEF_F8 $rD",
+def IMPLICIT_DEF_F8  : Pseudo<(outs F8RC:$rD), (ins),
+                              "${:comment} IMPLICIT_DEF_F8 $rD",
                               [(set F8RC:$rD, (undef))]>;
-def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "${:comment} IMPLICIT_DEF_F4 $rD",
+def IMPLICIT_DEF_F4  : Pseudo<(outs F4RC:$rD), (ins),
+                              "${:comment} IMPLICIT_DEF_F4 $rD",
                               [(set F4RC:$rD, (undef))]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.
 let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
     PPC970_Single = 1 in {
-  def SELECT_CC_I4 : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
+  def SELECT_CC_I4 : Pseudo<(outs GPRC:$dst), (ins CRRC:$cond, GPRC:$T, GPRC:$F,
                               i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
                               []>;
-  def SELECT_CC_I8 : Pseudo<(ops G8RC:$dst, CRRC:$cond, G8RC:$T, G8RC:$F,
+  def SELECT_CC_I8 : Pseudo<(outs G8RC:$dst), (ins CRRC:$cond, G8RC:$T, G8RC:$F,
                               i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
                               []>;
-  def SELECT_CC_F4  : Pseudo<(ops F4RC:$dst, CRRC:$cond, F4RC:$T, F4RC:$F,
+  def SELECT_CC_F4  : Pseudo<(outs F4RC:$dst), (ins CRRC:$cond, F4RC:$T, F4RC:$F,
                               i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
                               []>;
-  def SELECT_CC_F8  : Pseudo<(ops F8RC:$dst, CRRC:$cond, F8RC:$T, F8RC:$F,
+  def SELECT_CC_F8  : Pseudo<(outs F8RC:$dst), (ins CRRC:$cond, F8RC:$T, F8RC:$F,
                               i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
                               []>;
-  def SELECT_CC_VRRC: Pseudo<(ops VRRC:$dst, CRRC:$cond, VRRC:$T, VRRC:$F,
+  def SELECT_CC_VRRC: Pseudo<(outs VRRC:$dst), (ins CRRC:$cond, VRRC:$T, VRRC:$F,
                               i32imm:$BROPC), "${:comment} SELECT_CC PSEUDO!",
                               []>;
 }
 
 let isTerminator = 1, isBarrier = 1, noResults = 1, PPC970_Unit = 7 in {
   let isReturn = 1 in
-    def BLR : XLForm_2_br<19, 16, 0, (ops pred:$p),
+    def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
                           "b${p:cc}lr ${p:reg}", BrB, 
                           [(retflag)]>;
-  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
+  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
 }
 
 
 
 let Defs = [LR] in
-  def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label", []>,
+  def MovePCtoLR : Pseudo<(outs), (ins piclabel:$label), "bl $label", []>,
                    PPC970_Unit_BRU;
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
     noResults = 1, PPC970_Unit = 7 in {
   let isBarrier = 1 in {
-  def B   : IForm<18, 0, 0, (ops target:$dst),
+  def B   : IForm<18, 0, 0, (outs), (ins target:$dst),
                   "b $dst", BrB,
                   [(br bb:$dst)]>;
   }
@@ -367,7 +370,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1,
   // BCC represents an arbitrary conditional branch on a predicate.
   // FIXME: should be able to write a pattern for PPCcondbranch, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def BCC : BForm<16, 0, 0, (ops pred:$cond, target:$dst),
+  def BCC : BForm<16, 0, 0, (outs), (ins pred:$cond, target:$dst),
                   "b${cond:cc} ${cond:reg}, $dst"
                   /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
 }
@@ -382,13 +385,13 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
   def BL_Macho  : IForm<18, 0, 1,
-                        (ops calltarget:$func, variable_ops), 
+                        (outs), (ins calltarget:$func, variable_ops), 
                         "bl $func", BrB, []>;  // See Pat patterns below.
   def BLA_Macho : IForm<18, 1, 1, 
-                        (ops aaddr:$func, variable_ops),
+                        (outs), (ins aaddr:$func, variable_ops),
                         "bla $func", BrB, [(PPCcall_Macho (i32 imm:$func))]>;
   def BCTRL_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                 (ops variable_ops),
+                                 (outs), (ins variable_ops),
                                  "bctrl", BrB,
                                  [(PPCbctrl_Macho)]>;
 }
@@ -403,41 +406,41 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
   def BL_ELF  : IForm<18, 0, 1,
-                      (ops calltarget:$func, variable_ops), 
+                      (outs), (ins calltarget:$func, variable_ops), 
                       "bl $func", BrB, []>;  // See Pat patterns below.
   def BLA_ELF : IForm<18, 1, 1,
-                      (ops aaddr:$func, variable_ops),
+                      (outs), (ins aaddr:$func, variable_ops),
                       "bla $func", BrB,
                       [(PPCcall_ELF (i32 imm:$func))]>;
   def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
-                               (ops variable_ops),
+                               (outs), (ins variable_ops),
                                "bctrl", BrB,
                                [(PPCbctrl_ELF)]>;
 }
 
 // DCB* instructions.
-def DCBA   : DCB_Form<758, 0, (ops memrr:$dst),
+def DCBA   : DCB_Form<758, 0, (outs), (ins memrr:$dst),
                       "dcba $dst", LdStDCBF, [(int_ppc_dcba xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBF   : DCB_Form<86, 0, (ops memrr:$dst),
+def DCBF   : DCB_Form<86, 0, (outs), (ins memrr:$dst),
                       "dcbf $dst", LdStDCBF, [(int_ppc_dcbf xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBI   : DCB_Form<470, 0, (ops memrr:$dst),
+def DCBI   : DCB_Form<470, 0, (outs), (ins memrr:$dst),
                       "dcbi $dst", LdStDCBF, [(int_ppc_dcbi xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBST  : DCB_Form<54, 0, (ops memrr:$dst),
+def DCBST  : DCB_Form<54, 0, (outs), (ins memrr:$dst),
                       "dcbst $dst", LdStDCBF, [(int_ppc_dcbst xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBT   : DCB_Form<278, 0, (ops memrr:$dst),
+def DCBT   : DCB_Form<278, 0, (outs), (ins memrr:$dst),
                       "dcbt $dst", LdStDCBF, [(int_ppc_dcbt xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBTST : DCB_Form<246, 0, (ops memrr:$dst),
+def DCBTST : DCB_Form<246, 0, (outs), (ins memrr:$dst),
                       "dcbtst $dst", LdStDCBF, [(int_ppc_dcbtst xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBZ   : DCB_Form<1014, 0, (ops memrr:$dst),
+def DCBZ   : DCB_Form<1014, 0, (outs), (ins memrr:$dst),
                       "dcbz $dst", LdStDCBF, [(int_ppc_dcbz xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
-def DCBZL  : DCB_Form<1014, 1, (ops memrr:$dst),
+def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
                       "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
 
@@ -447,55 +450,55 @@ def DCBZL  : DCB_Form<1014, 1, (ops memrr:$dst),
 
 // Unindexed (r+i) Loads. 
 let isLoad = 1, PPC970_Unit = 2 in {
-def LBZ : DForm_1<34, (ops GPRC:$rD, memri:$src),
+def LBZ : DForm_1<34, (outs GPRC:$rD), (ins memri:$src),
                   "lbz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (zextloadi8 iaddr:$src))]>;
-def LHA : DForm_1<42, (ops GPRC:$rD, memri:$src),
+def LHA : DForm_1<42, (outs GPRC:$rD), (ins memri:$src),
                   "lha $rD, $src", LdStLHA,
                   [(set GPRC:$rD, (sextloadi16 iaddr:$src))]>,
                   PPC970_DGroup_Cracked;
-def LHZ : DForm_1<40, (ops GPRC:$rD, memri:$src),
+def LHZ : DForm_1<40, (outs GPRC:$rD), (ins memri:$src),
                   "lhz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (zextloadi16 iaddr:$src))]>;
-def LWZ : DForm_1<32, (ops GPRC:$rD, memri:$src),
+def LWZ : DForm_1<32, (outs GPRC:$rD), (ins memri:$src),
                   "lwz $rD, $src", LdStGeneral,
                   [(set GPRC:$rD, (load iaddr:$src))]>;
 
-def LFS : DForm_1<48, (ops F4RC:$rD, memri:$src),
+def LFS : DForm_1<48, (outs F4RC:$rD), (ins memri:$src),
                   "lfs $rD, $src", LdStLFDU,
                   [(set F4RC:$rD, (load iaddr:$src))]>;
-def LFD : DForm_1<50, (ops F8RC:$rD, memri:$src),
+def LFD : DForm_1<50, (outs F8RC:$rD), (ins memri:$src),
                   "lfd $rD, $src", LdStLFD,
                   [(set F8RC:$rD, (load iaddr:$src))]>;
 
 
 // Unindexed (r+i) Loads with Update (preinc).
-def LBZU : DForm_1<35, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+def LBZU : DForm_1<35, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
                    "lbzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHAU : DForm_1<43, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+def LHAU : DForm_1<43, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
                    "lhau $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHZU : DForm_1<41, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+def LHZU : DForm_1<41, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
                    "lhzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LWZU : DForm_1<33, (ops GPRC:$rD, ptr_rc:$ea_result, memri:$addr),
+def LWZU : DForm_1<33, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
                    "lwzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFSU : DForm_1<49, (ops F4RC:$rD, ptr_rc:$ea_result, memri:$addr),
+def LFSU : DForm_1<49, (outs F4RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
                   "lfs $rD, $addr", LdStLFDU,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$ea_result, memri:$addr),
+def LFDU : DForm_1<51, (outs F8RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
                   "lfd $rD, $addr", LdStLFD,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
@@ -504,32 +507,32 @@ def LFDU : DForm_1<51, (ops F8RC:$rD, ptr_rc:$ea_result, memri:$addr),
 // Indexed (r+r) Loads.
 //
 let isLoad = 1, PPC970_Unit = 2 in {
-def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
+def LBZX : XForm_1<31,  87, (outs GPRC:$rD), (ins memrr:$src),
                    "lbzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (zextloadi8 xaddr:$src))]>;
-def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
+def LHAX : XForm_1<31, 343, (outs GPRC:$rD), (ins memrr:$src),
                    "lhax $rD, $src", LdStLHA,
                    [(set GPRC:$rD, (sextloadi16 xaddr:$src))]>,
                    PPC970_DGroup_Cracked;
-def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
+def LHZX : XForm_1<31, 279, (outs GPRC:$rD), (ins memrr:$src),
                    "lhzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (zextloadi16 xaddr:$src))]>;
-def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
+def LWZX : XForm_1<31,  23, (outs GPRC:$rD), (ins memrr:$src),
                    "lwzx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (load xaddr:$src))]>;
                    
                    
-def LHBRX : XForm_1<31, 790, (ops GPRC:$rD, memrr:$src),
+def LHBRX : XForm_1<31, 790, (outs GPRC:$rD), (ins memrr:$src),
                    "lhbrx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i16))]>;
-def LWBRX : XForm_1<31,  534, (ops GPRC:$rD, memrr:$src),
+def LWBRX : XForm_1<31,  534, (outs GPRC:$rD), (ins memrr:$src),
                    "lwbrx $rD, $src", LdStGeneral,
                    [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i32))]>;
 
-def LFSX   : XForm_25<31, 535, (ops F4RC:$frD, memrr:$src),
+def LFSX   : XForm_25<31, 535, (outs F4RC:$frD), (ins memrr:$src),
                       "lfsx $frD, $src", LdStLFDU,
                       [(set F4RC:$frD, (load xaddr:$src))]>;
-def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
+def LFDX   : XForm_25<31, 599, (outs F8RC:$frD), (ins memrr:$src),
                       "lfdx $frD, $src", LdStLFDU,
                       [(set F8RC:$frD, (load xaddr:$src))]>;
 }
@@ -540,52 +543,52 @@ def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
 
 // Unindexed (r+i) Stores.
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STB  : DForm_1<38, (ops GPRC:$rS, memri:$src),
+def STB  : DForm_1<38, (outs), (ins GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
-def STH  : DForm_1<44, (ops GPRC:$rS, memri:$src),
+def STH  : DForm_1<44, (outs), (ins GPRC:$rS, memri:$src),
                    "sth $rS, $src", LdStGeneral,
                    [(truncstorei16 GPRC:$rS, iaddr:$src)]>;
-def STW  : DForm_1<36, (ops GPRC:$rS, memri:$src),
+def STW  : DForm_1<36, (outs), (ins GPRC:$rS, memri:$src),
                    "stw $rS, $src", LdStGeneral,
                    [(store GPRC:$rS, iaddr:$src)]>;
-def STFS : DForm_1<52, (ops F4RC:$rS, memri:$dst),
+def STFS : DForm_1<52, (outs), (ins F4RC:$rS, memri:$dst),
                    "stfs $rS, $dst", LdStUX,
                    [(store F4RC:$rS, iaddr:$dst)]>;
-def STFD : DForm_1<54, (ops F8RC:$rS, memri:$dst),
+def STFD : DForm_1<54, (outs), (ins F8RC:$rS, memri:$dst),
                    "stfd $rS, $dst", LdStUX,
                    [(store F8RC:$rS, iaddr:$dst)]>;
 }
 
 // Unindexed (r+i) Stores with Update (preinc).
 let isStore = 1, PPC970_Unit = 2 in {
-def STBU  : DForm_1<39, (ops ptr_rc:$ea_res, GPRC:$rS,
+def STBU  : DForm_1<39, (outs), (ins ptr_rc:$ea_res, GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                           (pre_truncsti8 GPRC:$rS, ptr_rc:$ptrreg, 
                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STHU  : DForm_1<45, (ops ptr_rc:$ea_res, GPRC:$rS,
+def STHU  : DForm_1<45, (outs), (ins ptr_rc:$ea_res, GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                         (pre_truncsti16 GPRC:$rS, ptr_rc:$ptrreg, 
                                         iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STWU  : DForm_1<37, (ops ptr_rc:$ea_res, GPRC:$rS,
+def STWU  : DForm_1<37, (outs), (ins ptr_rc:$ea_res, GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stwu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store GPRC:$rS, ptr_rc:$ptrreg, 
                                                      iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STFSU : DForm_1<37, (ops ptr_rc:$ea_res, F4RC:$rS,
+def STFSU : DForm_1<37, (outs), (ins ptr_rc:$ea_res, F4RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stfsu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store F4RC:$rS,  ptr_rc:$ptrreg, 
                                           iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STFDU : DForm_1<37, (ops ptr_rc:$ea_res, F8RC:$rS,
+def STFDU : DForm_1<37, (outs), (ins ptr_rc:$ea_res, F8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stfdu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store F8RC:$rS, ptr_rc:$ptrreg, 
@@ -597,37 +600,37 @@ def STFDU : DForm_1<37, (ops ptr_rc:$ea_res, F8RC:$rS,
 // Indexed (r+r) Stores.
 //
 let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
-def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
+def STBX  : XForm_8<31, 215, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
-def STHX  : XForm_8<31, 407, (ops GPRC:$rS, memrr:$dst),
+def STHX  : XForm_8<31, 407, (outs), (ins GPRC:$rS, memrr:$dst),
                    "sthx $rS, $dst", LdStGeneral,
                    [(truncstorei16 GPRC:$rS, xaddr:$dst)]>, 
                    PPC970_DGroup_Cracked;
-def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
+def STWX  : XForm_8<31, 151, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStGeneral,
                    [(store GPRC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
-def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
+def STWUX : XForm_8<31, 183, (outs), (ins GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
-def STHBRX: XForm_8<31, 918, (ops GPRC:$rS, memrr:$dst),
+def STHBRX: XForm_8<31, 918, (outs), (ins GPRC:$rS, memrr:$dst),
                    "sthbrx $rS, $dst", LdStGeneral,
                    [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i16)]>, 
                    PPC970_DGroup_Cracked;
-def STWBRX: XForm_8<31, 662, (ops GPRC:$rS, memrr:$dst),
+def STWBRX: XForm_8<31, 662, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stwbrx $rS, $dst", LdStGeneral,
                    [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i32)]>,
                    PPC970_DGroup_Cracked;
 
-def STFIWX: XForm_28<31, 983, (ops F8RC:$frS, memrr:$dst),
+def STFIWX: XForm_28<31, 983, (outs), (ins F8RC:$frS, memrr:$dst),
                      "stfiwx $frS, $dst", LdStUX,
                      [(PPCstfiwx F8RC:$frS, xoaddr:$dst)]>;
-def STFSX : XForm_28<31, 663, (ops F4RC:$frS, memrr:$dst),
+def STFSX : XForm_28<31, 663, (outs), (ins F4RC:$frS, memrr:$dst),
                      "stfsx $frS, $dst", LdStUX,
                      [(store F4RC:$frS, xaddr:$dst)]>;
-def STFDX : XForm_28<31, 727, (ops F8RC:$frS, memrr:$dst),
+def STFDX : XForm_28<31, 727, (outs), (ins F8RC:$frS, memrr:$dst),
                      "stfdx $frS, $dst", LdStUX,
                      [(store F8RC:$frS, xaddr:$dst)]>;
 }
@@ -638,140 +641,140 @@ def STFDX : XForm_28<31, 727, (ops F8RC:$frS, memrr:$dst),
 //
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDI   : DForm_2<14, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "addi $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (add GPRC:$rA, immSExt16:$imm))]>;
-def ADDIC  : DForm_2<12, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDIC  : DForm_2<12, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (addc GPRC:$rA, immSExt16:$imm))]>,
                      PPC970_DGroup_Cracked;
-def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDICo : DForm_2<13, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm", IntGeneral,
                      []>;
-def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$imm),
+def ADDIS  : DForm_2<15, (outs GPRC:$rD), (ins GPRC:$rA, symbolHi:$imm),
                      "addis $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (add GPRC:$rA, imm16ShiftedSExt:$imm))]>;
-def LA     : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
+def LA     : DForm_2<14, (outs GPRC:$rD), (ins GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)", IntGeneral,
                      [(set GPRC:$rD, (add GPRC:$rA,
                                           (PPClo tglobaladdr:$sym, 0)))]>;
-def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def MULLI  : DForm_2< 7, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm", IntMulLI,
                      [(set GPRC:$rD, (mul GPRC:$rA, immSExt16:$imm))]>;
-def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def SUBFIC : DForm_2< 8, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (subc immSExt16:$imm, GPRC:$rA))]>;
-def LI  : DForm_2_r0<14, (ops GPRC:$rD, symbolLo:$imm),
+def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
                      "li $rD, $imm", IntGeneral,
                      [(set GPRC:$rD, immSExt16:$imm)]>;
-def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
+def LIS : DForm_2_r0<15, (outs GPRC:$rD), (ins symbolHi:$imm),
                      "lis $rD, $imm", IntGeneral,
                      [(set GPRC:$rD, imm16ShiftedSExt:$imm)]>;
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-def ANDIo : DForm_4<28, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ANDIo : DForm_4<28, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "andi. $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (and GPRC:$src1, immZExt16:$src2))]>,
                     isDOT;
-def ANDISo : DForm_4<29, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ANDISo : DForm_4<29, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "andis. $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (and GPRC:$src1,imm16ShiftedZExt:$src2))]>,
                     isDOT;
-def ORI   : DForm_4<24, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ORI   : DForm_4<24, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (or GPRC:$src1, immZExt16:$src2))]>;
-def ORIS  : DForm_4<25, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def ORIS  : DForm_4<25, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "oris $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (or GPRC:$src1, imm16ShiftedZExt:$src2))]>;
-def XORI  : DForm_4<26, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def XORI  : DForm_4<26, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "xori $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (xor GPRC:$src1, immZExt16:$src2))]>;
-def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
+def XORIS : DForm_4<27, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     "xoris $dst, $src1, $src2", IntGeneral,
                     [(set GPRC:$dst, (xor GPRC:$src1,imm16ShiftedZExt:$src2))]>;
-def NOP   : DForm_4_zero<24, (ops), "nop", IntGeneral,
+def NOP   : DForm_4_zero<24, (outs), (ins), "nop", IntGeneral,
                          []>;
-def CMPWI : DForm_5_ext<11, (ops CRRC:$crD, GPRC:$rA, s16imm:$imm),
+def CMPWI : DForm_5_ext<11, (outs), (ins CRRC:$crD, GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm", IntCompare>;
-def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
+def CMPLWI : DForm_6_ext<10, (outs), (ins CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2", IntCompare>;
 }
 
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def NAND : XForm_6<31, 476, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "nand $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (not (and GPRC:$rS, GPRC:$rB)))]>;
-def AND  : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def AND  : XForm_6<31,  28, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (and GPRC:$rS, GPRC:$rB))]>;
-def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def ANDC : XForm_6<31,  60, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
-def OR   : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def OR   : XForm_6<31, 444, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (or GPRC:$rS, GPRC:$rB))]>;
-def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def NOR  : XForm_6<31, 124, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
-def ORC  : XForm_6<31, 412, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def ORC  : XForm_6<31, 412, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "orc $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (or GPRC:$rS, (not GPRC:$rB)))]>;
-def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def EQV  : XForm_6<31, 284, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "eqv $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (not (xor GPRC:$rS, GPRC:$rB)))]>;
-def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def XOR  : XForm_6<31, 316, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;
-def SLW  : XForm_6<31,  24, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SLW  : XForm_6<31,  24, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (PPCshl GPRC:$rS, GPRC:$rB))]>;
-def SRW  : XForm_6<31, 536, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRW  : XForm_6<31, 536, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "srw $rA, $rS, $rB", IntGeneral,
                    [(set GPRC:$rA, (PPCsrl GPRC:$rS, GPRC:$rB))]>;
-def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRAW : XForm_6<31, 792, (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB", IntShift,
                    [(set GPRC:$rA, (PPCsra GPRC:$rS, GPRC:$rB))]>;
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
-def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
+def SRAWI : XForm_10<31, 824, (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH", IntShift,
                      [(set GPRC:$rA, (sra GPRC:$rS, (i32 imm:$SH)))]>;
-def CNTLZW : XForm_11<31,  26, (ops GPRC:$rA, GPRC:$rS),
+def CNTLZW : XForm_11<31,  26, (outs GPRC:$rA), (ins GPRC:$rS),
                       "cntlzw $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (ctlz GPRC:$rS))]>;
-def EXTSB  : XForm_11<31, 954, (ops GPRC:$rA, GPRC:$rS),
+def EXTSB  : XForm_11<31, 954, (outs GPRC:$rA), (ins GPRC:$rS),
                       "extsb $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i8))]>;
-def EXTSH  : XForm_11<31, 922, (ops GPRC:$rA, GPRC:$rS),
+def EXTSH  : XForm_11<31, 922, (outs GPRC:$rA), (ins GPRC:$rS),
                       "extsh $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i16))]>;
 
-def CMPW   : XForm_16_ext<31, 0, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+def CMPW   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
                           "cmpw $crD, $rA, $rB", IntCompare>;
-def CMPLW  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
+def CMPLW  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins GPRC:$rA, GPRC:$rB),
                           "cmplw $crD, $rA, $rB", IntCompare>;
 }
 let PPC970_Unit = 3 in {  // FPU Operations.
-//def FCMPO  : XForm_17<63, 32, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
+//def FCMPO  : XForm_17<63, 32, (outs CRRC:$crD), (ins FPRC:$fA, FPRC:$fB),
 //                      "fcmpo $crD, $fA, $fB", FPCompare>;
-def FCMPUS : XForm_17<63, 0, (ops CRRC:$crD, F4RC:$fA, F4RC:$fB),
+def FCMPUS : XForm_17<63, 0, (outs CRRC:$crD), (ins F4RC:$fA, F4RC:$fB),
                       "fcmpu $crD, $fA, $fB", FPCompare>;
-def FCMPUD : XForm_17<63, 0, (ops CRRC:$crD, F8RC:$fA, F8RC:$fB),
+def FCMPUD : XForm_17<63, 0, (outs CRRC:$crD), (ins F8RC:$fA, F8RC:$fB),
                       "fcmpu $crD, $fA, $fB", FPCompare>;
 
-def FCTIWZ : XForm_26<63, 15, (ops F8RC:$frD, F8RC:$frB),
+def FCTIWZ : XForm_26<63, 15, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fctiwz $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (PPCfctiwz F8RC:$frB))]>;
-def FRSP   : XForm_26<63, 12, (ops F4RC:$frD, F8RC:$frB),
+def FRSP   : XForm_26<63, 12, (outs F4RC:$frD), (ins F8RC:$frB),
                       "frsp $frD, $frB", FPGeneral,
                       [(set F4RC:$frD, (fround F8RC:$frB))]>;
-def FSQRT  : XForm_26<63, 22, (ops F8RC:$frD, F8RC:$frB),
+def FSQRT  : XForm_26<63, 22, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fsqrt $frD, $frB", FPSqrt,
                       [(set F8RC:$frD, (fsqrt F8RC:$frB))]>;
-def FSQRTS : XForm_26<59, 22, (ops F4RC:$frD, F4RC:$frB),
+def FSQRTS : XForm_26<59, 22, (outs F4RC:$frD), (ins F4RC:$frB),
                       "fsqrts $frD, $frB", FPSqrt,
                       [(set F4RC:$frD, (fsqrt F4RC:$frB))]>;
 }
@@ -782,37 +785,37 @@ def FSQRTS : XForm_26<59, 22, (ops F4RC:$frD, F4RC:$frB),
 /// often coalesced away and we don't want the dispatch group builder to think
 /// that they will fill slots (which could cause the load of a LSU reject to
 /// sneak into a d-group with a store).
-def FMRS   : XForm_26<63, 72, (ops F4RC:$frD, F4RC:$frB),
+def FMRS   : XForm_26<63, 72, (outs F4RC:$frD), (ins F4RC:$frB),
                       "fmr $frD, $frB", FPGeneral,
                       []>,  // (set F4RC:$frD, F4RC:$frB)
                       PPC970_Unit_Pseudo;
-def FMRD   : XForm_26<63, 72, (ops F8RC:$frD, F8RC:$frB),
+def FMRD   : XForm_26<63, 72, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fmr $frD, $frB", FPGeneral,
                       []>,  // (set F8RC:$frD, F8RC:$frB)
                       PPC970_Unit_Pseudo;
-def FMRSD  : XForm_26<63, 72, (ops F8RC:$frD, F4RC:$frB),
+def FMRSD  : XForm_26<63, 72, (outs F8RC:$frD), (ins F4RC:$frB),
                       "fmr $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (fextend F4RC:$frB))]>,
                       PPC970_Unit_Pseudo;
 
 let PPC970_Unit = 3 in {  // FPU Operations.
 // These are artificially split into two different forms, for 4/8 byte FP.
-def FABSS  : XForm_26<63, 264, (ops F4RC:$frD, F4RC:$frB),
+def FABSS  : XForm_26<63, 264, (outs F4RC:$frD), (ins F4RC:$frB),
                       "fabs $frD, $frB", FPGeneral,
                       [(set F4RC:$frD, (fabs F4RC:$frB))]>;
-def FABSD  : XForm_26<63, 264, (ops F8RC:$frD, F8RC:$frB),
+def FABSD  : XForm_26<63, 264, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fabs $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (fabs F8RC:$frB))]>;
-def FNABSS : XForm_26<63, 136, (ops F4RC:$frD, F4RC:$frB),
+def FNABSS : XForm_26<63, 136, (outs F4RC:$frD), (ins F4RC:$frB),
                       "fnabs $frD, $frB", FPGeneral,
                       [(set F4RC:$frD, (fneg (fabs F4RC:$frB)))]>;
-def FNABSD : XForm_26<63, 136, (ops F8RC:$frD, F8RC:$frB),
+def FNABSD : XForm_26<63, 136, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fnabs $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (fneg (fabs F8RC:$frB)))]>;
-def FNEGS  : XForm_26<63, 40, (ops F4RC:$frD, F4RC:$frB),
+def FNEGS  : XForm_26<63, 40, (outs F4RC:$frD), (ins F4RC:$frB),
                       "fneg $frD, $frB", FPGeneral,
                       [(set F4RC:$frD, (fneg F4RC:$frB))]>;
-def FNEGD  : XForm_26<63, 40, (ops F8RC:$frD, F8RC:$frB),
+def FNEGD  : XForm_26<63, 40, (outs F8RC:$frD), (ins F8RC:$frB),
                       "fneg $frD, $frB", FPGeneral,
                       [(set F8RC:$frD, (fneg F8RC:$frB))]>;
 }
@@ -820,48 +823,52 @@ def FNEGD  : XForm_26<63, 40, (ops F8RC:$frD, F8RC:$frB),
 
 // XL-Form instructions.  condition register logical ops.
 //
-def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
+def MCRF   : XLForm_3<19, 0, (outs CRRC:$BF), (ins CRRC:$BFA),
                       "mcrf $BF, $BFA", BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
 
-def CREQV  : XLForm_1<19, 289, (ops CRRC:$CRD, CRRC:$CRA, CRRC:$CRB),
+def CREQV  : XLForm_1<19, 289, (outs CRRC:$CRD), (ins CRRC:$CRA, CRRC:$CRB),
                       "creqv $CRD, $CRA, $CRB", BrCR,
                       []>;
 
-def SETCR  : XLForm_1_ext<19, 289, (ops CRRC:$dst),
+def SETCR  : XLForm_1_ext<19, 289, (outs CRRC:$dst), (ins),
               "creqv $dst, $dst, $dst", BrCR,
               []>;
 
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //
-def MFCTR : XFXForm_1_ext<31, 339, 9, (ops GPRC:$rT), "mfctr $rT", SprMFSPR>,
+def MFCTR : XFXForm_1_ext<31, 339, 9, (outs GPRC:$rT), (ins),
+                          "mfctr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 let Pattern = [(PPCmtctr GPRC:$rS)] in {
-def MTCTR : XFXForm_7_ext<31, 467, 9, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>,
+def MTCTR : XFXForm_7_ext<31, 467, 9, (outs), (ins GPRC:$rS),
+                          "mtctr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
-def MTLR  : XFXForm_7_ext<31, 467, 8, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>,
+def MTLR  : XFXForm_7_ext<31, 467, 8, (outs), (ins GPRC:$rS),
+                          "mtlr $rS", SprMTSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
-def MFLR  : XFXForm_1_ext<31, 339, 8, (ops GPRC:$rT), "mflr $rT", SprMFSPR>,
+def MFLR  : XFXForm_1_ext<31, 339, 8, (outs GPRC:$rT), (ins),
+                          "mflr $rT", SprMFSPR>,
             PPC970_DGroup_First, PPC970_Unit_FXU;
 
 // Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed like
 // a GPR on the PPC970.  As such, copies in and out have the same performance
 // characteristics as an OR instruction.
-def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS),
+def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (outs), (ins GPRC:$rS),
                              "mtspr 256, $rS", IntGeneral>,
                PPC970_DGroup_Single, PPC970_Unit_FXU;
-def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT),
+def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs GPRC:$rT), (ins),
                              "mfspr $rT, 256", IntGeneral>,
                PPC970_DGroup_First, PPC970_Unit_FXU;
 
-def MTCRF : XFXForm_5<31, 144, (ops crbitm:$FXM, GPRC:$rS),
+def MTCRF : XFXForm_5<31, 144, (outs), (ins crbitm:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
-def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT", SprMFCR>,
+def MFCR  : XFXForm_3<31, 19, (outs GPRC:$rT), (ins), "mfcr $rT", SprMFCR>,
             PPC970_MicroCode, PPC970_Unit_CRU;
-def MFOCRF: XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
+def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
 
@@ -869,56 +876,56 @@ let PPC970_Unit = 1 in {  // FXU Operations.
 
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
-def ADD4  : XOForm_1<31, 266, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADD4  : XOForm_1<31, 266, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (add GPRC:$rA, GPRC:$rB))]>;
-def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADDC  : XOForm_1<31, 10, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (addc GPRC:$rA, GPRC:$rB))]>,
                      PPC970_DGroup_Cracked;
-def ADDE  : XOForm_1<31, 138, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADDE  : XOForm_1<31, 138, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (adde GPRC:$rA, GPRC:$rB))]>;
-def DIVW  : XOForm_1<31, 491, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def DIVW  : XOForm_1<31, 491, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (sdiv GPRC:$rA, GPRC:$rB))]>,
                      PPC970_DGroup_First, PPC970_DGroup_Cracked;
-def DIVWU : XOForm_1<31, 459, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def DIVWU : XOForm_1<31, 459, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "divwu $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (udiv GPRC:$rA, GPRC:$rB))]>,
                      PPC970_DGroup_First, PPC970_DGroup_Cracked;
-def MULHW : XOForm_1<31, 75, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULHW : XOForm_1<31, 75, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "mulhw $rT, $rA, $rB", IntMulHW,
                      [(set GPRC:$rT, (mulhs GPRC:$rA, GPRC:$rB))]>;
-def MULHWU : XOForm_1<31, 11, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULHWU : XOForm_1<31, 11, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "mulhwu $rT, $rA, $rB", IntMulHWU,
                      [(set GPRC:$rT, (mulhu GPRC:$rA, GPRC:$rB))]>;
-def MULLW : XOForm_1<31, 235, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULLW : XOForm_1<31, 235, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "mullw $rT, $rA, $rB", IntMulHW,
                      [(set GPRC:$rT, (mul GPRC:$rA, GPRC:$rB))]>;
-def SUBF  : XOForm_1<31, 40, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUBF  : XOForm_1<31, 40, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "subf $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (sub GPRC:$rB, GPRC:$rA))]>;
-def SUBFC : XOForm_1<31, 8, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUBFC : XOForm_1<31, 8, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "subfc $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (subc GPRC:$rB, GPRC:$rA))]>,
                      PPC970_DGroup_Cracked;
-def SUBFE : XOForm_1<31, 136, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def SUBFE : XOForm_1<31, 136, 0, (outs GPRC:$rT), (ins GPRC:$rA, GPRC:$rB),
                      "subfe $rT, $rA, $rB", IntGeneral,
                      [(set GPRC:$rT, (sube GPRC:$rB, GPRC:$rA))]>;
-def ADDME  : XOForm_3<31, 234, 0, (ops GPRC:$rT, GPRC:$rA),
+def ADDME  : XOForm_3<31, 234, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "addme $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (adde GPRC:$rA, immAllOnes))]>;
-def ADDZE  : XOForm_3<31, 202, 0, (ops GPRC:$rT, GPRC:$rA),
+def ADDZE  : XOForm_3<31, 202, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "addze $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (adde GPRC:$rA, 0))]>;
-def NEG    : XOForm_3<31, 104, 0, (ops GPRC:$rT, GPRC:$rA),
+def NEG    : XOForm_3<31, 104, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "neg $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (ineg GPRC:$rA))]>;
-def SUBFME : XOForm_3<31, 232, 0, (ops GPRC:$rT, GPRC:$rA),
+def SUBFME : XOForm_3<31, 232, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "subfme $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (sube immAllOnes, GPRC:$rA))]>;
-def SUBFZE : XOForm_3<31, 200, 0, (ops GPRC:$rT, GPRC:$rA),
+def SUBFZE : XOForm_3<31, 200, 0, (outs GPRC:$rT), (ins GPRC:$rA),
                       "subfze $rT, $rA", IntGeneral,
                       [(set GPRC:$rT, (sube 0, GPRC:$rA))]>;
 }
@@ -928,49 +935,49 @@ def SUBFZE : XOForm_3<31, 200, 0, (ops GPRC:$rT, GPRC:$rA),
 //
 let PPC970_Unit = 3 in {  // FPU Operations.
 def FMADD : AForm_1<63, 29, 
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmadd $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fadd (fmul F8RC:$FRA, F8RC:$FRC),
                                            F8RC:$FRB))]>,
                     Requires<[FPContractions]>;
 def FMADDS : AForm_1<59, 29,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmadds $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fadd (fmul F4RC:$FRA, F4RC:$FRC),
                                            F4RC:$FRB))]>,
                     Requires<[FPContractions]>;
 def FMSUB : AForm_1<63, 28,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmsub $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fsub (fmul F8RC:$FRA, F8RC:$FRC),
                                            F8RC:$FRB))]>,
                     Requires<[FPContractions]>;
 def FMSUBS : AForm_1<59, 28,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmsubs $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fsub (fmul F4RC:$FRA, F4RC:$FRC),
                                            F4RC:$FRB))]>,
                     Requires<[FPContractions]>;
 def FNMADD : AForm_1<63, 31,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmadd $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fneg (fadd (fmul F8RC:$FRA, F8RC:$FRC),
                                                  F8RC:$FRB)))]>,
                     Requires<[FPContractions]>;
 def FNMADDS : AForm_1<59, 31,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmadds $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fneg (fadd (fmul F4RC:$FRA, F4RC:$FRC),
                                                  F4RC:$FRB)))]>,
                     Requires<[FPContractions]>;
 def FNMSUB : AForm_1<63, 30,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmsub $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fneg (fsub (fmul F8RC:$FRA, F8RC:$FRC),
                                                  F8RC:$FRB)))]>,
                     Requires<[FPContractions]>;
 def FNMSUBS : AForm_1<59, 30,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmsubs $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fneg (fsub (fmul F4RC:$FRA, F4RC:$FRC),
                                                  F4RC:$FRB)))]>,
@@ -980,43 +987,43 @@ def FNMSUBS : AForm_1<59, 30,
 // should use an FMRSD if the input comparison value really wants to be a float)
 // and 4/8 byte forms for the result and operand type..
 def FSELD : AForm_1<63, 23,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fsel $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F8RC:$FRT, (PPCfsel F8RC:$FRA,F8RC:$FRC,F8RC:$FRB))]>;
 def FSELS : AForm_1<63, 23,
-                     (ops F4RC:$FRT, F8RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                     (outs F4RC:$FRT), (ins F8RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                      "fsel $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (PPCfsel F8RC:$FRA,F4RC:$FRC,F4RC:$FRB))]>;
 def FADD  : AForm_2<63, 21,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
                     "fadd $FRT, $FRA, $FRB", FPGeneral,
                     [(set F8RC:$FRT, (fadd F8RC:$FRA, F8RC:$FRB))]>;
 def FADDS : AForm_2<59, 21,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
                     "fadds $FRT, $FRA, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fadd F4RC:$FRA, F4RC:$FRB))]>;
 def FDIV  : AForm_2<63, 18,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
                     "fdiv $FRT, $FRA, $FRB", FPDivD,
                     [(set F8RC:$FRT, (fdiv F8RC:$FRA, F8RC:$FRB))]>;
 def FDIVS : AForm_2<59, 18,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
                     "fdivs $FRT, $FRA, $FRB", FPDivS,
                     [(set F4RC:$FRT, (fdiv F4RC:$FRA, F4RC:$FRB))]>;
 def FMUL  : AForm_3<63, 25,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
                     "fmul $FRT, $FRA, $FRB", FPFused,
                     [(set F8RC:$FRT, (fmul F8RC:$FRA, F8RC:$FRB))]>;
 def FMULS : AForm_3<59, 25,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
                     "fmuls $FRT, $FRA, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fmul F4RC:$FRA, F4RC:$FRB))]>;
 def FSUB  : AForm_2<63, 20,
-                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
                     "fsub $FRT, $FRA, $FRB", FPGeneral,
                     [(set F8RC:$FRT, (fsub F8RC:$FRA, F8RC:$FRB))]>;
 def FSUBS : AForm_2<59, 20,
-                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
+                    (outs F4RC:$FRT), (ins F4RC:$FRA, F4RC:$FRB),
                     "fsubs $FRT, $FRA, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fsub F4RC:$FRA, F4RC:$FRB))]>;
 }
@@ -1027,21 +1034,21 @@ let PPC970_Unit = 1 in {  // FXU Operations.
 let isCommutable = 1 in {
 // RLWIMI can be commuted if the rotate amount is zero.
 def RLWIMI : MForm_2<20,
-                     (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
+                     (outs GPRC:$rA), (ins GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME", IntRotate,
                       []>, PPC970_DGroup_Cracked, RegConstraint<"$rSi = $rA">,
                       NoEncode<"$rSi">;
 }
 def RLWINM : MForm_2<21,
-                     (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                     (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>;
 def RLWINMo : MForm_2<21,
-                     (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
+                     (outs GPRC:$rA), (ins GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
                      "rlwinm. $rA, $rS, $SH, $MB, $ME", IntGeneral,
                      []>, isDOT, PPC970_DGroup_Cracked;
 def RLWNM  : MForm_2<23,
-                     (ops GPRC:$rA, GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
+                     (outs GPRC:$rA), (ins GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
                      "rlwnm $rA, $rS, $rB, $MB, $ME", IntGeneral,
                      []>;
 }
@@ -1051,7 +1058,7 @@ def RLWNM  : MForm_2<23,
 // DWARF Pseudo Instructions
 //
 
-def DWARF_LOC        : Pseudo<(ops i32imm:$line, i32imm:$col, i32imm:$file),
+def DWARF_LOC        : Pseudo<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
                               "${:comment} .loc $file, $line, $col",
                       [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
                                   (i32 imm:$file))]>;
