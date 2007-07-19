@@ -39,7 +39,6 @@
 #include <deque>
 #include <map>
 #include <vector>
-#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -655,12 +654,12 @@ namespace {
                             SmallPtrSet<Value*, 16>& currTemps) ;
     bool buildsets_anticout(BasicBlock* BB,
                             ValueNumberedSet& anticOut,
-                            std::set<BasicBlock*>& visited) ;
+                            SmallPtrSet<BasicBlock*, 8>& visited) ;
     unsigned buildsets_anticin(BasicBlock* BB,
                            ValueNumberedSet& anticOut,
                            ValueNumberedSet& currExps,
                            SmallPtrSet<Value*, 16>& currTemps,
-                           std::set<BasicBlock*>& visited) ;
+                           SmallPtrSet<BasicBlock*, 8>& visited) ;
     void buildsets(Function& F) ;
     
     void insertion_pre(Value* e, BasicBlock* BB,
@@ -1351,7 +1350,7 @@ void GVNPRE::buildsets_availout(BasicBlock::iterator I,
 /// set as a function of the ANTIC_IN set of the block's predecessors
 bool GVNPRE::buildsets_anticout(BasicBlock* BB,
                                 ValueNumberedSet& anticOut,
-                                std::set<BasicBlock*>& visited) {
+                                SmallPtrSet<BasicBlock*, 8>& visited) {
   if (BB->getTerminator()->getNumSuccessors() == 1) {
     if (BB->getTerminator()->getSuccessor(0) != BB &&
         visited.count(BB->getTerminator()->getSuccessor(0)) == 0) {
@@ -1398,7 +1397,7 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
                                ValueNumberedSet& anticOut,
                                ValueNumberedSet& currExps,
                                SmallPtrSet<Value*, 16>& currTemps,
-                               std::set<BasicBlock*>& visited) {
+                               SmallPtrSet<BasicBlock*, 8>& visited) {
   ValueNumberedSet& anticIn = anticipatedIn[BB];
   unsigned old = anticIn.size();
       
@@ -1439,8 +1438,8 @@ unsigned GVNPRE::buildsets_anticin(BasicBlock* BB,
 /// buildsets - Phase 1 of the main algorithm.  Construct the AVAIL_OUT
 /// and the ANTIC_IN sets.
 void GVNPRE::buildsets(Function& F) {
-  std::map<BasicBlock*, ValueNumberedSet> generatedExpressions;
-  std::map<BasicBlock*, SmallPtrSet<Value*, 16> > generatedTemporaries;
+  DenseMap<BasicBlock*, ValueNumberedSet> generatedExpressions;
+  DenseMap<BasicBlock*, SmallPtrSet<Value*, 16> > generatedTemporaries;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();   
   
@@ -1471,7 +1470,7 @@ void GVNPRE::buildsets(Function& F) {
 
   // Phase 1, Part 2: calculate ANTIC_IN
   
-  std::set<BasicBlock*> visited;
+  SmallPtrSet<BasicBlock*, 8> visited;
   SmallPtrSet<BasicBlock*, 4> block_changed;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     block_changed.insert(FI);
