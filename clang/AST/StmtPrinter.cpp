@@ -423,6 +423,10 @@ void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   OS << "(" << Node->getType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());
 }
+void StmtPrinter::VisitCompoundLiteralExpr(CompoundLiteralExpr *Node) {
+  OS << "(" << Node->getType().getAsString() << ")";
+  PrintExpr(Node->getInitializer());
+}
 void StmtPrinter::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
   // No need to print anything, simply forward to the sub expression.
   PrintExpr(Node->getSubExpr());

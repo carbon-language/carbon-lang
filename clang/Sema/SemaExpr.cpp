@@ -472,14 +472,15 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
 
 Action::ExprResult Sema::
 ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
-                     SourceLocation RParenLoc, ExprTy *Op) {
+                     SourceLocation RParenLoc, ExprTy *InitExpr) {
   assert((Ty != 0) && "ParseCompoundLiteral(): missing type");
   QualType literalType = QualType::getFromOpaquePtr(Ty);
-  assert((Op != 0) && "ParseCompoundLiteral(): missing expression");
-  Expr *literalExpr = static_cast<Expr*>(Op);
+  // FIXME: put back this assert when initializers are worked out.
+  //assert((InitExpr != 0) && "ParseCompoundLiteral(): missing expression");
+  Expr *literalExpr = static_cast<Expr*>(InitExpr);
   
   // FIXME: add semantic analysis (C99 6.5.2.5).
-  return false; // FIXME: instantiate a CompoundLiteralExpr
+  return new CompoundLiteralExpr(literalType, literalExpr);
 }
 
 Action::ExprResult Sema::

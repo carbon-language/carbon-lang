@@ -434,6 +434,25 @@ public:
   static bool classof(const MemberExpr *) { return true; }
 };
 
+/// CompoundLiteralExpr - [C99 6.5.2.5] 
+///
+class CompoundLiteralExpr : public Expr {
+  Expr *Init;
+public:
+  CompoundLiteralExpr(QualType ty, Expr *init) : 
+    Expr(CompoundLiteralExprClass, ty), Init(init) {}
+  
+  Expr *getInitializer() const { return Init; }
+  
+  virtual SourceRange getSourceRange() const { return SourceRange(); } // FIXME
+
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CompoundLiteralExprClass; 
+  }
+  static bool classof(const CompoundLiteralExpr *) { return true; }
+};
+
 /// ImplicitCastExpr - Allows us to explicitly represent implicit type 
 /// conversions. For example: converting T[]->T*, void f()->void (*f)(), 
 /// float->double, short->int, etc.
@@ -447,7 +466,7 @@ public:
   Expr *getSubExpr() { return Op; }
   const Expr *getSubExpr() const { return Op; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const { return SourceRange(); } // FIXME
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
@@ -478,7 +497,6 @@ public:
   }
   static bool classof(const CastExpr *) { return true; }
 };
-
 
 class BinaryOperator : public Expr {
 public:

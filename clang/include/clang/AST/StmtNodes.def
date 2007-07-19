@@ -59,14 +59,15 @@ STMT(44, CastExpr             , Expr)
 STMT(45, BinaryOperator       , Expr)
 STMT(46, ConditionalOperator  , Expr)
 STMT(47, ImplicitCastExpr     , Expr)
+STMT(48, CompoundLiteralExpr  , Expr)
 
 // GNU Extensions.
-STMT(48, AddrLabel            , Expr)
+STMT(49, AddrLabel            , Expr)
 
 // C++ Expressions.
-STMT(49, CXXCastExpr          , Expr)
-STMT(50, CXXBoolLiteralExpr   , Expr)
-LAST_EXPR(50)
+STMT(50, CXXCastExpr          , Expr)
+STMT(51, CXXBoolLiteralExpr   , Expr)
+LAST_EXPR(51)
 
 #undef STMT
 #undef FIRST_STMT
