@@ -1022,18 +1022,23 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
 
   return (NoFramePointerElim || 
-          MF.getFrameInfo()->hasVarSizedObjects() ||
+          MFI->hasVarSizedObjects() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
           (MMI && MMI->callsUnwindInit()));
+}
+
+bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+  return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 void X86RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (hasFP(MF)) {
-    // If we have a frame pointer, turn the adjcallstackup instruction into a
-    // 'sub ESP, <amt>' and the adjcallstackdown instruction into 'add ESP,
-    // <amt>'
+  if (!hasReservedCallFrame(MF)) {
+    // If the stack pointer can be changed after prologue, turn the
+    // adjcallstackup instruction into a 'sub ESP, <amt>' and the
+    // adjcallstackdown instruction into 'add ESP, <amt>'
+    // TODO: consider using push / pop instead of sub + store / add
     MachineInstr *Old = I;
     uint64_t Amount = Old->getOperand(0).getImm();
     if (Amount != 0) {

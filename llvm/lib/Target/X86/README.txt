@@ -1040,51 +1040,6 @@ int %test2(int %X) {
 
 //===---------------------------------------------------------------------===//
 
-We use push/pop of stack space around calls in situations where we don't have to.
-Call to f below produces:
-        subl $16, %esp      <<<<<
-        movl %eax, (%esp)
-        call L_f$stub
-        addl $16, %esp     <<<<<
-The stack push/pop can be moved into the prolog/epilog.  It does this because it's
-building the frame pointer, but this should not be sufficient, only the use of alloca
-should cause it to do this.
-(There are other issues shown by this code, but this is one.)
-
-typedef struct _range_t {
-    float fbias;
-    float fscale;
-    int ibias;
-    int iscale;
-    int ishift;
-    unsigned char lut[];
-} range_t;
-
-struct _decode_t {
-    int type:4;
-    int unit:4;
-    int alpha:8;
-    int N:8;
-    int bpc:8;
-    int bpp:16;
-    int skip:8;
-    int swap:8;
-    const range_t*const*range;
-};
-
-typedef struct _decode_t decode_t;
-
-extern int f(const decode_t* decode);
-
-int decode_byte (const decode_t* decode) {
-  if (decode->swap != 0)
-    return f(decode);
-  return 0;
-}
-
-
-//===---------------------------------------------------------------------===//
-
 This:
 #include <xmmintrin.h>
 unsigned test(float f) {
