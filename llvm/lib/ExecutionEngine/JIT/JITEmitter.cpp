@@ -50,12 +50,12 @@ namespace {
   struct MemoryRangeHeader {
     /// ThisAllocated - This is true if this block is currently allocated.  If
     /// not, this can be converted to a FreeRangeHeader.
-    intptr_t ThisAllocated : 1;
+    unsigned ThisAllocated : 1;
     
     /// PrevAllocated - Keep track of whether the block immediately before us is
     /// allocated.  If not, the word immediately before this header is the size
     /// of the previous block.
-    intptr_t PrevAllocated : 1;
+    unsigned PrevAllocated : 1;
     
     /// BlockSize - This is the size in bytes of this memory block,
     /// including this header.
