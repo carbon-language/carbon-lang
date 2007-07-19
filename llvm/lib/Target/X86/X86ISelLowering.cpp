@@ -422,7 +422,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FDIV,               MVT::v4f32, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v4f32, Legal);
     setOperationAction(ISD::FNEG,               MVT::v4f32, Custom);
-    setOperationAction(ISD::FABS,               MVT::v4f32, Custom);
     setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
@@ -452,7 +451,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FDIV,               MVT::v2f64, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
-    setOperationAction(ISD::FABS,               MVT::v2f64, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
@@ -3374,8 +3372,11 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
 SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType EltVT = VT;
-  if (MVT::isVector(VT))
+  unsigned EltNum = 1;
+  if (MVT::isVector(VT)) {
     EltVT = MVT::getVectorElementType(VT);
+    EltNum = MVT::getVectorNumElements(VT);
+  }
   const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
@@ -3391,13 +3392,21 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   }
   Constant *CS = ConstantStruct::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  SDVTList Tys = DAG.getVTList(VT, MVT::Other);
-  SmallVector<SDOperand, 3> Ops;
-  Ops.push_back(DAG.getEntryNode());
-  Ops.push_back(CPIdx);
-  Ops.push_back(DAG.getSrcValue(NULL));
-  SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
-  return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
+  if (MVT::isVector(VT)) {
+    SDOperand Mask = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
+    return DAG.getNode(ISD::BIT_CONVERT, VT,
+                       DAG.getNode(ISD::XOR, MVT::v2i64,
+                    DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64, Op.getOperand(0)),
+                    DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64, Mask)));
+  } else {
+    SDVTList Tys = DAG.getVTList(VT, MVT::Other);
+    SmallVector<SDOperand, 3> Ops;
+    Ops.push_back(DAG.getEntryNode());
+    Ops.push_back(CPIdx);
+    Ops.push_back(DAG.getSrcValue(NULL));
+    SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+    return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
+  }
 }
 
 SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
