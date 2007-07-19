@@ -3,7 +3,7 @@
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
 ; RUN:   grep sxtab | wc -l | grep 1
 
-define i8 @test1(i32 %A) sext {
+define i8 @test1(i32 %A) signext {
 	%B = lshr i32 %A, 8
 	%C = shl i32 %A, 24
 	%D = or i32 %B, %C
@@ -11,7 +11,7 @@ define i8 @test1(i32 %A) sext {
 	ret i8 %E
 }
 
-define i32 @test2(i32 %A, i32 %X) sext {
+define i32 @test2(i32 %A, i32 %X) signext {
 	%B = lshr i32 %A, 8
 	%C = shl i32 %A, 24
 	%D = or i32 %B, %C

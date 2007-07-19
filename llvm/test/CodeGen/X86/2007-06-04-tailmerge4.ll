@@ -431,9 +431,9 @@ declare i32 @report__ident_int(i32 %x)
 
 declare i8 @report__equal(i32 %x, i32 %y)
 
-declare i8 @report__ident_char(i8 zext  %x)
+declare i8 @report__ident_char(i8 zeroext  %x)
 
-declare i16 @report__ident_wide_char(i16 zext  %x)
+declare i16 @report__ident_wide_char(i16 zeroext  %x)
 
 declare i8 @report__ident_bool(i8 %x)
 
@@ -451,4 +451,4 @@ declare void @report__legal_file_name(%struct.string___XUP* sret  %agg.result, i
 
 declare void @__gnat_rcheck_06(i8*, i32)
 
-declare void @system__string_ops__str_concat_cs(%struct.string___XUP* sret , i8 zext , i64)
+declare void @system__string_ops__str_concat_cs(%struct.string___XUP* sret , i8 zeroext , i64)

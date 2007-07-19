@@ -225,6 +225,8 @@ coldcc          { return COLDCC_TOK; }
 x86_stdcallcc   { return X86_STDCALLCC_TOK; }
 x86_fastcallcc  { return X86_FASTCALLCC_TOK; }
 
+signext         { return SIGNEXT; }
+zeroext         { return ZEROEXT; }
 inreg           { return INREG; }
 sret            { return SRET;  }
 nounwind        { return NOUNWIND; }

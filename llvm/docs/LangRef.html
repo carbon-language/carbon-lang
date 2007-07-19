@@ -760,22 +760,22 @@ a power of 2.</p>
 
 <div class="doc_code">
 <pre>
-%someFunc = i16 (i8 sext %someParam) zext
-%someFunc = i16 (i8 zext %someParam) zext
+%someFunc = i16 (i8 signext %someParam) zeroext
+%someFunc = i16 (i8 zeroext %someParam) zeroext
 </pre>
 </div>
 
   <p>Note that the two function types above are unique because the parameter has
-  a different attribute (sext in the first one, zext in the second). Also note
-  that the attribute for the function result (zext) comes immediately after the
-  argument list.</p>
+  a different attribute (<tt>signext</tt> in the first one, <tt>zeroext</tt> in
+  the second).  Also note that the attribute for the function result 
+  (<tt>zeroext</tt>) comes immediately after the argument list.</p>
 
   <p>Currently, only the following parameter attributes are defined:</p>
   <dl>
-    <dt><tt>zext</tt></dt>
+    <dt><tt>zeroext</tt></dt>
     <dd>This indicates that the parameter should be zero extended just before
     a call to this function.</dd>
-    <dt><tt>sext</tt></dt>
+    <dt><tt>signext</tt></dt>
     <dd>This indicates that the parameter should be sign extended just before
     a call to this function.</dd>
     <dt><tt>inreg</tt></dt>
@@ -1131,7 +1131,7 @@ Variable argument functions can access their arguments with the <a
     <td class="left">function taking an <tt>i32</tt>, returning an <tt>i32</tt>
     </td>
   </tr><tr class="layout">
-    <td class="left"><tt>float&nbsp;(i16&nbsp;sext,&nbsp;i32&nbsp;*)&nbsp;*
+    <td class="left"><tt>float&nbsp;(i16&nbsp;signext,&nbsp;i32&nbsp;*)&nbsp;*
     </tt></td>
     <td class="left"><a href="#t_pointer">Pointer</a> to a function that takes 
       an <tt>i16</tt> that should be sign extended and a 

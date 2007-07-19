@@ -90,9 +90,9 @@ std::string
 ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   std::string Result;
   if (Attrs & ParamAttr::ZExt)
-    Result += "zext ";
+    Result += "zeroext ";
   if (Attrs & ParamAttr::SExt)
-    Result += "sext ";
+    Result += "signext ";
   if (Attrs & ParamAttr::NoReturn)
     Result += "noreturn ";
   if (Attrs & ParamAttr::NoUnwind)

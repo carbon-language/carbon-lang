@@ -47,12 +47,12 @@ target triple = "arm-linux-gnueabi"
 	%struct.htab = type { i32 (i8*)*, i32 (i8*, i8*)*, void (i8*)*, i8**, i32, i32, i32, i32, i32, i8* (i32, i32)*, void (i8*)*, i8*, i8* (i8*, i32, i32)*, void (i8*, i8*)*, i32 }
 	%struct.initial_value_struct = type opaque
 	%struct.lang_decl = type opaque
-	%struct.lang_hooks = type { i8*, i32, i32 (i32)*, i32 (i32, i8**)*, void (%struct.diagnostic_context*)*, i32 (i32, i8*, i32)*, i8 (i8*, i32) zext *, i8 (i8**) zext *, i8 () zext *, void ()*, void ()*, void (i32)*, void ()*, i64 (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, %struct.rtx_def* (%struct.tree_node*, %struct.rtx_def*, i32, i32, %struct.rtx_def**)*, i32 (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, i32 (%struct.rtx_def*, %struct.tree_node*)*, void (%struct.tree_node*)*, i8 (%struct.tree_node*) zext *, %struct.tree_node* (%struct.tree_node*)*, void (%struct.tree_node*)*, void (%struct.tree_node*)*, i8 () zext *, i8, i8, void ()*, void (%struct.FILE*, %struct.tree_node*, i32)*, void (%struct.FILE*, %struct.tree_node*, i32)*, void (%struct.FILE*, %struct.tree_node*, i32)*, void (%struct.FILE*, %struct.tree_node*, i32)*, i8* (%struct.tree_node*, i32)*, i32 (%struct.tree_node*, %struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, void (%struct.diagnostic_context*, i8*)*, %struct.tree_node* (%struct.tree_node*)*, i64 (i64)*, %struct.attribute_spec*, %struct.attribute_spec*, %struct.attribute_spec*, i32 (%struct.tree_node*)*, %struct.lang_hooks_for_functions, %struct.lang_hooks_for_tree_inlining, %struct.lang_hooks_for_callgraph, %struct.lang_hooks_for_tree_dump, %struct.lang_hooks_for_decls, %struct.lang_hooks_for_types, i32 (%struct.tree_node**, %struct.tree_node**, %struct.tree_node**)*, %struct.tree_node* (%struct.tree_node*, %struct.tree_node*)*, %struct.tree_node* (i8*, %struct.tree_node*, i32, i32, i8*, %struct.tree_node*)* }
+	%struct.lang_hooks = type { i8*, i32, i32 (i32)*, i32 (i32, i8**)*, void (%struct.diagnostic_context*)*, i32 (i32, i8*, i32)*, i8 (i8*, i32) zeroext *, i8 (i8**) zeroext *, i8 () zeroext *, void ()*, void ()*, void (i32)*, void ()*, i64 (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, %struct.rtx_def* (%struct.tree_node*, %struct.rtx_def*, i32, i32, %struct.rtx_def**)*, i32 (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, i32 (%struct.rtx_def*, %struct.tree_node*)*, void (%struct.tree_node*)*, i8 (%struct.tree_node*) zeroext *, %struct.tree_node* (%struct.tree_node*)*, void (%struct.tree_node*)*, void (%struct.tree_node*)*, i8 () zeroext *, i8, i8, void ()*, void (%struct.FILE*, %struct.tree_node*, i32)*, void (%struct.FILE*, %struct.tree_node*, i32)*, void (%struct.FILE*, %struct.tree_node*, i32)*, void (%struct.FILE*, %struct.tree_node*, i32)*, i8* (%struct.tree_node*, i32)*, i32 (%struct.tree_node*, %struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, void (%struct.diagnostic_context*, i8*)*, %struct.tree_node* (%struct.tree_node*)*, i64 (i64)*, %struct.attribute_spec*, %struct.attribute_spec*, %struct.attribute_spec*, i32 (%struct.tree_node*)*, %struct.lang_hooks_for_functions, %struct.lang_hooks_for_tree_inlining, %struct.lang_hooks_for_callgraph, %struct.lang_hooks_for_tree_dump, %struct.lang_hooks_for_decls, %struct.lang_hooks_for_types, i32 (%struct.tree_node**, %struct.tree_node**, %struct.tree_node**)*, %struct.tree_node* (%struct.tree_node*, %struct.tree_node*)*, %struct.tree_node* (i8*, %struct.tree_node*, i32, i32, i8*, %struct.tree_node*)* }
 	%struct.lang_hooks_for_callgraph = type { %struct.tree_node* (%struct.tree_node**, i32*, %struct.tree_node*)*, void (%struct.tree_node*)* }
-	%struct.lang_hooks_for_decls = type { i32 ()*, void (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, %struct.tree_node* ()*, i8 (%struct.tree_node*) zext *, void ()*, void (%struct.tree_node*)*, i8 (%struct.tree_node*) zext *, i8* (%struct.tree_node*)* }
-	%struct.lang_hooks_for_functions = type { void (%struct.function*)*, void (%struct.function*)*, void (%struct.function*)*, void (%struct.function*)*, i8 (%struct.tree_node*) zext * }
-	%struct.lang_hooks_for_tree_dump = type { i8 (i8*, %struct.tree_node*) zext *, i32 (%struct.tree_node*)* }
-	%struct.lang_hooks_for_tree_inlining = type { %struct.tree_node* (%struct.tree_node**, i32*, %struct.tree_node* (%struct.tree_node**, i32*, i8*)*, i8*, %struct.pointer_set_t*)*, i32 (%struct.tree_node**)*, i32 (%struct.tree_node*)*, %struct.tree_node* (i8*, %struct.tree_node*)*, i32 (%struct.tree_node*, %struct.tree_node*)*, i32 (%struct.tree_node*)*, i8 (%struct.tree_node*, %struct.tree_node*) zext *, i32 (%struct.tree_node*)*, void (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*, %struct.tree_node*, %struct.tree_node*, i32)* }
+	%struct.lang_hooks_for_decls = type { i32 ()*, void (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, %struct.tree_node* ()*, i8 (%struct.tree_node*) zeroext *, void ()*, void (%struct.tree_node*)*, i8 (%struct.tree_node*) zeroext *, i8* (%struct.tree_node*)* }
+	%struct.lang_hooks_for_functions = type { void (%struct.function*)*, void (%struct.function*)*, void (%struct.function*)*, void (%struct.function*)*, i8 (%struct.tree_node*) zeroext * }
+	%struct.lang_hooks_for_tree_dump = type { i8 (i8*, %struct.tree_node*) zeroext *, i32 (%struct.tree_node*)* }
+	%struct.lang_hooks_for_tree_inlining = type { %struct.tree_node* (%struct.tree_node**, i32*, %struct.tree_node* (%struct.tree_node**, i32*, i8*)*, i8*, %struct.pointer_set_t*)*, i32 (%struct.tree_node**)*, i32 (%struct.tree_node*)*, %struct.tree_node* (i8*, %struct.tree_node*)*, i32 (%struct.tree_node*, %struct.tree_node*)*, i32 (%struct.tree_node*)*, i8 (%struct.tree_node*, %struct.tree_node*) zeroext *, i32 (%struct.tree_node*)*, void (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*, %struct.tree_node*, %struct.tree_node*, i32)* }
 	%struct.lang_hooks_for_types = type { %struct.tree_node* (i32)*, %struct.tree_node* (i32, i32)*, %struct.tree_node* (i32, i32)*, %struct.tree_node* (%struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, %struct.tree_node* (i32, %struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, void (%struct.tree_node*, i8*)*, void (%struct.tree_node*, %struct.tree_node*)*, %struct.tree_node* (%struct.tree_node*)*, i8 }
 	%struct.lang_type = type opaque
 	%struct.language_function = type opaque
@@ -64,7 +64,7 @@ target triple = "arm-linux-gnueabi"
 	%struct.output_buffer = type { %struct.obstack, %struct.FILE*, i32, [128 x i8] }
 	%struct.phi_arg_d = type { %struct.tree_node*, i8 }
 	%struct.pointer_set_t = type opaque
-	%struct.pretty_printer = type { %struct.output_buffer*, i8*, i32, i32, i32, i32, i32, i8 (%struct.pretty_printer*, %struct.text_info*) zext *, i8, i8 }
+	%struct.pretty_printer = type { %struct.output_buffer*, i8*, i32, i32, i32, i32, i32, i8 (%struct.pretty_printer*, %struct.text_info*) zeroext *, i8, i8 }
 	%struct.ptr_info_def = type { i8, %struct.bitmap_head_def*, %struct.tree_node* }
 	%struct.real_value = type { i8, [3 x i8], [5 x i32] }
 	%struct.reg_attrs = type { %struct.tree_node*, i64 }
@@ -354,7 +354,7 @@ declare i64 @get_alias_set(%struct.tree_node*)
 
 declare i32 @alias_sets_conflict_p(i64, i64)
 
-declare fastcc i8 @cpt_same_type(%struct.tree_node*, %struct.tree_node*) zext 
+declare fastcc i8 @cpt_same_type(%struct.tree_node*, %struct.tree_node*) zeroext
 
 declare %struct.tree_node* @check_pointer_types_r(%struct.tree_node**, i32*, i8*)
 
@@ -380,7 +380,7 @@ declare fastcc %struct.tree_node* @shortcut_cond_expr(%struct.tree_node*)
 
 declare %struct.tree_node* @expr_last(%struct.tree_node*)
 
-declare i8 @block_may_fallthru(%struct.tree_node*) zext 
+declare i8 @block_may_fallthru(%struct.tree_node*) zeroext 
 
 declare fastcc void @gimple_pop_condition(%struct.tree_node**)
 
@@ -388,9 +388,9 @@ declare %struct.tree_node* @gimple_build_eh_filter(%struct.tree_node*, %struct.t
 
 declare void @annotate_all_with_locus(%struct.tree_node**, i32, i32)
 
-declare fastcc %struct.tree_node* @internal_get_tmp_var(%struct.tree_node*, %struct.tree_node**, %struct.tree_node**, i8 zext )
+declare fastcc %struct.tree_node* @internal_get_tmp_var(%struct.tree_node*, %struct.tree_node**, %struct.tree_node**, i8 zeroext )
 
-define i32 @gimplify_expr(%struct.tree_node** %expr_p, %struct.tree_node** %pre_p, %struct.tree_node** %post_p, i8 (%struct.tree_node*) zext * %gimple_test_f, i32 %fallback) {
+define i32 @gimplify_expr(%struct.tree_node** %expr_p, %struct.tree_node** %pre_p, %struct.tree_node** %post_p, i8 (%struct.tree_node*) zeroext * %gimple_test_f, i32 %fallback) {
 entry:
 	%internal_post = alloca %struct.tree_node*, align 4		; <%struct.tree_node**> [#uses=2]
 	%pre_p_addr.0 = select i1 false, %struct.tree_node** null, %struct.tree_node** %pre_p		; <%struct.tree_node**> [#uses=7]
@@ -598,7 +598,7 @@ cond_next3113:		; preds = %cond_next3074
 	ret i32 0
 
 bb3351:		; preds = %cond_next3074
-	%tmp3354 = call i8 @tree_ssa_useless_type_conversion( %struct.tree_node* %tmp2554 ) zext 		; <i8> [#uses=1]
+	%tmp3354 = call i8 @tree_ssa_useless_type_conversion( %struct.tree_node* %tmp2554 ) zeroext 		; <i8> [#uses=1]
 	icmp eq i8 %tmp3354, 0		; <i1>:7 [#uses=1]
 	%tmp3424 = load i32* null		; <i32> [#uses=1]
 	br i1 %7, label %cond_next3417, label %cond_true3356
@@ -640,7 +640,7 @@ cond_true4315:		; preds = %cond_next4300
 	unreachable
 
 cond_next4327:		; preds = %cond_next4300
-	%tmp4336 = call i32 @gimplify_expr( %struct.tree_node** null, %struct.tree_node** %pre_p_addr.0, %struct.tree_node** %post_p_addr.0, i8 (%struct.tree_node*) zext * @is_gimple_val, i32 1 )		; <i32> [#uses=0]
+	%tmp4336 = call i32 @gimplify_expr( %struct.tree_node** null, %struct.tree_node** %pre_p_addr.0, %struct.tree_node** %post_p_addr.0, i8 (%struct.tree_node*) zeroext * @is_gimple_val, i32 1 )		; <i32> [#uses=0]
 	ret i32 0
 
 bb4339:		; preds = %cond_next298
@@ -714,8 +714,8 @@ bb6296:		; preds = %cond_next298
 cond_next6474:		; preds = %cond_next298
 	icmp eq %struct.tree_node** %internal_post, %post_p_addr.0		; <i1>:11 [#uses=1]
 	%iftmp.381.0 = select i1 %11, %struct.tree_node** null, %struct.tree_node** %post_p_addr.0		; <%struct.tree_node**> [#uses=1]
-	%tmp6490 = call i32 @gimplify_expr( %struct.tree_node** null, %struct.tree_node** %pre_p_addr.0, %struct.tree_node** %iftmp.381.0, i8 (%struct.tree_node*) zext * %gimple_test_f, i32 %fallback )		; <i32> [#uses=0]
-	%tmp6551 = call i32 @gimplify_expr( %struct.tree_node** null, %struct.tree_node** %pre_p_addr.0, %struct.tree_node** %post_p_addr.0, i8 (%struct.tree_node*) zext * @is_gimple_val, i32 1 )		; <i32> [#uses=0]
+	%tmp6490 = call i32 @gimplify_expr( %struct.tree_node** null, %struct.tree_node** %pre_p_addr.0, %struct.tree_node** %iftmp.381.0, i8 (%struct.tree_node*) zeroext * %gimple_test_f, i32 %fallback )		; <i32> [#uses=0]
+	%tmp6551 = call i32 @gimplify_expr( %struct.tree_node** null, %struct.tree_node** %pre_p_addr.0, %struct.tree_node** %post_p_addr.0, i8 (%struct.tree_node*) zeroext * @is_gimple_val, i32 1 )		; <i32> [#uses=0]
 	ret i32 0
 
 bb7444:		; preds = %cond_next298
@@ -728,7 +728,7 @@ bb7478:		; preds = %bb277
 	ret i32 0
 }
 
-declare i8 @is_gimple_formal_tmp_rhs(%struct.tree_node*) zext 
+declare i8 @is_gimple_formal_tmp_rhs(%struct.tree_node*) zeroext 
 
 declare void @gimplify_and_add(%struct.tree_node*, %struct.tree_node**)
 
@@ -738,17 +738,17 @@ declare %struct.tree_node* @get_formal_tmp_var(%struct.tree_node*, %struct.tree_
 
 declare fastcc void @gimplify_init_ctor_preeval(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, %struct.gimplify_init_ctor_preeval_data*)
 
-declare i8 @type_contains_placeholder_p(%struct.tree_node*) zext 
+declare i8 @type_contains_placeholder_p(%struct.tree_node*) zeroext 
 
-declare i8 @is_gimple_mem_rhs(%struct.tree_node*) zext 
+declare i8 @is_gimple_mem_rhs(%struct.tree_node*) zeroext 
 
-declare fastcc i32 @gimplify_modify_expr_rhs(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i8 zext )
+declare fastcc i32 @gimplify_modify_expr_rhs(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i8 zeroext )
 
 declare %struct.tree_node* @fold_indirect_ref(%struct.tree_node*)
 
-declare fastcc i32 @gimplify_compound_expr(%struct.tree_node**, %struct.tree_node**, i8 zext )
+declare fastcc i32 @gimplify_compound_expr(%struct.tree_node**, %struct.tree_node**, i8 zeroext )
 
-declare i8 @is_gimple_lvalue(%struct.tree_node*) zext 
+declare i8 @is_gimple_lvalue(%struct.tree_node*) zeroext 
 
 declare void @categorize_ctor_elements(%struct.tree_node*, i64*, i64*, i64*, i8*)
 
@@ -764,21 +764,21 @@ declare void @gimplify_stmt(%struct.tree_node**)
 
 declare %struct.tree_node* @get_base_address(%struct.tree_node*)
 
-declare fastcc void @gimplify_init_ctor_eval(%struct.tree_node*, %struct.tree_node*, %struct.tree_node**, i8 zext )
+declare fastcc void @gimplify_init_ctor_eval(%struct.tree_node*, %struct.tree_node*, %struct.tree_node**, i8 zeroext )
 
 declare %struct.tree_node* @build_complex(%struct.tree_node*, %struct.tree_node*, %struct.tree_node*)
 
-declare i8 (%struct.tree_node*) zext * @rhs_predicate_for(%struct.tree_node*)
+declare i8 (%struct.tree_node*) zeroext * @rhs_predicate_for(%struct.tree_node*)
 
 declare %struct.tree_node* @build_vector(%struct.tree_node*, %struct.tree_node*)
 
-declare i8 @is_gimple_val(%struct.tree_node*) zext 
+declare i8 @is_gimple_val(%struct.tree_node*) zeroext 
 
-declare i8 @is_gimple_reg_type(%struct.tree_node*) zext 
+declare i8 @is_gimple_reg_type(%struct.tree_node*) zeroext 
 
 declare fastcc i32 @gimplify_cond_expr(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, %struct.tree_node*, i32)
 
-declare fastcc i32 @gimplify_modify_expr(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i8 zext )
+declare fastcc i32 @gimplify_modify_expr(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i8 zeroext )
 
 declare %struct.tree_node* @tree_cons_stat(%struct.tree_node*, %struct.tree_node*, %struct.tree_node*)
 
@@ -786,31 +786,31 @@ declare %struct.tree_node* @build_fold_addr_expr(%struct.tree_node*)
 
 declare %struct.tree_node* @build_function_call_expr(%struct.tree_node*, %struct.tree_node*)
 
-declare i8 @is_gimple_addressable(%struct.tree_node*) zext 
+declare i8 @is_gimple_addressable(%struct.tree_node*) zeroext 
 
-declare i8 @is_gimple_reg(%struct.tree_node*) zext 
+declare i8 @is_gimple_reg(%struct.tree_node*) zeroext 
 
 declare %struct.tree_node* @make_ssa_name(%struct.tree_node*, %struct.tree_node*)
 
-declare i8 @tree_ssa_useless_type_conversion(%struct.tree_node*) zext 
+declare i8 @tree_ssa_useless_type_conversion(%struct.tree_node*) zeroext 
 
-declare fastcc i32 @gimplify_self_mod_expr(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i8 zext )
+declare fastcc i32 @gimplify_self_mod_expr(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i8 zeroext )
 
 declare fastcc i32 @gimplify_compound_lval(%struct.tree_node**, %struct.tree_node**, %struct.tree_node**, i32)
 
 declare %struct.tree_node* @get_callee_fndecl(%struct.tree_node*)
 
-declare %struct.tree_node* @fold_builtin(%struct.tree_node*, i8 zext )
+declare %struct.tree_node* @fold_builtin(%struct.tree_node*, i8 zeroext )
 
 declare void @error(i8*, ...)
 
 declare %struct.tree_node* @build_empty_stmt()
 
-declare i8 @fold_builtin_next_arg(%struct.tree_node*) zext 
+declare i8 @fold_builtin_next_arg(%struct.tree_node*) zeroext 
 
 declare fastcc i32 @gimplify_arg(%struct.tree_node**, %struct.tree_node**)
 
-declare i8 @is_gimple_call_addr(%struct.tree_node*) zext 
+declare i8 @is_gimple_call_addr(%struct.tree_node*) zeroext 
 
 declare i32 @call_expr_flags(%struct.tree_node*)
 
@@ -862,7 +862,7 @@ declare void @tsi_delink(%struct.tree_stmt_iterator*)
 
 declare void @tsi_link_before(%struct.tree_stmt_iterator*, %struct.tree_node*, i32)
 
-declare i8 @is_gimple_stmt(%struct.tree_node*) zext 
+declare i8 @is_gimple_stmt(%struct.tree_node*) zeroext 
 
 declare void @print_generic_expr(%struct.FILE*, %struct.tree_node*, i32)
 
@@ -870,13 +870,13 @@ declare void @debug_tree(%struct.tree_node*)
 
 declare void @internal_error(i8*, ...)
 
-declare %struct.tree_node* @force_gimple_operand(%struct.tree_node*, %struct.tree_node**, i8 zext , %struct.tree_node*)
+declare %struct.tree_node* @force_gimple_operand(%struct.tree_node*, %struct.tree_node**, i8 zeroext , %struct.tree_node*)
 
-declare i8 @is_gimple_reg_rhs(%struct.tree_node*) zext 
+declare i8 @is_gimple_reg_rhs(%struct.tree_node*) zeroext 
 
 declare void @add_referenced_tmp_var(%struct.tree_node*)
 
-declare i8 @contains_placeholder_p(%struct.tree_node*) zext 
+declare i8 @contains_placeholder_p(%struct.tree_node*) zeroext 
 
 declare %struct.varray_head_tag* @varray_init(i32, i32, i8*)
 
@@ -886,21 +886,21 @@ declare void @varray_check_failed(%struct.varray_head_tag*, i32, i8*, i32, i8*)
 
 declare %struct.tree_node* @array_ref_low_bound(%struct.tree_node*)
 
-declare i8 @is_gimple_min_invariant(%struct.tree_node*) zext 
+declare i8 @is_gimple_min_invariant(%struct.tree_node*) zeroext 
 
-declare i8 @is_gimple_formal_tmp_reg(%struct.tree_node*) zext 
+declare i8 @is_gimple_formal_tmp_reg(%struct.tree_node*) zeroext 
 
 declare %struct.tree_node* @array_ref_element_size(%struct.tree_node*)
 
 declare %struct.tree_node* @component_ref_field_offset(%struct.tree_node*)
 
-declare i8 @is_gimple_min_lval(%struct.tree_node*) zext 
+declare i8 @is_gimple_min_lval(%struct.tree_node*) zeroext 
 
 declare void @varray_underflow(%struct.varray_head_tag*, i8*, i32, i8*)
 
 declare i32 @list_length(%struct.tree_node*)
 
-declare i8 @parse_output_constraint(i8**, i32, i32, i32, i8*, i8*, i8*) zext 
+declare i8 @parse_output_constraint(i8**, i32, i32, i32, i8*, i8*, i8*) zeroext 
 
 declare i8* @xstrdup(i8*)
 
@@ -912,11 +912,11 @@ declare %struct.tree_node* @build_tree_list_stat(%struct.tree_node*, %struct.tre
 
 declare %struct.tree_node* @chainon(%struct.tree_node*, %struct.tree_node*)
 
-declare i8 @parse_input_constraint(i8**, i32, i32, i32, i32, i8**, i8*, i8*) zext 
+declare i8 @parse_input_constraint(i8**, i32, i32, i32, i32, i8**, i8*, i8*) zeroext 
 
-declare i8 @is_gimple_asm_val(%struct.tree_node*) zext 
+declare i8 @is_gimple_asm_val(%struct.tree_node*) zeroext 
 
-declare void @gimplify_body(%struct.tree_node**, %struct.tree_node*, i8 zext )
+declare void @gimplify_body(%struct.tree_node**, %struct.tree_node*, i8 zeroext )
 
 declare void @timevar_push_1(i32)
 
@@ -934,11 +934,11 @@ declare %struct.tree_node* @make_tree_vec_stat(i32)
 
 declare %struct.tree_node* @tsi_split_statement_list_after(%struct.tree_stmt_iterator*)
 
-declare i8 @is_gimple_condexpr(%struct.tree_node*) zext 
+declare i8 @is_gimple_condexpr(%struct.tree_node*) zeroext 
 
 declare %struct.tree_node* @invert_truthvalue(%struct.tree_node*)
 
-declare i8 @initializer_zerop(%struct.tree_node*) zext 
+declare i8 @initializer_zerop(%struct.tree_node*) zeroext 
 
 declare i32 @simple_cst_equal(%struct.tree_node*, %struct.tree_node*)
 

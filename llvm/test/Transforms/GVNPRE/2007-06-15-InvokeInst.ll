@@ -11,7 +11,7 @@ cond_true:		; preds = %entry
 	ret i32 0
 
 cond_next:		; preds = %entry
-	%tmp10 = invoke i16 @_ZN12token_stream4openEPKc( i8* null, i8* null ) sext 
+	%tmp10 = invoke i16 @_ZN12token_stream4openEPKc( i8* null, i8* null ) signext 
 			to label %invcont unwind label %cleanup690		; <i16> [#uses=0]
 
 invcont:		; preds = %cond_next
@@ -63,7 +63,7 @@ cleanup690:		; preds = %cond_next
 	ret i32 0
 }
 
-declare i16 @_ZN12token_stream4openEPKc(i8*, i8*) sext 
+declare i16 @_ZN12token_stream4openEPKc(i8*, i8*) signext 
 
 declare i32 @printf(i8*, ...)
 

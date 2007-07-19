@@ -9,7 +9,7 @@
 	%struct.__fooString = type opaque
 	%struct.__fooV = type opaque
 	%struct.fooXBase = type { i32, [4 x i8] }
-	%struct.fooXClass = type { i32, i8*, void (i8*)*, i8* (%struct.__fooAllocator*, i8*)*, void (i8*)*, i8 (i8*, i8*) zext *, i32 (i8*)*, %struct.__fooString* (i8*, %struct.__fooZ*)*, %struct.__fooString* (i8*)* }
+	%struct.fooXClass = type { i32, i8*, void (i8*)*, i8* (%struct.__fooAllocator*, i8*)*, void (i8*)*, i8 (i8*, i8*) zeroext *, i32 (i8*)*, %struct.__fooString* (i8*, %struct.__fooZ*)*, %struct.__fooString* (i8*)* }
 	%struct.aa_cache = type { i32, i32, [1 x %struct.aa_method*] }
 	%struct.aa_class = type { %struct.aa_class*, %struct.aa_class*, i8*, i32, i32, i32, %struct.aa_ivar_list*, %struct.aa_method_list**, %struct.aa_cache*, %struct.aa_protocol_list* }
 	%struct.aa_ivar = type { i8*, i8*, i32 }
@@ -27,7 +27,7 @@
 @str15 = external constant [24 x i8]		; <[24 x i8]*> [#uses=1]
 
 
-define i8 @test(%struct.__fooY* %calendar, double* %atp, i8* %componentDesc, ...) zext  {
+define i8 @test(%struct.__fooY* %calendar, double* %atp, i8* %componentDesc, ...) zeroext  {
 entry:
 	%args = alloca i8*, align 4		; <i8**> [#uses=5]
 	%args4 = bitcast i8** %args to i8*		; <i8*> [#uses=2]
@@ -75,12 +75,12 @@ cond_true60:		; preds = %cond_true58
 	%tmp63 = call %struct.aa_ss* @sel_registerName( i8* getelementptr ([24 x i8]* @str15, i32 0, i32 0) )		; <%struct.aa_ss*> [#uses=2]
 	store %struct.aa_ss* %tmp63, %struct.aa_ss** @s.10319
 	%tmp66137 = volatile load i8** %args		; <i8*> [#uses=1]
-	%tmp73138 = call i8 (i8*, %struct.aa_ss*, ...) zext * bitcast (%struct.aa_object* (%struct.aa_object*, %struct.aa_ss*, ...)* @aa_mm to i8 (i8*, %struct.aa_ss*, ...) zext *)( i8* %tmp6869, %struct.aa_ss* %tmp63, double* %atp, i8* %componentDesc, i8* %tmp66137 ) zext 		; <i8> [#uses=1]
+	%tmp73138 = call i8 (i8*, %struct.aa_ss*, ...) zeroext * bitcast (%struct.aa_object* (%struct.aa_object*, %struct.aa_ss*, ...)* @aa_mm to i8 (i8*, %struct.aa_ss*, ...) zeroext *)( i8* %tmp6869, %struct.aa_ss* %tmp63, double* %atp, i8* %componentDesc, i8* %tmp66137) zeroext 		; <i8> [#uses=1]
 	ret i8 %tmp73138
 
 cond_next64:		; preds = %cond_true58
 	%tmp66 = volatile load i8** %args		; <i8*> [#uses=1]
-	%tmp73 = call i8 (i8*, %struct.aa_ss*, ...) zext * bitcast (%struct.aa_object* (%struct.aa_object*, %struct.aa_ss*, ...)* @aa_mm to i8 (i8*, %struct.aa_ss*, ...) zext *)( i8* %tmp6869, %struct.aa_ss* %tmp59, double* %atp, i8* %componentDesc, i8* %tmp66 ) zext 		; <i8> [#uses=1]
+	%tmp73 = call i8 (i8*, %struct.aa_ss*, ...) zeroext * bitcast (%struct.aa_object* (%struct.aa_object*, %struct.aa_ss*, ...)* @aa_mm to i8 (i8*, %struct.aa_ss*, ...) zeroext *)( i8* %tmp6869, %struct.aa_ss* %tmp59, double* %atp, i8* %componentDesc, i8* %tmp66 ) zeroext 		; <i8> [#uses=1]
 	ret i8 %tmp73
 
 cond_true111:		; preds = %cond_true111, %bb48
@@ -98,13 +98,13 @@ cond_true111:		; preds = %cond_true111, %bb48
 
 bb114:		; preds = %cond_true111, %bb48
 	call void @llvm.va_end( i8* %args4 )
-	%tmp122 = call i8 @_fooYCCV( %struct.__fooY* %calendar, double* %atp, i8* %componentDesc, i32* %tmp92, i32 %tmp78 ) zext 		; <i8> [#uses=1]
+	%tmp122 = call i8 @_fooYCCV( %struct.__fooY* %calendar, double* %atp, i8* %componentDesc, i32* %tmp92, i32 %tmp78 ) zeroext 		; <i8> [#uses=1]
 	ret i8 %tmp122
 }
 
 declare i32 @_fooXRegisterClass(%struct.fooXClass*)
 
-declare i8 @_fooYCCV(%struct.__fooY*, double*, i8*, i32*, i32) zext 
+declare i8 @_fooYCCV(%struct.__fooY*, double*, i8*, i32*, i32) zeroext 
 
 declare %struct.aa_object* @aa_mm(%struct.aa_object*, %struct.aa_ss*, ...)
 

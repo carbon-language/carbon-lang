@@ -9,7 +9,7 @@ define void @test(i8* %P) {
 	ret void
 }
 
-define i16 @test2(i16 zext %crc) zext { 
+define i16 @test2(i16 zeroext %crc) zeroext { 
         ; No and's should be needed for the i16s here.
         %tmp.1 = lshr i16 %crc, 1
         %tmp.7 = xor i16 %tmp.1, 40961
