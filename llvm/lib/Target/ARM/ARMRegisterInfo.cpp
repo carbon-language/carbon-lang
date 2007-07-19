@@ -429,7 +429,7 @@ bool ARMRegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
     if (CFSize >= ((1 << 12) - 1) / 2)  // Half of imm12
       return false;
   }
-  return !hasFP(MF);
+  return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 /// emitARMRegPlusImmediate - Emits a series of instructions to materialize
