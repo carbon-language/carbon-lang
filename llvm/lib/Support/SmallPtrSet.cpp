@@ -186,10 +186,12 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
            "Cannot assign sets with different small sizes");
            
   // If we're becoming small, prepare to insert into our stack space
-  if (RHS.isSmall())
+  if (RHS.isSmall()) {
+    if (!isSmall())
+      free(CurArray);
     CurArray = &SmallArray[0];
   // Otherwise, allocate new heap space (unless we were the same size)
-  else if (CurArraySize != RHS.CurArraySize) {
+  } else if (CurArraySize != RHS.CurArraySize) {
     if (isSmall())
       CurArray = (void**)malloc(sizeof(void*) * (RHS.CurArraySize+1));
     else
