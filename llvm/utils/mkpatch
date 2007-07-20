@@ -18,11 +18,11 @@ if [ "$#" -ne 1 ] ; then
 fi
 NAME="$1"
 echo "mkpatch: Generating differences on top level files"
-svn diff -N -x -u -N * > "$NAME".patch.raw 2>&1
+svn diff -N -x -u > "$NAME".patch.raw 2>&1
 echo "mkpatch: Generating differences on all directories"
 svn diff -x -u  >> "$NAME".patch.raw 2>&1 \
   autoconf docs utils include lib/System lib/Support lib/VMCore lib/AsmParser \
-  lib/Bytecode lib/Analysis lib/Transforms lib/CodeGen lib/Target \
+  lib/Bitcode lib/Analysis lib/Transforms lib/CodeGen lib/Target \
   lib/ExecutionEngine lib/Debugger lib/Linker \
   tools test runtime projects examples win32 Xcode
 
