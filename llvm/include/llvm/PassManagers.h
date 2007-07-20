@@ -127,10 +127,10 @@ public:
   virtual void addTopLevelPass(Pass  *P) = 0;
 
   /// Set pass P as the last user of the given analysis passes.
-  void setLastUser(std::vector<Pass *> &AnalysisPasses, Pass *P);
+  void setLastUser(SmallVector<Pass *, 12> &AnalysisPasses, Pass *P);
 
   /// Collect passes whose last user is P
-  void collectLastUses(std::vector<Pass *> &LastUses, Pass *P);
+  void collectLastUses(SmallVector<Pass *, 12> &LastUses, Pass *P);
 
   /// Find the pass that implements Analysis AID. Search immutable
   /// passes and all pass managers. If desired pass is not found

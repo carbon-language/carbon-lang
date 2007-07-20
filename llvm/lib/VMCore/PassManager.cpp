@@ -381,10 +381,10 @@ PMTopLevelManager::PMTopLevelManager (enum TopLevelManagerType t) {
 }
 
 /// Set pass P as the last user of the given analysis passes.
-void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses, 
+void PMTopLevelManager::setLastUser(SmallVector<Pass *, 12> &AnalysisPasses, 
                                     Pass *P) {
 
-  for (std::vector<Pass *>::iterator I = AnalysisPasses.begin(),
+  for (SmallVector<Pass *, 12>::iterator I = AnalysisPasses.begin(),
          E = AnalysisPasses.end(); I != E; ++I) {
     Pass *AP = *I;
     LastUser[AP] = P;
@@ -403,7 +403,7 @@ void PMTopLevelManager::setLastUser(std::vector<Pass *> &AnalysisPasses,
 }
 
 /// Collect passes whose last user is P
-void PMTopLevelManager::collectLastUses(std::vector<Pass *> &LastUses,
+void PMTopLevelManager::collectLastUses(SmallVector<Pass *, 12> &LastUses,
                                             Pass *P) {
    for (std::map<Pass *, Pass *>::iterator LUI = LastUser.begin(),
           LUE = LastUser.end(); LUI != LUE; ++LUI)
@@ -653,7 +653,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 void PMDataManager::removeDeadPasses(Pass *P, std::string Msg,
                                      enum PassDebuggingString DBG_STR) {
 
-  std::vector<Pass *> DeadPasses;
+  SmallVector<Pass *, 12> DeadPasses;
 
   // If this is a on the fly manager then it does not have TPM.
   if (!TPM)
@@ -661,7 +661,7 @@ void PMDataManager::removeDeadPasses(Pass *P, std::string Msg,
 
   TPM->collectLastUses(DeadPasses, P);
 
-  for (std::vector<Pass *>::iterator I = DeadPasses.begin(),
+  for (SmallVector<Pass *, 12>::iterator I = DeadPasses.begin(),
          E = DeadPasses.end(); I != E; ++I) {
 
     dumpPassInfo(*I, FREEING_MSG, DBG_STR, Msg);
@@ -691,12 +691,12 @@ void PMDataManager::add(Pass *P,
 
   // If a FunctionPass F is the last user of ModulePass info M
   // then the F's manager, not F, records itself as a last user of M.
-  std::vector<Pass *> TransferLastUses;
+  SmallVector<Pass *, 12> TransferLastUses;
 
   if (ProcessAnalysis) {
 
     // At the moment, this pass is the last user of all required passes.
-    std::vector<Pass *> LastUses;
+    SmallVector<Pass *, 12> LastUses;
     SmallVector<Pass *, 8> RequiredPasses;
     SmallVector<AnalysisID, 8> ReqAnalysisNotAvailable;
 
@@ -827,7 +827,7 @@ Pass *PMDataManager::findAnalysisPass(AnalysisID AID, bool SearchParent) {
 // Print list of passes that are last used by P.
 void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 
-  std::vector<Pass *> LUses;
+  SmallVector<Pass *, 12> LUses;
 
   // If this is a on the fly manager then it does not have TPM.
   if (!TPM)
@@ -835,7 +835,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 
   TPM->collectLastUses(LUses, P);
   
-  for (std::vector<Pass *>::iterator I = LUses.begin(),
+  for (SmallVector<Pass *, 12>::iterator I = LUses.begin(),
          E = LUses.end(); I != E; ++I) {
     llvm::cerr << "--" << std::string(Offset*2, ' ');
     (*I)->dumpPassStructure(0);
@@ -1260,7 +1260,7 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   FPP->add(RequiredPass);
 
   // Register P as the last user of RequiredPass.
-  std::vector<Pass *> LU; 
+  SmallVector<Pass *, 12> LU;
   LU.push_back(RequiredPass);
   FPP->setLastUser(LU,  P);
 }
