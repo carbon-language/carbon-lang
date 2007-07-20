@@ -53,8 +53,8 @@ namespace SrcMgr {
   typedef std::pair<const FileEntry * const, FileInfo> InfoRec;
 
   /// FileIDInfo - Information about a FileID, basically just the logical file
-  /// that it represents and include stack information.  A SourceLocation is a
-  /// byte offset from the start of this.
+  /// that it represents and include stack information.  A File SourceLocation
+  /// is a byte offset from the start of this.
   ///
   /// FileID's are used to compute the location of a character in memory as well
   /// as the logical source location, which can be differ from the physical
@@ -63,16 +63,12 @@ namespace SrcMgr {
   ///
   /// Each FileID has include stack information, indicating where it came from.
   /// For the primary translation unit, it comes from SourceLocation() aka 0.
+  /// This information encodes the #include chain that a token was instantiated
+  /// from.
   ///
-  /// There are three types of FileID's:
-  ///   1. Normal MemoryBuffer (file).  These are represented by a "InfoRec *",
-  ///      describing the source file, and a Chunk number, which factors into
-  ///      the SourceLocation's offset from the start of the buffer.
-  ///   2. Macro Expansions.  These indicate that the logical location is
-  ///      totally different than the physical location.  The logical source
-  ///      location is specified by the IncludeLoc.  The physical location is
-  ///      the FilePos of the token's SourceLocation combined with the FileID
-  ///      from MacroTokenFileID.
+  /// FileIDInfos contain a "InfoRec *", describing the source file, and a Chunk
+  /// number, which allows a SourceLocation to index into very large files
+  /// (those which there are not enough FilePosBits to address).
   ///
   struct FileIDInfo {
   private:
@@ -104,6 +100,11 @@ namespace SrcMgr {
     const InfoRec *getInfo() const { return Info; }
   };
   
+  /// MacroIDInfo - Macro SourceLocations refer to these records by their ID.
+  /// Each MacroIDInfo encodes the Instantiation location - where the macro was
+  /// instantiated, and the PhysicalLoc - where the actual character data for
+  /// the token came from.  An actual macro SourceLocation stores deltas from
+  /// these positions.
   class MacroIDInfo {
     SourceLocation InstantiationLoc, PhysicalLoc;
   public:
@@ -153,13 +154,8 @@ class SourceManager {
   /// MacroIDs - Information about each MacroID.
   std::vector<SrcMgr::MacroIDInfo> MacroIDs;
   
-  /// LastInstantiationLoc_* - Cache the last instantiation request for fast
-  /// lookup.  Macros often want many tokens instantated at the same location.
-  SourceLocation LastInstantiationLoc_InstantLoc;
-  unsigned       LastInstantiationLoc_MacroFID;
-  unsigned       LastInstantiationLoc_Result;
 public:
-  SourceManager() { LastInstantiationLoc_MacroFID = ~0U; }
+  SourceManager() {}
   ~SourceManager();
   
   /// createFileID - Create a new FileID that represents the specified file
@@ -249,8 +245,8 @@ public:
     // File locations are both physical and logical.
     if (Loc.isFileID()) return Loc;
     
-    SourceLocation ILoc = MacroIDs[Loc.getMacroID()].getPhysicalLoc();
-    return ILoc.getFileLocWithOffset(Loc.getMacroPhysOffs());
+    SourceLocation PLoc = MacroIDs[Loc.getMacroID()].getPhysicalLoc();
+    return PLoc.getFileLocWithOffset(Loc.getMacroPhysOffs());
   }
 
   /// getFileEntryForLoc - Return the FileEntry record for the physloc of the 

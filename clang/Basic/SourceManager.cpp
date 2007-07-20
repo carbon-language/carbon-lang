@@ -165,15 +165,34 @@ unsigned SourceManager::createFileID(const InfoRec *File,
 /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
 /// that a token from physloc PhysLoc should actually be referenced from
 /// InstantiationLoc.
-SourceLocation SourceManager::getInstantiationLoc(SourceLocation VirtLoc,
+SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
                                                   SourceLocation InstantLoc) {
   // The specified source location may be a mapped location, due to a macro
   // instantiation or #line directive.  Strip off this information to find out
   // where the characters are actually located.
-  SourceLocation PhysLoc = getPhysicalLoc(VirtLoc);
+  PhysLoc = getPhysicalLoc(PhysLoc);
   
   // Resolve InstantLoc down to a real logical location.
   InstantLoc = getLogicalLoc(InstantLoc);
+  
+  
+  // If the last macro id is close to the currently requested location, try to
+  // reuse it.  This implements a single-entry cache.
+  if (!MacroIDs.empty()) {
+    MacroIDInfo &LastOne = MacroIDs.back();
+    if (LastOne.getInstantiationLoc() == InstantLoc &&
+        LastOne.getPhysicalLoc().getFileID() == PhysLoc.getFileID()) {
+      
+      int PhysDelta = PhysLoc.getRawFilePos() -
+                      LastOne.getPhysicalLoc().getRawFilePos();
+      if (unsigned(PhysDelta) < (1 << SourceLocation::MacroPhysOffsBits))
+        return SourceLocation::getMacroLoc(MacroIDs.size()-1,
+                                           (unsigned)PhysDelta, 0);
+
+    }
+  }
+  
+  
   
   // FIXME: intelligently cache macroid's.
   MacroIDs.push_back(MacroIDInfo::get(InstantLoc, PhysLoc));

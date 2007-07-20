@@ -28,8 +28,8 @@ public:
     FileIDBits  = 14,
     FilePosBits = 32-1-FileIDBits,
     
-    MacroIDBits       = 23,
-    MacroPhysOffsBits = 5,
+    MacroIDBits       = 19,
+    MacroPhysOffsBits = 9,
     MacroLogOffBits   = 3
   };
 
@@ -106,7 +106,7 @@ public:
   
   unsigned getMacroLogOffs() const {
     assert(isMacroID() && "Is not a macro id!");
-    return ID & ((1 << MacroPhysOffsBits)-1);
+    return ID & ((1 << MacroLogOffBits)-1);
   }
   
   /// getFileLocWithOffset - Return a source location with the specified offset
