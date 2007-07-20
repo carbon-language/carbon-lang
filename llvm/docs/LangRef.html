@@ -4841,7 +4841,7 @@ Handling</a> document. </p>
   provides an interface to the hardware, not an interface to the programmer. It 
   is aimed at a low enough level to allow any programming models or APIs which 
   need atomic behaviors to map cleanly onto it. It is also modeled primarily on 
-  hardware behavior. Just as hardware provides a "unviresal IR" for source 
+  hardware behavior. Just as hardware provides a "universal IR" for source 
   languages, it also provides a starting point for developing a "universal" 
   atomic operation and synchronization IR.
 </p>
@@ -4873,8 +4873,8 @@ declare i64 @llvm.atomic.lcs.i64.i64p.i64.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;
 </pre>
 <h5>Overview:</h5>
 <p>
-  This loads a value in shared memory and compares it to a given value. If they 
-  are equal, it stores a new value into the shared memory.
+  This loads a value in memory and compares it to a given value. If they are 
+  equal, it stores a new value into the memory.
 </p>
 <h5>Arguments:</h5>
 <p>
@@ -4887,10 +4887,10 @@ declare i64 @llvm.atomic.lcs.i64.i64p.i64.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;
 <h5>Semantics:</h5>
 <p>
   This entire intrinsic must be executed atomically. It first loads the value 
-  in shared memory pointed to by <tt>ptr</tt> and compares it with the value 
-  <tt>cmp</tt>. If they are equal, <tt>val</tt> is stored into the shared 
-  memory. The loaded value is yielded in all cases. This provides the 
-  equivalent of an atomic compare-and-swap operation within the SSA framework.
+  in memory pointed to by <tt>ptr</tt> and compares it with the value 
+  <tt>cmp</tt>. If they are equal, <tt>val</tt> is stored into the memory. The 
+  loaded value is yielded in all cases. This provides the equivalent of an 
+  atomic compare-and-swap operation within the SSA framework.
 </p>
 <h5>Examples:</h5>
 <pre>
@@ -4928,9 +4928,9 @@ declare i64 @llvm.atomic.ls.i64.i64p.i64( i64* &lt;ptr&gt;, i64 &lt;val&gt; )
 </pre>
 <h5>Overview:</h5>
 <p>
-  This intrinsic loads the value stored in shared memory at <tt>ptr</tt> and 
-  yields the value from memory. It then stores the value in <tt>val</tt> in the 
-  shared memory at <tt>ptr</tt>.
+  This intrinsic loads the value stored in memory at <tt>ptr</tt> and yields 
+  the value from memory. It then stores the value in <tt>val</tt> in the memory 
+  at <tt>ptr</tt>.
 </p>
 <h5>Arguments:</h5>
 <p>
@@ -4982,7 +4982,7 @@ declare i64 @llvm.atomic.las.i64.i64p.i64( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 </pre>
 <h5>Overview:</h5>
 <p>
-  This intrinsic adds <tt>delta</tt> to the value stored in shared memory at 
+  This intrinsic adds <tt>delta</tt> to the value stored in memory at 
   <tt>ptr</tt>. It yields the original value at <tt>ptr</tt>.
 </p>
 <h5>Arguments:</h5>
@@ -5029,8 +5029,8 @@ declare i64 @llvm.atomic.lss.i64.i64.i64( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 </pre>
 <h5>Overview:</h5>
 <p>
-  This intrinsic subtracts <tt>delta</tt> from the value stored in shared 
-  memory at <tt>ptr</tt>. It yields the original value at <tt>ptr</tt>.
+  This intrinsic subtracts <tt>delta</tt> from the value stored in memory at 
+  <tt>ptr</tt>. It yields the original value at <tt>ptr</tt>.
 </p>
 <h5>Arguments:</h5>
 <p>
