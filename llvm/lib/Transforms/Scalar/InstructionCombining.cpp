@@ -8790,6 +8790,11 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
+  // Attempt to improve the alignment.
+  unsigned KnownAlign = GetKnownAlignment(Op, TD);
+  if (KnownAlign > LI.getAlignment())
+    LI.setAlignment(KnownAlign);
+
   // load (cast X) --> cast (load X) iff safe
   if (isa<CastInst>(Op))
     if (Instruction *Res = InstCombineLoadCast(*this, LI))
@@ -8984,6 +8989,11 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
         return 0;
       }
   }
+
+  // Attempt to improve the alignment.
+  unsigned KnownAlign = GetKnownAlignment(Ptr, TD);
+  if (KnownAlign > SI.getAlignment())
+    SI.setAlignment(KnownAlign);
 
   // Do really simple DSE, to catch cases where there are several consequtive
   // stores to the same location, separated by a few arithmetic operations. This
