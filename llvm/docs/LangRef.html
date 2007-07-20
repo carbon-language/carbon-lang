@@ -200,11 +200,11 @@
           <li><a href="#int_memory_barrier">'<tt>llvm.memory.barrier</tt>' Intrinsic</a></li>
         </ol>
       </li>
-      <li><a href="#int_general">General intrinsics</a></li>
+      <li><a href="#int_general">General intrinsics</a>
         <ol>
-          <li><a href="#int_var_annotation">'<tt>llvm.var.annotation</tt>' 
-                                                              Intrinsic</a></li>
-          </ol>
+          <li><a href="#int_var_annotation">
+            <tt>llvm.var.annotation</tt>' Intrinsic</a></li>
+        </ol>
       </li>
     </ol>
   </li>
@@ -282,7 +282,7 @@ by the verifier pass indicate bugs in transformation passes or input to
 the parser.</p>
 </div>
 
-<!-- Describe the typesetting conventions here. --> </div>
+<!-- Describe the typesetting conventions here. -->
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="identifiers">Identifiers</a> </div>
@@ -4848,7 +4848,7 @@ Handling</a> document. </p>
 <p>
   These do <em>not</em> form an API such as high-level threading libraries, 
   software transaction memory systems, atomic primitives, and intrinsic 
-  functionss as found in BSD, GNU libc, atomic_ops, APR, and other system and 
+  functions as found in BSD, GNU libc, atomic_ops, APR, and other system and 
   application libraries.  The hardware interface provided by LLVM should allow 
   a clean implementation of all of these APIs and parallel programming models. 
   No one model or paradigm should be selected above others unless the hardware 
@@ -4864,14 +4864,13 @@ Handling</a> document. </p>
 <h5>Syntax:</h5>
 <p>
   This is an overloaded intrinsic. You can use <tt>llvm.atomic.lcs</tt> on any 
-  integer bit width. Not all targets support all bit widths however.
+  integer bit width. Not all targets support all bit widths however.</p>
 <pre>
 declare i8 @llvm.atomic.lcs.i8.i8p.i8.i8( i8* &lt;ptr&gt;, i8 &lt;cmp&gt;, i8 &lt;val&gt; )
 declare i16 @llvm.atomic.lcs.i16.i16p.i16.i16( i16* &lt;ptr&gt;, i16 &lt;cmp&gt;, i16 &lt;val&gt; )
 declare i32 @llvm.atomic.lcs.i32.i32p.i32.i32( i32* &lt;ptr&gt;, i32 &lt;cmp&gt;, i32 &lt;val&gt; )
 declare i64 @llvm.atomic.lcs.i64.i64p.i64.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;, i64 &lt;val&gt; )
 </pre>
-</p>
 <h5>Overview:</h5>
 <p>
   This loads a value in shared memory and compares it to a given value. If they 
@@ -4920,14 +4919,13 @@ declare i64 @llvm.atomic.lcs.i64.i64p.i64.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;
 <h5>Syntax:</h5>
 <p>
   This is an overloaded intrinsic. You can use <tt>llvm.atomic.ls</tt> on any 
-  integer bit width. Not all targets support all bit widths however.
+  integer bit width. Not all targets support all bit widths however.</p>
 <pre>
 declare i8 @llvm.atomic.ls.i8.i8p.i8( i8* &lt;ptr&gt;, i8 &lt;val&gt; )
 declare i16 @llvm.atomic.ls.i16.i16p.i16( i16* &lt;ptr&gt;, i16 &lt;val&gt; )
 declare i32 @llvm.atomic.ls.i32.i32p.i32( i32* &lt;ptr&gt;, i32 &lt;val&gt; )
 declare i64 @llvm.atomic.ls.i64.i64p.i64( i64* &lt;ptr&gt;, i64 &lt;val&gt; )
 </pre>
-</p>
 <h5>Overview:</h5>
 <p>
   This intrinsic loads the value stored in shared memory at <tt>ptr</tt> and 
@@ -4975,14 +4973,13 @@ declare i64 @llvm.atomic.ls.i64.i64p.i64( i64* &lt;ptr&gt;, i64 &lt;val&gt; )
 <h5>Syntax:</h5>
 <p>
   This is an overloaded intrinsic. You can use <tt>llvm.atomic.las</tt> on any 
-  integer bit width. Not all targets support all bit widths however.
+  integer bit width. Not all targets support all bit widths however.</p>
 <pre>
 declare i8 @llvm.atomic.las.i8.i8p.i8( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
 declare i16 @llvm.atomic.las.i16.i16p.i16( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
 declare i32 @llvm.atomic.las.i32.i32p.i32( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
 declare i64 @llvm.atomic.las.i64.i64p.i64( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 </pre>
-</p>
 <h5>Overview:</h5>
 <p>
   This intrinsic adds <tt>delta</tt> to the value stored in shared memory at 
@@ -5023,14 +5020,13 @@ declare i64 @llvm.atomic.las.i64.i64p.i64( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 <h5>Syntax:</h5>
 <p>
   This is an overloaded intrinsic. You can use <tt>llvm.atomic.lss</tt> on any 
-  integer bit width. Not all targets support all bit widths however.
+  integer bit width. Not all targets support all bit widths however.</p>
 <pre>
 declare i8 @llvm.atomic.lss.i8.i8.i8( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
 declare i16 @llvm.atomic.lss.i16.i16.i16( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
 declare i32 @llvm.atomic.lss.i32.i32.i32( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
 declare i64 @llvm.atomic.lss.i64.i64.i64( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 </pre>
-</p>
 <h5>Overview:</h5>
 <p>
   This intrinsic subtracts <tt>delta</tt> from the value stored in shared 
@@ -5070,11 +5066,9 @@ declare i64 @llvm.atomic.lss.i64.i64.i64( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<p>
 <pre>
 declare void @llvm.memory.barrier( i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, i1 &lt;ss&gt; )
 </pre>
-</p>
 <h5>Overview:</h5>
 <p>
   The <tt>llvm.memory.barrier</tt> intrinsic guarantees ordering between 
