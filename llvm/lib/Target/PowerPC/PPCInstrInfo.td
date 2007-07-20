@@ -562,33 +562,33 @@ def STFD : DForm_1<54, (outs), (ins F8RC:$rS, memri:$dst),
 
 // Unindexed (r+i) Stores with Update (preinc).
 let isStore = 1, PPC970_Unit = 2 in {
-def STBU  : DForm_1<39, (outs), (ins ptr_rc:$ea_res, GPRC:$rS,
+def STBU  : DForm_1<39, (outs ptr_rc:$ea_res), (ins GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                           (pre_truncsti8 GPRC:$rS, ptr_rc:$ptrreg, 
                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STHU  : DForm_1<45, (outs), (ins ptr_rc:$ea_res, GPRC:$rS,
+def STHU  : DForm_1<45, (outs ptr_rc:$ea_res), (ins GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                         (pre_truncsti16 GPRC:$rS, ptr_rc:$ptrreg, 
                                         iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STWU  : DForm_1<37, (outs), (ins ptr_rc:$ea_res, GPRC:$rS,
+def STWU  : DForm_1<37, (outs ptr_rc:$ea_res), (ins GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stwu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store GPRC:$rS, ptr_rc:$ptrreg, 
                                                      iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STFSU : DForm_1<37, (outs), (ins ptr_rc:$ea_res, F4RC:$rS,
+def STFSU : DForm_1<37, (outs ptr_rc:$ea_res), (ins F4RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stfsu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store F4RC:$rS,  ptr_rc:$ptrreg, 
                                           iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STFDU : DForm_1<37, (outs), (ins ptr_rc:$ea_res, F8RC:$rS,
+def STFDU : DForm_1<37, (outs ptr_rc:$ea_res), (ins F8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stfdu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store F8RC:$rS, ptr_rc:$ptrreg, 

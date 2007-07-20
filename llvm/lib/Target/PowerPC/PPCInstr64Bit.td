@@ -473,21 +473,21 @@ def STDX  : XForm_8<31, 149, (outs), (ins G8RC:$rS, memrr:$dst),
 
 let isStore = 1, PPC970_Unit = 2 in {
 
-def STBU8 : DForm_1<38, (outs), (ins ptr_rc:$ea_res, G8RC:$rS,
+def STBU8 : DForm_1<38, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                           (pre_truncsti8 G8RC:$rS, ptr_rc:$ptrreg, 
                                          iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STHU8 : DForm_1<45, (outs), (ins ptr_rc:$ea_res, G8RC:$rS,
+def STHU8 : DForm_1<45, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "sthu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res,
                         (pre_truncsti16 G8RC:$rS, ptr_rc:$ptrreg, 
                                         iaddroff:$ptroff))]>,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
-def STWU8 : DForm_1<37, (outs), (ins ptr_rc:$ea_res, G8RC:$rS,
+def STWU8 : DForm_1<37, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stwu $rS, $ptroff($ptrreg)", LdStGeneral,
                     [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
@@ -495,7 +495,7 @@ def STWU8 : DForm_1<37, (outs), (ins ptr_rc:$ea_res, G8RC:$rS,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">;
 
 
-def STDU : DSForm_1<62, 1, (outs), (ins ptr_rc:$ea_res, G8RC:$rS,
+def STDU : DSForm_1<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                                 s16immX4:$ptroff, ptr_rc:$ptrreg),
                     "stdu $rS, $ptroff($ptrreg)", LdStSTD,
                     [(set ptr_rc:$ea_res, (pre_store G8RC:$rS, ptr_rc:$ptrreg, 
