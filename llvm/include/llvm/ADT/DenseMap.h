@@ -15,6 +15,7 @@
 #define LLVM_ADT_DENSEMAP_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <utility>
 
@@ -300,8 +301,9 @@ private:
     unsigned OldNumBuckets = NumBuckets;
     BucketT *OldBuckets = Buckets;
     
-    // Halve the number of buckets.
-    NumBuckets >>= 1;
+    // Reduce the number of buckets.
+    NumBuckets = NumEntries > 32 ? 1 << (Log2_32_Ceil(NumEntries) + 1)
+                                 : 64;
     NumTombstones = 0;
     Buckets = (BucketT*)new char[sizeof(BucketT)*NumBuckets];
 
