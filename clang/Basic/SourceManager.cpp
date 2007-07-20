@@ -188,39 +188,13 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
       if (unsigned(PhysDelta) < (1 << SourceLocation::MacroPhysOffsBits))
         return SourceLocation::getMacroLoc(MacroIDs.size()-1,
                                            (unsigned)PhysDelta, 0);
-
     }
   }
   
-  
-  
-  // FIXME: intelligently cache macroid's.
+ 
   MacroIDs.push_back(MacroIDInfo::get(InstantLoc, PhysLoc));
   
   return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0, 0);
-  
-#if 0
-  unsigned InstantiationFileID;
-  
-  // If this is the same instantiation as was requested last time, return this
-  // immediately.
-  if (PhysLoc.getFileID() == LastInstantiationLoc_MacroFID &&
-      InstantLoc == LastInstantiationLoc_InstantLoc) {
-    InstantiationFileID = LastInstantiationLoc_Result;
-  } else {
-    // Add a FileID for this.  FIXME: should cache these!
-    FileIDs.push_back(FileIDInfo::getMacroExpansion(InstantLoc,
-                                                    PhysLoc.getFileID()));
-    InstantiationFileID = FileIDs.size();
-    
-    // Remember this in the single-entry cache for next time.
-    LastInstantiationLoc_MacroFID   = PhysLoc.getFileID();
-    LastInstantiationLoc_InstantLoc = InstantLoc;
-    LastInstantiationLoc_Result     = InstantiationFileID;
-  }
-  return SourceLocation::getMacroLoc(InstantiationFileID, 
-                                     PhysLoc.getRawFilePos());
-#endif
 }
 
 
