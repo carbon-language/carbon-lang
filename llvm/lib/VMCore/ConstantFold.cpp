@@ -140,8 +140,13 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                             const Type *DestTy) {
   const Type *SrcTy = V->getType();
 
-  if (isa<UndefValue>(V))
+  if (isa<UndefValue>(V)) {
+    // zext(undef) = 0, because the top bits will be zero.
+    // sext(undef) = 0, because the top bits will all be the same.
+    if (opc == Instruction::ZExt || opc == Instruction::SExt)
+      return Constant::getNullValue(DestTy);
     return UndefValue::get(DestTy);
+  }
 
   // If the cast operand is a constant expression, there's a few things we can
   // do to try to simplify it.
