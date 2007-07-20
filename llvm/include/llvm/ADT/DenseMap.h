@@ -90,6 +90,11 @@ public:
   unsigned size() const { return NumEntries; }
   
   void clear() {
+    if (NumEntries * 4 < NumBuckets && NumBuckets > 64) {
+      shrink_and_clear();
+      return;
+    }
+    
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
       if (P->first != EmptyKey && P->first != TombstoneKey) {
@@ -101,7 +106,7 @@ public:
     assert(NumEntries == 0 && "Node count imbalance!");
     NumTombstones = 0;
   }
-  
+
   /// count - Return true if the specified key is in the map.
   bool count(const KeyT &Val) const {
     BucketT *TheBucket;
@@ -289,6 +294,36 @@ private:
     
     // Free the old table.
     delete[] (char*)OldBuckets;
+  }
+  
+  void shrink_and_clear() {
+    unsigned OldNumBuckets = NumBuckets;
+    BucketT *OldBuckets = Buckets;
+    
+    // Halve the number of buckets.
+    NumBuckets >>= 1;
+    NumTombstones = 0;
+    Buckets = (BucketT*)new char[sizeof(BucketT)*NumBuckets];
+
+    // Initialize all the keys to EmptyKey.
+    const KeyT EmptyKey = getEmptyKey();
+    for (unsigned i = 0, e = NumBuckets; i != e; ++i)
+      new (&Buckets[i].first) KeyT(EmptyKey);
+
+    // Free the old buckets.
+    const KeyT TombstoneKey = getTombstoneKey();
+    for (BucketT *B = OldBuckets, *E = OldBuckets+OldNumBuckets; B != E; ++B) {
+      if (B->first != EmptyKey && B->first != TombstoneKey) {
+        // Free the value.
+        B->second.~ValueT();
+      }
+      B->first.~KeyT();
+    }
+    
+    // Free the old table.
+    delete[] (char*)OldBuckets;
+    
+    NumEntries = 0;
   }
 };
 
