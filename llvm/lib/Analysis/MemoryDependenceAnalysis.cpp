@@ -248,7 +248,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
 void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   // Figure out the new dep for things that currently depend on rem
   Instruction* newDep = NonLocal;
-  if (depGraphLocal[rem].first != NonLocal) {
+  if (depGraphLocal[rem].first != NonLocal &&
+      depGraphLocal[rem].second) {
     // If we have dep info for rem, set them to it
     BasicBlock::iterator RI = depGraphLocal[rem].first;
     RI++;
