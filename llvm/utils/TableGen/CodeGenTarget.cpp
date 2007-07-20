@@ -369,7 +369,6 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
-  noResults    = R->getValueAsBit("noResults");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
   hasOptionalDef = false;
   hasVariableNumberOfOperands = false;

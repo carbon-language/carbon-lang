@@ -100,7 +100,6 @@ namespace llvm {
     bool usesCustomDAGSchedInserter;
     bool hasVariableNumberOfOperands;
     bool hasCtrlDep;
-    bool noResults;
     bool isNotDuplicable;
     bool hasOptionalDef;
     

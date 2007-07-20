@@ -752,7 +752,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     CodeGenInstruction &InstInfo =
       ISE.getTargetInfo().getInstruction(getOperator()->getName());
     // Apply the result type to the node
-    if (NumResults == 0 || InstInfo.noResults) { // FIXME: temporary hack.
+    if (NumResults == 0 || InstInfo.NumDefs == 0) {
       MadeChange = UpdateNodeType(MVT::isVoid, TP);
     } else {
       Record *ResultNode = Inst.getResult(0);
@@ -1452,8 +1452,7 @@ void DAGISelEmitter::ParseInstructions() {
       CodeGenInstruction &InstInfo =Target.getInstruction(Instrs[i]->getName());
 
       if (InstInfo.OperandList.size() != 0) {
-        // FIXME: temporary hack...
-        if (InstInfo.noResults) {
+        if (InstInfo.NumDefs == 0) {
           // These produce no results
           for (unsigned j = 0, e = InstInfo.OperandList.size(); j < e; ++j)
             Operands.push_back(InstInfo.OperandList[j].Rec);
