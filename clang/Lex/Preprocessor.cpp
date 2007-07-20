@@ -281,8 +281,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   // lexer to parse it correctly.
   if (CharNo != 0) {
     // Create a lexer starting at this token position.
-    const llvm::MemoryBuffer *SrcBuf =SourceMgr.getBuffer(TokStart.getFileID());
-    Lexer TheLexer(SrcBuf, TokStart, *this, TokPtr);
+    Lexer TheLexer(TokStart, *this, TokPtr);
     LexerToken Tok;
     // Skip over characters the remaining characters.
     const char *TokStartPtr = TokPtr;
@@ -390,9 +389,7 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
-  const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
-  Lexer *TheLexer = new Lexer(Buffer, SourceLocation::getFileLoc(FileID, 0),
-                              *this);
+  Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
   if (isMainFile) TheLexer->setIsMainFile();
   EnterSourceFileWithLexer(TheLexer, CurDir);
 }  

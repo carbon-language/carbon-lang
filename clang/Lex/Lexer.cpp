@@ -34,20 +34,24 @@ using namespace clang;
 
 static void InitCharacterInfo();
 
-Lexer::Lexer(const llvm::MemoryBuffer *File, SourceLocation fileloc,
-             Preprocessor &pp, const char *BufStart, const char *BufEnd)
-  : BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
-    InputFile(File), FileLoc(fileloc), PP(pp), Features(PP.getLangOptions()) {
+Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
+             const char *BufStart, const char *BufEnd)
+  : FileLoc(fileloc), PP(pp), Features(PP.getLangOptions()) {
+      
+  SourceManager &SourceMgr = PP.getSourceManager();
+  InputFile =SourceMgr.getBuffer(SourceMgr.getPhysicalLoc(FileLoc).getFileID());
+      
   Is_PragmaLexer = false;
   IsMainFile = false;
   InitCharacterInfo();
       
+  BufferPtr = BufStart ? BufStart : InputFile->getBufferStart();
+  BufferEnd = BufEnd ? BufEnd : InputFile->getBufferEnd();
+
   assert(BufferEnd[0] == 0 &&
          "We assume that the input buffer has a null character at the end"
          " to simplify lexing!");
-    
-  BufferPtr = BufStart ? BufStart : File->getBufferStart();
-
+  
   // Start of the file is a start of line.
   IsAtStartOfLine = true;
 

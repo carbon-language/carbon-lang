@@ -578,13 +578,8 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
       SourceManager &SourceMgr = PP.getSourceManager();
       const char *ResultStrData = SourceMgr.getCharacterData(ResultTokLoc);
       
-      unsigned FileID = ResultTokLoc.getFileID();
-      assert(FileID && "Could not get FileID for paste?");
-      
       // Make a lexer object so that we lex and expand the paste result.
-      Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID),
-                            SourceLocation::getFileLoc(FileID, 0), PP,
-                            ResultStrData, 
+      Lexer *TL = new Lexer(ResultTokLoc, PP, ResultStrData, 
                             ResultStrData+LHSLen+RHSLen /*don't include null*/);
       
       // Lex a token in raw mode.  This way it won't look up identifiers

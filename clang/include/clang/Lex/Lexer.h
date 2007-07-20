@@ -36,7 +36,7 @@ class Preprocessor;
 class Lexer {
   //===--------------------------------------------------------------------===//
   // Constant configuration values for this lexer.
-  const char * const BufferEnd;  // End of the buffer.
+  const char *BufferEnd;         // End of the buffer.
   const llvm::MemoryBuffer *InputFile; // The file we are reading from.
   SourceLocation FileLoc;        // Location for start of file.
   Preprocessor &PP;              // Preprocessor object controlling lexing.
@@ -93,15 +93,17 @@ class Lexer {
   /// we are currently in.
   std::vector<PPConditionalInfo> ConditionalStack;
   
+  Lexer(const Lexer&);          // DO NOT IMPLEMENT
+  void operator=(const Lexer&); // DO NOT IMPLEMENT
   friend class Preprocessor;
 public:
     
   /// Lexer constructor - Create a new lexer object for the specified buffer
   /// with the specified preprocessor managing the lexing process.  This lexer
-  /// assumes that the specified MemoryBuffer and Preprocessor objects will
-  /// outlive it, but doesn't take ownership of either pointer.
-  Lexer(const llvm::MemoryBuffer *InBuffer, SourceLocation FileLoc, 
-        Preprocessor &PP, const char *BufStart = 0, const char *BufEnd = 0);
+  /// assumes that the associated MemoryBuffer and Preprocessor objects will
+  /// outlive it, so it doesn't take ownership of either of them.
+  Lexer(SourceLocation FileLoc, Preprocessor &PP,
+        const char *BufStart = 0, const char *BufEnd = 0);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!

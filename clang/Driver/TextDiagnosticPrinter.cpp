@@ -108,15 +108,11 @@ unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
   // TODO: this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.  This could use 
   // Lexer::isObviouslySimpleCharacter for example.
-  unsigned FileID = Loc.getFileID();
   
   // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(SourceMgr.getBuffer(FileID), Loc,
-                 *ThePreprocessor, StrData);
-  
+  Lexer TheLexer(Loc, *ThePreprocessor, StrData);
   LexerToken TheTok;
   TheLexer.LexRawToken(TheTok);
-
   return TheTok.getLength();
 }
 

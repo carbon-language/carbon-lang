@@ -140,12 +140,9 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   SourceLocation TokLoc = CreateString(&StrVal[0], StrVal.size(), StrLoc);
   const char *StrData = SourceMgr.getCharacterData(TokLoc);
 
-  unsigned FileID = SourceMgr.getPhysicalLoc(TokLoc).getFileID();
-  assert(FileID && "Could not get FileID for _Pragma?");
-
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.
-  Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), TokLoc, *this,
+  Lexer *TL = new Lexer(TokLoc, *this,
                         StrData, StrData+StrVal.size()-1 /* no null */);
   
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
