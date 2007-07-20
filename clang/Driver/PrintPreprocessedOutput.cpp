@@ -128,9 +128,9 @@ public:
   virtual void Ident(SourceLocation Loc, const std::string &str);
   
 
-  void HandleFirstTokOnLine(LexerToken &Tok);
+  void HandleFirstTokOnLine(Token &Tok);
   void MoveToLine(SourceLocation Loc);
-  bool AvoidConcat(const LexerToken &PrevTok, const LexerToken &Tok);
+  bool AvoidConcat(const Token &PrevTok, const Token &Tok);
 };
 }
 
@@ -250,7 +250,7 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
 /// is called for the first token on each new line.
-void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(LexerToken &Tok) {
+void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
   MoveToLine(Tok.getLocation());
@@ -281,7 +281,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
   
   UnknownPragmaHandler(const char *prefix, PrintPPOutputPPCallbacks *callbacks)
     : PragmaHandler(0), Prefix(prefix), Callbacks(callbacks) {}
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &PragmaTok) {
+  virtual void HandlePragma(Preprocessor &PP, Token &PragmaTok) {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
     Callbacks->MoveToLine(PragmaTok.getLocation());
@@ -311,8 +311,8 @@ struct UnknownPragmaHandler : public PragmaHandler {
 /// the resulting output won't have incorrect concatenations going on.  Examples
 /// include "..", which we print with a space between, because we don't want to
 /// track enough to tell "x.." from "...".
-bool PrintPPOutputPPCallbacks::AvoidConcat(const LexerToken &PrevTok,
-                                           const LexerToken &Tok) {
+bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
+                                           const Token &Tok) {
   char Buffer[256];
   
   // If we haven't emitted a token on this line yet, PrevTok isn't useful to
@@ -394,7 +394,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   
   InitOutputBuffer();
   
-  LexerToken Tok, PrevTok;
+  Token Tok, PrevTok;
   char Buffer[256];
   PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(PP);
   PP.setPPCallbacks(Callbacks);

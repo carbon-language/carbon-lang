@@ -191,14 +191,14 @@ public:
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the
   /// tokens input to a function-like macro.
-  void EnterMacro(LexerToken &Identifier, MacroArgs *Args);
+  void EnterMacro(Token &Identifier, MacroArgs *Args);
   
   /// EnterTokenStream - Add a "macro" context to the top of the include stack,
   /// which will cause the lexer to start returning the specified tokens.  Note
   /// that these tokens will be re-macro-expanded when/if expansion is enabled.
   /// This method assumes that the specified stream of tokens has a permanent
   /// owner somewhere, so they do not need to be copied.
-  void EnterTokenStream(const LexerToken *Toks, unsigned NumToks);
+  void EnterTokenStream(const Token *Toks, unsigned NumToks);
   
   /// RemoveTopOfLexerStack - Pop the current lexer/macro exp off the top of the
   /// lexer stack.  This should only be used in situations where the current
@@ -207,7 +207,7 @@ public:
   
   /// Lex - To lex a token from the preprocessor, just pull a token from the
   /// current lexer or macro object.
-  void Lex(LexerToken &Result) {
+  void Lex(Token &Result) {
     if (CurLexer)
       CurLexer->Lex(Result);
     else
@@ -217,7 +217,7 @@ public:
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get
   /// something not a comment.  This is useful in -E -C mode where comments
   /// would foul up preprocessor directive handling.
-  void LexNonComment(LexerToken &Result) {
+  void LexNonComment(Token &Result) {
     do
       Lex(Result);
     while (Result.getKind() == tok::comment);
@@ -225,7 +225,7 @@ public:
   
   /// LexUnexpandedToken - This is just like Lex, but this disables macro
   /// expansion of identifier tokens.
-  void LexUnexpandedToken(LexerToken &Result) {
+  void LexUnexpandedToken(Token &Result) {
     // Disable macro expansion.
     bool OldVal = DisableMacroExpansion;
     DisableMacroExpansion = true;
@@ -237,14 +237,14 @@ public:
   }
   
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
-  /// the specified LexerToken's location, translating the token's start
+  /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
   void Diag(SourceLocation Loc, unsigned DiagID);  
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
-  void Diag(const LexerToken &Tok, unsigned DiagID) {
+  void Diag(const Token &Tok, unsigned DiagID) {
     Diag(Tok.getLocation(), DiagID);
   }
-  void Diag(const LexerToken &Tok, unsigned DiagID, const std::string &Msg) {
+  void Diag(const Token &Tok, unsigned DiagID, const std::string &Msg) {
     Diag(Tok.getLocation(), DiagID, Msg);
   }
   
@@ -253,7 +253,7 @@ public:
   /// after trigraph expansion and escaped-newline folding.  In particular, this
   /// wants to get the true, uncanonicalized, spelling of things like digraphs
   /// UCNs, etc.
-  std::string getSpelling(const LexerToken &Tok) const;
+  std::string getSpelling(const Token &Tok) const;
   
   /// getSpelling - This method is used to get the spelling of a token into a
   /// preallocated buffer, instead of as an std::string.  The caller is required
@@ -265,7 +265,7 @@ public:
   /// to point to a constant buffer with the data already in it (avoiding a
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
-  unsigned getSpelling(const LexerToken &Tok, const char *&Buffer) const;
+  unsigned getSpelling(const Token &Tok, const char *&Buffer) const;
   
   
   /// CreateString - Plop the specified string into a scratch buffer and return
@@ -276,7 +276,7 @@ public:
   
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
-  void DumpToken(const LexerToken &Tok, bool DumpFlags = false) const;
+  void DumpToken(const Token &Tok, bool DumpFlags = false) const;
   void DumpMacro(const MacroInfo &MI) const;
   
   /// AdvanceToTokenCharacter - Given a location that specifies the start of a
@@ -302,32 +302,32 @@ public:
 
   /// LookUpIdentifierInfo - Given a tok::identifier token, look up the
   /// identifier information for the token and install it into the token.
-  IdentifierInfo *LookUpIdentifierInfo(LexerToken &Identifier,
+  IdentifierInfo *LookUpIdentifierInfo(Token &Identifier,
                                        const char *BufPtr = 0);
   
   /// HandleIdentifier - This callback is invoked when the lexer reads an
   /// identifier and has filled in the tokens IdentifierInfo member.  This
   /// callback potentially macro expands it or turns it into a named token (like
   /// 'for').
-  void HandleIdentifier(LexerToken &Identifier);
+  void HandleIdentifier(Token &Identifier);
 
   
   /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
   /// the current file.  This either returns the EOF token and returns true, or
   /// pops a level off the include stack and returns false, at which point the
   /// client should call lex again.
-  bool HandleEndOfFile(LexerToken &Result, bool isEndOfMacro = false);
+  bool HandleEndOfFile(Token &Result, bool isEndOfMacro = false);
   
   /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
   /// the current macro line.  It returns true if Result is filled in with a
   /// token, or false if Lex should be called again.
-  bool HandleEndOfMacro(LexerToken &Result);
+  bool HandleEndOfMacro(Token &Result);
   
   /// HandleDirective - This callback is invoked when the lexer sees a # token
   /// at the start of a line.  This consumes the directive, modifies the 
   /// lexer/preprocessor state, and advances the lexer(s) so that the next token
   /// read is the correct one.
-  void HandleDirective(LexerToken &Result);
+  void HandleDirective(Token &Result);
 
   /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
   /// not, emit a diagnostic and consume up until the eom.
@@ -341,7 +341,7 @@ private:
   /// ReadMacroName - Lex and validate a macro name, which occurs after a
   /// #define or #undef.  This emits a diagnostic, sets the token kind to eom,
   /// and discards the rest of the macro line if the macro name is invalid.
-  void ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef = 0);
+  void ReadMacroName(Token &MacroNameTok, char isDefineUndef = 0);
   
   /// ReadMacroDefinitionArgList - The ( starting an argument list of a macro
   /// definition has just been read.  Lex the rest of the arguments and the
@@ -377,7 +377,7 @@ private:
   /// HandleMacroExpandedIdentifier - If an identifier token is read that is to
   /// be expanded as a macro, handle it and return the next token as 'Tok'.  If
   /// the macro should not be expanded return true, otherwise return false.
-  bool HandleMacroExpandedIdentifier(LexerToken &Tok, MacroInfo *MI);
+  bool HandleMacroExpandedIdentifier(Token &Tok, MacroInfo *MI);
   
   /// isNextPPTokenLParen - Determine whether the next preprocessor token to be
   /// lexed is a '('.  If so, consume the token and return true, if not, this
@@ -387,16 +387,16 @@ private:
   /// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
   /// invoked to read all of the formal arguments specified for the macro
   /// invocation.  This returns null on error.
-  MacroArgs *ReadFunctionLikeMacroArgs(LexerToken &MacroName, MacroInfo *MI);
+  MacroArgs *ReadFunctionLikeMacroArgs(Token &MacroName, MacroInfo *MI);
 
   /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
   /// as a builtin macro, handle it and return the next token as 'Tok'.
-  void ExpandBuiltinMacro(LexerToken &Tok);
+  void ExpandBuiltinMacro(Token &Tok);
   
   /// Handle_Pragma - Read a _Pragma directive, slice it up, process it, then
   /// return the first token after the directive.  The _Pragma token has just
   /// been read into 'Tok'.
-  void Handle_Pragma(LexerToken &Tok);
+  void Handle_Pragma(Token &Tok);
   
   
   /// EnterSourceFileWithLexer - Add a lexer to the top of the include stack and
@@ -409,7 +409,7 @@ private:
   /// caller is expected to provide a buffer that is large enough to hold the
   /// spelling of the filename, but is also expected to handle the case when
   /// this method decides to use a different buffer.
-  bool GetIncludeFilenameSpelling(const LexerToken &FNTok,
+  bool GetIncludeFilenameSpelling(const Token &FNTok,
                                   const char *&BufStart, const char *&BufEnd);
   
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
@@ -424,38 +424,38 @@ private:
   /// should side-effect the current preprocessor object so that the next call
   /// to Lex() will return the appropriate token next.
   
-  void HandleUserDiagnosticDirective(LexerToken &Tok, bool isWarning);
-  void HandleIdentSCCSDirective(LexerToken &Tok);
+  void HandleUserDiagnosticDirective(Token &Tok, bool isWarning);
+  void HandleIdentSCCSDirective(Token &Tok);
   
   // File inclusion.
-  void HandleIncludeDirective(LexerToken &Tok,
+  void HandleIncludeDirective(Token &Tok,
                               const DirectoryLookup *LookupFrom = 0,
                               bool isImport = false);
-  void HandleIncludeNextDirective(LexerToken &Tok);
-  void HandleImportDirective(LexerToken &Tok);
+  void HandleIncludeNextDirective(Token &Tok);
+  void HandleImportDirective(Token &Tok);
   
   // Macro handling.
-  void HandleDefineDirective(LexerToken &Tok, bool isTargetSpecific);
-  void HandleUndefDirective(LexerToken &Tok);
-  void HandleDefineOtherTargetDirective(LexerToken &Tok);
-  // HandleAssertDirective(LexerToken &Tok);
-  // HandleUnassertDirective(LexerToken &Tok);
+  void HandleDefineDirective(Token &Tok, bool isTargetSpecific);
+  void HandleUndefDirective(Token &Tok);
+  void HandleDefineOtherTargetDirective(Token &Tok);
+  // HandleAssertDirective(Token &Tok);
+  // HandleUnassertDirective(Token &Tok);
   
   // Conditional Inclusion.
-  void HandleIfdefDirective(LexerToken &Tok, bool isIfndef,
+  void HandleIfdefDirective(Token &Tok, bool isIfndef,
                             bool ReadAnyTokensBeforeDirective);
-  void HandleIfDirective(LexerToken &Tok, bool ReadAnyTokensBeforeDirective);
-  void HandleEndifDirective(LexerToken &Tok);
-  void HandleElseDirective(LexerToken &Tok);
-  void HandleElifDirective(LexerToken &Tok);
+  void HandleIfDirective(Token &Tok, bool ReadAnyTokensBeforeDirective);
+  void HandleEndifDirective(Token &Tok);
+  void HandleElseDirective(Token &Tok);
+  void HandleElifDirective(Token &Tok);
   
   // Pragmas.
   void HandlePragmaDirective();
 public:
-  void HandlePragmaOnce(LexerToken &OnceTok);
-  void HandlePragmaPoison(LexerToken &PoisonTok);
-  void HandlePragmaSystemHeader(LexerToken &SysHeaderTok);
-  void HandlePragmaDependency(LexerToken &DependencyTok);
+  void HandlePragmaOnce(Token &OnceTok);
+  void HandlePragmaPoison(Token &PoisonTok);
+  void HandlePragmaSystemHeader(Token &SysHeaderTok);
+  void HandlePragmaDependency(Token &DependencyTok);
 };
 
 }  // end namespace clang

@@ -111,7 +111,7 @@ unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
   
   // Create a lexer starting at the beginning of this token.
   Lexer TheLexer(Loc, *ThePreprocessor, StrData);
-  LexerToken TheTok;
+  Token TheTok;
   TheLexer.LexRawToken(TheTok);
   return TheTok.getLength();
 }

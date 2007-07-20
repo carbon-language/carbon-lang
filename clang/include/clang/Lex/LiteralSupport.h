@@ -26,7 +26,7 @@ namespace clang {
 
 class Diagnostic;
 class Preprocessor;
-class LexerToken;
+class Token;
 class SourceLocation;
 class TargetInfo;
     
@@ -142,7 +142,7 @@ class StringLiteralParser {
   llvm::SmallString<512> ResultBuf;
   char *ResultPtr; // cursor
 public:
-  StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
+  StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       Preprocessor &PP, TargetInfo &T);
   bool hadError;
   bool AnyWide;

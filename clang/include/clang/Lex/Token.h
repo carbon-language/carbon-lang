@@ -1,4 +1,4 @@
-//===--- LexerToken.h - Token interface -------------------------*- C++ -*-===//
+//===--- Token.h - Token interface ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the LexerToken interface.
+//  This file defines the Token interface.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LEXERTOKEN_H
-#define LLVM_CLANG_LEXERTOKEN_H
+#ifndef LLVM_CLANG_TOKEN_H
+#define LLVM_CLANG_TOKEN_H
 
 #include "clang/Basic/TokenKinds.h"
 #include "clang/Basic/SourceLocation.h"
@@ -21,11 +21,11 @@ namespace clang {
 
 class IdentifierInfo;
 
-/// LexerToken - This structure provides full information about a lexed token.
+/// Token - This structure provides full information about a lexed token.
 /// It is not intended to be space efficient, it is intended to return as much
 /// information as possible about each returned token.  This is expected to be
 /// compressed into a smaller form if memory footprint is important.
-class LexerToken {
+class Token {
   /// The location and length of the token text itself.
   SourceLocation Loc;
   unsigned Length;

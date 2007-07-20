@@ -50,8 +50,8 @@ bool MacroInfo::isIdenticalTo(const MacroInfo &Other, Preprocessor &PP) const {
        
   // Check all the tokens.
   for (unsigned i = 0, e = ReplacementTokens.size(); i != e; ++i) {
-    const LexerToken &A = ReplacementTokens[i];
-    const LexerToken &B = Other.ReplacementTokens[i];
+    const Token &A = ReplacementTokens[i];
+    const Token &B = Other.ReplacementTokens[i];
     if (A.getKind() != B.getKind() || 
         A.isAtStartOfLine() != B.isAtStartOfLine() ||
         A.hasLeadingSpace() != B.hasLeadingSpace())

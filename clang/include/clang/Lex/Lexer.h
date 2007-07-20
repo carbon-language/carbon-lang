@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_LEXER_H
 #define LLVM_CLANG_LEXER_H
 
-#include "clang/Lex/LexerToken.h"
+#include "clang/Lex/Token.h"
 #include "clang/Lex/MultipleIncludeOpt.h"
 #include "clang/Basic/LangOptions.h"
 #include <string>
@@ -129,14 +129,14 @@ public:
   /// return the tok::eof token.  Return true if an error occurred and
   /// compilation should terminate, false if normal.  This implicitly involves
   /// the preprocessor.
-  void Lex(LexerToken &Result) {
+  void Lex(Token &Result) {
     // Start a new token.
     Result.startToken();
     
     // NOTE, any changes here should also change code after calls to 
     // Preprocessor::HandleDirective
     if (IsAtStartOfLine) {
-      Result.setFlag(LexerToken::StartOfLine);
+      Result.setFlag(Token::StartOfLine);
       IsAtStartOfLine = false;
     }
    
@@ -148,7 +148,7 @@ public:
   /// LexRawToken - Switch the lexer to raw mode, lex a token into Result and
   /// switch it back.  Return true if the 'next character to read' pointer
   /// points and the end of the lexer buffer, false otherwise.
-  bool LexRawToken(LexerToken &Result) {
+  bool LexRawToken(Token &Result) {
     assert(!LexingRawMode && "Already in raw mode!");
     LexingRawMode = true;
     Lex(Result);
@@ -184,14 +184,14 @@ private:
   /// LexTokenInternal - Internal interface to lex a preprocessing token. Called
   /// by Lex.
   ///
-  void LexTokenInternal(LexerToken &Result);
+  void LexTokenInternal(Token &Result);
 
   /// FormTokenWithChars - When we lex a token, we have identified a span
   /// starting at BufferPtr, going to TokEnd that forms the token.  This method
   /// takes that range and assigns it to the token as its location and size.  In
   /// addition, since tokens cannot overlap, this also updates BufferPtr to be
   /// TokEnd.
-  void FormTokenWithChars(LexerToken &Result, const char *TokEnd) {
+  void FormTokenWithChars(Token &Result, const char *TokEnd) {
     Result.setLocation(getSourceLocation(BufferPtr));
     Result.setLength(TokEnd-BufferPtr);
     BufferPtr = TokEnd;
@@ -233,7 +233,7 @@ public:
   /// advance over it, and return it.  This is tricky in several cases.  Here we
   /// just handle the trivial case and fall-back to the non-inlined
   /// getCharAndSizeSlow method to handle the hard case.
-  inline char getAndAdvanceChar(const char *&Ptr, LexerToken &Tok) {
+  inline char getAndAdvanceChar(const char *&Ptr, Token &Tok) {
     // If this is not a trigraph and not a UCN or escaped newline, return
     // quickly.
     if (isObviouslySimpleCharacter(Ptr[0])) return *Ptr++;
@@ -249,7 +249,7 @@ private:
   /// and added to a given token, check to see if there are diagnostics that
   /// need to be emitted or flags that need to be set on the token.  If so, do
   /// it.
-  const char *ConsumeChar(const char *Ptr, unsigned Size, LexerToken &Tok) {
+  const char *ConsumeChar(const char *Ptr, unsigned Size, Token &Tok) {
     // Normal case, we consumed exactly one token.  Just return it.
     if (Size == 1)
       return Ptr+Size;
@@ -279,7 +279,7 @@ private:
   
   /// getCharAndSizeSlow - Handle the slow/uncommon case of the getCharAndSize
   /// method.
-  char getCharAndSizeSlow(const char *Ptr, unsigned &Size, LexerToken *Tok = 0);
+  char getCharAndSizeSlow(const char *Ptr, unsigned &Size, Token *Tok = 0);
   
   /// getCharAndSizeNoWarn - Like the getCharAndSize method, but does not ever
   /// emit a warning.
@@ -343,22 +343,22 @@ private:
   // Other lexer functions.
   
   // Helper functions to lex the remainder of a token of the specific type.
-  void LexIdentifier         (LexerToken &Result, const char *CurPtr);
-  void LexNumericConstant    (LexerToken &Result, const char *CurPtr);
-  void LexStringLiteral      (LexerToken &Result, const char *CurPtr,bool Wide);
-  void LexAngledStringLiteral(LexerToken &Result, const char *CurPtr);
-  void LexCharConstant       (LexerToken &Result, const char *CurPtr);
-  bool LexEndOfFile          (LexerToken &Result, const char *CurPtr);
+  void LexIdentifier         (Token &Result, const char *CurPtr);
+  void LexNumericConstant    (Token &Result, const char *CurPtr);
+  void LexStringLiteral      (Token &Result, const char *CurPtr,bool Wide);
+  void LexAngledStringLiteral(Token &Result, const char *CurPtr);
+  void LexCharConstant       (Token &Result, const char *CurPtr);
+  bool LexEndOfFile          (Token &Result, const char *CurPtr);
   
-  void SkipWhitespace        (LexerToken &Result, const char *CurPtr);
-  bool SkipBCPLComment       (LexerToken &Result, const char *CurPtr);
-  bool SkipBlockComment      (LexerToken &Result, const char *CurPtr);
-  bool SaveBCPLComment       (LexerToken &Result, const char *CurPtr);
+  void SkipWhitespace        (Token &Result, const char *CurPtr);
+  bool SkipBCPLComment       (Token &Result, const char *CurPtr);
+  bool SkipBlockComment      (Token &Result, const char *CurPtr);
+  bool SaveBCPLComment       (Token &Result, const char *CurPtr);
   
   /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
   /// (potentially) macro expand the filename.  If the sequence parsed is not
   /// lexically legal, emit a diagnostic and return a result EOM token.
-  void LexIncludeFilename(LexerToken &Result);
+  void LexIncludeFilename(Token &Result);
 };
 
 

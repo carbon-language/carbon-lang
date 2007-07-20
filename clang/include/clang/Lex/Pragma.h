@@ -19,7 +19,7 @@
 
 namespace clang {
   class Preprocessor;
-  class LexerToken;
+  class Token;
   class IdentifierInfo;
   class PragmaNamespace;
 
@@ -39,7 +39,7 @@ public:
   virtual ~PragmaHandler();
   
   const IdentifierInfo *getName() const { return Name; }
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &FirstToken) = 0;
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken) = 0;
   
   /// getIfNamespace - If this is a namespace, return it.  This is equivalent to
   /// using a dynamic_cast, but doesn't require RTTI.
@@ -71,7 +71,7 @@ public:
     Handlers.push_back(Handler);
   }
 
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &FirstToken);
+  virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
   
   virtual PragmaNamespace *getIfNamespace() { return this; }
 };

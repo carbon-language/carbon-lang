@@ -535,7 +535,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 ///         hex-digit hex-digit hex-digit hex-digit
 ///
 StringLiteralParser::
-StringLiteralParser(const LexerToken *StringToks, unsigned NumStringToks,
+StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                     Preprocessor &pp, TargetInfo &t)
   : PP(pp), Target(t) {
   // Scan all of the string portions, remember the max individual token length,

@@ -27,7 +27,7 @@
 using namespace clang;
 
 static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
-                                     LexerToken &PeekTok, bool ValueLive,
+                                     Token &PeekTok, bool ValueLive,
                                      Preprocessor &PP);
 
 /// DefinedTracker - This struct is used while parsing expressions to keep track
@@ -60,7 +60,7 @@ struct DefinedTracker {
 /// If ValueLive is false, then this value is being evaluated in a context where
 /// the result is not used.  As such, avoid diagnostics that relate to
 /// evaluation.
-static bool EvaluateValue(llvm::APSInt &Result, LexerToken &PeekTok,
+static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
                           DefinedTracker &DT, bool ValueLive,
                           Preprocessor &PP) {
   Result = 0;
@@ -360,7 +360,7 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
 /// the result is not used.  As such, avoid diagnostics that relate to
 /// evaluation.
 static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
-                                     LexerToken &PeekTok, bool ValueLive,
+                                     Token &PeekTok, bool ValueLive,
                                      Preprocessor &PP) {
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
@@ -393,7 +393,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       RHSIsLive = ValueLive;
 
     // Consume the operator, saving the operator token for error reporting.
-    LexerToken OpToken = PeekTok;
+    Token OpToken = PeekTok;
     PP.LexNonComment(PeekTok);
 
     llvm::APSInt RHS(LHS.getBitWidth());
@@ -607,7 +607,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
 bool Preprocessor::
 EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // Peek ahead one token.
-  LexerToken Tok;
+  Token Tok;
   Lex(Tok);
   
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.

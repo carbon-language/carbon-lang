@@ -32,7 +32,7 @@ class Parser {
   
   /// Tok - The current token we are peeking head.  All parsing methods assume
   /// that this is valid.
-  LexerToken Tok;
+  Token Tok;
   
   unsigned short ParenCount, BracketCount, BraceCount;
 
@@ -219,7 +219,7 @@ private:
     
   void Diag(SourceLocation Loc, unsigned DiagID,
             const std::string &Msg = std::string());
-  void Diag(const LexerToken &Tok, unsigned DiagID,
+  void Diag(const Token &Tok, unsigned DiagID,
             const std::string &M = std::string()) {
     Diag(Tok.getLocation(), DiagID, M);
   }
@@ -275,9 +275,9 @@ private:
   ExprResult ParseConstantExpression();
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
   
-  ExprResult ParseExpressionWithLeadingIdentifier(const LexerToken &Tok);
-  ExprResult ParseAssignmentExprWithLeadingIdentifier(const LexerToken &Tok);
-  ExprResult ParseAssignmentExpressionWithLeadingStar(const LexerToken &Tok);
+  ExprResult ParseExpressionWithLeadingIdentifier(const Token &Tok);
+  ExprResult ParseAssignmentExprWithLeadingIdentifier(const Token &Tok);
+  ExprResult ParseAssignmentExpressionWithLeadingStar(const Token &Tok);
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression);

@@ -115,7 +115,7 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // assignment-expression or if it is an old-style structure field
       // designator.
       // TODO: Check that this is the first designator.
-      LexerToken Ident = Tok;
+      Token Ident = Tok;
       ConsumeToken();
       
       // If this is the gross GNU extension, handle it now.

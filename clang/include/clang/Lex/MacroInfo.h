@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_MACROINFO_H
 #define LLVM_CLANG_MACROINFO_H
 
-#include "clang/Lex/LexerToken.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <cassert>
@@ -39,7 +39,7 @@ class MacroInfo {
   
   /// ReplacementTokens - This is the list of tokens that the macro is defined
   /// to.
-  llvm::SmallVector<LexerToken, 8> ReplacementTokens;
+  llvm::SmallVector<Token, 8> ReplacementTokens;
 
   /// IsFunctionLike - True if this macro is a function-like macro, false if it
   /// is an object-like macro.
@@ -165,18 +165,18 @@ public:
     return ReplacementTokens.size();
   }
 
-  const LexerToken &getReplacementToken(unsigned Tok) const {
+  const Token &getReplacementToken(unsigned Tok) const {
     assert(Tok < ReplacementTokens.size() && "Invalid token #");
     return ReplacementTokens[Tok];
   }
   
-  typedef llvm::SmallVector<LexerToken, 8>::const_iterator tokens_iterator;
+  typedef llvm::SmallVector<Token, 8>::const_iterator tokens_iterator;
   tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
   
   /// AddTokenToBody - Add the specified token to the replacement text for the
   /// macro.
-  void AddTokenToBody(const LexerToken &Tok) {
+  void AddTokenToBody(const Token &Tok) {
     ReplacementTokens.push_back(Tok);
   }
   

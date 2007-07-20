@@ -32,7 +32,7 @@ namespace clang {
   class QualType;
   class LangOptions;
   class DeclaratorChunk;
-  class LexerToken;
+  class Token;
   class IntegerLiteral;
   class ArrayType;
   class LabelStmt;
@@ -208,14 +208,14 @@ public:
                                          bool HasTrailingLParen);
   virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
-  virtual ExprResult ParseNumericConstant(const LexerToken &);
-  virtual ExprResult ParseCharacterConstant(const LexerToken &);
+  virtual ExprResult ParseNumericConstant(const Token &);
+  virtual ExprResult ParseCharacterConstant(const Token &);
   virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
 
   /// ParseStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringLiteral(const LexerToken *Toks, unsigned NumToks);
+  virtual ExprResult ParseStringLiteral(const Token *Toks, unsigned NumToks);
     
   // Binary/Unary Operators.  'Tok' is the token for the operator.
   virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,

@@ -754,7 +754,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   PP.EnterSourceFile(FileID, 0);
 
   // Lex the file, which will read all the macros.
-  LexerToken Tok;
+  Token Tok;
   PP.Lex(Tok);
   assert(Tok.getKind() == tok::eof && "Didn't read entire file!");
 
@@ -775,7 +775,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     fprintf(stderr, "Unexpected program action!\n");
     return;
   case DumpTokens: {                 // Token dump mode.
-    LexerToken Tok;
+    Token Tok;
     // Start parsing the specified input file.
     PP.EnterSourceFile(MainFileID, 0, true);
     do {
@@ -786,7 +786,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
   }
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
-    LexerToken Tok;
+    Token Tok;
     // Start parsing the specified input file.
     PP.EnterSourceFile(MainFileID, 0, true);
     do {

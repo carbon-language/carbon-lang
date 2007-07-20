@@ -105,7 +105,7 @@ PPCallbacks::~PPCallbacks() {
 }
 
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
-/// the specified LexerToken's location, translating the token's start
+/// the specified Token's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
   Diags.Report(Loc, DiagID);
@@ -116,7 +116,7 @@ void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
   Diags.Report(Loc, DiagID, &Msg, 1);
 }
 
-void Preprocessor::DumpToken(const LexerToken &Tok, bool DumpFlags) const {
+void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
   std::cerr << tok::getTokenName(Tok.getKind()) << " '"
             << getSpelling(Tok) << "'";
   
@@ -176,7 +176,7 @@ void Preprocessor::PrintStats() {
 /// after trigraph expansion and escaped-newline folding.  In particular, this
 /// wants to get the true, uncanonicalized, spelling of things like digraphs
 /// UCNs, etc.
-std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
+std::string Preprocessor::getSpelling(const Token &Tok) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
   
   // If this token contains nothing interesting, return it directly.
@@ -209,7 +209,7 @@ std::string Preprocessor::getSpelling(const LexerToken &Tok) const {
 /// to point to a constant buffer with the data already in it (avoiding a
 /// copy).  The caller is not allowed to modify the returned buffer pointer
 /// if an internal buffer is returned.
-unsigned Preprocessor::getSpelling(const LexerToken &Tok,
+unsigned Preprocessor::getSpelling(const Token &Tok,
                                    const char *&Buffer) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
   
@@ -282,7 +282,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
   if (CharNo != 0) {
     // Create a lexer starting at this token position.
     Lexer TheLexer(TokStart, *this, TokPtr);
-    LexerToken Tok;
+    Token Tok;
     // Skip over characters the remaining characters.
     const char *TokStartPtr = TokPtr;
     for (; CharNo; --CharNo)
@@ -426,7 +426,7 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 
 /// EnterMacro - Add a Macro to the top of the include stack and start lexing
 /// tokens from it instead of the current buffer.
-void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
+void Preprocessor::EnterMacro(Token &Tok, MacroArgs *Args) {
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurMacroExpander));
   CurLexer     = 0;
@@ -445,7 +445,7 @@ void Preprocessor::EnterMacro(LexerToken &Tok, MacroArgs *Args) {
 /// that these tokens will be re-macro-expanded when/if expansion is enabled.
 /// This method assumes that the specified stream of tokens has a permanent
 /// owner somewhere, so they do not need to be copied.
-void Preprocessor::EnterTokenStream(const LexerToken *Toks, unsigned NumToks) {
+void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks) {
   // Save our current state.
   IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
                                                CurMacroExpander));
@@ -585,7 +585,7 @@ bool Preprocessor::isNextPPTokenLParen() {
   if (Val != 1)
     return false;
   
-  LexerToken Tok;
+  Token Tok;
   LexUnexpandedToken(Tok);
   assert(Tok.getKind() == tok::l_paren && "Error computing l-paren-ness?");
   return true;
@@ -593,7 +593,7 @@ bool Preprocessor::isNextPPTokenLParen() {
 
 /// HandleMacroExpandedIdentifier - If an identifier token is read that is to be
 /// expanded as a macro, handle it and return the next token as 'Identifier'.
-bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier, 
+bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier, 
                                                  MacroInfo *MI) {
   
   // If this is a builtin macro, like __LINE__ or _Pragma, handle it specially.
@@ -662,8 +662,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     // stuff like "! XX," -> "! ," and "   XX," -> "    ,", when XX is
     // empty.
     if (!Identifier.isAtStartOfLine()) {
-      if (IsAtStartOfLine) Identifier.setFlag(LexerToken::StartOfLine);
-      if (HadLeadingSpace) Identifier.setFlag(LexerToken::LeadingSpace);
+      if (IsAtStartOfLine) Identifier.setFlag(Token::StartOfLine);
+      if (HadLeadingSpace) Identifier.setFlag(Token::LeadingSpace);
     }
     ++NumFastMacroExpanded;
     return false;
@@ -686,8 +686,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     Identifier = MI->getReplacementToken(0);
     
     // Restore the StartOfLine/LeadingSpace markers.
-    Identifier.setFlagValue(LexerToken::StartOfLine , isAtStartOfLine);
-    Identifier.setFlagValue(LexerToken::LeadingSpace, hasLeadingSpace);
+    Identifier.setFlagValue(Token::StartOfLine , isAtStartOfLine);
+    Identifier.setFlagValue(Token::LeadingSpace, hasLeadingSpace);
     
     // Update the tokens location to include both its logical and physical
     // locations.
@@ -698,7 +698,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
     // If this is #define X X, we must mark the result as unexpandible.
     if (IdentifierInfo *NewII = Identifier.getIdentifierInfo())
       if (NewII->getMacroInfo() == MI)
-        Identifier.setFlag(LexerToken::DisableExpand);
+        Identifier.setFlag(Token::DisableExpand);
     
     // Since this is not an identifier token, it can't be macro expanded, so
     // we're done.
@@ -718,21 +718,21 @@ bool Preprocessor::HandleMacroExpandedIdentifier(LexerToken &Identifier,
 /// ReadFunctionLikeMacroArgs - After reading "MACRO(", this method is
 /// invoked to read all of the actual arguments specified for the macro
 /// invocation.  This returns null on error.
-MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
+MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
                                                    MacroInfo *MI) {
   // The number of fixed arguments to parse.
   unsigned NumFixedArgsLeft = MI->getNumArgs();
   bool isVariadic = MI->isVariadic();
   
   // Outer loop, while there are more arguments, keep reading them.
-  LexerToken Tok;
+  Token Tok;
   Tok.setKind(tok::comma);
   --NumFixedArgsLeft;  // Start reading the first arg.
 
   // ArgTokens - Build up a list of tokens that make up each argument.  Each
   // argument is separated by an EOF token.  Use a SmallVector so we can avoid
   // heap allocations in the common case.
-  llvm::SmallVector<LexerToken, 64> ArgTokens;
+  llvm::SmallVector<Token, 64> ArgTokens;
 
   unsigned NumActuals = 0;
   while (Tok.getKind() == tok::comma) {
@@ -784,7 +784,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(LexerToken &MacroName,
       Diag(Tok, diag::ext_empty_fnmacro_arg);
     
     // Add a marker EOF token to the end of the token list for this argument.
-    LexerToken EOFTok;
+    Token EOFTok;
     EOFTok.startToken();
     EOFTok.setKind(tok::eof);
     EOFTok.setLocation(Tok.getLocation());
@@ -862,7 +862,7 @@ static void ComputeDATE_TIME(SourceLocation &DATELoc, SourceLocation &TIMELoc,
 
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
 /// as a builtin macro, handle it and return the next token as 'Tok'.
-void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
+void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   // Figure out which token this is.
   IdentifierInfo *II = Tok.getIdentifierInfo();
   assert(II && "Can't be a macro without id info!");
@@ -878,7 +878,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
 
   // Set up the return result.
   Tok.setIdentifierInfo(0);
-  Tok.clearFlag(LexerToken::NeedsCleaning);
+  Tok.clearFlag(Token::NeedsCleaning);
   
   if (II == Ident__LINE__) {
     // __LINE__ expands to a simple numeric value.
@@ -971,7 +971,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
 
 /// LookUpIdentifierInfo - Given a tok::identifier token, look up the
 /// identifier information for the token and install it into the token.
-IdentifierInfo *Preprocessor::LookUpIdentifierInfo(LexerToken &Identifier,
+IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
                                                    const char *BufPtr) {
   assert(Identifier.getKind() == tok::identifier && "Not an identifier!");
   assert(Identifier.getIdentifierInfo() == 0 && "Identinfo already exists!");
@@ -997,7 +997,7 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(LexerToken &Identifier,
 /// HandleIdentifier - This callback is invoked when the lexer reads an
 /// identifier.  This callback looks up the identifier in the map and/or
 /// potentially macro expands it or turns it into a named token (like 'for').
-void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
+void Preprocessor::HandleIdentifier(Token &Identifier) {
   assert(Identifier.getIdentifierInfo() &&
          "Can't handle identifiers without identifier info!");
   
@@ -1022,7 +1022,7 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
         // C99 6.10.3.4p2 says that a disabled macro may never again be
         // expanded, even if it's in a context where it could be expanded in the
         // future.
-        Identifier.setFlag(LexerToken::DisableExpand);
+        Identifier.setFlag(Token::DisableExpand);
       }
     }
   } else if (II.isOtherTargetMacro() && !DisableMacroExpansion) {
@@ -1055,7 +1055,7 @@ void Preprocessor::HandleIdentifier(LexerToken &Identifier) {
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
-bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
+bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   assert(!CurMacroExpander &&
          "Ending a file when currently in a macro!");
   
@@ -1119,7 +1119,7 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
 
 /// HandleEndOfMacro - This callback is invoked when the lexer hits the end of
 /// the current macro expansion or token stream expansion.
-bool Preprocessor::HandleEndOfMacro(LexerToken &Result) {
+bool Preprocessor::HandleEndOfMacro(Token &Result) {
   assert(CurMacroExpander && !CurLexer &&
          "Ending a macro when currently in a #include file!");
 
@@ -1142,7 +1142,7 @@ bool Preprocessor::HandleEndOfMacro(LexerToken &Result) {
 /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
 /// current line until the tok::eom token is found.
 void Preprocessor::DiscardUntilEndOfDirective() {
-  LexerToken Tmp;
+  Token Tmp;
   do {
     LexUnexpandedToken(Tmp);
   } while (Tmp.getKind() != tok::eom);
@@ -1160,7 +1160,7 @@ static bool isCXXNamedOperator(const std::string &Spelling) {
 /// of the macro line if the macro name is invalid.  isDefineUndef is 1 if
 /// this is due to a a #define, 2 if #undef directive, 0 if it is something
 /// else (e.g. #ifdef).
-void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef) {
+void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   // Read the token, don't allow macro expansion on it.
   LexUnexpandedToken(MacroNameTok);
   
@@ -1202,7 +1202,7 @@ void Preprocessor::ReadMacroName(LexerToken &MacroNameTok, char isDefineUndef) {
 /// CheckEndOfDirective - Ensure that the next token is a tok::eom token.  If
 /// not, emit a diagnostic and consume up until the eom.
 void Preprocessor::CheckEndOfDirective(const char *DirType) {
-  LexerToken Tmp;
+  Token Tmp;
   Lex(Tmp);
   // There should be no tokens after the directive, but we allow them as an
   // extension.
@@ -1238,7 +1238,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
   // Enter raw mode to disable identifier lookup (and thus macro expansion),
   // disabling warnings, etc.
   CurLexer->LexingRawMode = true;
-  LexerToken Tok;
+  Token Tok;
   while (1) {
     CurLexer->Lex(Tok);
     
@@ -1409,7 +1409,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
 /// at the start of a line.  This consumes the directive, modifies the 
 /// lexer/preprocessor state, and advances the lexer(s) so that the next token
 /// read is the correct one.
-void Preprocessor::HandleDirective(LexerToken &Result) {
+void Preprocessor::HandleDirective(Token &Result) {
   // FIXME: Traditional: # with whitespace before it not recognized by K&R?
   
   // We just parsed a # character at the start of a line, so we're in directive
@@ -1533,7 +1533,7 @@ TryAgain:
   // Okay, we're done parsing the directive.
 }
 
-void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Tok, 
+void Preprocessor::HandleUserDiagnosticDirective(Token &Tok, 
                                                  bool isWarning) {
   // Read the rest of the line raw.  We do this because we don't want macros
   // to be expanded and we don't require that the tokens be valid preprocessing
@@ -1548,12 +1548,12 @@ void Preprocessor::HandleUserDiagnosticDirective(LexerToken &Tok,
 
 /// HandleIdentSCCSDirective - Handle a #ident/#sccs directive.
 ///
-void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
+void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   // Yes, this directive is an extension.
   Diag(Tok, diag::ext_pp_ident_directive);
   
   // Read the string argument.
-  LexerToken StrTok;
+  Token StrTok;
   Lex(StrTok);
   
   // If the token kind isn't a string, it's a malformed directive.
@@ -1578,7 +1578,7 @@ void Preprocessor::HandleIdentSCCSDirective(LexerToken &Tok) {
 /// caller is expected to provide a buffer that is large enough to hold the
 /// spelling of the filename, but is also expected to handle the case when
 /// this method decides to use a different buffer.
-bool Preprocessor::GetIncludeFilenameSpelling(const LexerToken &FilenameTok,
+bool Preprocessor::GetIncludeFilenameSpelling(const Token &FilenameTok,
                                               const char *&BufStart,
                                               const char *&BufEnd) {
   // Get the text form of the filename.
@@ -1625,11 +1625,11 @@ bool Preprocessor::GetIncludeFilenameSpelling(const LexerToken &FilenameTok,
 /// file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between #include, #include_next and
 /// #import.
-void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
+void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
                                           const DirectoryLookup *LookupFrom,
                                           bool isImport) {
 
-  LexerToken FilenameTok;
+  Token FilenameTok;
   CurLexer->LexIncludeFilename(FilenameTok);
   
   // If the token kind is EOM, the error has already been diagnosed.
@@ -1682,7 +1682,7 @@ void Preprocessor::HandleIncludeDirective(LexerToken &IncludeTok,
 
 /// HandleIncludeNextDirective - Implements #include_next.
 ///
-void Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
+void Preprocessor::HandleIncludeNextDirective(Token &IncludeNextTok) {
   Diag(IncludeNextTok, diag::ext_pp_include_next_directive);
   
   // #include_next is like #include, except that we start searching after
@@ -1704,7 +1704,7 @@ void Preprocessor::HandleIncludeNextDirective(LexerToken &IncludeNextTok) {
 
 /// HandleImportDirective - Implements #import.
 ///
-void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
+void Preprocessor::HandleImportDirective(Token &ImportTok) {
   Diag(ImportTok, diag::ext_pp_import_directive);
   
   return HandleIncludeDirective(ImportTok, 0, true);
@@ -1721,7 +1721,7 @@ void Preprocessor::HandleImportDirective(LexerToken &ImportTok) {
 bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
   llvm::SmallVector<IdentifierInfo*, 32> Arguments;
   
-  LexerToken Tok;
+  Token Tok;
   while (1) {
     LexUnexpandedToken(Tok);
     switch (Tok.getKind()) {
@@ -1808,11 +1808,11 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
 /// line then lets the caller lex the next real token.  If 'isTargetSpecific' is
 /// true, then this is a "#define_target", otherwise this is a "#define".
 ///
-void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
+void Preprocessor::HandleDefineDirective(Token &DefineTok,
                                          bool isTargetSpecific) {
   ++NumDefined;
 
-  LexerToken MacroNameTok;
+  Token MacroNameTok;
   ReadMacroName(MacroNameTok, 1);
   
   // Error reading macro name?  If so, diagnostic already issued.
@@ -1831,7 +1831,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
   MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro(false);
 
   
-  LexerToken Tok;
+  Token Tok;
   LexUnexpandedToken(Tok);
   
   // If this is a function-like macro definition, parse the argument list,
@@ -1865,7 +1865,7 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
   } else {
     // This is a normal token with leading space.  Clear the leading space
     // marker on the first token to get proper expansion.
-    Tok.clearFlag(LexerToken::LeadingSpace);
+    Tok.clearFlag(Token::LeadingSpace);
   }
   
   // If this is a definition of a variadic C99 function-like macro, not using
@@ -1967,8 +1967,8 @@ void Preprocessor::HandleDefineDirective(LexerToken &DefineTok,
 }
 
 /// HandleDefineOtherTargetDirective - Implements #define_other_target.
-void Preprocessor::HandleDefineOtherTargetDirective(LexerToken &Tok) {
-  LexerToken MacroNameTok;
+void Preprocessor::HandleDefineOtherTargetDirective(Token &Tok) {
+  Token MacroNameTok;
   ReadMacroName(MacroNameTok, 1);
   
   // Error reading macro name?  If so, diagnostic already issued.
@@ -1992,10 +1992,10 @@ void Preprocessor::HandleDefineOtherTargetDirective(LexerToken &Tok) {
 
 /// HandleUndefDirective - Implements #undef.
 ///
-void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
+void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   ++NumUndefined;
 
-  LexerToken MacroNameTok;
+  Token MacroNameTok;
   ReadMacroName(MacroNameTok, 2);
   
   // Error reading macro name?  If so, diagnostic already issued.
@@ -2032,12 +2032,12 @@ void Preprocessor::HandleUndefDirective(LexerToken &UndefTok) {
 /// if any tokens have been returned or pp-directives activated before this
 /// #ifndef has been lexed.
 ///
-void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
+void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
                                         bool ReadAnyTokensBeforeDirective) {
   ++NumIf;
-  LexerToken DirectiveTok = Result;
+  Token DirectiveTok = Result;
 
-  LexerToken MacroNameTok;
+  Token MacroNameTok;
   ReadMacroName(MacroNameTok);
   
   // Error reading macro name?  If so, diagnostic already issued.
@@ -2092,7 +2092,7 @@ void Preprocessor::HandleIfdefDirective(LexerToken &Result, bool isIfndef,
 
 /// HandleIfDirective - Implements the #if directive.
 ///
-void Preprocessor::HandleIfDirective(LexerToken &IfToken,
+void Preprocessor::HandleIfDirective(Token &IfToken,
                                      bool ReadAnyTokensBeforeDirective) {
   ++NumIf;
   
@@ -2120,7 +2120,7 @@ void Preprocessor::HandleIfDirective(LexerToken &IfToken,
 
 /// HandleEndifDirective - Implements the #endif directive.
 ///
-void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
+void Preprocessor::HandleEndifDirective(Token &EndifToken) {
   ++NumEndif;
   
   // Check that this is the whole directive.
@@ -2141,7 +2141,7 @@ void Preprocessor::HandleEndifDirective(LexerToken &EndifToken) {
 }
 
 
-void Preprocessor::HandleElseDirective(LexerToken &Result) {
+void Preprocessor::HandleElseDirective(Token &Result) {
   ++NumElse;
   
   // #else directive in a non-skipping conditional... start skipping.
@@ -2164,7 +2164,7 @@ void Preprocessor::HandleElseDirective(LexerToken &Result) {
                                       /*FoundElse*/true);
 }
 
-void Preprocessor::HandleElifDirective(LexerToken &ElifToken) {
+void Preprocessor::HandleElifDirective(Token &ElifToken) {
   ++NumElse;
   
   // #elif directive in a non-skipping conditional... start skipping.

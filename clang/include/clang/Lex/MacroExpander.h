@@ -20,7 +20,7 @@
 namespace clang {
   class MacroInfo;
   class Preprocessor;
-  class LexerToken;
+  class Token;
 
 /// MacroArgs - An instance of this class captures information about
 /// the formal arguments specified to a function-like macro invocation.
@@ -34,11 +34,11 @@ class MacroArgs {
   /// PreExpArgTokens - Pre-expanded tokens for arguments that need them.  Empty
   /// if not yet computed.  This includes the EOF marker at the end of the
   /// stream.
-  std::vector<std::vector<LexerToken> > PreExpArgTokens;
+  std::vector<std::vector<Token> > PreExpArgTokens;
 
   /// StringifiedArgs - This contains arguments in 'stringified' form.  If the
   /// stringified form of an argument has not yet been computed, this is empty.
-  std::vector<LexerToken> StringifiedArgs;
+  std::vector<Token> StringifiedArgs;
 
   /// VarargsElided - True if this is a C99 style varargs macro invocation and
   /// there was no argument specified for the "..." argument.  If the argument
@@ -54,7 +54,7 @@ public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified
   /// macro and argument info.
   static MacroArgs *create(const MacroInfo *MI,
-                           const LexerToken *UnexpArgTokens,
+                           const Token *UnexpArgTokens,
                            unsigned NumArgTokens, bool VarargsElided);
   
   /// destroy - Destroy and deallocate the memory for this object.
@@ -63,26 +63,26 @@ public:
   
   /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
   /// by pre-expansion, return false.  Otherwise, conservatively return true.
-  bool ArgNeedsPreexpansion(const LexerToken *ArgTok) const;
+  bool ArgNeedsPreexpansion(const Token *ArgTok) const;
   
   /// getUnexpArgument - Return a pointer to the first token of the unexpanded
   /// token list for the specified formal.
   ///
-  const LexerToken *getUnexpArgument(unsigned Arg) const;
+  const Token *getUnexpArgument(unsigned Arg) const;
   
   /// getArgLength - Given a pointer to an expanded or unexpanded argument,
   /// return the number of tokens, not counting the EOF, that make up the
   /// argument.
-  static unsigned getArgLength(const LexerToken *ArgPtr);
+  static unsigned getArgLength(const Token *ArgPtr);
   
   /// getPreExpArgument - Return the pre-expanded form of the specified
   /// argument.
-  const std::vector<LexerToken> &
+  const std::vector<Token> &
     getPreExpArgument(unsigned Arg, Preprocessor &PP);  
   
   /// getStringifiedArgument - Compute, cache, and return the specified argument
   /// that has been 'stringified' as required by the # operator.
-  const LexerToken &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP);
+  const Token &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP);
   
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
@@ -118,7 +118,7 @@ class MacroExpander {
   /// MacroTokens - This is the pointer to an array of tokens that the macro is
   /// defined to, with arguments expanded for function-like macros.  If this is
   /// a token stream, these are the tokens we are returning.
-  const LexerToken *MacroTokens;
+  const Token *MacroTokens;
   
   /// NumMacroTokens - This is the length of the MacroTokens array.
   ///
@@ -141,7 +141,7 @@ class MacroExpander {
 public:
   /// Create a macro expander for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
-  MacroExpander(LexerToken &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
+  MacroExpander(Token &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp) {
     Init(Tok, ActualArgs);
   }
@@ -149,18 +149,18 @@ public:
   /// Init - Initialize this macro expander to expand from the specified macro
   /// with the specified argument information.  Note that this ctor takes
   /// ownership of the ActualArgs pointer.
-  void Init(LexerToken &Tok, MacroArgs *ActualArgs);
+  void Init(Token &Tok, MacroArgs *ActualArgs);
   
   /// Create a macro expander for the specified token stream.  This does not
   /// take ownership of the specified token vector.
-  MacroExpander(const LexerToken *TokArray, unsigned NumToks, Preprocessor &pp)
+  MacroExpander(const Token *TokArray, unsigned NumToks, Preprocessor &pp)
     : Macro(0), ActualArgs(0), PP(pp) {
     Init(TokArray, NumToks);
   }
   
   /// Init - Initialize this macro expander with the specified token stream.
   /// This does not take ownership of the specified token vector.
-  void Init(const LexerToken *TokArray, unsigned NumToks);
+  void Init(const Token *TokArray, unsigned NumToks);
   
   ~MacroExpander() { destroy(); }
   
@@ -170,7 +170,7 @@ public:
   unsigned isNextTokenLParen() const;
   
   /// Lex - Lex and return a token from this macro stream.
-  void Lex(LexerToken &Tok);
+  void Lex(Token &Tok);
   
 private:
   void destroy();
@@ -185,7 +185,7 @@ private:
   /// operator.  Read the ## and RHS, and paste the LHS/RHS together.  If there
   /// are is another ## after it, chomp it iteratively.  Return the result as
   /// Tok.
-  void PasteTokens(LexerToken &Tok);
+  void PasteTokens(Token &Tok);
   
   /// Expand the arguments of a function-like macro so that we can quickly
   /// return preexpanded tokens from MacroTokens.

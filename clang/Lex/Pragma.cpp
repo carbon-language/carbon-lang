@@ -53,7 +53,7 @@ PragmaHandler *PragmaNamespace::FindHandler(const IdentifierInfo *Name,
   return IgnoreNull ? 0 : NullHandler;
 }
 
-void PragmaNamespace::HandlePragma(Preprocessor &PP, LexerToken &Tok) {
+void PragmaNamespace::HandlePragma(Preprocessor &PP, Token &Tok) {
   // Read the 'namespace' that the directive is in, e.g. STDC.  Do not macro
   // expand it, the user can have a STDC #define, that should not affect this.
   PP.LexUnexpandedToken(Tok);
@@ -76,7 +76,7 @@ void Preprocessor::HandlePragmaDirective() {
   ++NumPragma;
   
   // Invoke the first level of pragma handlers which reads the namespace id.
-  LexerToken Tok;
+  Token Tok;
   PragmaHandlers->HandlePragma(*this, Tok);
   
   // If the pragma handler didn't read the rest of the line, consume it now.
@@ -87,7 +87,7 @@ void Preprocessor::HandlePragmaDirective() {
 /// Handle_Pragma - Read a _Pragma directive, slice it up, process it, then
 /// return the first token after the directive.  The _Pragma token has just
 /// been read into 'Tok'.
-void Preprocessor::Handle_Pragma(LexerToken &Tok) {
+void Preprocessor::Handle_Pragma(Token &Tok) {
   // Remember the pragma token location.
   SourceLocation PragmaLoc = Tok.getLocation();
   
@@ -165,7 +165,7 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
 
 /// HandlePragmaOnce - Handle #pragma once.  OnceTok is the 'once'.
 ///
-void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
+void Preprocessor::HandlePragmaOnce(Token &OnceTok) {
   if (isInPrimaryFile()) {
     Diag(OnceTok, diag::pp_pragma_once_in_main_file);
     return;
@@ -180,8 +180,8 @@ void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
 
 /// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
 ///
-void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
-  LexerToken Tok;
+void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
+  Token Tok;
 
   while (1) {
     // Read the next token to poison.  While doing this, pretend that we are
@@ -220,7 +220,7 @@ void Preprocessor::HandlePragmaPoison(LexerToken &PoisonTok) {
 
 /// HandlePragmaSystemHeader - Implement #pragma GCC system_header.  We know
 /// that the whole directive has been parsed.
-void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
+void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   if (isInPrimaryFile()) {
     Diag(SysHeaderTok, diag::pp_pragma_sysheader_in_main_file);
     return;
@@ -242,8 +242,8 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
 
 /// HandlePragmaDependency - Handle #pragma GCC dependency "foo" blah.
 ///
-void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
-  LexerToken FilenameTok;
+void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
+  Token FilenameTok;
   CurLexer->LexIncludeFilename(FilenameTok);
 
   // If the token kind is EOM, the error has already been diagnosed.
@@ -324,7 +324,7 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
 namespace {
 struct PragmaOnceHandler : public PragmaHandler {
   PragmaOnceHandler(const IdentifierInfo *OnceID) : PragmaHandler(OnceID) {}
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &OnceTok) {
+  virtual void HandlePragma(Preprocessor &PP, Token &OnceTok) {
     PP.CheckEndOfDirective("#pragma once");
     PP.HandlePragmaOnce(OnceTok);
   }
@@ -332,21 +332,21 @@ struct PragmaOnceHandler : public PragmaHandler {
 
 struct PragmaPoisonHandler : public PragmaHandler {
   PragmaPoisonHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &PoisonTok) {
+  virtual void HandlePragma(Preprocessor &PP, Token &PoisonTok) {
     PP.HandlePragmaPoison(PoisonTok);
   }
 };
 
 struct PragmaSystemHeaderHandler : public PragmaHandler {
   PragmaSystemHeaderHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &SHToken) {
+  virtual void HandlePragma(Preprocessor &PP, Token &SHToken) {
     PP.HandlePragmaSystemHeader(SHToken);
     PP.CheckEndOfDirective("#pragma");
   }
 };
 struct PragmaDependencyHandler : public PragmaHandler {
   PragmaDependencyHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
-  virtual void HandlePragma(Preprocessor &PP, LexerToken &DepToken) {
+  virtual void HandlePragma(Preprocessor &PP, Token &DepToken) {
     PP.HandlePragmaDependency(DepToken);
   }
 };

@@ -31,7 +31,7 @@ using namespace clang;
 /// string.
 /// 
 Action::ExprResult
-Sema::ParseStringLiteral(const LexerToken *StringToks, unsigned NumStringToks) {
+Sema::ParseStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
   StringLiteralParser Literal(StringToks, NumStringToks, PP, Context.Target);
@@ -95,7 +95,7 @@ Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
   }
 }
 
-Sema::ExprResult Sema::ParseCharacterConstant(const LexerToken &Tok) {
+Sema::ExprResult Sema::ParseCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
   CharBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &CharBuffer[0];
@@ -109,7 +109,7 @@ Sema::ExprResult Sema::ParseCharacterConstant(const LexerToken &Tok) {
                               Tok.getLocation());
 }
 
-Action::ExprResult Sema::ParseNumericConstant(const LexerToken &Tok) {
+Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
   // fast path for a single digit (which is quite common). A single digit 
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {

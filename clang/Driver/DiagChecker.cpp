@@ -91,7 +91,7 @@ static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
   // Enter the cave.
   PP.EnterSourceFile(MainFileID, 0, true);
 
-  LexerToken Tok;
+  Token Tok;
   do {
     PP.Lex(Tok);
 

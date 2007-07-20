@@ -177,7 +177,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   assert(Tok.getKind() == tok::identifier && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
-  LexerToken IdentTok = Tok;  // Save the whole token.
+  Token IdentTok = Tok;  // Save the whole token.
   ConsumeToken();  // eat the identifier.
   
   // identifier ':' statement

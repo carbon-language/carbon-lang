@@ -27,7 +27,7 @@ namespace clang {
   class Action;
   // Lex.
   class IdentifierInfo;
-  class LexerToken;
+  class Token;
 
 /// Action - As the parser reads the input file and recognizes the productions
 /// of the grammar, it invokes methods on this class to turn the parsed input
@@ -279,12 +279,12 @@ public:
                                             tok::TokenKind Kind) {
     return 0;
   }
-  virtual ExprResult ParseCharacterConstant(const LexerToken &) { return 0; }
-  virtual ExprResult ParseNumericConstant(const LexerToken &) { return 0; }
+  virtual ExprResult ParseCharacterConstant(const Token &) { return 0; }
+  virtual ExprResult ParseNumericConstant(const Token &) { return 0; }
   
   /// ParseStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringLiteral(const LexerToken *Toks, unsigned NumToks) {
+  virtual ExprResult ParseStringLiteral(const Token *Toks, unsigned NumToks) {
     return 0;
   }
   

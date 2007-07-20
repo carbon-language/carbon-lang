@@ -1349,7 +1349,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   ExprResult NumElements(false);
   if (Tok.getKind() == tok::star) {
     // Remember the '*' token, in case we have to un-get it.
-    LexerToken StarTok = Tok;
+    Token StarTok = Tok;
     ConsumeToken();
 
     // Check that the ']' token is present to avoid incorrectly parsing

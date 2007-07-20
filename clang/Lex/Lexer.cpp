@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements the Lexer and LexerToken interfaces.
+//  This file implements the Lexer and Token interfaces.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -248,7 +248,7 @@ static char DecodeTrigraphChar(const char *CP, Lexer *L) {
 /// be updated to match.
 ///
 char Lexer::getCharAndSizeSlow(const char *Ptr, unsigned &Size,
-                               LexerToken *Tok) {
+                               Token *Tok) {
   // If we have a slash, look for an escaped newline.
   if (Ptr[0] == '\\') {
     ++Size;
@@ -264,7 +264,7 @@ Slash:
         ++SizeTmp;
         if (Ptr[SizeTmp-1] == '\n' || Ptr[SizeTmp-1] == '\r') {
           // Remember that this token needs to be cleaned.
-          if (Tok) Tok->setFlag(LexerToken::NeedsCleaning);
+          if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
           // Warn if there was whitespace between the backslash and newline.
           if (SizeTmp != 1 && Tok)
@@ -294,7 +294,7 @@ Slash:
     // a trigraph warning.  If so, and if trigraphs are enabled, return it.
     if (char C = DecodeTrigraphChar(Ptr+2, Tok ? this : 0)) {
       // Remember that this token needs to be cleaned.
-      if (Tok) Tok->setFlag(LexerToken::NeedsCleaning);
+      if (Tok) Tok->setFlag(Token::NeedsCleaning);
 
       Ptr += 3;
       Size += 3;
@@ -372,7 +372,7 @@ Slash:
 // Helper methods for lexing.
 //===----------------------------------------------------------------------===//
 
-void Lexer::LexIdentifier(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
   unsigned Size;
   unsigned char C = *CurPtr++;
@@ -436,7 +436,7 @@ FinishIdentifier:
 /// LexNumericConstant - Lex the remainer of a integer or floating point
 /// constant. From[-1] is the first character lexed.  Return the end of the
 /// constant.
-void Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   char PrevCh = 0;
@@ -463,7 +463,7 @@ void Lexer::LexNumericConstant(LexerToken &Result, const char *CurPtr) {
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
 /// either " or L".
-void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr, bool Wide){
+void Lexer::LexStringLiteral(Token &Result, const char *CurPtr, bool Wide){
   const char *NulCharacter = 0; // Does this string contain the \0 character?
   
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -495,7 +495,7 @@ void Lexer::LexStringLiteral(LexerToken &Result, const char *CurPtr, bool Wide){
 
 /// LexAngledStringLiteral - Lex the remainder of an angled string literal,
 /// after having lexed the '<' character.  This is used for #include filenames.
-void Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexAngledStringLiteral(Token &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this string contain the \0 character?
   
   char C = getAndAdvanceChar(CurPtr, Result);
@@ -528,7 +528,7 @@ void Lexer::LexAngledStringLiteral(LexerToken &Result, const char *CurPtr) {
 
 /// LexCharConstant - Lex the remainder of a character constant, after having
 /// lexed either ' or L'.
-void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
+void Lexer::LexCharConstant(Token &Result, const char *CurPtr) {
   const char *NulCharacter = 0; // Does this character contain the \0 character?
 
   // Handle the common case of 'x' and '\y' efficiently.
@@ -576,7 +576,7 @@ void Lexer::LexCharConstant(LexerToken &Result, const char *CurPtr) {
 
 /// SkipWhitespace - Efficiently skip over a series of whitespace characters.
 /// Update BufferPtr to point to the next non-whitespace character and return.
-void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
+void Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   // Whitespace - Skip it, then return the token after the whitespace.
   unsigned char Char = *CurPtr;  // Skip consequtive spaces efficiently.
   while (1) {
@@ -596,16 +596,16 @@ void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
     
     // ok, but handle newline.
     // The returned token is at the start of the line.
-    Result.setFlag(LexerToken::StartOfLine);
+    Result.setFlag(Token::StartOfLine);
     // No leading whitespace seen so far.
-    Result.clearFlag(LexerToken::LeadingSpace);
+    Result.clearFlag(Token::LeadingSpace);
     Char = *++CurPtr;
   }
 
   // If this isn't immediately after a newline, there is leading space.
   char PrevChar = CurPtr[-1];
   if (PrevChar != '\n' && PrevChar != '\r')
-    Result.setFlag(LexerToken::LeadingSpace);
+    Result.setFlag(Token::LeadingSpace);
 
   // If the next token is obviously a // or /* */ comment, skip it efficiently
   // too (without going through the big switch stmt).
@@ -625,7 +625,7 @@ void Lexer::SkipWhitespace(LexerToken &Result, const char *CurPtr) {
 // SkipBCPLComment - We have just read the // characters from input.  Skip until
 // we find the newline character thats terminate the comment.  Then update
 /// BufferPtr and return.
-bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
+bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   // If BCPL comments aren't explicitly enabled for this language, emit an
   // extension warning.
   if (!Features.BCPLComment) {
@@ -704,15 +704,15 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
   ++CurPtr;
     
   // The next returned token is at the start of the line.
-  Result.setFlag(LexerToken::StartOfLine);
+  Result.setFlag(Token::StartOfLine);
   // No leading whitespace seen so far.
-  Result.clearFlag(LexerToken::LeadingSpace);
+  Result.clearFlag(Token::LeadingSpace);
     
   // It is common for the tokens immediately after a // comment to be
   // whitespace (indentation for the next line).  Instead of going through the
   // big switch, handle it efficiently now.
   if (isWhitespace(*CurPtr)) {
-    Result.setFlag(LexerToken::LeadingSpace);
+    Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
     return true;
   }
@@ -723,7 +723,7 @@ bool Lexer::SkipBCPLComment(LexerToken &Result, const char *CurPtr) {
 
 /// SaveBCPLComment - If in save-comment mode, package up this BCPL comment in
 /// an appropriate way and return it.
-bool Lexer::SaveBCPLComment(LexerToken &Result, const char *CurPtr) {
+bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
   Result.setKind(tok::comment);
   FormTokenWithChars(Result, CurPtr);
   
@@ -812,7 +812,7 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
 /// because they cannot cause the comment to end.  The only thing that can
 /// happen is the comment could end with an escaped newline between the */ end
 /// of comment.
-bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
+bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   // Scan one character past where we should, looking for a '/' character.  Once
   // we find it, check to see if it was preceeded by a *.  This common
   // optimization helps people who like to put a lot of * characters in their
@@ -907,14 +907,14 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
   // whitespace.  Instead of going through the big switch, handle it
   // efficiently now.
   if (isHorizontalWhitespace(*CurPtr)) {
-    Result.setFlag(LexerToken::LeadingSpace);
+    Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr+1);
     return true;
   }
 
   // Otherwise, just return so that the next character will be lexed as a token.
   BufferPtr = CurPtr;
-  Result.setFlag(LexerToken::LeadingSpace);
+  Result.setFlag(Token::LeadingSpace);
   return true;
 }
 
@@ -924,7 +924,7 @@ bool Lexer::SkipBlockComment(LexerToken &Result, const char *CurPtr) {
 
 /// LexIncludeFilename - After the preprocessor has parsed a #include, lex and
 /// (potentially) macro expand the filename.
-void Lexer::LexIncludeFilename(LexerToken &FilenameTok) {
+void Lexer::LexIncludeFilename(Token &FilenameTok) {
   assert(ParsingPreprocessorDirective &&
          ParsingFilename == false &&
          "Must be in a preprocessing directive!");
@@ -949,7 +949,7 @@ std::string Lexer::ReadToEndOfLine() {
   assert(ParsingPreprocessorDirective && ParsingFilename == false &&
          "Must be in a preprocessing directive!");
   std::string Result;
-  LexerToken Tmp;
+  Token Tmp;
 
   // CurPtr - Cache BufferPtr in an automatic variable.
   const char *CurPtr = BufferPtr;
@@ -987,7 +987,7 @@ std::string Lexer::ReadToEndOfLine() {
 /// condition, reporting diagnostics and handling other edge cases as required.
 /// This returns true if Result contains a token, false if PP.Lex should be
 /// called again.
-bool Lexer::LexEndOfFile(LexerToken &Result, const char *CurPtr) {
+bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   // If we hit the end of the file while parsing a preprocessor directive,
   // end the preprocessor directive first.  The next token returned will
   // then be the end of file.
@@ -1046,7 +1046,7 @@ unsigned Lexer::isNextPPTokenLParen() {
   // Save state that can be changed while lexing so that we can restore it.
   const char *TmpBufferPtr = BufferPtr;
   
-  LexerToken Tok;
+  Token Tok;
   Tok.startToken();
   LexTokenInternal(Tok);
   
@@ -1069,10 +1069,10 @@ unsigned Lexer::isNextPPTokenLParen() {
 /// preprocessing token, not a normal token, as such, it is an internal
 /// interface.  It assumes that the Flags of result have been cleared before
 /// calling this.
-void Lexer::LexTokenInternal(LexerToken &Result) {
+void Lexer::LexTokenInternal(Token &Result) {
 LexNextToken:
   // New token, can't need cleaning yet.
-  Result.clearFlag(LexerToken::NeedsCleaning);
+  Result.clearFlag(Token::NeedsCleaning);
   Result.setIdentifierInfo(0);
   
   // CurPtr - Cache BufferPtr in an automatic variable.
@@ -1084,7 +1084,7 @@ LexNextToken:
     while ((*CurPtr == ' ') || (*CurPtr == '\t'))
       ++CurPtr;
     BufferPtr = CurPtr;
-    Result.setFlag(LexerToken::LeadingSpace);
+    Result.setFlag(Token::LeadingSpace);
   }
   
   unsigned SizeTmp, SizeTmp2;   // Temporaries for use in cases below.
@@ -1104,7 +1104,7 @@ LexNextToken:
     }
     
     Diag(CurPtr-1, diag::null_in_file);
-    Result.setFlag(LexerToken::LeadingSpace);
+    Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case '\n':
@@ -1125,16 +1125,16 @@ LexNextToken:
       break;
     }
     // The returned token is at the start of the line.
-    Result.setFlag(LexerToken::StartOfLine);
+    Result.setFlag(Token::StartOfLine);
     // No leading whitespace seen so far.
-    Result.clearFlag(LexerToken::LeadingSpace);
+    Result.clearFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
   case ' ':
   case '\t':
   case '\f':
   case '\v':
-    Result.setFlag(LexerToken::LeadingSpace);
+    Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
     goto LexNextToken;   // GCC isn't tail call eliminating.
 
@@ -1346,7 +1346,7 @@ LexNextToken:
             // want us starting at the beginning of the line again.  If so, set
             // the StartOfLine flag.
             if (IsAtStartOfLine) {
-              Result.setFlag(LexerToken::StartOfLine);
+              Result.setFlag(Token::StartOfLine);
               IsAtStartOfLine = false;
             }
             goto LexNextToken;   // GCC isn't tail call eliminating.
@@ -1475,7 +1475,7 @@ LexNextToken:
           // want us starting at the beginning of the line again.  If so, set
           // the StartOfLine flag.
           if (IsAtStartOfLine) {
-            Result.setFlag(LexerToken::StartOfLine);
+            Result.setFlag(Token::StartOfLine);
             IsAtStartOfLine = false;
           }
           goto LexNextToken;   // GCC isn't tail call eliminating.

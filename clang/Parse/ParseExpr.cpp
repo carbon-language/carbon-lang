@@ -195,7 +195,7 @@ Parser::ExprResult Parser::ParseConstantExpression() {
 /// of part of an expression.  For example, in "A[1]+B", we consumed "A" (which
 /// is now in 'IdTok') and the current token is "[".
 Parser::ExprResult Parser::
-ParseExpressionWithLeadingIdentifier(const LexerToken &IdTok) {
+ParseExpressionWithLeadingIdentifier(const Token &IdTok) {
   // We know that 'IdTok' must correspond to this production:
   //   primary-expression: identifier
   
@@ -226,7 +226,7 @@ ParseExpressionWithLeadingIdentifier(const LexerToken &IdTok) {
 /// of part of an assignment-expression.  For example, in "A[1]+B", we consumed
 /// "A" (which is now in 'IdTok') and the current token is "[".
 Parser::ExprResult Parser::
-ParseAssignmentExprWithLeadingIdentifier(const LexerToken &IdTok) {
+ParseAssignmentExprWithLeadingIdentifier(const Token &IdTok) {
   // We know that 'IdTok' must correspond to this production:
   //   primary-expression: identifier
   
@@ -258,7 +258,7 @@ ParseAssignmentExprWithLeadingIdentifier(const LexerToken &IdTok) {
 /// expression.  For example, in "*(int*)P+B", we consumed "*" (which is
 /// now in 'StarTok') and the current token is "(".
 Parser::ExprResult Parser::
-ParseAssignmentExpressionWithLeadingStar(const LexerToken &StarTok) {
+ParseAssignmentExpressionWithLeadingStar(const Token &StarTok) {
   // We know that 'StarTok' must correspond to this production:
   //  unary-expression: unary-operator cast-expression
   // where 'unary-operator' is '*'.
@@ -303,7 +303,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       return LHS;
 
     // Consume the operator, saving the operator token for error reporting.
-    LexerToken OpToken = Tok;
+    Token OpToken = Tok;
     ConsumeToken();
     
     // Special case handling for the ternary operator.
@@ -696,7 +696,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   assert((Tok.getKind() == tok::kw_sizeof ||
           Tok.getKind() == tok::kw___alignof) &&
          "Not a sizeof/alignof expression!");
-  LexerToken OpTok = Tok;
+  Token OpTok = Tok;
   ConsumeToken();
   
   // If the operand doesn't start with an '(', it must be an expression.
@@ -924,7 +924,7 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   
   // String concat.  Note that keywords like __func__ and __FUNCTION__ are not
   // considered to be strings for concatenation purposes.
-  llvm::SmallVector<LexerToken, 4> StringToks;
+  llvm::SmallVector<Token, 4> StringToks;
   
   do {
     StringToks.push_back(Tok);
