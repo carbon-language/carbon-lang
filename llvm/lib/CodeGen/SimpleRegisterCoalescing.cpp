@@ -955,7 +955,7 @@ MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI, unsig
 void SimpleRegisterCoalescing::unsetRegisterKill(MachineInstr *MI, unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isUse() && MO.isKill() && MO.getReg() &&
+    if (MO.isReg() && MO.isKill() && MO.getReg() &&
         mri_->regsOverlap(rep(MO.getReg()), Reg))
       MO.unsetIsKill();
   }
@@ -979,7 +979,7 @@ void SimpleRegisterCoalescing::unsetRegisterKills(unsigned Start, unsigned End,
 
     for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
       MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isUse() && MO.isKill() && MO.getReg() &&
+      if (MO.isReg() && MO.isKill() && MO.getReg() &&
           mri_->regsOverlap(rep(MO.getReg()), Reg)) {
         MO.unsetIsKill();
       }

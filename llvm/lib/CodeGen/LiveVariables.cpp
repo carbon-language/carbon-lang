@@ -582,15 +582,13 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
         if (VI.DefInst == OldMI)
           VI.DefInst = NewMI;
       }
-      if (MO.isUse()) {
-        if (MO.isKill()) {
-          MO.unsetIsKill();
-          addVirtualRegisterKilled(Reg, NewMI);
-        }
-        // If this is a kill of the value, update the VI kills list.
-        if (VI.removeKill(OldMI))
-          VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
+      if (MO.isKill()) {
+        MO.unsetIsKill();
+        addVirtualRegisterKilled(Reg, NewMI);
       }
+      // If this is a kill of the value, update the VI kills list.
+      if (VI.removeKill(OldMI))
+        VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
     }
   }
 }
