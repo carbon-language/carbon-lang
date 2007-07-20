@@ -160,18 +160,18 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::TypeName: assert(0 && "Not a canonical type!");
   case Type::FunctionNoProto:
   case Type::FunctionProto:
-    assert(0 && "Incomplete types have no size!");
   default:
+    assert(0 && "Incomplete types have no size!");
   case Type::Array: {
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<ArrayType>(T)->getElementType(), L);
     
     // Get the size of the array.
-    llvm::APSInt Size(32);
-    if (!cast<ArrayType>(T)->getSizeExpr()->isIntegerConstantExpr(Size, *this))
+    llvm::APSInt Sz(32);
+    if (!cast<ArrayType>(T)->getSizeExpr()->isIntegerConstantExpr(Sz, *this))
       assert(0 && "VLAs not implemented yet!");
     
-    Size = EltInfo.first*Size.getZExtValue();
+    Size = EltInfo.first*Sz.getZExtValue();
     Align = EltInfo.second;
     break;
   }    
