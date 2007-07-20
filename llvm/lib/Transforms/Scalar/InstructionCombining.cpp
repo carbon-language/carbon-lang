@@ -6469,11 +6469,6 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
 Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   Value *Src = CI.getOperand(0);
 
-  // Casting undef to anything results in undef so might as just replace it and
-  // get rid of the cast.
-  if (isa<UndefValue>(Src))   // cast undef -> undef
-    return ReplaceInstUsesWith(CI, UndefValue::get(CI.getType()));
-
   // Many cases of "cast of a cast" are eliminable. If it's eliminable we just
   // eliminate it now.
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
@@ -9888,7 +9883,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         Inst->eraseFromParent();
         continue;
       }
-      
+     
       IC.AddToWorkList(Inst);
     }
 
