@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movdqa | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86-64 | grep movaps | wc -l | grep 1
 
 define <2 x i64> @bar(<2 x i64>* %p)
 {

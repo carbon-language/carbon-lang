@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movdqu | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86-64 | grep movups | wc -l | grep 1
 
 define void @bar(<2 x i64>* %p, <2 x i64> %x)
 {
