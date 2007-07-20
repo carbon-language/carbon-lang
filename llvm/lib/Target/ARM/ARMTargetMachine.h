@@ -61,9 +61,9 @@ public:
   virtual bool addAssemblyEmitter(FunctionPassManager &PM, bool Fast, 
                                   std::ostream &Out);
   virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast,
-                              MachineCodeEmitter &MCE);
+                              bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                    MachineCodeEmitter &MCE);
+                                    bool DumpAsm, MachineCodeEmitter &MCE);
 };
 
 /// ThumbTargetMachine - Thumb target machine.

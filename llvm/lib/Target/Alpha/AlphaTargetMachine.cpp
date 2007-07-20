@@ -86,12 +86,14 @@ bool AlphaTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
   return false;
 }
 bool AlphaTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                        MachineCodeEmitter &MCE) {
+                                        bool DumpAsm, MachineCodeEmitter &MCE) {
   PM.add(createAlphaCodeEmitterPass(*this, MCE));
+  if (DumpAsm)
+    PM.add(createAlphaCodePrinterPass(*cerr.stream(), *this));
   return false;
 }
 bool AlphaTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM,
-                                              bool Fast,
+                                              bool Fast, bool DumpAsm,
                                               MachineCodeEmitter &MCE) {
-  return addCodeEmitter(PM, Fast, MCE);
+  return addCodeEmitter(PM, Fast, DumpAsm, MCE);
 }

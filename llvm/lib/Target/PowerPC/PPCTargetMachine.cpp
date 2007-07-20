@@ -137,7 +137,7 @@ bool PPCTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 }
 
 bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                      MachineCodeEmitter &MCE) {
+                                      bool DumpAsm, MachineCodeEmitter &MCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
   if (Subtarget.isPPC64()) {
@@ -155,12 +155,16 @@ bool PPCTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
+  if (DumpAsm) 
+    PM.add(createPPCAsmPrinterPass(*cerr.stream(), *this));
   return false;
 }
 
 bool PPCTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                            MachineCodeEmitter &MCE) {
+                                            bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
+  if (DumpAsm) 
+    PM.add(createPPCAsmPrinterPass(*cerr.stream(), *this));
   return false;
 }

@@ -26,6 +26,8 @@ static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
     cl::desc("Print LLVM IR input to isel pass"));
+static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
+    cl::desc("Dump emitter generated instructions as assembly"));
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
@@ -119,7 +121,7 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(FunctionPassManager &PM,
                                                   MachineCodeEmitter *MCE,
                                                   bool Fast) {
   if (MCE)
-    addSimpleCodeEmitter(PM, Fast, *MCE);
+    addSimpleCodeEmitter(PM, Fast, PrintEmittedAsm, *MCE);
 
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
@@ -196,7 +198,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  addCodeEmitter(PM, Fast, MCE);
+  addCodeEmitter(PM, Fast, PrintEmittedAsm, MCE);
   
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());

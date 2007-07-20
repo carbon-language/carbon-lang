@@ -170,7 +170,7 @@ bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 }
 
 bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                      MachineCodeEmitter &MCE) {
+                                      bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   setRelocationModel(Reloc::Static);
   Subtarget.setPICStyle(PICStyle::None);
@@ -180,11 +180,16 @@ bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
     setCodeModel(CodeModel::Large);
 
   PM.add(createX86CodeEmitterPass(*this, MCE));
+  if (DumpAsm)
+    PM.add(createX86CodePrinterPass(*cerr.stream(), *this));
+
   return false;
 }
 
 bool X86TargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                            MachineCodeEmitter &MCE) {
+                                        bool DumpAsm, MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
+  if (DumpAsm)
+    PM.add(createX86CodePrinterPass(*cerr.stream(), *this));
   return false;
 }

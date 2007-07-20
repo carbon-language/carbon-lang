@@ -143,18 +143,22 @@ bool ARMTargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 
 
 bool ARMTargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                      MachineCodeEmitter &MCE) {
+                                      bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   setRelocationModel(Reloc::Static);
 
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
+  if (DumpAsm)
+    PM.add(createARMCodePrinterPass(*cerr.stream(), *this));
   return false;
 }
 
 bool ARMTargetMachine::addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast,
-                                            MachineCodeEmitter &MCE) {
+                                        bool DumpAsm, MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
+  if (DumpAsm)
+    PM.add(createARMCodePrinterPass(*cerr.stream(), *this));
   return false;
 }

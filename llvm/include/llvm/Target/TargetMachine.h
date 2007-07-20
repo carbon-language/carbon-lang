@@ -306,17 +306,18 @@ public:
   
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
-  /// returned.
-  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast, 
+  /// returned. If DumpAsm is true, the generated assembly is printed to cerr.
+  virtual bool addCodeEmitter(FunctionPassManager &PM, bool Fast, bool DumpAsm,
                               MachineCodeEmitter &MCE) {
     return true;
   }
 
   /// addSimpleCodeEmitter - This pass should be overridden by the target to add
   /// a code emitter (without setting flags), if supported.  If this is not
-  /// supported, 'true' should be returned.
+  /// supported, 'true' should be returned.  If DumpAsm is true, the generated
+  /// assembly is printed to cerr.
   virtual bool addSimpleCodeEmitter(FunctionPassManager &PM, bool Fast, 
-                                    MachineCodeEmitter &MCE) {
+                                    bool DumpAsm, MachineCodeEmitter &MCE) {
     return true;
   }
 
