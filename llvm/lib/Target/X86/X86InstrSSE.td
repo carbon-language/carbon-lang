@@ -1632,17 +1632,17 @@ def MOVDQArr : PDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movdqa {$src, $dst|$dst, $src}", []>;
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (alignedloadv2i64 addr:$src))]>;
+                   [/*(set VR128:$dst, (alignedloadv2i64 addr:$src))*/]>;
 def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqa {$src, $dst|$dst, $src}",
-                   [(alignedstore (v2i64 VR128:$src), addr:$dst)]>;
+                   [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/]>;
 def MOVDQUrm :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqu {$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (loadv2i64 addr:$src))]>,
+                   [/*(set VR128:$dst, (loadv2i64 addr:$src))*/]>,
                  XS, Requires<[HasSSE2]>;
 def MOVDQUmr :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqu {$src, $dst|$dst, $src}",
-                   [(store (v2i64 VR128:$src), addr:$dst)]>,
+                   [/*(store (v2i64 VR128:$src), addr:$dst)*/]>,
                  XS, Requires<[HasSSE2]>;
 
 // Intrinsic forms of MOVDQU load and store
@@ -2375,13 +2375,6 @@ def : Pat<(v4i32 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE2]>;
 def : Pat<(v4f32 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE1]>;
 
-// Store 128-bit integer vector values.
-def : Pat<(store (v16i8 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(store (v8i16 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(store (v4i32 VR128:$src), addr:$dst),
-          (MOVDQAmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 
 // Scalar to v8i16 / v16i8. The source may be a GR32, but only the lower 8 or
 // 16-bits matter.
@@ -2641,3 +2634,26 @@ def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
 // Unaligned load
 def : Pat<(v4f32 (X86loadu addr:$src)), (MOVUPSrm addr:$src)>,
       Requires<[HasSSE1]>;
+
+// Use movaps / movups for SSE integer load / store (one byte shorter).
+def : Pat<(alignedloadv2i64 addr:$src),
+          (MOVAPSrm addr:$src)>, Requires<[HasSSE2]>;
+def : Pat<(loadv2i64 addr:$src),
+          (MOVUPSrm addr:$src)>, Requires<[HasSSE2]>;
+
+def : Pat<(alignedstore (v2i64 VR128:$src), addr:$dst),
+          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(alignedstore (v4i32 VR128:$src), addr:$dst),
+          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(alignedstore (v8i16 VR128:$src), addr:$dst),
+          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(alignedstore (v16i8 VR128:$src), addr:$dst),
+          (MOVAPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(store (v2i64 VR128:$src), addr:$dst),
+          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(store (v4i32 VR128:$src), addr:$dst),
+          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(store (v8i16 VR128:$src), addr:$dst),
+          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(store (v16i8 VR128:$src), addr:$dst),
+          (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
