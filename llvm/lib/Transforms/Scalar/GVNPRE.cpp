@@ -418,7 +418,7 @@ Expression ValueTable::create_expression(GetElementPtrInst* G) {
   e.secondVN = 0;
   e.thirdVN = 0;
   e.type = G->getType();
-  e.opcode = Expression::SELECT;
+  e.opcode = Expression::GEP;
   
   for (GetElementPtrInst::op_iterator I = G->idx_begin(), E = G->idx_end();
        I != E; ++I)
