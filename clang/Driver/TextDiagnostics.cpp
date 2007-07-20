@@ -45,9 +45,7 @@ bool TextDiagnostics::IgnoreDiagnostic(Diagnostic::Level Level,
     // diagnostic.
     if (Level == Diagnostic::Warning ||
         Level == Diagnostic::Note) {
-      SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Pos);
-      const FileEntry *F = SourceMgr.getFileEntryForFileID(PhysLoc.getFileID());
-      if (F) {
+      if (const FileEntry *F = SourceMgr.getFileEntryForLoc(Pos)) {
         DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
         if (DirInfo == DirectoryLookup::SystemHeaderDir ||
             DirInfo == DirectoryLookup::ExternCSystemHeaderDir)

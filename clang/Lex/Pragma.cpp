@@ -140,12 +140,12 @@ void Preprocessor::Handle_Pragma(LexerToken &Tok) {
   SourceLocation TokLoc = CreateString(&StrVal[0], StrVal.size(), StrLoc);
   const char *StrData = SourceMgr.getCharacterData(TokLoc);
 
-  unsigned FileID = TokLoc.getFileID();
+  unsigned FileID = SourceMgr.getPhysicalLoc(TokLoc).getFileID();
   assert(FileID && "Could not get FileID for _Pragma?");
 
   // Make and enter a lexer object so that we lex and expand the tokens just
   // like any others.
-  Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, *this,
+  Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), TokLoc, *this,
                         StrData, StrData+StrVal.size()-1 /* no null */);
   
   // Ensure that the lexer thinks it is inside a directive, so that end \n will
@@ -175,10 +175,10 @@ void Preprocessor::HandlePragmaOnce(LexerToken &OnceTok) {
   }
   
   // Get the current file lexer we're looking at.  Ignore _Pragma 'files' etc.
-  unsigned FileID = getCurrentFileLexer()->getCurFileID();
+  SourceLocation FileLoc = getCurrentFileLexer()->getFileLoc();
   
   // Mark the file as a once-only file now.
-  HeaderInfo.MarkFileIncludeOnce(SourceMgr.getFileEntryForFileID(FileID));
+  HeaderInfo.MarkFileIncludeOnce(SourceMgr.getFileEntryForLoc(FileLoc));
 }
 
 /// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
@@ -233,8 +233,7 @@ void Preprocessor::HandlePragmaSystemHeader(LexerToken &SysHeaderTok) {
   Lexer *TheLexer = getCurrentFileLexer();
   
   // Mark the file as a system header.
-  const FileEntry *File = 
-    SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
+  const FileEntry *File = SourceMgr.getFileEntryForLoc(TheLexer->getFileLoc());
   HeaderInfo.MarkFileSystemHeader(File);
   
   // Notify the client, if desired, that we are in a new source file.
@@ -274,8 +273,8 @@ void Preprocessor::HandlePragmaDependency(LexerToken &DependencyTok) {
     return Diag(FilenameTok, diag::err_pp_file_not_found,
                 std::string(FilenameStart, FilenameEnd));
   
-  unsigned FileID = getCurrentFileLexer()->getCurFileID();
-  const FileEntry *CurFile = SourceMgr.getFileEntryForFileID(FileID);
+  SourceLocation FileLoc = getCurrentFileLexer()->getFileLoc();
+  const FileEntry *CurFile = SourceMgr.getFileEntryForLoc(FileLoc);
 
   // If this file is older than the file it depends on, emit a diagnostic.
   if (CurFile && CurFile->getModificationTime() < File->getModificationTime()) {

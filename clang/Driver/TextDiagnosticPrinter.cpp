@@ -32,16 +32,15 @@ NoCaretDiagnostics("fno-caret-diagnostics",
 
 void TextDiagnosticPrinter::
 PrintIncludeStack(SourceLocation Pos) {
-  unsigned FileID = Pos.getFileID();
-  if (FileID == 0) return;
-  
+  if (Pos.isInvalid()) return;
+
+  Pos = SourceMgr.getLogicalLoc(Pos);
+
   // Print out the other include frames first.
-  PrintIncludeStack(SourceMgr.getIncludeLoc(FileID));
-  
+  PrintIncludeStack(SourceMgr.getIncludeLoc(Pos));
   unsigned LineNo = SourceMgr.getLineNumber(Pos);
   
-  const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
-  std::cerr << "In file included from " << Buffer->getBufferIdentifier()
+  std::cerr << "In file included from " << SourceMgr.getSourceName(Pos)
             << ":" << LineNo << ":\n";
 }
 
@@ -55,16 +54,16 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
          "Expect a correspondence between source and carat line!");
   if (!R.isValid()) return;
 
-  unsigned StartLineNo = SourceMgr.getLineNumber(R.Begin());
+  unsigned StartLineNo = SourceMgr.getLogicalLineNumber(R.Begin());
   if (StartLineNo > LineNo) return;  // No intersection.
   
-  unsigned EndLineNo = SourceMgr.getLineNumber(R.End());
+  unsigned EndLineNo = SourceMgr.getLogicalLineNumber(R.End());
   if (EndLineNo < LineNo) return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr.getColumnNumber(R.Begin());
+    StartColNo = SourceMgr.getLogicalColumnNumber(R.Begin());
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
@@ -76,7 +75,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Compute the column number of the end.
   unsigned EndColNo = CaratLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr.getColumnNumber(R.End());
+    EndColNo = SourceMgr.getLogicalColumnNumber(R.End());
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
       
@@ -112,8 +111,8 @@ unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
   unsigned FileID = Loc.getFileID();
   
   // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(SourceMgr.getBuffer(FileID), FileID,
-                 *ThePreprocessor,  StrData);
+  Lexer TheLexer(SourceMgr.getBuffer(FileID), Loc,
+                 *ThePreprocessor, StrData);
   
   LexerToken TheTok;
   TheLexer.LexRawToken(TheTok);
@@ -128,35 +127,33 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                                              unsigned NumStrs,
                                              const SourceRange *Ranges,
                                              unsigned NumRanges) {
-  unsigned LineNo = 0, FilePos = 0, FileID = 0, ColNo = 0;
-  unsigned LineStart = 0, LineEnd = 0;
-  const llvm::MemoryBuffer *Buffer = 0;
+  unsigned LineNo = 0, ColNo = 0;
+  const char *LineStart = 0, *LineEnd = 0;
   
   if (Pos.isValid()) {
-    LineNo = SourceMgr.getLineNumber(Pos);
-    FileID  = SourceMgr.getLogicalLoc(Pos).getFileID();
+    SourceLocation LPos = SourceMgr.getLogicalLoc(Pos);
+    LineNo = SourceMgr.getLineNumber(LPos);
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    if (LastWarningLoc != SourceMgr.getIncludeLoc(FileID)) {
-      LastWarningLoc = SourceMgr.getIncludeLoc(FileID);
+    if (LastWarningLoc != SourceMgr.getIncludeLoc(LPos)) {
+      LastWarningLoc = SourceMgr.getIncludeLoc(LPos);
       PrintIncludeStack(LastWarningLoc);
     }
   
     // Compute the column number.  Rewind from the current position to the start
     // of the line.
-    ColNo = SourceMgr.getColumnNumber(Pos);
-    FilePos = SourceMgr.getSourceFilePos(Pos);
-    LineStart = FilePos-ColNo+1;  // Column # is 1-based
+    ColNo = SourceMgr.getColumnNumber(LPos);
+    const char *TokLogicalPtr = SourceMgr.getCharacterData(LPos);
+    LineStart = TokLogicalPtr-ColNo+1;  // Column # is 1-based
   
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
-    Buffer = SourceMgr.getBuffer(FileID);
-    const char *Buf = Buffer->getBufferStart();
+    const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(LPos.getFileID());
     const char *BufEnd = Buffer->getBufferEnd();
-    LineEnd = FilePos;
-    while (Buf+LineEnd != BufEnd && 
-           Buf[LineEnd] != '\n' && Buf[LineEnd] != '\r')
+    LineEnd = TokLogicalPtr;
+    while (LineEnd != BufEnd && 
+           *LineEnd != '\n' && *LineEnd != '\r')
       ++LineEnd;
   
     std::cerr << Buffer->getBufferIdentifier() 
@@ -180,8 +177,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   
   if (!NoCaretDiagnostics && Pos.isValid()) {
     // Get the line of the source file.
-    const char *Buf = Buffer->getBufferStart();
-    std::string SourceLine(Buf+LineStart, Buf+LineEnd);
+    std::string SourceLine(LineStart, LineEnd);
     
     // Create a line for the carat that is filled with spaces that is the same
     // length as the line of source code.

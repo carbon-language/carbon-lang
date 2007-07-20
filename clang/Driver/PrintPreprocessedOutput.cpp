@@ -146,7 +146,7 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     return;
   }
   
-  unsigned LineNo = PP.getSourceManager().getLineNumber(Loc);
+  unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
   
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
@@ -191,7 +191,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
   if (Reason == PPCallbacks::EnterFile) {
-    MoveToLine(SourceMgr.getIncludeLoc(Loc.getFileID()));
+    MoveToLine(SourceMgr.getIncludeLoc(Loc));
   } else if (Reason == PPCallbacks::SystemHeaderPragma) {
     MoveToLine(Loc);
     
@@ -200,6 +200,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
     // strange behavior.
   }
   
+  Loc = SourceMgr.getLogicalLoc(Loc);
   CurLine = SourceMgr.getLineNumber(Loc);
   CurFilename = '"' + Lexer::Stringify(SourceMgr.getSourceName(Loc)) + '"';
   FileType = FileType;
@@ -256,8 +257,8 @@ void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(LexerToken &Tok) {
   
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
-  unsigned ColNo = 
-    PP.getSourceManager().getColumnNumber(Tok.getLocation());
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  unsigned ColNo = SourceMgr.getLogicalColumnNumber(Tok.getLocation());
   
   // This hack prevents stuff like:
   // #define HASH #

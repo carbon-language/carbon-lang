@@ -14,6 +14,8 @@
 #ifndef LLVM_CLANG_SOURCELOCATION_H
 #define LLVM_CLANG_SOURCELOCATION_H
 
+#include <cassert>
+
 namespace clang {
     
 /// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
@@ -24,14 +26,20 @@ class SourceLocation {
 public:
   enum {
     FileIDBits  = 14,
-    FilePosBits = 32-FileIDBits
+    FilePosBits = 32-1-FileIDBits,
+    
+    MacroIDBits       = 23,
+    MacroPhysOffsBits = 5,
+    MacroLogOffBits   = 3
   };
 
   SourceLocation() : ID(0) {}  // 0 is an invalid FileID.
   
-  /// SourceLocation constructor - Create a new SourceLocation object with the 
-  /// specified FileID and FilePos.
-  SourceLocation(unsigned FileID, unsigned FilePos) {
+  bool isFileID() const { return (ID >> 31) == 0; }
+  bool isMacroID() const { return (ID >> 31) != 0; }
+  
+  static SourceLocation getFileLoc(unsigned FileID, unsigned FilePos) {
+    SourceLocation L;
     // If a FilePos is larger than (1<<FilePosBits), the SourceManager makes
     // enough consequtive FileIDs that we have one for each chunk.
     if (FilePos >= (1 << FilePosBits)) {
@@ -44,26 +52,68 @@ public:
     if (FileID >= (1 << FileIDBits))
       FileID = (1 << FileIDBits)-1;
     
-    ID = (FileID << FilePosBits) | FilePos;
+    L.ID = (FileID << FilePosBits) | FilePos;
+    return L;
   }
+  
+  static SourceLocation getMacroLoc(unsigned MacroID, unsigned PhysOffs,
+                                    unsigned LogOffs) {
+    SourceLocation L;
+    
+    assert(MacroID < (1 << MacroIDBits) && "Too many macros!");
+    assert(PhysOffs < (1 << MacroPhysOffsBits) && "Physoffs too large!");
+    assert(LogOffs  < (1 << MacroLogOffBits) && "Logical offs too large!");
+    
+    L.ID = (1 << 31) | (MacroID << (MacroPhysOffsBits+MacroLogOffBits)) |
+           (PhysOffs << MacroLogOffBits) | LogOffs;
+    return L;
+  }
+  
   
   /// isValid - Return true if this is a valid SourceLocation object.  Invalid
   /// SourceLocations are often used when events have no corresponding location
   /// in the source (e.g. a diagnostic is required for a command line option).
   ///
   bool isValid() const { return ID != 0; }
+  bool isInvalid() const { return ID == 0; }
   
   /// getFileID - Return the file identifier for this SourceLocation.  This
   /// FileID can be used with the SourceManager object to obtain an entire
   /// include stack for a file position reference.
-  unsigned getFileID() const { return ID >> FilePosBits; }
+  unsigned getFileID() const {
+    assert(isFileID() && "can't get the file id of a non-file sloc!");
+    return ID >> FilePosBits;
+  }
   
   /// getRawFilePos - Return the byte offset from the start of the file-chunk
   /// referred to by FileID.  This method should not be used to get the offset
   /// from the start of the file, instead you should use
   /// SourceManager::getFilePos.  This method will be incorrect for large files.
-  unsigned getRawFilePos() const { return ID & ((1 << FilePosBits)-1); }
+  unsigned getRawFilePos() const { 
+    assert(isFileID() && "can't get the file id of a non-file sloc!");
+    return ID & ((1 << FilePosBits)-1);
+  }
+
+  unsigned getMacroID() const {
+    assert(isMacroID() && "Is not a macro id!");
+    return (ID >> (MacroPhysOffsBits+MacroLogOffBits)) & ((1 << MacroIDBits)-1);
+  }
   
+  unsigned getMacroPhysOffs() const {
+    assert(isMacroID() && "Is not a macro id!");
+    return (ID >> MacroLogOffBits) & ((1 << MacroPhysOffsBits)-1);
+  }
+  
+  unsigned getMacroLogOffs() const {
+    assert(isMacroID() && "Is not a macro id!");
+    return ID & ((1 << MacroPhysOffsBits)-1);
+  }
+  
+  /// getFileLocWithOffset - Return a source location with the specified offset
+  /// from this file SourceLocation.
+  SourceLocation getFileLocWithOffset(unsigned Offset) const {
+    return getFileLoc(getFileID(), getRawFilePos()+Offset);
+  }
   
   /// getRawEncoding - When a SourceLocation itself cannot be used, this returns
   /// an (opaque) 32-bit integer encoding for it.  This should only be passed

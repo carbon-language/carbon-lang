@@ -38,7 +38,7 @@ class Lexer {
   // Constant configuration values for this lexer.
   const char * const BufferEnd;  // End of the buffer.
   const llvm::MemoryBuffer *InputFile; // The file we are reading from.
-  unsigned CurFileID;            // FileID for the current input file.
+  SourceLocation FileLoc;        // Location for start of file.
   Preprocessor &PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
@@ -100,16 +100,18 @@ public:
   /// with the specified preprocessor managing the lexing process.  This lexer
   /// assumes that the specified MemoryBuffer and Preprocessor objects will
   /// outlive it, but doesn't take ownership of either pointer.
-    Lexer(const llvm::MemoryBuffer *InBuffer, unsigned CurFileID, 
-          Preprocessor &PP, const char *BufStart = 0, const char *BufEnd = 0);
+  Lexer(const llvm::MemoryBuffer *InBuffer, SourceLocation FileLoc, 
+        Preprocessor &PP, const char *BufStart = 0, const char *BufEnd = 0);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!
   const LangOptions &getFeatures() const { return Features; }
 
-  /// getCurFileID - Return the FileID for the file we are lexing out of.  This
-  /// implicitly encodes the include path to get to the file.
-  unsigned getCurFileID() const { return CurFileID; }
+  /// getFileLoc - Return the File Location for the file we are lexing out of.
+  /// The physical location encodes the location where the characters come from,
+  /// the virtual location encodes where we should *claim* the characters came
+  /// from.  Currently this is only used by _Pragma handling.
+  SourceLocation getFileLoc() const { return FileLoc; }
   
   /// setIsMainFile - Mark this lexer as being the lexer for the top-level
   /// source file.

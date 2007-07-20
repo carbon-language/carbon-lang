@@ -75,69 +75,50 @@ namespace SrcMgr {
   ///      from MacroTokenFileID.
   ///
   struct FileIDInfo {
-    enum FileIDType {
-      NormalBuffer,
-      MacroExpansion
-    };
-    
-    /// The type of this FileID.
-    FileIDType IDType;
-    
+  private:
     /// IncludeLoc - The location of the #include that brought in this file.
-    /// This SourceLocation object has a FileId of 0 for the main file.
+    /// This SourceLocation object has an invalid SLOC for the main file.
     SourceLocation IncludeLoc;
     
-    /// This union is discriminated by IDType.
+    /// ChunkNo - Really large buffers are broken up into chunks that are
+    /// each (1 << SourceLocation::FilePosBits) in size.  This specifies the
+    /// chunk number of this FileID.
+    unsigned ChunkNo;
+    
+    /// FileInfo - Information about the source buffer itself.
     ///
-    union {
-      struct NormalBufferInfo {
-        /// ChunkNo - Really large buffers are broken up into chunks that are
-        /// each (1 << SourceLocation::FilePosBits) in size.  This specifies the
-        /// chunk number of this FileID.
-        unsigned ChunkNo;
-        
-        /// FileInfo - Information about the source buffer itself.
-        ///
-        const InfoRec *Info;
-      } NormalBuffer;
-      
-      /// MacroTokenFileID - This is the File ID that contains the characters
-      /// that make up the expanded token.
-      unsigned MacroTokenFileID;
-    } u;
+    const InfoRec *Info;
+  public:
     
-    /// getNormalBuffer - Return a FileIDInfo object for a normal buffer
-    /// reference.
-    static FileIDInfo getNormalBuffer(SourceLocation IL, unsigned CN,
-                                      const InfoRec *Inf) {
+    /// get - Return a FileIDInfo object.
+    static FileIDInfo get(SourceLocation IL, unsigned CN, const InfoRec *Inf) {
       FileIDInfo X;
-      X.IDType = NormalBuffer;
       X.IncludeLoc = IL;
-      X.u.NormalBuffer.ChunkNo = CN;
-      X.u.NormalBuffer.Info = Inf;
+      X.ChunkNo = CN;
+      X.Info = Inf;
       return X;
     }
     
-    /// getMacroExpansion - Return a FileID for a macro expansion.  IL specifies
-    /// the instantiation location, and MacroFID specifies the FileID that the
-    /// token's characters come from. 
-    static FileIDInfo getMacroExpansion(SourceLocation IL,
-                                        unsigned MacroFID) {
-      FileIDInfo X;
-      X.IDType = MacroExpansion;
-      X.IncludeLoc = IL;
-      X.u.MacroTokenFileID = MacroFID;
-      return X;
-    }
+    SourceLocation getIncludeLoc() const { return IncludeLoc; }
+    unsigned getChunkNo() const { return ChunkNo; }
+    const InfoRec *getInfo() const { return Info; }
+  };
+  
+  class MacroIDInfo {
+    SourceLocation InstantiationLoc, PhysicalLoc;
+  public:
+    SourceLocation getInstantiationLoc() const { return InstantiationLoc; }
+    SourceLocation getPhysicalLoc() const { return PhysicalLoc; }
     
-    unsigned getNormalBufferChunkNo() const {
-      assert(IDType == NormalBuffer && "Not a normal buffer!");
-      return u.NormalBuffer.ChunkNo;
-    }
-
-    const InfoRec *getNormalBufferInfo() const {
-      assert(IDType == NormalBuffer && "Not a normal buffer!");
-      return u.NormalBuffer.Info;
+    /// get - Return a MacroID for a macro expansion.  IL specifies
+    /// the instantiation location, and PL specifies the physical location
+    /// (where the characters from the token come from).  Both IL and PL refer
+    /// to normal File SLocs.
+    static MacroIDInfo get(SourceLocation IL, SourceLocation PL) {
+      MacroIDInfo X;
+      X.InstantiationLoc = IL;
+      X.PhysicalLoc = PL;
+      return X;
     }
   };
 }  // end SrcMgr namespace.
@@ -168,6 +149,9 @@ class SourceManager {
   /// FileIDs - Information about each FileID.  FileID #0 is not valid, so all
   /// entries are off by one.
   std::vector<SrcMgr::FileIDInfo> FileIDs;
+  
+  /// MacroIDs - Information about each MacroID.
+  std::vector<SrcMgr::MacroIDInfo> MacroIDs;
   
   /// LastInstantiationLoc_* - Cache the last instantiation request for fast
   /// lookup.  Macros often want many tokens instantated at the same location.
@@ -206,82 +190,76 @@ public:
   }
   
   /// getIncludeLoc - Return the location of the #include for the specified
-  /// FileID.
-  SourceLocation getIncludeLoc(unsigned FileID) const;
-  
-  /// getFilePos - This (efficient) method returns the offset from the start of
-  /// the file that the specified SourceLocation represents.  This returns the
-  /// location of the physical character data, not the logical file position.
-  unsigned getFilePos(SourceLocation Loc) const {
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
-
-    // For Macros, the physical loc is specified by the MacroTokenFileID.
-    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
-      FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
-    
-    // If this file has been split up into chunks, factor in the chunk number
-    // that the FileID references.
-    unsigned ChunkNo = FIDInfo->getNormalBufferChunkNo();
-    return Loc.getRawFilePos() + (ChunkNo << SourceLocation::FilePosBits);
+  /// SourceLocation.  If this is a macro expansion, this transparently figures
+  /// out which file includes the file being expanded into.
+  SourceLocation getIncludeLoc(SourceLocation ID) const {
+    return getFIDInfo(getLogicalLoc(ID).getFileID())->getIncludeLoc();
   }
   
   /// getCharacterData - Return a pointer to the start of the specified location
   /// in the appropriate MemoryBuffer.
   const char *getCharacterData(SourceLocation SL) const;
   
-  /// getColumnNumber - Return the column # for the specified include position.
-  /// this is significantly cheaper to compute than the line number.  This
-  /// returns zero if the column number isn't known.
+  /// getColumnNumber - Return the column # for the specified file position.
+  /// This is significantly cheaper to compute than the line number.  This
+  /// returns zero if the column number isn't known.  This may only be called on
+  /// a file sloc, so you must choose a physical or logical location before
+  /// calling this method.
   unsigned getColumnNumber(SourceLocation Loc) const;
+  
+  unsigned getPhysicalColumnNumber(SourceLocation Loc) const {
+    return getColumnNumber(getPhysicalLoc(Loc));
+  }
+  unsigned getLogicalColumnNumber(SourceLocation Loc) const {
+    return getColumnNumber(getLogicalLoc(Loc));
+  }
+  
   
   /// getLineNumber - Given a SourceLocation, return the physical line number
   /// for the position indicated.  This requires building and caching a table of
   /// line offsets for the MemoryBuffer, so this is not cheap: use only when
   /// about to emit a diagnostic.
   unsigned getLineNumber(SourceLocation Loc);
+
+  unsigned getLogicalLineNumber(SourceLocation Loc) {
+    return getLineNumber(getLogicalLoc(Loc));
+  }
+  unsigned getPhysicalLineNumber(SourceLocation Loc) {
+    return getLineNumber(getPhysicalLoc(Loc));
+  }
   
-  /// getSourceFilePos - This method returns the *logical* offset from the start
-  /// of the file that the specified SourceLocation represents.  This returns
-  /// the location of the *logical* character data, not the physical file
-  /// position.  In the case of macros, for example, this returns where the
-  /// macro was instantiated, not where the characters for the macro can be
-  /// found.
-  unsigned getSourceFilePos(SourceLocation Loc) const;
-    
   /// getSourceName - This method returns the name of the file or buffer that
   /// the SourceLocation specifies.  This can be modified with #line directives,
   /// etc.
   std::string getSourceName(SourceLocation Loc);
 
-  /// getFileEntryForFileID - Return the FileEntry record for the specified
-  /// FileID if one exists.
-  const FileEntry *getFileEntryForFileID(unsigned FileID) const {
-    assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].getNormalBufferInfo()->first;
-  }
-  
   /// Given a SourceLocation object, return the logical location referenced by
   /// the ID.  This logical location is subject to #line directives, etc.
   SourceLocation getLogicalLoc(SourceLocation Loc) const {
-    if (Loc.getFileID() == 0) return Loc;
-    
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
-    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
-      return FIDInfo->IncludeLoc;
-    return Loc;
+    // File locations are both physical and logical.
+    if (Loc.isFileID()) return Loc;
+
+    SourceLocation ILoc = MacroIDs[Loc.getMacroID()].getInstantiationLoc();
+    return ILoc.getFileLocWithOffset(Loc.getMacroLogOffs());
   }
   
   /// getPhysicalLoc - Given a SourceLocation object, return the physical
   /// location referenced by the ID.
   SourceLocation getPhysicalLoc(SourceLocation Loc) const {
-    if (Loc.getFileID() == 0) return Loc;
+    // File locations are both physical and logical.
+    if (Loc.isFileID()) return Loc;
     
-    // For Macros, the physical loc is specified by the MacroTokenFileID.
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
-    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
-      return SourceLocation(FIDInfo->u.MacroTokenFileID,
-                            Loc.getRawFilePos());
-    return Loc;
+    SourceLocation ILoc = MacroIDs[Loc.getMacroID()].getPhysicalLoc();
+    return ILoc.getFileLocWithOffset(Loc.getMacroPhysOffs());
+  }
+
+  /// getFileEntryForLoc - Return the FileEntry record for the physloc of the 
+  /// specified SourceLocation, if one exists.
+  const FileEntry *getFileEntryForLoc(SourceLocation Loc) const {
+    Loc = getPhysicalLoc(Loc);
+    unsigned FileID = Loc.getFileID();
+    assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
+    return FileIDs[FileID-1].getInfo()->first;
   }
   
   /// PrintStats - Print statistics to stderr.
@@ -305,33 +283,36 @@ private:
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
     return &FileIDs[FileID-1];
   }
-    
-  /// Return the InfoRec structure for the specified FileID.  This is always the
-  /// physical reference for the ID.
-  const SrcMgr::InfoRec *getInfoRec(const SrcMgr::FileIDInfo *FIDInfo) const {
-    // For Macros, the physical loc is specified by the MacroTokenFileID.
-    if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
-      FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
-    return FIDInfo->getNormalBufferInfo();
-  }
+  
   const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
     return getInfoRec(getFIDInfo(FileID));
   }
   
-  SrcMgr::FileInfo *getFileInfo(const SrcMgr::FileIDInfo *FIDInfo) const {
-    if (const SrcMgr::InfoRec *IR = getInfoRec(FIDInfo))
-      return const_cast<SrcMgr::FileInfo *>(&IR->second);
-    return 0;
-  }
   SrcMgr::FileInfo *getFileInfo(unsigned FileID) const {
     if (const SrcMgr::InfoRec *IR = getInfoRec(FileID))
       return const_cast<SrcMgr::FileInfo *>(&IR->second);
     return 0;
   }
-  SrcMgr::FileInfo *getFileInfo(const FileEntry *SourceFile) {
-    if (const SrcMgr::InfoRec *IR = getInfoRec(SourceFile))
-      return const_cast<SrcMgr::FileInfo *>(&IR->second);
-    return 0;
+  
+  /// Return the InfoRec structure for the specified FileID.  This is always the
+  /// physical reference for the ID.
+  const SrcMgr::InfoRec *getInfoRec(const SrcMgr::FileIDInfo *FIDInfo) const {
+    return FIDInfo->getInfo();
+  }
+  
+  
+  /// getFullFilePos - This (efficient) method returns the offset from the start
+  /// of the file that the specified physical SourceLocation represents.  This
+  /// returns the location of the physical character data, not the logical file
+  /// position.
+  unsigned getFullFilePos(SourceLocation PhysLoc) const {
+    // TODO: Add a flag "is first chunk" to SLOC.
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(PhysLoc.getFileID());
+    
+    // If this file has been split up into chunks, factor in the chunk number
+    // that the FileID references.
+    unsigned ChunkNo = FIDInfo->getChunkNo();
+    return PhysLoc.getRawFilePos() + (ChunkNo << SourceLocation::FilePosBits);
   }
 };
 

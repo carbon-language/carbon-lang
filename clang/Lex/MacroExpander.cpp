@@ -582,7 +582,8 @@ void MacroExpander::PasteTokens(LexerToken &Tok) {
       assert(FileID && "Could not get FileID for paste?");
       
       // Make a lexer object so that we lex and expand the paste result.
-      Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID), FileID, PP,
+      Lexer *TL = new Lexer(SourceMgr.getBuffer(FileID),
+                            SourceLocation::getFileLoc(FileID, 0), PP,
                             ResultStrData, 
                             ResultStrData+LHSLen+RHSLen /*don't include null*/);
       

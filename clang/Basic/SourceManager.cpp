@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <iostream>
 #include <fcntl.h>
-
 using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
@@ -141,7 +140,7 @@ unsigned SourceManager::createFileID(const InfoRec *File,
   // FilePos field.
   unsigned FileSize = File->second.Buffer->getBufferSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
-    FileIDs.push_back(FileIDInfo::getNormalBuffer(IncludePos, 0, File));
+    FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File));
     assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
            "Ran out of file ID's!");
     return FileIDs.size();
@@ -152,7 +151,7 @@ unsigned SourceManager::createFileID(const InfoRec *File,
 
   unsigned ChunkNo = 0;
   while (1) {
-    FileIDs.push_back(FileIDInfo::getNormalBuffer(IncludePos, ChunkNo++, File));
+    FileIDs.push_back(FileIDInfo::get(IncludePos, ChunkNo++, File));
 
     if (FileSize+1 < (1 << SourceLocation::FilePosBits)) break;
     FileSize -= (1 << SourceLocation::FilePosBits);
@@ -176,7 +175,14 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation VirtLoc,
   // Resolve InstantLoc down to a real logical location.
   InstantLoc = getLogicalLoc(InstantLoc);
   
+  // FIXME: intelligently cache macroid's.
+  MacroIDs.push_back(MacroIDInfo::get(InstantLoc, PhysLoc));
+  
+  return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0, 0);
+  
+#if 0
   unsigned InstantiationFileID;
+  
   // If this is the same instantiation as was requested last time, return this
   // immediately.
   if (PhysLoc.getFileID() == LastInstantiationLoc_MacroFID &&
@@ -193,7 +199,9 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation VirtLoc,
     LastInstantiationLoc_InstantLoc = InstantLoc;
     LastInstantiationLoc_Result     = InstantiationFileID;
   }
-  return SourceLocation(InstantiationFileID, PhysLoc.getRawFilePos());
+  return SourceLocation::getMacroLoc(InstantiationFileID, 
+                                     PhysLoc.getRawFilePos());
+#endif
 }
 
 
@@ -203,34 +211,21 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation VirtLoc,
 const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // Note that this is a hot function in the getSpelling() path, which is
   // heavily used by -E mode.
-  unsigned FileID = SL.getFileID();
-  assert(FileID && "Invalid source location!");
+  SL = getPhysicalLoc(SL);
   
-  return getFileInfo(FileID)->Buffer->getBufferStart() + getFilePos(SL);
+  return getFileInfo(SL.getFileID())->Buffer->getBufferStart() + 
+         getFullFilePos(SL);
 }
 
-/// getIncludeLoc - Return the location of the #include for the specified
-/// FileID.
-SourceLocation SourceManager::getIncludeLoc(unsigned FileID) const {
-  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(FileID);
 
-  // For Macros, the physical loc is specified by the MacroTokenFileID.
-  if (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion)
-    FIDInfo = &FileIDs[FIDInfo->u.MacroTokenFileID-1];
-  
-  return FIDInfo->IncludeLoc;
-}  
-
-
-/// getColumnNumber - Return the column # for the specified include position.
+/// getColumnNumber - Return the column # for the specified file position.
 /// this is significantly cheaper to compute than the line number.  This returns
 /// zero if the column number isn't known.
 unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
-  Loc = getLogicalLoc(Loc);
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return 0;
   
-  unsigned FilePos = getFilePos(Loc);
+  unsigned FilePos = getFullFilePos(Loc);
   const MemoryBuffer *Buffer = getBuffer(FileID);
   const char *Buf = Buffer->getBufferStart();
 
@@ -244,7 +239,6 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 /// the SourceLocation specifies.  This can be modified with #line directives,
 /// etc.
 std::string SourceManager::getSourceName(SourceLocation Loc) {
-  Loc = getLogicalLoc(Loc);
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return "";
   return getFileInfo(FileID)->Buffer->getBufferIdentifier();
@@ -256,7 +250,6 @@ std::string SourceManager::getSourceName(SourceLocation Loc) {
 /// line offsets for the MemoryBuffer, so this is not cheap: use only when
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(SourceLocation Loc) {
-  Loc = getLogicalLoc(Loc);
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return 0;
   FileInfo *FileInfo = getFileInfo(FileID);
@@ -317,26 +310,8 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   // type approaches to make good (tight?) initial guesses based on the
   // assumption that all lines are the same average size.
   unsigned *Pos = std::lower_bound(SourceLineCache, SourceLineCache+NumLines,
-                                   getFilePos(Loc)+1);
+                                   getFullFilePos(Loc)+1);
   return Pos-SourceLineCache;
-}
-
-/// getSourceFilePos - This method returns the *logical* offset from the start
-/// of the file that the specified SourceLocation represents.  This returns
-/// the location of the *logical* character data, not the physical file
-/// position.  In the case of macros, for example, this returns where the
-/// macro was instantiated, not where the characters for the macro can be
-/// found.
-unsigned SourceManager::getSourceFilePos(SourceLocation Loc) const {
- 
-  // If this is a macro, we need to get the instantiation location.
-  const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
-  while (FIDInfo->IDType == SrcMgr::FileIDInfo::MacroExpansion) {
-    Loc = FIDInfo->IncludeLoc;
-    FIDInfo = getFIDInfo(Loc.getFileID());
-  }
-  
-  return getFilePos(Loc);
 }
 
 /// PrintStats - Print statistics to stderr.
@@ -346,17 +321,8 @@ void SourceManager::PrintStats() const {
   std::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
             << " mem buffers mapped, " << FileIDs.size() 
             << " file ID's allocated.\n";
-  unsigned NumBuffers = 0, NumMacros = 0;
-  for (unsigned i = 0, e = FileIDs.size(); i != e; ++i) {
-    if (FileIDs[i].IDType == FileIDInfo::NormalBuffer)
-      ++NumBuffers;
-    else if (FileIDs[i].IDType == FileIDInfo::MacroExpansion)
-      ++NumMacros;
-    else
-      assert(0 && "Unknown FileID!");
-  }
-  std::cerr << "  " << NumBuffers << " normal buffer FileID's, "
-            << NumMacros << " macro expansion FileID's.\n";
+  std::cerr << "  " << FileIDs.size() << " normal buffer FileID's, "
+            << MacroIDs.size() << " macro expansion FileID's.\n";
     
   
   

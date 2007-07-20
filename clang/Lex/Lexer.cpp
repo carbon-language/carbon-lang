@@ -27,17 +27,17 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
 using namespace clang;
 
 static void InitCharacterInfo();
 
-Lexer::Lexer(const llvm::MemoryBuffer *File, unsigned fileid, Preprocessor &pp,
-             const char *BufStart, const char *BufEnd)
+Lexer::Lexer(const llvm::MemoryBuffer *File, SourceLocation fileloc,
+             Preprocessor &pp, const char *BufStart, const char *BufEnd)
   : BufferEnd(BufEnd ? BufEnd : File->getBufferEnd()),
-    InputFile(File), CurFileID(fileid), PP(pp), Features(PP.getLangOptions()) {
+    InputFile(File), FileLoc(fileloc), PP(pp), Features(PP.getLangOptions()) {
   Is_PragmaLexer = false;
   IsMainFile = false;
   InitCharacterInfo();
@@ -151,7 +151,24 @@ static inline bool isNumberBody(unsigned char c) {
 SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   assert(Loc >= InputFile->getBufferStart() && Loc <= BufferEnd &&
          "Location out of range for this buffer!");
-  return SourceLocation(CurFileID, Loc-InputFile->getBufferStart());
+
+  // In the normal case, we're just lexing from a simple file buffer, return
+  // the file id from FileLoc with the offset specified.
+  unsigned CharNo = Loc-InputFile->getBufferStart();
+  if (FileLoc.isFileID())
+    return SourceLocation::getFileLoc(FileLoc.getFileID(), CharNo);
+  
+  // Otherwise, we're lexing "mapped tokens".  This is used for things like
+  // _Pragma handling.  Combine the instantiation location of FileLoc with the
+  // physical location.
+  SourceManager &SourceMgr = PP.getSourceManager();
+
+  // Create a new SLoc which is expanded from logical(FileLoc) but whose
+  // characters come from phys(FileLoc)+Offset.
+  SourceLocation VirtLoc = SourceMgr.getLogicalLoc(FileLoc);
+  SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(FileLoc);
+  PhysLoc = SourceLocation::getFileLoc(PhysLoc.getFileID(), CharNo);
+  return SourceMgr.getInstantiationLoc(PhysLoc, VirtLoc);
 }
 
 

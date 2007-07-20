@@ -258,34 +258,41 @@ CreateString(const char *Buf, unsigned Len, SourceLocation SLoc) {
 /// token, return a new location that specifies a character within the token.
 SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart, 
                                                      unsigned CharNo) {
-  // If they request the first char of the token, we're trivially done.
-  if (CharNo == 0) return TokStart;
+  // If they request the first char of the token, we're trivially done.  If this
+  // is a macro expansion, it doesn't make sense to point to a character within
+  // the instantiation point (the name).  We could point to the source
+  // character, but without also pointing to instantiation info, this is
+  // confusing.
+  if (CharNo == 0 || TokStart.isMacroID()) return TokStart;
   
   // Figure out how many physical characters away the specified logical
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
-  const char *TokStartPtr = SourceMgr.getCharacterData(TokStart);
-  const char *TokPtr = TokStartPtr;
+  const char *TokPtr = SourceMgr.getCharacterData(TokStart);
+  unsigned PhysOffset = 0;
   
   // The usual case is that tokens don't contain anything interesting.  Skip
   // over the uninteresting characters.  If a token only consists of simple
   // chars, this method is extremely fast.
   while (CharNo && Lexer::isObviouslySimpleCharacter(*TokPtr))
-    ++TokPtr, --CharNo;
+    ++TokPtr, --CharNo, ++PhysOffset;
   
   // If we have a character that may be a trigraph or escaped newline, create a
   // lexer to parse it correctly.
-  unsigned FileID = TokStart.getFileID();
-  const llvm::MemoryBuffer *SrcBuf = SourceMgr.getBuffer(FileID);
   if (CharNo != 0) {
     // Create a lexer starting at this token position.
-    Lexer TheLexer(SrcBuf, FileID, *this, TokPtr);
+    const llvm::MemoryBuffer *SrcBuf =SourceMgr.getBuffer(TokStart.getFileID());
+    Lexer TheLexer(SrcBuf, TokStart, *this, TokPtr);
     LexerToken Tok;
     // Skip over characters the remaining characters.
+    const char *TokStartPtr = TokPtr;
     for (; CharNo; --CharNo)
       TheLexer.getAndAdvanceChar(TokPtr, Tok);
+    
+    PhysOffset += TokPtr-TokStartPtr;
   }
-  return SourceLocation(FileID, TokPtr-SrcBuf->getBufferStart());
+  
+  return TokStart.getFileLocWithOffset(PhysOffset);
 }
 
 
@@ -306,8 +313,8 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   // info about where the current file is.
   const FileEntry *CurFileEnt = 0;
   if (!FromDir) {
-    unsigned TheFileID = getCurrentFileLexer()->getCurFileID();
-    CurFileEnt = SourceMgr.getFileEntryForFileID(TheFileID);
+    SourceLocation FileLoc = getCurrentFileLexer()->getFileLoc();
+    CurFileEnt = SourceMgr.getFileEntryForLoc(FileLoc);
   }
   
   // Do a standard file entry lookup.
@@ -321,7 +328,7 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
   if (CurLexer && !CurLexer->Is_PragmaLexer) {
-    CurFileEnt = SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID());
+    CurFileEnt = SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc());
     if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
                                                   CurFileEnt)))
       return FE;
@@ -330,8 +337,7 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
     if (ISEntry.TheLexer && !ISEntry.TheLexer->Is_PragmaLexer) {
-      CurFileEnt =
-        SourceMgr.getFileEntryForFileID(ISEntry.TheLexer->getCurFileID());
+      CurFileEnt = SourceMgr.getFileEntryForLoc(ISEntry.TheLexer->getFileLoc());
       if ((FE = HeaderInfo.LookupSubframeworkHeader(FilenameStart, FilenameEnd,
                                                     CurFileEnt)))
         return FE;
@@ -385,7 +391,8 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(FileID);
-  Lexer *TheLexer = new Lexer(Buffer, FileID, *this);
+  Lexer *TheLexer = new Lexer(Buffer, SourceLocation::getFileLoc(FileID, 0),
+                              *this);
   if (isMainFile) TheLexer->setIsMainFile();
   EnterSourceFileWithLexer(TheLexer, CurDir);
 }  
@@ -410,10 +417,10 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
     
     // Get the file entry for the current file.
     if (const FileEntry *FE = 
-          SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
+           SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc()))
       FileType = HeaderInfo.getFileDirFlavor(FE);
     
-    Callbacks->FileChanged(SourceLocation(CurLexer->getCurFileID(), 0),
+    Callbacks->FileChanged(CurLexer->getFileLoc(),
                            PPCallbacks::EnterFile, FileType);
   }
 }
@@ -878,7 +885,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
   
   if (II == Ident__LINE__) {
     // __LINE__ expands to a simple numeric value.
-    sprintf(TmpBuffer, "%u", SourceMgr.getLineNumber(Tok.getLocation()));
+    sprintf(TmpBuffer, "%u", SourceMgr.getLogicalLineNumber(Tok.getLocation()));
     unsigned Length = strlen(TmpBuffer);
     Tok.setKind(tok::numeric_constant);
     Tok.setLength(Length);
@@ -887,15 +894,15 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     SourceLocation Loc = Tok.getLocation();
     if (II == Ident__BASE_FILE__) {
       Diag(Tok, diag::ext_pp_base_file);
-      SourceLocation NextLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
-      while (NextLoc.getFileID() != 0) {
+      SourceLocation NextLoc = SourceMgr.getIncludeLoc(Loc);
+      while (NextLoc.isValid()) {
         Loc = NextLoc;
-        NextLoc = SourceMgr.getIncludeLoc(Loc.getFileID());
+        NextLoc = SourceMgr.getIncludeLoc(Loc);
       }
     }
     
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
-    std::string FN = SourceMgr.getSourceName(Loc);
+    std::string FN = SourceMgr.getSourceName(SourceMgr.getLogicalLoc(Loc));
     FN = '"' + Lexer::Stringify(FN) + '"';
     Tok.setKind(tok::string_literal);
     Tok.setLength(FN.size());
@@ -917,9 +924,9 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
 
     // Compute the include depth of this token.
     unsigned Depth = 0;
-    SourceLocation Loc = SourceMgr.getIncludeLoc(Tok.getLocation().getFileID());
-    for (; Loc.getFileID() != 0; ++Depth)
-      Loc = SourceMgr.getIncludeLoc(Loc.getFileID());
+    SourceLocation Loc = SourceMgr.getIncludeLoc(Tok.getLocation());
+    for (; Loc.isValid(); ++Depth)
+      Loc = SourceMgr.getIncludeLoc(Loc);
     
     // __INCLUDE_LEVEL__ expands to a simple numeric value.
     sprintf(TmpBuffer, "%u", Depth);
@@ -938,7 +945,7 @@ void Preprocessor::ExpandBuiltinMacro(LexerToken &Tok) {
     Lexer *TheLexer = getCurrentFileLexer();
     
     if (TheLexer)
-      CurFile = SourceMgr.getFileEntryForFileID(TheLexer->getCurFileID());
+      CurFile = SourceMgr.getFileEntryForLoc(TheLexer->getFileLoc());
     
     // If this file is older than the file it depends on, emit a diagnostic.
     const char *Result;
@@ -1061,7 +1068,7 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
           CurLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
       // Okay, this has a controlling macro, remember in PerFileInfo.
       if (const FileEntry *FE = 
-            SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
+            SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc()))
         HeaderInfo.SetFileControllingMacro(FE, ControllingMacro);
     }
   }
@@ -1078,7 +1085,7 @@ bool Preprocessor::HandleEndOfFile(LexerToken &Result, bool isEndOfMacro) {
       
       // Get the file entry for the current file.
       if (const FileEntry *FE = 
-            SourceMgr.getFileEntryForFileID(CurLexer->getCurFileID()))
+            SourceMgr.getFileEntryForLoc(CurLexer->getFileLoc()))
         FileType = HeaderInfo.getFileDirFlavor(FE);
 
       Callbacks->FileChanged(CurLexer->getSourceLocation(CurLexer->BufferPtr),
