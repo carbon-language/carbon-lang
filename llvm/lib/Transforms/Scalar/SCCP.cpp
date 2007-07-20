@@ -129,9 +129,6 @@ public:
   }
 };
 
-} // end anonymous namespace
-
-
 //===----------------------------------------------------------------------===//
 //
 /// SCCPSolver - This class is a general purpose solver for Sparse Conditional
@@ -407,6 +404,9 @@ private:
     markOverdefined(&I);   // Just in case
   }
 };
+
+} // end anonymous namespace
+
 
 // getFeasibleSuccessors - Return a vector of booleans to indicate which
 // successors are reachable from a given terminator instruction.
