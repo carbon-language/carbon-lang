@@ -5078,13 +5078,13 @@ declare void @llvm.memory.barrier( i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, 
 <p>
   The <tt>llvm.memory.barrier</tt> intrinsic requires four boolean arguments. 
   Each argument enables a specific barrier as listed below.
+</p>
   <ul>
     <li><tt>ll</tt>: load-load barrier</li>
     <li><tt>ls</tt>: load-store barrier</li>
     <li><tt>sl</tt>: store-load barrier</li>
     <li><tt>ss</tt>: store-store barrier</li>
   </ul>
-</p>
 <h5>Semantics:</h5>
 <p>
   This intrinsic causes the system to enforce some ordering constraints upon 
@@ -5094,6 +5094,7 @@ declare void @llvm.memory.barrier( i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, 
   (f.ex.  load-load, or store-load), all of the first operations preceding the 
   barrier will complete before any of the second operations succeeding the 
   barrier begin. Specifically the semantics for each pairing is as follows:
+</p>
   <ul>
     <li><tt>ll</tt>: All loads before the barrier must complete before any load 
     after the barrier begins.</li>
@@ -5104,6 +5105,7 @@ declare void @llvm.memory.barrier( i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, 
     <li><tt>sl</tt>: All stores before the barrier must complete before any 
     load after the barrier begins.</li>
   </ul>
+<p>
   These semantics are applied with a logical "and" behavior when more than  one 
   is enabled in a single memory barrier intrinsic.
 </p>
