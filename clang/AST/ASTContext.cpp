@@ -565,7 +565,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
   // variable size array (for parameter types) at the end of them.
   FunctionTypeProto *FTP = 
     (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
-                               (NumArgs-1)*sizeof(QualType));
+                               NumArgs*sizeof(QualType));
   new (FTP) FunctionTypeProto(ResultTy, ArgArray, NumArgs, isVariadic,
                               Canonical);
   Types.push_back(FTP);

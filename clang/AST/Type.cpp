@@ -424,7 +424,7 @@ const char *BuiltinType::getName() const {
 }
 
 void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
-                                QualType* ArgTys,
+                                arg_type_iterator ArgTys,
                                 unsigned NumArgs, bool isVariadic) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
@@ -433,7 +433,7 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
 }
 
 void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getResultType(), ArgInfo, NumArgs, isVariadic());
+  Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic());
 }
 
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to

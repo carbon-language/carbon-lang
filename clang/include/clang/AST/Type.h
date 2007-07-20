@@ -563,6 +563,8 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
                     bool isVariadic, QualType Canonical)
     : FunctionType(FunctionProto, Result, isVariadic, Canonical),
       NumArgs(numArgs) {
+    // Fill in the trailing argument array.
+    QualType *ArgInfo = reinterpret_cast<QualType *>(this+1);;
     for (unsigned i = 0; i != numArgs; ++i)
       ArgInfo[i] = ArgArray[i];
   }
@@ -570,23 +572,23 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   /// NumArgs - The number of arguments this function has, not counting '...'.
   unsigned NumArgs;
   
-  /// ArgInfo - This array holds the argument types.  Note that this is actually
-  /// a variable-sized array, so it must be the last instance variable in the
-  /// class.
-  QualType ArgInfo[1];
+  /// ArgInfo - There is an variable size array after the class in memory that
+  /// holds the argument types.
   friend class ASTContext;  // ASTContext creates these.
 public:
   unsigned getNumArgs() const { return NumArgs; }
   QualType getArgType(unsigned i) const {
     assert(i < NumArgs && "Invalid argument number!");
-    return ArgInfo[i];
+    return arg_type_begin()[i];
   }
     
   bool isVariadic() const { return getSubClassData(); }
   
   typedef const QualType *arg_type_iterator;
-  arg_type_iterator arg_type_begin() const { return ArgInfo; }
-  arg_type_iterator arg_type_end() const { return ArgInfo+NumArgs; }
+  arg_type_iterator arg_type_begin() const {
+    return reinterpret_cast<const QualType *>(this+1);
+  }
+  arg_type_iterator arg_type_end() const { return arg_type_begin()+NumArgs; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
 
@@ -597,7 +599,8 @@ public:
   
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
-                      QualType* ArgTys, unsigned NumArgs, bool isVariadic);
+                      arg_type_iterator ArgTys, unsigned NumArgs,
+                      bool isVariadic);
 };
 
 
