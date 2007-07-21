@@ -160,14 +160,12 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 def IMPLICIT_DEF_VRRC : Pseudo<(outs VRRC:$rD), (ins),"; IMPLICIT_DEF_VRRC $rD",
                                [(set VRRC:$rD, (v4i32 (undef)))]>;
 
-let noResults = 1 in {
 def DSS   : DSS_Form<822, (outs), (ins u5imm:$A, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
                      "dss $STRM, $A", LdStGeneral /*FIXME*/, []>;
 def DST   : DSS_Form<342, (outs), (ins u5imm:$T, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
                      "dst $rA, $rB, $STRM, $T", LdStGeneral /*FIXME*/, []>;
 def DSTST : DSS_Form<374, (outs), (ins u5imm:$T, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
                    "dstst $rA, $rB, $STRM, $T", LdStGeneral /*FIXME*/, []>;
-}
 
 def MFVSCR : VXForm_4<1540, (outs VRRC:$vD), (ins),
                       "mfvcr $vD", LdStGeneral,
@@ -203,7 +201,7 @@ def LVSR : XForm_1<31,  38, (outs VRRC:$vD), (ins memrr:$src),
                    [(set VRRC:$vD, (int_ppc_altivec_lvsr xoaddr:$src))]>,
                    PPC970_Unit_LSU;
 
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {   // Stores.
+let isStore = 1, PPC970_Unit = 2 in {   // Stores.
 def STVEBX: XForm_8<31, 135, (outs), (ins VRRC:$rS, memrr:$dst),
                    "stvebx $rS, $dst", LdStGeneral,
                    [(int_ppc_altivec_stvebx VRRC:$rS, xoaddr:$dst)]>;

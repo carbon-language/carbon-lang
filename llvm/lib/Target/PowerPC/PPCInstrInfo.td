@@ -345,7 +345,7 @@ let usesCustomDAGSchedInserter = 1,    // Expanded by the scheduler.
                               []>;
 }
 
-let isTerminator = 1, isBarrier = 1, noResults = 1, PPC970_Unit = 7 in {
+let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isReturn = 1 in
     def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
                           "b${p:cc}lr ${p:reg}", BrB, 
@@ -359,8 +359,7 @@ let Defs = [LR] in
   def MovePCtoLR : Pseudo<(outs), (ins piclabel:$label), "bl $label", []>,
                    PPC970_Unit_BRU;
 
-let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, 
-    noResults = 1, PPC970_Unit = 7 in {
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   let isBarrier = 1 in {
   def B   : IForm<18, 0, 0, (outs), (ins target:$dst),
                   "b $dst", BrB,
@@ -376,7 +375,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1,
 }
 
 // Macho ABI Calls.
-let isCall = 1, noResults = 1, PPC970_Unit = 7, 
+let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the non-callee saved registers...
   Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
@@ -397,7 +396,7 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
 }
 
 // ELF ABI Calls.
-let isCall = 1, noResults = 1, PPC970_Unit = 7, 
+let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the non-callee saved registers...
   Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,
@@ -542,7 +541,7 @@ def LFDX   : XForm_25<31, 599, (outs F8RC:$frD), (ins memrr:$src),
 //
 
 // Unindexed (r+i) Stores.
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+let isStore = 1, PPC970_Unit = 2 in {
 def STB  : DForm_1<38, (outs), (ins GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
@@ -599,7 +598,7 @@ def STFDU : DForm_1<37, (outs ptr_rc:$ea_res), (ins F8RC:$rS,
 
 // Indexed (r+r) Stores.
 //
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+let isStore = 1, PPC970_Unit = 2 in {
 def STBX  : XForm_8<31, 215, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, xaddr:$dst)]>, 

@@ -403,14 +403,14 @@ def TRUNC_32to16 : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR32:$src),
 
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
-    hasCtrlDep = 1, noResults = 1 in {
+    hasCtrlDep = 1 in {
   def RET    : I<0xC3, RawFrm, (outs), (ins), "ret", [(X86retflag 0)]>;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt), "ret $amt",
                     [(X86retflag imm:$amt)]>;
 }
 
 // All branches are RawFrm, Void, Branch, and Terminators
-let isBranch = 1, isTerminator = 1, noResults = 1 in
+let isBranch = 1, isTerminator = 1 in
   class IBr<bits<8> opcode, dag ins, string asm, list<dag> pattern> :
         I<opcode, RawFrm, (outs), ins, asm, pattern>;
 
@@ -418,7 +418,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in
 let isBranch = 1, isBarrier = 1 in
   def JMP : IBr<0xE9, (ins brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
 
-let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   def JMP32r     : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l} {*}$dst",
                      [(brind GR32:$dst)]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l} {*}$dst",
@@ -464,7 +464,7 @@ def JNO : IBr<0x81, (ins brtarget:$dst), "jno $dst",
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
-let isCall = 1, noResults = 1 in
+let isCall = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
@@ -478,13 +478,13 @@ let isCall = 1, noResults = 1 in
   }
 
 // Tail call stuff.
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPd : IBr<0xE9, (ins i32imm:$dst), "jmp ${dst:call}  # TAIL CALL",
                  []>;
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp {*}$dst  # TAIL CALL",
                  []>;
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem:$dst),
                    "jmp {*}$dst  # TAIL CALL", []>;
 
@@ -2506,7 +2506,7 @@ def DWARF_LOC   : I<0, Pseudo, (outs),
 // EH Pseudo Instructions
 //
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
-    hasCtrlDep = 1, noResults = 1 in {
+    hasCtrlDep = 1 in {
 def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
                     "ret #eh_return, addr: $addr",
                     [(X86ehret GR32:$addr)]>;

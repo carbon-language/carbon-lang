@@ -117,7 +117,7 @@ def IMPLICIT_DEF_GR64  : I<0, Pseudo, (outs GR64:$dst), (ins),
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
-let isCall = 1, noResults = 1 in
+let isCall = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
               FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
@@ -133,7 +133,7 @@ let isCall = 1, noResults = 1 in
   }
 
 // Branches
-let isBranch = 1, isTerminator = 1, noResults = 1, isBarrier = 1 in {
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   def JMP64r     : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q} {*}$dst",
                      [(brind GR64:$dst)]>;
   def JMP64m     : I<0xFF, MRM4m, (outs), (ins i64mem:$dst), "jmp{q} {*}$dst",
@@ -597,7 +597,6 @@ def SHRD64rri8 : RIi8<0xAC, MRMDestReg,
 
 // Temporary hack: there is no patterns associated with these instructions
 // so we have to tell tblgen that these do not produce results.
-let noResults = 1 in {
 def SHLD64mrCL : RI<0xA5, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                     "shld{q} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
                  Imp<[CL],[]>, TB;
@@ -612,7 +611,6 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
                       (outs), (ins i64mem:$dst, GR64:$src2, i8imm:$src3),
                       "shrd{q} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
                  TB;
-} // noResults
 
 //===----------------------------------------------------------------------===//
 //  Logical Instructions...

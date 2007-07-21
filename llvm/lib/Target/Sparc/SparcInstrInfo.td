@@ -267,7 +267,7 @@ let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, noResults = 1 in {
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
   let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
     def RETL: F3_2<2, 0b111000, (outs), (ins), "retl", [(retflag)]>;
 }
@@ -464,7 +464,6 @@ class BranchSP<bits<4> cc, dag ins, string asmstr, list<dag> pattern>
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
-  let noResults = 1;
 }
 
 let isBarrier = 1 in
@@ -486,7 +485,6 @@ class FPBranchSP<bits<4> cc, dag ins, string asmstr, list<dag> pattern>
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
-  let noResults = 1;
 }
 
 // FIXME: the encoding for the JIT should look at the condition field.
@@ -498,7 +496,7 @@ def FBCOND  : FPBranchSP<0, (ins brtarget:$dst, CCOp:$cc),
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
 let Uses = [O0, O1, O2, O3, O4, O5],
-    hasDelaySlot = 1, isCall = 1, noResults = 1,
+    hasDelaySlot = 1, isCall = 1,
     Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in { 
   def CALL : InstSP<(outs), (ins calltarget:$dst),

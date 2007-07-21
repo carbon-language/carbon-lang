@@ -208,7 +208,7 @@ class StoreM<bits<6> op, string instr_asm, PatFrag OpNode>:
       [(OpNode CPURegs:$dst, addr:$addr)]>;
 
 // Conditional Branch
-let isBranch = 1, noResults=1, isTerminator=1 in
+let isBranch = 1, isTerminator=1 in
 class CBranch<bits<6> op, string instr_asm, PatFrag cond_op>:
   FI< op,
       (outs),
@@ -234,7 +234,7 @@ class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op,
       [(set CPURegs:$dst, (cond_op CPURegs:$b, imm_type:$c))]>;
 
 // Unconditional branch
-let hasCtrlDep=1, noResults=1, isTerminator=1 in
+let hasCtrlDep=1, isTerminator=1 in
 class JumpFJ<bits<6> op, string instr_asm>:
   FJ< op,
       (outs),
@@ -242,7 +242,7 @@ class JumpFJ<bits<6> op, string instr_asm>:
       !strconcat(instr_asm, " $target"),
       [(br bb:$target)]>;
 
-let hasCtrlDep=1, noResults=1, isTerminator=1, rd=0 in
+let hasCtrlDep=1, isTerminator=1, rd=0 in
 class JumpFR<bits<6> op, bits<6> func, string instr_asm>:
   FR< op,
       func,
@@ -407,7 +407,7 @@ def NOOP :  FJ<0, (outs), (ins), "nop", []>;
 
 // Ret instruction - as mips does not have "ret" a 
 // jr $ra must be generated.
-let isReturn=1, isTerminator=1, hasDelaySlot=1, noResults=1,
+let isReturn=1, isTerminator=1, hasDelaySlot=1,
     isBarrier=1, hasCtrlDep=1, rs=0, rt=0, shamt=0 in 
 {
   def RET : FR <0x00, 0x02, (outs), (ins CPURegs:$target),

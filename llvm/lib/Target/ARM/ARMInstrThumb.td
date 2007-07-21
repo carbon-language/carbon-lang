@@ -190,7 +190,7 @@ let isLoad = 1, isReturn = 1, isTerminator = 1 in
 def tPOP_RET : TI<(outs reglist:$dst1, variable_ops), (ins),
                    "pop $dst1", []>;
 
-let isCall = 1, noResults = 1, 
+let isCall = 1, 
   Defs = [R0, R1, R2, R3, LR,
           D0, D1, D2, D3, D4, D5, D6, D7] in {
   def tBL  : TIx2<(outs), (ins i32imm:$func, variable_ops),
@@ -209,7 +209,7 @@ let isCall = 1, noResults = 1,
                   [(ARMcall_nolink GPR:$func)]>;
 }
 
-let isBranch = 1, isTerminator = 1, noResults = 1 in {
+let isBranch = 1, isTerminator = 1 in {
   let isBarrier = 1 in {
     let isPredicable = 1 in
     def tB   : TI<(outs), (ins brtarget:$target), "b $target",
@@ -227,7 +227,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in {
 
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use
 // a two-value operand where a dag node expects two operands. :( 
-let isBranch = 1, isTerminator = 1, noResults = 1 in
+let isBranch = 1, isTerminator = 1 in
   def tBcc : TI<(outs), (ins brtarget:$target, pred:$cc), "b$cc $target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 

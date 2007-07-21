@@ -70,7 +70,7 @@ let Defs = [LR8] in
                     PPC970_Unit_BRU;
 
 // Macho ABI Calls.
-let isCall = 1, noResults = 1, PPC970_Unit = 7, 
+let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the PPC64 non-callee saved registers.
   Defs = [X0,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
@@ -89,7 +89,7 @@ let isCall = 1, noResults = 1, PPC970_Unit = 7,
 
 // ELF 64 ABI Calls = Macho ABI Calls
 // Used to define BL8_ELF and BLA8_ELF
-let isCall = 1, noResults = 1, PPC970_Unit = 7, 
+let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the PPC64 non-callee saved registers.
   Defs = [X0,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
@@ -438,7 +438,7 @@ def LDU  : DSForm_1<58, 1, (outs G8RC:$rD), (ins ptr_rc:$ea_result, memrix:$addr
 
 }
 
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+let isStore = 1, PPC970_Unit = 2 in {
 // Truncating stores.                       
 def STB8 : DForm_1<38, (outs), (ins G8RC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
@@ -505,7 +505,7 @@ def STDU : DSForm_1<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
 
 }
 
-let isStore = 1, noResults = 1, PPC970_Unit = 2 in {
+let isStore = 1, PPC970_Unit = 2 in {
 
 def STDUX : XForm_8<31, 181, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdux $rS, $dst", LdStSTD,

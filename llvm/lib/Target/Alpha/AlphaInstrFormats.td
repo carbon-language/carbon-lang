@@ -97,7 +97,7 @@ class MbrpForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr, list<dag> patt
 //3.3.2
 def target : Operand<OtherVT> {}
 
-let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, noResults = 1 in {
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
 class BFormN<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
    : InstAlpha<opcode, asmstr, itin> {
   let OutOperandList = (ops);
