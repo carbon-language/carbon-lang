@@ -83,17 +83,26 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
   abort();
 }
 
-Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
-                                              tok::TokenKind Kind) {
+Sema::ExprResult Sema::ParsePreDefinedExpr(SourceLocation Loc,
+                                           tok::TokenKind Kind) {
+  PreDefinedExpr::IdentType IT;
+  
   switch (Kind) {
   default:
     assert(0 && "Unknown simple primary expr!");
-  // TODO: MOVE this to be some other callback.
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
+    IT = PreDefinedExpr::Func;
+    break;
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
+    IT = PreDefinedExpr::Function;
+    break;
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    return 0;
+    IT = PreDefinedExpr::PrettyFunction;
+    break;
   }
+  
+  // Pre-defined identifiers are always of type char *.
+  return new PreDefinedExpr(Loc, Context.getPointerType(Context.CharTy), IT);
 }
 
 Sema::ExprResult Sema::ParseCharacterConstant(const Token &Tok) {

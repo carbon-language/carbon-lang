@@ -206,7 +206,7 @@ public:
   virtual ExprResult ParseIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen);
-  virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
+  virtual ExprResult ParsePreDefinedExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
   virtual ExprResult ParseNumericConstant(const Token &);
   virtual ExprResult ParseCharacterConstant(const Token &);

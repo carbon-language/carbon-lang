@@ -55,6 +55,7 @@ namespace clang {
   class CompoundAssignOperator;
   class ArraySubscriptExpr;
   class ConditionalOperator;
+  class PreDefinedExpr;
   
   class BlockVarDecl;
   class EnumConstantDecl;
@@ -305,6 +306,7 @@ public:
   
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
+  LValue EmitPreDefinedLValue(const PreDefinedExpr *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
     

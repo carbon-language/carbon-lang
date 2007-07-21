@@ -291,6 +291,22 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
+void StmtPrinter::VisitPreDefinedExpr(PreDefinedExpr *Node) {
+  switch (Node->getIdentType()) {
+    default:
+      assert(0 && "unknown case");
+    case PreDefinedExpr::Func:
+      OS << "__func__";
+      break;
+    case PreDefinedExpr::Function:
+      OS << "__FUNCTION__";
+      break;
+    case PreDefinedExpr::PrettyFunction:
+      OS << "__PRETTY_FUNCTION__";
+      break;
+  }
+}
+
 void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
   // FIXME should print an L for wchar_t constants
   unsigned value = Node->getValue();

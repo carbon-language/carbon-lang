@@ -244,6 +244,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
+  case Expr::PreDefinedExprClass:
+    return EmitPreDefinedLValue(cast<PreDefinedExpr>(E));
   case Expr::StringLiteralClass:
     return EmitStringLiteralLValue(cast<StringLiteral>(E));
     
@@ -390,6 +392,40 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   return LValue::MakeAddr(C);
 }
 
+LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
+  std::string FunctionName(CurFuncDecl->getName());
+  std::string GlobalVarName;
+  
+  switch (E->getIdentType()) {
+    default:
+      assert(0 && "unknown pre-defined ident type");
+    case PreDefinedExpr::Func:
+      GlobalVarName = "__func__.";
+      break;
+    case PreDefinedExpr::Function:
+      GlobalVarName = "__FUNCTION__.";
+      break;
+    case PreDefinedExpr::PrettyFunction:
+      // FIXME:: Demangle C++ method names
+      GlobalVarName = "__PRETTY_FUNCTION__.";
+      break;
+  }
+  
+  GlobalVarName += CurFuncDecl->getName();
+  
+  // FIXME: Can cache/reuse these within the module.
+  llvm::Constant *C=llvm::ConstantArray::get(FunctionName);
+  
+  // Create a global variable for this.
+  C = new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, GlobalVarName, CurFn->getParent());
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zeros[] = { Zero, Zero };
+  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
+  return LValue::MakeAddr(C);
+}
+
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // The index must always be a pointer or integer, neither of which is an
   // aggregate.  Emit it.
@@ -457,6 +493,7 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitLoadOfLValue(E);
   case Expr::ArraySubscriptExprClass:
     return EmitArraySubscriptExprRV(cast<ArraySubscriptExpr>(E));
+  case Expr::PreDefinedExprClass:
   case Expr::StringLiteralClass:
     return RValue::get(EmitLValue(E).getAddress());
     

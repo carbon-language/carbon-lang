@@ -41,9 +41,10 @@ STMT(15, ReturnStmt      , Stmt)
 STMT(16, DeclStmt        , Stmt)
 LAST_STMT(16)
 
-FIRST_EXPR(32)
+FIRST_EXPR(31)
 // Expressions.
-STMT(32, Expr                 , Stmt)
+STMT(31, Expr                 , Stmt)
+STMT(32, PreDefinedExpr       , Expr)
 STMT(33, DeclRefExpr          , Expr)
 STMT(34, IntegerLiteral       , Expr)
 STMT(35, FloatingLiteral      , Expr)

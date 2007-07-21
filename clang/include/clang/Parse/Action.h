@@ -275,8 +275,8 @@ public:
     return 0;
   }
   
-  virtual ExprResult ParseSimplePrimaryExpr(SourceLocation Loc,
-                                            tok::TokenKind Kind) {
+  virtual ExprResult ParsePreDefinedExpr(SourceLocation Loc,
+                                         tok::TokenKind Kind) {
     return 0;
   }
   virtual ExprResult ParseCharacterConstant(const Token &) { return 0; }

@@ -134,6 +134,33 @@ public:
   static bool classof(const DeclRefExpr *) { return true; }
 };
 
+// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__
+class PreDefinedExpr : public Expr {
+public:
+  enum IdentType {
+    Func,
+    Function,
+    PrettyFunction
+  };
+  
+private:
+  SourceLocation Loc;
+  IdentType Type;
+public:
+  PreDefinedExpr(SourceLocation l, QualType type, IdentType IT) 
+    : Expr(PreDefinedExprClass, type), Loc(l), Type(IT) {}
+  
+  IdentType getIdentType() const { return Type; }
+  
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == PreDefinedExprClass; 
+  }
+  static bool classof(const PreDefinedExpr *) { return true; }  
+};
+
 class IntegerLiteral : public Expr {
   llvm::APInt Value;
   SourceLocation Loc;
