@@ -198,7 +198,7 @@ Expr::isLvalueResult Expr::isLvalue() const {
   if (TR->isFunctionType()) // from isObjectType()
     return LV_NotObjectType;
 
-  if (TR->isIncompleteType() && TR->isVoidType())
+  if (TR->isVoidType())
     return LV_IncompleteVoidType;
 
   if (TR->isReferenceType()) // C++ [expr]
