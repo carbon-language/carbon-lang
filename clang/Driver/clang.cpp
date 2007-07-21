@@ -920,5 +920,5 @@ int main(int argc, char **argv) {
     fprintf(stderr, "\n");
   }
   
-  return Diags.getNumErrors();
+  return Diags.getNumErrors() != 0;
 }
