@@ -624,7 +624,6 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     case tok::l_paren: {   // p-e: p-e '(' argument-expression-list[opt] ')'
       llvm::SmallVector<ExprTy*, 8> ArgExprs;
       llvm::SmallVector<SourceLocation, 8> CommaLocs;
-      bool ArgExprsOk = true;
       
       Loc = ConsumeParen();
       
@@ -632,9 +631,8 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         while (1) {
           ExprResult ArgExpr = ParseAssignmentExpression();
           if (ArgExpr.isInvalid) {
-            ArgExprsOk = false;
             SkipUntil(tok::r_paren);
-            break;
+            return ExprResult(true);
           } else
             ArgExprs.push_back(ArgExpr.Val);
           
@@ -646,15 +644,14 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       }
         
       // Match the ')'.
-      if (!LHS.isInvalid && ArgExprsOk && Tok.getKind() == tok::r_paren) {
+      if (!LHS.isInvalid && Tok.getKind() == tok::r_paren) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
         LHS = Actions.ParseCallExpr(LHS.Val, Loc, &ArgExprs[0], ArgExprs.size(),
                                     &CommaLocs[0], Tok.getLocation());
       }
       
-      if (ArgExprsOk)
-        MatchRHSPunctuation(tok::r_paren, Loc);
+      MatchRHSPunctuation(tok::r_paren, Loc);
       break;
     }
     case tok::arrow:       // postfix-expression: p-e '->' identifier

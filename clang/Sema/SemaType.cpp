@@ -204,19 +204,20 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
             // have arguments of incomplete type.
             if (FTI.NumArgs != 1 || FTI.isVariadic) {
               Diag(DeclType.Loc, diag::err_void_only_param);
-              return QualType();
-            }
-            // Reject, but continue to parse 'int(void abc)'.
-            if (FTI.ArgInfo[i].Ident)
+              ArgTy = Context.IntTy;
+            } else if (FTI.ArgInfo[i].Ident) {
+              // Reject, but continue to parse 'int(void abc)'.
               Diag(FTI.ArgInfo[i].IdentLoc,
                    diag::err_void_param_with_identifier);
-            
-            // Reject, but continue to parse 'float(const void)'.
-            if (ArgTy.getQualifiers())
-              Diag(DeclType.Loc, diag::err_void_param_qualified);
-            
-            // Do not add 'void' to the ArgTys list.
-            break;
+              ArgTy = Context.IntTy;
+            } else {
+              // Reject, but continue to parse 'float(const void)'.
+              if (ArgTy.getQualifiers())
+                Diag(DeclType.Loc, diag::err_void_param_qualified);
+              
+              // Do not add 'void' to the ArgTys list.
+              break;
+            }
           }
           
           ArgTys.push_back(ArgTy);
