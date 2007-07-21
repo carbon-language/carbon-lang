@@ -3872,7 +3872,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       }
       
       // (V1 & V3)|(V2 & ~V3) -> ((V1 ^ V2) & V3) ^ V2
-      if (isOnlyUse(Op0) && isOnlyUse(Op1)) {
+      // Disable this transformations temporarily. This causes
+      // mis-compilation when V2 is undefined.
+      if (0 && isOnlyUse(Op0) && isOnlyUse(Op1)) {
         // Try all combination of terms to find V3 and ~V3.
         if (A->hasOneUse() && match(A, m_Not(m_Value(V3)))) {
           if (V3 == B)
