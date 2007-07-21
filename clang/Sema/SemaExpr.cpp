@@ -367,14 +367,15 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
 Action::ExprResult Sema::
-ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
-              ExprTy **Args, unsigned NumArgsInCall,
+ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
+              ExprTy **args, unsigned NumArgsInCall,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
-  Expr *funcExpr = (Expr *)Fn;
-  assert(funcExpr && "no function call expression");
+  Expr *Fn = static_cast<Expr *>(fn);
+  Expr **Args = reinterpret_cast<Expr**>(args);
+  assert(Fn && "no function call expression");
   
-  UsualUnaryConversions(funcExpr);
-  QualType funcType = funcExpr->getType();
+  UsualUnaryConversions(Fn);
+  QualType funcType = Fn->getType();
 
   // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
   // type pointer to function".
@@ -382,16 +383,16 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
   if (PT == 0) PT = dyn_cast<PointerType>(funcType.getCanonicalType());
   
   if (PT == 0)
-    return Diag(funcExpr->getLocStart(), diag::err_typecheck_call_not_function,
-                SourceRange(funcExpr->getLocStart(), RParenLoc));
+    return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
+                SourceRange(Fn->getLocStart(), RParenLoc));
   
   const FunctionType *funcT = dyn_cast<FunctionType>(PT->getPointeeType());
   if (funcT == 0)
     funcT = dyn_cast<FunctionType>(PT->getPointeeType().getCanonicalType());
   
   if (funcT == 0)
-    return Diag(funcExpr->getLocStart(), diag::err_typecheck_call_not_function,
-                SourceRange(funcExpr->getLocStart(), RParenLoc));
+    return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
+                SourceRange(Fn->getLocStart(), RParenLoc));
     
   // If a prototype isn't declared, the parser implicitly defines a func decl
   QualType resultType = funcT->getResultType();
@@ -405,18 +406,18 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
     
     if (NumArgsInCall < NumArgsInProto)
       Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
-           funcExpr->getSourceRange());
+           Fn->getSourceRange());
     else if (NumArgsInCall > NumArgsInProto) {
       if (!proto->isVariadic()) {
-        Diag(((Expr **)Args)[NumArgsInProto+1]->getLocStart(), 
-             diag::err_typecheck_call_too_many_args, funcExpr->getSourceRange(),
-             ((Expr **)Args)[NumArgsInProto+1]->getSourceRange());
+        Diag(Args[NumArgsInProto+1]->getLocStart(), 
+             diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
+             Args[NumArgsInProto+1]->getSourceRange());
       }
       NumArgsToCheck = NumArgsInProto;
     }
     // Continue to check argument types (even if we have too few/many args).
     for (unsigned i = 0; i < NumArgsToCheck; i++) {
-      Expr *argExpr = ((Expr **)Args)[i];
+      Expr *argExpr = Args[i];
       assert(argExpr && "ParseCallExpr(): missing argument expression");
       
       QualType lhsType = proto->getArgType(i);
@@ -438,36 +439,35 @@ ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
         if (!argExpr->isNullPointerConstant(Context)) {
           Diag(l, diag::ext_typecheck_passing_pointer_int, 
                lhsType.getAsString(), rhsType.getAsString(),
-               funcExpr->getSourceRange(), argExpr->getSourceRange());
+               Fn->getSourceRange(), argExpr->getSourceRange());
         }
         break;
       case IntFromPointer:
         Diag(l, diag::ext_typecheck_passing_pointer_int, 
              lhsType.getAsString(), rhsType.getAsString(),
-             funcExpr->getSourceRange(), argExpr->getSourceRange());
+             Fn->getSourceRange(), argExpr->getSourceRange());
         break;
       case IncompatiblePointer:
         Diag(l, diag::ext_typecheck_passing_incompatible_pointer, 
              rhsType.getAsString(), lhsType.getAsString(),
-             funcExpr->getSourceRange(), argExpr->getSourceRange());
+             Fn->getSourceRange(), argExpr->getSourceRange());
         break;
       case CompatiblePointerDiscardsQualifiers:
         Diag(l, diag::ext_typecheck_passing_discards_qualifiers,
              rhsType.getAsString(), lhsType.getAsString(),
-             funcExpr->getSourceRange(), argExpr->getSourceRange());
+             Fn->getSourceRange(), argExpr->getSourceRange());
         break;
       case Incompatible:
         return Diag(l, diag::err_typecheck_passing_incompatible,
                  rhsType.getAsString(), lhsType.getAsString(),
-                 funcExpr->getSourceRange(), argExpr->getSourceRange());
+                 Fn->getSourceRange(), argExpr->getSourceRange());
       }
     }
     // Even if the types checked, bail if we had the wrong number of arguments.
-    if ((NumArgsInCall != NumArgsInProto) && !proto->isVariadic())
+    if (NumArgsInCall != NumArgsInProto && !proto->isVariadic())
       return true;
   }
-  return new CallExpr((Expr*)Fn, (Expr**)Args, NumArgsInCall, resultType,
-                      RParenLoc);
+  return new CallExpr(Fn, Args, NumArgsInCall, resultType, RParenLoc);
 }
 
 Action::ExprResult Sema::
