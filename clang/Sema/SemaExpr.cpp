@@ -409,9 +409,10 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
            Fn->getSourceRange());
     else if (NumArgsInCall > NumArgsInProto) {
       if (!proto->isVariadic()) {
-        Diag(Args[NumArgsInProto+1]->getLocStart(), 
+        Diag(Args[NumArgsInProto]->getLocStart(), 
              diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
-             Args[NumArgsInProto+1]->getSourceRange());
+             SourceRange(Args[NumArgsInProto]->getLocStart(),
+                         Args[NumArgsInCall-1]->getLocEnd()));
       }
       NumArgsToCheck = NumArgsInProto;
     }
