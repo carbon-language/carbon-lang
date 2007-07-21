@@ -195,13 +195,13 @@ bool Expr::hasLocalSideEffect() const {
 ///
 Expr::isLvalueResult Expr::isLvalue() const {
   // first, check the type (C99 6.3.2.1)
-  if (isa<FunctionType>(TR.getCanonicalType())) // from isObjectType()
+  if (TR->isFunctionType()) // from isObjectType()
     return LV_NotObjectType;
 
   if (TR->isIncompleteType() && TR->isVoidType())
     return LV_IncompleteVoidType;
 
-  if (isa<ReferenceType>(TR.getCanonicalType())) // C++ [expr]
+  if (TR->isReferenceType()) // C++ [expr]
     return LV_Valid;
 
   // the type looks fine, now check the expression
