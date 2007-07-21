@@ -493,7 +493,7 @@ public:
   Expr *getSubExpr() { return Op; }
   const Expr *getSubExpr() const { return Op; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); } // FIXME
+  virtual SourceRange getSourceRange() const { return Op->getSourceRange(); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
