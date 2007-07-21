@@ -445,8 +445,8 @@ DIAG(err_typecheck_ocu_vector_not_typedef, ERROR,
      "ocu_vector_type only applies to types, not variables")
 
 // Function Parameter Semantic Analysis.
-DIAG(err_void_param_with_identifier, ERROR,
-     "void argument may not have a name")
+DIAG(err_param_with_void_type, ERROR,
+     "argument may not have 'void' type")
 DIAG(err_void_only_param, ERROR,
      "'void' must be the first and only parameter if specified")
 DIAG(err_void_param_qualified, ERROR,

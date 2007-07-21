@@ -208,7 +208,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
             } else if (FTI.ArgInfo[i].Ident) {
               // Reject, but continue to parse 'int(void abc)'.
               Diag(FTI.ArgInfo[i].IdentLoc,
-                   diag::err_void_param_with_identifier);
+                   diag::err_param_with_void_type);
               ArgTy = Context.IntTy;
             } else {
               // Reject, but continue to parse 'float(const void)'.
