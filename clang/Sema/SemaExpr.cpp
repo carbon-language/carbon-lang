@@ -80,6 +80,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
 
   assert(0 && "Invalid decl");
+  abort();
 }
 
 Sema::ExprResult Sema::ParseSimplePrimaryExpr(SourceLocation Loc,
