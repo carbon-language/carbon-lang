@@ -7,7 +7,7 @@
 
 # Process the options passed in to us by the build script into standard
 # variables. 
-process_builder_args "$@"
+process_arguments "$@"
 
 # See if we have previously been configured by sensing the presense
 # of the config.status scripts
