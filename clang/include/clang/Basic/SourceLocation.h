@@ -28,9 +28,9 @@ public:
     FileIDBits  = 14,
     FilePosBits = 32-1-FileIDBits,
     
-    MacroIDBits       = 19,
+    MacroIDBits       = 20,
     MacroPhysOffsBits = 9,
-    MacroLogOffBits   = 3
+    MacroLogOffBits   = 2
   };
 
   SourceLocation() : ID(0) {}  // 0 is an invalid FileID.
@@ -56,16 +56,24 @@ public:
     return L;
   }
   
-  static SourceLocation getMacroLoc(unsigned MacroID, unsigned PhysOffs,
+  static bool isValidMacroPhysOffs(int Val) {
+    if (Val >= 0)
+      return Val < (1 << (MacroPhysOffsBits-1));
+    return -Val < (1 << (MacroPhysOffsBits-1));
+  }
+  
+  static SourceLocation getMacroLoc(unsigned MacroID, int PhysOffs,
                                     unsigned LogOffs) {
-    SourceLocation L;
-    
     assert(MacroID < (1 << MacroIDBits) && "Too many macros!");
-    assert(PhysOffs < (1 << MacroPhysOffsBits) && "Physoffs too large!");
+    assert(isValidMacroPhysOffs(PhysOffs) && "Physoffs too large!");
     assert(LogOffs  < (1 << MacroLogOffBits) && "Logical offs too large!");
     
+    PhysOffs &= (1 << MacroPhysOffsBits)-1;
+    
+    SourceLocation L;
     L.ID = (1 << 31) | (MacroID << (MacroPhysOffsBits+MacroLogOffBits)) |
-           (PhysOffs << MacroLogOffBits) | LogOffs;
+           (PhysOffs << MacroLogOffBits) |
+           LogOffs;
     return L;
   }
   
@@ -99,9 +107,12 @@ public:
     return (ID >> (MacroPhysOffsBits+MacroLogOffBits)) & ((1 << MacroIDBits)-1);
   }
   
-  unsigned getMacroPhysOffs() const {
+  int getMacroPhysOffs() const {
     assert(isMacroID() && "Is not a macro id!");
-    return (ID >> MacroLogOffBits) & ((1 << MacroPhysOffsBits)-1);
+    int Val = (ID >> MacroLogOffBits) & ((1 << MacroPhysOffsBits)-1);
+    // Sign extend it properly.
+    unsigned ShAmt = sizeof(int)*8 - MacroPhysOffsBits;
+    return (Val << ShAmt) >> ShAmt;
   }
   
   unsigned getMacroLogOffs() const {
@@ -111,7 +122,7 @@ public:
   
   /// getFileLocWithOffset - Return a source location with the specified offset
   /// from this file SourceLocation.
-  SourceLocation getFileLocWithOffset(unsigned Offset) const {
+  SourceLocation getFileLocWithOffset(int Offset) const {
     return getFileLoc(getFileID(), getRawFilePos()+Offset);
   }
   

@@ -180,20 +180,19 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
   // reuse it.  This implements a single-entry cache.
   if (!MacroIDs.empty()) {
     MacroIDInfo &LastOne = MacroIDs.back();
+    
     if (LastOne.getInstantiationLoc() == InstantLoc &&
         LastOne.getPhysicalLoc().getFileID() == PhysLoc.getFileID()) {
       
       int PhysDelta = PhysLoc.getRawFilePos() -
                       LastOne.getPhysicalLoc().getRawFilePos();
-      if (unsigned(PhysDelta) < (1 << SourceLocation::MacroPhysOffsBits))
-        return SourceLocation::getMacroLoc(MacroIDs.size()-1,
-                                           (unsigned)PhysDelta, 0);
+      if (SourceLocation::isValidMacroPhysOffs(PhysDelta))
+        return SourceLocation::getMacroLoc(MacroIDs.size()-1, PhysDelta, 0);
     }
   }
   
  
   MacroIDs.push_back(MacroIDInfo::get(InstantLoc, PhysLoc));
-  
   return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0, 0);
 }
 
