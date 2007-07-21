@@ -192,8 +192,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
           QualType ArgTy = QualType::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);
-          if (ArgTy.isNull())
-            return QualType();  // Error occurred parsing argument type.
+          assert(!ArgTy.isNull() && "Couldn't parse type?");
           
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
@@ -205,11 +204,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
             if (FTI.NumArgs != 1 || FTI.isVariadic) {
               Diag(DeclType.Loc, diag::err_void_only_param);
               ArgTy = Context.IntTy;
+              FTI.ArgInfo[i].TypeInfo = ArgTy.getAsOpaquePtr();
             } else if (FTI.ArgInfo[i].Ident) {
               // Reject, but continue to parse 'int(void abc)'.
               Diag(FTI.ArgInfo[i].IdentLoc,
                    diag::err_param_with_void_type);
               ArgTy = Context.IntTy;
+              FTI.ArgInfo[i].TypeInfo = ArgTy.getAsOpaquePtr();
             } else {
               // Reject, but continue to parse 'float(const void)'.
               if (ArgTy.getQualifiers())
