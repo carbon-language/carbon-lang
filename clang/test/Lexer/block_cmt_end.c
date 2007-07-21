@@ -6,6 +6,9 @@
   RUN: clang -parse-ast-check %s
  */
 
+// This is a simple comment, /*/ does not end a comment, the trailing */ does.
+int i = /*/ */ 1;
+
 /* abc
 
 next comment ends with normal escaped newline:

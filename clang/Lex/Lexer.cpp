@@ -817,12 +817,23 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
   // we find it, check to see if it was preceeded by a *.  This common
   // optimization helps people who like to put a lot of * characters in their
   // comments.
-  unsigned char C = *CurPtr++;
+
+  // The first character we get with newlines and trigraphs skipped to handle
+  // the degenerate /*/ case below correctly if the * has an escaped newline
+  // after it.
+  unsigned CharSize;
+  unsigned char C = getCharAndSize(CurPtr, CharSize);
+  CurPtr += CharSize;
   if (C == 0 && CurPtr == BufferEnd+1) {
     Diag(BufferPtr, diag::err_unterminated_block_comment);
     BufferPtr = CurPtr-1;
     return true;
   }
+  
+  // Check to see if the first character after the '/*' is another /.  If so,
+  // then this slash does not end the block comment, it is part of it.
+  if (C == '/')
+    C = *CurPtr++;
   
   while (1) {
     // Skip over all non-interesting characters until we find end of buffer or a
