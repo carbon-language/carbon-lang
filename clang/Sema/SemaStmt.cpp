@@ -52,55 +52,63 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
 Action::StmtResult
 Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
                     SourceLocation DotDotDotLoc, ExprTy *rhsval,
-                    SourceLocation ColonLoc, StmtTy *SubStmt) {
+                    SourceLocation ColonLoc, StmtTy *subStmt) {
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt);
   Expr *LHSVal = ((Expr *)lhsval);
   assert((LHSVal != 0) && "missing expression in case statement");
     
   SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
-  if (!LHSVal->isIntegerConstantExpr(Context, &ExpLoc))
-    return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
-                LHSVal->getSourceRange());
+  if (!LHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
+    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
+         LHSVal->getSourceRange());
+    return SubStmt;
+  }
 
   // GCC extension: The expression shall be an integer constant.
   Expr *RHSVal = ((Expr *)rhsval);
-  if (RHSVal) {
-    if (!RHSVal->isIntegerConstantExpr(Context, &ExpLoc))
-      return Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
-                  RHSVal->getSourceRange());
+  if (RHSVal && !RHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
+    Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
+         RHSVal->getSourceRange());
+    return SubStmt;
   }
 
-  return new CaseStmt(LHSVal, (Expr*)RHSVal, (Stmt*)SubStmt);
+  return new CaseStmt(LHSVal, (Expr*)RHSVal, SubStmt);
 }
 
 Action::StmtResult
 Sema::ParseDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
-                       StmtTy *SubStmt, Scope *CurScope) {
+                       StmtTy *subStmt, Scope *CurScope) {
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt);
   Scope *S = CurScope->getBreakParent();
+  
+  if (!S) {
+    Diag(DefaultLoc, diag::err_default_not_in_switch);
+    return SubStmt;
+  }
   
   if (S->getDefaultStmt()) {
     Diag(DefaultLoc, diag::err_multiple_default_labels_defined);
     Diag(((DefaultStmt *)S->getDefaultStmt())->getDefaultLoc(), 
          diag::err_first_label);
-
-    return true;
+    return SubStmt;
   }
   
-  DefaultStmt *DS = new DefaultStmt(DefaultLoc, (Stmt*)SubStmt);
+  DefaultStmt *DS = new DefaultStmt(DefaultLoc, SubStmt);
   S->setDefaultStmt(DS);
-  
   return DS;
 }
 
 Action::StmtResult
 Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
-                     SourceLocation ColonLoc, StmtTy *SubStmt) {
+                     SourceLocation ColonLoc, StmtTy *subStmt) {
+  Stmt *SubStmt = static_cast<Stmt*>(subStmt);
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = LabelMap[II];
   
   // If not forward referenced or defined already, just create a new LabelStmt.
   if (LabelDecl == 0)
-    return LabelDecl = new LabelStmt(IdentLoc, II, (Stmt*)SubStmt);
+    return LabelDecl = new LabelStmt(IdentLoc, II, SubStmt);
   
   assert(LabelDecl->getID() == II && "Label mismatch!");
   
@@ -109,13 +117,13 @@ Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
   if (LabelDecl->getSubStmt()) {
     Diag(IdentLoc, diag::err_redefinition_of_label, LabelDecl->getName());
     Diag(LabelDecl->getIdentLoc(), diag::err_previous_definition);
-    return (Stmt*)SubStmt;
+    return SubStmt;
   }
   
   // Otherwise, this label was forward declared, and we just found its real
   // definition.  Fill in the forward definition and return it.
   LabelDecl->setIdentLoc(IdentLoc);
-  LabelDecl->setSubStmt((Stmt*)SubStmt);
+  LabelDecl->setSubStmt(SubStmt);
   return LabelDecl;
 }
 
