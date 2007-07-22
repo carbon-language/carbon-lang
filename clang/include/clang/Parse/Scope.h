@@ -79,9 +79,6 @@ private:
   typedef llvm::SmallPtrSet<Action::DeclTy*, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
   
-  /// DefaultStmt - when parsing the body of a switch statement, this keeps
-  /// track of the statement with the default label.
-  Action::StmtTy *DefaultStmt;
 public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
@@ -118,9 +115,6 @@ public:
     return DeclsInScope.count(D) != 0;
   }
   
-  void setDefaultStmt(Action::StmtTy *S) { DefaultStmt = S; }
-  Action::StmtTy *getDefaultStmt() const { return DefaultStmt; }
-  
   /// Init - This is used by the parser to implement scope caching.
   ///
   void Init(Scope *Parent, unsigned ScopeFlags) {
@@ -137,8 +131,6 @@ public:
     } else {
       FnParent = BreakParent = ContinueParent = 0;
     }
-    
-    DefaultStmt = 0;
     
     // If this scope is a function or contains breaks/continues, remember it.
     if (Flags & FnScope)       FnParent = this;

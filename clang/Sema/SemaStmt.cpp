@@ -18,6 +18,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Lex/IdentifierTable.h"
+
 using namespace clang;
 
 Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
@@ -56,7 +57,7 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   Stmt *SubStmt = static_cast<Stmt*>(subStmt);
   Expr *LHSVal = ((Expr *)lhsval);
   assert((LHSVal != 0) && "missing expression in case statement");
-    
+  
   SourceLocation ExpLoc;
   // C99 6.8.4.2p3: The expression shall be an integer constant.
   if (!LHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
@@ -73,7 +74,13 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
     return SubStmt;
   }
 
-  return new CaseStmt(LHSVal, (Expr*)RHSVal, SubStmt);
+  CaseStmt *CS = new CaseStmt(LHSVal, RHSVal, SubStmt);
+  
+  assert(!SwitchStack.empty() && "missing push/pop in switch stack!");
+  SwitchStmt *SS = SwitchStack.back();
+  SS->addSwitchCase(CS);
+ 
+  return CS;
 }
 
 Action::StmtResult
@@ -87,15 +94,12 @@ Sema::ParseDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
     return SubStmt;
   }
   
-  if (S->getDefaultStmt()) {
-    Diag(DefaultLoc, diag::err_multiple_default_labels_defined);
-    Diag(((DefaultStmt *)S->getDefaultStmt())->getDefaultLoc(), 
-         diag::err_first_label);
-    return SubStmt;
-  }
-  
   DefaultStmt *DS = new DefaultStmt(DefaultLoc, SubStmt);
-  S->setDefaultStmt(DS);
+
+  assert(!SwitchStack.empty() && "missing push/pop in switch stack!");
+  SwitchStmt *SS = SwitchStack.back();
+  SS->addSwitchCase(DS);
+
   return DS;
 }
 
@@ -145,16 +149,54 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
 }
 
 Action::StmtResult
-Sema::ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond, StmtTy *Body) {
-  Expr *condExpr = (Expr *)Cond;
+Sema::StartSwitchStmt(ExprTy *Cond) {
+  SwitchStmt *SS = new SwitchStmt((Expr*)Cond);
+  SwitchStack.push_back(SS);
+  return SS;
+}
 
+Action::StmtResult
+Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
+  Stmt *BodyStmt = (Stmt*)Body;
+  
+  SwitchStmt *SS = SwitchStack.back();
+  assert(SS == (SwitchStmt*)Switch && "switch stack missing push/pop!");
+    
+  SS->setBody(BodyStmt);
+  SwitchStack.pop_back(); 
+
+  Expr *condExpr = SS->getCond();
   QualType condType = condExpr->getType();
   
-  if (!condType->isIntegerType()) // C99 6.8.4.2p1
-    return Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer,
-                condType.getAsString(), condExpr->getSourceRange());
+  if (!condType->isIntegerType()) { // C99 6.8.4.2p1
+    Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer,
+         condType.getAsString(), condExpr->getSourceRange());
+    return false;
+  }
 
-  return new SwitchStmt((Expr*)Cond, (Stmt*)Body);
+  DefaultStmt *CurDefaultStmt = 0;
+  
+  // FIXME: The list of cases is backwards and needs to be reversed.
+  for (SwitchCase *SC = SS->getSwitchCaseList(); SC; 
+       SC = SC->getNextSwitchCase()) {
+    if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC)) {
+      if (CurDefaultStmt) {
+        Diag(DS->getDefaultLoc(), 
+            diag::err_multiple_default_labels_defined);
+        Diag(CurDefaultStmt->getDefaultLoc(), 
+            diag::err_first_label);
+            
+        // FIXME: Remove the default statement from the switch block
+        // so that we'll return a valid AST.
+      } else {
+        CurDefaultStmt = DS;
+      }
+      
+      // FIXME: Check that case values are unique here.
+    }    
+  }
+
+  return SS;
 }
 
 Action::StmtResult

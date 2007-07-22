@@ -220,10 +220,15 @@ public:
     return 0; 
   }
   
-  virtual StmtResult ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond,
-                                     StmtTy *Body) {
+  virtual StmtResult StartSwitchStmt(ExprTy *Cond) {
     return 0;
   }
+  
+  virtual StmtResult FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
+                                      ExprTy *Body) {
+    return 0;
+  }
+
   virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body) {
     return 0;

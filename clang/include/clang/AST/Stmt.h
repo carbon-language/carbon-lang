@@ -124,15 +124,37 @@ public:
   static bool classof(const CompoundStmt *) { return true; }
 };
 
-class CaseStmt : public Stmt {
+// SwitchCase is the base class for CaseStmt and DefaultStmt,
+class SwitchCase : public Stmt {
+  // A pointer to the following CaseStmt or DefaultStmt class,
+  // used by SwitchStmt.
+  SwitchCase *NextSwitchCase;
+protected:
+  SwitchCase(StmtClass SC) : Stmt(SC), NextSwitchCase(0) {}
+  
+public:
+  const SwitchCase *getNextSwitchCase() const { return NextSwitchCase; }
+
+  SwitchCase *getNextSwitchCase() { return NextSwitchCase; }
+
+  void setNextSwitchCase(SwitchCase *SC) { NextSwitchCase = SC; }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CaseStmtClass || 
+    T->getStmtClass() == DefaultStmtClass;
+  }
+  static bool classof(const SwitchCase *) { return true; }
+
+  virtual void visit(StmtVisitor &Visitor) = 0;
+};
+
+class CaseStmt : public SwitchCase {
   Expr *LHSVal;
   Expr *RHSVal;  // Non-null for GNU "case 1 ... 4" extension
   Stmt *SubStmt;
-  SwitchStmt *Switch;
 public:
   CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
-    : Stmt(CaseStmtClass), LHSVal(lhs), RHSVal(rhs), SubStmt(substmt), 
-    Switch(0) {}
+    : SwitchCase(CaseStmtClass), LHSVal(lhs), RHSVal(rhs), SubStmt(substmt) {}
   
   Expr *getLHS() { return LHSVal; }
   Expr *getRHS() { return RHSVal; }
@@ -145,11 +167,11 @@ public:
   static bool classof(const CaseStmt *) { return true; }
 };
 
-class DefaultStmt : public Stmt {
+class DefaultStmt : public SwitchCase {
   SourceLocation DefaultLoc;
   Stmt *SubStmt;
 public:
-  DefaultStmt(SourceLocation DL, Stmt *substmt) : Stmt(DefaultStmtClass), 
+  DefaultStmt(SourceLocation DL, Stmt *substmt) : SwitchCase(DefaultStmtClass), 
     DefaultLoc(DL), SubStmt(substmt) {}
   
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
@@ -216,12 +238,29 @@ public:
 class SwitchStmt : public Stmt {
   Expr *Cond;
   Stmt *Body;
-public:
-  SwitchStmt(Expr *cond, Stmt *body)
-    : Stmt(SwitchStmtClass), Cond(cond), Body(body) {}
   
+  // This points to a linked list of case and default statements.
+  SwitchCase *FirstCase;
+public:
+  SwitchStmt(Expr *cond)
+    : Stmt(SwitchStmtClass), Cond(cond), Body(0), FirstCase(0) {}
+  
+  const Expr *getCond() const { return Cond; }
+  const Stmt *getBody() const { return Body; }
+  const SwitchCase *getSwitchCaseList() const { return FirstCase; }
+
   Expr *getCond() { return Cond; }
   Stmt *getBody() { return Body; }
+  SwitchCase *getSwitchCaseList() { return FirstCase; }
+
+  void setBody(Stmt *S) { Body = S; }  
+  
+  void addSwitchCase(SwitchCase *SC) {
+    if (FirstCase)
+      SC->setNextSwitchCase(FirstCase);
+
+    FirstCase = SC;
+  }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

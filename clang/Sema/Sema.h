@@ -17,6 +17,7 @@
 
 #include "clang/Parse/Action.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
 #include <string>
 
@@ -36,6 +37,7 @@ namespace clang {
   class IntegerLiteral;
   class ArrayType;
   class LabelStmt;
+  class SwitchStmt;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -57,6 +59,8 @@ class Sema : public Action {
   /// it (which acts like the label decl in some ways).  Forward referenced
   /// labels have a LabelStmt created for them with a null location & SubStmt.
   llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
+  
+  llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -175,8 +179,9 @@ public:
   virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
-  virtual StmtResult ParseSwitchStmt(SourceLocation SwitchLoc, ExprTy *Cond,
-                                     StmtTy *Body);
+  virtual StmtResult StartSwitchStmt(ExprTy *Cond);
+  virtual StmtResult FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, 
+                                      ExprTy *Body);
   virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body);
   virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,

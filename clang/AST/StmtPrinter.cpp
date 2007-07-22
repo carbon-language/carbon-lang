@@ -218,6 +218,10 @@ void StmtPrinter::VisitSwitchStmt(SwitchStmt *Node) {
   }
 }
 
+void StmtPrinter::VisitSwitchCase(SwitchCase*) {
+  assert(0 && "SwitchCase is an abstract class");
+}
+
 void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {
   Indent() << "while (";
   PrintExpr(Node->getCond());

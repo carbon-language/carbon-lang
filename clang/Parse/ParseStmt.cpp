@@ -475,14 +475,24 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
   
+  if (Cond.isInvalid) {
+    ExitScope();
+    return true;
+  }
+    
+  StmtResult Switch = Actions.StartSwitchStmt(Cond.Val);
+  
   // Read the body statement.
   StmtResult Body = ParseStatement();
 
+  if (Body.isInvalid) {
+    Body = Actions.ParseNullStmt(Tok.getLocation());
+    // FIXME: Remove the case statement list from the Switch statement.
+  }
+  
   ExitScope();
   
-  if (Cond.isInvalid || Body.isInvalid) return true;
-  
-  return Actions.ParseSwitchStmt(SwitchLoc, Cond.Val, Body.Val);
+  return Actions.FinishSwitchStmt(SwitchLoc, Switch.Val, Body.Val);
 }
 
 /// ParseWhileStatement
