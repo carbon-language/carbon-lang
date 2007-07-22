@@ -28,6 +28,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cctype>
 using namespace clang;
@@ -150,6 +151,29 @@ static inline bool isNumberBody(unsigned char c) {
 // Diagnostics forwarding code.
 //===----------------------------------------------------------------------===//
 
+/// GetMappedTokenLoc - If lexing out of a 'mapped buffer', where we pretend the
+/// lexer buffer was all instantiated at a single point, perform the mapping.
+/// This is currently only used for _Pragma implementation, so it is the slow
+/// path of the hot getSourceLocation method.  Do not allow it to be inlined.
+static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
+                                        SourceLocation FileLoc,
+                                        unsigned CharNo) DISABLE_INLINE;
+static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
+                                        SourceLocation FileLoc,
+                                        unsigned CharNo) {
+  // Otherwise, we're lexing "mapped tokens".  This is used for things like
+  // _Pragma handling.  Combine the instantiation location of FileLoc with the
+  // physical location.
+  SourceManager &SourceMgr = PP.getSourceManager();
+  
+  // Create a new SLoc which is expanded from logical(FileLoc) but whose
+  // characters come from phys(FileLoc)+Offset.
+  SourceLocation VirtLoc = SourceMgr.getLogicalLoc(FileLoc);
+  SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(FileLoc);
+  PhysLoc = SourceLocation::getFileLoc(PhysLoc.getFileID(), CharNo);
+  return SourceMgr.getInstantiationLoc(PhysLoc, VirtLoc);
+}
+
 /// getSourceLocation - Return a source location identifier for the specified
 /// offset in the current file.
 SourceLocation Lexer::getSourceLocation(const char *Loc) const {
@@ -162,19 +186,8 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   if (FileLoc.isFileID())
     return SourceLocation::getFileLoc(FileLoc.getFileID(), CharNo);
   
-  // Otherwise, we're lexing "mapped tokens".  This is used for things like
-  // _Pragma handling.  Combine the instantiation location of FileLoc with the
-  // physical location.
-  SourceManager &SourceMgr = PP.getSourceManager();
-
-  // Create a new SLoc which is expanded from logical(FileLoc) but whose
-  // characters come from phys(FileLoc)+Offset.
-  SourceLocation VirtLoc = SourceMgr.getLogicalLoc(FileLoc);
-  SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(FileLoc);
-  PhysLoc = SourceLocation::getFileLoc(PhysLoc.getFileID(), CharNo);
-  return SourceMgr.getInstantiationLoc(PhysLoc, VirtLoc);
+  return GetMappedTokenLoc(PP, FileLoc, CharNo);
 }
-
 
 /// Diag - Forwarding function for diagnostics.  This translate a source
 /// position in the current buffer into a SourceLocation object for rendering.
@@ -1302,8 +1315,8 @@ LexNextToken:
     if (Char == '/') {         // BCPL comment.
       if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result))) {
         // It is common for the tokens immediately after a // comment to be
-        // whitespace (indentation for the next line).  Instead of going through the
-        // big switch, handle it efficiently now.
+        // whitespace (indentation for the next line).  Instead of going through
+        // the big switch, handle it efficiently now.
         goto SkipIgnoredUnits;
       }        
       return; // KeepCommentMode
