@@ -607,18 +607,6 @@ void Lexer::SkipWhitespace(Token &Result, const char *CurPtr) {
   if (PrevChar != '\n' && PrevChar != '\r')
     Result.setFlag(Token::LeadingSpace);
 
-  // If the next token is obviously a // or /* */ comment, skip it efficiently
-  // too (without going through the big switch stmt).
-  if (Char == '/' && CurPtr[1] == '/' && !KeepCommentMode) {
-    BufferPtr = CurPtr;
-    SkipBCPLComment(Result, CurPtr+1);
-    return;
-  }
-  if (Char == '/' && CurPtr[1] == '*' && !KeepCommentMode) {
-    BufferPtr = CurPtr;
-    SkipBlockComment(Result, CurPtr+2);
-    return;
-  }
   BufferPtr = CurPtr;
 }
 
@@ -707,16 +695,6 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   Result.setFlag(Token::StartOfLine);
   // No leading whitespace seen so far.
   Result.clearFlag(Token::LeadingSpace);
-    
-  // It is common for the tokens immediately after a // comment to be
-  // whitespace (indentation for the next line).  Instead of going through the
-  // big switch, handle it efficiently now.
-  if (isWhitespace(*CurPtr)) {
-    Result.setFlag(Token::LeadingSpace);
-    SkipWhitespace(Result, CurPtr+1);
-    return true;
-  }
-
   BufferPtr = CurPtr;
   return true;
 }
@@ -1145,8 +1123,24 @@ LexNextToken:
   case '\t':
   case '\f':
   case '\v':
+  SkipHorizontalWhitespace:
     Result.setFlag(Token::LeadingSpace);
     SkipWhitespace(Result, CurPtr);
+
+  SkipIgnoredUnits:
+    CurPtr = BufferPtr;
+    
+    // If the next token is obviously a // or /* */ comment, skip it efficiently
+    // too (without going through the big switch stmt).
+    if (CurPtr[0] == '/' && CurPtr[1] == '/' && !KeepCommentMode) {
+      SkipBCPLComment(Result, CurPtr+2);
+      goto SkipIgnoredUnits;
+    } else if (CurPtr[0] == '/' && CurPtr[1] == '*' && !KeepCommentMode) {
+      SkipBlockComment(Result, CurPtr+2);
+      goto SkipIgnoredUnits;
+    } else if (isHorizontalWhitespace(*CurPtr)) {
+      goto SkipHorizontalWhitespace;
+    }
     goto LexNextToken;   // GCC isn't tail call eliminating.
 
   case 'L':
@@ -1306,8 +1300,12 @@ LexNextToken:
     // 6.4.9: Comments
     Char = getCharAndSize(CurPtr, SizeTmp);
     if (Char == '/') {         // BCPL comment.
-      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
-        goto LexNextToken;   // GCC isn't tail call eliminating.
+      if (SkipBCPLComment(Result, ConsumeChar(CurPtr, SizeTmp, Result))) {
+        // It is common for the tokens immediately after a // comment to be
+        // whitespace (indentation for the next line).  Instead of going through the
+        // big switch, handle it efficiently now.
+        goto SkipIgnoredUnits;
+      }        
       return; // KeepCommentMode
     } else if (Char == '*') {  // /**/ comment.
       if (SkipBlockComment(Result, ConsumeChar(CurPtr, SizeTmp, Result)))
