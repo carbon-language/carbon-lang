@@ -680,7 +680,11 @@ Parser::StmtResult Parser::ParseGotoStatement() {
       return true;
     }
     Res = Actions.ParseIndirectGotoStmt(GotoLoc, StarLoc, R.Val);
+  } else {
+    Diag(Tok, diag::err_expected_ident);
+    return true;
   }
+    
   return Res;
 }
 
