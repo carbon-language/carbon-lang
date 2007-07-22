@@ -163,6 +163,26 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
   if (FromDir)
     i = FromDir-&SearchDirs[0];
   
+  // Cache all of the lookups performed by this method.  Many headers are
+  // multiply included, and the "pragma once" optimization prevents them from
+  // being relex/pp'd, but they would still have to search through a
+  // (potentially huge) series of SearchDirs to find it.
+  std::pair<unsigned, unsigned> &CacheLookup =
+    LookupFileCache.GetOrCreateValue(FilenameStart, FilenameEnd).getValue();
+
+  // If the entry has been previously looked up, the first value will be
+  // non-zero.  If the value is equal to i (the start point of our search), then
+  // this is a matching hit.
+  if (CacheLookup.first == i+1) {
+    // Skip querying potentially lots of directories for this lookup.
+    i = CacheLookup.second;
+  } else {
+    // Otherwise, this is the first query, or the previous query didn't match
+    // our search start.  We will fill in our found location below, so prime the
+    // start point value.
+    CacheLookup.first = i+1;
+  }
+    
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     const FileEntry *FE = 0;
@@ -183,11 +203,15 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
       
       // This file is a system header or C++ unfriendly if the dir is.
       getFileInfo(FE).DirInfo = CurDir->getDirCharacteristic();
+      
+      // Remember this location for the next lookup we do.
+      CacheLookup.second = i;
       return FE;
     }
   }
   
-  // Otherwise, didn't find it.
+  // Otherwise, didn't find it. Remember we didn't find this.
+  CacheLookup.second = SearchDirs.size();
   return 0;
 }
 

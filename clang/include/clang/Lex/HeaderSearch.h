@@ -68,6 +68,15 @@ class HeaderSearch {
   ///
   std::vector<PerFileInfo> FileInfo;
 
+  /// LookupFileCache - This is keeps track of each lookup performed by
+  /// LookupFile.  The first part of the value is the starting index in
+  /// SearchDirs that the cached search was performed from.  If there is a hit
+  /// and this value doesn't match the current query, the cache has to be
+  /// ignored.  The second value is the entry in SearchDirs that satisfied the
+  /// query.
+  llvm::StringMap<std::pair<unsigned, unsigned> > LookupFileCache;
+  
+  
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
   llvm::StringMap<const DirectoryEntry *> FrameworkMap;
@@ -88,6 +97,7 @@ public:
     SearchDirs = dirs;
     SystemDirIdx = systemDirIdx;
     NoCurDirSearch = noCurDirSearch;
+    //LookupFileCache.clear();
   }
   
   /// ClearFileInfo - Forget everything we know about headers so far.
