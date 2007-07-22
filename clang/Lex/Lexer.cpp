@@ -40,13 +40,19 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
   : FileLoc(fileloc), PP(pp), Features(PP.getLangOptions()) {
       
   SourceManager &SourceMgr = PP.getSourceManager();
-  InputFile =SourceMgr.getBuffer(SourceMgr.getPhysicalLoc(FileLoc).getFileID());
+  unsigned InputFileID = SourceMgr.getPhysicalLoc(FileLoc).getFileID();
+  const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(InputFileID);
       
   Is_PragmaLexer = false;
   IsMainFile = false;
   InitCharacterInfo();
-      
-  BufferPtr = BufStart ? BufStart : InputFile->getBufferStart();
+  
+  // BufferStart must always be InputFile->getBufferStart().
+  BufferStart = InputFile->getBufferStart();
+  
+  // BufferPtr and BufferEnd can start out somewhere inside the current buffer.
+  // If unspecified, they starts at the start/end of the buffer.
+  BufferPtr = BufStart ? BufStart : BufferStart;
   BufferEnd = BufEnd ? BufEnd : InputFile->getBufferEnd();
 
   assert(BufferEnd[0] == 0 &&
@@ -177,12 +183,12 @@ static SourceLocation GetMappedTokenLoc(Preprocessor &PP,
 /// getSourceLocation - Return a source location identifier for the specified
 /// offset in the current file.
 SourceLocation Lexer::getSourceLocation(const char *Loc) const {
-  assert(Loc >= InputFile->getBufferStart() && Loc <= BufferEnd &&
+  assert(Loc >= BufferStart && Loc <= BufferEnd &&
          "Location out of range for this buffer!");
 
   // In the normal case, we're just lexing from a simple file buffer, return
   // the file id from FileLoc with the offset specified.
-  unsigned CharNo = Loc-InputFile->getBufferStart();
+  unsigned CharNo = Loc-BufferStart;
   if (FileLoc.isFileID())
     return SourceLocation::getFileLoc(FileLoc.getFileID(), CharNo);
   

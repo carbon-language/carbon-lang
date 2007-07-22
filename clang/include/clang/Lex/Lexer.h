@@ -21,10 +21,6 @@
 #include <vector>
 #include <cassert>
 
-namespace llvm {
-  class MemoryBuffer;
-}
-  
 namespace clang {
 class Diagnostic;
 class Preprocessor;
@@ -36,8 +32,8 @@ class Preprocessor;
 class Lexer {
   //===--------------------------------------------------------------------===//
   // Constant configuration values for this lexer.
+  const char *BufferStart;       // Start of the buffer.
   const char *BufferEnd;         // End of the buffer.
-  const llvm::MemoryBuffer *InputFile; // The file we are reading from.
   SourceLocation FileLoc;        // Location for start of file.
   Preprocessor &PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
