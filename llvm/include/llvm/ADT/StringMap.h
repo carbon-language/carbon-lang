@@ -55,7 +55,13 @@ protected:
   unsigned NumTombstones;
   unsigned ItemSize;
 protected:
-  StringMapImpl(unsigned itemSize) : ItemSize(itemSize) { init(16); }
+  StringMapImpl(unsigned itemSize) : ItemSize(itemSize) {
+    // Initialize the map with zero buckets to allocation.
+    TheTable = 0;
+    NumBuckets = 0;
+    NumItems = 0;
+    NumTombstones = 0;
+  }
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
   void RehashTable();
   
@@ -274,6 +280,12 @@ public:
     RemoveKey(KeyValue);
   }
   
+  void erase(iterator I) {
+    MapEntryTy &V = *I;
+    remove(&V);
+    V.Destroy(Allocator);
+  }
+  
   ~StringMap() {
     for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
       if (I->Item && I->Item != getTombstoneVal())
@@ -281,6 +293,9 @@ public:
     }
     free(TheTable);
   }
+private:
+  StringMap(const StringMap &);  // FIXME: Implement.
+  void operator=(const StringMap &);  // FIXME: Implement.
 };
   
 
