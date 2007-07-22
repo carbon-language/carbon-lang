@@ -212,8 +212,6 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
     EmittedTokensOnThisLine = false;
   }
   
-  if (DisableLineMarkers) return;
-  
   OutputChar('#');
   OutputChar(' ');
   std::string Num = llvm::utostr_32(CurLine);
