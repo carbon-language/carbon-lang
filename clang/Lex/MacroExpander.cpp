@@ -245,6 +245,7 @@ void MacroExpander::Init(Token &Tok, MacroArgs *Actuals) {
   AtStartOfLine = Tok.isAtStartOfLine();
   HasLeadingSpace = Tok.hasLeadingSpace();
   MacroTokens = &*Macro->tokens_begin();
+  OwnsMacroTokens = false;
   NumMacroTokens = Macro->tokens_end()-Macro->tokens_begin();
 
   // If this is a function-like macro, expand the arguments and change
@@ -270,6 +271,7 @@ void MacroExpander::Init(const Token *TokArray, unsigned NumToks) {
   Macro = 0;
   ActualArgs = 0;
   MacroTokens = TokArray;
+  OwnsMacroTokens = false;
   NumMacroTokens = NumToks;
   CurToken = 0;
   InstantiateLoc = SourceLocation();
@@ -288,8 +290,10 @@ void MacroExpander::Init(const Token *TokArray, unsigned NumToks) {
 void MacroExpander::destroy() {
   // If this was a function-like macro that actually uses its arguments, delete
   // the expanded tokens.
-  if (Macro && MacroTokens != &*Macro->tokens_begin())
+  if (OwnsMacroTokens) {
     delete [] MacroTokens;
+    MacroTokens = 0;
+  }
   
   // MacroExpander owns its formal arguments.
   if (ActualArgs) ActualArgs->destroy();
@@ -455,6 +459,7 @@ void MacroExpander::ExpandFunctionArguments() {
     if (NumMacroTokens)
       memcpy(Res, &ResultToks[0], NumMacroTokens*sizeof(Token));
     MacroTokens = Res;
+    OwnsMacroTokens = true;
   }
 }
 

@@ -134,7 +134,12 @@ class MacroExpander {
   
   /// Lexical information about the expansion point of the macro: the identifier
   /// that the macro expanded from had these properties.
-  bool AtStartOfLine, HasLeadingSpace;
+  bool AtStartOfLine : 1;
+  bool HasLeadingSpace : 1;
+  
+  /// OwnsMacroTokens - This is true if this macroexpander allocated the
+  /// MacroTokens array, and thus needs to free it when destroyed.
+  bool OwnsMacroTokens : 1;
   
   MacroExpander(const MacroExpander&);  // DO NOT IMPLEMENT
   void operator=(const MacroExpander&); // DO NOT IMPLEMENT
@@ -142,7 +147,7 @@ public:
   /// Create a macro expander for the specified macro with the specified actual
   /// arguments.  Note that this ctor takes ownership of the ActualArgs pointer.
   MacroExpander(Token &Tok, MacroArgs *ActualArgs, Preprocessor &pp)
-    : Macro(0), ActualArgs(0), PP(pp) {
+    : Macro(0), ActualArgs(0), PP(pp), OwnsMacroTokens(false) {
     Init(Tok, ActualArgs);
   }
   
@@ -154,7 +159,7 @@ public:
   /// Create a macro expander for the specified token stream.  This does not
   /// take ownership of the specified token vector.
   MacroExpander(const Token *TokArray, unsigned NumToks, Preprocessor &pp)
-    : Macro(0), ActualArgs(0), PP(pp) {
+    : Macro(0), ActualArgs(0), PP(pp), OwnsMacroTokens(false) {
     Init(TokArray, NumToks);
   }
   
