@@ -14,7 +14,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/Builtins.h"
-#include <map>
+#include "llvm/ADT/StringMap.h"
 #include <set>
 using namespace clang;
 
@@ -32,20 +32,24 @@ void TargetInfo::DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind) {
 /// GetTargetDefineMap - Get the set of target #defines in an associative
 /// collection for easy lookup.
 static void GetTargetDefineMap(const TargetInfoImpl *Target,
-                               std::map<std::string, std::string> &Map) {
+                               llvm::StringMap<std::string> &Map) {
   std::vector<std::string> PrimaryDefines;
   Target->getTargetDefines(PrimaryDefines);
 
   while (!PrimaryDefines.empty()) {
-    const char *Str = PrimaryDefines.back().c_str();
+    std::string &PrimDefineStr = PrimaryDefines.back();
+    const char *Str    = PrimDefineStr.c_str();
+    const char *StrEnd = Str+PrimDefineStr.size();
+    
     if (const char *Equal = strchr(Str, '=')) {
       // Split at the '='.
-      Map.insert(std::make_pair(std::string(Str, Equal),
-                                std::string(Equal+1,
-                                            Str+PrimaryDefines.back().size())));
+      
+      std::string &Entry = Map.GetOrCreateValue(Str, Equal).getValue();
+      Entry = std::string(Equal+1, StrEnd);
     } else {
       // Remember "macroname=1".
-      Map.insert(std::make_pair(PrimaryDefines.back(), std::string("1")));
+      std::string &Entry = Map.GetOrCreateValue(Str, StrEnd).getValue();
+      Entry = "1";
     }
     PrimaryDefines.pop_back();
   }
@@ -64,12 +68,12 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
   // of target-specific macros.
   
   // Get the set of primary #defines.
-  std::map<std::string, std::string> PrimaryDefines;
+  llvm::StringMap<std::string> PrimaryDefines;
   GetTargetDefineMap(PrimaryTarget, PrimaryDefines);
   
   // If we have no secondary targets, be a bit more efficient.
   if (SecondaryTargets.empty()) {
-    for (std::map<std::string, std::string>::iterator I = 
+    for (llvm::StringMap<std::string>::iterator I = 
            PrimaryDefines.begin(), E = PrimaryDefines.end(); I != E; ++I) {
       // If this define is non-portable, turn it into #define_target, otherwise
       // just use #define.
@@ -77,42 +81,47 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
       Buffer.insert(Buffer.end(), Command, Command+strlen(Command));
       
       // Insert "defname defvalue\n".
-      Buffer.insert(Buffer.end(), I->first.begin(), I->first.end());
+      const char *KeyStart = I->getKeyData();
+      const char *KeyEnd = KeyStart + I->getKeyLength();
+      
+      Buffer.insert(Buffer.end(), KeyStart, KeyEnd);
       Buffer.push_back(' ');
-      Buffer.insert(Buffer.end(), I->second.begin(), I->second.end());
+      Buffer.insert(Buffer.end(), I->getValue().begin(), I->getValue().end());
       Buffer.push_back('\n');
     }
     return;
   }
   
   // Get the sets of secondary #defines.
-  std::vector<std::map<std::string, std::string> > SecondaryDefines;
-  SecondaryDefines.resize(SecondaryTargets.size());
+  llvm::StringMap<std::string> *SecondaryDefines
+    = new llvm::StringMap<std::string>[SecondaryTargets.size()];
   for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i)
     GetTargetDefineMap(SecondaryTargets[i], SecondaryDefines[i]);
 
   // Loop over all defines in the primary target, processing them until we run
   // out.
-  while (!PrimaryDefines.empty()) {
-    std::string DefineName  = PrimaryDefines.begin()->first;
-    std::string DefineValue = PrimaryDefines.begin()->second;
-    PrimaryDefines.erase(PrimaryDefines.begin());
+  for (llvm::StringMap<std::string>::iterator PDI = 
+         PrimaryDefines.begin(), E = PrimaryDefines.end(); PDI != E; ++PDI) {
+    std::string DefineName(PDI->getKeyData(),
+                           PDI->getKeyData() + PDI->getKeyLength());
+    std::string DefineValue = PDI->getValue();
     
     // Check to see whether all secondary targets have this #define and whether
     // it is to the same value.  Remember if not, but remove the #define from
     // their collection in any case if they have it.
     bool isPortable = true;
     
-    for (unsigned i = 0, e = SecondaryDefines.size(); i != e; ++i) {
-      std::map<std::string, std::string>::iterator I = 
-        SecondaryDefines[i].find(DefineName);
+    for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i) {
+      llvm::StringMap<std::string>::iterator I = 
+        SecondaryDefines[i].find(&DefineName[0],
+                                 &DefineName[0]+DefineName.size());
       if (I == SecondaryDefines[i].end()) {
         // Secondary target doesn't have this #define.
         isPortable = false;
       } else {
         // Secondary target has this define, remember if it disagrees.
         if (isPortable)
-          isPortable = I->second == DefineValue;
+          isPortable = I->getValue() == DefineValue;
         // Remove it from the secondary target unconditionally.
         SecondaryDefines[i].erase(I);
       }
@@ -133,25 +142,31 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
   // Now that all of the primary target's defines have been handled and removed
   // from the secondary target's define sets, go through the remaining secondary
   // target's #defines and taint them.
-  for (unsigned i = 0, e = SecondaryDefines.size(); i != e; ++i) {
-    std::map<std::string, std::string> &Defs = SecondaryDefines[i];
+  for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i) {
+    llvm::StringMap<std::string> &Defs = SecondaryDefines[i];
     while (!Defs.empty()) {
-      const std::string &DefName = Defs.begin()->first;
+      const char *DefStart = Defs.begin()->getKeyData();
+      const char *DefEnd = DefStart + Defs.begin()->getKeyLength();
       
       // Insert "#define_other_target defname".
       const char *Command = "#define_other_target ";
       Buffer.insert(Buffer.end(), Command, Command+strlen(Command));
-      Buffer.insert(Buffer.end(), DefName.begin(), DefName.end());
+      Buffer.insert(Buffer.end(), DefStart, DefEnd);
       Buffer.push_back('\n');
       
       // If any other secondary targets have this same define, remove it from
       // them to avoid duplicate #define_other_target directives.
-      for (unsigned j = i+1; j != e; ++j)
-        SecondaryDefines[j].erase(DefName);
-      
+      for (unsigned j = i+1; j != e; ++j) {
+        llvm::StringMap<std::string>::iterator I =
+          SecondaryDefines[j].find(DefStart, DefEnd);
+        if (I != SecondaryDefines[j].end())
+          SecondaryDefines[j].erase(I);
+      }
       Defs.erase(Defs.begin());
     }
   }
+  
+  delete[] SecondaryDefines;
 }
 
 /// ComputeWCharWidth - Determine the width of the wchar_t type for the primary
@@ -185,9 +200,12 @@ void TargetInfo::getTargetBuiltins(const Builtin::Info *&Records,
   
   // Start by computing a mapping from the primary target's builtins to their
   // info records for efficient lookup.
-  std::map<std::string, const Builtin::Info*> PrimaryRecs;
-  for (unsigned i = 0, e = NumRecords; i != e; ++i)
-    PrimaryRecs[Records[i].Name] = Records+i;
+  llvm::StringMap<const Builtin::Info*> PrimaryRecs;
+  for (unsigned i = 0, e = NumRecords; i != e; ++i) {
+    const char *BIName = Records[i].Name;
+    PrimaryRecs.GetOrCreateValue(BIName, BIName+strlen(BIName)).getValue()
+      = Records+i;
+  }
   
   for (unsigned i = 0, e = SecondaryTargets.size(); i != e; ++i) {
     // Get the builtins for this secondary target.
@@ -202,7 +220,11 @@ void TargetInfo::getTargetBuiltins(const Builtin::Info *&Records,
       BuiltinNames2nd.insert(Records2nd[j].Name);
       
       // Check to see if the primary target has this builtin.
-      if (const Builtin::Info *PrimBI = PrimaryRecs[Records2nd[j].Name]) {
+      llvm::StringMap<const Builtin::Info*>::iterator I =
+        PrimaryRecs.find(Records2nd[j].Name,
+                         Records2nd[j].Name+strlen(Records2nd[j].Name));
+      if (I != PrimaryRecs.end()) {
+        const Builtin::Info *PrimBI = I->getValue();
         // If does.  If they are not identical, mark the builtin as being
         // non-portable.
         if (Records2nd[j] != *PrimBI)
