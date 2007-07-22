@@ -361,9 +361,8 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
   case tok::less:            // <<, <<=, <=, <?=, <?, <:, <%
     return FirstChar == '<' || FirstChar == '?' || FirstChar == '=' ||
            FirstChar == ':' || FirstChar == '%';
-  case tok::greater:         // >>, >=, >>=, >?=, >?, ->*
-    return FirstChar == '>' || FirstChar == '?' || FirstChar == '=' || 
-           FirstChar == '*';
+  case tok::greater:         // >>, >=, >>=, >?=, >?
+    return FirstChar == '>' || FirstChar == '?' || FirstChar == '=';
   case tok::pipe:            // ||, |=
     return FirstChar == '|' || FirstChar == '=';
   case tok::percent:         // %=, %>, %:
