@@ -116,7 +116,7 @@ class PrintPPOutputPPCallbacks : public PPCallbacks {
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp) : PP(pp) {
     CurLine = 0;
-    CurFilename = "\"<uninit>\"";
+    CurFilename = "<uninit>";
     EmittedTokensOnThisLine = false;
     FileType = DirectoryLookup::NormalHeaderDir;
   }
@@ -168,7 +168,9 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     std::string Num = llvm::utostr_32(LineNo);
     OutputString(&Num[0], Num.size());
     OutputChar(' ');
+    OutputChar('"');
     OutputString(&CurFilename[0], CurFilename.size());
+    OutputChar('"');
     
     if (FileType == DirectoryLookup::SystemHeaderDir)
       OutputString(" 3", 2);
@@ -202,7 +204,7 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   Loc = SourceMgr.getLogicalLoc(Loc);
   CurLine = SourceMgr.getLineNumber(Loc);
-  CurFilename = '"' + Lexer::Stringify(SourceMgr.getSourceName(Loc)) + '"';
+  CurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
   FileType = FileType;
   
   if (EmittedTokensOnThisLine) {
@@ -217,7 +219,9 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   std::string Num = llvm::utostr_32(CurLine);
   OutputString(&Num[0], Num.size());
   OutputChar(' ');
+  OutputChar('"');
   OutputString(&CurFilename[0], CurFilename.size());
+  OutputChar('"');
   
   switch (Reason) {
   case PPCallbacks::EnterFile:
