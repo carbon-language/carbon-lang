@@ -159,6 +159,9 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
       // Get the module we must link in.
       std::string moduleErrorMsg;
       std::auto_ptr<Module> AutoModule((*I)->releaseModule( &moduleErrorMsg ));
+      if (!moduleErrorMsg.empty())
+        return error("Could not load a module: " + moduleErrorMsg);
+
       Module* aModule = AutoModule.get();
 
       if (aModule != NULL) {
