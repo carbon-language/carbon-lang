@@ -770,6 +770,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
                              TextDiagnostics &OurDiagnosticClient,
                              HeaderSearch &HeaderInfo,
                              const LangOptions &LangInfo) {
+  bool ClearSourceMgr = false;
   switch (ProgAction) {
   default:
     fprintf(stderr, "Unexpected program action!\n");
@@ -783,6 +784,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
       PP.DumpToken(Tok, true);
       fprintf(stderr, "\n");
     } while (Tok.getKind() != tok::eof);
+    ClearSourceMgr = true;
     break;
   }
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
@@ -792,19 +794,23 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     do {
       PP.Lex(Tok);
     } while (Tok.getKind() != tok::eof);
+    ClearSourceMgr = true;
     break;
   }
     
   case PrintPreprocessedInput:       // -E mode.
     DoPrintPreprocessedInput(MainFileID, PP, LangInfo);
+    ClearSourceMgr = true;
     break;
     
   case ParseNoop:                    // -parse-noop
     ParseFile(PP, new MinimalAction(), MainFileID);
+    ClearSourceMgr = true;
     break;
     
   case ParsePrintCallbacks:
     ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
+    ClearSourceMgr = true;
     break;
   case ParseSyntaxOnly:              // -fsyntax-only
   case ParseAST:
@@ -826,7 +832,16 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
     HeaderInfo.PrintStats();
+    if (ClearSourceMgr)
+      SourceMgr.PrintStats();
     fprintf(stderr, "\n");
+  }
+
+  // For a multi-file compilation, some things are ok with nuking the source 
+  // manager tables, other require stable fileid/macroid's across multiple
+  // files.
+  if (ClearSourceMgr) {
+    SourceMgr.clearIDTables();
   }
 }
 

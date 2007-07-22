@@ -158,6 +158,11 @@ public:
   SourceManager() {}
   ~SourceManager();
   
+  void clearIDTables() {
+    FileIDs.clear();
+    MacroIDs.clear();
+  }
+  
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
