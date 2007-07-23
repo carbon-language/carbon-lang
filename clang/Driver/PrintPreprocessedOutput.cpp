@@ -517,7 +517,11 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
       OutputChar(' ');
     }
     
-    if (Tok.getLength() < 256) {
+    if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+      const char *Str = II->getName();
+      unsigned Len = Tok.needsCleaning() ? strlen(Str) : Tok.getLength();
+      OutputString(Str, Len);
+    } else if (Tok.getLength() < 256) {
       const char *TokPtr = Buffer;
       unsigned Len = PP.getSpelling(Tok, TokPtr);
       OutputString(TokPtr, Len);
