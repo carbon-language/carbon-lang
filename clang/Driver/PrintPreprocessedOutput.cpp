@@ -151,10 +151,13 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
   // If this line is "close enough" to the original line, just print newlines,
   // otherwise print a #line directive.
   if (LineNo-CurLine < 8) {
-    unsigned Line = CurLine;
-    for (; Line != LineNo; ++Line)
+    if (LineNo-CurLine == 1)
       OutputChar('\n');
-    CurLine = Line;
+    else {
+      const char *NewLines = "\n\n\n\n\n\n\n\n";
+      OutputString(NewLines, LineNo-CurLine);
+      CurLine = LineNo;
+    }
   } else {
     if (EmittedTokensOnThisLine) {
       OutputChar('\n');
