@@ -148,6 +148,21 @@ public:
 };
 }
 
+/// UToStr - Do itoa on the specified number, in-place in the specified buffer.
+/// endptr points to the end of the buffer.
+static char *UToStr(unsigned N, char *EndPtr) {
+  // Null terminate the buffer.
+  *--EndPtr = '\0';
+  if (N == 0)          // Zero is a special case.
+    *--EndPtr = '0';
+  while (N) {
+    *--EndPtr = '0' + char(N % 10);
+    N /= 10;
+  }
+  return EndPtr;
+}
+
+
 /// MoveToLine - Move the output to the source line specified by the location
 /// object.  We can do this by emitting some number of \n's, or be emitting a
 /// #line directive.
@@ -182,8 +197,9 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     
     OutputChar('#');
     OutputChar(' ');
-    std::string Num = llvm::utostr_32(LineNo);
-    OutputString(&Num[0], Num.size());
+    char NumberBuffer[20];
+    const char *NumStr = UToStr(LineNo, NumberBuffer+20);
+    OutputString(NumStr, (NumberBuffer+20)-NumStr-1);
     OutputChar(' ');
     OutputChar('"');
     OutputString(&CurFilename[0], CurFilename.size());
