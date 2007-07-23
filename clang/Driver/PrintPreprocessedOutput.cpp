@@ -426,7 +426,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
     if (Tok.getKind() == tok::equal ||
         Tok.getKind() == tok::equalequal)
       return true;
-    ConcatInfo &= ~ConcatInfo;
+    ConcatInfo &= ~aci_avoid_equal;
   }
   
   if (ConcatInfo == 0) return false;
@@ -540,7 +540,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
     } else if (Tok.hasLeadingSpace() || 
                // If we haven't emitted a token on this line yet, PrevTok isn't
                // useful to look at and no concatenation could happen anyway.
-               (!Callbacks->hasEmittedTokensOnThisLine() &&
+               (Callbacks->hasEmittedTokensOnThisLine() &&
                 // Don't print "-" next to "-", it would form "--".
                 Callbacks->AvoidConcat(PrevTok, Tok))) {
       OutputChar(' ');
