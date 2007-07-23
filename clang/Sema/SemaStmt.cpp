@@ -55,7 +55,7 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
                     SourceLocation DotDotDotLoc, ExprTy *rhsval,
                     SourceLocation ColonLoc, StmtTy *subStmt) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt);
-  Expr *LHSVal = ((Expr *)lhsval);
+  Expr *LHSVal = ((Expr *)lhsval), *RHSVal = ((Expr *)rhsval);
   assert((LHSVal != 0) && "missing expression in case statement");
   
   SourceLocation ExpLoc;
@@ -67,19 +67,19 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   }
 
   // GCC extension: The expression shall be an integer constant.
-  Expr *RHSVal = ((Expr *)rhsval);
   if (RHSVal && !RHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
     Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
          RHSVal->getSourceRange());
     return SubStmt;
   }
+  
+  if (SwitchStack.empty()) {
+    Diag(CaseLoc, diag::err_case_not_in_switch);
+    return SubStmt;
+  }
 
   CaseStmt *CS = new CaseStmt(LHSVal, RHSVal, SubStmt);
-  
-  assert(!SwitchStack.empty() && "missing push/pop in switch stack!");
-  SwitchStmt *SS = SwitchStack.back();
-  SS->addSwitchCase(CS);
- 
+  SwitchStack.back()->addSwitchCase(CS);
   return CS;
 }
 
@@ -87,18 +87,14 @@ Action::StmtResult
 Sema::ParseDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
                        StmtTy *subStmt, Scope *CurScope) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt);
-  Scope *S = CurScope->getBreakParent();
   
-  if (!S) {
+  if (SwitchStack.empty()) {
     Diag(DefaultLoc, diag::err_default_not_in_switch);
     return SubStmt;
   }
   
   DefaultStmt *DS = new DefaultStmt(DefaultLoc, SubStmt);
-
-  assert(!SwitchStack.empty() && "missing push/pop in switch stack!");
-  SwitchStmt *SS = SwitchStack.back();
-  SS->addSwitchCase(DS);
+  SwitchStack.back()->addSwitchCase(DS);
 
   return DS;
 }
