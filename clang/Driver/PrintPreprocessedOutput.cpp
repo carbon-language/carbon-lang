@@ -87,7 +87,20 @@ static void OutputString(const char *Ptr, unsigned Size) {
 #else
   if (OutBufCur+Size >= OutBufEnd)
     FlushBuffer();
-  memcpy(OutBufCur, Ptr, Size);
+  
+  switch (Size) {
+  default: 
+    memcpy(OutBufCur, Ptr, Size);
+    break;
+  case 3:
+    OutBufCur[2] = Ptr[2];
+  case 2:
+    OutBufCur[1] = Ptr[1];
+  case 1:
+    OutBufCur[0] = Ptr[0];
+  case 0:
+    break;
+  }
   OutBufCur += Size;
 #endif
 }
