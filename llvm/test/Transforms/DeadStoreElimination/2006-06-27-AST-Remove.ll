@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -dse -disable-output
+; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -fdse -disable-output
 target endian = big
 target pointersize = 32
 target triple = "powerpc-apple-darwin8"

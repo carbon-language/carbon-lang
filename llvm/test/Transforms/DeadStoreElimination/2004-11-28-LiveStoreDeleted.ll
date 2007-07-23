@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse -scalarrepl -instcombine | \
+; RUN: llvm-upgrade < %s | llvm-as | opt -fdse -scalarrepl -instcombine | \
 ; RUN:   llvm-dis | not grep {ret int undef}
 
 int %test(double %__x) {

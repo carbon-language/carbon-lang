@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | not grep DEAD
+; RUN: llvm-upgrade < %s | llvm-as | opt -fdse | llvm-dis | not grep DEAD
 
 void %test(int* %Q, int* %P) {
 	%DEAD = load int* %Q

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -dse | llvm-dis | grep store
+; RUN: llvm-upgrade < %s | llvm-as | opt -fdse | llvm-dis | grep store
 
 double %foo(sbyte* %X) {
         %X_addr = alloca sbyte*
