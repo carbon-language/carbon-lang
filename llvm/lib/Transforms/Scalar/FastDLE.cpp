@@ -69,6 +69,12 @@ bool FDLE::runOnBasicBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ++BBI) {
     // If we find a store or a free...
     if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
+      // We can't delete volatile loads
+      if (L->isVolatile()) {
+        lastLoad[L->getPointerOperand()] = L;
+        continue;
+      }
+      
       Value* pointer = L->getPointerOperand();
       LoadInst*& last = lastLoad[pointer];
       
