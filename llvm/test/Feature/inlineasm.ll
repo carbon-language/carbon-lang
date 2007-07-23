@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade %s -o - | llvm-as -o /dev/null -f
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > Output/t1.ll
-; RUN: llvm-as Output/t1.ll -o - | llvm-dis > Output/t2.ll
-; RUN: diff Output/t1.ll Output/t2.ll
+; RUN: llvm-upgrade < %s | llvm-as | llvm-dis > t1.ll
+; RUN: llvm-as t1.ll -o - | llvm-dis > t2.ll
+; RUN: diff t1.ll t2.ll
 
 
 module asm "this is an inline asm block"

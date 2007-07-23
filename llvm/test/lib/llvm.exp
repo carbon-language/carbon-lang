@@ -46,7 +46,6 @@ proc substitute { line test tmpFile } {
   global llvmgcc llvmgxx llvmgcc_version llvmgccmajvers 
   global gccpath gxxpath compile_c compile_cxx link shlibext llvmlibsdir
   set path [file join $srcdir $subdir]
-  set tmp  [file join Output $tmpFile]
 
   # Substitute all Tcl variables.
   set new_line [subst $line ]
@@ -72,7 +71,7 @@ proc substitute { line test tmpFile } {
   #replace %s with filename
   regsub -all {%s} $new_line $test new_line
   #replace %t with temp filenames
-  regsub -all {%t} $new_line [file join Output $tmpFile] new_line
+  regsub -all {%t} $new_line $tmpFile new_line
   #replace %% with %
   regsub -all {%%} $new_line % new_line
   return $new_line
@@ -94,6 +93,7 @@ proc RunLLVMTests { test_source_files } {
   }
   
   file mkdir Output
+  cd Output
 
   foreach test $test_source_files {
     #Should figure out best way to set the timeout
