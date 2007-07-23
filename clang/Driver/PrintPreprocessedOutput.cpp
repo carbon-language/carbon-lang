@@ -332,6 +332,10 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
   if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
     // Avoid spelling identifiers, the most common form of token.
     FirstChar = II->getName()[0];
+  } else if (!Tok.needsCleaning()) {
+    SourceManager &SrcMgr = PP.getSourceManager();
+    FirstChar =
+      *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()));
   } else if (Tok.getLength() < 256) {
     const char *TokPtr = Buffer;
     PP.getSpelling(Tok, TokPtr);
