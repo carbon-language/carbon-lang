@@ -1,4 +1,4 @@
--- RUN: %llvmgcc -c %s -o /dev/null
+-- RUN: %llvmgcc -c %s
 procedure Array_Size is
    subtype S is String (1 .. 2);
    type R is record
