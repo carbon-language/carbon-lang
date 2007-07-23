@@ -332,6 +332,13 @@ FunctionPass *createFastDeadStoreEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// FastDeadStoreElimination - This pass deletes loads that are dominated by
+// must-aliased loads and are not stored to between the loads.
+//
+FunctionPass *createFastDeadLoadEliminationPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
