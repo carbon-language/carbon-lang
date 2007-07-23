@@ -362,12 +362,12 @@ void Verifier::visitFunction(Function &F) {
   if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
     unsigned Idx = 1;
 
-    Assert(!Attrs->paramHasAttr(0, ParamAttr::ByVal),
-           "Attribute ByVal should not apply to functions!");
-    Assert(!Attrs->paramHasAttr(0, ParamAttr::StructRet),
-           "Attribute SRet should not apply to functions!");
-    Assert(!Attrs->paramHasAttr(0, ParamAttr::InReg),
-           "Attribute SRet should not apply to functions!");
+    Assert1(!Attrs->paramHasAttr(0, ParamAttr::ByVal),
+            "Attribute ByVal should not apply to functions!", &F);
+    Assert1(!Attrs->paramHasAttr(0, ParamAttr::StructRet),
+            "Attribute SRet should not apply to functions!", &F);
+    Assert1(!Attrs->paramHasAttr(0, ParamAttr::InReg),
+            "Attribute SRet should not apply to functions!", &F);
 
     for (FunctionType::param_iterator I = FT->param_begin(), 
          E = FT->param_end(); I != E; ++I, ++Idx) {
@@ -391,10 +391,10 @@ void Verifier::visitFunction(Function &F) {
                 "Attribute ByVal should only apply to pointer to structs!", &F);
       }
 
-      if (Attrs->paramHasAttr(Idx, ParamAttr::NoReturn))
-        Assert1(0, "Attribute NoReturn should only be applied to function", &F);
-      if (Attrs->paramHasAttr(Idx, ParamAttr::NoUnwind))
-        Assert1(0, "Attribute NoUnwind should only be applied to function", &F);
+      Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::NoReturn), 
+             "Attribute NoReturn should only be applied to function", &F);
+      Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::NoUnwind),
+             "Attribute NoUnwind should only be applied to function", &F);
     }
   }
 
