@@ -66,9 +66,6 @@ static cl::opt<bool> LinkAsLibrary("link-as-library",
 static cl::alias Relink("r", cl::aliasopt(LinkAsLibrary),
   cl::desc("Alias for -link-as-library"));
 
-static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
-  MachineArch("march", cl::desc("Architecture to generate assembly for:"));
-
 static cl::opt<bool> Native("native",
   cl::desc("Generate a native binary instead of a shell script"));
 
