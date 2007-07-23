@@ -254,8 +254,10 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   llvm::SmallVector<char, 128> FilenameBuffer;
   FilenameBuffer.resize(FilenameTok.getLength());
   
-  const char *FilenameStart = &FilenameBuffer[0], *FilenameEnd;
-  bool isAngled = GetIncludeFilenameSpelling(FilenameTok,
+  const char *FilenameStart = &FilenameBuffer[0];
+  unsigned Len = getSpelling(FilenameTok, FilenameStart);
+  const char *FilenameEnd = FilenameStart+Len;
+  bool isAngled = GetIncludeFilenameSpelling(FilenameTok.getLocation(),
                                              FilenameStart, FilenameEnd);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
   // error.

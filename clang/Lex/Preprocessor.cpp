@@ -1584,39 +1584,37 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
 /// caller is expected to provide a buffer that is large enough to hold the
 /// spelling of the filename, but is also expected to handle the case when
 /// this method decides to use a different buffer.
-bool Preprocessor::GetIncludeFilenameSpelling(const Token &FilenameTok,
+bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
                                               const char *&BufStart,
                                               const char *&BufEnd) {
   // Get the text form of the filename.
-  unsigned Len = getSpelling(FilenameTok, BufStart);
-  BufEnd = BufStart+Len;
   assert(BufStart != BufEnd && "Can't have tokens with empty spellings!");
   
   // Make sure the filename is <x> or "x".
   bool isAngled;
   if (BufStart[0] == '<') {
     if (BufEnd[-1] != '>') {
-      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+      Diag(Loc, diag::err_pp_expects_filename);
       BufStart = 0;
       return true;
     }
     isAngled = true;
   } else if (BufStart[0] == '"') {
     if (BufEnd[-1] != '"') {
-      Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+      Diag(Loc, diag::err_pp_expects_filename);
       BufStart = 0;
       return true;
     }
     isAngled = false;
   } else {
-    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+    Diag(Loc, diag::err_pp_expects_filename);
     BufStart = 0;
     return true;
   }
   
   // Diagnose #include "" as invalid.
   if (BufEnd-BufStart <= 2) {
-    Diag(FilenameTok.getLocation(), diag::err_pp_empty_filename);
+    Diag(Loc, diag::err_pp_empty_filename);
     BufStart = 0;
     return "";
   }
@@ -1646,8 +1644,10 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   llvm::SmallVector<char, 128> FilenameBuffer;
   FilenameBuffer.resize(FilenameTok.getLength());
   
-  const char *FilenameStart = &FilenameBuffer[0], *FilenameEnd;
-  bool isAngled = GetIncludeFilenameSpelling(FilenameTok,
+  const char *FilenameStart = &FilenameBuffer[0];
+  unsigned Len = getSpelling(FilenameTok, FilenameStart);
+  const char *FilenameEnd = FilenameStart+Len;
+  bool isAngled = GetIncludeFilenameSpelling(FilenameTok.getLocation(),
                                              FilenameStart, FilenameEnd);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
   // error.

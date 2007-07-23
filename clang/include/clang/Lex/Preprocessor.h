@@ -409,7 +409,7 @@ private:
   /// caller is expected to provide a buffer that is large enough to hold the
   /// spelling of the filename, but is also expected to handle the case when
   /// this method decides to use a different buffer.
-  bool GetIncludeFilenameSpelling(const Token &FNTok,
+  bool GetIncludeFilenameSpelling(SourceLocation Loc,
                                   const char *&BufStart, const char *&BufEnd);
   
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
