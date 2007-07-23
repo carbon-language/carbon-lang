@@ -112,11 +112,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cvtss2si : GCCBuiltin<"__builtin_ia32_cvtss2si">,
               Intrinsic<[llvm_i32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse_cvtss2si64 : GCCBuiltin<"__builtin_ia32_cvtss2si64">,
+              Intrinsic<[llvm_i64_ty, llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_sse_cvttss2si : GCCBuiltin<"__builtin_ia32_cvttss2si">,
               Intrinsic<[llvm_i32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse_cvttss2si64 : GCCBuiltin<"__builtin_ia32_cvttss2si64">,
+              Intrinsic<[llvm_i64_ty, llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_sse_cvtsi2ss : GCCBuiltin<"__builtin_ia32_cvtsi2ss">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
                          llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse_cvtsi642ss : GCCBuiltin<"__builtin_ia32_cvtsi642ss">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
+                         llvm_i64_ty], [IntrNoMem]>;
 }
 
 // SIMD load ops
@@ -387,11 +394,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v2f64_ty, llvm_v4f32_ty], [IntrNoMem]>;
   def int_x86_sse2_cvtsd2si : GCCBuiltin<"__builtin_ia32_cvtsd2si">,
               Intrinsic<[llvm_i32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtsd2si64 : GCCBuiltin<"__builtin_ia32_cvtsd2si64">,
+              Intrinsic<[llvm_i64_ty, llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_cvttsd2si : GCCBuiltin<"__builtin_ia32_cvttsd2si">,
               Intrinsic<[llvm_i32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvttsd2si64 : GCCBuiltin<"__builtin_ia32_cvttsd2si64">,
+              Intrinsic<[llvm_i64_ty, llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_cvtsi2sd : GCCBuiltin<"__builtin_ia32_cvtsi2sd">,
               Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
                          llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_sse2_cvtsi642sd : GCCBuiltin<"__builtin_ia32_cvtsi642sd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
+                         llvm_i64_ty], [IntrNoMem]>;
   def int_x86_sse2_cvtsd2ss : GCCBuiltin<"__builtin_ia32_cvtsd2ss">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
                          llvm_v2f64_ty], [IntrNoMem]>;
