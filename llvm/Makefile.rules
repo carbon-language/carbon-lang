@@ -391,7 +391,7 @@ endif
 ifndef VERBOSE
   Verb := @
   LibTool.Flags += --silent
-  AR.Flags += >/dev/null 2>/dev/null
+  AR.Flags += ">/dev/null 2>/dev/null"
   ConfigureScriptFLAGS += >$(PROJ_OBJ_DIR)/configure.out 2>&1
 else
   ConfigureScriptFLAGS := 
@@ -1471,7 +1471,7 @@ ifneq ($(strip $(filter-out clean clean-local dist-clean,$(MAKECMDGOALS)))),)
 DependFiles := $(basename $(filter %.cpp %.c %.cc, $(Sources)))
 DependFiles := $(DependFiles:%=$(PROJ_OBJ_DIR)/$(BuildMode)/%.d)
 
--include /dev/null $(DependFiles)
+-include $(DependFiles)
 
 endif
 
