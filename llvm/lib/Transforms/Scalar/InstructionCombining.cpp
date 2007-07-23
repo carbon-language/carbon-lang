@@ -3870,42 +3870,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           InsertNewInstBefore(BinaryOperator::createOr(V2, V3, "tmp"), I);
         return BinaryOperator::createAnd(V1, Or);
       }
-      
-      // (V1 & V3)|(V2 & ~V3) -> ((V1 ^ V2) & V3) ^ V2
-      // Disable this transformations temporarily. This causes
-      // mis-compilation when V2 is undefined.
-      if (0 && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-        // Try all combination of terms to find V3 and ~V3.
-        if (A->hasOneUse() && match(A, m_Not(m_Value(V3)))) {
-          if (V3 == B)
-            V1 = D, V2 = C;
-          else if (V3 == D)
-            V1 = B, V2 = C;
-        }
-        if (B->hasOneUse() && match(B, m_Not(m_Value(V3)))) {
-          if (V3 == A)
-            V1 = C, V2 = D;
-          else if (V3 == C)
-            V1 = A, V2 = D;
-        }
-        if (C->hasOneUse() && match(C, m_Not(m_Value(V3)))) {
-          if (V3 == B)
-            V1 = D, V2 = A;
-          else if (V3 == D)
-            V1 = B, V2 = A;
-        }
-        if (D->hasOneUse() && match(D, m_Not(m_Value(V3)))) {
-          if (V3 == A)
-            V1 = C, V2 = B;
-          else if (V3 == C)
-            V1 = A, V2 = B;
-        }
-        if (V1) {
-          A = InsertNewInstBefore(BinaryOperator::createXor(V1, V2, "tmp"), I);
-          A = InsertNewInstBefore(BinaryOperator::createAnd(A, V3, "tmp"), I);
-          return BinaryOperator::createXor(A, V2);
-        }
-      }
     }
   }
   
