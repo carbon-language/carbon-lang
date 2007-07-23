@@ -122,6 +122,7 @@ public:
   }
   
   void SetEmittedTokensOnThisLine() { EmittedTokensOnThisLine = true; }
+  bool hasEmittedTokensOnThisLine() const { return EmittedTokensOnThisLine; }
   
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            DirectoryLookup::DirType FileType);
@@ -305,6 +306,67 @@ struct UnknownPragmaHandler : public PragmaHandler {
 };
 } // end anonymous namespace
 
+
+enum AvoidConcatInfo {
+  /// By default, a token never needs to avoid concatenation.  Most tokens (e.g.
+  /// ',', ')', etc) don't cause a problem when concatenated.
+  aci_never_avoid_concat = 0,
+
+  /// aci_custom_firstchar - AvoidConcat contains custom code to handle this
+  /// token's requirements, and it needs to know the first character of the
+  /// token.
+  aci_custom_firstchar = 1,
+
+  /// aci_custom - AvoidConcat contains custom code to handle this token's
+  /// requirements, but it doesn't need to know the first character of the
+  /// token.
+  aci_custom = 2,
+  
+  /// aci_avoid_equal - Many tokens cannot be safely followed by an '='
+  /// character.  For example, "<<" turns into "<<=" when followed by an =.
+  aci_avoid_equal = 4
+};
+
+/// This array contains information for each token on what action to take when
+/// avoiding concatenation of tokens in the AvoidConcat method.
+static char TokenInfo[tok::NUM_TOKENS];
+
+/// InitAvoidConcatTokenInfo - Tokens that must avoid concatenation should be
+/// marked by this function.
+static void InitAvoidConcatTokenInfo() {
+  // These tokens have custom code in AvoidConcat.
+  TokenInfo[tok::identifier      ] |= aci_custom;
+  TokenInfo[tok::numeric_constant] |= aci_custom_firstchar;
+  TokenInfo[tok::period          ] |= aci_custom_firstchar;
+  TokenInfo[tok::amp             ] |= aci_custom_firstchar;
+  TokenInfo[tok::plus            ] |= aci_custom_firstchar;
+  TokenInfo[tok::minus           ] |= aci_custom_firstchar;
+  TokenInfo[tok::slash           ] |= aci_custom_firstchar;
+  TokenInfo[tok::less            ] |= aci_custom_firstchar;
+  TokenInfo[tok::greater         ] |= aci_custom_firstchar;
+  TokenInfo[tok::pipe            ] |= aci_custom_firstchar;
+  TokenInfo[tok::percent         ] |= aci_custom_firstchar;
+  TokenInfo[tok::colon           ] |= aci_custom_firstchar;
+  TokenInfo[tok::hash            ] |= aci_custom_firstchar;
+  TokenInfo[tok::arrow           ] |= aci_custom_firstchar;
+  
+  // These tokens change behavior if followed by an '='.
+  TokenInfo[tok::amp         ] |= aci_avoid_equal;           // &=
+  TokenInfo[tok::plus        ] |= aci_avoid_equal;           // +=
+  TokenInfo[tok::minus       ] |= aci_avoid_equal;           // -=
+  TokenInfo[tok::slash       ] |= aci_avoid_equal;           // /=
+  TokenInfo[tok::less        ] |= aci_avoid_equal;           // <=
+  TokenInfo[tok::greater     ] |= aci_avoid_equal;           // >=
+  TokenInfo[tok::pipe        ] |= aci_avoid_equal;           // |=
+  TokenInfo[tok::percent     ] |= aci_avoid_equal;           // %=
+  TokenInfo[tok::star        ] |= aci_avoid_equal;           // *=
+  TokenInfo[tok::exclaim     ] |= aci_avoid_equal;           // !=
+  TokenInfo[tok::lessless    ] |= aci_avoid_equal;           // <<=
+  TokenInfo[tok::greaterequal] |= aci_avoid_equal;           // >>=
+  TokenInfo[tok::caret       ] |= aci_avoid_equal;           // ^=
+  TokenInfo[tok::equal       ] |= aci_avoid_equal;           // ==
+}
+
 /// AvoidConcat - If printing PrevTok immediately followed by Tok would cause
 /// the two individual tokens to be lexed as a single token, return true (which
 /// causes a space to be printed between them).  This allows the output of -E
@@ -320,16 +382,35 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
                                            const Token &Tok) {
   char Buffer[256];
   
-  // If we haven't emitted a token on this line yet, PrevTok isn't useful to
-  // look at and no concatenation could happen anyway.
-  if (!EmittedTokensOnThisLine)
-    return false;
+  tok::TokenKind PrevKind = PrevTok.getKind();
+  if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
+    PrevKind = tok::identifier;
+ 
+  // Look up information on when we should avoid concatenation with prevtok.
+  unsigned ConcatInfo = TokenInfo[PrevKind];
+  
+  // If prevtok never causes a problem for anything after it, return quickly.
+  if (ConcatInfo == 0) return false;
 
+  if (ConcatInfo & aci_avoid_equal) {
+    // If the next token is '=' or '==', avoid concatenation.
+    if (Tok.getKind() == tok::equal ||
+        Tok.getKind() == tok::equalequal)
+      return true;
+    ConcatInfo &= ~ConcatInfo;
+  }
+  
+  if (ConcatInfo == 0) return false;
+
+  
+  
   // Basic algorithm: we look at the first character of the second token, and
   // determine whether it, if appended to the first token, would form (or would
   // contribute) to a larger token if concatenated.
-  char FirstChar;
-  if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
+  char FirstChar = 0;
+  if (ConcatInfo & aci_custom) {
+    // If the token does not need to know the first character, don't get it.
+  } else if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
     // Avoid spelling identifiers, the most common form of token.
     FirstChar = II->getName()[0];
   } else if (!Tok.needsCleaning()) {
@@ -343,52 +424,56 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
   } else {
     FirstChar = PP.getSpelling(Tok)[0];
   }
-  
-  tok::TokenKind PrevKind = PrevTok.getKind();
-  if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
-    PrevKind = tok::identifier;
-  
+ 
   switch (PrevKind) {
-  default: return false;
+  default: assert(0 && "InitAvoidConcatTokenInfo built wrong");
   case tok::identifier:   // id+id or id+number or id+L"foo".
-    return isalnum(FirstChar) || FirstChar == '_';
+    if (Tok.getKind() == tok::numeric_constant || Tok.getIdentifierInfo() ||
+        Tok.getKind() == tok::wide_string_literal /* ||
+        Tok.getKind() == tok::wide_char_literal*/)
+      return true;
+    if (Tok.getKind() != tok::char_constant)
+      return false;
+      
+    // FIXME: need a wide_char_constant!
+    if (!Tok.needsCleaning()) {
+      SourceManager &SrcMgr = PP.getSourceManager();
+      return *SrcMgr.getCharacterData(SrcMgr.getPhysicalLoc(Tok.getLocation()))
+             == 'L';
+    } else if (Tok.getLength() < 256) {
+      const char *TokPtr = Buffer;
+      PP.getSpelling(Tok, TokPtr);
+      return TokPtr[0] == 'L';
+    } else {
+      return PP.getSpelling(Tok)[0] == 'L';
+    }
   case tok::numeric_constant:
     return isalnum(FirstChar) || Tok.getKind() == tok::numeric_constant ||
            FirstChar == '+' || FirstChar == '-' || FirstChar == '.';
   case tok::period:          // ..., .*, .1234
     return FirstChar == '.' || FirstChar == '*' || isdigit(FirstChar);
-  case tok::amp:             // &&, &=
-    return FirstChar == '&' || FirstChar == '=';
-  case tok::plus:            // ++, +=
-    return FirstChar == '+' || FirstChar == '=';
-  case tok::minus:           // --, ->, -=, ->*
-    return FirstChar == '-' || FirstChar == '>' || FirstChar == '=';
-  case tok::slash:           // /=, /*, //
-    return FirstChar == '=' || FirstChar == '*' || FirstChar == '/';
-  case tok::less:            // <<, <<=, <=, <?=, <?, <:, <%
-    return FirstChar == '<' || FirstChar == '?' || FirstChar == '=' ||
-           FirstChar == ':' || FirstChar == '%';
-  case tok::greater:         // >>, >=, >>=, >?=, >?
-    return FirstChar == '>' || FirstChar == '?' || FirstChar == '=';
-  case tok::pipe:            // ||, |=
-    return FirstChar == '|' || FirstChar == '=';
-  case tok::percent:         // %=, %>, %:
-    return FirstChar == '=' || FirstChar == '>' || FirstChar == ':';
+  case tok::amp:             // &&
+    return FirstChar == '&';
+  case tok::plus:            // ++
+    return FirstChar == '+';
+  case tok::minus:           // --, ->, ->*
+    return FirstChar == '-' || FirstChar == '>';
+  case tok::slash:           //, /*, //
+    return FirstChar == '*' || FirstChar == '/';
+  case tok::less:            // <<, <<=, <:, <%
+    return FirstChar == '<' || FirstChar == ':' || FirstChar == '%';
+  case tok::greater:         // >>, >>=
+    return FirstChar == '>';
+  case tok::pipe:            // ||
+    return FirstChar == '|';
+  case tok::percent:         // %>, %:
+    return FirstChar == '>' || FirstChar == ':';
   case tok::colon:           // ::, :>
     return FirstChar == ':' || FirstChar == '>';
   case tok::hash:            // ##, #@, %:%:
     return FirstChar == '#' || FirstChar == '@' || FirstChar == '%';
   case tok::arrow:           // ->*
     return FirstChar == '*';
-    
-  case tok::star:            // *=
-  case tok::exclaim:         // !=
-  case tok::lessless:        // <<=
-  case tok::greaterequal:    // >>=
-  case tok::caret:           // ^=
-  case tok::equal:           // ==
-    // Cases that concatenate only if the next char is =.
-    return FirstChar == '=';
   }
 }
 
@@ -401,6 +486,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
   
   InitOutputBuffer();
+  InitAvoidConcatTokenInfo();
   
   Token Tok, PrevTok;
   char Buffer[256];
@@ -423,8 +509,11 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
     if (Tok.isAtStartOfLine()) {
       Callbacks->HandleFirstTokOnLine(Tok);
     } else if (Tok.hasLeadingSpace() || 
-               // Don't print "-" next to "-", it would form "--".
-               Callbacks->AvoidConcat(PrevTok, Tok)) {
+               // If we haven't emitted a token on this line yet, PrevTok isn't
+               // useful to look at and no concatenation could happen anyway.
+               (!Callbacks->hasEmittedTokensOnThisLine() &&
+                // Don't print "-" next to "-", it would form "--".
+                Callbacks->AvoidConcat(PrevTok, Tok))) {
       OutputChar(' ');
     }
     
