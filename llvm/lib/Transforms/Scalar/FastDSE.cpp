@@ -1,4 +1,4 @@
-//===- DeadStoreElimination.cpp - Dead Store Elimination ------------------===//
+//===- FastDSE.cpp - Fast Dead Store Elimination --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
