@@ -1625,6 +1625,55 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
   return isAngled;
 }
 
+/// ConcatenateIncludeName - Handle cases where the #include name is expanded
+/// from a macro as multiple tokens, which need to be glued together.  This
+/// occurs for code like:
+///    #define FOO <a/b.h>
+///    #include FOO
+/// because in this case, "<a/b.h>" is returned as 7 tokens, not one.
+///
+/// This code concatenates and consumes tokens up to the '>' token.  It returns
+/// false if the > was found, otherwise it returns true if it finds and consumes
+/// the EOM marker.
+static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
+                                   Preprocessor &PP) {
+  Token CurTok;
+  
+  PP.Lex(CurTok);
+  while (CurTok.getKind() != tok::eom) {
+    // Append the spelling of this token to the buffer. If there was a space
+    // before it, add it now.
+    if (CurTok.hasLeadingSpace())
+      FilenameBuffer.push_back(' ');
+    
+    // Get the spelling of the token, directly into FilenameBuffer if possible.
+    unsigned PreAppendSize = FilenameBuffer.size();
+    FilenameBuffer.resize(PreAppendSize+CurTok.getLength());
+    
+    const char *BufPtr = &FilenameBuffer[PreAppendSize];
+    unsigned ActualLen = PP.getSpelling(CurTok, BufPtr);
+    
+    // If the token was spelled somewhere else, copy it into FilenameBuffer.
+    if (BufPtr != &FilenameBuffer[PreAppendSize])
+      memcpy(&FilenameBuffer[PreAppendSize], BufPtr, ActualLen);
+    
+    // Resize FilenameBuffer to the correct size.
+    if (CurTok.getLength() != ActualLen)
+      FilenameBuffer.resize(PreAppendSize+ActualLen);
+    
+    // If we found the '>' marker, return success.
+    if (CurTok.getKind() == tok::greater)
+      return false;
+    
+    PP.Lex(CurTok);
+  }
+
+  // If we hit the eom marker, emit an error and return true so that the caller
+  // knows the EOM has been read.
+  PP.Diag(CurTok.getLocation(), diag::err_pp_expects_filename);
+  return true;
+}
+
 /// HandleIncludeDirective - The "#include" tokens have just been read, read the
 /// file to be included from the lexer, then include it!  This is a common
 /// routine with functionality shared between #include, #include_next and
@@ -1636,23 +1685,46 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   Token FilenameTok;
   CurLexer->LexIncludeFilename(FilenameTok);
   
-  // If the token kind is EOM, the error has already been diagnosed.
-  if (FilenameTok.getKind() == tok::eom)
-    return;
-  
   // Reserve a buffer to get the spelling.
   llvm::SmallVector<char, 128> FilenameBuffer;
-  FilenameBuffer.resize(FilenameTok.getLength());
+  const char *FilenameStart, *FilenameEnd;
+
+  switch (FilenameTok.getKind()) {
+  case tok::eom:
+    // If the token kind is EOM, the error has already been diagnosed.
+    return;
   
-  const char *FilenameStart = &FilenameBuffer[0];
-  unsigned Len = getSpelling(FilenameTok, FilenameStart);
-  const char *FilenameEnd = FilenameStart+Len;
+  case tok::angle_string_literal:
+  case tok::string_literal:
+    FilenameBuffer.resize(FilenameTok.getLength());
+    FilenameStart = &FilenameBuffer[0];
+    unsigned Len = getSpelling(FilenameTok, FilenameStart);
+    FilenameEnd = FilenameStart+Len;
+    break;
+    
+  case tok::less:
+    // This could be a <foo/bar.h> file coming from a macro expansion.  In this
+    // case, glue the tokens together into FilenameBuffer and interpret those.
+    FilenameBuffer.push_back('<');
+    if (ConcatenateIncludeName(FilenameBuffer, *this))
+      return;   // Found <eom> but no ">"?  Diagnostic already emitted.
+    FilenameStart = &FilenameBuffer[0];
+    FilenameEnd = &FilenameBuffer[FilenameBuffer.size()];
+    break;
+  default:
+    Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
+    DiscardUntilEndOfDirective();
+    return;
+  }
+  
   bool isAngled = GetIncludeFilenameSpelling(FilenameTok.getLocation(),
                                              FilenameStart, FilenameEnd);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
   // error.
-  if (FilenameStart == 0)
+  if (FilenameStart == 0) {
+    DiscardUntilEndOfDirective();
     return;
+  }
   
   // Verify that there is nothing after the filename, other than EOM.  Use the
   // preprocessor to lex this in case lexing the filename entered a macro.
