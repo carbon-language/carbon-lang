@@ -227,14 +227,14 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     break;
   }
   case Type::Tagged:
-    if (RecordType *RT = dyn_cast<RecordType>(cast<TagType>(T))) {
-      const RecordLayout &Layout = getRecordLayout(RT->getDecl(), L);
-      Size = Layout.getSize();
-      Align = Layout.getAlignment();
-      break;
-    }
-    // FIXME: Handle enums.
-    assert(0 && "Unimplemented type sizes!");
+    RecordType *RT = dyn_cast<RecordType>(cast<TagType>(T));
+    if (!RT)
+      // FIXME: Handle enums.
+      assert(0 && "Unimplemented type sizes!");
+    const RecordLayout &Layout = getRecordLayout(RT->getDecl(), L);
+    Size = Layout.getSize();
+    Align = Layout.getAlignment();
+    break;
   }
   
   assert(Align && (Align & (Align-1)) == 0 && "Alignment must be power of 2");
