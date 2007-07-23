@@ -4676,8 +4676,8 @@ static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
   if (Loc.getOpcode() == ISD::FrameIndex) {
     if (BaseLoc.getOpcode() != ISD::FrameIndex)
       return false;
-    int FI  = dyn_cast<FrameIndexSDNode>(Loc)->getIndex();
-    int BFI = dyn_cast<FrameIndexSDNode>(BaseLoc)->getIndex();
+    int FI  = cast<FrameIndexSDNode>(Loc)->getIndex();
+    int BFI = cast<FrameIndexSDNode>(BaseLoc)->getIndex();
     int FS  = MFI->getObjectSize(FI);
     int BFS = MFI->getObjectSize(BFI);
     if (FS != BFS || FS != Size) return false;
@@ -4704,7 +4704,7 @@ static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI,
     return (GV->getAlignment() >= 16 && (Offset % 16) == 0);
   else {
     assert(Base->getOpcode() == ISD::FrameIndex && "Unexpected base node!");
-    int BFI = dyn_cast<FrameIndexSDNode>(Base)->getIndex();
+    int BFI = cast<FrameIndexSDNode>(Base)->getIndex();
     if (BFI < 0)
       // Fixed objects do not specify alignment, however the offsets are known.
       return ((Subtarget->getStackAlignment() % 16) == 0 &&

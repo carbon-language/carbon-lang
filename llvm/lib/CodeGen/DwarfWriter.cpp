@@ -1546,7 +1546,7 @@ private:
                 break;
               }
               
-              FromTy = dyn_cast<DerivedTypeDesc>(FromTy)->getFromType();
+              FromTy = cast<DerivedTypeDesc>(FromTy)->getFromType();
             }
             
             // Unless we have a bit field.

@@ -3210,7 +3210,7 @@ HandleSDNode::~HandleSDNode() {
 GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
                                          MVT::ValueType VT, int o)
   : SDNode(isa<GlobalVariable>(GA) &&
-           dyn_cast<GlobalVariable>(GA)->isThreadLocal() ?
+           cast<GlobalVariable>(GA)->isThreadLocal() ?
            // Thread Local
            (isTarget ? ISD::TargetGlobalTLSAddress : ISD::GlobalTLSAddress) :
            // Non Thread Local
