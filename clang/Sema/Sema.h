@@ -271,6 +271,9 @@ public:
   virtual ExprResult ParseAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                     IdentifierInfo *LabelII);
   
+  virtual ExprResult ParseStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
+                                   SourceLocation RPLoc); // "({..})"
+  
   /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,

@@ -468,8 +468,14 @@ void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
 
 void StmtPrinter::VisitAddrLabel(AddrLabel *Node) {
   OS << "&&" << Node->getLabel()->getName();
-  
 }
+
+void StmtPrinter::VisitStmtExpr(StmtExpr *E) {
+  OS << "(";
+  PrintRawCompoundStmt(E->getSubStmt());
+  OS << ")";
+}
+
 
 // C++
 

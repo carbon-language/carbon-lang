@@ -364,11 +364,19 @@ public:
     return 0;
   }
   
+  //===---------------------- GNU Extension Expressions -------------------===//
+
   virtual ExprResult ParseAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                     IdentifierInfo *LabelII) { // "&&foo"
     return 0;
   }
   
+  virtual ExprResult ParseStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
+                                   SourceLocation RPLoc) { // "({..})"
+    return 0;
+  }
+
+  //===------------------------- C++ Expressions --------------------------===//
   
   /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,

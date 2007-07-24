@@ -107,13 +107,17 @@ public:
   CompoundStmt(Stmt **StmtStart, unsigned NumStmts)
     : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts) {}
   
+  bool body_empty() const { return Body.empty(); }
+  
   typedef llvm::SmallVector<Stmt*, 16>::iterator body_iterator;
   body_iterator body_begin() { return Body.begin(); }
   body_iterator body_end() { return Body.end(); }
+  Stmt *body_back() { return Body.back(); }
 
   typedef llvm::SmallVector<Stmt*, 16>::const_iterator const_body_iterator;
   const_body_iterator body_begin() const { return Body.begin(); }
   const_body_iterator body_end() const { return Body.end(); }
+  const Stmt *body_back() const { return Body.back(); }
   
   void push_back(Stmt *S) { Body.push_back(S); }
     

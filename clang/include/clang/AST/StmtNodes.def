@@ -65,11 +65,12 @@ STMT(48, CompoundLiteralExpr  , Expr)
 
 // GNU Extensions.
 STMT(49, AddrLabel            , Expr)
+STMT(50, StmtExpr             , Expr)
 
 // C++ Expressions.
-STMT(50, CXXCastExpr          , Expr)
-STMT(51, CXXBoolLiteralExpr   , Expr)
-LAST_EXPR(51)
+STMT(51, CXXCastExpr          , Expr)
+STMT(52, CXXBoolLiteralExpr   , Expr)
+LAST_EXPR(52)
 
 #undef STMT
 #undef FIRST_STMT

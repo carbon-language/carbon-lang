@@ -539,7 +539,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw___real:     // unary-expression: '__real' cast-expression [GNU]
   case tok::kw___imag:     // unary-expression: '__imag' cast-expression [GNU]
   case tok::kw___extension__:{//unary-expression:'__extension__' cast-expr [GNU]
-    // FIXME: Extension not handled correctly here!
+    // FIXME: Extension should silence extwarns in subexpressions.
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
@@ -853,15 +853,19 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
                                                 SourceLocation &RParenLoc) {
   assert(Tok.getKind() == tok::l_paren && "Not a paren expr!");
   SourceLocation OpenLoc = ConsumeParen();
-  ExprResult Result(false);
+  ExprResult Result(true);
   CastTy = 0;
   
   if (ExprType >= CompoundStmt && Tok.getKind() == tok::l_brace &&
       !getLang().NoExtensions) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    ParseCompoundStatement();
+    Parser::StmtResult Stmt = ParseCompoundStatement();
     ExprType = CompoundStmt;
-    // TODO: Build AST for GNU compound stmt.
+    
+    // If the substmt parsed correctly, build the AST node.
+    if (!Stmt.isInvalid && Tok.getKind() == tok::r_paren)
+      Result = Actions.ParseStmtExpr(OpenLoc, Stmt.Val, Tok.getLocation());
+    
   } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
     // Otherwise, this is a compound literal expression or cast expression.
     TypeTy *Ty = ParseTypeName();

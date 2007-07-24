@@ -134,7 +134,7 @@ public:
   static bool classof(const DeclRefExpr *) { return true; }
 };
 
-// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__
+/// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__.
 class PreDefinedExpr : public Expr {
 public:
   enum IdentType {
@@ -661,7 +661,33 @@ public:
   }
   static bool classof(const AddrLabel *) { return true; }
 };
+
+/// StmtExpr - This is the GNU Statement Expression extension: ({int X=4; X;}).
+/// The StmtExpr contains a single CompoundStmt node, which it evaluates and
+/// takes the value of the last subexpression.
+class StmtExpr : public Expr {
+  CompoundStmt *SubStmt;
+  SourceLocation LParenLoc, RParenLoc;
+public:
+    StmtExpr(CompoundStmt *substmt, QualType T,
+             SourceLocation lp, SourceLocation rp)
+    : Expr(StmtExprClass, T), SubStmt(substmt),  LParenLoc(lp), RParenLoc(rp) {
+    }
   
+  CompoundStmt *getSubStmt() { return SubStmt; }
+  const CompoundStmt *getSubStmt() const { return SubStmt; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(LParenLoc, RParenLoc);
+  }
+  
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == StmtExprClass; 
+  }
+  static bool classof(const StmtExpr *) { return true; }
+};
+
 }  // end namespace clang
 
 #endif

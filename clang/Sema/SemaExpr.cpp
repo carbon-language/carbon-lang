@@ -1476,3 +1476,26 @@ Sema::ExprResult Sema::ParseAddrLabel(SourceLocation OpLoc,
                        Context.getPointerType(Context.VoidTy));
 }
 
+Sema::ExprResult Sema::ParseStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
+                                     SourceLocation RPLoc) { // "({..})"
+  Stmt *SubStmt = static_cast<Stmt*>(substmt);
+  assert(SubStmt && isa<CompoundStmt>(SubStmt) && "Invalid action invocation!");
+  CompoundStmt *Compound = cast<CompoundStmt>(SubStmt);
+
+  // FIXME: there are a variety of strange constraints to enforce here, for
+  // example, it is not possible to goto into a stmt expression apparently.
+  // More semantic analysis is needed.
+  
+  // FIXME: the last statement in the compount stmt has its value used.  We
+  // should not warn about it being unused.
+
+  // If there are sub stmts in the compound stmt, take the type of the last one
+  // as the type of the stmtexpr.
+  QualType Ty = Context.VoidTy;
+  
+  if (!Compound->body_empty())
+    if (Expr *LastExpr = dyn_cast<Expr>(Compound->body_back()))
+      Ty = LastExpr->getType();
+  
+  return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
+}
