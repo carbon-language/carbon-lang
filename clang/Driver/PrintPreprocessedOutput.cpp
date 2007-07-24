@@ -250,8 +250,10 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   OutputChar('#');
   OutputChar(' ');
-  std::string Num = llvm::utostr_32(CurLine);
-  OutputString(&Num[0], Num.size());
+  
+  char NumberBuffer[20];
+  const char *NumStr = UToStr(CurLine, NumberBuffer+20);
+  OutputString(NumStr, (NumberBuffer+20)-NumStr-1);
   OutputChar(' ');
   OutputChar('"');
   OutputString(&CurFilename[0], CurFilename.size());
