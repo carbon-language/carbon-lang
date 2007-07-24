@@ -84,7 +84,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
 //===----------------------------------------------------------------------===//
 
 /// SkipUntil - Read tokens until we get to the specified token, then consume
-/// it (unless DontConsume is false).  Because we cannot guarantee that the
+/// it (unless DontConsume is true).  Because we cannot guarantee that the
 /// token will ever occur, this skips to the next token, or to some likely
 /// good stopping point.  If StopAtSemi is true, skipping will stop at a ';'
 /// character.
