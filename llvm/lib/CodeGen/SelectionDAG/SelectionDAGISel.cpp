@@ -4799,7 +4799,7 @@ HazardRecognizer *SelectionDAGISel::CreateTargetHazardRecognizer() {
 /// actual value in the DAG on the RHS of an AND, and DesiredMaskS is the value
 /// specified in the .td file (e.g. 255).
 bool SelectionDAGISel::CheckAndMask(SDOperand LHS, ConstantSDNode *RHS, 
-                                    int64_t DesiredMaskS) {
+                                    int64_t DesiredMaskS) const {
   uint64_t ActualMask = RHS->getValue();
   uint64_t DesiredMask =DesiredMaskS & MVT::getIntVTBitMask(LHS.getValueType());
   
@@ -4828,7 +4828,7 @@ bool SelectionDAGISel::CheckAndMask(SDOperand LHS, ConstantSDNode *RHS,
 /// actual value in the DAG on the RHS of an OR, and DesiredMaskS is the value
 /// specified in the .td file (e.g. 255).
 bool SelectionDAGISel::CheckOrMask(SDOperand LHS, ConstantSDNode *RHS, 
-                                    int64_t DesiredMaskS) {
+                                    int64_t DesiredMaskS) const {
   uint64_t ActualMask = RHS->getValue();
   uint64_t DesiredMask =DesiredMaskS & MVT::getIntVTBitMask(LHS.getValueType());
   
