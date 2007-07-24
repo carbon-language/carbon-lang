@@ -367,7 +367,7 @@ void Verifier::visitFunction(Function &F) {
     Assert1(!Attrs->paramHasAttr(0, ParamAttr::StructRet),
             "Attribute SRet should not apply to functions!", &F);
     Assert1(!Attrs->paramHasAttr(0, ParamAttr::InReg),
-            "Attribute SRet should not apply to functions!", &F);
+            "Attribute InReg should not apply to functions!", &F);
 
     for (FunctionType::param_iterator I = FT->param_begin(), 
          E = FT->param_end(); I != E; ++I, ++Idx) {
