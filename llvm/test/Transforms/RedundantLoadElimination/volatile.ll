@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -fdle | llvm-dis | grep NOTDEAD
+; RUN: llvm-as < %s | opt -rle | llvm-dis | grep NOTDEAD
 
 define void @test(i32* %Q, i32* %P) {
   %A = load i32* %Q

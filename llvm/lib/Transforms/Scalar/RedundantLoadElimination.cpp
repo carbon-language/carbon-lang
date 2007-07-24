@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "fdle"
+#define DEBUG_TYPE "rle"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -30,9 +30,9 @@ using namespace llvm;
 STATISTIC(NumFastLoads, "Number of loads deleted");
 
 namespace {
-  struct VISIBILITY_HIDDEN FDLE : public FunctionPass {
+  struct VISIBILITY_HIDDEN RLE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    FDLE() : FunctionPass((intptr_t)&ID) {}
+    RLE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;
@@ -51,13 +51,13 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
   };
-  char FDLE::ID = 0;
-  RegisterPass<FDLE> X("fdle", "Fast Dead Load Elimination");
+  char RLE::ID = 0;
+  RegisterPass<RLE> X("rle", "Redundant Load Elimination");
 }
 
-FunctionPass *llvm::createFastDeadLoadEliminationPass() { return new FDLE(); }
+FunctionPass *llvm::createRedundantLoadEliminationPass() { return new RLE(); }
 
-bool FDLE::runOnBasicBlock(BasicBlock &BB) {
+bool RLE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   // Record the last-seen load from this pointer

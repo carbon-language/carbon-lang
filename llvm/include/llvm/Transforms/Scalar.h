@@ -332,10 +332,10 @@ FunctionPass *createFastDeadStoreEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
-// FastDeadLoadElimination - This pass deletes loads that are dominated by
+// RedundantLoadElimination - This pass deletes loads that are dominated by
 // must-aliased loads and are not stored to between the loads.
 //
-FunctionPass *createFastDeadLoadEliminationPass();
+FunctionPass *createRedundantLoadEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
