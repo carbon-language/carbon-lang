@@ -240,7 +240,7 @@ public:
   /// getSourceName - This method returns the name of the file or buffer that
   /// the SourceLocation specifies.  This can be modified with #line directives,
   /// etc.
-  std::string getSourceName(SourceLocation Loc);
+  const char *getSourceName(SourceLocation Loc);
 
   /// Given a SourceLocation object, return the logical location referenced by
   /// the ID.  This logical location is subject to #line directives, etc.

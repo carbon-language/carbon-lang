@@ -17,6 +17,7 @@
 #include "clang/Lex/Token.h"
 #include "clang/Lex/MultipleIncludeOpt.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/SmallVector.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -172,6 +173,10 @@ public:
   /// and " characters.  This does not add surrounding ""'s to the string.
   /// If Charify is true, this escapes the ' character instead of ".
   static std::string Stringify(const std::string &Str, bool Charify = false);
+  
+  /// Stringify - Convert the specified string into a C string by escaping '\'
+  /// and " characters.  This does not add surrounding ""'s to the string.
+  static void Stringify(llvm::SmallVectorImpl<char> &Str);
   
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.

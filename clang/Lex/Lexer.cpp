@@ -92,6 +92,17 @@ std::string Lexer::Stringify(const std::string &Str, bool Charify) {
   return Result;
 }
 
+/// Stringify - Convert the specified string into a C string by escaping '\'
+/// and " characters.  This does not add surrounding ""'s to the string.
+void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (Str[i] == '\\' || Str[i] == '"') {
+      Str.insert(Str.begin()+i, '\\');
+      ++i; ++e;
+    }
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 // Character information.

@@ -18,6 +18,7 @@
 #include "clang/Lex/Pragma.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
@@ -123,13 +124,13 @@ namespace {
 class PrintPPOutputPPCallbacks : public PPCallbacks {
   Preprocessor &PP;
   unsigned CurLine;
-  std::string CurFilename;
   bool EmittedTokensOnThisLine;
   DirectoryLookup::DirType FileType;
+  llvm::SmallString<512> CurFilename;
 public:
   PrintPPOutputPPCallbacks(Preprocessor &pp) : PP(pp) {
     CurLine = 0;
-    CurFilename = "<uninit>";
+    CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
     FileType = DirectoryLookup::NormalHeaderDir;
   }
@@ -237,7 +238,9 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   Loc = SourceMgr.getLogicalLoc(Loc);
   CurLine = SourceMgr.getLineNumber(Loc);
-  CurFilename = Lexer::Stringify(SourceMgr.getSourceName(Loc));
+  CurFilename.clear();
+  CurFilename += SourceMgr.getSourceName(Loc);
+  Lexer::Stringify(CurFilename);
   FileType = FileType;
   
   if (EmittedTokensOnThisLine) {
