@@ -2875,7 +2875,7 @@ public:
         std::string NodeName;
         if (!isRoot) {
           NodeName = "Tmp" + utostr(ResNo);
-          Code2 = "SDOperand " + NodeName + " = SDOperand(";
+          Code2 = "SDOperand " + NodeName + "(";
         } else {
           NodeName = "ResNode";
           if (!ResNodeDecled) {
@@ -2991,7 +2991,7 @@ public:
         bool NeedReplace = false;
         if (NodeHasOutFlag) {
           if (!InFlagDecled) {
-            emitCode("SDOperand InFlag = SDOperand(ResNode, " + 
+            emitCode("SDOperand InFlag(ResNode, " + 
                      utostr(NumResults + (unsigned)NodeHasChain) + ");");
             InFlagDecled = true;
           } else
