@@ -339,6 +339,13 @@ FunctionPass *createRedundantLoadEliminationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// GVN - This pass performs global value numbering and redundant load 
+// elimination cotemporaneously.
+//
+FunctionPass *createGVNPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
