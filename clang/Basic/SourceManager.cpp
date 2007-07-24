@@ -13,6 +13,7 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include <algorithm>
@@ -236,6 +237,50 @@ std::string SourceManager::getSourceName(SourceLocation Loc) {
   return getFileInfo(FileID)->Buffer->getBufferIdentifier();
 }
 
+static void ComputeLineNumbers(FileInfo *FI) DISABLE_INLINE;
+static void ComputeLineNumbers(FileInfo *FI) {
+  const MemoryBuffer *Buffer = FI->Buffer;
+  
+  // Find the file offsets of all of the *physical* source lines.  This does
+  // not look at trigraphs, escaped newlines, or anything else tricky.
+  std::vector<unsigned> LineOffsets;
+  
+  // Line #1 starts at char 0.
+  LineOffsets.push_back(0);
+  
+  const unsigned char *Buf = (const unsigned char *)Buffer->getBufferStart();
+  const unsigned char *End = (const unsigned char *)Buffer->getBufferEnd();
+  unsigned Offs = 0;
+  while (1) {
+    // Skip over the contents of the line.
+    // TODO: Vectorize this?  This is very performance sensitive for programs
+    // with lots of diagnostics and in -E mode.
+    const unsigned char *NextBuf = (const unsigned char *)Buf;
+    while (*NextBuf != '\n' && *NextBuf != '\r' && *NextBuf != '\0')
+      ++NextBuf;
+    Offs += NextBuf-Buf;
+    Buf = NextBuf;
+    
+    if (Buf[0] == '\n' || Buf[0] == '\r') {
+      // If this is \n\r or \r\n, skip both characters.
+      if ((Buf[1] == '\n' || Buf[1] == '\r') && Buf[0] != Buf[1])
+        ++Offs, ++Buf;
+      ++Offs, ++Buf;
+      LineOffsets.push_back(Offs);
+    } else {
+      // Otherwise, this is a null.  If end of file, exit.
+      if (Buf == End) break;
+      // Otherwise, skip the null.
+      ++Offs, ++Buf;
+    }
+  }
+  LineOffsets.push_back(Offs);
+  
+  // Copy the offsets into the FileInfo structure.
+  FI->NumLines = LineOffsets.size();
+  FI->SourceLineCache = new unsigned[LineOffsets.size()];
+  std::copy(LineOffsets.begin(), LineOffsets.end(), FI->SourceLineCache);
+}
 
 /// getLineNumber - Given a SourceLocation, return the physical line number
 /// for the position indicated.  This requires building and caching a table of
@@ -244,66 +289,66 @@ std::string SourceManager::getSourceName(SourceLocation Loc) {
 unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return 0;
-  FileInfo *FileInfo = getFileInfo(FileID);
+  FileInfo *FileInfo;
+  
+  if (LastLineNoFileIDQuery == FileID)
+    FileInfo = LastLineNoFileInfo;
+  else
+    FileInfo = getFileInfo(FileID);
   
   // If this is the first use of line information for this buffer, compute the
-  /// SourceLineCache for it on demand. 
-  if (FileInfo->SourceLineCache == 0) {
-    const MemoryBuffer *Buffer = FileInfo->Buffer;
-    
-    // Find the file offsets of all of the *physical* source lines.  This does
-    // not look at trigraphs, escaped newlines, or anything else tricky.
-    std::vector<unsigned> LineOffsets;
-    
-    // Line #1 starts at char 0.
-    LineOffsets.push_back(0);
-    
-    const unsigned char *Buf = (const unsigned char *)Buffer->getBufferStart();
-    const unsigned char *End = (const unsigned char *)Buffer->getBufferEnd();
-    unsigned Offs = 0;
-    while (1) {
-      // Skip over the contents of the line.
-      // TODO: Vectorize this?  This is very performance sensitive for programs
-      // with lots of diagnostics and in -E mode.
-      const unsigned char *NextBuf = (const unsigned char *)Buf;
-      while (*NextBuf != '\n' && *NextBuf != '\r' && *NextBuf != '\0')
-        ++NextBuf;
-      Offs += NextBuf-Buf;
-      Buf = NextBuf;
-      
-      if (Buf[0] == '\n' || Buf[0] == '\r') {
-        // If this is \n\r or \r\n, skip both characters.
-        if ((Buf[1] == '\n' || Buf[1] == '\r') && Buf[0] != Buf[1])
-          ++Offs, ++Buf;
-        ++Offs, ++Buf;
-        LineOffsets.push_back(Offs);
-      } else {
-        // Otherwise, this is a null.  If end of file, exit.
-        if (Buf == End) break;
-        // Otherwise, skip the null.
-        ++Offs, ++Buf;
-      }
-    }
-    LineOffsets.push_back(Offs);
-    
-    // Copy the offsets into the FileInfo structure.
-    FileInfo->NumLines = LineOffsets.size();
-    FileInfo->SourceLineCache = new unsigned[LineOffsets.size()];
-    std::copy(LineOffsets.begin(), LineOffsets.end(),
-              FileInfo->SourceLineCache);
-  }
+  /// SourceLineCache for it on demand.
+  if (FileInfo->SourceLineCache == 0)
+    ComputeLineNumbers(FileInfo);
 
   // Okay, we know we have a line number table.  Do a binary search to find the
   // line number that this character position lands on.
-  unsigned NumLines = FileInfo->NumLines;
   unsigned *SourceLineCache = FileInfo->SourceLineCache;
-    
+  unsigned *SourceLineCacheStart = SourceLineCache;
+  unsigned *SourceLineCacheEnd = SourceLineCache + FileInfo->NumLines;
+  
+  unsigned QueriedFilePos = getFullFilePos(Loc)+1;
+
+  // If the previous query was to the same file, we know both the file pos from
+  // that query and the line number returned.  This allows us to narrow the
+  // search space from the entire file to something near the match.
+  if (LastLineNoFileIDQuery == FileID) {
+    if (QueriedFilePos >= LastLineNoFilePos) {
+      SourceLineCache = SourceLineCache+LastLineNoResult-1;
+      
+      // The query is likely to be nearby the previous one.  Here we check to
+      // see if it is within 5, 10 or 20 lines.  It can be far away in cases
+      // where big comment blocks and vertical whitespace eat up lines but
+      // contribute no tokens.
+      if (SourceLineCache+5 < SourceLineCacheEnd) {
+        if (SourceLineCache[5] > QueriedFilePos)
+          SourceLineCacheEnd = SourceLineCache+5;
+        else if (SourceLineCache+10 < SourceLineCacheEnd) {
+          if (SourceLineCache[10] > QueriedFilePos)
+            SourceLineCacheEnd = SourceLineCache+10;
+          else if (SourceLineCache+20 < SourceLineCacheEnd) {
+            if (SourceLineCache[20] > QueriedFilePos)
+              SourceLineCacheEnd = SourceLineCache+20;
+          }
+        }
+      }
+    } else {
+      SourceLineCacheEnd = SourceLineCache+LastLineNoResult+1;
+    }
+  }
+  
+  unsigned *Pos;
   // TODO: If this is performance sensitive, we could try doing simple radix
   // type approaches to make good (tight?) initial guesses based on the
   // assumption that all lines are the same average size.
-  unsigned *Pos = std::lower_bound(SourceLineCache, SourceLineCache+NumLines,
-                                   getFullFilePos(Loc)+1);
-  return Pos-SourceLineCache;
+  Pos = std::lower_bound(SourceLineCache, SourceLineCacheEnd, QueriedFilePos);
+  unsigned LineNo = Pos-SourceLineCacheStart;
+  
+  LastLineNoFileIDQuery = FileID;
+  LastLineNoFileInfo = FileInfo;
+  LastLineNoFilePos = QueriedFilePos;
+  LastLineNoResult = LineNo;
+  return LineNo;
 }
 
 /// PrintStats - Print statistics to stderr.

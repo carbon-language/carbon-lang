@@ -154,13 +154,21 @@ class SourceManager {
   /// MacroIDs - Information about each MacroID.
   std::vector<SrcMgr::MacroIDInfo> MacroIDs;
   
+  /// LastLineNo - These ivars serve as a cache used in the getLineNumber
+  /// method which is used to speedup getLineNumber calls to nearby locations.
+  unsigned LastLineNoFileIDQuery;
+  SrcMgr::FileInfo *LastLineNoFileInfo;
+  unsigned LastLineNoFilePos;
+  unsigned LastLineNoResult;
 public:
-  SourceManager() {}
+  SourceManager() : LastLineNoFileIDQuery(~0U) {}
   ~SourceManager();
   
   void clearIDTables() {
     FileIDs.clear();
     MacroIDs.clear();
+    LastLineNoFileIDQuery = ~0U;
+    LastLineNoFileInfo = 0;
   }
   
   /// createFileID - Create a new FileID that represents the specified file
