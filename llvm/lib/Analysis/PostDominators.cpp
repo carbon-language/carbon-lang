@@ -112,8 +112,12 @@ void PostDominatorTree::calculate(Function &F) {
   // relationships.  These blocks, which have no successors, end with return and
   // unwind instructions.
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (succ_begin(I) == succ_end(I))
-      Roots.push_back(I);
+    if (succ_begin(I) == succ_end(I)) {
+      Instruction *Insn = I->getTerminator();
+      // Unreachable block is not a root node.
+      if (!isa<UnreachableInst>(Insn))
+        Roots.push_back(I);
+    }
   
   Vertex.push_back(0);
   
