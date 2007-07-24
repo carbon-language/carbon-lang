@@ -2495,6 +2495,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumZero  = 0;
   unsigned NumNonZero = 0;
   unsigned NonZeros = 0;
+  unsigned NumNonZeroImms = 0;
   std::set<SDOperand> Values;
   for (unsigned i = 0; i < NumElems; ++i) {
     SDOperand Elt = Op.getOperand(i);
@@ -2505,6 +2506,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       else {
         NonZeros |= (1 << i);
         NumNonZero++;
+        if (Elt.getOpcode() == ISD::Constant ||
+            Elt.getOpcode() == ISD::ConstantFP)
+          NumNonZeroImms++;
       }
     }
   }
@@ -2547,6 +2551,11 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
                          DAG.getNode(ISD::UNDEF, VT), Mask);
     }
   }
+
+  // A vector full of immediates; various special cases are already
+  // handled, so this is best done with a single constant-pool load.
+  if (NumNonZero == NumNonZeroImms)
+    return SDOperand();
 
   // Let legalizer expand 2-wide build_vectors.
   if (EVTBits == 64)
