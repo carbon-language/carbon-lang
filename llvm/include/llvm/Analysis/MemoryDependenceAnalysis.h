@@ -20,6 +20,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Compiler.h"
 #include <map>
 
@@ -37,6 +38,7 @@ class MemoryDependenceAnalysis : public FunctionPass {
   
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        bool local = true);
+    SmallPtrSet<Instruction*, 4> nonLocalHelper(Instruction* query, BasicBlock* block);
   public:
     
     static Instruction* NonLocal;
@@ -63,7 +65,9 @@ class MemoryDependenceAnalysis : public FunctionPass {
     /// getDependency - Return the instruction on which a memory operation
     /// depends, starting with start.
     Instruction* getDependency(Instruction* query, Instruction* start = 0,
-                               bool local = true);
+                               BasicBlock* block = 0);
+    
+    SmallPtrSet<Instruction*, 4> getNonLocalDependency(Instruction* query);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.

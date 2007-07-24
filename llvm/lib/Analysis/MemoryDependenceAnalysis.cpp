@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
 
 using namespace llvm;
@@ -26,7 +27,7 @@ using namespace llvm;
 char MemoryDependenceAnalysis::ID = 0;
   
 Instruction* MemoryDependenceAnalysis::NonLocal = (Instruction*)0;
-Instruction* MemoryDependenceAnalysis::None = (Instruction*)~0;
+Instruction* MemoryDependenceAnalysis::None = (Instruction*)(~0 - 1);
   
 // Register this pass...
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
@@ -100,15 +101,60 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, Instruc
   return NonLocal;
 }
 
+SmallPtrSet<Instruction*, 4> MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
+                                                                      BasicBlock* block) {
+  SmallPtrSet<Instruction*, 4> ret;
+  
+  Instruction* localDep = getDependency(query, block->end(), block);
+  if (localDep != NonLocal) {
+    ret.insert(localDep);
+    return ret;
+  }
+  
+  for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
+       PI != PE; ++PI) {
+    SmallPtrSet<Instruction*, 4> pred_deps = nonLocalHelper(query, *PI);
+    for (SmallPtrSet<Instruction*, 4>::iterator I = pred_deps.begin(),
+         E = pred_deps.end(); I != E; ++I)
+      ret.insert(*I);
+  }
+  
+  if (ret.empty())
+    ret.insert(None);
+  
+  return ret;
+}
+
+SmallPtrSet<Instruction*, 4> MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query) {
+  SmallPtrSet<Instruction*, 4> ret;
+  
+  Instruction* localDep = getDependency(query);
+  if (localDep != NonLocal) {
+    ret.insert(localDep);
+    return ret;
+  }
+  
+  BasicBlock* parent = query->getParent();
+  for (pred_iterator PI = pred_begin(parent), PE = pred_end(parent);
+       PI != PE; ++PI) {
+    SmallPtrSet<Instruction*, 4> pred_deps = nonLocalHelper(query, *PI);
+    for (SmallPtrSet<Instruction*, 4>::iterator I = pred_deps.begin(),
+         E = pred_deps.end(); I != E; ++I)
+      ret.insert(*I);
+  }
+  
+  if (ret.empty())
+    ret.insert(None);
+  
+  return ret;
+}
+
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local paramter indicates if the query should only
 /// evaluate dependencies within the same basic block.
 Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
                                                      Instruction* start,
-                                                     bool local) {
-  if (!local)
-    assert(0 && "Non-local memory dependence is not yet supported.");
-  
+                                                     BasicBlock* block) {
   // Start looking for dependencies with the queried inst
   BasicBlock::iterator QI = query;
   
@@ -154,7 +200,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   else
     return None;
   
-  BasicBlock::iterator blockBegin = query->getParent()->begin();
+  BasicBlock::iterator blockBegin = block ? block->begin()
+                                          : query->getParent()->begin();
   
   while (QI != blockBegin) {
     --QI;
