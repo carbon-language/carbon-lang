@@ -149,33 +149,23 @@ void SmallPtrSetImpl::Grow() {
 }
 
 SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
-  NumElements = that.NumElements;
-  NumTombstones = 0;
+  // If we're becoming small, prepare to insert into our stack space
   if (that.isSmall()) {
-    CurArraySize = that.CurArraySize;
     CurArray = &SmallArray[0];
-    // Copy the entire contents of the array, including the -1's and the null
-    // terminator.
-    memcpy(CurArray, that.CurArray, sizeof(void*)*(CurArraySize+1));
+  // Otherwise, allocate new heap space (unless we were the same size)
   } else {
-    CurArraySize = that.NumElements < 64 ? 128 : that.CurArraySize*2;
-    CurArray = (void**)malloc(sizeof(void*) * (CurArraySize+1));
+    CurArray = (void**)malloc(sizeof(void*) * (that.CurArraySize+1));
     assert(CurArray && "Failed to allocate memory?");
-    memset(CurArray, -1, CurArraySize*sizeof(void*));
-    
-    // The end pointer, always valid, is set to a valid element to help the
-    // iterator.
-    CurArray[CurArraySize] = 0;
-
-    // Copy over all valid entries.
-    for (void **BucketPtr = that.CurArray, **E = that.CurArray+that.CurArraySize;
-         BucketPtr != E; ++BucketPtr) {
-      // Copy over the element if it is valid.
-      void *Elt = *BucketPtr;
-      if (Elt != getTombstoneMarker() && Elt != getEmptyMarker())
-        *const_cast<void**>(FindBucketFor(Elt)) = Elt;
-    }
   }
+  
+  // Copy over the new array size
+  CurArraySize = that.CurArraySize;
+
+  // Copy over the contents from the other set
+  memcpy(CurArray, that.CurArray, sizeof(void*)*(CurArraySize+1));
+  
+  NumElements = that.NumElements;
+  NumTombstones = that.NumTombstones;
 }
 
 /// CopyFrom - implement operator= from a smallptrset that has the same pointer
