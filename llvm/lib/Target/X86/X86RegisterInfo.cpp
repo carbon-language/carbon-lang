@@ -1297,9 +1297,21 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
             
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-    for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
+
+    // FIXME: This is dirty hack. The code itself is pretty mess right now.
+    // It should be rewritten from scratch and generalized sometimes.
+    
+    // Determine maximum offset (minumum due to stack growth)
+    int64_t MaxOffset = 0;
+    for (unsigned I = 0, E = CSI.size(); I!=E; ++I)
+      MaxOffset = std::min(MaxOffset,
+                           MFI->getObjectOffset(CSI[I].getFrameIdx()));
+
+    // Calculate offsets
+    for (unsigned I = 0, E = CSI.size(); I!=E; ++I) {
       int64_t Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       unsigned Reg = CSI[I].getReg();
+      Offset = (MaxOffset-Offset+3*stackGrowth);
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);
       Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
