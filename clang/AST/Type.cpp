@@ -84,8 +84,16 @@ const ReferenceType *Type::isReferenceType() const {
   return 0;
 }
 
-bool Type::isArrayType() const {
-  return isa<ArrayType>(CanonicalType);
+const ArrayType *Type::isArrayType() const {
+  // If this is directly a reference type, return it.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
+    return ATy;
+  
+  // If this is a typedef for an array type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<ArrayType>(CanonicalType))
+    return cast<ArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
 }
 
 bool Type::isStructureType() const {

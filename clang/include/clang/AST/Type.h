@@ -35,6 +35,7 @@ namespace clang {
   class PointerType;
   class ReferenceType;
   class VectorType;
+  class ArrayType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -237,7 +238,7 @@ public:
   bool isDerivedType() const;
   const PointerType *isPointerType() const;
   const ReferenceType *isReferenceType() const;
-  bool isArrayType() const;
+  const ArrayType *isArrayType() const;
   bool isStructureType() const;   
   bool isUnionType() const;
   

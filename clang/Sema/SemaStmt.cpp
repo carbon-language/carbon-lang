@@ -318,9 +318,6 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   // we have a non-void function with an expression, continue checking
   QualType rhsType = RetValExp->getType();
 
-  if (lhsType == rhsType) // common case, fast path...
-    return new ReturnStmt(RetValExp);
-
   // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
   // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
   // function return.  

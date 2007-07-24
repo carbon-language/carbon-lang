@@ -433,10 +433,15 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       
       QualType lhsType = proto->getArgType(i);
       QualType rhsType = argExpr->getType();
-      
-      if (lhsType == rhsType) // common case, fast path...
-        continue;
+
+      // C99 6.7.5.3p7
+      if (const ArrayType *ary = lhsType->isArrayType())
+        lhsType = Context.getPointerType(ary->getElementType());
         
+      // C99 6.7.5.3p8
+      if (lhsType->isFunctionType())
+        lhsType = Context.getPointerType(lhsType);
+
       AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
                                                                       argExpr);
       SourceLocation l = argExpr->getLocStart();
@@ -638,7 +643,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
   }
   if (t->isFunctionType())
     promoteExprToType(e, Context.getPointerType(t));
-  else if (const ArrayType *ary = dyn_cast<ArrayType>(t.getCanonicalType()))
+  else if (const ArrayType *ary = t->isArrayType())
     promoteExprToType(e, Context.getPointerType(ary->getElementType()));
 }
 
@@ -793,6 +798,9 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 Sema::AssignmentCheckResult
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
+  if (lhsType == rhsType) // common case, fast path...
+    return Compatible;
+
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
       if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
@@ -1066,9 +1074,6 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
            lhsType.getAsString(), lex->getSourceRange());
       return QualType();
   }
-  if (lhsType == rhsType) // common case, fast path...
-    return lhsType;
-  
   AssignmentCheckResult result;
   
   if (compoundType.isNull())
