@@ -434,12 +434,10 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       QualType lhsType = proto->getArgType(i);
       QualType rhsType = argExpr->getType();
 
-      // C99 6.7.5.3p7
+      // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 
       if (const ArrayType *ary = lhsType->isArrayType())
         lhsType = Context.getPointerType(ary->getElementType());
-        
-      // C99 6.7.5.3p8
-      if (lhsType->isFunctionType())
+      else if (lhsType->isFunctionType())
         lhsType = Context.getPointerType(lhsType);
 
       AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
