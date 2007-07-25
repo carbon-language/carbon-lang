@@ -30,17 +30,6 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   
   NeedsSet = true;
   AddressSize = isPPC64 ? 8 : 4;
-  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
   DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
@@ -71,6 +60,18 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
   SupportsExceptionHandling = true;
+
+  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
+  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
+  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
+  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
+  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
+  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
+  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
+  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
+  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
+  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
   
   // In non-PIC modes, emit a special label before jump tables so that the
   // linker can perform more accurate dead code stripping.
@@ -93,4 +94,16 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
   StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
   UsedDirective = "\t# .no_dead_strip\t";
   WeakRefDirective = "\t.weak\t";
+
+  DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
+  DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
+  DwarfLineSection =    "\t.section\t.debug_line,\"\",@progbits";
+  DwarfFrameSection =   "\t.section\t.debug_frame,\"\",@progbits";
+  DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",@progbits";
+  DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",@progbits";
+  DwarfStrSection =     "\t.section\t.debug_str,\"\",@progbits";
+  DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
+  DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
+  DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
+  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 }

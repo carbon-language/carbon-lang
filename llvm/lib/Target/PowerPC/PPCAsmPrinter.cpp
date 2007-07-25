@@ -668,8 +668,8 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
       if (I->hasExternalLinkage()) {
         O << "\t.global " << name << '\n';
         O << "\t.type " << name << ", @object\n";
-        //O << "\t.zerofill __DATA, __common, " << name << ", "
-        //  << Size << ", " << Align;
+        O << name << ":\n";
+        O << "\t.zero " << Size << "\n";
       } else if (I->hasInternalLinkage()) {
         SwitchToDataSection("\t.data", I);
         O << TAI->getLCOMMDirective() << name << "," << Size;
