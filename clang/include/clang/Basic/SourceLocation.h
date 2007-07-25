@@ -161,6 +161,9 @@ public:
   SourceLocation Begin() const { return B; }
   SourceLocation End() const { return E; }
   
+  void setBegin(SourceLocation b) { B = b; }
+  void setEnd(SourceLocation e) { E = e; }
+  
   bool isValid() const { return B.isValid() && E.isValid(); }
 };
   

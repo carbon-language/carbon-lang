@@ -277,7 +277,6 @@ void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
   }
 
   // Okay, now we can infer the real type.
-  // TODO: infer real type.
   
   // TODO: return "auto function" and other bad things based on the real type.
   

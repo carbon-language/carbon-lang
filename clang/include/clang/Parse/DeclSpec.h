@@ -28,6 +28,9 @@ namespace clang {
 /// and function-specifiers.
 class DeclSpec {
 public:
+  SourceRange Range;
+  const SourceRange &getSourceRange() const { return Range; }
+  
   // storage-class-specifier
   enum SCS {
     SCS_unspecified,
@@ -414,8 +417,8 @@ struct DeclaratorChunk {
 /// Abstract declarators are used when parsing types, and don't have an
 /// identifier.  Normal declarators do have ID's.
 ///
-/// This is NOT intended to be a small value object: this should be a transient
-/// object that lives on the stack.
+/// Instances of this class should be a transient object that lives on the
+/// stack, not objects that are allocated in large quantities on the heap.
 class Declarator {
   const DeclSpec &DS;
   IdentifierInfo *Identifier;
@@ -458,6 +461,9 @@ public:
   const DeclSpec &getDeclSpec() const { return DS; }
   
   TheContext getContext() const { return Context; }
+  
+  // getSourceRange - FIXME: This should be implemented.
+  const SourceRange getSourceRange() const { return SourceRange(); }
   
   /// clear - Reset the contents of this Declarator.
   void clear() {

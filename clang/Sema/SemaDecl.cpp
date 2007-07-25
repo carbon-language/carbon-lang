@@ -278,6 +278,14 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
   Expr *Init = static_cast<Expr*>(init);
   IdentifierInfo *II = D.getIdentifier();
   
+  // All of these full declarators require an identifier.  If it doesn't have
+  // one, the ParsedFreeStandingDeclSpec action should be used.
+  if (II == 0) {
+    Diag(D.getDeclSpec().getSourceRange().Begin(), diag::err_declarator_need_ident,
+         D.getDeclSpec().getSourceRange(), D.getSourceRange());
+    return 0;
+  }
+  
   // See if this is a redefinition of a variable in the same scope.
   Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
                                     D.getIdentifierLoc(), S);

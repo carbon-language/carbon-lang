@@ -427,6 +427,8 @@ DIAG(err_invalid_storage_class_in_func_decl, ERROR,
      "invalid storage class specifier in function declarator")
 DIAG(err_invalid_reference_qualifier_application, ERROR,
      "'%0' qualifier may not be applied to a reference")
+DIAG(err_declarator_need_ident, ERROR,
+     "declarator requires an identifier")
 
 // Attributes
 DIAG(err_attribute_wrong_number_arguments, ERROR,

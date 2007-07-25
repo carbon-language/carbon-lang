@@ -296,7 +296,6 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   /// specifier-qualifier-list is a subset of declaration-specifiers.  Just
   /// parse declaration-specifiers and complain about extra stuff.
-  SourceLocation Loc = Tok.getLocation();
   ParseDeclarationSpecifiers(DS);
   
   // Validate declspec for type-name.
@@ -367,6 +366,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [C99]   'inline'
 ///
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
+  DS.Range.setBegin(Tok.getLocation());
   while (1) {
     int isInvalid = false;
     const char *PrevSpec = 0;
@@ -509,6 +509,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       else                 // extwarn.
         Diag(Tok, diag::ext_duplicate_declspec, PrevSpec);
     }
+    DS.Range.setEnd(Tok.getLocation());
     ConsumeToken();
   }
 }
@@ -527,7 +528,9 @@ bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
   if (Tok.getKind() != tok::identifier &&
       Tok.getKind() != tok::l_brace) {
     Diag(Tok, diag::err_expected_ident_lbrace);
-    // TODO: better error recovery here.
+    
+    // Skip the rest of this declarator, up until the comma or semicolon.
+    SkipUntil(tok::comma, true);
     return true;
   }
   
