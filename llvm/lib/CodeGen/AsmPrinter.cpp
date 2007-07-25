@@ -621,14 +621,17 @@ void AsmPrinter::EmitString(const std::string &String) const {
 //     Align = std::max(Align, ForcedAlignBits);
 //
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV,
-                               unsigned ForcedAlignBits) const {
+                               unsigned ForcedAlignBits, bool UseFillExpr,
+                               unsigned FillValue) const {
   if (GV && GV->getAlignment())
     NumBits = Log2_32(GV->getAlignment());
   NumBits = std::max(NumBits, ForcedAlignBits);
   
   if (NumBits == 0) return;   // No need to emit alignment.
   if (TAI->getAlignmentIsInBytes()) NumBits = 1 << NumBits;
-  O << TAI->getAlignDirective() << NumBits << "\n";
+  O << TAI->getAlignDirective() << NumBits;
+  if (UseFillExpr) O << ",0x" << std::hex << FillValue << std::dec;
+  O << "\n";
 }
 
     

@@ -251,7 +251,9 @@ namespace llvm {
     /// an explicit alignment requested, it will unconditionally override the
     /// alignment request.  However, if ForcedAlignBits is specified, this value
     /// has final say: the ultimate alignment will be the max of ForcedAlignBits
-    /// and the alignment computed with NumBits and the global.
+    /// and the alignment computed with NumBits and the global. If UseFillExpr
+    /// is true, it also emits an optional second value FillValue which the
+    /// assembler uses to fill gaps to match alignment.
     ///
     /// The algorithm is:
     ///     Align = NumBits;
@@ -259,7 +261,8 @@ namespace llvm {
     ///     Align = std::max(Align, ForcedAlignBits);
     ///
     void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0,
-                       unsigned ForcedAlignBits = 0) const;
+                       unsigned ForcedAlignBits = 0, bool UseFillExpr = false,
+                       unsigned FillValue = 0) const;
 
   protected:
     /// EmitZeros - Emit a block of zeros.
