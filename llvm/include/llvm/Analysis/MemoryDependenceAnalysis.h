@@ -39,7 +39,8 @@ class MemoryDependenceAnalysis : public FunctionPass {
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        bool local = true);
     bool nonLocalHelper(Instruction* query, BasicBlock* block,
-                        DenseMap<BasicBlock*, Value*>& resp);
+                        DenseMap<BasicBlock*, Value*>& resp,
+                        SmallPtrSet<BasicBlock*, 4>& visited);
   public:
     
     static Instruction* NonLocal;
