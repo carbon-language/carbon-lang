@@ -626,7 +626,7 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 bool LinuxAsmPrinter::doInitialization(Module &M) {
-  AsmPrinter::doInitialization(M);
+  bool Result = AsmPrinter::doInitialization(M);
   
   // GNU as handles section names wrapped in quotes
   Mang->setUseQuotes(true);
@@ -635,7 +635,7 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   
   // Emit initial debug information.
   DW.BeginModule(&M);
-  return false;
+  return Result;
 }
 
 bool LinuxAsmPrinter::doFinalization(Module &M) {
@@ -743,8 +743,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
   // Emit initial debug information.
   DW.EndModule();
 
-  AsmPrinter::doFinalization(M);
-  return false; // success
+  return AsmPrinter::doFinalization(M);
 }
 
 std::string LinuxAsmPrinter::getSectionForFunction(const Function &F) const {
@@ -858,7 +857,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
   O << "\t.machine " << CPUDirectives[Directive] << "\n";
      
-  AsmPrinter::doInitialization(M);
+  bool Result = AsmPrinter::doInitialization(M);
   
   // Darwin wants symbols to be quoted if they have complex names.
   Mang->setUseQuotes(true);
@@ -878,7 +877,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   
   // Emit initial debug information.
   DW.BeginModule(&M);
-  return false;
+  return Result;
 }
 
 bool DarwinAsmPrinter::doFinalization(Module &M) {
@@ -1078,8 +1077,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   // code that does this, it is always safe to set.
   O << "\t.subsections_via_symbols\n";
 
-  AsmPrinter::doFinalization(M);
-  return false; // success
+  return AsmPrinter::doFinalization(M);
 }
 
 

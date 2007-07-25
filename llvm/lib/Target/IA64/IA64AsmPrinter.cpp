@@ -248,13 +248,13 @@ void IA64AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool IA64AsmPrinter::doInitialization(Module &M) {
-  AsmPrinter::doInitialization(M);
+  bool Result = AsmPrinter::doInitialization(M);
 
   O << "\n.ident \"LLVM-ia64\"\n\n"
     << "\t.psr    lsb\n"  // should be "msb" on HP-UX, for starters
     << "\t.radix  C\n"
     << "\t.psr    abi64\n"; // we only support 64 bits for now
-  return false;
+  return Result;
 }
 
 bool IA64AsmPrinter::doFinalization(Module &M) {
@@ -344,8 +344,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
   }
   O << "\n\n";
   
-  AsmPrinter::doFinalization(M);
-  return false; // success
+  return AsmPrinter::doFinalization(M);
 }
 
 /// createIA64CodePrinterPass - Returns a pass that prints the IA64

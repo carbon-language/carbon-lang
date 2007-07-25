@@ -339,7 +339,7 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
-  X86SharedAsmPrinter::doInitialization(M);
+  bool Result = X86SharedAsmPrinter::doInitialization(M);
   
   Mang->markCharUnacceptable('.');
 
@@ -373,7 +373,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
     }
   }
 
-  return false;
+  return Result;
 }
 
 bool X86IntelAsmPrinter::doFinalization(Module &M) {
@@ -463,10 +463,10 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   }
   
   // Bypass X86SharedAsmPrinter::doFinalization().
-  AsmPrinter::doFinalization(M);
+  bool Result = AsmPrinter::doFinalization(M);
   SwitchToDataSection("");
   O << "\tend\n";
-  return false; // success
+  return Result;
 }
 
 void X86IntelAsmPrinter::EmitString(const ConstantArray *CVA) const {

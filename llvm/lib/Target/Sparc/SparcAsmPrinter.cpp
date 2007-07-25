@@ -286,6 +286,5 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
       }
     }
 
-  AsmPrinter::doFinalization(M);
-  return false; // success
+  return AsmPrinter::doFinalization(M);
 }

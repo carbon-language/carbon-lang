@@ -198,8 +198,7 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
   else
     O << "\t.arch ev6\n";
   O << "\t.set noat\n";
-  AsmPrinter::doInitialization(M);
-  return false;
+  return AsmPrinter::doInitialization(M);
 }
 
 bool AlphaAsmPrinter::doFinalization(Module &M) {
@@ -271,8 +270,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
     O << '\n';
   }
 
-  AsmPrinter::doFinalization(M);
-  return false;
+  return AsmPrinter::doFinalization(M);
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.

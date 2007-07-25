@@ -120,13 +120,13 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     DW.BeginModule(&M);
   }
 
-  AsmPrinter::doInitialization(M);
+  bool Result = AsmPrinter::doInitialization(M);
 
   // Darwin wants symbols to be quoted if they have complex names.
   if (Subtarget->isTargetDarwin())
     Mang->setUseQuotes(true);
 
-  return false;
+  return Result;
 }
 
 bool X86SharedAsmPrinter::doFinalization(Module &M) {
@@ -389,8 +389,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     DW.EndModule();
   }
 
-  AsmPrinter::doFinalization(M);
-  return false; // success
+  return AsmPrinter::doFinalization(M);
 }
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code
