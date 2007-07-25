@@ -111,6 +111,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   case Function::LinkOnceLinkage:
   case Function::WeakLinkage:
     if (Subtarget->isTargetDarwin()) {
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygMing()) {
