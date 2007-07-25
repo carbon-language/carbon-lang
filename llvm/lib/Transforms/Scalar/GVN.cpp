@@ -714,8 +714,15 @@ Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
   unsigned numPreds = std::distance(pred_begin(BB), pred_end(BB));
   
   if (numPreds == 1) {
-    Phis[BB] = Phis[*pred_begin(BB)];
-    return Phis[BB];
+    DenseMap<BasicBlock*, Value*>::iterator DI = Phis.find(BB);
+    if (DI != Phis.end()) {
+      Phis.insert(std::make_pair(BB, DI->second));
+      return DI->second;
+    } else {
+      Value* domV = performPHIConstruction(*pred_begin(BB), orig, Phis);
+      Phis.insert(std::make_pair(BB, domV));
+      return domV;
+    }
   } else {
     PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle", BB->begin());
     PN->reserveOperandSpace(numPreds);
