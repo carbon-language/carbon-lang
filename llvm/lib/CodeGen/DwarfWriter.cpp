@@ -1041,7 +1041,7 @@ public:
           Asm->EOL("Offset");
         } else if (Reg < 64) {
           Asm->EmitInt8(DW_CFA_offset + Reg);
-          Asm->EOL("DW_CFA_offset + Reg");
+          Asm->EOL("DW_CFA_offset + Reg (" + utostr(Reg) + ")");
           Asm->EmitULEB128Bytes(Offset);
           Asm->EOL("Offset");
         } else {

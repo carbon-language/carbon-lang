@@ -110,8 +110,9 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
 
     // Set up DWARF directives
     HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+
+    // Debug Information
     AbsoluteDebugSectionOffsets = true;
-    AbsoluteEHSectionOffsets = false;
     SupportsDebugInformation = true;
     DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
     DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
@@ -125,8 +126,10 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
     DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 
+    // Exceptions handling
     if (!Subtarget->is64Bit())
       SupportsExceptionHandling = true;
+    AbsoluteEHSectionOffsets = false;
     DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
     DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
     break;
