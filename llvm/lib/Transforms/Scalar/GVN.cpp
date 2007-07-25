@@ -651,7 +651,8 @@ namespace {
                             SmallVector<Instruction*, 4>& toErase);
     bool processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase);
     Value *performPHIConstruction(BasicBlock *BB, LoadInst* orig,
-                                  DenseMap<BasicBlock*, Value*> &Phis);
+                                  DenseMap<BasicBlock*, Value*> &Phis,
+                                  SmallPtrSet<BasicBlock*, 4>& visited);
     void dump(DenseMap<BasicBlock*, Value*>& d);
   };
   
@@ -706,7 +707,8 @@ void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
 
 
 Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
-                                   DenseMap<BasicBlock*, Value*> &Phis) {
+                                   DenseMap<BasicBlock*, Value*> &Phis,
+                                   SmallPtrSet<BasicBlock*, 4>& visited) {
   DenseMap<BasicBlock*, Value*>::iterator DI = Phis.find(BB);
   if (DI != Phis.end())
     return DI->second;
@@ -719,17 +721,25 @@ Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
       Phis.insert(std::make_pair(BB, DI->second));
       return DI->second;
     } else {
-      Value* domV = performPHIConstruction(*pred_begin(BB), orig, Phis);
+      visited.insert(BB);
+      Value* domV = performPHIConstruction(*pred_begin(BB), orig, Phis, visited);
+      visited.erase(BB);
+      
       Phis.insert(std::make_pair(BB, domV));
       return domV;
     }
   } else {
     PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle", BB->begin());
     PN->reserveOperandSpace(numPreds);
-                                 
+    
+    visited.insert(BB);
     // Fill in the incoming values for the block.
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-      PN->addIncoming(performPHIConstruction(*PI, orig, Phis), *PI);
+      if (!visited.count(*PI))
+        PN->addIncoming(performPHIConstruction(*PI, orig, Phis, visited), *PI);
+      else
+        PN->addIncoming(PN, *PI);
+    visited.erase(BB);
     
     bool all_same = PN->getNumIncomingValues() != 1;
     Value* first = PN->getIncomingValue(0);
@@ -772,7 +782,8 @@ bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase
       return false;
     }
   
-  Value* v = performPHIConstruction(L->getParent(), L, repl);
+  SmallPtrSet<BasicBlock*, 4> visited;
+  Value* v = performPHIConstruction(L->getParent(), L, repl, visited);
   
   MD.removeInstruction(L);
   L->replaceAllUsesWith(v);
