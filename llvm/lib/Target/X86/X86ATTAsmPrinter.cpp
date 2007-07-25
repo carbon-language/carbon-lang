@@ -99,19 +99,28 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
-    EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+    if (Subtarget->isTargetDarwin())
+      // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F, 0, true, 0x90);
+    else
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     break;
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
     //FALLS THROUGH
   case Function::ExternalLinkage:
-    EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+    if (Subtarget->isTargetDarwin())
+      // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F, 0, true, 0x90);
+    else
+      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
     O << "\t.globl\t" << CurrentFnName << "\n";    
     break;
   case Function::LinkOnceLinkage:
   case Function::WeakLinkage:
     if (Subtarget->isTargetDarwin()) {
-      EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
+      // FIXME: This should be parameterized somewhere.
+      EmitAlignment(4, F, 0, true, 0x90);
       O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygMing()) {
