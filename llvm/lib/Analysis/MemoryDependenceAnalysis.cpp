@@ -103,7 +103,8 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, Instruc
 
 bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
                                               BasicBlock* block,
-                                              DenseMap<BasicBlock*, Value*>& resp) {
+                                              DenseMap<BasicBlock*, Value*>& resp,
+                                              SmallPtrSet<BasicBlock*, 4>& visited) {
   if (resp.count(block))
     return resp[block] != None;
   
@@ -113,10 +114,15 @@ bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     return true;
   }
   
+  visited.insert(block);
+  
   bool inserted = false;
   for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
        PI != PE; ++PI)
-    inserted |= nonLocalHelper(query, *PI, resp);
+    if (!visited.count(*PI))
+      inserted |= nonLocalHelper(query, *PI, resp, visited);
+  
+  visited.erase(block);
   
   if (!inserted)
     resp.insert(std::make_pair(block, None));
@@ -133,11 +139,14 @@ bool MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
   }
   
   bool inserted = false;
+  SmallPtrSet<BasicBlock*, 4> visited;
+  visited.insert(query->getParent());
   
   BasicBlock* parent = query->getParent();
   for (pred_iterator PI = pred_begin(parent), PE = pred_end(parent);
        PI != PE; ++PI) {
-    inserted |= nonLocalHelper(query, *PI, resp);
+    if (!visited.count(*PI))
+      inserted |= nonLocalHelper(query, *PI, resp, visited);
   }
   
   if (!inserted)
