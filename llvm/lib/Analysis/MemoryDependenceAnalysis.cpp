@@ -26,8 +26,8 @@ using namespace llvm;
 
 char MemoryDependenceAnalysis::ID = 0;
   
-Instruction* MemoryDependenceAnalysis::NonLocal = (Instruction*)0;
-Instruction* MemoryDependenceAnalysis::None = (Instruction*)(~0 - 1);
+Instruction* MemoryDependenceAnalysis::NonLocal = (Instruction*)-2;
+Instruction* MemoryDependenceAnalysis::None = (Instruction*)-3;
   
 // Register this pass...
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
@@ -101,52 +101,49 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, Instruc
   return NonLocal;
 }
 
-SmallPtrSet<Instruction*, 4> MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
-                                                                      BasicBlock* block) {
-  SmallPtrSet<Instruction*, 4> ret;
+bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
+                                              BasicBlock* block,
+                                              DenseMap<BasicBlock*, Value*>& resp) {
+  if (resp.count(block))
+    return resp[block] != None;
   
-  Instruction* localDep = getDependency(query, block->end(), block);
+  Instruction* localDep = getDependency(query, 0, block);
   if (localDep != NonLocal) {
-    ret.insert(localDep);
-    return ret;
+    resp.insert(std::make_pair(block, localDep));
+    return true;
   }
   
+  bool inserted = false;
   for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
-       PI != PE; ++PI) {
-    SmallPtrSet<Instruction*, 4> pred_deps = nonLocalHelper(query, *PI);
-    for (SmallPtrSet<Instruction*, 4>::iterator I = pred_deps.begin(),
-         E = pred_deps.end(); I != E; ++I)
-      ret.insert(*I);
-  }
+       PI != PE; ++PI)
+    inserted |= nonLocalHelper(query, *PI, resp);
   
-  if (ret.empty())
-    ret.insert(None);
+  if (!inserted)
+    resp.insert(std::make_pair(block, None));
   
-  return ret;
+  return inserted;
 }
 
-SmallPtrSet<Instruction*, 4> MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query) {
-  SmallPtrSet<Instruction*, 4> ret;
-  
+bool MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
+                                                     DenseMap<BasicBlock*, Value*>& resp) {
   Instruction* localDep = getDependency(query);
   if (localDep != NonLocal) {
-    ret.insert(localDep);
-    return ret;
+    resp.insert(std::make_pair(query->getParent(), localDep));
+    return true;
   }
+  
+  bool inserted = false;
   
   BasicBlock* parent = query->getParent();
   for (pred_iterator PI = pred_begin(parent), PE = pred_end(parent);
        PI != PE; ++PI) {
-    SmallPtrSet<Instruction*, 4> pred_deps = nonLocalHelper(query, *PI);
-    for (SmallPtrSet<Instruction*, 4>::iterator I = pred_deps.begin(),
-         E = pred_deps.end(); I != E; ++I)
-      ret.insert(*I);
+    inserted |= nonLocalHelper(query, *PI, resp);
   }
   
-  if (ret.empty())
-    ret.insert(None);
+  if (!inserted)
+    resp.insert(std::make_pair(query->getParent(), None));
   
-  return ret;
+  return inserted;
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -163,12 +160,14 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   // If we have a _confirmed_ cached entry, return it
   if (cachedResult.second)
     return cachedResult.first;
-  else if (cachedResult.first != NonLocal)
+  else if (cachedResult.first && cachedResult.first != NonLocal)
   // If we have an unconfirmed cached entry, we can start our search from there
     QI = cachedResult.first;
   
   if (start)
     QI = start;
+  else if (!start && block)
+    QI = block->end();
   
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   TargetData& TD = getAnalysis<TargetData>();
@@ -212,7 +211,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && S->isVolatile()) {
-        if (!start) {
+        if (!start || block) {
           depGraphLocal.insert(std::make_pair(query, std::make_pair(S, true)));
           reverseDep.insert(std::make_pair(S, query));
         }
@@ -225,7 +224,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && L->isVolatile()) {
-        if (!start) {
+        if (!start || block) {
           depGraphLocal.insert(std::make_pair(query, std::make_pair(L, true)));
           reverseDep.insert(std::make_pair(L, query));
         }
@@ -253,7 +252,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       // Call insts need special handling.  Check is they can modify our pointer
       if (AA.getModRefInfo(CallSite::get(QI), dependee, dependeeSize) !=
           AliasAnalysis::NoModRef) {
-        if (!start) {
+        if (!start || block) {
           depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
           reverseDep.insert(std::make_pair(QI, query));
         }
@@ -270,7 +269,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
                                               dependee, dependeeSize);
       
       if (R != AliasAnalysis::NoAlias) {
-        if (!start) {
+        if (!start || block) {
           depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
           reverseDep.insert(std::make_pair(QI, query));
         }
@@ -281,7 +280,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   }
   
   // If we found nothing, return the non-local flag
-  if (!start) {
+  if (!start || block) {
     depGraphLocal.insert(std::make_pair(query,
                                         std::make_pair(NonLocal, true)));
     reverseDep.insert(std::make_pair(NonLocal, query));

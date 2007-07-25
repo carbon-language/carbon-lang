@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "gvn"
 #include "llvm/Value.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/DerivedTypes.h"
@@ -648,6 +649,10 @@ namespace {
                             ValueNumberedSet& currAvail,
                             DenseMap<Value*, LoadInst*>& lastSeenLoad,
                             SmallVector<Instruction*, 4>& toErase);
+    bool processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase);
+    Value *performPHIConstruction(BasicBlock *BB, LoadInst* orig,
+                                  DenseMap<BasicBlock*, Value*> &Phis);
+    void dump(DenseMap<BasicBlock*, Value*>& d);
   };
   
   char GVN::ID = 0;
@@ -687,6 +692,88 @@ void GVN::val_insert(ValueNumberedSet& s, Value* v) {
     s.insert(v);
 }
 
+void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
+  printf("{\n");
+  for (DenseMap<BasicBlock*, Value*>::iterator I = d.begin(),
+       E = d.end(); I != E; ++I) {
+    if (I->second == MemoryDependenceAnalysis::None)
+      printf("None\n");
+    else
+      I->second->dump();
+  }
+  printf("}\n");
+}
+
+
+Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
+                                   DenseMap<BasicBlock*, Value*> &Phis) {
+  DenseMap<BasicBlock*, Value*>::iterator DI = Phis.find(BB);
+  if (DI != Phis.end())
+    return DI->second;
+  
+  unsigned numPreds = std::distance(pred_begin(BB), pred_end(BB));
+  
+  if (numPreds == 1) {
+    Phis[BB] = Phis[*pred_begin(BB)];
+    return Phis[BB];
+  } else {
+    PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle", BB->begin());
+    PN->reserveOperandSpace(numPreds);
+                                 
+    // Fill in the incoming values for the block.
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+      PN->addIncoming(performPHIConstruction(*PI, orig, Phis), *PI);
+    
+    bool all_same = PN->getNumIncomingValues() != 1;
+    Value* first = PN->getIncomingValue(0);
+    for (unsigned i = 1; i < PN->getNumIncomingValues(); ++i)
+      all_same &= (PN->getIncomingValue(i) == first);
+    
+    if (all_same) {
+      PN->eraseFromParent();
+      return first;
+    } else {
+      return PN;
+    }
+  }
+}
+
+bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase) {
+  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  
+  DenseMap<BasicBlock*, Value*> deps;
+  bool ret = MD.getNonLocalDependency(L, deps);
+  if (!ret)
+    return false;
+  
+  DenseMap<BasicBlock*, Value*> repl;
+  for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(), E = deps.end();
+       I != E; ++I)
+    if (I->second == MemoryDependenceAnalysis::None) {
+      return false;
+    } else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
+      if (S->getPointerOperand() == L->getPointerOperand())
+        repl.insert(std::make_pair(I->first, S->getOperand(0)));
+      else
+        return false;
+    } else if (LoadInst* LD = dyn_cast<LoadInst>(I->second)) {
+      if (LD->getPointerOperand() == L->getPointerOperand())
+        repl.insert(std::make_pair(I->first, LD));
+      else
+        return false;
+    } else {
+      return false;
+    }
+  
+  Value* v = performPHIConstruction(L->getParent(), L, repl);
+  
+  MD.removeInstruction(L);
+  L->replaceAllUsesWith(v);
+  toErase.push_back(L);
+
+  return true;
+}
+
 bool GVN::processLoad(LoadInst* L,
                          DenseMap<Value*, LoadInst*>& lastLoad,
                          SmallVector<Instruction*, 4>& toErase) {
@@ -701,6 +788,9 @@ bool GVN::processLoad(LoadInst* L,
   // ... to a pointer that has been loaded from before...
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   Instruction* dep = MD.getDependency(L);
+  if (dep == MemoryDependenceAnalysis::NonLocal &&
+      L->getParent() != &L->getParent()->getParent()->getEntryBlock())
+    processNonLocalLoad(L, toErase);
   bool deletedLoad = false;
   
   while (dep != MemoryDependenceAnalysis::None &&
@@ -802,15 +892,17 @@ bool GVN::runOnFunction(Function &F) {
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ++BI) {
-      processInstruction(BI, currAvail, lastSeenLoad, toErase);
+      changed_function |= processInstruction(BI, currAvail, lastSeenLoad, toErase);
+      
+      NumGVNInstr += toErase.size();
+      
+      for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
+           E = toErase.end(); I != E; ++I)
+        (*I)->eraseFromParent();
+      
+      toErase.clear();
     }
   }
-  
-  NumGVNInstr = toErase.size();
-  
-  for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
-       E = toErase.end(); I != E; ++I)
-    (*I)->eraseFromParent();
   
   return changed_function;
 }

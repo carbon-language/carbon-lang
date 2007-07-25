@@ -38,7 +38,8 @@ class MemoryDependenceAnalysis : public FunctionPass {
   
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        bool local = true);
-    SmallPtrSet<Instruction*, 4> nonLocalHelper(Instruction* query, BasicBlock* block);
+    bool nonLocalHelper(Instruction* query, BasicBlock* block,
+                        DenseMap<BasicBlock*, Value*>& resp);
   public:
     
     static Instruction* NonLocal;
@@ -67,7 +68,8 @@ class MemoryDependenceAnalysis : public FunctionPass {
     Instruction* getDependency(Instruction* query, Instruction* start = 0,
                                BasicBlock* block = 0);
     
-    SmallPtrSet<Instruction*, 4> getNonLocalDependency(Instruction* query);
+    bool getNonLocalDependency(Instruction* query,
+                               DenseMap<BasicBlock*, Value*>& resp);
     
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
