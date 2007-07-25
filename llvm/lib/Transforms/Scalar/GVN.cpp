@@ -738,8 +738,12 @@ Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
       if (!visited.count(*PI))
         PN->addIncoming(performPHIConstruction(*PI, orig, Phis, visited), *PI);
-      else
-        PN->addIncoming(Phis[*PI], *PI);
+      else {
+        if (Phis[*PI])
+          PN->addIncoming(Phis[*PI], *PI);
+        else
+          PN->addIncoming(PN, *PI);
+      }
     visited.erase(BB);
     
     bool all_same = PN->getNumIncomingValues() != 1;
