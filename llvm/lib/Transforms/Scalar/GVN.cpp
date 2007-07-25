@@ -731,6 +731,7 @@ Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
   } else {
     PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle", BB->begin());
     PN->reserveOperandSpace(numPreds);
+    Phis[BB] = PN;
     
     visited.insert(BB);
     // Fill in the incoming values for the block.
@@ -738,7 +739,7 @@ Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
       if (!visited.count(*PI))
         PN->addIncoming(performPHIConstruction(*PI, orig, Phis, visited), *PI);
       else
-        PN->addIncoming(PN, *PI);
+        PN->addIncoming(Phis[*PI], *PI);
     visited.erase(BB);
     
     bool all_same = PN->getNumIncomingValues() != 1;
@@ -748,6 +749,7 @@ Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
     
     if (all_same) {
       PN->eraseFromParent();
+      Phis[BB] = first;
       return first;
     } else {
       return PN;
