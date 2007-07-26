@@ -39,7 +39,6 @@ void MachineInstr::addImplicitDefUseOperands() {
       Op.IsKill = false;
       Op.IsDead = false;
       Op.contents.RegNo = *ImpDefs;
-      Op.auxInfo.subReg = 0;
       Operands.push_back(Op);
     }
   if (TID->ImplicitUses)
@@ -51,7 +50,6 @@ void MachineInstr::addImplicitDefUseOperands() {
       Op.IsKill = false;
       Op.IsDead = false;
       Op.contents.RegNo = *ImpUses;
-      Op.auxInfo.subReg = 0;
       Operands.push_back(Op);
     }
 }
