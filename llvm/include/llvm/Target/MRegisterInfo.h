@@ -68,6 +68,7 @@ private:
   const sc_iterator SubClasses;
   const sc_iterator SuperClasses;
   const sc_iterator SubRegClasses;
+  const sc_iterator SuperRegClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
@@ -76,9 +77,10 @@ public:
                       const TargetRegisterClass * const *subcs,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
+                      const TargetRegisterClass * const *superregcs,
                       unsigned RS, unsigned Al, iterator RB, iterator RE)
     : ID(id), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
-    SubRegClasses(subregcs),
+    SubRegClasses(subregcs), SuperRegClasses(superregcs),
     RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
@@ -131,9 +133,9 @@ public:
     return I;
   }
 
-  /// hasSubRegClass - return true if the specified TargetRegisterClass is a
+  /// hasSubClass - return true if the specified TargetRegisterClass is a
   /// sub-register class of this TargetRegisterClass.
-  bool hasSubRegClass(const TargetRegisterClass *cs) const {
+  bool hasSubClass(const TargetRegisterClass *cs) const {
     for (int i = 0; SubClasses[i] != NULL; ++i) 
       if (SubClasses[i] == cs)
         return true;
@@ -152,9 +154,9 @@ public:
     return I;
   }
   
-  /// hasSuperRegClass - return true if the specified TargetRegisterClass is a
+  /// hasSuperClass - return true if the specified TargetRegisterClass is a
   /// super-register class of this TargetRegisterClass.
-  bool hasSuperRegClass(const TargetRegisterClass *cs) const {
+  bool hasSuperClass(const TargetRegisterClass *cs) const {
     for (int i = 0; SuperClasses[i] != NULL; ++i) 
       if (SuperClasses[i] == cs)
         return true;
@@ -173,9 +175,9 @@ public:
     return I;
   }
   
-  /// hasSubRegForClass - return true if the specified TargetRegisterClass is a
+  /// hasSubRegClass - return true if the specified TargetRegisterClass is a
   /// class of a sub-register class for this TargetRegisterClass.
-  bool hasSubRegForClass(const TargetRegisterClass *cs) const {
+  bool hasSubRegClass(const TargetRegisterClass *cs) const {
     for (int i = 0; SubRegClasses[i] != NULL; ++i) 
       if (SubRegClasses[i] == cs)
         return true;
@@ -199,6 +201,7 @@ public:
     for (unsigned i = 0; SubRegClasses[i] != NULL; ++i) 
       if (i == SubReg)
         return &SubRegClasses[i];
+    assert(0 && "Invalid subregister index for register class");
     return NULL;
   }
   
@@ -210,6 +213,18 @@ public:
   
   sc_iterator subregclasses_end() const {
     sc_iterator I = SubRegClasses;
+    while (*I != NULL) ++I;
+    return I;
+  }
+  
+  /// superregclasses_begin / superregclasses_end - Loop over all of
+  /// the superregister classes of this register class.
+  sc_iterator superregclasses_begin() const {
+    return SuperRegClasses;
+  }
+  
+  sc_iterator superregclasses_end() const {
+    sc_iterator I = SuperRegClasses;
     while (*I != NULL) ++I;
     return I;
   }
