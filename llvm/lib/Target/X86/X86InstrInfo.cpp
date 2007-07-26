@@ -402,11 +402,7 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   }
 }
 
-// For purposes of branch analysis do not count FP_REG_KILL as a terminator.
 bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  if (MI->getOpcode() == X86::FP_REG_KILL)
-    return false;
-
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   if (TID->Flags & M_TERMINATOR_FLAG) {
     // Conditional branch is a special case.
@@ -419,20 +415,28 @@ bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   return false;
 }
 
+// For purposes of branch analysis do not count FP_REG_KILL as a terminator.
+static bool isBrAnalysisUnpredicatedTerminator(const MachineInstr *MI,
+                                               const X86InstrInfo &TII) {
+  if (MI->getOpcode() == X86::FP_REG_KILL)
+    return false;
+  return TII.isUnpredicatedTerminator(MI);
+}
+
 bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB, 
                                  MachineBasicBlock *&TBB,
                                  MachineBasicBlock *&FBB,
                                  std::vector<MachineOperand> &Cond) const {
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin() || !isUnpredicatedTerminator(--I))
+  if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this))
     return false;
 
   // Get the last instruction in the block.
   MachineInstr *LastInst = I;
   
   // If there is only one terminator instruction, process it.
-  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
+  if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this)) {
     if (!isBranch(LastInst->getOpcode()))
       return true;
     
@@ -457,7 +461,8 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   MachineInstr *SecondLastInst = I;
   
   // If there are three terminators, we don't know what sort of block this is.
-  if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
+  if (SecondLastInst && I != MBB.begin() &&
+      isBrAnalysisUnpredicatedTerminator(--I, *this))
     return true;
 
   // If the block ends with X86::JMP and a conditional branch, handle it.
