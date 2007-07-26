@@ -585,10 +585,6 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         (lhptee->isObjectType() || lhptee->isIncompleteType()))
       return rexT;
 
-    // FIXME: C99 6.5.15p6: If both operands are pointers to compatible types
-    // *or* to differently qualified versions of compatible types, the result
-    // type is a pointer to an appropriately qualified version of the 
-    // *composite* type.
     if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
                                   rhptee.getUnqualifiedType())) {
       Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
@@ -596,6 +592,11 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
            lex->getSourceRange(), rex->getSourceRange());
       return lexT; // FIXME: this is an _ext - is this return o.k?
     }
+    // The pointer types are compatible.
+    // C99 6.5.15p6: If both operands are pointers to compatible types *or* to 
+    // differently qualified versions of compatible types, the result type is a 
+    // pointer to an appropriately qualified version of the *composite* type.
+    return lexT; // FIXME: Need to return the composite type.
   }
   if (lexT->isVoidType() && rexT->isVoidType()) // C99 6.5.15p3
     return lexT;
