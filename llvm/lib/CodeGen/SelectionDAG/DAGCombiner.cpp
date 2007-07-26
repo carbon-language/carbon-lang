@@ -4599,8 +4599,8 @@ bool DAGCombiner::isAlias(SDOperand Ptr1, int64_t Size1,
 
   if (CombinerGlobalAA) {
     // Use alias analysis information.
-    int Overlap1 = Size1 + SrcValueOffset1 + Offset1;
-    int Overlap2 = Size2 + SrcValueOffset2 + Offset2;
+    int Overlap1 = Size1 + SrcValueOffset1;
+    int Overlap2 = Size2 + SrcValueOffset2;
     AliasAnalysis::AliasResult AAResult = 
                              AA.alias(SrcValue1, Overlap1, SrcValue2, Overlap2);
     if (AAResult == AliasAnalysis::NoAlias)
