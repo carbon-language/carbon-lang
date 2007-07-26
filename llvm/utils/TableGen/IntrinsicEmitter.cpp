@@ -309,7 +309,7 @@ EmitNoMemoryInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
       break;
     }
   }
-  OS << "    return true; // These intrinsics have no side effects.\n";
+  OS << "    return true; // These intrinsics do not reference memory.\n";
   OS << "  }\n";
   OS << "#endif\n\n";
 }
