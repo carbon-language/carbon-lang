@@ -50,6 +50,8 @@ std::string MVT::getValueTypeString(MVT::ValueType VT) {
   case MVT::v2f32: return "v2f32";
   case MVT::v4f32: return "v4f32";
   case MVT::v2f64: return "v2f64";
+  case MVT::v3i32: return "v3i32";
+  case MVT::v3f32: return "v3f32";
   }
 }
 
@@ -83,6 +85,8 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   case MVT::v2f32: return VectorType::get(Type::FloatTy, 2);
   case MVT::v4f32: return VectorType::get(Type::FloatTy, 4);
   case MVT::v2f64: return VectorType::get(Type::DoubleTy, 2);
+  case MVT::v3i32: return VectorType::get(Type::Int32Ty, 3);
+  case MVT::v3f32: return VectorType::get(Type::FloatTy, 3);
   }
 }
 

@@ -52,16 +52,19 @@ namespace MVT {  // MVT = Machine Value Types
     v1i64          =  16,   //  1 x i64
     v16i8          =  17,   // 16 x i8
     v8i16          =  18,   //  8 x i16
-    v4i32          =  19,   //  4 x i32
-    v2i64          =  20,   //  2 x i64
+    v3i32           = 19,   //  3 x i32
+    v4i32          =  20,   //  4 x i32
+    v2i64          =  21,   //  2 x i64
 
-    v2f32          =  21,   //  2 x f32
-    v4f32          =  22,   //  4 x f32
-    v2f64          =  23,   //  2 x f64
+    v2f32          =  22,   //  2 x f32
+    v3f32           = 23,   //  3 x f32
+    v4f32          =  24,   //  4 x f32
+    v2f64          =  25,   //  2 x f64
+    
     FIRST_VECTOR_VALUETYPE = v8i8,
     LAST_VECTOR_VALUETYPE  = v2f64,
 
-    LAST_VALUETYPE =  24,   // This always remains at the end of the list.
+    LAST_VALUETYPE =  26,   // This always remains at the end of the list.
 
     // iAny - An integer value of any bit width. This is used for intrinsics
     // that have overloadings based on integer bit widths. This is only for
@@ -133,10 +136,12 @@ namespace MVT {  // MVT = Machine Value Types
     case v4i16:
     case v8i16: return i16; 
     case v2i32:
+    case v3i32:
     case v4i32: return i32;
     case v1i64:
     case v2i64: return i64;
     case v2f32:
+    case v3f32:
     case v4f32: return f32;
     case v2f64: return f64;
     }
@@ -156,6 +161,8 @@ namespace MVT {  // MVT = Machine Value Types
     case v4i16:
     case v4i32: 
     case v4f32: return 4;
+    case v3i32:
+    case v3f32: return 3;
     case v2i32:
     case v2i64:
     case v2f32:
@@ -187,6 +194,8 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::v1i64:
     case MVT::v2f32: return 64;
     case MVT::f80 :  return 80;
+    case MVT::v3i32:
+    case MVT::v3f32: return 96;
     case MVT::f128:
     case MVT::i128: 
     case MVT::v16i8:
@@ -215,6 +224,7 @@ namespace MVT {  // MVT = Machine Value Types
       break;
     case MVT::i32:
       if (NumElements == 2)  return MVT::v2i32;
+      if (NumElements == 3)  return MVT::v3i32;
       if (NumElements == 4)  return MVT::v4i32;
       break;
     case MVT::i64:
@@ -223,6 +233,7 @@ namespace MVT {  // MVT = Machine Value Types
       break;
     case MVT::f32:
       if (NumElements == 2)  return MVT::v2f32;
+      if (NumElements == 3)  return MVT::v3f32;
       if (NumElements == 4)  return MVT::v4f32;
       break;
     case MVT::f64:
@@ -244,6 +255,7 @@ namespace MVT {  // MVT = Machine Value Types
     default: return getVectorType(i8, NumElts);
     case  1: return v1i64;
     case  2: return v2i32;
+    case  3: return v3i32;
     case  4: return v4i16;
     case  8: return v8i8;
     case 16: return v16i8;
