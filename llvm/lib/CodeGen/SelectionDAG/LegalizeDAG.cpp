@@ -3605,7 +3605,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
     if (isTypeLegal(TVT)) {
       Vec = LegalizeOp(Vec);
       Op = DAG.UpdateNodeOperands(Op, Vec, Idx);
-      Op = LegalizeOp(Op);
+      return Op;
     }
     break;
   case TargetLowering::Expand:
