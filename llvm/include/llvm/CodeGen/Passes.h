@@ -88,6 +88,12 @@ namespace llvm {
   /// and eliminates abstract frame references.
   ///
   FunctionPass *createPrologEpilogCodeInserter();
+  
+  /// LowerSubregs Pass - This pass lowers subregs to register-register copies
+  /// which yields suboptimial, but correct code if the register allocator
+  /// cannot coalesce all subreg operations during allocation.
+  ///
+  FunctionPass *createLowerSubregsPass();
 
   /// createPostRAScheduler - under development.
   FunctionPass *createPostRAScheduler();

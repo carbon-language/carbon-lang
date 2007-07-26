@@ -96,6 +96,8 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
 
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
+    
+  PM.add(createLowerSubregsPass());
 
   switch (FileType) {
   default:
@@ -197,6 +199,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
+    
+  PM.add(createLowerSubregsPass());
 
   addCodeEmitter(PM, Fast, PrintEmittedAsm, MCE);
   
