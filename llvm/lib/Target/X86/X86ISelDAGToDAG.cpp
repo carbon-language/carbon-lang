@@ -628,19 +628,19 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
           AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
-          AM.isRIPRel = !isStatic;
+          AM.isRIPRel = !isAbs32;
           return false;
         }
       } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
         if (isAbs32 || isRoot) {
           AM.ES = S->getSymbol();
-          AM.isRIPRel = !isStatic;
+          AM.isRIPRel = !isAbs32;
           return false;
         }
       } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
         if (isAbs32 || isRoot) {
           AM.JT = J->getIndex();
-          AM.isRIPRel = !isStatic;
+          AM.isRIPRel = !isAbs32;
           return false;
         }
       }
