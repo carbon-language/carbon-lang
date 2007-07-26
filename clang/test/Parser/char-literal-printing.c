@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-print %s 2>&1 | clang -parse-ast-print
+// RUN: clang -parse-ast-print %s
 
 #include <stddef.h>
 
