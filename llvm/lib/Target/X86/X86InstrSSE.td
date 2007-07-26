@@ -349,8 +349,7 @@ let isTwoAddress = 1 in {
 let isTwoAddress = 1 in {
   def CMPSSrr : SSI<0xC2, MRMSrcReg, 
                     (outs FR32:$dst), (ins FR32:$src1, FR32:$src, SSECC:$cc),
-                    "cmp${cc}ss {$src, $dst|$dst, $src}",
-                    []>;
+                    "cmp${cc}ss {$src, $dst|$dst, $src}", []>;
   def CMPSSrm : SSI<0xC2, MRMSrcMem, 
                     (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, SSECC:$cc),
                     "cmp${cc}ss {$src, $dst|$dst, $src}", []>;
