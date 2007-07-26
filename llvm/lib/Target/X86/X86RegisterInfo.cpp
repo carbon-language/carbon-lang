@@ -1372,8 +1372,9 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
   // Skip the callee-saved pop instructions.
   while (MBBI != MBB.begin()) {
-    MachineBasicBlock::iterator PI = prior(MBBI);      
-    if (PI->getOpcode() != X86::POP32r && PI->getOpcode() != X86::POP64r)
+    MachineBasicBlock::iterator PI = prior(MBBI);
+    unsigned Opc = PI->getOpcode();
+    if (Opc != X86::POP32r && Opc != X86::POP64r && !TII.isTerminatorInstr(Opc))
       break;
     --MBBI;
   }
