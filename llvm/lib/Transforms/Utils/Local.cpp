@@ -175,13 +175,6 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
 
   if (!I->mayWriteToMemory()) return true;
 
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    if (Function *F = CI->getCalledFunction()) {
-      unsigned IntrinsicID = F->getIntrinsicID();
-#define GET_SIDE_EFFECT_INFO
-#include "llvm/Intrinsics.gen"
-#undef GET_SIDE_EFFECT_INFO
-    }
   return false;
 }
 
