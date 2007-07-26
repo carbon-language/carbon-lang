@@ -255,6 +255,11 @@ namespace llvm {
     virtual void Schedule() {}
 
   private:
+    /// EmitSubregNode - Generate machine code for subreg nodes.
+    ///
+    void EmitSubregNode(SDNode *Node, 
+                        DenseMap<SDOperand, unsigned> &VRBaseMap);
+  
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
                     const TargetInstrDescriptor *II,
                     DenseMap<SDOperand, unsigned> &VRBaseMap);

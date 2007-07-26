@@ -429,6 +429,148 @@ static const TargetRegisterClass *getPhysicalRegisterRegClass(
   return 0;
 }
 
+// Returns the Register Class of a subregister
+static const TargetRegisterClass *getSubRegisterRegClass(
+        const TargetRegisterClass *TRC,
+        unsigned SubIdx) {
+  // Pick the register class of the subregister
+  MRegisterInfo::regclass_iterator I = TRC->subregclasses_begin() + SubIdx-1;
+  assert(I < TRC->subregclasses_end() && 
+         "Invalid subregister index for register class");
+  return *I;
+}
+
+static const TargetRegisterClass *getSuperregRegisterClass(
+        const TargetRegisterClass *TRC,
+        unsigned SubIdx,
+        MVT::ValueType VT) {
+  // Pick the register class of the superegister for this type
+  for (MRegisterInfo::regclass_iterator I = TRC->superregclasses_begin(),
+         E = TRC->superregclasses_end(); I != E; ++I)
+    if ((*I)->hasType(VT) && getSubRegisterRegClass(*I, SubIdx) == TRC)
+      return *I;
+  assert(false && "Couldn't find the register class");
+  return 0;
+}
+
+/// EmitSubregNode - Generate machine code for subreg nodes.
+///
+void ScheduleDAG::EmitSubregNode(SDNode *Node, 
+                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
+  unsigned VRBase = 0;
+  unsigned Opc = Node->getTargetOpcode();
+  if (Opc == TargetInstrInfo::EXTRACT_SUBREG) {
+    // If the node is only used by a CopyToReg and the dest reg is a vreg, use
+    // the CopyToReg'd destination register instead of creating a new vreg.
+    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+         UI != E; ++UI) {
+      SDNode *Use = *UI;
+      if (Use->getOpcode() == ISD::CopyToReg && 
+          Use->getOperand(2).Val == Node) {
+        unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+        if (MRegisterInfo::isVirtualRegister(DestReg)) {
+          VRBase = DestReg;
+          break;
+        }
+      }
+    }
+    
+    unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getValue();
+    
+    // TODO: If the node is a use of a CopyFromReg from a physical register
+    // fold the extract into the copy now
+
+    // TODO: Add tracking info to SSARegMap of which vregs are subregs
+    // to allow coalescing in the allocator
+    
+    // Create the extract_subreg machine instruction.
+    MachineInstr *MI =
+      new MachineInstr(BB, TII->get(TargetInstrInfo::EXTRACT_SUBREG));
+
+    // Figure out the register class to create for the destreg.
+    unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
+    const TargetRegisterClass *TRC = RegMap->getRegClass(VReg);
+    const TargetRegisterClass *SRC = getSubRegisterRegClass(TRC, SubIdx);
+
+    if (VRBase) {
+      // Grab the destination register
+      const TargetRegisterClass *DRC = 0;
+      DRC = RegMap->getRegClass(VRBase);
+      assert(SRC == DRC && 
+             "Source subregister and destination must have the same class");
+    } else {
+      // Create the reg
+      VRBase = RegMap->createVirtualRegister(SRC);
+    }
+    
+    // Add def, source, and subreg index
+    MI->addRegOperand(VRBase, true);
+    AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
+    MI->addImmOperand(SubIdx);
+    
+  } else if (Opc == TargetInstrInfo::INSERT_SUBREG) {
+    assert((Node->getNumOperands() == 2 || Node->getNumOperands() == 3) &&
+            "Malformed insert_subreg node");
+    bool isUndefInput = (Node->getNumOperands() == 2);
+    unsigned SubReg = 0;
+    unsigned SubIdx = 0;
+    
+    if (isUndefInput) {
+      SubReg = getVR(Node->getOperand(0), VRBaseMap);
+      SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getValue();
+    } else {
+      SubReg = getVR(Node->getOperand(1), VRBaseMap);
+      SubIdx = cast<ConstantSDNode>(Node->getOperand(2))->getValue();
+    }
+    
+    // TODO: Add tracking info to SSARegMap of which vregs are subregs
+    // to allow coalescing in the allocator
+          
+    // If the node is only used by a CopyToReg and the dest reg is a vreg, use
+    // the CopyToReg'd destination register instead of creating a new vreg.
+    // If the CopyToReg'd destination register is physical, then fold the
+    // insert into the copy
+    for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+         UI != E; ++UI) {
+      SDNode *Use = *UI;
+      if (Use->getOpcode() == ISD::CopyToReg && 
+          Use->getOperand(2).Val == Node) {
+        unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+        if (MRegisterInfo::isVirtualRegister(DestReg)) {
+          VRBase = DestReg;
+          break;
+        }
+      }
+    }
+    
+    // Create the insert_subreg machine instruction.
+    MachineInstr *MI =
+      new MachineInstr(BB, TII->get(TargetInstrInfo::INSERT_SUBREG));
+      
+    // Figure out the register class to create for the destreg.
+    const TargetRegisterClass *TRC = 0;
+    if (VRBase) {
+      TRC = RegMap->getRegClass(VRBase);
+    } else {
+      TRC = getSuperregRegisterClass(RegMap->getRegClass(SubReg), 
+                                     SubIdx, 
+                                     Node->getValueType(0));
+      assert(TRC && "Couldn't determine register class for insert_subreg");
+      VRBase = RegMap->createVirtualRegister(TRC); // Create the reg
+    }
+    
+    MI->addRegOperand(VRBase, true);
+    AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
+    if (!isUndefInput)
+      AddOperand(MI, Node->getOperand(1), 0, 0, VRBaseMap);
+    MI->addImmOperand(SubIdx);
+  } else
+    assert(0 && "Node is not a subreg insert or extract");
+     
+  bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0), VRBase));
+  assert(isNew && "Node emitted out of order - early");
+}
+
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(SDNode *Node, 
@@ -436,6 +578,14 @@ void ScheduleDAG::EmitNode(SDNode *Node,
   // If machine instruction
   if (Node->isTargetOpcode()) {
     unsigned Opc = Node->getTargetOpcode();
+    
+    // Handle subreg insert/extract specially
+    if (Opc == TargetInstrInfo::EXTRACT_SUBREG || 
+        Opc == TargetInstrInfo::INSERT_SUBREG) {
+      EmitSubregNode(Node, VRBaseMap);
+      return;
+    }
+    
     const TargetInstrDescriptor &II = TII->get(Opc);
 
     unsigned NumResults = CountResults(Node);
