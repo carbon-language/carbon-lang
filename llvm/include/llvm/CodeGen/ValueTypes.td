@@ -39,12 +39,12 @@ def v1i64  : ValueType<64 , 16>;   //  1 x i64 vector value
 
 def v16i8  : ValueType<128, 17>;   // 16 x i8  vector value
 def v8i16  : ValueType<128, 18>;   //  8 x i16 vector value
-def v3i32  : ValueType<96 , 19>;   //  3 x f32 vector value
+def v3i32  : ValueType<96 , 19>;   //  3 x i32 vector value
 def v4i32  : ValueType<128, 20>;   //  4 x i32 vector value
 def v2i64  : ValueType<128, 21>;   //  2 x i64 vector value
 
 def v2f32  : ValueType<64,  22>;   //  2 x f32 vector value
-def v3f32  : ValueType<96 , 23>;   //  3 x f64 vector value
+def v3f32  : ValueType<96 , 23>;   //  3 x f32 vector value
 def v4f32  : ValueType<128, 24>;   //  4 x f32 vector value
 def v2f64  : ValueType<128, 25>;   //  2 x f64 vector value
 
