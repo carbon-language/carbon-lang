@@ -40,11 +40,11 @@ namespace {
       LeakDetector::removeGarbageObject(this);
     }
 
-    virtual Instruction *clone() const {
+    Instruction *clone() const {
       assert(0 && "Cannot clone EOL");abort();
       return 0;
     }
-    virtual const char *getOpcodeName() const { return "*end-of-list-inst*"; }
+    const char *getOpcodeName() const { return "*end-of-list-inst*"; }
 
     // Methods for support type inquiry through isa, cast, and dyn_cast...
     static inline bool classof(const DummyInst *) { return true; }
