@@ -96,6 +96,17 @@ const ArrayType *Type::isArrayType() const {
   return 0;
 }
 
+const RecordType *Type::isRecordType() const {
+  // If this is directly a reference type, return it.
+  if (const RecordType *RTy = dyn_cast<RecordType>(this))
+    return RTy;
+  
+  // If this is a typedef for an record type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<RecordType>(CanonicalType))
+    return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
+}
+
 bool Type::isStructureType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Struct)

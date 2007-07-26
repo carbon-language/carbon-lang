@@ -36,6 +36,7 @@ namespace clang {
   class ReferenceType;
   class VectorType;
   class ArrayType;
+  class RecordType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -239,6 +240,7 @@ public:
   const PointerType *isPointerType() const;
   const ReferenceType *isReferenceType() const;
   const ArrayType *isArrayType() const;
+  const RecordType *isRecordType() const;
   bool isStructureType() const;   
   bool isUnionType() const;
   
@@ -650,10 +652,10 @@ class RecordType : public TagType {
   RecordType(); // DO NOT IMPLEMENT
 public:
     
-  const RecordDecl *getDecl() const {
+  const RecordDecl *getDecl() {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
-  RecordDecl *getDecl() {
+  RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
   

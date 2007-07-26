@@ -343,34 +343,35 @@ Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
-  QualType qualifiedType = ((Expr *)Base)->getType();
+  Expr *BaseExpr = static_cast<Expr *>(Base);
+  assert(BaseExpr && "no record expression");
   
-  assert(!qualifiedType.isNull() && "no type for member expression");
+  QualType BaseType = BaseExpr->getType();
+  assert(!BaseType.isNull() && "no type for member expression");
   
-  QualType canonType = qualifiedType.getCanonicalType();
-
   if (OpKind == tok::arrow) {
-    if (PointerType *PT = dyn_cast<PointerType>(canonType)) {
-      qualifiedType = PT->getPointeeType();
-      canonType = qualifiedType.getCanonicalType();
-    } else
-      return Diag(OpLoc, diag::err_typecheck_member_reference_arrow);
+    if (const PointerType *PT = BaseType->isPointerType())
+      BaseType = PT->getPointeeType();
+    else
+      return Diag(OpLoc, diag::err_typecheck_member_reference_arrow,
+                  SourceRange(MemberLoc));
   }
-  if (!isa<RecordType>(canonType))
-    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion);
+  // Get the member decl from the struct/union definition.
+  FieldDecl *MemberDecl;
+  if (const RecordType *RTy = BaseType->isRecordType()) {
+    RecordDecl *RDecl = RTy->getDecl();
+    if (RTy->isIncompleteType())
+      return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RDecl->getName(),
+                  BaseExpr->getSourceRange());
+    // The record definition is complete, now make sure the member is valid.
+    if (!(MemberDecl = RDecl->getMember(&Member)))
+      return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName(),
+                  SourceRange(MemberLoc));
+  } else
+    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
+                SourceRange(MemberLoc));
   
-  // get the struct/union definition from the type.
-  RecordDecl *RD = cast<RecordType>(canonType)->getDecl();
-    
-  if (canonType->isIncompleteType())
-    return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RD->getName());
-    
-  FieldDecl *MemberDecl = RD->getMember(&Member);
-  if (!MemberDecl)
-    return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName());
-    
-  return new MemberExpr((Expr*)Base, OpKind == tok::arrow, 
-                        MemberDecl, MemberLoc);
+  return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl, MemberLoc);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
