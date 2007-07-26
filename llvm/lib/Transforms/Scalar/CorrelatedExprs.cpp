@@ -1321,7 +1321,6 @@ bool Relation::incorporate(unsigned Op, ValueInfo &VI) {
     }
     return false;
   case FCmpInst::FCMP_OGE: 
-    return Op == FCmpInst::FCMP_OLT;
     if (Op == FCmpInst::FCMP_OEQ || Op == FCmpInst::FCMP_OGT) {
       Rel = Op;
       return true;
