@@ -289,6 +289,15 @@ namespace ISD {
     /// elements of the vector are undefined.
     SCALAR_TO_VECTOR,
     
+    // EXTRACT_SUBREG - This node is used to extract a sub-register value. 
+    // This node takes a superreg and a constant sub-register index as operands.
+    EXTRACT_SUBREG,
+    
+    // INSERT_SUBREG - This node is used to insert a sub-register value. 
+    // This node takes a superreg, a subreg value, and a constant sub-register
+    // index as operands.
+    INSERT_SUBREG,
+    
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.
     MULHU, MULHS,
