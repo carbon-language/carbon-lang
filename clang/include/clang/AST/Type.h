@@ -37,6 +37,9 @@ namespace clang {
   class VectorType;
   class ArrayType;
   class RecordType;
+  class TagType;
+  class FunctionType;
+  class OCUVectorType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -212,9 +215,6 @@ public:
   /// of memory that can be examined and stored into (H&S).
   bool isObjectType() const;
 
-  /// isFunctionType - types that describe functions.
-  bool isFunctionType() const;   
-
   /// isIncompleteType - Return true if this is an incomplete type.
   /// A type that can describe objects, but which lacks information needed to
   /// determine its size (e.g. void, or a fwd declared struct). Clients of this
@@ -234,15 +234,17 @@ public:
   
   /// Vector types
   const VectorType *isVectorType() const; // GCC vector type.
+  const OCUVectorType *isOCUVectorType() const; // OCU vector type.
   
-  /// Derived types (C99 6.2.5p20). isFunctionType() is also a derived type.
+  /// Derived types (C99 6.2.5p20).
   bool isDerivedType() const;
+  const FunctionType *isFunctionType() const;   
   const PointerType *isPointerType() const;
   const ReferenceType *isReferenceType() const;
   const ArrayType *isArrayType() const;
   const RecordType *isRecordType() const;
-  bool isStructureType() const;   
-  bool isUnionType() const;
+  const TagType *isStructureType() const;   
+  const TagType *isUnionType() const;
   
   bool isVoidType() const;         // C99 6.2.5p19
   bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
@@ -502,6 +504,9 @@ class OCUVectorType : public VectorType {
     VectorType(OCUVector, vecType, nElements, canonType) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
+  }
   static bool classof(const VectorType *T) { 
     return T->getTypeClass() == OCUVector; 
   }

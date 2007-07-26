@@ -56,8 +56,16 @@ bool Type::isDerivedType() const {
   }
 }
 
-bool Type::isFunctionType() const {
-  return isa<FunctionType>(CanonicalType);
+const FunctionType *Type::isFunctionType() const {
+  // If this is directly a function type, return it.
+  if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
+    return FTy;
+    
+  // If this is a typedef for a function type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<FunctionType>(CanonicalType))
+    return cast<FunctionType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
 }
 
 const PointerType *Type::isPointerType() const {
@@ -108,20 +116,34 @@ const RecordType *Type::isRecordType() const {
   return 0;
 }
 
-bool Type::isStructureType() const {
+const TagType *Type::isStructureType() const {
+  // If this is directly a structure type, return it.
+  if (const TagType *TT = dyn_cast<TagType>(this)) {
+    if (TT->getDecl()->getKind() == Decl::Struct)
+      return TT;
+  }
+  // If this is a typedef for a structure type, strip the typedef off without
+  // losing all typedef information.
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Struct)
-      return true;
+      return cast<TagType>(cast<TypedefType>(this)->LookThroughTypedefs());
   }
-  return false;
+  return 0;
 }
 
-bool Type::isUnionType() const { 
+const TagType *Type::isUnionType() const { 
+  // If this is directly a union type, return it.
+  if (const TagType *TT = dyn_cast<TagType>(this)) {
+    if (TT->getDecl()->getKind() == Decl::Union)
+      return TT;
+  }
+  // If this is a typedef for a union type, strip the typedef off without
+  // losing all typedef information.
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
     if (TT->getDecl()->getKind() == Decl::Union)
-      return true;
+      return cast<TagType>(cast<TypedefType>(this)->LookThroughTypedefs());
   }
-  return false;
+  return 0;
 }
 
 bool Type::isComplexType() const {
@@ -137,6 +159,19 @@ const VectorType *Type::isVectorType() const {
   // losing all typedef information.
   if (isa<VectorType>(CanonicalType))
     return cast<VectorType>(cast<TypedefType>(this)->LookThroughTypedefs());
+
+  return 0;
+}
+
+const OCUVectorType *Type::isOCUVectorType() const {
+  // Are we directly an OpenCU vector type?
+  if (const OCUVectorType *VTy = dyn_cast<OCUVectorType>(this))
+    return VTy;
+  
+  // If this is a typedef for an OpenCU vector type, strip the typedef off 
+  // without losing all typedef information.
+  if (isa<OCUVectorType>(CanonicalType))
+    return cast<OCUVectorType>(cast<TypedefType>(this)->LookThroughTypedefs());
 
   return 0;
 }
