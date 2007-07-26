@@ -321,6 +321,18 @@ def LABEL : Instruction {
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;
 }
+def EXTRACT_SUBREG : Instruction {
+        let OutOperandList = (ops variable_ops);
+  let InOperandList = (ops variable_ops);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+}
+def INSERT_SUBREG : Instruction {
+        let OutOperandList = (ops variable_ops);
+  let InOperandList = (ops variable_ops);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+}
 
 //===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize

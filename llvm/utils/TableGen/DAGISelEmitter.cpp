@@ -3729,6 +3729,33 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "                               MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
+  OS << "SDNode *Select_EXTRACT_SUBREG(const SDOperand &N) {\n"
+     << "  SDOperand N0 = N.getOperand(0);\n"
+     << "  SDOperand N1 = N.getOperand(1);\n"
+     << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
+     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  AddToISelQueue(N0);\n"
+     << "  return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
+     << "                             N.getValueType(), N0, Tmp);\n"
+     << "}\n\n";
+
+  OS << "SDNode *Select_INSERT_SUBREG(const SDOperand &N) {\n"
+     << "  SDOperand N0 = N.getOperand(0);\n"
+     << "  SDOperand N1 = N.getOperand(1);\n"
+     << "  SDOperand N2 = N.getOperand(2);\n"
+     << "  unsigned C = cast<ConstantSDNode>(N2)->getValue();\n"
+     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  AddToISelQueue(N1);\n"
+     << "  if (N0.getOpcode() == ISD::UNDEF) {\n"
+     << "    return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
+     << "                                    N.getValueType(), N1, Tmp);\n"
+     << "  } else {\n"
+     << "    AddToISelQueue(N0);\n"
+     << "    return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
+     << "                                    N.getValueType(), N0, N1, Tmp);\n"
+     << "  }\n"
+     << "}\n\n";
+
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDOperand N) {\n"
      << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
@@ -3766,7 +3793,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"
-     << "  case ISD::LABEL: return Select_LABEL(N);\n";
+     << "  case ISD::LABEL: return Select_LABEL(N);\n"
+     << "  case ISD::EXTRACT_SUBREG: return Select_EXTRACT_SUBREG(N);\n"
+     << "  case ISD::INSERT_SUBREG:  return Select_INSERT_SUBREG(N);\n";
 
     
   // Loop over all of the case statements, emiting a call to each method we

@@ -177,7 +177,9 @@ public:
   enum { 
     PHI = 0,
     INLINEASM = 1,
-    LABEL = 2
+    LABEL = 2,
+    EXTRACT_SUBREG = 3,
+    INSERT_SUBREG = 4
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }

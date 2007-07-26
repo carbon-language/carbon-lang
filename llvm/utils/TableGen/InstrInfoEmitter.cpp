@@ -325,7 +325,9 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
     // This isn't an error if this is a builtin instruction.
     if (R->getName() != "PHI" &&
         R->getName() != "INLINEASM" &&
-        R->getName() != "LABEL")
+        R->getName() != "LABEL" &&
+        R->getName() != "EXTRACT_SUBREG" &&
+        R->getName() != "INSERT_SUBREG")
       throw R->getName() + " doesn't have a field named '" + 
             Val->getValue() + "'!";
     return;
