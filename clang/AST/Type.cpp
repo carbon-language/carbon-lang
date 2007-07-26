@@ -105,6 +105,7 @@ const RecordType *Type::isRecordType() const {
   // losing all typedef information.
   if (isa<RecordType>(CanonicalType))
     return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
 }
 
 bool Type::isStructureType() const {
