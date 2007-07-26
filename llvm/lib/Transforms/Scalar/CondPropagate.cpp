@@ -65,7 +65,7 @@ bool CondProp::runOnFunction(Function &F) {
     MadeChange = false;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       SimplifyBlock(BB);
-    EverMadeChange = MadeChange;
+    EverMadeChange = EverMadeChange || MadeChange;
   } while (MadeChange);
   return EverMadeChange;
 }
