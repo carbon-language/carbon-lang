@@ -117,12 +117,18 @@ bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
   visited.insert(block);
   
   bool inserted = false;
+  bool predOnStack = false;
   for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
        PI != PE; ++PI)
     if (!visited.count(*PI))
       inserted |= nonLocalHelper(query, *PI, resp, visited);
-  
+    else
+      predOnStack = true;
+
   visited.erase(block);
+
+  if (!inserted && !predOnStack)
+    resp.insert(std::make_pair(block, None));
   
   return inserted;
 }
