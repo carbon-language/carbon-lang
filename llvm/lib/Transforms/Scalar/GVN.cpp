@@ -13,12 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "gvn"
-#include "llvm/Value.h"
+
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Instructions.h"
-#include "llvm/Function.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Value.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -650,9 +652,8 @@ namespace {
                             DenseMap<Value*, LoadInst*>& lastSeenLoad,
                             SmallVector<Instruction*, 4>& toErase);
     bool processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase);
-    Value *performPHIConstruction(BasicBlock *BB, LoadInst* orig,
-                                  DenseMap<BasicBlock*, Value*> &Phis,
-                                  SmallPtrSet<BasicBlock*, 4>& visited);
+    Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
+                                  DenseMap<BasicBlock*, Value*> &Phis);
     void dump(DenseMap<BasicBlock*, Value*>& d);
   };
   
@@ -706,59 +707,35 @@ void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
 }
 
 
-Value *GVN::performPHIConstruction(BasicBlock *BB, LoadInst* orig,
-                                   DenseMap<BasicBlock*, Value*> &Phis,
-                                   SmallPtrSet<BasicBlock*, 4>& visited) {
-  DenseMap<BasicBlock*, Value*>::iterator DI = Phis.find(BB);
-  if (DI != Phis.end())
-    return DI->second;
-  
-  unsigned numPreds = std::distance(pred_begin(BB), pred_end(BB));
-  
-  if (numPreds == 1) {
-    DenseMap<BasicBlock*, Value*>::iterator DI = Phis.find(BB);
-    if (DI != Phis.end()) {
-      Phis.insert(std::make_pair(BB, DI->second));
-      return DI->second;
-    } else {
-      visited.insert(BB);
-      Value* domV = performPHIConstruction(*pred_begin(BB), orig, Phis, visited);
-      visited.erase(BB);
-      
-      Phis.insert(std::make_pair(BB, domV));
-      return domV;
-    }
-  } else {
-    PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle", BB->begin());
-    PN->reserveOperandSpace(numPreds);
-    Phis[BB] = PN;
-    
-    visited.insert(BB);
-    // Fill in the incoming values for the block.
-    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-      if (!visited.count(*PI))
-        PN->addIncoming(performPHIConstruction(*PI, orig, Phis, visited), *PI);
-      else {
-        if (Phis[*PI])
-          PN->addIncoming(Phis[*PI], *PI);
-        else
-          PN->addIncoming(PN, *PI);
-      }
-    visited.erase(BB);
-    
-    bool all_same = PN->getNumIncomingValues() != 1;
-    Value* first = PN->getIncomingValue(0);
-    for (unsigned i = 1; i < PN->getNumIncomingValues(); ++i)
-      all_same &= (PN->getIncomingValue(i) == first);
-    
-    if (all_same) {
-      PN->eraseFromParent();
-      Phis[BB] = first;
-      return first;
-    } else {
-      return PN;
-    }
+/// GetValueForBlock - Get the value to use within the specified basic block.
+/// available values are in Phis.
+Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
+                               DenseMap<BasicBlock*, Value*> &Phis) {
+  DominatorTree &DT = getAnalysis<DominatorTree>(); 
+                                 
+  // If we have already computed this value, return the previously computed val.
+  Value *&V = Phis[BB];
+  if (V) return V;
+
+  DomTreeNode *IDom = DT.getNode(BB)->getIDom();
+
+  if (IDom && Phis.count(IDom->getBlock())) {
+    return V = GetValueForBlock(IDom->getBlock(), orig, Phis);
   }
+  
+  
+  
+  // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
+  // now, then get values to fill in the incoming values for the PHI.
+  PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle",
+                            BB->begin());
+  PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+  V = PN;
+                                 
+  // Fill in the incoming values for the block.
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+    PN->addIncoming(GetValueForBlock(DT.getNode(*PI)->getBlock(), orig, Phis), *PI);
+  return PN;
 }
 
 bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase) {
@@ -789,7 +766,7 @@ bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase
     }
   
   SmallPtrSet<BasicBlock*, 4> visited;
-  Value* v = performPHIConstruction(L->getParent(), L, repl, visited);
+  Value* v = GetValueForBlock(L->getParent(), L, repl);
   
   MD.removeInstruction(L);
   L->replaceAllUsesWith(v);

@@ -124,9 +124,6 @@ bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
   
   visited.erase(block);
   
-  if (!inserted)
-    resp.insert(std::make_pair(block, None));
-  
   return inserted;
 }
 
