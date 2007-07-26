@@ -143,14 +143,6 @@ namespace llvm {
       /// REP_MOVS - Repeat move, corresponds to X86::REP_MOVSx.
       REP_MOVS,
 
-      /// LOAD_PACK Load a 128-bit packed float / double value. It has the same
-      /// operands as a normal load.
-      LOAD_PACK,
-
-      /// LOAD_UA Load an unaligned 128-bit value. It has the same operands as
-      /// a normal load.
-      LOAD_UA,
-
       /// GlobalBaseReg - On Darwin, this node represents the result of the popl
       /// at function entry, used for PIC code.
       GlobalBaseReg,
