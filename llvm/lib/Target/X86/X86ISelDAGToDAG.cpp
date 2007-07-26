@@ -613,10 +613,10 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
       bool isStatic = TM.getRelocationModel() == Reloc::Static;
       SDOperand N0 = N.getOperand(0);
+      // Mac OS X X86-64 lower 4G address is not available.
+      bool isAbs32 = !is64Bit || (isStatic && !Subtarget->isTargetDarwin());
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
         GlobalValue *GV = G->getGlobal();
-        // Mac OS X X86-64 lower 4G address is not available.
-        bool isAbs32 = !is64Bit || (isStatic && !Subtarget->isTargetDarwin());
         if (isAbs32 || isRoot) {
           AM.GV = GV;
           AM.Disp += G->getOffset();
@@ -624,7 +624,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
           return false;
         }
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N0)) {
-        if (!is64Bit || isStatic || isRoot) {
+        if (isAbs32 || isRoot) {
           AM.CP = CP->getConstVal();
           AM.Align = CP->getAlignment();
           AM.Disp += CP->getOffset();
@@ -632,13 +632,13 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
           return false;
         }
       } else if (ExternalSymbolSDNode *S =dyn_cast<ExternalSymbolSDNode>(N0)) {
-        if (isStatic || isRoot) {
+        if (isAbs32 || isRoot) {
           AM.ES = S->getSymbol();
           AM.isRIPRel = !isStatic;
           return false;
         }
       } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
-        if (isStatic || isRoot) {
+        if (isAbs32 || isRoot) {
           AM.JT = J->getIndex();
           AM.isRIPRel = !isStatic;
           return false;
