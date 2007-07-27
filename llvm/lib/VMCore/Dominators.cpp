@@ -616,7 +616,11 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
        PI != PE; ++PI)
       PredBlocks.push_back(*PI);  
 
-  assert(!PredBlocks.empty() && "No predblocks??");
+  if (PredBlocks.empty())
+    // If NewBB does not have any predecessors then it is a entry block.
+    // In this case, NewBB and its successor NewBBSucc dominates all
+    // other blocks.
+    return;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();
   bool NewBBDominatesNewBBSucc = true;
@@ -643,8 +647,13 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
         else
           ++SetI;
       }
-      
-      addBasicBlock(NewBB, Set);
+
+      DominanceFrontier::iterator NewBBI = find(NewBB);
+      if (NewBBI != end()) {
+        DominanceFrontier::DomSetType NewBBSet = NewBBI->second;
+        NewBBSet.insert(Set.begin(), Set.end());
+      } else 
+        addBasicBlock(NewBB, Set);
     }
     
   } else {
