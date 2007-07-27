@@ -105,6 +105,8 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
     Result += "sret ";  
   if (Attrs & ParamAttr::ByVal)
     Result += "byval ";
+  if (Attrs & ParamAttr::Nest)
+    Result += "nest ";
   return Result;
 }
 

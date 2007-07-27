@@ -215,7 +215,9 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET               , MVT::Other, Custom);
-  
+
+  setOperationAction(ISD::ADJUST_TRAMP, MVT::i32, Expand);
+
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   // VAARG needs to be lowered to not do unaligned accesses for doubles.

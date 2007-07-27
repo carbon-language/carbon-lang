@@ -812,8 +812,10 @@ public:
     bool isZExt;
     bool isInReg;
     bool isSRet;
+    bool isNest;
 
-    ArgListEntry():isSExt(false), isZExt(false), isInReg(false), isSRet(false) { };
+    ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
+      isSRet(false), isNest(false) { };
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>

@@ -45,6 +45,10 @@ class CCIfCC<string CC, CCAction A>
 /// the specified action.
 class CCIfInReg<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::InReg", A> {}
 
+/// CCIfNest - If this argument is marked with the 'nest' attribute, apply
+/// the specified action.
+class CCIfNest<CCAction A> : CCIf<"ArgFlags & ISD::ParamFlags::Nest", A> {}
+
 /// CCIfNotVarArg - If the current function is not vararg - apply the action
 class CCIfNotVarArg<CCAction A> : CCIf<"!State.isVarArg()", A> {}
 

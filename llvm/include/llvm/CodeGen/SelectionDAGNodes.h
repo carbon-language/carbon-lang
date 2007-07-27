@@ -66,6 +66,8 @@ namespace ISD {
     StructReturnOffs  = 3,
     ByVal             = 1<<4,  ///< Struct passed by value
     ByValOffs         = 4,
+    Nest              = 1<<5,  ///< Parameter is nested function static chain
+    NestOffs          = 5,
     OrigAlignment     = 0x1F<<27,
     OrigAlignmentOffs = 27
   };
@@ -528,7 +530,19 @@ namespace ISD {
     // number, then a column then a file id (provided by MachineModuleInfo.) It
     // produces a token chain as output.
     DEBUG_LOC,
-    
+
+    // ADJUST_TRAMP - This corresponds to the adjust_trampoline intrinsic.
+    // It takes a value as input and returns a value as output.
+    ADJUST_TRAMP,
+
+    // TRAMPOLINE - This corresponds to the init_trampoline intrinsic.
+    // It takes as input a token chain, the pointer to the trampoline,
+    // the pointer to the nested function, the pointer to pass for the
+    // 'nest' parameter, a SRCVALUE for the trampoline and another for
+    // the nested function (allowing targets to access the original
+    // Function*).  It produces a token chain as output.
+    TRAMPOLINE,
+
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
   };

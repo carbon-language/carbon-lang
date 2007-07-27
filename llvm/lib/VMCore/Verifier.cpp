@@ -361,6 +361,7 @@ void Verifier::visitFunction(Function &F) {
 
   if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
     unsigned Idx = 1;
+    bool SawNest = false;
 
     Assert1(!Attrs->paramHasAttr(0, ParamAttr::ByVal),
             "Attribute ByVal should not apply to functions!", &F);
@@ -368,6 +369,8 @@ void Verifier::visitFunction(Function &F) {
             "Attribute SRet should not apply to functions!", &F);
     Assert1(!Attrs->paramHasAttr(0, ParamAttr::InReg),
             "Attribute InReg should not apply to functions!", &F);
+    Assert1(!Attrs->paramHasAttr(0, ParamAttr::Nest),
+            "Attribute Nest should not apply to functions!", &F);
 
     for (FunctionType::param_iterator I = FT->param_begin(), 
          E = FT->param_end(); I != E; ++I, ++Idx) {
@@ -389,6 +392,20 @@ void Verifier::visitFunction(Function &F) {
             cast<PointerType>(FT->getParamType(Idx-1));
         Assert1(isa<StructType>(Ty->getElementType()),
                 "Attribute ByVal should only apply to pointer to structs!", &F);
+      }
+
+      if (Attrs->paramHasAttr(Idx, ParamAttr::Nest)) {
+        Assert1(!SawNest, "More than one parameter has attribute Nest!", &F);
+        SawNest = true;
+
+        Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
+                "Attribute Nest should only apply to Pointer type!", &F);
+        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::ByVal),
+                "Attributes Nest and ByVal are incompatible!", &F);
+        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::InReg),
+                "Attributes Nest and InReg are incompatible!", &F);
+        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::StructRet),
+                "Attributes Nest and StructRet are incompatible!", &F);
       }
 
       Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::NoReturn), 

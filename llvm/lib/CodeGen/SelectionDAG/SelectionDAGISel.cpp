@@ -2863,6 +2863,28 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::var_annotation:
     // Discard annotate attributes
     return 0;
+
+  case Intrinsic::adjust_trampoline: {
+    SDOperand Arg = getValue(I.getOperand(1));
+    setValue(&I, DAG.getNode(ISD::ADJUST_TRAMP, TLI.getPointerTy(), Arg));
+    return 0;
+  }
+
+  case Intrinsic::init_trampoline: {
+    const Function *F =
+      cast<Function>(IntrinsicInst::StripPointerCasts(I.getOperand(2)));
+
+    SDOperand Ops[6];
+    Ops[0] = getRoot();
+    Ops[1] = getValue(I.getOperand(1));
+    Ops[2] = getValue(I.getOperand(2));
+    Ops[3] = getValue(I.getOperand(3));
+    Ops[4] = DAG.getSrcValue(I.getOperand(1));
+    Ops[5] = DAG.getSrcValue(F);
+
+    DAG.setRoot(DAG.getNode(ISD::TRAMPOLINE, MVT::Other, Ops, 6));
+    return 0;
+  }
   }
 }
 
@@ -2892,6 +2914,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Entry.isZExt  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::ZExt);
     Entry.isInReg = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::InReg);
     Entry.isSRet  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::StructRet);
+    Entry.isNest  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::Nest);
     Args.push_back(Entry);
   }
 
@@ -3827,6 +3850,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags |= ISD::ParamFlags::StructReturn;
     if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ByVal))
       Flags |= ISD::ParamFlags::ByVal;
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::Nest))
+      Flags |= ISD::ParamFlags::Nest;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
     
     switch (getTypeAction(VT)) {
@@ -3945,6 +3970,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Flags |= ISD::ParamFlags::InReg;
     if (Args[i].isSRet)
       Flags |= ISD::ParamFlags::StructReturn;
+    if (Args[i].isNest)
+      Flags |= ISD::ParamFlags::Nest;
     Flags |= OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs;
     
     switch (getTypeAction(VT)) {

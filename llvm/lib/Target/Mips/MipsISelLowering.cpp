@@ -102,6 +102,8 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
+  setOperationAction(ISD::ADJUST_TRAMP, MVT::i32, Expand);
+
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
 }

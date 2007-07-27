@@ -3156,6 +3156,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
+  case ISD::ADJUST_TRAMP: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom:
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      Result = TLI.LowerOperation(Result, DAG);
+      if (Result.Val) break;
+      // FALL THROUGH
+    case TargetLowering::Expand:
+      Result = Tmp1;
+      break;
+    }
+    break;
+  }
+  case ISD::TRAMPOLINE: {
+    SDOperand Ops[6];
+    for (unsigned i = 0; i != 6; ++i)
+      Ops[i] = LegalizeOp(Node->getOperand(i));
+    Result = DAG.UpdateNodeOperands(Result, Ops, 6);
+    // The only option for this node is to custom lower it.
+    Result = TLI.LowerOperation(Result, DAG);
+    assert(Result.Val && "Should always custom lower!");
+    break;
+  }
   }
   
   assert(Result.getValueType() == Op.getValueType() &&

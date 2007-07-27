@@ -190,7 +190,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::MEMSET          , MVT::Other, Expand);
   setOperationAction(ISD::MEMCPY          , MVT::Other, Custom);
   setOperationAction(ISD::MEMMOVE         , MVT::Other, Expand);
-  
+
+  if (Subtarget->isThumb())
+    setOperationAction(ISD::ADJUST_TRAMP, MVT::i32, Custom);
+  else
+    setOperationAction(ISD::ADJUST_TRAMP, MVT::i32, Expand);
+
   // Use the default implementation.
   setOperationAction(ISD::VASTART           , MVT::Other, Expand);
   setOperationAction(ISD::VAARG             , MVT::Other, Expand);
@@ -1413,6 +1418,14 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   return Chain;
 }
 
+SDOperand ARMTargetLowering::LowerADJUST_TRAMP(SDOperand Op,
+                                                    SelectionDAG &DAG) {
+  // Thumb trampolines should be entered in thumb mode, so set the bottom bit
+  // of the address.
+  return DAG.getNode(ISD::OR, MVT::i32, Op.getOperand(0),
+                     DAG.getConstant(1, MVT::i32));
+}
+
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Don't know how to custom lower this!"); abort();
@@ -1444,6 +1457,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG);
+  case ISD::ADJUST_TRAMP:  return LowerADJUST_TRAMP(Op, DAG);
   }
   return SDOperand();
 }

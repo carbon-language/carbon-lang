@@ -97,6 +97,8 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::ROTR , MVT::i64  , Expand);
       setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
 
+      setOperationAction(ISD::ADJUST_TRAMP, MVT::i64, Expand);
+
       // VASTART needs to be custom lowered to use the VarArgsFrameIndex
       setOperationAction(ISD::VAARG             , MVT::Other, Custom);
       setOperationAction(ISD::VASTART           , MVT::Other, Custom);

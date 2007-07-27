@@ -30,14 +30,15 @@ namespace ParamAttr {
 /// @brief Function parameter attributes.
 enum Attributes {
   None       = 0,      ///< No attributes have been set
-  ZExt       = 1 << 0, ///< zero extended before/after call
-  SExt       = 1 << 1, ///< sign extended before/after call
-  NoReturn   = 1 << 2, ///< mark the function as not returning
-  InReg      = 1 << 3, ///< force argument to be passed in register
-  StructRet  = 1 << 4, ///< hidden pointer to structure to return
+  ZExt       = 1 << 0, ///< Zero extended before/after call
+  SExt       = 1 << 1, ///< Sign extended before/after call
+  NoReturn   = 1 << 2, ///< Mark the function as not returning
+  InReg      = 1 << 3, ///< Force argument to be passed in register
+  StructRet  = 1 << 4, ///< Hidden pointer to structure to return
   NoUnwind   = 1 << 5, ///< Function doesn't unwind stack
-  NoAlias    = 1 << 6, ///< Considered to not alias after call.
-  ByVal      = 1 << 7  ///< Pass structure by value
+  NoAlias    = 1 << 6, ///< Considered to not alias after call
+  ByVal      = 1 << 7, ///< Pass structure by value
+  Nest       = 1 << 8  ///< Nested function static chain
 };
 
 }
