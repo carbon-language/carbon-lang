@@ -354,66 +354,82 @@ void Verifier::visitFunction(Function &F) {
           F.getReturnType() == Type::VoidTy,
           "Functions cannot return aggregate values!", &F);
 
-  Assert1(!FT->isStructReturn() ||
-          (FT->getReturnType() == Type::VoidTy && 
-           FT->getNumParams() > 0 && isa<PointerType>(FT->getParamType(0))),
+  Assert1(!FT->isStructReturn() || FT->getReturnType() == Type::VoidTy,
           "Invalid struct-return function!", &F);
+
+  const uint16_t ReturnIncompatible =
+    ParamAttr::ByVal | ParamAttr::InReg |
+    ParamAttr::Nest  | ParamAttr::StructRet;
+
+  const uint16_t ParameterIncompatible =
+    ParamAttr::NoReturn | ParamAttr::NoUnwind;
+
+  const uint16_t MutuallyIncompatible =
+    ParamAttr::ByVal | ParamAttr::Nest | ParamAttr::StructRet;
+
+  const uint16_t IntegerTypeOnly =
+    ParamAttr::SExt | ParamAttr::ZExt;
+
+  const uint16_t PointerTypeOnly =
+    ParamAttr::ByVal   | ParamAttr::Nest |
+    ParamAttr::NoAlias | ParamAttr::StructRet;
+
+  bool SawSRet = false;
 
   if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
     unsigned Idx = 1;
     bool SawNest = false;
 
-    Assert1(!Attrs->paramHasAttr(0, ParamAttr::ByVal),
-            "Attribute ByVal should not apply to functions!", &F);
-    Assert1(!Attrs->paramHasAttr(0, ParamAttr::StructRet),
-            "Attribute SRet should not apply to functions!", &F);
-    Assert1(!Attrs->paramHasAttr(0, ParamAttr::InReg),
-            "Attribute InReg should not apply to functions!", &F);
-    Assert1(!Attrs->paramHasAttr(0, ParamAttr::Nest),
-            "Attribute Nest should not apply to functions!", &F);
+    uint16_t RetI = Attrs->getParamAttrs(0) & ReturnIncompatible;
+    Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
+            "should not apply to functions!", &F);
 
     for (FunctionType::param_iterator I = FT->param_begin(), 
          E = FT->param_end(); I != E; ++I, ++Idx) {
-      if (Attrs->paramHasAttr(Idx, ParamAttr::ZExt) ||
-          Attrs->paramHasAttr(Idx, ParamAttr::SExt))
-        Assert1(FT->getParamType(Idx-1)->isInteger(),
-                "Attribute ZExt should only apply to Integer type!", &F);
-      if (Attrs->paramHasAttr(Idx, ParamAttr::NoAlias))
-        Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
-                "Attribute NoAlias should only apply to Pointer type!", &F);
+
+      uint16_t Attr = Attrs->getParamAttrs(Idx);
+
+      uint16_t ParmI = Attr & ParameterIncompatible;
+      Assert1(!ParmI, "Attribute " + Attrs->getParamAttrsText(ParmI) +
+              "should only be applied to function!", &F);
+
+      uint16_t MutI = Attr & MutuallyIncompatible;
+      Assert1(!(MutI & (MutI - 1)), "Attributes " +
+              Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
+
+      uint16_t IType = Attr & IntegerTypeOnly;
+      Assert1(!IType || FT->getParamType(Idx-1)->isInteger(),
+              "Attribute " + Attrs->getParamAttrsText(IType) +
+              "should only apply to Integer type!", &F);
+
+      uint16_t PType = Attr & PointerTypeOnly;
+      Assert1(!PType || isa<PointerType>(FT->getParamType(Idx-1)),
+              "Attribute " + Attrs->getParamAttrsText(PType) +
+              "should only apply to Pointer type!", &F);
+
       if (Attrs->paramHasAttr(Idx, ParamAttr::ByVal)) {
-        Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
-                "Attribute ByVal should only apply to pointer to structs!", &F);
-
-        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::StructRet),
-                "Attributes ByVal and StructRet are incompatible!", &F);
-
         const PointerType *Ty =
-            cast<PointerType>(FT->getParamType(Idx-1));
-        Assert1(isa<StructType>(Ty->getElementType()),
-                "Attribute ByVal should only apply to pointer to structs!", &F);
+            dyn_cast<PointerType>(FT->getParamType(Idx-1));
+        Assert1(!Ty || isa<StructType>(Ty->getElementType()),
+                "Attribute byval should only apply to pointer to structs!", &F);
       }
 
       if (Attrs->paramHasAttr(Idx, ParamAttr::Nest)) {
-        Assert1(!SawNest, "More than one parameter has attribute Nest!", &F);
+        Assert1(!SawNest, "More than one parameter has attribute nest!", &F);
         SawNest = true;
-
-        Assert1(isa<PointerType>(FT->getParamType(Idx-1)),
-                "Attribute Nest should only apply to Pointer type!", &F);
-        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::ByVal),
-                "Attributes Nest and ByVal are incompatible!", &F);
         Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::InReg),
-                "Attributes Nest and InReg are incompatible!", &F);
-        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::StructRet),
-                "Attributes Nest and StructRet are incompatible!", &F);
+                "Attributes nest and inreg are incompatible!", &F);
       }
 
-      Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::NoReturn), 
-             "Attribute NoReturn should only be applied to function", &F);
-      Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::NoUnwind),
-             "Attribute NoUnwind should only be applied to function", &F);
+      if (Attrs->paramHasAttr(Idx, ParamAttr::StructRet)) {
+        SawSRet = true;
+        Assert1(Idx == 1, "Attribute sret not on first parameter!", &F);
+      }
     }
   }
+
+  Assert1(SawSRet == FT->isStructReturn(),
+          "StructReturn function with no sret attribute!", &F);
 
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
