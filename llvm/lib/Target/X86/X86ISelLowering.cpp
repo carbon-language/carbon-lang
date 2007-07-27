@@ -3367,14 +3367,10 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
     CV.push_back(C);
     CV.push_back(C);
   }
-  Constant *CS = ConstantStruct::get(CV);
-  SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  SDVTList Tys = DAG.getVTList(VT, MVT::Other);
-  SmallVector<SDOperand, 3> Ops;
-  Ops.push_back(DAG.getEntryNode());
-  Ops.push_back(CPIdx);
-  Ops.push_back(DAG.getSrcValue(NULL));
-  SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+  Constant *C = ConstantVector::get(CV);
+  SDOperand CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);
+  SDOperand Mask = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0,
+                               false, 16);
   return DAG.getNode(X86ISD::FAND, VT, Op.getOperand(0), Mask);
 }
 
@@ -3399,21 +3395,16 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
     CV.push_back(C);
     CV.push_back(C);
   }
-  Constant *CS = ConstantStruct::get(CV);
-  SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
+  Constant *C = ConstantVector::get(CV);
+  SDOperand CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);
+  SDOperand Mask = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0,
+                               false, 16);
   if (MVT::isVector(VT)) {
-    SDOperand Mask = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0);
     return DAG.getNode(ISD::BIT_CONVERT, VT,
                        DAG.getNode(ISD::XOR, MVT::v2i64,
                     DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64, Op.getOperand(0)),
                     DAG.getNode(ISD::BIT_CONVERT, MVT::v2i64, Mask)));
   } else {
-    SDVTList Tys = DAG.getVTList(VT, MVT::Other);
-    SmallVector<SDOperand, 3> Ops;
-    Ops.push_back(DAG.getEntryNode());
-    Ops.push_back(CPIdx);
-    Ops.push_back(DAG.getSrcValue(NULL));
-    SDOperand Mask = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
     return DAG.getNode(X86ISD::FXOR, VT, Op.getOperand(0), Mask);
   }
 }
@@ -3442,14 +3433,10 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
     CV.push_back(ConstantFP::get(SrcTy, 0.0));
     CV.push_back(ConstantFP::get(SrcTy, 0.0));
   }
-  Constant *CS = ConstantStruct::get(CV);
-  SDOperand CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  SDVTList Tys = DAG.getVTList(SrcVT, MVT::Other);
-  SmallVector<SDOperand, 3> Ops;
-  Ops.push_back(DAG.getEntryNode());
-  Ops.push_back(CPIdx);
-  Ops.push_back(DAG.getSrcValue(NULL));
-  SDOperand Mask1 = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+  Constant *C = ConstantVector::get(CV);
+  SDOperand CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);
+  SDOperand Mask1 = DAG.getLoad(SrcVT, DAG.getEntryNode(), CPIdx, NULL, 0,
+                                false, 16);
   SDOperand SignBit = DAG.getNode(X86ISD::FAND, SrcVT, Op1, Mask1);
 
   // Shift sign bit right or left if the two operands have different types.
@@ -3474,14 +3461,10 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
     CV.push_back(ConstantFP::get(SrcTy, 0.0));
     CV.push_back(ConstantFP::get(SrcTy, 0.0));
   }
-  CS = ConstantStruct::get(CV);
-  CPIdx = DAG.getConstantPool(CS, getPointerTy(), 4);
-  Tys = DAG.getVTList(VT, MVT::Other);
-  Ops.clear();
-  Ops.push_back(DAG.getEntryNode());
-  Ops.push_back(CPIdx);
-  Ops.push_back(DAG.getSrcValue(NULL));
-  SDOperand Mask2 = DAG.getNode(X86ISD::LOAD_PACK, Tys, &Ops[0], Ops.size());
+  C = ConstantVector::get(CV);
+  CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);
+  SDOperand Mask2 = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, NULL, 0,
+                                false, 16);
   SDOperand Val = DAG.getNode(X86ISD::FAND, VT, Op0, Mask2);
 
   // Or the value with the sign bit.
@@ -4357,8 +4340,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
   case X86ISD::REP_STOS:           return "X86ISD::REP_STOS";
   case X86ISD::REP_MOVS:           return "X86ISD::REP_MOVS";
-  case X86ISD::LOAD_PACK:          return "X86ISD::LOAD_PACK";
-  case X86ISD::LOAD_UA:            return "X86ISD::LOAD_UA";
   case X86ISD::GlobalBaseReg:      return "X86ISD::GlobalBaseReg";
   case X86ISD::Wrapper:            return "X86ISD::Wrapper";
   case X86ISD::S2VEC:              return "X86ISD::S2VEC";
@@ -4756,19 +4737,14 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   }
 
   bool isAlign16 = isBaseAlignment16(Base->getOperand(1).Val, MFI, Subtarget);
+  LoadSDNode *LD = cast<LoadSDNode>(Base);
   if (isAlign16) {
-    LoadSDNode *LD = cast<LoadSDNode>(Base);
     return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
-                       LD->getSrcValueOffset());
+                       LD->getSrcValueOffset(), LD->isVolatile());
   } else {
-    // Just use movups, it's shorter.
-    SDVTList Tys = DAG.getVTList(MVT::v4f32, MVT::Other);
-    SmallVector<SDOperand, 3> Ops;
-    Ops.push_back(Base->getOperand(0));
-    Ops.push_back(Base->getOperand(1));
-    Ops.push_back(Base->getOperand(2));
-    return DAG.getNode(ISD::BIT_CONVERT, VT,
-                       DAG.getNode(X86ISD::LOAD_UA, Tys, &Ops[0], Ops.size()));
+    return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
+                       LD->getSrcValueOffset(), LD->isVolatile(),
+                       LD->getAlignment());
   }
 }
 

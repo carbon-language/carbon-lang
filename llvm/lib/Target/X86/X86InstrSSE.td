@@ -21,8 +21,6 @@
 def SDTX86FPShiftOp : SDTypeProfile<1, 2, [ SDTCisSameAs<0, 1>,
                                             SDTCisFP<0>, SDTCisInt<2> ]>;
 
-def X86loadp   : SDNode<"X86ISD::LOAD_PACK", SDTLoad, [SDNPHasChain]>;
-def X86loadu   : SDNode<"X86ISD::LOAD_UA",   SDTLoad, [SDNPHasChain]>;
 def X86fmin    : SDNode<"X86ISD::FMIN",      SDTFPBinOp>;
 def X86fmax    : SDNode<"X86ISD::FMAX",      SDTFPBinOp>;
 def X86fand    : SDNode<"X86ISD::FAND",      SDTFPBinOp,
@@ -82,33 +80,32 @@ def sdmem : Operand<v2f64> {
 // SSE pattern fragments
 //===----------------------------------------------------------------------===//
 
-def X86loadpf32  : PatFrag<(ops node:$ptr), (f32   (X86loadp node:$ptr))>;
-def X86loadpf64  : PatFrag<(ops node:$ptr), (f64   (X86loadp node:$ptr))>;
-
 def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
 def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
 def loadv4i32    : PatFrag<(ops node:$ptr), (v4i32 (load node:$ptr))>;
 def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
-// Like 'store', but always requires natural alignment.
+// Like 'store', but always requires vector alignment.
 def alignedstore : PatFrag<(ops node:$val, node:$ptr),
                            (st node:$val, node:$ptr), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
     return !ST->isTruncatingStore() &&
            ST->getAddressingMode() == ISD::UNINDEXED &&
-           ST->getAlignment() * 8 >= MVT::getSizeInBits(ST->getStoredVT());
+           ST->getAlignment() >= 16;
   return false;
 }]>;
 
-// Like 'load', but always requires natural alignment.
+// Like 'load', but always requires vector alignment.
 def alignedload : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
     return LD->getExtensionType() == ISD::NON_EXTLOAD &&
            LD->getAddressingMode() == ISD::UNINDEXED &&
-           LD->getAlignment() * 8 >= MVT::getSizeInBits(LD->getLoadedVT());
+           LD->getAlignment() >= 16;
   return false;
 }]>;
 
+def alignedloadfsf32 : PatFrag<(ops node:$ptr), (f32   (alignedload node:$ptr))>;
+def alignedloadfsf64 : PatFrag<(ops node:$ptr), (f64   (alignedload node:$ptr))>;
 def alignedloadv4f32 : PatFrag<(ops node:$ptr), (v4f32 (alignedload node:$ptr))>;
 def alignedloadv2f64 : PatFrag<(ops node:$ptr), (v2f64 (alignedload node:$ptr))>;
 def alignedloadv4i32 : PatFrag<(ops node:$ptr), (v4i32 (alignedload node:$ptr))>;
@@ -123,10 +120,12 @@ def memop : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
     return LD->getExtensionType() == ISD::NON_EXTLOAD &&
            LD->getAddressingMode() == ISD::UNINDEXED &&
-           LD->getAlignment() * 8 >= MVT::getSizeInBits(LD->getLoadedVT());
+           LD->getAlignment() >= 16;
   return false;
 }]>;
 
+def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
+def memopfsf64 : PatFrag<(ops node:$ptr), (f64   (memop node:$ptr))>;
 def memopv4f32 : PatFrag<(ops node:$ptr), (v4f32 (memop node:$ptr))>;
 def memopv2f64 : PatFrag<(ops node:$ptr), (v2f64 (memop node:$ptr))>;
 def memopv4i32 : PatFrag<(ops node:$ptr), (v4i32 (memop node:$ptr))>;
@@ -410,7 +409,7 @@ def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
 // disregarded.
 def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
                      "movaps {$src, $dst|$dst, $src}",
-                     [(set FR32:$dst, (X86loadpf32 addr:$src))]>;
+                     [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
 let isTwoAddress = 1 in {
@@ -429,15 +428,15 @@ let isCommutable = 1 in {
 def FsANDPSrm : PSI<0x54, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1, f128mem:$src2),
                     "andps {$src2, $dst|$dst, $src2}",
                     [(set FR32:$dst, (X86fand FR32:$src1,
-                                      (X86loadpf32 addr:$src2)))]>;
+                                      (memopfsf32 addr:$src2)))]>;
 def FsORPSrm  : PSI<0x56, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1, f128mem:$src2),
                     "orps {$src2, $dst|$dst, $src2}",
                     [(set FR32:$dst, (X86for FR32:$src1,
-                                      (X86loadpf32 addr:$src2)))]>;
+                                      (memopfsf32 addr:$src2)))]>;
 def FsXORPSrm : PSI<0x57, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1, f128mem:$src2),
                     "xorps {$src2, $dst|$dst, $src2}",
                     [(set FR32:$dst, (X86fxor FR32:$src1,
-                                      (X86loadpf32 addr:$src2)))]>;
+                                      (memopfsf32 addr:$src2)))]>;
 
 def FsANDNPSrr : PSI<0x55, MRMSrcReg,
                      (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
@@ -1083,7 +1082,7 @@ def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
 // disregarded.
 def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      "movapd {$src, $dst|$dst, $src}",
-                     [(set FR64:$dst, (X86loadpf64 addr:$src))]>;
+                     [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
 
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
 let isTwoAddress = 1 in {
@@ -1102,15 +1101,15 @@ let isCommutable = 1 in {
 def FsANDPDrm : PDI<0x54, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
                     "andpd {$src2, $dst|$dst, $src2}",
                     [(set FR64:$dst, (X86fand FR64:$src1,
-                                      (X86loadpf64 addr:$src2)))]>;
+                                      (memopfsf64 addr:$src2)))]>;
 def FsORPDrm  : PDI<0x56, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
                     "orpd {$src2, $dst|$dst, $src2}",
                     [(set FR64:$dst, (X86for FR64:$src1,
-                                      (X86loadpf64 addr:$src2)))]>;
+                                      (memopfsf64 addr:$src2)))]>;
 def FsXORPDrm : PDI<0x57, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
                     "xorpd {$src2, $dst|$dst, $src2}",
                     [(set FR64:$dst, (X86fxor FR64:$src1,
-                                      (X86loadpf64 addr:$src2)))]>;
+                                      (memopfsf64 addr:$src2)))]>;
 
 def FsANDNPDrr : PDI<0x55, MRMSrcReg,
                      (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
@@ -2630,11 +2629,11 @@ def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
                   (load addr:$src2))),
           (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
-// Unaligned load
-def : Pat<(v4f32 (X86loadu addr:$src)), (MOVUPSrm addr:$src)>,
-      Requires<[HasSSE1]>;
-
 // Use movaps / movups for SSE integer load / store (one byte shorter).
+def : Pat<(alignedloadv4i32 addr:$src),
+          (MOVAPSrm addr:$src)>, Requires<[HasSSE1]>;
+def : Pat<(loadv4i32 addr:$src),
+          (MOVUPSrm addr:$src)>, Requires<[HasSSE1]>;
 def : Pat<(alignedloadv2i64 addr:$src),
           (MOVAPSrm addr:$src)>, Requires<[HasSSE2]>;
 def : Pat<(loadv2i64 addr:$src),
