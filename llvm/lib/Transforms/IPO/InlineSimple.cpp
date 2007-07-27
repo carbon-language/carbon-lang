@@ -23,14 +23,15 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
 #include "llvm/Transforms/Utils/InlineCost.h"
-#include <set>
+#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
 
 namespace {
 
   class VISIBILITY_HIDDEN SimpleInliner : public Inliner {
-    std::set<const Function*> NeverInline; // Functions that are never inlined
+    // Functions that are never inlined
+    SmallPtrSet<const Function*, 16> NeverInline; 
     InlineCostAnalyzer CA;
   public:
     SimpleInliner() : Inliner(&ID) {}

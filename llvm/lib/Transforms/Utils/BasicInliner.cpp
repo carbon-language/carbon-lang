@@ -23,7 +23,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <vector>
-#include <set>
 
 using namespace llvm;
 
@@ -65,7 +64,7 @@ namespace llvm {
   private:
     TargetData *TD;
     std::vector<Function *> Functions;
-    std::set<const Function *> NeverInline;
+    SmallPtrSet<const Function *, 16> NeverInline;
     SmallPtrSet<Function *, 8> DeadFunctions;
     InlineCostAnalyzer CA;
   };

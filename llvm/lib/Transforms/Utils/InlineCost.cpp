@@ -141,7 +141,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
 //
-int InlineCostAnalyzer::getInlineCost(CallSite CS, std::set<const Function *> &NeverInline) {
+int InlineCostAnalyzer::getInlineCost(CallSite CS, SmallPtrSet<const Function *, 16> &NeverInline) {
   Instruction *TheCall = CS.getInstruction();
   Function *Callee = CS.getCalledFunction();
   const Function *Caller = TheCall->getParent()->getParent();

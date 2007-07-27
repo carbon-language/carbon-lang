@@ -14,7 +14,7 @@
 #ifndef INLINECOST_H
 #define INLINECOST_H
 
-#include <set>
+#include "llvm/ADT/SmallPtrSet.h"
 #include <map>
 #include <vector>
 
@@ -73,7 +73,7 @@ namespace llvm {
     // getInlineCost - The heuristic used to determine if we should inline the
     // function call or not.
     //
-    int getInlineCost(CallSite CS, std::set<const Function *> &NeverInline);
+    int getInlineCost(CallSite CS, SmallPtrSet<const Function *, 16> &NeverInline);
   };
 }
 
