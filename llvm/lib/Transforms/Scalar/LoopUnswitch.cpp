@@ -482,9 +482,9 @@ void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig,
       for (DominanceFrontier::DomSetType::iterator I = S.begin(), E = S.end();
            I != E; ++I) {
         BasicBlock *BB = *I;
-        DenseMap<const Value*, Value*>::iterator I = VM.find(BB);
-        if (I != VM.end())
-          NewDFSet.insert(cast<BasicBlock>(I->second));
+        DenseMap<const Value*, Value*>::iterator IDM = VM.find(BB);
+        if (IDM != VM.end())
+          NewDFSet.insert(cast<BasicBlock>(IDM->second));
         else
           NewDFSet.insert(BB);
       }

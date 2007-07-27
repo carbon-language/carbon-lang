@@ -25,6 +25,7 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/ManagedStatic.h"
 #include <csignal>
 #include <map>
 #include <cmath>
@@ -33,7 +34,7 @@ using std::vector;
 using namespace llvm;
 
 typedef GenericValue (*ExFunc)(FunctionType *, const vector<GenericValue> &);
-static std::map<const Function *, ExFunc> Functions;
+static ManagedStatic<std::map<const Function *, ExFunc> > Functions;
 static std::map<std::string, ExFunc> FuncNames;
 
 static Interpreter *TheInterpreter;
@@ -80,7 +81,7 @@ static ExFunc lookupFunction(const Function *F) {
     FnPtr = (ExFunc)(intptr_t)
       sys::DynamicLibrary::SearchForAddressOfSymbol(F->getName());
   if (FnPtr != 0)
-    Functions.insert(std::make_pair(F, FnPtr));  // Cache for later
+    Functions->insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;
 }
 
@@ -90,8 +91,8 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 
   // Do a lookup to see if the function is in our cache... this should just be a
   // deferred annotation!
-  std::map<const Function *, ExFunc>::iterator FI = Functions.find(F);
-  ExFunc Fn = (FI == Functions.end()) ? lookupFunction(F) : FI->second;
+  std::map<const Function *, ExFunc>::iterator FI = Functions->find(F);
+  ExFunc Fn = (FI == Functions->end()) ? lookupFunction(F) : FI->second;
   if (Fn == 0) {
     cerr << "Tried to execute an unknown external function: "
          << F->getType()->getDescription() << " " << F->getName() << "\n";

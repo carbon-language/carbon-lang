@@ -240,8 +240,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
       bool Empty = true;
       
-      for (unsigned subrc = 0, e2 = RC.SubRegClasses.size();
-            subrc != e2; ++subrc) {
+      for (unsigned subrc = 0, subrcMax = RC.SubRegClasses.size();
+            subrc != subrcMax; ++subrc) {
         unsigned rc2 = 0, e2 = RegisterClasses.size();
         for (; rc2 != e2; ++rc2) {
           const CodeGenRegisterClass &RC2 =  RegisterClasses[rc2];
