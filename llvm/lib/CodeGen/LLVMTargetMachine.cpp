@@ -72,6 +72,11 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
+    
+  PM.add(createLowerSubregsPass());
+  
+  if (PrintMachineCode)  // Print the subreg lowered code
+    PM.add(createMachineFunctionPrinterPass(cerr));
 
   // Run post-ra passes.
   if (addPostRegAlloc(PM, Fast) && PrintMachineCode)
@@ -96,8 +101,6 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
 
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
-    
-  PM.add(createLowerSubregsPass());
 
   switch (FileType) {
   default:
@@ -178,6 +181,11 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
+    
+  PM.add(createLowerSubregsPass());
+  
+  if (PrintMachineCode)  // Print the subreg lowered code
+    PM.add(createMachineFunctionPrinterPass(cerr));
 
   // Run post-ra passes.
   if (addPostRegAlloc(PM, Fast) && PrintMachineCode)
@@ -199,8 +207,6 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
-    
-  PM.add(createLowerSubregsPass());
 
   addCodeEmitter(PM, Fast, PrintEmittedAsm, MCE);
   
