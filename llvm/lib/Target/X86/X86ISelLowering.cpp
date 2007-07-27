@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "X86CodeEmitter.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
 #include "X86MachineFunctionInfo.h"
@@ -34,6 +35,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ParameterAttributes.h"
 using namespace llvm;
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
@@ -244,6 +246,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setExceptionSelectorRegister(X86::EDX);
   }
   
+  setOperationAction(ISD::ADJUST_TRAMP, MVT::i32,   Expand);
+  setOperationAction(ISD::ADJUST_TRAMP, MVT::i64,   Expand);
+  setOperationAction(ISD::TRAMPOLINE,   MVT::Other, Custom);
+
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   setOperationAction(ISD::VAARG             , MVT::Other, Expand);
@@ -4265,6 +4271,89 @@ SDOperand X86TargetLowering::LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG)
                      Chain, DAG.getRegister(X86::ECX, getPointerTy()));
 }
 
+SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
+                                             SelectionDAG &DAG) {
+  SDOperand Root = Op.getOperand(0);
+  SDOperand Trmp = Op.getOperand(1); // trampoline
+  SDOperand FPtr = Op.getOperand(2); // nested function
+  SDOperand Nest = Op.getOperand(3); // 'nest' parameter value
+
+  SrcValueSDNode *TrmpSV = cast<SrcValueSDNode>(Op.getOperand(4));
+
+  if (Subtarget->is64Bit()) {
+    return SDOperand(); // not yet supported
+  } else {
+    Function *Func = (Function *)
+      cast<Function>(cast<SrcValueSDNode>(Op.getOperand(5))->getValue());
+    unsigned CC = Func->getCallingConv();
+    unsigned char NestReg;
+
+    switch (CC) {
+    default:
+      assert(0 && "Unsupported calling convention");
+    case CallingConv::C:
+    case CallingConv::Fast:
+    case CallingConv::X86_StdCall: {
+      // Pass 'nest' parameter in ECX.
+      // Must be kept in sync with X86CallingConv.td
+      NestReg = N86::ECX;
+
+      // Check that ECX wasn't needed by an 'inreg' parameter.
+      const FunctionType *FTy = Func->getFunctionType();
+      const ParamAttrsList *Attrs = FTy->getParamAttrs();
+
+      if (Attrs && !Func->isVarArg()) {
+        unsigned InRegCount = 0;
+        unsigned Idx = 1;
+
+        for (FunctionType::param_iterator I = FTy->param_begin(),
+             E = FTy->param_end(); I != E; ++I, ++Idx)
+          if (Attrs->paramHasAttr(Idx, ParamAttr::InReg))
+            // FIXME: should only count parameters that are lowered to integers.
+            InRegCount += (getTargetData()->getTypeSizeInBits(*I) + 31) / 32;
+
+        if (InRegCount > 2) {
+          cerr << "Nest register in use - reduce number of inreg parameters!\n";
+          abort();
+        }
+      }
+      break;
+    }
+    case CallingConv::X86_FastCall:
+      // Pass 'nest' parameter in EAX.
+      // Must be kept in sync with X86CallingConv.td
+      NestReg = N86::EAX;
+      break;
+    }
+
+    SDOperand OutChains[4];
+    SDOperand Addr, Disp;
+
+    Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(10, MVT::i32));
+    Disp = DAG.getNode(ISD::SUB, MVT::i32, FPtr, Addr);
+
+    const unsigned char MOV32ri = 0xB8;
+    const unsigned char JMP     = 0xE9;
+
+    OutChains[0] = DAG.getStore(Root, DAG.getConstant(MOV32ri|NestReg, MVT::i8),
+                                Trmp, TrmpSV->getValue(), TrmpSV->getOffset());
+
+    Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(1, MVT::i32));
+    OutChains[1] = DAG.getStore(Root, Nest, Addr, TrmpSV->getValue(),
+                                TrmpSV->getOffset() + 1, false, 1);
+
+    Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(5, MVT::i32));
+    OutChains[2] = DAG.getStore(Root, DAG.getConstant(JMP, MVT::i8), Addr,
+                                TrmpSV->getValue() + 5, TrmpSV->getOffset());
+
+    Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(6, MVT::i32));
+    OutChains[3] = DAG.getStore(Root, Disp, Addr, TrmpSV->getValue(),
+                                TrmpSV->getOffset() + 6, false, 1);
+
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains, 4);
+  }
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -4306,6 +4395,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                 return LowerFRAME_TO_ARGS_OFFSET(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
+  case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
   }
   return SDOperand();
 }

@@ -423,6 +423,7 @@ namespace llvm {
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFRAME_TO_ARGS_OFFSET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
   };
 }
 

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "x86-emitter"
+#include "X86CodeEmitter.h"
 #include "X86InstrInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
@@ -190,14 +191,6 @@ void Emitter::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
   if (Reloc == X86::reloc_absolute_dword)
     MCE.emitWordLE(0);
   MCE.emitWordLE(0); // The relocated value will be added to the displacement
-}
-
-/// N86 namespace - Native X86 Register numbers... used by X86 backend.
-///
-namespace N86 {
-  enum {
-    EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7
-  };
 }
 
 // getX86RegNum - This function maps LLVM register identifiers to their X86

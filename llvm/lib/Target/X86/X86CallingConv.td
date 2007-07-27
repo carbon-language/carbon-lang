@@ -108,6 +108,9 @@ def CC_X86_64_C : CallingConv<[
   CCIfType<[v8i8, v4i16, v2i32, v1i64],
               CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
 
+  // The 'nest' parameter, if any, is passed in R10.
+  CCIfNest<CCAssignToReg<[R10]>>,
+
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
@@ -150,11 +153,14 @@ def CC_X86_32_Common : CallingConv<[
 def CC_X86_32_C : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
-  
+
+  // The 'nest' parameter, if any, is passed in ECX.
+  CCIfNest<CCAssignToReg<[ECX]>>,
+
   // The first 3 integer arguments, if marked 'inreg' and if the call is not
   // a vararg call, are passed in integer registers.
   CCIfNotVarArg<CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>>>,
-  
+
   // Otherwise, same as everything else.
   CCDelegateTo<CC_X86_32_Common>
 ]>;
@@ -163,10 +169,13 @@ def CC_X86_32_C : CallingConv<[
 def CC_X86_32_FastCall : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
-  
+
+  // The 'nest' parameter, if any, is passed in EAX.
+  CCIfNest<CCAssignToReg<[EAX]>>,
+
   // The first 2 integer arguments are passed in ECX/EDX
   CCIfType<[i32], CCAssignToReg<[ECX, EDX]>>,
-  
+
   // Otherwise, same as everything else.
   CCDelegateTo<CC_X86_32_Common>
 ]>;
