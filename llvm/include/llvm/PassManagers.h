@@ -227,10 +227,7 @@ public:
   /// Add RequiredPass into list of lower level passes required by pass P.
   /// RequiredPass is run on the fly by Pass Manager when P requests it
   /// through getAnalysis interface.
-  virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
-    assert (0 && 
-            "Unable to handle Pass that requires lower level Analysis pass");
-  }
+  virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
 
   virtual Pass * getOnTheFlyPass(Pass *P, const PassInfo *PI, Function &F) {
     assert (0 && "Unable to find on the fly pass");

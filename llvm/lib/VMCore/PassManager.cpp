@@ -907,6 +907,18 @@ void PMDataManager::dumpAnalysisSetInfo(const char *Msg, Pass *P,
   }
 }
 
+/// Add RequiredPass into list of lower level passes required by pass P.
+/// RequiredPass is run on the fly by Pass Manager when P requests it
+/// through getAnalysis interface.
+/// This should be handled by specific pass manager.
+void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
+  if (TPM) {
+    TPM->dumpArguments();
+    TPM->dumpPasses();
+  }
+  assert (0 && "Unable to handle Pass that requires lower level Analysis pass");
+}
+
 // Destructor
 PMDataManager::~PMDataManager() {
   
