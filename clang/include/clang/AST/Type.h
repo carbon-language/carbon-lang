@@ -504,6 +504,28 @@ class OCUVectorType : public VectorType {
     VectorType(OCUVector, vecType, nElements, canonType) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
+  bool isPointAccessor(const char c) const {
+    return c == 'x' || c == 'y' || c == 'z' || c == 'w';
+  }
+  bool isColorAccessor(const char c) const {
+    return c == 'r' || c == 'g' || c == 'b' || c == 'a';
+  }
+  bool isTextureAccessor(const char c) const {
+    return c == 's' || c == 't' || c == 'p' || c == 'q';
+  };
+  bool isAccessorWithinNumElements(const char c) const {
+    switch (NumElements) {
+      default: assert(0 && "Illegal number of elements");
+      case 2: return c == 'x' || c == 'y' || 
+                     c == 'r' || c == 'g' ||
+                     c == 's' || c == 't';
+      case 3: return c == 'x' || c == 'y' || c == 'z' ||
+                     c == 'r' || c == 'g' || c == 'b' ||
+                     c == 's' || c == 't' || c == 'p';
+      case 4: return isPointAccessor(c) || isColorAccessor(c) || 
+                     isTextureAccessor(c);
+    }
+  }
   static bool classof(const Type *T) { 
     return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
   }

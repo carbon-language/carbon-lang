@@ -23,6 +23,7 @@ using namespace clang;
 
 Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
   Expr *E = static_cast<Expr*>(expr);
+  assert(E && "ParseExprStmt(): missing expression");
   
   // Exprs are statements, so there is no need to do a conversion here. However,
   // diagnose some potentially bad code.

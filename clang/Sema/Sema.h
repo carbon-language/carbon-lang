@@ -38,6 +38,7 @@ namespace clang {
   class ArrayType;
   class LabelStmt;
   class SwitchStmt;
+  class OCUVectorType;
   
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -369,7 +370,11 @@ private:
   QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation loc, 
                                      bool isSizeof);
-    
+  
+  /// type checking primary expressions.
+  QualType CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
+                                   IdentifierInfo &Comp, SourceLocation CmpLoc);
+  
   /// C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
   /// a constant expression of type int with a value greater than zero.  If the
   /// array has an incomplete type or a valid constant size, return false,

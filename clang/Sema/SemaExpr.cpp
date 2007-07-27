@@ -339,6 +339,57 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   return new ArraySubscriptExpr(LHSExp, RHSExp, ResultType, RLoc);
 }
 
+QualType Sema::
+CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
+                        IdentifierInfo &CompName, SourceLocation CompLoc) {
+  const OCUVectorType *vecType = baseType->isOCUVectorType();
+  
+  // The vector accessor can't exceed the number of elements.
+  const char *compStr = CompName.getName();
+  if (strlen(compStr) > vecType->getNumElements()) {
+    Diag(OpLoc, diag::err_ocuvector_component_exceeds_length, 
+                baseType.getAsString(), SourceRange(CompLoc));
+    return QualType();
+  }
+  // The component names must come from the same set.
+  if (vecType->isPointAccessor(*compStr))
+   do { compStr++; } while (*compStr && vecType->isPointAccessor(*compStr));
+  else if (vecType->isColorAccessor(*compStr))
+   do { compStr++; } while (*compStr && vecType->isColorAccessor(*compStr));
+  else if (vecType->isTextureAccessor(*compStr))
+   do { compStr++; } while (*compStr && vecType->isTextureAccessor(*compStr));
+    
+  if (*compStr) { 
+    // We didn't get to the end of the string. This means the component names
+    // didn't come from the same set *or* we encountered an illegal name.
+    Diag(OpLoc, diag::err_ocuvector_component_name_illegal, 
+         std::string(compStr,compStr+1), SourceRange(CompLoc));
+    return QualType();
+  }
+  // Each component accessor can't exceed the vector type.
+  compStr = CompName.getName();
+  while (*compStr) {
+    if (vecType->isAccessorWithinNumElements(*compStr))
+      compStr++;
+    else
+      break;
+  }
+  if (*compStr) { 
+    // We didn't get to the end of the string. This means a component accessor
+    // exceeds the number of elements in the vector.
+    Diag(OpLoc, diag::err_ocuvector_component_exceeds_length, 
+                baseType.getAsString(), SourceRange(CompLoc));
+    return QualType();
+  }
+  // The component accessor looks fine - now we need to compute the actual type.
+  // The vector type is implied by the component accessor. For example, 
+  // vec4.b is a float, vec4.xy is a vec2, vec4.rgb is a vec3, etc.
+  unsigned CompSize = strlen(CompName.getName());
+  if (CompSize == 1)
+    return vecType->getElementType();
+  return Context.getOCUVectorType(vecType->getElementType(), CompSize);
+}
+
 Action::ExprResult Sema::
 ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -356,22 +407,27 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow,
                   SourceRange(MemberLoc));
   }
-  // Get the member decl from the struct/union definition.
-  FieldDecl *MemberDecl;
+  // The base type is either a record or an OCUVectorType.
   if (const RecordType *RTy = BaseType->isRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
       return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RDecl->getName(),
                   BaseExpr->getSourceRange());
     // The record definition is complete, now make sure the member is valid.
-    if (!(MemberDecl = RDecl->getMember(&Member)))
+    FieldDecl *MemberDecl = RDecl->getMember(&Member);
+    if (!MemberDecl)
       return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName(),
                   SourceRange(MemberLoc));
+    return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl, MemberLoc);
+  } else if (BaseType->isOCUVectorType() && OpKind == tok::period) {
+    QualType ret = CheckOCUVectorComponent(BaseType, OpLoc, Member, MemberLoc);
+    if (ret.isNull())
+      return true;
+    // FIXME: instantiate a OCUVectorComponentExpr node...
+    return true;
   } else
     return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
                 SourceRange(MemberLoc));
-  
-  return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl, MemberLoc);
 }
 
 /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
