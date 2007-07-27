@@ -365,7 +365,8 @@ void Verifier::visitFunction(Function &F) {
     ParamAttr::NoReturn | ParamAttr::NoUnwind;
 
   const uint16_t MutuallyIncompatible =
-    ParamAttr::ByVal | ParamAttr::Nest | ParamAttr::StructRet;
+    ParamAttr::ByVal | ParamAttr::InReg |
+    ParamAttr::Nest  | ParamAttr::StructRet;
 
   const uint16_t IntegerTypeOnly =
     ParamAttr::SExt | ParamAttr::ZExt;
@@ -417,8 +418,6 @@ void Verifier::visitFunction(Function &F) {
       if (Attrs->paramHasAttr(Idx, ParamAttr::Nest)) {
         Assert1(!SawNest, "More than one parameter has attribute nest!", &F);
         SawNest = true;
-        Assert1(!Attrs->paramHasAttr(Idx, ParamAttr::InReg),
-                "Attributes nest and inreg are incompatible!", &F);
       }
 
       if (Attrs->paramHasAttr(Idx, ParamAttr::StructRet)) {
