@@ -43,7 +43,7 @@ class SmallPtrSetImpl {
 protected:
   /// CurArray - This is the current set of buckets.  If it points to
   /// SmallArray, then the set is in 'small mode'.
-  void **CurArray;
+  const void **CurArray;
   /// CurArraySize - The allocated size of CurArray, always a power of two.
   /// Note that CurArray points to an array that has CurArraySize+1 elements in
   /// it, so that the end iterator actually points to valid memory.
@@ -52,7 +52,7 @@ protected:
   // If small, this is # elts allocated consequtively
   unsigned NumElements;
   unsigned NumTombstones;
-  void *SmallArray[1];  // Must be last ivar.
+  const void *SmallArray[1];  // Must be last ivar.
 
   // Helper to copy construct a SmallPtrSet.
   SmallPtrSetImpl(const SmallPtrSetImpl& that);
@@ -88,7 +88,7 @@ public:
   
   /// insert - This returns true if the pointer was new to the set, false if it
   /// was already in the set.
-  bool insert(void *Ptr);
+  bool insert(const void * Ptr);
   
   template <typename IterT>
   void insert(IterT I, IterT E) {
@@ -98,12 +98,12 @@ public:
   
   /// erase - If the set contains the specified pointer, remove it and return
   /// true, otherwise return false.
-  bool erase(void *Ptr);
+  bool erase(void * const Ptr);
   
-  bool count(void *Ptr) const {
+  bool count(void * const Ptr) const {
     if (isSmall()) {
       // Linear search for the item.
-      for (void *const *APtr = SmallArray, *const *E = SmallArray+NumElements;
+      for (const void *const *APtr = SmallArray, *const *E = SmallArray+NumElements;
            APtr != E; ++APtr)
         if (*APtr == Ptr)
           return true;
@@ -117,10 +117,10 @@ public:
 private:
   bool isSmall() const { return CurArray == &SmallArray[0]; }
 
-  unsigned Hash(void *Ptr) const {
+  unsigned Hash(const void *Ptr) const {
     return ((uintptr_t)Ptr >> 4) & (CurArraySize-1);
   }
-  void * const *FindBucketFor(void *Ptr) const;
+  const void * const *FindBucketFor(const void *Ptr) const;
   
   /// Grow - Allocate a larger backing store for the buckets and move it over.
   void Grow();
@@ -134,9 +134,9 @@ protected:
 /// instances of SmallPtrSetIterator.
 class SmallPtrSetIteratorImpl {
 protected:
-  void *const *Bucket;
+  const void *const *Bucket;
 public:
-  SmallPtrSetIteratorImpl(void *const *BP) : Bucket(BP) {
+  SmallPtrSetIteratorImpl(const void *const *BP) : Bucket(BP) {
     AdvanceIfNotValid();
   }
   
@@ -162,12 +162,12 @@ protected:
 template<typename PtrTy>
 class SmallPtrSetIterator : public SmallPtrSetIteratorImpl {
 public:
-  SmallPtrSetIterator(void *const *BP) : SmallPtrSetIteratorImpl(BP) {}
+  SmallPtrSetIterator(const void *const *BP) : SmallPtrSetIteratorImpl(BP) {}
 
   // Most methods provided by baseclass.
   
-  PtrTy operator*() const {
-    return static_cast<PtrTy>(*Bucket);
+  const PtrTy operator*() const {
+    return static_cast<const PtrTy>(const_cast<void*>(*Bucket));
   }
   
   inline SmallPtrSetIterator& operator++() {          // Preincrement

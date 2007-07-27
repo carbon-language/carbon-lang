@@ -18,10 +18,10 @@
 
 using namespace llvm;
 
-bool SmallPtrSetImpl::insert(void *Ptr) {
+bool SmallPtrSetImpl::insert(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is already in the set.
-    for (void **APtr = SmallArray, **E = SmallArray+NumElements;
+    for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
          APtr != E; ++APtr)
       if (*APtr == Ptr)
         return false;
@@ -40,21 +40,21 @@ bool SmallPtrSetImpl::insert(void *Ptr) {
     Grow();
   
   // Okay, we know we have space.  Find a hash bucket.
-  void **Bucket = const_cast<void**>(FindBucketFor(Ptr));
+  void **Bucket = const_cast<void**>(FindBucketFor((void*)Ptr));
   if (*Bucket == Ptr) return false; // Already inserted, good.
   
   // Otherwise, insert it!
   if (*Bucket == getTombstoneMarker())
     --NumTombstones;
-  *Bucket = Ptr;
+  *Bucket = (void*)Ptr;
   ++NumElements;  // Track density.
   return true;
 }
 
-bool SmallPtrSetImpl::erase(void *Ptr) {
+bool SmallPtrSetImpl::erase(void * const Ptr) {
   if (isSmall()) {
     // Check to see if it is in the set.
-    for (void **APtr = SmallArray, **E = SmallArray+NumElements;
+    for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
          APtr != E; ++APtr)
       if (*APtr == Ptr) {
         // If it is in the set, replace this element.
@@ -78,12 +78,12 @@ bool SmallPtrSetImpl::erase(void *Ptr) {
   return true;
 }
 
-void * const *SmallPtrSetImpl::FindBucketFor(void *Ptr) const {
+const void * const *SmallPtrSetImpl::FindBucketFor(const void *Ptr) const {
   unsigned Bucket = Hash(Ptr);
   unsigned ArraySize = CurArraySize;
   unsigned ProbeAmt = 1;
-  void *const *Array = CurArray;
-  void *const *Tombstone = 0;
+  const void *const *Array = CurArray;
+  const void *const *Tombstone = 0;
   while (1) {
     // Found Ptr's bucket?
     if (Array[Bucket] == Ptr)
@@ -112,11 +112,11 @@ void SmallPtrSetImpl::Grow() {
   unsigned OldSize = CurArraySize;
   unsigned NewSize = OldSize < 64 ? 128 : OldSize*2;
   
-  void **OldBuckets = CurArray;
+  const void **OldBuckets = CurArray;
   bool WasSmall = isSmall();
   
   // Install the new array.  Clear all the buckets to empty.
-  CurArray = (void**)malloc(sizeof(void*) * (NewSize+1));
+  CurArray = (const void**)malloc(sizeof(void*) * (NewSize+1));
   assert(CurArray && "Failed to allocate memory?");
   CurArraySize = NewSize;
   memset(CurArray, -1, NewSize*sizeof(void*));
@@ -128,19 +128,19 @@ void SmallPtrSetImpl::Grow() {
   // Copy over all the elements.
   if (WasSmall) {
     // Small sets store their elements in order.
-    for (void **BucketPtr = OldBuckets, **E = OldBuckets+NumElements;
+    for (const void **BucketPtr = OldBuckets, **E = OldBuckets+NumElements;
          BucketPtr != E; ++BucketPtr) {
-      void *Elt = *BucketPtr;
-      *const_cast<void**>(FindBucketFor(Elt)) = Elt;
+      const void *Elt = *BucketPtr;
+      *const_cast<void**>(FindBucketFor(Elt)) = const_cast<void*>(Elt);
     }
   } else {
     // Copy over all valid entries.
-    for (void **BucketPtr = OldBuckets, **E = OldBuckets+OldSize;
+    for (const void **BucketPtr = OldBuckets, **E = OldBuckets+OldSize;
          BucketPtr != E; ++BucketPtr) {
       // Copy over the element if it is valid.
-      void *Elt = *BucketPtr;
+      const void *Elt = *BucketPtr;
       if (Elt != getTombstoneMarker() && Elt != getEmptyMarker())
-        *const_cast<void**>(FindBucketFor(Elt)) = Elt;
+        *const_cast<void**>(FindBucketFor(Elt)) = const_cast<void*>(Elt);
     }
     
     free(OldBuckets);
@@ -154,7 +154,7 @@ SmallPtrSetImpl::SmallPtrSetImpl(const SmallPtrSetImpl& that) {
     CurArray = &SmallArray[0];
   // Otherwise, allocate new heap space (unless we were the same size)
   } else {
-    CurArray = (void**)malloc(sizeof(void*) * (that.CurArraySize+1));
+    CurArray = (const void**)malloc(sizeof(void*) * (that.CurArraySize+1));
     assert(CurArray && "Failed to allocate memory?");
   }
   
@@ -183,9 +183,9 @@ void SmallPtrSetImpl::CopyFrom(const SmallPtrSetImpl &RHS) {
   // Otherwise, allocate new heap space (unless we were the same size)
   } else if (CurArraySize != RHS.CurArraySize) {
     if (isSmall())
-      CurArray = (void**)malloc(sizeof(void*) * (RHS.CurArraySize+1));
+      CurArray = (const void**)malloc(sizeof(void*) * (RHS.CurArraySize+1));
     else
-      CurArray = (void**)realloc(CurArray, sizeof(void*)*(RHS.CurArraySize+1));
+      CurArray = (const void**)realloc(CurArray, sizeof(void*)*(RHS.CurArraySize+1));
     assert(CurArray && "Failed to allocate memory?");
   }
   
