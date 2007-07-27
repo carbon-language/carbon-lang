@@ -1,105 +1,157 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="System"
 	ProjectGUID="{0F8407F3-FA23-4CF1-83A9-DCBE0B361489}"
 	RootNamespace="System"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="4"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/System.lib"/>
+				OutputFile="$(OutDir)/System.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/System.lib"/>
+				OutputFile="$(OutDir)/System.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -108,117 +160,157 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath="..\..\lib\System\Alarm.cpp">
+				RelativePath="..\..\lib\System\Alarm.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Disassembler.cpp">
+				RelativePath="..\..\lib\System\Disassembler.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\DynamicLibrary.cpp">
+				RelativePath="..\..\lib\System\DynamicLibrary.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\IncludeFile.cpp">
+				RelativePath="..\..\lib\System\IncludeFile.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\MappedFile.cpp">
+				RelativePath="..\..\lib\System\MappedFile.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Memory.cpp">
+				RelativePath="..\..\lib\System\Memory.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Mutex.cpp">
+				RelativePath="..\..\lib\System\Mutex.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Path.cpp">
+				RelativePath="..\..\lib\System\Path.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Process.cpp">
+				RelativePath="..\..\lib\System\Process.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Program.cpp">
+				RelativePath="..\..\lib\System\Program.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Signals.cpp">
+				RelativePath="..\..\lib\System\Signals.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\TimeValue.cpp">
+				RelativePath="..\..\lib\System\TimeValue.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath="..\..\include\llvm\System\Alarm.h">
+				RelativePath="..\..\include\llvm\System\Alarm.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Disassembler.h">
+				RelativePath="..\..\include\llvm\System\Disassembler.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\DynamicLibrary.h">
+				RelativePath="..\..\include\llvm\System\DynamicLibrary.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\IncludeFile.h">
+				RelativePath="..\..\include\llvm\System\IncludeFile.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\MappedFile.h">
+				RelativePath="..\..\include\llvm\System\MappedFile.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Memory.h">
+				RelativePath="..\..\include\llvm\System\Memory.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Mutex.h">
+				RelativePath="..\..\include\llvm\System\Mutex.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Path.h">
+				RelativePath="..\..\include\llvm\System\Path.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Process.h">
+				RelativePath="..\..\include\llvm\System\Process.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Program.h">
+				RelativePath="..\..\include\llvm\System\Program.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\Signals.h">
+				RelativePath="..\..\include\llvm\System\Signals.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\System\TimeValue.h">
+				RelativePath="..\..\include\llvm\System\TimeValue.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Win32"
-			Filter="">
+			>
 			<File
-				RelativePath="..\..\lib\System\Win32\DynamicLibrary.inc">
+				RelativePath="..\..\lib\System\Win32\Alarm.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\MappedFile.inc">
+				RelativePath="..\..\lib\System\Win32\DynamicLibrary.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Memory.inc">
+				RelativePath="..\..\lib\System\Win32\MappedFile.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Mutex.inc">
+				RelativePath="..\..\lib\System\Win32\Memory.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Path.inc">
+				RelativePath="..\..\lib\System\Win32\Mutex.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Process.inc">
+				RelativePath="..\..\lib\System\Win32\Path.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Program.inc">
+				RelativePath="..\..\lib\System\Win32\Process.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Signals.inc">
+				RelativePath="..\..\lib\System\Win32\Program.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\TimeValue.inc">
+				RelativePath="..\..\lib\System\Win32\Signals.inc"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\System\Win32\Win32.h">
+				RelativePath="..\..\lib\System\Win32\TimeValue.inc"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\System\Win32\Win32.h"
+				>
 			</File>
 		</Filter>
 	</Files>

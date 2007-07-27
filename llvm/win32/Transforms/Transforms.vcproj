@@ -1,104 +1,156 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="Transforms"
 	ProjectGUID="{C59374C1-9FC0-4147-B836-327DFDC52D99}"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="4"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/Transforms.lib"/>
+				OutputFile="$(OutDir)/Transforms.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/Transforms.lib"/>
+				OutputFile="$(OutDir)/Transforms.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -107,289 +159,397 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<Filter
 				Name="Instrumentation"
-				Filter="">
+				>
 				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\BlockProfiling.cpp">
+					RelativePath="..\..\lib\Transforms\Instrumentation\BlockProfiling.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\EdgeProfiling.cpp">
+					RelativePath="..\..\lib\Transforms\Instrumentation\EdgeProfiling.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\ProfilingUtils.cpp">
+					RelativePath="..\..\lib\Transforms\Instrumentation\ProfilingUtils.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\ProfilingUtils.h">
+					RelativePath="..\..\lib\Transforms\Instrumentation\ProfilingUtils.h"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.cpp">
+					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.h">
+					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="IPO"
-				Filter="">
+				>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\ArgumentPromotion.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\ArgumentPromotion.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\ConstantMerge.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\ConstantMerge.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\DeadArgumentElimination.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\DeadArgumentElimination.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\DeadTypeElimination.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\DeadTypeElimination.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\ExtractFunction.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\ExtractFunction.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\GlobalDCE.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\GlobalDCE.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\GlobalOpt.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\GlobalOpt.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\IndMemRemoval.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\IndMemRemoval.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\Inliner.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\Inliner.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\Inliner.h">
+					RelativePath="..\..\lib\Transforms\Ipo\Inliner.h"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\InlineSimple.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\InlineSimple.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\Internalize.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\Internalize.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\IPConstantPropagation.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\IPConstantPropagation.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\LoopExtractor.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\LoopExtractor.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\LowerSetJmp.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\LowerSetJmp.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\PruneEH.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\PruneEH.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\RaiseAllocations.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\RaiseAllocations.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\SimplifyLibCalls.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\SimplifyLibCalls.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\IPO\StripDeadPrototypes.cpp">
+					RelativePath="..\..\lib\Transforms\IPO\StripDeadPrototypes.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\StripSymbols.cpp">
+					RelativePath="..\..\lib\Transforms\Ipo\StripSymbols.cpp"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Scalar"
-				Filter="">
+				>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\ADCE.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\ADCE.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\BasicBlockPlacement.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\BasicBlockPlacement.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\CodeGenPrepare.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\CodeGenPrepare.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\CondPropagate.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\CondPropagate.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\ConstantProp.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\ConstantProp.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\CorrelatedExprs.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\CorrelatedExprs.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\DCE.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\DCE.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\DeadStoreElimination.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\DeadStoreElimination.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\GCSE.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\FastDSE.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\IndVarSimplify.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\GCSE.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\InstructionCombining.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\GVN.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LICM.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\GVNPRE.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LoopRotation.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\IndVarSimplify.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LoopStrengthReduce.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\InstructionCombining.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LoopUnroll.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LICM.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LoopUnswitch.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LoopRotation.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerGC.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LoopStrengthReduce.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerPacked.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LoopUnroll.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\PredicateSimplifier.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LoopUnswitch.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\Reassociate.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LowerGC.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\Reg2Mem.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\LowerPacked.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\ScalarReplAggregates.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\PredicateSimplifier.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\SCCP.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\Reassociate.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\SimplifyCFG.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\RedundantLoadElimination.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\TailDuplication.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\Reg2Mem.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\TailRecursionElimination.cpp">
+					RelativePath="..\..\lib\Transforms\Scalar\ScalarReplAggregates.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\SCCP.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\SimplifyCFG.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\TailDuplication.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\TailRecursionElimination.cpp"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Parallel"
-				Filter="">
+				>
 			</Filter>
 			<Filter
 				Name="Utils"
-				Filter="">
+				>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\BasicBlockUtils.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\BasicBlockUtils.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\BreakCriticalEdges.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\BreakCriticalEdges.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\CloneFunction.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\CloneFunction.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\CloneModule.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\CloneModule.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\CloneTrace.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\CloneTrace.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\CodeExtractor.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\CodeExtractor.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\DemoteRegToStack.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\DemoteRegToStack.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\InlineFunction.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\InlineCost.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\LCSSA.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\InlineFunction.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\Local.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\LCSSA.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\LoopSimplify.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\Local.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\LowerAllocations.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\LoopSimplify.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\LowerInvoke.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\LowerAllocations.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\LowerSelect.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\LowerInvoke.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\LowerSwitch.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\LowerSelect.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\Mem2Reg.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\LowerSwitch.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\PromoteMemoryToRegister.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\Mem2Reg.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\SimplifyCFG.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\PromoteMemoryToRegister.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\SimplifyCFG.cpp"
+					>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Release|Win32">
+						Name="Release|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\UnifyFunctionExitNodes.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\UnifyFunctionExitNodes.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.cpp">
+					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.h">
+					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Utils\BasicBlockUtils.h">
+				RelativePath="..\..\include\llvm\Transforms\Utils\BasicBlockUtils.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Utils\Cloning.h">
+				RelativePath="..\..\include\llvm\Transforms\Utils\Cloning.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Utils\FunctionUtils.h">
+				RelativePath="..\..\include\llvm\Transforms\Utils\FunctionUtils.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Instrumentation.h">
+				RelativePath="..\..\include\llvm\Transforms\Instrumentation.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\IPO.h">
+				RelativePath="..\..\include\llvm\Transforms\IPO.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Utils\Local.h">
+				RelativePath="..\..\include\llvm\Transforms\Utils\Local.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Utils\PromoteMemToReg.h">
+				RelativePath="..\..\include\llvm\Transforms\Utils\PromoteMemToReg.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Scalar.h">
+				RelativePath="..\..\include\llvm\Transforms\Scalar.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Transforms\Utils\UnifyFunctionExitNodes.h">
+				RelativePath="..\..\include\llvm\Transforms\Utils\UnifyFunctionExitNodes.h"
+				>
 			</File>
 		</Filter>
 	</Files>

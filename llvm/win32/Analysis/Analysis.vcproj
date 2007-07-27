@@ -1,104 +1,156 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="Analysis"
 	ProjectGUID="{0622E827-8464-489D-8B1C-B0B496F35C08}"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
-				DebugInformationFormat="4"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/Analysis.lib"/>
+				OutputFile="$(OutDir)/Analysis.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/Analysis.lib"/>
+				OutputFile="$(OutDir)/Analysis.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -107,174 +159,233 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath="..\..\lib\Analysis\AliasAnalysis.cpp">
+				RelativePath="..\..\lib\Analysis\AliasAnalysis.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\AliasAnalysisCounter.cpp">
+				RelativePath="..\..\lib\Analysis\AliasAnalysisCounter.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\AliasAnalysisEvaluator.cpp">
+				RelativePath="..\..\lib\Analysis\AliasAnalysisEvaluator.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\AliasDebugger.cpp">
+				RelativePath="..\..\lib\Analysis\AliasDebugger.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\AliasSetTracker.cpp">
+				RelativePath="..\..\lib\Analysis\AliasSetTracker.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\BasicAliasAnalysis.cpp">
+				RelativePath="..\..\lib\Analysis\BasicAliasAnalysis.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\CFGPrinter.cpp">
+				RelativePath="..\..\lib\Analysis\CFGPrinter.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ConstantFolding.cpp">
+				RelativePath="..\..\lib\Analysis\ConstantFolding.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\InstCount.cpp">
+				RelativePath="..\..\lib\Analysis\InstCount.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\Interval.cpp">
+				RelativePath="..\..\lib\Analysis\Interval.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\IntervalPartition.cpp">
+				RelativePath="..\..\lib\Analysis\IntervalPartition.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\LoadValueNumbering.cpp">
+				RelativePath="..\..\lib\Analysis\LoadValueNumbering.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\LoopInfo.cpp">
+				RelativePath="..\..\lib\Analysis\LoopInfo.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\LoopPass.cpp">
+				RelativePath="..\..\lib\Analysis\LoopPass.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\PostDominators.cpp">
+				RelativePath="..\..\lib\Analysis\MemoryDependenceAnalysis.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ProfileInfo.cpp">
+				RelativePath="..\..\lib\Analysis\PostDominators.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ProfileInfoLoader.cpp">
+				RelativePath="..\..\lib\Analysis\ProfileInfo.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ProfileInfoLoaderPass.cpp">
+				RelativePath="..\..\lib\Analysis\ProfileInfoLoader.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ScalarEvolution.cpp">
+				RelativePath="..\..\lib\Analysis\ProfileInfoLoaderPass.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ScalarEvolutionExpander.cpp">
+				RelativePath="..\..\lib\Analysis\ScalarEvolution.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\Trace.cpp">
+				RelativePath="..\..\lib\Analysis\ScalarEvolutionExpander.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\ValueNumbering.cpp">
+				RelativePath="..\..\lib\Analysis\Trace.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\ValueNumbering.cpp"
+				>
 			</File>
 			<Filter
 				Name="IPA"
-				Filter="">
+				>
 				<File
-					RelativePath="..\..\lib\Analysis\Ipa\Andersens.cpp">
+					RelativePath="..\..\lib\Analysis\Ipa\Andersens.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\Ipa\CallGraph.cpp">
+					RelativePath="..\..\lib\Analysis\Ipa\CallGraph.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\Ipa\CallGraphSCCPass.cpp">
+					RelativePath="..\..\lib\Analysis\Ipa\CallGraphSCCPass.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\Ipa\FindUsedTypes.cpp">
+					RelativePath="..\..\lib\Analysis\Ipa\FindUsedTypes.cpp"
+					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\Ipa\GlobalsModRef.cpp">
+					RelativePath="..\..\lib\Analysis\Ipa\GlobalsModRef.cpp"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\AliasAnalysis.h">
+				RelativePath="..\..\include\llvm\Analysis\AliasAnalysis.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\AliasSetTracker.h">
+				RelativePath="..\..\include\llvm\Analysis\AliasSetTracker.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\CallGraph.h">
+				RelativePath="..\..\include\llvm\Analysis\CallGraph.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\CFGPrinter.h">
+				RelativePath="..\..\include\llvm\Analysis\CFGPrinter.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ConstantFolding.h">
+				RelativePath="..\..\include\llvm\Analysis\ConstantFolding.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ConstantsScanner.h">
+				RelativePath="..\..\include\llvm\Analysis\ConstantsScanner.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\Dominators.h">
+				RelativePath="..\..\include\llvm\Analysis\Dominators.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ET-Forest.h">
+				RelativePath="..\..\include\llvm\Analysis\ET-Forest.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\FindUsedTypes.h">
+				RelativePath="..\..\include\llvm\Analysis\FindUsedTypes.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\Interval.h">
+				RelativePath="..\..\include\llvm\Analysis\Interval.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\IntervalIterator.h">
+				RelativePath="..\..\include\llvm\Analysis\IntervalIterator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\IntervalPartition.h">
+				RelativePath="..\..\include\llvm\Analysis\IntervalPartition.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\LoadValueNumbering.h">
+				RelativePath="..\..\include\llvm\Analysis\LoadValueNumbering.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\LoopInfo.h">
+				RelativePath="..\..\include\llvm\Analysis\LoopInfo.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\LoopPass.h">
+				RelativePath="..\..\include\llvm\Analysis\LoopPass.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\Passes.h">
+				RelativePath="..\..\include\llvm\Analysis\Passes.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\PostDominators.h">
+				RelativePath="..\..\include\llvm\Analysis\PostDominators.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ProfileInfo.h">
+				RelativePath="..\..\include\llvm\Analysis\ProfileInfo.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ProfileInfoLoader.h">
+				RelativePath="..\..\include\llvm\Analysis\ProfileInfoLoader.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ProfileInfoTypes.h">
+				RelativePath="..\..\include\llvm\Analysis\ProfileInfoTypes.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ScalarEvolution.h">
+				RelativePath="..\..\include\llvm\Analysis\ScalarEvolution.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ScalarEvolutionExpander.h">
+				RelativePath="..\..\include\llvm\Analysis\ScalarEvolutionExpander.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ScalarEvolutionExpressions.h">
+				RelativePath="..\..\include\llvm\Analysis\ScalarEvolutionExpressions.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\Trace.h">
+				RelativePath="..\..\include\llvm\Analysis\Trace.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\ValueNumbering.h">
+				RelativePath="..\..\include\llvm\Analysis\ValueNumbering.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Analysis\Verifier.h">
+				RelativePath="..\..\include\llvm\Analysis\Verifier.h"
+				>
 			</File>
 		</Filter>
 	</Files>

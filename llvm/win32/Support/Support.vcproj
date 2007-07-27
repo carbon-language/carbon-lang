@@ -1,105 +1,154 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="support"
 	ProjectGUID="{28AA9146-3482-4F41-9CC6-407B1D258508}"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
-			ReferencesPath="">
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
-				MinimalRebuild="TRUE"
+				StringPooling="true"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				BrowseInformation="1"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/support.lib"/>
+				OutputFile="$(OutDir)/support.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\include;.."
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				ForceConformanceInForLoopScope="TRUE"
-				RuntimeTypeInfo="TRUE"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="FALSE"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355,4146,4800"/>
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/support.lib"/>
+				OutputFile="$(OutDir)/support.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -108,300 +157,396 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath="..\..\lib\Support\Allocator.cpp">
+				RelativePath="..\..\lib\Support\Allocator.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Annotation.cpp">
+				RelativePath="..\..\lib\Support\Annotation.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\APInt.cpp">
+				RelativePath="..\..\lib\Support\APInt.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\CommandLine.cpp">
+				RelativePath="..\..\lib\Support\CommandLine.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\ConstantRange.cpp">
+				RelativePath="..\..\lib\Support\ConstantRange.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Debug.cpp">
+				RelativePath="..\..\lib\Support\Debug.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Dwarf.cpp">
+				RelativePath="..\..\lib\Support\Dwarf.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\FileUtilities.cpp">
+				RelativePath="..\..\lib\Support\FileUtilities.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\FoldingSet.cpp">
+				RelativePath="..\..\lib\Support\FoldingSet.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\GraphWriter.cpp">
+				RelativePath="..\..\lib\Support\GraphWriter.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\IsInf.cpp">
+				RelativePath="..\..\lib\Support\IsInf.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\IsNAN.cpp">
+				RelativePath="..\..\lib\Support\IsNAN.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\ManagedStatic.cpp">
+				RelativePath="..\..\lib\Support\ManagedStatic.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\MemoryBuffer.cpp">
+				RelativePath="..\..\lib\Support\MemoryBuffer.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\PluginLoader.cpp">
+				RelativePath="..\..\lib\Support\PluginLoader.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\SlowOperationInformer.cpp">
+				RelativePath="..\..\lib\Support\SlowOperationInformer.cpp"
+				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
+					>
 					<Tool
-						Name="VCCLCompilerTool"/>
+						Name="VCCLCompilerTool"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					ExcludedFromBuild="TRUE">
+					ExcludedFromBuild="true"
+					>
 					<Tool
-						Name="VCCLCompilerTool"/>
+						Name="VCCLCompilerTool"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\SmallPtrSet.cpp">
+				RelativePath="..\..\lib\Support\SmallPtrSet.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Statistic.cpp">
+				RelativePath="..\..\lib\Support\Statistic.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Streams.cpp">
+				RelativePath="..\..\lib\Support\Streams.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\StringExtras.cpp">
+				RelativePath="..\..\lib\Support\StringExtras.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\StringMap.cpp">
+				RelativePath="..\..\lib\Support\StringMap.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\SystemUtils.cpp">
+				RelativePath="..\..\lib\Support\SystemUtils.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\lib\Support\Timer.cpp">
+				RelativePath="..\..\lib\Support\Timer.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath="..\..\include\llvm\Support\AIXDataTypesFix.h">
+				RelativePath="..\..\include\llvm\Support\AIXDataTypesFix.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Allocator.h">
+				RelativePath="..\..\include\llvm\Support\Allocator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Annotation.h">
+				RelativePath="..\..\include\llvm\Support\Annotation.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\CallSite.h">
+				RelativePath="..\..\include\llvm\Support\CallSite.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Casting.h">
+				RelativePath="..\..\include\llvm\Support\Casting.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\CFG.h">
+				RelativePath="..\..\include\llvm\Support\CFG.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\CommandLine.h">
+				RelativePath="..\..\include\llvm\Support\CommandLine.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Compiler.h">
+				RelativePath="..\..\include\llvm\Support\Compiler.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\ConstantRange.h">
+				RelativePath="..\..\include\llvm\Support\ConstantRange.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\DataTypes.h">
+				RelativePath="..\..\include\llvm\Support\DataTypes.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Debug.h">
+				RelativePath="..\..\include\llvm\Support\Debug.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\DOTGraphTraits.h">
+				RelativePath="..\..\include\llvm\Support\DOTGraphTraits.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Dwarf.h">
+				RelativePath="..\..\include\llvm\Support\Dwarf.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\ELF.h">
+				RelativePath="..\..\include\llvm\Support\ELF.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\FileUtilities.h">
+				RelativePath="..\..\include\llvm\Support\FileUtilities.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\GetElementPtrTypeIterator.h">
+				RelativePath="..\..\include\llvm\Support\GetElementPtrTypeIterator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\GraphWriter.h">
+				RelativePath="..\..\include\llvm\Support\GraphWriter.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\InstIterator.h">
+				RelativePath="..\..\include\llvm\Support\InstIterator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\InstVisitor.h">
+				RelativePath="..\..\include\llvm\Support\InstVisitor.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\LeakDetector.h">
+				RelativePath="..\..\include\llvm\Support\LeakDetector.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Linker.h">
+				RelativePath="..\..\include\llvm\Support\Linker.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\MallocAllocator.h">
+				RelativePath="..\..\include\llvm\Support\MallocAllocator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\ManagedStatic.h">
+				RelativePath="..\..\include\llvm\Support\ManagedStatic.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Mangler.h">
+				RelativePath="..\..\include\llvm\Support\Mangler.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\MathExtras.h">
+				RelativePath="..\..\include\llvm\Support\MathExtras.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\MemoryBuffer.h">
+				RelativePath="..\..\include\llvm\Support\MemoryBuffer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\OutputBuffer.h">
+				RelativePath="..\..\include\llvm\Support\OutputBuffer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\PassNameParser.h">
+				RelativePath="..\..\include\llvm\Support\PassNameParser.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\PatternMatch.h">
+				RelativePath="..\..\include\llvm\Support\PatternMatch.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\PluginLoader.h">
+				RelativePath="..\..\include\llvm\Support\PluginLoader.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\SlowOperationInformer.h">
+				RelativePath="..\..\include\llvm\Support\SlowOperationInformer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\StableBasicBlockNumbering.h">
+				RelativePath="..\..\include\llvm\Support\StableBasicBlockNumbering.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Streams.h">
+				RelativePath="..\..\include\llvm\Support\Streams.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\SystemUtils.h">
+				RelativePath="..\..\include\llvm\Support\SystemUtils.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\ThreadSupport-NoSupport.h">
+				RelativePath="..\..\include\llvm\Support\ThreadSupport-NoSupport.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\ThreadSupport-PThreads.h">
+				RelativePath="..\..\include\llvm\Support\ThreadSupport-PThreads.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\Timer.h">
+				RelativePath="..\..\include\llvm\Support\Timer.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\type_traits.h">
+				RelativePath="..\..\include\llvm\Support\type_traits.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\TypeInfo.h">
+				RelativePath="..\..\include\llvm\Support\TypeInfo.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="ADT"
-			Filter="">
+			>
 			<File
-				RelativePath="..\..\include\llvm\ADT\APInt.h">
+				RelativePath="..\..\include\llvm\ADT\APInt.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\APSInt.h">
+				RelativePath="..\..\include\llvm\ADT\APSInt.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\BitVector.h">
+				RelativePath="..\..\include\llvm\ADT\BitVector.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\DenseMap.h">
+				RelativePath="..\..\include\llvm\Adt\DenseMap.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\DepthFirstIterator.h">
+				RelativePath="..\..\include\llvm\Adt\DepthFirstIterator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\EquivalenceClasses.h">
+				RelativePath="..\..\include\llvm\Adt\EquivalenceClasses.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\FoldingSet.h">
+				RelativePath="..\..\include\llvm\ADT\FoldingSet.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\GraphTraits.h">
+				RelativePath="..\..\include\llvm\Adt\GraphTraits.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\hash_map">
+				RelativePath="..\..\include\llvm\Adt\hash_map"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\hash_set">
+				RelativePath="..\..\include\llvm\Adt\hash_set"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\HashExtras.h">
+				RelativePath="..\..\include\llvm\Adt\HashExtras.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\ilist">
+				RelativePath="..\..\include\llvm\Adt\ilist"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\IndexedMap.h">
+				RelativePath="..\..\include\llvm\ADT\IndexedMap.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\iterator">
+				RelativePath="..\..\include\llvm\Adt\iterator"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\PostOrderIterator.h">
+				RelativePath="..\..\include\llvm\Adt\PostOrderIterator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\SCCIterator.h">
+				RelativePath="..\..\include\llvm\Adt\SCCIterator.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\SetOperations.h">
+				RelativePath="..\..\include\llvm\Adt\SetOperations.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\SetVector.h">
+				RelativePath="..\..\include\llvm\Adt\SetVector.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\SmallPtrSet.h">
+				RelativePath="..\..\include\llvm\ADT\SmallPtrSet.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\SmallSet.h">
+				RelativePath="..\..\include\llvm\ADT\SmallSet.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\SmallString.h">
+				RelativePath="..\..\include\llvm\ADT\SmallString.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\SmallVector.h">
+				RelativePath="..\..\include\llvm\ADT\SmallVector.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\Statistic.h">
+				RelativePath="..\..\include\llvm\Adt\Statistic.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\STLExtras.h">
+				RelativePath="..\..\include\llvm\Adt\STLExtras.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\StringExtras.h">
+				RelativePath="..\..\include\llvm\Adt\StringExtras.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ADT\StringMap.h">
+				RelativePath="..\..\include\llvm\ADT\StringMap.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\Tree.h">
+				RelativePath="..\..\include\llvm\Adt\Tree.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\UniqueVector.h">
+				RelativePath="..\..\include\llvm\Adt\UniqueVector.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\VectorExtras.h">
+				RelativePath="..\..\include\llvm\Adt\VectorExtras.h"
+				>
 			</File>
 		</Filter>
 	</Files>

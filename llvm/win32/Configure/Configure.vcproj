@@ -1,63 +1,97 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="Configure"
 	ProjectGUID="{19514E48-456C-4B9D-8637-F2285476461E}"
 	RootNamespace="Configure"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Configure|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_CONSOLE"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/Configure.exe"
 				LinkIncremental="2"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/Configure.pdb"
 				SubSystem="1"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -66,72 +100,85 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath="..\..\include\llvm\Config\config.h.in">
+				RelativePath="..\..\include\llvm\Config\config.h.in"
+				>
 				<FileConfiguration
-					Name="Configure|Win32">
+					Name="Configure|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Config\config.h"
-						CommandLine="copy $(InputPath)+$(SolutionDir)config.h  $(ProjectDir)..\llvm\Config\config.h"
+						CommandLine="copy $(InputPath)+$(SolutionDir)config.h  $(ProjectDir)..\llvm\Config\config.h&#x0D;&#x0A;"
 						AdditionalDependencies="$(SolutionDir)config.h"
-						Outputs="$(ProjectDir)..\llvm\Config\config.h"/>
+						Outputs="$(ProjectDir)..\llvm\Config\config.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Support\DataTypes.h.in">
+				RelativePath="..\..\include\llvm\Support\DataTypes.h.in"
+				>
 				<FileConfiguration
-					Name="Configure|Win32">
+					Name="Configure|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Support\DataTypes.h"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Support\DataTypes.h
-"
-						Outputs="$(ProjectDir)..\llvm\Support\DataTypes.h"/>
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Support\DataTypes.h&#x0D;&#x0A;"
+						Outputs="$(ProjectDir)..\llvm\Support\DataTypes.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\hash_map.in">
+				RelativePath="..\..\include\llvm\Adt\hash_map.in"
+				>
 				<FileConfiguration
-					Name="Configure|Win32">
+					Name="Configure|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_map"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_map
-"
-						Outputs="$(ProjectDir)..\llvm\ADT\hash_map"/>
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_map&#x0D;&#x0A;"
+						Outputs="$(ProjectDir)..\llvm\ADT\hash_map"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\hash_set.in">
+				RelativePath="..\..\include\llvm\Adt\hash_set.in"
+				>
 				<FileConfiguration
-					Name="Configure|Win32">
+					Name="Configure|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_set"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_set
-"
-						Outputs="$(ProjectDir)..\llvm\ADT\hash_set"/>
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_set&#x0D;&#x0A;"
+						Outputs="$(ProjectDir)..\llvm\ADT\hash_set"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\Adt\iterator.in">
+				RelativePath="..\..\include\llvm\Adt\iterator.in"
+				>
 				<FileConfiguration
-					Name="Configure|Win32">
+					Name="Configure|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\iterator"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\iterator
-"
-						Outputs="$(ProjectDir)..\llvm\ADT\iterator"/>
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\iterator&#x0D;&#x0A;"
+						Outputs="$(ProjectDir)..\llvm\ADT\iterator"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 		</Filter>
 	</Files>
 	<Globals>
