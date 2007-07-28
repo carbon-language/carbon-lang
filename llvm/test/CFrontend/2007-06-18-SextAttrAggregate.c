@@ -6,6 +6,6 @@ long a;
 long b;
 };
 
-void f(struct s a, char *b, char C) {
+void f(struct s a, char *b, signed char C) {
 
 }
