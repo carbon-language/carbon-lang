@@ -439,6 +439,11 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   assert(Field && "MemberExpr should alway reference a field!");
   OS << Field->getName();
 }
+void StmtPrinter::VisitOCUVectorComponent(OCUVectorComponent *Node) {
+  PrintExpr(Node->getBase());
+  OS << ".";
+  OS << Node->getAccessor().getName();
+}
 void StmtPrinter::VisitCastExpr(CastExpr *Node) {
   OS << "(" << Node->getType().getAsString() << ")";
   PrintExpr(Node->getSubExpr());

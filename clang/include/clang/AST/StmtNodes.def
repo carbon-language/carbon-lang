@@ -62,15 +62,16 @@ STMT(45, BinaryOperator       , Expr)
 STMT(46, ConditionalOperator  , Expr)
 STMT(47, ImplicitCastExpr     , Expr)
 STMT(48, CompoundLiteralExpr  , Expr)
+STMT(49, OCUVectorComponent   , Expr)
 
 // GNU Extensions.
-STMT(49, AddrLabel            , Expr)
-STMT(50, StmtExpr             , Expr)
+STMT(50, AddrLabel            , Expr)
+STMT(51, StmtExpr             , Expr)
 
 // C++ Expressions.
-STMT(51, CXXCastExpr          , Expr)
-STMT(52, CXXBoolLiteralExpr   , Expr)
-LAST_EXPR(52)
+STMT(52, CXXCastExpr          , Expr)
+STMT(53, CXXBoolLiteralExpr   , Expr)
+LAST_EXPR(53)
 
 #undef STMT
 #undef FIRST_STMT

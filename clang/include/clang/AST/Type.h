@@ -526,6 +526,8 @@ public:
                      isTextureAccessor(c);
     }
   }
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
   static bool classof(const Type *T) { 
     return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
   }

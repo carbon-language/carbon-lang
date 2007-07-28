@@ -423,8 +423,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     QualType ret = CheckOCUVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;
-    // FIXME: instantiate a OCUVectorComponentExpr node...
-    return true;
+    return new OCUVectorComponent(ret, BaseExpr, Member, MemberLoc);
   } else
     return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
                 SourceRange(MemberLoc));

@@ -631,6 +631,13 @@ void VectorType::getAsStringInternal(std::string &S) const {
   ElementType.getAsStringInternal(S);
 }
 
+void OCUVectorType::getAsStringInternal(std::string &S) const {
+  S += " __attribute__((ocu_vector_type(";
+  S += llvm::utostr_32(NumElements);
+  S += ")))";
+  ElementType.getAsStringInternal(S);
+}
+
 void FunctionTypeNoProto::getAsStringInternal(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())

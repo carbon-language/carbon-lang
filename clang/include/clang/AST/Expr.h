@@ -461,6 +461,38 @@ public:
   static bool classof(const MemberExpr *) { return true; }
 };
 
+/// OCUVectorComponent
+///
+class OCUVectorComponent : public Expr {
+public:
+  enum ComponentType {
+    Point,
+    Color,
+    Texture
+  };
+private:
+  Expr *Base;
+  IdentifierInfo &Accessor;
+  SourceLocation AccessorLoc;
+public:
+  OCUVectorComponent(QualType ty, Expr *base, IdentifierInfo &accessor,
+                     SourceLocation loc) : Expr(OCUVectorComponentClass, ty), 
+                     Base(base), Accessor(accessor), AccessorLoc(loc) {}
+                     
+  Expr *getBase() const { return Base; }
+  IdentifierInfo & getAccessor() const { return Accessor; }
+  ComponentType getComponentType() const;
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getBase()->getLocStart(), AccessorLoc);
+  }
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == OCUVectorComponentClass; 
+  }
+  static bool classof(const OCUVectorComponent *) { return true; }
+};
+
 /// CompoundLiteralExpr - [C99 6.5.2.5] 
 ///
 class CompoundLiteralExpr : public Expr {

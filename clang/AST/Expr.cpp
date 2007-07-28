@@ -571,3 +571,13 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   llvm::APSInt Val(32);
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
+
+OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
+  // derive the component type, no need to waste space.
+  const char *compStr = Accessor.getName();
+  const OCUVectorType *VT = getType()->isOCUVectorType();
+  if (VT->isPointAccessor(*compStr)) return Point;
+  if (VT->isColorAccessor(*compStr)) return Color;
+  if (VT->isTextureAccessor(*compStr)) return Texture;
+  assert(0 && "getComponentType(): Illegal accessor");
+}
