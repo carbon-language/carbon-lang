@@ -163,6 +163,48 @@ let Namespace = "X86" in {
   def ST7 : Register<"ST(7)">, DwarfRegNum<18>; 
 }
 
+
+//===----------------------------------------------------------------------===//
+// Subregister Set Definitions... now that we have all of the pieces, define the
+// sub registers for each register.
+//
+
+def : SubRegSet<1, [AX, CX, DX, BX, SP,  BP,  SI,  DI,  
+                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W],
+                   [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
+                    R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
+
+// It's unclear if this subreg set is safe, given that not all registers
+// in the class have an 'H' subreg.
+// def : SubRegSet<2, [AX, CX, DX, BX],
+//                    [AH, CH, DH, BH]>;
+
+def : SubRegSet<1, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,  
+                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
+                   [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
+                    R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
+
+def : SubRegSet<2, [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI,  
+                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
+                   [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
+                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
+
+
+def : SubRegSet<1, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,  
+                    R8,  R9,  R10, R11, R12, R13, R14, R15],
+                   [AL, CL, DL, BL, SPL, BPL, SIL, DIL, 
+                    R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;
+
+def : SubRegSet<2, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,  
+                    R8,  R9,  R10, R11, R12, R13, R14, R15],
+                   [AX,  CX,  DX,  BX,  SP,  BP,  SI,  DI, 
+                    R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
+                    
+def : SubRegSet<3, [RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI,  
+                    R8,  R9,  R10, R11, R12, R13, R14, R15],
+                   [EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, 
+                    R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
+
 //===----------------------------------------------------------------------===//
 // Register Class Definitions... now that we have all of the pieces, define the
 // top-level register classes.  The order specified in the register list is
@@ -229,6 +271,7 @@ def GR8 : RegisterClass<"X86", [i8],  8,
 def GR16 : RegisterClass<"X86", [i16], 16,
                          [AX, CX, DX, SI, DI, BX, BP, SP,
                           R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]> {
+  let SubRegClassList = [GR8];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -292,6 +335,7 @@ def GR16 : RegisterClass<"X86", [i16], 16,
 def GR32 : RegisterClass<"X86", [i32], 32, 
                          [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP,
                           R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]> {
+  let SubRegClassList = [GR8, GR16];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -355,6 +399,7 @@ def GR32 : RegisterClass<"X86", [i32], 32,
 def GR64 : RegisterClass<"X86", [i64], 64, 
                          [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
                           RBX, R14, R15, R12, R13, RBP, RSP]> {
+  let SubRegClassList = [GR8, GR16, GR32];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
@@ -374,8 +419,12 @@ def GR64 : RegisterClass<"X86", [i64], 64,
 
 // GR16, GR32 subclasses which contain registers that have R8 sub-registers.
 // These should only be used for 32-bit mode.
-def GR16_ : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]>;
-def GR32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]>;
+def GR16_ : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]> {
+  let SubRegClassList = [GR8];
+}
+def GR32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]> {
+  let SubRegClassList = [GR8, GR16];
+}
 
 // Scalar SSE2 floating point registers.
 def FR32 : RegisterClass<"X86", [f32], 32,
