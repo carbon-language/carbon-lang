@@ -448,12 +448,6 @@ bool Emitter::isX86_64ExtendedReg(const MachineOperand &MO) {
   return false;
 }
 
-inline static bool isX86_64TruncToByte(unsigned oc) {
-  return (oc == X86::TRUNC_64to8 || oc == X86::TRUNC_32to8 ||
-          oc == X86::TRUNC_16to8);
-}
-
-
 inline static bool isX86_64NonExtLowByteReg(unsigned reg) {
   return (reg == X86::SPL || reg == X86::BPL ||
           reg == X86::SIL || reg == X86::DIL);
@@ -465,7 +459,6 @@ inline static bool isX86_64NonExtLowByteReg(unsigned reg) {
 unsigned Emitter::determineREX(const MachineInstr &MI) {
   unsigned REX = 0;
   const TargetInstrDescriptor *Desc = MI.getInstrDescriptor();
-  unsigned Opcode = Desc->Opcode;
 
   // Pseudo instructions do not need REX prefix byte.
   if ((Desc->TSFlags & X86II::FormMask) == X86II::Pseudo)
@@ -479,16 +472,11 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
       Desc->getOperandConstraint(1, TOI::TIED_TO) != -1;
 
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
-    bool isTrunc8 = isX86_64TruncToByte(Opcode);
     unsigned i = isTwoAddr ? 1 : 0;
     for (unsigned e = NumOps; i != e; ++i) {
       const MachineOperand& MO = MI.getOperand(i);
       if (MO.isRegister()) {
         unsigned Reg = MO.getReg();
-        // Trunc to byte are actually movb. The real source operand is the low
-        // byte of the register.
-        if (isTrunc8 && i == 1)
-          Reg = getX86SubSuperRegister(Reg, MVT::i8);
         if (isX86_64NonExtLowByteReg(Reg))
           REX |= 0x40;
       }

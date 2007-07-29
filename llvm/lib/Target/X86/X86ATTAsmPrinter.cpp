@@ -580,29 +580,6 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   // See if a truncate instruction can be turned into a nop.
   switch (MI->getOpcode()) {
   default: break;
-  case X86::TRUNC_64to32:
-  case X86::TRUNC_64to16:
-  case X86::TRUNC_32to16:
-  case X86::TRUNC_32to8:
-  case X86::TRUNC_16to8:
-  case X86::TRUNC_32_to8:
-  case X86::TRUNC_16_to8: {
-    const MachineOperand &MO0 = MI->getOperand(0);
-    const MachineOperand &MO1 = MI->getOperand(1);
-    unsigned Reg0 = MO0.getReg();
-    unsigned Reg1 = MO1.getReg();
-    unsigned Opc = MI->getOpcode();
-    if (Opc == X86::TRUNC_64to32)
-      Reg1 = getX86SubSuperRegister(Reg1, MVT::i32);
-    else if (Opc == X86::TRUNC_32to16 || Opc == X86::TRUNC_64to16)
-      Reg1 = getX86SubSuperRegister(Reg1, MVT::i16);
-    else
-      Reg1 = getX86SubSuperRegister(Reg1, MVT::i8);
-    O << TAI->getCommentString() << " TRUNCATE ";
-    if (Reg0 != Reg1)
-      O << "\n\t";
-    break;
-  }
   case X86::PsMOVZX64rr32:
     O << TAI->getCommentString() << " ZERO-EXTEND " << "\n\t";
     break;

@@ -1005,28 +1005,6 @@ let isTwoAddress = 1 in {
 // Alias Instructions
 //===----------------------------------------------------------------------===//
 
-// Truncate
-// In 64-mode, each 64-bit and 32-bit registers has a low 8-bit sub-register.
-def TRUNC_64to8  : I<0x88, MRMDestReg, (outs GR8:$dst), (ins GR64:$src),
-                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}",
-                     [(set GR8:$dst, (trunc GR64:$src))]>;
-def TRUNC_32to8  : I<0x88, MRMDestReg, (outs GR8:$dst), (ins GR32:$src),
-                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}",
-                     [(set GR8:$dst, (trunc GR32:$src))]>,
-                   Requires<[In64BitMode]>;
-def TRUNC_16to8  : I<0x88, MRMDestReg, (outs GR8:$dst), (ins GR16:$src),
-                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}}",
-                     [(set GR8:$dst, (trunc GR16:$src))]>,
-                   Requires<[In64BitMode]>;
-
-def TRUNC_64to16 : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR64:$src),
-                     "mov{w} {${src:subreg16}, $dst|$dst, ${src:subreg16}}",
-                     [(set GR16:$dst, (trunc GR64:$src))]>;
-
-def TRUNC_64to32 : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR64:$src),
-                     "mov{l} {${src:subreg32}, $dst|$dst, ${src:subreg32}}",
-                     [(set GR32:$dst, (trunc GR64:$src))]>;
-
 // Zero-extension
 // TODO: Remove this after proper i32 -> i64 zext support.
 def PsMOVZX64rr32: I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR32:$src),

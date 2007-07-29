@@ -388,14 +388,6 @@ def IMPLICIT_DEF_GR32  : I<0, Pseudo, (outs GR32:$dst), (ins),
 // Nop
 def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
 
-// Truncate
-def TRUNC_32_to8 : I<0x88, MRMDestReg, (outs GR8:$dst), (ins GR32_:$src),
-                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}", []>;
-def TRUNC_16_to8 : I<0x88, MRMDestReg, (outs GR8:$dst), (ins GR16_:$src),
-                     "mov{b} {${src:subreg8}, $dst|$dst, ${src:subreg8}}", []>;
-def TRUNC_32to16 : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR32:$src),
-                     "mov{w} {${src:subreg16}, $dst|$dst, ${src:subreg16}}",
-                     [(set GR16:$dst, (trunc GR32:$src))]>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...

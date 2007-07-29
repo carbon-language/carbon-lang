@@ -1258,39 +1258,51 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       return NULL;
     }
-
-    case ISD::TRUNCATE: {
-      if (!Subtarget->is64Bit() && NVT == MVT::i8) {
-        unsigned Opc2;
-        MVT::ValueType VT;
-        switch (Node->getOperand(0).getValueType()) {
-        default: assert(0 && "Unknown truncate!");
-        case MVT::i16:
-          Opc = X86::MOV16to16_;
-          VT = MVT::i16;
-          Opc2 = X86::TRUNC_16_to8;
-          break;
-        case MVT::i32:
-          Opc = X86::MOV32to32_;
-          VT = MVT::i32;
-          Opc2 = X86::TRUNC_32_to8;
-          break;
-        }
-
-        AddToISelQueue(Node->getOperand(0));
-        SDOperand Tmp =
-          SDOperand(CurDAG->getTargetNode(Opc, VT, Node->getOperand(0)), 0);
-        SDNode *ResNode = CurDAG->getTargetNode(Opc2, NVT, Tmp);
       
+    case ISD::TRUNCATE: {
+      SDOperand Tmp;
+      SDOperand Input = Node->getOperand(0);
+      AddToISelQueue(Node->getOperand(0));
+      switch (NVT) {
+      case MVT::i8:
+        Tmp = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+        // Ensure that the source register has an 8-bit subreg on 32-bit targets
+        if (!Subtarget->is64Bit()) { 
+          unsigned Opc;
+          MVT::ValueType VT;
+          switch (Node->getOperand(0).getValueType()) {
+          default: assert(0 && "Unknown truncate!");
+          case MVT::i16:
+            Opc = X86::MOV16to16_;
+            VT = MVT::i16;
+            break;
+          case MVT::i32:
+            Opc = X86::MOV32to32_;
+            VT = MVT::i32;
+            break;
+          }
+          Input = 
+            SDOperand(CurDAG->getTargetNode(Opc, VT, Node->getOperand(0)), 0);
+        }
+        break;
+      case MVT::i16:
+        Tmp = CurDAG->getTargetConstant(2, MVT::i32); // SubRegSet 2
+        break;
+      case MVT::i32:
+        Tmp = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
+        break;
+      default: assert(0 && "Unknown truncate!");
+      }
+      SDNode *ResNode = CurDAG->getTargetNode(X86::EXTRACT_SUBREG, 
+                                              NVT, 
+                                              Input, Tmp);
 #ifndef NDEBUG
         DOUT << std::string(Indent-2, ' ') << "=> ";
         DEBUG(ResNode->dump(CurDAG));
         DOUT << "\n";
         Indent -= 2;
 #endif
-        return ResNode;
-      }
-
+      return ResNode;
       break;
     }
   }
