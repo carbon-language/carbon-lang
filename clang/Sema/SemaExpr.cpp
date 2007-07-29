@@ -387,7 +387,15 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
   unsigned CompSize = strlen(CompName.getName());
   if (CompSize == 1)
     return vecType->getElementType();
-  return Context.getOCUVectorType(vecType->getElementType(), CompSize);
+    
+  QualType VT = Context.getOCUVectorType(vecType->getElementType(), CompSize);
+  // Now look up the TypeDefDecl from the vector type. Without this, 
+  // diagostics look bad. We want OCU vector types to appear built-in.
+  for (unsigned i = 0, e = OCUVectorDecls.size(); i != e; ++i) {
+    if (OCUVectorDecls[i]->getUnderlyingType() == VT)
+      return Context.getTypedefType(OCUVectorDecls[i]);
+  }
+  return VT; // should never get here (a typedef type should always be found).
 }
 
 Action::ExprResult Sema::

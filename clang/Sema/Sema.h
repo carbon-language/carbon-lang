@@ -39,7 +39,8 @@ namespace clang {
   class LabelStmt;
   class SwitchStmt;
   class OCUVectorType;
-  
+  class TypedefDecl;
+
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
   Preprocessor &PP;
@@ -62,6 +63,11 @@ class Sema : public Action {
   llvm::DenseMap<IdentifierInfo*, LabelStmt*> LabelMap;
   
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
+  
+  /// OCUVectorDecls - This is a list all the OCU vector types. This allows
+  /// us to associate a raw vector type with one of the OCU type names.
+  /// This is only necessary for issuing pretty diagnostics.
+  llvm::SmallVector<TypedefDecl*, 24> OCUVectorDecls;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -158,7 +164,7 @@ private:
   // for the variable, measured in bytes. If curType and rawAttr are well
   // formed, this routine will return a new vector type.
   QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
-  QualType HandleOCUVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
+  void HandleOCUVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

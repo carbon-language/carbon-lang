@@ -965,15 +965,11 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
     }
   }
   if (strcmp(rawAttr->getAttributeName()->getName(), "ocu_vector_type") == 0) {
-    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
-      QualType newType = HandleOCUVectorTypeAttribute(tDecl->getUnderlyingType(), 
-                                                      rawAttr);
-      if (!newType.isNull()) // install the new vector type into the decl
-        tDecl->setUnderlyingType(newType);
-    } else {
+    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
+      HandleOCUVectorTypeAttribute(tDecl, rawAttr);
+    else
       Diag(rawAttr->getAttributeLoc(), 
            diag::err_typecheck_ocu_vector_not_typedef);
-    }
   }
   // FIXME: add other attributes...
 }
@@ -990,20 +986,21 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
   }
 }
 
-QualType Sema::HandleOCUVectorTypeAttribute(QualType curType, 
-                                            AttributeList *rawAttr) {
+void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl, 
+                                        AttributeList *rawAttr) {
+  QualType curType = tDecl->getUnderlyingType();
   // check the attribute arugments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
-    return QualType();
+    return;
   }
   Expr *sizeExpr = static_cast<Expr *>(rawAttr->getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
          sizeExpr->getSourceRange());
-    return QualType();
+    return;
   }
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
   // in conjunction with complex types (pointers, arrays, functions, etc.).
@@ -1011,7 +1008,7 @@ QualType Sema::HandleOCUVectorTypeAttribute(QualType curType,
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_invalid_vector_type,
          curType.getCanonicalType().getAsString());
-    return QualType();
+    return;
   }
   // unlike gcc's vector_size attribute, the size is specified as the 
   // number of elements, not the number of bytes.
@@ -1020,10 +1017,12 @@ QualType Sema::HandleOCUVectorTypeAttribute(QualType curType,
   if (vectorSize == 0) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_zero_size,
          sizeExpr->getSourceRange());
-    return QualType();
+    return;
   }
-  // Instantiate the vector type, the number of elements is > 0.
-  return Context.getOCUVectorType(curType, vectorSize);
+  // Instantiate/Install the vector type, the number of elements is > 0.
+  tDecl->setUnderlyingType(Context.getOCUVectorType(curType, vectorSize));
+  // Remember this typedef decl, we will need it later for diagnostics.
+  OCUVectorDecls.push_back(tDecl);
 }
 
 QualType Sema::HandleVectorTypeAttribute(QualType curType, 

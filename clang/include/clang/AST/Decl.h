@@ -313,7 +313,6 @@ protected:
   TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
     : Decl(DK, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
-  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= Typedef && D->getKind() <= Enum;
