@@ -1290,7 +1290,7 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   UsualUnaryConversions(op);
   QualType qType = op->getType();
   
-  if (PointerType *PT = dyn_cast<PointerType>(qType.getCanonicalType())) {
+  if (const PointerType *PT = qType->isPointerType()) {
     QualType ptype = PT->getPointeeType();
     // C99 6.5.3.2p4. "if it points to an object,...".
     if (ptype->isIncompleteType()) { // An incomplete type is not an object
