@@ -349,7 +349,7 @@ public:
   ///
   bool doInitialization(Module &M);
   
-  /// doFinalization - Run all of the initializers for the function passes.
+  /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization(Module &M);
 
