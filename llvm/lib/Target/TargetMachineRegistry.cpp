@@ -75,10 +75,9 @@ TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
   return UsableTargets.back().second;
 }
 
-/// getClosestTargetForJIT - Given an LLVM module, pick the best target that
-/// is compatible with the current host and the specified module.  If no
-/// close target can be found, this returns null and sets the Error string
-/// to a reason.
+/// getClosestTargetForJIT - Pick the best target that is compatible with
+/// the current host.  If no close target can be found, this returns null
+/// and sets the Error string to a reason.
 const TargetMachineRegistry::Entry *
 TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
   std::vector<std::pair<unsigned, const Entry *> > UsableTargets;
