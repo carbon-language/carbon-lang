@@ -895,10 +895,13 @@ bool GVN::runOnFunction(Function &F) {
       currAvail = availableOut[DI->getIDom()->getBlock()];
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-         BI != BE; ++BI) {
+         BI != BE; ) {
       changed_function |= processInstruction(BI, currAvail, lastSeenLoad, toErase);
       
       NumGVNInstr += toErase.size();
+      
+      // Avoid iterator invalidation
+      ++BI;
       
       for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
            E = toErase.end(); I != E; ++I)
