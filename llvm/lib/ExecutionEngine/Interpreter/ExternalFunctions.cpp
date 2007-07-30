@@ -62,6 +62,11 @@ static char getTypeID(const Type *Ty) {
   }
 }
 
+// Try to find address of external function given a Function object.
+// Please note, that interpreter doesn't know how to assemble a
+// real call in general case (this is JIT job), that's why it assumes,
+// that all external functions has the same (and pretty "general") signature.
+// The typical example of such functions are "lle_X_" ones.
 static ExFunc lookupFunction(const Function *F) {
   // Function not found, look it up... start by figuring out what the
   // composite function name should be.
