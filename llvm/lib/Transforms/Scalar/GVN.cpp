@@ -723,7 +723,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     return V = GetValueForBlock(IDom->getBlock(), orig, Phis);
   }
   
-  
+  if (std::distance(pred_begin(BB), pred_end(BB)) == 1)
+    return V = GetValueForBlock(IDom->getBlock(), orig, Phis);
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
@@ -731,10 +732,10 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             BB->begin());
   PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
   V = PN;
-                                 
+  
   // Fill in the incoming values for the block.
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-    PN->addIncoming(GetValueForBlock(DT.getNode(*PI)->getBlock(), orig, Phis), *PI);
+    PN->addIncoming(GetValueForBlock(*PI, orig, Phis), *PI);
   return PN;
 }
 
