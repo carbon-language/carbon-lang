@@ -70,12 +70,14 @@ namespace {
     SmallPtrSet<Value *,8> UnswitchedVals;
     
     bool OptimizeForSize;
+    bool redoLoop;
   public:
     static char ID; // Pass ID, replacement for typeid
     LoopUnswitch(bool Os = false) : 
-      LoopPass((intptr_t)&ID), OptimizeForSize(Os) {}
+      LoopPass((intptr_t)&ID), OptimizeForSize(Os), redoLoop(false) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool processLoop(Loop *L);
 
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
@@ -152,11 +154,23 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
 }
 
 bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
-  assert(L->isLCSSAForm());
   LI = &getAnalysis<LoopInfo>();
   LPM = &LPM_Ref;
   bool Changed = false;
-  
+
+  do {
+    redoLoop = false;
+    Changed |= processLoop(L);
+  } while(redoLoop);
+
+  return Changed;
+}
+
+/// processLoop - Do actual work and unswitch loop if possible and profitable.
+bool LoopUnswitch::processLoop(Loop *L) {
+  assert(L->isLCSSAForm());
+  bool Changed = false;
+
   // Loop over all of the basic blocks in the loop.  If we find an interior
   // block that is branching on a loop-invariant condition, we can unswitch this
   // loop.
@@ -576,7 +590,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   OrigPH->getTerminator()->eraseFromParent();
 
   // We need to reprocess this loop, it could be unswitched again.
-  LPM->redoLoop(L);
+  redoLoop = true;
   
   // Now that we know that the loop is never entered when this condition is a
   // particular value, rewrite the loop with this info.  We know that this will
@@ -740,7 +754,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   OldBR->eraseFromParent();
   
   LoopProcessWorklist.push_back(NewLoop);
-  LPM->redoLoop(L);
+  redoLoop = true;
 
   // Now we rewrite the original code to know that the condition is true and the
   // new code to know that the condition is false.
