@@ -452,28 +452,22 @@ void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig,
   else
      OrigIDom = OrigIDomNode->getBlock();
 
-   // Initially use Orig's immediate dominator as NewBB's immediate dominator.
-   BasicBlock *NewIDom = OrigIDom;
-   DenseMap<const Value*, Value*>::iterator I = VM.find(OrigIDom);
-   if (I != VM.end()) {
-     //    if (!DT->getNode(OrigIDom))
-     // CloneDomInfo(NewIDom, OrigIDom, NewPreheader, OrigPreheader, 
-     //              OrigHeader, DT, DF, VM);
-
-     NewIDom = cast<BasicBlock>(I->second);
-
-     // If NewIDom does not have corresponding dominatore tree node then
-     // get one.
-     if (!DT->getNode(NewIDom))
+  // Initially use Orig's immediate dominator as NewBB's immediate dominator.
+  BasicBlock *NewIDom = OrigIDom;
+  DenseMap<const Value*, Value*>::iterator I = VM.find(OrigIDom);
+  if (I != VM.end()) {
+    NewIDom = cast<BasicBlock>(I->second);
+    
+    // If NewIDom does not have corresponding dominatore tree node then
+    // get one.
+    if (!DT->getNode(NewIDom))
       CloneDomInfo(NewIDom, OrigIDom, NewPreheader, OrigPreheader, 
                    OrigHeader, DT, DF, VM);
   }
-   //  if (NewBB == NewIDom) {
-   // DT->addNewBlock(NewBB, OrigIDom);
-   // DT->changeImmediateDominator(NewBB, NewIDom);
-   //} else
-    DT->addNewBlock(NewBB, NewIDom);
-
+  
+  DT->addNewBlock(NewBB, NewIDom);
+  
+  // Copy cloned dominance frontiner set
   DominanceFrontier::DomSetType NewDFSet;
   if (DF) {
     DominanceFrontier::iterator DFI = DF->find(Orig);
