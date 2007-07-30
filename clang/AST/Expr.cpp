@@ -226,6 +226,10 @@ Expr::isLvalueResult Expr::isLvalue() const {
     break;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
+  case OCUVectorComponentClass:
+    if (cast<OCUVectorComponent>(this)->containsDuplicateComponents())
+      return LV_DuplicateVectorComponents;
+    return LV_Valid;
   default:
     break;
   }
@@ -244,6 +248,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   case LV_Valid: break;
   case LV_NotObjectType: return MLV_NotObjectType;
   case LV_IncompleteVoidType: return MLV_IncompleteVoidType;
+  case LV_DuplicateVectorComponents: return MLV_DuplicateVectorComponents;
   case LV_InvalidExpression: return MLV_InvalidExpression;
   }
   if (TR.isConstQualified())
@@ -580,4 +585,17 @@ OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
   if (VT->isColorAccessor(*compStr)) return Color;
   if (VT->isTextureAccessor(*compStr)) return Texture;
   assert(0 && "getComponentType(): Illegal accessor");
+}
+
+bool OCUVectorComponent::containsDuplicateComponents() const {
+  const char *compStr = Accessor.getName();
+  unsigned length = strlen(compStr);
+  
+  for (unsigned i = 0; i < length-1; i++) {
+    const char *s = compStr+i;
+    for (const char c = *s++; *s; s++)
+      if (c == *s) 
+        return true;
+  }
+  return false;
 }

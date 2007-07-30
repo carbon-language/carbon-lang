@@ -67,6 +67,7 @@ public:
     LV_Valid,
     LV_NotObjectType,
     LV_IncompleteVoidType,
+    LV_DuplicateVectorComponents,
     LV_InvalidExpression
   };
   isLvalueResult isLvalue() const;
@@ -80,6 +81,7 @@ public:
     MLV_Valid,
     MLV_NotObjectType,
     MLV_IncompleteVoidType,
+    MLV_DuplicateVectorComponents,
     MLV_InvalidExpression,
     MLV_IncompleteType,
     MLV_ConstQualified,
@@ -464,17 +466,15 @@ public:
 /// OCUVectorComponent
 ///
 class OCUVectorComponent : public Expr {
+  Expr *Base;
+  IdentifierInfo &Accessor;
+  SourceLocation AccessorLoc;
 public:
   enum ComponentType {
     Point,
     Color,
     Texture
   };
-private:
-  Expr *Base;
-  IdentifierInfo &Accessor;
-  SourceLocation AccessorLoc;
-public:
   OCUVectorComponent(QualType ty, Expr *base, IdentifierInfo &accessor,
                      SourceLocation loc) : Expr(OCUVectorComponentClass, ty), 
                      Base(base), Accessor(accessor), AccessorLoc(loc) {}
@@ -483,6 +483,8 @@ public:
   IdentifierInfo & getAccessor() const { return Accessor; }
   ComponentType getComponentType() const;
 
+  bool containsDuplicateComponents() const;
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);
   }

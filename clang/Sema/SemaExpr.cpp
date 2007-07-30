@@ -1136,6 +1136,10 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
       Diag(loc, diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
            lhsType.getAsString(), lex->getSourceRange());
       return QualType();
+    case Expr::MLV_DuplicateVectorComponents:
+      Diag(loc, diag::err_typecheck_duplicate_vector_components_not_mlvalue,
+           lex->getSourceRange());
+      return QualType();
   }
   AssignmentCheckResult result;
   
