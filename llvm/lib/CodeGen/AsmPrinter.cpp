@@ -1144,7 +1144,8 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
   if (printColon)
     O << ':';
   if (printComment && MBB->getBasicBlock())
-    O << '\t' << TAI->getCommentString() << MBB->getBasicBlock()->getName();
+    O << '\t' << TAI->getCommentString() << ' '
+      << MBB->getBasicBlock()->getName();
 }
 
 /// printSetLabel - This method prints a set label for the specified
