@@ -192,8 +192,9 @@ public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.  If Fast is set to true, the code generator should emit code
-  /// as fast as possible, without regard for compile time.  This method should
-  /// return FileModel::Error if emission of this file type is not supported.
+  /// as fast as possible, though the generated code may be less efficient.
+  /// This method should return FileModel::Error if emission of this file type
+  /// is not supported.
   ///
   virtual FileModel::Model addPassesToEmitFile(FunctionPassManager &PM,
                                                std::ostream &Out,
@@ -243,8 +244,9 @@ public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.  If Fast is set to true, the code generator should emit code
-  /// as fast as possible, without regard for compile time.  This method should
-  /// return FileModel::Error if emission of this file type is not supported.
+  /// as fast as possible, though the generated code may be less efficient.
+  /// This method should return FileModel::Error if emission of this file type
+  /// is not supported.
   ///
   /// The default implementation of this method adds components from the
   /// LLVM retargetable code generator, invoking the methods below to get
