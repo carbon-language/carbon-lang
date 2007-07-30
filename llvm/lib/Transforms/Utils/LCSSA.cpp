@@ -73,6 +73,14 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addRequired<DominatorTree>();
       AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<DominatorTree>();
+
+      // Request DominanceFrontier now, even though LCSSA does
+      // not use it. This allows Pass Manager to schedule Dominance
+      // Frontier early enough such that one LPPassManager can handle
+      // multiple loop transformation passes.
+      AU.addRequired<DominanceFrontier>(); 
+      AU.addPreserved<DominanceFrontier>();
     }
   private:
     void getLoopValuesUsedOutsideLoop(Loop *L,
