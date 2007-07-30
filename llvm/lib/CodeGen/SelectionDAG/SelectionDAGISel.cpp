@@ -695,9 +695,9 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
   } else if (NumParts > 0) {
     // If the intermediate type was expanded, build the intermediate operands
     // from the parts.
-    assert(NumIntermediates % NumParts == 0 &&
+    assert(NumParts % NumIntermediates == 0 &&
            "Must expand into a divisible number of parts!");
-    unsigned Factor = NumIntermediates / NumParts;
+    unsigned Factor = NumParts / NumIntermediates;
     for (unsigned i = 0; i != NumIntermediates; ++i)
       Ops[i] = getCopyFromParts(DAG, &Parts[i * Factor], Factor,
                                 PartVT, IntermediateVT);
@@ -708,7 +708,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
   return DAG.getNode(MVT::isVector(IntermediateVT) ?
                        ISD::CONCAT_VECTORS :
                        ISD::BUILD_VECTOR,
-                     ValueVT, &Ops[0], NumParts);
+                     ValueVT, &Ops[0], NumIntermediates);
 }
 
 /// getCopyToParts - Create a series of nodes that contain the
