@@ -27,17 +27,29 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
+
+#include "llvm/Config/config.h"
+
 using namespace llvm;
 
 #ifdef __APPLE__ 
-#include <AvailabilityMacros.h>
-#if defined(MAC_OS_X_VERSION_10_4) && \
-    ((MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4) || \
-     (MAC_OS_X_VERSION_MIN_REQUIRED == MAC_OS_X_VERSION_10_4 && \
-      __APPLE_CC__ >= 5330))
-// __dso_handle is resolved by Mac OS X dynamic linker.
-extern void *__dso_handle __attribute__ ((__visibility__ ("hidden")));
+// Apple gcc defaults to -fuse-cxa-atexit (i.e. calls __cxa_atexit instead
+// of atexit). It passes the address of linker generated symbol __dso_handle
+// to the function.
+// This configuration change happened at version 5330.
+# include <AvailabilityMacros.h>
+# if defined(MAC_OS_X_VERSION_10_4) && \
+     ((MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4) || \
+      (MAC_OS_X_VERSION_MIN_REQUIRED == MAC_OS_X_VERSION_10_4 && \
+       __APPLE_CC__ >= 5330))
+#  ifndef HAVE___DSO_HANDLE
+#   define HAVE___DSO_HANDLE 1
+#  endif
+# endif
 #endif
+
+#if HAVE___DSO_HANDLE
+extern void *__dso_handle __attribute__ ((__visibility__ ("hidden")));
 #endif
 
 static struct RegisterJIT {
@@ -302,14 +314,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 
   // If the global is external, just remember the address.
   if (GV->isDeclaration()) {
-#if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_4) && \
-    ((MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4) || \
-     (MAC_OS_X_VERSION_MIN_REQUIRED == MAC_OS_X_VERSION_10_4 && \
-      __APPLE_CC__ >= 5330))
-    // Apple gcc defaults to -fuse-cxa-atexit (i.e. calls __cxa_atexit instead
-    // of atexit). It passes the address of linker generated symbol __dso_handle
-    // to the function.
-    // This configuration change happened at version 5330.
+#if HAVE___DSO_HANDLE
     if (GV->getName() == "__dso_handle")
       return (void*)&__dso_handle;
 #endif

@@ -437,6 +437,9 @@
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
 
+/* Define to 1 if you have the `__dso_handle' function. */
+#undef HAVE___DSO_HANDLE
+
 /* Installation directory for binary executables */
 #undef LLVM_BINDIR
 
