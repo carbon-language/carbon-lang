@@ -2738,9 +2738,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CTLZ:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Op
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Custom: assert(0 && "Cannot custom handle this yet!");
+    case TargetLowering::Custom:
     case TargetLowering::Legal:
       Result = DAG.UpdateNodeOperands(Result, Tmp1);
+      if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
+	  TargetLowering::Custom) {
+	Tmp1 = TLI.LowerOperation(Result, DAG);
+	if (Tmp1.Val) {
+	  Result = Tmp1;
+	}
+      }
       break;
     case TargetLowering::Promote: {
       MVT::ValueType OVT = Tmp1.getValueType();
@@ -2760,7 +2767,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                             DAG.getConstant(MVT::getSizeInBits(NVT), NVT),
                             ISD::SETEQ);
         Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
-                           DAG.getConstant(MVT::getSizeInBits(OVT),NVT), Tmp1);
+                             DAG.getConstant(MVT::getSizeInBits(OVT),NVT), Tmp1);
         break;
       case ISD::CTLZ:
         // Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
