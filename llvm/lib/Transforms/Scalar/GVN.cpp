@@ -752,7 +752,9 @@ bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase
        I != E; ++I)
     if (I->second == MemoryDependenceAnalysis::None) {
       return false;
-    } else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
+    } else if (I->second == MemoryDependenceAnalysis::NonLocal) {
+      continue;
+    }else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
       if (S->getPointerOperand() == L->getPointerOperand())
         repl.insert(std::make_pair(I->first, S->getOperand(0)));
       else

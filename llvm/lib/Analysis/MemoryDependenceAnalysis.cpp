@@ -129,6 +129,8 @@ bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
 
   if (!inserted && !predOnStack)
     resp.insert(std::make_pair(block, None));
+  else if (inserted && predOnStack)
+    resp.insert(std::make_pair(block, NonLocal));
   
   return inserted;
 }
