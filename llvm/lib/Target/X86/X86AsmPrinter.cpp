@@ -168,7 +168,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
     
     if (Subtarget->isTargetELF())
-      O << "\t.type " << name << ",@object\n";
+      O << "\t.type\t" << name << ",@object\n";
     
     if (C->isNullValue()) {
       if (I->hasExternalLinkage()) {
@@ -228,7 +228,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
                                 name +
                                 ",\"aw\",@progbits");
         SwitchToDataSection(SectionName.c_str(), I);
-        O << "\t.weak " << name << "\n";
+        O << "\t.weak\t" << name << "\n";
       }
       break;
     case GlobalValue::AppendingLinkage:
@@ -305,7 +305,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << name << ":\t\t\t\t" << TAI->getCommentString() << " " << I->getName()
       << "\n";
     if (TAI->hasDotTypeDotSizeDirective())
-      O << "\t.size " << name << ", " << Size << "\n";
+      O << "\t.size\t" << name << ", " << Size << "\n";
     // If the initializer is a extern weak symbol, remember to emit the weak
     // reference!
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))

@@ -129,7 +129,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << "\t.linkonce discard\n";
     } else {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-      O << "\t.weak " << CurrentFnName << "\n";
+      O << "\t.weak\t" << CurrentFnName << "\n";
     }
     break;
   }
@@ -142,7 +142,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   if (Subtarget->isTargetELF())
-    O << "\t.type " << CurrentFnName << ",@function\n";
+    O << "\t.type\t" << CurrentFnName << ",@function\n";
   else if (Subtarget->isTargetCygMing()) {
     O << "\t.def\t " << CurrentFnName
       << ";\t.scl\t" <<
