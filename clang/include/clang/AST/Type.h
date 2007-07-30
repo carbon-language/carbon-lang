@@ -497,8 +497,9 @@ public:
 
 /// OCUVectorType - Extended vector type. This type is created using
 /// __attribute__((ocu_vector_type(n)), where "n" is the number of elements.
-/// Unlike vector_size, ocu_vector_type is only allowed on typedef's.
-/// This class will enable syntactic extensions, like C++ style initializers.
+/// Unlike vector_size, ocu_vector_type is only allowed on typedef's. This
+/// class enables syntactic extensions, like Vector Components for accessing
+/// points, colors, and textures (modeled after OpenGL Shading Language).
 class OCUVectorType : public VectorType {
   OCUVectorType(QualType vecType, unsigned nElements, QualType canonType) :
     VectorType(OCUVector, vecType, nElements, canonType) {} 
