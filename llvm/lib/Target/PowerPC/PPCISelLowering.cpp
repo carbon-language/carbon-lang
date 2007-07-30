@@ -259,6 +259,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::UDIV, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::UREM, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::FDIV, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::FNEG, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
@@ -521,6 +522,16 @@ bool PPC::isSplatShuffleMask(SDNode *N, unsigned EltSize) {
   }
 
   return true;
+}
+
+/// isAllNegativeZeroVector - Returns true if all elements of build_vector
+/// are -0.0.
+bool PPC::isAllNegativeZeroVector(SDNode *N) {
+  assert(N->getOpcode() == ISD::BUILD_VECTOR);
+  if (PPC::isSplatShuffleMask(N, N->getNumOperands()))
+    if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N))
+      return CFP->isExactlyValue(-0.0);
+  return false;
 }
 
 /// getVSPLTImmediate - Return the appropriate VSPLT* immediate to splat the

@@ -70,7 +70,6 @@ def VMRGHW_unary_shuffle_mask : PatLeaf<(build_vector), [{
   return PPC::isVMRGHShuffleMask(N, 4, true);
 }]>;
 
-
 def VSLDOI_get_imm : SDNodeXForm<build_vector, [{
   return getI32Imm(PPC::isVSLDOIShuffleMask(N, false));
 }]>;
@@ -132,6 +131,10 @@ def VSPLTISW_get_imm : SDNodeXForm<build_vector, [{
 def vecspltisw : PatLeaf<(build_vector), [{
   return PPC::get_VSPLTI_elt(N, 4, *CurDAG).Val != 0;
 }], VSPLTISW_get_imm>;
+
+def V_immneg0 : PatLeaf<(build_vector), [{
+  return PPC::isAllNegativeZeroVector(N);
+}]>;
 
 //===----------------------------------------------------------------------===//
 // Helpers for defining instructions that directly correspond to intrinsics.
@@ -228,7 +231,8 @@ def VMADDFP : VAForm_1<46, (outs VRRC:$vD), (ins VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        Requires<[FPContractions]>;
 def VNMSUBFP: VAForm_1<47, (outs VRRC:$vD), (ins VRRC:$vA, VRRC:$vC, VRRC:$vB),
                        "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
-                       [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, VRRC:$vC),
+                       [(set VRRC:$vD, (fsub V_immneg0,
+                                             (fsub (fmul VRRC:$vA, VRRC:$vC),
                                                    VRRC:$vB)))]>,
                        Requires<[FPContractions]>;
 
