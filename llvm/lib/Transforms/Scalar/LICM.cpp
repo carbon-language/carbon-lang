@@ -42,6 +42,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -78,6 +79,8 @@ namespace {
       AU.addRequired<DominatorTree>();
       AU.addRequired<DominanceFrontier>();  // For scalar promotion (mem2reg)
       AU.addRequired<AliasAnalysis>();
+      AU.addPreserved<ScalarEvolution>();
+      AU.addPreserved<DominanceFrontier>();
     }
 
     bool doFinalization() {
