@@ -62,6 +62,8 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
+      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominanceFrontier>();
     }
 
     // Helper functions
