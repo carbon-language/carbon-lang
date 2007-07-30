@@ -24,7 +24,7 @@ namespace llvm {
   class CallingConvEmitter : public TableGenBackend {
     RecordKeeper &Records;
   public:
-    CallingConvEmitter(RecordKeeper &R) : Records(R) {}
+    explicit CallingConvEmitter(RecordKeeper &R) : Records(R) {}
 
     // run - Output the asmwriter, returning true on failure.
     void run(std::ostream &o);

@@ -115,13 +115,13 @@ public:
   }
     
   /// Constructs a TargetData from a specification string. See init().
-  TargetData(const std::string &TargetDescription) 
+  explicit TargetData(const std::string &TargetDescription) 
     : ImmutablePass((intptr_t)&ID) {
     init(TargetDescription);
   }
 
   /// Initialize target data from properties stored in the module.
-  TargetData(const Module *M);
+  explicit TargetData(const Module *M);
 
   TargetData(const TargetData &TD) : 
     ImmutablePass((intptr_t)&ID),
