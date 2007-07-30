@@ -267,7 +267,6 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
   addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-  // FIXME: Temporary!
   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
   addPass(PM, createCondPropagationPass());      // Propagate conditionals
