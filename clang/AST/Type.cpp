@@ -56,12 +56,6 @@ bool Type::isDerivedType() const {
   }
 }
 
-// FIXME: move inline
-bool Type::isFunctionType() const { return isa<FunctionType>(CanonicalType); }
-bool Type::isPointerType() const { return isa<PointerType>(CanonicalType); }
-bool Type::isReferenceType() const { return isa<ReferenceType>(CanonicalType); }
-bool Type::isArrayType() const { return isa<ArrayType>(CanonicalType); }
-bool Type::isRecordType() const { return isa<RecordType>(CanonicalType); }
 bool Type::isStructureType() const {
   if (const RecordType *RT = dyn_cast<RecordType>(this))
     if (RT->getDecl()->getKind() == Decl::Struct)
@@ -74,9 +68,6 @@ bool Type::isUnionType() const {
       return true;
   return false;
 }
-bool Type::isVectorType() const { return isa<VectorType>(CanonicalType); }
-bool Type::isOCUVectorType() const { return isa<OCUVectorType>(CanonicalType); }
-    
 
 const FunctionType *Type::getAsFunctionType() const {
   // If this is directly a function type, return it.

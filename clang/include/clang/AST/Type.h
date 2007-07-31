@@ -739,13 +739,7 @@ public:
 };
 
 
-/// ...
-
-// TODO: When we support C++, we should have types for uses of template with
-// default parameters.  We should be able to distinguish source use of
-// 'std::vector<int>' from 'std::vector<int, std::allocator<int> >'. Though they
-// specify the same type, we want to print the default argument only if
-// specified in the source code.
+// Inline function definitions.
 
 /// getCanonicalType - Return the canonical version of this type, with the
 /// appropriate type qualifiers on it.
@@ -754,7 +748,30 @@ inline QualType QualType::getCanonicalType() const {
                   getQualifiers() |
                   getTypePtr()->getCanonicalTypeInternal().getQualifiers());
 }
-  
+
+
+inline bool Type::isFunctionType() const {
+  return isa<FunctionType>(CanonicalType);
+}
+inline bool Type::isPointerType() const {
+  return isa<PointerType>(CanonicalType);
+}
+inline bool Type::isReferenceType() const {
+  return isa<ReferenceType>(CanonicalType);
+}
+inline bool Type::isArrayType() const {
+  return isa<ArrayType>(CanonicalType);
+}
+inline bool Type::isRecordType() const {
+  return isa<RecordType>(CanonicalType);
+}
+inline bool Type::isVectorType() const {
+  return isa<VectorType>(CanonicalType);
+}
+inline bool Type::isOCUVectorType() const {
+  return isa<OCUVectorType>(CanonicalType);
+}
+
 }  // end namespace clang
 
 #endif
