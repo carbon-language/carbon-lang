@@ -710,21 +710,14 @@ void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
 Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
-                               DenseMap<BasicBlock*, Value*> &Phis) {
-  DominatorTree &DT = getAnalysis<DominatorTree>(); 
+                               DenseMap<BasicBlock*, Value*> &Phis) { 
                                  
   // If we have already computed this value, return the previously computed val.
   Value *&V = Phis[BB];
   if (V) return V;
-
-  DomTreeNode *IDom = DT.getNode(BB)->getIDom();
-
-  if (IDom && Phis.count(IDom->getBlock())) {
-    return V = GetValueForBlock(IDom->getBlock(), orig, Phis);
-  }
   
   if (std::distance(pred_begin(BB), pred_end(BB)) == 1)
-    return V = GetValueForBlock(IDom->getBlock(), orig, Phis);
+    return V = GetValueForBlock(*pred_begin(BB), orig, Phis);
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
@@ -733,9 +726,30 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
   V = PN;
   
+  bool all_same = true;
+  Value* first = 0;
+  
   // Fill in the incoming values for the block.
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-    PN->addIncoming(GetValueForBlock(*PI, orig, Phis), *PI);
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+    Value* val = GetValueForBlock(*PI, orig, Phis);
+    if (first == 0)
+      first = val;
+    else if (all_same && first != val)
+      all_same = false;
+    
+    PN->addIncoming(val, *PI);
+  }
+  
+  if (all_same) {
+    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+    
+    MD.removeInstruction(PN);
+    PN->replaceAllUsesWith(first);
+    PN->eraseFromParent();
+    
+    return first;
+  }
+
   return PN;
 }
 
