@@ -277,20 +277,6 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 // SSE1 Instructions
 //===----------------------------------------------------------------------===//
 
-// SSE1 Instruction Templates:
-// 
-//   SSI   - SSE1 instructions with XS prefix.
-//   PSI   - SSE1 instructions with TB prefix.
-//   PSIi8 - SSE1 instructions with ImmT == Imm8 and TB prefix.
-
-class SSI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE1]>;
-class PSI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasSSE1]>;
-class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, TB, Requires<[HasSSE1]>;
-
 // Move Instructions
 def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                   "movss {$src, $dst|$dst, $src}", []>;
@@ -946,20 +932,6 @@ def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
 //===----------------------------------------------------------------------===//
 // SSE2 Instructions
 //===----------------------------------------------------------------------===//
-
-// SSE2 Instruction Templates:
-// 
-//   SDI   - SSE2 instructions with XD prefix.
-//   PDI   - SSE2 instructions with TB and OpSize prefixes.
-//   PDIi8 - SSE2 instructions with ImmT == Imm8 and TB and OpSize prefixes.
-
-class SDI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, XD, Requires<[HasSSE2]>;
-class PDI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
-class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, TB, OpSize, Requires<[HasSSE2]>;
 
 // Move Instructions
 def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
@@ -2180,19 +2152,6 @@ def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
 // SSE3 Instructions
 //===----------------------------------------------------------------------===//
 
-// SSE3 Instruction Templates:
-// 
-//   S3I   - SSE3 instructions with TB and OpSize prefixes.
-//   S3SI  - SSE3 instructions with XS prefix.
-//   S3DI  - SSE3 instructions with XD prefix.
-
-class S3SI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE3]>;
-class S3DI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, XD, Requires<[HasSSE3]>;
-class S3I<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, OpSize, Requires<[HasSSE3]>;
-
 // Move Instructions
 def MOVSHDUPrr : S3SI<0x16, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                       "movshdup {$src, $dst|$dst, $src}",
@@ -2655,3 +2614,11 @@ def : Pat<(store (v8i16 VR128:$src), addr:$dst),
           (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
 def : Pat<(store (v16i8 VR128:$src), addr:$dst),
           (MOVUPSmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
+
+// (vextract (v4i32 bc (v4f32 s2v (f32 load $addr))), 0) -> (i32 load $addr)
+def : Pat<(vector_extract
+           (bc_v4i32 (v4f32 (scalar_to_vector (loadf32 addr:$src)))), (iPTR 0)),
+          (MOV32rm addr:$src)>;
+def : Pat<(vector_extract
+           (bc_v2i64 (v2f64 (scalar_to_vector (loadf64 addr:$src)))), (iPTR 0)),
+          (MOV64rm addr:$src)>;

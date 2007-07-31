@@ -40,36 +40,6 @@ def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
                                []>;
 
 //===----------------------------------------------------------------------===//
-// Instruction templates...
-//
-
-class RI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, REX_W;
-class RIi8 <bits<8> o, Format F, dag outs, dag ins, string asm,
-            list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, REX_W;
-class RIi32 <bits<8> o, Format F, dag outs, dag ins, string asm,
-             list<dag> pattern>
-      : Ii32<o, F, outs, ins, asm, pattern>, REX_W;
-
-class RIi64<bits<8> o, Format f, dag outs, dag ins, string asm,
-            list<dag> pattern>
-  : X86Inst<o, f, Imm64, outs, ins, asm>, REX_W {
-  let Pattern = pattern;
-  let CodeSize = 3;
-}
-
-class RSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern>
-      : SSI<o, F, outs, ins, asm, pattern>, REX_W;
-class RSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern>
-      : SDI<o, F, outs, ins, asm, pattern>, REX_W;
-class RPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern>
-      : PDI<o, F, outs, ins, asm, pattern>, REX_W;
-
-//===----------------------------------------------------------------------===//
 // Pattern fragments...
 //
 

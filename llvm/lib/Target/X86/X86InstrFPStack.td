@@ -119,17 +119,6 @@ let isTerminator = 1 in
 // a pattern) and the FPI instruction should have emission info (e.g. opcode
 // encoding and asm printing info).
 
-// FPI - Floating Point Instruction template.
-class FPI<bits<8> o, Format F, dag outs, dag ins, string asm>
-  : I<o, F, outs, ins, asm, []> {}
-
-// FpI_ - Floating Point Psuedo Instruction template. Not Predicated.
-class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern>
-  : X86Inst<0, Pseudo, NoImm, outs, ins, ""> {
-  let FPForm = fp; let FPFormBits = FPForm.Value;
-  let Pattern = pattern;
-}
-
 // Random Pseudo Instructions.
 def FpGETRESULT32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP,
                       [(set RFP32:$dst, X86fpget)]>;           // FPR = ST(0)

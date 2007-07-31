@@ -13,29 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-// Instruction templates
-//===----------------------------------------------------------------------===//
-
-// MMXI   - MMX instructions with TB prefix.
-// MMX2I  - MMX / SSE2 instructions with TB and OpSize prefixes.
-// MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
-// MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
-// MMXID  - MMX instructions with XD prefix.
-// MMXIS  - MMX instructions with XS prefix.
-class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasMMX]>;
-class MMXRI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, REX_W, Requires<[HasMMX]>;
-class MMX2I<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TB, OpSize, Requires<[HasMMX]>;
-class MMXIi8<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, TB, Requires<[HasMMX]>;
-class MMXID<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, XD, Requires<[HasMMX]>;
-class MMXIS<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasMMX]>;
-
 // Some 'special' instructions
 def IMPLICIT_DEF_VR64 : I<0, Pseudo, (outs VR64:$dst), (ins),
                           "#IMPLICIT_DEF $dst",

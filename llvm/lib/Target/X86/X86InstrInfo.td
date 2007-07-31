@@ -153,29 +153,6 @@ def lea32addr : ComplexPattern<i32, 4, "SelectLEAAddr",
                                [add, mul, shl, or, frameindex], []>;
 
 //===----------------------------------------------------------------------===//
-// X86 Instruction Format Definitions.
-//
-
-// Format specifies the encoding used by the instruction.  This is part of the
-// ad-hoc solution used to emit machine instruction encodings by our machine
-// code emitter.
-class Format<bits<6> val> {
-  bits<6> Value = val;
-}
-
-def Pseudo     : Format<0>; def RawFrm     : Format<1>;
-def AddRegFrm  : Format<2>; def MRMDestReg : Format<3>;
-def MRMDestMem : Format<4>; def MRMSrcReg  : Format<5>;
-def MRMSrcMem  : Format<6>;
-def MRM0r  : Format<16>; def MRM1r  : Format<17>; def MRM2r  : Format<18>;
-def MRM3r  : Format<19>; def MRM4r  : Format<20>; def MRM5r  : Format<21>;
-def MRM6r  : Format<22>; def MRM7r  : Format<23>;
-def MRM0m  : Format<24>; def MRM1m  : Format<25>; def MRM2m  : Format<26>;
-def MRM3m  : Format<27>; def MRM4m  : Format<28>; def MRM5m  : Format<29>;
-def MRM6m  : Format<30>; def MRM7m  : Format<31>;
-def MRMInitReg : Format<32>;
-
-//===----------------------------------------------------------------------===//
 // X86 Instruction Predicate Definitions.
 def HasMMX       : Predicate<"Subtarget->hasMMX()">;
 def HasSSE1      : Predicate<"Subtarget->hasSSE1()">;
@@ -190,84 +167,10 @@ def NotSmallCode : Predicate<"TM.getCodeModel() != CodeModel::Small">;
 def IsStatic     : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 
 //===----------------------------------------------------------------------===//
-// X86 specific pattern fragments.
+// X86 Instruction Format Definitions.
 //
 
-// ImmType - This specifies the immediate type used by an instruction. This is
-// part of the ad-hoc solution used to emit machine instruction encodings by our
-// machine code emitter.
-class ImmType<bits<3> val> {
-  bits<3> Value = val;
-}
-def NoImm  : ImmType<0>;
-def Imm8   : ImmType<1>;
-def Imm16  : ImmType<2>;
-def Imm32  : ImmType<3>;
-def Imm64  : ImmType<4>;
-
-// FPFormat - This specifies what form this FP instruction has.  This is used by
-// the Floating-Point stackifier pass.
-class FPFormat<bits<3> val> {
-  bits<3> Value = val;
-}
-def NotFP      : FPFormat<0>;
-def ZeroArgFP  : FPFormat<1>;
-def OneArgFP   : FPFormat<2>;
-def OneArgFPRW : FPFormat<3>;
-def TwoArgFP   : FPFormat<4>;
-def CompareFP  : FPFormat<5>;
-def CondMovFP  : FPFormat<6>;
-def SpecialFP  : FPFormat<7>;
-
-
-class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
-              string AsmStr>
-  : Instruction {
-  let Namespace = "X86";
-
-  bits<8> Opcode = opcod;
-  Format Form = f;
-  bits<6> FormBits = Form.Value;
-  ImmType ImmT = i;
-  bits<3> ImmTypeBits = ImmT.Value;
-
-  dag OutOperandList = outs;
-  dag InOperandList = ins;
-  string AsmString = AsmStr;
-
-  //
-  // Attributes specific to X86 instructions...
-  //
-  bit hasOpSizePrefix = 0;  // Does this inst have a 0x66 prefix?
-  bit hasAdSizePrefix = 0;  // Does this inst have a 0x67 prefix?
-
-  bits<4> Prefix = 0;       // Which prefix byte does this inst have?
-  bit hasREX_WPrefix  = 0;  // Does this inst requires the REX.W prefix?
-  FPFormat FPForm;          // What flavor of FP instruction is this?
-  bits<3> FPFormBits = 0;
-}
-
-
-// Prefix byte classes which are used to indicate to the ad-hoc machine code
-// emitter that various prefix bytes are required.
-class OpSize { bit hasOpSizePrefix = 1; }
-class AdSize { bit hasAdSizePrefix = 1; }
-class REX_W  { bit hasREX_WPrefix = 1; }
-class TB     { bits<4> Prefix = 1; }
-class REP    { bits<4> Prefix = 2; }
-class D8     { bits<4> Prefix = 3; }
-class D9     { bits<4> Prefix = 4; }
-class DA     { bits<4> Prefix = 5; }
-class DB     { bits<4> Prefix = 6; }
-class DC     { bits<4> Prefix = 7; }
-class DD     { bits<4> Prefix = 8; }
-class DE     { bits<4> Prefix = 9; }
-class DF     { bits<4> Prefix = 10; }
-class XD     { bits<4> Prefix = 11; }
-class XS     { bits<4> Prefix = 12; }
-class T8     { bits<4> Prefix = 13; }
-class TA     { bits<4> Prefix = 14; }
-
+include "X86InstrFormats.td"
 
 //===----------------------------------------------------------------------===//
 // Pattern fragments...
@@ -332,31 +235,6 @@ def extloadi32i1   : PatFrag<(ops node:$ptr), (i32 (extloadi1 node:$ptr))>;
 def extloadi16i8   : PatFrag<(ops node:$ptr), (i16 (extloadi8 node:$ptr))>;
 def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extloadi8 node:$ptr))>;
 def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
-
-//===----------------------------------------------------------------------===//
-// Instruction templates...
-//
-
-class I<bits<8> o, Format f, dag outs, dag ins, string asm, list<dag> pattern>
-  : X86Inst<o, f, NoImm, outs, ins, asm> {
-  let Pattern = pattern;
-  let CodeSize = 3;
-}
-class Ii8 <bits<8> o, Format f, dag outs, dag ins, string asm, list<dag> pattern>
-  : X86Inst<o, f, Imm8 , outs, ins, asm> {
-  let Pattern = pattern;
-  let CodeSize = 3;
-}
-class Ii16<bits<8> o, Format f, dag outs, dag ins, string asm, list<dag> pattern>
-  : X86Inst<o, f, Imm16, outs, ins, asm> {
-  let Pattern = pattern;
-  let CodeSize = 3;
-}
-class Ii32<bits<8> o, Format f, dag outs, dag ins, string asm, list<dag> pattern>
-  : X86Inst<o, f, Imm32, outs, ins, asm> {
-  let Pattern = pattern;
-  let CodeSize = 3;
-}
 
 //===----------------------------------------------------------------------===//
 // Instruction list...
@@ -2654,6 +2532,12 @@ def : Pat<(store (or (shl (loadi16 addr:$dst), CL:$amt),
 include "X86InstrFPStack.td"
 
 //===----------------------------------------------------------------------===//
+// X86-64 Support
+//===----------------------------------------------------------------------===//
+
+include "X86InstrX86-64.td"
+
+//===----------------------------------------------------------------------===//
 // MMX and XMM Packed Integer support (requires MMX, SSE, and SSE2)
 //===----------------------------------------------------------------------===//
 
@@ -2664,9 +2548,3 @@ include "X86InstrMMX.td"
 //===----------------------------------------------------------------------===//
 
 include "X86InstrSSE.td"
-
-//===----------------------------------------------------------------------===//
-// X86-64 Support
-//===----------------------------------------------------------------------===//
-
-include "X86InstrX86-64.td"
