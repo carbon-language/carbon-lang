@@ -7533,11 +7533,13 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
 
     const Type *BasePtrTy = GEPI->getOperand(0)->getType();
     const PointerType *PtrTy = cast<PointerType>(BasePtrTy);
-    if (TD->getABITypeAlignment(PtrTy->getElementType())
-        <= BaseAlignment) {
+    unsigned Align = TD->getABITypeAlignment(PtrTy->getElementType());
+    if (Align <= BaseAlignment) {
       const Type *GEPTy = GEPI->getType();
       const PointerType *GEPPtrTy = cast<PointerType>(GEPTy);
-      return TD->getABITypeAlignment(GEPPtrTy->getElementType());
+      Align = std::min(Align, (unsigned)
+                       TD->getABITypeAlignment(GEPPtrTy->getElementType()));
+      return Align;
     }
     return 0;
   }
