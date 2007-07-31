@@ -125,7 +125,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::Pointer:
-      if (isa<ReferenceType>(T.getCanonicalType().getTypePtr())) {
+      if (T->isReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_pointer_to_reference,
              D.getIdentifier()->getName());
@@ -171,7 +171,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier()->getName());
         T = RT->getReferenceeType();
-      } else if (RecordType *EltTy =dyn_cast<RecordType>(T.getCanonicalType())){
+      } else if (const RecordType *EltTy = T->getAsRecordType()) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {

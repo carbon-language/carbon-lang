@@ -381,7 +381,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       }
       // C99 6.7.5.2p2: If an identifier is declared to be an object with 
       // static storage duration, it shall not have a variable length array.
-      if (ArrayType *ary = dyn_cast<ArrayType>(R.getCanonicalType())) {
+      if (const ArrayType *ary = R->getAsArrayType()) {
         if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
           return 0;
       }
@@ -399,7 +399,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       if (SC == VarDecl::Static) {
         // C99 6.7.5.2p2: If an identifier is declared to be an object with 
         // static storage duration, it shall not have a variable length array.
-        if (ArrayType *ary = dyn_cast<ArrayType>(R.getCanonicalType())) {
+        if (const ArrayType *ary = R->getAsArrayType()) {
           if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
             return 0;
         }
@@ -738,7 +738,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
-  if (ArrayType *ary = dyn_cast<ArrayType>(T.getCanonicalType())) {
+  if (const ArrayType *ary = T->getAsArrayType()) {
     if (VerifyConstantArrayType(ary, Loc))
       return 0;
   }
@@ -771,10 +771,10 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     if (!FD) continue;  // Already issued a diagnostic.
     
     // Get the type for the field.
-    Type *FDTy = FD->getType().getCanonicalType().getTypePtr();
+    Type *FDTy = FD->getType().getTypePtr();
     
     // C99 6.7.2.1p2 - A field may not be a function type.
-    if (isa<FunctionType>(FDTy)) {
+    if (FDTy->isFunctionType()) {
       Diag(FD->getLocation(), diag::err_field_declared_as_function,
            FD->getName());
       delete FD;
@@ -785,7 +785,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     if (FDTy->isIncompleteType()) {
       if (i != NumFields-1 ||                   // ... that the last member ...
           Record->getKind() != Decl::Struct ||  // ... of a structure ...
-          !isa<ArrayType>(FDTy)) {         //... may have incomplete array type.
+          !FDTy->isArrayType()) {         //... may have incomplete array type.
         Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
         delete FD;
         continue;
@@ -804,7 +804,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     
     /// C99 6.7.2.1p2 - a struct ending in a flexible array member cannot be the
     /// field of another structure or the element of an array.
-    if (RecordType *FDTTy = dyn_cast<RecordType>(FDTy)) {
+    if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
         if (Record->getKind() == Decl::Union) {
