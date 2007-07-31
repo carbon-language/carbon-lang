@@ -1501,7 +1501,7 @@ following is the syntax for constant expressions:</p>
   <dd>Floating point extend a constant to another type. The size of CST must be 
   smaller or equal to the size of TYPE. Both types must be floating point.</dd>
 
-  <dt><b><tt>fp2uint ( CST to TYPE )</tt></b></dt>
+  <dt><b><tt>fptoui ( CST to TYPE )</tt></b></dt>
   <dd>Convert a floating point constant to the corresponding unsigned integer
   constant. TYPE must be an integer type. CST must be floating point. If the 
   value won't fit in the integer type, the results are undefined.</dd>
@@ -3098,21 +3098,21 @@ used to make a <i>no-op cast</i> because it always changes bits. Use
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = fp2uint &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
+  &lt;result&gt; = fptoui &lt;ty&gt; &lt;value&gt; to &lt;ty2&gt;             <i>; yields ty2</i>
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>fp2uint</tt>' converts a floating point <tt>value</tt> to its
+<p>The '<tt>fptoui</tt>' converts a floating point <tt>value</tt> to its
 unsigned integer equivalent of type <tt>ty2</tt>.
 </p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>fp2uint</tt>' instruction takes a value to cast, which must be a 
+<p>The '<tt>fptoui</tt>' instruction takes a value to cast, which must be a 
 <a href="#t_floating">floating point</a> value, and a type to cast it to, which
 must be an <a href="#t_integer">integer</a> type.</p>
 
 <h5>Semantics:</h5>
-<p> The '<tt>fp2uint</tt>' instruction converts its 
+<p> The '<tt>fptoui</tt>' instruction converts its 
 <a href="#t_floating">floating point</a> operand into the nearest (rounding
 towards zero) unsigned integer value. If the value cannot fit in <tt>ty2</tt>,
 the results are undefined.</p>
@@ -3123,9 +3123,9 @@ If the <tt>value</tt> was non-zero, the i1 result will be <tt>true</tt>.</p>
 
 <h5>Example:</h5>
 <pre>
-  %X = fp2uint double 123.0 to i32      <i>; yields i32:123</i>
-  %Y = fp2uint float 1.0E+300 to i1     <i>; yields i1:true</i>
-  %X = fp2uint float 1.04E+17 to i8     <i>; yields undefined:1</i>
+  %X = fptoui double 123.0 to i32      <i>; yields i32:123</i>
+  %Y = fptoui float 1.0E+300 to i1     <i>; yields i1:true</i>
+  %X = fptoui float 1.04E+17 to i8     <i>; yields undefined:1</i>
 </pre>
 </div>
 
