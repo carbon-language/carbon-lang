@@ -1147,7 +1147,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     result = CheckSingleAssignmentConstraints(lhsType, rex);
   else
     result = CheckCompoundAssignmentConstraints(lhsType, rhsType);
-    
+
   // decode the result (notice that extensions still return a type).
   switch (result) {
   case Compatible:

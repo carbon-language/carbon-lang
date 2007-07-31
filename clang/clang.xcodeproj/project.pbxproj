@@ -191,7 +191,7 @@
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
-		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = Parse/ParseExprCXX.cpp; sourceTree = "<group>"; };
 		DE06B73D0A8307640050E87E /* LangOptions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = LangOptions.h; sourceTree = "<group>"; };

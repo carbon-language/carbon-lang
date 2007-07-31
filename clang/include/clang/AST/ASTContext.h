@@ -100,6 +100,10 @@ public:
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
 
+  /// getTypeOfType - GCC extension.
+  QualType getTypeOfType(Expr *e);
+  QualType getTypeOfType(QualType t);
+  
   /// getTagDeclType - Return the unique reference to the type for the
   /// specified TagDecl (struct/union/class/enum) decl.
   QualType getTagDeclType(TagDecl *Decl);

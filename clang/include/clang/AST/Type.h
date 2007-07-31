@@ -189,7 +189,8 @@ public:
   enum TypeClass {
     Builtin, Complex, Pointer, Reference, Array, Vector, OCUVector,
     FunctionNoProto, FunctionProto,
-    TypeName, Tagged
+    TypeName, Tagged, 
+    TypeOfExp, TypeOfTyp // GNU typeof extension.
   };
 private:
   QualType CanonicalType;
@@ -661,6 +662,37 @@ public:
   static bool classof(const TypedefType *) { return true; }
 };
 
+/// TypeOfExpr (GCC extension).
+class TypeOfExpr : public Type {
+  Expr *TOExpr;
+  TypeOfExpr(Expr *E, QualType can) : Type(TypeOfExp, can), TOExpr(E) {
+    assert(!isa<TypedefType>(can) && "Invalid canonical type");
+  }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  Expr *getUnderlyingExpr() const { return TOExpr; }
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExp; }
+  static bool classof(const TypeOfExpr *) { return true; }
+};
+
+/// TypeOfType (GCC extension).
+class TypeOfType : public Type {
+  QualType TOType;
+  TypeOfType(QualType T, QualType can) : Type(TypeOfTyp, can), TOType(T) {
+    assert(!isa<TypedefType>(can) && "Invalid canonical type");
+  }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  QualType getUnderlyingType() const { return TOType; }
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) { return T->getTypeClass() == TypeOfTyp; }
+  static bool classof(const TypeOfType *) { return true; }
+};
 
 class TagType : public Type {
   TagDecl *Decl;

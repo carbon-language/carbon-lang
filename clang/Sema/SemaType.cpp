@@ -95,6 +95,18 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
     // TypeQuals handled by caller.
     return Ctx.getTypedefType(cast<TypedefDecl>(D));
   }
+  case DeclSpec::TST_typeofType: {
+    QualType T = QualType::getFromOpaquePtr(DS.getTypeRep());
+    assert(!T.isNull() && "Didn't get a type for typeof?");
+    // TypeQuals handled by caller.
+    return Ctx.getTypeOfType(T);
+  }
+  case DeclSpec::TST_typeofExpr: {
+    Expr *E = static_cast<Expr *>(DS.getTypeRep());
+    assert(E && "Didn't get an expression for typeof?");
+    // TypeQuals handled by caller.
+    return Ctx.getTypeOfType(E);
+  }
   }
 }
 

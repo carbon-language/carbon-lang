@@ -361,6 +361,7 @@ private:
 
   TypeTy *ParseTypeName();
   AttributeList *ParseAttributes();
+  void ParseTypeofSpecifier(DeclSpec &DS);
   
   /// ParseDeclarator - Parse and verify a newly-initialized declarator.
   void ParseDeclarator(Declarator &D);

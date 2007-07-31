@@ -638,6 +638,18 @@ void OCUVectorType::getAsStringInternal(std::string &S) const {
   ElementType.getAsStringInternal(S);
 }
 
+void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
+  // FIXME: output expression, getUnderlyingExpr()->print().
+  // At the moment, Stmt::print(std::ostream) doesn't work for us here.
+  InnerString = "typeof(<expr>) " + InnerString;
+}
+
+void TypeOfType::getAsStringInternal(std::string &S) const {
+  std::string Tmp;
+  getUnderlyingType().getAsStringInternal(Tmp);
+  S += "typeof(" + Tmp + ")";
+}
+
 void FunctionTypeNoProto::getAsStringInternal(std::string &S) const {
   // If needed for precedence reasons, wrap the inner part in grouping parens.
   if (!S.empty())

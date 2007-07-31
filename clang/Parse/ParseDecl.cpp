@@ -482,6 +482,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       ParseEnumSpecifier(DS);
       continue;
     
+    // GNU typeof support.
+    case tok::kw_typeof:
+      ParseTypeofSpecifier(DS);
+      continue;
+      
     // type-qualifier
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,
@@ -825,6 +830,9 @@ bool Parser::isTypeSpecifierQualifier() const {
   default: return false;
     // GNU attributes support.
   case tok::kw___attribute:
+    // GNU typeof support.
+  case tok::kw_typeof:
+  
     // type-specifiers
   case tok::kw_short:
   case tok::kw_long:
@@ -902,6 +910,9 @@ bool Parser::isDeclarationSpecifier() const {
   case tok::kw_const:
   case tok::kw_volatile:
   case tok::kw_restrict:
+
+    // GNU typeof support.
+  case tok::kw_typeof:
     
     // function-specifier
   case tok::kw_inline:
@@ -1395,5 +1406,42 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
                                           NumElements.Val, StartLoc));
+}
+
+/// [GNU] typeof-specifier:
+///         typeof ( expressions )
+///         typeof ( type-name )
+///
+void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
+  assert(Tok.getKind() == tok::kw_typeof && "Not a typeof specifier");
+  SourceLocation StartLoc = ConsumeToken();
+
+  if (Tok.getKind() != tok::l_paren) {
+    // FIXME: handle error.
+  }
+  SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
+  
+  if (isTypeSpecifierQualifier()) {
+    TypeTy *Ty = ParseTypeName();
+
+    const char *PrevSpec = 0;
+    bool isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, 
+                                        PrevSpec, Ty);
+    // FIXME: what we have an invalid type? (or Ty is null)
+  } else { // we have an expression.
+    ExprResult Result = ParseExpression();
+    if (Result.isInvalid) {
+      SkipUntil(tok::r_paren);
+    }
+    const char *PrevSpec = 0;
+    bool isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, 
+                                        PrevSpec, Result.Val);
+    // FIXME: what we have an invalid type? (or Result.Val is null)
+  }
+  // Match the ')'.
+  if (Tok.getKind() == tok::r_paren)
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
 }
 

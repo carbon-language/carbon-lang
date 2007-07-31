@@ -75,7 +75,9 @@ public:
     TST_enum,
     TST_union,
     TST_struct,
-    TST_typedef
+    TST_typedef,
+    TST_typeofType,
+    TST_typeofExpr
   };
   
   // type-qualifiers

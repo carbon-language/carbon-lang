@@ -584,6 +584,18 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
+QualType ASTContext::getTypeOfType(Expr *tofExpr) {
+  QualType Canonical = tofExpr->getType().getCanonicalType();
+  // Note: TypeOfExpr's aren't uniqued.
+  return QualType(new TypeOfExpr(tofExpr, Canonical), 0);
+}
+
+QualType ASTContext::getTypeOfType(QualType tofType) {
+  QualType Canonical = tofType.getCanonicalType();
+  // Note: TypeOfType's aren't uniqued.
+  return QualType(new TypeOfType(tofType, Canonical), 0);
+}
+
 /// getTagDeclType - Return the unique reference to the type for the
 /// specified TagDecl (struct/union/class/enum) decl.
 QualType ASTContext::getTagDeclType(TagDecl *Decl) {
