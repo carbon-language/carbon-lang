@@ -1,9 +1,9 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux-gnu | \
-; RUN:     grep {movl %gs:i@NTPOFF, %eax}
+; RUN:     grep {movl	%gs:i@NTPOFF, %eax}
 ; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux-gnu | \
-; RUN:     grep {leal i@NTPOFF(%eax), %eax}
+; RUN:     grep {leal	i@NTPOFF(%eax), %eax}
 ; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux-gnu -relocation-model=pic | \
-; RUN:     grep {leal i@TLSGD(,%ebx,1), %eax}
+; RUN:     grep {leal	i@TLSGD(,%ebx,1), %eax}
 
 @i = thread_local global i32 15		; <i32*> [#uses=2]
 

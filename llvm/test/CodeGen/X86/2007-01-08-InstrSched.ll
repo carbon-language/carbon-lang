@@ -1,6 +1,6 @@
 ; PR1075
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | \
-; RUN:   %prcontext {mulss LCPI1_3} 1 | grep mulss | wc -l | grep 1
+; RUN:   %prcontext {mulss	LCPI1_3} 1 | grep mulss | wc -l | grep 1
 
 define float @foo(float %x) {
     %tmp1 = mul float %x, 3.000000e+00

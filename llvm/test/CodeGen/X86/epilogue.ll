@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 | not grep lea
-; RUN: llvm-as < %s | llc -march=x86 | grep {movl %ebp}
+; RUN: llvm-as < %s | llc -march=x86 | grep {movl	%ebp}
 
 declare void @bar(<2 x i64>* %n)
 

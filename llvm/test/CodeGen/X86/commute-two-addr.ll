@@ -3,7 +3,7 @@
 
 ; Make sure there are only 3 mov's for each testcase
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
-; RUN:   grep {mov } | wc -l | grep 6
+; RUN:   grep {\\\<mov\\\>} | wc -l | grep 6
 
 
 target triple = "i686-pc-linux-gnu"
