@@ -218,7 +218,9 @@ namespace {
 
 LoopPass *llvm::createLICMPass() { return new LICM(); }
 
-/// Hoist expressions out of the specified loop...
+/// Hoist expressions out of the specified loop. Note, alias info for inner
+/// loop is not preserved so it is not a good idea to run LICM multiple 
+/// times on one loop.
 ///
 bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   Changed = false;
