@@ -117,6 +117,7 @@
 		DEEBCBE50C33703100A9FE82 /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBCBE40C33703100A9FE82 /* TextDiagnosticBuffer.cpp */; };
 		DEF2E9320C5FB9FB000C4259 /* ASTStreamers.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E9310C5FB9FB000C4259 /* ASTStreamers.h */; };
 		DEF2E9340C5FBA02000C4259 /* ASTStreamers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */; };
+		DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */; };
 		F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */; };
 		F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */; };
 /* End PBXBuildFile section */
@@ -183,6 +184,7 @@
 				DE6951C70C4D1F5D00A5826B /* RecordLayout.h in CopyFiles */,
 				DE6954640C5121BD00A5826B /* Token.h in CopyFiles */,
 				DEF2E9320C5FB9FB000C4259 /* ASTStreamers.h in CopyFiles */,
+				DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -300,6 +302,7 @@
 		DEEBCBE40C33703100A9FE82 /* TextDiagnosticBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticBuffer.cpp; path = Driver/TextDiagnosticBuffer.cpp; sourceTree = "<group>"; };
 		DEF2E9310C5FB9FB000C4259 /* ASTStreamers.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamers.h; path = Driver/ASTStreamers.h; sourceTree = "<group>"; };
 		DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamers.cpp; path = Driver/ASTStreamers.cpp; sourceTree = "<group>"; };
+		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -354,6 +357,7 @@
 				DEAEED4A0A5AF89A0045101B /* NOTES.txt */,
 				DED7D7D70A524302003AD0FB /* README.txt */,
 				DEEBBD430C19C5D200A9FE82 /* TODO.txt */,
+				DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */,
 			);
 			name = Documentation;
 			sourceTree = "<group>";
