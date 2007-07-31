@@ -115,6 +115,8 @@
 		DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */; };
 		DEEBCBE30C33702C00A9FE82 /* TextDiagnosticBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEEBCBE20C33702C00A9FE82 /* TextDiagnosticBuffer.h */; };
 		DEEBCBE50C33703100A9FE82 /* TextDiagnosticBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEEBCBE40C33703100A9FE82 /* TextDiagnosticBuffer.cpp */; };
+		DEF2E9320C5FB9FB000C4259 /* ASTStreamers.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E9310C5FB9FB000C4259 /* ASTStreamers.h */; };
+		DEF2E9340C5FBA02000C4259 /* ASTStreamers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */; };
 		F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */; };
 		F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */; };
 /* End PBXBuildFile section */
@@ -180,6 +182,7 @@
 				DEEBCBE30C33702C00A9FE82 /* TextDiagnosticBuffer.h in CopyFiles */,
 				DE6951C70C4D1F5D00A5826B /* RecordLayout.h in CopyFiles */,
 				DE6954640C5121BD00A5826B /* Token.h in CopyFiles */,
+				DEF2E9320C5FB9FB000C4259 /* ASTStreamers.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -295,6 +298,8 @@
 		DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenTypes.cpp; path = CodeGen/CodeGenTypes.cpp; sourceTree = "<group>"; };
 		DEEBCBE20C33702C00A9FE82 /* TextDiagnosticBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticBuffer.h; path = Driver/TextDiagnosticBuffer.h; sourceTree = "<group>"; };
 		DEEBCBE40C33703100A9FE82 /* TextDiagnosticBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticBuffer.cpp; path = Driver/TextDiagnosticBuffer.cpp; sourceTree = "<group>"; };
+		DEF2E9310C5FB9FB000C4259 /* ASTStreamers.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTStreamers.h; path = Driver/ASTStreamers.h; sourceTree = "<group>"; };
+		DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamers.cpp; path = Driver/ASTStreamers.cpp; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -435,6 +440,8 @@
 			children = (
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
+				DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */,
+				DEF2E9310C5FB9FB000C4259 /* ASTStreamers.h */,
 				DED67AEF0B6DB92F00AAD4A3 /* PPCBuiltins.def */,
 				DED67AED0B6DB92A00AAD4A3 /* X86Builtins.def */,
 				DEC82DC30C32D50A00BAC245 /* DiagChecker.cpp */,
@@ -663,6 +670,7 @@
 				DEEBC3BC0C2363BC00A9FE82 /* CodeGenTypes.cpp in Sources */,
 				DEC82DC40C32D50A00BAC245 /* DiagChecker.cpp in Sources */,
 				DEEBCBE50C33703100A9FE82 /* TextDiagnosticBuffer.cpp in Sources */,
+				DEF2E9340C5FBA02000C4259 /* ASTStreamers.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
