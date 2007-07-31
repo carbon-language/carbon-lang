@@ -395,7 +395,7 @@ typedefs to find the pointer type.  For example, if the subexpression had type
 "<tt>foo*</tt>", we could return that type as the result.  If the subexpression
 had type "<tt>bar</tt>", we want to return "<tt>foo*</tt>" (note that we do
 <em>not</em> want "<tt>int*</tt>").  In order to provide all of this, Type has
-a getIfPointerType() method that checks whether the type is structurally a
+a getAsPointerType() method that checks whether the type is structurally a
 PointerType and, if so, returns the best one.  If not, it returns a null
 pointer.</p>
 
