@@ -240,9 +240,11 @@ public:
   /// Derived types (C99 6.2.5p20).
   bool isDerivedType() const;
   const FunctionType *isFunctionType() const;   
+
   bool isPointerType() const;
+  bool isReferenceType() const;
   const PointerType *getAsPointerType() const;
-  const ReferenceType *isReferenceType() const;
+  const ReferenceType *getAsReferenceType() const;
   const ArrayType *isArrayType() const;
   const RecordType *isRecordType() const;
   const TagType *isStructureType() const;   

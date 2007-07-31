@@ -70,6 +70,7 @@ const FunctionType *Type::isFunctionType() const {
 
 // FIXME: move inline
 bool Type::isPointerType() const { return isa<PointerType>(CanonicalType); }
+bool Type::isReferenceType() const { return isa<ReferenceType>(CanonicalType); }
 
 const PointerType *Type::getAsPointerType() const {
   // If this is directly a pointer type, return it.
@@ -83,7 +84,7 @@ const PointerType *Type::getAsPointerType() const {
   return 0;
 }
 
-const ReferenceType *Type::isReferenceType() const {
+const ReferenceType *Type::getAsReferenceType() const {
   // If this is directly a reference type, return it.
   if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
     return RTy;

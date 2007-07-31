@@ -136,7 +136,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
       break;
     case DeclaratorChunk::Reference:
-      if (const ReferenceType *RT = T->isReferenceType()) {
+      if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no references to references ...
         Diag(D.getIdentifierLoc(),
              diag::err_illegal_decl_reference_to_reference,
@@ -166,7 +166,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
              D.getIdentifier()->getName());
         T = Context.getPointerType(T);
-      } else if (const ReferenceType *RT = T->isReferenceType()) {
+      } else if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier()->getName());
