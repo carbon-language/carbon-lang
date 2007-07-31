@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "simpleregistercoalescing"
+#define DEBUG_TYPE "regcoalescing"
 #include "llvm/CodeGen/SimpleRegisterCoalescing.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "VirtRegMap.h"
