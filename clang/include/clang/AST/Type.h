@@ -232,27 +232,35 @@ public:
   bool isFloatingType() const;     // C99 6.2.5p11 (real floating + complex)
   bool isRealType() const;         // C99 6.2.5p17 (real floating + integer)
   bool isArithmeticType() const;   // C99 6.2.5p18 (integer + floating)
-  
-  /// Vector types
-  const VectorType *isVectorType() const; // GCC vector type.
-  const OCUVectorType *isOCUVectorType() const; // OCU vector type.
-  
-  /// Derived types (C99 6.2.5p20).
-  bool isDerivedType() const;
-  const FunctionType *isFunctionType() const;   
-
-  bool isPointerType() const;
-  bool isReferenceType() const;
-  const PointerType *getAsPointerType() const;
-  const ReferenceType *getAsReferenceType() const;
-  const ArrayType *isArrayType() const;
-  const RecordType *isRecordType() const;
-  const TagType *isStructureType() const;   
-  const TagType *isUnionType() const;
-  
   bool isVoidType() const;         // C99 6.2.5p19
+  bool isDerivedType() const;      // C99 6.2.5p20
   bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
   bool isAggregateType() const;    // C99 6.2.5p21 (arrays, structures)
+  
+  // Type Predicates: Check to see if this type is structurally the specified
+  // type, ignoring typedefs.
+  bool isFunctionType() const;
+  bool isPointerType() const;
+  bool isReferenceType() const;
+  bool isArrayType() const;
+  bool isRecordType() const;
+  bool isStructureType() const;   
+  bool isUnionType() const;
+  bool isVectorType() const; // GCC vector type.
+  bool isOCUVectorType() const; // OCU vector type.
+  
+  // Type Checking Functions: Check to see if this type is structurally the
+  // specified type, ignoring typedefs, and return a pointer to the best type
+  // we can.
+  const FunctionType *getAsFunctionType() const;   
+  const PointerType *getAsPointerType() const;
+  const ReferenceType *getAsReferenceType() const;
+  const ArrayType *getAsArrayType() const;
+  const RecordType *getAsRecordType() const;
+  const RecordType *getAsStructureType() const;   
+  const RecordType *getAsUnionType() const;
+  const VectorType *getAsVectorType() const; // GCC vector type.
+  const OCUVectorType *getAsOCUVectorType() const; // OCU vector type.
   
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
@@ -717,9 +725,6 @@ class RecordType : public TagType {
   RecordType(); // DO NOT IMPLEMENT
 public:
     
-  const RecordDecl *getDecl() {
-    return reinterpret_cast<RecordDecl*>(TagType::getDecl());
-  }
   RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }

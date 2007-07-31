@@ -56,21 +56,39 @@ bool Type::isDerivedType() const {
   }
 }
 
-const FunctionType *Type::isFunctionType() const {
+// FIXME: move inline
+bool Type::isFunctionType() const { return isa<FunctionType>(CanonicalType); }
+bool Type::isPointerType() const { return isa<PointerType>(CanonicalType); }
+bool Type::isReferenceType() const { return isa<ReferenceType>(CanonicalType); }
+bool Type::isArrayType() const { return isa<ArrayType>(CanonicalType); }
+bool Type::isRecordType() const { return isa<RecordType>(CanonicalType); }
+bool Type::isStructureType() const {
+  if (const RecordType *RT = dyn_cast<RecordType>(this))
+    if (RT->getDecl()->getKind() == Decl::Struct)
+      return true;
+  return false;
+}
+bool Type::isUnionType() const {
+  if (const RecordType *RT = dyn_cast<RecordType>(this))
+    if (RT->getDecl()->getKind() == Decl::Union)
+      return true;
+  return false;
+}
+bool Type::isVectorType() const { return isa<VectorType>(CanonicalType); }
+bool Type::isOCUVectorType() const { return isa<OCUVectorType>(CanonicalType); }
+    
+
+const FunctionType *Type::getAsFunctionType() const {
   // If this is directly a function type, return it.
   if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
     return FTy;
-    
+  
   // If this is a typedef for a function type, strip the typedef off without
   // losing all typedef information.
   if (isa<FunctionType>(CanonicalType))
     return cast<FunctionType>(cast<TypedefType>(this)->LookThroughTypedefs());
   return 0;
 }
-
-// FIXME: move inline
-bool Type::isPointerType() const { return isa<PointerType>(CanonicalType); }
-bool Type::isReferenceType() const { return isa<ReferenceType>(CanonicalType); }
 
 const PointerType *Type::getAsPointerType() const {
   // If this is directly a pointer type, return it.
@@ -96,7 +114,7 @@ const ReferenceType *Type::getAsReferenceType() const {
   return 0;
 }
 
-const ArrayType *Type::isArrayType() const {
+const ArrayType *Type::getAsArrayType() const {
   // If this is directly a reference type, return it.
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy;
@@ -108,7 +126,7 @@ const ArrayType *Type::isArrayType() const {
   return 0;
 }
 
-const RecordType *Type::isRecordType() const {
+const RecordType *Type::getAsRecordType() const {
   // If this is directly a reference type, return it.
   if (const RecordType *RTy = dyn_cast<RecordType>(this))
     return RTy;
@@ -120,32 +138,32 @@ const RecordType *Type::isRecordType() const {
   return 0;
 }
 
-const TagType *Type::isStructureType() const {
+const RecordType *Type::getAsStructureType() const {
   // If this is directly a structure type, return it.
-  if (const TagType *TT = dyn_cast<TagType>(this)) {
-    if (TT->getDecl()->getKind() == Decl::Struct)
-      return TT;
+  if (const RecordType *RT = dyn_cast<RecordType>(this)) {
+    if (RT->getDecl()->getKind() == Decl::Struct)
+      return RT;
   }
   // If this is a typedef for a structure type, strip the typedef off without
   // losing all typedef information.
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-    if (TT->getDecl()->getKind() == Decl::Struct)
-      return cast<TagType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
+    if (RT->getDecl()->getKind() == Decl::Struct)
+      return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
   }
   return 0;
 }
 
-const TagType *Type::isUnionType() const { 
+const RecordType *Type::getAsUnionType() const { 
   // If this is directly a union type, return it.
-  if (const TagType *TT = dyn_cast<TagType>(this)) {
-    if (TT->getDecl()->getKind() == Decl::Union)
-      return TT;
+  if (const RecordType *RT = dyn_cast<RecordType>(this)) {
+    if (RT->getDecl()->getKind() == Decl::Union)
+      return RT;
   }
   // If this is a typedef for a union type, strip the typedef off without
   // losing all typedef information.
-  if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-    if (TT->getDecl()->getKind() == Decl::Union)
-      return cast<TagType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
+    if (RT->getDecl()->getKind() == Decl::Union)
+      return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
   }
   return 0;
 }
@@ -154,7 +172,7 @@ bool Type::isComplexType() const {
   return isa<ComplexType>(CanonicalType);
 }
 
-const VectorType *Type::isVectorType() const {
+const VectorType *Type::getAsVectorType() const {
   // Are we directly a vector type?
   if (const VectorType *VTy = dyn_cast<VectorType>(this))
     return VTy;
@@ -167,7 +185,7 @@ const VectorType *Type::isVectorType() const {
   return 0;
 }
 
-const OCUVectorType *Type::isOCUVectorType() const {
+const OCUVectorType *Type::getAsOCUVectorType() const {
   // Are we directly an OpenCU vector type?
   if (const OCUVectorType *VTy = dyn_cast<OCUVectorType>(this))
     return VTy;

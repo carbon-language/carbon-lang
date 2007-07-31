@@ -314,8 +314,8 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     IndexExpr = LHSExp;
     // FIXME: need to deal with const...
     ResultType = PTy->getPointeeType();
-  } else if (const VectorType *VTy = LHSTy->isVectorType()) { // vectors: V[123]
-    BaseExpr = LHSExp;
+  } else if (const VectorType *VTy = LHSTy->getAsVectorType()) {
+    BaseExpr = LHSExp;    // vectors: V[123]
     IndexExpr = RHSExp;
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
@@ -342,7 +342,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
 QualType Sema::
 CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
                         IdentifierInfo &CompName, SourceLocation CompLoc) {
-  const OCUVectorType *vecType = baseType->isOCUVectorType();
+  const OCUVectorType *vecType = baseType->getAsOCUVectorType();
   
   // The vector accessor can't exceed the number of elements.
   const char *compStr = CompName.getName();
@@ -416,7 +416,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                   SourceRange(MemberLoc));
   }
   // The base type is either a record or an OCUVectorType.
-  if (const RecordType *RTy = BaseType->isRecordType()) {
+  if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
       return Diag(OpLoc, diag::err_typecheck_incomplete_tag, RDecl->getName(),
@@ -499,7 +499,7 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       QualType rhsType = argExpr->getType();
 
       // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 
-      if (const ArrayType *ary = lhsType->isArrayType())
+      if (const ArrayType *ary = lhsType->getAsArrayType())
         lhsType = Context.getPointerType(ary->getElementType());
       else if (lhsType->isFunctionType())
         lhsType = Context.getPointerType(lhsType);
@@ -706,7 +706,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
   }
   if (t->isFunctionType())
     promoteExprToType(e, Context.getPointerType(t));
-  else if (const ArrayType *ary = t->isArrayType())
+  else if (const ArrayType *ary = t->getAsArrayType())
     promoteExprToType(e, Context.getPointerType(ary->getElementType()));
 }
 
