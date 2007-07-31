@@ -308,33 +308,40 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
 void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   // Figure out the new dep for things that currently depend on rem
   Instruction* newDep = NonLocal;
-  if (depGraphLocal[rem].first != NonLocal &&
-      depGraphLocal[rem].second) {
-    // If we have dep info for rem, set them to it
-    BasicBlock::iterator RI = depGraphLocal[rem].first;
-    RI++;
-    newDep = RI;
-  } else if (depGraphLocal[rem].first == NonLocal &&
-             depGraphLocal[rem].second ) {
-    // If we have a confirmed non-local flag, use it
-    newDep = NonLocal;
-  } else {
-    // Otherwise, use the immediate successor of rem
-    // NOTE: This is because, when getDependence is called, it will first check
-    // the immediate predecessor of what is in the cache.
-    BasicBlock::iterator RI = rem;
-    RI++;
-    newDep = RI;
+
+  depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
+  // We assume here that it's not in the reverse map if it's not in
+  // the dep map.  Checking it could be expensive, so don't do it.
+
+  if (depGraphEntry != depGraphLocal.end()) {
+    if (depGraphEntry->second.first != NonLocal &&
+        depGraphEntry->second.second) {
+      // If we have dep info for rem, set them to it
+      BasicBlock::iterator RI = depGraphEntry->second.first;
+      RI++;
+      newDep = RI;
+    } else if (depGraphEntry->second.first == NonLocal &&
+               depGraphEntry->second.second ) {
+      // If we have a confirmed non-local flag, use it
+      newDep = NonLocal;
+    } else {
+      // Otherwise, use the immediate successor of rem
+      // NOTE: This is because, when getDependence is called, it will first check
+      // the immediate predecessor of what is in the cache.
+      BasicBlock::iterator RI = rem;
+      RI++;
+      newDep = RI;
+    }
+    
+    std::multimap<Instruction*, Instruction*>::iterator I = reverseDep.find(rem);
+    while (I != reverseDep.end() && I->first == rem) {
+      // Insert the new dependencies
+      // Mark it as unconfirmed as long as it is not the non-local flag
+      depGraphLocal[I->second] = std::make_pair(newDep, !newDep);
+      reverseDep.erase(I);
+      I = reverseDep.find(rem);
+    }
   }
 
-  std::multimap<Instruction*, Instruction*>::iterator I = reverseDep.find(rem);
-  while (I->first == rem) {
-    // Insert the new dependencies
-    // Mark it as unconfirmed as long as it is not the non-local flag
-    depGraphLocal[I->second] = std::make_pair(newDep, !newDep);
-    reverseDep.erase(I);
-    I = reverseDep.find(rem);
-  }
-  
   getAnalysis<AliasAnalysis>().deleteValue(rem);
 }

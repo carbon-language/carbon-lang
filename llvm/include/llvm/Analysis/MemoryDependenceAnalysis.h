@@ -32,9 +32,14 @@ class Instruction;
 
 class MemoryDependenceAnalysis : public FunctionPass {
   private:
-    
-    DenseMap<Instruction*, std::pair<Instruction*, bool> > depGraphLocal;
-    std::multimap<Instruction*, Instruction*> reverseDep;
+
+    typedef DenseMap<Instruction*, std::pair<Instruction*, bool> > 
+    depMapType;
+
+    depMapType depGraphLocal;
+
+    typedef std::multimap<Instruction*, Instruction*> reverseDepMapType;
+    reverseDepMapType reverseDep;
   
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        bool local = true);
