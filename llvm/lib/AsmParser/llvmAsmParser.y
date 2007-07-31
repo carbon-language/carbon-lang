@@ -1225,7 +1225,9 @@ OptCallingConv : /*empty*/          { $$ = CallingConv::C; } |
                  };
 
 ParamAttr     : ZEROEXT { $$ = ParamAttr::ZExt;      }
+              | ZEXT    { $$ = ParamAttr::ZExt;      }
               | SIGNEXT { $$ = ParamAttr::SExt;      }
+              | SEXT    { $$ = ParamAttr::SExt;      }
               | INREG   { $$ = ParamAttr::InReg;     }
               | SRET    { $$ = ParamAttr::StructRet; }
               | NOALIAS { $$ = ParamAttr::NoAlias;   }

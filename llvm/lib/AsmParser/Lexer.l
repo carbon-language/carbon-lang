@@ -177,6 +177,8 @@ HexFPConstant 0x[0-9A-Fa-f]+
  */
 HexIntConstant [us]0x[0-9A-Fa-f]+
 
+/* WSNL - shorthand for newline followed by whitespace */
+WSNL [ \r\t\n]*$
 %%
 
 {Comment}       { /* Ignore comments for now */ }
@@ -234,6 +236,10 @@ noreturn        { return NORETURN; }
 noalias         { return NOALIAS; }
 byval           { return BYVAL; }
 nest            { return NEST; }
+sext{WSNL}      { // For auto-upgrade only, drop in LLVM 3.0 
+                  return SIGNEXT; } 
+zext{WSNL}      { // For auto-upgrade only, drop in LLVM 3.0
+                  return ZEROEXT; } 
 
 void            { RET_TY(Type::VoidTy,  VOID);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }
