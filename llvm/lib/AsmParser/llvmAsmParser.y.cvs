@@ -1245,7 +1245,6 @@ FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
               | NOUNWIND { $$ = ParamAttr::NoUnwind; }
               | ZEROEXT  { $$ = ParamAttr::ZExt;     }
               | SIGNEXT  { $$ = ParamAttr::SExt;     }
-              | INREG    { $$ = ParamAttr::InReg;    }
               ;
 
 OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
