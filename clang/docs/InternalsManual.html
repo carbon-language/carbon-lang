@@ -301,7 +301,7 @@ are accessed through the ASTContext class, which implicitly creates and uniques
 them as they are needed.  Types have a couple of non-obvious features: 1) they
 do not capture type qualifiers like const or volatile (See
 <a href="#QualType">QualType</a>), and 2) they implicitly capture typedef
-information.</p>
+information.  Once created, types are immutable (unlike decls).</p>
 
 <p>Typedefs in C make semantic analysis a bit more complex than it would
 be without them.  The issue is that we want to capture typedef information
@@ -312,8 +312,11 @@ and represent it in the AST perfectly, but the semantics of operations need to
 void func() {<br>
   typedef int foo;<br>
   foo X, *Y;<br>
+  typedef foo* bar;<br>
+  bar Z;<br>
   *X;   <i>// error</i><br>
   **Y;  <i>// error</i><br>
+  **Z;  <i>// error</i><br>
 }<br>
 </code>
 
@@ -321,11 +324,14 @@ void func() {<br>
 on the annotated lines.  In this example, we expect to get:</p>
 
 <pre>
-<b>../t.c:4:1: error: indirection requires pointer operand ('foo' invalid)</b>
+<b>test.c:6:1: error: indirection requires pointer operand ('foo' invalid)</b>
 *X; // error
 <font color="blue">^~</font>
-<b>../t.c:5:1: error: indirection requires pointer operand ('foo' invalid)</b>
+<b>test.c:7:1: error: indirection requires pointer operand ('foo' invalid)</b>
 **Y; // error
+<font color="blue">^~~</font>
+<b>test.c:8:1: error: indirection requires pointer operand ('foo' invalid)</b>
+**Z; // error
 <font color="blue">^~~</font>
 </pre>
 
@@ -334,37 +340,67 @@ retain typedef information where possible, so that we can emit errors about
 "<tt>std::string</tt>" instead of "<tt>std::basic_string&lt;char, std:...</tt>".
 Doing this requires properly keeping typedef information (for example, the type
 of "X" is "foo", not "int"), and requires properly propagating it through the
-various operators (for example, the type of *Y is "foo", not "int").</p>
+various operators (for example, the type of *Y is "foo", not "int").  In order
+to retain this information, the type of these expressions is an instance of the
+TypedefType class, which indicates that the type of these expressions is a
+typedef for foo.
+</p>
 
+<p>Representing types like this is great for diagnostics, because the
+user-specified type is always immediately available.  There are two problems
+with this: first, various semantic checks need to make judgements about the
+<em>structure</em> of a type, not its structure.  Second, we need an efficient
+way to query whether two types are structurally identical to each other,
+ignoring typedefs.  The solution to both of these problems is the idea of
+canonical types.</p>
 
+<h4>Canonical Types</h4>
 
-<p>
-/// Type - This is the base class of the type hierarchy.  A central concept
-/// with types is that each type always has a canonical type.  A canonical type
-/// is the type with any typedef names stripped out of it or the types it
-/// references.  For example, consider:
-///
-///  typedef int  foo;
-///  typedef foo* bar;
-///    'int *'    'foo *'    'bar'
-///
-/// There will be a Type object created for 'int'.  Since int is canonical, its
-/// canonicaltype pointer points to itself.  There is also a Type for 'foo' (a
-/// TypeNameType).  Its CanonicalType pointer points to the 'int' Type.  Next
-/// there is a PointerType that represents 'int*', which, like 'int', is
-/// canonical.  Finally, there is a PointerType type for 'foo*' whose canonical
-/// type is 'int*', and there is a TypeNameType for 'bar', whose canonical type
-/// is also 'int*'.
-///
-/// Non-canonical types are useful for emitting diagnostics, without losing
-/// information about typedefs being used.  Canonical types are useful for type
-/// comparisons (they allow by-pointer equality tests) and useful for reasoning
-/// about whether something has a particular form (e.g. is a function type),
-/// because they implicitly, recursively, strip all typedefs out of a type.
-///
-/// Types, once created, are immutable.
-///</p>
+<p>Every instance of the Type class contains a canonical type pointer.  For
+simple types with no typedefs involved (e.g. "<tt>int</tt>", "<tt>int*</tt>",
+"<tt>int**</tt>"), the type just points to itself.  For types that have a
+typedef somewhere in their structure (e.g. "<tt>foo</tt>", "<tt>foo*</tt>",
+"<tt>foo**</tt>", "<tt>bar</tt>"), the canonical type pointer points to their
+structurally equivalent type without any typedefs (e.g. "<tt>int</tt>",
+"<tt>int*</tt>", "<tt>int**</tt>", and "<tt>int*</tt>" respectively).</p>
 
+<p>This design provides a constant time operation (dereferencing the canonical
+type pointer) that gives us access to the structure of types.  For example,
+we can trivially tell that "bar" and "foo*" are the same type by dereferencing
+their canonical type pointers and doing a pointer comparison (they both point
+to the single "<tt>int*</tt>" type).</p>
+
+<p>Canonical types and typedef types bring up some complexities that must be
+carefully managed.  Specifically, the "isa/cast/dyncast" operators generally
+shouldn't be used in code that is inspecting the AST.  For example, when type
+checking the indirection operator (unary '*' on a pointer), the type checker
+must verify that the operand has a pointer type.  It would not be correct to
+check that with "<tt>isa&lt;PointerType&gt;(SubExpr-&gt;getType())</tt>",
+because this predicate would fail if the subexpression had a typedef type.</p>
+
+<p>The solution to this problem are a set of helper methods on Type, used to
+check their properties.  In this case, it would be correct to use
+"<tt>SubExpr-&gt;getType()-&gt;isPointerType()</tt>" to do the check.  This
+predicate will return true if the <em>canonical type is a pointer</em>, which is
+true any time the type is structurally a pointer type.  The only hard part here
+is remembering not to use the <tt>isa/cast/dyncast</tt> operations.</p>
+
+<p>The second problem we face is how to get access to the pointer type once we
+know it exists.  To continue the example, the result type of the indirection
+operator is the pointee type of the subexpression.  In order to determine the
+type, we need to get the instance of PointerType that best captures the typedef
+information in the program.  If the type of the expression is literally a
+PointerType, we can return that, otherwise we have to dig through the
+typedefs to find the pointer type.  For example, if the subexpression had type
+"<tt>foo*</tt>", we could return that type as the result.  If the subexpression
+had type "<tt>bar</tt>", we want to return "<tt>foo*</tt>" (note that we do
+<em>not</em> want "<tt>int*</tt>").  In order to provide all of this, Type has
+a getIfPointerType() method that checks whether the type is structurally a
+PointerType and, if so, returns the best one.  If not, it returns a null
+pointer.</p>
+
+<p>This structure is somewhat mystical, but after meditating on it, it will 
+make sense to you :).</p>
 
 <!-- ======================================================================= -->
 <h3 id="QualType">The QualType class</h3>
