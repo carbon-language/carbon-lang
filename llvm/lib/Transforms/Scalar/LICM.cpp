@@ -102,6 +102,13 @@ namespace {
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
     std::map<Loop *, AliasSetTracker *> LoopToAliasMap;
 
+    /// cloneBasicBlockAnalysis - Simple Analysis hook. Clone alias set info.
+    void cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L);
+
+    /// deleteAnalysisValue - Simple Analysis hook. Delete value V from alias
+    /// set.
+    void deleteAnalysisValue(Value *V, Loop *L);
+
     /// SinkRegion - Walk the specified region of the CFG (defined by all blocks
     /// dominated by the specified block, and that are in the current loop) in
     /// reverse depth first order w.r.t the DominatorTree.  This allows us to
@@ -797,4 +804,23 @@ void LICM::FindPromotableValuesInLoop(
       }
     }
   }
+}
+
+/// cloneBasicBlockAnalysis - Simple Analysis hook. Clone alias set info.
+void LICM::cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L) {
+  AliasSetTracker *AST = LoopToAliasMap[L];
+  if (!AST)
+    return;
+
+  AST->copyValue(From, To);
+}
+
+/// deleteAnalysisValue - Simple Analysis hook. Delete value V from alias
+/// set.
+void LICM::deleteAnalysisValue(Value *V, Loop *L) {
+  AliasSetTracker *AST = LoopToAliasMap[L];
+  if (!AST)
+    return;
+
+  AST->deleteValue(V);
 }
