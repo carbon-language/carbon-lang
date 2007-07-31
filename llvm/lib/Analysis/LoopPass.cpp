@@ -140,6 +140,27 @@ void LPPassManager::redoLoop(Loop *L) {
   redoThisLoop = true;
 }
 
+/// cloneBasicBlockSimpleAnalysis - Invoke cloneBasicBlockAnalysis hook for
+/// all loop passes.
+void LPPassManager::cloneBasicBlockSimpleAnalysis(BasicBlock *From, 
+                                                  BasicBlock *To, Loop *L) {
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+    Pass *P = getContainedPass(Index);
+    LoopPass *LP = dynamic_cast<LoopPass *>(P);
+    LP->cloneBasicBlockAnalysis(From, To, L);
+  }
+}
+
+/// deleteSimpleAnalysisValue - Invoke deleteAnalysisValue hook for all passes.
+void LPPassManager::deleteSimpleAnalysisValue(Value *V, Loop *L) {
+  for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+    Pass *P = getContainedPass(Index);
+    LoopPass *LP = dynamic_cast<LoopPass *>(P);
+    LP->deleteAnalysisValue(V, L);
+  }
+}
+
+
 // Recurse through all subloops and all loops  into LQ.
 static void addLoopIntoQueue(Loop *L, std::deque<Loop *> &LQ) {
   LQ.push_back(L);

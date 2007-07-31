@@ -63,6 +63,21 @@ class LoopPass : public Pass {
   virtual PassManagerType getPotentialPassManagerType() const {
     return PMT_LoopPassManager;
   }
+
+  //===--------------------------------------------------------------------===//
+  /// SimpleAnalysis - Provides simple interface to update analysis info
+  /// maintained by various passes. Note, if required this interface can
+  /// be extracted into a separate abstract class but it would require
+  /// additional use of multiple inheritance in Pass class hierarcy, someting
+  /// we are trying to avoid.
+
+  /// Each loop pass can override these simple analysis hookss to update
+  /// desired analysis information.
+  /// cloneBasicBlockAnalysis - Clone analysis info associated with basic block.
+  virtual void cloneBasicBlockAnalysis(BasicBlock *F, BasicBlock *T, Loop *L) {}
+
+  /// deletekAnalysisValue - Delete analysis info associated with value V.
+  virtual void deleteAnalysisValue(Value *V, Loop *L) {}
 };
 
 class LPPassManager : public FunctionPass, public PMDataManager {
@@ -115,6 +130,20 @@ public:
   // utility may send LPPassManager into infinite loops so use caution.
   void redoLoop(Loop *L);
 
+  //===--------------------------------------------------------------------===//
+  /// SimpleAnalysis - Provides simple interface to update analysis info
+  /// maintained by various passes. Note, if required this interface can
+  /// be extracted into a separate abstract class but it would require
+  /// additional use of multiple inheritance in Pass class hierarcy, someting
+  /// we are trying to avoid.
+
+  /// cloneBasicBlockSimpleAnalysis - Invoke cloneBasicBlockAnalysis hook for
+  /// all passes that implement simple analysis interface.
+  void cloneBasicBlockSimpleAnalysis(BasicBlock *From, BasicBlock *To, Loop *L);
+
+  /// deleteSimpleAnalysisValue - Invoke deleteAnalysisValue hook for all passes
+  /// that implement simple analysis interface.
+  void deleteSimpleAnalysisValue(Value *V, Loop *L);
 private:
   std::deque<Loop *> LQ;
   bool skipThisLoop;
