@@ -453,17 +453,12 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
 
   // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
   // type pointer to function".
-  const PointerType *PT = dyn_cast<PointerType>(funcType);
-  if (PT == 0) PT = dyn_cast<PointerType>(funcType.getCanonicalType());
-  
+  const PointerType *PT = funcType->getAsPointerType();
   if (PT == 0)
     return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
                 SourceRange(Fn->getLocStart(), RParenLoc));
   
-  const FunctionType *funcT = dyn_cast<FunctionType>(PT->getPointeeType());
-  if (funcT == 0)
-    funcT = dyn_cast<FunctionType>(PT->getPointeeType().getCanonicalType());
-  
+  const FunctionType *funcT = PT->getPointeeType()->getAsFunctionType();
   if (funcT == 0)
     return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
                 SourceRange(Fn->getLocStart(), RParenLoc));
@@ -613,14 +608,12 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     UsualArithmeticConversions(lex, rex);
     return lex->getType();
   }
-  if ((lexT->isStructureType() && rexT->isStructureType()) || // C99 6.5.15p3
-      (lexT->isUnionType() && rexT->isUnionType())) {
-    TagType *lTag = cast<TagType>(lexT.getCanonicalType());
-    TagType *rTag = cast<TagType>(rexT.getCanonicalType());
-    
-    if (lTag->getDecl()->getIdentifier() == rTag->getDecl()->getIdentifier()) 
-      return lexT;
-    else {
+  if (const RecordType *LHSRT = lexT->getAsRecordType()) {    // C99 6.5.15p3
+    if (const RecordType *RHSRT = rexT->getAsRecordType()) {
+      
+      if (LHSRT->getDecl()->getIdentifier() ==RHSRT->getDecl()->getIdentifier()) 
+        return lexT;
+      
       Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
            lexT.getAsString(), rexT.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
@@ -633,34 +626,35 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   if (rexT->isPointerType() && lex->isNullPointerConstant(Context))
     return rexT;
     
-  if (lexT->isPointerType() && rexT->isPointerType()) { // C99 6.5.15p3,6
-    QualType lhptee, rhptee;
-    
-    // get the "pointed to" type
-    lhptee = cast<PointerType>(lexT.getCanonicalType())->getPointeeType();
-    rhptee = cast<PointerType>(rexT.getCanonicalType())->getPointeeType();
+  if (const PointerType *LHSPT = lexT->getAsPointerType()) { // C99 6.5.15p3,6
+    if (const PointerType *RHSPT = rexT->getAsPointerType()) {
+      // get the "pointed to" types
+      QualType lhptee = LHSPT->getPointeeType();
+      QualType rhptee = RHSPT->getPointeeType();
 
-    // ignore qualifiers on void (C99 6.5.15p3, clause 6)
-    if (lhptee.getUnqualifiedType()->isVoidType() &&
-        (rhptee->isObjectType() || rhptee->isIncompleteType()))
-      return lexT;
-    if (rhptee.getUnqualifiedType()->isVoidType() &&
-        (lhptee->isObjectType() || lhptee->isIncompleteType()))
-      return rexT;
+      // ignore qualifiers on void (C99 6.5.15p3, clause 6)
+      if (lhptee->isVoidType() &&
+          (rhptee->isObjectType() || rhptee->isIncompleteType()))
+        return lexT;
+      if (rhptee->isVoidType() &&
+          (lhptee->isObjectType() || lhptee->isIncompleteType()))
+        return rexT;
 
-    if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
-                                  rhptee.getUnqualifiedType())) {
-      Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
-           lexT.getAsString(), rexT.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
-      return lexT; // FIXME: this is an _ext - is this return o.k?
+      if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                    rhptee.getUnqualifiedType())) {
+        Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
+             lexT.getAsString(), rexT.getAsString(),
+             lex->getSourceRange(), rex->getSourceRange());
+        return lexT; // FIXME: this is an _ext - is this return o.k?
+      }
+      // The pointer types are compatible.
+      // C99 6.5.15p6: If both operands are pointers to compatible types *or* to 
+      // differently qualified versions of compatible types, the result type is a 
+      // pointer to an appropriately qualified version of the *composite* type.
+      return lexT; // FIXME: Need to return the composite type.
     }
-    // The pointer types are compatible.
-    // C99 6.5.15p6: If both operands are pointers to compatible types *or* to 
-    // differently qualified versions of compatible types, the result type is a 
-    // pointer to an appropriately qualified version of the *composite* type.
-    return lexT; // FIXME: Need to return the composite type.
   }
+  
   if (lexT->isVoidType() && rexT->isVoidType()) // C99 6.5.15p3
     return lexT;
     
@@ -809,8 +803,8 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   QualType lhptee, rhptee;
   
   // get the "pointed to" type (ignoring qualifiers at the top level)
-  lhptee = cast<PointerType>(lhsType.getCanonicalType())->getPointeeType();
-  rhptee = cast<PointerType>(rhsType.getCanonicalType())->getPointeeType();
+  lhptee = lhsType->getAsPointerType()->getPointeeType();
+  rhptee = rhsType->getAsPointerType()->getPointeeType();
   
   // make sure we operate on the canonical type
   lhptee = lhptee.getCanonicalType();
