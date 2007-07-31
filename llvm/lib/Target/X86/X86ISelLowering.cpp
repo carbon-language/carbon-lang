@@ -3010,17 +3010,10 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       // Use two pinsrw instructions to insert a 32 bit value.
       Idx <<= 1;
       if (MVT::isFloatingPoint(N1.getValueType())) {
-        if (ISD::isNON_EXTLoad(N1.Val)) {
-          // Just load directly from f32mem to GR32.
-          LoadSDNode *LD = cast<LoadSDNode>(N1);
-          N1 = DAG.getLoad(MVT::i32, LD->getChain(), LD->getBasePtr(),
-                           LD->getSrcValue(), LD->getSrcValueOffset());
-        } else {
-          N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, N1);
-          N1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, N1);
-          N1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32, N1,
-                           DAG.getConstant(0, getPointerTy()));
-        }
+        N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, N1);
+        N1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, N1);
+        N1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32, N1,
+                         DAG.getConstant(0, getPointerTy()));
       }
       N0 = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, N0);
       N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
