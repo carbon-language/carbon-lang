@@ -358,7 +358,8 @@ void Verifier::visitFunction(Function &F) {
           "Invalid struct-return function!", &F);
 
   const uint16_t ReturnIncompatible =
-    ParamAttr::ByVal | ParamAttr::Nest | ParamAttr::StructRet;
+    ParamAttr::ByVal | ParamAttr::InReg |
+    ParamAttr::Nest  | ParamAttr::StructRet;
 
   const uint16_t ParameterIncompatible =
     ParamAttr::NoReturn | ParamAttr::NoUnwind;
