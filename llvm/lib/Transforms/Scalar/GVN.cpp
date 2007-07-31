@@ -747,6 +747,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     PN->replaceAllUsesWith(first);
     PN->eraseFromParent();
     
+    Phis[BB] = first;
+    
     return first;
   }
 
