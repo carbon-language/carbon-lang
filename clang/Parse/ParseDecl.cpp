@@ -354,7 +354,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [GNU]   '_Decimal32'
 /// [GNU]   '_Decimal64'
 /// [GNU]   '_Decimal128'
-/// [GNU]   typeof-specifier                      [TODO]
+/// [GNU]   typeof-specifier
 /// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
 /// [OBJC]  typedef-name objc-protocol-refs       [TODO]
 /// [OBJC]  objc-protocol-refs                    [TODO]
@@ -1424,24 +1424,30 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   if (isTypeSpecifierQualifier()) {
     TypeTy *Ty = ParseTypeName();
 
-    const char *PrevSpec = 0;
-    bool isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, 
-                                        PrevSpec, Ty);
-    // FIXME: what we have an invalid type? (or Ty is null)
+    assert(Ty && "Parser::ParseTypeofSpecifier(): missing type");
+
+    // Match the ')'.
+    if (Tok.getKind() == tok::r_paren) {
+      RParenLoc = ConsumeParen();
+      const char *PrevSpec = 0;
+      if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
+        // Duplicate type specifiers (e.g. "int typeof(int)).
+        Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+    } else // error
+      MatchRHSPunctuation(tok::r_paren, LParenLoc);
   } else { // we have an expression.
     ExprResult Result = ParseExpression();
-    if (Result.isInvalid) {
-      SkipUntil(tok::r_paren);
-    }
-    const char *PrevSpec = 0;
-    bool isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, 
-                                        PrevSpec, Result.Val);
-    // FIXME: what we have an invalid type? (or Result.Val is null)
+    
+    // Match the ')'.
+    if (!Result.isInvalid && Tok.getKind() == tok::r_paren) {
+      RParenLoc = ConsumeParen();
+      const char *PrevSpec = 0;
+      if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
+                             Result.Val))
+        // Duplicate type specifiers (e.g. "int typeof(int)).
+        Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+    } else // error
+      MatchRHSPunctuation(tok::r_paren, LParenLoc);
   }
-  // Match the ')'.
-  if (Tok.getKind() == tok::r_paren)
-    RParenLoc = ConsumeParen();
-  else
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
 }
 
