@@ -558,6 +558,11 @@ void ValueTable::clear() {
   nextValueNumber = 1;
 }
 
+/// erase - Remove a value from the value numbering
+void ValueTable::erase(Value* V) {
+  valueNumbering.erase(V);
+}
+
 //===----------------------------------------------------------------------===//
 //                       ValueNumberedSet Class
 //===----------------------------------------------------------------------===//
@@ -871,6 +876,7 @@ bool GVN::processInstruction(Instruction* I,
   if (currAvail.test(num)) {
     Value* repl = find_leader(currAvail, num);
     
+    VN.erase(I);
     I->replaceAllUsesWith(repl);
     toErase.push_back(I);
     return true;
