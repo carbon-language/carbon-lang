@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
@@ -294,6 +295,21 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
   // Pointing at a discernible object?
   if (O1) {
+    // Check for noalias attribute
+    if (isa<Argument>(O1)) {
+      const Argument *Arg = cast<Argument>(O1);
+      const Function *Func = Arg->getParent();
+      const ParamAttrsList *Attr = Func->getFunctionType()->getParamAttrs();
+      if (Attr) {
+        unsigned Idx = 1;
+        for (Function::const_arg_iterator I = Func->arg_begin(), 
+              E = Func->arg_end(); I != E; ++I, ++Idx) {
+          if (&(*I) == Arg && 
+               Attr->paramHasAttr(Idx, ParamAttr::NoAlias))
+            return NoAlias;
+        }
+      }
+    }
     if (O2) {
       if (isa<Argument>(O1)) {
         // Incoming argument cannot alias locally allocated object!
@@ -307,7 +323,22 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         // If they are two different objects, we know that we have no alias...
         return NoAlias;
       }
-
+      
+      // Check for noalias atrribute independently from above logic
+      if (isa<Argument>(O2)) {
+        const Argument *Arg = cast<Argument>(O2);
+        const Function *Func = Arg->getParent();
+        const ParamAttrsList *Attr = Func->getFunctionType()->getParamAttrs();
+        if (Attr) {
+          unsigned Idx = 1;
+          for (Function::const_arg_iterator I = Func->arg_begin(), 
+                E = Func->arg_end(); I != E; ++I, ++Idx) {
+            if (&(*I) == Arg && 
+                 Attr->paramHasAttr(Idx, ParamAttr::NoAlias))
+              return NoAlias;
+          }
+        }
+      }
       // If they are the same object, they we can look at the indexes.  If they
       // index off of the object is the same for both pointers, they must alias.
       // If they are provably different, they must not alias.  Otherwise, we
