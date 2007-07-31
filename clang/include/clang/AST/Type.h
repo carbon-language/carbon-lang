@@ -240,7 +240,8 @@ public:
   /// Derived types (C99 6.2.5p20).
   bool isDerivedType() const;
   const FunctionType *isFunctionType() const;   
-  const PointerType *isPointerType() const;
+  bool isPointerType() const;
+  const PointerType *getAsPointerType() const;
   const ReferenceType *isReferenceType() const;
   const ArrayType *isArrayType() const;
   const RecordType *isRecordType() const;

@@ -68,7 +68,10 @@ const FunctionType *Type::isFunctionType() const {
   return 0;
 }
 
-const PointerType *Type::isPointerType() const {
+// FIXME: move inline
+bool Type::isPointerType() const { return isa<PointerType>(CanonicalType); }
+
+const PointerType *Type::getAsPointerType() const {
   // If this is directly a pointer type, return it.
   if (const PointerType *PTy = dyn_cast<PointerType>(this))
     return PTy;

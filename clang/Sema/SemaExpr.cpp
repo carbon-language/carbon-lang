@@ -303,12 +303,12 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   // and index from the expression types.
   Expr *BaseExpr, *IndexExpr;
   QualType ResultType;
-  if (const PointerType *PTy = LHSTy->isPointerType()) {
+  if (const PointerType *PTy = LHSTy->getAsPointerType()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     // FIXME: need to deal with const...
     ResultType = PTy->getPointeeType();
-  } else if (const PointerType *PTy = RHSTy->isPointerType()) {
+  } else if (const PointerType *PTy = RHSTy->getAsPointerType()) {
      // Handle the uncommon case of "123[Ptr]".
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
@@ -409,7 +409,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   assert(!BaseType.isNull() && "no type for member expression");
   
   if (OpKind == tok::arrow) {
-    if (const PointerType *PT = BaseType->isPointerType())
+    if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
     else
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow,
@@ -1290,7 +1290,7 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
   UsualUnaryConversions(op);
   QualType qType = op->getType();
   
-  if (const PointerType *PT = qType->isPointerType()) {
+  if (const PointerType *PT = qType->getAsPointerType()) {
     QualType ptype = PT->getPointeeType();
     // C99 6.5.3.2p4. "if it points to an object,...".
     if (ptype->isIncompleteType()) { // An incomplete type is not an object
