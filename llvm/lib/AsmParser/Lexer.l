@@ -177,8 +177,8 @@ HexFPConstant 0x[0-9A-Fa-f]+
  */
 HexIntConstant [us]0x[0-9A-Fa-f]+
 
-/* WSNL - shorthand for newline followed by whitespace */
-WSNL [ \r\t\n]*$
+/* WSNL - shorthand for whitespace followed by newline */
+WSNL [ \r\t]*$
 %%
 
 {Comment}       { /* Ignore comments for now */ }
