@@ -2618,7 +2618,7 @@ def : Pat<(store (v16i8 VR128:$src), addr:$dst),
 // (vextract (v4i32 bc (v4f32 s2v (f32 load $addr))), 0) -> (i32 load $addr)
 def : Pat<(vector_extract
            (bc_v4i32 (v4f32 (scalar_to_vector (loadf32 addr:$src)))), (iPTR 0)),
-          (MOV32rm addr:$src)>;
+          (MOV32rm addr:$src)>, Requires<[HasSSE2]>;
 def : Pat<(vector_extract
            (bc_v2i64 (v2f64 (scalar_to_vector (loadf64 addr:$src)))), (iPTR 0)),
-          (MOV64rm addr:$src)>;
+          (MOV64rm addr:$src)>, Requires<[HasSSE2, In64BitMode]>;
