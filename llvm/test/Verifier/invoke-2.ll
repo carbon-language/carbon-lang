@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s -o /dev/null -f
+; RUN: llvm-upgrade < %s | not llvm-as -f &| grep {not verify as correct}
 ; PR1042
 
 int %foo() {
