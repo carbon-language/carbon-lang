@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | %prcontext {pinsrw \$2} 1 | grep "movl \$1"
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | not grep movss
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | %prcontext {pinsrw \$2} 1 | grep "movl \$1"
+; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | not grep movss
 
 @G = global <4 x float> zeroinitializer
 
