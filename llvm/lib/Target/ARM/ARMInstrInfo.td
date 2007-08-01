@@ -745,34 +745,34 @@ def LDRD  : AI3<(outs GPR:$dst), (ins addrmode3:$addr),
                 []>, Requires<[IsARM, HasV5T]>;
 
 // Indexed loads
-def LDR_PRE  : AI2pr<(outs GPR:$dst), (ins GPR:$base_wb, addrmode2:$addr),
+def LDR_PRE  : AI2pr<(outs GPR:$dst, GPR:$base_wb), (ins addrmode2:$addr),
                     "ldr", " $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDR_POST : AI2po<(outs GPR:$dst), (ins GPR:$base_wb, GPR:$base, am2offset:$offset),
+def LDR_POST : AI2po<(outs GPR:$dst, GPR:$base_wb), (ins GPR:$base, am2offset:$offset),
                     "ldr", " $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRH_PRE  : AI3pr<(outs GPR:$dst), (ins GPR:$base_wb, addrmode3:$addr),
+def LDRH_PRE  : AI3pr<(outs GPR:$dst, GPR:$base_wb), (ins addrmode3:$addr),
                      "ldr", "h $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRH_POST : AI3po<(outs GPR:$dst), (ins GPR:$base_wb, GPR:$base,am3offset:$offset),
+def LDRH_POST : AI3po<(outs GPR:$dst, GPR:$base_wb), (ins GPR:$base,am3offset:$offset),
                      "ldr", "h $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRB_PRE  : AI2pr<(outs GPR:$dst), (ins GPR:$base_wb, addrmode2:$addr),
+def LDRB_PRE  : AI2pr<(outs GPR:$dst, GPR:$base_wb), (ins addrmode2:$addr),
                      "ldr", "b $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRB_POST : AI2po<(outs GPR:$dst), (ins GPR:$base_wb, GPR:$base,am2offset:$offset),
+def LDRB_POST : AI2po<(outs GPR:$dst, GPR:$base_wb), (ins GPR:$base,am2offset:$offset),
                      "ldr", "b $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRSH_PRE : AI3pr<(outs GPR:$dst), (ins GPR:$base_wb, addrmode3:$addr),
+def LDRSH_PRE : AI3pr<(outs GPR:$dst, GPR:$base_wb), (ins addrmode3:$addr),
                       "ldr", "sh $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRSH_POST: AI3po<(outs GPR:$dst), (ins GPR:$base_wb, GPR:$base,am3offset:$offset),
+def LDRSH_POST: AI3po<(outs GPR:$dst, GPR:$base_wb), (ins GPR:$base,am3offset:$offset),
                       "ldr", "sh $dst, [$base], $offset", "$base = $base_wb", []>;
 
-def LDRSB_PRE : AI3pr<(outs GPR:$dst), (ins GPR:$base_wb, addrmode3:$addr),
+def LDRSB_PRE : AI3pr<(outs GPR:$dst, GPR:$base_wb), (ins addrmode3:$addr),
                       "ldr", "sb $dst, $addr!", "$addr.base = $base_wb", []>;
 
-def LDRSB_POST: AI3po<(outs GPR:$dst), (ins GPR:$base_wb, GPR:$base,am3offset:$offset),
+def LDRSB_POST: AI3po<(outs GPR:$dst, GPR:$base_wb), (ins GPR:$base,am3offset:$offset),
                       "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
 } // isLoad
 
