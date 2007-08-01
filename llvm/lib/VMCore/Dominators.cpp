@@ -627,6 +627,15 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
   if (!DT.dominates(NewBB, NewBBSucc))
     NewBBDominatesNewBBSucc = false;
 
+  // NewBBSucc inherites original NewBB frontier.
+  DominanceFrontier::iterator NewBBI = find(NewBB);
+  if (NewBBI != end()) {
+    DominanceFrontier::DomSetType NewBBSet = NewBBI->second;
+    DominanceFrontier::DomSetType NewBBSuccSet;
+    NewBBSuccSet.insert(NewBBSet.begin(), NewBBSet.end());
+    addBasicBlock(NewBBSucc, NewBBSuccSet);
+  }
+
   // If NewBB dominates NewBBSucc, then DF(NewBB) is now going to be the
   // DF(PredBlocks[0]) without the stuff that the new block does not dominate
   // a predecessor of.
@@ -648,7 +657,6 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
           ++SetI;
       }
 
-      DominanceFrontier::iterator NewBBI = find(NewBB);
       if (NewBBI != end()) {
         DominanceFrontier::DomSetType NewBBSet = NewBBI->second;
         NewBBSet.insert(Set.begin(), Set.end());
