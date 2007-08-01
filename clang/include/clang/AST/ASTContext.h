@@ -101,7 +101,7 @@ public:
   QualType getTypedefType(TypedefDecl *Decl);
 
   /// getTypeOfType - GCC extension.
-  QualType getTypeOfType(Expr *e);
+  QualType getTypeOfExpr(Expr *e);
   QualType getTypeOfType(QualType t);
   
   /// getTagDeclType - Return the unique reference to the type for the

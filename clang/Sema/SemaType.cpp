@@ -105,7 +105,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for typeof?");
     // TypeQuals handled by caller.
-    return Ctx.getTypeOfType(E);
+    return Ctx.getTypeOfExpr(E);
   }
   }
 }

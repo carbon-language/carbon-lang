@@ -18,6 +18,8 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/StringExtras.h"
+#include <sstream>
+
 using namespace clang;
 
 Type::~Type() {}
@@ -652,9 +654,9 @@ void OCUVectorType::getAsStringInternal(std::string &S) const {
 }
 
 void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
-  // FIXME: output expression, getUnderlyingExpr()->print().
-  // At the moment, Stmt::print(std::ostream) doesn't work for us here.
-  InnerString = "typeof(<expr>) " + InnerString;
+  std::ostringstream s;
+  getUnderlyingExpr()->print(s);
+  InnerString = "typeof(" + s.str() + ") " + InnerString;
 }
 
 void TypeOfType::getAsStringInternal(std::string &S) const {

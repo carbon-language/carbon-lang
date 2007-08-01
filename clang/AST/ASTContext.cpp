@@ -584,7 +584,7 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-QualType ASTContext::getTypeOfType(Expr *tofExpr) {
+QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
   QualType Canonical = tofExpr->getType().getCanonicalType();
   // Note: TypeOfExpr's aren't uniqued.
   return QualType(new TypeOfExpr(tofExpr, Canonical), 0);
