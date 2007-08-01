@@ -2958,7 +2958,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         GEN_ERROR("Invalid number of parameters detected");
     }
     // Create the call node
-    CallInst *CI = new CallInst(V, &Args[0], Args.size());
+    CallInst *CI = new CallInst(V, Args.begin(), Args.end());
     CI->setTailCall($1);
     CI->setCallingConv($2);
     $$ = CI;

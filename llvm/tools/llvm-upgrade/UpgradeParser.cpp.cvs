@@ -1,7 +1,7 @@
-/* A Bison parser, made by GNU Bison 2.1.  */
+/* A Bison parser, made by GNU Bison 1.875c.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
@@ -36,9 +36,6 @@
 /* Identify Bison output.  */
 #define YYBISON 1
 
-/* Bison version.  */
-#define YYBISON_VERSION "2.1"
-
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
 
@@ -48,7 +45,8 @@
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
-/* Substitute the variable and function names.  */
+/* If NAME_PREFIX is specified substitute the variables and functions
+   names.  */
 #define yyparse Upgradeparse
 #define yylex   Upgradelex
 #define yyerror Upgradeerror
@@ -215,7 +213,6 @@
      BITCAST = 406
    };
 #endif
-/* Tokens.  */
 #define ESINT64VAL 258
 #define EUINT64VAL 259
 #define SINTVAL 260
@@ -370,7 +367,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 14 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 14 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
 
 #include "UpgradeInternals.h"
 #include "llvm/CallingConv.h"
@@ -1873,7 +1870,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         const PointerType *PFTy = PointerType::get(FTy);
         Value* Func = getVal(PFTy, ID);
         Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
-        return new CallInst(Func, &Args[0], Args.size());
+        return new CallInst(Func, Args.begin(), Args.end());
       } else if (Name == "llvm.va_copy") {
         if (Args.size() != 2)
           error("Invalid prototype for " + Name + " prototype");
@@ -1887,7 +1884,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         std::string InstName1(makeNameUnique("va1"));
         Args[0] = new BitCastInst(Args[0], PtrTy, InstName0, CurBB);
         Args[1] = new BitCastInst(Args[1], PtrTy, InstName1, CurBB);
-        return new CallInst(Func, &Args[0], Args.size());
+        return new CallInst(Func, Args.begin(), Args.end());
       }
     }
   }
@@ -2111,11 +2108,12 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
-        AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
-        AllocaInst* b = new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI);
-        new StoreInst(CI->getOperand(1), b, CI);
-        new CallInst(NF, a, b, "", CI);
-        Value* foo = new LoadInst(a, "vacopy.fix.3", CI);
+        SmallVector<Value *, 2> Args;
+        Args.push_back(new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI));
+        Args.push_back(new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI));
+        new StoreInst(CI->getOperand(1), Args[1], CI);
+        new CallInst(NF, Args.begin(), Args.end(), "", CI);
+        Value* foo = new LoadInst(Args[0], "vacopy.fix.3", CI);
         CI->replaceAllUsesWith(foo);
         CI->getParent()->getInstList().erase(CI);
       }
@@ -2145,13 +2143,8 @@ using namespace llvm;
 # define YYERROR_VERBOSE 0
 #endif
 
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
-
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 1775 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 1776 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
 typedef union YYSTYPE {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -2193,8 +2186,8 @@ typedef union YYSTYPE {
   llvm::FCmpInst::Predicate         FPred;
   llvm::Module::Endianness          Endianness;
 } YYSTYPE;
-/* Line 196 of yacc.c.  */
-#line 2198 "UpgradeParser.tab.c"
+/* Line 191 of yacc.c.  */
+#line 2191 "UpgradeParser.tab.c"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -2205,34 +2198,8 @@ typedef union YYSTYPE {
 /* Copy the second part of user declarations.  */
 
 
-/* Line 219 of yacc.c.  */
-#line 2210 "UpgradeParser.tab.c"
-
-#if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
-# define YYSIZE_T __SIZE_TYPE__
-#endif
-#if ! defined (YYSIZE_T) && defined (size_t)
-# define YYSIZE_T size_t
-#endif
-#if ! defined (YYSIZE_T) && (defined (__STDC__) || defined (__cplusplus))
-# include <stddef.h> /* INFRINGES ON USER NAME SPACE */
-# define YYSIZE_T size_t
-#endif
-#if ! defined (YYSIZE_T)
-# define YYSIZE_T unsigned int
-#endif
-
-#ifndef YY_
-# if YYENABLE_NLS
-#  if ENABLE_NLS
-#   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
-#   define YY_(msgid) dgettext ("bison-runtime", msgid)
-#  endif
-# endif
-# ifndef YY_
-#  define YY_(msgid) msgid
-# endif
-#endif
+/* Line 214 of yacc.c.  */
+#line 2203 "UpgradeParser.tab.c"
 
 #if ! defined (yyoverflow) || YYERROR_VERBOSE
 
@@ -2240,14 +2207,14 @@ typedef union YYSTYPE {
 
 # ifdef YYSTACK_USE_ALLOCA
 #  if YYSTACK_USE_ALLOCA
+#   define YYSTACK_ALLOC alloca
+#  endif
+# else
+#  if defined (alloca) || defined (_ALLOCA_H)
+#   define YYSTACK_ALLOC alloca
+#  else
 #   ifdef __GNUC__
 #    define YYSTACK_ALLOC __builtin_alloca
-#   else
-#    define YYSTACK_ALLOC alloca
-#    if defined (__STDC__) || defined (__cplusplus)
-#     include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#     define YYINCLUDED_STDLIB_H
-#    endif
 #   endif
 #  endif
 # endif
@@ -2255,39 +2222,13 @@ typedef union YYSTYPE {
 # ifdef YYSTACK_ALLOC
    /* Pacify GCC's `empty if-body' warning. */
 #  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
-#  ifndef YYSTACK_ALLOC_MAXIMUM
-    /* The OS might guarantee only one guard page at the bottom of the stack,
-       and a page size can be as small as 4096 bytes.  So we cannot safely
-       invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
-       to allow for a few compiler-allocated temporary stack slots.  */
-#   define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2005 */
-#  endif
 # else
-#  define YYSTACK_ALLOC YYMALLOC
-#  define YYSTACK_FREE YYFREE
-#  ifndef YYSTACK_ALLOC_MAXIMUM
-#   define YYSTACK_ALLOC_MAXIMUM ((YYSIZE_T) -1)
+#  if defined (__STDC__) || defined (__cplusplus)
+#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#   define YYSIZE_T size_t
 #  endif
-#  ifdef __cplusplus
-extern "C" {
-#  endif
-#  ifndef YYMALLOC
-#   define YYMALLOC malloc
-#   if (! defined (malloc) && ! defined (YYINCLUDED_STDLIB_H) \
-	&& (defined (__STDC__) || defined (__cplusplus)))
-void *malloc (YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
-#   endif
-#  endif
-#  ifndef YYFREE
-#   define YYFREE free
-#   if (! defined (free) && ! defined (YYINCLUDED_STDLIB_H) \
-	&& (defined (__STDC__) || defined (__cplusplus)))
-void free (void *); /* INFRINGES ON USER NAME SPACE */
-#   endif
-#  endif
-#  ifdef __cplusplus
-}
-#  endif
+#  define YYSTACK_ALLOC malloc
+#  define YYSTACK_FREE free
 # endif
 #endif /* ! defined (yyoverflow) || YYERROR_VERBOSE */
 
@@ -2299,7 +2240,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  short int yyss;
+  short yyss;
   YYSTYPE yyvs;
   };
 
@@ -2309,7 +2250,7 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (short int) + sizeof (YYSTYPE))			\
+     ((N) * (sizeof (short) + sizeof (YYSTYPE))				\
       + YYSTACK_GAP_MAXIMUM)
 
 /* Copy COUNT objects from FROM to TO.  The source and destination do
@@ -2322,7 +2263,7 @@ union yyalloc
 #   define YYCOPY(To, From, Count)		\
       do					\
 	{					\
-	  YYSIZE_T yyi;				\
+	  register YYSIZE_T yyi;		\
 	  for (yyi = 0; yyi < (Count); yyi++)	\
 	    (To)[yyi] = (From)[yyi];		\
 	}					\
@@ -2351,7 +2292,7 @@ union yyalloc
 #if defined (__STDC__) || defined (__cplusplus)
    typedef signed char yysigned_char;
 #else
-   typedef short int yysigned_char;
+   typedef short yysigned_char;
 #endif
 
 /* YYFINAL -- State number of the termination state. */
@@ -2372,7 +2313,7 @@ union yyalloc
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   406
 
-#define YYTRANSLATE(YYX)						\
+#define YYTRANSLATE(YYX) 						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
@@ -2424,7 +2365,7 @@ static const unsigned char yytranslate[] =
 #if YYDEBUG
 /* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
    YYRHS.  */
-static const unsigned short int yyprhs[] =
+static const unsigned short yyprhs[] =
 {
        0,     0,     3,     5,     7,     9,    11,    13,    15,    17,
       19,    21,    23,    25,    27,    29,    31,    33,    35,    37,
@@ -2461,7 +2402,7 @@ static const unsigned short int yyprhs[] =
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS. */
-static const short int yyrhs[] =
+static const short yyrhs[] =
 {
      200,     0,    -1,     5,    -1,     6,    -1,     3,    -1,     4,
       -1,    79,    -1,    80,    -1,    81,    -1,    82,    -1,    83,
@@ -2564,45 +2505,45 @@ static const short int yyrhs[] =
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const unsigned short int yyrline[] =
+static const unsigned short yyrline[] =
 {
-       0,  1915,  1915,  1916,  1924,  1925,  1935,  1935,  1935,  1935,
-    1935,  1935,  1935,  1935,  1935,  1935,  1935,  1939,  1939,  1939,
-    1943,  1943,  1943,  1943,  1943,  1943,  1947,  1947,  1948,  1948,
-    1949,  1949,  1950,  1950,  1951,  1951,  1955,  1955,  1956,  1956,
-    1957,  1957,  1958,  1958,  1959,  1959,  1960,  1960,  1961,  1961,
-    1962,  1963,  1966,  1966,  1966,  1966,  1970,  1970,  1970,  1970,
-    1970,  1970,  1970,  1971,  1971,  1971,  1971,  1971,  1971,  1977,
-    1977,  1977,  1977,  1981,  1981,  1981,  1981,  1985,  1985,  1989,
-    1989,  1994,  1997,  2002,  2003,  2004,  2005,  2006,  2007,  2008,
-    2009,  2013,  2014,  2015,  2016,  2017,  2018,  2019,  2020,  2030,
-    2031,  2039,  2040,  2048,  2057,  2058,  2065,  2066,  2070,  2074,
-    2090,  2091,  2098,  2099,  2106,  2114,  2114,  2114,  2114,  2114,
-    2114,  2114,  2115,  2115,  2115,  2115,  2115,  2120,  2124,  2128,
-    2133,  2142,  2169,  2175,  2188,  2199,  2203,  2216,  2220,  2234,
-    2238,  2245,  2246,  2252,  2259,  2271,  2301,  2314,  2337,  2365,
-    2387,  2398,  2420,  2431,  2440,  2445,  2504,  2511,  2519,  2526,
-    2533,  2537,  2541,  2550,  2565,  2577,  2586,  2614,  2627,  2636,
-    2642,  2648,  2659,  2665,  2671,  2682,  2683,  2692,  2693,  2705,
-    2714,  2715,  2716,  2717,  2718,  2734,  2754,  2756,  2758,  2758,
-    2765,  2765,  2773,  2773,  2781,  2781,  2790,  2792,  2794,  2799,
-    2813,  2814,  2818,  2821,  2829,  2833,  2840,  2844,  2848,  2852,
-    2860,  2860,  2864,  2865,  2869,  2877,  2882,  2890,  2891,  2898,
-    2905,  2909,  3099,  3099,  3103,  3103,  3113,  3113,  3117,  3122,
-    3123,  3124,  3128,  3129,  3128,  3141,  3142,  3147,  3148,  3149,
-    3150,  3154,  3158,  3159,  3160,  3161,  3182,  3186,  3200,  3201,
-    3206,  3206,  3214,  3224,  3227,  3236,  3247,  3252,  3261,  3272,
-    3272,  3275,  3279,  3283,  3288,  3298,  3316,  3325,  3398,  3402,
-    3409,  3421,  3436,  3466,  3476,  3486,  3490,  3497,  3498,  3502,
-    3505,  3511,  3530,  3548,  3564,  3578,  3592,  3603,  3621,  3630,
-    3639,  3646,  3667,  3691,  3697,  3703,  3709,  3725,  3818,  3826,
-    3827,  3831,  3832,  3836,  3842,  3849,  3855,  3862,  3869,  3882,
-    3908
+       0,  1916,  1916,  1917,  1925,  1926,  1936,  1936,  1936,  1936,
+    1936,  1936,  1936,  1936,  1936,  1936,  1936,  1940,  1940,  1940,
+    1944,  1944,  1944,  1944,  1944,  1944,  1948,  1948,  1949,  1949,
+    1950,  1950,  1951,  1951,  1952,  1952,  1956,  1956,  1957,  1957,
+    1958,  1958,  1959,  1959,  1960,  1960,  1961,  1961,  1962,  1962,
+    1963,  1964,  1967,  1967,  1967,  1967,  1971,  1971,  1971,  1971,
+    1971,  1971,  1971,  1972,  1972,  1972,  1972,  1972,  1972,  1978,
+    1978,  1978,  1978,  1982,  1982,  1982,  1982,  1986,  1986,  1990,
+    1990,  1995,  1998,  2003,  2004,  2005,  2006,  2007,  2008,  2009,
+    2010,  2014,  2015,  2016,  2017,  2018,  2019,  2020,  2021,  2031,
+    2032,  2040,  2041,  2049,  2058,  2059,  2066,  2067,  2071,  2075,
+    2091,  2092,  2099,  2100,  2107,  2115,  2115,  2115,  2115,  2115,
+    2115,  2115,  2116,  2116,  2116,  2116,  2116,  2121,  2125,  2129,
+    2134,  2143,  2170,  2176,  2189,  2200,  2204,  2217,  2221,  2235,
+    2239,  2246,  2247,  2253,  2260,  2272,  2302,  2315,  2338,  2366,
+    2388,  2399,  2421,  2432,  2441,  2446,  2505,  2512,  2520,  2527,
+    2534,  2538,  2542,  2551,  2566,  2578,  2587,  2615,  2628,  2637,
+    2643,  2649,  2660,  2666,  2672,  2683,  2684,  2693,  2694,  2706,
+    2715,  2716,  2717,  2718,  2719,  2735,  2755,  2757,  2759,  2759,
+    2766,  2766,  2774,  2774,  2782,  2782,  2791,  2793,  2795,  2800,
+    2814,  2815,  2819,  2822,  2830,  2834,  2841,  2845,  2849,  2853,
+    2861,  2861,  2865,  2866,  2870,  2878,  2883,  2891,  2892,  2899,
+    2906,  2910,  3100,  3100,  3104,  3104,  3114,  3114,  3118,  3123,
+    3124,  3125,  3129,  3130,  3129,  3142,  3143,  3148,  3149,  3150,
+    3151,  3155,  3159,  3160,  3161,  3162,  3183,  3187,  3201,  3202,
+    3207,  3207,  3215,  3225,  3228,  3237,  3248,  3253,  3262,  3273,
+    3273,  3276,  3280,  3284,  3289,  3299,  3317,  3326,  3399,  3403,
+    3410,  3422,  3437,  3467,  3477,  3487,  3491,  3498,  3499,  3503,
+    3506,  3512,  3531,  3549,  3565,  3579,  3593,  3604,  3622,  3631,
+    3640,  3647,  3668,  3692,  3698,  3704,  3710,  3726,  3819,  3827,
+    3828,  3832,  3833,  3837,  3843,  3850,  3856,  3863,  3870,  3883,
+    3909
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
-/* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
+#if YYDEBUG || YYERROR_VERBOSE
+/* YYTNME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals. */
 static const char *const yytname[] =
 {
@@ -2652,7 +2593,7 @@ static const char *const yytname[] =
 # ifdef YYPRINT
 /* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
    token YYLEX-NUM.  */
-static const unsigned short int yytoknum[] =
+static const unsigned short yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
@@ -2751,7 +2692,7 @@ static const unsigned char yyr2[] =
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
    STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
    means the default is an error.  */
-static const unsigned short int yydefact[] =
+static const unsigned short yydefact[] =
 {
      198,     0,    90,   184,     1,   183,   232,    83,    84,    85,
       86,    87,    88,    89,     0,   224,   257,   180,   181,   257,
@@ -2817,7 +2758,7 @@ static const unsigned short int yydefact[] =
 };
 
 /* YYDEFGOTO[NTERM-NUM]. */
-static const short int yydefgoto[] =
+static const short yydefgoto[] =
 {
       -1,    94,   312,   329,   330,   331,   255,   272,   332,   333,
      219,   220,   243,   221,    25,    15,    63,   555,   359,   454,
@@ -2833,7 +2774,7 @@ static const short int yydefgoto[] =
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
 #define YYPACT_NINF -542
-static const short int yypact[] =
+static const short yypact[] =
 {
     -542,    13,   162,   567,  -542,  -542,  -542,  -542,  -542,  -542,
     -542,  -542,  -542,  -542,    83,  -542,    19,  -542,  -542,   -14,
@@ -2899,7 +2840,7 @@ static const short int yypact[] =
 };
 
 /* YYPGOTO[NTERM-NUM].  */
-static const short int yypgoto[] =
+static const short yypgoto[] =
 {
     -542,  -542,  -542,   435,   439,   441,   191,   197,   442,   445,
     -119,  -116,  -541,  -542,   478,   489,  -107,  -542,  -267,    37,
@@ -2917,7 +2858,7 @@ static const short int yypgoto[] =
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
 #define YYTABLE_NINF -180
-static const short int yytable[] =
+static const short yytable[] =
 {
       97,   241,   227,   110,   242,   230,   223,   361,   197,    31,
      111,    26,   449,     4,   244,   204,    34,   578,    97,   201,
@@ -3085,7 +3026,7 @@ static const short int yytable[] =
      175
 };
 
-static const short int yycheck[] =
+static const short yycheck[] =
 {
       45,   120,   115,    63,   120,   118,   107,   274,     4,    23,
       29,     3,   161,     0,   121,   164,    30,   558,    63,    93,
@@ -3320,6 +3261,22 @@ static const unsigned char yystos[] =
      235,   230,    21,    21,   230,   230
 };
 
+#if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
+# define YYSIZE_T __SIZE_TYPE__
+#endif
+#if ! defined (YYSIZE_T) && defined (size_t)
+# define YYSIZE_T size_t
+#endif
+#if ! defined (YYSIZE_T)
+# if defined (__STDC__) || defined (__cplusplus)
+#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  define YYSIZE_T size_t
+# endif
+#endif
+#if ! defined (YYSIZE_T)
+# define YYSIZE_T unsigned int
+#endif
+
 #define yyerrok		(yyerrstatus = 0)
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		(-2)
@@ -3349,58 +3306,25 @@ do								\
       goto yybackup;						\
     }								\
   else								\
-    {								\
-      yyerror (YY_("syntax error: cannot back up")); \
+    { 								\
+      yyerror ("syntax error: cannot back up");\
       YYERROR;							\
     }								\
 while (0)
 
-
 #define YYTERROR	1
 #define YYERRCODE	256
 
+/* YYLLOC_DEFAULT -- Compute the default location (before the actions
+   are run).  */
 
-/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
-   If N is 0, then set CURRENT to the empty location which ends
-   the previous symbol: RHS[0] (always defined).  */
-
-#define YYRHSLOC(Rhs, K) ((Rhs)[K])
 #ifndef YYLLOC_DEFAULT
-# define YYLLOC_DEFAULT(Current, Rhs, N)				\
-    do									\
-      if (N)								\
-	{								\
-	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
-	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
-	  (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
-	  (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
-	}								\
-      else								\
-	{								\
-	  (Current).first_line   = (Current).last_line   =		\
-	    YYRHSLOC (Rhs, 0).last_line;				\
-	  (Current).first_column = (Current).last_column =		\
-	    YYRHSLOC (Rhs, 0).last_column;				\
-	}								\
-    while (0)
+# define YYLLOC_DEFAULT(Current, Rhs, N)		\
+   ((Current).first_line   = (Rhs)[1].first_line,	\
+    (Current).first_column = (Rhs)[1].first_column,	\
+    (Current).last_line    = (Rhs)[N].last_line,	\
+    (Current).last_column  = (Rhs)[N].last_column)
 #endif
-
-
-/* YY_LOCATION_PRINT -- Print the location on the stream.
-   This macro was not mandated originally: define only if we know
-   we won't break user code: when these are the locations we know.  */
-
-#ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
-#  define YY_LOCATION_PRINT(File, Loc)			\
-     fprintf (File, "%d.%d-%d.%d",			\
-              (Loc).first_line, (Loc).first_column,	\
-              (Loc).last_line,  (Loc).last_column)
-# else
-#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-# endif
-#endif
-
 
 /* YYLEX -- calling `yylex' with the right arguments.  */
 
@@ -3424,13 +3348,19 @@ do {						\
     YYFPRINTF Args;				\
 } while (0)
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)		\
+# define YYDSYMPRINT(Args)			\
+do {						\
+  if (yydebug)					\
+    yysymprint Args;				\
+} while (0)
+
+# define YYDSYMPRINTF(Title, Token, Value, Location)		\
 do {								\
   if (yydebug)							\
     {								\
       YYFPRINTF (stderr, "%s ", Title);				\
-      yysymprint (stderr,					\
-                  Type, Value);	\
+      yysymprint (stderr, 					\
+                  Token, Value);	\
       YYFPRINTF (stderr, "\n");					\
     }								\
 } while (0)
@@ -3442,12 +3372,12 @@ do {								\
 
 #if defined (__STDC__) || defined (__cplusplus)
 static void
-yy_stack_print (short int *bottom, short int *top)
+yy_stack_print (short *bottom, short *top)
 #else
 static void
 yy_stack_print (bottom, top)
-    short int *bottom;
-    short int *top;
+    short *bottom;
+    short *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
@@ -3477,13 +3407,13 @@ yy_reduce_print (yyrule)
 #endif
 {
   int yyi;
-  unsigned long int yylno = yyrline[yyrule];
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu), ",
+  unsigned int yylno = yyrline[yyrule];
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %u), ",
              yyrule - 1, yylno);
   /* Print the symbols being reduced, and their result.  */
   for (yyi = yyprhs[yyrule]; 0 <= yyrhs[yyi]; yyi++)
-    YYFPRINTF (stderr, "%s ", yytname[yyrhs[yyi]]);
-  YYFPRINTF (stderr, "-> %s\n", yytname[yyr1[yyrule]]);
+    YYFPRINTF (stderr, "%s ", yytname [yyrhs[yyi]]);
+  YYFPRINTF (stderr, "-> %s\n", yytname [yyr1[yyrule]]);
 }
 
 # define YY_REDUCE_PRINT(Rule)		\
@@ -3497,7 +3427,8 @@ do {					\
 int yydebug;
 #else /* !YYDEBUG */
 # define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDSYMPRINT(Args)
+# define YYDSYMPRINTF(Title, Token, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -3512,8 +3443,12 @@ int yydebug;
    if the built-in stack extension method is used).
 
    Do not make this value too large; the results are undefined if
-   YYSTACK_ALLOC_MAXIMUM < YYSTACK_BYTES (YYMAXDEPTH)
+   SIZE_MAX < YYSTACK_BYTES (YYMAXDEPTH)
    evaluated with infinite-precision integer arithmetic.  */
+
+#if defined (YYMAXDEPTH) && YYMAXDEPTH == 0
+# undef YYMAXDEPTH
+#endif
 
 #ifndef YYMAXDEPTH
 # define YYMAXDEPTH 10000
@@ -3536,7 +3471,7 @@ yystrlen (yystr)
      const char *yystr;
 #   endif
 {
-  const char *yys = yystr;
+  register const char *yys = yystr;
 
   while (*yys++ != '\0')
     continue;
@@ -3561,8 +3496,8 @@ yystpcpy (yydest, yysrc)
      const char *yysrc;
 #   endif
 {
-  char *yyd = yydest;
-  const char *yys = yysrc;
+  register char *yyd = yydest;
+  register const char *yys = yysrc;
 
   while ((*yyd++ = *yys++) != '\0')
     continue;
@@ -3572,55 +3507,7 @@ yystpcpy (yydest, yysrc)
 #  endif
 # endif
 
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYSIZE_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      size_t yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-	switch (*++yyp)
-	  {
-	  case '\'':
-	  case ',':
-	    goto do_not_strip_quotes;
-
-	  case '\\':
-	    if (*++yyp != '\\')
-	      goto do_not_strip_quotes;
-	    /* Fall through.  */
-	  default:
-	    if (yyres)
-	      yyres[yyn] = *yyp;
-	    yyn++;
-	    break;
-
-	  case '"':
-	    if (yyres)
-	      yyres[yyn] = '\0';
-	    return yyn;
-	  }
-    do_not_strip_quotes: ;
-    }
-
-  if (! yyres)
-    return yystrlen (yystr);
-
-  return yystpcpy (yyres, yystr) - yyres;
-}
-# endif
-
-#endif /* YYERROR_VERBOSE */
+#endif /* !YYERROR_VERBOSE */
 
 
 
@@ -3644,15 +3531,15 @@ yysymprint (yyoutput, yytype, yyvaluep)
   (void) yyvaluep;
 
   if (yytype < YYNTOKENS)
-    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
+    {
+      YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
+# ifdef YYPRINT
+      YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+# endif
+    }
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# endif
   switch (yytype)
     {
       default:
@@ -3668,21 +3555,16 @@ yysymprint (yyoutput, yytype, yyvaluep)
 
 #if defined (__STDC__) || defined (__cplusplus)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (int yytype, YYSTYPE *yyvaluep)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep)
-    const char *yymsg;
+yydestruct (yytype, yyvaluep)
     int yytype;
     YYSTYPE *yyvaluep;
 #endif
 {
   /* Pacify ``unused variable'' warnings.  */
   (void) yyvaluep;
-
-  if (!yymsg)
-    yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
   switch (yytype)
     {
@@ -3711,10 +3593,10 @@ int yyparse ();
 
 
 
-/* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
+/* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 
 /* Number of syntax errors so far.  */
@@ -3745,12 +3627,12 @@ yyparse ()
 #endif
 {
   
-  int yystate;
-  int yyn;
+  register int yystate;
+  register int yyn;
   int yyresult;
   /* Number of tokens to shift before error messages enabled.  */
   int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
+  /* Lookahead token as an internal (translated) token number.  */
   int yytoken = 0;
 
   /* Three stacks and their tools:
@@ -3762,14 +3644,14 @@ yyparse ()
      to reallocate them elsewhere.  */
 
   /* The state stack.  */
-  short int yyssa[YYINITDEPTH];
-  short int *yyss = yyssa;
-  short int *yyssp;
+  short	yyssa[YYINITDEPTH];
+  short *yyss = yyssa;
+  register short *yyssp;
 
   /* The semantic value stack.  */
   YYSTYPE yyvsa[YYINITDEPTH];
   YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
+  register YYSTYPE *yyvsp;
 
 
 
@@ -3826,14 +3708,14 @@ yyparse ()
 	   these so that the &'s don't force the real ones into
 	   memory.  */
 	YYSTYPE *yyvs1 = yyvs;
-	short int *yyss1 = yyss;
+	short *yyss1 = yyss;
 
 
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
 	   be undefined if yyoverflow is a macro.  */
-	yyoverflow (YY_("memory exhausted"),
+	yyoverflow ("parser stack overflow",
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
 
@@ -3844,21 +3726,21 @@ yyparse ()
       }
 #else /* no yyoverflow */
 # ifndef YYSTACK_RELOCATE
-      goto yyexhaustedlab;
+      goto yyoverflowlab;
 # else
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-	goto yyexhaustedlab;
+	goto yyoverflowlab;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
 	yystacksize = YYMAXDEPTH;
 
       {
-	short int *yyss1 = yyss;
+	short *yyss1 = yyss;
 	union yyalloc *yyptr =
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
-	  goto yyexhaustedlab;
+	  goto yyoverflowlab;
 	YYSTACK_RELOCATE (yyss);
 	YYSTACK_RELOCATE (yyvs);
 
@@ -3890,18 +3772,18 @@ yyparse ()
 yybackup:
 
 /* Do appropriate processing given the current state.  */
-/* Read a look-ahead token if we need one and don't already have one.  */
+/* Read a lookahead token if we need one and don't already have one.  */
 /* yyresume: */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
 
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -3916,7 +3798,7 @@ yybackup:
   else
     {
       yytoken = YYTRANSLATE (yychar);
-      YY_SYMBOL_PRINT ("Next token is", yytoken, &yylval, &yylloc);
+      YYDSYMPRINTF ("Next token is", yytoken, &yylval, &yylloc);
     }
 
   /* If the proper action on seeing token YYTOKEN is to reduce or to
@@ -3936,8 +3818,8 @@ yybackup:
   if (yyn == YYFINAL)
     YYACCEPT;
 
-  /* Shift the look-ahead token.  */
-  YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
+  /* Shift the lookahead token.  */
+  YYDPRINTF ((stderr, "Shifting token %s, ", yytname[yytoken]));
 
   /* Discard the token being shifted unless it is eof.  */
   if (yychar != YYEOF)
@@ -3987,399 +3869,399 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 1916 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 1917 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[0].UIntVal) > (uint32_t)INT32_MAX)     // Outside of my range!
+    if (yyvsp[0].UIntVal > (uint32_t)INT32_MAX)     // Outside of my range!
       error("Value too large for type");
-    (yyval.SIntVal) = (int32_t)(yyvsp[0].UIntVal);
+    yyval.SIntVal = (int32_t)yyvsp[0].UIntVal;
   ;}
     break;
 
   case 5:
-#line 1925 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 1926 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[0].UInt64Val) > (uint64_t)INT64_MAX)     // Outside of my range!
+    if (yyvsp[0].UInt64Val > (uint64_t)INT64_MAX)     // Outside of my range!
       error("Value too large for type");
-    (yyval.SInt64Val) = (int64_t)(yyvsp[0].UInt64Val);
+    yyval.SInt64Val = (int64_t)yyvsp[0].UInt64Val;
   ;}
     break;
 
   case 26:
-#line 1947 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_EQ; ;}
+#line 1948 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_EQ; ;}
     break;
 
   case 27:
-#line 1947 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_NE; ;}
+#line 1948 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_NE; ;}
     break;
 
   case 28:
-#line 1948 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_SLT; ;}
+#line 1949 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_SLT; ;}
     break;
 
   case 29:
-#line 1948 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_SGT; ;}
+#line 1949 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_SGT; ;}
     break;
 
   case 30:
-#line 1949 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_SLE; ;}
+#line 1950 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_SLE; ;}
     break;
 
   case 31:
-#line 1949 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_SGE; ;}
+#line 1950 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_SGE; ;}
     break;
 
   case 32:
-#line 1950 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_ULT; ;}
+#line 1951 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_ULT; ;}
     break;
 
   case 33:
-#line 1950 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_UGT; ;}
+#line 1951 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_UGT; ;}
     break;
 
   case 34:
-#line 1951 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_ULE; ;}
+#line 1952 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_ULE; ;}
     break;
 
   case 35:
-#line 1951 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.IPred) = ICmpInst::ICMP_UGE; ;}
+#line 1952 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.IPred = ICmpInst::ICMP_UGE; ;}
     break;
 
   case 36:
-#line 1955 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_OEQ; ;}
+#line 1956 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_OEQ; ;}
     break;
 
   case 37:
-#line 1955 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_ONE; ;}
+#line 1956 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_ONE; ;}
     break;
 
   case 38:
-#line 1956 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_OLT; ;}
+#line 1957 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_OLT; ;}
     break;
 
   case 39:
-#line 1956 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_OGT; ;}
+#line 1957 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_OGT; ;}
     break;
 
   case 40:
-#line 1957 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_OLE; ;}
+#line 1958 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_OLE; ;}
     break;
 
   case 41:
-#line 1957 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_OGE; ;}
+#line 1958 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_OGE; ;}
     break;
 
   case 42:
-#line 1958 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_ORD; ;}
+#line 1959 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_ORD; ;}
     break;
 
   case 43:
-#line 1958 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_UNO; ;}
+#line 1959 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_UNO; ;}
     break;
 
   case 44:
-#line 1959 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_UEQ; ;}
+#line 1960 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_UEQ; ;}
     break;
 
   case 45:
-#line 1959 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_UNE; ;}
+#line 1960 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_UNE; ;}
     break;
 
   case 46:
-#line 1960 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_ULT; ;}
+#line 1961 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_ULT; ;}
     break;
 
   case 47:
-#line 1960 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_UGT; ;}
+#line 1961 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_UGT; ;}
     break;
 
   case 48:
-#line 1961 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_ULE; ;}
+#line 1962 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_ULE; ;}
     break;
 
   case 49:
-#line 1961 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_UGE; ;}
+#line 1962 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_UGE; ;}
     break;
 
   case 50:
-#line 1962 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_TRUE; ;}
+#line 1963 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_TRUE; ;}
     break;
 
   case 51:
-#line 1963 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.FPred) = FCmpInst::FCMP_FALSE; ;}
+#line 1964 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.FPred = FCmpInst::FCMP_FALSE; ;}
     break;
 
   case 81:
-#line 1994 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 1995 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.StrVal) = (yyvsp[-1].StrVal);
+    yyval.StrVal = yyvsp[-1].StrVal;
   ;}
     break;
 
   case 82:
-#line 1997 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 1998 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.StrVal) = 0;
+    yyval.StrVal = 0;
   ;}
     break;
 
   case 83:
-#line 2002 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::InternalLinkage; ;}
+#line 2003 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::InternalLinkage; ;}
     break;
 
   case 84:
-#line 2003 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::LinkOnceLinkage; ;}
+#line 2004 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::LinkOnceLinkage; ;}
     break;
 
   case 85:
-#line 2004 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::WeakLinkage; ;}
+#line 2005 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::WeakLinkage; ;}
     break;
 
   case 86:
-#line 2005 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::AppendingLinkage; ;}
+#line 2006 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::AppendingLinkage; ;}
     break;
 
   case 87:
-#line 2006 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
+#line 2007 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 88:
-#line 2007 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::DLLExportLinkage; ;}
+#line 2008 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::DLLExportLinkage; ;}
     break;
 
   case 89:
-#line 2008 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
+#line 2009 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 90:
-#line 2009 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
+#line 2010 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 91:
-#line 2013 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::C; ;}
+#line 2014 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::C; ;}
     break;
 
   case 92:
-#line 2014 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::C; ;}
+#line 2015 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::C; ;}
     break;
 
   case 93:
-#line 2015 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::CSRet; ;}
+#line 2016 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::CSRet; ;}
     break;
 
   case 94:
-#line 2016 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::Fast; ;}
+#line 2017 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::Fast; ;}
     break;
 
   case 95:
-#line 2017 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::Cold; ;}
+#line 2018 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::Cold; ;}
     break;
 
   case 96:
-#line 2018 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::X86_StdCall; ;}
+#line 2019 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::X86_StdCall; ;}
     break;
 
   case 97:
-#line 2019 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = lastCallingConv = OldCallingConv::X86_FastCall; ;}
+#line 2020 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = lastCallingConv = OldCallingConv::X86_FastCall; ;}
     break;
 
   case 98:
-#line 2020 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2021 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((unsigned)(yyvsp[0].UInt64Val) != (yyvsp[0].UInt64Val))
+    if ((unsigned)yyvsp[0].UInt64Val != yyvsp[0].UInt64Val)
       error("Calling conv too large");
-    (yyval.UIntVal) = lastCallingConv = (yyvsp[0].UInt64Val);
+    yyval.UIntVal = lastCallingConv = yyvsp[0].UInt64Val;
   ;}
     break;
 
   case 99:
-#line 2030 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = 0; ;}
+#line 2031 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = 0; ;}
     break;
 
   case 100:
-#line 2031 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2032 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.UIntVal) = (yyvsp[0].UInt64Val);
-    if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
+    yyval.UIntVal = yyvsp[0].UInt64Val;
+    if (yyval.UIntVal != 0 && !isPowerOf2_32(yyval.UIntVal))
       error("Alignment must be a power of two");
   ;}
     break;
 
   case 101:
-#line 2039 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.UIntVal) = 0; ;}
+#line 2040 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.UIntVal = 0; ;}
     break;
 
   case 102:
-#line 2040 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2041 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.UIntVal) = (yyvsp[0].UInt64Val);
-    if ((yyval.UIntVal) != 0 && !isPowerOf2_32((yyval.UIntVal)))
+    yyval.UIntVal = yyvsp[0].UInt64Val;
+    if (yyval.UIntVal != 0 && !isPowerOf2_32(yyval.UIntVal))
       error("Alignment must be a power of two");
   ;}
     break;
 
   case 103:
-#line 2048 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2049 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    for (unsigned i = 0, e = strlen((yyvsp[0].StrVal)); i != e; ++i)
-      if ((yyvsp[0].StrVal)[i] == '"' || (yyvsp[0].StrVal)[i] == '\\')
+    for (unsigned i = 0, e = strlen(yyvsp[0].StrVal); i != e; ++i)
+      if (yyvsp[0].StrVal[i] == '"' || yyvsp[0].StrVal[i] == '\\')
         error("Invalid character in section name");
-    (yyval.StrVal) = (yyvsp[0].StrVal);
+    yyval.StrVal = yyvsp[0].StrVal;
   ;}
     break;
 
   case 104:
-#line 2057 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.StrVal) = 0; ;}
+#line 2058 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.StrVal = 0; ;}
     break;
 
   case 105:
-#line 2058 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.StrVal) = (yyvsp[0].StrVal); ;}
+#line 2059 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.StrVal = yyvsp[0].StrVal; ;}
     break;
 
   case 106:
-#line 2065 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2066 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {;}
     break;
 
   case 107:
-#line 2066 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2067 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {;}
     break;
 
   case 108:
-#line 2070 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2071 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    CurGV->setSection((yyvsp[0].StrVal));
-    free((yyvsp[0].StrVal));
+    CurGV->setSection(yyvsp[0].StrVal);
+    free(yyvsp[0].StrVal);
   ;}
     break;
 
   case 109:
-#line 2074 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2075 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[0].UInt64Val) != 0 && !isPowerOf2_32((yyvsp[0].UInt64Val)))
+    if (yyvsp[0].UInt64Val != 0 && !isPowerOf2_32(yyvsp[0].UInt64Val))
       error("Alignment must be a power of two");
-    CurGV->setAlignment((yyvsp[0].UInt64Val));
+    CurGV->setAlignment(yyvsp[0].UInt64Val);
     
   ;}
     break;
 
   case 111:
-#line 2091 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2092 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
-    (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[0].PrimType).T); 
-    (yyval.TypeVal).S.makeSignless();
+    yyval.TypeVal.PAT = new PATypeHolder(yyvsp[0].PrimType.T); 
+    yyval.TypeVal.S.makeSignless();
   ;}
     break;
 
   case 113:
-#line 2099 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2100 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
-    (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[0].PrimType).T); 
-    (yyval.TypeVal).S.makeSignless();
+    yyval.TypeVal.PAT = new PATypeHolder(yyvsp[0].PrimType.T); 
+    yyval.TypeVal.S.makeSignless();
   ;}
     break;
 
   case 114:
-#line 2106 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2107 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     if (!UpRefs.empty())
-      error("Invalid upreference in type: " + (*(yyvsp[0].TypeVal).PAT)->getDescription());
-    (yyval.TypeVal) = (yyvsp[0].TypeVal);
+      error("Invalid upreference in type: " + (*yyvsp[0].TypeVal.PAT)->getDescription());
+    yyval.TypeVal = yyvsp[0].TypeVal;
   ;}
     break;
 
   case 127:
-#line 2120 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2121 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
-    (yyval.TypeVal).PAT = new PATypeHolder((yyvsp[0].PrimType).T);
-    (yyval.TypeVal).S.copy((yyvsp[0].PrimType).S);
+    yyval.TypeVal.PAT = new PATypeHolder(yyvsp[0].PrimType.T);
+    yyval.TypeVal.S.copy(yyvsp[0].PrimType.S);
   ;}
     break;
 
   case 128:
-#line 2124 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2125 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.TypeVal).PAT = new PATypeHolder(OpaqueType::get());
-    (yyval.TypeVal).S.makeSignless();
+    yyval.TypeVal.PAT = new PATypeHolder(OpaqueType::get());
+    yyval.TypeVal.S.makeSignless();
   ;}
     break;
 
   case 129:
-#line 2128 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2129 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {            // Named types are also simple types...
-    (yyval.TypeVal).S.copy(getTypeSign((yyvsp[0].ValIDVal)));
-    const Type* tmp = getType((yyvsp[0].ValIDVal));
-    (yyval.TypeVal).PAT = new PATypeHolder(tmp);
+    yyval.TypeVal.S.copy(getTypeSign(yyvsp[0].ValIDVal));
+    const Type* tmp = getType(yyvsp[0].ValIDVal);
+    yyval.TypeVal.PAT = new PATypeHolder(tmp);
   ;}
     break;
 
   case 130:
-#line 2133 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2134 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                   // Type UpReference
-    if ((yyvsp[0].UInt64Val) > (uint64_t)~0U) 
+    if (yyvsp[0].UInt64Val > (uint64_t)~0U) 
       error("Value out of range");
     OpaqueType *OT = OpaqueType::get();        // Use temporary placeholder
-    UpRefs.push_back(UpRefRecord((unsigned)(yyvsp[0].UInt64Val), OT));  // Add to vector...
-    (yyval.TypeVal).PAT = new PATypeHolder(OT);
-    (yyval.TypeVal).S.makeSignless();
+    UpRefs.push_back(UpRefRecord((unsigned)yyvsp[0].UInt64Val, OT));  // Add to vector...
+    yyval.TypeVal.PAT = new PATypeHolder(OT);
+    yyval.TypeVal.S.makeSignless();
     UR_OUT("New Upreference!\n");
   ;}
     break;
 
   case 131:
-#line 2142 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2143 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {           // Function derived type?
-    (yyval.TypeVal).S.makeComposite((yyvsp[-3].TypeVal).S);
+    yyval.TypeVal.S.makeComposite(yyvsp[-3].TypeVal.S);
     std::vector<const Type*> Params;
-    for (std::list<llvm::PATypeInfo>::iterator I = (yyvsp[-1].TypeList)->begin(),
-           E = (yyvsp[-1].TypeList)->end(); I != E; ++I) {
+    for (std::list<llvm::PATypeInfo>::iterator I = yyvsp[-1].TypeList->begin(),
+           E = yyvsp[-1].TypeList->end(); I != E; ++I) {
       Params.push_back(I->PAT->get());
-      (yyval.TypeVal).S.add(I->S);
+      yyval.TypeVal.S.add(I->S);
     }
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
@@ -4394,164 +4276,164 @@ yyreduce:
     }
 
     const FunctionType *FTy =
-      FunctionType::get((yyvsp[-3].TypeVal).PAT->get(), Params, isVarArg, PAL);
+      FunctionType::get(yyvsp[-3].TypeVal.PAT->get(), Params, isVarArg, PAL);
 
-    (yyval.TypeVal).PAT = new PATypeHolder( HandleUpRefs(FTy, (yyval.TypeVal).S) );
-    delete (yyvsp[-3].TypeVal).PAT;  // Delete the return type handle
-    delete (yyvsp[-1].TypeList);      // Delete the argument list
+    yyval.TypeVal.PAT = new PATypeHolder( HandleUpRefs(FTy, yyval.TypeVal.S) );
+    delete yyvsp[-3].TypeVal.PAT;  // Delete the return type handle
+    delete yyvsp[-1].TypeList;      // Delete the argument list
   ;}
     break;
 
   case 132:
-#line 2169 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2170 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {          // Sized array type?
-    (yyval.TypeVal).S.makeComposite((yyvsp[-1].TypeVal).S);
-    (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(ArrayType::get((yyvsp[-1].TypeVal).PAT->get(), 
-                                           (unsigned)(yyvsp[-3].UInt64Val)), (yyval.TypeVal).S));
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.TypeVal.S.makeComposite(yyvsp[-1].TypeVal.S);
+    yyval.TypeVal.PAT = new PATypeHolder(HandleUpRefs(ArrayType::get(yyvsp[-1].TypeVal.PAT->get(), 
+                                           (unsigned)yyvsp[-3].UInt64Val), yyval.TypeVal.S));
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 133:
-#line 2175 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2176 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {          // Vector type?
-    const llvm::Type* ElemTy = (yyvsp[-1].TypeVal).PAT->get();
-    if ((unsigned)(yyvsp[-3].UInt64Val) != (yyvsp[-3].UInt64Val))
+    const llvm::Type* ElemTy = yyvsp[-1].TypeVal.PAT->get();
+    if ((unsigned)yyvsp[-3].UInt64Val != yyvsp[-3].UInt64Val)
        error("Unsigned result not equal to signed result");
     if (!(ElemTy->isInteger() || ElemTy->isFloatingPoint()))
        error("Elements of a VectorType must be integer or floating point");
-    if (!isPowerOf2_32((yyvsp[-3].UInt64Val)))
+    if (!isPowerOf2_32(yyvsp[-3].UInt64Val))
       error("VectorType length should be a power of 2");
-    (yyval.TypeVal).S.makeComposite((yyvsp[-1].TypeVal).S);
-    (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(VectorType::get(ElemTy, 
-                                         (unsigned)(yyvsp[-3].UInt64Val)), (yyval.TypeVal).S));
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.TypeVal.S.makeComposite(yyvsp[-1].TypeVal.S);
+    yyval.TypeVal.PAT = new PATypeHolder(HandleUpRefs(VectorType::get(ElemTy, 
+                                         (unsigned)yyvsp[-3].UInt64Val), yyval.TypeVal.S));
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 134:
-#line 2188 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2189 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                        // Structure type?
     std::vector<const Type*> Elements;
-    (yyval.TypeVal).S.makeComposite();
-    for (std::list<llvm::PATypeInfo>::iterator I = (yyvsp[-1].TypeList)->begin(),
-           E = (yyvsp[-1].TypeList)->end(); I != E; ++I) {
+    yyval.TypeVal.S.makeComposite();
+    for (std::list<llvm::PATypeInfo>::iterator I = yyvsp[-1].TypeList->begin(),
+           E = yyvsp[-1].TypeList->end(); I != E; ++I) {
       Elements.push_back(I->PAT->get());
-      (yyval.TypeVal).S.add(I->S);
+      yyval.TypeVal.S.add(I->S);
     }
-    (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements), (yyval.TypeVal).S));
-    delete (yyvsp[-1].TypeList);
+    yyval.TypeVal.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements), yyval.TypeVal.S));
+    delete yyvsp[-1].TypeList;
   ;}
     break;
 
   case 135:
-#line 2199 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2200 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                                  // Empty structure type?
-    (yyval.TypeVal).PAT = new PATypeHolder(StructType::get(std::vector<const Type*>()));
-    (yyval.TypeVal).S.makeComposite();
+    yyval.TypeVal.PAT = new PATypeHolder(StructType::get(std::vector<const Type*>()));
+    yyval.TypeVal.S.makeComposite();
   ;}
     break;
 
   case 136:
-#line 2203 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2204 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                // Packed Structure type?
-    (yyval.TypeVal).S.makeComposite();
+    yyval.TypeVal.S.makeComposite();
     std::vector<const Type*> Elements;
-    for (std::list<llvm::PATypeInfo>::iterator I = (yyvsp[-2].TypeList)->begin(),
-           E = (yyvsp[-2].TypeList)->end(); I != E; ++I) {
+    for (std::list<llvm::PATypeInfo>::iterator I = yyvsp[-2].TypeList->begin(),
+           E = yyvsp[-2].TypeList->end(); I != E; ++I) {
       Elements.push_back(I->PAT->get());
-      (yyval.TypeVal).S.add(I->S);
+      yyval.TypeVal.S.add(I->S);
       delete I->PAT;
     }
-    (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true), 
-                                           (yyval.TypeVal).S));
-    delete (yyvsp[-2].TypeList);
+    yyval.TypeVal.PAT = new PATypeHolder(HandleUpRefs(StructType::get(Elements, true), 
+                                           yyval.TypeVal.S));
+    delete yyvsp[-2].TypeList;
   ;}
     break;
 
   case 137:
-#line 2216 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2217 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                          // Empty packed structure type?
-    (yyval.TypeVal).PAT = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
-    (yyval.TypeVal).S.makeComposite();
+    yyval.TypeVal.PAT = new PATypeHolder(StructType::get(std::vector<const Type*>(),true));
+    yyval.TypeVal.S.makeComposite();
   ;}
     break;
 
   case 138:
-#line 2220 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2221 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                             // Pointer type?
-    if ((yyvsp[-1].TypeVal).PAT->get() == Type::LabelTy)
+    if (yyvsp[-1].TypeVal.PAT->get() == Type::LabelTy)
       error("Cannot form a pointer to a basic block");
-    (yyval.TypeVal).S.makeComposite((yyvsp[-1].TypeVal).S);
-    (yyval.TypeVal).PAT = new PATypeHolder(HandleUpRefs(PointerType::get((yyvsp[-1].TypeVal).PAT->get()),
-                                           (yyval.TypeVal).S));
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.TypeVal.S.makeComposite(yyvsp[-1].TypeVal.S);
+    yyval.TypeVal.PAT = new PATypeHolder(HandleUpRefs(PointerType::get(yyvsp[-1].TypeVal.PAT->get()),
+                                           yyval.TypeVal.S));
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 139:
-#line 2234 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2235 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.TypeList) = new std::list<PATypeInfo>();
-    (yyval.TypeList)->push_back((yyvsp[0].TypeVal)); 
+    yyval.TypeList = new std::list<PATypeInfo>();
+    yyval.TypeList->push_back(yyvsp[0].TypeVal); 
   ;}
     break;
 
   case 140:
-#line 2238 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2239 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back((yyvsp[0].TypeVal));
+    (yyval.TypeList=yyvsp[-2].TypeList)->push_back(yyvsp[0].TypeVal);
   ;}
     break;
 
   case 142:
-#line 2246 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2247 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S.makeSignless();
-    ((yyval.TypeList)=(yyvsp[-2].TypeList))->push_back(VoidTI);
+    (yyval.TypeList=yyvsp[-2].TypeList)->push_back(VoidTI);
   ;}
     break;
 
   case 143:
-#line 2252 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2253 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.TypeList) = new std::list<PATypeInfo>();
+    yyval.TypeList = new std::list<PATypeInfo>();
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S.makeSignless();
-    (yyval.TypeList)->push_back(VoidTI);
+    yyval.TypeList->push_back(VoidTI);
   ;}
     break;
 
   case 144:
-#line 2259 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2260 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.TypeList) = new std::list<PATypeInfo>();
+    yyval.TypeList = new std::list<PATypeInfo>();
   ;}
     break;
 
   case 145:
-#line 2271 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2272 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized arr
-    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-3].TypeVal).PAT->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>(yyvsp[-3].TypeVal.PAT->get());
     if (ATy == 0)
       error("Cannot make array constant with type: '" + 
-            (yyvsp[-3].TypeVal).PAT->get()->getDescription() + "'");
+            yyvsp[-3].TypeVal.PAT->get()->getDescription() + "'");
     const Type *ETy = ATy->getElementType();
     int NumElements = ATy->getNumElements();
 
     // Verify that we have the correct size...
-    if (NumElements != -1 && NumElements != (int)(yyvsp[-1].ConstVector)->size())
+    if (NumElements != -1 && NumElements != (int)yyvsp[-1].ConstVector->size())
       error("Type mismatch: constant sized array initialized with " +
-            utostr((yyvsp[-1].ConstVector)->size()) +  " arguments, but has size of " + 
+            utostr(yyvsp[-1].ConstVector->size()) +  " arguments, but has size of " + 
             itostr(NumElements) + "");
 
     // Verify all elements are correct type!
     std::vector<Constant*> Elems;
-    for (unsigned i = 0; i < (yyvsp[-1].ConstVector)->size(); i++) {
-      Constant *C = (*(yyvsp[-1].ConstVector))[i].C;
+    for (unsigned i = 0; i < yyvsp[-1].ConstVector->size(); i++) {
+      Constant *C = (*yyvsp[-1].ConstVector)[i].C;
       const Type* ValTy = C->getType();
       if (ETy != ValTy)
         error("Element #" + utostr(i) + " is not of type '" + 
@@ -4559,75 +4441,75 @@ yyreduce:
               ValTy->getDescription() + "'");
       Elems.push_back(C);
     }
-    (yyval.ConstVal).C = ConstantArray::get(ATy, Elems);
-    (yyval.ConstVal).S.copy((yyvsp[-3].TypeVal).S);
-    delete (yyvsp[-3].TypeVal).PAT; 
-    delete (yyvsp[-1].ConstVector);
+    yyval.ConstVal.C = ConstantArray::get(ATy, Elems);
+    yyval.ConstVal.S.copy(yyvsp[-3].TypeVal.S);
+    delete yyvsp[-3].TypeVal.PAT; 
+    delete yyvsp[-1].ConstVector;
   ;}
     break;
 
   case 146:
-#line 2301 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2302 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal).PAT->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>(yyvsp[-2].TypeVal.PAT->get());
     if (ATy == 0)
       error("Cannot make array constant with type: '" + 
-            (yyvsp[-2].TypeVal).PAT->get()->getDescription() + "'");
+            yyvsp[-2].TypeVal.PAT->get()->getDescription() + "'");
     int NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       error("Type mismatch: constant sized array initialized with 0"
             " arguments, but has size of " + itostr(NumElements) +"");
-    (yyval.ConstVal).C = ConstantArray::get(ATy, std::vector<Constant*>());
-    (yyval.ConstVal).S.copy((yyvsp[-2].TypeVal).S);
-    delete (yyvsp[-2].TypeVal).PAT;
+    yyval.ConstVal.C = ConstantArray::get(ATy, std::vector<Constant*>());
+    yyval.ConstVal.S.copy(yyvsp[-2].TypeVal.S);
+    delete yyvsp[-2].TypeVal.PAT;
   ;}
     break;
 
   case 147:
-#line 2314 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2315 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const ArrayType *ATy = dyn_cast<ArrayType>((yyvsp[-2].TypeVal).PAT->get());
+    const ArrayType *ATy = dyn_cast<ArrayType>(yyvsp[-2].TypeVal.PAT->get());
     if (ATy == 0)
       error("Cannot make array constant with type: '" + 
-            (yyvsp[-2].TypeVal).PAT->get()->getDescription() + "'");
+            yyvsp[-2].TypeVal.PAT->get()->getDescription() + "'");
     int NumElements = ATy->getNumElements();
     const Type *ETy = dyn_cast<IntegerType>(ATy->getElementType());
     if (!ETy || cast<IntegerType>(ETy)->getBitWidth() != 8)
       error("String arrays require type i8, not '" + ETy->getDescription() + 
             "'");
-    char *EndStr = UnEscapeLexed((yyvsp[0].StrVal), true);
-    if (NumElements != -1 && NumElements != (EndStr-(yyvsp[0].StrVal)))
+    char *EndStr = UnEscapeLexed(yyvsp[0].StrVal, true);
+    if (NumElements != -1 && NumElements != (EndStr-yyvsp[0].StrVal))
       error("Can't build string constant of size " + 
-            itostr((int)(EndStr-(yyvsp[0].StrVal))) + " when array has size " + 
+            itostr((int)(EndStr-yyvsp[0].StrVal)) + " when array has size " + 
             itostr(NumElements) + "");
     std::vector<Constant*> Vals;
-    for (char *C = (char *)(yyvsp[0].StrVal); C != (char *)EndStr; ++C)
+    for (char *C = (char *)yyvsp[0].StrVal; C != (char *)EndStr; ++C)
       Vals.push_back(ConstantInt::get(ETy, *C));
-    free((yyvsp[0].StrVal));
-    (yyval.ConstVal).C = ConstantArray::get(ATy, Vals);
-    (yyval.ConstVal).S.copy((yyvsp[-2].TypeVal).S);
-    delete (yyvsp[-2].TypeVal).PAT;
+    free(yyvsp[0].StrVal);
+    yyval.ConstVal.C = ConstantArray::get(ATy, Vals);
+    yyval.ConstVal.S.copy(yyvsp[-2].TypeVal.S);
+    delete yyvsp[-2].TypeVal.PAT;
   ;}
     break;
 
   case 148:
-#line 2337 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2338 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized arr
-    const VectorType *PTy = dyn_cast<VectorType>((yyvsp[-3].TypeVal).PAT->get());
+    const VectorType *PTy = dyn_cast<VectorType>(yyvsp[-3].TypeVal.PAT->get());
     if (PTy == 0)
       error("Cannot make packed constant with type: '" + 
-            (yyvsp[-3].TypeVal).PAT->get()->getDescription() + "'");
+            yyvsp[-3].TypeVal.PAT->get()->getDescription() + "'");
     const Type *ETy = PTy->getElementType();
     int NumElements = PTy->getNumElements();
     // Verify that we have the correct size...
-    if (NumElements != -1 && NumElements != (int)(yyvsp[-1].ConstVector)->size())
+    if (NumElements != -1 && NumElements != (int)yyvsp[-1].ConstVector->size())
       error("Type mismatch: constant sized packed initialized with " +
-            utostr((yyvsp[-1].ConstVector)->size()) +  " arguments, but has size of " + 
+            utostr(yyvsp[-1].ConstVector->size()) +  " arguments, but has size of " + 
             itostr(NumElements) + "");
     // Verify all elements are correct type!
     std::vector<Constant*> Elems;
-    for (unsigned i = 0; i < (yyvsp[-1].ConstVector)->size(); i++) {
-      Constant *C = (*(yyvsp[-1].ConstVector))[i].C;
+    for (unsigned i = 0; i < yyvsp[-1].ConstVector->size(); i++) {
+      Constant *C = (*yyvsp[-1].ConstVector)[i].C;
       const Type* ValTy = C->getType();
       if (ETy != ValTy)
         error("Element #" + utostr(i) + " is not of type '" + 
@@ -4635,124 +4517,124 @@ yyreduce:
               ValTy->getDescription() + "'");
       Elems.push_back(C);
     }
-    (yyval.ConstVal).C = ConstantVector::get(PTy, Elems);
-    (yyval.ConstVal).S.copy((yyvsp[-3].TypeVal).S);
-    delete (yyvsp[-3].TypeVal).PAT;
-    delete (yyvsp[-1].ConstVector);
+    yyval.ConstVal.C = ConstantVector::get(PTy, Elems);
+    yyval.ConstVal.S.copy(yyvsp[-3].TypeVal.S);
+    delete yyvsp[-3].TypeVal.PAT;
+    delete yyvsp[-1].ConstVector;
   ;}
     break;
 
   case 149:
-#line 2365 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2366 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const StructType *STy = dyn_cast<StructType>((yyvsp[-3].TypeVal).PAT->get());
+    const StructType *STy = dyn_cast<StructType>(yyvsp[-3].TypeVal.PAT->get());
     if (STy == 0)
       error("Cannot make struct constant with type: '" + 
-            (yyvsp[-3].TypeVal).PAT->get()->getDescription() + "'");
-    if ((yyvsp[-1].ConstVector)->size() != STy->getNumContainedTypes())
+            yyvsp[-3].TypeVal.PAT->get()->getDescription() + "'");
+    if (yyvsp[-1].ConstVector->size() != STy->getNumContainedTypes())
       error("Illegal number of initializers for structure type");
 
     // Check to ensure that constants are compatible with the type initializer!
     std::vector<Constant*> Fields;
-    for (unsigned i = 0, e = (yyvsp[-1].ConstVector)->size(); i != e; ++i) {
-      Constant *C = (*(yyvsp[-1].ConstVector))[i].C;
+    for (unsigned i = 0, e = yyvsp[-1].ConstVector->size(); i != e; ++i) {
+      Constant *C = (*yyvsp[-1].ConstVector)[i].C;
       if (C->getType() != STy->getElementType(i))
         error("Expected type '" + STy->getElementType(i)->getDescription() +
               "' for element #" + utostr(i) + " of structure initializer");
       Fields.push_back(C);
     }
-    (yyval.ConstVal).C = ConstantStruct::get(STy, Fields);
-    (yyval.ConstVal).S.copy((yyvsp[-3].TypeVal).S);
-    delete (yyvsp[-3].TypeVal).PAT;
-    delete (yyvsp[-1].ConstVector);
+    yyval.ConstVal.C = ConstantStruct::get(STy, Fields);
+    yyval.ConstVal.S.copy(yyvsp[-3].TypeVal.S);
+    delete yyvsp[-3].TypeVal.PAT;
+    delete yyvsp[-1].ConstVector;
   ;}
     break;
 
   case 150:
-#line 2387 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2388 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const StructType *STy = dyn_cast<StructType>((yyvsp[-2].TypeVal).PAT->get());
+    const StructType *STy = dyn_cast<StructType>(yyvsp[-2].TypeVal.PAT->get());
     if (STy == 0)
       error("Cannot make struct constant with type: '" + 
-              (yyvsp[-2].TypeVal).PAT->get()->getDescription() + "'");
+              yyvsp[-2].TypeVal.PAT->get()->getDescription() + "'");
     if (STy->getNumContainedTypes() != 0)
       error("Illegal number of initializers for structure type");
-    (yyval.ConstVal).C = ConstantStruct::get(STy, std::vector<Constant*>());
-    (yyval.ConstVal).S.copy((yyvsp[-2].TypeVal).S);
-    delete (yyvsp[-2].TypeVal).PAT;
+    yyval.ConstVal.C = ConstantStruct::get(STy, std::vector<Constant*>());
+    yyval.ConstVal.S.copy(yyvsp[-2].TypeVal.S);
+    delete yyvsp[-2].TypeVal.PAT;
   ;}
     break;
 
   case 151:
-#line 2398 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2399 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const StructType *STy = dyn_cast<StructType>((yyvsp[-5].TypeVal).PAT->get());
+    const StructType *STy = dyn_cast<StructType>(yyvsp[-5].TypeVal.PAT->get());
     if (STy == 0)
       error("Cannot make packed struct constant with type: '" + 
-            (yyvsp[-5].TypeVal).PAT->get()->getDescription() + "'");
-    if ((yyvsp[-2].ConstVector)->size() != STy->getNumContainedTypes())
+            yyvsp[-5].TypeVal.PAT->get()->getDescription() + "'");
+    if (yyvsp[-2].ConstVector->size() != STy->getNumContainedTypes())
       error("Illegal number of initializers for packed structure type");
 
     // Check to ensure that constants are compatible with the type initializer!
     std::vector<Constant*> Fields;
-    for (unsigned i = 0, e = (yyvsp[-2].ConstVector)->size(); i != e; ++i) {
-      Constant *C = (*(yyvsp[-2].ConstVector))[i].C;
+    for (unsigned i = 0, e = yyvsp[-2].ConstVector->size(); i != e; ++i) {
+      Constant *C = (*yyvsp[-2].ConstVector)[i].C;
       if (C->getType() != STy->getElementType(i))
         error("Expected type '" + STy->getElementType(i)->getDescription() +
               "' for element #" + utostr(i) + " of packed struct initializer");
       Fields.push_back(C);
     }
-    (yyval.ConstVal).C = ConstantStruct::get(STy, Fields);
-    (yyval.ConstVal).S.copy((yyvsp[-5].TypeVal).S);
-    delete (yyvsp[-5].TypeVal).PAT; 
-    delete (yyvsp[-2].ConstVector);
+    yyval.ConstVal.C = ConstantStruct::get(STy, Fields);
+    yyval.ConstVal.S.copy(yyvsp[-5].TypeVal.S);
+    delete yyvsp[-5].TypeVal.PAT; 
+    delete yyvsp[-2].ConstVector;
   ;}
     break;
 
   case 152:
-#line 2420 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2421 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const StructType *STy = dyn_cast<StructType>((yyvsp[-4].TypeVal).PAT->get());
+    const StructType *STy = dyn_cast<StructType>(yyvsp[-4].TypeVal.PAT->get());
     if (STy == 0)
       error("Cannot make packed struct constant with type: '" + 
-              (yyvsp[-4].TypeVal).PAT->get()->getDescription() + "'");
+              yyvsp[-4].TypeVal.PAT->get()->getDescription() + "'");
     if (STy->getNumContainedTypes() != 0)
       error("Illegal number of initializers for packed structure type");
-    (yyval.ConstVal).C = ConstantStruct::get(STy, std::vector<Constant*>());
-    (yyval.ConstVal).S.copy((yyvsp[-4].TypeVal).S);
-    delete (yyvsp[-4].TypeVal).PAT;
+    yyval.ConstVal.C = ConstantStruct::get(STy, std::vector<Constant*>());
+    yyval.ConstVal.S.copy(yyvsp[-4].TypeVal.S);
+    delete yyvsp[-4].TypeVal.PAT;
   ;}
     break;
 
   case 153:
-#line 2431 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2432 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal).PAT->get());
+    const PointerType *PTy = dyn_cast<PointerType>(yyvsp[-1].TypeVal.PAT->get());
     if (PTy == 0)
       error("Cannot make null pointer constant with type: '" + 
-            (yyvsp[-1].TypeVal).PAT->get()->getDescription() + "'");
-    (yyval.ConstVal).C = ConstantPointerNull::get(PTy);
-    (yyval.ConstVal).S.copy((yyvsp[-1].TypeVal).S);
-    delete (yyvsp[-1].TypeVal).PAT;
+            yyvsp[-1].TypeVal.PAT->get()->getDescription() + "'");
+    yyval.ConstVal.C = ConstantPointerNull::get(PTy);
+    yyval.ConstVal.S.copy(yyvsp[-1].TypeVal.S);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 154:
-#line 2440 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2441 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ConstVal).C = UndefValue::get((yyvsp[-1].TypeVal).PAT->get());
-    (yyval.ConstVal).S.copy((yyvsp[-1].TypeVal).S);
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.ConstVal.C = UndefValue::get(yyvsp[-1].TypeVal.PAT->get());
+    yyval.ConstVal.S.copy(yyvsp[-1].TypeVal.S);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 155:
-#line 2445 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2446 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const PointerType *Ty = dyn_cast<PointerType>((yyvsp[-1].TypeVal).PAT->get());
+    const PointerType *Ty = dyn_cast<PointerType>(yyvsp[-1].TypeVal.PAT->get());
     if (Ty == 0)
       error("Global const reference must be a pointer type, not" +
-            (yyvsp[-1].TypeVal).PAT->get()->getDescription());
+            yyvsp[-1].TypeVal.PAT->get()->getDescription());
 
     // ConstExprs can exist in the body of a function, thus creating
     // GlobalValues whenever they refer to a variable.  Because we are in
@@ -4763,8 +4645,8 @@ yyreduce:
     //
     Function *SavedCurFn = CurFun.CurrentFunction;
     CurFun.CurrentFunction = 0;
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
-    Value *V = getExistingValue(Ty, (yyvsp[0].ValIDVal));
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-1].TypeVal.S);
+    Value *V = getExistingValue(Ty, yyvsp[0].ValIDVal);
     CurFun.CurrentFunction = SavedCurFn;
 
     // If this is an initializer for a constant pointer, which is referencing a
@@ -4777,14 +4659,14 @@ yyreduce:
 
       // First check to see if the forward references value is already created!
       PerModuleInfo::GlobalRefsType::iterator I =
-        CurModule.GlobalRefs.find(std::make_pair(PT, (yyvsp[0].ValIDVal)));
+        CurModule.GlobalRefs.find(std::make_pair(PT, yyvsp[0].ValIDVal));
     
       if (I != CurModule.GlobalRefs.end()) {
         V = I->second;             // Placeholder already exists, use it...
-        (yyvsp[0].ValIDVal).destroy();
+        yyvsp[0].ValIDVal.destroy();
       } else {
         std::string Name;
-        if ((yyvsp[0].ValIDVal).Type == ValID::NameVal) Name = (yyvsp[0].ValIDVal).Name;
+        if (yyvsp[0].ValIDVal.Type == ValID::NameVal) Name = yyvsp[0].ValIDVal.Name;
 
         // Create the forward referenced global.
         GlobalValue *GV;
@@ -4799,151 +4681,151 @@ yyreduce:
         }
 
         // Keep track of the fact that we have a forward ref to recycle it
-        CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, (yyvsp[0].ValIDVal)), GV));
+        CurModule.GlobalRefs.insert(std::make_pair(std::make_pair(PT, yyvsp[0].ValIDVal), GV));
         V = GV;
       }
     }
-    (yyval.ConstVal).C = cast<GlobalValue>(V);
-    (yyval.ConstVal).S.copy((yyvsp[-1].TypeVal).S);
-    delete (yyvsp[-1].TypeVal).PAT;            // Free the type handle
+    yyval.ConstVal.C = cast<GlobalValue>(V);
+    yyval.ConstVal.S.copy(yyvsp[-1].TypeVal.S);
+    delete yyvsp[-1].TypeVal.PAT;            // Free the type handle
   ;}
     break;
 
   case 156:
-#line 2504 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2505 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[-1].TypeVal).PAT->get() != (yyvsp[0].ConstVal).C->getType())
+    if (yyvsp[-1].TypeVal.PAT->get() != yyvsp[0].ConstVal.C->getType())
       error("Mismatched types for constant expression");
-    (yyval.ConstVal) = (yyvsp[0].ConstVal);
-    (yyval.ConstVal).S.copy((yyvsp[-1].TypeVal).S);
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.ConstVal = yyvsp[0].ConstVal;
+    yyval.ConstVal.S.copy(yyvsp[-1].TypeVal.S);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 157:
-#line 2511 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2512 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
+    const Type *Ty = yyvsp[-1].TypeVal.PAT->get();
     if (isa<FunctionType>(Ty) || Ty == Type::LabelTy || isa<OpaqueType>(Ty))
       error("Cannot create a null initialized value of this type");
-    (yyval.ConstVal).C = Constant::getNullValue(Ty);
-    (yyval.ConstVal).S.copy((yyvsp[-1].TypeVal).S);
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.ConstVal.C = Constant::getNullValue(Ty);
+    yyval.ConstVal.S.copy(yyvsp[-1].TypeVal.S);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 158:
-#line 2519 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2520 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {      // integral constants
-    const Type *Ty = (yyvsp[-1].PrimType).T;
-    if (!ConstantInt::isValueValidForType(Ty, (yyvsp[0].SInt64Val)))
+    const Type *Ty = yyvsp[-1].PrimType.T;
+    if (!ConstantInt::isValueValidForType(Ty, yyvsp[0].SInt64Val))
       error("Constant value doesn't fit in type");
-    (yyval.ConstVal).C = ConstantInt::get(Ty, (yyvsp[0].SInt64Val));
-    (yyval.ConstVal).S.makeSigned();
+    yyval.ConstVal.C = ConstantInt::get(Ty, yyvsp[0].SInt64Val);
+    yyval.ConstVal.S.makeSigned();
   ;}
     break;
 
   case 159:
-#line 2526 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2527 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {            // integral constants
-    const Type *Ty = (yyvsp[-1].PrimType).T;
-    if (!ConstantInt::isValueValidForType(Ty, (yyvsp[0].UInt64Val)))
+    const Type *Ty = yyvsp[-1].PrimType.T;
+    if (!ConstantInt::isValueValidForType(Ty, yyvsp[0].UInt64Val))
       error("Constant value doesn't fit in type");
-    (yyval.ConstVal).C = ConstantInt::get(Ty, (yyvsp[0].UInt64Val));
-    (yyval.ConstVal).S.makeUnsigned();
+    yyval.ConstVal.C = ConstantInt::get(Ty, yyvsp[0].UInt64Val);
+    yyval.ConstVal.S.makeUnsigned();
   ;}
     break;
 
   case 160:
-#line 2533 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2534 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                      // Boolean constants
-    (yyval.ConstVal).C = ConstantInt::get(Type::Int1Ty, true);
-    (yyval.ConstVal).S.makeUnsigned();
+    yyval.ConstVal.C = ConstantInt::get(Type::Int1Ty, true);
+    yyval.ConstVal.S.makeUnsigned();
   ;}
     break;
 
   case 161:
-#line 2537 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2538 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                     // Boolean constants
-    (yyval.ConstVal).C = ConstantInt::get(Type::Int1Ty, false);
-    (yyval.ConstVal).S.makeUnsigned();
+    yyval.ConstVal.C = ConstantInt::get(Type::Int1Ty, false);
+    yyval.ConstVal.S.makeUnsigned();
   ;}
     break;
 
   case 162:
-#line 2541 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2542 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                   // Float & Double constants
-    if (!ConstantFP::isValueValidForType((yyvsp[-1].PrimType).T, (yyvsp[0].FPVal)))
+    if (!ConstantFP::isValueValidForType(yyvsp[-1].PrimType.T, yyvsp[0].FPVal))
       error("Floating point constant invalid for type");
-    (yyval.ConstVal).C = ConstantFP::get((yyvsp[-1].PrimType).T, (yyvsp[0].FPVal));
-    (yyval.ConstVal).S.makeSignless();
+    yyval.ConstVal.C = ConstantFP::get(yyvsp[-1].PrimType.T, yyvsp[0].FPVal);
+    yyval.ConstVal.S.makeSignless();
   ;}
     break;
 
   case 163:
-#line 2550 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2551 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type* SrcTy = (yyvsp[-3].ConstVal).C->getType();
-    const Type* DstTy = (yyvsp[-1].TypeVal).PAT->get();
-    Signedness SrcSign((yyvsp[-3].ConstVal).S);
-    Signedness DstSign((yyvsp[-1].TypeVal).S);
+    const Type* SrcTy = yyvsp[-3].ConstVal.C->getType();
+    const Type* DstTy = yyvsp[-1].TypeVal.PAT->get();
+    Signedness SrcSign(yyvsp[-3].ConstVal.S);
+    Signedness DstSign(yyvsp[-1].TypeVal.S);
     if (!SrcTy->isFirstClassType())
       error("cast constant expression from a non-primitive type: '" +
             SrcTy->getDescription() + "'");
     if (!DstTy->isFirstClassType())
       error("cast constant expression to a non-primitive type: '" +
             DstTy->getDescription() + "'");
-    (yyval.ConstVal).C = cast<Constant>(getCast((yyvsp[-5].CastOpVal), (yyvsp[-3].ConstVal).C, SrcSign, DstTy, DstSign));
-    (yyval.ConstVal).S.copy(DstSign);
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.ConstVal.C = cast<Constant>(getCast(yyvsp[-5].CastOpVal, yyvsp[-3].ConstVal.C, SrcSign, DstTy, DstSign));
+    yyval.ConstVal.S.copy(DstSign);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 164:
-#line 2565 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2566 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-2].ConstVal).C->getType();
+    const Type *Ty = yyvsp[-2].ConstVal.C->getType();
     if (!isa<PointerType>(Ty))
       error("GetElementPtr requires a pointer operand");
 
     std::vector<Constant*> CIndices;
-    upgradeGEPCEIndices((yyvsp[-2].ConstVal).C->getType(), (yyvsp[-1].ValueList), CIndices);
+    upgradeGEPCEIndices(yyvsp[-2].ConstVal.C->getType(), yyvsp[-1].ValueList, CIndices);
 
-    delete (yyvsp[-1].ValueList);
-    (yyval.ConstVal).C = ConstantExpr::getGetElementPtr((yyvsp[-2].ConstVal).C, &CIndices[0], CIndices.size());
-    (yyval.ConstVal).S.copy(getElementSign((yyvsp[-2].ConstVal), CIndices));
+    delete yyvsp[-1].ValueList;
+    yyval.ConstVal.C = ConstantExpr::getGetElementPtr(yyvsp[-2].ConstVal.C, &CIndices[0], CIndices.size());
+    yyval.ConstVal.S.copy(getElementSign(yyvsp[-2].ConstVal, CIndices));
   ;}
     break;
 
   case 165:
-#line 2577 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2578 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!(yyvsp[-5].ConstVal).C->getType()->isInteger() ||
-        cast<IntegerType>((yyvsp[-5].ConstVal).C->getType())->getBitWidth() != 1)
+    if (!yyvsp[-5].ConstVal.C->getType()->isInteger() ||
+        cast<IntegerType>(yyvsp[-5].ConstVal.C->getType())->getBitWidth() != 1)
       error("Select condition must be bool type");
-    if ((yyvsp[-3].ConstVal).C->getType() != (yyvsp[-1].ConstVal).C->getType())
+    if (yyvsp[-3].ConstVal.C->getType() != yyvsp[-1].ConstVal.C->getType())
       error("Select operand types must match");
-    (yyval.ConstVal).C = ConstantExpr::getSelect((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.copy((yyvsp[-3].ConstVal).S);
+    yyval.ConstVal.C = ConstantExpr::getSelect(yyvsp[-5].ConstVal.C, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.copy(yyvsp[-3].ConstVal.S);
   ;}
     break;
 
   case 166:
-#line 2586 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2587 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-3].ConstVal).C->getType();
-    if (Ty != (yyvsp[-1].ConstVal).C->getType())
+    const Type *Ty = yyvsp[-3].ConstVal.C->getType();
+    if (Ty != yyvsp[-1].ConstVal.C->getType())
       error("Binary operator types must match");
     // First, make sure we're dealing with the right opcode by upgrading from
     // obsolete versions.
-    Instruction::BinaryOps Opcode = getBinaryOp((yyvsp[-5].BinaryOpVal), Ty, (yyvsp[-3].ConstVal).S);
+    Instruction::BinaryOps Opcode = getBinaryOp(yyvsp[-5].BinaryOpVal, Ty, yyvsp[-3].ConstVal.S);
 
     // HACK: llvm 1.3 and earlier used to emit invalid pointer constant exprs.
     // To retain backward compatibility with these early compilers, we emit a
     // cast to the appropriate integer type automatically if we are in the
     // broken case.  See PR424 for more information.
     if (!isa<PointerType>(Ty)) {
-      (yyval.ConstVal).C = ConstantExpr::get(Opcode, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
+      yyval.ConstVal.C = ConstantExpr::get(Opcode, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
     } else {
       const Type *IntPtrTy = 0;
       switch (CurModule.CurrentModule->getPointerSize()) {
@@ -4951,165 +4833,165 @@ yyreduce:
       case Module::Pointer64: IntPtrTy = Type::Int64Ty; break;
       default: error("invalid pointer binary constant expr");
       }
-      (yyval.ConstVal).C = ConstantExpr::get(Opcode, 
-             ConstantExpr::getCast(Instruction::PtrToInt, (yyvsp[-3].ConstVal).C, IntPtrTy),
-             ConstantExpr::getCast(Instruction::PtrToInt, (yyvsp[-1].ConstVal).C, IntPtrTy));
-      (yyval.ConstVal).C = ConstantExpr::getCast(Instruction::IntToPtr, (yyval.ConstVal).C, Ty);
+      yyval.ConstVal.C = ConstantExpr::get(Opcode, 
+             ConstantExpr::getCast(Instruction::PtrToInt, yyvsp[-3].ConstVal.C, IntPtrTy),
+             ConstantExpr::getCast(Instruction::PtrToInt, yyvsp[-1].ConstVal.C, IntPtrTy));
+      yyval.ConstVal.C = ConstantExpr::getCast(Instruction::IntToPtr, yyval.ConstVal.C, Ty);
     }
-    (yyval.ConstVal).S.copy((yyvsp[-3].ConstVal).S); 
+    yyval.ConstVal.S.copy(yyvsp[-3].ConstVal.S); 
   ;}
     break;
 
   case 167:
-#line 2614 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2615 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type* Ty = (yyvsp[-3].ConstVal).C->getType();
-    if (Ty != (yyvsp[-1].ConstVal).C->getType())
+    const Type* Ty = yyvsp[-3].ConstVal.C->getType();
+    if (Ty != yyvsp[-1].ConstVal.C->getType())
       error("Logical operator types must match");
     if (!Ty->isInteger()) {
       if (!isa<VectorType>(Ty) || 
           !cast<VectorType>(Ty)->getElementType()->isInteger())
         error("Logical operator requires integer operands");
     }
-    Instruction::BinaryOps Opcode = getBinaryOp((yyvsp[-5].BinaryOpVal), Ty, (yyvsp[-3].ConstVal).S);
-    (yyval.ConstVal).C = ConstantExpr::get(Opcode, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.copy((yyvsp[-3].ConstVal).S);
+    Instruction::BinaryOps Opcode = getBinaryOp(yyvsp[-5].BinaryOpVal, Ty, yyvsp[-3].ConstVal.S);
+    yyval.ConstVal.C = ConstantExpr::get(Opcode, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.copy(yyvsp[-3].ConstVal.S);
   ;}
     break;
 
   case 168:
-#line 2627 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2628 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type* Ty = (yyvsp[-3].ConstVal).C->getType();
-    if (Ty != (yyvsp[-1].ConstVal).C->getType())
+    const Type* Ty = yyvsp[-3].ConstVal.C->getType();
+    if (Ty != yyvsp[-1].ConstVal.C->getType())
       error("setcc operand types must match");
     unsigned short pred;
-    Instruction::OtherOps Opcode = getCompareOp((yyvsp[-5].BinaryOpVal), pred, Ty, (yyvsp[-3].ConstVal).S);
-    (yyval.ConstVal).C = ConstantExpr::getCompare(Opcode, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.makeUnsigned();
+    Instruction::OtherOps Opcode = getCompareOp(yyvsp[-5].BinaryOpVal, pred, Ty, yyvsp[-3].ConstVal.S);
+    yyval.ConstVal.C = ConstantExpr::getCompare(Opcode, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.makeUnsigned();
   ;}
     break;
 
   case 169:
-#line 2636 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2637 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[-3].ConstVal).C->getType() != (yyvsp[-1].ConstVal).C->getType()) 
+    if (yyvsp[-3].ConstVal.C->getType() != yyvsp[-1].ConstVal.C->getType()) 
       error("icmp operand types must match");
-    (yyval.ConstVal).C = ConstantExpr::getCompare((yyvsp[-5].IPred), (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.makeUnsigned();
+    yyval.ConstVal.C = ConstantExpr::getCompare(yyvsp[-5].IPred, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.makeUnsigned();
   ;}
     break;
 
   case 170:
-#line 2642 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2643 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[-3].ConstVal).C->getType() != (yyvsp[-1].ConstVal).C->getType()) 
+    if (yyvsp[-3].ConstVal.C->getType() != yyvsp[-1].ConstVal.C->getType()) 
       error("fcmp operand types must match");
-    (yyval.ConstVal).C = ConstantExpr::getCompare((yyvsp[-5].FPred), (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.makeUnsigned();
+    yyval.ConstVal.C = ConstantExpr::getCompare(yyvsp[-5].FPred, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.makeUnsigned();
   ;}
     break;
 
   case 171:
-#line 2648 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2649 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!(yyvsp[-1].ConstVal).C->getType()->isInteger() ||
-        cast<IntegerType>((yyvsp[-1].ConstVal).C->getType())->getBitWidth() != 8)
+    if (!yyvsp[-1].ConstVal.C->getType()->isInteger() ||
+        cast<IntegerType>(yyvsp[-1].ConstVal.C->getType())->getBitWidth() != 8)
       error("Shift count for shift constant must be unsigned byte");
-    const Type* Ty = (yyvsp[-3].ConstVal).C->getType();
-    if (!(yyvsp[-3].ConstVal).C->getType()->isInteger())
+    const Type* Ty = yyvsp[-3].ConstVal.C->getType();
+    if (!yyvsp[-3].ConstVal.C->getType()->isInteger())
       error("Shift constant expression requires integer operand");
-    Constant *ShiftAmt = ConstantExpr::getZExt((yyvsp[-1].ConstVal).C, Ty);
-    (yyval.ConstVal).C = ConstantExpr::get(getBinaryOp((yyvsp[-5].BinaryOpVal), Ty, (yyvsp[-3].ConstVal).S), (yyvsp[-3].ConstVal).C, ShiftAmt);
-    (yyval.ConstVal).S.copy((yyvsp[-3].ConstVal).S);
+    Constant *ShiftAmt = ConstantExpr::getZExt(yyvsp[-1].ConstVal.C, Ty);
+    yyval.ConstVal.C = ConstantExpr::get(getBinaryOp(yyvsp[-5].BinaryOpVal, Ty, yyvsp[-3].ConstVal.S), yyvsp[-3].ConstVal.C, ShiftAmt);
+    yyval.ConstVal.S.copy(yyvsp[-3].ConstVal.S);
   ;}
     break;
 
   case 172:
-#line 2659 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2660 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!ExtractElementInst::isValidOperands((yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C))
+    if (!ExtractElementInst::isValidOperands(yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C))
       error("Invalid extractelement operands");
-    (yyval.ConstVal).C = ConstantExpr::getExtractElement((yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.copy((yyvsp[-3].ConstVal).S.get(0));
+    yyval.ConstVal.C = ConstantExpr::getExtractElement(yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.copy(yyvsp[-3].ConstVal.S.get(0));
   ;}
     break;
 
   case 173:
-#line 2665 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2666 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!InsertElementInst::isValidOperands((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C))
+    if (!InsertElementInst::isValidOperands(yyvsp[-5].ConstVal.C, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C))
       error("Invalid insertelement operands");
-    (yyval.ConstVal).C = ConstantExpr::getInsertElement((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.copy((yyvsp[-5].ConstVal).S);
+    yyval.ConstVal.C = ConstantExpr::getInsertElement(yyvsp[-5].ConstVal.C, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.copy(yyvsp[-5].ConstVal.S);
   ;}
     break;
 
   case 174:
-#line 2671 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2672 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!ShuffleVectorInst::isValidOperands((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C))
+    if (!ShuffleVectorInst::isValidOperands(yyvsp[-5].ConstVal.C, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C))
       error("Invalid shufflevector operands");
-    (yyval.ConstVal).C = ConstantExpr::getShuffleVector((yyvsp[-5].ConstVal).C, (yyvsp[-3].ConstVal).C, (yyvsp[-1].ConstVal).C);
-    (yyval.ConstVal).S.copy((yyvsp[-5].ConstVal).S);
+    yyval.ConstVal.C = ConstantExpr::getShuffleVector(yyvsp[-5].ConstVal.C, yyvsp[-3].ConstVal.C, yyvsp[-1].ConstVal.C);
+    yyval.ConstVal.S.copy(yyvsp[-5].ConstVal.S);
   ;}
     break;
 
   case 175:
-#line 2682 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { ((yyval.ConstVector) = (yyvsp[-2].ConstVector))->push_back((yyvsp[0].ConstVal)); ;}
+#line 2683 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { (yyval.ConstVector = yyvsp[-2].ConstVector)->push_back(yyvsp[0].ConstVal); ;}
     break;
 
   case 176:
-#line 2683 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2684 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ConstVector) = new std::vector<ConstInfo>();
-    (yyval.ConstVector)->push_back((yyvsp[0].ConstVal));
+    yyval.ConstVector = new std::vector<ConstInfo>();
+    yyval.ConstVector->push_back(yyvsp[0].ConstVal);
   ;}
     break;
 
   case 177:
-#line 2692 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.BoolVal) = false; ;}
+#line 2693 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.BoolVal = false; ;}
     break;
 
   case 178:
-#line 2693 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.BoolVal) = true; ;}
+#line 2694 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.BoolVal = true; ;}
     break;
 
   case 179:
-#line 2705 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2706 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ModuleVal) = ParserResult = (yyvsp[0].ModuleVal);
+    yyval.ModuleVal = ParserResult = yyvsp[0].ModuleVal;
     CurModule.ModuleDone();
   ;}
     break;
 
   case 180:
-#line 2714 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ModuleVal) = (yyvsp[-1].ModuleVal); CurFun.FunctionDone(); ;}
+#line 2715 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ModuleVal = yyvsp[-1].ModuleVal; CurFun.FunctionDone(); ;}
     break;
 
   case 181:
-#line 2715 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ModuleVal) = (yyvsp[-1].ModuleVal); ;}
+#line 2716 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ModuleVal = yyvsp[-1].ModuleVal; ;}
     break;
 
   case 182:
-#line 2716 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ModuleVal) = (yyvsp[-3].ModuleVal); ;}
+#line 2717 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ModuleVal = yyvsp[-3].ModuleVal; ;}
     break;
 
   case 183:
-#line 2717 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ModuleVal) = (yyvsp[-1].ModuleVal); ;}
+#line 2718 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ModuleVal = yyvsp[-1].ModuleVal; ;}
     break;
 
   case 184:
-#line 2718 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2719 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ModuleVal) = CurModule.CurrentModule;
+    yyval.ModuleVal = CurModule.CurrentModule;
     // Emit an error if there are any unresolved types left.
     if (!CurModule.LateResolveTypes.empty()) {
       const ValID &DID = CurModule.LateResolveTypes.begin()->first;
@@ -5123,7 +5005,7 @@ yyreduce:
     break;
 
   case 185:
-#line 2734 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2735 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
@@ -5134,123 +5016,123 @@ yyreduce:
     // If types are not resolved eagerly, then the two types will not be
     // determined to be the same type!
     //
-    ResolveTypeTo((yyvsp[-2].StrVal), (yyvsp[0].TypeVal).PAT->get(), (yyvsp[0].TypeVal).S);
+    ResolveTypeTo(yyvsp[-2].StrVal, yyvsp[0].TypeVal.PAT->get(), yyvsp[0].TypeVal.S);
 
-    if (!setTypeName((yyvsp[0].TypeVal), (yyvsp[-2].StrVal)) && !(yyvsp[-2].StrVal)) {
+    if (!setTypeName(yyvsp[0].TypeVal, yyvsp[-2].StrVal) && !yyvsp[-2].StrVal) {
       // If this is a numbered type that is not a redefinition, add it to the 
       // slot table.
-      CurModule.Types.push_back((yyvsp[0].TypeVal).PAT->get());
-      CurModule.TypeSigns.push_back((yyvsp[0].TypeVal).S);
+      CurModule.Types.push_back(yyvsp[0].TypeVal.PAT->get());
+      CurModule.TypeSigns.push_back(yyvsp[0].TypeVal.S);
     }
-    delete (yyvsp[0].TypeVal).PAT;
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 186:
-#line 2754 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2755 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {       // Function prototypes can be in const pool
   ;}
     break;
 
   case 187:
-#line 2756 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2757 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {  // Asm blocks can be in the const pool
   ;}
     break;
 
   case 188:
-#line 2758 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2759 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[0].ConstVal).C == 0) 
+    if (yyvsp[0].ConstVal.C == 0) 
       error("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), (yyvsp[-2].Linkage), (yyvsp[-1].BoolVal), (yyvsp[0].ConstVal).C->getType(), (yyvsp[0].ConstVal).C, (yyvsp[0].ConstVal).S);
+    CurGV = ParseGlobalVariable(yyvsp[-3].StrVal, yyvsp[-2].Linkage, yyvsp[-1].BoolVal, yyvsp[0].ConstVal.C->getType(), yyvsp[0].ConstVal.C, yyvsp[0].ConstVal.S);
   ;}
     break;
 
   case 189:
-#line 2762 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2763 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 190:
-#line 2765 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2766 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
-    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalLinkage, (yyvsp[-1].BoolVal), Ty, 0,
-                                (yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+    const Type *Ty = yyvsp[0].TypeVal.PAT->get();
+    CurGV = ParseGlobalVariable(yyvsp[-3].StrVal, GlobalValue::ExternalLinkage, yyvsp[-1].BoolVal, Ty, 0,
+                                yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 191:
-#line 2770 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2771 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 192:
-#line 2773 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2774 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
-    CurGV = ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::DLLImportLinkage, (yyvsp[-1].BoolVal), Ty, 0,
-                                (yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+    const Type *Ty = yyvsp[0].TypeVal.PAT->get();
+    CurGV = ParseGlobalVariable(yyvsp[-3].StrVal, GlobalValue::DLLImportLinkage, yyvsp[-1].BoolVal, Ty, 0,
+                                yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 193:
-#line 2778 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2779 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 194:
-#line 2781 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2782 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
+    const Type *Ty = yyvsp[0].TypeVal.PAT->get();
     CurGV = 
-      ParseGlobalVariable((yyvsp[-3].StrVal), GlobalValue::ExternalWeakLinkage, (yyvsp[-1].BoolVal), Ty, 0, 
-                          (yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+      ParseGlobalVariable(yyvsp[-3].StrVal, GlobalValue::ExternalWeakLinkage, yyvsp[-1].BoolVal, Ty, 0, 
+                          yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 195:
-#line 2787 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2788 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     CurGV = 0;
   ;}
     break;
 
   case 196:
-#line 2790 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2791 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
   ;}
     break;
 
   case 197:
-#line 2792 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2793 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
   ;}
     break;
 
   case 198:
-#line 2794 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2795 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
   ;}
     break;
 
   case 199:
-#line 2799 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2800 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     const std::string &AsmSoFar = CurModule.CurrentModule->getModuleInlineAsm();
-    char *EndStr = UnEscapeLexed((yyvsp[0].StrVal), true);
-    std::string NewAsm((yyvsp[0].StrVal), EndStr);
-    free((yyvsp[0].StrVal));
+    char *EndStr = UnEscapeLexed(yyvsp[0].StrVal, true);
+    std::string NewAsm(yyvsp[0].StrVal, EndStr);
+    free(yyvsp[0].StrVal);
 
     if (AsmSoFar.empty())
       CurModule.CurrentModule->setModuleInlineAsm(NewAsm);
@@ -5260,149 +5142,149 @@ yyreduce:
     break;
 
   case 200:
-#line 2813 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Endianness) = Module::BigEndian; ;}
+#line 2814 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Endianness = Module::BigEndian; ;}
     break;
 
   case 201:
-#line 2814 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Endianness) = Module::LittleEndian; ;}
+#line 2815 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Endianness = Module::LittleEndian; ;}
     break;
 
   case 202:
-#line 2818 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2819 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    CurModule.setEndianness((yyvsp[0].Endianness));
+    CurModule.setEndianness(yyvsp[0].Endianness);
   ;}
     break;
 
   case 203:
-#line 2821 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2822 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[0].UInt64Val) == 32)
+    if (yyvsp[0].UInt64Val == 32)
       CurModule.setPointerSize(Module::Pointer32);
-    else if ((yyvsp[0].UInt64Val) == 64)
+    else if (yyvsp[0].UInt64Val == 64)
       CurModule.setPointerSize(Module::Pointer64);
     else
-      error("Invalid pointer size: '" + utostr((yyvsp[0].UInt64Val)) + "'");
+      error("Invalid pointer size: '" + utostr(yyvsp[0].UInt64Val) + "'");
   ;}
     break;
 
   case 204:
-#line 2829 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2830 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    CurModule.CurrentModule->setTargetTriple((yyvsp[0].StrVal));
-    free((yyvsp[0].StrVal));
+    CurModule.CurrentModule->setTargetTriple(yyvsp[0].StrVal);
+    free(yyvsp[0].StrVal);
   ;}
     break;
 
   case 205:
-#line 2833 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2834 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    CurModule.CurrentModule->setDataLayout((yyvsp[0].StrVal));
-    free((yyvsp[0].StrVal));
+    CurModule.CurrentModule->setDataLayout(yyvsp[0].StrVal);
+    free(yyvsp[0].StrVal);
   ;}
     break;
 
   case 207:
-#line 2844 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2845 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-      CurModule.CurrentModule->addLibrary((yyvsp[0].StrVal));
-      free((yyvsp[0].StrVal));
+      CurModule.CurrentModule->addLibrary(yyvsp[0].StrVal);
+      free(yyvsp[0].StrVal);
   ;}
     break;
 
   case 208:
-#line 2848 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2849 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    CurModule.CurrentModule->addLibrary((yyvsp[0].StrVal));
-    free((yyvsp[0].StrVal));
+    CurModule.CurrentModule->addLibrary(yyvsp[0].StrVal);
+    free(yyvsp[0].StrVal);
   ;}
     break;
 
   case 209:
-#line 2852 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2853 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { ;}
     break;
 
   case 213:
-#line 2865 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.StrVal) = 0; ;}
+#line 2866 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.StrVal = 0; ;}
     break;
 
   case 214:
-#line 2869 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2870 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[-1].TypeVal).PAT->get() == Type::VoidTy)
+    if (yyvsp[-1].TypeVal.PAT->get() == Type::VoidTy)
       error("void typed arguments are invalid");
-    (yyval.ArgVal) = new std::pair<PATypeInfo, char*>((yyvsp[-1].TypeVal), (yyvsp[0].StrVal));
+    yyval.ArgVal = new std::pair<PATypeInfo, char*>(yyvsp[-1].TypeVal, yyvsp[0].StrVal);
   ;}
     break;
 
   case 215:
-#line 2877 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2878 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ArgList) = (yyvsp[-2].ArgList);
-    (yyval.ArgList)->push_back(*(yyvsp[0].ArgVal));
-    delete (yyvsp[0].ArgVal);
+    yyval.ArgList = yyvsp[-2].ArgList;
+    yyval.ArgList->push_back(*yyvsp[0].ArgVal);
+    delete yyvsp[0].ArgVal;
   ;}
     break;
 
   case 216:
-#line 2882 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2883 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ArgList) = new std::vector<std::pair<PATypeInfo,char*> >();
-    (yyval.ArgList)->push_back(*(yyvsp[0].ArgVal));
-    delete (yyvsp[0].ArgVal);
+    yyval.ArgList = new std::vector<std::pair<PATypeInfo,char*> >();
+    yyval.ArgList->push_back(*yyvsp[0].ArgVal);
+    delete yyvsp[0].ArgVal;
   ;}
     break;
 
   case 217:
-#line 2890 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ArgList) = (yyvsp[0].ArgList); ;}
+#line 2891 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ArgList = yyvsp[0].ArgList; ;}
     break;
 
   case 218:
-#line 2891 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2892 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ArgList) = (yyvsp[-2].ArgList);
+    yyval.ArgList = yyvsp[-2].ArgList;
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S.makeSignless();
-    (yyval.ArgList)->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
+    yyval.ArgList->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
   ;}
     break;
 
   case 219:
-#line 2898 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2899 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ArgList) = new std::vector<std::pair<PATypeInfo,char*> >();
+    yyval.ArgList = new std::vector<std::pair<PATypeInfo,char*> >();
     PATypeInfo VoidTI;
     VoidTI.PAT = new PATypeHolder(Type::VoidTy);
     VoidTI.S.makeSignless();
-    (yyval.ArgList)->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
+    yyval.ArgList->push_back(std::pair<PATypeInfo, char*>(VoidTI, 0));
   ;}
     break;
 
   case 220:
-#line 2905 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ArgList) = 0; ;}
+#line 2906 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ArgList = 0; ;}
     break;
 
   case 221:
-#line 2909 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 2910 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    UnEscapeLexed((yyvsp[-5].StrVal));
-    std::string FunctionName((yyvsp[-5].StrVal));
-    free((yyvsp[-5].StrVal));  // Free strdup'd memory!
+    UnEscapeLexed(yyvsp[-5].StrVal);
+    std::string FunctionName(yyvsp[-5].StrVal);
+    free(yyvsp[-5].StrVal);  // Free strdup'd memory!
 
-    const Type* RetTy = (yyvsp[-6].TypeVal).PAT->get();
+    const Type* RetTy = yyvsp[-6].TypeVal.PAT->get();
     
     if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
       error("LLVM functions cannot return aggregate types");
 
     Signedness FTySign;
-    FTySign.makeComposite((yyvsp[-6].TypeVal).S);
+    FTySign.makeComposite(yyvsp[-6].TypeVal.S);
     std::vector<const Type*> ParamTyList;
 
     // In LLVM 2.0 the signatures of three varargs intrinsics changed to take
@@ -5413,9 +5295,9 @@ yyreduce:
     } else if (FunctionName == "llvm.va_copy") {
       ParamTyList.push_back(PointerType::get(Type::Int8Ty));
       ParamTyList.push_back(PointerType::get(Type::Int8Ty));
-    } else if ((yyvsp[-3].ArgList)) {   // If there are arguments...
+    } else if (yyvsp[-3].ArgList) {   // If there are arguments...
       for (std::vector<std::pair<PATypeInfo,char*> >::iterator 
-           I = (yyvsp[-3].ArgList)->begin(), E = (yyvsp[-3].ArgList)->end(); I != E; ++I) {
+           I = yyvsp[-3].ArgList->begin(), E = yyvsp[-3].ArgList->end(); I != E; ++I) {
         const Type *Ty = I->first.PAT->get();
         ParamTyList.push_back(Ty);
         FTySign.add(I->first.S);
@@ -5429,7 +5311,7 @@ yyreduce:
     // Convert the CSRet calling convention into the corresponding parameter
     // attribute.
     ParamAttrsList *PAL = 0;
-    if ((yyvsp[-7].UIntVal) == OldCallingConv::CSRet) {
+    if (yyvsp[-7].UIntVal == OldCallingConv::CSRet) {
       ParamAttrsVector Attrs;
       ParamAttrsWithIndex PAWI;
       PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
@@ -5440,7 +5322,7 @@ yyreduce:
     const FunctionType *FT = 
       FunctionType::get(RetTy, ParamTyList, isVarArg, PAL);
     const PointerType *PFT = PointerType::get(FT);
-    delete (yyvsp[-6].TypeVal).PAT;
+    delete yyvsp[-6].TypeVal.PAT;
 
     ValID ID;
     if (!FunctionName.empty()) {
@@ -5549,163 +5431,163 @@ yyreduce:
       // argument to another function.
       Fn->setLinkage(CurFun.Linkage);
     }
-    Fn->setCallingConv(upgradeCallingConv((yyvsp[-7].UIntVal)));
-    Fn->setAlignment((yyvsp[0].UIntVal));
-    if ((yyvsp[-1].StrVal)) {
-      Fn->setSection((yyvsp[-1].StrVal));
-      free((yyvsp[-1].StrVal));
+    Fn->setCallingConv(upgradeCallingConv(yyvsp[-7].UIntVal));
+    Fn->setAlignment(yyvsp[0].UIntVal);
+    if (yyvsp[-1].StrVal) {
+      Fn->setSection(yyvsp[-1].StrVal);
+      free(yyvsp[-1].StrVal);
     }
 
     // Add all of the arguments we parsed to the function...
-    if ((yyvsp[-3].ArgList)) {                     // Is null if empty...
+    if (yyvsp[-3].ArgList) {                     // Is null if empty...
       if (isVarArg) {  // Nuke the last entry
-        assert((yyvsp[-3].ArgList)->back().first.PAT->get() == Type::VoidTy && 
-               (yyvsp[-3].ArgList)->back().second == 0 && "Not a varargs marker");
-        delete (yyvsp[-3].ArgList)->back().first.PAT;
-        (yyvsp[-3].ArgList)->pop_back();  // Delete the last entry
+        assert(yyvsp[-3].ArgList->back().first.PAT->get() == Type::VoidTy && 
+               yyvsp[-3].ArgList->back().second == 0 && "Not a varargs marker");
+        delete yyvsp[-3].ArgList->back().first.PAT;
+        yyvsp[-3].ArgList->pop_back();  // Delete the last entry
       }
       Function::arg_iterator ArgIt = Fn->arg_begin();
       Function::arg_iterator ArgEnd = Fn->arg_end();
-      std::vector<std::pair<PATypeInfo,char*> >::iterator I = (yyvsp[-3].ArgList)->begin();
-      std::vector<std::pair<PATypeInfo,char*> >::iterator E = (yyvsp[-3].ArgList)->end();
+      std::vector<std::pair<PATypeInfo,char*> >::iterator I = yyvsp[-3].ArgList->begin();
+      std::vector<std::pair<PATypeInfo,char*> >::iterator E = yyvsp[-3].ArgList->end();
       for ( ; I != E && ArgIt != ArgEnd; ++I, ++ArgIt) {
         delete I->first.PAT;                      // Delete the typeholder...
         ValueInfo VI; VI.V = ArgIt; VI.S.copy(I->first.S); 
         setValueName(VI, I->second);           // Insert arg into symtab...
         InsertValue(ArgIt);
       }
-      delete (yyvsp[-3].ArgList);                     // We're now done with the argument list
+      delete yyvsp[-3].ArgList;                     // We're now done with the argument list
     }
     lastCallingConv = OldCallingConv::C;
   ;}
     break;
 
   case 224:
-#line 3103 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { CurFun.Linkage = (yyvsp[0].Linkage); ;}
+#line 3104 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { CurFun.Linkage = yyvsp[0].Linkage; ;}
     break;
 
   case 225:
-#line 3103 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3104 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.FunctionVal) = CurFun.CurrentFunction;
+    yyval.FunctionVal = CurFun.CurrentFunction;
 
     // Make sure that we keep track of the linkage type even if there was a
     // previous "declare".
-    (yyval.FunctionVal)->setLinkage((yyvsp[-3].Linkage));
+    yyval.FunctionVal->setLinkage(yyvsp[-3].Linkage);
   ;}
     break;
 
   case 228:
-#line 3117 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3118 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
+    yyval.FunctionVal = yyvsp[-1].FunctionVal;
   ;}
     break;
 
   case 229:
-#line 3122 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::ExternalLinkage; ;}
+#line 3123 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::ExternalLinkage; ;}
     break;
 
   case 230:
-#line 3123 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::DLLImportLinkage; ;}
+#line 3124 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::DLLImportLinkage; ;}
     break;
 
   case 231:
-#line 3124 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.Linkage) = GlobalValue::ExternalWeakLinkage; ;}
+#line 3125 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.Linkage = GlobalValue::ExternalWeakLinkage; ;}
     break;
 
   case 232:
-#line 3128 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3129 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { CurFun.isDeclare = true; ;}
     break;
 
   case 233:
-#line 3129 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { CurFun.Linkage = (yyvsp[0].Linkage); ;}
+#line 3130 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { CurFun.Linkage = yyvsp[0].Linkage; ;}
     break;
 
   case 234:
-#line 3129 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3130 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.FunctionVal) = CurFun.CurrentFunction;
+    yyval.FunctionVal = CurFun.CurrentFunction;
     CurFun.FunctionDone();
     
   ;}
     break;
 
   case 235:
-#line 3141 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.BoolVal) = false; ;}
+#line 3142 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.BoolVal = false; ;}
     break;
 
   case 236:
-#line 3142 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.BoolVal) = true; ;}
+#line 3143 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.BoolVal = true; ;}
     break;
 
   case 237:
-#line 3147 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValIDVal) = ValID::create((yyvsp[0].SInt64Val)); ;}
+#line 3148 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValIDVal = ValID::create(yyvsp[0].SInt64Val); ;}
     break;
 
   case 238:
-#line 3148 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValIDVal) = ValID::create((yyvsp[0].UInt64Val)); ;}
+#line 3149 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValIDVal = ValID::create(yyvsp[0].UInt64Val); ;}
     break;
 
   case 239:
-#line 3149 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValIDVal) = ValID::create((yyvsp[0].FPVal)); ;}
+#line 3150 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValIDVal = ValID::create(yyvsp[0].FPVal); ;}
     break;
 
   case 240:
-#line 3150 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3151 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
-    (yyval.ValIDVal) = ValID::create(ConstantInt::get(Type::Int1Ty, true));
-    (yyval.ValIDVal).S.makeUnsigned();
+    yyval.ValIDVal = ValID::create(ConstantInt::get(Type::Int1Ty, true));
+    yyval.ValIDVal.S.makeUnsigned();
   ;}
     break;
 
   case 241:
-#line 3154 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3155 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
-    (yyval.ValIDVal) = ValID::create(ConstantInt::get(Type::Int1Ty, false)); 
-    (yyval.ValIDVal).S.makeUnsigned();
+    yyval.ValIDVal = ValID::create(ConstantInt::get(Type::Int1Ty, false)); 
+    yyval.ValIDVal.S.makeUnsigned();
   ;}
     break;
 
   case 242:
-#line 3158 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValIDVal) = ValID::createNull(); ;}
+#line 3159 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValIDVal = ValID::createNull(); ;}
     break;
 
   case 243:
-#line 3159 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValIDVal) = ValID::createUndef(); ;}
+#line 3160 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValIDVal = ValID::createUndef(); ;}
     break;
 
   case 244:
-#line 3160 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValIDVal) = ValID::createZeroInit(); ;}
+#line 3161 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValIDVal = ValID::createZeroInit(); ;}
     break;
 
   case 245:
-#line 3161 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3162 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { // Nonempty unsized packed vector
-    const Type *ETy = (*(yyvsp[-1].ConstVector))[0].C->getType();
-    int NumElements = (yyvsp[-1].ConstVector)->size(); 
+    const Type *ETy = (*yyvsp[-1].ConstVector)[0].C->getType();
+    int NumElements = yyvsp[-1].ConstVector->size(); 
     VectorType* pt = VectorType::get(ETy, NumElements);
-    (yyval.ValIDVal).S.makeComposite((*(yyvsp[-1].ConstVector))[0].S);
-    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(pt, (yyval.ValIDVal).S));
+    yyval.ValIDVal.S.makeComposite((*yyvsp[-1].ConstVector)[0].S);
+    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(pt, yyval.ValIDVal.S));
     
     // Verify all elements are correct type!
     std::vector<Constant*> Elems;
-    for (unsigned i = 0; i < (yyvsp[-1].ConstVector)->size(); i++) {
-      Constant *C = (*(yyvsp[-1].ConstVector))[i].C;
+    for (unsigned i = 0; i < yyvsp[-1].ConstVector->size(); i++) {
+      Constant *C = (*yyvsp[-1].ConstVector)[i].C;
       const Type *CTy = C->getType();
       if (ETy != CTy)
         error("Element #" + utostr(i) + " is not of type '" + 
@@ -5713,209 +5595,209 @@ yyreduce:
               CTy->getDescription() + "'");
       Elems.push_back(C);
     }
-    (yyval.ValIDVal) = ValID::create(ConstantVector::get(pt, Elems));
-    delete PTy; delete (yyvsp[-1].ConstVector);
+    yyval.ValIDVal = ValID::create(ConstantVector::get(pt, Elems));
+    delete PTy; delete yyvsp[-1].ConstVector;
   ;}
     break;
 
   case 246:
-#line 3182 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3183 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ValIDVal) = ValID::create((yyvsp[0].ConstVal).C);
-    (yyval.ValIDVal).S.copy((yyvsp[0].ConstVal).S);
+    yyval.ValIDVal = ValID::create(yyvsp[0].ConstVal.C);
+    yyval.ValIDVal.S.copy(yyvsp[0].ConstVal.S);
   ;}
     break;
 
   case 247:
-#line 3186 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3187 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    char *End = UnEscapeLexed((yyvsp[-2].StrVal), true);
-    std::string AsmStr = std::string((yyvsp[-2].StrVal), End);
-    End = UnEscapeLexed((yyvsp[0].StrVal), true);
-    std::string Constraints = std::string((yyvsp[0].StrVal), End);
-    (yyval.ValIDVal) = ValID::createInlineAsm(AsmStr, Constraints, (yyvsp[-3].BoolVal));
-    free((yyvsp[-2].StrVal));
-    free((yyvsp[0].StrVal));
+    char *End = UnEscapeLexed(yyvsp[-2].StrVal, true);
+    std::string AsmStr = std::string(yyvsp[-2].StrVal, End);
+    End = UnEscapeLexed(yyvsp[0].StrVal, true);
+    std::string Constraints = std::string(yyvsp[0].StrVal, End);
+    yyval.ValIDVal = ValID::createInlineAsm(AsmStr, Constraints, yyvsp[-3].BoolVal);
+    free(yyvsp[-2].StrVal);
+    free(yyvsp[0].StrVal);
   ;}
     break;
 
   case 248:
-#line 3200 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    {  (yyval.ValIDVal) = ValID::create((yyvsp[0].SIntVal)); (yyval.ValIDVal).S.makeSignless(); ;}
+#line 3201 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    {  yyval.ValIDVal = ValID::create(yyvsp[0].SIntVal); yyval.ValIDVal.S.makeSignless(); ;}
     break;
 
   case 249:
-#line 3201 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    {  (yyval.ValIDVal) = ValID::create((yyvsp[0].StrVal)); (yyval.ValIDVal).S.makeSignless(); ;}
+#line 3202 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    {  yyval.ValIDVal = ValID::create(yyvsp[0].StrVal); yyval.ValIDVal.S.makeSignless(); ;}
     break;
 
   case 252:
-#line 3214 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3215 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { 
-    const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
-    (yyval.ValueVal).V = getVal(Ty, (yyvsp[0].ValIDVal)); 
-    (yyval.ValueVal).S.copy((yyvsp[-1].TypeVal).S);
-    delete (yyvsp[-1].TypeVal).PAT;
+    const Type *Ty = yyvsp[-1].TypeVal.PAT->get();
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-1].TypeVal.S);
+    yyval.ValueVal.V = getVal(Ty, yyvsp[0].ValIDVal); 
+    yyval.ValueVal.S.copy(yyvsp[-1].TypeVal.S);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 253:
-#line 3224 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3225 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
+    yyval.FunctionVal = yyvsp[-1].FunctionVal;
   ;}
     break;
 
   case 254:
-#line 3227 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3228 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     { // Do not allow functions with 0 basic blocks   
-    (yyval.FunctionVal) = (yyvsp[-1].FunctionVal);
+    yyval.FunctionVal = yyvsp[-1].FunctionVal;
   ;}
     break;
 
   case 255:
-#line 3236 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3237 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    ValueInfo VI; VI.V = (yyvsp[0].TermInstVal).TI; VI.S.copy((yyvsp[0].TermInstVal).S);
-    setValueName(VI, (yyvsp[-1].StrVal));
-    InsertValue((yyvsp[0].TermInstVal).TI);
-    (yyvsp[-2].BasicBlockVal)->getInstList().push_back((yyvsp[0].TermInstVal).TI);
-    InsertValue((yyvsp[-2].BasicBlockVal));
-    (yyval.BasicBlockVal) = (yyvsp[-2].BasicBlockVal);
+    ValueInfo VI; VI.V = yyvsp[0].TermInstVal.TI; VI.S.copy(yyvsp[0].TermInstVal.S);
+    setValueName(VI, yyvsp[-1].StrVal);
+    InsertValue(yyvsp[0].TermInstVal.TI);
+    yyvsp[-2].BasicBlockVal->getInstList().push_back(yyvsp[0].TermInstVal.TI);
+    InsertValue(yyvsp[-2].BasicBlockVal);
+    yyval.BasicBlockVal = yyvsp[-2].BasicBlockVal;
   ;}
     break;
 
   case 256:
-#line 3247 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3248 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if ((yyvsp[0].InstVal).I)
-      (yyvsp[-1].BasicBlockVal)->getInstList().push_back((yyvsp[0].InstVal).I);
-    (yyval.BasicBlockVal) = (yyvsp[-1].BasicBlockVal);
+    if (yyvsp[0].InstVal.I)
+      yyvsp[-1].BasicBlockVal->getInstList().push_back(yyvsp[0].InstVal.I);
+    yyval.BasicBlockVal = yyvsp[-1].BasicBlockVal;
   ;}
     break;
 
   case 257:
-#line 3252 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3253 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++),true);
+    yyval.BasicBlockVal = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++),true);
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
     Function::BasicBlockListType &BBL = 
       CurFun.CurrentFunction->getBasicBlockList();
-    BBL.splice(BBL.end(), BBL, (yyval.BasicBlockVal));
+    BBL.splice(BBL.end(), BBL, yyval.BasicBlockVal);
   ;}
     break;
 
   case 258:
-#line 3261 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3262 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.BasicBlockVal) = CurBB = getBBVal(ValID::create((yyvsp[0].StrVal)), true);
+    yyval.BasicBlockVal = CurBB = getBBVal(ValID::create(yyvsp[0].StrVal), true);
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
     Function::BasicBlockListType &BBL = 
       CurFun.CurrentFunction->getBasicBlockList();
-    BBL.splice(BBL.end(), BBL, (yyval.BasicBlockVal));
+    BBL.splice(BBL.end(), BBL, yyval.BasicBlockVal);
   ;}
     break;
 
   case 261:
-#line 3275 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3276 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {              // Return with a result...
-    (yyval.TermInstVal).TI = new ReturnInst((yyvsp[0].ValueVal).V);
-    (yyval.TermInstVal).S.makeSignless();
+    yyval.TermInstVal.TI = new ReturnInst(yyvsp[0].ValueVal.V);
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 262:
-#line 3279 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3280 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                                       // Return with no result...
-    (yyval.TermInstVal).TI = new ReturnInst();
-    (yyval.TermInstVal).S.makeSignless();
+    yyval.TermInstVal.TI = new ReturnInst();
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 263:
-#line 3283 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3284 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {                         // Unconditional Branch...
-    BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
-    (yyval.TermInstVal).TI = new BranchInst(tmpBB);
-    (yyval.TermInstVal).S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[0].ValIDVal);
+    yyval.TermInstVal.TI = new BranchInst(tmpBB);
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 264:
-#line 3288 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3289 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {  
-    (yyvsp[-3].ValIDVal).S.makeSignless();
-    (yyvsp[0].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBBA = getBBVal((yyvsp[-3].ValIDVal));
-    BasicBlock* tmpBBB = getBBVal((yyvsp[0].ValIDVal));
-    (yyvsp[-6].ValIDVal).S.makeUnsigned();
-    Value* tmpVal = getVal(Type::Int1Ty, (yyvsp[-6].ValIDVal));
-    (yyval.TermInstVal).TI = new BranchInst(tmpBBA, tmpBBB, tmpVal);
-    (yyval.TermInstVal).S.makeSignless();
+    yyvsp[-3].ValIDVal.S.makeSignless();
+    yyvsp[0].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBBA = getBBVal(yyvsp[-3].ValIDVal);
+    BasicBlock* tmpBBB = getBBVal(yyvsp[0].ValIDVal);
+    yyvsp[-6].ValIDVal.S.makeUnsigned();
+    Value* tmpVal = getVal(Type::Int1Ty, yyvsp[-6].ValIDVal);
+    yyval.TermInstVal.TI = new BranchInst(tmpBBA, tmpBBB, tmpVal);
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 265:
-#line 3298 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3299 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-6].ValIDVal).S.copy((yyvsp[-7].PrimType).S);
-    Value* tmpVal = getVal((yyvsp[-7].PrimType).T, (yyvsp[-6].ValIDVal));
-    (yyvsp[-3].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBB = getBBVal((yyvsp[-3].ValIDVal));
-    SwitchInst *S = new SwitchInst(tmpVal, tmpBB, (yyvsp[-1].JumpTable)->size());
-    (yyval.TermInstVal).TI = S;
-    (yyval.TermInstVal).S.makeSignless();
-    std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = (yyvsp[-1].JumpTable)->begin(),
-      E = (yyvsp[-1].JumpTable)->end();
+    yyvsp[-6].ValIDVal.S.copy(yyvsp[-7].PrimType.S);
+    Value* tmpVal = getVal(yyvsp[-7].PrimType.T, yyvsp[-6].ValIDVal);
+    yyvsp[-3].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[-3].ValIDVal);
+    SwitchInst *S = new SwitchInst(tmpVal, tmpBB, yyvsp[-1].JumpTable->size());
+    yyval.TermInstVal.TI = S;
+    yyval.TermInstVal.S.makeSignless();
+    std::vector<std::pair<Constant*,BasicBlock*> >::iterator I = yyvsp[-1].JumpTable->begin(),
+      E = yyvsp[-1].JumpTable->end();
     for (; I != E; ++I) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(I->first))
           S->addCase(CI, I->second);
       else
         error("Switch case is constant, but not a simple integer");
     }
-    delete (yyvsp[-1].JumpTable);
+    delete yyvsp[-1].JumpTable;
   ;}
     break;
 
   case 266:
-#line 3316 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3317 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-5].ValIDVal).S.copy((yyvsp[-6].PrimType).S);
-    Value* tmpVal = getVal((yyvsp[-6].PrimType).T, (yyvsp[-5].ValIDVal));
-    (yyvsp[-2].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBB = getBBVal((yyvsp[-2].ValIDVal));
+    yyvsp[-5].ValIDVal.S.copy(yyvsp[-6].PrimType.S);
+    Value* tmpVal = getVal(yyvsp[-6].PrimType.T, yyvsp[-5].ValIDVal);
+    yyvsp[-2].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[-2].ValIDVal);
     SwitchInst *S = new SwitchInst(tmpVal, tmpBB, 0);
-    (yyval.TermInstVal).TI = S;
-    (yyval.TermInstVal).S.makeSignless();
+    yyval.TermInstVal.TI = S;
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 267:
-#line 3326 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3327 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     const PointerType *PFTy;
     const FunctionType *Ty;
     Signedness FTySign;
 
-    if (!(PFTy = dyn_cast<PointerType>((yyvsp[-10].TypeVal).PAT->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>(yyvsp[-10].TypeVal.PAT->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      FTySign.makeComposite((yyvsp[-10].TypeVal).S);
-      if ((yyvsp[-7].ValueList)) {
-        for (std::vector<ValueInfo>::iterator I = (yyvsp[-7].ValueList)->begin(), E = (yyvsp[-7].ValueList)->end();
+      FTySign.makeComposite(yyvsp[-10].TypeVal.S);
+      if (yyvsp[-7].ValueList) {
+        for (std::vector<ValueInfo>::iterator I = yyvsp[-7].ValueList->begin(), E = yyvsp[-7].ValueList->end();
              I != E; ++I) {
           ParamTypes.push_back((*I).V->getType());
           FTySign.add(I->S);
         }
       }
       ParamAttrsList *PAL = 0;
-      if ((yyvsp[-11].UIntVal) == OldCallingConv::CSRet) {
+      if (yyvsp[-11].UIntVal == OldCallingConv::CSRet) {
         ParamAttrsVector Attrs;
         ParamAttrsWithIndex PAWI;
         PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
@@ -5924,32 +5806,32 @@ yyreduce:
       }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
-      Ty = FunctionType::get((yyvsp[-10].TypeVal).PAT->get(), ParamTypes, isVarArg, PAL);
+      Ty = FunctionType::get(yyvsp[-10].TypeVal.PAT->get(), ParamTypes, isVarArg, PAL);
       PFTy = PointerType::get(Ty);
-      (yyval.TermInstVal).S.copy((yyvsp[-10].TypeVal).S);
+      yyval.TermInstVal.S.copy(yyvsp[-10].TypeVal.S);
     } else {
-      FTySign = (yyvsp[-10].TypeVal).S;
+      FTySign = yyvsp[-10].TypeVal.S;
       // Get the signedness of the result type. $3 is the pointer to the
       // function type so we get the 0th element to extract the function type,
       // and then the 0th element again to get the result type.
-      (yyval.TermInstVal).S.copy((yyvsp[-10].TypeVal).S.get(0).get(0)); 
+      yyval.TermInstVal.S.copy(yyvsp[-10].TypeVal.S.get(0).get(0)); 
     }
 
-    (yyvsp[-9].ValIDVal).S.makeComposite(FTySign);
-    Value *V = getVal(PFTy, (yyvsp[-9].ValIDVal));   // Get the function we're calling...
-    BasicBlock *Normal = getBBVal((yyvsp[-3].ValIDVal));
-    BasicBlock *Except = getBBVal((yyvsp[0].ValIDVal));
+    yyvsp[-9].ValIDVal.S.makeComposite(FTySign);
+    Value *V = getVal(PFTy, yyvsp[-9].ValIDVal);   // Get the function we're calling...
+    BasicBlock *Normal = getBBVal(yyvsp[-3].ValIDVal);
+    BasicBlock *Except = getBBVal(yyvsp[0].ValIDVal);
 
     // Create the call node...
-    if (!(yyvsp[-7].ValueList)) {                                   // Has no arguments?
-      (yyval.TermInstVal).TI = new InvokeInst(V, Normal, Except, 0, 0);
+    if (!yyvsp[-7].ValueList) {                                   // Has no arguments?
+      yyval.TermInstVal.TI = new InvokeInst(V, Normal, Except, 0, 0);
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
       //
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      std::vector<ValueInfo>::iterator ArgI = (yyvsp[-7].ValueList)->begin(), ArgE = (yyvsp[-7].ValueList)->end();
+      std::vector<ValueInfo>::iterator ArgI = yyvsp[-7].ValueList->begin(), ArgE = yyvsp[-7].ValueList->end();
 
       std::vector<Value*> Args;
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
@@ -5962,71 +5844,71 @@ yyreduce:
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         error("Invalid number of parameters detected");
 
-      (yyval.TermInstVal).TI = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
+      yyval.TermInstVal.TI = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
     }
-    cast<InvokeInst>((yyval.TermInstVal).TI)->setCallingConv(upgradeCallingConv((yyvsp[-11].UIntVal)));
-    delete (yyvsp[-10].TypeVal).PAT;
-    delete (yyvsp[-7].ValueList);
+    cast<InvokeInst>(yyval.TermInstVal.TI)->setCallingConv(upgradeCallingConv(yyvsp[-11].UIntVal));
+    delete yyvsp[-10].TypeVal.PAT;
+    delete yyvsp[-7].ValueList;
     lastCallingConv = OldCallingConv::C;
   ;}
     break;
 
   case 268:
-#line 3398 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3399 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.TermInstVal).TI = new UnwindInst();
-    (yyval.TermInstVal).S.makeSignless();
+    yyval.TermInstVal.TI = new UnwindInst();
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 269:
-#line 3402 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3403 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.TermInstVal).TI = new UnreachableInst();
-    (yyval.TermInstVal).S.makeSignless();
+    yyval.TermInstVal.TI = new UnreachableInst();
+    yyval.TermInstVal.S.makeSignless();
   ;}
     break;
 
   case 270:
-#line 3409 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3410 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.JumpTable) = (yyvsp[-5].JumpTable);
-    (yyvsp[-3].ValIDVal).S.copy((yyvsp[-4].PrimType).S);
-    Constant *V = cast<Constant>(getExistingValue((yyvsp[-4].PrimType).T, (yyvsp[-3].ValIDVal)));
+    yyval.JumpTable = yyvsp[-5].JumpTable;
+    yyvsp[-3].ValIDVal.S.copy(yyvsp[-4].PrimType.S);
+    Constant *V = cast<Constant>(getExistingValue(yyvsp[-4].PrimType.T, yyvsp[-3].ValIDVal));
     
     if (V == 0)
       error("May only switch on a constant pool value");
 
-    (yyvsp[0].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
-    (yyval.JumpTable)->push_back(std::make_pair(V, tmpBB));
+    yyvsp[0].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[0].ValIDVal);
+    yyval.JumpTable->push_back(std::make_pair(V, tmpBB));
   ;}
     break;
 
   case 271:
-#line 3421 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3422 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.JumpTable) = new std::vector<std::pair<Constant*, BasicBlock*> >();
-    (yyvsp[-3].ValIDVal).S.copy((yyvsp[-4].PrimType).S);
-    Constant *V = cast<Constant>(getExistingValue((yyvsp[-4].PrimType).T, (yyvsp[-3].ValIDVal)));
+    yyval.JumpTable = new std::vector<std::pair<Constant*, BasicBlock*> >();
+    yyvsp[-3].ValIDVal.S.copy(yyvsp[-4].PrimType.S);
+    Constant *V = cast<Constant>(getExistingValue(yyvsp[-4].PrimType.T, yyvsp[-3].ValIDVal));
 
     if (V == 0)
       error("May only switch on a constant pool value");
 
-    (yyvsp[0].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBB = getBBVal((yyvsp[0].ValIDVal));
-    (yyval.JumpTable)->push_back(std::make_pair(V, tmpBB)); 
+    yyvsp[0].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[0].ValIDVal);
+    yyval.JumpTable->push_back(std::make_pair(V, tmpBB)); 
   ;}
     break;
 
   case 272:
-#line 3436 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3437 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     bool omit = false;
-    if ((yyvsp[-1].StrVal))
-      if (BitCastInst *BCI = dyn_cast<BitCastInst>((yyvsp[0].InstVal).I))
+    if (yyvsp[-1].StrVal)
+      if (BitCastInst *BCI = dyn_cast<BitCastInst>(yyvsp[0].InstVal.I))
         if (BCI->getSrcTy() == BCI->getDestTy() && 
-            BCI->getOperand(0)->getName() == (yyvsp[-1].StrVal))
+            BCI->getOperand(0)->getName() == yyvsp[-1].StrVal)
           // This is a useless bit cast causing a name redefinition. It is
           // a bit cast from a type to the same type of an operand with the
           // same name as the name we would give this instruction. Since this
@@ -6041,258 +5923,258 @@ yyreduce:
           // The bitcast is clearly useless so we omit it.
           omit = true;
     if (omit) {
-      (yyval.InstVal).I = 0;
-      (yyval.InstVal).S.makeSignless();
+      yyval.InstVal.I = 0;
+      yyval.InstVal.S.makeSignless();
     } else {
-      ValueInfo VI; VI.V = (yyvsp[0].InstVal).I; VI.S.copy((yyvsp[0].InstVal).S);
-      setValueName(VI, (yyvsp[-1].StrVal));
-      InsertValue((yyvsp[0].InstVal).I);
-      (yyval.InstVal) = (yyvsp[0].InstVal);
+      ValueInfo VI; VI.V = yyvsp[0].InstVal.I; VI.S.copy(yyvsp[0].InstVal.S);
+      setValueName(VI, yyvsp[-1].StrVal);
+      InsertValue(yyvsp[0].InstVal.I);
+      yyval.InstVal = yyvsp[0].InstVal;
     }
   ;}
     break;
 
   case 273:
-#line 3466 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3467 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {    // Used for PHI nodes
-    (yyval.PHIList).P = new std::list<std::pair<Value*, BasicBlock*> >();
-    (yyval.PHIList).S.copy((yyvsp[-5].TypeVal).S);
-    (yyvsp[-3].ValIDVal).S.copy((yyvsp[-5].TypeVal).S);
-    Value* tmpVal = getVal((yyvsp[-5].TypeVal).PAT->get(), (yyvsp[-3].ValIDVal));
-    (yyvsp[-1].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBB = getBBVal((yyvsp[-1].ValIDVal));
-    (yyval.PHIList).P->push_back(std::make_pair(tmpVal, tmpBB));
-    delete (yyvsp[-5].TypeVal).PAT;
+    yyval.PHIList.P = new std::list<std::pair<Value*, BasicBlock*> >();
+    yyval.PHIList.S.copy(yyvsp[-5].TypeVal.S);
+    yyvsp[-3].ValIDVal.S.copy(yyvsp[-5].TypeVal.S);
+    Value* tmpVal = getVal(yyvsp[-5].TypeVal.PAT->get(), yyvsp[-3].ValIDVal);
+    yyvsp[-1].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[-1].ValIDVal);
+    yyval.PHIList.P->push_back(std::make_pair(tmpVal, tmpBB));
+    delete yyvsp[-5].TypeVal.PAT;
   ;}
     break;
 
   case 274:
-#line 3476 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3477 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.PHIList) = (yyvsp[-6].PHIList);
-    (yyvsp[-3].ValIDVal).S.copy((yyvsp[-6].PHIList).S);
-    Value* tmpVal = getVal((yyvsp[-6].PHIList).P->front().first->getType(), (yyvsp[-3].ValIDVal));
-    (yyvsp[-1].ValIDVal).S.makeSignless();
-    BasicBlock* tmpBB = getBBVal((yyvsp[-1].ValIDVal));
-    (yyvsp[-6].PHIList).P->push_back(std::make_pair(tmpVal, tmpBB));
+    yyval.PHIList = yyvsp[-6].PHIList;
+    yyvsp[-3].ValIDVal.S.copy(yyvsp[-6].PHIList.S);
+    Value* tmpVal = getVal(yyvsp[-6].PHIList.P->front().first->getType(), yyvsp[-3].ValIDVal);
+    yyvsp[-1].ValIDVal.S.makeSignless();
+    BasicBlock* tmpBB = getBBVal(yyvsp[-1].ValIDVal);
+    yyvsp[-6].PHIList.P->push_back(std::make_pair(tmpVal, tmpBB));
   ;}
     break;
 
   case 275:
-#line 3486 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3487 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {    // Used for call statements, and memory insts...
-    (yyval.ValueList) = new std::vector<ValueInfo>();
-    (yyval.ValueList)->push_back((yyvsp[0].ValueVal));
+    yyval.ValueList = new std::vector<ValueInfo>();
+    yyval.ValueList->push_back(yyvsp[0].ValueVal);
   ;}
     break;
 
   case 276:
-#line 3490 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3491 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.ValueList) = (yyvsp[-2].ValueList);
-    (yyvsp[-2].ValueList)->push_back((yyvsp[0].ValueVal));
+    yyval.ValueList = yyvsp[-2].ValueList;
+    yyvsp[-2].ValueList->push_back(yyvsp[0].ValueVal);
   ;}
     break;
 
   case 278:
-#line 3498 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValueList) = 0; ;}
+#line 3499 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValueList = 0; ;}
     break;
 
   case 279:
-#line 3502 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3503 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.BoolVal) = true;
+    yyval.BoolVal = true;
   ;}
     break;
 
   case 280:
-#line 3505 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3506 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.BoolVal) = false;
+    yyval.BoolVal = false;
   ;}
     break;
 
   case 281:
-#line 3511 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3512 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    const Type* Ty = (yyvsp[-3].TypeVal).PAT->get();
+    yyvsp[-2].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    const Type* Ty = yyvsp[-3].TypeVal.PAT->get();
     if (!Ty->isInteger() && !Ty->isFloatingPoint() && !isa<VectorType>(Ty))
       error("Arithmetic operator requires integer, FP, or packed operands");
     if (isa<VectorType>(Ty) && 
-        ((yyvsp[-4].BinaryOpVal) == URemOp || (yyvsp[-4].BinaryOpVal) == SRemOp || (yyvsp[-4].BinaryOpVal) == FRemOp || (yyvsp[-4].BinaryOpVal) == RemOp))
+        (yyvsp[-4].BinaryOpVal == URemOp || yyvsp[-4].BinaryOpVal == SRemOp || yyvsp[-4].BinaryOpVal == FRemOp || yyvsp[-4].BinaryOpVal == RemOp))
       error("Remainder not supported on vector types");
     // Upgrade the opcode from obsolete versions before we do anything with it.
-    Instruction::BinaryOps Opcode = getBinaryOp((yyvsp[-4].BinaryOpVal), Ty, (yyvsp[-3].TypeVal).S);
-    Value* val1 = getVal(Ty, (yyvsp[-2].ValIDVal)); 
-    Value* val2 = getVal(Ty, (yyvsp[0].ValIDVal));
-    (yyval.InstVal).I = BinaryOperator::create(Opcode, val1, val2);
-    if ((yyval.InstVal).I == 0)
+    Instruction::BinaryOps Opcode = getBinaryOp(yyvsp[-4].BinaryOpVal, Ty, yyvsp[-3].TypeVal.S);
+    Value* val1 = getVal(Ty, yyvsp[-2].ValIDVal); 
+    Value* val2 = getVal(Ty, yyvsp[0].ValIDVal);
+    yyval.InstVal.I = BinaryOperator::create(Opcode, val1, val2);
+    if (yyval.InstVal.I == 0)
       error("binary operator returned null");
-    (yyval.InstVal).S.copy((yyvsp[-3].TypeVal).S);
-    delete (yyvsp[-3].TypeVal).PAT;
+    yyval.InstVal.S.copy(yyvsp[-3].TypeVal.S);
+    delete yyvsp[-3].TypeVal.PAT;
   ;}
     break;
 
   case 282:
-#line 3530 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3531 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    const Type *Ty = (yyvsp[-3].TypeVal).PAT->get();
+    yyvsp[-2].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    const Type *Ty = yyvsp[-3].TypeVal.PAT->get();
     if (!Ty->isInteger()) {
       if (!isa<VectorType>(Ty) ||
           !cast<VectorType>(Ty)->getElementType()->isInteger())
         error("Logical operator requires integral operands");
     }
-    Instruction::BinaryOps Opcode = getBinaryOp((yyvsp[-4].BinaryOpVal), Ty, (yyvsp[-3].TypeVal).S);
-    Value* tmpVal1 = getVal(Ty, (yyvsp[-2].ValIDVal));
-    Value* tmpVal2 = getVal(Ty, (yyvsp[0].ValIDVal));
-    (yyval.InstVal).I = BinaryOperator::create(Opcode, tmpVal1, tmpVal2);
-    if ((yyval.InstVal).I == 0)
+    Instruction::BinaryOps Opcode = getBinaryOp(yyvsp[-4].BinaryOpVal, Ty, yyvsp[-3].TypeVal.S);
+    Value* tmpVal1 = getVal(Ty, yyvsp[-2].ValIDVal);
+    Value* tmpVal2 = getVal(Ty, yyvsp[0].ValIDVal);
+    yyval.InstVal.I = BinaryOperator::create(Opcode, tmpVal1, tmpVal2);
+    if (yyval.InstVal.I == 0)
       error("binary operator returned null");
-    (yyval.InstVal).S.copy((yyvsp[-3].TypeVal).S);
-    delete (yyvsp[-3].TypeVal).PAT;
+    yyval.InstVal.S.copy(yyvsp[-3].TypeVal.S);
+    delete yyvsp[-3].TypeVal.PAT;
   ;}
     break;
 
   case 283:
-#line 3548 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3549 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    const Type* Ty = (yyvsp[-3].TypeVal).PAT->get();
+    yyvsp[-2].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    const Type* Ty = yyvsp[-3].TypeVal.PAT->get();
     if(isa<VectorType>(Ty))
       error("VectorTypes currently not supported in setcc instructions");
     unsigned short pred;
-    Instruction::OtherOps Opcode = getCompareOp((yyvsp[-4].BinaryOpVal), pred, Ty, (yyvsp[-3].TypeVal).S);
-    Value* tmpVal1 = getVal(Ty, (yyvsp[-2].ValIDVal));
-    Value* tmpVal2 = getVal(Ty, (yyvsp[0].ValIDVal));
-    (yyval.InstVal).I = CmpInst::create(Opcode, pred, tmpVal1, tmpVal2);
-    if ((yyval.InstVal).I == 0)
+    Instruction::OtherOps Opcode = getCompareOp(yyvsp[-4].BinaryOpVal, pred, Ty, yyvsp[-3].TypeVal.S);
+    Value* tmpVal1 = getVal(Ty, yyvsp[-2].ValIDVal);
+    Value* tmpVal2 = getVal(Ty, yyvsp[0].ValIDVal);
+    yyval.InstVal.I = CmpInst::create(Opcode, pred, tmpVal1, tmpVal2);
+    if (yyval.InstVal.I == 0)
       error("binary operator returned null");
-    (yyval.InstVal).S.makeUnsigned();
-    delete (yyvsp[-3].TypeVal).PAT;
+    yyval.InstVal.S.makeUnsigned();
+    delete yyvsp[-3].TypeVal.PAT;
   ;}
     break;
 
   case 284:
-#line 3564 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3565 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    const Type *Ty = (yyvsp[-3].TypeVal).PAT->get();
+    yyvsp[-2].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    const Type *Ty = yyvsp[-3].TypeVal.PAT->get();
     if (isa<VectorType>(Ty)) 
       error("VectorTypes currently not supported in icmp instructions");
     else if (!Ty->isInteger() && !isa<PointerType>(Ty))
       error("icmp requires integer or pointer typed operands");
-    Value* tmpVal1 = getVal(Ty, (yyvsp[-2].ValIDVal));
-    Value* tmpVal2 = getVal(Ty, (yyvsp[0].ValIDVal));
-    (yyval.InstVal).I = new ICmpInst((yyvsp[-4].IPred), tmpVal1, tmpVal2);
-    (yyval.InstVal).S.makeUnsigned();
-    delete (yyvsp[-3].TypeVal).PAT;
+    Value* tmpVal1 = getVal(Ty, yyvsp[-2].ValIDVal);
+    Value* tmpVal2 = getVal(Ty, yyvsp[0].ValIDVal);
+    yyval.InstVal.I = new ICmpInst(yyvsp[-4].IPred, tmpVal1, tmpVal2);
+    yyval.InstVal.S.makeUnsigned();
+    delete yyvsp[-3].TypeVal.PAT;
   ;}
     break;
 
   case 285:
-#line 3578 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3579 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-2].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-3].TypeVal).S);
-    const Type *Ty = (yyvsp[-3].TypeVal).PAT->get();
+    yyvsp[-2].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-3].TypeVal.S);
+    const Type *Ty = yyvsp[-3].TypeVal.PAT->get();
     if (isa<VectorType>(Ty))
       error("VectorTypes currently not supported in fcmp instructions");
     else if (!Ty->isFloatingPoint())
       error("fcmp instruction requires floating point operands");
-    Value* tmpVal1 = getVal(Ty, (yyvsp[-2].ValIDVal));
-    Value* tmpVal2 = getVal(Ty, (yyvsp[0].ValIDVal));
-    (yyval.InstVal).I = new FCmpInst((yyvsp[-4].FPred), tmpVal1, tmpVal2);
-    (yyval.InstVal).S.makeUnsigned();
-    delete (yyvsp[-3].TypeVal).PAT;
+    Value* tmpVal1 = getVal(Ty, yyvsp[-2].ValIDVal);
+    Value* tmpVal2 = getVal(Ty, yyvsp[0].ValIDVal);
+    yyval.InstVal.I = new FCmpInst(yyvsp[-4].FPred, tmpVal1, tmpVal2);
+    yyval.InstVal.S.makeUnsigned();
+    delete yyvsp[-3].TypeVal.PAT;
   ;}
     break;
 
   case 286:
-#line 3592 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3593 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     warning("Use of obsolete 'not' instruction: Replacing with 'xor");
-    const Type *Ty = (yyvsp[0].ValueVal).V->getType();
+    const Type *Ty = yyvsp[0].ValueVal.V->getType();
     Value *Ones = ConstantInt::getAllOnesValue(Ty);
     if (Ones == 0)
       error("Expected integral type for not instruction");
-    (yyval.InstVal).I = BinaryOperator::create(Instruction::Xor, (yyvsp[0].ValueVal).V, Ones);
-    if ((yyval.InstVal).I == 0)
+    yyval.InstVal.I = BinaryOperator::create(Instruction::Xor, yyvsp[0].ValueVal.V, Ones);
+    if (yyval.InstVal.I == 0)
       error("Could not create a xor instruction");
-    (yyval.InstVal).S.copy((yyvsp[0].ValueVal).S);
+    yyval.InstVal.S.copy(yyvsp[0].ValueVal.S);
   ;}
     break;
 
   case 287:
-#line 3603 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3604 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!(yyvsp[0].ValueVal).V->getType()->isInteger() ||
-        cast<IntegerType>((yyvsp[0].ValueVal).V->getType())->getBitWidth() != 8)
+    if (!yyvsp[0].ValueVal.V->getType()->isInteger() ||
+        cast<IntegerType>(yyvsp[0].ValueVal.V->getType())->getBitWidth() != 8)
       error("Shift amount must be int8");
-    const Type* Ty = (yyvsp[-2].ValueVal).V->getType();
+    const Type* Ty = yyvsp[-2].ValueVal.V->getType();
     if (!Ty->isInteger())
       error("Shift constant expression requires integer operand");
     Value* ShiftAmt = 0;
     if (cast<IntegerType>(Ty)->getBitWidth() > Type::Int8Ty->getBitWidth())
-      if (Constant *C = dyn_cast<Constant>((yyvsp[0].ValueVal).V))
+      if (Constant *C = dyn_cast<Constant>(yyvsp[0].ValueVal.V))
         ShiftAmt = ConstantExpr::getZExt(C, Ty);
       else
-        ShiftAmt = new ZExtInst((yyvsp[0].ValueVal).V, Ty, makeNameUnique("shift"), CurBB);
+        ShiftAmt = new ZExtInst(yyvsp[0].ValueVal.V, Ty, makeNameUnique("shift"), CurBB);
     else
-      ShiftAmt = (yyvsp[0].ValueVal).V;
-    (yyval.InstVal).I = BinaryOperator::create(getBinaryOp((yyvsp[-3].BinaryOpVal), Ty, (yyvsp[-2].ValueVal).S), (yyvsp[-2].ValueVal).V, ShiftAmt);
-    (yyval.InstVal).S.copy((yyvsp[-2].ValueVal).S);
+      ShiftAmt = yyvsp[0].ValueVal.V;
+    yyval.InstVal.I = BinaryOperator::create(getBinaryOp(yyvsp[-3].BinaryOpVal, Ty, yyvsp[-2].ValueVal.S), yyvsp[-2].ValueVal.V, ShiftAmt);
+    yyval.InstVal.S.copy(yyvsp[-2].ValueVal.S);
   ;}
     break;
 
   case 288:
-#line 3621 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3622 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *DstTy = (yyvsp[0].TypeVal).PAT->get();
+    const Type *DstTy = yyvsp[0].TypeVal.PAT->get();
     if (!DstTy->isFirstClassType())
       error("cast instruction to a non-primitive type: '" +
             DstTy->getDescription() + "'");
-    (yyval.InstVal).I = cast<Instruction>(getCast((yyvsp[-3].CastOpVal), (yyvsp[-2].ValueVal).V, (yyvsp[-2].ValueVal).S, DstTy, (yyvsp[0].TypeVal).S, true));
-    (yyval.InstVal).S.copy((yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+    yyval.InstVal.I = cast<Instruction>(getCast(yyvsp[-3].CastOpVal, yyvsp[-2].ValueVal.V, yyvsp[-2].ValueVal.S, DstTy, yyvsp[0].TypeVal.S, true));
+    yyval.InstVal.S.copy(yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 289:
-#line 3630 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3631 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!(yyvsp[-4].ValueVal).V->getType()->isInteger() ||
-        cast<IntegerType>((yyvsp[-4].ValueVal).V->getType())->getBitWidth() != 1)
+    if (!yyvsp[-4].ValueVal.V->getType()->isInteger() ||
+        cast<IntegerType>(yyvsp[-4].ValueVal.V->getType())->getBitWidth() != 1)
       error("select condition must be bool");
-    if ((yyvsp[-2].ValueVal).V->getType() != (yyvsp[0].ValueVal).V->getType())
+    if (yyvsp[-2].ValueVal.V->getType() != yyvsp[0].ValueVal.V->getType())
       error("select value types should match");
-    (yyval.InstVal).I = new SelectInst((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V);
-    (yyval.InstVal).S.copy((yyvsp[-2].ValueVal).S);
+    yyval.InstVal.I = new SelectInst(yyvsp[-4].ValueVal.V, yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V);
+    yyval.InstVal.S.copy(yyvsp[-2].ValueVal.S);
   ;}
     break;
 
   case 290:
-#line 3639 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3640 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[0].TypeVal).PAT->get();
+    const Type *Ty = yyvsp[0].TypeVal.PAT->get();
     NewVarArgs = true;
-    (yyval.InstVal).I = new VAArgInst((yyvsp[-2].ValueVal).V, Ty);
-    (yyval.InstVal).S.copy((yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+    yyval.InstVal.I = new VAArgInst(yyvsp[-2].ValueVal.V, Ty);
+    yyval.InstVal.S.copy(yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 291:
-#line 3646 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3647 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type* ArgTy = (yyvsp[-2].ValueVal).V->getType();
-    const Type* DstTy = (yyvsp[0].TypeVal).PAT->get();
+    const Type* ArgTy = yyvsp[-2].ValueVal.V->getType();
+    const Type* DstTy = yyvsp[0].TypeVal.PAT->get();
     ObsoleteVarArgs = true;
     Function* NF = cast<Function>(CurModule.CurrentModule->
       getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0));
@@ -6304,20 +6186,20 @@ yyreduce:
     //b = vaarg foo, t
     AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
     CurBB->getInstList().push_back(foo);
-    CallInst* bar = new CallInst(NF, (yyvsp[-2].ValueVal).V);
+    CallInst* bar = new CallInst(NF, yyvsp[-2].ValueVal.V);
     CurBB->getInstList().push_back(bar);
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
-    (yyval.InstVal).I = new VAArgInst(foo, DstTy);
-    (yyval.InstVal).S.copy((yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+    yyval.InstVal.I = new VAArgInst(foo, DstTy);
+    yyval.InstVal.S.copy(yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 292:
-#line 3667 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3668 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type* ArgTy = (yyvsp[-2].ValueVal).V->getType();
-    const Type* DstTy = (yyvsp[0].TypeVal).PAT->get();
+    const Type* ArgTy = yyvsp[-2].ValueVal.V->getType();
+    const Type* DstTy = yyvsp[0].TypeVal.PAT->get();
     ObsoleteVarArgs = true;
     Function* NF = cast<Function>(CurModule.CurrentModule->
       getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0));
@@ -6330,81 +6212,81 @@ yyreduce:
     //b = load foo
     AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
     CurBB->getInstList().push_back(foo);
-    CallInst* bar = new CallInst(NF, (yyvsp[-2].ValueVal).V);
+    CallInst* bar = new CallInst(NF, yyvsp[-2].ValueVal.V);
     CurBB->getInstList().push_back(bar);
     CurBB->getInstList().push_back(new StoreInst(bar, foo));
     Instruction* tmp = new VAArgInst(foo, DstTy);
     CurBB->getInstList().push_back(tmp);
-    (yyval.InstVal).I = new LoadInst(foo);
-    (yyval.InstVal).S.copy((yyvsp[0].TypeVal).S);
-    delete (yyvsp[0].TypeVal).PAT;
+    yyval.InstVal.I = new LoadInst(foo);
+    yyval.InstVal.S.copy(yyvsp[0].TypeVal.S);
+    delete yyvsp[0].TypeVal.PAT;
   ;}
     break;
 
   case 293:
-#line 3691 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3692 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!ExtractElementInst::isValidOperands((yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V))
+    if (!ExtractElementInst::isValidOperands(yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V))
       error("Invalid extractelement operands");
-    (yyval.InstVal).I = new ExtractElementInst((yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V);
-    (yyval.InstVal).S.copy((yyvsp[-2].ValueVal).S.get(0));
+    yyval.InstVal.I = new ExtractElementInst(yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V);
+    yyval.InstVal.S.copy(yyvsp[-2].ValueVal.S.get(0));
   ;}
     break;
 
   case 294:
-#line 3697 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3698 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!InsertElementInst::isValidOperands((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V))
+    if (!InsertElementInst::isValidOperands(yyvsp[-4].ValueVal.V, yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V))
       error("Invalid insertelement operands");
-    (yyval.InstVal).I = new InsertElementInst((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V);
-    (yyval.InstVal).S.copy((yyvsp[-4].ValueVal).S);
+    yyval.InstVal.I = new InsertElementInst(yyvsp[-4].ValueVal.V, yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V);
+    yyval.InstVal.S.copy(yyvsp[-4].ValueVal.S);
   ;}
     break;
 
   case 295:
-#line 3703 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3704 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    if (!ShuffleVectorInst::isValidOperands((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V))
+    if (!ShuffleVectorInst::isValidOperands(yyvsp[-4].ValueVal.V, yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V))
       error("Invalid shufflevector operands");
-    (yyval.InstVal).I = new ShuffleVectorInst((yyvsp[-4].ValueVal).V, (yyvsp[-2].ValueVal).V, (yyvsp[0].ValueVal).V);
-    (yyval.InstVal).S.copy((yyvsp[-4].ValueVal).S);
+    yyval.InstVal.I = new ShuffleVectorInst(yyvsp[-4].ValueVal.V, yyvsp[-2].ValueVal.V, yyvsp[0].ValueVal.V);
+    yyval.InstVal.S.copy(yyvsp[-4].ValueVal.S);
   ;}
     break;
 
   case 296:
-#line 3709 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3710 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[0].PHIList).P->front().first->getType();
+    const Type *Ty = yyvsp[0].PHIList.P->front().first->getType();
     if (!Ty->isFirstClassType())
       error("PHI node operands must be of first class type");
     PHINode *PHI = new PHINode(Ty);
-    PHI->reserveOperandSpace((yyvsp[0].PHIList).P->size());
-    while ((yyvsp[0].PHIList).P->begin() != (yyvsp[0].PHIList).P->end()) {
-      if ((yyvsp[0].PHIList).P->front().first->getType() != Ty) 
+    PHI->reserveOperandSpace(yyvsp[0].PHIList.P->size());
+    while (yyvsp[0].PHIList.P->begin() != yyvsp[0].PHIList.P->end()) {
+      if (yyvsp[0].PHIList.P->front().first->getType() != Ty) 
         error("All elements of a PHI node must be of the same type");
-      PHI->addIncoming((yyvsp[0].PHIList).P->front().first, (yyvsp[0].PHIList).P->front().second);
-      (yyvsp[0].PHIList).P->pop_front();
+      PHI->addIncoming(yyvsp[0].PHIList.P->front().first, yyvsp[0].PHIList.P->front().second);
+      yyvsp[0].PHIList.P->pop_front();
     }
-    (yyval.InstVal).I = PHI;
-    (yyval.InstVal).S.copy((yyvsp[0].PHIList).S);
-    delete (yyvsp[0].PHIList).P;  // Free the list...
+    yyval.InstVal.I = PHI;
+    yyval.InstVal.S.copy(yyvsp[0].PHIList.S);
+    delete yyvsp[0].PHIList.P;  // Free the list...
   ;}
     break;
 
   case 297:
-#line 3725 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3726 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
     // Handle the short call syntax
     const PointerType *PFTy;
     const FunctionType *FTy;
     Signedness FTySign;
-    if (!(PFTy = dyn_cast<PointerType>((yyvsp[-4].TypeVal).PAT->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>(yyvsp[-4].TypeVal.PAT->get())) ||
         !(FTy = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      FTySign.makeComposite((yyvsp[-4].TypeVal).S);
-      if ((yyvsp[-1].ValueList)) {
-        for (std::vector<ValueInfo>::iterator I = (yyvsp[-1].ValueList)->begin(), E = (yyvsp[-1].ValueList)->end();
+      FTySign.makeComposite(yyvsp[-4].TypeVal.S);
+      if (yyvsp[-1].ValueList) {
+        for (std::vector<ValueInfo>::iterator I = yyvsp[-1].ValueList->begin(), E = yyvsp[-1].ValueList->end();
              I != E; ++I) {
           ParamTypes.push_back((*I).V->getType());
           FTySign.add(I->S);
@@ -6414,13 +6296,13 @@ yyreduce:
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      const Type *RetTy = (yyvsp[-4].TypeVal).PAT->get();
+      const Type *RetTy = yyvsp[-4].TypeVal.PAT->get();
       if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
         error("Functions cannot return aggregate types");
 
       // Deal with CSRetCC
       ParamAttrsList *PAL = 0;
-      if ((yyvsp[-5].UIntVal) == OldCallingConv::CSRet) {
+      if (yyvsp[-5].UIntVal == OldCallingConv::CSRet) {
         ParamAttrsVector Attrs;
         ParamAttrsWithIndex PAWI;
         PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
@@ -6430,32 +6312,32 @@ yyreduce:
 
       FTy = FunctionType::get(RetTy, ParamTypes, isVarArg, PAL);
       PFTy = PointerType::get(FTy);
-      (yyval.InstVal).S.copy((yyvsp[-4].TypeVal).S);
+      yyval.InstVal.S.copy(yyvsp[-4].TypeVal.S);
     } else {
-      FTySign = (yyvsp[-4].TypeVal).S;
+      FTySign = yyvsp[-4].TypeVal.S;
       // Get the signedness of the result type. $3 is the pointer to the
       // function type so we get the 0th element to extract the function type,
       // and then the 0th element again to get the result type.
-      (yyval.InstVal).S.copy((yyvsp[-4].TypeVal).S.get(0).get(0)); 
+      yyval.InstVal.S.copy(yyvsp[-4].TypeVal.S.get(0).get(0)); 
     }
-    (yyvsp[-3].ValIDVal).S.makeComposite(FTySign);
+    yyvsp[-3].ValIDVal.S.makeComposite(FTySign);
 
     // First upgrade any intrinsic calls.
     std::vector<Value*> Args;
-    if ((yyvsp[-1].ValueList))
-      for (unsigned i = 0, e = (yyvsp[-1].ValueList)->size(); i < e; ++i) 
-        Args.push_back((*(yyvsp[-1].ValueList))[i].V);
-    Instruction *Inst = upgradeIntrinsicCall(FTy->getReturnType(), (yyvsp[-3].ValIDVal), Args);
+    if (yyvsp[-1].ValueList)
+      for (unsigned i = 0, e = yyvsp[-1].ValueList->size(); i < e; ++i) 
+        Args.push_back((*yyvsp[-1].ValueList)[i].V);
+    Instruction *Inst = upgradeIntrinsicCall(FTy->getReturnType(), yyvsp[-3].ValIDVal, Args);
 
     // If we got an upgraded intrinsic
     if (Inst) {
-      (yyval.InstVal).I = Inst;
+      yyval.InstVal.I = Inst;
     } else {
       // Get the function we're calling
-      Value *V = getVal(PFTy, (yyvsp[-3].ValIDVal));
+      Value *V = getVal(PFTy, yyvsp[-3].ValIDVal);
 
       // Check the argument values match
-      if (!(yyvsp[-1].ValueList)) {                                   // Has no arguments?
+      if (!yyvsp[-1].ValueList) {                                   // Has no arguments?
         // Make sure no arguments is a good thing!
         if (FTy->getNumParams() != 0)
           error("No arguments passed to a function that expects arguments");
@@ -6465,7 +6347,7 @@ yyreduce:
         //
         FunctionType::param_iterator I = FTy->param_begin();
         FunctionType::param_iterator E = FTy->param_end();
-        std::vector<ValueInfo>::iterator ArgI = (yyvsp[-1].ValueList)->begin(), ArgE = (yyvsp[-1].ValueList)->end();
+        std::vector<ValueInfo>::iterator ArgI = yyvsp[-1].ValueList->begin(), ArgE = yyvsp[-1].ValueList->end();
 
         for (; ArgI != ArgE && I != E; ++ArgI, ++I)
           if ((*ArgI).V->getType() != *I)
@@ -6477,129 +6359,129 @@ yyreduce:
       }
 
       // Create the call instruction
-      CallInst *CI = new CallInst(V, &Args[0], Args.size());
-      CI->setTailCall((yyvsp[-6].BoolVal));
-      CI->setCallingConv(upgradeCallingConv((yyvsp[-5].UIntVal)));
-      (yyval.InstVal).I = CI;
+      CallInst *CI = new CallInst(V, Args.begin(), Args.end());
+      CI->setTailCall(yyvsp[-6].BoolVal);
+      CI->setCallingConv(upgradeCallingConv(yyvsp[-5].UIntVal));
+      yyval.InstVal.I = CI;
     }
-    delete (yyvsp[-4].TypeVal).PAT;
-    delete (yyvsp[-1].ValueList);
+    delete yyvsp[-4].TypeVal.PAT;
+    delete yyvsp[-1].ValueList;
     lastCallingConv = OldCallingConv::C;
   ;}
     break;
 
   case 298:
-#line 3818 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3819 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyval.InstVal) = (yyvsp[0].InstVal);
+    yyval.InstVal = yyvsp[0].InstVal;
   ;}
     break;
 
   case 299:
-#line 3826 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValueList) = (yyvsp[0].ValueList); ;}
+#line 3827 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValueList = yyvsp[0].ValueList; ;}
     break;
 
   case 300:
-#line 3827 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.ValueList) = new std::vector<ValueInfo>(); ;}
+#line 3828 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.ValueList = new std::vector<ValueInfo>(); ;}
     break;
 
   case 301:
-#line 3831 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.BoolVal) = true; ;}
+#line 3832 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.BoolVal = true; ;}
     break;
 
   case 302:
-#line 3832 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
-    { (yyval.BoolVal) = false; ;}
+#line 3833 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
+    { yyval.BoolVal = false; ;}
     break;
 
   case 303:
-#line 3836 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3837 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
-    (yyval.InstVal).S.makeComposite((yyvsp[-1].TypeVal).S);
-    (yyval.InstVal).I = new MallocInst(Ty, 0, (yyvsp[0].UIntVal));
-    delete (yyvsp[-1].TypeVal).PAT;
+    const Type *Ty = yyvsp[-1].TypeVal.PAT->get();
+    yyval.InstVal.S.makeComposite(yyvsp[-1].TypeVal.S);
+    yyval.InstVal.I = new MallocInst(Ty, 0, yyvsp[0].UIntVal);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 304:
-#line 3842 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3843 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-4].TypeVal).PAT->get();
-    (yyvsp[-1].ValIDVal).S.makeUnsigned();
-    (yyval.InstVal).S.makeComposite((yyvsp[-4].TypeVal).S);
-    (yyval.InstVal).I = new MallocInst(Ty, getVal((yyvsp[-2].PrimType).T, (yyvsp[-1].ValIDVal)), (yyvsp[0].UIntVal));
-    delete (yyvsp[-4].TypeVal).PAT;
+    const Type *Ty = yyvsp[-4].TypeVal.PAT->get();
+    yyvsp[-1].ValIDVal.S.makeUnsigned();
+    yyval.InstVal.S.makeComposite(yyvsp[-4].TypeVal.S);
+    yyval.InstVal.I = new MallocInst(Ty, getVal(yyvsp[-2].PrimType.T, yyvsp[-1].ValIDVal), yyvsp[0].UIntVal);
+    delete yyvsp[-4].TypeVal.PAT;
   ;}
     break;
 
   case 305:
-#line 3849 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3850 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-1].TypeVal).PAT->get();
-    (yyval.InstVal).S.makeComposite((yyvsp[-1].TypeVal).S);
-    (yyval.InstVal).I = new AllocaInst(Ty, 0, (yyvsp[0].UIntVal));
-    delete (yyvsp[-1].TypeVal).PAT;
+    const Type *Ty = yyvsp[-1].TypeVal.PAT->get();
+    yyval.InstVal.S.makeComposite(yyvsp[-1].TypeVal.S);
+    yyval.InstVal.I = new AllocaInst(Ty, 0, yyvsp[0].UIntVal);
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 306:
-#line 3855 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3856 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *Ty = (yyvsp[-4].TypeVal).PAT->get();
-    (yyvsp[-1].ValIDVal).S.makeUnsigned();
-    (yyval.InstVal).S.makeComposite((yyvsp[-2].PrimType).S);
-    (yyval.InstVal).I = new AllocaInst(Ty, getVal((yyvsp[-2].PrimType).T, (yyvsp[-1].ValIDVal)), (yyvsp[0].UIntVal));
-    delete (yyvsp[-4].TypeVal).PAT;
+    const Type *Ty = yyvsp[-4].TypeVal.PAT->get();
+    yyvsp[-1].ValIDVal.S.makeUnsigned();
+    yyval.InstVal.S.makeComposite(yyvsp[-2].PrimType.S);
+    yyval.InstVal.I = new AllocaInst(Ty, getVal(yyvsp[-2].PrimType.T, yyvsp[-1].ValIDVal), yyvsp[0].UIntVal);
+    delete yyvsp[-4].TypeVal.PAT;
   ;}
     break;
 
   case 307:
-#line 3862 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3863 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type *PTy = (yyvsp[0].ValueVal).V->getType();
+    const Type *PTy = yyvsp[0].ValueVal.V->getType();
     if (!isa<PointerType>(PTy))
       error("Trying to free nonpointer type '" + PTy->getDescription() + "'");
-    (yyval.InstVal).I = new FreeInst((yyvsp[0].ValueVal).V);
-    (yyval.InstVal).S.makeSignless();
+    yyval.InstVal.I = new FreeInst(yyvsp[0].ValueVal.V);
+    yyval.InstVal.S.makeSignless();
   ;}
     break;
 
   case 308:
-#line 3869 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3870 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    const Type* Ty = (yyvsp[-1].TypeVal).PAT->get();
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
+    const Type* Ty = yyvsp[-1].TypeVal.PAT->get();
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-1].TypeVal.S);
     if (!isa<PointerType>(Ty))
       error("Can't load from nonpointer type: " + Ty->getDescription());
     if (!cast<PointerType>(Ty)->getElementType()->isFirstClassType())
       error("Can't load from pointer of non-first-class type: " +
                      Ty->getDescription());
-    Value* tmpVal = getVal(Ty, (yyvsp[0].ValIDVal));
-    (yyval.InstVal).I = new LoadInst(tmpVal, "", (yyvsp[-3].BoolVal));
-    (yyval.InstVal).S.copy((yyvsp[-1].TypeVal).S.get(0));
-    delete (yyvsp[-1].TypeVal).PAT;
+    Value* tmpVal = getVal(Ty, yyvsp[0].ValIDVal);
+    yyval.InstVal.I = new LoadInst(tmpVal, "", yyvsp[-3].BoolVal);
+    yyval.InstVal.S.copy(yyvsp[-1].TypeVal.S.get(0));
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 309:
-#line 3882 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3883 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[0].ValIDVal).S.copy((yyvsp[-1].TypeVal).S);
-    const PointerType *PTy = dyn_cast<PointerType>((yyvsp[-1].TypeVal).PAT->get());
+    yyvsp[0].ValIDVal.S.copy(yyvsp[-1].TypeVal.S);
+    const PointerType *PTy = dyn_cast<PointerType>(yyvsp[-1].TypeVal.PAT->get());
     if (!PTy)
       error("Can't store to a nonpointer type: " + 
-             (yyvsp[-1].TypeVal).PAT->get()->getDescription());
+             yyvsp[-1].TypeVal.PAT->get()->getDescription());
     const Type *ElTy = PTy->getElementType();
-    Value *StoreVal = (yyvsp[-3].ValueVal).V;
-    Value* tmpVal = getVal(PTy, (yyvsp[0].ValIDVal));
-    if (ElTy != (yyvsp[-3].ValueVal).V->getType()) {
-      StoreVal = handleSRetFuncTypeMerge((yyvsp[-3].ValueVal).V, ElTy);
+    Value *StoreVal = yyvsp[-3].ValueVal.V;
+    Value* tmpVal = getVal(PTy, yyvsp[0].ValIDVal);
+    if (ElTy != yyvsp[-3].ValueVal.V->getType()) {
+      StoreVal = handleSRetFuncTypeMerge(yyvsp[-3].ValueVal.V, ElTy);
       if (!StoreVal)
-        error("Can't store '" + (yyvsp[-3].ValueVal).V->getType()->getDescription() +
+        error("Can't store '" + yyvsp[-3].ValueVal.V->getType()->getDescription() +
               "' into space of type '" + ElTy->getDescription() + "'");
       else {
         PTy = PointerType::get(StoreVal->getType());
@@ -6609,38 +6491,37 @@ yyreduce:
           tmpVal = new BitCastInst(tmpVal, PTy, "upgrd.cast", CurBB);
       }
     }
-    (yyval.InstVal).I = new StoreInst(StoreVal, tmpVal, (yyvsp[-5].BoolVal));
-    (yyval.InstVal).S.makeSignless();
-    delete (yyvsp[-1].TypeVal).PAT;
+    yyval.InstVal.I = new StoreInst(StoreVal, tmpVal, yyvsp[-5].BoolVal);
+    yyval.InstVal.S.makeSignless();
+    delete yyvsp[-1].TypeVal.PAT;
   ;}
     break;
 
   case 310:
-#line 3908 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3909 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
     {
-    (yyvsp[-1].ValIDVal).S.copy((yyvsp[-2].TypeVal).S);
-    const Type* Ty = (yyvsp[-2].TypeVal).PAT->get();
+    yyvsp[-1].ValIDVal.S.copy(yyvsp[-2].TypeVal.S);
+    const Type* Ty = yyvsp[-2].TypeVal.PAT->get();
     if (!isa<PointerType>(Ty))
       error("getelementptr insn requires pointer operand");
 
     std::vector<Value*> VIndices;
-    upgradeGEPInstIndices(Ty, (yyvsp[0].ValueList), VIndices);
+    upgradeGEPInstIndices(Ty, yyvsp[0].ValueList, VIndices);
 
-    Value* tmpVal = getVal(Ty, (yyvsp[-1].ValIDVal));
-    (yyval.InstVal).I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
-    ValueInfo VI; VI.V = tmpVal; VI.S.copy((yyvsp[-2].TypeVal).S);
-    (yyval.InstVal).S.copy(getElementSign(VI, VIndices));
-    delete (yyvsp[-2].TypeVal).PAT;
-    delete (yyvsp[0].ValueList);
+    Value* tmpVal = getVal(Ty, yyvsp[-1].ValIDVal);
+    yyval.InstVal.I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
+    ValueInfo VI; VI.V = tmpVal; VI.S.copy(yyvsp[-2].TypeVal.S);
+    yyval.InstVal.S.copy(getElementSign(VI, VIndices));
+    delete yyvsp[-2].TypeVal.PAT;
+    delete yyvsp[0].ValueList;
   ;}
     break;
 
 
-      default: break;
     }
 
-/* Line 1126 of yacc.c.  */
-#line 6644 "UpgradeParser.tab.c"
+/* Line 993 of yacc.c.  */
+#line 6525 "UpgradeParser.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -6679,35 +6560,11 @@ yyerrlab:
 
       if (YYPACT_NINF < yyn && yyn < YYLAST)
 	{
+	  YYSIZE_T yysize = 0;
 	  int yytype = YYTRANSLATE (yychar);
-	  YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
-	  YYSIZE_T yysize = yysize0;
-	  YYSIZE_T yysize1;
-	  int yysize_overflow = 0;
-	  char *yymsg = 0;
-#	  define YYERROR_VERBOSE_ARGS_MAXIMUM 5
-	  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+	  const char* yyprefix;
+	  char *yymsg;
 	  int yyx;
-
-#if 0
-	  /* This is so xgettext sees the translatable formats that are
-	     constructed on the fly.  */
-	  YY_("syntax error, unexpected %s");
-	  YY_("syntax error, unexpected %s, expecting %s");
-	  YY_("syntax error, unexpected %s, expecting %s or %s");
-	  YY_("syntax error, unexpected %s, expecting %s or %s or %s");
-	  YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
-#endif
-	  char *yyfmt;
-	  char const *yyf;
-	  static char const yyunexpected[] = "syntax error, unexpected %s";
-	  static char const yyexpecting[] = ", expecting %s";
-	  static char const yyor[] = " or %s";
-	  char yyformat[sizeof yyunexpected
-			+ sizeof yyexpecting - 1
-			+ ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
-			   * (sizeof yyor - 1))];
-	  char const *yyprefix = yyexpecting;
 
 	  /* Start YYX at -YYN if negative to avoid negative indexes in
 	     YYCHECK.  */
@@ -6716,91 +6573,81 @@ yyerrlab:
 	  /* Stay within bounds of both yycheck and yytname.  */
 	  int yychecklim = YYLAST - yyn;
 	  int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-	  int yycount = 1;
+	  int yycount = 0;
 
-	  yyarg[0] = yytname[yytype];
-	  yyfmt = yystpcpy (yyformat, yyunexpected);
-
+	  yyprefix = ", expecting ";
 	  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
 	    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
 	      {
-		if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
+		yysize += yystrlen (yyprefix) + yystrlen (yytname [yyx]);
+		yycount += 1;
+		if (yycount == 5)
 		  {
-		    yycount = 1;
-		    yysize = yysize0;
-		    yyformat[sizeof yyunexpected - 1] = '\0';
+		    yysize = 0;
 		    break;
 		  }
-		yyarg[yycount++] = yytname[yyx];
-		yysize1 = yysize + yytnamerr (0, yytname[yyx]);
-		yysize_overflow |= yysize1 < yysize;
-		yysize = yysize1;
-		yyfmt = yystpcpy (yyfmt, yyprefix);
-		yyprefix = yyor;
 	      }
-
-	  yyf = YY_(yyformat);
-	  yysize1 = yysize + yystrlen (yyf);
-	  yysize_overflow |= yysize1 < yysize;
-	  yysize = yysize1;
-
-	  if (!yysize_overflow && yysize <= YYSTACK_ALLOC_MAXIMUM)
-	    yymsg = (char *) YYSTACK_ALLOC (yysize);
-	  if (yymsg)
+	  yysize += (sizeof ("syntax error, unexpected ")
+		     + yystrlen (yytname[yytype]));
+	  yymsg = (char *) YYSTACK_ALLOC (yysize);
+	  if (yymsg != 0)
 	    {
-	      /* Avoid sprintf, as that infringes on the user's name space.
-		 Don't have undefined behavior even if the translation
-		 produced a string with the wrong number of "%s"s.  */
-	      char *yyp = yymsg;
-	      int yyi = 0;
-	      while ((*yyp = *yyf))
+	      char *yyp = yystpcpy (yymsg, "syntax error, unexpected ");
+	      yyp = yystpcpy (yyp, yytname[yytype]);
+
+	      if (yycount < 5)
 		{
-		  if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
-		    {
-		      yyp += yytnamerr (yyp, yyarg[yyi++]);
-		      yyf += 2;
-		    }
-		  else
-		    {
-		      yyp++;
-		      yyf++;
-		    }
+		  yyprefix = ", expecting ";
+		  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+		    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
+		      {
+			yyp = yystpcpy (yyp, yyprefix);
+			yyp = yystpcpy (yyp, yytname[yyx]);
+			yyprefix = " or ";
+		      }
 		}
 	      yyerror (yymsg);
 	      YYSTACK_FREE (yymsg);
 	    }
 	  else
-	    {
-	      yyerror (YY_("syntax error"));
-	      goto yyexhaustedlab;
-	    }
+	    yyerror ("syntax error; also virtual memory exhausted");
 	}
       else
 #endif /* YYERROR_VERBOSE */
-	yyerror (YY_("syntax error"));
+	yyerror ("syntax error");
     }
 
 
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
+      /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
         {
-	  /* Return failure if at end of input.  */
+          /* If at end of input, pop the error token,
+	     then the rest of the stack, then return failure.  */
 	  if (yychar == YYEOF)
-	    YYABORT;
+	     for (;;)
+	       {
+		 YYPOPSTACK;
+		 if (yyssp == yyss)
+		   YYABORT;
+		 YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
+		 yydestruct (yystos[*yyssp], yyvsp);
+	       }
         }
       else
 	{
-	  yydestruct ("Error: discarding", yytoken, &yylval);
+	  YYDSYMPRINTF ("Error: discarding", yytoken, &yylval, &yylloc);
+	  yydestruct (yytoken, &yylval);
 	  yychar = YYEMPTY;
+
 	}
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -6810,13 +6657,14 @@ yyerrlab:
 `---------------------------------------------------*/
 yyerrorlab:
 
-  /* Pacify compilers like GCC when the user code never invokes
-     YYERROR and the label yyerrorlab therefore never appears in user
-     code.  */
+#ifdef __GNUC__
+  /* Pacify GCC when the user code never invokes YYERROR and the label
+     yyerrorlab therefore never appears in user code.  */
   if (0)
      goto yyerrorlab;
+#endif
 
-yyvsp -= yylen;
+  yyvsp -= yylen;
   yyssp -= yylen;
   yystate = *yyssp;
   goto yyerrlab1;
@@ -6846,8 +6694,8 @@ yyerrlab1:
       if (yyssp == yyss)
 	YYABORT;
 
-
-      yydestruct ("Error: popping", yystos[yystate], yyvsp);
+      YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
+      yydestruct (yystos[yystate], yyvsp);
       YYPOPSTACK;
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -6856,11 +6704,10 @@ yyerrlab1:
   if (yyn == YYFINAL)
     YYACCEPT;
 
+  YYDPRINTF ((stderr, "Shifting error token, "));
+
   *++yyvsp = yylval;
 
-
-  /* Shift the error token. */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -6881,25 +6728,16 @@ yyabortlab:
   goto yyreturn;
 
 #ifndef yyoverflow
-/*-------------------------------------------------.
-| yyexhaustedlab -- memory exhaustion comes here.  |
-`-------------------------------------------------*/
-yyexhaustedlab:
-  yyerror (YY_("memory exhausted"));
+/*----------------------------------------------.
+| yyoverflowlab -- parser overflow comes here.  |
+`----------------------------------------------*/
+yyoverflowlab:
+  yyerror ("parser stack overflow");
   yyresult = 2;
   /* Fall through.  */
 #endif
 
 yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
-     yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval);
-  while (yyssp != yyss)
-    {
-      yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp);
-      YYPOPSTACK;
-    }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
@@ -6908,7 +6746,7 @@ yyreturn:
 }
 
 
-#line 3926 "/proj/llvm/llvm-4/tools/llvm-upgrade/UpgradeParser.y"
+#line 3927 "/users/dag/projects/cascade/llvm.modified/tools/llvm-upgrade/UpgradeParser.y"
 
 
 int yyerror(const char *ErrorMsg) {
