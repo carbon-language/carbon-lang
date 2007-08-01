@@ -180,7 +180,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   }
 
   if (TAI->hasDotTypeDotSizeDirective())
-    O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
+    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   if (TAI->doesSupportDebugInformation()) {
     // Emit post-function debug information.
