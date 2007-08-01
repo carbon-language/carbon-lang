@@ -348,7 +348,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     DstAddr, SrcAddr, SizeVal,llvm::ConstantInt::get(llvm::Type::Int32Ty, Align)
   };
   
-  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, 4);
+  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
 }
 
 
@@ -624,7 +624,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
       Args.push_back(ArgVal.getAggregateAddr());
   }
   
-  llvm::Value *V = Builder.CreateCall(Callee, &Args[0], Args.size());
+  llvm::Value *V = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
   if (V->getType() != llvm::Type::VoidTy)
     V->setName("call");
   
