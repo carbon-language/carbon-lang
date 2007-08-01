@@ -472,32 +472,32 @@ def LFD : DForm_1<50, (outs F8RC:$rD), (ins memri:$src),
 
 
 // Unindexed (r+i) Loads with Update (preinc).
-def LBZU : DForm_1<35, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LBZU : DForm_1<35, (outs GPRC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                    "lbzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHAU : DForm_1<43, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LHAU : DForm_1<43, (outs GPRC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                    "lhau $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LHZU : DForm_1<41, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LHZU : DForm_1<41, (outs GPRC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                    "lhzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LWZU : DForm_1<33, (outs GPRC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LWZU : DForm_1<33, (outs GPRC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                    "lwzu $rD, $addr", LdStGeneral,
                    []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFSU : DForm_1<49, (outs F4RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LFSU : DForm_1<49, (outs F4RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                   "lfs $rD, $addr", LdStLFDU,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
 
-def LFDU : DForm_1<51, (outs F8RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LFDU : DForm_1<51, (outs F8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                   "lfd $rD, $addr", LdStLFD,
                   []>, RegConstraint<"$addr.reg = $ea_result">,
                    NoEncode<"$ea_result">;
@@ -694,9 +694,9 @@ def XORIS : DForm_4<27, (outs GPRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                     [(set GPRC:$dst, (xor GPRC:$src1,imm16ShiftedZExt:$src2))]>;
 def NOP   : DForm_4_zero<24, (outs), (ins), "nop", IntGeneral,
                          []>;
-def CMPWI : DForm_5_ext<11, (outs), (ins CRRC:$crD, GPRC:$rA, s16imm:$imm),
+def CMPWI : DForm_5_ext<11, (outs CRRC:$crD), (ins GPRC:$rA, s16imm:$imm),
                         "cmpwi $crD, $rA, $imm", IntCompare>;
-def CMPLWI : DForm_6_ext<10, (outs), (ins CRRC:$dst, GPRC:$src1, u16imm:$src2),
+def CMPLWI : DForm_6_ext<10, (outs CRRC:$dst), (ins GPRC:$src1, u16imm:$src2),
                          "cmplwi $dst, $src1, $src2", IntCompare>;
 }
 

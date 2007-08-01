@@ -272,13 +272,13 @@ def MULHDU : XOForm_1<31, 9, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "mulhdu $rT, $rA, $rB", IntMulHWU,
                      [(set G8RC:$rT, (mulhu G8RC:$rA, G8RC:$rB))]>;
 
-def CMPD   : XForm_16_ext<31, 0, (outs), (ins CRRC:$crD, G8RC:$rA, G8RC:$rB),
+def CMPD   : XForm_16_ext<31, 0, (outs CRRC:$crD), (ins G8RC:$rA, G8RC:$rB),
                           "cmpd $crD, $rA, $rB", IntCompare>, isPPC64;
-def CMPLD  : XForm_16_ext<31, 32, (outs), (ins CRRC:$crD, G8RC:$rA, G8RC:$rB),
+def CMPLD  : XForm_16_ext<31, 32, (outs CRRC:$crD), (ins G8RC:$rA, G8RC:$rB),
                           "cmpld $crD, $rA, $rB", IntCompare>, isPPC64;
-def CMPDI  : DForm_5_ext<11, (outs), (ins CRRC:$crD, G8RC:$rA, s16imm:$imm),
+def CMPDI  : DForm_5_ext<11, (outs CRRC:$crD), (ins G8RC:$rA, s16imm:$imm),
                          "cmpdi $crD, $rA, $imm", IntCompare>, isPPC64;
-def CMPLDI : DForm_6_ext<10, (outs), (ins CRRC:$dst, G8RC:$src1, u16imm:$src2),
+def CMPLDI : DForm_6_ext<10, (outs CRRC:$dst), (ins G8RC:$src1, u16imm:$src2),
                          "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
 
 def SLD  : XForm_6<31,  27, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
@@ -374,7 +374,7 @@ def LWAX : XForm_1<31, 341, (outs G8RC:$rD), (ins memrr:$src),
                    PPC970_DGroup_Cracked;
 
 // Update forms.
-def LHAU8 : DForm_1<43, (outs G8RC:$rD), (ins ptr_rc:$ea_result, symbolLo:$disp,
+def LHAU8 : DForm_1<43, (outs G8RC:$rD, ptr_rc:$ea_result), (ins symbolLo:$disp,
                             ptr_rc:$rA),
                     "lhau $rD, $disp($rA)", LdStGeneral,
                     []>, RegConstraint<"$rA = $ea_result">,
@@ -407,15 +407,15 @@ def LWZX8 : XForm_1<31,  23, (outs G8RC:$rD), (ins memrr:$src),
                    
                    
 // Update forms.
-def LBZU8 : DForm_1<35, (outs G8RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LBZU8 : DForm_1<35, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                     "lbzu $rD, $addr", LdStGeneral,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
-def LHZU8 : DForm_1<41, (outs G8RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LHZU8 : DForm_1<41, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                     "lhzu $rD, $addr", LdStGeneral,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
-def LWZU8 : DForm_1<33, (outs G8RC:$rD), (ins ptr_rc:$ea_result, memri:$addr),
+def LWZU8 : DForm_1<33, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memri:$addr),
                     "lwzu $rD, $addr", LdStGeneral,
                     []>, RegConstraint<"$addr.reg = $ea_result">,
                     NoEncode<"$ea_result">;
@@ -431,7 +431,7 @@ def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
                    
-def LDU  : DSForm_1<58, 1, (outs G8RC:$rD), (ins ptr_rc:$ea_result, memrix:$addr),
+def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", LdStLD,
                     []>, RegConstraint<"$addr.reg = $ea_result">, isPPC64,
                     NoEncode<"$ea_result">;
