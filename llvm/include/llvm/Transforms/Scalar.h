@@ -325,13 +325,6 @@ FunctionPass *createGVNPREPass();
 
 //===----------------------------------------------------------------------===//
 //
-// FastDeadStoreElimination - This pass deletes stores that are post-dominated by
-// must-aliased stores and are not loaded used between the stores.
-//
-FunctionPass *createFastDeadStoreEliminationPass();
-
-//===----------------------------------------------------------------------===//
-//
 // RedundantLoadElimination - This pass deletes loads that are dominated by
 // must-aliased loads and are not stored to between the loads.
 //

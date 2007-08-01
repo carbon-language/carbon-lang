@@ -1,4 +1,4 @@
-//===- FastDSE.cpp - Fast Dead Store Elimination --------------------------===//
+//===- DeadStoreElimination.cpp - Fast Dead Store Elimination --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "fdse"
+#define DEBUG_TYPE "dse"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -35,9 +35,9 @@ STATISTIC(NumFastStores, "Number of stores deleted");
 STATISTIC(NumFastOther , "Number of other instrs removed");
 
 namespace {
-  struct VISIBILITY_HIDDEN FDSE : public FunctionPass {
+  struct VISIBILITY_HIDDEN DSE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    FDSE() : FunctionPass((intptr_t)&ID) {}
+    DSE() : FunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnFunction(Function &F) {
       bool Changed = false;
@@ -78,13 +78,13 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
   };
-  char FDSE::ID = 0;
-  RegisterPass<FDSE> X("fdse", "Fast Dead Store Elimination");
+  char DSE::ID = 0;
+  RegisterPass<DSE> X("dse", "Dead Store Elimination");
 }
 
-FunctionPass *llvm::createFastDeadStoreEliminationPass() { return new FDSE(); }
+FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 
-bool FDSE::runOnBasicBlock(BasicBlock &BB) {
+bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   // Record the last-seen store to this pointer
@@ -172,7 +172,7 @@ bool FDSE::runOnBasicBlock(BasicBlock &BB) {
 
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure
-bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
+bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
                                               SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -213,7 +213,7 @@ bool FDSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
 
 /// handleEndBlock - Remove dead stores to stack-allocated locations in the function
 /// end block
-bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead) {
+bool DSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
@@ -309,7 +309,7 @@ bool FDSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead)
   return MadeChange;
 }
 
-bool FDSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
+bool DSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
                                 BasicBlock::iterator& BBI,
                                 SmallPtrSet<AllocaInst*, 4>& deadPointers, 
                                 SetVector<Instruction*>& possiblyDead) {
@@ -363,7 +363,7 @@ bool FDSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
   return MadeChange;
 }
 
-void FDSE::DeleteDeadInstructionChains(Instruction *I,
+void DSE::DeleteDeadInstructionChains(Instruction *I,
                                       SetVector<Instruction*> &DeadInsts) {
   // Instruction must be dead.
   if (!I->use_empty() || !isInstructionTriviallyDead(I)) return;
