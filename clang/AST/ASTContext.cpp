@@ -584,16 +584,28 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
+/// getTypeOfExpr - Unlike many "get<Type>" functions, we can't unique
+/// TypeOfExpr AST's (since expression's are never shared). For example,
+/// multiple declarations that refer to "typeof(x)" all contain different
+/// DeclRefExpr's. This doesn't effect the type checker, since it operates 
+/// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfExpr(Expr *tofExpr) {
   QualType Canonical = tofExpr->getType().getCanonicalType();
-  // Note: TypeOfExpr's aren't uniqued.
-  return QualType(new TypeOfExpr(tofExpr, Canonical), 0);
+  TypeOfExpr *toe = new TypeOfExpr(tofExpr, Canonical);
+  Types.push_back(toe);
+  return QualType(toe, 0);
 }
 
+/// getTypeOfType -  Unlike many "get<Type>" functions, we don't unique
+/// TypeOfType AST's. The only motivation to unique these nodes would be
+/// memory savings. Since typeof(t) is fairly uncommon, space shouldn't be
+/// an issue. This doesn't effect the type checker, since it operates 
+/// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfType(QualType tofType) {
   QualType Canonical = tofType.getCanonicalType();
-  // Note: TypeOfType's aren't uniqued.
-  return QualType(new TypeOfType(tofType, Canonical), 0);
+  TypeOfType *tot = new TypeOfType(tofType, Canonical);
+  Types.push_back(tot);
+  return QualType(tot, 0);
 }
 
 /// getTagDeclType - Return the unique reference to the type for the
