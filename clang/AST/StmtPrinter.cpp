@@ -375,8 +375,8 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   }
 }
 void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
-  // FIXME: print value.
-  OS << "~1.0~";
+  // FIXME: print value more precisely.
+  OS << Node->getValue();
 }
 void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   if (Str->isWide()) OS << 'L';
