@@ -153,7 +153,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
           SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
           // Insert a call instruction before the invoke.
           CallInst *Call = new CallInst(II->getCalledValue(),
-                                        &Args[0], Args.size(), "", II);
+                                        Args.begin(), Args.end(), "", II);
           Call->takeName(II);
           Call->setCallingConv(II->getCallingConv());
 

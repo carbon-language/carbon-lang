@@ -16,7 +16,10 @@
 #ifndef LLVM_INSTRUCTIONS_H
 #define LLVM_INSTRUCTIONS_H
 
+#include <iterator>
+
 #include "llvm/InstrTypes.h"
+#include "llvm/DerivedTypes.h"
 
 namespace llvm {
 
@@ -735,12 +738,12 @@ public:
 //===----------------------------------------------------------------------===//
 //                                 CallInst Class
 //===----------------------------------------------------------------------===//
-
 /// CallInst - This class represents a function call, abstracting a target
 /// machine's calling convention.  This class uses low bit of the SubClassData
 /// field to indicate whether or not this is a tail call.  The rest of the bits
 /// hold the calling convention of the call.
 ///
+
 class CallInst : public Instruction {
   ParamAttrsList *ParamAttrs; ///< parameter attributes for call
   CallInst(const CallInst &CI);
@@ -749,18 +752,73 @@ class CallInst : public Instruction {
   void init(Value *Func, Value *Actual);
   void init(Value *Func);
 
+  template<typename InputIterator>
+  void init(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
+            const std::string &Name,
+            // This argument ensures that we have an iterator we can
+            // do arithmetic on in constant time
+            std::random_access_iterator_tag) {
+    typename std::iterator_traits<InputIterator>::difference_type NumArgs = 
+      std::distance(ArgBegin, ArgEnd);
+    
+    if (NumArgs > 0) {
+      // This requires that the iterator points to contiguous memory.
+      init(Func, &*ArgBegin, NumArgs);
+    }
+    else {
+      init(Func, 0, NumArgs);
+    }
+    
+    setName(Name);
+  }
+
 public:
+  /// Construct a CallInst given a range of arguments.  InputIterator
+  /// must be a random-access iterator pointing to contiguous storage
+  /// (e.g. a std::vector<>::iterator).  Checks are made for
+  /// random-accessness but not for contiguous storage as that would
+  /// incur runtime overhead.
+  /// @brief Construct a CallInst from a range of arguments
+  template<typename InputIterator>
+  CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
+           const std::string &Name = "", Instruction *InsertBefore = 0)
+      : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                       ->getElementType())->getReturnType(),
+                    Instruction::Call, 0, 0, InsertBefore) {
+    init(Func, ArgBegin, ArgEnd, Name, 
+         typename std::iterator_traits<InputIterator>::iterator_category());
+  }
+
+  /// Construct a CallInst given a range of arguments.  InputIterator
+  /// must be a random-access iterator pointing to contiguous storage
+  /// (e.g. a std::vector<>::iterator).  Checks are made for
+  /// random-accessness but not for contiguous storage as that would
+  /// incur runtime overhead.
+  /// @brief Construct a CallInst from a range of arguments
+  template<typename InputIterator>
+  CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
+           const std::string &Name, BasicBlock *InsertAtEnd)
+      : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                       ->getElementType())->getReturnType(),
+                    Instruction::Call, 0, 0, InsertAtEnd) {
+    init(Func, ArgBegin, ArgEnd, Name,
+         typename std::iterator_traits<InputIterator>::iterator_category());
+  }
+
+#if 0
+  // Leave these here for llvm-gcc
   CallInst(Value *F, Value* const *Args, unsigned NumArgs,
            const std::string &Name = "", Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *const *Args, unsigned NumArgs,
            const std::string &Name, BasicBlock *InsertAtEnd);
-  
+
   // Alternate CallInst ctors w/ two actuals, w/ one actual and no
   // actuals, respectively.
   CallInst(Value *F, Value *Actual1, Value *Actual2,
            const std::string& Name = "", Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *Actual1, Value *Actual2,
            const std::string& Name, BasicBlock *InsertAtEnd);
+#endif
   CallInst(Value *F, Value *Actual, const std::string& Name = "",
            Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *Actual, const std::string& Name,

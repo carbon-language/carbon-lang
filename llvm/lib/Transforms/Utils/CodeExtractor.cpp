@@ -393,7 +393,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   }
 
   // Emit the call to the function
-  CallInst *call = new CallInst(newFunction, &params[0], params.size(),
+  CallInst *call = new CallInst(newFunction, params.begin(), params.end(),
                                 NumExitBlocks > 1 ? "targetBlock" : "");
   codeReplacer->getInstList().push_back(call);
 

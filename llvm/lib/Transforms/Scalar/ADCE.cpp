@@ -194,7 +194,7 @@ bool ADCE::doADCE() {
           // The function cannot unwind.  Convert it to a call with a branch
           // after it to the normal destination.
           SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
-          CallInst *NewCall = new CallInst(F, &Args[0], Args.size(), "", II);
+          CallInst *NewCall = new CallInst(F, Args.begin(), Args.end(), "", II);
           NewCall->takeName(II);
           NewCall->setCallingConv(II->getCallingConv());
           II->replaceAllUsesWith(NewCall);

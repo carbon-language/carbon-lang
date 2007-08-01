@@ -509,7 +509,7 @@ public:
       ConstantInt::get(SLC.getIntPtrType(), SrcStr.size()+1), // copy nul byte.
       ConstantInt::get(Type::Int32Ty, 1)  // alignment
     };
-    new CallInst(SLC.get_memcpy(), Vals, 4, "", CI);
+    new CallInst(SLC.get_memcpy(), Vals, Vals + 4, "", CI);
 
     return ReplaceCallWith(CI, Dst);
   }
@@ -549,7 +549,7 @@ public:
         CI->getOperand(2),
         ConstantInt::get(SLC.getIntPtrType(), Str.size()+1)
       };
-      return ReplaceCallWith(CI, new CallInst(SLC.get_memchr(), Args, 3,
+      return ReplaceCallWith(CI, new CallInst(SLC.get_memchr(), Args, Args + 3,
                                               CI->getName(), CI));
     }
 
@@ -752,7 +752,7 @@ public:
       ConstantInt::get(SLC.getIntPtrType(), SrcStr.size()+1),
       ConstantInt::get(Type::Int32Ty, 1) // alignment
     };
-    new CallInst(SLC.get_memcpy(), MemcpyOps, 4, "", CI);
+    new CallInst(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
 
     return ReplaceCallWith(CI, Dst);
   }
@@ -1294,7 +1294,7 @@ public:
         ConstantInt::get(SLC.getIntPtrType(), 1),
         CI->getOperand(1)
       };
-      new CallInst(SLC.get_fwrite(FILEty), FWriteArgs, 4, CI->getName(), CI);
+      new CallInst(SLC.get_fwrite(FILEty), FWriteArgs, FWriteArgs + 4, CI->getName(), CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 
                                                   FormatStr.size()));
     }
@@ -1311,7 +1311,10 @@ public:
       const Type *FILETy = CI->getOperand(1)->getType();
       Value *C = CastInst::createZExtOrBitCast(CI->getOperand(3), Type::Int32Ty,
                                                CI->getName()+".int", CI);
-      new CallInst(SLC.get_fputc(FILETy), C, CI->getOperand(1), "", CI);
+      SmallVector<Value *, 2> Args;
+      Args.push_back(C);
+      Args.push_back(CI->getOperand(1));
+      new CallInst(SLC.get_fputc(FILETy), Args.begin(), Args.end(), "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
     }
     case 's': {
@@ -1323,8 +1326,11 @@ public:
         return false;
       
       // fprintf(file,"%s",str) -> fputs(str,file)
-      new CallInst(SLC.get_fputs(FILETy), CastToCStr(CI->getOperand(3), CI),
-                   CI->getOperand(1), CI->getName(), CI);
+      SmallVector<Value *, 2> Args;
+      Args.push_back(CastToCStr(CI->getOperand(3), CI));
+      Args.push_back(CI->getOperand(1));
+      new CallInst(SLC.get_fputs(FILETy), Args.begin(),
+                   Args.end(), CI->getName(), CI);
       return ReplaceCallWith(CI, 0);
     }
     default:
@@ -1375,7 +1381,7 @@ public:
                          FormatStr.size()+1), // Copy the nul byte.
         ConstantInt::get(Type::Int32Ty, 1)
       };
-      new CallInst(SLC.get_memcpy(), MemCpyArgs, 4, "", CI);
+      new CallInst(SLC.get_memcpy(), MemCpyArgs, MemCpyArgs + 4, "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 
                                                   FormatStr.size()));
     }
@@ -1412,7 +1418,7 @@ public:
         Len,
         ConstantInt::get(Type::Int32Ty, 1)
       };
-      new CallInst(SLC.get_memcpy(), MemcpyArgs, 4, "", CI);
+      new CallInst(SLC.get_memcpy(), MemcpyArgs, MemcpyArgs + 4, "", CI);
       
       // The strlen result is the unincremented number of bytes in the string.
       if (!CI->use_empty()) {
@@ -1464,7 +1470,7 @@ public:
       ConstantInt::get(SLC.getIntPtrType(), 1),
       CI->getOperand(2)
     };
-    new CallInst(SLC.get_fwrite(FILETy), FWriteParms, 4, "", CI);
+    new CallInst(SLC.get_fwrite(FILETy), FWriteParms, FWriteParms + 4, "", CI);
     return ReplaceCallWith(CI, 0);  // Known to have no uses (see above).
   }
 } FPutsOptimizer;
@@ -1505,12 +1511,14 @@ public:
     
     // If this is writing one byte, turn it into fputc.
     if (EltSize == 1 && EltCount == 1) {
+      SmallVector<Value *, 2> Args;
       // fwrite(s,1,1,F) -> fputc(s[0],F)
       Value *Ptr = CI->getOperand(1);
       Value *Val = new LoadInst(Ptr, Ptr->getName()+".byte", CI);
-      Val = new ZExtInst(Val, Type::Int32Ty, Val->getName()+".int", CI);
+      Args.push_back(new ZExtInst(Val, Type::Int32Ty, Val->getName()+".int", CI));
+      Args.push_back(CI->getOperand(4));
       const Type *FILETy = CI->getOperand(4)->getType();
-      new CallInst(SLC.get_fputc(FILETy), Val, CI->getOperand(4), "", CI);
+      new CallInst(SLC.get_fputc(FILETy), Args.begin(), Args.end(), "", CI);
       return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), 1));
     }
     return false;

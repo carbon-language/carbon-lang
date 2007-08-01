@@ -49,6 +49,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 STATISTIC(LongJmpsTransformed, "Number of longjmps transformed");
@@ -263,7 +264,10 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   // Inst's uses and doesn't get a name.
   CastInst* CI = 
     new BitCastInst(Inst->getOperand(1), SBPTy, "LJBuf", Inst);
-  new CallInst(ThrowLongJmp, CI, Inst->getOperand(2), "", Inst);
+  SmallVector<Value *, 2> Args;
+  Args.push_back(CI);
+  Args.push_back(Inst->getOperand(2));
+  new CallInst(ThrowLongJmp, Args.begin(), Args.end(), "", Inst);
 
   SwitchValuePair& SVP = SwitchValMap[Inst->getParent()->getParent()];
 
@@ -381,7 +385,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
     make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
                         ConstantInt::get(Type::Int32Ty,
                                          SetJmpIDMap[Func]++), 0);
-  new CallInst(AddSJToMap, &Args[0], Args.size(), "", Inst);
+  new CallInst(AddSJToMap, Args.begin(), Args.end(), "", Inst);
 
   // We are guaranteed that there are no values live across basic blocks
   // (because we are "not in SSA form" yet), but there can still be values live

@@ -709,7 +709,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
           ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
           Zero  // Align
         };
-        new CallInst(TheFn, Ops, 4, "", MI);
+        new CallInst(TheFn, Ops, Ops + 4, "", MI);
       } else {
         assert(isa<MemSetInst>(MI));
         Value *Ops[] = {
@@ -717,7 +717,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
           ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
           Zero  // Align
         };
-        new CallInst(TheFn, Ops, 4, "", MI);
+        new CallInst(TheFn, Ops, Ops + 4, "", MI);
       }
     }
 

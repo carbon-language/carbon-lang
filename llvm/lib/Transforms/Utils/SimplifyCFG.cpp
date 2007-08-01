@@ -1374,7 +1374,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // Insert the call now...
           SmallVector<Value*,8> Args(II->op_begin()+3, II->op_end());
           CallInst *CI = new CallInst(II->getCalledValue(),
-                                      &Args[0], Args.size(), II->getName(), BI);
+                                      Args.begin(), Args.end(), II->getName(), BI);
           CI->setCallingConv(II->getCallingConv());
           // If the invoke produced a value, the Call now does instead
           II->replaceAllUsesWith(CI);
@@ -1748,7 +1748,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             // Insert the call now...
             SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
             CallInst *CI = new CallInst(II->getCalledValue(),
-                                        &Args[0], Args.size(),
+                                        Args.begin(), Args.end(),
                                         II->getName(), BI);
             CI->setCallingConv(II->getCallingConv());
             // If the invoke produced a value, the Call does now instead.

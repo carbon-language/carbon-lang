@@ -1513,7 +1513,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         const PointerType *PFTy = PointerType::get(FTy);
         Value* Func = getVal(PFTy, ID);
         Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
-        return new CallInst(Func, &Args[0], Args.size());
+        return new CallInst(Func, Args.begin(), Args.end());
       } else if (Name == "llvm.va_copy") {
         if (Args.size() != 2)
           error("Invalid prototype for " + Name + " prototype");
@@ -1527,7 +1527,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         std::string InstName1(makeNameUnique("va1"));
         Args[0] = new BitCastInst(Args[0], PtrTy, InstName0, CurBB);
         Args[1] = new BitCastInst(Args[1], PtrTy, InstName1, CurBB);
-        return new CallInst(Func, &Args[0], Args.size());
+        return new CallInst(Func, Args.begin(), Args.end());
       }
     }
   }
@@ -1751,11 +1751,12 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
-        AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
-        AllocaInst* b = new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI);
-        new StoreInst(CI->getOperand(1), b, CI);
-        new CallInst(NF, a, b, "", CI);
-        Value* foo = new LoadInst(a, "vacopy.fix.3", CI);
+        SmallVector<Value *, 2> Args;
+        Args.push_back(new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI));
+        Args.push_back(new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI));
+        new StoreInst(CI->getOperand(1), Args[1], CI);
+        new CallInst(NF, Args.begin(), Args.end(), "", CI);
+        Value* foo = new LoadInst(Args[0], "vacopy.fix.3", CI);
         CI->replaceAllUsesWith(foo);
         CI->getParent()->getInstList().erase(CI);
       }
@@ -3806,7 +3807,7 @@ InstVal
       }
 
       // Create the call instruction
-      CallInst *CI = new CallInst(V, &Args[0], Args.size());
+      CallInst *CI = new CallInst(V, Args.begin(), Args.end());
       CI->setTailCall($1);
       CI->setCallingConv(upgradeCallingConv($2));
       $$.I = CI;

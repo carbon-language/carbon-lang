@@ -1499,7 +1499,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         }
       }
       
-      I = new CallInst(Callee, &Args[0], Args.size());
+      I = new CallInst(Callee, Args.begin(), Args.end());
       cast<CallInst>(I)->setCallingConv(CCInfo>>1);
       cast<CallInst>(I)->setTailCall(CCInfo & 1);
       break;

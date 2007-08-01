@@ -224,7 +224,7 @@ GenericValue JIT::runFunction(Function *F,
     Args.push_back(C);
   }
 
-  CallInst *TheCall = new CallInst(F, &Args[0], Args.size(), "", StubBB);
+  CallInst *TheCall = new CallInst(F, Args.begin(), Args.end(), "", StubBB);
   TheCall->setTailCall();
   if (TheCall->getType() != Type::VoidTy)
     new ReturnInst(TheCall, StubBB);             // Return result of the call.

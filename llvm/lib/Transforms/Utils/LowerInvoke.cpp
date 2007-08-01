@@ -212,7 +212,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
       // Insert a normal call instruction...
       CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                       &CallArgs[0], CallArgs.size(), "", II);
+                                       CallArgs.begin(), CallArgs.end(), "", II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
       II->replaceAllUsesWith(NewCall);
@@ -269,7 +269,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   // Insert a normal call instruction.
   std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
   CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                   &CallArgs[0], CallArgs.size(), "",
+                                   CallArgs.begin(), CallArgs.end(), "",
                                    II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
@@ -542,7 +542,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx[0] = new GetElementPtrInst(BufPtr, &Idx[0], 2, "JmpBuf", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::Int32Ty, 1);
-  new CallInst(LongJmpFn, &Idx[0], Idx.size(), "", UnwindBlock);
+  new CallInst(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
   new UnreachableInst(UnwindBlock);
   
   // Set up the term block ("throw without a catch").

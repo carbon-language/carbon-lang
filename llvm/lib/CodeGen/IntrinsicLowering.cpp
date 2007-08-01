@@ -53,8 +53,8 @@ static CallInst *ReplaceCallWith(const char *NewFn, CallInst *CI,
                                     FunctionType::get(RetTy, ParamTys, false));
   }
 
-  SmallVector<Value*, 8> Operands(ArgBegin, ArgEnd);
-  CallInst *NewCI = new CallInst(FCache, &Operands[0], Operands.size(),
+  SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
+  CallInst *NewCI = new CallInst(FCache, Args.begin(), Args.end(),
                                  CI->getName(), CI);
   if (!CI->use_empty())
     CI->replaceAllUsesWith(NewCI);
@@ -421,7 +421,7 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     CI->getOperand(2),
     CI->getOperand(3)
   };
-  return new CallInst(F, Args, sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
+  return new CallInst(F, Args, Args+sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
 }
 
 /// Convert the llvm.part.set.iX.iY.iZ intrinsic. This intrinsic takes 
@@ -587,7 +587,7 @@ static Instruction *LowerPartSet(CallInst *CI) {
     CI->getOperand(3),
     CI->getOperand(4)
   };
-  return new CallInst(F, Args, sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
+  return new CallInst(F, Args, Args+sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
 }
 
 

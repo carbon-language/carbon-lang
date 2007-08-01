@@ -27,6 +27,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 namespace {
@@ -197,8 +198,18 @@ bool LowerGC::runOnFunction(Function &F) {
                 CI->setOperand(0, GCRead);
               } else {
                 // Create a whole new call to replace the old one.
-                CallInst *NC = new CallInst(GCRead, CI->getOperand(1),
-                                            CI->getOperand(2),
+                
+                // It sure would be nice to pass op_begin()+1,
+                // op_begin()+2 but it runs into trouble with
+                // CallInst::init's &*ierator, which requires a
+                // conversion from Use* to Value*.  The conversion
+                // from Use to Value * is not useful because the
+                // memory for Value * won't be contiguous.
+                SmallVector<Value *, 2> Args;
+                Args.push_back(CI->getOperand(1));
+                Args.push_back(CI->getOperand(2));
+                CallInst *NC = new CallInst(GCRead, Args.begin(),
+                                            Args.end(),
                                             CI->getName(), CI);
                 // These functions only deal with ptr type results so BitCast
                 // is the correct kind of cast (no-op cast).

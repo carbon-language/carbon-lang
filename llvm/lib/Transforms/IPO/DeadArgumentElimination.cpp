@@ -177,7 +177,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
                            &Args[0], Args.size(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
-      New = new CallInst(NF, &Args[0], Args.size(), "", Call);
+      New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
@@ -543,7 +543,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
                            &Args[0], Args.size(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
-      New = new CallInst(NF, &Args[0], Args.size(), "", Call);
+      New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
