@@ -548,7 +548,7 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
                [(set AL, (mul AL, GR8:$src))]>,
-             Imp<[AL],[AX]>;               // AL,AH = AL*GR8
+             Imp<[AL],[AL,AH]>;               // AL,AH = AL*GR8
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src), "mul{w}\t$src", []>,
              Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*GR16
 def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src), "mul{l}\t$src", []>,
