@@ -4449,14 +4449,18 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
     return false;
   
   if (AM.BaseGV) {
-    // X86-64 only supports addr of globals in small code model.
-    if (Subtarget->is64Bit() &&
-        getTargetMachine().getCodeModel() != CodeModel::Small)
-      return false;
-    
-    // We can only fold this if we don't need a load either.
+    // We can only fold this if we don't need an extra load.
     if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine(), false))
       return false;
+
+    // X86-64 only supports addr of globals in small code model.
+    if (Subtarget->is64Bit()) {
+      if (getTargetMachine().getCodeModel() != CodeModel::Small)
+        return false;
+      // If lower 4G is not available, then we must use rip-relative addressing.
+      if (AM.BaseOffs || AM.Scale > 1)
+        return false;
+    }
   }
   
   switch (AM.Scale) {
