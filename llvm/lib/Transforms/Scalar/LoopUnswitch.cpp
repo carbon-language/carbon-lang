@@ -543,8 +543,17 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
     std::swap(TrueDest, FalseDest);
 
   // Insert the new branch.
-  new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
+  BranchInst *BRI = new BranchInst(TrueDest, FalseDest, BranchVal, InsertPt);
 
+  // Update dominator info.
+  // BranchVal is a new preheader so it dominates true and false destination
+  // loop headers.
+  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>()) {
+    DT->changeImmediateDominator(TrueDest, BRI->getParent());
+    DT->changeImmediateDominator(FalseDest, BRI->getParent());
+  }
+  // No need to update DominanceFrontier. BRI->getParent() dominated TrueDest
+  // and FalseDest anyway. Now it immediately dominates them.
 }
 
 
@@ -626,14 +635,12 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // Split all of the edges from inside the loop to their exit blocks.  Update
   // the appropriate Phi nodes as we do so.
-  SmallVector<BasicBlock *,8> MiddleBlocks;
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
 
     for (unsigned j = 0, e = Preds.size(); j != e; ++j) {
       BasicBlock* MiddleBlock = SplitEdge(Preds[j], ExitBlock, this);
-      MiddleBlocks.push_back(MiddleBlock);
       BasicBlock* StartBlock = Preds[j];
       BasicBlock* EndBlock;
       if (MiddleBlock->getSinglePredecessor() == ExitBlock) {
@@ -678,9 +685,6 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // Add exit blocks to the loop blocks.
   LoopBlocks.insert(LoopBlocks.end(), ExitBlocks.begin(), ExitBlocks.end());
 
-  DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
-  DominatorTree *DT = getAnalysisToUpdate<DominatorTree>();
-
   // Next step, clone all of the basic blocks that make up the loop (including
   // the loop preheader and exit blocks), keeping track of the mapping between
   // the instructions and blocks.
@@ -694,21 +698,16 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
     LPM->cloneBasicBlockSimpleAnalysis(LoopBlocks[i], New, L);
   }
 
-  // OutSiders are basic block that are dominated by original header and
-  // at the same time they are not part of loop.
-  SmallPtrSet<BasicBlock *, 8> OutSiders;
-  if (DT) {
-    DomTreeNode *OrigHeaderNode = DT->getNode(OrigHeader);
-    for(std::vector<DomTreeNode*>::iterator DI = OrigHeaderNode->begin(), 
-          DE = OrigHeaderNode->end();  DI != DE; ++DI) {
-      BasicBlock *B = (*DI)->getBlock();
-
-      DenseMap<const Value*, Value*>::iterator VI = ValueMap.find(B);
-      if (VI == ValueMap.end()) 
-        OutSiders.insert(B);
+  // Update dominator info
+  DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
+  if (DominatorTree *DT = getAnalysisToUpdate<DominatorTree>())
+    for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
+      BasicBlock *LBB = LoopBlocks[i];
+      BasicBlock *NBB = NewBlocks[i];
+      CloneDomInfo(NBB, LBB, NewPreheader, OrigPreheader, 
+                   OrigHeader, DT, DF, ValueMap);
     }
-  }
-
+  
   // Splice the newly inserted blocks into the function right before the
   // original preheader.
   F->getBasicBlockList().splice(LoopBlocks[0], F->getBasicBlockList(),
@@ -760,61 +759,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   EmitPreheaderBranchOnCondition(LIC, Val, NewBlocks[0], LoopBlocks[0], OldBR);
   OldBR->eraseFromParent();
   LPM->deleteSimpleAnalysisValue(OldBR, L);
-
-  // Update dominator info
-  if (DF && DT) {
-
-    // Clone dominator info for all cloned basic block.
-    for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
-      BasicBlock *LBB = LoopBlocks[i];
-      BasicBlock *NBB = NewBlocks[i];
-      CloneDomInfo(NBB, LBB, NewPreheader, OrigPreheader, 
-                   OrigHeader, DT, DF, ValueMap);
-
-      // Remove any OutSiders from LBB and NBB's dominance frontier.
-      DominanceFrontier::iterator LBBI = DF->find(LBB);
-      if (LBBI != DF->end()) {
-        DominanceFrontier::DomSetType &LBSet = LBBI->second;
-        for (DominanceFrontier::DomSetType::iterator LI = LBSet.begin(),
-               LE = LBSet.end(); LI != LE; ++LI) {
-          BasicBlock *B = *LI;
-          if (OutSiders.count(B))
-            DF->removeFromFrontier(LBBI, B);
-        }
-      }
-
-      // Remove any OutSiders from LBB and NBB's dominance frontier.
-      DominanceFrontier::iterator NBBI = DF->find(NBB);
-      if (NBBI != DF->end()) {
-        DominanceFrontier::DomSetType NBSet = NBBI->second;
-        for (DominanceFrontier::DomSetType::iterator NI = NBSet.begin(),
-               NE = NBSet.end(); NI != NE; ++NI) {
-          BasicBlock *B = *NI;
-          if (OutSiders.count(B))
-            DF->removeFromFrontier(NBBI, B);
-        }
-      }
-    }
-
-    // MiddleBlocks are dominated by original pre header. SplitEdge updated
-    // MiddleBlocks' dominance frontier appropriately.
-    for (unsigned i = 0, e = MiddleBlocks.size(); i != e; ++i) {
-      BasicBlock *MBB = MiddleBlocks[i];
-      DT->changeImmediateDominator(MBB, OrigPreheader);
-    }
-
-    // All Outsiders are now dominated by original pre header.
-    for (SmallPtrSet<BasicBlock *, 8>::iterator OI = OutSiders.begin(),
-           OE = OutSiders.end(); OI != OE; ++OI) {
-      BasicBlock *OB = *OI;
-      DT->changeImmediateDominator(OB, OrigPreheader);
-    }
-
-    // New loop headers are dominated by original preheader
-    DT->changeImmediateDominator(NewBlocks[0], OrigPreheader);
-    DT->changeImmediateDominator(LoopBlocks[0], OrigPreheader);
-  }
-
+  
   LoopProcessWorklist.push_back(NewLoop);
   redoLoop = true;
 
