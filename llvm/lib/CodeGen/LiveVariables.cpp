@@ -281,10 +281,24 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     PhysRegUsed[SubReg] = true;
   }
 
-  // Remember the partial uses.
   for (const unsigned *SuperRegs = RegInfo->getSuperRegisters(Reg);
-       unsigned SuperReg = *SuperRegs; ++SuperRegs)
-    PhysRegPartUse[SuperReg] = MI;
+       unsigned SuperReg = *SuperRegs; ++SuperRegs) {
+    // Remember the partial use of this superreg if it was previously defined.
+    bool HasPrevDef = PhysRegInfo[SuperReg] != NULL;
+    if (!HasPrevDef) {
+      for (const unsigned *SSRegs = RegInfo->getSuperRegisters(SuperReg);
+           unsigned SSReg = *SSRegs; ++SSRegs) {
+        if (PhysRegInfo[SSReg] != NULL) {
+          HasPrevDef = true;
+          break;
+        }
+      }
+    }
+    if (HasPrevDef) {
+      PhysRegInfo[SuperReg] = MI;
+      PhysRegPartUse[SuperReg] = MI;
+    }
+  }
 }
 
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI,
@@ -342,7 +356,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
           addRegisterKilled(Reg, PhysRegPartUse[Reg], true);
       }
     } else if (PhysRegPartUse[Reg])
-      // Add implicit use / kill to last use of a sub-register.
+      // Add implicit use / kill to last partial use.
       addRegisterKilled(Reg, PhysRegPartUse[Reg], true);
     else
       addRegisterDead(Reg, LastRef);
@@ -385,11 +399,13 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 
     PhysRegInfo[Reg] = MI;
     PhysRegUsed[Reg] = false;
+    PhysRegPartDef[Reg].clear();
     PhysRegPartUse[Reg] = NULL;
     for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs) {
       PhysRegInfo[SubReg] = MI;
       PhysRegUsed[SubReg] = false;
+      PhysRegPartDef[SubReg].clear();
       PhysRegPartUse[SubReg] = NULL;
     }
   }
