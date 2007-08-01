@@ -262,7 +262,7 @@ public:
 
   /// ImmutablePasses are never run.
   ///
-  virtual bool runOnModule(Module &M) { return false; }
+  bool runOnModule(Module &M) { return false; }
 
   explicit ImmutablePass(intptr_t pid) : ModulePass(pid) {}
   // Force out-of-line virtual method.
