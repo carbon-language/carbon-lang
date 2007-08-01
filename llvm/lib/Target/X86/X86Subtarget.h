@@ -46,18 +46,23 @@ protected:
   };
 
   /// AsmFlavor - Which x86 asm dialect to use.
+  ///
   AsmWriterFlavorTy AsmFlavor;
 
   /// PICStyle - Which PIC style to use
+  ///
   PICStyle::Style PICStyle;
   
   /// X86SSELevel - MMX, SSE1, SSE2, SSE3, SSSE3, or none supported.
+  ///
   X86SSEEnum X86SSELevel;
 
   /// X863DNowLevel - 3DNow or 3DNow Athlon, or none supported.
+  ///
   X863DNowEnum X863DNowLevel;
 
   /// HasX86_64 - True if the processor supports X86-64 instructions.
+  ///
   bool HasX86_64;
 
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
@@ -65,12 +70,17 @@ protected:
   unsigned stackAlignment;
 
   /// Min. memset / memcpy size that is turned into rep/movs, rep/stos ops.
+  ///
   unsigned MinRepStrSizeThreshold;
 
 private:
   /// Is64Bit - True if the processor supports 64-bit instructions and module
   /// pointer size is 64 bit.
   bool Is64Bit;
+
+  /// HasLow4GUserAddress - True if the low 4G user-space address is available.
+  ///
+  bool HasLow4GUserAddress;
 
 public:
   enum {
@@ -102,6 +112,10 @@ public:
   void AutoDetectSubtargetFeatures();
 
   bool is64Bit() const { return Is64Bit; }
+
+  /// hasLow4GUserSpaceAddress - True if lower 4G user-space address is
+  /// available.
+  bool hasLow4GUserSpaceAddress() const { return HasLow4GUserAddress; }
 
   PICStyle::Style getPICStyle() const { return PICStyle; }
   void setPICStyle(PICStyle::Style Style)  { PICStyle = Style; }

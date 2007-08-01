@@ -614,7 +614,8 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       bool isStatic = TM.getRelocationModel() == Reloc::Static;
       SDOperand N0 = N.getOperand(0);
       // Mac OS X X86-64 lower 4G address is not available.
-      bool isAbs32 = !is64Bit || (isStatic && !Subtarget->isTargetDarwin());
+      bool isAbs32 = !is64Bit ||
+        (isStatic && Subtarget->hasLow4GUserSpaceAddress());
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
         GlobalValue *GV = G->getGlobal();
         if (isAbs32 || isRoot) {
