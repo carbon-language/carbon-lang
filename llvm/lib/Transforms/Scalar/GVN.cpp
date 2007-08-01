@@ -721,8 +721,9 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   Value *&V = Phis[BB];
   if (V) return V;
   
-  if (std::distance(pred_begin(BB), pred_end(BB)) == 1)
-    return V = GetValueForBlock(*pred_begin(BB), orig, Phis);
+  BasicBlock* singlePred = BB->getSinglePredecessor();
+  if (singlePred)
+    return V = GetValueForBlock(singlePred, orig, Phis);
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
@@ -750,6 +751,16 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     
     MD.removeInstruction(PN);
     PN->replaceAllUsesWith(first);
+    
+    SmallVector<BasicBlock*, 4> toRemove;
+    for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
+         E = Phis.end(); I != E; ++I)
+      if (I->second == PN)
+        toRemove.push_back(I->first);
+    for (SmallVector<BasicBlock*, 4>::iterator I = toRemove.begin(),
+         E= toRemove.end(); I != E; ++I)
+      Phis[*I] = first;
+    
     PN->eraseFromParent();
     
     Phis[BB] = first;
@@ -764,9 +775,7 @@ bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   DenseMap<BasicBlock*, Value*> deps;
-  bool ret = MD.getNonLocalDependency(L, deps);
-  if (!ret)
-    return false;
+  MD.getNonLocalDependency(L, deps);
   
   DenseMap<BasicBlock*, Value*> repl;
   for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(), E = deps.end();

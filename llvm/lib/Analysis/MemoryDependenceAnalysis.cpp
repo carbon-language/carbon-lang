@@ -101,63 +101,62 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, Instruc
   return NonLocal;
 }
 
-bool MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
+void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
                                               BasicBlock* block,
-                                              DenseMap<BasicBlock*, Value*>& resp,
-                                              SmallPtrSet<BasicBlock*, 4>& visited) {
-  if (resp.count(block))
-    return resp[block] != None;
+                                              DenseMap<BasicBlock*, Value*>& resp) {
+  SmallPtrSet<BasicBlock*, 4> visited;
+  SmallVector<BasicBlock*, 4> stack;
+  stack.push_back(block);
   
-  Instruction* localDep = getDependency(query, 0, block);
-  if (localDep != NonLocal) {
-    resp.insert(std::make_pair(block, localDep));
-    return true;
+  while (!stack.empty()) {
+    BasicBlock* BB = stack.back();
+    
+    visited.insert(BB);
+    
+    if (resp.count(BB)) {
+      stack.pop_back();
+      continue;
+    }
+    
+    if (BB != block) {
+      Instruction* localDep = getDependency(query, 0, BB);
+      if (localDep != NonLocal) {
+        resp.insert(std::make_pair(BB, localDep));
+        continue;
+      }
+    }
+    
+    bool predOnStack = false;
+    bool inserted = false;
+    for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+         PI != PE; ++PI)
+      if (!visited.count(*PI)) {
+        stack.push_back(*PI);
+        inserted = true;
+      } else
+        predOnStack = true;
+    
+    if (inserted)
+      continue;
+    else if (!inserted && !predOnStack) {
+      resp.insert(std::make_pair(BB, None));
+    } else if (!inserted && predOnStack){
+      resp.insert(std::make_pair(BB, NonLocal));
+    }
+    
+    stack.pop_back();
   }
-  
-  visited.insert(block);
-  
-  bool inserted = false;
-  bool predOnStack = false;
-  for (pred_iterator PI = pred_begin(block), PE = pred_end(block);
-       PI != PE; ++PI)
-    if (!visited.count(*PI))
-      inserted |= nonLocalHelper(query, *PI, resp, visited);
-    else
-      predOnStack = true;
-
-  visited.erase(block);
-
-  if (!inserted && !predOnStack)
-    resp.insert(std::make_pair(block, None));
-  else if (inserted && predOnStack)
-    resp.insert(std::make_pair(block, NonLocal));
-  
-  return inserted;
 }
 
-bool MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
+void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
                                                      DenseMap<BasicBlock*, Value*>& resp) {
   Instruction* localDep = getDependency(query);
   if (localDep != NonLocal) {
     resp.insert(std::make_pair(query->getParent(), localDep));
-    return true;
+    return;
   }
   
-  bool inserted = false;
-  SmallPtrSet<BasicBlock*, 4> visited;
-  visited.insert(query->getParent());
-  
-  BasicBlock* parent = query->getParent();
-  for (pred_iterator PI = pred_begin(parent), PE = pred_end(parent);
-       PI != PE; ++PI) {
-    if (!visited.count(*PI))
-      inserted |= nonLocalHelper(query, *PI, resp, visited);
-  }
-  
-  if (!inserted)
-    resp.insert(std::make_pair(query->getParent(), None));
-  
-  return inserted;
+  nonLocalHelper(query, query->getParent(), resp);
 }
 
 /// getDependency - Return the instruction on which a memory operation
