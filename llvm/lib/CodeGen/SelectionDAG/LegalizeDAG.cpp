@@ -550,6 +550,93 @@ SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
   return Result;
 }
 
+/// ExpandUnalignedStore - Expands an unaligned store to 2 half-size stores.
+static
+SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
+                               TargetLowering &TLI) {
+  assert(MVT::isInteger(ST->getStoredVT()) &&
+         "Non integer unaligned stores not implemented.");
+  int SVOffset = ST->getSrcValueOffset();
+  SDOperand Chain = ST->getChain();
+  SDOperand Ptr = ST->getBasePtr();
+  SDOperand Val = ST->getValue();
+  MVT::ValueType VT = Val.getValueType();
+  // Get the half-size VT
+  MVT::ValueType NewStoredVT = ST->getStoredVT() - 1;
+  int NumBits = MVT::getSizeInBits(NewStoredVT);
+  int Alignment = ST->getAlignment();
+  int IncrementSize = NumBits / 8;
+
+  // Divide the stored value in two parts.
+  SDOperand ShiftAmount = DAG.getConstant(NumBits, TLI.getShiftAmountTy());
+  SDOperand Lo = Val;
+  SDOperand Hi = DAG.getNode(ISD::SRL, VT, Val, ShiftAmount);
+
+  // Store the two parts
+  SDOperand Store1, Store2;
+  Store1 = DAG.getTruncStore(Chain, TLI.isLittleEndian()?Lo:Hi, Ptr,
+                             ST->getSrcValue(), SVOffset, NewStoredVT,
+                             ST->isVolatile(), Alignment);
+  Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                    DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+  Store2 = DAG.getTruncStore(Chain, TLI.isLittleEndian()?Hi:Lo, Ptr,
+                             ST->getSrcValue(), SVOffset + IncrementSize,
+                             NewStoredVT, ST->isVolatile(), Alignment);
+
+  return DAG.getNode(ISD::TokenFactor, MVT::Other, Store1, Store2);
+}
+
+/// ExpandUnalignedLoad - Expands an unaligned load to 2 half-size loads.
+static
+SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
+                              TargetLowering &TLI) {
+  assert(MVT::isInteger(LD->getLoadedVT()) &&
+         "Non integer unaligned loads not implemented.");
+  int SVOffset = LD->getSrcValueOffset();
+  SDOperand Chain = LD->getChain();
+  SDOperand Ptr = LD->getBasePtr();
+  MVT::ValueType VT = LD->getValueType(0);
+  MVT::ValueType NewLoadedVT = LD->getLoadedVT() - 1;
+  int NumBits = MVT::getSizeInBits(NewLoadedVT);
+  int Alignment = LD->getAlignment();
+  int IncrementSize = NumBits / 8;
+  ISD::LoadExtType HiExtType = LD->getExtensionType();
+
+  // If the original load is NON_EXTLOAD, the hi part load must be ZEXTLOAD.
+  if (HiExtType == ISD::NON_EXTLOAD)
+    HiExtType = ISD::ZEXTLOAD;
+
+  // Load the value in two parts
+  SDOperand Lo, Hi;
+  if (TLI.isLittleEndian()) {
+    Lo = DAG.getExtLoad(ISD::ZEXTLOAD, VT, Chain, Ptr, LD->getSrcValue(),
+                        SVOffset, NewLoadedVT, LD->isVolatile(), Alignment);
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+    Hi = DAG.getExtLoad(HiExtType, VT, Chain, Ptr, LD->getSrcValue(),
+                        SVOffset + IncrementSize, NewLoadedVT, LD->isVolatile(),
+                        Alignment);
+  } else {
+    Hi = DAG.getExtLoad(HiExtType, VT, Chain, Ptr, LD->getSrcValue(), SVOffset,
+                        NewLoadedVT,LD->isVolatile(), Alignment);
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+    Lo = DAG.getExtLoad(ISD::ZEXTLOAD, VT, Chain, Ptr, LD->getSrcValue(),
+                        SVOffset + IncrementSize, NewLoadedVT, LD->isVolatile(),
+                        Alignment);
+  }
+
+  // aggregate the two parts
+  SDOperand ShiftAmount = DAG.getConstant(NumBits, TLI.getShiftAmountTy());
+  SDOperand Result = DAG.getNode(ISD::SHL, VT, Hi, ShiftAmount);
+  Result = DAG.getNode(ISD::OR, VT, Result, Lo);
+
+  SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                             Hi.getValue(1));
+
+  SDOperand Ops[] = { Result, TF };
+  return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other), Ops, 2);
+}
 
 /// LegalizeOp - We know that the specified value has a legal type, and
 /// that its operands are legal.  Now ensure that the operation itself
@@ -1507,7 +1594,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     
       switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
       default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal: break;
+      case TargetLowering::Legal:
+        // If this is an unaligned load and the target doesn't support it,
+        // expand it.
+        if (!TLI.allowsUnalignedMemoryAccesses()) {
+          unsigned ABIAlignment = TLI.getTargetData()->
+            getABITypeAlignment(MVT::getTypeForValueType(LD->getLoadedVT()));
+          if (LD->getAlignment() < ABIAlignment){
+            Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
+                                         TLI);
+            Tmp3 = Result.getOperand(0);
+            Tmp4 = Result.getOperand(1);
+            LegalizeOp(Tmp3);
+            LegalizeOp(Tmp4);
+          }
+        }
+        break;
       case TargetLowering::Custom:
         Tmp1 = TLI.LowerOperation(Tmp3, DAG);
         if (Tmp1.Val) {
@@ -1560,6 +1662,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           if (Tmp3.Val) {
             Tmp1 = LegalizeOp(Tmp3);
             Tmp2 = LegalizeOp(Tmp3.getValue(1));
+          }
+        } else {
+          // If this is an unaligned load and the target doesn't support it,
+          // expand it.
+          if (!TLI.allowsUnalignedMemoryAccesses()) {
+            unsigned ABIAlignment = TLI.getTargetData()->
+              getABITypeAlignment(MVT::getTypeForValueType(LD->getLoadedVT()));
+            if (LD->getAlignment() < ABIAlignment){
+              Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.Val), DAG,
+                                           TLI);
+              Tmp1 = Result.getOperand(0);
+              Tmp2 = Result.getOperand(1);
+              LegalizeOp(Tmp1);
+              LegalizeOp(Tmp2);
+            }
           }
         }
         break;
@@ -1810,7 +1927,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         MVT::ValueType VT = Tmp3.getValueType();
         switch (TLI.getOperationAction(ISD::STORE, VT)) {
         default: assert(0 && "This action is not supported yet!");
-        case TargetLowering::Legal:  break;
+        case TargetLowering::Legal:
+          // If this is an unaligned store and the target doesn't support it,
+          // expand it.
+          if (!TLI.allowsUnalignedMemoryAccesses()) {
+            unsigned ABIAlignment = TLI.getTargetData()->
+              getABITypeAlignment(MVT::getTypeForValueType(ST->getStoredVT()));
+            if (ST->getAlignment() < ABIAlignment)
+              Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
+                                            TLI);
+          }
+          break;
         case TargetLowering::Custom:
           Tmp1 = TLI.LowerOperation(Result, DAG);
           if (Tmp1.Val) Result = Tmp1;
@@ -1923,7 +2050,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType StVT = cast<StoreSDNode>(Result.Val)->getStoredVT();
       switch (TLI.getStoreXAction(StVT)) {
       default: assert(0 && "This action is not supported yet!");
-      case TargetLowering::Legal: break;
+      case TargetLowering::Legal:
+        // If this is an unaligned store and the target doesn't support it,
+        // expand it.
+        if (!TLI.allowsUnalignedMemoryAccesses()) {
+          unsigned ABIAlignment = TLI.getTargetData()->
+            getABITypeAlignment(MVT::getTypeForValueType(ST->getStoredVT()));
+          if (ST->getAlignment() < ABIAlignment)
+            Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.Val), DAG,
+                                          TLI);
+        }
+        break;
       case TargetLowering::Custom:
         Tmp1 = TLI.LowerOperation(Result, DAG);
         if (Tmp1.Val) Result = Tmp1;
