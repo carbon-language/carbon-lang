@@ -37,7 +37,7 @@ namespace {
     bool LowerMallocArgToInteger;
   public:
     static char ID; // Pass ID, replacement for typeid
-    LowerAllocations(bool LowerToInt = false)
+    explicit LowerAllocations(bool LowerToInt = false)
       : BasicBlockPass((intptr_t)&ID), MallocFunc(0), FreeFunc(0), 
         LowerMallocArgToInteger(LowerToInt) {}
 

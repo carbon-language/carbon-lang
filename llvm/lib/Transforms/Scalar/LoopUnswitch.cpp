@@ -73,7 +73,7 @@ namespace {
     bool redoLoop;
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopUnswitch(bool Os = false) : 
+    explicit LoopUnswitch(bool Os = false) : 
       LoopPass((intptr_t)&ID), OptimizeForSize(Os), redoLoop(false) {}
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);

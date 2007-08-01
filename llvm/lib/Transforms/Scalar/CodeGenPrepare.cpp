@@ -40,8 +40,8 @@ namespace {
     const TargetLowering *TLI;
   public:
     static char ID; // Pass identification, replacement for typeid
-    CodeGenPrepare(const TargetLowering *tli = 0) : FunctionPass((intptr_t)&ID),
-      TLI(tli) {}
+    explicit CodeGenPrepare(const TargetLowering *tli = 0)
+      : FunctionPass((intptr_t)&ID), TLI(tli) {}
     bool runOnFunction(Function &F);
     
   private:

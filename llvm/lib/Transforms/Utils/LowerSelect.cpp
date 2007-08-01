@@ -34,7 +34,7 @@ namespace {
     bool OnlyFP;   // Only lower FP select instructions?
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerSelect(bool onlyfp = false) : FunctionPass((intptr_t)&ID), 
+    explicit LowerSelect(bool onlyfp = false) : FunctionPass((intptr_t)&ID), 
       OnlyFP(onlyfp) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {

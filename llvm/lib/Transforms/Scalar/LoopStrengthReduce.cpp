@@ -145,7 +145,7 @@ namespace {
 
   public:
     static char ID; // Pass ID, replacement for typeid
-    LoopStrengthReduce(const TargetLowering *tli = NULL) : 
+    explicit LoopStrengthReduce(const TargetLowering *tli = NULL) : 
       LoopPass((intptr_t)&ID), TLI(tli) {
     }
 

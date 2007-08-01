@@ -31,8 +31,8 @@ namespace {
     /// specified function. Otherwise, it deletes as much of the module as
     /// possible, except for the function specified.
     ///
-    FunctionExtractorPass(Function *F = 0, bool deleteFn = true,
-                          bool relinkCallees = false)
+    explicit FunctionExtractorPass(Function *F = 0, bool deleteFn = true,
+                                   bool relinkCallees = false)
       : ModulePass((intptr_t)&ID), Named(F), deleteFunc(deleteFn), 
       reLink(relinkCallees) {}
 

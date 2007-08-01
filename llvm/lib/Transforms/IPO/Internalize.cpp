@@ -47,8 +47,8 @@ namespace {
     bool DontInternalize;
   public:
     static char ID; // Pass identification, replacement for typeid
-    InternalizePass(bool InternalizeEverything = true);
-    InternalizePass(const std::vector <const char *>& exportList);
+    explicit InternalizePass(bool InternalizeEverything = true);
+    explicit InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
   };

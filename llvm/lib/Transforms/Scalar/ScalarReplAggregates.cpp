@@ -48,7 +48,7 @@ STATISTIC(NumGlobals,   "Number of allocas copied from constant global");
 namespace {
   struct VISIBILITY_HIDDEN SROA : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
-    SROA(signed T = -1) : FunctionPass((intptr_t)&ID) {
+    explicit SROA(signed T = -1) : FunctionPass((intptr_t)&ID) {
       if (T == -1)
         SRThreshold = 128;
       else

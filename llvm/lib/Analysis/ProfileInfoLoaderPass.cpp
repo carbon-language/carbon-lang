@@ -33,7 +33,7 @@ namespace {
     std::string Filename;
   public:
     static char ID; // Class identification, replacement for typeinfo
-    LoaderPass(const std::string &filename = "")
+    explicit LoaderPass(const std::string &filename = "")
       : ModulePass((intptr_t)&ID), Filename(filename) {
       if (filename.empty()) Filename = ProfileInfoFilename;
     }

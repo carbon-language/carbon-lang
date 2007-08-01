@@ -114,7 +114,8 @@ class MachineConstantPool {
   std::vector<MachineConstantPoolEntry> Constants; ///< The pool of constants.
 public:
   /// @brief The only constructor.
-  MachineConstantPool(const TargetData *td) : TD(td), PoolAlignment(1) {}
+  explicit MachineConstantPool(const TargetData *td)
+    : TD(td), PoolAlignment(1) {}
   ~MachineConstantPool();
     
   /// getConstantPoolAlignment - Return the log2 of the alignment required by

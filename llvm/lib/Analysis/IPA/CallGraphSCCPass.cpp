@@ -31,7 +31,7 @@ class CGPassManager : public ModulePass, public PMDataManager {
 
 public:
   static char ID;
-  CGPassManager(int Depth) 
+  explicit CGPassManager(int Depth) 
     : ModulePass((intptr_t)&ID), PMDataManager(Depth) { }
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of

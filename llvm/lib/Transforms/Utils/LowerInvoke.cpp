@@ -76,8 +76,8 @@ namespace {
     
   public:
     static char ID; // Pass identification, replacement for typeid
-    LowerInvoke(const TargetLowering *tli = NULL) : FunctionPass((intptr_t)&ID),
-      TLI(tli) { }
+    explicit LowerInvoke(const TargetLowering *tli = NULL)
+      : FunctionPass((intptr_t)&ID), TLI(tli) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
  

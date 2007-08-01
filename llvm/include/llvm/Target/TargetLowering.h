@@ -76,7 +76,7 @@ public:
     SchedulingForRegPressure       // Scheduling for lowest register pressure.
   };
 
-  TargetLowering(TargetMachine &TM);
+  explicit TargetLowering(TargetMachine &TM);
   virtual ~TargetLowering();
 
   TargetMachine &getTargetMachine() const { return TM; }
@@ -510,7 +510,7 @@ public:
     SDOperand Old;
     SDOperand New;
 
-    TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
+    explicit TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
     
     bool CombineTo(SDOperand O, SDOperand N) { 
       Old = O; 
