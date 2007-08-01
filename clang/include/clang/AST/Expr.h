@@ -728,18 +728,20 @@ public:
 class TypesCompatibleExpr : public Expr {
   QualType Type1;
   QualType Type2;
-  SourceLocation LParenLoc, RParenLoc;
+  SourceLocation BuiltinLoc, RParenLoc;
 public:
-  TypesCompatibleExpr(QualType ReturnType, SourceLocation LP, 
+  TypesCompatibleExpr(QualType ReturnType, SourceLocation BLoc, 
                       QualType t1, QualType t2, SourceLocation RP) : 
     Expr(TypesCompatibleExprClass, ReturnType), Type1(t1), Type2(t2),
-    LParenLoc(LP), RParenLoc(RP) {}
+    BuiltinLoc(BLoc), RParenLoc(RP) {}
 
   QualType getArgType1() { return Type1; }
   QualType getArgType2() { return Type2; }
-    
+  
+  int typesAreCompatible() { return Type::typesAreCompatible(Type1,Type2); }
+  
   virtual SourceRange getSourceRange() const {
-    return SourceRange(LParenLoc, RParenLoc);
+    return SourceRange(BuiltinLoc, RParenLoc);
   }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) {

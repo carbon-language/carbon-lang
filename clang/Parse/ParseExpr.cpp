@@ -819,13 +819,18 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     Res = ParseAssignmentExpression();
     break;
   case tok::kw___builtin_types_compatible_p:
-    TypeTy *Type1 = ParseTypeName();
+    TypeTy *Ty1 = ParseTypeName();
     
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
-    TypeTy *Type2 = ParseTypeName();
-    break;
+    TypeTy *Ty2 = ParseTypeName();
+    
+    if (Tok.getKind() != tok::r_paren) {
+      Diag(Tok, diag::err_expected_rparen);
+      return ExprResult(true);
+    }
+    return Actions.ParseTypesCompatibleExpr(StartLoc, Ty1, Ty2, ConsumeParen());
   }      
   
   MatchRHSPunctuation(tok::r_paren, LParenLoc);

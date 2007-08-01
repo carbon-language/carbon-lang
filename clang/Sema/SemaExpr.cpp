@@ -1566,7 +1566,7 @@ Sema::ExprResult Sema::ParseStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
   return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
 }
 
-Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation LPLoc, 
+Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                                 TypeTy *arg1, TypeTy *arg2,
                                                 SourceLocation RPLoc) {
   QualType argT1 = QualType::getFromOpaquePtr(arg1);
@@ -1574,6 +1574,6 @@ Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation LPLoc,
   
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
   
-  return new TypesCompatibleExpr(Context.IntTy, LPLoc, argT1, argT2, RPLoc);
+  return new TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, argT2, RPLoc);
 }
 

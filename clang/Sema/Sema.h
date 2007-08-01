@@ -282,7 +282,7 @@ public:
                                    SourceLocation RPLoc); // "({..})"
                                    
   // __builtin_types_compatible_p(type1, type2)
-  virtual ExprResult ParseTypesCompatibleExpr(SourceLocation LPLoc, 
+  virtual ExprResult ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                               TypeTy *arg1, TypeTy *arg2,
                                               SourceLocation RPLoc);
   

@@ -654,15 +654,19 @@ void OCUVectorType::getAsStringInternal(std::string &S) const {
 }
 
 void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(e) X'.
+    InnerString = ' ' + InnerString;
   std::ostringstream s;
   getUnderlyingExpr()->print(s);
   InnerString = "typeof(" + s.str() + ") " + InnerString;
 }
 
-void TypeOfType::getAsStringInternal(std::string &S) const {
+void TypeOfType::getAsStringInternal(std::string &InnerString) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(t) X'.
+    InnerString = ' ' + InnerString;
   std::string Tmp;
   getUnderlyingType().getAsStringInternal(Tmp);
-  S += "typeof(" + Tmp + ")";
+  InnerString = "typeof(" + Tmp + ")" + InnerString;
 }
 
 void FunctionTypeNoProto::getAsStringInternal(std::string &S) const {
