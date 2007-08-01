@@ -375,6 +375,12 @@ public:
                                    SourceLocation RPLoc) { // "({..})"
     return 0;
   }
+  // __builtin_types_compatible_p(type1, type2)
+  virtual ExprResult ParseTypesCompatibleExpr(SourceLocation LPLoc, 
+                                              TypeTy *arg1, TypeTy *arg2,
+                                              SourceLocation RPLoc) {
+    return 0;
+  }
 
   //===------------------------- C++ Expressions --------------------------===//
   

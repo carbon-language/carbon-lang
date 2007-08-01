@@ -67,11 +67,12 @@ STMT(49, OCUVectorComponent   , Expr)
 // GNU Extensions.
 STMT(50, AddrLabel            , Expr)
 STMT(51, StmtExpr             , Expr)
+STMT(52, TypesCompatibleExpr  , Expr)
 
 // C++ Expressions.
-STMT(52, CXXCastExpr          , Expr)
-STMT(53, CXXBoolLiteralExpr   , Expr)
-LAST_EXPR(53)
+STMT(53, CXXCastExpr          , Expr)
+STMT(54, CXXBoolLiteralExpr   , Expr)
+LAST_EXPR(54)
 
 #undef STMT
 #undef FIRST_STMT

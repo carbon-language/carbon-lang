@@ -819,12 +819,12 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     Res = ParseAssignmentExpression();
     break;
   case tok::kw___builtin_types_compatible_p:
-    ParseTypeName();
+    TypeTy *Type1 = ParseTypeName();
     
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
-    ParseTypeName();
+    TypeTy *Type2 = ParseTypeName();
     break;
   }      
   

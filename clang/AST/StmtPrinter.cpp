@@ -481,6 +481,12 @@ void StmtPrinter::VisitStmtExpr(StmtExpr *E) {
   OS << ")";
 }
 
+void StmtPrinter::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
+  OS << "__builtin_types_compatible_p(";
+  OS << Node->getArgType1().getAsString() << ",";
+  OS << Node->getArgType2().getAsString() << ")";
+}
+
 
 // C++
 

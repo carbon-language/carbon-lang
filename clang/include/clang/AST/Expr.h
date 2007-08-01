@@ -703,10 +703,9 @@ class StmtExpr : public Expr {
   CompoundStmt *SubStmt;
   SourceLocation LParenLoc, RParenLoc;
 public:
-    StmtExpr(CompoundStmt *substmt, QualType T,
-             SourceLocation lp, SourceLocation rp)
-    : Expr(StmtExprClass, T), SubStmt(substmt),  LParenLoc(lp), RParenLoc(rp) {
-    }
+  StmtExpr(CompoundStmt *substmt, QualType T,
+           SourceLocation lp, SourceLocation rp) :
+    Expr(StmtExprClass, T), SubStmt(substmt),  LParenLoc(lp), RParenLoc(rp) { }
   
   CompoundStmt *getSubStmt() { return SubStmt; }
   const CompoundStmt *getSubStmt() const { return SubStmt; }
@@ -720,6 +719,33 @@ public:
     return T->getStmtClass() == StmtExprClass; 
   }
   static bool classof(const StmtExpr *) { return true; }
+};
+
+/// TypesCompatibleExpr - GNU builtin-in function __builtin_type_compatible_p.
+/// This AST node represents a function that returns 1 if two *types* (not
+/// expressions) are compatible. The result of this built-in function can be
+/// used in integer constant expressions.
+class TypesCompatibleExpr : public Expr {
+  QualType Type1;
+  QualType Type2;
+  SourceLocation LParenLoc, RParenLoc;
+public:
+  TypesCompatibleExpr(QualType ReturnType, SourceLocation LP, 
+                      QualType t1, QualType t2, SourceLocation RP) : 
+    Expr(TypesCompatibleExprClass, ReturnType), Type1(t1), Type2(t2),
+    LParenLoc(LP), RParenLoc(RP) {}
+
+  QualType getArgType1() { return Type1; }
+  QualType getArgType2() { return Type2; }
+    
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(LParenLoc, RParenLoc);
+  }
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == TypesCompatibleExprClass; 
+  }
+  static bool classof(const TypesCompatibleExpr *) { return true; }
 };
 
 }  // end namespace clang
