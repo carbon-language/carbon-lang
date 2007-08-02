@@ -553,7 +553,7 @@ multiclass sse1_fp_binop_rm<bits<8> opc, string OpcodeStr,
   }
 
   // Vector intrinsic operation, reg+mem.
-  def PSrm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, f32mem:$src2),
+  def PSrm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                      !strconcat(OpcodeStr, "ps\t{$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (V4F32Int VR128:$src1, (load addr:$src2)))]>;
 }
@@ -711,7 +711,7 @@ multiclass sse1_fp_unop_rm<bits<8> opc, string OpcodeStr,
   }
 
   // Vector intrinsic operation, mem
-  def PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
+  def PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                     !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (V4F32Int (load addr:$src)))]>;
 }
@@ -1214,7 +1214,7 @@ multiclass sse2_fp_binop_rm<bits<8> opc, string OpcodeStr,
   }
 
   // Vector intrinsic operation, reg+mem.
-  def PDrm_Int : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
+  def PDrm_Int : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, f128mem:$src2),
                      !strconcat(OpcodeStr, "pd\t{$src2, $dst|$dst, $src2}"),
                      [(set VR128:$dst, (V2F64Int VR128:$src1, (load addr:$src2)))]>;
 }
@@ -1468,7 +1468,7 @@ multiclass sse2_fp_unop_rm<bits<8> opc, string OpcodeStr,
   }
 
   // Vector intrinsic operation, mem
-  def PDm_Int : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+  def PDm_Int : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                     !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (V2F64Int (load addr:$src)))]>;
 }
