@@ -517,13 +517,13 @@ class OCUVectorType : public VectorType {
     VectorType(OCUVector, vecType, nElements, canonType) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
-  bool isPointAccessor(const char c) const {
+  static bool isPointAccessor(const char c) {
     return c == 'x' || c == 'y' || c == 'z' || c == 'w';
   }
-  bool isColorAccessor(const char c) const {
+  static bool isColorAccessor(const char c) {
     return c == 'r' || c == 'g' || c == 'b' || c == 'a';
   }
-  bool isTextureAccessor(const char c) const {
+  static bool isTextureAccessor(const char c) {
     return c == 's' || c == 't' || c == 'p' || c == 'q';
   };
   bool isAccessorWithinNumElements(const char c) const {
@@ -542,9 +542,6 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
 
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
-  }
-  static bool classof(const VectorType *T) { 
     return T->getTypeClass() == OCUVector; 
   }
   static bool classof(const OCUVectorType *) { return true; }
