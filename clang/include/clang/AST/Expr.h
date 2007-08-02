@@ -735,8 +735,8 @@ public:
     Expr(TypesCompatibleExprClass, ReturnType), Type1(t1), Type2(t2),
     BuiltinLoc(BLoc), RParenLoc(RP) {}
 
-  QualType getArgType1() { return Type1; }
-  QualType getArgType2() { return Type2; }
+  QualType getArgType1() const { return Type1; }
+  QualType getArgType2() const { return Type2; }
   
   int typesAreCompatible() const { return Type::typesAreCompatible(Type1,Type2); }
   
