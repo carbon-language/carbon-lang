@@ -1,4 +1,4 @@
-//===- DeadStoreElimination.cpp - Fast Dead Store Elimination --------------===//
+//===- DeadStoreElimination.cpp - Fast Dead Store Elimination -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -47,8 +47,9 @@ namespace {
     }
 
     bool runOnBasicBlock(BasicBlock &BB);
-    bool handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dependency,
-                                            SetVector<Instruction*>& possiblyDead);
+    bool handleFreeWithNonTrivialDependency(FreeInst* F,
+                                            Instruction* dependency,
+                                        SetVector<Instruction*>& possiblyDead);
     bool handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead);
     bool RemoveUndeadPointers(Value* pointer, unsigned pointerSize,
                               BasicBlock::iterator& BBI,
@@ -57,7 +58,8 @@ namespace {
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
     void TranslatePointerBitCasts(Value*& v) {
-      assert(isa<PointerType>(v->getType()) && "Translating a non-pointer type?");
+      assert(isa<PointerType>(v->getType()) &&
+             "Translating a non-pointer type?");
       
       // See through pointer-to-pointer bitcasts
       while (isa<BitCastInst>(v) || isa<GetElementPtrInst>(v))
@@ -95,7 +97,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   bool MadeChange = false;
   
   // Do a top-down walk on the BB
-  for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ++BBI) {
+  for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end();
+       BBI != BBE; ++BBI) {
     // If we find a store or a free...
     if (isa<StoreInst>(BBI) || isa<FreeInst>(BBI)) {
       Value* pointer = 0;
@@ -144,7 +147,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       // Handle frees whose dependencies are non-trivial
       if (FreeInst* F = dyn_cast<FreeInst>(BBI))
         if (!deletedStore)
-          MadeChange |= handleFreeWithNonTrivialDependency(F, MD.getDependency(F),
+          MadeChange |= handleFreeWithNonTrivialDependency(F,
+                                                           MD.getDependency(F),
                                                            possiblyDead);
       
       // Update our most-recent-store map
@@ -173,7 +177,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 /// handleFreeWithNonTrivialDependency - Handle frees of entire structures whose
 /// dependency is a store to a field of that structure
 bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
-                                              SetVector<Instruction*>& possiblyDead) {
+                                       SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
@@ -187,7 +191,8 @@ bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
     return false;
   
   Value* depPointer = dependency->getPointerOperand();
-  unsigned depPointerSize = TD.getTypeSize(dependency->getOperand(0)->getType());
+  const Type* depType = dependency->getOperand(0)->getType();
+  unsigned depPointerSize = TD.getTypeSize(depType);
   
   // Check for aliasing
   AliasAnalysis::AliasResult A = AA.alias(F->getPointerOperand(), ~0UL,
@@ -211,9 +216,10 @@ bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
   return false;
 }
 
-/// handleEndBlock - Remove dead stores to stack-allocated locations in the function
-/// end block
-bool DSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead) {
+/// handleEndBlock - Remove dead stores to stack-allocated locations in the
+/// function end block
+bool DSE::handleEndBlock(BasicBlock& BB,
+                         SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
@@ -282,7 +288,8 @@ bool DSE::handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead) 
         // Get size information for the alloca
         unsigned pointerSize = ~0UL;
         if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
-          pointerSize = C->getZExtValue() * TD.getTypeSize((*I)->getAllocatedType());     
+          pointerSize = C->getZExtValue() * \
+                        TD.getTypeSize((*I)->getAllocatedType());     
         
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = AA.getModRefInfo(CallSite::get(BBI),
@@ -326,10 +333,12 @@ bool DSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
     // Get size information for the alloca
     unsigned pointerSize = ~0UL;
     if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
-      pointerSize = C->getZExtValue() * TD.getTypeSize((*I)->getAllocatedType());     
+      pointerSize = C->getZExtValue() * \
+                    TD.getTypeSize((*I)->getAllocatedType());     
       
     // See if this pointer could alias it
-    AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize, killPointer, killPointerSize);
+    AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,
+                                            killPointer, killPointerSize);
 
     // If it must-alias and a store, we can delete it
     if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
