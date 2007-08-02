@@ -66,7 +66,8 @@ bool RLE::runOnBasicBlock(BasicBlock &BB) {
   bool MadeChange = false;
   
   // Do a top-down walk on the BB
-  for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); BBI != BBE; ++BBI) {
+  for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end(); 
+       BBI != BBE; ++BBI) {
     // If we find a store or a free...
     if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
       // We can't delete volatile loads

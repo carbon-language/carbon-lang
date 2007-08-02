@@ -651,9 +651,10 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
         Instruction *InsertPt = PN->getIncomingBlock(i)->getTerminator();
         Code = InsertCodeForBaseAtPosition(NewBase, Rewriter, InsertPt, L);
 
-        // Adjust the type back to match the PHI. Note that we can't use InsertPt
-        // here because the SCEVExpander may have inserted its instructions after
-        // that point, in its efforts to avoid inserting redundant expressions.
+        // Adjust the type back to match the PHI. Note that we can't use
+        // InsertPt here because the SCEVExpander may have inserted its
+        // instructions after that point, in its efforts to avoid inserting
+        // redundant expressions.
         if (isa<PointerType>(PN->getType())) {
           Code = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr,
                                               Code,

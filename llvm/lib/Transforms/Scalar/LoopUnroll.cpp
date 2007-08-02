@@ -41,7 +41,7 @@
 using namespace llvm;
 
 STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
-STATISTIC(NumUnrolled,           "Number of loops unrolled (completely or otherwise)");
+STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 
 namespace {
   cl::opt<unsigned>

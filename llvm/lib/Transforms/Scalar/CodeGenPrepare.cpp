@@ -396,8 +396,8 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
 
 /// OptimizeCmpExpression - sink the given CmpInst into user blocks to reduce 
 /// the number of virtual registers that must be created and coalesced.  This is
-/// a clear win except on targets with multiple condition code registers (powerPC),
-/// where it might lose; some adjustment may be wanted there.
+/// a clear win except on targets with multiple condition code registers
+///  (PowerPC), where it might lose; some adjustment may be wanted there.
 ///
 /// Return true if any changes are made.
 static bool OptimizeCmpExpression(CmpInst *CI){

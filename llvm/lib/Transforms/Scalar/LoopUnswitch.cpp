@@ -425,7 +425,8 @@ static inline void RemapInstruction(Instruction *I,
   }
 }
 
-// CloneDomInfo - NewBB is cloned from Orig basic block. Now clone Dominator Info.
+// CloneDomInfo - NewBB is cloned from Orig basic block. Now clone Dominator
+// Info.
 //
 // If Orig block's immediate dominator is mapped in VM then use corresponding
 // immediate dominator from the map. Otherwise Orig block's dominator is also
@@ -1113,7 +1114,8 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     switch (I->getOpcode()) {
     case Instruction::Select:
       if (ConstantInt *CB = dyn_cast<ConstantInt>(I->getOperand(0))) {
-        ReplaceUsesOfWith(I, I->getOperand(!CB->getZExtValue()+1), Worklist, L, LPM);
+        ReplaceUsesOfWith(I, I->getOperand(!CB->getZExtValue()+1), Worklist, L,
+                          LPM);
         continue;
       }
       break;

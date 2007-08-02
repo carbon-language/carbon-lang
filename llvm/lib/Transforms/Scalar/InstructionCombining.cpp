@@ -7988,7 +7988,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
                         &Args[0], Args.size(), Caller->getName(), Caller);
     cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
   } else {
-    NC = new CallInst(Callee, Args.begin(), Args.end(), Caller->getName(), Caller);
+    NC = new CallInst(Callee, Args.begin(), Args.end(),
+                      Caller->getName(), Caller);
     if (cast<CallInst>(Caller)->isTailCall())
       cast<CallInst>(NC)->setTailCall();
    cast<CallInst>(NC)->setCallingConv(cast<CallInst>(Caller)->getCallingConv());
