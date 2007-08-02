@@ -280,6 +280,7 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 // Move Instructions
 def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}", []>;
+let isReMaterializable = 1 in
 def MOVSSrm : SSI<0x10, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
                   "movss\t{$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (loadf32 addr:$src))]>;
@@ -569,6 +570,7 @@ defm MIN : sse1_fp_binop_rm<0x5D, "min", X86fmin,
 // Move Instructions
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}", []>;
+let isReMaterializable = 1 in
 def MOVAPSrm : PSI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv4f32 addr:$src))]>;
@@ -936,6 +938,7 @@ def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
 // Move Instructions
 def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}", []>;
+let isReMaterializable = 1 in
 def MOVSDrm : SDI<0x10, MRMSrcMem, (outs FR64:$dst), (ins f64mem:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (loadf64 addr:$src))]>;
@@ -1228,6 +1231,7 @@ defm MIN : sse2_fp_binop_rm<0x5D, "min", X86fmin,
 // Move Instructions
 def MOVAPDrr : PDI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movapd\t{$src, $dst|$dst, $src}", []>;
+let isReMaterializable = 1 in
 def MOVAPDrm : PDI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movapd\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv2f64 addr:$src))]>;
