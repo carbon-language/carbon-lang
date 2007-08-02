@@ -6385,6 +6385,7 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
   case Instruction::Trunc:
     // If this is the same kind of case as our original (e.g. zext+zext), we
     // can safely eliminate it.
+    break;  // FIXME: This causes PR1594
     if (I->getOpcode() == CastOpc) {
       ++NumCastsRemoved;
       return true;
