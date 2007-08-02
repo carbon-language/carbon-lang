@@ -85,17 +85,17 @@ public:
   
   APSInt& extend(uint32_t width) {
     if (IsUnsigned)
-      *this = zext(width);
+      zext(width);
     else
-      *this = sext(width);
+      sext(width);
     return *this;
   }
   
   APSInt& extOrTrunc(uint32_t width) {
       if (IsUnsigned)
-        *this = zextOrTrunc(width);
+        zextOrTrunc(width);
       else
-        *this = sextOrTrunc(width);
+        sextOrTrunc(width);
       return *this;
   }
   
