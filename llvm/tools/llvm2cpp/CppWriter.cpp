@@ -1325,7 +1325,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
             << (ila->hasSideEffects() ? "true" : "false") << ");";
         nl(Out);
       }
-      if (call->getNumOperands() > 3) {
+      if (call->getNumOperands() > 2) {
         Out << "std::vector<Value*> " << iName << "_params;";
         nl(Out);
         for (unsigned i = 1; i < call->getNumOperands(); ++i) {
@@ -1333,11 +1333,8 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
           nl(Out);
         }
         Out << "CallInst* " << iName << " = new CallInst("
-            << opNames[0] << ", &" << iName << "_params[0], " 
-            << call->getNumOperands() - 1 << ", \"";
-      } else if (call->getNumOperands() == 3) {
-        Out << "CallInst* " << iName << " = new CallInst("
-            << opNames[0] << ", " << opNames[1] << ", " << opNames[2] << ", \"";
+            << opNames[0] << ", " << iName << "_params.begin(), "
+            << iName << "_params.end(), \"";
       } else if (call->getNumOperands() == 2) {
         Out << "CallInst* " << iName << " = new CallInst("
             << opNames[0] << ", " << opNames[1] << ", \"";
