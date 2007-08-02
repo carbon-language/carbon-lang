@@ -4,7 +4,7 @@
 ; RUN: grep movq     %t1 | wc -l | grep 6 
 ; RUN: grep leaq     %t1 | wc -l | grep 1 
 ; RUN: llvm-upgrade < %s | llvm-as | \
-; RUN:   llc -mtriple=x86_64-apple-darwin -relocation-model=static -o %t2 -f
+; RUN:   llc -mtriple=x86_64-pc-linux -relocation-model=static -o %t2 -f
 ; RUN: grep rip  %t2 | wc -l | grep 4 
 ; RUN: grep movl %t2 | wc -l | grep 2 
 ; RUN: grep movq %t2 | wc -l | grep 2
