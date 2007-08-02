@@ -203,7 +203,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     MinOperands = 0;
   
   OS << "  { ";
-  OS << Num << ",\t" << MinOperands << ",\t\"";
+  OS << Num << ",\t" << MinOperands << ",\t"
+     << Inst.NumDefs << ",\t\"";
 
   if (Inst.Name.empty())
     OS << Inst.TheDef->getName();
