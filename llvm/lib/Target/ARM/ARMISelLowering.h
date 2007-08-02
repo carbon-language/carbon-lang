@@ -76,7 +76,7 @@ namespace llvm {
   class ARMTargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
   public:
-    ARMTargetLowering(TargetMachine &TM);
+    explicit ARMTargetLowering(TargetMachine &TM);
 
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     virtual const char *getTargetNodeName(unsigned Opcode) const;

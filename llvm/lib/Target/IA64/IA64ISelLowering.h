@@ -43,7 +43,7 @@ namespace llvm {
     unsigned GP, SP, RP; // FIXME - clean this mess up
 	  
   public:
-    IA64TargetLowering(TargetMachine &TM);
+    explicit IA64TargetLowering(TargetMachine &TM);
 
     unsigned VirtGPR; // this is public so it can be accessed in the selector
                       // for ISD::RET. add an accessor instead? FIXME

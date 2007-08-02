@@ -64,7 +64,7 @@ namespace llvm {
     int VarArgsBase;    // What is the base FrameIndex
     bool useITOF;
   public:
-    AlphaTargetLowering(TargetMachine &TM);
+    explicit AlphaTargetLowering(TargetMachine &TM);
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

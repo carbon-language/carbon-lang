@@ -75,7 +75,7 @@ namespace llvm {
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
 
   public:
-    VirtRegMap(MachineFunction &mf);
+    explicit VirtRegMap(MachineFunction &mf);
 
     void grow();
 

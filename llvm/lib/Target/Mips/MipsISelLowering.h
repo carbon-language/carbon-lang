@@ -53,7 +53,7 @@ namespace llvm {
     // const MipsSubtarget &MipsSubTarget;
   public:
 
-    MipsTargetLowering(MipsTargetMachine &TM);
+    explicit MipsTargetLowering(MipsTargetMachine &TM);
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);

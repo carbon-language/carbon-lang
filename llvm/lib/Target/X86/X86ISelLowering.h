@@ -286,7 +286,7 @@ namespace llvm {
     int BytesToPopOnReturn;           // Number of arg bytes ret should pop.
     int BytesCallerReserves;          // Number of arg bytes caller makes.
   public:
-    X86TargetLowering(TargetMachine &TM);
+    explicit X86TargetLowering(TargetMachine &TM);
 
     // Return the number of bytes that a function should pop when it returns (in
     // addition to the space used by the return address).

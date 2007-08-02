@@ -186,7 +186,7 @@ namespace llvm {
     int ReturnAddrIndex;              // FrameIndex for return slot.
     const PPCSubtarget &PPCSubTarget;
   public:
-    PPCTargetLowering(PPCTargetMachine &TM);
+    explicit PPCTargetLowering(PPCTargetMachine &TM);
     
     /// getTargetNodeName() - This method returns the name of a target specific
     /// DAG node.
