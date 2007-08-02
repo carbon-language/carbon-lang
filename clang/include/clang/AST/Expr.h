@@ -463,7 +463,9 @@ public:
   static bool classof(const MemberExpr *) { return true; }
 };
 
-/// OCUVectorComponent
+/// OCUVectorComponent - This represents access to specific components of a
+/// vector, and may occur on the left hand side or right hand side.  For example
+/// the following is legal:  "V.xy = V.zw" if V is a 4 element ocu vector.
 ///
 class OCUVectorComponent : public Expr {
   Expr *Base;
@@ -471,18 +473,25 @@ class OCUVectorComponent : public Expr {
   SourceLocation AccessorLoc;
 public:
   enum ComponentType {
-    Point,
-    Color,
-    Texture
+    Point,   // xywz
+    Color,   // rgba
+    Texture  // uv
   };
   OCUVectorComponent(QualType ty, Expr *base, IdentifierInfo &accessor,
                      SourceLocation loc) : Expr(OCUVectorComponentClass, ty), 
                      Base(base), Accessor(accessor), AccessorLoc(loc) {}
                      
-  Expr *getBase() const { return Base; }
-  IdentifierInfo & getAccessor() const { return Accessor; }
+  const Expr *getBase() const { return Base; }
+  Expr *getBase() { return Base; }
+  
+  IdentifierInfo &getAccessor() const { return Accessor; }
+  
+  /// getComponentType - Determine whether the components of this access are
+  /// "point" "color" or "texture" elements.
   ComponentType getComponentType() const;
 
+  /// containsDuplicateComponents - Return true if any element access is
+  /// repeated.
   bool containsDuplicateComponents() const;
   
   virtual SourceRange getSourceRange() const {

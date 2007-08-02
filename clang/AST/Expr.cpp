@@ -583,6 +583,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
 
+/// getComponentType - Determine whether the components of this access are
+/// "point" "color" or "texture" elements.
 OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
   // derive the component type, no need to waste space.
   const char *compStr = Accessor.getName();
@@ -593,6 +595,8 @@ OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
   assert(0 && "getComponentType(): Illegal accessor");
 }
 
+/// containsDuplicateComponents - Return true if any element access is
+/// repeated.
 bool OCUVectorComponent::containsDuplicateComponents() const {
   const char *compStr = Accessor.getName();
   unsigned length = strlen(compStr);
