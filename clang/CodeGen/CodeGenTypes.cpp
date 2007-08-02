@@ -29,6 +29,10 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   const clang::Type &Ty = *T.getCanonicalType();
   
   switch (Ty.getTypeClass()) {
+  case Type::TypeName:        // typedef isn't canonical.
+  case Type::TypeOfExp:       // typeof isn't canonical.
+  case Type::TypeOfTyp:       // typeof isn't canonical.
+    assert(0 && "Non-canonical type, shouldn't happen");
   case Type::Builtin: {
     switch (cast<BuiltinType>(Ty).getKind()) {
     case BuiltinType::Void:
@@ -128,7 +132,6 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     
     return llvm::FunctionType::get(ResultType, ArgTys, isVarArg, 0);
   }
-  case Type::TypeName:
   case Type::Tagged:
     break;
   }
