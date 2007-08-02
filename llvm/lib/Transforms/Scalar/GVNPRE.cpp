@@ -156,8 +156,13 @@ namespace {
 
 namespace llvm {
 template <> struct DenseMapKeyInfo<Expression> {
-  static inline Expression getEmptyKey() { return Expression(Expression::EMPTY); }
-  static inline Expression getTombstoneKey() { return Expression(Expression::TOMBSTONE); }
+  static inline Expression getEmptyKey() {
+    return Expression(Expression::EMPTY);
+  }
+  
+  static inline Expression getTombstoneKey() {
+    return Expression(Expression::TOMBSTONE);
+  }
   
   static unsigned getHashValue(const Expression e) {
     unsigned hash = e.opcode;
@@ -170,8 +175,8 @@ template <> struct DenseMapKeyInfo<Expression> {
             (unsigned)((uintptr_t)e.type >> 9) +
             hash * 37;
     
-    for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(), E = e.varargs.end();
-         I != E; ++I)
+    for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
+         E = e.varargs.end(); I != E; ++I)
       hash = *I + hash * 37;
     
     return hash;
@@ -723,7 +728,7 @@ namespace {
 FunctionPass *llvm::createGVNPREPass() { return new GVNPRE(); }
 
 static RegisterPass<GVNPRE> X("gvnpre",
-                              "Global Value Numbering/Partial Redundancy Elimination");
+                      "Global Value Numbering/Partial Redundancy Elimination");
 
 
 STATISTIC(NumInsertedVals, "Number of values inserted");
@@ -1223,7 +1228,8 @@ bool GVNPRE::elimination() {
           isa<ExtractElementInst>(BI) || isa<SelectInst>(BI) ||
           isa<CastInst>(BI) || isa<GetElementPtrInst>(BI)) {
         
-        if (availableOut[BB].test(VN.lookup(BI)) && !availableOut[BB].count(BI)) {
+        if (availableOut[BB].test(VN.lookup(BI)) &&
+            !availableOut[BB].count(BI)) {
           Value *leader = find_leader(availableOut[BB], VN.lookup(BI));
           if (Instruction* Instr = dyn_cast<Instruction>(leader))
             if (Instr->getParent() != 0 && Instr != BI) {
@@ -1243,8 +1249,8 @@ bool GVNPRE::elimination() {
     changed_function = true;
   }
     
-  for (SmallVector<Instruction*, 8>::iterator I = erase.begin(), E = erase.end();
-       I != E; ++I)
+  for (SmallVector<Instruction*, 8>::iterator I = erase.begin(),
+       E = erase.end(); I != E; ++I)
      (*I)->eraseFromParent();
   
   return changed_function;
