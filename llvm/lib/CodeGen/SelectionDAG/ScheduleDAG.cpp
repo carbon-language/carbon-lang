@@ -254,15 +254,69 @@ static const TargetRegisterClass *getInstrOperandRegClass(
          ? TII->getPointerRegClass() : MRI->getRegClass(toi.RegClass);
 }
 
-static void CreateVirtualRegisters(SDNode *Node,
-                                   unsigned NumResults, 
-                                   const MRegisterInfo *MRI,
-                                   MachineInstr *MI,
-                                   SSARegMap *RegMap,
-                                   const TargetInstrInfo *TII,
-                                   const TargetInstrDescriptor &II,
-                                   DenseMap<SDOperand, unsigned> &VRBaseMap) {
-  for (unsigned i = 0; i < NumResults; ++i) {
+// Returns the Register Class of a physical register
+static const TargetRegisterClass *getPhysicalRegisterRegClass(
+        const MRegisterInfo *MRI,
+        MVT::ValueType VT,
+        unsigned reg) {
+  assert(MRegisterInfo::isPhysicalRegister(reg) &&
+         "reg must be a physical register");
+  // Pick the register class of the right type that contains this physreg.
+  for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
+         E = MRI->regclass_end(); I != E; ++I)
+    if ((*I)->hasType(VT) && (*I)->contains(reg))
+      return *I;
+  assert(false && "Couldn't find the register class");
+  return 0;
+}
+
+void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo, unsigned SrcReg,
+                                  DenseMap<SDOperand, unsigned> &VRBaseMap) {
+  unsigned VRBase = 0;
+  if (MRegisterInfo::isVirtualRegister(SrcReg)) {
+    // Just use the input register directly!
+    bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo),SrcReg));
+    assert(isNew && "Node emitted out of order - early");
+    return;
+  }
+
+  // If the node is only used by a CopyToReg and the dest reg is a vreg, use
+  // the CopyToReg'd destination register instead of creating a new vreg.
+  for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+       UI != E; ++UI) {
+    SDNode *Use = *UI;
+    if (Use->getOpcode() == ISD::CopyToReg && 
+        Use->getOperand(2).Val == Node &&
+        Use->getOperand(2).ResNo == ResNo) {
+      unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+      if (MRegisterInfo::isVirtualRegister(DestReg)) {
+        VRBase = DestReg;
+        break;
+      }
+    }
+  }
+
+  // Figure out the register class to create for the destreg.
+  const TargetRegisterClass *TRC = 0;
+  if (VRBase) {
+    TRC = RegMap->getRegClass(VRBase);
+  } else {
+    TRC = getPhysicalRegisterRegClass(MRI, Node->getValueType(ResNo), SrcReg);
+
+    // Create the reg, emit the copy.
+    VRBase = RegMap->createVirtualRegister(TRC);
+  }
+  MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC);
+
+  bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo), VRBase));
+  assert(isNew && "Node emitted out of order - early");
+}
+
+void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
+                                         MachineInstr *MI,
+                                         const TargetInstrDescriptor &II,
+                                     DenseMap<SDOperand, unsigned> &VRBaseMap) {
+  for (unsigned i = 0; i < II.numDefs; ++i) {
     // If the specific node value is only used by a CopyToReg and the dest reg
     // is a vreg, use the CopyToReg'd destination register instead of creating
     // a new vreg.
@@ -282,9 +336,9 @@ static void CreateVirtualRegisters(SDNode *Node,
       }
     }
 
+    // Create the result registers for this node and add the result regs to
+    // the machine instruction.
     if (VRBase == 0) {
-      // Create the result registers for this node and add the result regs to
-      // the machine instruction.
       const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
       assert(RC && "Isn't a register operand!");
       VRBase = RegMap->createVirtualRegister(RC);
@@ -411,22 +465,6 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     }
   }
   
-}
-
-// Returns the Register Class of a physical register
-static const TargetRegisterClass *getPhysicalRegisterRegClass(
-        const MRegisterInfo *MRI,
-        MVT::ValueType VT,
-        unsigned reg) {
-  assert(MRegisterInfo::isPhysicalRegister(reg) &&
-         "reg must be a physical register");
-  // Pick the register class of the right type that contains this physreg.
-  for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
-         E = MRI->regclass_end(); I != E; ++I)
-    if ((*I)->hasType(VT) && (*I)->contains(reg))
-      return *I;
-  assert(false && "Couldn't find the register class");
-  return 0;
 }
 
 // Returns the Register Class of a subregister
@@ -591,9 +629,10 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     unsigned NumResults = CountResults(Node);
     unsigned NodeOperands = CountOperands(Node);
     unsigned NumMIOperands = NodeOperands + NumResults;
+    bool     HasPhysRegOuts = (NumResults > II.numDefs) && II.ImplicitDefs;
 #ifndef NDEBUG
     assert((unsigned(II.numOperands) == NumMIOperands ||
-            (II.Flags & M_VARIABLE_OPS)) &&
+            HasPhysRegOuts || (II.Flags & M_VARIABLE_OPS)) &&
            "#operands for dag node doesn't match .td file!"); 
 #endif
 
@@ -603,13 +642,12 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     // Add result register values for things that are defined by this
     // instruction.
     if (NumResults)
-      CreateVirtualRegisters(Node, NumResults, MRI, MI, RegMap,
-                             TII, II, VRBaseMap);
+      CreateVirtualRegisters(Node, MI, II, VRBaseMap);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
     for (unsigned i = 0; i != NodeOperands; ++i)
-      AddOperand(MI, Node->getOperand(i), i+NumResults, &II, VRBaseMap);
+      AddOperand(MI, Node->getOperand(i), i+II.numDefs, &II, VRBaseMap);
 
     // Commute node if it has been determined to be profitable.
     if (CommuteSet.count(Node)) {
@@ -632,6 +670,14 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       // Insert this instruction into the end of the basic block, potentially
       // taking some custom action.
       BB = DAG.getTargetLoweringInfo().InsertAtEndOfBasicBlock(MI, BB);
+    }
+
+    // Additional results must be an physical register def.
+    if (HasPhysRegOuts) {
+      for (unsigned i = II.numDefs; i < NumResults; ++i) {
+        unsigned Reg = II.ImplicitDefs[i - II.numDefs];
+        EmitCopyFromReg(Node, i, Reg, VRBaseMap);
+      }
     }
   } else {
     switch (Node->getOpcode()) {
@@ -665,44 +711,8 @@ void ScheduleDAG::EmitNode(SDNode *Node,
       break;
     }
     case ISD::CopyFromReg: {
-      unsigned VRBase = 0;
       unsigned SrcReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
-        // Just use the input register directly!
-        bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0),SrcReg));
-        assert(isNew && "Node emitted out of order - early");
-        break;
-      }
-
-      // If the node is only used by a CopyToReg and the dest reg is a vreg, use
-      // the CopyToReg'd destination register instead of creating a new vreg.
-      for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
-           UI != E; ++UI) {
-        SDNode *Use = *UI;
-        if (Use->getOpcode() == ISD::CopyToReg && 
-            Use->getOperand(2).Val == Node) {
-          unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
-          if (MRegisterInfo::isVirtualRegister(DestReg)) {
-            VRBase = DestReg;
-            break;
-          }
-        }
-      }
-
-      // Figure out the register class to create for the destreg.
-      const TargetRegisterClass *TRC = 0;
-      if (VRBase) {
-        TRC = RegMap->getRegClass(VRBase);
-      } else {
-        TRC = getPhysicalRegisterRegClass(MRI, Node->getValueType(0), SrcReg);
-
-        // Create the reg, emit the copy.
-        VRBase = RegMap->createVirtualRegister(TRC);
-      }
-      MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC);
-
-      bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0), VRBase));
-      assert(isNew && "Node emitted out of order - early");
+      EmitCopyFromReg(Node, 0, SrcReg, VRBaseMap);
       break;
     }
     case ISD::INLINEASM: {

@@ -245,7 +245,16 @@ namespace llvm {
     /// EmitNoop - Emit a noop instruction.
     ///
     void EmitNoop();
+
+    /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
+    /// implicit physical register output.
+    void EmitCopyFromReg(SDNode *Node, unsigned ResNo, unsigned SrcReg,
+                         DenseMap<SDOperand, unsigned> &VRBaseMap);
     
+    void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
+                                const TargetInstrDescriptor &II,
+                                DenseMap<SDOperand, unsigned> &VRBaseMap);
+
     void EmitSchedule();
 
     void dumpSchedule() const;
