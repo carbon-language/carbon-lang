@@ -146,8 +146,13 @@ namespace {
 
 namespace llvm {
 template <> struct DenseMapKeyInfo<Expression> {
-  static inline Expression getEmptyKey() { return Expression(Expression::EMPTY); }
-  static inline Expression getTombstoneKey() { return Expression(Expression::TOMBSTONE); }
+  static inline Expression getEmptyKey() {
+    return Expression(Expression::EMPTY);
+  }
+  
+  static inline Expression getTombstoneKey() {
+    return Expression(Expression::TOMBSTONE);
+  }
   
   static unsigned getHashValue(const Expression e) {
     unsigned hash = e.opcode;
@@ -160,8 +165,8 @@ template <> struct DenseMapKeyInfo<Expression> {
             (unsigned)((uintptr_t)e.type >> 9) +
             hash * 37;
     
-    for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(), E = e.varargs.end();
-         I != E; ++I)
+    for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
+         E = e.varargs.end(); I != E; ++I)
       hash = *I + hash * 37;
     
     return hash;
@@ -656,7 +661,8 @@ namespace {
                             ValueNumberedSet& currAvail,
                             DenseMap<Value*, LoadInst*>& lastSeenLoad,
                             SmallVector<Instruction*, 4>& toErase);
-    bool processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase);
+    bool processNonLocalLoad(LoadInst* L,
+                             SmallVector<Instruction*, 4>& toErase);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -773,7 +779,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   return PN;
 }
 
-bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase) {
+bool GVN::processNonLocalLoad(LoadInst* L,
+                              SmallVector<Instruction*, 4>& toErase) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
   DenseMap<BasicBlock*, Value*> deps;
@@ -929,7 +936,8 @@ bool GVN::runOnFunction(Function &F) {
 
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE; ) {
-      changed_function |= processInstruction(BI, currAvail, lastSeenLoad, toErase);
+      changed_function |= processInstruction(BI, currAvail,
+                                             lastSeenLoad, toErase);
       
       NumGVNInstr += toErase.size();
       
