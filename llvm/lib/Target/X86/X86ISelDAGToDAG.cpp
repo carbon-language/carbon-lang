@@ -1045,6 +1045,50 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       break;
     }
 
+    case ISD::MUL: {
+      if (NVT == MVT::i8) {
+        SDOperand N0 = Node->getOperand(0);
+        SDOperand N1 = Node->getOperand(1);
+        SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
+        bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
+        if (!foldedLoad) {
+          foldedLoad = TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3);
+          if (foldedLoad)
+            std::swap(N0, N1);
+        }
+
+        SDNode *ResNode;
+        if (foldedLoad) {
+          SDOperand Chain = N1.getOperand(0);
+          AddToISelQueue(N0);
+          AddToISelQueue(Chain);
+          AddToISelQueue(Tmp0);
+          AddToISelQueue(Tmp1);
+          AddToISelQueue(Tmp2);
+          AddToISelQueue(Tmp3);
+          SDOperand InFlag(0, 0);
+          Chain = CurDAG->getCopyToReg(Chain, X86::AL, N0, InFlag);
+          InFlag = Chain.getValue(1);
+          SDOperand Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Chain, InFlag };
+          ResNode = CurDAG->getTargetNode(X86::MUL8m, MVT::i8, MVT::i8,
+                                          MVT::Other, Ops, 6);
+          ReplaceUses(N1.getValue(1), SDOperand(ResNode, 2));
+        } else {
+          SDOperand Chain = CurDAG->getEntryNode();
+          AddToISelQueue(N0);
+          AddToISelQueue(N1);
+          SDOperand InFlag(0, 0);
+          InFlag = CurDAG->getCopyToReg(Chain, X86::AL, N0, InFlag).getValue(1);
+          ResNode = CurDAG->getTargetNode(X86::MUL8r, MVT::i8, MVT::i8,
+                                          N1, InFlag);
+        }
+
+        ReplaceUses(N.getValue(0), SDOperand(ResNode, 0));
+        return NULL;
+      }
+      break;
+    }
+
     case ISD::MULHU:
     case ISD::MULHS: {
       if (Opcode == ISD::MULHU)
@@ -1076,16 +1120,13 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand N0 = Node->getOperand(0);
       SDOperand N1 = Node->getOperand(1);
 
-      bool foldedLoad = false;
       SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
-      foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      bool foldedLoad = TryFoldLoad(N, N1, Tmp0, Tmp1, Tmp2, Tmp3);
       // MULHU and MULHS are commmutative
       if (!foldedLoad) {
         foldedLoad = TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3);
-        if (foldedLoad) {
-          N0 = Node->getOperand(1);
-          N1 = Node->getOperand(0);
-        }
+        if (foldedLoad)
+          std::swap(N0, N1);
       }
 
       SDOperand Chain;

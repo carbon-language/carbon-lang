@@ -548,7 +548,7 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
-               [(set AL, (mul AL, GR8:$src))]>,
+               []>,
              Imp<[AL],[AL,AH]>;               // AL,AH = AL*GR8
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src), "mul{w}\t$src", []>,
              Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*GR16
@@ -559,22 +559,22 @@ def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
-               [(set AL, (mul AL, (loadi8 addr:$src)))]>,
-             Imp<[AL],[AX]>;          // AL,AH = AL*[mem8]
+               []>,
+             Imp<[AL],[AL,AH]>;          // AL,AH = AL*[mem8]
 def MUL16m : I<0xF7, MRM4m, (outs), (ins i16mem:$src),
                "mul{w}\t$src", []>, Imp<[AX],[AX,DX]>,
                OpSize; // AX,DX = AX*[mem16]
 def MUL32m : I<0xF7, MRM4m, (outs), (ins i32mem:$src),
-               "mul{l}\t$src", []>, Imp<[EAX],[EAX,EDX]>;// EAX,EDX = EAX*[mem32]
+              "mul{l}\t$src", []>, Imp<[EAX],[EAX,EDX]>;// EAX,EDX = EAX*[mem32]
 
 def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", []>,
-              Imp<[AL],[AX]>;               // AL,AH = AL*GR8
+              Imp<[AL],[AL,AH]>;               // AL,AH = AL*GR8
 def IMUL16r : I<0xF7, MRM5r, (outs),  (ins GR16:$src), "imul{w}\t$src", []>,
               Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*GR16
 def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", []>,
               Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*GR32
 def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
-                "imul{b}\t$src", []>, Imp<[AL],[AX]>;        // AL,AH = AL*[mem8]
+                "imul{b}\t$src", []>, Imp<[AL],[AL,AH]>;    // AL,AH = AL*[mem8]
 def IMUL16m : I<0xF7, MRM5m, (outs), (ins i16mem:$src),
                 "imul{w}\t$src", []>, Imp<[AX],[AX,DX]>,
                 OpSize; // AX,DX = AX*[mem16]
