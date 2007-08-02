@@ -588,11 +588,13 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
 OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
   // derive the component type, no need to waste space.
   const char *compStr = Accessor.getName();
-  const OCUVectorType *VT = getType()->getAsOCUVectorType();
-  if (VT->isPointAccessor(*compStr)) return Point;
-  if (VT->isColorAccessor(*compStr)) return Color;
-  if (VT->isTextureAccessor(*compStr)) return Texture;
-  assert(0 && "getComponentType(): Illegal accessor");
+  
+  if (OCUVectorType::isPointAccessor(*compStr)) return Point;
+  if (OCUVectorType::isColorAccessor(*compStr)) return Color;
+  
+  assert(OCUVectorType::isTextureAccessor(*compStr) &&
+         "getComponentType(): Illegal accessor");
+  return Texture;
 }
 
 /// containsDuplicateComponents - Return true if any element access is
