@@ -49,8 +49,7 @@ public:
     
     // FIXME: Find a way to handle out of FileID bits!  Maybe MaxFileID is an
     // escape of some sort?
-    if (FileID >= (1 << FileIDBits))
-      FileID = (1 << FileIDBits)-1;
+    assert(FileID < (1 << FileIDBits) && "Out of fileid's");
     
     L.ID = (FileID << FilePosBits) | FilePos;
     return L;
