@@ -808,7 +808,7 @@ let isTwoAddress = 1 in {
                         "shufps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                         [(set VR128:$dst,
                           (v4f32 (vector_shuffle
-                                  VR128:$src1, (load addr:$src2),
+                                  VR128:$src1, (memopv4f32 addr:$src2),
                                   SHUFP_shuffle_mask:$src3)))]>;
 
   let AddedComplexity = 10 in {
@@ -824,7 +824,7 @@ let isTwoAddress = 1 in {
                          "unpckhps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
                            (v4f32 (vector_shuffle
-                                   VR128:$src1, (load addr:$src2),
+                                   VR128:$src1, (memopv4f32 addr:$src2),
                                    UNPCKH_shuffle_mask)))]>;
 
     def UNPCKLPSrr : PSI<0x14, MRMSrcReg, 
@@ -839,7 +839,7 @@ let isTwoAddress = 1 in {
                          "unpcklps\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
                            (v4f32 (vector_shuffle
-                                   VR128:$src1, (load addr:$src2),
+                                   VR128:$src1, (memopv4f32 addr:$src2),
                                    UNPCKL_shuffle_mask)))]>;
   } // AddedComplexity
 } // isTwoAddress
@@ -1561,7 +1561,7 @@ let isTwoAddress = 1 in {
                         "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                         [(set VR128:$dst,
                           (v2f64 (vector_shuffle
-                                  VR128:$src1, (load addr:$src2),
+                                  VR128:$src1, (memopv2f64 addr:$src2),
                                   SHUFP_shuffle_mask:$src3)))]>;
 
   let AddedComplexity = 10 in {
@@ -1577,7 +1577,7 @@ let isTwoAddress = 1 in {
                          "unpckhpd\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
                            (v2f64 (vector_shuffle
-                                   VR128:$src1, (load addr:$src2),
+                                   VR128:$src1, (memopv2f64 addr:$src2),
                                    UNPCKH_shuffle_mask)))]>;
 
     def UNPCKLPDrr : PDI<0x14, MRMSrcReg, 
@@ -1592,7 +1592,7 @@ let isTwoAddress = 1 in {
                          "unpcklpd\t{$src2, $dst|$dst, $src2}",
                          [(set VR128:$dst,
                            (v2f64 (vector_shuffle
-                                   VR128:$src1, (load addr:$src2),
+                                   VR128:$src1, (memopv2f64 addr:$src2),
                                    UNPCKL_shuffle_mask)))]>;
   } // AddedComplexity
 } // isTwoAddress
@@ -1782,7 +1782,7 @@ let isTwoAddress = 1 in {
                     (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
                     "pandn\t{$src2, $dst|$dst, $src2}",
                     [(set VR128:$dst, (v2i64 (and (vnot VR128:$src1),
-                                              (load addr:$src2))))]>;
+                                              (memopv2i64 addr:$src2))))]>;
 }
 
 // SSE2 Integer comparison
@@ -2419,6 +2419,11 @@ def : Pat<(vector_shuffle (v4f32 VR128:$src1), (undef),
            SHUFP_unary_shuffle_mask:$sm),
           (SHUFPSrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
       Requires<[HasSSE1]>;
+// Special unary SHUFPDrri case.
+def : Pat<(vector_shuffle (v2f64 VR128:$src1), (undef),
+           SHUFP_unary_shuffle_mask:$sm),
+          (SHUFPDrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
+      Requires<[HasSSE2]>;
 // Unary v4f32 shuffle with PSHUF* in order to fold a load.
 def : Pat<(vector_shuffle (memopv4f32 addr:$src1), (undef),
            SHUFP_unary_shuffle_mask:$sm),
@@ -2583,13 +2588,13 @@ def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
           (PANDNrr VR128:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
 
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
-                  (load addr:$src2))),
+                  (memopv2i64 addr:$src2))),
           (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v8i16 immAllOnesV))),
-                  (load addr:$src2))),
+                  (memopv2i64 addr:$src2))),
           (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
-                  (load addr:$src2))),
+                  (memopv2i64 addr:$src2))),
           (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
 // Use movaps / movups for SSE integer load / store (one byte shorter).

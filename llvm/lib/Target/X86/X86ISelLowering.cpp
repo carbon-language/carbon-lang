@@ -1578,7 +1578,7 @@ static bool isUndefOrEqual(SDOperand Op, unsigned Val) {
 bool X86::isPSHUFDMask(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
 
-  if (N->getNumOperands() != 4)
+  if (N->getNumOperands() != 2 && N->getNumOperands() != 4)
     return false;
 
   // Check if the value doesn't reference the second vector.
@@ -1586,7 +1586,7 @@ bool X86::isPSHUFDMask(SDNode *N) {
     SDOperand Arg = N->getOperand(i);
     if (Arg.getOpcode() == ISD::UNDEF) continue;
     assert(isa<ConstantSDNode>(Arg) && "Invalid VECTOR_SHUFFLE mask!");
-    if (cast<ConstantSDNode>(Arg)->getValue() >= 4)
+    if (cast<ConstantSDNode>(Arg)->getValue() >= e)
       return false;
   }
 
@@ -2767,7 +2767,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
 
   // If VT is integer, try PSHUF* first, then SHUFP*.
   if (MVT::isInteger(VT)) {
-    if (X86::isPSHUFDMask(PermMask.Val) ||
+    // MMX doesn't have PSHUFD; it does have PSHUFW. While it's theoretically
+    // possible to shuffle a v2i32 using PSHUFW, that's not yet implemented.
+    if (((MVT::getSizeInBits(VT) != 64 || NumElems == 4) &&
+         X86::isPSHUFDMask(PermMask.Val)) ||
         X86::isPSHUFHWMask(PermMask.Val) ||
         X86::isPSHUFLWMask(PermMask.Val)) {
       if (V2.getOpcode() != ISD::UNDEF)
