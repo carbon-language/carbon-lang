@@ -1414,10 +1414,12 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
 ///
 void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
   assert(Tok.getKind() == tok::kw_typeof && "Not a typeof specifier");
+  const IdentifierInfo *BuiltinII = Tok.getIdentifierInfo();
   SourceLocation StartLoc = ConsumeToken();
 
   if (Tok.getKind() != tok::l_paren) {
-    // FIXME: handle error.
+    Diag(Tok, diag::err_expected_lparen_after, BuiltinII->getName());
+    return;
   }
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   
@@ -1426,28 +1428,28 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
 
     assert(Ty && "Parser::ParseTypeofSpecifier(): missing type");
 
-    // Match the ')'.
-    if (Tok.getKind() == tok::r_paren) {
-      RParenLoc = ConsumeParen();
-      const char *PrevSpec = 0;
-      if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
-        // Duplicate type specifiers (e.g. "int typeof(int)).
-        Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
-    } else // error
+    if (Tok.getKind() != tok::r_paren) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
+      return;
+    }
+    RParenLoc = ConsumeParen();
+    const char *PrevSpec = 0;
+    // Check for duplicate type specifiers (e.g. "int typeof(int)").
+    if (DS.SetTypeSpecType(DeclSpec::TST_typeofType, StartLoc, PrevSpec, Ty))
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
   } else { // we have an expression.
     ExprResult Result = ParseExpression();
     
-    // Match the ')'.
-    if (!Result.isInvalid && Tok.getKind() == tok::r_paren) {
-      RParenLoc = ConsumeParen();
-      const char *PrevSpec = 0;
-      if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
-                             Result.Val))
-        // Duplicate type specifiers (e.g. "int typeof(int)).
-        Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
-    } else // error
+    if (Result.isInvalid || Tok.getKind() != tok::r_paren) {
       MatchRHSPunctuation(tok::r_paren, LParenLoc);
+      return;
+    }
+    RParenLoc = ConsumeParen();
+    const char *PrevSpec = 0;
+    // Check for duplicate type specifiers (e.g. "int typeof(int)").
+    if (DS.SetTypeSpecType(DeclSpec::TST_typeofExpr, StartLoc, PrevSpec, 
+                           Result.Val))
+      Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
   }
 }
 
