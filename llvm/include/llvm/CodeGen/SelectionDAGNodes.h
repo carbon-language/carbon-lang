@@ -858,6 +858,10 @@ public:
   /// operation.
   bool hasNUsesOfValue(unsigned NUses, unsigned Value) const;
 
+  /// hasAnyUseOfValue - Return true if there are any use of the indicated
+  /// value. This method ignores uses of other values defined by this operation.
+  bool hasAnyUseOfValue(unsigned Value) const;
+
   /// isOnlyUse - Return true if this node is the only use of N.
   ///
   bool isOnlyUse(SDNode *N) const;

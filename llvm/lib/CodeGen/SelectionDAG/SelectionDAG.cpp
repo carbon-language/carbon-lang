@@ -3242,7 +3242,7 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
   // If there is only one value, this is easy.
   if (getNumValues() == 1)
     return use_size() == NUses;
-  if (Uses.size() < NUses) return false;
+  if (use_size() < NUses) return false;
 
   SDOperand TheValue(const_cast<SDNode *>(this), Value);
 
@@ -3262,6 +3262,31 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   // Found exactly the right number of uses?
   return NUses == 0;
+}
+
+
+/// hasAnyUseOfValue - Return true if there are any use of the indicated
+/// value. This method ignores uses of other values defined by this operation.
+bool SDNode::hasAnyUseOfValue(unsigned Value) const {
+  assert(Value < getNumValues() && "Bad value!");
+
+  if (use_size() == 0) return false;
+
+  SDOperand TheValue(const_cast<SDNode *>(this), Value);
+
+  SmallPtrSet<SDNode*, 32> UsersHandled;
+
+  for (SDNode::use_iterator UI = Uses.begin(), E = Uses.end(); UI != E; ++UI) {
+    SDNode *User = *UI;
+    if (User->getNumOperands() == 1 ||
+        UsersHandled.insert(User))     // First time we've seen this?
+      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
+        if (User->getOperand(i) == TheValue) {
+          return true;
+        }
+  }
+
+  return false;
 }
 
 

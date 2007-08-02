@@ -676,7 +676,8 @@ void ScheduleDAG::EmitNode(SDNode *Node,
     if (HasPhysRegOuts) {
       for (unsigned i = II.numDefs; i < NumResults; ++i) {
         unsigned Reg = II.ImplicitDefs[i - II.numDefs];
-        EmitCopyFromReg(Node, i, Reg, VRBaseMap);
+        if (Node->hasAnyUseOfValue(i))
+          EmitCopyFromReg(Node, i, Reg, VRBaseMap);
       }
     }
   } else {
