@@ -311,25 +311,25 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   // Pointing at a discernible object?
   if (O1) {
     if (O2) {
-      if (isa<Argument>(O1)) {
+      if (const Argument *O1Arg = dyn_cast<Argument>(O1)) {
         // Incoming argument cannot alias locally allocated object!
         if (isa<AllocationInst>(O2)) return NoAlias;
         
         // If they are two different objects, and one is a noalias argument
         // then they do not alias.
-        if (O1 != O2 && isNoAliasArgument(cast<Argument>(O1)))
+        if (O1 != O2 && isNoAliasArgument(O1Arg))
           return NoAlias;
           
         // Otherwise, nothing is known...
       } 
       
-      if (isa<Argument>(O2)) {
+      if (const Argument *O2Arg = dyn_cast<Argument>(O2)) {
         // Incoming argument cannot alias locally allocated object!
         if (isa<AllocationInst>(O1)) return NoAlias;
         
         // If they are two different objects, and one is a noalias argument
         // then they do not alias.
-        if (O1 != O2 && isNoAliasArgument(cast<Argument>(O2)))
+        if (O1 != O2 && isNoAliasArgument(O2Arg))
           return NoAlias;
           
         // Otherwise, nothing is known...
