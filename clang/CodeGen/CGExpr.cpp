@@ -253,6 +253,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
   case Expr::ArraySubscriptExprClass:
     return EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E));
+  case Expr::OCUVectorComponentClass:
+    return EmitOCUVectorComponentExpr(cast<OCUVectorComponent>(E));
   }
 }
 
@@ -469,6 +471,16 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   if (!E->getType()->isConstantSizeType(getContext()))
     assert(0 && "VLA idx not implemented");
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"));
+}
+
+LValue CodeGenFunction::
+EmitOCUVectorComponentExpr(const OCUVectorComponent *E) {
+  // Emit the base vector as an l-value.
+  LValue Base = EmitLValue(E->getBase());
+  assert(Base.isSimple() && "Can only subscript lvalue vectors here!");
+
+  return LValue::MakeOCUVectorComp(Base.getAddress(), 
+                                   E->getEncodedElementAccess());
 }
 
 //===--------------------------------------------------------------------===//

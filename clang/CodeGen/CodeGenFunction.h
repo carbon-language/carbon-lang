@@ -54,6 +54,7 @@ namespace clang {
   class BinaryOperator;
   class CompoundAssignOperator;
   class ArraySubscriptExpr;
+  class OCUVectorComponent;
   class ConditionalOperator;
   class PreDefinedExpr;
   
@@ -116,26 +117,35 @@ class LValue {
   // alignment?
   
   enum {
-    Simple,    // This is a normal l-value, use getAddress().
-    VectorElt, // This is a vector element l-value (V[i]), use getVector*
-    BitField   // This is a bitfield l-value, use getBitfield*.
+    Simple,       // This is a normal l-value, use getAddress().
+    VectorElt,    // This is a vector element l-value (V[i]), use getVector*
+    BitField,     // This is a bitfield l-value, use getBitfield*.
+    OCUVectorComp // This is an ocu vector subset, use getOCUVectorComp
   } LVType;
   
   llvm::Value *V;
   
   union {
-    llvm::Value *VectorIdx;
+    llvm::Value *VectorIdx;   // Index into a vector subscript: V[i]
+    unsigned VectorComp;      // Encoded OCUVector element subset: V.xyx
   };
 public:
   bool isSimple() const { return LVType == Simple; }
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitfield() const { return LVType == BitField; }
+  bool isOCUVectorComp() const { return LVType == OCUVectorComp; }
   
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
   // vector elt lvalue
   llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
+  // ocu vector components.
+  unsigned getOCUVectorComp() const {
+    assert(isOCUVectorComp());
+    return VectorComp;
+  }
+  
   
   static LValue MakeAddr(llvm::Value *V) {
     LValue R;
@@ -152,6 +162,13 @@ public:
     return R;
   }
   
+  static LValue MakeOCUVectorComp(llvm::Value *Vec, unsigned Components) {
+    LValue R;
+    R.LVType = VectorElt;
+    R.V = Vec;
+    R.VectorComp = Components;
+    return R;
+  }
 };
 
 /// CodeGenFunction - This class organizes the per-function state that is used
@@ -309,6 +326,7 @@ public:
   LValue EmitPreDefinedLValue(const PreDefinedExpr *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
+  LValue EmitOCUVectorComponentExpr(const OCUVectorComponent *E);
     
   //===--------------------------------------------------------------------===//
   //                             Expression Emission
