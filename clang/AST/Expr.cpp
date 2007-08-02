@@ -589,10 +589,10 @@ OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
   // derive the component type, no need to waste space.
   const char *compStr = Accessor.getName();
   
-  if (OCUVectorType::isPointAccessor(*compStr)) return Point;
-  if (OCUVectorType::isColorAccessor(*compStr)) return Color;
+  if (OCUVectorType::getPointAccessorIdx(*compStr) != -1) return Point;
+  if (OCUVectorType::getColorAccessorIdx(*compStr) != -1) return Color;
   
-  assert(OCUVectorType::isTextureAccessor(*compStr) &&
+  assert(OCUVectorType::getTextureAccessorIdx(*compStr) != -1 &&
          "getComponentType(): Illegal accessor");
   return Texture;
 }

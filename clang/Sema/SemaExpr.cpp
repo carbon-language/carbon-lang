@@ -352,12 +352,19 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
     return QualType();
   }
   // The component names must come from the same set.
-  if (vecType->isPointAccessor(*compStr))
-   do { compStr++; } while (*compStr && vecType->isPointAccessor(*compStr));
-  else if (vecType->isColorAccessor(*compStr))
-   do { compStr++; } while (*compStr && vecType->isColorAccessor(*compStr));
-  else if (vecType->isTextureAccessor(*compStr))
-   do { compStr++; } while (*compStr && vecType->isTextureAccessor(*compStr));
+  if (vecType->getPointAccessorIdx(*compStr) != -1) {
+    do
+      compStr++;
+    while (*compStr && vecType->getPointAccessorIdx(*compStr) != -1);
+  } else if (vecType->getColorAccessorIdx(*compStr) != -1) {
+    do
+      compStr++;
+    while (*compStr && vecType->getColorAccessorIdx(*compStr) != -1);
+  } else if (vecType->getTextureAccessorIdx(*compStr) != -1) {
+    do 
+      compStr++;
+    while (*compStr && vecType->getTextureAccessorIdx(*compStr) != -1);
+  }
     
   if (*compStr) { 
     // We didn't get to the end of the string. This means the component names

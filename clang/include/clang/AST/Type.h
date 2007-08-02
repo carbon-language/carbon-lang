@@ -517,27 +517,41 @@ class OCUVectorType : public VectorType {
     VectorType(OCUVector, vecType, nElements, canonType) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
-  static bool isPointAccessor(const char c) {
-    return c == 'x' || c == 'y' || c == 'z' || c == 'w';
-  }
-  static bool isColorAccessor(const char c) {
-    return c == 'r' || c == 'g' || c == 'b' || c == 'a';
-  }
-  static bool isTextureAccessor(const char c) {
-    return c == 's' || c == 't' || c == 'p' || c == 'q';
-  };
-  bool isAccessorWithinNumElements(const char c) const {
-    switch (NumElements) {
-      default: assert(0 && "Illegal number of elements");
-      case 2: return c == 'x' || c == 'y' || 
-                     c == 'r' || c == 'g' ||
-                     c == 's' || c == 't';
-      case 3: return c == 'x' || c == 'y' || c == 'z' ||
-                     c == 'r' || c == 'g' || c == 'b' ||
-                     c == 's' || c == 't' || c == 'p';
-      case 4: return isPointAccessor(c) || isColorAccessor(c) || 
-                     isTextureAccessor(c);
+  static int getPointAccessorIdx(char c) {
+    switch (c) {
+    default: return -1;
+    case 'x': return 0;
+    case 'y': return 1;
+    case 'z': return 2;
+    case 'w': return 3;
     }
+  }
+  static int getColorAccessorIdx(char c) {
+    switch (c) {
+    default: return -1;
+    case 'r': return 0;
+    case 'g': return 1;
+    case 'b': return 2;
+    case 'a': return 3;
+    }
+  }
+  static int getTextureAccessorIdx(char c) {
+    switch (c) {
+    default: return -1;
+    case 's': return 0;
+    case 't': return 1;
+    case 'p': return 2;
+    case 'q': return 3;
+    }
+  };
+  bool isAccessorWithinNumElements(char c) const {
+    if (int idx = getPointAccessorIdx(c)+1)
+      return unsigned(idx-1) < NumElements;
+    if (int idx = getColorAccessorIdx(c)+1)
+      return unsigned(idx-1) < NumElements;
+    if (int idx = getTextureAccessorIdx(c)+1)
+      return unsigned(idx-1) < NumElements;
+    return false;
   }
   virtual void getAsStringInternal(std::string &InnerString) const;
 
