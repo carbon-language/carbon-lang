@@ -83,6 +83,22 @@ public:
     return *this;
   }
   
+  APSInt& extend(uint32_t width) {
+    if (IsUnsigned)
+      *this = zext(width);
+    else
+      *this = sext(width);
+    return *this;
+  }
+  
+  APSInt& extOrTrunc(uint32_t width) {
+      if (IsUnsigned)
+        *this = zextOrTrunc(width);
+      else
+        *this = sextOrTrunc(width);
+      return *this;
+  }
+  
   APSInt operator>>(unsigned Amt) const {
     return IsUnsigned ? lshr(Amt) : ashr(Amt);
   }
