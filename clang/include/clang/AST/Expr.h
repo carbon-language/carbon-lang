@@ -738,7 +738,7 @@ public:
   QualType getArgType1() { return Type1; }
   QualType getArgType2() { return Type2; }
   
-  int typesAreCompatible() { return Type::typesAreCompatible(Type1,Type2); }
+  int typesAreCompatible() const { return Type::typesAreCompatible(Type1,Type2); }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);

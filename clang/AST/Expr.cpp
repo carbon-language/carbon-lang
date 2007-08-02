@@ -305,6 +305,9 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     Result.setIsUnsigned(!getType()->isSignedIntegerType());
     break;
   }
+  case TypesCompatibleExprClass:
+    Result = cast<TypesCompatibleExpr>(this)->typesAreCompatible();
+    break;
   case DeclRefExprClass:
     if (const EnumConstantDecl *D = 
           dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl())) {
