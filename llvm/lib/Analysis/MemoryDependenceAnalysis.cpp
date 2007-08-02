@@ -111,19 +111,31 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
   while (!stack.empty()) {
     BasicBlock* BB = stack.back();
     
-    visited.insert(BB);
-    
-    if (resp.count(BB)) {
+    if (visited.count(BB)) {
       stack.pop_back();
       continue;
     }
     
     if (BB != block) {
+      visited.insert(BB);
+      
       Instruction* localDep = getDependency(query, 0, BB);
       if (localDep != NonLocal) {
         resp.insert(std::make_pair(BB, localDep));
+        stack.pop_back();
+        
         continue;
       }
+    } else if (BB == block && stack.size() > 1) {
+      visited.insert(BB);
+      
+      Instruction* localDep = getDependency(query, 0, BB);
+      if (localDep != query)
+        resp.insert(std::make_pair(BB, localDep));
+      
+      stack.pop_back();
+      
+      continue;
     }
     
     bool predOnStack = false;

@@ -658,7 +658,8 @@ namespace {
                             SmallVector<Instruction*, 4>& toErase);
     bool processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
-                                  DenseMap<BasicBlock*, Value*> &Phis);
+                            DenseMap<BasicBlock*, Value*> &Phis,
+                            bool top_level = false);
     void dump(DenseMap<BasicBlock*, Value*>& d);
   };
   
@@ -715,11 +716,12 @@ void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
 Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
-                               DenseMap<BasicBlock*, Value*> &Phis) { 
+                               DenseMap<BasicBlock*, Value*> &Phis,
+                               bool top_level) { 
                                  
   // If we have already computed this value, return the previously computed val.
   Value *&V = Phis[BB];
-  if (V) return V;
+  if (V && ! top_level) return V;
   
   BasicBlock* singlePred = BB->getSinglePredecessor();
   if (singlePred)
@@ -799,7 +801,7 @@ bool GVN::processNonLocalLoad(LoadInst* L, SmallVector<Instruction*, 4>& toErase
     }
   
   SmallPtrSet<BasicBlock*, 4> visited;
-  Value* v = GetValueForBlock(L->getParent(), L, repl);
+  Value* v = GetValueForBlock(L->getParent(), L, repl, true);
   
   MD.removeInstruction(L);
   L->replaceAllUsesWith(v);
