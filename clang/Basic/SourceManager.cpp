@@ -192,7 +192,7 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
     int PhysDelta = PhysLoc.getRawFilePos() -
                     LastOne.getPhysicalLoc().getRawFilePos();
     if (SourceLocation::isValidMacroPhysOffs(PhysDelta))
-      return SourceLocation::getMacroLoc(MacroIDs.size()-1, PhysDelta, 0);
+      return SourceLocation::getMacroLoc(i, PhysDelta, 0);
   }
   
  
