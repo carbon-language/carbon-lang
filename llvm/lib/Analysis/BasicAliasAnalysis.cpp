@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
@@ -260,6 +261,21 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   return AliasAnalysis::getModRefInfo(CS, P, Size);
 }
 
+static bool isNoAliasArgument(const Argument *Arg) {
+  const Function *Func = Arg->getParent();
+  const ParamAttrsList *Attr = Func->getFunctionType()->getParamAttrs();
+  if (Attr) {
+    unsigned Idx = 1;
+    for (Function::const_arg_iterator I = Func->arg_begin(), 
+          E = Func->arg_end(); I != E; ++I, ++Idx) {
+      if (&(*I) == Arg && 
+           Attr->paramHasAttr(Idx, ParamAttr::NoAlias))
+        return true;
+    }
+  }
+  return false;
+}
+
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
 // as array references.  Note that this function is heavily tail recursive.
 // Hopefully we have a smart C++ compiler.  :)
@@ -298,10 +314,24 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       if (isa<Argument>(O1)) {
         // Incoming argument cannot alias locally allocated object!
         if (isa<AllocationInst>(O2)) return NoAlias;
+        
+        // If they are two different objects, and one is a noalias argument
+        // then they do not alias.
+        if (O1 != O2 && isNoAliasArgument(cast<Argument>(O1)))
+          return NoAlias;
+          
         // Otherwise, nothing is known...
-      } else if (isa<Argument>(O2)) {
+      } 
+      
+      if (isa<Argument>(O2)) {
         // Incoming argument cannot alias locally allocated object!
         if (isa<AllocationInst>(O1)) return NoAlias;
+        
+        // If they are two different objects, and one is a noalias argument
+        // then they do not alias.
+        if (O1 != O2 && isNoAliasArgument(cast<Argument>(O2)))
+          return NoAlias;
+          
         // Otherwise, nothing is known...
       } else if (O1 != O2) {
         // If they are two different objects, we know that we have no alias...
