@@ -178,18 +178,21 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
   
   
   // If the last macro id is close to the currently requested location, try to
-  // reuse it.  This implements a single-entry cache.
-  if (!MacroIDs.empty()) {
-    MacroIDInfo &LastOne = MacroIDs.back();
+  // reuse it.  This implements a small cache.
+  for (int i = MacroIDs.size()-1, e = MacroIDs.size()-6; i >= 0 && i != e; --i){
+    MacroIDInfo &LastOne = MacroIDs[i];
     
-    if (LastOne.getInstantiationLoc() == InstantLoc &&
-        LastOne.getPhysicalLoc().getFileID() == PhysLoc.getFileID()) {
-      
-      int PhysDelta = PhysLoc.getRawFilePos() -
-                      LastOne.getPhysicalLoc().getRawFilePos();
-      if (SourceLocation::isValidMacroPhysOffs(PhysDelta))
-        return SourceLocation::getMacroLoc(MacroIDs.size()-1, PhysDelta, 0);
-    }
+    // The instanitation point and source physloc have to exactly match to reuse
+    // (for now).  We could allow "nearby" instantiations in the future.
+    if (LastOne.getInstantiationLoc() != InstantLoc ||
+        LastOne.getPhysicalLoc().getFileID() != PhysLoc.getFileID())
+      continue;
+  
+    // Check to see if the physloc of the token came from near enough to reuse.
+    int PhysDelta = PhysLoc.getRawFilePos() -
+                    LastOne.getPhysicalLoc().getRawFilePos();
+    if (SourceLocation::isValidMacroPhysOffs(PhysDelta))
+      return SourceLocation::getMacroLoc(MacroIDs.size()-1, PhysDelta, 0);
   }
   
  
