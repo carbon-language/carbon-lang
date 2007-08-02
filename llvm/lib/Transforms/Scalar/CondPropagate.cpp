@@ -142,14 +142,15 @@ void CondProp::SimplifyPredecessors(BranchInst *BI) {
     if (ConstantInt *CB = dyn_cast<ConstantInt>(PN->getIncomingValue(i-1))) {
       // If we have a constant, forward the edge from its current to its
       // ultimate destination.
-      bool PHIGone = PN->getNumIncomingValues() == 2;
       RevectorBlockTo(PN->getIncomingBlock(i-1),
                       BI->getSuccessor(CB->isZero()));
       ++NumBrThread;
 
-      // If there were two predecessors before this simplification, the PHI node
-      // will be deleted.  Don't iterate through it the last time.
-      if (PHIGone) return;
+      // If there were two predecessors before this simplification, or if the
+      // PHI node contained all the same value except for the one we just
+      // substituted, the PHI node may be deleted.  Don't iterate through it the
+      // last time.
+      if (BI->getCondition() != PN) return;
     }
 }
 
@@ -177,16 +178,17 @@ void CondProp::SimplifyPredecessors(SwitchInst *SI) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(PN->getIncomingValue(i-1))) {
       // If we have a constant, forward the edge from its current to its
       // ultimate destination.
-      bool PHIGone = PN->getNumIncomingValues() == 2;
       unsigned DestCase = SI->findCaseValue(CI);
       RevectorBlockTo(PN->getIncomingBlock(i-1),
                       SI->getSuccessor(DestCase));
       ++NumSwThread;
       RemovedPreds = true;
 
-      // If there were two predecessors before this simplification, the PHI node
-      // will be deleted.  Don't iterate through it the last time.
-      if (PHIGone) return;
+      // If there were two predecessors before this simplification, or if the
+      // PHI node contained all the same value except for the one we just
+      // substituted, the PHI node may be deleted.  Don't iterate through it the
+      // last time.
+      if (SI->getCondition() != PN) return;
     }
 }
 
