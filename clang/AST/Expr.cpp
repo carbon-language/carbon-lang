@@ -611,3 +611,20 @@ bool OCUVectorComponent::containsDuplicateComponents() const {
   }
   return false;
 }
+
+/// getEncodedElementAccess - We encode fields with two bits per component.
+unsigned OCUVectorComponent::getEncodedElementAccess() const {
+  const char *compStr = Accessor.getName();
+  unsigned length = strlen(compStr);
+
+  unsigned Result = 0;
+  
+  while (length--) {
+    Result <<= 2;
+    int Idx = OCUVectorType::getAccessorIdx(compStr[length]);
+    assert(Idx != -1 && "Invalid accessor letter");
+    Result |= Idx;
+  }
+  return Result;
+}
+

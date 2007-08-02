@@ -544,12 +544,15 @@ public:
     case 'q': return 3;
     }
   };
+  
+  static int getAccessorIdx(char c) {
+    if (int idx = getPointAccessorIdx(c)+1) return idx-1;
+    if (int idx = getColorAccessorIdx(c)+1) return idx-1;
+    return getTextureAccessorIdx(c);
+  }
+  
   bool isAccessorWithinNumElements(char c) const {
-    if (int idx = getPointAccessorIdx(c)+1)
-      return unsigned(idx-1) < NumElements;
-    if (int idx = getColorAccessorIdx(c)+1)
-      return unsigned(idx-1) < NumElements;
-    if (int idx = getTextureAccessorIdx(c)+1)
+    if (int idx = getAccessorIdx(c)+1)
       return unsigned(idx-1) < NumElements;
     return false;
   }

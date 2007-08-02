@@ -494,6 +494,18 @@ public:
   /// repeated.
   bool containsDuplicateComponents() const;
   
+  /// getEncodedElementAccess - Encode the elements accessed into a bit vector.
+  /// The encoding currently uses 2-bit bitfields, but clients should use the
+  /// accessors below to access them.
+  ///
+  unsigned getEncodedElementAccess() const;
+  
+  /// getAccessedFieldNo - Given an encoded value and a result number, return
+  /// the input field number being accessed.
+  static unsigned getAccessedFieldNo(unsigned Idx, unsigned EncodedVal) {
+    return (EncodedVal >> (Idx*2)) & 3;
+  }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);
   }
