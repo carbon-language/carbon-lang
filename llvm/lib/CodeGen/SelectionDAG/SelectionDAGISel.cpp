@@ -4031,7 +4031,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   SDOperand Res = DAG.getNode(ISD::CALL,
                               DAG.getVTList(&RetTys[0], NumRegs + 1),
                               &Ops[0], Ops.size());
-  SDOperand Chain = Res.getValue(NumRegs);
+  Chain = Res.getValue(NumRegs);
 
   // Gather up the call result into a single value.
   if (RetTy != Type::VoidTy) {
