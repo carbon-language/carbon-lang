@@ -24,4 +24,6 @@ static void test() {
     vec2.xx = vec2_2.xy; // expected-error {{vector is not assignable (contains duplicate components)}}
     vec2.yx = vec2_2.xy;
     vec4 = (float4){ 1,2,3,4 };
+    vec4.rg.g; // expected-error {{vector component access limited to variables}}
+    vec4.rg[1]; // expected-error {{vector component access limited to variables}}
 }

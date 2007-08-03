@@ -449,6 +449,8 @@ DIAG(err_ocuvector_component_exceeds_length, ERROR,
      "vector component access exceeds type '%0'")
 DIAG(err_ocuvector_component_name_illegal, ERROR,
      "illegal vector component name '%0'")
+DIAG(err_ocuvector_component_access, ERROR,
+     "vector component access limited to variables")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,

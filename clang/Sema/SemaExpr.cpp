@@ -317,6 +317,11 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   } else if (const VectorType *VTy = LHSTy->getAsVectorType()) {
     BaseExpr = LHSExp;    // vectors: V[123]
     IndexExpr = RHSExp;
+    
+    // Component access limited to variables (reject vec4.rg[1]).
+    if (!isa<DeclRefExpr>(BaseExpr)) 
+      return Diag(LLoc, diag::err_ocuvector_component_access, 
+                  SourceRange(LLoc, RLoc));
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
   } else {
@@ -435,6 +440,10 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                   SourceRange(MemberLoc));
     return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl, MemberLoc);
   } else if (BaseType->isOCUVectorType() && OpKind == tok::period) {
+    // Component access limited to variables (reject vec4.rg.g).
+    if (!isa<DeclRefExpr>(BaseExpr)) 
+      return Diag(OpLoc, diag::err_ocuvector_component_access, 
+                  SourceRange(MemberLoc));
     QualType ret = CheckOCUVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;
