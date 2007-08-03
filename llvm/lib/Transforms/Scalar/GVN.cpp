@@ -726,21 +726,23 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                                bool top_level) { 
                                  
   // If we have already computed this value, return the previously computed val.
-  Value *V = Phis[BB];
-  if (V && ! top_level) return V;
+  DenseMap<BasicBlock*, Value*>::iterator V = Phis.find(BB);
+  if (V != Phis.end() && !top_level) return V->second;
   
   BasicBlock* singlePred = BB->getSinglePredecessor();
   if (singlePred) {
-    V = GetValueForBlock(singlePred, orig, Phis);
-    Phis[BB] = V;
-    return V;
+    Value *ret = GetValueForBlock(singlePred, orig, Phis);
+    Phis[BB] = ret;
+    return ret;
   }
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
   PHINode *PN = new PHINode(orig->getType(), orig->getName()+".rle",
                             BB->begin());
   PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
-  Phis[BB] = PN;
+  
+  if (Phis.count(BB) == 0)
+    Phis.insert(std::make_pair(BB, PN));
   
   bool all_same = true;
   Value* first = 0;
