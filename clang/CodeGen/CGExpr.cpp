@@ -298,14 +298,31 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
       return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
     }
     
+    // If the source and destination have the same number of elements, use a
+    // vector shuffle instead of insert/extracts.
+    unsigned NumResultElts = cast<VectorType>(ExprType)->getNumElements();
+    unsigned NumSourceElts =
+      cast<llvm::VectorType>(Vec->getType())->getNumElements();
     
-    unsigned NumElts = cast<VectorType>(ExprType)->getNumElements();
+    if (NumResultElts == NumSourceElts) {
+      llvm::SmallVector<llvm::Constant*, 4> Mask;
+      for (unsigned i = 0; i != NumResultElts; ++i) {
+        unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+        Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
+      }
+      
+      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      Vec = Builder.CreateShuffleVector(Vec,
+                                        llvm::UndefValue::get(Vec->getType()),
+                                        MaskV, "tmp");
+      return RValue::get(Vec);
+    }
     
     // Start out with an undef of the result type.
     llvm::Value *Result = llvm::UndefValue::get(ConvertType(ExprType));
     
     // Extract/Insert each element of the result.
-    for (unsigned i = 0; i != NumElts; ++i) {
+    for (unsigned i = 0; i != NumResultElts; ++i) {
       unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
       llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
       Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
