@@ -354,17 +354,23 @@ RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
 /// is 'Ty'.
 void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, 
                                              QualType Ty) {
-  if (Dst.isVectorElt()) {
-    // Read/modify/write the vector, inserting the new element.
-    // FIXME: Volatility.
-    llvm::Value *Vec = Builder.CreateLoad(Dst.getVectorAddr(), "tmp");
-    Vec = Builder.CreateInsertElement(Vec, Src.getVal(),
-                                      Dst.getVectorIdx(), "vecins");
-    Builder.CreateStore(Vec, Dst.getVectorAddr());
-    return;
-  }
+  if (!Dst.isSimple()) {
+    if (Dst.isVectorElt()) {
+      // Read/modify/write the vector, inserting the new element.
+      // FIXME: Volatility.
+      llvm::Value *Vec = Builder.CreateLoad(Dst.getVectorAddr(), "tmp");
+      Vec = Builder.CreateInsertElement(Vec, Src.getVal(),
+                                        Dst.getVectorIdx(), "vecins");
+      Builder.CreateStore(Vec, Dst.getVectorAddr());
+      return;
+    }
   
-  assert(Dst.isSimple() && "FIXME: Don't support store to bitfield yet");
+    // If this is an update of elements of a vector, insert them as appropriate.
+    if (Dst.isOCUVectorComp())
+      return EmitStoreThroughOCUComponentLValue(Src, Dst, Ty);
+  
+    assert(0 && "FIXME: Don't support store to bitfield yet");
+  }
   
   llvm::Value *DstAddr = Dst.getAddress();
   if (Src.isScalar()) {
@@ -409,6 +415,29 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   };
   
   Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
+}
+
+void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, 
+                                                         QualType Ty) {
+  // This access turns into a read/modify/write of the vector.  Load the input
+  // value now.
+  llvm::Value *Vec = Builder.CreateLoad(Dst.getOCUVectorAddr(), "tmp");
+  // FIXME: Volatility.
+  unsigned EncFields = Dst.getOCUVectorComp();
+  
+  llvm::Value *SrcVal = Src.getVal();
+  
+  // If the Src is a scalar (not a vector) it must be updating a single element.
+  if (!Ty->isVectorType()) {
+    unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
+    llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+    Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
+  } else {
+    
+  }
+  
+  
+  Builder.CreateStore(Vec, Dst.getOCUVectorAddr());
 }
 
 

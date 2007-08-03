@@ -323,6 +323,7 @@ public:
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
   void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
+  void EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, QualType Ty);
   
   LValue EmitDeclRefLValue(const DeclRefExpr *E);
   LValue EmitStringLiteralLValue(const StringLiteral *E);
