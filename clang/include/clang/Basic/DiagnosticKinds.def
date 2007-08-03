@@ -652,7 +652,8 @@ DIAG(err_typecheck_cond_incompatible_operands, ERROR,
      "incompatible operand types ('%0' and '%1')")
 DIAG(ext_typecheck_cond_incompatible_pointers, WARNING,
      "pointer type mismatch ('%0' and '%1')")
-
+DIAG(err_typecheck_choose_expr_requires_constant, ERROR,
+     "'__builtin_choose_expr' requires a constant expression")
 DIAG(warn_unused_expr, WARNING,
      "expression result unused")
 

@@ -285,6 +285,11 @@ public:
   virtual ExprResult ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                               TypeTy *arg1, TypeTy *arg2,
                                               SourceLocation RPLoc);
+                                              
+  // __builtin_choose_expr(constExpr, expr1, expr2)
+  virtual ExprResult ParseChooseExpr(SourceLocation BuiltinLoc, 
+                                     ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
+                                     SourceLocation RPLoc);
   
   /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,

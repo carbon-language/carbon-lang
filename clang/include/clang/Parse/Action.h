@@ -381,6 +381,12 @@ public:
                                               SourceLocation RPLoc) {
     return 0;
   }
+  // __builtin_choose_expr(constExpr, expr1, expr2)
+  virtual ExprResult ParseChooseExpr(SourceLocation BuiltinLoc, 
+                                     ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
+                                     SourceLocation RPLoc) {
+    return 0;
+  }
 
   //===------------------------- C++ Expressions --------------------------===//
   

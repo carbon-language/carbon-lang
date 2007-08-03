@@ -805,19 +805,35 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       }
     }
     break;
-  case tok::kw___builtin_choose_expr:
-    Res = ParseAssignmentExpression();
-    
+  case tok::kw___builtin_choose_expr: {
+    ExprResult Cond = ParseAssignmentExpression();
+    if (Cond.isInvalid) {
+      SkipUntil(tok::r_paren);
+      return Cond;
+    }
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
-    Res = ParseAssignmentExpression();
-    
+    ExprResult Expr1 = ParseAssignmentExpression();
+    if (Expr1.isInvalid) {
+      SkipUntil(tok::r_paren);
+      return Expr1;
+    }    
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
-    Res = ParseAssignmentExpression();
-    break;
+    ExprResult Expr2 = ParseAssignmentExpression();
+    if (Expr2.isInvalid) {
+      SkipUntil(tok::r_paren);
+      return Expr2;
+    }    
+    if (Tok.getKind() != tok::r_paren) {
+      Diag(Tok, diag::err_expected_rparen);
+      return ExprResult(true);
+    }
+    return Actions.ParseChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
+                                   ConsumeParen());
+  }
   case tok::kw___builtin_types_compatible_p:
     TypeTy *Ty1 = ParseTypeName();
     

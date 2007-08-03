@@ -487,6 +487,15 @@ void StmtPrinter::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
   OS << Node->getArgType2().getAsString() << ")";
 }
 
+void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
+  OS << "__builtin_choose_expr(";
+  PrintExpr(Node->getCond());
+  OS << ",";
+  PrintExpr(Node->getLHS());
+  OS << ",";
+  PrintExpr(Node->getRHS());
+  OS << ")";
+}
 
 // C++
 

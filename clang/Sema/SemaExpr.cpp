@@ -1584,3 +1584,25 @@ Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation BuiltinLoc,
   return new TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, argT2, RPLoc);
 }
 
+Sema::ExprResult Sema::ParseChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond, 
+                                       ExprTy *expr1, ExprTy *expr2,
+                                       SourceLocation RPLoc) {
+  Expr *CondExpr = static_cast<Expr*>(cond);
+  Expr *LHSExpr = static_cast<Expr*>(expr1);
+  Expr *RHSExpr = static_cast<Expr*>(expr2);
+  
+  assert((CondExpr && LHSExpr && RHSExpr) && "Missing type argument(s)");
+
+  // The conditional expression is required to be a constant expression.
+  llvm::APSInt condEval(32);
+  SourceLocation ExpLoc;
+  if (!CondExpr->isIntegerConstantExpr(condEval, Context, &ExpLoc))
+    return Diag(ExpLoc, diag::err_typecheck_choose_expr_requires_constant,
+                 CondExpr->getSourceRange());
+
+  // If the condition is > zero, then the AST type is the same as the LSHExpr.
+  QualType resType = condEval.getZExtValue() ? LHSExpr->getType() : 
+                                               RHSExpr->getType();
+  return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
+}
+

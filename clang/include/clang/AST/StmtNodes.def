@@ -68,11 +68,12 @@ STMT(49, OCUVectorElementExpr , Expr)
 STMT(50, AddrLabelExpr        , Expr)
 STMT(51, StmtExpr             , Expr)
 STMT(52, TypesCompatibleExpr  , Expr)
+STMT(53, ChooseExpr           , Expr)
 
 // C++ Expressions.
-STMT(53, CXXCastExpr          , Expr)
-STMT(54, CXXBoolLiteralExpr   , Expr)
-LAST_EXPR(54)
+STMT(54, CXXCastExpr          , Expr)
+STMT(55, CXXBoolLiteralExpr   , Expr)
+LAST_EXPR(55)
 
 #undef STMT
 #undef FIRST_STMT

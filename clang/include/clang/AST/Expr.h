@@ -776,6 +776,35 @@ public:
   static bool classof(const TypesCompatibleExpr *) { return true; }
 };
 
+/// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
+/// This AST node is similar to the conditional operator (?:) in C, with 
+/// the following exceptions:
+/// - the test expression much be a constant expression.
+/// - the expression returned has it's type unaltered by promotion rules.
+/// - does not evaluate the expression that was not chosen.
+class ChooseExpr : public Expr {
+  Expr *Cond, *LHS, *RHS;  // First, second, and third arguments.
+  SourceLocation BuiltinLoc, RParenLoc;
+public:
+  ChooseExpr(SourceLocation BLoc, Expr *cond, Expr *lhs, Expr *rhs, QualType t,
+             SourceLocation RP)
+    : Expr(ChooseExprClass, t),  
+      Cond(cond), LHS(lhs), RHS(rhs), BuiltinLoc(BLoc), RParenLoc(RP) {}
+    
+  Expr *getCond() const { return Cond; }
+  Expr *getLHS() const { return LHS; }
+  Expr *getRHS() const { return RHS; }
+    
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(BuiltinLoc, RParenLoc);
+  }
+  virtual void visit(StmtVisitor &Visitor);
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ChooseExprClass; 
+  }
+  static bool classof(const ChooseExpr *) { return true; }
+};
+
 }  // end namespace clang
 
 #endif
