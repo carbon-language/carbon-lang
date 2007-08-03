@@ -583,6 +583,11 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
 
+unsigned OCUVectorComponent::getNumComponents() const {
+  return strlen(Accessor.getName());
+}
+
+
 /// getComponentType - Determine whether the components of this access are
 /// "point" "color" or "texture" elements.
 OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
@@ -615,7 +620,7 @@ bool OCUVectorComponent::containsDuplicateComponents() const {
 /// getEncodedElementAccess - We encode fields with two bits per component.
 unsigned OCUVectorComponent::getEncodedElementAccess() const {
   const char *compStr = Accessor.getName();
-  unsigned length = strlen(compStr);
+  unsigned length = getNumComponents();
 
   unsigned Result = 0;
   

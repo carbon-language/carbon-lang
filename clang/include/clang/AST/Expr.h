@@ -486,6 +486,9 @@ public:
   
   IdentifierInfo &getAccessor() const { return Accessor; }
   
+  /// getNumComponents - Get the number of components being selected.
+  unsigned getNumComponents() const;
+  
   /// getComponentType - Determine whether the components of this access are
   /// "point" "color" or "texture" elements.
   ComponentType getComponentType() const;
