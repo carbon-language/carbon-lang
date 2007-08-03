@@ -287,12 +287,22 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
   // shuffle the input or extract/insert them as appropriate.
   if (LV.isOCUVectorComp()) {
     llvm::Value *Vec = Builder.CreateLoad(LV.getOCUVectorAddr(), "tmp");
+
+    unsigned EncFields = LV.getOCUVectorComp();
+
+    // If the result of the expression is a non-vector type, we must be
+    // extracting a single element.  Just codegen as an extractelement.
+    if (!isa<VectorType>(ExprType)) {
+      unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
+      llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+      return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
+    }
+    
+    
     unsigned NumElts = cast<VectorType>(ExprType)->getNumElements();
     
     // Start out with an undef of the result type.
     llvm::Value *Result = llvm::UndefValue::get(ConvertType(ExprType));
-    
-    unsigned EncFields = LV.getOCUVectorComp();
     
     // Extract/Insert each element of the result.
     for (unsigned i = 0; i != NumElts; ++i) {
