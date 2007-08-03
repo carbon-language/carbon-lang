@@ -427,15 +427,24 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
   
   llvm::Value *SrcVal = Src.getVal();
   
-  // If the Src is a scalar (not a vector) it must be updating a single element.
-  if (!Ty->isVectorType()) {
+  if (const VectorType *VTy = Ty->getAsVectorType()) {
+    unsigned NumSrcElts = VTy->getNumElements();
+
+    // Extract/Insert each element.
+    for (unsigned i = 0; i != NumSrcElts; ++i) {
+      llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      Elt = Builder.CreateExtractElement(SrcVal, Elt, "tmp");
+      
+      unsigned Idx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+      llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Idx);
+      Vec = Builder.CreateInsertElement(Vec, Elt, OutIdx, "tmp");
+    }
+  } else {
+    // If the Src is a scalar (not a vector) it must be updating one element.
     unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
-  } else {
-    
   }
-  
   
   Builder.CreateStore(Vec, Dst.getOCUVectorAddr());
 }
