@@ -282,6 +282,30 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
     return RValue::get(Builder.CreateExtractElement(Vec, LV.getVectorIdx(),
                                                     "vecext"));
   }
+
+  // If this is a reference to a subset of the elements of a vector, either
+  // shuffle the input or extract/insert them as appropriate.
+  if (LV.isOCUVectorComp()) {
+    llvm::Value *Vec = Builder.CreateLoad(LV.getOCUVectorAddr(), "tmp");
+    unsigned NumElts = cast<VectorType>(ExprType)->getNumElements();
+    
+    // Start out with an undef of the result type.
+    llvm::Value *Result = llvm::UndefValue::get(ConvertType(ExprType));
+    
+    unsigned EncFields = LV.getOCUVectorComp();
+    
+    // Extract/Insert each element of the result.
+    for (unsigned i = 0; i != NumElts; ++i) {
+      unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+      llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+      Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
+
+      llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      Result = Builder.CreateInsertElement(Result, Elt, OutIdx, "tmp");
+    }
+    
+    return RValue::get(Result);
+  }
   
   assert(0 && "Bitfield ref not impl!");
 }
@@ -505,6 +529,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitLoadOfLValue(E);
   case Expr::ArraySubscriptExprClass:
     return EmitArraySubscriptExprRV(cast<ArraySubscriptExpr>(E));
+  case Expr::OCUVectorComponentClass:
+    return EmitLoadOfLValue(E);
   case Expr::PreDefinedExprClass:
   case Expr::StringLiteralClass:
     return RValue::get(EmitLValue(E).getAddress());

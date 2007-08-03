@@ -141,6 +141,7 @@ public:
   llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
   // ocu vector components.
+  llvm::Value *getOCUVectorAddr() const { assert(isOCUVectorComp()); return V; }
   unsigned getOCUVectorComp() const {
     assert(isOCUVectorComp());
     return VectorComp;
@@ -164,7 +165,7 @@ public:
   
   static LValue MakeOCUVectorComp(llvm::Value *Vec, unsigned Components) {
     LValue R;
-    R.LVType = VectorElt;
+    R.LVType = OCUVectorComp;
     R.V = Vec;
     R.VectorComp = Components;
     return R;
