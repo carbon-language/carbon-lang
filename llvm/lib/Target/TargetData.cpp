@@ -436,6 +436,13 @@ uint64_t TargetData::getTypeSize(const Type *Ty) const {
     return 4;
   case Type::DoubleTyID:
     return 8;
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID:
+    return 16;
+  // In memory objects this is always aligned to a higher boundary, but
+  // only 10 bytes contain information.
+  case Type::X86_FP80TyID:
+    return 10;
   case Type::VectorTyID: {
     const VectorType *PTy = cast<VectorType>(Ty);
     return PTy->getBitWidth() / 8;
@@ -493,6 +500,11 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     break;
   case Type::FloatTyID:
   case Type::DoubleTyID:
+  // PPC_FP128TyID and FP128TyID have different data contents, but the
+  // same size and alignment, so they look the same here.
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID:
+  case Type::X86_FP80TyID:
     AlignType = FLOAT_ALIGN;
     break;
   case Type::VectorTyID: {

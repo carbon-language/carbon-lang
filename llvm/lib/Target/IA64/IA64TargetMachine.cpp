@@ -63,7 +63,7 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
 /// IA64TargetMachine ctor - Create an LP64 architecture model
 ///
 IA64TargetMachine::IA64TargetMachine(const Module &M, const std::string &FS)
-  : DataLayout("e"),
+  : DataLayout("e-f80:128:128"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     TLInfo(*this) { // FIXME? check this stuff
 }
