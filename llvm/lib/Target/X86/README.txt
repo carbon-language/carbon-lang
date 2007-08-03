@@ -1103,3 +1103,30 @@ These instructions should go away:
 movaps %xmm1, 192(%esp) 
 movaps %xmm1, 224(%esp) 
 movaps %xmm1, 176(%esp)
+
+//===---------------------------------------------------------------------===//
+
+This is a "commutable two-address" register coallescing deficiency:
+
+define <4 x float> @test1(<4 x float> %V) {
+entry:
+        %tmp8 = shufflevector <4 x float> %V, <4 x float> undef, <4 x i32> < i32 3, i32 2, i32 1, i32 0 >               ; <<4 x float>> [#uses=1]
+        %add = add <4 x float> %tmp8, %V                ; <<4 x float>> [#uses=1]
+        ret <4 x float> %add
+}
+
+this codegens to:
+
+_test1:
+        pshufd  $27, %xmm0, %xmm1
+        addps   %xmm0, %xmm1
+        movaps  %xmm1, %xmm0
+        ret
+
+instead of:
+
+_test1:
+        pshufd  $27, %xmm0, %xmm1
+        addps   %xmm1, %xmm0
+        ret
+
