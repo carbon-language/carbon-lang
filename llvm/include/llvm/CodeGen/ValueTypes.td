@@ -30,23 +30,24 @@ def f32    : ValueType<32 ,  7>;   // 32-bit floating point value
 def f64    : ValueType<64 ,  8>;   // 64-bit floating point value
 def f80    : ValueType<80 ,  9>;   // 80-bit floating point value
 def f128   : ValueType<128, 10>;   // 128-bit floating point value
-def FlagVT : ValueType<0  , 11>;   // Condition code or machine flag
-def isVoid : ValueType<0  , 12>;   // Produces no value
-def v8i8   : ValueType<64 , 13>;   //  8 x i8  vector value
-def v4i16  : ValueType<64 , 14>;   //  4 x i16 vector value
-def v2i32  : ValueType<64 , 15>;   //  2 x i32 vector value
-def v1i64  : ValueType<64 , 16>;   //  1 x i64 vector value
+def ppcf128: ValueType<128, 11>;   // PPC 128-bit floating point value
+def FlagVT : ValueType<0  , 12>;   // Condition code or machine flag
+def isVoid : ValueType<0  , 13>;   // Produces no value
+def v8i8   : ValueType<64 , 14>;   //  8 x i8  vector value
+def v4i16  : ValueType<64 , 15>;   //  4 x i16 vector value
+def v2i32  : ValueType<64 , 16>;   //  2 x i32 vector value
+def v1i64  : ValueType<64 , 17>;   //  1 x i64 vector value
 
-def v16i8  : ValueType<128, 17>;   // 16 x i8  vector value
-def v8i16  : ValueType<128, 18>;   //  8 x i16 vector value
-def v3i32  : ValueType<96 , 19>;   //  3 x i32 vector value
-def v4i32  : ValueType<128, 20>;   //  4 x i32 vector value
-def v2i64  : ValueType<128, 21>;   //  2 x i64 vector value
+def v16i8  : ValueType<128, 18>;   // 16 x i8  vector value
+def v8i16  : ValueType<128, 19>;   //  8 x i16 vector value
+def v3i32  : ValueType<96 , 20>;   //  3 x i32 vector value
+def v4i32  : ValueType<128, 21>;   //  4 x i32 vector value
+def v2i64  : ValueType<128, 22>;   //  2 x i64 vector value
 
-def v2f32  : ValueType<64,  22>;   //  2 x f32 vector value
-def v3f32  : ValueType<96 , 23>;   //  3 x f32 vector value
-def v4f32  : ValueType<128, 24>;   //  4 x f32 vector value
-def v2f64  : ValueType<128, 25>;   //  2 x f64 vector value
+def v2f32  : ValueType<64,  23>;   //  2 x f32 vector value
+def v3f32  : ValueType<96 , 24>;   //  3 x f32 vector value
+def v4f32  : ValueType<128, 25>;   //  4 x f32 vector value
+def v2f64  : ValueType<128, 26>;   //  2 x f64 vector value
 
 // Pseudo valuetype to represent "integer of any bit width"
 def iAny   : ValueType<0  , 254>;   // integer value of any bit width

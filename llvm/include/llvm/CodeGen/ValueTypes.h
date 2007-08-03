@@ -42,29 +42,30 @@ namespace MVT {  // MVT = Machine Value Types
     f64            =   8,   // This is a 64 bit floating point value
     f80            =   9,   // This is a 80 bit floating point value
     f128           =  10,   // This is a 128 bit floating point value
-    Flag           =  11,   // This is a condition code or machine flag.
+    ppcf128        =  11,   // This is a PPC 128-bit floating point value
+    Flag           =  12,   // This is a condition code or machine flag.
 
-    isVoid         =  12,   // This has no value
+    isVoid         =  13,   // This has no value
     
-    v8i8           =  13,   //  8 x i8
-    v4i16          =  14,   //  4 x i16
-    v2i32          =  15,   //  2 x i32
-    v1i64          =  16,   //  1 x i64
-    v16i8          =  17,   // 16 x i8
-    v8i16          =  18,   //  8 x i16
-    v3i32           = 19,   //  3 x i32
-    v4i32          =  20,   //  4 x i32
-    v2i64          =  21,   //  2 x i64
+    v8i8           =  14,   //  8 x i8
+    v4i16          =  15,   //  4 x i16
+    v2i32          =  16,   //  2 x i32
+    v1i64          =  17,   //  1 x i64
+    v16i8          =  18,   // 16 x i8
+    v8i16          =  19,   //  8 x i16
+    v3i32           = 20,   //  3 x i32
+    v4i32          =  21,   //  4 x i32
+    v2i64          =  22,   //  2 x i64
 
-    v2f32          =  22,   //  2 x f32
-    v3f32           = 23,   //  3 x f32
-    v4f32          =  24,   //  4 x f32
-    v2f64          =  25,   //  2 x f64
+    v2f32          =  23,   //  2 x f32
+    v3f32           = 24,   //  3 x f32
+    v4f32          =  25,   //  4 x f32
+    v2f64          =  26,   //  2 x f64
     
     FIRST_VECTOR_VALUETYPE = v8i8,
     LAST_VECTOR_VALUETYPE  = v2f64,
 
-    LAST_VALUETYPE =  26,   // This always remains at the end of the list.
+    LAST_VALUETYPE =  27,   // This always remains at the end of the list.
 
     // iAny - An integer value of any bit width. This is used for intrinsics
     // that have overloadings based on integer bit widths. This is only for
@@ -114,7 +115,7 @@ namespace MVT {  // MVT = Machine Value Types
   /// MVT::isFloatingPoint - Return true if this is an FP, or a vector FP type.
   static inline bool isFloatingPoint(ValueType VT) {
     ValueType SVT = VT & SimpleTypeMask;
-    return (SVT >= f32 && SVT <= f128) || (SVT >= v2f32 && SVT <= v2f64);
+    return (SVT >= f32 && SVT <= ppcf128) || (SVT >= v2f32 && SVT <= v2f64);
   }
   
   /// MVT::isVector - Return true if this is a vector value type.
@@ -197,6 +198,7 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::v3i32:
     case MVT::v3f32: return 96;
     case MVT::f128:
+    case MVT::ppcf128:
     case MVT::i128: 
     case MVT::v16i8:
     case MVT::v8i16:
