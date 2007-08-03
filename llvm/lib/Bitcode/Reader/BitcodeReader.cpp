@@ -303,6 +303,15 @@ bool BitcodeReader::ParseTypeTable() {
     case bitc::TYPE_CODE_DOUBLE:    // DOUBLE
       ResultTy = Type::DoubleTy;
       break;
+    case bitc::TYPE_CODE_X86_FP80:  // X86_FP80
+      ResultTy = Type::X86_FP80Ty;
+      break;
+    case bitc::TYPE_CODE_FP128:     // FP128
+      ResultTy = Type::FP128Ty;
+      break;
+    case bitc::TYPE_CODE_PPC_FP128: // PPC_FP128
+      ResultTy = Type::PPC_FP128Ty;
+      break;
     case bitc::TYPE_CODE_LABEL:     // LABEL
       ResultTy = Type::LabelTy;
       break;

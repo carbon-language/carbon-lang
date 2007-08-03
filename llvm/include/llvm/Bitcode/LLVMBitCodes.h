@@ -81,7 +81,14 @@ namespace bitc {
     TYPE_CODE_FUNCTION =  9,   // FUNCTION: [vararg, retty, paramty x N]
     TYPE_CODE_STRUCT   = 10,   // STRUCT: [ispacked, eltty x N]
     TYPE_CODE_ARRAY    = 11,   // ARRAY: [numelts, eltty]
-    TYPE_CODE_VECTOR   = 12    // VECTOR: [numelts, eltty]
+    TYPE_CODE_VECTOR   = 12,   // VECTOR: [numelts, eltty]
+
+    // These are not with the other floating point types because they're
+    // a late addition, and putting them in the right place breaks
+    // binary compatibility.
+    TYPE_CODE_X86_FP80 = 13,   // X86 LONG DOUBLE
+    TYPE_CODE_FP128    = 14,   // LONG DOUBLE (112 bit mantissa)
+    TYPE_CODE_PPC_FP128= 15    // PPC LONG DOUBLE (2 doubles)
     // Any other type code is assumed to be an unknown type.
   };
   

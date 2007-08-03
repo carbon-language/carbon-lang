@@ -1050,7 +1050,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type  <TypeVal> Types ResultTypes
 %type  <PrimType> IntType FPType PrimType           // Classifications
 %token <PrimType> VOID INTTYPE 
-%token <PrimType> FLOAT DOUBLE LABEL
+%token <PrimType> FLOAT DOUBLE X86_FP80 FP128 PPC_FP128 LABEL
 %token TYPE
 
 
@@ -1141,7 +1141,7 @@ FPredicates
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
 IntType :  INTTYPE;
-FPType   : FLOAT | DOUBLE;
+FPType   : FLOAT | DOUBLE | PPC_FP128 | FP128 | X86_FP80;
 
 LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT ;
 OptLocalName : LocalName | /*empty*/ { $$ = 0; };
@@ -1305,7 +1305,7 @@ GlobalVarAttribute : SectionString {
 
 // Derived types are added later...
 //
-PrimType : INTTYPE | FLOAT | DOUBLE | LABEL ;
+PrimType : INTTYPE | FLOAT | DOUBLE | PPC_FP128 | FP128 | X86_FP80 | LABEL ;
 
 Types 
   : OPAQUE {

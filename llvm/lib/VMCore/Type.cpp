@@ -105,10 +105,13 @@ void Type::destroy() const {
 
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
-  case VoidTyID  : return VoidTy;
-  case FloatTyID : return FloatTy;
-  case DoubleTyID: return DoubleTy;
-  case LabelTyID : return LabelTy;
+  case VoidTyID      : return VoidTy;
+  case FloatTyID     : return FloatTy;
+  case DoubleTyID    : return DoubleTy;
+  case X86_FP80TyID  : return X86_FP80Ty;
+  case FP128TyID     : return FP128Ty;
+  case PPC_FP128TyID : return PPC_FP128Ty;
+  case LabelTyID     : return LabelTy;
   default:
     return 0;
   }
@@ -126,7 +129,10 @@ const Type *Type::getVAArgsPromotedType() const {
 /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
 ///
 bool Type::isFPOrFPVector() const {
-  if (ID == Type::FloatTyID || ID == Type::DoubleTyID) return true;
+  if (ID == Type::FloatTyID || ID == Type::DoubleTyID || 
+      ID == Type::FP128TyID || ID == Type::X86_FP80TyID || 
+      ID == Type::PPC_FP128TyID)
+    return true;
   if (ID != Type::VectorTyID) return false;
   
   return cast<VectorType>(this)->getElementType()->isFloatingPoint();
@@ -162,6 +168,9 @@ unsigned Type::getPrimitiveSizeInBits() const {
   switch (getTypeID()) {
   case Type::FloatTyID: return 32;
   case Type::DoubleTyID: return 64;
+  case Type::X86_FP80TyID: return 80;
+  case Type::FP128TyID: return 128;
+  case Type::PPC_FP128TyID: return 128;
   case Type::IntegerTyID: return cast<IntegerType>(this)->getBitWidth();
   case Type::VectorTyID:  return cast<VectorType>(this)->getBitWidth();
   default: return 0;
@@ -251,6 +260,11 @@ static std::string getTypeDescription(const Type *Ty,
       case Type::VoidTyID:   return (*ConcreteTypeDescriptions)[Ty] = "void";
       case Type::FloatTyID:  return (*ConcreteTypeDescriptions)[Ty] = "float";
       case Type::DoubleTyID: return (*ConcreteTypeDescriptions)[Ty] = "double";
+      case Type::X86_FP80TyID: 
+            return (*ConcreteTypeDescriptions)[Ty] = "x86_fp80";
+      case Type::FP128TyID: return (*ConcreteTypeDescriptions)[Ty] = "fp128";
+      case Type::PPC_FP128TyID: 
+          return (*ConcreteTypeDescriptions)[Ty] = "ppc_fp128";
       case Type::LabelTyID:  return (*ConcreteTypeDescriptions)[Ty] = "label";
       }
     }
@@ -393,10 +407,13 @@ const Type *StructType::getTypeAtIndex(const Value *V) const {
 //                          Primitive 'Type' data
 //===----------------------------------------------------------------------===//
 
-const Type *Type::VoidTy   = new Type(Type::VoidTyID);
-const Type *Type::FloatTy  = new Type(Type::FloatTyID);
-const Type *Type::DoubleTy = new Type(Type::DoubleTyID);
-const Type *Type::LabelTy  = new Type(Type::LabelTyID);
+const Type *Type::VoidTy       = new Type(Type::VoidTyID);
+const Type *Type::FloatTy      = new Type(Type::FloatTyID);
+const Type *Type::DoubleTy     = new Type(Type::DoubleTyID);
+const Type *Type::X86_FP80Ty   = new Type(Type::X86_FP80TyID);
+const Type *Type::FP128Ty      = new Type(Type::FP128TyID);
+const Type *Type::PPC_FP128Ty  = new Type(Type::PPC_FP128TyID);
+const Type *Type::LabelTy      = new Type(Type::LabelTyID);
 
 namespace {
   struct BuiltinIntegerType : public IntegerType {

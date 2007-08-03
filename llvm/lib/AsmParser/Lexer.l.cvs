@@ -244,6 +244,9 @@ zext{WSNL}      { // For auto-upgrade only, drop in LLVM 3.0
 void            { RET_TY(Type::VoidTy,  VOID);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }
 double          { RET_TY(Type::DoubleTy,DOUBLE);}
+x86_fp80        { RET_TY(Type::X86_FP80Ty, X86_FP80);}
+fp128            { RET_TY(Type::FP128Ty, FP128);}
+ppc_fp128         { RET_TY(Type::PPC_FP128Ty, PPC_FP128);}
 label           { RET_TY(Type::LabelTy, LABEL); }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
