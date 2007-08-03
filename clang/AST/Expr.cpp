@@ -226,8 +226,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     break;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
-  case OCUVectorComponentClass:
-    if (cast<OCUVectorComponent>(this)->containsDuplicateComponents())
+  case OCUVectorElementExprClass:
+    if (cast<OCUVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;
     return LV_Valid;
   default:
@@ -583,14 +583,15 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
 
-unsigned OCUVectorComponent::getNumComponents() const {
+unsigned OCUVectorElementExpr::getNumElements() const {
   return strlen(Accessor.getName());
 }
 
 
 /// getComponentType - Determine whether the components of this access are
 /// "point" "color" or "texture" elements.
-OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
+OCUVectorElementExpr::ElementType 
+OCUVectorElementExpr::getElementType() const {
   // derive the component type, no need to waste space.
   const char *compStr = Accessor.getName();
   
@@ -602,9 +603,9 @@ OCUVectorComponent::ComponentType OCUVectorComponent::getComponentType() const {
   return Texture;
 }
 
-/// containsDuplicateComponents - Return true if any element access is
+/// containsDuplicateElements - Return true if any element access is
 /// repeated.
-bool OCUVectorComponent::containsDuplicateComponents() const {
+bool OCUVectorElementExpr::containsDuplicateElements() const {
   const char *compStr = Accessor.getName();
   unsigned length = strlen(compStr);
   
@@ -618,9 +619,9 @@ bool OCUVectorComponent::containsDuplicateComponents() const {
 }
 
 /// getEncodedElementAccess - We encode fields with two bits per component.
-unsigned OCUVectorComponent::getEncodedElementAccess() const {
+unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
   const char *compStr = Accessor.getName();
-  unsigned length = getNumComponents();
+  unsigned length = getNumElements();
 
   unsigned Result = 0;
   

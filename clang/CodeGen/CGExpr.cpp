@@ -253,8 +253,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitUnaryOpLValue(cast<UnaryOperator>(E));
   case Expr::ArraySubscriptExprClass:
     return EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E));
-  case Expr::OCUVectorComponentClass:
-    return EmitOCUVectorComponentExpr(cast<OCUVectorComponent>(E));
+  case Expr::OCUVectorElementExprClass:
+    return EmitOCUVectorElementExpr(cast<OCUVectorElementExpr>(E));
   }
 }
 
@@ -285,24 +285,24 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
   // If this is a reference to a subset of the elements of a vector, either
   // shuffle the input or extract/insert them as appropriate.
-  if (LV.isOCUVectorComp())
-    return EmitLoadOfOCUComponentLValue(LV, ExprType);
+  if (LV.isOCUVectorElt())
+    return EmitLoadOfOCUElementLValue(LV, ExprType);
   
   assert(0 && "Bitfield ref not impl!");
 }
 
 // If this is a reference to a subset of the elements of a vector, either
 // shuffle the input or extract/insert them as appropriate.
-RValue CodeGenFunction::EmitLoadOfOCUComponentLValue(LValue LV,
+RValue CodeGenFunction::EmitLoadOfOCUElementLValue(LValue LV,
                                                      QualType ExprType) {
   llvm::Value *Vec = Builder.CreateLoad(LV.getOCUVectorAddr(), "tmp");
   
-  unsigned EncFields = LV.getOCUVectorComp();
+  unsigned EncFields = LV.getOCUVectorElts();
   
   // If the result of the expression is a non-vector type, we must be
   // extracting a single element.  Just codegen as an extractelement.
   if (!isa<VectorType>(ExprType)) {
-    unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
+    unsigned InIdx = OCUVectorElementExpr::getAccessedFieldNo(0, EncFields);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
   }
@@ -316,7 +316,7 @@ RValue CodeGenFunction::EmitLoadOfOCUComponentLValue(LValue LV,
   if (NumResultElts == NumSourceElts) {
     llvm::SmallVector<llvm::Constant*, 4> Mask;
     for (unsigned i = 0; i != NumResultElts; ++i) {
-      unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+      unsigned InIdx = OCUVectorElementExpr::getAccessedFieldNo(i, EncFields);
       Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
     }
     
@@ -332,7 +332,7 @@ RValue CodeGenFunction::EmitLoadOfOCUComponentLValue(LValue LV,
   
   // Extract/Insert each element of the result.
   for (unsigned i = 0; i != NumResultElts; ++i) {
-    unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+    unsigned InIdx = OCUVectorElementExpr::getAccessedFieldNo(i, EncFields);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
     
@@ -366,7 +366,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     }
   
     // If this is an update of elements of a vector, insert them as appropriate.
-    if (Dst.isOCUVectorComp())
+    if (Dst.isOCUVectorElt())
       return EmitStoreThroughOCUComponentLValue(Src, Dst, Ty);
   
     assert(0 && "FIXME: Don't support store to bitfield yet");
@@ -423,7 +423,7 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
   // value now.
   llvm::Value *Vec = Builder.CreateLoad(Dst.getOCUVectorAddr(), "tmp");
   // FIXME: Volatility.
-  unsigned EncFields = Dst.getOCUVectorComp();
+  unsigned EncFields = Dst.getOCUVectorElts();
   
   llvm::Value *SrcVal = Src.getVal();
   
@@ -435,13 +435,13 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
       llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       Elt = Builder.CreateExtractElement(SrcVal, Elt, "tmp");
       
-      unsigned Idx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+      unsigned Idx = OCUVectorElementExpr::getAccessedFieldNo(i, EncFields);
       llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Idx);
       Vec = Builder.CreateInsertElement(Vec, Elt, OutIdx, "tmp");
     }
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.
-    unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
+    unsigned InIdx = OCUVectorElementExpr::getAccessedFieldNo(0, EncFields);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
   }
@@ -570,13 +570,13 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 }
 
 LValue CodeGenFunction::
-EmitOCUVectorComponentExpr(const OCUVectorComponent *E) {
+EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
   // Emit the base vector as an l-value.
   LValue Base = EmitLValue(E->getBase());
   assert(Base.isSimple() && "Can only subscript lvalue vectors here!");
 
-  return LValue::MakeOCUVectorComp(Base.getAddress(), 
-                                   E->getEncodedElementAccess());
+  return LValue::MakeOCUVectorElt(Base.getAddress(), 
+                                  E->getEncodedElementAccess());
 }
 
 //===--------------------------------------------------------------------===//
@@ -601,7 +601,7 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitLoadOfLValue(E);
   case Expr::ArraySubscriptExprClass:
     return EmitArraySubscriptExprRV(cast<ArraySubscriptExpr>(E));
-  case Expr::OCUVectorComponentClass:
+  case Expr::OCUVectorElementExprClass:
     return EmitLoadOfLValue(E);
   case Expr::PreDefinedExprClass:
   case Expr::StringLiteralClass:

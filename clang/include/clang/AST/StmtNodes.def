@@ -62,10 +62,10 @@ STMT(45, BinaryOperator       , Expr)
 STMT(46, ConditionalOperator  , Expr)
 STMT(47, ImplicitCastExpr     , Expr)
 STMT(48, CompoundLiteralExpr  , Expr)
-STMT(49, OCUVectorComponent   , Expr)
+STMT(49, OCUVectorElementExpr , Expr)
 
 // GNU Extensions.
-STMT(50, AddrLabel            , Expr)
+STMT(50, AddrLabelExpr        , Expr)
 STMT(51, StmtExpr             , Expr)
 STMT(52, TypesCompatibleExpr  , Expr)
 

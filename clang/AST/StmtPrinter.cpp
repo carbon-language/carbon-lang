@@ -439,7 +439,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   assert(Field && "MemberExpr should alway reference a field!");
   OS << Field->getName();
 }
-void StmtPrinter::VisitOCUVectorComponent(OCUVectorComponent *Node) {
+void StmtPrinter::VisitOCUVectorElementExpr(OCUVectorElementExpr *Node) {
   PrintExpr(Node->getBase());
   OS << ".";
   OS << Node->getAccessor().getName();
@@ -471,7 +471,7 @@ void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
 
 // GNU extensions.
 
-void StmtPrinter::VisitAddrLabel(AddrLabel *Node) {
+void StmtPrinter::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   OS << "&&" << Node->getLabel()->getName();
 }
 

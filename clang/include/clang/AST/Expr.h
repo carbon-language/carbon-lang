@@ -463,39 +463,40 @@ public:
   static bool classof(const MemberExpr *) { return true; }
 };
 
-/// OCUVectorComponent - This represents access to specific components of a
+/// OCUVectorElementExpr - This represents access to specific elements of a
 /// vector, and may occur on the left hand side or right hand side.  For example
 /// the following is legal:  "V.xy = V.zw" if V is a 4 element ocu vector.
 ///
-class OCUVectorComponent : public Expr {
+class OCUVectorElementExpr : public Expr {
   Expr *Base;
   IdentifierInfo &Accessor;
   SourceLocation AccessorLoc;
 public:
-  enum ComponentType {
+  enum ElementType {
     Point,   // xywz
     Color,   // rgba
     Texture  // uv
   };
-  OCUVectorComponent(QualType ty, Expr *base, IdentifierInfo &accessor,
-                     SourceLocation loc) : Expr(OCUVectorComponentClass, ty), 
-                     Base(base), Accessor(accessor), AccessorLoc(loc) {}
+  OCUVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
+                       SourceLocation loc)
+    : Expr(OCUVectorElementExprClass, ty), 
+      Base(base), Accessor(accessor), AccessorLoc(loc) {}
                      
   const Expr *getBase() const { return Base; }
   Expr *getBase() { return Base; }
   
   IdentifierInfo &getAccessor() const { return Accessor; }
   
-  /// getNumComponents - Get the number of components being selected.
-  unsigned getNumComponents() const;
+  /// getNumElements - Get the number of components being selected.
+  unsigned getNumElements() const;
   
-  /// getComponentType - Determine whether the components of this access are
+  /// getElementType - Determine whether the components of this access are
   /// "point" "color" or "texture" elements.
-  ComponentType getComponentType() const;
+  ElementType getElementType() const;
 
-  /// containsDuplicateComponents - Return true if any element access is
+  /// containsDuplicateElements - Return true if any element access is
   /// repeated.
-  bool containsDuplicateComponents() const;
+  bool containsDuplicateElements() const;
   
   /// getEncodedElementAccess - Encode the elements accessed into a bit vector.
   /// The encoding currently uses 2-bit bitfields, but clients should use the
@@ -514,9 +515,9 @@ public:
   }
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == OCUVectorComponentClass; 
+    return T->getStmtClass() == OCUVectorElementExprClass; 
   }
-  static bool classof(const OCUVectorComponent *) { return true; }
+  static bool classof(const OCUVectorElementExpr *) { return true; }
 };
 
 /// CompoundLiteralExpr - [C99 6.5.2.5] 
@@ -699,13 +700,14 @@ public:
   static bool classof(const ConditionalOperator *) { return true; }
 };
 
-/// AddrLabel - The GNU address of label extension, representing &&label.
-class AddrLabel : public Expr {
+/// AddrLabelExpr - The GNU address of label extension, representing &&label.
+class AddrLabelExpr : public Expr {
   SourceLocation AmpAmpLoc, LabelLoc;
   LabelStmt *Label;
 public:
-  AddrLabel(SourceLocation AALoc, SourceLocation LLoc, LabelStmt *L, QualType t)
-    : Expr(AddrLabelClass, t), AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
+  AddrLabelExpr(SourceLocation AALoc, SourceLocation LLoc, LabelStmt *L,
+                QualType t)
+    : Expr(AddrLabelExprClass, t), AmpAmpLoc(AALoc), LabelLoc(LLoc), Label(L) {}
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(AmpAmpLoc, LabelLoc);
@@ -715,9 +717,9 @@ public:
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == AddrLabelClass; 
+    return T->getStmtClass() == AddrLabelExprClass; 
   }
-  static bool classof(const AddrLabel *) { return true; }
+  static bool classof(const AddrLabelExpr *) { return true; }
 };
 
 /// StmtExpr - This is the GNU Statement Expression extension: ({int X=4; X;}).

@@ -54,7 +54,7 @@ namespace clang {
   class BinaryOperator;
   class CompoundAssignOperator;
   class ArraySubscriptExpr;
-  class OCUVectorComponent;
+  class OCUVectorElementExpr;
   class ConditionalOperator;
   class PreDefinedExpr;
   
@@ -120,31 +120,31 @@ class LValue {
     Simple,       // This is a normal l-value, use getAddress().
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
-    OCUVectorComp // This is an ocu vector subset, use getOCUVectorComp
+    OCUVectorElt  // This is an ocu vector subset, use getOCUVectorComp
   } LVType;
   
   llvm::Value *V;
   
   union {
     llvm::Value *VectorIdx;   // Index into a vector subscript: V[i]
-    unsigned VectorComp;      // Encoded OCUVector element subset: V.xyx
+    unsigned VectorElts;      // Encoded OCUVector element subset: V.xyx
   };
 public:
   bool isSimple() const { return LVType == Simple; }
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitfield() const { return LVType == BitField; }
-  bool isOCUVectorComp() const { return LVType == OCUVectorComp; }
+  bool isOCUVectorElt() const { return LVType == OCUVectorElt; }
   
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
   // vector elt lvalue
   llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
-  // ocu vector components.
-  llvm::Value *getOCUVectorAddr() const { assert(isOCUVectorComp()); return V; }
-  unsigned getOCUVectorComp() const {
-    assert(isOCUVectorComp());
-    return VectorComp;
+  // ocu vector elements.
+  llvm::Value *getOCUVectorAddr() const { assert(isOCUVectorElt()); return V; }
+  unsigned getOCUVectorElts() const {
+    assert(isOCUVectorElt());
+    return VectorElts;
   }
   
   
@@ -163,11 +163,11 @@ public:
     return R;
   }
   
-  static LValue MakeOCUVectorComp(llvm::Value *Vec, unsigned Components) {
+  static LValue MakeOCUVectorElt(llvm::Value *Vec, unsigned Elements) {
     LValue R;
-    R.LVType = OCUVectorComp;
+    R.LVType = OCUVectorElt;
     R.V = Vec;
-    R.VectorComp = Components;
+    R.VectorElts = Elements;
     return R;
   }
 };
@@ -316,7 +316,7 @@ public:
   /// rvalue, returning the rvalue.
   RValue EmitLoadOfLValue(const Expr *E);
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
-  RValue EmitLoadOfOCUComponentLValue(LValue V, QualType LVType);
+  RValue EmitLoadOfOCUElementLValue(LValue V, QualType LVType);
 
   
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
@@ -330,7 +330,7 @@ public:
   LValue EmitPreDefinedLValue(const PreDefinedExpr *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
-  LValue EmitOCUVectorComponentExpr(const OCUVectorComponent *E);
+  LValue EmitOCUVectorElementExpr(const OCUVectorElementExpr *E);
     
   //===--------------------------------------------------------------------===//
   //                             Expression Emission

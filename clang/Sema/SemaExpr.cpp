@@ -438,7 +438,7 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     QualType ret = CheckOCUVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;
-    return new OCUVectorComponent(ret, BaseExpr, Member, MemberLoc);
+    return new OCUVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
   } else
     return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
                 SourceRange(MemberLoc));
@@ -1545,8 +1545,8 @@ Sema::ExprResult Sema::ParseAddrLabel(SourceLocation OpLoc,
     LabelDecl = new LabelStmt(LabLoc, LabelII, 0);
   
   // Create the AST node.  The address of a label always has type 'void*'.
-  return new AddrLabel(OpLoc, LabLoc, LabelDecl,
-                       Context.getPointerType(Context.VoidTy));
+  return new AddrLabelExpr(OpLoc, LabLoc, LabelDecl,
+                           Context.getPointerType(Context.VoidTy));
 }
 
 Sema::ExprResult Sema::ParseStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
