@@ -48,6 +48,8 @@ namespace clang {
   class IntegerLiteral;
   class FloatingLiteral;
   class CharacterLiteral;
+  class TypesCompatibleExpr;
+  
   class CastExpr;
   class CallExpr;
   class UnaryOperator;
@@ -351,6 +353,7 @@ public:
   RValue EmitIntegerLiteral(const IntegerLiteral *E);
   RValue EmitFloatingLiteral(const FloatingLiteral *E);
   RValue EmitCharacterLiteral(const CharacterLiteral *E);
+  RValue EmitTypesCompatibleExpr(const TypesCompatibleExpr *E);
    
   RValue EmitCastExpr(const Expr *Op, QualType DestTy);
   RValue EmitCallExpr(const CallExpr *E);

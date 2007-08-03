@@ -614,6 +614,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitFloatingLiteral(cast<FloatingLiteral>(E));
   case Expr::CharacterLiteralClass:
     return EmitCharacterLiteral(cast<CharacterLiteral>(E));
+  case Expr::TypesCompatibleExprClass:
+    return EmitTypesCompatibleExpr(cast<TypesCompatibleExpr>(E));
     
   // Operators.  
   case Expr::ParenExprClass:
@@ -650,6 +652,12 @@ RValue CodeGenFunction::EmitCharacterLiteral(const CharacterLiteral *E) {
   return RValue::get(llvm::ConstantInt::get(ConvertType(E->getType()),
                                             E->getValue()));
 }
+
+RValue CodeGenFunction::EmitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
+  return RValue::get(llvm::ConstantInt::get(ConvertType(E->getType()),
+                                            E->typesAreCompatible()));
+}
+
 
 RValue CodeGenFunction::EmitArraySubscriptExprRV(const ArraySubscriptExpr *E) {
   // Emit subscript expressions in rvalue context's.  For most cases, this just
