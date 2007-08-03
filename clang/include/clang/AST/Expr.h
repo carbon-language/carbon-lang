@@ -475,7 +475,7 @@ public:
   enum ElementType {
     Point,   // xywz
     Color,   // rgba
-    Texture  // uv
+    Texture  // stpq
   };
   OCUVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
                        SourceLocation loc)
