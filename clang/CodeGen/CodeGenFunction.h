@@ -316,7 +316,9 @@ public:
   /// rvalue, returning the rvalue.
   RValue EmitLoadOfLValue(const Expr *E);
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
+  RValue EmitLoadOfOCUComponentLValue(LValue V, QualType LVType);
 
+  
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.

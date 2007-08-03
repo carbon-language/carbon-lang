@@ -285,57 +285,64 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 
   // If this is a reference to a subset of the elements of a vector, either
   // shuffle the input or extract/insert them as appropriate.
-  if (LV.isOCUVectorComp()) {
-    llvm::Value *Vec = Builder.CreateLoad(LV.getOCUVectorAddr(), "tmp");
-
-    unsigned EncFields = LV.getOCUVectorComp();
-
-    // If the result of the expression is a non-vector type, we must be
-    // extracting a single element.  Just codegen as an extractelement.
-    if (!isa<VectorType>(ExprType)) {
-      unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
-      llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
-      return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
-    }
-    
-    // If the source and destination have the same number of elements, use a
-    // vector shuffle instead of insert/extracts.
-    unsigned NumResultElts = cast<VectorType>(ExprType)->getNumElements();
-    unsigned NumSourceElts =
-      cast<llvm::VectorType>(Vec->getType())->getNumElements();
-    
-    if (NumResultElts == NumSourceElts) {
-      llvm::SmallVector<llvm::Constant*, 4> Mask;
-      for (unsigned i = 0; i != NumResultElts; ++i) {
-        unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
-        Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
-      }
-      
-      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
-      Vec = Builder.CreateShuffleVector(Vec,
-                                        llvm::UndefValue::get(Vec->getType()),
-                                        MaskV, "tmp");
-      return RValue::get(Vec);
-    }
-    
-    // Start out with an undef of the result type.
-    llvm::Value *Result = llvm::UndefValue::get(ConvertType(ExprType));
-    
-    // Extract/Insert each element of the result.
-    for (unsigned i = 0; i != NumResultElts; ++i) {
-      unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
-      llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
-      Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
-
-      llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-      Result = Builder.CreateInsertElement(Result, Elt, OutIdx, "tmp");
-    }
-    
-    return RValue::get(Result);
-  }
+  if (LV.isOCUVectorComp())
+    return EmitLoadOfOCUComponentLValue(LV, ExprType);
   
   assert(0 && "Bitfield ref not impl!");
 }
+
+// If this is a reference to a subset of the elements of a vector, either
+// shuffle the input or extract/insert them as appropriate.
+RValue CodeGenFunction::EmitLoadOfOCUComponentLValue(LValue LV,
+                                                     QualType ExprType) {
+  llvm::Value *Vec = Builder.CreateLoad(LV.getOCUVectorAddr(), "tmp");
+  
+  unsigned EncFields = LV.getOCUVectorComp();
+  
+  // If the result of the expression is a non-vector type, we must be
+  // extracting a single element.  Just codegen as an extractelement.
+  if (!isa<VectorType>(ExprType)) {
+    unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(0, EncFields);
+    llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+    return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
+  }
+  
+  // If the source and destination have the same number of elements, use a
+  // vector shuffle instead of insert/extracts.
+  unsigned NumResultElts = cast<VectorType>(ExprType)->getNumElements();
+  unsigned NumSourceElts =
+    cast<llvm::VectorType>(Vec->getType())->getNumElements();
+  
+  if (NumResultElts == NumSourceElts) {
+    llvm::SmallVector<llvm::Constant*, 4> Mask;
+    for (unsigned i = 0; i != NumResultElts; ++i) {
+      unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+      Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
+    }
+    
+    llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+    Vec = Builder.CreateShuffleVector(Vec,
+                                      llvm::UndefValue::get(Vec->getType()),
+                                      MaskV, "tmp");
+    return RValue::get(Vec);
+  }
+  
+  // Start out with an undef of the result type.
+  llvm::Value *Result = llvm::UndefValue::get(ConvertType(ExprType));
+  
+  // Extract/Insert each element of the result.
+  for (unsigned i = 0; i != NumResultElts; ++i) {
+    unsigned InIdx = OCUVectorComponent::getAccessedFieldNo(i, EncFields);
+    llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+    Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
+    
+    llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+    Result = Builder.CreateInsertElement(Result, Elt, OutIdx, "tmp");
+  }
+  
+  return RValue::get(Result);
+}
+
 
 RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
   return EmitLoadOfLValue(EmitLValue(E), E->getType());
