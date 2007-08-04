@@ -801,6 +801,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 RenamePassData::ValVector &IncomingVals,
                                 std::vector<RenamePassData> &Worklist) {
+NextIteration:
   // If we are inserting any phi nodes into this BB, they will already be in the
   // block.
   if (PHINode *APN = dyn_cast<PHINode>(BB->begin())) {
@@ -865,36 +866,49 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
     Instruction *I = II++; // get the instruction, increment iterator
 
     if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      if (AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand())) {
-        std::map<AllocaInst*, unsigned>::iterator AI = AllocaLookup.find(Src);
-        if (AI != AllocaLookup.end()) {
-          Value *V = IncomingVals[AI->second];
+      AllocaInst *Src = dyn_cast<AllocaInst>(LI->getPointerOperand());
+      if (!Src) continue;
+  
+      std::map<AllocaInst*, unsigned>::iterator AI = AllocaLookup.find(Src);
+      if (AI == AllocaLookup.end()) continue;
 
-          // walk the use list of this load and replace all uses with r
-          LI->replaceAllUsesWith(V);
-          if (AST && isa<PointerType>(LI->getType()))
-            AST->deleteValue(LI);
-          BB->getInstList().erase(LI);
-        }
-      }
+      Value *V = IncomingVals[AI->second];
+
+      // Anything using the load now uses the current value.
+      LI->replaceAllUsesWith(V);
+      if (AST && isa<PointerType>(LI->getType()))
+        AST->deleteValue(LI);
+      BB->getInstList().erase(LI);
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
       // Delete this instruction and mark the name as the current holder of the
       // value
-      if (AllocaInst *Dest = dyn_cast<AllocaInst>(SI->getPointerOperand())) {
-        std::map<AllocaInst *, unsigned>::iterator ai = AllocaLookup.find(Dest);
-        if (ai != AllocaLookup.end()) {
-          // what value were we writing?
-          IncomingVals[ai->second] = SI->getOperand(0);
-          BB->getInstList().erase(SI);
-        }
-      }
+      AllocaInst *Dest = dyn_cast<AllocaInst>(SI->getPointerOperand());
+      if (!Dest) continue;
+      
+      std::map<AllocaInst *, unsigned>::iterator ai = AllocaLookup.find(Dest);
+      if (ai == AllocaLookup.end())
+        continue;
+      
+      // what value were we writing?
+      IncomingVals[ai->second] = SI->getOperand(0);
+      BB->getInstList().erase(SI);
     }
   }
 
-  // Recurse to our successors.
+  // 'Recurse' to our successors.
   TerminatorInst *TI = BB->getTerminator();
-  for (unsigned i = 0; i != TI->getNumSuccessors(); i++)
+  unsigned NumSuccs = TI->getNumSuccessors();
+  if (NumSuccs == 0) return;
+  
+  // Add all-but-one successor to the worklist.
+  for (unsigned i = 0; i != NumSuccs-1; i++)
     Worklist.push_back(RenamePassData(TI->getSuccessor(i), BB, IncomingVals));
+  
+  // Handle the last successor without using the worklist.  This allows us to
+  // handle unconditional branches directly, for example.
+  Pred = BB;
+  BB = TI->getSuccessor(NumSuccs-1);
+  goto NextIteration;
 }
 
 /// PromoteMemToReg - Promote the specified list of alloca instructions into
