@@ -557,7 +557,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
     // do so now.  We can't handle the case where the store doesn't dominate a
     // block because there may be a path between the store and the use, but we
     // may need to insert phi nodes to handle dominance properly.
-    if (StoringGlobalVal || !dominates(OnlyStore->getParent(), UseBlock))
+    if (!StoringGlobalVal && !dominates(OnlyStore->getParent(), UseBlock))
       continue;
     
     // If the use and store are in the same block, do a quick scan to
@@ -569,7 +569,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
           break;
       }
       if (&*I != OnlyStore)
-        break;  // Do not handle this alloca.
+        continue;  // Do not promote the uses of this in this block.
     }
     
     // Otherwise, if this is a different block or if all uses happen
