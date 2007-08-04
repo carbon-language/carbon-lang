@@ -175,6 +175,8 @@ namespace {
       return NP-1;
     }
 
+    void DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
+                                 AllocaInfo &Info);
     
     void RewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info);
 
@@ -314,9 +316,6 @@ void PromoteMem2Reg::run() {
       continue;
     }
     
-    if (AST)
-      PointerAllocaValues[AllocaNum] = Info.AllocaPointerVal;
-
     // If we haven't computed a numbering for the BB's in the function, do so
     // now.
     if (BBNumbers.empty()) {
@@ -325,69 +324,19 @@ void PromoteMem2Reg::run() {
         BBNumbers[I] = ID++;
     }
 
-    // Compute the locations where PhiNodes need to be inserted.  Look at the
-    // dominance frontier of EACH basic-block we have a write in.
-    //
-    unsigned CurrentVersion = 0;
-    SmallPtrSet<PHINode*, 16> InsertedPHINodes;
-    std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
-    while (!Info.DefiningBlocks.empty()) {
-      BasicBlock *BB = Info.DefiningBlocks.back();
-      Info.DefiningBlocks.pop_back();
-
-      // Look up the DF for this write, add it to PhiNodes
-      DominanceFrontier::const_iterator it = DF.find(BB);
-      if (it != DF.end()) {
-        const DominanceFrontier::DomSetType &S = it->second;
-
-        // In theory we don't need the indirection through the DFBlocks vector.
-        // In practice, the order of calling QueuePhiNode would depend on the
-        // (unspecified) ordering of basic blocks in the dominance frontier,
-        // which would give PHI nodes non-determinstic subscripts.  Fix this by
-        // processing blocks in order of the occurance in the function.
-        for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
-             PE = S.end(); P != PE; ++P)
-          DFBlocks.push_back(std::make_pair(BBNumbers[*P], *P));
-
-        // Sort by which the block ordering in the function.
-        std::sort(DFBlocks.begin(), DFBlocks.end());
-
-        for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
-          BasicBlock *BB = DFBlocks[i].second;
-          if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
-            Info.DefiningBlocks.push_back(BB);
-        }
-        DFBlocks.clear();
-      }
-    }
-
-    // Now that we have inserted PHI nodes along the Iterated Dominance Frontier
-    // of the writes to the variable, scan through the reads of the variable,
-    // marking PHI nodes which are actually necessary as alive (by removing them
-    // from the InsertedPHINodes set).  This is not perfect: there may PHI
-    // marked alive because of loads which are dominated by stores, but there
-    // will be no unmarked PHI nodes which are actually used.
-    //
-    for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i)
-      MarkDominatingPHILive(Info.UsingBlocks[i], AllocaNum, InsertedPHINodes);
-    Info.UsingBlocks.clear();
-
-    // If there are any PHI nodes which are now known to be dead, remove them!
-    for (SmallPtrSet<PHINode*, 16>::iterator I = InsertedPHINodes.begin(),
-           E = InsertedPHINodes.end(); I != E; ++I) {
-      PHINode *PN = *I;
-      bool Erased=NewPhiNodes.erase(std::make_pair(PN->getParent(), AllocaNum));
-      Erased=Erased;
-      assert(Erased && "PHI already removed?");
-      
-      if (AST && isa<PointerType>(PN->getType()))
-        AST->deleteValue(PN);
-      PN->eraseFromParent();
-      PhiToAllocaMap.erase(PN);
-    }
-
-    // Keep the reverse mapping of the 'Allocas' array.
+    // If we have an AST to keep updated, remember some pointer value that is
+    // stored into the alloca.
+    if (AST)
+      PointerAllocaValues[AllocaNum] = Info.AllocaPointerVal;
+    
+    // Keep the reverse mapping of the 'Allocas' array for the rename pass.
     AllocaLookup[Allocas[AllocaNum]] = AllocaNum;
+
+    // At this point, we're committed to promoting the alloca using IDF's, and
+    // the standard SSA construction algorithm.  Determine which blocks need phi
+    // nodes and see if we can optimize out some work by avoiding insertion of
+    // dead phi nodes.
+    DetermineInsertionPoint(AI, AllocaNum, Info);
   }
 
   // Process all allocas which are only used in a single basic block.
@@ -541,6 +490,74 @@ void PromoteMem2Reg::run() {
   NewPhiNodes.clear();
 }
 
+
+/// DetermineInsertionPoint - At this point, we're committed to promoting the
+/// alloca using IDF's, and the standard SSA construction algorithm.  Determine
+/// which blocks need phi nodes and see if we can optimize out some work by
+/// avoiding insertion of dead phi nodes.
+void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
+                                             AllocaInfo &Info) {
+  // Compute the locations where PhiNodes need to be inserted.  Look at the
+  // dominance frontier of EACH basic-block we have a write in.
+  unsigned CurrentVersion = 0;
+  SmallPtrSet<PHINode*, 16> InsertedPHINodes;
+  std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
+  while (!Info.DefiningBlocks.empty()) {
+    BasicBlock *BB = Info.DefiningBlocks.back();
+    Info.DefiningBlocks.pop_back();
+    
+    // Look up the DF for this write, add it to PhiNodes
+    DominanceFrontier::const_iterator it = DF.find(BB);
+    if (it != DF.end()) {
+      const DominanceFrontier::DomSetType &S = it->second;
+      
+      // In theory we don't need the indirection through the DFBlocks vector.
+      // In practice, the order of calling QueuePhiNode would depend on the
+      // (unspecified) ordering of basic blocks in the dominance frontier,
+      // which would give PHI nodes non-determinstic subscripts.  Fix this by
+      // processing blocks in order of the occurance in the function.
+      for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
+           PE = S.end(); P != PE; ++P)
+        DFBlocks.push_back(std::make_pair(BBNumbers[*P], *P));
+      
+      // Sort by which the block ordering in the function.
+      std::sort(DFBlocks.begin(), DFBlocks.end());
+      
+      for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
+        BasicBlock *BB = DFBlocks[i].second;
+        if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
+          Info.DefiningBlocks.push_back(BB);
+      }
+      DFBlocks.clear();
+    }
+  }
+  
+  // Now that we have inserted PHI nodes along the Iterated Dominance Frontier
+  // of the writes to the variable, scan through the reads of the variable,
+  // marking PHI nodes which are actually necessary as alive (by removing them
+  // from the InsertedPHINodes set).  This is not perfect: there may PHI
+  // marked alive because of loads which are dominated by stores, but there
+  // will be no unmarked PHI nodes which are actually used.
+  //
+  for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i)
+    MarkDominatingPHILive(Info.UsingBlocks[i], AllocaNum, InsertedPHINodes);
+  Info.UsingBlocks.clear();
+  
+  // If there are any PHI nodes which are now known to be dead, remove them!
+  for (SmallPtrSet<PHINode*, 16>::iterator I = InsertedPHINodes.begin(),
+       E = InsertedPHINodes.end(); I != E; ++I) {
+    PHINode *PN = *I;
+    bool Erased=NewPhiNodes.erase(std::make_pair(PN->getParent(), AllocaNum));
+    Erased=Erased;
+    assert(Erased && "PHI already removed?");
+    
+    if (AST && isa<PointerType>(PN->getType()))
+      AST->deleteValue(PN);
+    PN->eraseFromParent();
+    PhiToAllocaMap.erase(PN);
+  }
+}
+  
 
 /// RewriteSingleStoreAlloca - If there is only a single store to this value,
 /// replace any loads of it that are directly dominated by the definition with
