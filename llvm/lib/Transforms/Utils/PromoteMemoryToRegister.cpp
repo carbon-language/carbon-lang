@@ -121,9 +121,6 @@ namespace {
     /// non-determinstic behavior.
     DenseMap<BasicBlock*, unsigned> BBNumbers;
 
-    /// RenamePassWorkList - Worklist used by RenamePass()
-    std::vector<RenamePassData> RenamePassWorkList;
-
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
                    SmallVector<AllocaInst*, 16> &Retry, DominatorTree &dt,
@@ -154,7 +151,8 @@ namespace {
                                    const std::vector<AllocaInst*> &AIs);
 
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                    std::vector<Value*> &IncVals);
+                    std::vector<Value*> &IncVals,
+                    std::vector<RenamePassData> &Worklist);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
                       SmallPtrSet<PHINode*, 16> &InsertedPHINodes);
   };
@@ -404,13 +402,14 @@ void PromoteMem2Reg::run() {
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-  RenamePassWorkList.clear();
+
+  std::vector<RenamePassData> RenamePassWorkList;
   RenamePassWorkList.push_back(RenamePassData(F.begin(), 0, Values));
   while(!RenamePassWorkList.empty()) {
     RenamePassData RPD = RenamePassWorkList.back(); 
     RenamePassWorkList.pop_back();
     // RenamePass may add new worklist entries.
-    RenamePass(RPD.BB, RPD.Pred, RPD.Values);
+    RenamePass(RPD.BB, RPD.Pred, RPD.Values, RenamePassWorkList);
   }
   
   // The renamer uses the Visited set to avoid infinite loops.  Clear it now.
@@ -699,7 +698,8 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
 // value each Alloca contains on exit from the predecessor block Pred.
 //
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                                std::vector<Value*> &IncomingVals) {
+                                std::vector<Value*> &IncomingVals,
+                                std::vector<RenamePassData> &Worklist) {
   // If we are inserting any phi nodes into this BB, they will already be in the
   // block.
   if (PHINode *APN = dyn_cast<PHINode>(BB->begin())) {
@@ -793,7 +793,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
   // Recurse to our successors.
   TerminatorInst *TI = BB->getTerminator();
   for (unsigned i = 0; i != TI->getNumSuccessors(); i++)
-    RenamePassWorkList.push_back(RenamePassData(TI->getSuccessor(i), BB, IncomingVals));
+    Worklist.push_back(RenamePassData(TI->getSuccessor(i), BB, IncomingVals));
 }
 
 /// PromoteMemToReg - Promote the specified list of alloca instructions into
