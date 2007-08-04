@@ -496,14 +496,14 @@ void PromoteMem2Reg::run() {
     if (&BB->front() != SomePHI)
       continue;
 
-    // Count the number of preds for BB.
-    SmallVector<BasicBlock*, 16> Preds(pred_begin(BB), pred_end(BB));
-
     // Only do work here if there the PHI nodes are missing incoming values.  We
     // know that all PHI nodes that were inserted in a block will have the same
     // number of incoming values, so we can just check any of them.
-    if (SomePHI->getNumIncomingValues() == Preds.size())
+    if (SomePHI->getNumIncomingValues() == getNumPreds(BB))
       continue;
+
+    // Get the preds for BB.
+    SmallVector<BasicBlock*, 16> Preds(pred_begin(BB), pred_end(BB));
     
     // Ok, now we know that all of the PHI nodes are missing entries for some
     // basic blocks.  Start by sorting the incoming predecessors for efficient
