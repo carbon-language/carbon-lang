@@ -686,10 +686,10 @@ bool PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   }
 
   // After traversing the basic block, there should be no more uses of the
-  // alloca, remove it now.
+  // alloca: remove it now.
   assert(AI->use_empty() && "Uses of alloca from more than one BB??");
   if (AST) AST->deleteValue(AI);
-  AI->getParent()->getInstList().erase(AI);
+  AI->eraseFromParent();
   
   ++NumLocalPromoted;
   return false;
@@ -739,6 +739,17 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
       }
     }
   }
+  
+  // At the end of the block scan, all allocas in CurValues are dead.
+  for (DenseMap<AllocaInst*, Value*>::iterator I = CurValues.begin(),
+       E = CurValues.end(); I != E; ++I) {
+    AllocaInst *AI = I->first;
+    assert(AI->use_empty() && "Uses of alloca from more than one BB??");
+    if (AST) AST->deleteValue(AI);
+    AI->eraseFromParent();
+  }
+
+  NumLocalPromoted += CurValues.size();
 }
 
 
