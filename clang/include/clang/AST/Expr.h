@@ -791,10 +791,14 @@ public:
     : Expr(ChooseExprClass, t),  
       Cond(cond), LHS(lhs), RHS(rhs), BuiltinLoc(BLoc), RParenLoc(RP) {}
     
-  Expr *getCond() const { return Cond; }
-  Expr *getLHS() const { return LHS; }
-  Expr *getRHS() const { return RHS; }
-    
+  Expr *getCond() { return Cond; }
+  Expr *getLHS() { return LHS; }
+  Expr *getRHS() { return RHS; }
+
+  const Expr *getCond() const { return Cond; }
+  const Expr *getLHS() const { return LHS; }
+  const Expr *getRHS() const { return RHS; }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
