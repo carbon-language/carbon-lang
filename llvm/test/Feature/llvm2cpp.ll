@@ -403,30 +403,6 @@ declare i1 @llvm.isunordered.f64(double, double)
 
 declare void @llvm.prefetch(i8*, i32, i32)
 
-declare i32 @upgrd.rm.llvm.ctpop.i8(i8)
-
-declare i32 @upgrd.rm.llvm.ctpop.i16(i16)
-
-declare i32 @upgrd.rm.llvm.ctpop.i32(i32)
-
-declare i32 @upgrd.rm.llvm.ctpop.i64(i64)
-
-declare i32 @upgrd.rm.llvm.cttz.i8(i8)
-
-declare i32 @upgrd.rm.llvm.cttz.i16(i16)
-
-declare i32 @upgrd.rm.llvm.cttz.i32(i32)
-
-declare i32 @upgrd.rm.llvm.cttz.i64(i64)
-
-declare i32 @upgrd.rm.llvm.ctlz.i8(i8)
-
-declare i32 @upgrd.rm.llvm.ctlz.i16(i16)
-
-declare i32 @upgrd.rm.llvm.ctlz.i32(i32)
-
-declare i32 @upgrd.rm.llvm.ctlz.i64(i64)
-
 declare float @llvm.sqrt.f32(float)
 
 declare double @llvm.sqrt.f64(double)
@@ -437,56 +413,44 @@ define void @libm() {
 	call void @llvm.prefetch( i8* null, i32 1, i32 3 )
 	call float @llvm.sqrt.f32( float 5.000000e+00 )		; <float>:3 [#uses=0]
 	call double @llvm.sqrt.f64( double 6.000000e+00 )		; <double>:4 [#uses=0]
-	call i32 @llvm.ctpop.i8( i8 10 )		; <i32>:5 [#uses=1]
-	bitcast i32 %5 to i32		; <i32>:6 [#uses=0]
-	call i32 @llvm.ctpop.i16( i16 11 )		; <i32>:7 [#uses=1]
-	bitcast i32 %7 to i32		; <i32>:8 [#uses=0]
+	call i8 @llvm.ctpop.i8( i8 10 )		; <i32>:5 [#uses=1]
+	call i16 @llvm.ctpop.i16( i16 11 )		; <i32>:7 [#uses=1]
 	call i32 @llvm.ctpop.i32( i32 12 )		; <i32>:9 [#uses=1]
-	bitcast i32 %9 to i32		; <i32>:10 [#uses=0]
-	call i32 @llvm.ctpop.i64( i64 13 )		; <i32>:11 [#uses=1]
-	bitcast i32 %11 to i32		; <i32>:12 [#uses=0]
-	call i32 @llvm.ctlz.i8( i8 14 )		; <i32>:13 [#uses=1]
-	bitcast i32 %13 to i32		; <i32>:14 [#uses=0]
-	call i32 @llvm.ctlz.i16( i16 15 )		; <i32>:15 [#uses=1]
-	bitcast i32 %15 to i32		; <i32>:16 [#uses=0]
+	call i64 @llvm.ctpop.i64( i64 13 )		; <i32>:11 [#uses=1]
+	call i8 @llvm.ctlz.i8( i8 14 )		; <i32>:13 [#uses=1]
+	call i16 @llvm.ctlz.i16( i16 15 )		; <i32>:15 [#uses=1]
 	call i32 @llvm.ctlz.i32( i32 16 )		; <i32>:17 [#uses=1]
-	bitcast i32 %17 to i32		; <i32>:18 [#uses=0]
-	call i32 @llvm.ctlz.i64( i64 17 )		; <i32>:19 [#uses=1]
-	bitcast i32 %19 to i32		; <i32>:20 [#uses=0]
-	call i32 @llvm.cttz.i8( i8 18 )		; <i32>:21 [#uses=1]
-	bitcast i32 %21 to i32		; <i32>:22 [#uses=0]
-	call i32 @llvm.cttz.i16( i16 19 )		; <i32>:23 [#uses=1]
-	bitcast i32 %23 to i32		; <i32>:24 [#uses=0]
+	call i64 @llvm.ctlz.i64( i64 17 )		; <i32>:19 [#uses=1]
+	call i8 @llvm.cttz.i8( i8 18 )		; <i32>:21 [#uses=1]
+	call i16 @llvm.cttz.i16( i16 19 )		; <i32>:23 [#uses=1]
 	call i32 @llvm.cttz.i32( i32 20 )		; <i32>:25 [#uses=1]
-	bitcast i32 %25 to i32		; <i32>:26 [#uses=0]
-	call i32 @llvm.cttz.i64( i64 21 )		; <i32>:27 [#uses=1]
-	bitcast i32 %27 to i32		; <i32>:28 [#uses=0]
+	call i64 @llvm.cttz.i64( i64 21 )		; <i32>:27 [#uses=1]
 	ret void
 }
 
-declare i32 @llvm.ctpop.i8(i8)
+declare i8 @llvm.ctpop.i8(i8)
 
-declare i32 @llvm.ctpop.i16(i16)
+declare i16 @llvm.ctpop.i16(i16)
 
 declare i32 @llvm.ctpop.i32(i32)
 
-declare i32 @llvm.ctpop.i64(i64)
+declare i64 @llvm.ctpop.i64(i64)
 
-declare i32 @llvm.ctlz.i8(i8)
+declare i8 @llvm.ctlz.i8(i8)
 
-declare i32 @llvm.ctlz.i16(i16)
+declare i16 @llvm.ctlz.i16(i16)
 
 declare i32 @llvm.ctlz.i32(i32)
 
-declare i32 @llvm.ctlz.i64(i64)
+declare i64 @llvm.ctlz.i64(i64)
 
-declare i32 @llvm.cttz.i8(i8)
+declare i8 @llvm.cttz.i8(i8)
 
-declare i32 @llvm.cttz.i16(i16)
+declare i16 @llvm.cttz.i16(i16)
 
 declare i32 @llvm.cttz.i32(i32)
 
-declare i32 @llvm.cttz.i64(i64)
+declare i64 @llvm.cttz.i64(i64)
 
 ; ModuleID = 'packed.ll'
 @foo1 = external global <4 x float>		; <<4 x float>*> [#uses=2]

@@ -219,9 +219,9 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
     return false;
   
   // Okay, we can do this xform, do so now.
-  const Type *Tys[] = { Ty, Ty };
+  const Type *Tys[] = { Ty };
   Module *M = CI->getParent()->getParent()->getParent();
-  Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 2);
+  Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
   
   Value *Op = CI->getOperand(1);
   Op = new CallInst(Int, Op, CI->getName(), CI);

@@ -18,6 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
+#include "llvm/AutoUpgrade.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
@@ -130,6 +131,11 @@ static struct PerModuleInfo {
       GenerateError(UndefinedReferences);
       return;
     }
+
+    // Look for intrinsic functions and CallInst that need to be upgraded
+    for (Module::iterator FI = CurrentModule->begin(),
+         FE = CurrentModule->end(); FI != FE; )
+      UpgradeCallsToIntrinsic(FI++); // must be post-increment, as we remove
 
     Values.clear();         // Clear out function local definitions
     Types.clear();

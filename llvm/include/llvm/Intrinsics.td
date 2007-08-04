@@ -52,59 +52,48 @@ def IntrWriteMem : IntrinsicProperty;
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//
 
-class LLVMType<ValueType vt, string typeval> {
+class LLVMType<ValueType vt> {
   ValueType VT = vt;
-  string TypeVal = typeval;
 }
-
-class LLVMIntegerType<ValueType VT, int width>
-  : LLVMType<VT, "Type::IntegerTyID"> {
-  int Width = width;
-}
-
-class LLVMVectorType<ValueType VT, int numelts, LLVMType elty>
-  : LLVMType<VT, "Type::VectorTyID">{
-  int NumElts = numelts;
-  LLVMType ElTy = elty;
-} 
 
 class LLVMPointerType<LLVMType elty>
-  : LLVMType<iPTR, "Type::PointerTyID">{
+  : LLVMType<iPTR>{
   LLVMType ElTy = elty;
 } 
 
-class LLVMEmptyStructType
-  : LLVMType<OtherVT, "Type::StructTyID">{
+class LLVMMatchType<int num>
+  : LLVMType<OtherVT>{
+  int Number = num;
 } 
 
-def llvm_void_ty       : LLVMType<isVoid, "Type::VoidTyID">;
-def llvm_int_ty        : LLVMIntegerType<iAny, 0>;
-def llvm_i1_ty         : LLVMIntegerType<i1 , 1>;
-def llvm_i8_ty         : LLVMIntegerType<i8 , 8>;
-def llvm_i16_ty        : LLVMIntegerType<i16, 16>;
-def llvm_i32_ty        : LLVMIntegerType<i32, 32>;
-def llvm_i64_ty        : LLVMIntegerType<i64, 64>;
-def llvm_float_ty      : LLVMType<f32, "Type::FloatTyID">;
-def llvm_double_ty     : LLVMType<f64, "Type::DoubleTyID">;
+def llvm_void_ty       : LLVMType<isVoid>;
+def llvm_anyint_ty     : LLVMType<iAny>;
+def llvm_i1_ty         : LLVMType<i1>;
+def llvm_i8_ty         : LLVMType<i8>;
+def llvm_i16_ty        : LLVMType<i16>;
+def llvm_i32_ty        : LLVMType<i32>;
+def llvm_i64_ty        : LLVMType<i64>;
+def llvm_float_ty      : LLVMType<f32>;
+def llvm_double_ty     : LLVMType<f64>;
 def llvm_ptr_ty        : LLVMPointerType<llvm_i8_ty>;             // i8*
 def llvm_ptrptr_ty     : LLVMPointerType<llvm_ptr_ty>;            // i8**
-def llvm_empty_ty      : LLVMEmptyStructType;                     // { }
+def llvm_empty_ty      : LLVMType<OtherVT>;                       // { }
 def llvm_descriptor_ty : LLVMPointerType<llvm_empty_ty>;          // { }*
 
-def llvm_v16i8_ty      : LLVMVectorType<v16i8,16, llvm_i8_ty>;    // 16 x i8
-def llvm_v8i16_ty      : LLVMVectorType<v8i16, 8, llvm_i16_ty>;   //  8 x i16
-def llvm_v2i64_ty      : LLVMVectorType<v2i64, 2, llvm_i64_ty>;   //  2 x i64
-def llvm_v2i32_ty      : LLVMVectorType<v2i32, 2, llvm_i32_ty>;   //  2 x i32
-def llvm_v1i64_ty      : LLVMVectorType<v1i64, 1, llvm_i64_ty>;   //  1 x i64
-def llvm_v4i32_ty      : LLVMVectorType<v4i32, 4, llvm_i32_ty>;   //  4 x i32
-def llvm_v4f32_ty      : LLVMVectorType<v4f32, 4, llvm_float_ty>; //  4 x float
-def llvm_v2f64_ty      : LLVMVectorType<v2f64, 2, llvm_double_ty>;//  2 x double
+def llvm_v16i8_ty      : LLVMType<v16i8>;    // 16 x i8
+def llvm_v8i16_ty      : LLVMType<v8i16>;    //  8 x i16
+def llvm_v2i64_ty      : LLVMType<v2i64>;    //  2 x i64
+def llvm_v2i32_ty      : LLVMType<v2i32>;    //  2 x i32
+def llvm_v1i64_ty      : LLVMType<v1i64>;    //  1 x i64
+def llvm_v4i32_ty      : LLVMType<v4i32>;    //  4 x i32
+def llvm_v4f32_ty      : LLVMType<v4f32>;    //  4 x float
+def llvm_v2f64_ty      : LLVMType<v2f64>;    //  2 x double
 
 // MMX Vector Types
-def llvm_v8i8_ty       : LLVMVectorType<v8i8,  8, llvm_i8_ty>;    //  8 x i8
-def llvm_v4i16_ty      : LLVMVectorType<v4i16, 4, llvm_i16_ty>;   //  4 x i16
+def llvm_v8i8_ty       : LLVMType<v8i8>;     //  8 x i8
+def llvm_v4i16_ty      : LLVMType<v4i16>;    //  4 x i16
 
-def llvm_vararg_ty     : LLVMType<isVoid, "...">; // vararg
+def llvm_vararg_ty     : LLVMType<isVoid>;   // this means vararg here
 
 //===----------------------------------------------------------------------===//
 // Intrinsic Definitions.
@@ -185,10 +174,10 @@ let Properties = [IntrWriteArgMem] in {
 }
 
 let Properties = [IntrNoMem] in {
-  def int_sqrt_f32 : Intrinsic<[llvm_float_ty , llvm_float_ty]>;
+  def int_sqrt_f32 : Intrinsic<[llvm_float_ty, llvm_float_ty]>;
   def int_sqrt_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty]>;
 
-  def int_powi_f32 : Intrinsic<[llvm_float_ty , llvm_float_ty, llvm_i32_ty]>;
+  def int_powi_f32 : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_i32_ty]>;
   def int_powi_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty, llvm_i32_ty]>;
 }
 
@@ -203,14 +192,14 @@ def int_siglongjmp : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_i32_ty]>;
 
 // None of these intrinsics accesses memory at all.
 let Properties = [IntrNoMem] in {
-  def int_bswap: Intrinsic<[llvm_int_ty, llvm_int_ty]>;
-  def int_ctpop: Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
-  def int_ctlz : Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
-  def int_cttz : Intrinsic<[llvm_i32_ty, llvm_int_ty]>;
+  def int_bswap: Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>]>;
+  def int_ctpop: Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>]>;
+  def int_ctlz : Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>]>;
+  def int_cttz : Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>]>;
   def int_part_select : 
-     Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_i32_ty, llvm_i32_ty]>;
+     Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>, llvm_i32_ty, llvm_i32_ty]>;
   def int_part_set :
-     Intrinsic<[llvm_int_ty, llvm_int_ty, llvm_int_ty, llvm_i32_ty, 
+     Intrinsic<[llvm_anyint_ty, LLVMMatchType<0>, llvm_anyint_ty, llvm_i32_ty, 
                 llvm_i32_ty]>;
 }
 

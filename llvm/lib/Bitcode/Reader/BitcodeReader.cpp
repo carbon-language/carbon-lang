@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ParameterAttributes.h"
+#include "llvm/AutoUpgrade.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -857,6 +858,13 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       if (!FunctionsWithBodies.empty())
         return Error("Too few function bodies found");
 
+      // Look for intrinsic functions which need to be upgraded at some point
+      for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
+           FI != FE; ++FI) {
+        if (Function* NewFn = UpgradeIntrinsicFunction(FI))
+          UpgradedIntrinsics.push_back(std::make_pair(FI, NewFn));
+      }
+
       // Force deallocation of memory for these vectors to favor the client that
       // want lazy deserialization.
       std::vector<std::pair<GlobalVariable*, unsigned> >().swap(GlobalInits);
@@ -1588,6 +1596,18 @@ bool BitcodeReader::materializeFunction(Function *F, std::string *ErrInfo) {
     if (ErrInfo) *ErrInfo = ErrorString;
     return true;
   }
+
+  // Upgrade any old intrinsic calls in the function.
+  for (UpgradedIntrinsicMap::iterator I = UpgradedIntrinsics.begin(),
+       E = UpgradedIntrinsics.end(); I != E; ++I) {
+    if (I->first != I->second) {
+      for (Value::use_iterator UI = I->first->use_begin(),
+           UE = I->first->use_end(); UI != UE; ) {
+        if (CallInst* CI = dyn_cast<CallInst>(*UI++))
+          UpgradeIntrinsicCall(CI, I->second);
+      }
+    }
+  }
   
   return false;
 }
@@ -1614,6 +1634,25 @@ Module *BitcodeReader::materializeModule(std::string *ErrInfo) {
         materializeFunction(F, ErrInfo))
       return 0;
   }
+
+  // Upgrade any intrinsic calls that slipped through (should not happen!) and 
+  // delete the old functions to clean up. We can't do this unless the entire 
+  // module is materialized because there could always be another function body 
+  // with calls to the old function.
+  for (std::vector<std::pair<Function*, Function*> >::iterator I =
+       UpgradedIntrinsics.begin(), E = UpgradedIntrinsics.end(); I != E; ++I) {
+    if (I->first != I->second) {
+      for (Value::use_iterator UI = I->first->use_begin(),
+           UE = I->first->use_end(); UI != UE; ) {
+        if (CallInst* CI = dyn_cast<CallInst>(*UI++))
+          UpgradeIntrinsicCall(CI, I->second);
+      }
+      ValueList.replaceUsesOfWith(I->first, I->second);
+      I->first->eraseFromParent();
+    }
+  }
+  std::vector<std::pair<Function*, Function*> >().swap(UpgradedIntrinsics);
+  
   return TheModule;
 }
 

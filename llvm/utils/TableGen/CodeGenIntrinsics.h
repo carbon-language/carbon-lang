@@ -30,10 +30,6 @@ namespace llvm {
     std::string GCCBuiltinName;// Name of the corresponding GCC builtin, or "".
     std::string TargetPrefix;  // Target prefix, e.g. "ppc" for t-s intrinsics.
     
-    /// ArgTypes - The type primitive enum value for the return value and all
-    /// of the arguments.  These are things like Type::IntegerTyID.
-    std::vector<std::string> ArgTypes;
-    
     /// ArgVTs - The MVT::ValueType for each argument type.  Note that this list
     /// is only populated when in the context of a target .td file.  When
     /// building Intrinsics.td, this isn't available, because we don't know the

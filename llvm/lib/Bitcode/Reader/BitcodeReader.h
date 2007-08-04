@@ -102,6 +102,11 @@ class BitcodeReader : public ModuleProvider {
   // When reading the module header, this list is populated with functions that
   // have bodies later in the file.
   std::vector<Function*> FunctionsWithBodies;
+
+  // When intrinsic functions are encountered which require upgrading they are 
+  // stored here with their replacement function.
+  typedef std::vector<std::pair<Function*, Function*> > UpgradedIntrinsicMap;
+  UpgradedIntrinsicMap UpgradedIntrinsics;
   
   // After the module header has been read, the FunctionsWithBodies list is 
   // reversed.  This keeps track of whether we've done this yet.

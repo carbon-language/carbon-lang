@@ -97,7 +97,7 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   case MVT::v2f64: return "MVT::v2f64";
   case MVT::v3i32: return "MVT::v3i32";
   case MVT::v3f32: return "MVT::v3f32";
-  case MVT::iPTR:  return "TLI.getPointerTy()";
+  case MVT::iPTR:  return "MVT::iPTR";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -651,13 +651,12 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
-    ArgTypes.push_back(TyEl->getValueAsString("TypeVal"));
     MVT::ValueType VT = getValueType(TyEl->getValueAsDef("VT"));
     isOverloaded |= VT == MVT::iAny;
     ArgVTs.push_back(VT);
     ArgTypeDefs.push_back(TyEl);
   }
-  if (ArgTypes.size() == 0)
+  if (ArgVTs.size() == 0)
     throw "Intrinsic '"+DefName+"' needs at least a type for the ret value!";
 
   

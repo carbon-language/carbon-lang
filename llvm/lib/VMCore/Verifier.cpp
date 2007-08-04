@@ -53,6 +53,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
@@ -225,7 +226,8 @@ namespace {  // Anonymous namespace for class
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
 
-    void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...);
+    void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
+                                  unsigned Count, ...);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -1075,9 +1077,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 /// VerifyIntrinsicPrototype - TableGen emits calls to this function into
 /// Intrinsics.gen.  This implements a little state machine that verifies the
 /// prototype of intrinsics.
-void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...) {
+void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
+                                        Function *F,
+                                        unsigned Count, ...) {
   va_list VA;
-  va_start(VA, F);
+  va_start(VA, Count);
   
   const FunctionType *FTy = F->getFunctionType();
   
@@ -1086,97 +1090,94 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F, ...) {
   // suffix, to be checked at the end.
   std::string Suffix;
 
+  if (FTy->getNumParams() + FTy->isVarArg() != Count - 1) {
+    CheckFailed("Intrinsic prototype has incorrect number of arguments!", F);
+    return;
+  }
+
   // Note that "arg#0" is the return type.
-  for (unsigned ArgNo = 0; 1; ++ArgNo) {
-    int TypeID = va_arg(VA, int);
+  for (unsigned ArgNo = 0; ArgNo < Count; ++ArgNo) {
+    MVT::ValueType VT = va_arg(VA, MVT::ValueType);
 
-    if (TypeID == -2) {
+    if (VT == MVT::isVoid && ArgNo > 0) {
+      if (!FTy->isVarArg())
+        CheckFailed("Intrinsic prototype has no '...'!", F);
       break;
     }
 
-    if (TypeID == -1) {
-      if (ArgNo != FTy->getNumParams()+1)
-        CheckFailed("Intrinsic prototype has too many arguments!", F);
-      break;
-    }
-
-    if (ArgNo == FTy->getNumParams()+1) {
-      CheckFailed("Intrinsic prototype has too few arguments!", F);
-      break;
-    }
-    
     const Type *Ty;
     if (ArgNo == 0)
       Ty = FTy->getReturnType();
     else
       Ty = FTy->getParamType(ArgNo-1);
-    
-    if (TypeID != Ty->getTypeID()) {
-      if (ArgNo == 0)
-        CheckFailed("Intrinsic prototype has incorrect result type!", F);
-      else
-        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is wrong!",F);
-      break;
-    }
 
-    if (TypeID == Type::IntegerTyID) {
-      unsigned ExpectedBits = (unsigned) va_arg(VA, int);
-      unsigned GotBits = cast<IntegerType>(Ty)->getBitWidth();
-      if (ExpectedBits == 0) {
-        Suffix += ".i" + utostr(GotBits);
-      } else if (GotBits != ExpectedBits) {
-        std::string bitmsg = " Expected " + utostr(ExpectedBits) + " but got "+
-                             utostr(GotBits) + " bits.";
-        if (ArgNo == 0)
-          CheckFailed("Intrinsic prototype has incorrect integer result width!"
-                      + bitmsg, F);
-        else
-          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " has "
-                      "incorrect integer width!" + bitmsg, F);
-        break;
+    unsigned NumElts = 0;
+    const Type *EltTy = Ty;
+    if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+      EltTy = VTy->getElementType();
+      NumElts = VTy->getNumElements();
+    }
+    
+    if ((int)VT < 0) {
+      int Match = ~VT;
+      if (Match == 0) {
+        if (Ty != FTy->getReturnType()) {
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " does not "
+                      "match return type.", F);
+          break;
+        }
+      } else {
+        if (Ty != FTy->getParamType(Match-1)) {
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " does not "
+                      "match parameter %" + utostr(Match-1) + ".", F);
+          break;
+        }
       }
+    } else if (VT == MVT::iAny) {
+      unsigned GotBits = cast<IntegerType>(EltTy)->getBitWidth();
+      Suffix += ".";
+      if (EltTy != Ty)
+        Suffix += "v" + utostr(NumElts);
+      Suffix += "i" + utostr(GotBits);;
       // Check some constraints on various intrinsics.
       switch (ID) {
         default: break; // Not everything needs to be checked.
         case Intrinsic::bswap:
           if (GotBits < 16 || GotBits % 16 != 0)
             CheckFailed("Intrinsic requires even byte width argument", F);
-          /* FALL THROUGH */
-        case Intrinsic::part_set:
-        case Intrinsic::part_select:
-          if (ArgNo == 1) {
-            unsigned ResultBits = 
-              cast<IntegerType>(FTy->getReturnType())->getBitWidth();
-            if (GotBits != ResultBits)
-              CheckFailed("Intrinsic requires the bit widths of the first "
-                          "parameter and the result to match", F);
-          }
           break;
       }
-    } else if (TypeID == Type::VectorTyID) {
+    } else if (VT == MVT::iPTR) {
+      if (!isa<PointerType>(Ty)) {
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
+                    "pointer and a pointer is required.", F);
+        break;
+      }
+    } else if (MVT::isVector(VT)) {
       // If this is a vector argument, verify the number and type of elements.
-      const VectorType *PTy = cast<VectorType>(Ty);
-      int ElemTy = va_arg(VA, int);
-      if (ElemTy != PTy->getElementType()->getTypeID()) {
+      if (MVT::getVectorElementType(VT) != MVT::getValueType(EltTy)) {
         CheckFailed("Intrinsic prototype has incorrect vector element type!",
                     F);
         break;
       }
-      if (ElemTy == Type::IntegerTyID) {
-        unsigned NumBits = (unsigned)va_arg(VA, int);
-        unsigned ExpectedBits = 
-          cast<IntegerType>(PTy->getElementType())->getBitWidth();
-        if (NumBits != ExpectedBits) {
-          CheckFailed("Intrinsic prototype has incorrect vector element type!",
-                      F);
-          break;
-        }
-      }
-      if ((unsigned)va_arg(VA, int) != PTy->getNumElements()) {
+      if (MVT::getVectorNumElements(VT) != NumElts) {
         CheckFailed("Intrinsic prototype has incorrect number of "
                     "vector elements!",F);
-          break;
+        break;
       }
+    } else if (MVT::getTypeForValueType(VT) != EltTy) {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic prototype has incorrect result type!", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is wrong!",F);
+      break;
+    } else if (EltTy != Ty) {
+      if (ArgNo == 0)
+        CheckFailed("Intrinsic result type is vector "
+                    "and a scalar is required.", F);
+      else
+        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is vector "
+                    "and a scalar is required.", F);
     }
   }
 

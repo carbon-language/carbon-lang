@@ -448,13 +448,13 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
         return ConstantInt::get(Op->getValue().byteSwap());
       } else if (Name.size() > 11 && !memcmp(&Name[0],"llvm.ctpop",10)) {
         uint64_t ctpop = Op->getValue().countPopulation();
-        return ConstantInt::get(Type::Int32Ty, ctpop);
+        return ConstantInt::get(Ty, ctpop);
       } else if (Name.size() > 10 && !memcmp(&Name[0], "llvm.cttz", 9)) {
         uint64_t cttz = Op->getValue().countTrailingZeros();
-        return ConstantInt::get(Type::Int32Ty, cttz);
+        return ConstantInt::get(Ty, cttz);
       } else if (Name.size() > 10 && !memcmp(&Name[0], "llvm.ctlz", 9)) {
         uint64_t ctlz = Op->getValue().countLeadingZeros();
-        return ConstantInt::get(Type::Int32Ty, ctlz);
+        return ConstantInt::get(Ty, ctlz);
       }
     }
   } else if (NumOperands == 2) {

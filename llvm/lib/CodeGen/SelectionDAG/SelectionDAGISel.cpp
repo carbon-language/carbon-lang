@@ -2814,10 +2814,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDOperand Arg = getValue(I.getOperand(1));
     MVT::ValueType Ty = Arg.getValueType();
     SDOperand result = DAG.getNode(ISD::CTTZ, Ty, Arg);
-    if (Ty < MVT::i32)
-      result = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, result);
-    else if (Ty > MVT::i32)
-      result = DAG.getNode(ISD::TRUNCATE, MVT::i32, result);
     setValue(&I, result);
     return 0;
   }
@@ -2825,10 +2821,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDOperand Arg = getValue(I.getOperand(1));
     MVT::ValueType Ty = Arg.getValueType();
     SDOperand result = DAG.getNode(ISD::CTLZ, Ty, Arg);
-    if (Ty < MVT::i32)
-      result = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, result);
-    else if (Ty > MVT::i32)
-      result = DAG.getNode(ISD::TRUNCATE, MVT::i32, result);
     setValue(&I, result);
     return 0;
   }
@@ -2836,10 +2828,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDOperand Arg = getValue(I.getOperand(1));
     MVT::ValueType Ty = Arg.getValueType();
     SDOperand result = DAG.getNode(ISD::CTPOP, Ty, Arg);
-    if (Ty < MVT::i32)
-      result = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, result);
-    else if (Ty > MVT::i32)
-      result = DAG.getNode(ISD::TRUNCATE, MVT::i32, result);
     setValue(&I, result);
     return 0;
   }

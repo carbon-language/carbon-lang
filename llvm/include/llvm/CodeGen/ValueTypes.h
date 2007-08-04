@@ -67,14 +67,14 @@ namespace MVT {  // MVT = Machine Value Types
 
     LAST_VALUETYPE =  27,   // This always remains at the end of the list.
 
-    // iAny - An integer value of any bit width. This is used for intrinsics
-    // that have overloadings based on integer bit widths. This is only for
-    // tblgen's consumption!
-    iAny           = 254,   
+    // iAny - An integer or vector integer value of any bit width. This is
+    // used for intrinsics that have overloadings based on integer bit widths.
+    // This is only for tblgen's consumption!
+    iAny           =  254,   
 
     // iPTR - An int value the size of the pointer of the current
     // target.  This should only be used internal to tblgen!
-    iPTR           = 255
+    iPTR           =  255
   };
 
   /// MVT::ValueType - This type holds low-level value types. Valid values

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CodeGenTarget.h"
 #include "IntrinsicEmitter.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
@@ -94,12 +95,14 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
     
     // For overloaded intrinsics, only the prefix needs to match
     if (Ints[I->second].isOverloaded)
-      OS << "    if (Len >= " << I->first.size()
-       << " && !memcmp(Name, \"" << I->first << "\", " << I->first.size()
-       << ")) return Intrinsic::" << Ints[I->second].EnumName << ";\n";
+      OS << "    if (Len > " << I->first.size()
+       << " && !memcmp(Name, \"" << I->first << ".\", "
+       << (I->first.size() + 1) << ")) return Intrinsic::"
+       << Ints[I->second].EnumName << ";\n";
     else 
       OS << "    if (Len == " << I->first.size()
-         << " && !memcmp(Name, \"" << I->first << "\", Len)) return Intrinsic::"
+         << " && !memcmp(Name, \"" << I->first << "\", "
+         << I->first.size() << ")) return Intrinsic::"
          << Ints[I->second].EnumName << ";\n";
   }
   OS << "  }\n";
@@ -117,50 +120,55 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-static bool EmitTypeVerify(std::ostream &OS, Record *ArgType) {
-  if (ArgType->getValueAsString("TypeVal") == "...")  return true;
-  
-  OS << "(int)" << ArgType->getValueAsString("TypeVal") << ", ";
-  // If this is an integer type, check the width is correct.
-  if (ArgType->isSubClassOf("LLVMIntegerType"))
-    OS << ArgType->getValueAsInt("Width") << ", ";
-
-  // If this is a vector type, check that the subtype and size are correct.
-  else if (ArgType->isSubClassOf("LLVMVectorType")) {
-    EmitTypeVerify(OS, ArgType->getValueAsDef("ElTy"));
-    OS << ArgType->getValueAsInt("NumElts") << ", ";
+static void EmitTypeForValueType(std::ostream &OS, MVT::ValueType VT) {
+  if (MVT::isInteger(VT)) {
+    unsigned BitWidth = MVT::getSizeInBits(VT);
+    OS << "IntegerType::get(" << BitWidth << ")";
+  } else if (VT == MVT::Other) {
+    // MVT::OtherVT is used to mean the empty struct type here.
+    OS << "StructType::get(std::vector<const Type *>())";
+  } else if (VT == MVT::f32) {
+    OS << "Type::FloatTy";
+  } else if (VT == MVT::f64) {
+    OS << "Type::DoubleTy";
+  } else if (VT == MVT::isVoid) {
+    OS << "Type::VoidTy";
+  } else {
+    assert(false && "Unsupported ValueType!");
   }
-  
-  return false;
 }
 
 static void EmitTypeGenerate(std::ostream &OS, Record *ArgType, 
                              unsigned &ArgNo) {
-  if (ArgType->isSubClassOf("LLVMIntegerType")) {
-    unsigned BitWidth = ArgType->getValueAsInt("Width");
+  MVT::ValueType VT = getValueType(ArgType->getValueAsDef("VT"));
+
+  if (ArgType->isSubClassOf("LLVMMatchType")) {
+    unsigned Number = ArgType->getValueAsInt("Number");
+    assert(Number < ArgNo && "Invalid matching number!");
+    OS << "Tys[" << Number << "]";
+  } else if (VT == MVT::iAny) {
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
     // the index of the "arbitrary" type in the Tys array passed to the
     // Intrinsic::getDeclaration function. Consequently, we only want to
-    // increment it when we actually hit an arbitrary integer type which is
-    // identified by BitWidth == 0. Getting this wrong leads to very subtle
-    // bugs!
-    if (BitWidth == 0)
-      OS << "Tys[" << ArgNo++ << "]";
-    else
-      OS << "IntegerType::get(" << BitWidth << ")";
-  } else if (ArgType->isSubClassOf("LLVMVectorType")) {
+    // increment it when we actually hit an overloaded type. Getting this wrong
+    // leads to very subtle bugs!
+    OS << "Tys[" << ArgNo++ << "]";
+  } else if (MVT::isVector(VT)) {
     OS << "VectorType::get(";
-    EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
-    OS << ", " << ArgType->getValueAsInt("NumElts") << ")";
-  } else if (ArgType->isSubClassOf("LLVMPointerType")) {
+    EmitTypeForValueType(OS, MVT::getVectorElementType(VT));
+    OS << ", " << MVT::getVectorNumElements(VT) << ")";
+  } else if (VT == MVT::iPTR) {
     OS << "PointerType::get(";
     EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ")";
-  } else if (ArgType->isSubClassOf("LLVMEmptyStructType")) {
-    OS << "StructType::get(std::vector<const Type *>())";
+  } else if (VT == MVT::isVoid) {
+    if (ArgNo == 0)
+      OS << "Type::VoidTy";
+    else
+      // MVT::isVoid is used to mean varargs here.
+      OS << "...";
   } else {
-    OS << "Type::getPrimitiveType(";
-    OS << ArgType->getValueAsString("TypeVal") << ")";
+    EmitTypeForValueType(OS, VT);
   }
 }
 
@@ -209,18 +217,24 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     }
     
     const std::vector<Record*> &ArgTypes = I->first;
-    OS << "    VerifyIntrinsicPrototype(ID, IF, ";
-    bool VarArg = false;
+    OS << "    VerifyIntrinsicPrototype(ID, IF, " << ArgTypes.size() << ", ";
     for (unsigned j = 0; j != ArgTypes.size(); ++j) {
-      VarArg = EmitTypeVerify(OS, ArgTypes[j]);
-      if (VarArg) {
-        if ((j+1) != ArgTypes.size())
+      Record *ArgType = ArgTypes[j];
+      if (ArgType->isSubClassOf("LLVMMatchType")) {
+        unsigned Number = ArgType->getValueAsInt("Number");
+        assert(Number < j && "Invalid matching number!");
+        OS << "~" << Number;
+      } else {
+        MVT::ValueType VT = getValueType(ArgType->getValueAsDef("VT"));
+        OS << getEnumName(VT);
+        if (VT == MVT::isVoid && j != 0 && j != ArgTypes.size()-1)
           throw "Var arg type not last argument";
-        break;
       }
+      if (j != ArgTypes.size()-1)
+        OS << ", ";
     }
       
-    OS << (VarArg ? "-2);\n" : "-1);\n");
+    OS << ");\n";
     OS << "    break;\n";
   }
   OS << "  }\n";
@@ -255,7 +269,8 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
     const std::vector<Record*> &ArgTypes = I->first;
     unsigned N = ArgTypes.size();
 
-    if (ArgTypes[N-1]->getValueAsString("TypeVal") == "...") {
+    if (N > 1 &&
+        getValueType(ArgTypes[N-1]->getValueAsDef("VT")) == MVT::isVoid) {
       OS << "    IsVarArg = true;\n";
       --N;
     }

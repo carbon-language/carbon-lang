@@ -3717,9 +3717,9 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   for (unsigned i = 1, e = ByteValues.size(); i != e; ++i)
     if (ByteValues[i] != V)
       return 0;
-  const Type *Tys[] = { ITy, ITy };
+  const Type *Tys[] = { ITy };
   Module *M = I.getParent()->getParent()->getParent();
-  Function *F = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 2);
+  Function *F = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
   return new CallInst(F, V);
 }
 
