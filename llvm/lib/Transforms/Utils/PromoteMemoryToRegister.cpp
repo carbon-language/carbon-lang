@@ -273,16 +273,6 @@ void PromoteMem2Reg::run() {
     // analogous to finding the 'uses' and 'definitions' of each variable.
     Info.AnalyzeAlloca(AI);
 
-    // If the alloca is only read and written in one basic block, just perform a
-    // linear sweep over the block to eliminate it.
-    if (Info.OnlyUsedInOneBlock) {
-      LocallyUsedAllocas[Info.OnlyBlock].push_back(AI);
-
-      // Remove the alloca from the Allocas list, since it will be processed.
-      RemoveFromAllocasList(AllocaNum);
-      continue;
-    }
-
     // If there is only a single store to this value, replace any loads of
     // it that are directly dominated by the definition with the value stored.
     if (Info.DefiningBlocks.size() == 1) {
@@ -303,6 +293,15 @@ void PromoteMem2Reg::run() {
       }
     }
     
+    // If the alloca is only read and written in one basic block, just perform a
+    // linear sweep over the block to eliminate it.
+    if (Info.OnlyUsedInOneBlock) {
+      LocallyUsedAllocas[Info.OnlyBlock].push_back(AI);
+      
+      // Remove the alloca from the Allocas list, since it will be processed.
+      RemoveFromAllocasList(AllocaNum);
+      continue;
+    }
     
     if (AST)
       PointerAllocaValues[AllocaNum] = Info.AllocaPointerVal;
