@@ -531,28 +531,29 @@ void PromoteMem2Reg::run() {
 /// the value stored.
 void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
                                               AllocaInfo &Info) {
+  StoreInst *OnlyStore = Info.OnlyStore;
+  
   // Be aware of loads before the store.
   std::set<BasicBlock*> ProcessedBlocks;
   for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i) {
     // If the store dominates the block and if we haven't processed it yet,
     // do so now.
-    if (!dominates(Info.OnlyStore->getParent(), Info.UsingBlocks[i]))
-      continue;
-    
-    if (!ProcessedBlocks.insert(Info.UsingBlocks[i]).second)
+    if (!dominates(OnlyStore->getParent(), Info.UsingBlocks[i]))
       continue;
     
     BasicBlock *UseBlock = Info.UsingBlocks[i];
+    if (!ProcessedBlocks.insert(UseBlock).second)
+      continue;
     
     // If the use and store are in the same block, do a quick scan to
     // verify that there are no uses before the store.
-    if (UseBlock == Info.OnlyStore->getParent()) {
+    if (UseBlock == OnlyStore->getParent()) {
       BasicBlock::iterator I = UseBlock->begin();
-      for (; &*I != Info.OnlyStore; ++I) { // scan block for store.
+      for (; &*I != OnlyStore; ++I) { // scan block for store.
         if (isa<LoadInst>(I) && I->getOperand(0) == AI)
           break;
       }
-      if (&*I != Info.OnlyStore) break;  // Do not handle this case.
+      if (&*I != OnlyStore) break;  // Do not handle this case.
     }
     
     // Otherwise, if this is a different block or if all uses happen
@@ -562,7 +563,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
          I != E; ) {
       if (LoadInst *LI = dyn_cast<LoadInst>(I++)) {
         if (LI->getOperand(0) == AI) {
-          LI->replaceAllUsesWith(Info.OnlyStore->getOperand(0));
+          LI->replaceAllUsesWith(OnlyStore->getOperand(0));
           if (AST && isa<PointerType>(LI->getType()))
             AST->deleteValue(LI);
           LI->eraseFromParent();
@@ -572,6 +573,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
     
     // Finally, remove this block from the UsingBlock set.
     Info.UsingBlocks[i] = Info.UsingBlocks.back();
+    Info.UsingBlocks.pop_back();
     --i; --e;
   }
 }
