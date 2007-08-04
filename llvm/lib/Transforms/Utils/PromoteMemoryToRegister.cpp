@@ -37,6 +37,7 @@ using namespace llvm;
 STATISTIC(NumLocalPromoted, "Number of alloca's promoted within one block");
 STATISTIC(NumSingleStore,   "Number of alloca's promoted with a single store");
 STATISTIC(NumDeadAlloca,    "Number of dead alloca's removed");
+STATISTIC(NumPHIInsert,     "Number of PHI nodes inserted");
 
 // Provide DenseMapKeyInfo for all pointers.
 namespace llvm {
@@ -177,11 +178,12 @@ namespace {
 
     void DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
                                  AllocaInfo &Info);
+    void ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info, 
+                             const SmallPtrSet<BasicBlock*, 32> &DefBlocks,
+                             SmallPtrSet<BasicBlock*, 32> &LiveInBlocks);
     
     void RewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info);
 
-    void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
-                               SmallPtrSet<PHINode*, 16> &DeadPHINodes);
     bool PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
     void PromoteLocallyUsedAllocas(BasicBlock *BB,
                                    const std::vector<AllocaInst*> &AIs);
@@ -491,12 +493,94 @@ void PromoteMem2Reg::run() {
 }
 
 
+/// ComputeLiveInBlocks - Determine which blocks the value is live in.  These
+/// are blocks which lead to uses.  Knowing this allows us to avoid inserting
+/// PHI nodes into blocks which don't lead to uses (thus, the inserted phi nodes
+/// would be dead).
+void PromoteMem2Reg::
+ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info, 
+                    const SmallPtrSet<BasicBlock*, 32> &DefBlocks,
+                    SmallPtrSet<BasicBlock*, 32> &LiveInBlocks) {
+  
+  // To determine liveness, we must iterate through the predecessors of blocks
+  // where the def is live.  Blocks are added to the worklist if we need to
+  // check their predecessors.  Start with all the using blocks.
+  SmallVector<BasicBlock*, 64> LiveInBlockWorklist;
+  LiveInBlockWorklist.insert(LiveInBlockWorklist.end(), 
+                             Info.UsingBlocks.begin(), Info.UsingBlocks.end());
+  
+  // If any of the using blocks is also a definition block, check to see if the
+  // definition occurs before or after the use.  If it happens before the use,
+  // the value isn't really live-in.
+  for (unsigned i = 0, e = LiveInBlockWorklist.size(); i != e; ++i) {
+    BasicBlock *BB = LiveInBlockWorklist[i];
+    if (!DefBlocks.count(BB)) continue;
+    
+    // Okay, this is a block that both uses and defines the value.  If the first
+    // reference to the alloca is a def (store), then we know it isn't live-in.
+    for (BasicBlock::iterator I = BB->begin(); ; ++I) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+        if (SI->getOperand(1) != AI) continue;
+        
+        // We found a store to the alloca before a load.  The alloca is not
+        // actually live-in here.
+        LiveInBlockWorklist[i] = LiveInBlockWorklist.back();
+        LiveInBlockWorklist.pop_back();
+        --i, --e;
+        break;
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        if (LI->getOperand(0) != AI) continue;
+        
+        // Okay, we found a load before a store to the alloca.  It is actually
+        // live into this block.
+        break;
+      }
+    }
+  }
+  
+  // Now that we have a set of blocks where the phi is live-in, recursively add
+  // their predecessors until we find the full region the value is live.
+  while (!LiveInBlockWorklist.empty()) {
+    BasicBlock *BB = LiveInBlockWorklist.back();
+    LiveInBlockWorklist.pop_back();
+    
+    // The block really is live in here, insert it into the set.  If already in
+    // the set, then it has already been processed.
+    if (!LiveInBlocks.insert(BB))
+      continue;
+    
+    // Since the value is live into BB, it is either defined in a predecessor or
+    // live into it to.  Add the preds to the worklist unless they are a
+    // defining block.
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      BasicBlock *P = *PI;
+      
+      // The value is not live into a predecessor if it defines the value.
+      if (DefBlocks.count(P))
+        continue;
+      
+      // Otherwise it is, add to the worklist.
+      LiveInBlockWorklist.push_back(P);
+    }
+  }
+}
+
 /// DetermineInsertionPoint - At this point, we're committed to promoting the
 /// alloca using IDF's, and the standard SSA construction algorithm.  Determine
 /// which blocks need phi nodes and see if we can optimize out some work by
 /// avoiding insertion of dead phi nodes.
 void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
                                              AllocaInfo &Info) {
+
+  // Unique the set of defining blocks for efficient lookup.
+  SmallPtrSet<BasicBlock*, 32> DefBlocks;
+  DefBlocks.insert(Info.DefiningBlocks.begin(), Info.DefiningBlocks.end());
+
+  // Determine which blocks the value is live in.  These are blocks which lead
+  // to uses.
+  SmallPtrSet<BasicBlock*, 32> LiveInBlocks;
+  ComputeLiveInBlocks(AI, Info, DefBlocks, LiveInBlocks);
+
   // Compute the locations where PhiNodes need to be inserted.  Look at the
   // dominance frontier of EACH basic-block we have a write in.
   unsigned CurrentVersion = 0;
@@ -506,55 +590,37 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
     BasicBlock *BB = Info.DefiningBlocks.back();
     Info.DefiningBlocks.pop_back();
     
-    // Look up the DF for this write, add it to PhiNodes
+    // Look up the DF for this write, add it to defining blocks.
     DominanceFrontier::const_iterator it = DF.find(BB);
-    if (it != DF.end()) {
-      const DominanceFrontier::DomSetType &S = it->second;
-      
-      // In theory we don't need the indirection through the DFBlocks vector.
-      // In practice, the order of calling QueuePhiNode would depend on the
-      // (unspecified) ordering of basic blocks in the dominance frontier,
-      // which would give PHI nodes non-determinstic subscripts.  Fix this by
-      // processing blocks in order of the occurance in the function.
-      for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
-           PE = S.end(); P != PE; ++P)
-        DFBlocks.push_back(std::make_pair(BBNumbers[*P], *P));
-      
-      // Sort by which the block ordering in the function.
-      std::sort(DFBlocks.begin(), DFBlocks.end());
-      
-      for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
-        BasicBlock *BB = DFBlocks[i].second;
-        if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
-          Info.DefiningBlocks.push_back(BB);
-      }
-      DFBlocks.clear();
-    }
-  }
-  
-  // Now that we have inserted PHI nodes along the Iterated Dominance Frontier
-  // of the writes to the variable, scan through the reads of the variable,
-  // marking PHI nodes which are actually necessary as alive (by removing them
-  // from the InsertedPHINodes set).  This is not perfect: there may PHI
-  // marked alive because of loads which are dominated by stores, but there
-  // will be no unmarked PHI nodes which are actually used.
-  //
-  for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i)
-    MarkDominatingPHILive(Info.UsingBlocks[i], AllocaNum, InsertedPHINodes);
-  Info.UsingBlocks.clear();
-  
-  // If there are any PHI nodes which are now known to be dead, remove them!
-  for (SmallPtrSet<PHINode*, 16>::iterator I = InsertedPHINodes.begin(),
-       E = InsertedPHINodes.end(); I != E; ++I) {
-    PHINode *PN = *I;
-    bool Erased=NewPhiNodes.erase(std::make_pair(PN->getParent(), AllocaNum));
-    Erased=Erased;
-    assert(Erased && "PHI already removed?");
+    if (it == DF.end()) continue;
     
-    if (AST && isa<PointerType>(PN->getType()))
-      AST->deleteValue(PN);
-    PN->eraseFromParent();
-    PhiToAllocaMap.erase(PN);
+    const DominanceFrontier::DomSetType &S = it->second;
+    
+    // In theory we don't need the indirection through the DFBlocks vector.
+    // In practice, the order of calling QueuePhiNode would depend on the
+    // (unspecified) ordering of basic blocks in the dominance frontier,
+    // which would give PHI nodes non-determinstic subscripts.  Fix this by
+    // processing blocks in order of the occurance in the function.
+    for (DominanceFrontier::DomSetType::const_iterator P = S.begin(),
+         PE = S.end(); P != PE; ++P) {
+      // If the frontier block is not in the live-in set for the alloca, don't
+      // bother processing it.
+      if (!LiveInBlocks.count(*P))
+        continue;
+      
+      DFBlocks.push_back(std::make_pair(BBNumbers[*P], *P));
+    }
+    
+    // Sort by which the block ordering in the function.
+    if (DFBlocks.size() > 1)
+      std::sort(DFBlocks.begin(), DFBlocks.end());
+    
+    for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
+      BasicBlock *BB = DFBlocks[i].second;
+      if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
+        Info.DefiningBlocks.push_back(BB);
+    }
+    DFBlocks.clear();
   }
 }
   
@@ -621,41 +687,6 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
   }
 }
 
-
-// MarkDominatingPHILive - Mem2Reg wants to construct "pruned" SSA form, not
-// "minimal" SSA form.  To do this, it inserts all of the PHI nodes on the IDF
-// as usual (inserting the PHI nodes in the DeadPHINodes set), then processes
-// each read of the variable.  For each block that reads the variable, this
-// function is called, which removes used PHI nodes from the DeadPHINodes set.
-// After all of the reads have been processed, any PHI nodes left in the
-// DeadPHINodes set are removed.
-//
-void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
-                                      SmallPtrSet<PHINode*, 16> &DeadPHINodes) {
-  // Scan the immediate dominators of this block looking for a block which has a
-  // PHI node for Alloca num.  If we find it, mark the PHI node as being alive!
-  DomTreeNode *IDomNode = DT.getNode(BB);
-  for (DomTreeNode *IDom = IDomNode; IDom; IDom = IDom->getIDom()) {
-    BasicBlock *DomBB = IDom->getBlock();
-    DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator
-      I = NewPhiNodes.find(std::make_pair(DomBB, AllocaNum));
-    if (I == NewPhiNodes.end()) continue;
-    
-    // Ok, we found an inserted PHI node which dominates this value.
-    PHINode *DominatingPHI = I->second;
-
-    // Find out if we previously thought it was dead.  If so, mark it as being
-    // live by removing it from the DeadPHINodes set.
-    if (!DeadPHINodes.erase(DominatingPHI))
-      continue;
-    
-    // Now that we have marked the PHI node alive, also mark any PHI nodes
-    // which it might use as being alive as well.
-    for (pred_iterator PI = pred_begin(DomBB), PE = pred_end(DomBB);
-         PI != PE; ++PI)
-      MarkDominatingPHILive(*PI, AllocaNum, DeadPHINodes);
-  }
-}
 
 /// PromoteLocallyUsedAlloca - Many allocas are only used within a single basic
 /// block.  If this is the case, avoid traversing the CFG and inserting a lot of
@@ -799,6 +830,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   PN = new PHINode(Allocas[AllocaNo]->getAllocatedType(),
                    Allocas[AllocaNo]->getName() + "." +
                    utostr(Version++), BB->begin());
+  ++NumPHIInsert;
   PhiToAllocaMap[PN] = AllocaNo;
   PN->reserveOperandSpace(getNumPreds(BB));
   
