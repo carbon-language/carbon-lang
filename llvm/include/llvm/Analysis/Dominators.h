@@ -23,6 +23,7 @@
 
 #include "llvm/Pass.h"
 #include <set>
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -103,7 +104,7 @@ class DominatorTreeBase : public DominatorBase {
 
 protected:
   void reset();
-  typedef std::map<BasicBlock*, DomTreeNode*> DomTreeNodeMapType;
+  typedef DenseMap<BasicBlock*, DomTreeNode*> DomTreeNodeMapType;
   DomTreeNodeMapType DomTreeNodes;
   DomTreeNode *RootNode;
 
@@ -120,7 +121,7 @@ protected:
     InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
   };
 
-  std::map<BasicBlock*, BasicBlock*> IDoms;
+  DenseMap<BasicBlock*, BasicBlock*> IDoms;
 
   // Vertex - Map the DFS number to the BasicBlock*
   std::vector<BasicBlock*> Vertex;
@@ -141,8 +142,8 @@ protected:
   /// block.  This is the same as using operator[] on this class.
   ///
   inline DomTreeNode *getNode(BasicBlock *BB) const {
-    DomTreeNodeMapType::const_iterator i = DomTreeNodes.find(BB);
-    return (i != DomTreeNodes.end()) ? i->second : 0;
+    DomTreeNodeMapType::const_iterator I = DomTreeNodes.find(BB);
+    return I != DomTreeNodes.end() ? I->second : 0;
   }
 
   inline DomTreeNode *operator[](BasicBlock *BB) const {
@@ -302,9 +303,9 @@ private:
   BasicBlock *Eval(BasicBlock *v);
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
   inline BasicBlock *getIDom(BasicBlock *BB) const {
-      std::map<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
-      return I != IDoms.end() ? I->second : 0;
-    }
+    DenseMap<BasicBlock*, BasicBlock*>::const_iterator I = IDoms.find(BB);
+    return I != IDoms.end() ? I->second : 0;
+  }
 };
 
 //===-------------------------------------

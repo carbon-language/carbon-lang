@@ -212,8 +212,7 @@ void DominatorTree::Compress(BasicBlock *VIn) {
 
   std::vector<BasicBlock *> Work;
   std::set<BasicBlock *> Visited;
-  InfoRec &VInInfo = Info[VIn];
-  BasicBlock *VInAncestor = VInInfo.Ancestor;
+  BasicBlock *VInAncestor = Info[VIn].Ancestor;
   InfoRec &VInVAInfo = Info[VInAncestor];
 
   if (VInVAInfo.Ancestor != 0)
@@ -233,7 +232,7 @@ void DominatorTree::Compress(BasicBlock *VIn) {
     } 
     Work.pop_back(); 
 
-    // Update VINfo based on Ancestor info
+    // Update VInfo based on Ancestor info
     if (VAInfo.Ancestor == 0)
       continue;
     BasicBlock *VAncestorLabel = VAInfo.Label;
@@ -366,17 +365,16 @@ void DominatorTree::calculate(Function& F) {
   // Loop over all of the reachable blocks in the function...
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (BasicBlock *ImmDom = getIDom(I)) {  // Reachable block.
-      DomTreeNode *&BBNode = DomTreeNodes[I];
-      if (!BBNode) {  // Haven't calculated this node yet?
-        // Get or calculate the node for the immediate dominator
-        DomTreeNode *IDomNode = getNodeForBlock(ImmDom);
+      DomTreeNode *BBNode = DomTreeNodes[I];
+      if (BBNode) continue;  // Haven't calculated this node yet?
 
-        // Add a new tree node for this BasicBlock, and link it as a child of
-        // IDomNode
-        DomTreeNode *C = new DomTreeNode(I, IDomNode);
-        DomTreeNodes[I] = C;
-        BBNode = IDomNode->addChild(C);
-      }
+      // Get or calculate the node for the immediate dominator
+      DomTreeNode *IDomNode = getNodeForBlock(ImmDom);
+
+      // Add a new tree node for this BasicBlock, and link it as a child of
+      // IDomNode
+      DomTreeNode *C = new DomTreeNode(I, IDomNode);
+      DomTreeNodes[I] = IDomNode->addChild(C);
     }
 
   // Free temporary memory used to construct idom's
@@ -387,8 +385,7 @@ void DominatorTree::calculate(Function& F) {
   updateDFSNumbers();
 }
 
-void DominatorTreeBase::updateDFSNumbers()
-{
+void DominatorTreeBase::updateDFSNumbers() {
   int dfsnum = 0;
   // Iterate over all nodes in depth first order.
   for (unsigned i = 0, e = Roots.size(); i != e; ++i)

@@ -28,7 +28,7 @@ static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
 unsigned PostDominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
-                                          unsigned N) {
+                                    unsigned N) {
   std::vector<std::pair<BasicBlock *, InfoRec *> > workStack;
   std::set<BasicBlock *> visited;
   workStack.push_back(std::make_pair(V, &VInfo));
@@ -111,13 +111,18 @@ void PostDominatorTree::calculate(Function &F) {
   // Step #0: Scan the function looking for the root nodes of the post-dominance
   // relationships.  These blocks, which have no successors, end with return and
   // unwind instructions.
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (succ_begin(I) == succ_end(I)) {
-      Instruction *Insn = I->getTerminator();
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    TerminatorInst *Insn = I->getTerminator();
+    if (Insn->getNumSuccessors() == 0) {
       // Unreachable block is not a root node.
       if (!isa<UnreachableInst>(Insn))
         Roots.push_back(I);
     }
+    
+    // Prepopulate maps so that we don't get iterator invalidation issues later.
+    IDoms[I] = 0;
+    DomTreeNodes[I] = 0;
+  }
   
   Vertex.push_back(0);
   
