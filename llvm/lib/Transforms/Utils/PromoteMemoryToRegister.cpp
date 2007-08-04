@@ -76,11 +76,18 @@ namespace {
   // Data package used by RenamePass()
   class VISIBILITY_HIDDEN RenamePassData {
   public:
+    RenamePassData() {}
     RenamePassData(BasicBlock *B, BasicBlock *P,
                    const std::vector<Value *> &V) : BB(B), Pred(P), Values(V) {}
     BasicBlock *BB;
     BasicBlock *Pred;
     std::vector<Value *> Values;
+    
+    void swap(RenamePassData &RHS) {
+      std::swap(BB, RHS.BB);
+      std::swap(Pred, RHS.Pred);
+      Values.swap(RHS.Values);
+    }
   };
 
   struct VISIBILITY_HIDDEN PromoteMem2Reg {
@@ -406,7 +413,8 @@ void PromoteMem2Reg::run() {
   std::vector<RenamePassData> RenamePassWorkList;
   RenamePassWorkList.push_back(RenamePassData(F.begin(), 0, Values));
   while(!RenamePassWorkList.empty()) {
-    RenamePassData RPD = RenamePassWorkList.back(); 
+    RenamePassData RPD;
+    RPD.swap(RenamePassWorkList.back());
     RenamePassWorkList.pop_back();
     // RenamePass may add new worklist entries.
     RenamePass(RPD.BB, RPD.Pred, RPD.Values, RenamePassWorkList);
