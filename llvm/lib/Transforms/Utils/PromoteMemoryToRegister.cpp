@@ -611,20 +611,21 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
     BasicBlock *DomBB = IDom->getBlock();
     DenseMap<std::pair<BasicBlock*, unsigned>, PHINode*>::iterator
       I = NewPhiNodes.find(std::make_pair(DomBB, AllocaNum));
-    if (I != NewPhiNodes.end()) {
-      // Ok, we found an inserted PHI node which dominates this value.
-      PHINode *DominatingPHI = I->second;
+    if (I == NewPhiNodes.end()) continue;
+    
+    // Ok, we found an inserted PHI node which dominates this value.
+    PHINode *DominatingPHI = I->second;
 
-      // Find out if we previously thought it was dead.  If so, mark it as being
-      // live by removing it from the DeadPHINodes set.
-      if (DeadPHINodes.erase(DominatingPHI)) {
-        // Now that we have marked the PHI node alive, also mark any PHI nodes
-        // which it might use as being alive as well.
-        for (pred_iterator PI = pred_begin(DomBB), PE = pred_end(DomBB);
-             PI != PE; ++PI)
-          MarkDominatingPHILive(*PI, AllocaNum, DeadPHINodes);
-      }
-    }
+    // Find out if we previously thought it was dead.  If so, mark it as being
+    // live by removing it from the DeadPHINodes set.
+    if (!DeadPHINodes.erase(DominatingPHI))
+      continue;
+    
+    // Now that we have marked the PHI node alive, also mark any PHI nodes
+    // which it might use as being alive as well.
+    for (pred_iterator PI = pred_begin(DomBB), PE = pred_end(DomBB);
+         PI != PE; ++PI)
+      MarkDominatingPHILive(*PI, AllocaNum, DeadPHINodes);
   }
 }
 
