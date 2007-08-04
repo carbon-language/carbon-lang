@@ -772,6 +772,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                    Allocas[AllocaNo]->getName() + "." +
                    utostr(Version++), BB->begin());
   PhiToAllocaMap[PN] = AllocaNo;
+  PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
   
   InsertedPHINodes.insert(PN);
 
