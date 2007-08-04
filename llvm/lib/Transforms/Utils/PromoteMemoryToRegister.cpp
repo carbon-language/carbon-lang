@@ -534,7 +534,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
   StoreInst *OnlyStore = Info.OnlyStore;
   
   // Be aware of loads before the store.
-  std::set<BasicBlock*> ProcessedBlocks;
+  SmallPtrSet<BasicBlock*, 32> ProcessedBlocks;
   for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i) {
     // If the store dominates the block and if we haven't processed it yet,
     // do so now.
@@ -542,7 +542,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
       continue;
     
     BasicBlock *UseBlock = Info.UsingBlocks[i];
-    if (!ProcessedBlocks.insert(UseBlock).second)
+    if (!ProcessedBlocks.insert(UseBlock))
       continue;
     
     // If the use and store are in the same block, do a quick scan to
@@ -559,7 +559,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
     // Otherwise, if this is a different block or if all uses happen
     // after the store, do a simple linear scan to replace loads with
     // the stored value.
-    for (BasicBlock::iterator I = UseBlock->begin(),E = UseBlock->end();
+    for (BasicBlock::iterator I = UseBlock->begin(), E = UseBlock->end();
          I != E; ) {
       if (LoadInst *LI = dyn_cast<LoadInst>(I++)) {
         if (LI->getOperand(0) == AI) {
