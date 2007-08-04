@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "mem2reg"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -26,11 +27,16 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
+
+STATISTIC(NumLocalPromoted, "Number of alloca's promoted within one block");
+STATISTIC(NumSingleStore,   "Number of alloca's promoted with a single store");
+STATISTIC(NumDeadAlloca,    "Number of dead alloca's removed");
 
 // Provide DenseMapKeyInfo for all pointers.
 namespace llvm {
@@ -153,6 +159,12 @@ namespace {
     }
 
   private:
+    void RemoveFromAllocasList(unsigned &AllocaIdx) {
+      Allocas[AllocaIdx] = Allocas.back();
+      Allocas.pop_back();
+      --AllocaIdx;
+    }
+    
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
                                SmallPtrSet<PHINode*, 16> &DeadPHINodes);
     bool PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
@@ -164,6 +176,58 @@ namespace {
                     std::vector<RenamePassData> &Worklist);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
                       SmallPtrSet<PHINode*, 16> &InsertedPHINodes);
+  };
+  
+  struct AllocaInfo {
+    std::vector<BasicBlock*> DefiningBlocks;
+    std::vector<BasicBlock*> UsingBlocks;
+    
+    StoreInst  *OnlyStore;
+    BasicBlock *OnlyBlock;
+    bool OnlyUsedInOneBlock;
+    
+    Value *AllocaPointerVal;
+    
+    void clear() {
+      DefiningBlocks.clear();
+      UsingBlocks.clear();
+      OnlyStore = 0;
+      OnlyBlock = 0;
+      OnlyUsedInOneBlock = true;
+      AllocaPointerVal = 0;
+    }
+    
+    /// AnalyzeAlloca - Scan the uses of the specified alloca, filling in our
+    /// ivars.
+    void AnalyzeAlloca(AllocaInst *AI) {
+      clear();
+      
+      // As we scan the uses of the alloca instruction, keep track of stores,
+      // and decide whether all of the loads and stores to the alloca are within
+      // the same basic block.
+      for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
+           U != E; ++U){
+        Instruction *User = cast<Instruction>(*U);
+        if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+          // Remember the basic blocks which define new values for the alloca
+          DefiningBlocks.push_back(SI->getParent());
+          AllocaPointerVal = SI->getOperand(0);
+          OnlyStore = SI;
+        } else {
+          LoadInst *LI = cast<LoadInst>(User);
+          // Otherwise it must be a load instruction, keep track of variable reads
+          UsingBlocks.push_back(LI->getParent());
+          AllocaPointerVal = LI;
+        }
+        
+        if (OnlyUsedInOneBlock) {
+          if (OnlyBlock == 0)
+            OnlyBlock = User->getParent();
+          else if (OnlyBlock != User->getParent())
+            OnlyUsedInOneBlock = false;
+        }
+      }
+    }
   };
 
 }  // end of anonymous namespace
@@ -180,6 +244,8 @@ void PromoteMem2Reg::run() {
 
   if (AST) PointerAllocaValues.resize(Allocas.size());
 
+  AllocaInfo Info;
+
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
     AllocaInst *AI = Allocas[AllocaNum];
 
@@ -194,80 +260,46 @@ void PromoteMem2Reg::run() {
       AI->eraseFromParent();
 
       // Remove the alloca from the Allocas list, since it has been processed
-      Allocas[AllocaNum] = Allocas.back();
-      Allocas.pop_back();
-      --AllocaNum;
+      RemoveFromAllocasList(AllocaNum);
+      ++NumDeadAlloca;
       continue;
     }
-
+    
     // Calculate the set of read and write-locations for each alloca.  This is
     // analogous to finding the 'uses' and 'definitions' of each variable.
-    std::vector<BasicBlock*> DefiningBlocks;
-    std::vector<BasicBlock*> UsingBlocks;
-
-    StoreInst  *OnlyStore = 0;
-    BasicBlock *OnlyBlock = 0;
-    bool OnlyUsedInOneBlock = true;
-
-    // As we scan the uses of the alloca instruction, keep track of stores, and
-    // decide whether all of the loads and stores to the alloca are within the
-    // same basic block.
-    Value *AllocaPointerVal = 0;
-    for (Value::use_iterator U =AI->use_begin(), E = AI->use_end(); U != E;++U){
-      Instruction *User = cast<Instruction>(*U);
-      if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-        // Remember the basic blocks which define new values for the alloca
-        DefiningBlocks.push_back(SI->getParent());
-        AllocaPointerVal = SI->getOperand(0);
-        OnlyStore = SI;
-      } else {
-        LoadInst *LI = cast<LoadInst>(User);
-        // Otherwise it must be a load instruction, keep track of variable reads
-        UsingBlocks.push_back(LI->getParent());
-        AllocaPointerVal = LI;
-      }
-
-      if (OnlyUsedInOneBlock) {
-        if (OnlyBlock == 0)
-          OnlyBlock = User->getParent();
-        else if (OnlyBlock != User->getParent())
-          OnlyUsedInOneBlock = false;
-      }
-    }
+    Info.AnalyzeAlloca(AI);
 
     // If the alloca is only read and written in one basic block, just perform a
     // linear sweep over the block to eliminate it.
-    if (OnlyUsedInOneBlock) {
-      LocallyUsedAllocas[OnlyBlock].push_back(AI);
+    if (Info.OnlyUsedInOneBlock) {
+      LocallyUsedAllocas[Info.OnlyBlock].push_back(AI);
 
       // Remove the alloca from the Allocas list, since it will be processed.
-      Allocas[AllocaNum] = Allocas.back();
-      Allocas.pop_back();
-      --AllocaNum;
+      RemoveFromAllocasList(AllocaNum);
       continue;
     }
 
     // If there is only a single store to this value, replace any loads of
     // it that are directly dominated by the definition with the value stored.
-    if (DefiningBlocks.size() == 1) {
+    if (Info.DefiningBlocks.size() == 1) {
       // Be aware of loads before the store.
       std::set<BasicBlock*> ProcessedBlocks;
-      for (unsigned i = 0, e = UsingBlocks.size(); i != e; ++i)
+      for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i)
         // If the store dominates the block and if we haven't processed it yet,
         // do so now.
-        if (dominates(OnlyStore->getParent(), UsingBlocks[i]))
-          if (ProcessedBlocks.insert(UsingBlocks[i]).second) {
-            BasicBlock *UseBlock = UsingBlocks[i];
+        if (dominates(Info.OnlyStore->getParent(), Info.UsingBlocks[i]))
+          if (ProcessedBlocks.insert(Info.UsingBlocks[i]).second) {
+            BasicBlock *UseBlock = Info.UsingBlocks[i];
             
             // If the use and store are in the same block, do a quick scan to
             // verify that there are no uses before the store.
-            if (UseBlock == OnlyStore->getParent()) {
+            if (UseBlock == Info.OnlyStore->getParent()) {
               BasicBlock::iterator I = UseBlock->begin();
-              for (; &*I != OnlyStore; ++I) { // scan block for store.
+              for (; &*I != Info.OnlyStore; ++I) { // scan block for store.
                 if (isa<LoadInst>(I) && I->getOperand(0) == AI)
                   break;
               }
-              if (&*I != OnlyStore) break;  // Do not handle this case.
+              if (&*I != Info.OnlyStore) break;  // Do not handle this case.
             }
         
             // Otherwise, if this is a different block or if all uses happen
@@ -277,7 +309,7 @@ void PromoteMem2Reg::run() {
                  I != E; ) {
               if (LoadInst *LI = dyn_cast<LoadInst>(I++)) {
                 if (LI->getOperand(0) == AI) {
-                  LI->replaceAllUsesWith(OnlyStore->getOperand(0));
+                  LI->replaceAllUsesWith(Info.OnlyStore->getOperand(0));
                   if (AST && isa<PointerType>(LI->getType()))
                     AST->deleteValue(LI);
                   LI->eraseFromParent();
@@ -286,23 +318,22 @@ void PromoteMem2Reg::run() {
             }
             
             // Finally, remove this block from the UsingBlock set.
-            UsingBlocks[i] = UsingBlocks.back();
+            Info.UsingBlocks[i] = Info.UsingBlocks.back();
             --i; --e;
           }
 
       // Finally, after the scan, check to see if the store is all that is left.
-      if (UsingBlocks.empty()) {
+      if (Info.UsingBlocks.empty()) {
+        ++NumSingleStore;
         // The alloca has been processed, move on.
-        Allocas[AllocaNum] = Allocas.back();
-        Allocas.pop_back();
-        --AllocaNum;
+        RemoveFromAllocasList(AllocaNum);
         continue;
       }
     }
     
     
     if (AST)
-      PointerAllocaValues[AllocaNum] = AllocaPointerVal;
+      PointerAllocaValues[AllocaNum] = Info.AllocaPointerVal;
 
     // If we haven't computed a numbering for the BB's in the function, do so
     // now.
@@ -318,9 +349,9 @@ void PromoteMem2Reg::run() {
     unsigned CurrentVersion = 0;
     SmallPtrSet<PHINode*, 16> InsertedPHINodes;
     std::vector<std::pair<unsigned, BasicBlock*> > DFBlocks;
-    while (!DefiningBlocks.empty()) {
-      BasicBlock *BB = DefiningBlocks.back();
-      DefiningBlocks.pop_back();
+    while (!Info.DefiningBlocks.empty()) {
+      BasicBlock *BB = Info.DefiningBlocks.back();
+      Info.DefiningBlocks.pop_back();
 
       // Look up the DF for this write, add it to PhiNodes
       DominanceFrontier::const_iterator it = DF.find(BB);
@@ -342,7 +373,7 @@ void PromoteMem2Reg::run() {
         for (unsigned i = 0, e = DFBlocks.size(); i != e; ++i) {
           BasicBlock *BB = DFBlocks[i].second;
           if (QueuePhiNode(BB, AllocaNum, CurrentVersion, InsertedPHINodes))
-            DefiningBlocks.push_back(BB);
+            Info.DefiningBlocks.push_back(BB);
         }
         DFBlocks.clear();
       }
@@ -355,9 +386,9 @@ void PromoteMem2Reg::run() {
     // marked alive because of loads which are dominated by stores, but there
     // will be no unmarked PHI nodes which are actually used.
     //
-    for (unsigned i = 0, e = UsingBlocks.size(); i != e; ++i)
-      MarkDominatingPHILive(UsingBlocks[i], AllocaNum, InsertedPHINodes);
-    UsingBlocks.clear();
+    for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i)
+      MarkDominatingPHILive(Info.UsingBlocks[i], AllocaNum, InsertedPHINodes);
+    Info.UsingBlocks.clear();
 
     // If there are any PHI nodes which are now known to be dead, remove them!
     for (SmallPtrSet<PHINode*, 16>::iterator I = InsertedPHINodes.begin(),
@@ -623,6 +654,8 @@ bool PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   assert(AI->use_empty() && "Uses of alloca from more than one BB??");
   if (AST) AST->deleteValue(AI);
   AI->getParent()->getInstList().erase(AI);
+  
+  ++NumLocalPromoted;
   return false;
 }
 
