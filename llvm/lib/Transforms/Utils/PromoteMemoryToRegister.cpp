@@ -78,6 +78,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
 }
 
 namespace {
+  struct AllocaInfo;
 
   // Data package used by RenamePass()
   class VISIBILITY_HIDDEN RenamePassData {
@@ -165,6 +166,8 @@ namespace {
       --AllocaIdx;
     }
     
+    void RewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info);
+
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
                                SmallPtrSet<PHINode*, 16> &DeadPHINodes);
     bool PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
@@ -232,6 +235,7 @@ namespace {
 
 }  // end of anonymous namespace
 
+
 void PromoteMem2Reg::run() {
   Function &F = *DF.getRoot()->getParent();
 
@@ -282,45 +286,7 @@ void PromoteMem2Reg::run() {
     // If there is only a single store to this value, replace any loads of
     // it that are directly dominated by the definition with the value stored.
     if (Info.DefiningBlocks.size() == 1) {
-      // Be aware of loads before the store.
-      std::set<BasicBlock*> ProcessedBlocks;
-      for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i)
-        // If the store dominates the block and if we haven't processed it yet,
-        // do so now.
-        if (dominates(Info.OnlyStore->getParent(), Info.UsingBlocks[i]))
-          if (ProcessedBlocks.insert(Info.UsingBlocks[i]).second) {
-            BasicBlock *UseBlock = Info.UsingBlocks[i];
-            
-            // If the use and store are in the same block, do a quick scan to
-            // verify that there are no uses before the store.
-            if (UseBlock == Info.OnlyStore->getParent()) {
-              BasicBlock::iterator I = UseBlock->begin();
-              for (; &*I != Info.OnlyStore; ++I) { // scan block for store.
-                if (isa<LoadInst>(I) && I->getOperand(0) == AI)
-                  break;
-              }
-              if (&*I != Info.OnlyStore) break;  // Do not handle this case.
-            }
-        
-            // Otherwise, if this is a different block or if all uses happen
-            // after the store, do a simple linear scan to replace loads with
-            // the stored value.
-            for (BasicBlock::iterator I = UseBlock->begin(),E = UseBlock->end();
-                 I != E; ) {
-              if (LoadInst *LI = dyn_cast<LoadInst>(I++)) {
-                if (LI->getOperand(0) == AI) {
-                  LI->replaceAllUsesWith(Info.OnlyStore->getOperand(0));
-                  if (AST && isa<PointerType>(LI->getType()))
-                    AST->deleteValue(LI);
-                  LI->eraseFromParent();
-                }
-              }
-            }
-            
-            // Finally, remove this block from the UsingBlock set.
-            Info.UsingBlocks[i] = Info.UsingBlocks.back();
-            --i; --e;
-          }
+      RewriteSingleStoreAlloca(AI, Info);
 
       // Finally, after the scan, check to see if the store is all that is left.
       if (Info.UsingBlocks.empty()) {
@@ -558,6 +524,58 @@ void PromoteMem2Reg::run() {
         
   NewPhiNodes.clear();
 }
+
+
+/// RewriteSingleStoreAlloca - If there is only a single store to this value,
+/// replace any loads of it that are directly dominated by the definition with
+/// the value stored.
+void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
+                                              AllocaInfo &Info) {
+  // Be aware of loads before the store.
+  std::set<BasicBlock*> ProcessedBlocks;
+  for (unsigned i = 0, e = Info.UsingBlocks.size(); i != e; ++i) {
+    // If the store dominates the block and if we haven't processed it yet,
+    // do so now.
+    if (!dominates(Info.OnlyStore->getParent(), Info.UsingBlocks[i]))
+      continue;
+    
+    if (!ProcessedBlocks.insert(Info.UsingBlocks[i]).second)
+      continue;
+    
+    BasicBlock *UseBlock = Info.UsingBlocks[i];
+    
+    // If the use and store are in the same block, do a quick scan to
+    // verify that there are no uses before the store.
+    if (UseBlock == Info.OnlyStore->getParent()) {
+      BasicBlock::iterator I = UseBlock->begin();
+      for (; &*I != Info.OnlyStore; ++I) { // scan block for store.
+        if (isa<LoadInst>(I) && I->getOperand(0) == AI)
+          break;
+      }
+      if (&*I != Info.OnlyStore) break;  // Do not handle this case.
+    }
+    
+    // Otherwise, if this is a different block or if all uses happen
+    // after the store, do a simple linear scan to replace loads with
+    // the stored value.
+    for (BasicBlock::iterator I = UseBlock->begin(),E = UseBlock->end();
+         I != E; ) {
+      if (LoadInst *LI = dyn_cast<LoadInst>(I++)) {
+        if (LI->getOperand(0) == AI) {
+          LI->replaceAllUsesWith(Info.OnlyStore->getOperand(0));
+          if (AST && isa<PointerType>(LI->getType()))
+            AST->deleteValue(LI);
+          LI->eraseFromParent();
+        }
+      }
+    }
+    
+    // Finally, remove this block from the UsingBlock set.
+    Info.UsingBlocks[i] = Info.UsingBlocks.back();
+    --i; --e;
+  }
+}
+
 
 // MarkDominatingPHILive - Mem2Reg wants to construct "pruned" SSA form, not
 // "minimal" SSA form.  To do this, it inserts all of the PHI nodes on the IDF
