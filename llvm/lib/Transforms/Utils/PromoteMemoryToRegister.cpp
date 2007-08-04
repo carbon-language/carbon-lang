@@ -137,6 +137,8 @@ namespace {
     /// non-determinstic behavior.
     DenseMap<BasicBlock*, unsigned> BBNumbers;
 
+    /// BBNumPreds - Lazily compute the number of predecessors a block has.
+    DenseMap<const BasicBlock*, unsigned> BBNumPreds;
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A,
                    SmallVector<AllocaInst*, 16> &Retry, DominatorTree &dt,
@@ -165,6 +167,14 @@ namespace {
       Allocas.pop_back();
       --AllocaIdx;
     }
+
+    unsigned getNumPreds(const BasicBlock *BB) {
+      unsigned &NP = BBNumPreds[BB];
+      if (NP == 0)
+        NP = std::distance(pred_begin(BB), pred_end(BB))+1;
+      return NP-1;
+    }
+
     
     void RewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info);
 
@@ -209,7 +219,7 @@ namespace {
       // and decide whether all of the loads and stores to the alloca are within
       // the same basic block.
       for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
-           U != E; ++U){
+           U != E; ++U) {
         Instruction *User = cast<Instruction>(*U);
         if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
           // Remember the basic blocks which define new values for the alloca
@@ -218,7 +228,8 @@ namespace {
           OnlyStore = SI;
         } else {
           LoadInst *LI = cast<LoadInst>(User);
-          // Otherwise it must be a load instruction, keep track of variable reads
+          // Otherwise it must be a load instruction, keep track of variable
+          // reads.
           UsingBlocks.push_back(LI->getParent());
           AllocaPointerVal = LI;
         }
@@ -772,7 +783,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                    Allocas[AllocaNo]->getName() + "." +
                    utostr(Version++), BB->begin());
   PhiToAllocaMap[PN] = AllocaNo;
-  PN->reserveOperandSpace(std::distance(pred_begin(BB), pred_end(BB)));
+  PN->reserveOperandSpace(getNumPreds(BB));
   
   InsertedPHINodes.insert(PN);
 
