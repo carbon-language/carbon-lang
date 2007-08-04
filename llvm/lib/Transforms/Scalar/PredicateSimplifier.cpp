@@ -70,8 +70,7 @@
 //
 // The ValueRanges class stores the known integer bounds of a Value. When we
 // encounter i8 %a u< %b, the ValueRanges stores that %a = [1, 255] and
-// %b = [0, 254]. Because we store these by Value*, you should always
-// canonicalize through the InequalityGraph first.
+// %b = [0, 254].
 //
 // It never stores an empty range, because that means that the code is
 // unreachable. It never stores a single-element range since that's an equality
@@ -342,6 +341,8 @@ namespace {
     UGE = UGT | EQ_BIT
   };
 
+  /// validPredicate - determines whether a given value is actually a lattice
+  /// value. Only used in assertions or debugging.
   static bool validPredicate(LatticeVal LV) {
     switch (LV) {
       case GT: case GE: case LT: case LE: case NE:
@@ -372,6 +373,10 @@ namespace {
 
   /// ValueNumbering stores the scope-specific value numbers for a given Value.
   class VISIBILITY_HIDDEN ValueNumbering {
+
+    /// VNPair is a tuple of {Value, index number, DomTreeDFS::Node}. It
+    /// includes the comparison operators necessary to allow you to store it
+    /// in a sorted vector.
     class VISIBILITY_HIDDEN VNPair {
     public:
       Value *V;
@@ -393,11 +398,20 @@ namespace {
       bool operator<(Value *RHS) const {
         return V < RHS;
       }
+
+      bool operator>(Value *RHS) const {
+        return V > RHS;
+      }
+
+      friend bool operator<(Value *RHS, const VNPair &pair) {
+        return pair.operator>(RHS);
+      }
     };
 
     typedef std::vector<VNPair> VNMapType;
     VNMapType VNMap;
 
+    /// The canonical choice for value number at index.
     std::vector<Value *> Values;
 
     DomTreeDFS *DTDFS;
@@ -680,41 +694,44 @@ namespace {
         return E;
       }
 
-      /// Updates the lattice value for a given node. Create a new entry if
-      /// one doesn't exist, otherwise it merges the values. The new lattice
-      /// value must not be inconsistent with any previously existing value.
+      /// update - updates the lattice value for a given node, creating a new
+      /// entry if one doesn't exist. The new lattice value must not be
+      /// inconsistent with any previously existing value.
       void update(unsigned n, LatticeVal R, DomTreeDFS::Node *Subtree) {
         assert(validPredicate(R) && "Invalid predicate.");
-        iterator I = find(n, Subtree);
-        if (I == end()) {
-          Edge edge(n, R, Subtree);
-          iterator Insert = std::lower_bound(begin(), end(), edge);
-          Relations.insert(Insert, edge);
-        } else {
-          LatticeVal LV = static_cast<LatticeVal>(I->LV & R);
-          assert(validPredicate(LV) && "Invalid union of lattice values.");
-          if (LV != I->LV) {
-            if (Subtree != I->Subtree) {
-              assert(Subtree->DominatedBy(I->Subtree) &&
-                     "Find returned subtree that doesn't apply.");
 
-              Edge edge(n, R, Subtree);
-              iterator Insert = std::lower_bound(begin(), end(), edge);
-              Relations.insert(Insert, edge); // invalidates I
-              I = find(n, Subtree);
-            }
+        Edge edge(n, R, Subtree);
+        iterator B = begin(), E = end();
+        iterator I = std::lower_bound(B, E, edge);
 
-            // Also, we have to tighten any edge that Subtree dominates.
-            for (iterator B = begin(); I->To == n; --I) {
-              if (I->Subtree->DominatedBy(Subtree)) {
-                LatticeVal LV = static_cast<LatticeVal>(I->LV & R);
+        iterator J = I;
+        while (J != E && J->To == n) {
+          if (Subtree->DominatedBy(J->Subtree))
+            break;
+          ++J;
+        }
+
+        if (J != E && J->To == n && J->Subtree->dominates(Subtree)) {
+          edge.LV = static_cast<LatticeVal>(J->LV & R);
+          assert(validPredicate(edge.LV) && "Invalid union of lattice values.");
+          if (edge.LV != J->LV) {
+
+            // We have to tighten any edge beneath our update.
+            for (iterator K = I; K->To == n; --K) {
+              if (K->Subtree->DominatedBy(Subtree)) {
+                LatticeVal LV = static_cast<LatticeVal>(K->LV & edge.LV);
                 assert(validPredicate(LV) && "Invalid union of lattice values");
-                I->LV = LV;
+                K->LV = LV;
               }
-              if (I == B) break;
+              if (K == B) break;
             }
+
           }
         }
+
+        // Insert new edge at Subtree if it isn't already there.
+        if (I == E || I->To != n || Subtree != I->Subtree)
+          Relations.insert(I, edge);
       }
     };
 
@@ -939,7 +956,7 @@ namespace {
 
       void update(const ConstantRange &CR, DomTreeDFS::Node *Subtree) {
         assert(!CR.isEmptySet() && "Empty ConstantRange.");
-        assert(!CR.isSingleElement() && "Won't store single element.");
+        assert(!CR.isSingleElement() && "Refusing to store single element.");
 
         static ConstantRange empty(1, false);
         iterator E = end();
