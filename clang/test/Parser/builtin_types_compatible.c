@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check
+// RUN: clang -parse-ast-check %s
 
 extern void funcInt(int);
 extern void funcFloat(float);
