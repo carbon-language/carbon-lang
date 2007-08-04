@@ -58,6 +58,7 @@ namespace clang {
   class ArraySubscriptExpr;
   class OCUVectorElementExpr;
   class ConditionalOperator;
+  class ChooseExpr;
   class PreDefinedExpr;
   
   class BlockVarDecl;
@@ -399,6 +400,7 @@ public:
   
   // Conditional Operator.
   RValue EmitConditionalOperator(const ConditionalOperator *E);
+  RValue EmitChooseExpr(const ChooseExpr *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

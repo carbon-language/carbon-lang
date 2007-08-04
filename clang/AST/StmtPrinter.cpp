@@ -490,9 +490,9 @@ void StmtPrinter::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
 void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
   OS << "__builtin_choose_expr(";
   PrintExpr(Node->getCond());
-  OS << ",";
+  OS << ", ";
   PrintExpr(Node->getLHS());
-  OS << ",";
+  OS << ", ";
   PrintExpr(Node->getRHS());
   OS << ")";
 }

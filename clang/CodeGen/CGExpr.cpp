@@ -637,6 +637,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
   
   case Expr::ConditionalOperatorClass:
     return EmitConditionalOperator(cast<ConditionalOperator>(E));
+  case Expr::ChooseExprClass:
+    return EmitChooseExpr(cast<ChooseExpr>(E));
   }
   
 }
@@ -656,6 +658,16 @@ RValue CodeGenFunction::EmitCharacterLiteral(const CharacterLiteral *E) {
 RValue CodeGenFunction::EmitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
   return RValue::get(llvm::ConstantInt::get(ConvertType(E->getType()),
                                             E->typesAreCompatible()));
+}
+
+/// EmitChooseExpr - Implement __builtin_choose_expr.
+RValue CodeGenFunction::EmitChooseExpr(const ChooseExpr *E) {
+  llvm::APSInt CondVal(32);
+  bool IsConst = E->getCond()->isIntegerConstantExpr(CondVal, getContext());
+  assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
+  
+  // Emit the LHS or RHS as appropriate.
+  return EmitExpr(CondVal != 0 ? E->getLHS() : E->getRHS());
 }
 
 
