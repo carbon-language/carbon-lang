@@ -290,9 +290,15 @@ void PromoteMem2Reg::run() {
 
       // Finally, after the scan, check to see if the store is all that is left.
       if (Info.UsingBlocks.empty()) {
-        ++NumSingleStore;
+        // Remove the (now dead) store and alloca.
+        Info.OnlyStore->eraseFromParent();
+        if (AST) AST->deleteValue(AI);
+        AI->eraseFromParent();
+        
         // The alloca has been processed, move on.
         RemoveFromAllocasList(AllocaNum);
+        
+        ++NumSingleStore;
         continue;
       }
     }
@@ -728,7 +734,7 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
         if (AIt != CurValues.end()) {
           // Store updates the "current value"...
           AIt->second = SI->getOperand(0);
-          BB->getInstList().erase(SI);
+          SI->eraseFromParent();
         }
       }
     }
