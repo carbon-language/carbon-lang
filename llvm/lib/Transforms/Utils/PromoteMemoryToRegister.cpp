@@ -702,7 +702,7 @@ bool PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
 /// alloca which is locally used in it (which might be a lot).
 void PromoteMem2Reg::
 PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
-  std::map<AllocaInst*, Value*> CurValues;
+  DenseMap<AllocaInst*, Value*> CurValues;
   for (unsigned i = 0, e = AIs.size(); i != e; ++i)
     CurValues[AIs[i]] = 0; // Insert with null value
 
@@ -711,7 +711,7 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       // Is this a load of an alloca we are tracking?
       if (AllocaInst *AI = dyn_cast<AllocaInst>(LI->getOperand(0))) {
-        std::map<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
+        DenseMap<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
         if (AIt != CurValues.end()) {
           // If loading an uninitialized value, allow the inter-block case to
           // handle it.  Due to control flow, this might actually be ok.
@@ -730,7 +730,7 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
       }
     } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (AllocaInst *AI = dyn_cast<AllocaInst>(SI->getOperand(1))) {
-        std::map<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
+        DenseMap<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
         if (AIt != CurValues.end()) {
           // Store updates the "current value"...
           AIt->second = SI->getOperand(0);
