@@ -76,12 +76,14 @@ namespace {
   // Data package used by RenamePass()
   class VISIBILITY_HIDDEN RenamePassData {
   public:
+    typedef std::vector<Value *> ValVector;
+    
     RenamePassData() {}
     RenamePassData(BasicBlock *B, BasicBlock *P,
-                   const std::vector<Value *> &V) : BB(B), Pred(P), Values(V) {}
+                   const ValVector &V) : BB(B), Pred(P), Values(V) {}
     BasicBlock *BB;
     BasicBlock *Pred;
-    std::vector<Value *> Values;
+    ValVector Values;
     
     void swap(RenamePassData &RHS) {
       std::swap(BB, RHS.BB);
@@ -158,7 +160,7 @@ namespace {
                                    const std::vector<AllocaInst*> &AIs);
 
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                    std::vector<Value*> &IncVals,
+                    RenamePassData::ValVector &IncVals,
                     std::vector<RenamePassData> &Worklist);
     bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version,
                       SmallPtrSet<PHINode*, 16> &InsertedPHINodes);
@@ -402,17 +404,16 @@ void PromoteMem2Reg::run() {
   // the alloca's.  We do this in case there is a load of a value that has not
   // been stored yet.  In this case, it will get this null value.
   //
-  std::vector<Value *> Values(Allocas.size());
+  RenamePassData::ValVector Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
     Values[i] = UndefValue::get(Allocas[i]->getAllocatedType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
   //
-
   std::vector<RenamePassData> RenamePassWorkList;
   RenamePassWorkList.push_back(RenamePassData(F.begin(), 0, Values));
-  while(!RenamePassWorkList.empty()) {
+  while (!RenamePassWorkList.empty()) {
     RenamePassData RPD;
     RPD.swap(RenamePassWorkList.back());
     RenamePassWorkList.pop_back();
@@ -706,7 +707,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
 // value each Alloca contains on exit from the predecessor block Pred.
 //
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
-                                std::vector<Value*> &IncomingVals,
+                                RenamePassData::ValVector &IncomingVals,
                                 std::vector<RenamePassData> &Worklist) {
   // If we are inserting any phi nodes into this BB, they will already be in the
   // block.
