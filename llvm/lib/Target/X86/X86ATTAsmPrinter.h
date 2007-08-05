@@ -57,6 +57,9 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
   void printf64mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
+  void printf80mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
   void printf128mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }

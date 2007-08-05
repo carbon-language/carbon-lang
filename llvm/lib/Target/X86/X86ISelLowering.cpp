@@ -322,6 +322,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(-1.0); // FLD1/FCHS
   }
 
+  // Long double always uses X87.
+  addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
+
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;

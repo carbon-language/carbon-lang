@@ -119,6 +119,7 @@ def i64mem  : X86MemOperand<"printi64mem">;
 def i128mem : X86MemOperand<"printi128mem">;
 def f32mem  : X86MemOperand<"printf32mem">;
 def f64mem  : X86MemOperand<"printf64mem">;
+def f80mem  : X86MemOperand<"printf80mem">;
 def f128mem : X86MemOperand<"printf128mem">;
 
 def lea32mem : Operand<i32> {
@@ -216,6 +217,7 @@ def loadi64 : PatFrag<(ops node:$ptr), (i64 (load node:$ptr))>;
 
 def loadf32 : PatFrag<(ops node:$ptr), (f32 (load node:$ptr))>;
 def loadf64 : PatFrag<(ops node:$ptr), (f64 (load node:$ptr))>;
+def loadf80 : PatFrag<(ops node:$ptr), (f80 (load node:$ptr))>;
 
 def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextloadi1 node:$ptr))>;
 def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextloadi1 node:$ptr))>;

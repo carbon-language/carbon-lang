@@ -457,6 +457,13 @@ def extloadf32 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
            LD->getLoadedVT() == MVT::f32;
   return false;
 }]>;
+def extloadf64 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
+    return LD->getExtensionType() == ISD::EXTLOAD &&
+           LD->getAddressingMode() == ISD::UNINDEXED &&
+           LD->getLoadedVT() == MVT::f64;
+  return false;
+}]>;
 
 def sextloadi1  : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
   if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
@@ -558,6 +565,13 @@ def truncstoref32 : PatFrag<(ops node:$val, node:$ptr),
                             (st node:$val, node:$ptr), [{
   if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
     return ST->isTruncatingStore() && ST->getStoredVT() == MVT::f32 &&
+           ST->getAddressingMode() == ISD::UNINDEXED;
+  return false;
+}]>;
+def truncstoref64 : PatFrag<(ops node:$val, node:$ptr),
+                            (st node:$val, node:$ptr), [{
+  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N))
+    return ST->isTruncatingStore() && ST->getStoredVT() == MVT::f64 &&
            ST->getAddressingMode() == ISD::UNINDEXED;
   return false;
 }]>;

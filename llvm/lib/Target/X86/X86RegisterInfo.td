@@ -476,6 +476,7 @@ def FR64 : RegisterClass<"X86", [f64], 64,
 
 def RFP32 : RegisterClass<"X86", [f32], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 def RFP64 : RegisterClass<"X86", [f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP80 : RegisterClass<"X86", [f80], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers (these are not allocatable by the
 // register allocator - the floating point stackifier is responsible
