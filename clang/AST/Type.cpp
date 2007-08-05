@@ -658,7 +658,7 @@ void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
     InnerString = ' ' + InnerString;
   std::ostringstream s;
   getUnderlyingExpr()->print(s);
-  InnerString = "typeof(" + s.str() + ") " + InnerString;
+  InnerString = "typeof(" + s.str() + ")" + InnerString;
 }
 
 void TypeOfType::getAsStringInternal(std::string &InnerString) const {

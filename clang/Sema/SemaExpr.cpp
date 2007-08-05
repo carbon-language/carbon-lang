@@ -94,7 +94,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
   //    sizeof(blockvardecl); // type is "int [5]" (cannot convert to "int *")
   // }
   // 
-  // If we converted blockvardecl (at this level) is would be be incorrect
+  // If we converted blockvardecl (at this level) it would be be incorrect
   // for the sizeof and address of (&) operators (see C99 6.3.2.1p[2-4]).
   // This doesn't matter for parmvardecl, since arrays are always passed by 
   // reference (i.e. the [5] on parmvardecl is superfluous).
