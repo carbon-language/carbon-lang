@@ -60,7 +60,7 @@ public:
    void visitBinaryOperator(BinaryOperator& BO);
 
    /// @brief Lowers packed icmp operations.
-   /// @param CI the icmp operator to convert
+   /// @param IC the icmp operator to convert
    void visitICmpInst(ICmpInst& IC);
 
    /// @brief Lowers packed select instructions.
@@ -68,11 +68,11 @@ public:
    void visitSelectInst(SelectInst& SELI);
 
    /// @brief Lowers packed extractelement instructions.
-   /// @param EI the extractelement operator to convert
+   /// @param EE the extractelement operator to convert
    void visitExtractElementInst(ExtractElementInst& EE);
 
    /// @brief Lowers packed insertelement instructions.
-   /// @param EI the insertelement operator to convert
+   /// @param IE the insertelement operator to convert
    void visitInsertElementInst(InsertElementInst& IE);
 
    /// This function asserts if the instruction is a VectorType but
