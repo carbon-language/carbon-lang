@@ -496,10 +496,10 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
 /// in dfs order.
 void DomTreeNode::assignDFSNumber(int num) {
   std::vector<DomTreeNode *>  workStack;
-  std::set<DomTreeNode *> visitedNodes;
+  SmallPtrSet<DomTreeNode *, 32> Visited;
   
   workStack.push_back(this);
-  visitedNodes.insert(this);
+  Visited.insert(this);
   this->DFSNumIn = num++;
   
   while (!workStack.empty()) {
@@ -509,12 +509,12 @@ void DomTreeNode::assignDFSNumber(int num) {
     for (std::vector<DomTreeNode*>::iterator DI = Node->begin(),
            E = Node->end(); DI != E && !visitChild; ++DI) {
       DomTreeNode *Child = *DI;
-      if (visitedNodes.count(Child) == 0) {
-        visitChild = true;
-        Child->DFSNumIn = num++;
-        workStack.push_back(Child);
-        visitedNodes.insert(Child);
-      }
+      if (!Visited.insert(Child))
+        continue;
+      
+      visitChild = true;
+      Child->DFSNumIn = num++;
+      workStack.push_back(Child);
     }
     if (!visitChild) {
       // If we reach here means all children are visited
