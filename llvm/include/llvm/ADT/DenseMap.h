@@ -100,10 +100,12 @@ public:
     
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-      if (P->first != EmptyKey && P->first != TombstoneKey) {
+      if (P->first != EmptyKey) {
+        if (P->first != TombstoneKey) {
+          P->second.~ValueT();
+          --NumEntries;
+        }
         P->first = EmptyKey;
-        P->second.~ValueT();
-        --NumEntries;
       }
     }
     assert(NumEntries == 0 && "Node count imbalance!");
