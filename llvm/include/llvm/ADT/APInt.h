@@ -189,6 +189,7 @@ public:
   /// @param numBits the bit width of the constructed APInt
   /// @param strStart the start of the string to be interpreted
   /// @param slen the maximum number of characters to interpret
+  /// @param radix the radix to use for the conversion
   /// @brief Construct an APInt from a string representation.
   APInt(uint32_t numBits, const char strStart[], uint32_t slen, uint8_t radix);
 
