@@ -59,8 +59,10 @@ void llvm::SplitString(const std::string &Source,
 
 
 /// UnescapeString - Modify the argument string, turning two character sequences
-/// like '\\' 'n' into '\n'.  This handles: \e \a \b \f \n \r \t \v \' \\ and
+/// @verbatim
+/// like '\\' 'n' into '\n'.  This handles: \e \a \b \f \n \r \t \v \' \ and
 /// \num (where num is a 1-3 byte octal value).
+/// @endverbatim
 void llvm::UnescapeString(std::string &Str) {
   for (unsigned i = 0; i != Str.size(); ++i) {
     if (Str[i] == '\\' && i != Str.size()-1) {
