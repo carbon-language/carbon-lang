@@ -120,7 +120,8 @@ void DominatorTree::splitBlock(BasicBlock *NewBB) {
   }
 
 
-  // Find NewBB's immediate dominator and create new dominator tree node for NewBB.
+  // Find NewBB's immediate dominator and create new dominator tree node for
+  // NewBB.
   BasicBlock *NewBBIDom = 0;
   unsigned i = 0;
   for (i = 0; i < PredBlocks.size(); ++i)
@@ -552,8 +553,7 @@ DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
   DomTreeNode *C = new DomTreeNode(BB, IDomNode);
-  DomTreeNodes[BB] = C;
-  return BBNode = IDomNode->addChild(C);
+  return DomTreeNodes[BB] = IDomNode->addChild(C);
 }
 
 static std::ostream &operator<<(std::ostream &o,

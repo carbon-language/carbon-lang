@@ -217,8 +217,7 @@ DomTreeNode *PostDominatorTree::getNodeForBlock(BasicBlock *BB) {
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
   DomTreeNode *C = new DomTreeNode(BB, IPDomNode);
-  DomTreeNodes[BB] = C;
-  return BBNode = IPDomNode->addChild(C);
+  return DomTreeNodes[BB] = IPDomNode->addChild(C);
 }
 
 //===----------------------------------------------------------------------===//
