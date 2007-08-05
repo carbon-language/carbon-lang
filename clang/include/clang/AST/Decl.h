@@ -198,7 +198,7 @@ public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
               Decl *PrevDecl)
     : VarDecl(ParmVariable, L, Id, T, S, PrevDecl) {}
-  
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVariable; }
   static bool classof(const ParmVarDecl *D) { return true; }
