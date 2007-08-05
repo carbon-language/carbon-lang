@@ -47,8 +47,7 @@ namespace {
                 cl::init(true));
 
   RegisterPass<SimpleRegisterCoalescing> 
-  X("simple-register-coalescing",
-    "Simple register coalescing to eliminate all possible register copies");
+  X("simple-register-coalescing", "Simple Register Coalescing");
 }
 
 const PassInfo *llvm::SimpleRegisterCoalescingID = X.getPassInfo();
