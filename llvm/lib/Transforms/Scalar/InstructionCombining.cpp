@@ -870,11 +870,10 @@ static void ComputeSignedMinMaxValuesFromKnownBits(const Type *Ty,
 // could have the specified known zero and known one bits, returning them in
 // min/max.
 static void ComputeUnsignedMinMaxValuesFromKnownBits(const Type *Ty,
-                                                     const APInt& KnownZero,
-                                                     const APInt& KnownOne,
-                                                     APInt& Min,
-                                                     APInt& Max) {
-  uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+                                                     const APInt &KnownZero,
+                                                     const APInt &KnownOne,
+                                                     APInt &Min, APInt &Max) {
+  uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth(); BitWidth = BitWidth;
   assert(KnownZero.getBitWidth() == BitWidth && 
          KnownOne.getBitWidth() == BitWidth &&
          Min.getBitWidth() == BitWidth && Max.getBitWidth() &&
@@ -1885,7 +1884,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   if (I.getNumOperands() == 2) {
     Constant *C = cast<Constant>(I.getOperand(1));
     for (unsigned i = 0; i != NumPHIValues; ++i) {
-      Value *InV;
+      Value *InV = 0;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
         if (CmpInst *CI = dyn_cast<CmpInst>(&I))
           InV = ConstantExpr::getCompare(CI->getPredicate(), InC, C);
@@ -4095,7 +4094,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   // xor X, X = 0, even if X is nested in a sequence of Xor's.
   if (Instruction *Result = AssociativeOpt(I, XorSelf(Op1))) {
-    assert(Result == &I && "AssociativeOpt didn't work?");
+    assert(Result == &I && "AssociativeOpt didn't work?"); Result=Result;
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
   
@@ -10051,6 +10050,9 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   }
 
   assert(WorklistMap.empty() && "Worklist empty, but map not?");
+    
+  // Do an explicit clear, this shrinks the map if needed.
+  WorklistMap.clear();
   return Changed;
 }
 
