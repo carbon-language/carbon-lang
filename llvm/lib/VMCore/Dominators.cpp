@@ -211,7 +211,7 @@ unsigned DominatorTree::DFSPass(BasicBlock *V, unsigned N) {
 void DominatorTree::Compress(BasicBlock *VIn) {
 
   std::vector<BasicBlock *> Work;
-  std::set<BasicBlock *> Visited;
+  SmallPtrSet<BasicBlock *, 32> Visited;
   BasicBlock *VInAncestor = Info[VIn].Ancestor;
   InfoRec &VInVAInfo = Info[VInAncestor];
 
@@ -225,9 +225,9 @@ void DominatorTree::Compress(BasicBlock *VIn) {
     InfoRec &VAInfo = Info[VAncestor];
 
     // Process Ancestor first
-    if (Visited.count(VAncestor) == 0 && VAInfo.Ancestor != 0) {
+    if (Visited.insert(VAncestor) &&
+        VAInfo.Ancestor != 0) {
       Work.push_back(VAncestor);
-      Visited.insert(VAncestor);
       continue;
     } 
     Work.pop_back(); 

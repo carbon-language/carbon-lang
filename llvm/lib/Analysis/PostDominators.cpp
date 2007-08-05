@@ -29,7 +29,7 @@ F("postdomtree", "Post-Dominator Tree Construction", true);
 
 unsigned PostDominatorTree::DFSPass(BasicBlock *V, unsigned N) {
   std::vector<BasicBlock *> workStack;
-  std::set<BasicBlock *> visited;
+  SmallPtrSet<BasicBlock *, 32> Visited;
   workStack.push_back(V);
 
   do {
@@ -37,7 +37,7 @@ unsigned PostDominatorTree::DFSPass(BasicBlock *V, unsigned N) {
     InfoRec &CurVInfo = Info[currentBB];
 
     // Visit each block only once.
-    if (visited.insert(currentBB).second) {
+    if (Visited.insert(currentBB)) {
       CurVInfo.Semi = ++N;
       CurVInfo.Label = currentBB;
       
@@ -55,7 +55,7 @@ unsigned PostDominatorTree::DFSPass(BasicBlock *V, unsigned N) {
       InfoRec &SuccVInfo = Info[*PI];
       if (SuccVInfo.Semi == 0) {
         SuccVInfo.Parent = currentBB;
-        if (!visited.count(*PI)) {
+        if (!Visited.count(*PI)) {
           workStack.push_back(*PI);   
           visitChild = true;
         }
