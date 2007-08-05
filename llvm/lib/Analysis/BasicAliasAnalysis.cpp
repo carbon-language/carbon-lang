@@ -24,6 +24,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -900,17 +901,26 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
               StringCompare());
     Initialized = true;
   }
+  
+  ValueName *Name = F->getValueName();
+  unsigned NameLen = Name->getKeyLength();
+  const char *NamePtr = Name->getKeyData();
+  
+  // If there is an embedded nul character in the function name, we can never
+  // match it.
+  if (strlen(NamePtr) != NameLen)
+    return UnknownModRefBehavior;
 
   std::vector<const char*>::iterator Ptr =
     std::lower_bound(NoMemoryTable->begin(), NoMemoryTable->end(),
-                     F->getName().c_str(), StringCompare());
-  if (Ptr != NoMemoryTable->end() && *Ptr == F->getName())
+                     NamePtr, StringCompare());
+  if (Ptr != NoMemoryTable->end() && strcmp(*Ptr, NamePtr) == 0)
     return DoesNotAccessMemory;
 
   Ptr = std::lower_bound(OnlyReadsMemoryTable->begin(),
                          OnlyReadsMemoryTable->end(),
-                         F->getName().c_str(), StringCompare());
-  if (Ptr != OnlyReadsMemoryTable->end() && *Ptr == F->getName())
+                         NamePtr, StringCompare());
+  if (Ptr != OnlyReadsMemoryTable->end() && strcmp(*Ptr, NamePtr) == 0)
     return OnlyReadsMemory;
 
   return UnknownModRefBehavior;
