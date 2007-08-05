@@ -146,12 +146,12 @@ void DominatorTree::splitBlock(BasicBlock *NewBB) {
   }
 }
 
-unsigned DominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
-                                      unsigned N) {
+unsigned DominatorTree::DFSPass(BasicBlock *V, unsigned N) {
   // This is more understandable as a recursive algorithm, but we can't use the
   // recursive algorithm due to stack depth issues.  Keep it here for
   // documentation purposes.
 #if 0
+  InfoRec &VInfo = Info[Roots[i]];
   VInfo.Semi = ++N;
   VInfo.Label = V;
 
@@ -164,7 +164,7 @@ unsigned DominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
     InfoRec &SuccVInfo = Info[*SI];
     if (SuccVInfo.Semi == 0) {
       SuccVInfo.Parent = V;
-      N = DFSPass(*SI, SuccVInfo, N);
+      N = DFSPass(*SI, N);
     }
   }
 #else
@@ -313,7 +313,7 @@ void DominatorTree::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
 #endif
 }
 
-void DominatorTree::calculate(Function& F) {
+void DominatorTree::calculate(Function &F) {
   BasicBlock* Root = Roots[0];
 
   // Add a node for the root...
@@ -323,9 +323,7 @@ void DominatorTree::calculate(Function& F) {
 
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
-  unsigned N = 0;
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    N = DFSPass(Roots[i], Info[Roots[i]], 0);
+  unsigned N = DFSPass(Root, 0);
 
   for (unsigned i = N; i >= 2; --i) {
     BasicBlock *W = Vertex[i];

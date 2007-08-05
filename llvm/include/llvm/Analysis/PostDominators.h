@@ -39,7 +39,7 @@ struct PostDominatorTree : public DominatorTreeBase {
 private:
   void calculate(Function &F);
   DomTreeNode *getNodeForBlock(BasicBlock *BB);
-  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo,unsigned N);
+  unsigned DFSPass(BasicBlock *V, unsigned N);
   void Compress(BasicBlock *V, InfoRec &VInfo);
   BasicBlock *Eval(BasicBlock *V);
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);

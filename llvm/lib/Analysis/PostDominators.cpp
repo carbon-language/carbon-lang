@@ -27,28 +27,25 @@ char PostDominanceFrontier::ID = 0;
 static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
-unsigned PostDominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
-                                    unsigned N) {
-  std::vector<std::pair<BasicBlock *, InfoRec *> > workStack;
+unsigned PostDominatorTree::DFSPass(BasicBlock *V, unsigned N) {
+  std::vector<BasicBlock *> workStack;
   std::set<BasicBlock *> visited;
-  workStack.push_back(std::make_pair(V, &VInfo));
+  workStack.push_back(V);
 
   do {
-    BasicBlock *currentBB = workStack.back().first; 
-    InfoRec *currentVInfo = workStack.back().second;
+    BasicBlock *currentBB = workStack.back();
+    InfoRec &CurVInfo = Info[currentBB];
 
     // Visit each block only once.
-    if (visited.count(currentBB) == 0) {
-
-      visited.insert(currentBB);
-      currentVInfo->Semi = ++N;
-      currentVInfo->Label = currentBB;
+    if (visited.insert(currentBB).second) {
+      CurVInfo.Semi = ++N;
+      CurVInfo.Label = currentBB;
       
       Vertex.push_back(currentBB);  // Vertex[n] = current;
       // Info[currentBB].Ancestor = 0;     
       // Ancestor[n] = 0
       // Child[currentBB] = 0;
-      currentVInfo->Size = 1;       // Size[currentBB] = 1
+      CurVInfo.Size = 1;       // Size[currentBB] = 1
     }
 
     // Visit children
@@ -58,8 +55,8 @@ unsigned PostDominatorTree::DFSPass(BasicBlock *V, InfoRec &VInfo,
       InfoRec &SuccVInfo = Info[*PI];
       if (SuccVInfo.Semi == 0) {
         SuccVInfo.Parent = currentBB;
-        if (visited.count (*PI) == 0) {
-          workStack.push_back(std::make_pair(*PI, &SuccVInfo));   
+        if (!visited.count(*PI)) {
+          workStack.push_back(*PI);   
           visitChild = true;
         }
       }
@@ -130,7 +127,7 @@ void PostDominatorTree::calculate(Function &F) {
   // in later stages of the algorithm.
   unsigned N = 0;
   for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    N = DFSPass(Roots[i], Info[Roots[i]], N);
+    N = DFSPass(Roots[i], N);
   
   for (unsigned i = N; i >= 2; --i) {
     BasicBlock *W = Vertex[i];

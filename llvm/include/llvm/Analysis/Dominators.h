@@ -127,7 +127,7 @@ protected:
   std::vector<BasicBlock*> Vertex;
 
   // Info - Collection of information used during the computation of idoms.
-  std::map<BasicBlock*, InfoRec> Info;
+  DenseMap<BasicBlock*, InfoRec> Info;
 
   void updateDFSNumbers();
 
@@ -298,7 +298,7 @@ public:
 private:
   void calculate(Function& F);
   DomTreeNode *getNodeForBlock(BasicBlock *BB);
-  unsigned DFSPass(BasicBlock *V, InfoRec &VInfo, unsigned N);
+  unsigned DFSPass(BasicBlock *V, unsigned N);
   void Compress(BasicBlock *V);
   BasicBlock *Eval(BasicBlock *v);
   void Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo);
