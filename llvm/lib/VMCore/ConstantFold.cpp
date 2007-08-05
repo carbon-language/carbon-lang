@@ -114,7 +114,7 @@ static Constant *CastConstantVector(ConstantVector *CV,
 /// This function determines which opcode to use to fold two constant cast 
 /// expressions together. It uses CastInst::isEliminableCastPair to determine
 /// the opcode. Consequently its just a wrapper around that function.
-/// @Determine if it is valid to fold a cast of a cast
+/// @brief Determine if it is valid to fold a cast of a cast
 static unsigned
 foldConstantCastPair(
   unsigned opc,          ///< opcode of the second cast constant expression
