@@ -91,6 +91,8 @@ public:
   unsigned size() const { return NumEntries; }
   
   void clear() {
+    // If the capacity of the array is huge, and the # elements used is small,
+    // shrink the array.
     if (NumEntries * 4 < NumBuckets && NumBuckets > 64) {
       shrink_and_clear();
       return;

@@ -18,6 +18,24 @@
 
 using namespace llvm;
 
+void SmallPtrSetImpl::shrink_and_clear() {
+  assert(!isSmall() && "Can't shrink a small set!");
+  free(CurArray);
+
+  // Reduce the number of buckets.
+  CurArraySize = NumElements > 16 ? 1 << (Log2_32_Ceil(NumElements) + 1) : 32;
+  NumElements = NumTombstones = 0;
+
+  // Install the new array.  Clear all the buckets to empty.
+  CurArray = (const void**)malloc(sizeof(void*) * (CurArraySize+1));
+  assert(CurArray && "Failed to allocate memory?");
+  memset(CurArray, -1, CurArraySize*sizeof(void*));
+  
+  // The end pointer, always valid, is set to a valid element to help the
+  // iterator.
+  CurArray[CurArraySize] = 0;
+}
+
 bool SmallPtrSetImpl::insert(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is already in the set.

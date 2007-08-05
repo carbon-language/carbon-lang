@@ -80,6 +80,11 @@ public:
   }
   
   void clear() {
+    // If the capacity of the array is huge, and the # elements used is small,
+    // shrink the array.
+    if (!isSmall() && NumElements*4 < CurArraySize && CurArraySize > 32)
+      return shrink_and_clear();
+    
     // Fill the array with empty markers.
     memset(CurArray, -1, CurArraySize*sizeof(void*));
     NumElements = 0;
@@ -103,8 +108,8 @@ public:
   bool count(void * const Ptr) const {
     if (isSmall()) {
       // Linear search for the item.
-      for (const void *const *APtr = SmallArray, *const *E = SmallArray+NumElements;
-           APtr != E; ++APtr)
+      for (const void *const *APtr = SmallArray,
+                      *const *E = SmallArray+NumElements; APtr != E; ++APtr)
         if (*APtr == Ptr)
           return true;
       return false;
@@ -121,6 +126,7 @@ private:
     return ((uintptr_t)Ptr >> 4) & (CurArraySize-1);
   }
   const void * const *FindBucketFor(const void *Ptr) const;
+  void shrink_and_clear();
   
   /// Grow - Allocate a larger backing store for the buckets and move it over.
   void Grow();
