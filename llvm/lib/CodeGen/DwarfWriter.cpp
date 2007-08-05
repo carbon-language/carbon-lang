@@ -58,9 +58,9 @@ class DIEValue;
 
 //===----------------------------------------------------------------------===//
 /// DWLabel - Labels are used to track locations in the assembler file.
-/// Labels appear in the form <prefix><Tag><Number>, where the tag is a
-/// category of label (Ex. location) and number is a value unique in that
-/// category.
+/// Labels appear in the form @verbatim <prefix><Tag><Number> @endverbatim, 
+/// where the tag is a category of label (Ex. location) and number is a value 
+/// unique in that category.
 class DWLabel {
 public:
   /// Tag - Label category tag. Should always be a staticly declared C string.

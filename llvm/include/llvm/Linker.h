@@ -204,7 +204,7 @@ class Linker {
     /// found in one library, based on the unresolved symbols in the composite
     /// module.The \p Library should be the base name of a library, as if given
     /// with the -l option of a linker tool. The Linker's LibPaths are searched
-    /// for the \P Library and if found, it will be linked in with via the
+    /// for the \p Library and if found, it will be linked in with via the
     /// LinkInArchive method. If an error occurs, the Linker's error string is
     /// set.
     /// @see LinkInArchive

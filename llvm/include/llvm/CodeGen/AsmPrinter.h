@@ -240,7 +240,7 @@ namespace llvm {
 
     /// EmitString - Emit a string with quotes and a null terminator.
     /// Special characters are emitted properly.
-    /// \literal (Eg. '\t') \endliteral
+    /// @verbatim (Eg. '\t') @endverbatim
     void EmitString(const std::string &String) const;
     
     //===------------------------------------------------------------------===//

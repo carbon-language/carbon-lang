@@ -177,7 +177,8 @@ namespace sys {
       /// This constructor will accept a character range as a path.  No checking
       /// is done on this path to determine if it is valid.  To determine
       /// validity of the path, use the isValid method. 
-      /// @param p The path to assign.
+      /// @param StrStart A pointer to the first character of the path name
+      /// @param StrLen The length of the path name at StrStart
       /// @brief Construct a Path from a string.
       explicit Path(const char *StrStart, unsigned StrLen)
         : path(StrStart, StrStart+StrLen) {}
@@ -280,7 +281,7 @@ namespace sys {
 
       /// This function determines if the path name is absolute, as opposed to
       /// relative. 
-      /// @breif Determine if the path is absolute.
+      /// @brief Determine if the path is absolute.
       bool isAbsolute() const;
 
       /// This function opens the file associated with the path name provided by
@@ -512,6 +513,7 @@ namespace sys {
       /// directory, recursively. If the Path refers to a file, the
       /// \p destroy_contents parameter is ignored.
       /// @param destroy_contents Indicates whether the contents of a destroyed
+      /// @param Err An optional string to receive an error message.
       /// directory should also be destroyed (recursively).
       /// @returns false if the file/directory was destroyed, true on error.
       /// @brief Removes the file or directory from the filesystem.
@@ -554,18 +556,19 @@ namespace sys {
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
       /// of the path, use the isValid method. 
-      /// @param p The path to assign.
       /// @brief Construct a Path from a string.
-      explicit PathWithStatus(const std::string& p) 
-        : Path(p), status(), fsIsValid(false) {}
+      explicit PathWithStatus(
+        const std::string& p ///< The path to assign.
+      ) : Path(p), status(), fsIsValid(false) {}
 
       /// This constructor will accept a character range as a path.  No checking
       /// is done on this path to determine if it is valid.  To determine
       /// validity of the path, use the isValid method. 
-      /// @param p The path to assign.
       /// @brief Construct a Path from a string.
-      explicit PathWithStatus(const char *StrStart, unsigned StrLen)
-        : Path(StrStart, StrLen), status(), fsIsValid(false) {}
+      explicit PathWithStatus(
+        const char *StrStart,  ///< Pointer to the first character of the path
+        unsigned StrLen        ///< Length of the path.
+      ) : Path(StrStart, StrLen), status(), fsIsValid(false) {}
 
       /// Makes a copy of \p that to \p this.
       /// @returns \p this

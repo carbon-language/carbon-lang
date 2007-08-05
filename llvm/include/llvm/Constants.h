@@ -311,7 +311,9 @@ public:
   bool isString() const;
 
   /// isCString - This method returns true if the array is a string (see
+  /// @verbatim
   /// isString) and it ends in a null byte \0 and does not contains any other
+  /// @endverbatim
   /// null bytes except its terminator.
   bool isCString() const;
 

@@ -21,8 +21,8 @@ namespace llvm {
 
   /// BaseStream - Acts like the STL streams. It's a wrapper for the std::cerr,
   /// std::cout, std::cin, etc. streams. However, it doesn't require #including
-  /// <iostream> in every file (doing so increases static c'tors & d'tors in the
-  /// object code).
+  /// @verbatim <iostream> @endverbatm in every file (doing so increases static 
+  /// c'tors & d'tors in the object code).
   /// 
   template <typename StreamTy>
   class BaseStream {

@@ -71,7 +71,7 @@ public:
   void setUseQuotes(bool Val) { UseQuotes = Val; }
   
   /// setPreserveAsmNames - If the mangler should not strip off the asm name
-  /// identifier (\001), this should be set.
+  /// @verbatim identifier (\001), this should be set. @endverbatim
   void setPreserveAsmNames(bool Val) { PreserveAsmNames = Val; }
   
   /// Acceptable Characters - This allows the target to specify which characters

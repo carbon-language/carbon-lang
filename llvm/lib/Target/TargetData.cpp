@@ -146,10 +146,10 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
  <i>[E|e]</i>: Endianness. "E" specifies a big-endian target data model, "e"
  specifies a little-endian target data model.
  <br><br>
- <i>p:<size>:<abi_align>:<pref_align></i>: Pointer size, ABI and preferred
- alignment.
+ <i>p:@verbatim<size>:<abi_align>:<pref_align>@endverbatim</i>: Pointer size, 
+ ABI and preferred alignment.
  <br><br>
- <i><type><size>:<abi_align>:<pref_align></i>: Numeric type alignment. Type is
+ <i>@verbatim<type><size>:<abi_align>:<pref_align>@endverbatim</i>: Numeric type alignment. Type is
  one of <i>i|f|v|a</i>, corresponding to integer, floating point, vector (aka
  packed) or aggregate.  Size indicates the size, e.g., 32 or 64 bits.
  \p

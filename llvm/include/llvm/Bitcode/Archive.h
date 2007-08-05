@@ -463,6 +463,8 @@ class Archive {
     /// into memory.
     Archive(const sys::Path& filename);
 
+    /// @param data The symbol table data to be parsed
+    /// @param len  The length of the symbol table data
     /// @param error Set to address of a std::string to get error messages
     /// @returns false on error
     /// @brief Parse the symbol table at \p data.
@@ -476,17 +478,17 @@ class Archive {
       std::string* error ///< Optional error message catcher
     );
 
-    /// @param error Set to address of a std::string to get error messages
+    /// @param ErrMessage Set to address of a std::string to get error messages
     /// @returns false on error
     /// @brief Check that the archive signature is correct
     bool checkSignature(std::string* ErrMessage);
 
-    /// @param error Set to address of a std::string to get error messages
+    /// @param ErrMessage Set to address of a std::string to get error messages
     /// @returns false on error
     /// @brief Load the entire archive.
     bool loadArchive(std::string* ErrMessage);
 
-    /// @param error Set to address of a std::string to get error messages
+    /// @param ErrMessage Set to address of a std::string to get error messages
     /// @returns false on error
     /// @brief Load just the symbol table.
     bool loadSymbolTable(std::string* ErrMessage);
