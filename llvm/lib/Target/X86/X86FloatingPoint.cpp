@@ -629,7 +629,8 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   if (MI->getOpcode() == X86::IST_FP64m ||
       MI->getOpcode() == X86::ISTT_FP16m ||
       MI->getOpcode() == X86::ISTT_FP32m ||
-      MI->getOpcode() == X86::ISTT_FP64m) {
+      MI->getOpcode() == X86::ISTT_FP64m ||
+      MI->getOpcode() == X86::ST_FP80m) {
     assert(StackTop > 0 && "Stack empty??");
     --StackTop;
   } else if (KillsSrc) { // Last use of operand?
