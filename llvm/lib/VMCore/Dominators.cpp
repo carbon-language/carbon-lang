@@ -66,7 +66,6 @@ E("domtree", "Dominator Tree Construction", true);
 // NewBB is split and now it has one successor. Update dominator tree to
 // reflect this change.
 void DominatorTree::splitBlock(BasicBlock *NewBB) {
-
   assert(NewBB->getTerminator()->getNumSuccessors() == 1
          && "NewBB should have a single successor!");
   BasicBlock *NewBBSucc = NewBB->getTerminator()->getSuccessor(0);
@@ -92,7 +91,7 @@ void DominatorTree::splitBlock(BasicBlock *NewBB) {
     }
     
     for (; i != e; ++i)
-      if (PredBlocks[i] != OnePred && isReachableFromEntry(OnePred)){
+      if (PredBlocks[i] != OnePred && isReachableFromEntry(OnePred)) {
         NewBBDominatesNewBBSucc = false;
         break;
       }
@@ -118,7 +117,6 @@ void DominatorTree::splitBlock(BasicBlock *NewBB) {
         break;
       }
   }
-
 
   // Find NewBB's immediate dominator and create new dominator tree node for
   // NewBB.
@@ -390,9 +388,7 @@ void DominatorTreeBase::updateDFSNumbers() {
   for (unsigned i = 0, e = Roots.size(); i != e; ++i)
     for (df_iterator<BasicBlock*> I = df_begin(Roots[i]),
            E = df_end(Roots[i]); I != E; ++I) {
-      BasicBlock *BB = *I;
-      DomTreeNode *BBNode = getNode(BB);
-      if (BBNode) {
+      if (DomTreeNode *BBNode = getNode(*I)) {
         if (!BBNode->getIDom())
           BBNode->assignDFSNumber(dfsnum);
       }
@@ -462,11 +458,11 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
     return &Entry;
 
   // If B dominates A then B is nearest common dominator.
-  if (dominates(B,A))
+  if (dominates(B, A))
     return B;
 
   // If A dominates B then A is nearest common dominator.
-  if (dominates(A,B))
+  if (dominates(A, B))
     return A;
 
   DomTreeNode *NodeA = getNode(A);
@@ -476,7 +472,7 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
   SmallPtrSet<DomTreeNode*, 16> NodeADoms;
   NodeADoms.insert(NodeA);
   DomTreeNode *IDomA = NodeA->getIDom();
-  while(IDomA) {
+  while (IDomA) {
     NodeADoms.insert(IDomA);
     IDomA = IDomA->getIDom();
   }
@@ -542,8 +538,8 @@ void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
 }
 
 DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
-  DomTreeNode *&BBNode = DomTreeNodes[BB];
-  if (BBNode) return BBNode;
+  if (DomTreeNode *BBNode = DomTreeNodes[BB])
+    return BBNode;
 
   // Haven't calculated this node yet?  Get or calculate the node for the
   // immediate dominator.
@@ -556,12 +552,14 @@ DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
   return DomTreeNodes[BB] = IDomNode->addChild(C);
 }
 
-static std::ostream &operator<<(std::ostream &o,
-                                const DomTreeNode *Node) {
+static std::ostream &operator<<(std::ostream &o, const DomTreeNode *Node) {
   if (Node->getBlock())
     WriteAsOperand(o, Node->getBlock(), false);
   else
     o << " <<exit node>>";
+  
+  o << " {" << Node->getDFSNumIn() << "," << Node->getDFSNumOut() << "}";
+  
   return o << "\n";
 }
 
@@ -574,13 +572,17 @@ static void PrintDomTree(const DomTreeNode *N, std::ostream &o,
 }
 
 void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
-  o << "=============================--------------------------------\n"
-    << "Inorder Dominator Tree:\n";
+  o << "=============================--------------------------------\n";
+  o << "Inorder Dominator Tree: ";
+  if (DFSInfoValid)
+    o << "DFSNumbers invalid: " << SlowQueries << " slow queries.";
+  o << "\n";
+  
   PrintDomTree(getRootNode(), o, 1);
 }
 
 void DominatorTreeBase::dump() {
-  print (llvm::cerr);
+  print(llvm::cerr);
 }
 
 bool DominatorTree::runOnFunction(Function &F) {
@@ -601,7 +603,6 @@ G("domfrontier", "Dominance Frontier Construction", true);
 // NewBB is split and now it has one successor. Update dominace frontier to
 // reflect this change.
 void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
-
   assert(NewBB->getTerminator()->getNumSuccessors() == 1
          && "NewBB should have a single successor!");
   BasicBlock *NewBBSucc = NewBB->getTerminator()->getSuccessor(0);
@@ -617,12 +618,7 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
     // other blocks.
     return;
 
-  DominatorTree &DT = getAnalysis<DominatorTree>();
-  bool NewBBDominatesNewBBSucc = true;
-  if (!DT.dominates(NewBB, NewBBSucc))
-    NewBBDominatesNewBBSucc = false;
-
-  // NewBBSucc inherites original NewBB frontier.
+  // NewBBSucc inherits original NewBB frontier.
   DominanceFrontier::iterator NewBBI = find(NewBB);
   if (NewBBI != end()) {
     DominanceFrontier::DomSetType NewBBSet = NewBBI->second;
@@ -634,7 +630,8 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
   // If NewBB dominates NewBBSucc, then DF(NewBB) is now going to be the
   // DF(PredBlocks[0]) without the stuff that the new block does not dominate
   // a predecessor of.
-  if (NewBBDominatesNewBBSucc) {
+  DominatorTree &DT = getAnalysis<DominatorTree>();
+  if (DT.dominates(NewBB, NewBBSucc)) {
     DominanceFrontier::iterator DFI = find(PredBlocks[0]);
     if (DFI != end()) {
       DominanceFrontier::DomSetType Set = DFI->second;
@@ -678,9 +675,11 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
     DominanceFrontier::iterator DFI = find(FI);
     if (DFI == end()) continue;  // unreachable block.
     
-    // Only consider dominators of NewBBSucc
+    // Only consider nodes that have NewBBSucc in their dominator frontier.
     if (!DFI->second.count(NewBBSucc)) continue;
 
+    // Verify whether this block dominates a block in predblocks.  If not, do
+    // not update it.
     bool BlockDominatesAny = false;
     for (std::vector<BasicBlock*>::const_iterator BI = PredBlocks.begin(), 
            BE = PredBlocks.end(); BI != BE; ++BI) {
@@ -690,29 +689,27 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
       }
     }
     
-    if (BlockDominatesAny) {
-      // If NewBBSucc should not stay in our dominator frontier, remove it.
-      // We remove it unless there is a predecessor of NewBBSucc that we
-      // dominate, but we don't strictly dominate NewBBSucc.
-      bool ShouldRemove = true;
-      if ((BasicBlock*)FI == NewBBSucc
-          || !DT.dominates(FI, NewBBSucc)) {
-        // Okay, we know that PredDom does not strictly dominate NewBBSucc.
-        // Check to see if it dominates any predecessors of NewBBSucc.
-        for (pred_iterator PI = pred_begin(NewBBSucc),
-               E = pred_end(NewBBSucc); PI != E; ++PI)
-          if (DT.dominates(FI, *PI)) {
-            ShouldRemove = false;
-            break;
-          }
-        
-        if (ShouldRemove)
-          removeFromFrontier(DFI, NewBBSucc);
-        addToFrontier(DFI, NewBB);
-        
-        break;
-      }
+    if (!BlockDominatesAny)
+      continue;
+    
+    // If NewBBSucc should not stay in our dominator frontier, remove it.
+    // We remove it unless there is a predecessor of NewBBSucc that we
+    // dominate, but we don't strictly dominate NewBBSucc.
+    bool ShouldRemove = true;
+    if ((BasicBlock*)FI == NewBBSucc || !DT.dominates(FI, NewBBSucc)) {
+      // Okay, we know that PredDom does not strictly dominate NewBBSucc.
+      // Check to see if it dominates any predecessors of NewBBSucc.
+      for (pred_iterator PI = pred_begin(NewBBSucc),
+           E = pred_end(NewBBSucc); PI != E; ++PI)
+        if (DT.dominates(FI, *PI)) {
+          ShouldRemove = false;
+          break;
+        }
     }
+    
+    if (ShouldRemove)
+      removeFromFrontier(DFI, NewBBSucc);
+    addToFrontier(DFI, NewBB);
   }
 }
 
