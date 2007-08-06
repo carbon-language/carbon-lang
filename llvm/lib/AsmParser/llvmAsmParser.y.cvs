@@ -1980,6 +1980,7 @@ ThreadLocal : THREAD_LOCAL { $$ = true; } | { $$ = false; };
 AliaseeRef : ResultTypes SymbolicValueRef {
     const Type* VTy = $1->get();
     Value *V = getVal(VTy, $2);
+    CHECK_FOR_ERROR
     GlobalValue* Aliasee = dyn_cast<GlobalValue>(V);
     if (!Aliasee)
       GEN_ERROR("Aliases can be created only to global values");
