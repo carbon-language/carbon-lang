@@ -143,10 +143,16 @@ public:
                                          TargetType == isCygwin); }
   bool isTargetCygwin() const { return TargetType == isCygwin; }
 
-  std::string getDataLayout() const { return
-    is64Bit() ? std::string("e-p:64:64-f64:32:64-i64:32:64-f80:128:128") :
-    isTargetDarwin() ? std::string("e-p:32:32-f64:32:64-i64:32:64-f80:128:128") :
-    std::string("e-p:32:32-f64:32:64-i64:32:64-f80:32:32"); }
+  std::string getDataLayout() const {
+    const char *p;
+    if (is64Bit())
+      p = "e-p:64:64-f64:32:64-i64:32:64-f80:128:128";
+    else if (isTargetDarwin())
+      p = "e-p:32:32-f64:32:64-i64:32:64-f80:128:128";
+    else
+      p = "e-p:32:32-f64:32:64-i64:32:64-f80:32:32";
+    return std::string(p);
+  }
 
   bool isPICStyleSet() const { return PICStyle != PICStyle::None; }
   bool isPICStyleGOT() const { return PICStyle == PICStyle::GOT; }
