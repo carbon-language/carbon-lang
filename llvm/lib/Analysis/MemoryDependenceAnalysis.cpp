@@ -275,8 +275,14 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       pointerSize = ~0UL;
     } else if (CallSite::get(QI).getInstruction() != 0) {
       // Call insts need special handling.  Check is they can modify our pointer
-      if (AA.getModRefInfo(CallSite::get(QI), dependee, dependeeSize) !=
-          AliasAnalysis::NoModRef) {
+      AliasAnalysis::ModRefResult MR = AA.getModRefInfo(CallSite::get(QI),
+                                                      dependee, dependeeSize);
+      
+      if (MR != AliasAnalysis::NoModRef) {
+        // Loads don't depend on read-only calls
+        if (isa<LoadInst>(query) && MR == AliasAnalysis::Ref)
+          continue;
+        
         if (!start || block) {
           depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
           reverseDep.insert(std::make_pair(QI, query));
@@ -294,6 +300,11 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
                                               dependee, dependeeSize);
       
       if (R != AliasAnalysis::NoAlias) {
+        // May-alias loads don't depend on each other
+        if (isa<LoadInst>(query) && isa<LoadInst>(QI) &&
+            R == AliasAnalysis::MayAlias)
+          continue;
+        
         if (!start || block) {
           depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
           reverseDep.insert(std::make_pair(QI, query));
