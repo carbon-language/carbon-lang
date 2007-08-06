@@ -89,7 +89,9 @@ public:
     return Insert(new ReturnInst());
   }
 
-  /// @verbatim CreateRet - Create a 'ret <val>' instruction. @endverbatim
+  /// @verbatim 
+  /// CreateRet - Create a 'ret <val>' instruction. 
+  /// @endverbatim
   ReturnInst *CreateRet(Value *V) {
     return Insert(new ReturnInst(V));
   }
