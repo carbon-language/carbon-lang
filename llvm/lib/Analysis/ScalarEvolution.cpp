@@ -1220,8 +1220,9 @@ namespace {
 
     /// HowManyLessThans - Return the number of times a backedge containing the
     /// specified less-than comparison will execute.  If not computable, return
-    /// UnknownValue.
-    SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L);
+    /// UnknownValue. isSigned specifies whether the less-than is signed.
+    SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
+                                bool isSigned);
 
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
@@ -1690,13 +1691,24 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   }
   case ICmpInst::ICMP_SLT: {
-    SCEVHandle TC = HowManyLessThans(LHS, RHS, L);
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, true);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
   case ICmpInst::ICMP_SGT: {
     SCEVHandle TC = HowManyLessThans(SCEV::getNegativeSCEV(LHS),
-                                     SCEV::getNegativeSCEV(RHS), L);
+                                     SCEV::getNegativeSCEV(RHS), L, true);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    break;
+  }
+  case ICmpInst::ICMP_ULT: {
+    SCEVHandle TC = HowManyLessThans(LHS, RHS, L, false);
+    if (!isa<SCEVCouldNotCompute>(TC)) return TC;
+    break;
+  }
+  case ICmpInst::ICMP_UGT: {
+    SCEVHandle TC = HowManyLessThans(SCEV::getNegativeSCEV(LHS),
+                                     SCEV::getNegativeSCEV(RHS), L, false);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
@@ -2310,7 +2322,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
 /// specified less-than comparison will execute.  If not computable, return
 /// UnknownValue.
 SCEVHandle ScalarEvolutionsImpl::
-HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
+HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
   // Only handle:  "ADDREC < LoopInvariant".
   if (!RHS->isLoopInvariant(L)) return UnknownValue;
 
@@ -2367,28 +2379,34 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
     
       switch (Cond) {
       case ICmpInst::ICMP_UGT:
+        if (isSigned) return UnknownValue;
         std::swap(PreCondLHS, PreCondRHS);
         Cond = ICmpInst::ICMP_ULT;
         break;
       case ICmpInst::ICMP_SGT:
+        if (!isSigned) return UnknownValue;
         std::swap(PreCondLHS, PreCondRHS);
         Cond = ICmpInst::ICMP_SLT;
         break;
-      default: break;
+      case ICmpInst::ICMP_ULT:
+        if (isSigned) return UnknownValue;
+        break;
+      case ICmpInst::ICMP_SLT:
+        if (!isSigned) return UnknownValue;
+        break;
+      default:
+        return UnknownValue;
       }
 
-      if (Cond == ICmpInst::ICMP_SLT) {
-        if (PreCondLHS->getType()->isInteger()) {
-          if (RHS != getSCEV(PreCondRHS))
-            return UnknownValue;  // Not a comparison against 'm'.
+      if (PreCondLHS->getType()->isInteger()) {
+        if (RHS != getSCEV(PreCondRHS))
+          return UnknownValue;  // Not a comparison against 'm'.
 
-          if (SCEV::getMinusSCEV(AddRec->getOperand(0), One)
-                      != getSCEV(PreCondLHS))
-            return UnknownValue;  // Not a comparison against 'n-1'.
-        }
-        else return UnknownValue;
-      } else
-        return UnknownValue;
+        if (SCEV::getMinusSCEV(AddRec->getOperand(0), One)
+                    != getSCEV(PreCondLHS))
+          return UnknownValue;  // Not a comparison against 'n-1'.
+      }
+      else return UnknownValue;
 
       // cerr << "Computed Loop Trip Count as: " 
       //      << //  *SCEV::getMinusSCEV(RHS, AddRec->getOperand(0)) << "\n";
