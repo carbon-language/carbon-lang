@@ -76,17 +76,23 @@ public:
   const_iterator begin() const { return Children.begin(); }
   const_iterator end()   const { return Children.end(); }
   
-  inline BasicBlock *getBlock() const { return TheBB; }
-  inline DomTreeNode *getIDom() const { return IDom; }
-  inline const std::vector<DomTreeNode*> &getChildren() const { return Children; }
+  BasicBlock *getBlock() const { return TheBB; }
+  DomTreeNode *getIDom() const { return IDom; }
+  const std::vector<DomTreeNode*> &getChildren() const { return Children; }
   
-  inline DomTreeNode(BasicBlock *BB, DomTreeNode *iDom)
+  DomTreeNode(BasicBlock *BB, DomTreeNode *iDom)
     : TheBB(BB), IDom(iDom), DFSNumIn(-1), DFSNumOut(-1) { }
-  inline DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
+  DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
   void setIDom(DomTreeNode *NewIDom);
 
+  
+  /// getDFSNumIn/getDFSNumOut - These are an internal implementation detail, do
+  /// not call them.
+  unsigned getDFSNumIn() const { return DFSNumIn; }
+  unsigned getDFSNumOut() const { return DFSNumOut; }
 private:
-  // Return true if this node is dominated by other. Use this only if DFS info is valid.
+  // Return true if this node is dominated by other. Use this only if DFS info
+  // is valid.
   bool DominatedBy(const DomTreeNode *other) const {
     return this->DFSNumIn >= other->DFSNumIn &&
       this->DFSNumOut <= other->DFSNumOut;
@@ -118,7 +124,7 @@ protected:
 
     std::vector<BasicBlock*> Bucket;
 
-    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
+    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0) {}
   };
 
   DenseMap<BasicBlock*, BasicBlock*> IDoms;
@@ -416,9 +422,8 @@ public:
     AU.addRequired<DominatorTree>();
   }
 
-  /// splitBlock
-  /// BB is split and now it has one successor. Update dominace frontier to
-  /// reflect this change.
+  /// splitBlock - BB is split and now it has one successor. Update dominance
+  /// frontier to reflect this change.
   void splitBlock(BasicBlock *BB);
 
 private:
