@@ -698,5 +698,3 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
     DF->splitBlock(BEBlock);
 }
-
-
