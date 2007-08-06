@@ -21,10 +21,12 @@
 #include "llvm/ParameterAttributes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -874,6 +876,9 @@ static const char *OnlyReadsMemoryFns[] = {
 static ManagedStatic<std::vector<const char*> > NoMemoryTable;
 static ManagedStatic<std::vector<const char*> > OnlyReadsMemoryTable;
 
+static ManagedStatic<BitVector> NoMemoryIntrinsics;
+static ManagedStatic<BitVector> OnlyReadsMemoryIntrinsics;
+
 
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
@@ -891,15 +896,29 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
                                 OnlyReadsMemoryFns, 
                                 OnlyReadsMemoryFns+
                       sizeof(OnlyReadsMemoryFns)/sizeof(OnlyReadsMemoryFns[0]));
-#define GET_MODREF_BEHAVIOR
-#include "llvm/Intrinsics.gen"
-#undef GET_MODREF_BEHAVIOR
-    
+
     // Sort the table the first time through.
     std::sort(NoMemoryTable->begin(), NoMemoryTable->end(), StringCompare());
     std::sort(OnlyReadsMemoryTable->begin(), OnlyReadsMemoryTable->end(),
               StringCompare());
+    
+    NoMemoryIntrinsics->resize(Intrinsic::num_intrinsics);
+    OnlyReadsMemoryIntrinsics->resize(Intrinsic::num_intrinsics);
+#define GET_MODREF_BEHAVIOR
+#include "llvm/Intrinsics.gen"
+#undef GET_MODREF_BEHAVIOR
+    
     Initialized = true;
+  }
+
+  // If this is an intrinsic, we can use lookup tables
+  if (unsigned id = F->getIntrinsicID()) {
+    if (NoMemoryIntrinsics->test(id))
+      return DoesNotAccessMemory;
+    if (OnlyReadsMemoryIntrinsics->test(id))
+      return OnlyReadsMemory;
+
+    return UnknownModRefBehavior;
   }
   
   ValueName *Name = F->getValueName();
