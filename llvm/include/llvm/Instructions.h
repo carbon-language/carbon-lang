@@ -805,20 +805,6 @@ public:
          typename std::iterator_traits<InputIterator>::iterator_category());
   }
 
-#if 0
-  // Leave these here for llvm-gcc
-  CallInst(Value *F, Value* const *Args, unsigned NumArgs,
-           const std::string &Name = "", Instruction *InsertBefore = 0);
-  CallInst(Value *F, Value *const *Args, unsigned NumArgs,
-           const std::string &Name, BasicBlock *InsertAtEnd);
-
-  // Alternate CallInst ctors w/ two actuals, w/ one actual and no
-  // actuals, respectively.
-  CallInst(Value *F, Value *Actual1, Value *Actual2,
-           const std::string& Name = "", Instruction *InsertBefore = 0);
-  CallInst(Value *F, Value *Actual1, Value *Actual2,
-           const std::string& Name, BasicBlock *InsertAtEnd);
-#endif
   CallInst(Value *F, Value *Actual, const std::string& Name = "",
            Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *Actual, const std::string& Name,
