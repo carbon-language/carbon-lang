@@ -205,11 +205,11 @@ bool LowerGC::runOnFunction(Function &F) {
                 // conversion from Use* to Value*.  The conversion
                 // from Use to Value * is not useful because the
                 // memory for Value * won't be contiguous.
-                SmallVector<Value *, 2> Args;
-                Args.push_back(CI->getOperand(1));
-                Args.push_back(CI->getOperand(2));
-                CallInst *NC = new CallInst(GCRead, Args.begin(),
-                                            Args.end(),
+                Value* Args[] = {
+                  CI->getOperand(1),
+                  CI->getOperand(2) 
+                };
+                CallInst *NC = new CallInst(GCRead, Args, Args + 2,
                                             CI->getName(), CI);
                 // These functions only deal with ptr type results so BitCast
                 // is the correct kind of cast (no-op cast).
