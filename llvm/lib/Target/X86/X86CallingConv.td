@@ -35,7 +35,10 @@ def RetCC_X86Common : CallingConv<[
 
   // MMX vector types are always returned in MM0. If the target doesn't have
   // MM0, it doesn't support these vector types.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[MM0]>>
+  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[MM0]>>,
+
+  // Long double types are always returned in ST0 (even with SSE).
+  CCIfType<[f80], CCAssignToReg<[ST0]>>
 ]>;
 
 // X86-32 C return-value convention.
@@ -137,7 +140,10 @@ def CC_X86_32_Common : CallingConv<[
   
   // Doubles get 8-byte slots that are 4-byte aligned.
   CCIfType<[f64], CCAssignToStack<8, 4>>,
-  
+
+  // Long doubles get 16-byte slots that are 4-byte aligned.
+  CCIfType<[f80], CCAssignToStack<16, 4>>,
+
   // The first 4 vector arguments are passed in XMM registers.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
               CCAssignToReg<[XMM0, XMM1, XMM2, XMM3]>>,

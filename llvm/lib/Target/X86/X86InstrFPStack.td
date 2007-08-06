@@ -130,11 +130,17 @@ def FpGETRESULT32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP,
 def FpGETRESULT64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP,
                       [(set RFP64:$dst, X86fpget)]>;           // FPR = ST(0)
 
+def FpGETRESULT80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP,
+                      [(set RFP80:$dst, X86fpget)]>;           // FPR = ST(0)
+
 def FpSETRESULT32 : FpI_<(outs), (ins RFP32:$src), SpecialFP,
                       [(X86fpset RFP32:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
 
 def FpSETRESULT64 : FpI_<(outs), (ins RFP64:$src), SpecialFP,
                       [(X86fpset RFP64:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
+
+def FpSETRESULT80 : FpI_<(outs), (ins RFP80:$src), SpecialFP,
+                      [(X86fpset RFP80:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
 
 // FpI - Floating Point Psuedo Instruction template. Predicated on FPStack.
 class FpI<dag outs, dag ins, FPFormat fp, list<dag> pattern> :

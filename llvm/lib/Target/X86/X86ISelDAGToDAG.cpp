@@ -498,7 +498,8 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
                 MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
                 ((clas = RegMap->getRegClass(I->getOperand(0).getReg())) == 
                    X86::RFP32RegisterClass ||
-                 clas == X86::RFP64RegisterClass)) {
+                 clas == X86::RFP64RegisterClass ||
+                 clas == X86::RFP80RegisterClass)) {
               ContainsFPCode = true;
               break;
             }

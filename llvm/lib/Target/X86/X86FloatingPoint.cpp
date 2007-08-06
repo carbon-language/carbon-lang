@@ -684,48 +684,64 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
 static const TableEntry ForwardST0Table[] = {
   { X86::ADD_Fp32  , X86::ADD_FST0r },
   { X86::ADD_Fp64  , X86::ADD_FST0r },
+  { X86::ADD_Fp80  , X86::ADD_FST0r },
   { X86::DIV_Fp32  , X86::DIV_FST0r },
   { X86::DIV_Fp64  , X86::DIV_FST0r },
+  { X86::DIV_Fp80  , X86::DIV_FST0r },
   { X86::MUL_Fp32  , X86::MUL_FST0r },
   { X86::MUL_Fp64  , X86::MUL_FST0r },
+  { X86::MUL_Fp80  , X86::MUL_FST0r },
   { X86::SUB_Fp32  , X86::SUB_FST0r },
   { X86::SUB_Fp64  , X86::SUB_FST0r },
+  { X86::SUB_Fp80  , X86::SUB_FST0r },
 };
 
 // ReverseST0Table - Map: A = B op C  into: ST(0) = ST(i) op ST(0)
 static const TableEntry ReverseST0Table[] = {
   { X86::ADD_Fp32  , X86::ADD_FST0r  },   // commutative
   { X86::ADD_Fp64  , X86::ADD_FST0r  },   // commutative
+  { X86::ADD_Fp80  , X86::ADD_FST0r  },   // commutative
   { X86::DIV_Fp32  , X86::DIVR_FST0r },
   { X86::DIV_Fp64  , X86::DIVR_FST0r },
+  { X86::DIV_Fp80  , X86::DIVR_FST0r },
   { X86::MUL_Fp32  , X86::MUL_FST0r  },   // commutative
   { X86::MUL_Fp64  , X86::MUL_FST0r  },   // commutative
+  { X86::MUL_Fp80  , X86::MUL_FST0r  },   // commutative
   { X86::SUB_Fp32  , X86::SUBR_FST0r },
   { X86::SUB_Fp64  , X86::SUBR_FST0r },
+  { X86::SUB_Fp80  , X86::SUBR_FST0r },
 };
 
 // ForwardSTiTable - Map: A = B op C  into: ST(i) = ST(0) op ST(i)
 static const TableEntry ForwardSTiTable[] = {
   { X86::ADD_Fp32  , X86::ADD_FrST0  },   // commutative
   { X86::ADD_Fp64  , X86::ADD_FrST0  },   // commutative
+  { X86::ADD_Fp80  , X86::ADD_FrST0  },   // commutative
   { X86::DIV_Fp32  , X86::DIVR_FrST0 },
   { X86::DIV_Fp64  , X86::DIVR_FrST0 },
+  { X86::DIV_Fp80  , X86::DIVR_FrST0 },
   { X86::MUL_Fp32  , X86::MUL_FrST0  },   // commutative
   { X86::MUL_Fp64  , X86::MUL_FrST0  },   // commutative
+  { X86::MUL_Fp80  , X86::MUL_FrST0  },   // commutative
   { X86::SUB_Fp32  , X86::SUBR_FrST0 },
   { X86::SUB_Fp64  , X86::SUBR_FrST0 },
+  { X86::SUB_Fp80  , X86::SUBR_FrST0 },
 };
 
 // ReverseSTiTable - Map: A = B op C  into: ST(i) = ST(i) op ST(0)
 static const TableEntry ReverseSTiTable[] = {
   { X86::ADD_Fp32  , X86::ADD_FrST0 },
   { X86::ADD_Fp64  , X86::ADD_FrST0 },
+  { X86::ADD_Fp80  , X86::ADD_FrST0 },
   { X86::DIV_Fp32  , X86::DIV_FrST0 },
   { X86::DIV_Fp64  , X86::DIV_FrST0 },
+  { X86::DIV_Fp80  , X86::DIV_FrST0 },
   { X86::MUL_Fp32  , X86::MUL_FrST0 },
   { X86::MUL_Fp64  , X86::MUL_FrST0 },
+  { X86::MUL_Fp80  , X86::MUL_FrST0 },
   { X86::SUB_Fp32  , X86::SUB_FrST0 },
   { X86::SUB_Fp64  , X86::SUB_FrST0 },
+  { X86::SUB_Fp80  , X86::SUB_FrST0 },
 };
 
 
@@ -899,11 +915,13 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   default: assert(0 && "Unknown SpecialFP instruction!");
   case X86::FpGETRESULT32:  // Appears immediately after a call returning FP type!
   case X86::FpGETRESULT64:  // Appears immediately after a call returning FP type!
+  case X86::FpGETRESULT80:
     assert(StackTop == 0 && "Stack should be empty after a call!");
     pushReg(getFPReg(MI->getOperand(0)));
     break;
   case X86::FpSETRESULT32:
   case X86::FpSETRESULT64:
+  case X86::FpSETRESULT80:
     assert(StackTop == 1 && "Stack should have one element on it to return!");
     --StackTop;   // "Forget" we have something on the top of stack!
     break;
