@@ -4134,11 +4134,16 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   
   
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    // xor (icmp A, B), true = not (icmp A, B) = !icmp A, B
-    if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
-      if (RHS == ConstantInt::getTrue() && ICI->hasOneUse())
+    // xor (cmp A, B), true = not (cmp A, B) = !cmp A, B
+    if (RHS == ConstantInt::getTrue() && Op0->hasOneUse()) {
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
         return new ICmpInst(ICI->getInversePredicate(),
                             ICI->getOperand(0), ICI->getOperand(1));
+
+      if (FCmpInst *FCI = dyn_cast<FCmpInst>(Op0))
+        return new FCmpInst(FCI->getInversePredicate(),
+                            FCI->getOperand(0), FCI->getOperand(1));
+    }
 
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // ~(c-X) == X-c-1 == X+(-c-1)
