@@ -231,7 +231,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     }
   }
 
-  return CastInst::createIntegerCast(Count, Type::Int32Ty, false, "ctpop", IP);
+  return Count;
 }
 
 /// LowerCTLZ - Emit the code to lower ctlz of V before the specified
