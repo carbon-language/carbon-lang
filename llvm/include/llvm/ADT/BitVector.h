@@ -186,13 +186,17 @@ public:
       init_words(&Bits[OldCapacity], (Capacity-OldCapacity), t);
     }
     
-    // If we previously had no size, initialize the low word
-    if (Size == 0)
-      for (unsigned i = 0; i < Capacity; ++i)
-        Bits[i] = 0 - (unsigned)t;
+    // Set any old unused bits that are now included in the BitVector. This 
+    // may set bits that are not included in the new vector, but we will clear 
+    // them back out below.
+    if (N > Size)
+      set_unused_bits(t);
     
+    // Update the size, and clear out any bits that are now unused
+    unsigned OldSize = Size;
     Size = N;
-    clear_unused_bits();
+    if (t || N < OldSize)
+      clear_unused_bits();
   }
 
   void reserve(unsigned N) {
@@ -303,7 +307,7 @@ public:
     }
   
     // Grow the bitvector to have enough elements.
-    Capacity = NumBitWords(Size);
+    Capacity = RHSWords;
     BitWord *NewBits = new BitWord[Capacity];
     std::copy(RHS.Bits, &RHS.Bits[RHSWords], NewBits);
 
@@ -318,14 +322,25 @@ private:
   unsigned NumBitWords(unsigned S) const {
     return (S + BITWORD_SIZE-1) / BITWORD_SIZE;
   }
-
-  // Clear the unused top bits in the high word.
-  void clear_unused_bits() {
+  
+  // Set the unused bits in the high words.
+  void set_unused_bits(bool t = true) {
+    //  Set high words first.
+    unsigned UsedWords = NumBitWords(Size);
+    if (Capacity > UsedWords)
+      init_words(&Bits[UsedWords], (Capacity-UsedWords), t);
+    
+    //  Then set any stray high bits of the last used word.
     unsigned ExtraBits = Size % BITWORD_SIZE;
     if (ExtraBits) {
-      unsigned index = Size / BITWORD_SIZE;
-      Bits[index] &= ~(~0L << ExtraBits);
+      Bits[UsedWords-1] &= ~(~0L << ExtraBits);
+      Bits[UsedWords-1] |= (0 - (BitWord)t) << ExtraBits;
     }
+  }
+
+  // Clear the unused bits in the high words.
+  void clear_unused_bits() {
+    set_unused_bits(false);
   }
 
   void grow(unsigned NewSize) {
