@@ -2387,7 +2387,7 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L) {
             return UnknownValue;  // Not a comparison against 'n-1'.
         }
         else return UnknownValue;
-      } else if (Cond == ICmpInst::ICMP_ULT)
+      } else
         return UnknownValue;
 
       // cerr << "Computed Loop Trip Count as: " 
