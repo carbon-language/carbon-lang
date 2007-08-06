@@ -90,7 +90,7 @@ namespace llvm {
   FunctionPass *createPrologEpilogCodeInserter();
   
   /// LowerSubregs Pass - This pass lowers subregs to register-register copies
-  /// which yields suboptimial, but correct code if the register allocator
+  /// which yields suboptimal, but correct code if the register allocator
   /// cannot coalesce all subreg operations during allocation.
   ///
   FunctionPass *createLowerSubregsPass();
