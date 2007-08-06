@@ -389,24 +389,10 @@ public:
   }
 
   template<typename InputIterator>
-  CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, InputIterator ArgEnd,
-                       const char *Name = "") {
+  CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, 
+                       InputIterator ArgEnd, const char *Name = "") {
     return(Insert(new CallInst(Callee, ArgBegin, ArgEnd, Name)));
   }
-  
-#if 0
-   CallInst *CreateCall(Value *Callee, Value *Arg0, Value *Arg1,
-                        const char *Name = "") {
-     Value *Args[] = { Arg0, Arg1 };
-     return Insert(new CallInst(Callee, Args, Args+2, Name));
-   }
-
-  // Leave this here for llvm-gcc
-  CallInst *CreateCall(Value *Callee, Value* const *Args, unsigned NumArgs,
-                       const char *Name = "") {
-    return Insert(new CallInst(Callee, Args, Args+NumArgs, Name));
-  }
-#endif
   
   SelectInst *CreateSelect(Value *C, Value *True, Value *False,
                            const char *Name = "") {
