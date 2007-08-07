@@ -121,13 +121,15 @@ equivalent hardware instructions.
 
 =head1 CODE GENERATION OPTIONS
 
-=over
+=over 4
 
 =item B<-code-model>=I<model>
 
 Choose the code model from:
 
-=over 2
+=back 
+
+=over 8
 
 =item I<default>: Target default code model
 
@@ -140,6 +142,8 @@ Choose the code model from:
 =item I<large>: Large code model
 
 =back
+
+=over 4
 
 =item B<-disable-post-RA-scheduler>
 
@@ -168,7 +172,9 @@ Don't place zero-initialized symbols into the BSS section.
 
 Instruction schedulers available (before register allocation):
 
-=over 2
+=back
+
+=over 8
 
 =item I<=default>: Best scheduler for the target 
 
@@ -186,11 +192,15 @@ Instruction schedulers available (before register allocation):
 
 =back
 
+=over 4
+
 =item B<-regalloc>=I<allocator>
 
 Register allocator to use: (default = linearscan)
 
-=over 2
+=back
+
+=over 8
 
 =item I<=bigblock>: Big-block register allocator 
 
@@ -200,11 +210,15 @@ Register allocator to use: (default = linearscan)
 
 =back
 
+=over 4
+
 =item B<-relocation-model>=I<model> 
 
 Choose relocation model from:
 
-=over 2
+=back 
+
+=over 8
 
 =item I<=default>: Target default relocation model 
 
@@ -214,11 +228,15 @@ Choose relocation model from:
 
 =back
 
+=over 4
+
 =item B<-spiller>
 
 Spiller to use: (default: local) 
 
-=over 2
+=back
+
+=over 8
 
 =item I<=simple>: simple spiller 
 
@@ -226,17 +244,19 @@ Spiller to use: (default: local)
 
 =back
 
+=over  4
+
 =item B<-x86-asm-syntax>=I<syntax>
 
 Choose style of code to emit from X86 backend: 
 
-=over 2
+=back
+
+=over 8
 
 =item I<=att>: Emit AT&T-style assembly 
 
 =item I<=intel>: Emit Intel-style assembly
-
-=back
 
 =back
 
