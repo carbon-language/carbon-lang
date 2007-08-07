@@ -109,6 +109,12 @@ public:
   bool isRestrictQualified() const {
     return ThePtr & Restrict;
   }
+  
+  /// addConst/addVolatile/addRestrict - add the specified type qual to this
+  /// QualType.
+  void addConst()    { ThePtr |= Const; }
+  void addVolatile() { ThePtr |= Volatile; }
+  void addRestrict() { ThePtr |= Restrict; }
 
   QualType getQualifiedType(unsigned TQs) const {
     return QualType(getTypePtr(), TQs);
