@@ -91,6 +91,10 @@ equivalent hardware instructions.
 Causes B<lli> to enable optimizations that may decrease floating point
 precision.
 
+=item B<-disable-excess-fp-precision>
+
+Disable optimizations that may increase floating point precision.
+
 =back
 
 =head1 EXIT STATUS
