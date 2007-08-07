@@ -67,14 +67,24 @@ operations are enabled or not.  The default set of attributes is set by the
 current CPU.  For a list of available attributes, use:
 B<llvm-as E<lt> /dev/null | llc -march=xyz -mattr=help>
 
+=item B<-fake-argv0>=I<executable>
+
+Override the C<argv[0]> value passed into the executing program.
+
 =item B<-force-interpreter>=I<{false,true}>
 
 If set to true, use the interpreter even if a just-in-time compiler is available
 for this architecture. Defaults to false.
 
-=item B<-fake-argv0>=I<executable>
+=item B<-load>=I<puginfilename>
 
-Override the C<argv[0]> value passed into the executing program.
+Causes B<lli> to load the plugin (shared object) named I<pluginfilename> and use
+it for optimization.
+
+=item B<-soft-float>
+
+Causes B<lli> to generate software floating point library calls instead of
+equivalent hardware instructions.
 
 =back
 
