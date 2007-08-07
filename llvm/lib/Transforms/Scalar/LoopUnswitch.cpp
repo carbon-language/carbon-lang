@@ -777,8 +777,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
       if (LBBI != DF->end()) {
         DominanceFrontier::DomSetType &LBSet = LBBI->second;
         for (DominanceFrontier::DomSetType::iterator LI = LBSet.begin(),
-               LE = LBSet.end(); LI != LE; ++LI) {
-          BasicBlock *B = *LI;
+               LE = LBSet.end(); LI != LE; /* NULL */) {
+          BasicBlock *B = *LI++;
           if (OutSiders.count(B))
             DF->removeFromFrontier(LBBI, B);
         }
@@ -789,8 +789,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
       if (NBBI != DF->end()) {
         DominanceFrontier::DomSetType NBSet = NBBI->second;
         for (DominanceFrontier::DomSetType::iterator NI = NBSet.begin(),
-               NE = NBSet.end(); NI != NE; ++NI) {
-          BasicBlock *B = *NI;
+               NE = NBSet.end(); NI != NE; /* NULL */) {
+          BasicBlock *B = *NI++;
           if (OutSiders.count(B))
             DF->removeFromFrontier(NBBI, B);
         }
