@@ -171,10 +171,10 @@ def DSTST : DSS_Form<374, (outs), (ins u5imm:$T, u5imm:$STRM, GPRC:$rA, GPRC:$rB
                    "dstst $rA, $rB, $STRM, $T", LdStGeneral /*FIXME*/, []>;
 
 def MFVSCR : VXForm_4<1540, (outs VRRC:$vD), (ins),
-                      "mfvcr $vD", LdStGeneral,
+                      "mfvscr $vD", LdStGeneral,
                       [(set VRRC:$vD, (int_ppc_altivec_mfvscr))]>; 
 def MTVSCR : VXForm_5<1604, (outs), (ins VRRC:$vB),
-                      "mtvcr $vB", LdStGeneral,
+                      "mtvscr $vB", LdStGeneral,
                       [(int_ppc_altivec_mtvscr VRRC:$vB)]>; 
 
 let isLoad = 1, PPC970_Unit = 2 in {  // Loads.
