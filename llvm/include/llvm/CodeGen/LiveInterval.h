@@ -85,13 +85,22 @@ namespace llvm {
     float weight;        // weight of this interval
     MachineInstr* remat; // definition if the definition rematerializable
     Ranges ranges;       // the ranges in which this register is live
+
+    /// ValueNumberInfo - If the value number definition is undefined (e.g. phi
+    /// merge point), it contains ~0,x,x. If the value number is not in use, it
+    /// contains ~1,x,x to indicate that the value # is not used. The first
+    /// entry is the instruction # of the definition, the second is the kill #.
+    /// If the third value is non-zero, then the val# is defined by a copy and
+    /// it represents the register number it is copied from.
+    struct VNInfo {
+      unsigned def;
+      unsigned kill;
+      unsigned reg;
+      VNInfo() : def(~1U), kill(~0U), reg(0) {};
+      VNInfo(unsigned d, unsigned k, unsigned r) : def(d), kill(k), reg(r) {};
+    };
   private:
-    /// ValueNumberInfo - If this value number is not defined by a copy, this
-    /// holds ~0,x.  If the value number is not in use, it contains ~1,x to
-    /// indicate that the value # is not used.  If the val# is defined by a
-    /// copy, the first entry is the instruction # of the copy, and the second
-    /// is the register number copied from.
-    SmallVector<std::pair<unsigned,unsigned>, 4> ValueNumberInfo;
+    SmallVector<VNInfo, 4> ValueNumberInfo;
   public:
 
     LiveInterval(unsigned Reg, float Weight)
@@ -134,7 +143,7 @@ namespace llvm {
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     unsigned getNextValue(unsigned MIIdx, unsigned SrcReg) {
-      ValueNumberInfo.push_back(std::make_pair(MIIdx, SrcReg));
+      ValueNumberInfo.push_back(VNInfo(MIIdx, ~0U, SrcReg));
       return ValueNumberInfo.size()-1;
     }
     
@@ -142,25 +151,29 @@ namespace llvm {
     /// specified value number.
     unsigned getInstForValNum(unsigned ValNo) const {
       //assert(ValNo < ValueNumberInfo.size());
-      return ValueNumberInfo[ValNo].first;
+      return ValueNumberInfo[ValNo].def;
+    }
+    
+    /// getKillForValNum - Return the machine instruction index that kills the
+    /// specified value number.
+    unsigned getKillForValNum(unsigned ValNo) const {
+      //assert(ValNo < ValueNumberInfo.size());
+      return ValueNumberInfo[ValNo].kill;
     }
     
     unsigned getSrcRegForValNum(unsigned ValNo) const {
       //assert(ValNo < ValueNumberInfo.size());
-      if (ValueNumberInfo[ValNo].first < ~2U)
-        return ValueNumberInfo[ValNo].second;
-      return 0;
+      return ValueNumberInfo[ValNo].reg;
     }
     
-    std::pair<unsigned, unsigned> getValNumInfo(unsigned ValNo) const {
+    VNInfo getValNumInfo(unsigned ValNo) const {
       //assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo];
     }
     
     /// setValueNumberInfo - Change the value number info for the specified
     /// value number.
-    void setValueNumberInfo(unsigned ValNo,
-                            const std::pair<unsigned, unsigned> &I){
+    void setValueNumberInfo(unsigned ValNo, const VNInfo &I) {
       ValueNumberInfo[ValNo] = I;
     }
     
@@ -247,7 +260,7 @@ namespace llvm {
     /// the intervals are not joinable, this aborts.
     void join(LiveInterval &Other, int *ValNoAssignments,
               int *RHSValNoAssignments,
-              SmallVector<std::pair<unsigned,unsigned>,16> &NewValueNumberInfo);
+              SmallVector<VNInfo,16> &NewValueNumberInfo);
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must already be in this interval in its entirety.

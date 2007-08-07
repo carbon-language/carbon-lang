@@ -281,8 +281,7 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 /// the intervals are not joinable, this aborts.
 void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
                         int *RHSValNoAssignments, 
-                        SmallVector<std::pair<unsigned, 
-                                           unsigned>, 16> &NewValueNumberInfo) {
+                        SmallVector<VNInfo, 16> &NewValueNumberInfo) {
   
   // Try to do the least amount of work possible.  In particular, if there are
   // more liverange chunks in the other set than there are in the 'this' set,
@@ -301,7 +300,8 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
   for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
-    if (ValueNumberInfo[i].first == ~2U) continue;  // tombstone value #
+    assert(ValueNumberInfo[i].def != ~2U);
+    if (ValueNumberInfo[i].def == ~1U) continue;  // tombstone value #
     if (i != (unsigned)LHSValNoAssignments[i]) {
       MustMapCurValNos = true;
       break;
@@ -463,9 +463,9 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   if (V1 == getNumValNums()-1) {
     do {
       ValueNumberInfo.pop_back();
-    } while (ValueNumberInfo.back().first == ~1U);
+    } while (ValueNumberInfo.back().def == ~1U);
   } else {
-    ValueNumberInfo[V1].first = ~1U;
+    ValueNumberInfo[V1].def = ~1U;
   }
 }
 
@@ -507,10 +507,15 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
     for (unsigned i = 0; i != getNumValNums(); ++i) {
       if (i) OS << " ";
       OS << i << "@";
-      if (ValueNumberInfo[i].first == ~0U) {
+      if (ValueNumberInfo[i].def == ~0U) {
         OS << "?";
       } else {
-        OS << ValueNumberInfo[i].first;
+        OS << ValueNumberInfo[i].def;
+      }
+      if (ValueNumberInfo[i].kill == ~0U) {
+        OS << ",?";
+      } else {
+        OS << "," << ValueNumberInfo[i].kill;
       }
     }
   }

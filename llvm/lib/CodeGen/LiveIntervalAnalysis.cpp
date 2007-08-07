@@ -351,7 +351,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     unsigned ValNum;
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
-      ValNum = interval.getNextValue(~0U, 0);
+      ValNum = interval.getNextValue(defIndex, 0);
     else
       ValNum = interval.getNextValue(defIndex, SrcReg);
     
@@ -450,7 +450,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       interval.setValueNumberInfo(1, interval.getValNumInfo(0));
       
       // Value#0 is now defined by the 2-addr instruction.
-      interval.setValueNumberInfo(0, std::make_pair(~0U, 0U));
+      interval.setValueNumberInfo(0, LiveInterval::VNInfo(DefIndex, ~0U, 0U));
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
@@ -484,7 +484,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
-        LiveRange LR(Start, End, interval.getNextValue(~0U, 0));
+        LiveRange LR(Start, End, interval.getNextValue(~0, 0));
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
@@ -498,7 +498,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned ValNum;
       unsigned SrcReg, DstReg;
       if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
-        ValNum = interval.getNextValue(~0U, 0);
+        ValNum = interval.getNextValue(defIndex, 0);
       else
         ValNum = interval.getNextValue(defIndex, SrcReg);
       
@@ -566,8 +566,7 @@ exit:
   // Already exists? Extend old live interval.
   LiveInterval::iterator OldLR = interval.FindLiveRangeContaining(start);
   unsigned Id = (OldLR != interval.end())
-    ? OldLR->ValId
-    : interval.getNextValue(SrcReg != 0 ? start : ~0U, SrcReg);
+    ? OldLR->ValId : interval.getNextValue(start, SrcReg);
   LiveRange LR(start, end, Id);
   interval.addRange(LR);
   DOUT << " +" << LR << '\n';
@@ -634,7 +633,7 @@ exit:
     }
   }
 
-  LiveRange LR(start, end, interval.getNextValue(~0U, 0));
+  LiveRange LR(start, end, interval.getNextValue(start, 0));
   DOUT << " +" << LR << '\n';
   interval.addRange(LR);
 }
