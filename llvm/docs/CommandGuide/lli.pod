@@ -72,12 +72,9 @@ B<llvm-as E<lt> /dev/null | llc -march=xyz -mattr=help>
 If set to true, use the interpreter even if a just-in-time compiler is available
 for this architecture. Defaults to false.
 
-=item B<-f>=I<name>
+=item B<-fake-argv0>=I<executable>
 
-Call the function named I<name> to start the program.  Note: The
-function is assumed to have the C signature C<int> I<name> C<(int,
-char **, char **)>.  If you try to use this option to call a function of
-incompatible type, undefined behavior may result. Defaults to C<main>.
+Override the C<argv[0]> value passed into the executing program.
 
 =back
 
