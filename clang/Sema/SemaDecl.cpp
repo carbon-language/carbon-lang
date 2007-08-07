@@ -465,8 +465,31 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   
   // FIXME: Handle storage class (auto, register). No declarator?
   // TODO: Chain to previous parameter with the prevdeclarator chain?
-  ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, 
-                                     QualType::getFromOpaquePtr(PI.TypeInfo), 
+
+  // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
+  // Doing the promotion here has a win and a loss. The win is the type for
+  // both Decl's and DeclRefExpr's will match (a convenient invariant for the
+  // code generator). The loss is the orginal type isn't preserved. For example:
+  //
+  // void func(int parmvardecl[5]) { // convert "int [5]" to "int *"
+  //    int blockvardecl[5];
+  //    sizeof(parmvardecl);  // size == 4
+  //    sizeof(blockvardecl); // size == 20
+  // }
+  //
+  // For expressions, all implicit conversions are captured using the
+  // ImplicitCastExpr AST node (we have no such mechanism for Decl's).
+  //
+  // FIXME: If a source translation tool needs to see the original type, then
+  // we need to consider storing both types (in ParmVarDecl)...
+  // 
+  QualType parmDeclType = QualType::getFromOpaquePtr(PI.TypeInfo);
+  if (const ArrayType *AT = parmDeclType->getAsArrayType())
+    parmDeclType = Context.getPointerType(AT->getElementType());
+  else if (parmDeclType->isFunctionType())
+    parmDeclType = Context.getPointerType(parmDeclType);
+  
+  ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, parmDeclType, 
                                      VarDecl::None, 0);
 
   // If this has an identifier, add it to the scope stack.

@@ -73,32 +73,6 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
       return Diag(Loc, diag::err_undeclared_var_use, II.getName());
     }
   }
-  if (ParmVarDecl *PD = dyn_cast<ParmVarDecl>(D)) {
-    // For ParmVarDecl's, we perform the default function/array conversion 
-    // (C99 6.7.5.3p[7,8]).
-    QualType DeclRefType;
-    if (const ArrayType *AT = PD->getType()->getAsArrayType())
-      DeclRefType = Context.getPointerType(AT->getElementType());
-    else if (PD->getType()->isFunctionType())
-      DeclRefType = Context.getPointerType(PD->getType());
-    else 
-      DeclRefType = PD->getType();
-    return new DeclRefExpr(PD, DeclRefType, Loc);    
-  }
-  // The function/arrray conversion cannot be done for ValueDecl's in general. 
-  // Consider this example:
-  //
-  // void func(int parmvardecl[5]) {
-  //    int blockvardecl[5];
-  //    sizeof(parmvardecl);  // type is "int *" (converted from "int [5]")
-  //    sizeof(blockvardecl); // type is "int [5]" (cannot convert to "int *")
-  // }
-  // 
-  // If we converted blockvardecl (at this level) it would be be incorrect
-  // for the sizeof and address of (&) operators (see C99 6.3.2.1p[2-4]).
-  // This doesn't matter for parmvardecl, since arrays are always passed by 
-  // reference (i.e. the [5] on parmvardecl is superfluous).
-  //
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     return new DeclRefExpr(VD, VD->getType(), Loc);
   if (isa<TypedefDecl>(D))
