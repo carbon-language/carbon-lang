@@ -642,6 +642,10 @@ namespace {
     
     DenseMap<BasicBlock*, ValueNumberedSet> availableOut;
     
+    typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> > PhiMapType;
+    PhiMapType phiMap;
+    
+    
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -780,6 +784,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     return first;
   }
 
+  phiMap[orig->getPointerOperand()].insert(PN);
   return PN;
 }
 
@@ -791,6 +796,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   MD.getNonLocalDependency(L, deps);
   
   DenseMap<BasicBlock*, Value*> repl;
+  
   for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(), E = deps.end();
        I != E; ++I)
     if (I->second == MemoryDependenceAnalysis::None) {
@@ -799,17 +805,32 @@ bool GVN::processNonLocalLoad(LoadInst* L,
       continue;
     }else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
       if (S->getPointerOperand() == L->getPointerOperand())
-        repl.insert(std::make_pair(I->first, S->getOperand(0)));
+        repl[I->first] = S->getOperand(0);
       else
         return false;
     } else if (LoadInst* LD = dyn_cast<LoadInst>(I->second)) {
       if (LD->getPointerOperand() == L->getPointerOperand())
-        repl.insert(std::make_pair(I->first, LD));
+        repl[I->first] = LD;
       else
         return false;
     } else {
       return false;
     }
+  
+  SmallPtrSet<Instruction*, 4>& p = phiMap[L->getPointerOperand()];
+  for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
+       I != E; ++I) {
+    if ((*I)->getParent() == L->getParent()) {
+      MD.removeInstruction(L);
+      L->replaceAllUsesWith(*I);
+      toErase.push_back(L);
+      NumGVNLoad++;
+      
+      return true;
+    } else {
+      repl.insert(std::make_pair((*I)->getParent(), *I));
+    }
+  }
   
   SmallPtrSet<BasicBlock*, 4> visited;
   Value* v = GetValueForBlock(L->getParent(), L, repl, true);
@@ -817,6 +838,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   MD.removeInstruction(L);
   L->replaceAllUsesWith(v);
   toErase.push_back(L);
+  NumGVNLoad++;
 
   return true;
 }
@@ -917,6 +939,7 @@ bool GVN::runOnFunction(Function &F) {
   // Clean out global sets from any previous functions
   VN.clear();
   availableOut.clear();
+  phiMap.clear();
  
   bool changed_function = false;
   
