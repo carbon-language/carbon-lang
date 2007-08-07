@@ -201,7 +201,7 @@ bool LowerGC::runOnFunction(Function &F) {
                 
                 // It sure would be nice to pass op_begin()+1,
                 // op_begin()+2 but it runs into trouble with
-                // CallInst::init's &*ierator, which requires a
+                // CallInst::init's &*iterator, which requires a
                 // conversion from Use* to Value*.  The conversion
                 // from Use to Value * is not useful because the
                 // memory for Value * won't be contiguous.
