@@ -479,60 +479,60 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // If we are emitting FP stack code, scan the basic block to determine if this
   // block defines any FP values.  If so, put an FP_REG_KILL instruction before
   // the terminator of the block.
-  if (!Subtarget->hasSSE2()) {
-    // Note that FP stack instructions *are* used in SSE code when returning
-    // values, but these are not live out of the basic block, so we don't need
-    // an FP_REG_KILL in this case either.
-    bool ContainsFPCode = false;
-    
-    // Scan all of the machine instructions in these MBBs, checking for FP
-    // stores.
-    MachineFunction::iterator MBBI = FirstMBB;
-    do {
-      for (MachineBasicBlock::iterator I = MBBI->begin(), E = MBBI->end();
-           !ContainsFPCode && I != E; ++I) {
-        if (I->getNumOperands() != 0 && I->getOperand(0).isRegister()) {
-          const TargetRegisterClass *clas;
-          for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
-            if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
-                MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
-                ((clas = RegMap->getRegClass(I->getOperand(0).getReg())) == 
-                   X86::RFP32RegisterClass ||
-                 clas == X86::RFP64RegisterClass ||
-                 clas == X86::RFP80RegisterClass)) {
-              ContainsFPCode = true;
-              break;
-            }
-          }
-        }
-      }
-    } while (!ContainsFPCode && &*(MBBI++) != BB);
-    
-    // Check PHI nodes in successor blocks.  These PHI's will be lowered to have
-    // a copy of the input value in this block.
-    if (!ContainsFPCode) {
-      // Final check, check LLVM BB's that are successors to the LLVM BB
-      // corresponding to BB for FP PHI nodes.
-      const BasicBlock *LLVMBB = BB->getBasicBlock();
-      const PHINode *PN;
-      for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
-           !ContainsFPCode && SI != E; ++SI) {
-        for (BasicBlock::const_iterator II = SI->begin();
-             (PN = dyn_cast<PHINode>(II)); ++II) {
-          if (PN->getType()->isFloatingPoint()) {
+
+  // Note that FP stack instructions *are* used in SSE code for long double,
+  // so we do need this check.
+  bool ContainsFPCode = false;
+
+  // Scan all of the machine instructions in these MBBs, checking for FP
+  // stores.  (RFP32 and RFP64 will not exist in SSE mode, but RFP80 might.)
+  MachineFunction::iterator MBBI = FirstMBB;
+  do {
+    for (MachineBasicBlock::iterator I = MBBI->begin(), E = MBBI->end();
+         !ContainsFPCode && I != E; ++I) {
+      if (I->getNumOperands() != 0 && I->getOperand(0).isRegister()) {
+        const TargetRegisterClass *clas;
+        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
+          if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
+              MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
+              ((clas = RegMap->getRegClass(I->getOperand(0).getReg())) == 
+                 X86::RFP32RegisterClass ||
+               clas == X86::RFP64RegisterClass ||
+               clas == X86::RFP80RegisterClass)) {
             ContainsFPCode = true;
             break;
           }
         }
       }
     }
+  } while (!ContainsFPCode && &*(MBBI++) != BB);
 
-    // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
-    if (ContainsFPCode) {
-      BuildMI(*BB, BB->getFirstTerminator(),
-              TM.getInstrInfo()->get(X86::FP_REG_KILL));
-      ++NumFPKill;
+  // Check PHI nodes in successor blocks.  These PHI's will be lowered to have
+  // a copy of the input value in this block.  In SSE mode, we only care about
+  // 80-bit values.
+  if (!ContainsFPCode) {
+    // Final check, check LLVM BB's that are successors to the LLVM BB
+    // corresponding to BB for FP PHI nodes.
+    const BasicBlock *LLVMBB = BB->getBasicBlock();
+    const PHINode *PN;
+    for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
+         !ContainsFPCode && SI != E; ++SI) {
+      for (BasicBlock::const_iterator II = SI->begin();
+           (PN = dyn_cast<PHINode>(II)); ++II) {
+        if (PN->getType()==Type::X86_FP80Ty ||
+            (!Subtarget->hasSSE2() && PN->getType()->isFloatingPoint())) {
+          ContainsFPCode = true;
+          break;
+        }
+      }
     }
+  }
+
+  // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
+  if (ContainsFPCode) {
+    BuildMI(*BB, BB->getFirstTerminator(),
+            TM.getInstrInfo()->get(X86::FP_REG_KILL));
+    ++NumFPKill;
   }
 }
 
