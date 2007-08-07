@@ -143,7 +143,8 @@ LoopPass *createLoopRotatePass();
 
 //===----------------------------------------------------------------------===//
 //
-// LoopIndexSplit - This pass splits loop
+// LoopIndexSplit - This pass divides loop's iteration range by spliting loop
+// such that each individual loop is executed efficiently.
 //
 LoopPass *createLoopIndexSplitPass();
 
