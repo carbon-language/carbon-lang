@@ -22,13 +22,27 @@ program from standard input.
 The optional I<args> specified on the command line are passed to the program as
 arguments.
 
-=head1 OPTIONS
+=head1 GENERAL OPTIONS
 
 =over
+
+=item B<-fake-argv0>=I<executable>
+
+Override the C<argv[0]> value passed into the executing program.
+
+=item B<-force-interpreter>=I<{false,true}>
+
+If set to true, use the interpreter even if a just-in-time compiler is available
+for this architecture. Defaults to false.
 
 =item B<-help>
 
 Print a summary of command line options.
+
+=item B<-load>=I<puginfilename>
+
+Causes B<lli> to load the plugin (shared object) named I<pluginfilename> and use
+it for optimization.
 
 =item B<-stats>
 
@@ -39,6 +53,12 @@ the just-in-time compiler, at present.
 
 Record the amount of time needed for each code-generation pass and print it to
 standard error.
+
+=back 
+
+=head1 TARGET OPTIONS
+
+=over 
 
 =item B<-mtriple>=I<target triple>
 
@@ -67,33 +87,31 @@ operations are enabled or not.  The default set of attributes is set by the
 current CPU.  For a list of available attributes, use:
 B<llvm-as E<lt> /dev/null | llc -march=xyz -mattr=help>
 
-=item B<-fake-argv0>=I<executable>
+=back
 
-Override the C<argv[0]> value passed into the executing program.
 
-=item B<-force-interpreter>=I<{false,true}>
+=head1 FLOATING POINT OPTIONS
 
-If set to true, use the interpreter even if a just-in-time compiler is available
-for this architecture. Defaults to false.
+=over 
 
-=item B<-load>=I<puginfilename>
+=item B<-disable-excess-fp-precision>
 
-Causes B<lli> to load the plugin (shared object) named I<pluginfilename> and use
-it for optimization.
+Disable optimizations that may increase floating point precision.
 
-=item B<-soft-float>
+=item B<-enable-finite-only-fp-math>
 
-Causes B<lli> to generate software floating point library calls instead of
-equivalent hardware instructions.
+Enable optimizations that assumes only finite floating point math. That is,
+there is no NAN or Inf values.
 
 =item B<-enable-unsafe-fp-math>
 
 Causes B<lli> to enable optimizations that may decrease floating point
 precision.
 
-=item B<-disable-excess-fp-precision>
+=item B<-soft-float>
 
-Disable optimizations that may increase floating point precision.
+Causes B<lli> to generate software floating point library calls instead of
+equivalent hardware instructions.
 
 =back
 
