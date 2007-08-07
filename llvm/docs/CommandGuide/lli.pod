@@ -54,6 +54,10 @@ the just-in-time compiler, at present.
 Record the amount of time needed for each code-generation pass and print it to
 standard error.
 
+=item B<-version>
+
+Print out the version of B<lli> and exit without doing anything else.
+
 =back 
 
 =head1 TARGET OPTIONS
@@ -123,14 +127,16 @@ equivalent hardware instructions.
 
 Choose the code model from:
 
-=over
+=over 2
 
 =item I<default>: Target default code model
 
 =item I<small>: Small code model
 
 =item I<kernel>: Kernel code model
+
 =item I<medium>: Medium code model
+
 =item I<large>: Large code model
 
 =back
@@ -162,7 +168,7 @@ Don't place zero-initialized symbols into the BSS section.
 
 Instruction schedulers available (before register allocation):
 
-=over
+=over 2
 
 =item I<=default>: Best scheduler for the target 
 
@@ -184,7 +190,7 @@ Instruction schedulers available (before register allocation):
 
 Register allocator to use: (default = linearscan)
 
-=over
+=over 2
 
 =item I<=bigblock>: Big-block register allocator 
 
@@ -198,7 +204,7 @@ Register allocator to use: (default = linearscan)
 
 Choose relocation model from:
 
-=over
+=over 2
 
 =item I<=default>: Target default relocation model 
 
@@ -212,7 +218,7 @@ Choose relocation model from:
 
 Spiller to use: (default: local) 
 
-=over
+=over 2
 
 =item I<=simple>: simple spiller 
 
@@ -224,7 +230,7 @@ Spiller to use: (default: local)
 
 Choose style of code to emit from X86 backend: 
 
-=over
+=over 2
 
 =item I<=att>: Emit AT&T-style assembly 
 
