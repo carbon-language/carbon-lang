@@ -38,11 +38,12 @@ class MemoryDependenceAnalysis : public FunctionPass {
 
     depMapType depGraphLocal;
 
-    typedef std::multimap<Instruction*, Instruction*> reverseDepMapType;
+    typedef DenseMap<Instruction*,
+                     SmallPtrSet<Instruction*, 4> > reverseDepMapType;
     reverseDepMapType reverseDep;
   
     Instruction* getCallSiteDependency(CallSite C, Instruction* start,
-                                       bool local = true);
+                                       BasicBlock* block);
     void nonLocalHelper(Instruction* query, BasicBlock* block,
                         DenseMap<BasicBlock*, Value*>& resp);
   public:
