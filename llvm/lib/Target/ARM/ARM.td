@@ -102,11 +102,13 @@ def ARMInstrInfo : InstrInfo {
   let TSFlagsFields = ["AddrModeBits",
                        "SizeFlag",
                        "IndexModeBits",
-                       "Opcode"];
+                       "Opcode",
+                       "Form"];
   let TSFlagsShifts = [0,
                        4,
                        7,
-                       9];
+                       9,
+                       13];
 }
 
 //===----------------------------------------------------------------------===//

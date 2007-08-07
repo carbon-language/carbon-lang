@@ -34,6 +34,7 @@ namespace ARMII {
     // so that we can tell if we forgot to set a value.
 
     AddrModeMask  = 0xf,
+    AddrModeNone  = 0,
     AddrMode1     = 1,
     AddrMode2     = 2,
     AddrMode3     = 3,
@@ -61,7 +62,54 @@ namespace ARMII {
     
     // Opcode
     OpcodeShift   = 9,
-    OpcodeMask    = 0xf << OpcodeShift
+    OpcodeMask    = 0xf << OpcodeShift,
+    
+    // Format
+    FormShift   = 13,
+    FormMask    = 31 << FormShift,
+
+// Pseudo instructions
+    Pseudo      = 1 << FormShift,
+
+// Multiply instructions
+    MulFrm      = 2 << FormShift,
+
+// Branch instructions
+    Branch      = 3 << FormShift,
+    BranchMisc  = 4 << FormShift,
+
+// Data Processing instructions
+    DPRdIm      = 5 << FormShift,
+    DPRdReg     = 6 << FormShift,
+    DPRdSoReg   = 7 << FormShift,
+    DPRdMisc    = 8 << FormShift,
+
+    DPRnIm      = 9 << FormShift,
+    DPRnReg     = 10 << FormShift,
+    DPRnSoReg   = 11 << FormShift,
+
+    DPRIm       = 12 << FormShift,
+    DPRReg      = 13 << FormShift,
+    DPRSoReg    = 14 << FormShift,
+
+    DPRImS      = 15 << FormShift,
+    DPRRegS     = 16 << FormShift,
+    DPRSoRegS   = 17 << FormShift,
+
+// Load and Store
+    LdFrm       = 18 << FormShift,
+    StFrm       = 19 << FormShift,
+
+// Miscellaneous arithmetic instructions
+    ArithMisc   = 20 << FormShift,
+
+// Thumb format
+    ThumbFrm    = 21 << FormShift,
+
+// VFP format
+    VPFFrm      = 22 << FormShift
+    
+
   };
 }
 

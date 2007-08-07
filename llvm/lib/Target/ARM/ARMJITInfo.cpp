@@ -127,5 +127,23 @@ void *ARMJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
 /// referenced global symbols.
 void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase) {
-
+  for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
+    void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
+    intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
+    switch ((ARM::RelocationType)MR->getRelocationType()) {
+    case ARM::reloc_arm_relative: {
+      // PC relative relocation
+      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      break;
+    }
+    case ARM::reloc_arm_absolute:
+      break;
+    case ARM::reloc_arm_branch: {
+      // relocation to b and bl instructions
+      ResultPtr = (ResultPtr-(intptr_t)RelocPos) >> 2;
+      *((unsigned*)RelocPos) |= ResultPtr;
+      break;
+    }
+    }
+  }
 }

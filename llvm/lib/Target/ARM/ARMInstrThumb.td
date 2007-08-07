@@ -32,7 +32,7 @@ class ThumbV5Pat<dag pattern, dag result> : Pat<pattern, result> {
 class ThumbI<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
              string asm, string cstr, list<dag> pattern>
   // FIXME: Set all opcodes to 0 for now.
-  : InstARM<0, am, sz, IndexModeNone, cstr> {
+  : InstARM<0, am, sz, IndexModeNone, ThumbFrm, cstr> {
   let OutOperandList = outs;
   let InOperandList = ins;
   let AsmString   = asm;

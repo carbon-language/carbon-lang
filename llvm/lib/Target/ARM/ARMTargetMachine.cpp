@@ -37,7 +37,7 @@ namespace {
 /// ThumbTargetMachine - Create an Thumb architecture model.
 ///
 unsigned ThumbTargetMachine::getJITMatchQuality() {
-#if defined(__arm__)
+#if defined(__thumb__)
   return 10;
 #endif
   return 0;
@@ -87,7 +87,7 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS,
     TLInfo(*this) {}
 
 unsigned ARMTargetMachine::getJITMatchQuality() {
-#if defined(__thumb__)
+#if defined(__arm__)
   return 10;
 #endif
   return 0;
