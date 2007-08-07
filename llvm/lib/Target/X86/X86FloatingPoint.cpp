@@ -401,10 +401,13 @@ static const TableEntry OpcodeTable[] = {
   { X86::ILD_Fp64m80  , X86::ILD_F64m  },
   { X86::ISTT_Fp16m32 , X86::ISTT_FP16m},
   { X86::ISTT_Fp16m64 , X86::ISTT_FP16m},
+  { X86::ISTT_Fp16m80 , X86::ISTT_FP16m},
   { X86::ISTT_Fp32m32 , X86::ISTT_FP32m},
   { X86::ISTT_Fp32m64 , X86::ISTT_FP32m},
+  { X86::ISTT_Fp32m80 , X86::ISTT_FP32m},
   { X86::ISTT_Fp64m32 , X86::ISTT_FP64m},
   { X86::ISTT_Fp64m64 , X86::ISTT_FP64m},
+  { X86::ISTT_Fp64m80 , X86::ISTT_FP64m},
   { X86::IST_Fp16m32  , X86::IST_F16m  },
   { X86::IST_Fp16m64  , X86::IST_F16m  },
   { X86::IST_Fp16m80  , X86::IST_F16m  },
@@ -616,6 +619,9 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
        MI->getOpcode() == X86::ISTT_Fp16m64 ||
        MI->getOpcode() == X86::ISTT_Fp32m64 ||
        MI->getOpcode() == X86::ISTT_Fp64m64 ||
+       MI->getOpcode() == X86::ISTT_Fp16m80 ||
+       MI->getOpcode() == X86::ISTT_Fp32m80 ||
+       MI->getOpcode() == X86::ISTT_Fp64m80 ||
        MI->getOpcode() == X86::ST_FpP80m)) {
     duplicateToTop(Reg, 7 /*temp register*/, I);
   } else {

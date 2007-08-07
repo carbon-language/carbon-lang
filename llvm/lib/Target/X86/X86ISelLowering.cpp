@@ -4603,7 +4603,10 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
   case X86::FP32_TO_INT64_IN_MEM:
   case X86::FP64_TO_INT16_IN_MEM:
   case X86::FP64_TO_INT32_IN_MEM:
-  case X86::FP64_TO_INT64_IN_MEM: {
+  case X86::FP64_TO_INT64_IN_MEM:
+  case X86::FP80_TO_INT16_IN_MEM:
+  case X86::FP80_TO_INT32_IN_MEM:
+  case X86::FP80_TO_INT64_IN_MEM: {
     // Change the floating point control register to use "round towards zero"
     // mode when truncating to an integer value.
     MachineFunction *F = BB->getParent();
@@ -4636,6 +4639,9 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     case X86::FP64_TO_INT16_IN_MEM: Opc = X86::IST_Fp16m64; break;
     case X86::FP64_TO_INT32_IN_MEM: Opc = X86::IST_Fp32m64; break;
     case X86::FP64_TO_INT64_IN_MEM: Opc = X86::IST_Fp64m64; break;
+    case X86::FP80_TO_INT16_IN_MEM: Opc = X86::IST_Fp16m80; break;
+    case X86::FP80_TO_INT32_IN_MEM: Opc = X86::IST_Fp32m80; break;
+    case X86::FP80_TO_INT64_IN_MEM: Opc = X86::IST_Fp64m80; break;
     }
 
     X86AddressMode AM;

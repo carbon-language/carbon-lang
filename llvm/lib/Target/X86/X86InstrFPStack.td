@@ -98,6 +98,18 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
                               (outs), (ins i64mem:$dst, RFP64:$src),
                               "#FP64_TO_INT64_IN_MEM PSEUDO!",
                               [(X86fp_to_i64mem RFP64:$src, addr:$dst)]>;
+  def FP80_TO_INT16_IN_MEM : I<0, Pseudo,
+                              (outs), (ins i16mem:$dst, RFP80:$src),
+                              "#FP80_TO_INT16_IN_MEM PSEUDO!",
+                              [(X86fp_to_i16mem RFP80:$src, addr:$dst)]>;
+  def FP80_TO_INT32_IN_MEM : I<0, Pseudo,
+                              (outs), (ins i32mem:$dst, RFP80:$src),
+                              "#FP80_TO_INT32_IN_MEM PSEUDO!",
+                              [(X86fp_to_i32mem RFP80:$src, addr:$dst)]>;
+  def FP80_TO_INT64_IN_MEM : I<0, Pseudo,
+                              (outs), (ins i64mem:$dst, RFP80:$src),
+                              "#FP80_TO_INT64_IN_MEM PSEUDO!",
+                              [(X86fp_to_i64mem RFP80:$src, addr:$dst)]>;
 }
 
 let isTerminator = 1 in
@@ -414,6 +426,15 @@ def ISTT_Fp32m64 : FpI_<(outs), (ins i32mem:$op, RFP64:$src), OneArgFP,
 def ISTT_Fp64m64 : FpI_<(outs), (ins i64mem:$op, RFP64:$src), OneArgFP,
                     [(X86fp_to_i64mem RFP64:$src, addr:$op)]>,
                     Requires<[HasSSE3]>;
+def ISTT_Fp16m80 : FpI_<(outs), (ins i16mem:$op, RFP80:$src), OneArgFP,
+                    [(X86fp_to_i16mem RFP80:$src, addr:$op)]>,
+                    Requires<[HasSSE3]>;
+def ISTT_Fp32m80 : FpI_<(outs), (ins i32mem:$op, RFP80:$src), OneArgFP,
+                    [(X86fp_to_i32mem RFP80:$src, addr:$op)]>,
+                    Requires<[HasSSE3]>;
+def ISTT_Fp64m80 : FpI_<(outs), (ins i64mem:$op, RFP80:$src), OneArgFP,
+                    [(X86fp_to_i64mem RFP80:$src, addr:$op)]>,
+                    Requires<[HasSSE3]>;
 
 def ISTT_FP16m : FPI<0xDF, MRM1m, (outs), (ins i16mem:$dst), "fisttp{s}\t$dst">;
 def ISTT_FP32m : FPI<0xDB, MRM1m, (outs), (ins i32mem:$dst), "fisttp{l}\t$dst">;
@@ -498,6 +519,9 @@ def : Pat<(X86fld addr:$src, f80), (LD_Fp80m addr:$src)>;
 def : Pat<(X86fst RFP32:$src, addr:$op, f32), (ST_Fp32m addr:$op, RFP32:$src)>;
 def : Pat<(X86fst RFP64:$src, addr:$op, f32), (ST_Fp64m32 addr:$op, RFP64:$src)>;
 def : Pat<(X86fst RFP64:$src, addr:$op, f64), (ST_Fp64m addr:$op, RFP64:$src)>;
+def : Pat<(X86fst RFP80:$src, addr:$op, f32), (ST_Fp80m32 addr:$op, RFP80:$src)>;
+def : Pat<(X86fst RFP80:$src, addr:$op, f64), (ST_Fp80m64 addr:$op, RFP80:$src)>;
+def : Pat<(X86fst RFP80:$src, addr:$op, f80), (ST_FpP80m addr:$op, RFP80:$src)>;
 
 // Floating point constant -0.0 and -1.0
 def : Pat<(f32 fpimmneg0), (CHS_Fp32 (LD_Fp032))>, Requires<[FPStack]>;
