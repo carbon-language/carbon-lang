@@ -121,29 +121,17 @@ equivalent hardware instructions.
 
 =head1 CODE GENERATION OPTIONS
 
-=over 4
+=over
 
 =item B<-code-model>=I<model>
 
 Choose the code model from:
 
-=back 
-
-=over 8
-
-=item I<default>: Target default code model
-
-=item I<small>: Small code model
-
-=item I<kernel>: Kernel code model
-
-=item I<medium>: Medium code model
-
-=item I<large>: Large code model
-
-=back
-
-=over 4
+    default: Target default code model
+    small: Small code model
+    kernel: Kernel code model
+    medium: Medium code model
+    large: Large code model
 
 =item B<-disable-post-RA-scheduler>
 
@@ -172,91 +160,43 @@ Don't place zero-initialized symbols into the BSS section.
 
 Instruction schedulers available (before register allocation):
 
-=back
-
-=over 8
-
-=item I<=default>: Best scheduler for the target 
-
-=item I<=none>: No scheduling: breadth first sequencing 
-
-=item I<=simple>: Simple two pass scheduling: minimize critical path and maximize processor utilization 
-
-=item I<=simple-noitin>: Simple two pass scheduling: Same as simple except using generic latency 
-
-=item I<=list-burr>: Bottom-up register reduction list scheduling 
-
-=item I<=list-tdrr>: Top-down register reduction list scheduling 
-
-=item I<=list-td>: Top-down list scheduler -print-machineinstrs - Print generated machine code
-
-=back
-
-=over 4
+    =default: Best scheduler for the target 
+    =none: No scheduling: breadth first sequencing 
+    =simple: Simple two pass scheduling: minimize critical path and maximize processor utilization 
+    =simple-noitin: Simple two pass scheduling: Same as simple except using generic latency 
+    =list-burr: Bottom-up register reduction list scheduling 
+    =list-tdrr: Top-down register reduction list scheduling 
+    =list-td: Top-down list scheduler -print-machineinstrs - Print generated machine code
 
 =item B<-regalloc>=I<allocator>
 
 Register allocator to use: (default = linearscan)
 
-=back
-
-=over 8
-
-=item I<=bigblock>: Big-block register allocator 
-
-=item I<=linearscan>: linear scan register allocator =local -   local register allocator 
-
-=item I<=simple>: simple register allocator 
-
-=back
-
-=over 4
+    =bigblock: Big-block register allocator 
+    =linearscan: linear scan register allocator =local -   local register allocator 
+    =simple: simple register allocator 
 
 =item B<-relocation-model>=I<model> 
 
 Choose relocation model from:
 
-=back 
-
-=over 8
-
-=item I<=default>: Target default relocation model 
-
-=item I<=static>: Non-relocatable code =pic -   Fully relocatable, position independent code 
-
-=item I<=dynamic-no-pic>: Relocatable external references, non-relocatable code 
-
-=back
-
-=over 4
+    =default: Target default relocation model 
+    =static: Non-relocatable code =pic -   Fully relocatable, position independent code 
+    =dynamic-no-pic: Relocatable external references, non-relocatable code 
 
 =item B<-spiller>
 
 Spiller to use: (default: local) 
 
-=back
-
-=over 8
-
-=item I<=simple>: simple spiller 
-
-=item I<=local>: local spiller 
-
-=back
-
-=over  4
+    =simple: simple spiller 
+    =local: local spiller 
 
 =item B<-x86-asm-syntax>=I<syntax>
 
 Choose style of code to emit from X86 backend: 
 
-=back
-
-=over 8
-
-=item I<=att>: Emit AT&T-style assembly 
-
-=item I<=intel>: Emit Intel-style assembly
+    =att: Emit AT&T-style assembly 
+    =intel: Emit Intel-style assembly
 
 =back
 
