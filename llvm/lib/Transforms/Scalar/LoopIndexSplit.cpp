@@ -238,8 +238,7 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
   Instruction *NSplitCond = BinaryOperator::create(Instruction::And,
                                                    C1, C2, "lisplit", Terminator);
   SplitCondition->replaceAllUsesWith(NSplitCond);
-  SplitCondition->removeFromParent();
-  delete SplitCondition;
+  SplitCondition->eraseFromParent();
 
   // As a first step to break this loop, remove Latch to Header edge.
   BasicBlock *LatchSucc = NULL;
@@ -263,8 +262,7 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
       continue;
 
     I->replaceAllUsesWith(UndefValue::get(I->getType()));
-    I->removeFromParent();
-    delete I;
+    I->eraseFromParent();
   }
 
   LPM.deleteLoopFromQueue(L);
