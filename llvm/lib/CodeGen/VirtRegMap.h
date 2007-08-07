@@ -25,6 +25,7 @@
 
 namespace llvm {
   class MachineInstr;
+  class MachineFunction;
   class TargetInstrInfo;
 
   class VirtRegMap {
