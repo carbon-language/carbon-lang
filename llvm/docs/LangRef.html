@@ -296,25 +296,27 @@ the parser.</p>
 
 <div class="doc_text">
 
-<p>LLVM uses three different forms of identifiers, for different
-purposes:</p>
+  <p>LLVM identifiers come in two basic types: global and local. Global
+  identifiers (functions, global variables) begin with the @ character. Local
+  identifiers (register names, types) begin with the % character. Additionally,
+  there are three different formats for identifiers, for different purposes:
 
 <ol>
-  <li>Named values are represented as a string of characters with a '%' prefix.
-  For example, %foo, %DivisionByZero, %a.really.long.identifier.  The actual
-  regular expression used is '<tt>%[a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
+  <li>Named values are represented as a string of characters with their prefix.
+  For example, %foo, @DivisionByZero, %a.really.long.identifier.  The actual
+  regular expression used is '<tt>[%@][a-zA-Z$._][a-zA-Z$._0-9]*</tt>'.
   Identifiers which require other characters in their names can be surrounded
-  with quotes.  In this way, anything except a <tt>&quot;</tt> character can be used
-  in a name.</li>
+  with quotes.  In this way, anything except a <tt>&quot;</tt> character can 
+  be used in a named value.</li>
 
-  <li>Unnamed values are represented as an unsigned numeric value with a '%'
-  prefix.  For example, %12, %2, %44.</li>
+  <li>Unnamed values are represented as an unsigned numeric value with their
+  prefix.  For example, %12, @2, %44.</li>
 
   <li>Constants, which are described in a <a href="#constants">section about
   constants</a>, below.</li>
 </ol>
 
-<p>LLVM requires that values start with a '%' sign for two reasons: Compilers
+<p>LLVM requires that values start with a prefix for two reasons: Compilers
 don't need to worry about name clashes with reserved words, and the set of
 reserved words may be expanded in the future without penalty.  Additionally,
 unnamed identifiers allow a compiler to quickly come up with a temporary
@@ -327,7 +329,7 @@ languages. There are keywords for different opcodes
  '<tt><a href="#i_ret">ret</a></tt>', etc...), for primitive type names ('<tt><a
 href="#t_void">void</a></tt>', '<tt><a href="#t_primitive">i32</a></tt>', etc...),
 and others.  These reserved words cannot conflict with variable names, because
-none of them start with a '%' character.</p>
+none of them start with a prefix character ('%' or '@').</p>
 
 <p>Here is an example of LLVM code to multiply the integer variable
 '<tt>%X</tt>' by 8:</p>
