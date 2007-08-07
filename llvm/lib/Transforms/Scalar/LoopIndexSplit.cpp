@@ -13,8 +13,8 @@
 
 #define DEBUG_TYPE "loop-index-split"
 
-#include "llvm/Function.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Function.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/Compiler.h"
@@ -83,6 +83,9 @@ namespace {
     
     // This compare instruction compares IndVar against SplitValue.
     ICmpInst *SplitCondition;
+
+    // Loop exit condition.
+    ICmpInst *ExitCondition;
   };
 
   char LoopIndexSplit::ID = 0;
@@ -228,7 +231,7 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
   //      c1 = icmp uge i32 SplitValue, StartValue
   //      c2 = icmp ult i32 vSplitValue, ExitValue
   //      and i32 c1, c2 
-  bool SignedPredicate = SplitCondition->isSignedPredicate();
+  bool SignedPredicate = ExitCondition->isSignedPredicate();
   Instruction *C1 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
                                  SplitValue, StartValue, "lisplit", Terminator);
@@ -303,7 +306,6 @@ bool LoopIndexSplit::safeHeader(BasicBlock *Header) {
 // loop may not be eliminated. This is used by processOneIterationLoop().
 bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
 
-  Instruction *ExitCondition = NULL;
   Instruction *IndVarIncrement = NULL;
       
   for (BasicBlock::iterator BI = ExitBlock->begin(), BE = ExitBlock->end();
@@ -339,11 +341,11 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
     // I is an Exit condition if next instruction is block terminator.
     // Exit condition is OK if it compares loop invariant exit value,
     // which is checked below.
-    else if (isa<ICmpInst>(I)) {
+    else if (ICmpInst *EC = dyn_cast<ICmpInst>(I)) {
       ++BI;
       Instruction *N = BI;
       if (N == ExitBlock->getTerminator()) {
-        ExitCondition = I;
+        ExitCondition = EC;
         break;
       }
     }
