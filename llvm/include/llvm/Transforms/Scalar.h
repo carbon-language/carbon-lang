@@ -141,6 +141,12 @@ LoopPass *createLoopUnrollPass();
 //
 LoopPass *createLoopRotatePass();
 
+//===----------------------------------------------------------------------===//
+//
+// LoopIndexSplit - This pass splits loop
+//
+LoopPass *createLoopIndexSplitPass();
+
 
 //===----------------------------------------------------------------------===//
 //
