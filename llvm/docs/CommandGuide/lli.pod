@@ -86,6 +86,11 @@ it for optimization.
 Causes B<lli> to generate software floating point library calls instead of
 equivalent hardware instructions.
 
+=item B<-enable-unsafe-fp-math>
+
+Causes B<lli> to enable optimizations that may decrease floating point
+precision.
+
 =back
 
 =head1 EXIT STATUS
