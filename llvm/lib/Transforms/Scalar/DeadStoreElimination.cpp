@@ -294,10 +294,22 @@ bool DSE::handleEndBlock(BasicBlock& BB,
           AA.doesNotAccessMemory(CS.getCalledFunction()))
         continue;
       
+      unsigned modRef = 0;
+      unsigned other = 0;
+      
       // Remove any pointers made undead by the call from the dead set
       std::vector<Instruction*> dead;
       for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
            E = deadPointers.end(); I != E; ++I) {
+        // HACK: if we detect that our AA is imprecise, it's not
+        // worth it to scan the rest of the deadPointers set.  Just
+        // assume that the AA will return ModRef for everything, and
+        // go ahead and bail.
+        if (modRef >= 16 && other == 0) {
+          deadPointers.clear();
+          return MadeChange;
+        }
+        
         // Get size information for the alloca
         unsigned pointerSize = ~0UL;
         if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
@@ -306,6 +318,12 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I, pointerSize);
+        
+        if (A == AliasAnalysis::ModRef)
+          modRef++;
+        else
+          other++;
+        
         if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
           dead.push_back(*I);
       }
@@ -320,6 +338,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     if (!killPointer)
       continue;
     
+    TranslatePointerBitCasts(killPointer);
+    
     // Deal with undead pointers
     MadeChange |= RemoveUndeadPointers(killPointer, BBI,
                                        deadPointers, possiblyDead);
@@ -328,10 +348,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
   return MadeChange;
 }
 
-/// RemoveUndeadPointers - takes an instruction and a setvector of
-/// dead instructions.  If I is dead, it is erased, and its operands are
-/// checked for deadness.  If they are dead, they are added to the dead
-/// setvector.
+/// RemoveUndeadPointers - check for uses of a pointer that make it
+/// undead when scanning for dead stores to alloca's.
 bool DSE::RemoveUndeadPointers(Value* killPointer,
                                 BasicBlock::iterator& BBI,
                                 SmallPtrSet<AllocaInst*, 64>& deadPointers, 
@@ -340,6 +358,14 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
                                   
+  // If the kill pointer can be easily reduced to an alloca,
+  // don't bother doing extraneous AA queries
+  if (AllocaInst* A = dyn_cast<AllocaInst>(killPointer)) {
+    if (deadPointers.count(A))
+      deadPointers.erase(A);
+    return false;
+  }
+  
   bool MadeChange = false;
   
   std::vector<Instruction*> undead;
