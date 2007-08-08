@@ -31,23 +31,24 @@ class Instruction;
 
 class MemoryDependenceAnalysis : public FunctionPass {
   private:
-
+    // A map from instructions to their dependency, with a boolean
+    // flags for whether this mapping is confirmed or not
     typedef DenseMap<Instruction*, std::pair<const Instruction*, bool> > 
-    depMapType;
-
+            depMapType;
     depMapType depGraphLocal;
 
-    typedef DenseMap<const Instruction*,
-                     SmallPtrSet<Instruction*, 4> > reverseDepMapType;
+    // A reverse mapping form dependencies to the dependees.  This is
+    // used when removing instructions to keep the cache coherent.
+    typedef DenseMap<const Instruction*, SmallPtrSet<Instruction*, 4> >
+            reverseDepMapType;
     reverseDepMapType reverseDep;
-  
-    const Instruction* getCallSiteDependency(CallSite C, Instruction* start,
-                                       BasicBlock* block);
-    void nonLocalHelper(Instruction* query, BasicBlock* block,
-                        DenseMap<BasicBlock*, Value*>& resp);
-  public:
     
+  public:
+    // Special marker indicating that the query has no dependency
+    // in the specified block.
     static const Instruction* NonLocal;
+    
+    // Special marker indicating that the query has no dependency at all
     static const Instruction* None;
     
     static char ID; // Class identification, replacement for typeinfo
@@ -79,6 +80,12 @@ class MemoryDependenceAnalysis : public FunctionPass {
     /// removeInstruction - Remove an instruction from the dependence analysis,
     /// updating the dependence of instructions that previously depended on it.
     void removeInstruction(Instruction* rem);
+    
+  private:
+    const Instruction* getCallSiteDependency(CallSite C, Instruction* start,
+                                       BasicBlock* block);
+    void nonLocalHelper(Instruction* query, BasicBlock* block,
+                        DenseMap<BasicBlock*, Value*>& resp);
   };
 
 } // End llvm namespace
