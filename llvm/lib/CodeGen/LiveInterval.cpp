@@ -300,7 +300,7 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
   for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
-    if (ValueNumberInfo[i].def == ~1U) continue;  // tombstone value #
+    //if (ValueNumberInfo[i].def == ~1U) continue;  // tombstone value #
     if (i != (unsigned)LHSValNoAssignments[i]) {
       MustMapCurValNos = true;
       break;
@@ -508,13 +508,10 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
       OS << i << "@";
       if (ValueNumberInfo[i].def == ~0U) {
         OS << "?";
+      } else if (ValueNumberInfo[i].def == ~1U) {
+        OS << "x";
       } else {
         OS << ValueNumberInfo[i].def;
-      }
-      if (ValueNumberInfo[i].kill == ~0U) {
-        OS << ",?";
-      } else {
-        OS << "," << ValueNumberInfo[i].kill;
       }
     }
   }

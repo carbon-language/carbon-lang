@@ -87,17 +87,14 @@ namespace llvm {
     Ranges ranges;       // the ranges in which this register is live
 
     /// ValueNumberInfo - If the value number definition is undefined (e.g. phi
-    /// merge point), it contains ~0,x,x. If the value number is not in use, it
-    /// contains ~1,x,x to indicate that the value # is not used. The first
-    /// entry is the instruction # of the definition, the second is the kill #.
-    /// If the third value is non-zero, then the val# is defined by a copy and
-    /// it represents the register number it is copied from.
+    /// merge point), it contains ~0u,x. If the value number is not in use, it
+    /// contains ~1u,x to indicate that the value # is not used. 
     struct VNInfo {
-      unsigned def;
-      unsigned kill;
-      unsigned reg;
-      VNInfo() : def(~1U), kill(~0U), reg(0) {};
-      VNInfo(unsigned d, unsigned k, unsigned r) : def(d), kill(k), reg(r) {};
+      unsigned def;  // instruction # of the definition
+      unsigned reg;  // src reg: non-zero iff val# is defined by a copy
+      SmallVector<unsigned, 4> kills;  // instruction #s of the kills
+      VNInfo() : def(~1U), reg(0) {};
+      VNInfo(unsigned d, unsigned r) : def(d), reg(r) {};
     };
   private:
     SmallVector<VNInfo, 4> ValueNumberInfo;
@@ -143,7 +140,7 @@ namespace llvm {
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     unsigned getNextValue(unsigned MIIdx, unsigned SrcReg) {
-      ValueNumberInfo.push_back(VNInfo(MIIdx, ~0U, SrcReg));
+      ValueNumberInfo.push_back(VNInfo(MIIdx, SrcReg));
       return ValueNumberInfo.size()-1;
     }
     
@@ -154,16 +151,22 @@ namespace llvm {
       return ValueNumberInfo[ValNo].def;
     }
     
-    /// getKillForValNum - Return the machine instruction index that kills the
-    /// specified value number.
-    unsigned getKillForValNum(unsigned ValNo) const {
-      //assert(ValNo < ValueNumberInfo.size());
-      return ValueNumberInfo[ValNo].kill;
-    }
-    
     unsigned getSrcRegForValNum(unsigned ValNo) const {
       //assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].reg;
+    }
+    
+    /// getKillsForValNum - Return the kill instruction indexes of the specified
+    /// value number.
+    SmallVector<unsigned, 4> getKillsForValNum(unsigned ValNo) const {
+      //assert(ValNo < ValueNumberInfo.size());
+      return ValueNumberInfo[ValNo].kills;
+    }
+    
+    /// addKillForValNum - Add a kill instruction index to the specified value
+    /// number.
+    void addKillForValNum(unsigned ValNo, unsigned KillIdx) {
+      ValueNumberInfo[ValNo].kills.push_back(KillIdx);
     }
     
     VNInfo getValNumInfo(unsigned ValNo) const {
@@ -176,7 +179,7 @@ namespace llvm {
     void setValueNumberInfo(unsigned ValNo, const VNInfo &I) {
       ValueNumberInfo[ValNo] = I;
     }
-    
+
     /// MergeValueNumberInto - This method is called when two value nubmers
     /// are found to be equivalent.  This eliminates V1, replacing all
     /// LiveRanges with the V1 value number with the V2 value number.  This can

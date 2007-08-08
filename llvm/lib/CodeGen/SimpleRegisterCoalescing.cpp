@@ -132,7 +132,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   // We are about to delete CopyMI, so need to remove it as the 'instruction
   // that defines this value #'. Update the the valnum with the new defining
   // instruction #.
-  IntB.setValueNumberInfo(BValNo, LiveInterval::VNInfo(FillerStart, ~0U, 0));
+  IntB.setValueNumberInfo(BValNo, LiveInterval::VNInfo(FillerStart, 0));
   
   // Okay, we can merge them.  We need to insert a new liverange:
   // [ValLR.end, BLR.begin) of either value number, then we merge the
@@ -645,7 +645,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
           // Otherwise, use the specified value #.
           LHSValNoAssignments[VN] = RHSValID;
           if (VN != (unsigned)RHSValID)
-            ValueNumberInfo[VN].def = ~1U;
+            ValueNumberInfo[VN].def = RHSValNoInfo.def;
           else
             ValueNumberInfo[VN] = RHSValNoInfo;
         }

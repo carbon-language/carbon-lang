@@ -347,7 +347,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
-
     unsigned ValNum;
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
@@ -378,6 +377,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LiveRange LR(defIndex, killIdx, ValNum);
         interval.addRange(LR);
         DOUT << " +" << LR << "\n";
+        interval.addKillForValNum(ValNum, killIdx);
         return;
       }
     }
@@ -412,10 +412,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // block to the 'use' slot of the killing instruction.
     for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
       MachineInstr *Kill = vi.Kills[i];
+      unsigned killIdx = getUseIndex(getInstructionIndex(Kill))+1;
       LiveRange LR(getMBBStartIdx(Kill->getParent()),
-                   getUseIndex(getInstructionIndex(Kill))+1,
-                   ValNum);
+                   killIdx, ValNum);
       interval.addRange(LR);
+      interval.addKillForValNum(ValNum, killIdx);
       DOUT << " +" << LR;
     }
 
@@ -450,7 +451,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       interval.setValueNumberInfo(1, interval.getValNumInfo(0));
       
       // Value#0 is now defined by the 2-addr instruction.
-      interval.setValueNumberInfo(0, LiveInterval::VNInfo(DefIndex, ~0U, 0U));
+      interval.setValueNumberInfo(0, LiveInterval::VNInfo(DefIndex, 0U));
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
