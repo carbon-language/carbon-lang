@@ -364,6 +364,9 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
     if (deadPointers.count(A))
       deadPointers.erase(A);
     return false;
+  } else if (isa<GlobalValue>(killPointer)) {
+    // A global can't be in the dead pointer set
+    return false;
   }
   
   bool MadeChange = false;
