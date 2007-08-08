@@ -166,7 +166,22 @@ namespace llvm {
     /// addKillForValNum - Add a kill instruction index to the specified value
     /// number.
     void addKillForValNum(unsigned ValNo, unsigned KillIdx) {
+      assert(ValNo < ValueNumberInfo.size());
       ValueNumberInfo[ValNo].kills.push_back(KillIdx);
+    }
+
+    /// replaceKillForValNum - Replace a kill index of the specified value with
+    /// a new kill index.
+    bool replaceKillForValNum(unsigned ValNo, unsigned OldKill,
+                              unsigned NewKill) {
+      SmallVector<unsigned, 4> kills = ValueNumberInfo[ValNo].kills;
+      SmallVector<unsigned, 4>::iterator I =
+        std::find(kills.begin(), kills.end(), OldKill);
+      if (I == kills.end())
+        return false;
+      kills.erase(I);
+      kills.push_back(NewKill);
+      return true;
     }
     
     VNInfo getValNumInfo(unsigned ValNo) const {

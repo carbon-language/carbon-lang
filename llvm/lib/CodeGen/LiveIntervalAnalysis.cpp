@@ -457,6 +457,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(DefIndex, RedefIndex, ValNo);
       DOUT << " replace range with " << LR;
       interval.addRange(LR);
+      interval.addKillForValNum(ValNo, RedefIndex);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
@@ -481,6 +482,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
+        bool replaced = interval.replaceKillForValNum(0, End, Start);
+        assert(replaced && "Incorrect kill info?");
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
@@ -488,6 +491,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LiveRange LR(Start, End, interval.getNextValue(~0, 0));
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
+        interval.addKillForValNum(LR.ValId, End);
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
       }
 
@@ -503,9 +507,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       else
         ValNum = interval.getNextValue(defIndex, SrcReg);
       
-      LiveRange LR(defIndex,
-                   getInstructionIndex(&mbb->back()) + InstrSlots::NUM, ValNum);
+      unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
+      LiveRange LR(defIndex, killIndex, ValNum);
       interval.addRange(LR);
+      interval.addKillForValNum(ValNum, killIndex);
       DOUT << " +" << LR;
     }
   }
@@ -570,6 +575,7 @@ exit:
     ? OldLR->ValId : interval.getNextValue(start, SrcReg);
   LiveRange LR(start, end, Id);
   interval.addRange(LR);
+  interval.addKillForValNum(LR.ValId, end);
   DOUT << " +" << LR << '\n';
 }
 
@@ -635,8 +641,9 @@ exit:
   }
 
   LiveRange LR(start, end, interval.getNextValue(start, 0));
-  DOUT << " +" << LR << '\n';
   interval.addRange(LR);
+  interval.addKillForValNum(LR.ValId, end);
+  DOUT << " +" << LR << '\n';
 }
 
 /// computeIntervals - computes the live intervals for virtual
