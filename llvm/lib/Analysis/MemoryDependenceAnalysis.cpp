@@ -9,7 +9,7 @@
 //
 // This file implements an analysis that determines, for a given memory
 // operation, what preceding memory operations it depends on.  It builds on 
-// alias analysis information, and tries to provide a lazy, caching interface to 
+// alias analysis information, and tries to provide a lazy, caching interface to
 // a common kind of alias information query.
 //
 //===----------------------------------------------------------------------===//
@@ -42,8 +42,9 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 // Find the dependency of a CallSite
-const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, Instruction* start,
-                                                             BasicBlock* block) {
+const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
+                                                           Instruction* start,
+                                                            BasicBlock* block) {
   
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   TargetData& TD = getAnalysis<TargetData>();
@@ -73,7 +74,8 @@ const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, I
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue() * TD.getTypeSize(AI->getAllocatedType());
+        pointerSize = C->getZExtValue() * \
+                      TD.getTypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
@@ -109,14 +111,15 @@ const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C, I
   }
   
   // No dependence found
-  depGraphLocal.insert(std::make_pair(C.getInstruction(), std::make_pair(NonLocal, true)));
+  depGraphLocal.insert(std::make_pair(C.getInstruction(),
+                                      std::make_pair(NonLocal, true)));
   reverseDep[NonLocal].insert(C.getInstruction());
   return NonLocal;
 }
 
 void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
                                               BasicBlock* block,
-                                              DenseMap<BasicBlock*, Value*>& resp) {
+                                         DenseMap<BasicBlock*, Value*>& resp) {
   SmallPtrSet<BasicBlock*, 4> visited;
   SmallVector<BasicBlock*, 4> stack;
   stack.push_back(block);
@@ -173,11 +176,15 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
   }
 }
 
+/// getNonLocalDependency - Fills the passed-in map with the non-local 
+/// dependencies of the queries.  The map will contain NonLocal for
+/// blocks between the query and its dependencies.
 void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
-                                                     DenseMap<BasicBlock*, Value*>& resp) {
+                                         DenseMap<BasicBlock*, Value*>& resp) {
   const Instruction* localDep = getDependency(query);
   if (localDep != NonLocal) {
-    resp.insert(std::make_pair(query->getParent(), const_cast<Instruction*>(localDep)));
+    resp.insert(std::make_pair(query->getParent(),
+                               const_cast<Instruction*>(localDep)));
     return;
   }
   
@@ -275,7 +282,8 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
-        pointerSize = C->getZExtValue() * TD.getTypeSize(AI->getAllocatedType());
+        pointerSize = C->getZExtValue() * \
+                      TD.getTypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
@@ -287,7 +295,7 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
     } else if (CallSite::get(QI).getInstruction() != 0) {
-      // Call insts need special handling.  Check is they can modify our pointer
+      // Call insts need special handling. Check if they can modify our pointer
       AliasAnalysis::ModRefResult MR = AA.getModRefInfo(CallSite::get(QI),
                                                       dependee, dependeeSize);
       
@@ -297,7 +305,8 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
           continue;
         
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
+          depGraphLocal.insert(std::make_pair(query,
+                                              std::make_pair(QI, true)));
           reverseDep[QI].insert(query);
         }
         
@@ -319,7 +328,8 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
           continue;
         
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(query, std::make_pair(QI, true)));
+          depGraphLocal.insert(std::make_pair(query,
+                                              std::make_pair(QI, true)));
           reverseDep[QI].insert(query);
         }
         
@@ -352,7 +362,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     if (depGraphEntry->second.first != NonLocal &&
         depGraphEntry->second.second) {
       // If we have dep info for rem, set them to it
-      BasicBlock::iterator RI = const_cast<Instruction*>(depGraphEntry->second.first);
+      BasicBlock::iterator RI =
+                         const_cast<Instruction*>(depGraphEntry->second.first);
       RI++;
       newDep = RI;
     } else if (depGraphEntry->second.first == NonLocal &&
@@ -361,8 +372,8 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
       newDep = NonLocal;
     } else {
       // Otherwise, use the immediate successor of rem
-      // NOTE: This is because, when getDependence is called, it will first check
-      // the immediate predecessor of what is in the cache.
+      // NOTE: This is because, when getDependence is called, it will first
+      // check the immediate predecessor of what is in the cache.
       BasicBlock::iterator RI = rem;
       RI++;
       newDep = RI;
