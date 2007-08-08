@@ -14,6 +14,8 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 
 using namespace llvm;
 
@@ -153,6 +155,20 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
 ///
 bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   is_native = false;
+  
+  // Check for a file of name "-", which means "read standard input"
+  if (File.toString() == "-") {
+    std::auto_ptr<Module> M;
+    if (MemoryBuffer *Buffer = MemoryBuffer::getSTDIN()) {
+      M.reset(ParseBitcodeFile(Buffer, &Error));
+      delete Buffer;
+      if (!LinkInModule(M.get()))
+        return false;
+    } else 
+      Error = "standard input is empty";
+    return error("Cannot link stdin: " + Error);
+  }
+
   // Make sure we can at least read the file
   if (!File.canRead())
     return error("Cannot find linker input '" + File.toString() + "'");
