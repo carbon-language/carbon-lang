@@ -76,7 +76,7 @@ public:
                                              const char *BufferName = "");
   
   /// getSTDIN - Read all of stdin into a file buffer, and return it.  This
-  /// fails if stdin is empty.
+  /// returns null if stdin is empty.
   static MemoryBuffer *getSTDIN();
   
   
