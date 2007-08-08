@@ -386,38 +386,33 @@ void DominatorTree::calculate(Function &F) {
 void DominatorTreeBase::updateDFSNumbers() {
   unsigned DFSNum = 0;
 
-  SmallVector<DomTreeNode *, 32> WorkStack;
-  SmallPtrSet<DomTreeNode *, 32> Visited;
-
+  SmallVector<std::pair<DomTreeNode*, DomTreeNode::iterator>, 32> WorkStack;
+  
   for (unsigned i = 0, e = Roots.size(); i != e; ++i) {
     DomTreeNode *ThisRoot = getNode(Roots[i]);
-    WorkStack.push_back(ThisRoot);
-    Visited.insert(ThisRoot);
+    WorkStack.push_back(std::make_pair(ThisRoot, ThisRoot->begin()));
     ThisRoot->DFSNumIn = DFSNum++;
     
     while (!WorkStack.empty()) {
-      DomTreeNode *Node = WorkStack.back();
-      
-      bool MustVisitAChild = false;
-      for (DomTreeNode::iterator DI = Node->begin(), E = Node->end();
-           DI != E; ++DI) {
-        DomTreeNode *Child = *DI;
-        if (!Visited.insert(Child))
-          continue;
-        
-        MustVisitAChild = true;
-        Child->DFSNumIn = DFSNum++;
-        WorkStack.push_back(Child);
-        break;
-      }
-      
-      if (!MustVisitAChild) {
-        // If we reach here means all children are visited
+      DomTreeNode *Node = WorkStack.back().first;
+      DomTreeNode::iterator ChildIt = WorkStack.back().second;
+
+      // If we visited all of the children of this node, "recurse" back up the
+      // stack setting the DFOutNum.
+      if (ChildIt == Node->end()) {
         Node->DFSNumOut = DFSNum++;
         WorkStack.pop_back();
+      } else {
+        // Otherwise, recursively visit this child.
+        DomTreeNode *Child = *ChildIt;
+        ++WorkStack.back().second;
+        
+        WorkStack.push_back(std::make_pair(Child, Child->begin()));
+        Child->DFSNumIn = DFSNum++;
       }
     }
   }
+  
   SlowQueries = 0;
   DFSInfoValid = true;
 }
