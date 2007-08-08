@@ -51,9 +51,9 @@ namespace {
                                             Instruction* dependency,
                                         SetVector<Instruction*>& possiblyDead);
     bool handleEndBlock(BasicBlock& BB, SetVector<Instruction*>& possiblyDead);
-    bool RemoveUndeadPointers(Value* pointer, unsigned pointerSize,
+    bool RemoveUndeadPointers(Value* pointer,
                               BasicBlock::iterator& BBI,
-                              SmallPtrSet<AllocaInst*, 4>& deadPointers, 
+                              SmallPtrSet<AllocaInst*, 64>& deadPointers, 
                               SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
@@ -222,7 +222,11 @@ bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
 }
 
 /// handleEndBlock - Remove dead stores to stack-allocated locations in the
-/// function end block
+/// function end block.  Ex:
+/// %A = alloca i32
+/// ...
+/// store i32 1, i32* %A
+/// ret void
 bool DSE::handleEndBlock(BasicBlock& BB,
                          SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
@@ -232,7 +236,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
   bool MadeChange = false;
   
   // Pointers alloca'd in this function are dead in the end block
-  SmallPtrSet<AllocaInst*, 4> deadPointers;
+  SmallPtrSet<AllocaInst*, 64> deadPointers;
   
   // Find all of the alloca'd pointers in the entry block
   BasicBlock *Entry = BB.getParent()->begin();
@@ -246,9 +250,6 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     
     if (deadPointers.empty())
       break;
-    
-    Value* killPointer = 0;
-    unsigned killPointerSize = 0;
     
     // If we find a store whose pointer is dead...
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
@@ -271,24 +272,24 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         NumFastStores++;
         MadeChange = true;
       }
+      
+      continue;
+    }
+    
+    Value* killPointer = 0;
     
     // If we encounter a use of the pointer, it is no longer considered dead
-    } else if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
+    if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
       killPointer = L->getPointerOperand();
-      killPointerSize = TD.getTypeSize(L->getType());
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(BBI)) {
       killPointer = V->getOperand(0);
-      killPointerSize = TD.getTypeSize(V->getType());
-    } else if (FreeInst* F = dyn_cast<FreeInst>(BBI)) {
-      killPointer = F->getPointerOperand();
-      killPointerSize = ~0UL;
     } else if (AllocaInst* A = dyn_cast<AllocaInst>(BBI)) {
       deadPointers.erase(A);
       continue;
     } else if (CallSite::get(BBI).getInstruction() != 0) {
       // Remove any pointers made undead by the call from the dead set
       std::vector<Instruction*> dead;
-      for (SmallPtrSet<AllocaInst*, 4>::iterator I = deadPointers.begin(),
+      for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
            E = deadPointers.end(); I != E; ++I) {
         // Get size information for the alloca
         unsigned pointerSize = ~0UL;
@@ -314,16 +315,20 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       continue;
     
     // Deal with undead pointers
-    MadeChange |= RemoveUndeadPointers(killPointer, killPointerSize, BBI,
+    MadeChange |= RemoveUndeadPointers(killPointer, BBI,
                                        deadPointers, possiblyDead);
   }
   
   return MadeChange;
 }
 
-bool DSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
+/// RemoveUndeadPointers - takes an instruction and a setvector of
+/// dead instructions.  If I is dead, it is erased, and its operands are
+/// checked for deadness.  If they are dead, they are added to the dead
+/// setvector.
+bool DSE::RemoveUndeadPointers(Value* killPointer,
                                 BasicBlock::iterator& BBI,
-                                SmallPtrSet<AllocaInst*, 4>& deadPointers, 
+                                SmallPtrSet<AllocaInst*, 64>& deadPointers, 
                                 SetVector<Instruction*>& possiblyDead) {
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
@@ -333,7 +338,7 @@ bool DSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
   
   std::vector<Instruction*> undead;
     
-  for (SmallPtrSet<AllocaInst*, 4>::iterator I = deadPointers.begin(),
+  for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
       E = deadPointers.end(); I != E; ++I) {
     // Get size information for the alloca
     unsigned pointerSize = ~0UL;
@@ -343,7 +348,7 @@ bool DSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
       
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,
-                                            killPointer, killPointerSize);
+                                            killPointer, ~0UL);
 
     // If it must-alias and a store, we can delete it
     if (isa<StoreInst>(BBI) && A == AliasAnalysis::MustAlias) {
@@ -377,6 +382,10 @@ bool DSE::RemoveUndeadPointers(Value* killPointer, unsigned killPointerSize,
   return MadeChange;
 }
 
+/// DeleteDeadInstructionChains - takes an instruction and a setvector of
+/// dead instructions.  If I is dead, it is erased, and its operands are
+/// checked for deadness.  If they are dead, they are added to the dead
+/// setvector.
 void DSE::DeleteDeadInstructionChains(Instruction *I,
                                       SetVector<Instruction*> &DeadInsts) {
   // Instruction must be dead.
