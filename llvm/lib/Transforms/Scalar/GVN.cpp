@@ -803,7 +803,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
       return false;
     } else if (I->second == MemoryDependenceAnalysis::NonLocal) {
       continue;
-    }else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
+    } else if (StoreInst* S = dyn_cast<StoreInst>(I->second)) {
       if (S->getPointerOperand() == L->getPointerOperand())
         repl[I->first] = S->getOperand(0);
       else
@@ -856,7 +856,7 @@ bool GVN::processLoad(LoadInst* L,
   
   // ... to a pointer that has been loaded from before...
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-  Instruction* dep = MD.getDependency(L);
+  Instruction* dep = const_cast<Instruction*>(MD.getDependency(L));
   if (dep == MemoryDependenceAnalysis::NonLocal &&
       L->getParent() != &L->getParent()->getParent()->getEntryBlock())
     processNonLocalLoad(L, toErase);
@@ -895,7 +895,7 @@ bool GVN::processLoad(LoadInst* L,
         
       break;
     } else {
-      dep = MD.getDependency(L, dep);
+      dep = const_cast<Instruction*>(MD.getDependency(L, dep));
     }
   }
   

@@ -32,23 +32,23 @@ class Instruction;
 class MemoryDependenceAnalysis : public FunctionPass {
   private:
 
-    typedef DenseMap<Instruction*, std::pair<Instruction*, bool> > 
+    typedef DenseMap<Instruction*, std::pair<const Instruction*, bool> > 
     depMapType;
 
     depMapType depGraphLocal;
 
-    typedef DenseMap<Instruction*,
+    typedef DenseMap<const Instruction*,
                      SmallPtrSet<Instruction*, 4> > reverseDepMapType;
     reverseDepMapType reverseDep;
   
-    Instruction* getCallSiteDependency(CallSite C, Instruction* start,
+    const Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        BasicBlock* block);
     void nonLocalHelper(Instruction* query, BasicBlock* block,
                         DenseMap<BasicBlock*, Value*>& resp);
   public:
     
-    static Instruction* NonLocal;
-    static Instruction* None;
+    static const Instruction* NonLocal;
+    static const Instruction* None;
     
     static char ID; // Class identification, replacement for typeinfo
     MemoryDependenceAnalysis() : FunctionPass((intptr_t)&ID) {}
@@ -70,7 +70,7 @@ class MemoryDependenceAnalysis : public FunctionPass {
     
     /// getDependency - Return the instruction on which a memory operation
     /// depends, starting with start.
-    Instruction* getDependency(Instruction* query, Instruction* start = 0,
+    const Instruction* getDependency(Instruction* query, Instruction* start = 0,
                                BasicBlock* block = 0);
     
     void getNonLocalDependency(Instruction* query,

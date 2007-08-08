@@ -80,7 +80,7 @@ bool RLE::runOnBasicBlock(BasicBlock &BB) {
       LoadInst*& last = lastLoad[pointer];
       
       // ... to a pointer that has been loaded from before...
-      Instruction* dep = MD.getDependency(BBI);
+      Instruction* dep = const_cast<Instruction*>(MD.getDependency(BBI));
       bool deletedLoad = false;
       
       while (dep != MemoryDependenceAnalysis::None &&
@@ -120,7 +120,7 @@ bool RLE::runOnBasicBlock(BasicBlock &BB) {
             
           break;
         } else {
-          dep = MD.getDependency(BBI, dep);
+          dep = const_cast<Instruction*>(MD.getDependency(BBI, dep));
         }
       }
       
