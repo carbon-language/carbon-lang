@@ -41,7 +41,8 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<TargetData>();
 }
 
-// Find the dependency of a CallSite
+/// getCallSiteDependency - Private helper for finding the local dependencies
+/// of a call site.
 const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
                                                            Instruction* start,
                                                             BasicBlock* block) {
@@ -51,14 +52,17 @@ const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
   BasicBlock::iterator blockBegin = C.getInstruction()->getParent()->begin();
   BasicBlock::iterator QI = C.getInstruction();
   
+  // If the starting point was specifiy, use it
   if (start) {
     QI = start;
     blockBegin = start->getParent()->end();
+  // If the starting point wasn't specified, but the block was, use it
   } else if (!start && block) {
     QI = block->end();
     blockBegin = block->end();
   }
   
+  // Walk backwards through the block, looking for dependencies
   while (QI != blockBegin) {
     --QI;
     
@@ -117,21 +121,29 @@ const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
   return NonLocal;
 }
 
+/// nonLocalHelper - Private helper used to calculate non-local dependencies
+/// by doing DFS on the predecessors of a block to find its dependencies
 void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
                                               BasicBlock* block,
                                          DenseMap<BasicBlock*, Value*>& resp) {
+  // Set of blocks that we've already visited in our DFS
   SmallPtrSet<BasicBlock*, 4> visited;
+  // Current stack of the DFS
   SmallVector<BasicBlock*, 4> stack;
   stack.push_back(block);
   
+  // Do a basic DFS
   while (!stack.empty()) {
     BasicBlock* BB = stack.back();
     
+    // If we've already visited this block, no need to revist
     if (visited.count(BB)) {
       stack.pop_back();
       continue;
     }
     
+    // If we find a new block with a local dependency for query,
+    // then we insert the new dependency and backtrack.
     if (BB != block) {
       visited.insert(BB);
       
@@ -142,6 +154,9 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
         
         continue;
       }
+    // If we re-encounter the starting block, we still need to search it
+    // because there might be a dependency in the starting block AFTER
+    // the position of the query.  This is necessary to get loops right.
     } else if (BB == block && stack.size() > 1) {
       visited.insert(BB);
       
@@ -154,6 +169,7 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
       continue;
     }
     
+    // If we didn't find anything, recurse on the precessors of this block
     bool predOnStack = false;
     bool inserted = false;
     for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
@@ -164,10 +180,16 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
       } else
         predOnStack = true;
     
+    // If we inserted a new predecessor, then we'll come back to this block
     if (inserted)
       continue;
+    // If we didn't insert because we have no predecessors, then this
+    // query has no dependency at all.
     else if (!inserted && !predOnStack) {
       resp.insert(std::make_pair(BB, const_cast<Instruction*>(None)));
+    // If we didn't insert because our predecessors are already on the stack,
+    // then we might still have a dependency, but it will be discovered during
+    // backtracking.
     } else if (!inserted && predOnStack){
       resp.insert(std::make_pair(BB, const_cast<Instruction*>(NonLocal)));
     }
@@ -181,6 +203,7 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
 /// blocks between the query and its dependencies.
 void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
                                          DenseMap<BasicBlock*, Value*>& resp) {
+  // First check that we don't actually have a local dependency.
   const Instruction* localDep = getDependency(query);
   if (localDep != NonLocal) {
     resp.insert(std::make_pair(query->getParent(),
@@ -188,6 +211,7 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
     return;
   }
   
+  // If not, go ahead and search for non-local ones.
   nonLocalHelper(query, query->getParent(), resp);
 }
 
@@ -247,6 +271,7 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   BasicBlock::iterator blockBegin = block ? block->begin()
                                           : query->getParent()->begin();
   
+  // Walk backwards through the basic block, looking for dependencies
   while (QI != blockBegin) {
     --QI;
     
@@ -350,6 +375,7 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
 
 /// removeInstruction - Remove an instruction from the dependence analysis,
 /// updating the dependence of instructions that previously depended on it.
+/// This method attempts to keep the cache coherent using the reverse map.
 void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   // Figure out the new dep for things that currently depend on rem
   const Instruction* newDep = NonLocal;
