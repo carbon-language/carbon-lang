@@ -965,13 +965,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::Constant:
+  case ISD::Constant: {
+    ConstantSDNode *CN = cast<ConstantSDNode>(Node);
+    unsigned opAction =
+      TLI.getOperationAction(ISD::Constant, CN->getValueType(0));
+
     // We know we don't need to expand constants here, constants only have one
     // value and we check that it is fine above.
 
-    // FIXME: Maybe we should handle things like targets that don't support full
-    // 32-bit immediates?
+    if (opAction == TargetLowering::Custom) {
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val)
+        Result = Tmp1;
+    }
     break;
+  }
   case ISD::ConstantFP: {
     // Spill FP immediates to the constant pool if the target cannot directly
     // codegen them.  Targets often have some immediate values that can be
