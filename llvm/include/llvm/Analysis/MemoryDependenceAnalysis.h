@@ -74,6 +74,9 @@ class MemoryDependenceAnalysis : public FunctionPass {
     const Instruction* getDependency(Instruction* query, Instruction* start = 0,
                                BasicBlock* block = 0);
     
+    /// getNonLocalDependency - Fills the passed-in map with the non-local 
+    /// dependencies of the queries.  The map will contain NonLocal for
+    /// blocks between the query and its dependencies.
     void getNonLocalDependency(Instruction* query,
                                DenseMap<BasicBlock*, Value*>& resp);
     
