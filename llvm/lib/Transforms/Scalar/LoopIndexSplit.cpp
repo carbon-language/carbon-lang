@@ -44,6 +44,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
+      AU.addRequired<DominatorTree>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
     }
@@ -90,14 +91,16 @@ namespace {
     /// such case eliminate loop structure surrounding this loop body. For
     bool processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM);
     
-    // If loop header includes loop variant instruction operands then
-    // this loop may not be eliminated.
+    /// If loop header includes loop variant instruction operands then
+    /// this loop may not be eliminated.
     bool safeHeader(SplitInfo &SD,  BasicBlock *BB);
 
-    // If Exit block includes loop variant instructions then this
-    // loop may not be eliminated.
+    /// If Exit block includes loop variant instructions then this
+    /// loop may not be eliminated.
     bool safeExitBlock(SplitInfo &SD, BasicBlock *BB);
 
+    /// Find cost of spliting loop L.
+    unsigned findSplitCost(Loop *L, SplitInfo &SD);
     bool splitLoop(SplitInfo &SD);
 
   private:
@@ -105,7 +108,7 @@ namespace {
     // Current Loop.
     Loop *L;
     ScalarEvolution *SE;
-
+    DominatorTree *DT;
     SmallVector<SplitInfo, 4> SplitData;
   };
 
@@ -123,6 +126,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
   L = IncomingLoop;
 
   SE = &getAnalysis<ScalarEvolution>();
+  DT = &getAnalysis<DominatorTree>();
 
   findSplitCondition();
 
@@ -143,17 +147,24 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
     }
   }
 
+  unsigned MaxCost = 99;
+  unsigned Index = 0;
+  unsigned MostProfitableSDIndex = 0;
   for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
-         E = SplitData.end(); SI != E; ++SI) {
-    SplitInfo &SD = *SI;
+         E = SplitData.end(); SI != E; ++SI, ++Index) {
+    SplitInfo SD = *SI;
 
     // ICM_EQs are already handled above.
-    if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) 
+    if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ)
       continue;
-
-    // FIXME : Collect Spliting cost for all SD. Only operate on profitable SDs.
-    Changed = splitLoop(SD);
+    
+    unsigned Cost = findSplitCost(L, SD);
+    if (Cost < MaxCost)
+      MostProfitableSDIndex = Index;
   }
+
+  // Split most profitiable condition.
+  Changed = splitLoop(SplitData[MostProfitableSDIndex]);
 
   if (Changed)
     ++NumIndexSplit;
@@ -437,6 +448,25 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
 
   // We could not find any reason to consider ExitBlock unsafe.
   return true;
+}
+
+/// Find cost of spliting loop L. Cost is measured in terms of size growth.
+/// Size is growth is calculated based on amount of code duplicated in second
+/// loop.
+unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
+
+  unsigned Cost = 0;
+  BasicBlock *SDBlock = SD.SplitCondition->getParent();
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    // If a block is not dominated by split condition block then
+    // it must be duplicated in both loops.
+    if (!DT->dominates(SDBlock, BB))
+      Cost += BB->size();
+  }
+
+  return Cost;
 }
 
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
