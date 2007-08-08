@@ -287,6 +287,13 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       deadPointers.erase(A);
       continue;
     } else if (CallSite::get(BBI).getInstruction() != 0) {
+      // If this call does not access memory, it can't
+      // be undeadifying any of our pointers.
+      CallSite CS = CallSite::get(BBI);
+      if (CS.getCalledFunction() &&
+          AA.doesNotAccessMemory(CS.getCalledFunction()))
+        continue;
+      
       // Remove any pointers made undead by the call from the dead set
       std::vector<Instruction*> dead;
       for (SmallPtrSet<AllocaInst*, 64>::iterator I = deadPointers.begin(),
@@ -298,8 +305,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
                         TD.getTypeSize((*I)->getAllocatedType());     
         
         // See if the call site touches it
-        AliasAnalysis::ModRefResult A = AA.getModRefInfo(CallSite::get(BBI),
-                                                         *I, pointerSize);
+        AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I, pointerSize);
         if (A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref)
           dead.push_back(*I);
       }
