@@ -217,12 +217,25 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
   if (!safeExitBlock(ExitBlock)) 
     return false;
 
+  // Update CFG.
+
+  // As a first step to break this loop, remove Latch to Header edge.
   BasicBlock *Latch = L->getLoopLatch();
+  BasicBlock *LatchSucc = NULL;
+  BranchInst *BR = dyn_cast<BranchInst>(Latch->getTerminator());
+  if (!BR)
+    return false;
+  Header->removePredecessor(Latch);
+  for (succ_iterator SI = succ_begin(Latch), E = succ_end(Latch);
+       SI != E; ++SI) {
+    if (Header != *SI)
+      LatchSucc = *SI;
+  }
+  BR->setUnconditionalDest(LatchSucc);
+
   BasicBlock *Preheader = L->getLoopPreheader();
   Instruction *Terminator = Header->getTerminator();
   Value *StartValue = IndVar->getIncomingValueForBlock(Preheader);
-
-  // Update CFG.
 
   // Replace split condition in header.
   // Transform 
@@ -238,22 +251,10 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
   Instruction *C2 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                                  SplitValue, ExitValue, "lisplit", Terminator);
-  Instruction *NSplitCond = BinaryOperator::create(Instruction::And,
-                                                   C1, C2, "lisplit", Terminator);
+  Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", Terminator);
   SplitCondition->replaceAllUsesWith(NSplitCond);
   SplitCondition->eraseFromParent();
 
-  // As a first step to break this loop, remove Latch to Header edge.
-  BasicBlock *LatchSucc = NULL;
-  Header->removePredecessor(Latch);
-  for (succ_iterator SI = succ_begin(Latch), E = succ_end(Latch);
-       SI != E; ++SI) {
-    if (Header != *SI)
-      LatchSucc = *SI;
-  }
-  BranchInst *BR = dyn_cast<BranchInst>(Latch->getTerminator());
-  BR->setUnconditionalDest(LatchSucc);
-  
   // Now, clear latch block. Remove instructions that are responsible
   // to increment induction variable. 
   Instruction *LTerminator = Latch->getTerminator();
@@ -281,15 +282,13 @@ bool LoopIndexSplit::safeHeader(BasicBlock *Header) {
       BI != BE; ++BI) {
     Instruction *I = BI;
 
-    // PHI Nodes are OK.
+    // PHI Nodes are OK. FIXME : Handle last value assignments.
     if (isa<PHINode>(I))
       continue;
 
     // SplitCondition itself is OK.
-    if (ICmpInst *CI = dyn_cast<ICmpInst>(I)) {
-      if (CI == SplitCondition)
-        continue;
-    }
+    if (I == SplitCondition)
+      continue;
 
     // Terminator is also harmless.
     if (I == Terminator)
@@ -307,12 +306,12 @@ bool LoopIndexSplit::safeHeader(BasicBlock *Header) {
 bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
 
   Instruction *IndVarIncrement = NULL;
-      
+
   for (BasicBlock::iterator BI = ExitBlock->begin(), BE = ExitBlock->end();
        BI != BE; ++BI) {
     Instruction *I = BI;
 
-    // PHI Nodes are OK.
+    // PHI Nodes are OK. FIXME : Handle last value assignments.
     if (isa<PHINode>(I))
       continue;
 
@@ -338,6 +337,7 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
       if (IndVarIncrement && PN == IndVar && CI->isOne())
         continue;
     }
+
     // I is an Exit condition if next instruction is block terminator.
     // Exit condition is OK if it compares loop invariant exit value,
     // which is checked below.
@@ -346,7 +346,7 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
       Instruction *N = BI;
       if (N == ExitBlock->getTerminator()) {
         ExitCondition = EC;
-        break;
+        continue;
       }
     }
 
