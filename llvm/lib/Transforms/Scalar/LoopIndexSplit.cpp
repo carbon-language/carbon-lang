@@ -65,6 +65,15 @@ namespace {
 
       // Loop exit condition.
       ICmpInst *ExitCondition;
+
+      // Clear split info.
+      void clear() {
+        IndVar = NULL;
+        SplitValue = NULL;
+        ExitValue = NULL;
+        SplitCondition = NULL;
+        ExitCondition = NULL;
+      }
     };
 
   private:
@@ -193,6 +202,8 @@ void LoopIndexSplit::findSplitCondition() {
     if (SD.SplitCondition) {
       SD.IndVar = PN;
       SplitData.push_back(SD);
+      // Before reusing SD for next split condition clear its content.
+      SD.clear();
     }
   }
 }
