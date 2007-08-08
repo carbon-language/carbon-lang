@@ -147,19 +147,19 @@ namespace llvm {
     /// getInstForValNum - Return the machine instruction index that defines the
     /// specified value number.
     unsigned getInstForValNum(unsigned ValNo) const {
-      //assert(ValNo < ValueNumberInfo.size());
+      assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].def;
     }
     
     unsigned getSrcRegForValNum(unsigned ValNo) const {
-      //assert(ValNo < ValueNumberInfo.size());
+      assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].reg;
     }
     
     /// getKillsForValNum - Return the kill instruction indexes of the specified
     /// value number.
-    SmallVector<unsigned, 4> getKillsForValNum(unsigned ValNo) const {
-      //assert(ValNo < ValueNumberInfo.size());
+    const SmallVector<unsigned, 4> &getKillsForValNum(unsigned ValNo) const {
+      assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].kills;
     }
     
@@ -170,7 +170,7 @@ namespace llvm {
     }
     
     VNInfo getValNumInfo(unsigned ValNo) const {
-      //assert(ValNo < ValueNumberInfo.size());
+      assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo];
     }
     
