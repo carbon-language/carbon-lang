@@ -248,11 +248,13 @@ MemoryBuffer *MemoryBuffer::getSTDIN() {
   
   // Read in all of the data from stdin, we cannot mmap stdin.
   sys::Program::ChangeStdinToBinary();
-  while (size_t ReadBytes = fread(Buffer, 1, 4096*4, stdin))
+  while (size_t ReadBytes = fread(Buffer, sizeof(char), 4096*4, stdin))
     FileData.insert(FileData.end(), Buffer, Buffer+ReadBytes);
-  
+
   FileData.push_back(0); // &FileData[Size] is invalid. So is &*FileData.end().
   size_t Size = FileData.size();
+  if (Size <= 1)
+    return 0;
   MemoryBuffer *B = new STDINBufferFile();
   B->initCopyOf(&FileData[0], &FileData[Size-1]);
   return B;
