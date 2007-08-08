@@ -339,9 +339,6 @@ public:
   //                             Expression Emission
   //===--------------------------------------------------------------------===//
 
-  QualType EmitUsualArithmeticConversions(const BinaryOperator *E,
-                                          RValue &LHS, RValue &RHS);
-
   void EmitCompoundAssignmentOperands(const CompoundAssignOperator *CAO,
                                       LValue &LHSLV, RValue &LHS, RValue &RHS);
   RValue EmitCompoundAssignmentResult(const CompoundAssignOperator *E,

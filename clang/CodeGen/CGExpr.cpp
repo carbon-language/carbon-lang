@@ -897,100 +897,6 @@ RValue CodeGenFunction::EmitSizeAlignOf(QualType TypeToSize,
 //                         Binary Operator Emission
 //===--------------------------------------------------------------------===//
 
-// FIXME describe.
-QualType CodeGenFunction::
-EmitUsualArithmeticConversions(const BinaryOperator *E, RValue &LHS, 
-                               RValue &RHS) {
-  QualType LHSType = E->getLHS()->getType(), RHSType = E->getRHS()->getType();
-  LHS = EmitExpr(E->getLHS()), RHS = EmitExpr(E->getRHS());
-
-  // If both operands have the same source type, we're done already.
-  if (LHSType == RHSType) return LHSType;
-
-  // If either side is a non-arithmetic type (e.g. a pointer), we are done.
-  // The caller can deal with this (e.g. pointer + int).
-  if (!LHSType->isArithmeticType() || !RHSType->isArithmeticType())
-    return LHSType;
-
-  // At this point, we have two different arithmetic types. 
-  
-  // Handle complex types first (C99 6.3.1.8p1).
-  if (LHSType->isComplexType() || RHSType->isComplexType()) {
-    assert(0 && "FIXME: complex types unimp");
-#if 0
-    // if we have an integer operand, the result is the complex type.
-    if (rhs->isIntegerType())
-      return lhs;
-    if (lhs->isIntegerType())
-      return rhs;
-    return Context.maxComplexType(lhs, rhs);
-#endif
-  }
-  
-  // If neither operand is complex, they must be scalars.
-  llvm::Value *LHSV = LHS.getVal();
-  llvm::Value *RHSV = RHS.getVal();
-  
-  // If the LLVM types are already equal, then they only differed in sign, or it
-  // was something like char/signed char or double/long double.
-  if (LHSV->getType() == RHSV->getType())
-    return LHSType;
-  
-  // Now handle "real" floating types (i.e. float, double, long double).
-  if (LHSType->isRealFloatingType() || RHSType->isRealFloatingType()) {
-    // if we have an integer operand, the result is the real floating type, and
-    // the integer converts to FP.
-    if (RHSType->isIntegerType()) {
-      // Promote the RHS to an FP type of the LHS, with the sign following the
-      // RHS.
-      if (RHSType->isSignedIntegerType())
-        RHS = RValue::get(Builder.CreateSIToFP(RHSV,LHSV->getType(),"promote"));
-      else
-        RHS = RValue::get(Builder.CreateUIToFP(RHSV,LHSV->getType(),"promote"));
-      return LHSType;
-    }
-    
-    if (LHSType->isIntegerType()) {
-      // Promote the LHS to an FP type of the RHS, with the sign following the
-      // LHS.
-      if (LHSType->isSignedIntegerType())
-        LHS = RValue::get(Builder.CreateSIToFP(LHSV,RHSV->getType(),"promote"));
-      else
-        LHS = RValue::get(Builder.CreateUIToFP(LHSV,RHSV->getType(),"promote"));
-      return RHSType;
-    }
-    
-    // Otherwise, they are two FP types.  Promote the smaller operand to the
-    // bigger result.
-    QualType BiggerType = ASTContext::maxFloatingType(LHSType, RHSType);
-    
-    if (BiggerType == LHSType)
-      RHS = RValue::get(Builder.CreateFPExt(RHSV, LHSV->getType(), "promote"));
-    else
-      LHS = RValue::get(Builder.CreateFPExt(LHSV, RHSV->getType(), "promote"));
-    return BiggerType;
-  }
-  
-  // Finally, we have two integer types that are different according to C.  Do
-  // a sign or zero extension if needed.
-  
-  // Otherwise, one type is smaller than the other.  
-  QualType ResTy = ASTContext::maxIntegerType(LHSType, RHSType);
-  
-  if (LHSType == ResTy) {
-    if (RHSType->isSignedIntegerType())
-      RHS = RValue::get(Builder.CreateSExt(RHSV, LHSV->getType(), "promote"));
-    else
-      RHS = RValue::get(Builder.CreateZExt(RHSV, LHSV->getType(), "promote"));
-  } else {
-    assert(RHSType == ResTy && "Unknown conversion");
-    if (LHSType->isSignedIntegerType())
-      LHS = RValue::get(Builder.CreateSExt(LHSV, RHSV->getType(), "promote"));
-    else
-      LHS = RValue::get(Builder.CreateZExt(LHSV, RHSV->getType(), "promote"));
-  }  
-  return ResTy;
-}
 
 /// EmitCompoundAssignmentOperands - Compound assignment operations (like +=)
 /// are strange in that the result of the operation is not the same type as the
@@ -1043,42 +949,34 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     E->dump();
     return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
   case BinaryOperator::Mul:
-    EmitUsualArithmeticConversions(E, LHS, RHS);
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
     return EmitMul(LHS, RHS, E->getType());
   case BinaryOperator::Div:
-    EmitUsualArithmeticConversions(E, LHS, RHS);
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
     return EmitDiv(LHS, RHS, E->getType());
   case BinaryOperator::Rem:
-    EmitUsualArithmeticConversions(E, LHS, RHS);
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
     return EmitRem(LHS, RHS, E->getType());
-  case BinaryOperator::Add: {
-    QualType ExprTy = E->getType();
-    if (ExprTy->isPointerType()) {
-      Expr *LHSExpr = E->getLHS();
-      LHS = EmitExpr(LHSExpr);
-      Expr *RHSExpr = E->getRHS();
-      RHS = EmitExpr(RHSExpr);
-      return EmitPointerAdd(LHS, LHSExpr->getType(),
-                            RHS, RHSExpr->getType(), ExprTy);
-    } else {
-      EmitUsualArithmeticConversions(E, LHS, RHS);
-      return EmitAdd(LHS, RHS, ExprTy);
-    }
-  }
-  case BinaryOperator::Sub: {
-    QualType ExprTy = E->getType();
-    Expr *LHSExpr = E->getLHS();
-    if (LHSExpr->getType()->isPointerType()) {
-      LHS = EmitExpr(LHSExpr);
-      Expr *RHSExpr = E->getRHS();
-      RHS = EmitExpr(RHSExpr);
-      return EmitPointerSub(LHS, LHSExpr->getType(),
-                            RHS, RHSExpr->getType(), ExprTy);
-    } else {
-      EmitUsualArithmeticConversions(E, LHS, RHS);
-      return EmitSub(LHS, RHS, ExprTy);
-    }
-  }
+  case BinaryOperator::Add:
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
+    if (!E->getType()->isPointerType())
+      return EmitAdd(LHS, RHS, E->getType());
+      
+    return EmitPointerAdd(LHS, E->getLHS()->getType(),
+                          RHS, E->getRHS()->getType(), E->getType());
+  case BinaryOperator::Sub:
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
+
+    if (!E->getLHS()->getType()->isPointerType())
+      return EmitSub(LHS, RHS, E->getType());
+      
+    return EmitPointerSub(LHS, E->getLHS()->getType(),
+                          RHS, E->getRHS()->getType(), E->getType());
   case BinaryOperator::Shl:
     LHS = EmitExpr(E->getLHS());
     RHS = EmitExpr(E->getRHS());
@@ -1088,13 +986,16 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     RHS = EmitExpr(E->getRHS());
     return EmitShr(LHS, RHS, E->getType());
   case BinaryOperator::And:
-    EmitUsualArithmeticConversions(E, LHS, RHS);
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
     return EmitAnd(LHS, RHS, E->getType());
   case BinaryOperator::Xor:
-    EmitUsualArithmeticConversions(E, LHS, RHS);
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
     return EmitXor(LHS, RHS, E->getType());
   case BinaryOperator::Or :
-    EmitUsualArithmeticConversions(E, LHS, RHS);
+    LHS = EmitExpr(E->getLHS());
+    RHS = EmitExpr(E->getRHS());
     return EmitOr(LHS, RHS, E->getType());
   case BinaryOperator::LAnd: return EmitBinaryLAnd(E);
   case BinaryOperator::LOr: return EmitBinaryLOr(E);
@@ -1360,8 +1261,8 @@ RValue CodeGenFunction::EmitShr(RValue LHSV, RValue RHSV, QualType ResTy) {
 RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
                                           unsigned UICmpOpc, unsigned SICmpOpc,
                                           unsigned FCmpOpc) {
-  RValue LHS, RHS;
-  EmitUsualArithmeticConversions(E, LHS, RHS);
+  RValue LHS = EmitExpr(E->getLHS());
+  RValue RHS = EmitExpr(E->getRHS());
 
   llvm::Value *Result;
   if (LHS.isScalar()) {
