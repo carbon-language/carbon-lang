@@ -193,15 +193,9 @@ void PostDominatorTree::calculate(Function &F) {
   Info.clear();
   std::vector<BasicBlock*>().swap(Vertex);
 
-  int dfsnum = 0;
-  // Iterate over all nodes in depth first order...
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
-           E = idf_end(Roots[i]); I != E; ++I) {
-      if (!getNodeForBlock(*I)->getIDom())
-        getNodeForBlock(*I)->assignDFSNumber(dfsnum);
-    }
-  DFSInfoValid = true;
+  // Start out with the DFS numbers being invalid.  Let them be computed if
+  // demanded.
+  DFSInfoValid = false;
 }
 
 

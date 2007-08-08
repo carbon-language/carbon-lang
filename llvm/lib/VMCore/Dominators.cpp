@@ -20,6 +20,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
@@ -383,15 +384,39 @@ void DominatorTree::calculate(Function &F) {
 }
 
 void DominatorTreeBase::updateDFSNumbers() {
-  int dfsnum = 0;
-  // Iterate over all nodes in depth first order.
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
-    for (df_iterator<BasicBlock*> I = df_begin(Roots[i]),
-           E = df_end(Roots[i]); I != E; ++I) {
-      if (DomTreeNode *BBNode = getNode(*I)) {
-        if (!BBNode->getIDom())
-          BBNode->assignDFSNumber(dfsnum);
+  unsigned DFSNum = 0;
+
+  SmallVector<DomTreeNode *, 32> WorkStack;
+  SmallPtrSet<DomTreeNode *, 32> Visited;
+
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i) {
+    DomTreeNode *ThisRoot = getNode(Roots[i]);
+    WorkStack.push_back(ThisRoot);
+    Visited.insert(ThisRoot);
+    ThisRoot->DFSNumIn = DFSNum++;
+    
+    while (!WorkStack.empty()) {
+      DomTreeNode *Node = WorkStack.back();
+      
+      bool MustVisitAChild = false;
+      for (DomTreeNode::iterator DI = Node->begin(), E = Node->end();
+           DI != E; ++DI) {
+        DomTreeNode *Child = *DI;
+        if (!Visited.insert(Child))
+          continue;
+        
+        MustVisitAChild = true;
+        Child->DFSNumIn = DFSNum++;
+        WorkStack.push_back(Child);
+        break;
       }
+      
+      if (!MustVisitAChild) {
+        // If we reach here means all children are visited
+        Node->DFSNumOut = DFSNum++;
+        WorkStack.pop_back();
+      }
+    }
   }
   SlowQueries = 0;
   DFSInfoValid = true;
@@ -487,38 +512,6 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
   }
 
   return NULL;
-}
-
-/// assignDFSNumber - Assign In and Out numbers while walking dominator tree
-/// in dfs order.
-void DomTreeNode::assignDFSNumber(int num) {
-  std::vector<DomTreeNode *>  workStack;
-  SmallPtrSet<DomTreeNode *, 32> Visited;
-  
-  workStack.push_back(this);
-  Visited.insert(this);
-  this->DFSNumIn = num++;
-  
-  while (!workStack.empty()) {
-    DomTreeNode  *Node = workStack.back();
-    
-    bool visitChild = false;
-    for (std::vector<DomTreeNode*>::iterator DI = Node->begin(),
-           E = Node->end(); DI != E && !visitChild; ++DI) {
-      DomTreeNode *Child = *DI;
-      if (!Visited.insert(Child))
-        continue;
-      
-      visitChild = true;
-      Child->DFSNumIn = num++;
-      workStack.push_back(Child);
-    }
-    if (!visitChild) {
-      // If we reach here means all children are visited
-      Node->DFSNumOut = num++;
-      workStack.pop_back();
-    }
-  }
 }
 
 void DomTreeNode::setIDom(DomTreeNode *NewIDom) {

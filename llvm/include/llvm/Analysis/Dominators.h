@@ -97,17 +97,12 @@ private:
     return this->DFSNumIn >= other->DFSNumIn &&
       this->DFSNumOut <= other->DFSNumOut;
   }
-
-  /// assignDFSNumber - Assign In and Out numbers while walking dominator tree
-  /// in dfs order.
-  void assignDFSNumber(int num);
 };
 
 //===----------------------------------------------------------------------===//
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
 class DominatorTreeBase : public DominatorBase {
-
 protected:
   void reset();
   typedef DenseMap<BasicBlock*, DomTreeNode*> DomTreeNodeMapType;
@@ -135,9 +130,7 @@ protected:
   // Info - Collection of information used during the computation of idoms.
   DenseMap<BasicBlock*, InfoRec> Info;
 
-  void updateDFSNumbers();
-
-  public:
+public:
   DominatorTreeBase(intptr_t ID, bool isPostDom) 
     : DominatorBase(ID, isPostDom), DFSInfoValid(false), SlowQueries(0) {}
   ~DominatorTreeBase() { reset(); }
@@ -275,6 +268,11 @@ protected:
     if (OS) print(*OS, M);
   }
   virtual void dump();
+  
+protected:
+  /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
+  /// dominator tree in dfs order.
+  void updateDFSNumbers();
 };
 
 //===-------------------------------------
