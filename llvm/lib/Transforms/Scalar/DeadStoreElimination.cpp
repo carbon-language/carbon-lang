@@ -58,11 +58,11 @@ namespace {
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
     
-    // Find the base pointer that a pointer came from
-    // Because this is used to find pointers that originate
-    // from allocas, it is safe to ignore GEP indices, since
-    // either the store will be in the alloca, and thus dead,
-    // or beyond the end of the alloca, and thus undefined.
+    /// Find the base pointer that a pointer came from
+    /// Because this is used to find pointers that originate
+    /// from allocas, it is safe to ignore GEP indices, since
+    /// either the store will be in the alloca, and thus dead,
+    /// or beyond the end of the alloca, and thus undefined.
     void TranslatePointerBitCasts(Value*& v) {
       assert(isa<PointerType>(v->getType()) &&
              "Translating a non-pointer type?");
@@ -113,10 +113,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     Value* pointer = 0;
     if (StoreInst* S = dyn_cast<StoreInst>(BBI))
       pointer = S->getPointerOperand();
-    else if (FreeInst* F = dyn_cast<FreeInst>(BBI))
-      pointer = F->getPointerOperand();
-      
-    assert(pointer && "Not a free or a store?");
+    else
+      pointer = cast<FreeInst>(BBI)->getPointerOperand();
       
     StoreInst*& last = lastStore[pointer];
     bool deletedStore = false;
