@@ -46,6 +46,28 @@ namespace {
     }
 
   private:
+
+    class SplitInfo {
+    public:
+      SplitInfo() : IndVar(NULL), SplitValue(NULL), ExitValue(NULL),
+                    SplitCondition(NULL), ExitCondition(NULL) {}
+      // Induction variable whose range is being split by this transformation.
+      PHINode *IndVar;
+      
+      // Induction variable's range is split at this value.
+      Value *SplitValue;
+      
+      // Induction variable's final loop exit value.
+      Value *ExitValue;
+      
+      // This compare instruction compares IndVar against SplitValue.
+      ICmpInst *SplitCondition;
+
+      // Loop exit condition.
+      ICmpInst *ExitCondition;
+    };
+
+  private:
     /// Find condition inside a loop that is suitable candidate for index split.
     void findSplitCondition();
 
@@ -54,17 +76,17 @@ namespace {
     /// entire (i.e. meaningful) loop body is dominated by this compare
     /// instruction then loop body is executed only for one iteration. In
     /// such case eliminate loop structure surrounding this loop body. For
-    bool processOneIterationLoop(LPPassManager &LPM);
+    bool processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM);
     
     // If loop header includes loop variant instruction operands then
     // this loop may not be eliminated.
-    bool safeHeader(BasicBlock *BB);
+    bool safeHeader(SplitInfo &SD,  BasicBlock *BB);
 
     // If Exit block includes loop variant instructions then this
     // loop may not be eliminated.
-    bool safeExitBlock(BasicBlock *BB);
+    bool safeExitBlock(SplitInfo &SD, BasicBlock *BB);
 
-    bool splitLoop();
+    bool splitLoop(SplitInfo &SD);
 
   private:
 
@@ -72,20 +94,7 @@ namespace {
     Loop *L;
     ScalarEvolution *SE;
 
-    // Induction variable whose range is being split by this transformation.
-    PHINode *IndVar;
-
-    // Induction variable's range is split at this value.
-    Value *SplitValue;
-    
-    // Induction variable's final loop exit value.
-    Value *ExitValue;
-    
-    // This compare instruction compares IndVar against SplitValue.
-    ICmpInst *SplitCondition;
-
-    // Loop exit condition.
-    ICmpInst *ExitCondition;
+    SmallVector<SplitInfo, 4> SplitData;
   };
 
   char LoopIndexSplit::ID = 0;
@@ -100,30 +109,51 @@ LoopPass *llvm::createLoopIndexSplitPass() {
 bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
   bool Changed = false;
   L = IncomingLoop;
-  SplitCondition = NULL;
+
   SE = &getAnalysis<ScalarEvolution>();
 
   findSplitCondition();
 
-  if (!SplitCondition)
+  if (SplitData.empty())
     return false;
 
-  if (SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) 
-    // If it is possible to eliminate loop then do so.
-    Changed = processOneIterationLoop(LPM);
-  else
-    Changed = splitLoop();
+  // First see if it is possible to eliminate loop itself or not.
+  for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
+         E = SplitData.end(); SI != E; ++SI) {
+    SplitInfo &SD = *SI;
+    if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) {
+      Changed = processOneIterationLoop(SD,LPM);
+      if (Changed) {
+        ++NumIndexSplit;
+        // If is loop is eliminated then nothing else to do here.
+        return Changed;
+      }
+    }
+  }
+
+  for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
+         E = SplitData.end(); SI != E; ++SI) {
+    SplitInfo &SD = *SI;
+
+    // ICM_EQs are already handled above.
+    if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) 
+      continue;
+
+    // FIXME : Collect Spliting cost for all SD. Only operate on profitable SDs.
+    Changed = splitLoop(SD);
+  }
 
   if (Changed)
     ++NumIndexSplit;
-
+  
   return Changed;
 }
 
 /// Find condition inside a loop that is suitable candidate for index split.
 void LoopIndexSplit::findSplitCondition() {
 
- BasicBlock *Header = L->getHeader();
+  SplitInfo SD;
+  BasicBlock *Header = L->getHeader();
 
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
@@ -140,29 +170,29 @@ void LoopIndexSplit::findSplitCondition() {
     for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); 
          UI != E; ++UI) {
       if (ICmpInst *CI = dyn_cast<ICmpInst>(*UI)) {
-        SplitCondition = CI;
+        SD.SplitCondition = CI;
         break;
       }
     }
 
     // Valid SplitCondition's one operand is phi node and the other operand
     // is loop invariant.
-    if (SplitCondition) {
-      if (SplitCondition->getOperand(0) != PN)
-        SplitValue = SplitCondition->getOperand(0);
+    if (SD.SplitCondition) {
+      if (SD.SplitCondition->getOperand(0) != PN)
+        SD.SplitValue = SD.SplitCondition->getOperand(0);
       else
-        SplitValue = SplitCondition->getOperand(1);
-      SCEVHandle ValueSCEV = SE->getSCEV(SplitValue);
+        SD.SplitValue = SD.SplitCondition->getOperand(1);
+      SCEVHandle ValueSCEV = SE->getSCEV(SD.SplitValue);
 
       // If SplitValue is not invariant then SplitCondition is not appropriate.
       if (!ValueSCEV->isLoopInvariant(L))
-        SplitCondition = NULL;
+        SD.SplitCondition = NULL;
     }
 
     // We are looking for only one split condition.
-    if (SplitCondition) {
-      IndVar = PN;
-      break;
+    if (SD.SplitCondition) {
+      SD.IndVar = PN;
+      SplitData.push_back(SD);
     }
   }
 }
@@ -182,7 +212,7 @@ void LoopIndexSplit::findSplitCondition() {
 ///        i = somevalue;
 ///        loop_body
 ///     }
-bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
+bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) {
 
   BasicBlock *Header = L->getHeader();
 
@@ -191,7 +221,7 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
   
   // If SplitCondition is not in loop header then this loop is not suitable
   // for this transformation.
-  if (SplitCondition->getParent() != Header)
+  if (SD.SplitCondition->getParent() != Header)
     return false;
   
   // If one of the Header block's successor is not an exit block then this
@@ -209,12 +239,12 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
 
   // If loop header includes loop variant instruction operands then
   // this loop may not be eliminated.
-  if (!safeHeader(Header)) 
+  if (!safeHeader(SD, Header)) 
     return false;
 
   // If Exit block includes loop variant instructions then this
   // loop may not be eliminated.
-  if (!safeExitBlock(ExitBlock)) 
+  if (!safeExitBlock(SD, ExitBlock)) 
     return false;
 
   // Update CFG.
@@ -235,7 +265,7 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
 
   BasicBlock *Preheader = L->getLoopPreheader();
   Instruction *Terminator = Header->getTerminator();
-  Value *StartValue = IndVar->getIncomingValueForBlock(Preheader);
+  Value *StartValue = SD.IndVar->getIncomingValueForBlock(Preheader);
 
   // Replace split condition in header.
   // Transform 
@@ -244,16 +274,19 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
   //      c1 = icmp uge i32 SplitValue, StartValue
   //      c2 = icmp ult i32 vSplitValue, ExitValue
   //      and i32 c1, c2 
-  bool SignedPredicate = ExitCondition->isSignedPredicate();
+  bool SignedPredicate = SD.ExitCondition->isSignedPredicate();
   Instruction *C1 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
-                                 SplitValue, StartValue, "lisplit", Terminator);
+                                 SD.SplitValue, StartValue, "lisplit", 
+                                 Terminator);
   Instruction *C2 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                                 SplitValue, ExitValue, "lisplit", Terminator);
-  Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", Terminator);
-  SplitCondition->replaceAllUsesWith(NSplitCond);
-  SplitCondition->eraseFromParent();
+                                 SD.SplitValue, SD.ExitValue, "lisplit", 
+                                 Terminator);
+  Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", 
+                                                      Terminator);
+  SD.SplitCondition->replaceAllUsesWith(NSplitCond);
+  SD.SplitCondition->eraseFromParent();
 
   // Now, clear latch block. Remove instructions that are responsible
   // to increment induction variable. 
@@ -275,7 +308,7 @@ bool LoopIndexSplit::processOneIterationLoop(LPPassManager &LPM) {
 
 // If loop header includes loop variant instruction operands then
 // this loop can not be eliminated. This is used by processOneIterationLoop().
-bool LoopIndexSplit::safeHeader(BasicBlock *Header) {
+bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
 
   Instruction *Terminator = Header->getTerminator();
   for(BasicBlock::iterator BI = Header->begin(), BE = Header->end(); 
@@ -287,7 +320,7 @@ bool LoopIndexSplit::safeHeader(BasicBlock *Header) {
       continue;
 
     // SplitCondition itself is OK.
-    if (I == SplitCondition)
+    if (I == SD.SplitCondition)
       continue;
 
     // Terminator is also harmless.
@@ -303,7 +336,7 @@ bool LoopIndexSplit::safeHeader(BasicBlock *Header) {
 
 // If Exit block includes loop variant instructions then this
 // loop may not be eliminated. This is used by processOneIterationLoop().
-bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
+bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
 
   Instruction *IndVarIncrement = NULL;
 
@@ -334,7 +367,7 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
             IndVarIncrement = I;
       }
           
-      if (IndVarIncrement && PN == IndVar && CI->isOne())
+      if (IndVarIncrement && PN == SD.IndVar && CI->isOne())
         continue;
     }
 
@@ -345,7 +378,7 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
       ++BI;
       Instruction *N = BI;
       if (N == ExitBlock->getTerminator()) {
-        ExitCondition = EC;
+        SD.ExitCondition = EC;
         continue;
       }
     }
@@ -357,19 +390,19 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
   // Check if Exit condition is comparing induction variable against 
   // loop invariant value. If one operand is induction variable and 
   // the other operand is loop invaraint then Exit condition is safe.
-  if (ExitCondition) {
-    Value *Op0 = ExitCondition->getOperand(0);
-    Value *Op1 = ExitCondition->getOperand(1);
+  if (SD.ExitCondition) {
+    Value *Op0 = SD.ExitCondition->getOperand(0);
+    Value *Op1 = SD.ExitCondition->getOperand(1);
 
     Instruction *Insn0 = dyn_cast<Instruction>(Op0);
     Instruction *Insn1 = dyn_cast<Instruction>(Op1);
     
     if (Insn0 && Insn0 == IndVarIncrement)
-      ExitValue = Op1;
+      SD.ExitValue = Op1;
     else if (Insn1 && Insn1 == IndVarIncrement)
-      ExitValue = Op0;
+      SD.ExitValue = Op0;
 
-    SCEVHandle ValueSCEV = SE->getSCEV(ExitValue);
+    SCEVHandle ValueSCEV = SE->getSCEV(SD.ExitValue);
     if (!ValueSCEV->isLoopInvariant(L))
       return false;
   }
@@ -378,7 +411,7 @@ bool LoopIndexSplit::safeExitBlock(BasicBlock *ExitBlock) {
   return true;
 }
 
-bool LoopIndexSplit::splitLoop() {
+bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   // FIXME :)
   return false;
 }
