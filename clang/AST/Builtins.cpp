@@ -88,7 +88,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
   switch (*Str++) {
   default: assert(0 && "Unknown builtin type letter!");
   case 'v':
-    assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'f'!");
+    assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'v'!");
     return Context.VoidTy;
   case 'f':
     assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'f'!");
@@ -103,7 +103,14 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
     if (Unsigned)
       return Context.UnsignedShortTy;
     return Context.ShortTy;
-  //case 'i':
+  case 'i':
+    if (Long)
+      return Unsigned ? Context.UnsignedLongTy : Context.LongTy;
+    if (LongLong)
+      return Unsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
+    if (Unsigned)
+      return Context.UnsignedIntTy;
+    return Context.IntTy; // default is signed.
   }
 }
 
@@ -119,7 +126,10 @@ QualType Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context)const
   
   assert((TypeStr[0] != '.' || TypeStr[1] == 0) &&
          "'.' should only occur at end of builtin type list!");
-  
+
+  // handle untyped/variadic arguments "T c99Style();" or "T cppStyle(...);".
+  if (ArgTypes.size() == 0 && TypeStr[0] == '.')
+    return Context.getFunctionTypeNoProto(ResType);
   return Context.getFunctionType(ResType, &ArgTypes[0], ArgTypes.size(),
                                  TypeStr[0] == '.');
 }
