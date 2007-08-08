@@ -17,6 +17,7 @@
 #include "llvm/Function.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 
@@ -43,6 +44,8 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
+      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominanceFrontier>();
     }
 
   private:
@@ -314,6 +317,20 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) 
   }
 
   LPM.deleteLoopFromQueue(L);
+
+  // Update Dominator Info.
+  // Only CFG change done is to remove Latch to Header edge. This
+  // does not change dominator tree because Latch did not dominate
+  // Header.
+  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
+    DominanceFrontier::iterator HeaderDF = DF->find(Header);
+    if (HeaderDF != DF->end()) 
+      DF->removeFromFrontier(HeaderDF, Header);
+
+    DominanceFrontier::iterator LatchDF = DF->find(Latch);
+    if (LatchDF != DF->end()) 
+      DF->removeFromFrontier(LatchDF, Header);
+  }
   return true;
 }
 
