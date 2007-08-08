@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
   
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename);
   if (Buffer == 0) {
-    cerr << argv[0] << "Error reading file '" + InputFilename + "'\n";
+    cerr << argv[0] << ": Error reading file '" + InputFilename + "'\n";
     return 1;
   } else {
     M.reset(ParseBitcodeFile(Buffer));
