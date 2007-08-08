@@ -57,16 +57,23 @@ namespace {
                               SetVector<Instruction*>& possiblyDead);
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
+    
+    // Find the base pointer that a pointer came from
+    // Because this is used to find pointers that originate
+    // from allocas, it is safe to ignore GEP indices, since
+    // either the store will be in the alloca, and thus dead,
+    // or beyond the end of the alloca, and thus undefined.
     void TranslatePointerBitCasts(Value*& v) {
       assert(isa<PointerType>(v->getType()) &&
              "Translating a non-pointer type?");
-      
-      // See through pointer-to-pointer bitcasts
-      while (isa<BitCastInst>(v) || isa<GetElementPtrInst>(v))
+      while (true) {
         if (BitCastInst* C = dyn_cast<BitCastInst>(v))
           v = C->getOperand(0);
         else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(v))
           v = G->getOperand(0);
+        else
+          break;
+      }
     }
 
     // getAnalysisUsage - We require post dominance frontiers (aka Control
@@ -100,62 +107,62 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   for (BasicBlock::iterator BBI = BB.begin(), BBE = BB.end();
        BBI != BBE; ++BBI) {
     // If we find a store or a free...
-    if (isa<StoreInst>(BBI) || isa<FreeInst>(BBI)) {
-      Value* pointer = 0;
-      if (StoreInst* S = dyn_cast<StoreInst>(BBI))
-        pointer = S->getPointerOperand();
-      else if (FreeInst* F = dyn_cast<FreeInst>(BBI))
-        pointer = F->getPointerOperand();
+    if (!isa<StoreInst>(BBI) && !isa<FreeInst>(BBI))
+      continue;
       
-      assert(pointer && "Not a free or a store?");
+    Value* pointer = 0;
+    if (StoreInst* S = dyn_cast<StoreInst>(BBI))
+      pointer = S->getPointerOperand();
+    else if (FreeInst* F = dyn_cast<FreeInst>(BBI))
+      pointer = F->getPointerOperand();
       
-      StoreInst*& last = lastStore[pointer];
-      bool deletedStore = false;
+    assert(pointer && "Not a free or a store?");
       
-      // ... to a pointer that has been stored to before...
-      if (last) {
+    StoreInst*& last = lastStore[pointer];
+    bool deletedStore = false;
+      
+    // ... to a pointer that has been stored to before...
+    if (last) {
+      Instruction* dep = MD.getDependency(BBI);
         
-        Instruction* dep = MD.getDependency(BBI);
-        
-        // ... and no other memory dependencies are between them....
-        while (dep != MemoryDependenceAnalysis::None &&
-               dep != MemoryDependenceAnalysis::NonLocal &&
-               isa<StoreInst>(dep)) {
-          if (dep == last) {
-            
-            // Remove it!
-            MD.removeInstruction(last);
-          
-            // DCE instructions only used to calculate that store
-            if (Instruction* D = dyn_cast<Instruction>(last->getOperand(0)))
-              possiblyDead.insert(D);
-            if (Instruction* D = dyn_cast<Instruction>(last->getOperand(1)))
-              possiblyDead.insert(D);
-          
-            last->eraseFromParent();
-            NumFastStores++;
-            deletedStore = true;
-            MadeChange = true;
-            
-            break;
-          } else {
-            dep = MD.getDependency(BBI, dep);
-          }
+      // ... and no other memory dependencies are between them....
+      while (dep != MemoryDependenceAnalysis::None &&
+             dep != MemoryDependenceAnalysis::NonLocal &&
+             isa<StoreInst>(dep)) {
+        if (dep != last) {
+          dep = MD.getDependency(BBI, dep);
+          continue;
         }
+        
+        // Remove it!
+        MD.removeInstruction(last);
+          
+        // DCE instructions only used to calculate that store
+        if (Instruction* D = dyn_cast<Instruction>(last->getOperand(0)))
+          possiblyDead.insert(D);
+        if (Instruction* D = dyn_cast<Instruction>(last->getOperand(1)))
+          possiblyDead.insert(D);
+          
+        last->eraseFromParent();
+        NumFastStores++;
+        deletedStore = true;
+        MadeChange = true;
+          
+        break;
       }
-      
-      // Handle frees whose dependencies are non-trivial
-      if (FreeInst* F = dyn_cast<FreeInst>(BBI))
-        if (!deletedStore)
-          MadeChange |= handleFreeWithNonTrivialDependency(F,
-                                                           MD.getDependency(F),
-                                                           possiblyDead);
-      
-      // Update our most-recent-store map
-      if (StoreInst* S = dyn_cast<StoreInst>(BBI))
-        last = S;
-      else
-        last = 0;
+    }
+    
+    // Handle frees whose dependencies are non-trivial.
+    if (FreeInst* F = dyn_cast<FreeInst>(BBI)) {
+      if (!deletedStore)
+        MadeChange |= handleFreeWithNonTrivialDependency(F,
+                                                         MD.getDependency(F),
+                                                         possiblyDead);
+      // No known stores after the free
+      last = 0;
+    } else {
+      // Update our most-recent-store map.
+      last = cast<StoreInst>(BBI);
     }
   }
   
