@@ -300,7 +300,6 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
   for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
-    assert(ValueNumberInfo[i].def != ~2U);
     if (ValueNumberInfo[i].def == ~1U) continue;  // tombstone value #
     if (i != (unsigned)LHSValNoAssignments[i]) {
       MustMapCurValNos = true;
