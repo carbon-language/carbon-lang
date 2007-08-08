@@ -52,9 +52,19 @@ public:
   static void addStmtClass(const StmtClass s);
   static bool CollectingStats(bool enable=false);
   static void PrintStats();
-  
+
+  /// dump - This does a local dump of the specified AST fragment.  It dumps the
+  /// specified node and a few nodes underneath it, but not the whole subtree.
+  /// This is useful in a debugger.
   void dump() const;
-  void print(std::ostream &OS) const;
+
+  /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
+  void dumpAll() const;
+
+  /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
+  /// back to its original source language syntax.
+  void dumpPretty() const;
+  void printPretty(std::ostream &OS) const;
   
   // Implement visitor support.
   virtual void visit(StmtVisitor &Visitor);
@@ -367,10 +377,10 @@ public:
 class IndirectGotoStmt : public Stmt {
   Expr *Target;
 public:
-  IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass), 
-                                   Target(target) {}
+  IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass), Target(target){}
   
   Expr *getTarget() { return Target; }
+  const Expr *getTarget() const { return Target; }
   
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 

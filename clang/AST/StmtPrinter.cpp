@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Stmt::dump/Stmt::print methods.
+// This file implements the Stmt::dumpPretty/Stmt::printPretty methods, which
+// pretty print the AST back out to C code.
 //
 //===----------------------------------------------------------------------===//
 
@@ -524,12 +525,12 @@ void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
 
-void Stmt::dump() const {
+void Stmt::dumpPretty() const {
   // FIXME: eliminate use of <iostream>
-  print(std::cerr);
+  printPretty(std::cerr);
 }
 
-void Stmt::print(std::ostream &OS) const {
+void Stmt::printPretty(std::ostream &OS) const {
   if (this == 0) {
     OS << "<NULL>";
     return;

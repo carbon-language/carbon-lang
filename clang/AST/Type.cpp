@@ -677,7 +677,7 @@ void TypeOfExpr::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typeof(e) X'.
     InnerString = ' ' + InnerString;
   std::ostringstream s;
-  getUnderlyingExpr()->print(s);
+  getUnderlyingExpr()->printPretty(s);
   InnerString = "typeof(" + s.str() + ")" + InnerString;
 }
 

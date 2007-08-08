@@ -49,6 +49,7 @@ Stats("stats", llvm::cl::desc("Print performance metrics and statistics"));
 enum ProgActions {
   EmitLLVM,                     // Emit a .ll file.
   ParseASTPrint,                // Parse ASTs and print them.
+  ParseASTDump,                 // Parse ASTs and dump them.
   ParseASTCheck,                // Parse ASTs and check diagnostics.
   ParseAST,                     // Parse ASTs.
   ParsePrintCallbacks,          // Parse and print each callback.
@@ -79,6 +80,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser and build ASTs"),
              clEnumValN(ParseASTPrint, "parse-ast-print",
                         "Run parser, build ASTs, then print ASTs"),
+             clEnumValN(ParseASTDump, "parse-ast-dump",
+                        "Run parser, build ASTs, then dump them"),
              clEnumValN(ParseASTCheck, "parse-ast-check",
                         "Run parser, build ASTs, then check diagnostics"),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -818,6 +821,9 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
   case ParseASTPrint:
     PrintASTs(PP, MainFileID, Stats);
+    break;
+  case ParseASTDump:
+    DumpASTs(PP, MainFileID, Stats);
     break;
   case EmitLLVM:
     EmitLLVMFromASTs(PP, MainFileID, Stats);

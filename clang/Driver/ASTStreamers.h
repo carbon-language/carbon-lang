@@ -22,8 +22,7 @@ class TypedefDecl;
 
 void BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 void PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
-void PrintFunctionDecl(FunctionDecl *FD);
-void PrintTypeDefDecl(TypedefDecl *TD);
+void DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 
 } // end clang namespace
 

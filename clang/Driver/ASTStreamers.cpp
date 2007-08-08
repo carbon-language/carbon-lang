@@ -15,6 +15,7 @@
 #include "clang/AST/AST.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/ASTStreamer.h"
+using namespace clang;
 
 void clang::BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   // collect global stats on Decls/Stmts (until we have a module streamer)
@@ -40,7 +41,9 @@ void clang::BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   ASTStreamer_Terminate(Streamer);
 }
 
-void clang::PrintFunctionDecl(FunctionDecl *FD) {
+
+
+static void PrintFunctionDeclStart(FunctionDecl *FD) {
   bool HasBody = FD->getBody();
   
   std::string Proto = FD->getName();
@@ -70,16 +73,12 @@ void clang::PrintFunctionDecl(FunctionDecl *FD) {
   AFT->getResultType().getAsStringInternal(Proto);
   fprintf(stderr, "\n%s", Proto.c_str());
   
-  if (FD->getBody()) {
-    fprintf(stderr, " ");
-    FD->getBody()->dump();
-    fprintf(stderr, "\n");
-  } else {
+  if (!FD->getBody())
     fprintf(stderr, ";\n");
-  }
+  // Doesn't print the body.
 }
 
-void clang::PrintTypeDefDecl(TypedefDecl *TD) {
+static void PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getName();
   TD->getUnderlyingType().getAsStringInternal(S);
   fprintf(stderr, "typedef %s;\n", S.c_str());
@@ -91,7 +90,13 @@ void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      PrintFunctionDecl(FD);
+      PrintFunctionDeclStart(FD);
+
+      if (FD->getBody()) {
+        fprintf(stderr, " ");
+        FD->getBody()->dumpPretty();
+        fprintf(stderr, "\n");
+      }
     } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
       PrintTypeDefDecl(TD);
     } else {
@@ -107,3 +112,34 @@ void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   
   ASTStreamer_Terminate(Streamer);
 }
+
+void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
+  
+  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      PrintFunctionDeclStart(FD);
+      
+      if (FD->getBody()) {
+        fprintf(stderr, "\n");
+        FD->getBody()->dumpAll();
+        fprintf(stderr, "\n");
+      }
+    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+      PrintTypeDefDecl(TD);
+    } else {
+      fprintf(stderr, "Read top-level variable decl: '%s'\n", D->getName());
+    }
+  }
+  
+  if (Stats) {
+    fprintf(stderr, "\nSTATISTICS:\n");
+    ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
+  }
+  
+  ASTStreamer_Terminate(Streamer);
+}
+
+
