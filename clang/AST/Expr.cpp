@@ -85,6 +85,75 @@ CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
   RParenLoc = rparenloc;
 }
 
+bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
+  // The following enum mimics gcc's internal "typeclass.h" file.
+  enum gcc_type_class {
+    no_type_class = -1,
+    void_type_class, integer_type_class, char_type_class,
+    enumeral_type_class, boolean_type_class,
+    pointer_type_class, reference_type_class, offset_type_class,
+    real_type_class, complex_type_class,
+    function_type_class, method_type_class,
+    record_type_class, union_type_class,
+    array_type_class, string_type_class,
+    lang_type_class
+  };
+  Result.setIsSigned(true);
+  
+  // All simple function calls (e.g. func()) are implicitly cast to pointer to
+  // function. As a result, we try and obtain the DeclRefExpr from the 
+  // ImplicitCastExpr.
+  const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(getCallee());
+  if (!ICE) // FIXME: deal with more complex calls (e.g. (func)(), (*func)()).
+    return false;
+  const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr());
+  if (!DRE)
+    return false;
+
+  // We have a DeclRefExpr.
+  if (strcmp(DRE->getDecl()->getName(), "__builtin_classify_type") == 0) {
+    // If no argument was supplied, default to "no_type_class". This isn't 
+    // ideal, however it's what gcc does.
+    Result = static_cast<uint64_t>(no_type_class);
+    if (NumArgs >= 1) {
+      QualType argType = getArg(0)->getType();
+      
+      if (argType->isVoidType())
+        Result = void_type_class;
+      else if (argType->isEnumeralType())
+        Result = enumeral_type_class;
+      else if (argType->isBooleanType())
+        Result = boolean_type_class;
+      else if (argType->isCharType())
+        Result = string_type_class; // gcc doesn't appear to use char_type_class
+      else if (argType->isIntegerType())
+        Result = integer_type_class;
+      else if (argType->isPointerType())
+        Result = pointer_type_class;
+      else if (argType->isReferenceType())
+        Result = reference_type_class;
+      else if (argType->isRealType())
+        Result = real_type_class;
+      else if (argType->isComplexType())
+        Result = complex_type_class;
+      else if (argType->isFunctionType())
+        Result = function_type_class;
+      else if (argType->isStructureType())
+        Result = record_type_class;
+      else if (argType->isUnionType())
+        Result = union_type_class;
+      else if (argType->isArrayType())
+        Result = array_type_class;
+      else if (argType->isUnionType())
+        Result = union_type_class;
+      else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
+        assert(1 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
+    }
+    return true;
+  }
+  return false;
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "<<=".
 const char *BinaryOperator::getOpcodeStr(Opcode Op) {
@@ -310,6 +379,14 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     Result.zextOrTrunc(Ctx.getTypeSize(getType(), TCE->getLocStart()));                              
     Result = TCE->typesAreCompatible();
     break;
+  }
+  case CallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(this);
+    Result.zextOrTrunc(Ctx.getTypeSize(getType(), CE->getLocStart()));
+    if (CE->isBuiltinClassifyType(Result))
+      break;
+    if (Loc) *Loc = getLocStart();
+    return false;
   }
   case DeclRefExprClass:
     if (const EnumConstantDecl *D = 

@@ -231,6 +231,9 @@ public:
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
+  bool isEnumeralType() const;
+  bool isBooleanType() const;
+  bool isCharType() const;
   
   /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)

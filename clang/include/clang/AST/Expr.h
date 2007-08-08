@@ -424,6 +424,8 @@ public:
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
+  bool isBuiltinClassifyType(llvm::APSInt &Result) const;
+  
   SourceRange getSourceRange() const { 
     return SourceRange(Fn->getLocStart(), RParenLoc);
   }

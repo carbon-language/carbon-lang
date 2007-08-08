@@ -340,6 +340,26 @@ bool Type::isIntegerType() const {
   return false;
 }
 
+bool Type::isEnumeralType() const {
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    return TT->getDecl()->getKind() == Decl::Enum;
+  return false;
+}
+
+bool Type::isBooleanType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Bool;
+  return false;
+}
+
+bool Type::isCharType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() == BuiltinType::Char_U ||
+           BT->getKind() == BuiltinType::UChar ||
+           BT->getKind() == BuiltinType::Char_S;
+  return false;
+}
+
 bool Type::isSignedIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Char_S &&
