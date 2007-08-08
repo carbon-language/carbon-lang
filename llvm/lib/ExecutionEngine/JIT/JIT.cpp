@@ -107,11 +107,10 @@ GenericValue JIT::runFunction(Function *F,
 
   // Handle some common cases first.  These cases correspond to common `main'
   // prototypes.
-  if (RetTy == Type::Int32Ty || RetTy == Type::Int32Ty || RetTy == Type::VoidTy) {
+  if (RetTy == Type::Int32Ty || RetTy == Type::VoidTy) {
     switch (ArgValues.size()) {
     case 3:
-      if ((FTy->getParamType(0) == Type::Int32Ty ||
-           FTy->getParamType(0) == Type::Int32Ty) &&
+      if (FTy->getParamType(0) == Type::Int32Ty &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
         int (*PF)(int, char **, const char **) =
@@ -126,8 +125,7 @@ GenericValue JIT::runFunction(Function *F,
       }
       break;
     case 2:
-      if ((FTy->getParamType(0) == Type::Int32Ty ||
-           FTy->getParamType(0) == Type::Int32Ty) &&
+      if (FTy->getParamType(0) == Type::Int32Ty &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))(intptr_t)FPtr;
 
@@ -140,8 +138,7 @@ GenericValue JIT::runFunction(Function *F,
       break;
     case 1:
       if (FTy->getNumParams() == 1 &&
-          (FTy->getParamType(0) == Type::Int32Ty ||
-           FTy->getParamType(0) == Type::Int32Ty)) {
+          FTy->getParamType(0) == Type::Int32Ty) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))(intptr_t)FPtr;
         rv.IntVal = APInt(32, PF(ArgValues[0].IntVal.getZExtValue()));
