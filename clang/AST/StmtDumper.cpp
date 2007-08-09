@@ -58,6 +58,15 @@ namespace  {
         fprintf(F, "  ");
     }
     
+    void DumpType(QualType T) const {
+      fprintf(F, "'%s'", T.getAsString().c_str());
+
+      // If the type is directly a typedef, strip off typedefness to give at
+      // least one level of concreteness.
+      if (TypedefType *TDT = dyn_cast<TypedefType>(T))
+        fprintf(F, ":'%s'", TDT->LookThroughTypedefs().getAsString().c_str());
+    }
+    
     void DumpStmt(const Stmt *Node) const {
       Indent();
       fprintf(F, "(%s %p", Node->getStmtClassName(), (void*)Node);
@@ -65,7 +74,8 @@ namespace  {
     
     void DumpExpr(Expr *Node) const {
       DumpStmt(Node);
-      // TODO: DUMP TYPE
+      fprintf(F, " ");
+      DumpType(Node->getType());
     }
     
     virtual void VisitStmt(Stmt *Node);
