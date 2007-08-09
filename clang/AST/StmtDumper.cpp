@@ -327,27 +327,26 @@ void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   DumpExpr(Str);
   // FIXME: this doesn't print wstrings right.
-  // FIXME: this doesn't print strings with \0's in them.
-  fprintf(F, " \"%s\")", Str->getStrData());
+  fprintf(F, " %s\"", Str->isWide() ? "L" : "");
 
-#if 0
-  if (Str->isWide()) OS << 'L';
-  OS << '"';
-  
   for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
-    switch (Str->getStrData()[i]) {
-    default: OS << Str->getStrData()[i]; break;
+    switch (char C = Str->getStrData()[i]) {
+    default:
+      if (isprint(C))
+        fputc(C, F); 
+      else
+        fprintf(F, "\\%03o", C);
+      break;
     // Handle some common ones to make dumps prettier.
-    case '\\': OS << "\\\\"; break;
-    case '"': OS << "\\\""; break;
-    case '\n': OS << "\\n"; break;
-    case '\t': OS << "\\t"; break;
-    case '\a': OS << "\\a"; break;
-    case '\b': OS << "\\b"; break;
+    case '\\': fprintf(F, "\\\\"); break;
+    case '"':  fprintf(F, "\\\""); break;
+    case '\n': fprintf(F, "\\n"); break;
+    case '\t': fprintf(F, "\\t"); break;
+    case '\a': fprintf(F, "\\a"); break;
+    case '\b': fprintf(F, "\\b"); break;
     }
   }
-  OS << '"';
-#endif
+  fprintf(F, "\")");
 }
 void StmtDumper::VisitParenExpr(ParenExpr *Node) {
   DumpExpr(Node);
