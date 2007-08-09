@@ -530,9 +530,10 @@ public:
   CompoundLiteralExpr(QualType ty, Expr *init) : 
     Expr(CompoundLiteralExprClass, ty), Init(init) {}
   
-  Expr *getInitializer() const { return Init; }
+  const Expr *getInitializer() const { return Init; }
+  Expr *getInitializer() { return Init; }
   
-  virtual SourceRange getSourceRange() const { return SourceRange(); } // FIXME
+  virtual SourceRange getSourceRange() const { return Init->getSourceRange(); }
 
   virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
