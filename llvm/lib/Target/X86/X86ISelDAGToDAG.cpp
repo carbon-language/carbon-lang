@@ -1159,7 +1159,21 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
-      SDOperand Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
+      SDOperand Result;
+      if (HiReg == X86::AH && Subtarget->is64Bit()) {
+        // Prevent use of AH in a REX instruction by referencing AX instead.
+        // Shift it down 8 bits.
+        Result = CurDAG->getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
+        Chain = Result.getValue(1);
+        Result = SDOperand(CurDAG->getTargetNode(X86::SHR16ri, MVT::i16, Result,
+                                     CurDAG->getTargetConstant(8, MVT::i8)), 0);
+        // Then truncate it down to i8.
+        SDOperand SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+        Result = SDOperand(CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
+                                                 MVT::i8, Result, SRIdx), 0);
+      } else {
+        Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
+      }
       ReplaceUses(N.getValue(0), Result);
       if (foldedLoad)
         ReplaceUses(N1.getValue(1), Result.getValue(1));
@@ -1286,11 +1300,26 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
           SDOperand(CurDAG->getTargetNode(Opc, MVT::Flag, N1, InFlag), 0);
       }
 
-      SDOperand Result =
-        CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg, NVT, InFlag);
+      unsigned Reg = isDiv ? LoReg : HiReg;
+      SDOperand Result;
+      if (Reg == X86::AH && Subtarget->is64Bit()) {
+        // Prevent use of AH in a REX instruction by referencing AX instead.
+        // Shift it down 8 bits.
+        Result = CurDAG->getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
+        Chain = Result.getValue(1);
+        Result = SDOperand(CurDAG->getTargetNode(X86::SHR16ri, MVT::i16, Result,
+                                     CurDAG->getTargetConstant(8, MVT::i8)), 0);
+        // Then truncate it down to i8.
+        SDOperand SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+        Result = SDOperand(CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
+                                                 MVT::i8, Result, SRIdx), 0);
+      } else {
+        Result = CurDAG->getCopyFromReg(Chain, Reg, NVT, InFlag);
+        Chain = Result.getValue(1);
+      }
       ReplaceUses(N.getValue(0), Result);
       if (foldedLoad)
-        ReplaceUses(N1.getValue(1), Result.getValue(1));
+        ReplaceUses(N1.getValue(1), Chain);
 
 #ifndef NDEBUG
       DOUT << std::string(Indent-2, ' ') << "=> ";

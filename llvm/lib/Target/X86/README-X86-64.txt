@@ -221,3 +221,16 @@ we were to support medium or larger code models, we need to use the movabs
 instruction. We should probably introduce something like AbsoluteAddress to
 distinguish it from GlobalAddress so the asm printer and JIT code emitter can
 do the right thing.
+
+//===---------------------------------------------------------------------===//
+
+It's not possible to reference AH, BH, CH, and DH registers in an instruction
+requiring REX prefix. However, divb and mulb both produce results in AH. If isel
+emits a CopyFromReg which gets turned into a movb and that can be allocated a
+r8b - r15b.
+
+To get around this, isel emits a CopyFromReg from AX and then right shift it
+down by 8 and truncate it. It's not pretty but it works. We need some register
+allocation magic to make the hack go away (e.g. putting additional constraints
+on the result of the movb).
+
