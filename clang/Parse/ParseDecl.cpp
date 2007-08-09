@@ -865,8 +865,6 @@ bool Parser::isTypeSpecifierQualifier() const {
     // typedef-name
   case tok::identifier:
     return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope) != 0;
-    
-    // TODO: Attributes.
   }
 }
 
@@ -911,13 +909,13 @@ bool Parser::isDeclarationSpecifier() const {
   case tok::kw_volatile:
   case tok::kw_restrict:
 
-    // GNU typeof support.
-  case tok::kw_typeof:
-    
     // function-specifier
   case tok::kw_inline:
 
-    // attributes.
+    // GNU typeof support.
+  case tok::kw_typeof:
+    
+    // GNU attributes.
   case tok::kw___attribute:
     return true;
     
