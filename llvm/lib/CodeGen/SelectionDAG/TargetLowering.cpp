@@ -129,6 +129,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(LoadXActions, 0, sizeof(LoadXActions));
   memset(&StoreXActions, 0, sizeof(StoreXActions));
   memset(&IndexedModeActions, 0, sizeof(IndexedModeActions));
+  memset(&ConvertActions, 0, sizeof(ConvertActions));
 
   // Set all indexed load / store to expand.
   for (unsigned VT = 0; VT != (unsigned)MVT::LAST_VALUETYPE; ++VT) {

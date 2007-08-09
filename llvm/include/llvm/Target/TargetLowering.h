@@ -327,6 +327,24 @@ public:
            getIndexedStoreAction(IdxMode, VT) == Custom;
   }
   
+  /// getConvertAction - Return how the conversion should be treated:
+  /// either it is legal, needs to be promoted to a larger size, needs to be
+  /// expanded to some other code sequence, or the target has a custom expander
+  /// for it.
+  LegalizeAction
+  getConvertAction(MVT::ValueType FromVT, MVT::ValueType ToVT) const {
+    if (MVT::isExtendedVT(ToVT) || MVT::isExtendedVT(FromVT))
+      return Expand;
+    return (LegalizeAction)((ConvertActions[FromVT] >> (2*ToVT)) & 3);
+  }
+
+  /// isConvertLegal - Return true if the specified conversion is legal
+  /// on this target.
+  bool isConvertLegal(MVT::ValueType FromVT, MVT::ValueType ToVT) const {
+    return getConvertAction(FromVT, ToVT) == Legal ||
+           getConvertAction(FromVT, ToVT) == Custom;
+  }
+
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
   /// method returns the ValueType to promote to.
   MVT::ValueType getTypeToPromoteTo(unsigned Op, MVT::ValueType VT) const {
@@ -742,6 +760,16 @@ protected:
     IndexedModeActions[1][IdxMode] |= (uint64_t)Action << VT*2;
   }
   
+  /// setConvertAction - Indicate that the specified conversion does or does
+  /// not work with the with specified type and indicate what to do about it.
+  void setConvertAction(MVT::ValueType FromVT, MVT::ValueType ToVT, 
+                        LegalizeAction Action) {
+    assert(FromVT < MVT::LAST_VALUETYPE && ToVT < 32 && 
+           "Table isn't big enough!");
+    ConvertActions[FromVT] &= ~(uint64_t(3UL) << ToVT*2);
+    ConvertActions[FromVT] |= (uint64_t)Action << ToVT*2;
+  }
+
   /// AddPromotedToType - If Opc/OrigVT is specified as being promoted, the
   /// promotion code defaults to trying a larger integer/fp until it can find
   /// one that works.  If that default is insufficient, this method can be used
@@ -1081,6 +1109,13 @@ private:
   /// deal with the load / store.
   uint64_t IndexedModeActions[2][ISD::LAST_INDEXED_MODE];
   
+  /// ConvertActions - For each conversion from source type to destination type,
+  /// keep a LegalizeAction that indicates how instruction selection should
+  /// deal with the conversion.
+  /// Currently, this is used only for floating->floating conversions
+  /// (FP_EXTEND and FP_ROUND).
+  uint64_t ConvertActions[MVT::LAST_VALUETYPE];
+
   ValueTypeActionImpl ValueTypeActions;
 
   std::vector<double> LegalFPImmediates;

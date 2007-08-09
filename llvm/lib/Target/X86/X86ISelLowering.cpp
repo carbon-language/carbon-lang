@@ -298,6 +298,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
     setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
     addLegalFPImmediate(+0.0); // xorps / xorpd
+
+    // Conversions to long double (in X87) go through memory.
+    setConvertAction(MVT::f32, MVT::f80, Expand);
+    setConvertAction(MVT::f64, MVT::f80, Expand);
+
+    // Conversions from long double (in X87) go through memory.
+    setConvertAction(MVT::f80, MVT::f32, Expand);
+    setConvertAction(MVT::f80, MVT::f64, Expand);
   } else {
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
@@ -307,7 +315,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::UNDEF,     MVT::f32, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-    setOperationAction(ISD::FP_ROUND,  MVT::f32, Expand);
+
+    // Floating truncations need to go through memory.
+    setConvertAction(MVT::f80, MVT::f32, Expand);    
+    setConvertAction(MVT::f64, MVT::f32, Expand);
+    setConvertAction(MVT::f80, MVT::f64, Expand);
 
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
