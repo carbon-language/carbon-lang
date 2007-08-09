@@ -501,16 +501,7 @@ void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
 // C++
 
 void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {
-  switch (Node->getOpcode()) {
-    default:
-      assert(0 && "Not a C++ cast expression");
-      abort();
-    case CXXCastExpr::ConstCast:       OS << "const_cast<";       break;
-    case CXXCastExpr::DynamicCast:     OS << "dynamic_cast<";     break;
-    case CXXCastExpr::ReinterpretCast: OS << "reinterpret_cast<"; break;
-    case CXXCastExpr::StaticCast:      OS << "static_cast<";      break;
-  }
-  
+  OS << CXXCastExpr::getOpcodeStr(Node->getOpcode()) << '<';
   OS << Node->getDestType().getAsString() << ">(";
   PrintExpr(Node->getSubExpr());
   OS << ")";

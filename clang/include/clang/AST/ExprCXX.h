@@ -46,6 +46,19 @@ namespace clang {
   
     Opcode getOpcode() const { return Opc; }
 
+    /// getOpcodeStr - Turn an Opcode enum value into the string it represents,
+    /// e.g. "reinterpret_cast".
+    static const char *getOpcodeStr(Opcode Op) {
+      // FIXME: move out of line.
+      switch (Op) {
+      default: assert(0 && "Not a C++ cast expression");
+      case CXXCastExpr::ConstCast:       return "const_cast";
+      case CXXCastExpr::DynamicCast:     return "dynamic_cast";
+      case CXXCastExpr::ReinterpretCast: return "reinterpret_cast";
+      case CXXCastExpr::StaticCast:      return "static_cast";
+      }
+    }
+    
     virtual SourceRange getSourceRange() const {
       return SourceRange(Loc, getSubExpr()->getSourceRange().End());
     }
