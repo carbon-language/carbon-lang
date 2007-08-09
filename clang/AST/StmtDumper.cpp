@@ -166,17 +166,14 @@ void StmtDumper::VisitCompoundStmt(CompoundStmt *Node) {
 }
 
 void StmtDumper::VisitCaseStmt(CaseStmt *Node) {
-#if 0
-  Indent(-1) << "case ";
-  DumpExpr(Node->getLHS());
-  if (Node->getRHS()) {
-    OS << " ... ";
-    DumpExpr(Node->getRHS());
-  }
-  OS << ":\n";
-  
-  DumpSubTree(Node->getSubStmt(), 0);
-#endif
+  DumpStmt(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getLHS());
+  fprintf(F, "\n");
+  DumpSubTree(Node->getRHS());
+  fprintf(F, "\n");
+  DumpSubTree(Node->getSubStmt());
+  fprintf(F, ")");
 }
 
 void StmtDumper::VisitDefaultStmt(DefaultStmt *Node) {
@@ -313,53 +310,8 @@ void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {
 }
 
 void StmtDumper::VisitCharacterLiteral(CharacterLiteral *Node) {
-#if 0
-  // FIXME should print an L for wchar_t constants
-  unsigned value = Node->getValue();
-  switch (value) {
-  case '\\':
-    OS << "'\\\\'";
-    break;
-  case '\'':
-    OS << "'\\''";
-    break;
-  case '\a':
-    // TODO: K&R: the meaning of '\\a' is different in traditional C
-    OS << "'\\a'";
-    break;
-  case '\b':
-    OS << "'\\b'";
-    break;
-  // Nonstandard escape sequence.
-  /*case '\e':
-    OS << "'\\e'";
-    break;*/
-  case '\f':
-    OS << "'\\f'";
-    break;
-  case '\n':
-    OS << "'\\n'";
-    break;
-  case '\r':
-    OS << "'\\r'";
-    break;
-  case '\t':
-    OS << "'\\t'";
-    break;
-  case '\v':
-    OS << "'\\v'";
-    break;
-  default:
-    if (isprint(value) && value < 256) {
-      OS << "'" << (char)value << "'";
-    } else if (value < 256) {
-      OS << "'\\x" << std::hex << value << std::dec << "'";
-    } else {
-      // FIXME what to really do here?
-      OS << value;
-    }
-  }
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %d)", Node->getValue());
 }
 
 void StmtDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
@@ -373,11 +325,15 @@ void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   fprintf(F, " %f)", Node->getValue());
 }
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
+  DumpExpr(Str);
+  // FIXME: this doesn't print wstrings right.
+  // FIXME: this doesn't print strings with \0's in them.
+  fprintf(F, " \"%s\")", Str->getStrData());
+
 #if 0
   if (Str->isWide()) OS << 'L';
   OS << '"';
   
-  // FIXME: this doesn't print wstrings right.
   for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
     switch (Str->getStrData()[i]) {
     default: OS << Str->getStrData()[i]; break;
