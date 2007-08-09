@@ -54,7 +54,9 @@ namespace {
     class SplitInfo {
     public:
       SplitInfo() : IndVar(NULL), SplitValue(NULL), ExitValue(NULL),
-                    SplitCondition(NULL), ExitCondition(NULL) {}
+                    SplitCondition(NULL), ExitCondition(NULL), 
+                    IndVarIncrement(NULL) {}
+
       // Induction variable whose range is being split by this transformation.
       PHINode *IndVar;
       
@@ -70,6 +72,8 @@ namespace {
       // Loop exit condition.
       ICmpInst *ExitCondition;
 
+      Instruction *IndVarIncrement;
+
       // Clear split info.
       void clear() {
         IndVar = NULL;
@@ -77,7 +81,12 @@ namespace {
         ExitValue = NULL;
         SplitCondition = NULL;
         ExitCondition = NULL;
+        IndVarIncrement = NULL;
       }
+
+      /// Return true if V is a induction variable or induction variable's
+      /// increment for loop L.
+      bool findIndVar(Value *V, Loop *L);
     };
 
   private:
@@ -172,52 +181,93 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
   return Changed;
 }
 
+/// Return true if V is a induction variable or induction variable's
+/// increment for loop L.
+bool LoopIndexSplit::SplitInfo::findIndVar(Value *V, Loop *L) {
+  
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I)
+    return false;
+
+  // Check if I is a phi node from loop header or not.
+  if (PHINode *PN = dyn_cast<PHINode>(V)) {
+    if (PN->getParent() == L->getHeader()) {
+            IndVar = PN;
+            return true;
+    }
+  }
+ 
+  // Check if I is a add instruction whose one operand is
+  // phi node from loop header and second operand is constant.
+  if (I->getOpcode() != Instruction::Add)
+    return false;
+  
+  Value *Op0 = I->getOperand(0);
+  Value *Op1 = I->getOperand(1);
+  
+  if (PHINode *PN = dyn_cast<PHINode>(Op0)) {
+    if (PN->getParent() == L->getHeader()
+        && isa<ConstantInt>(Op1)) {
+      IndVar = PN;
+      IndVarIncrement = I;
+      return true;
+    }
+  }
+  
+  if (PHINode *PN = dyn_cast<PHINode>(Op1)) {
+    if (PN->getParent() == L->getHeader()
+        && isa<ConstantInt>(Op0)) {
+      IndVar = PN;
+      IndVarIncrement = I;
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 /// Find condition inside a loop that is suitable candidate for index split.
 void LoopIndexSplit::findSplitCondition() {
 
   SplitInfo SD;
-  BasicBlock *Header = L->getHeader();
+  // Check all basic block's terminators.
 
-  for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
-    PHINode *PN = cast<PHINode>(I);
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
 
-    if (!PN->getType()->isInteger())
+    // If this basic block does not terminate in a conditional branch
+    // then terminator is not a suitable split condition.
+    BranchInst *BR = dyn_cast<BranchInst>(BB->getTerminator());
+    if (!BR)
+      continue;
+    
+    if (BR->isUnconditional())
       continue;
 
-    SCEVHandle SCEV = SE->getSCEV(PN);
-    if (!isa<SCEVAddRecExpr>(SCEV)) 
-      continue;
+    ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
+    if (!CI)
+      return;
 
-    // If this phi node is used in a compare instruction then it is a
-    // split condition candidate.
-    for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); 
-         UI != E; ++UI) {
-      if (ICmpInst *CI = dyn_cast<ICmpInst>(*UI)) {
-        SD.SplitCondition = CI;
-        break;
-      }
+    // If one operand is loop invariant and second operand is SCEVAddRecExpr
+    // based on induction variable then CI is a candidate split condition.
+    Value *V0 = CI->getOperand(0);
+    Value *V1 = CI->getOperand(1);
+
+    SCEVHandle SH0 = SE->getSCEV(V0);
+    SCEVHandle SH1 = SE->getSCEV(V1);
+
+    if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
+      SD.SplitValue = V0;
+      SD.SplitCondition = CI;
+      if (SD.findIndVar(V1, L))
+        SplitData.push_back(SD);
     }
-
-    // Valid SplitCondition's one operand is phi node and the other operand
-    // is loop invariant.
-    if (SD.SplitCondition) {
-      if (SD.SplitCondition->getOperand(0) != PN)
-        SD.SplitValue = SD.SplitCondition->getOperand(0);
-      else
-        SD.SplitValue = SD.SplitCondition->getOperand(1);
-      SCEVHandle ValueSCEV = SE->getSCEV(SD.SplitValue);
-
-      // If SplitValue is not invariant then SplitCondition is not appropriate.
-      if (!ValueSCEV->isLoopInvariant(L))
-        SD.SplitCondition = NULL;
-    }
-
-    // We are looking for only one split condition.
-    if (SD.SplitCondition) {
-      SD.IndVar = PN;
-      SplitData.push_back(SD);
-      // Before reusing SD for next split condition clear its content.
-      SD.clear();
+    else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
+      SD.SplitValue =  V1;
+      SD.SplitCondition = CI;
+      if (SD.findIndVar(V0, L))
+        SplitData.push_back(SD);
     }
   }
 }
@@ -362,6 +412,14 @@ bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
     if (I == SD.SplitCondition)
       continue;
 
+    // Induction variable is OK.
+    if (I == SD.IndVar)
+      continue;
+
+    // Induction variable increment is OK.
+    if (I == SD.IndVarIncrement)
+      continue;
+
     // Terminator is also harmless.
     if (I == Terminator)
       continue;
@@ -377,8 +435,6 @@ bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
 // loop may not be eliminated. This is used by processOneIterationLoop().
 bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
 
-  Instruction *IndVarIncrement = NULL;
-
   for (BasicBlock::iterator BI = ExitBlock->begin(), BE = ExitBlock->end();
        BI != BE; ++BI) {
     Instruction *I = BI;
@@ -387,26 +443,28 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
     if (isa<PHINode>(I))
       continue;
 
-    // Check if I is induction variable increment instruction.
-    if (BinaryOperator *BOp = dyn_cast<BinaryOperator>(I)) {
-      if (BOp->getOpcode() != Instruction::Add)
-        return false;
+    // Induction variable increment is OK.
+    if (SD.IndVarIncrement && SD.IndVarIncrement == I)
+      continue;
 
-      Value *Op0 = BOp->getOperand(0);
-      Value *Op1 = BOp->getOperand(1);
+    // Check if I is induction variable increment instruction.
+    if (!SD.IndVarIncrement && I->getOpcode() == Instruction::Add) {
+
+      Value *Op0 = I->getOperand(0);
+      Value *Op1 = I->getOperand(1);
       PHINode *PN = NULL;
       ConstantInt *CI = NULL;
 
       if ((PN = dyn_cast<PHINode>(Op0))) {
         if ((CI = dyn_cast<ConstantInt>(Op1)))
-          IndVarIncrement = I;
+          SD.IndVarIncrement = I;
       } else 
         if ((PN = dyn_cast<PHINode>(Op1))) {
           if ((CI = dyn_cast<ConstantInt>(Op0)))
-            IndVarIncrement = I;
+            SD.IndVarIncrement = I;
       }
           
-      if (IndVarIncrement && PN == SD.IndVar && CI->isOne())
+      if (SD.IndVarIncrement && PN == SD.IndVar && CI->isOne())
         continue;
     }
 
@@ -436,9 +494,9 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
     Instruction *Insn0 = dyn_cast<Instruction>(Op0);
     Instruction *Insn1 = dyn_cast<Instruction>(Op1);
     
-    if (Insn0 && Insn0 == IndVarIncrement)
+    if (Insn0 && Insn0 == SD.IndVarIncrement)
       SD.ExitValue = Op1;
-    else if (Insn1 && Insn1 == IndVarIncrement)
+    else if (Insn1 && Insn1 == SD.IndVarIncrement)
       SD.ExitValue = Op0;
 
     SCEVHandle ValueSCEV = SE->getSCEV(SD.ExitValue);
