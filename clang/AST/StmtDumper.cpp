@@ -37,21 +37,21 @@ namespace  {
     StmtDumper(FILE *f, unsigned maxDepth)
       : F(f), IndentLevel(0), MaxDepth(maxDepth) {}
     
-    void DumpSubTree(Stmt *S, int SubIndent = 1) {
+    void DumpSubTree(Stmt *S) {
       // Prune the recursion if not using dump all.
       if (MaxDepth == 0) return;
       
-      IndentLevel += SubIndent;
+      ++IndentLevel;
       if (S) {
         S->visit(*this);
       } else {
         Indent();
         fprintf(F, "<<<NULL>>>\n");
       }
-      IndentLevel -= SubIndent;
+      --IndentLevel;
     }
     
-    void PrintRawDecl(Decl *D);
+    void DumpDeclarator(Decl *D);
     
     void Indent() const {
       for (int i = 0, e = IndentLevel; i < e; ++i)
@@ -94,42 +94,43 @@ void StmtDumper::VisitStmt(Stmt *Node) {
   fprintf(F, "<<unknown stmt type>>\n");
 }
 
-void StmtDumper::PrintRawDecl(Decl *D) {
-#if 0
+void StmtDumper::DumpDeclarator(Decl *D) {
   // FIXME: Need to complete/beautify this... this code simply shows the
   // nodes are where they need to be.
   if (TypedefDecl *localType = dyn_cast<TypedefDecl>(D)) {
-    OS << "typedef " << localType->getUnderlyingType().getAsString();
-    OS << " " << localType->getName();
+    fprintf(F, "\"typedef %s %s\"",
+            localType->getUnderlyingType().getAsString().c_str(),
+            localType->getName());
   } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+    fprintf(F, "\"");
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       switch (V->getStorageClass()) {
-        default: assert(0 && "Unknown storage class!");
-        case VarDecl::None:     break;
-        case VarDecl::Extern:   OS << "extern "; break;
-        case VarDecl::Static:   OS << "static "; break; 
-        case VarDecl::Auto:     OS << "auto "; break;
-        case VarDecl::Register: OS << "register "; break;
+      default: assert(0 && "Unknown storage class!");
+      case VarDecl::None:     break;
+      case VarDecl::Extern:   fprintf(F, "extern "); break;
+      case VarDecl::Static:   fprintf(F, "static "); break; 
+      case VarDecl::Auto:     fprintf(F, "auto "); break;
+      case VarDecl::Register: fprintf(F, "register "); break;
       }
     }
     
     std::string Name = VD->getName();
     VD->getType().getAsStringInternal(Name);
-    OS << Name;
+    fprintf(F, "%s", Name.c_str());
     
     // If this is a vardecl with an initializer, emit it.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       if (V->getInit()) {
-        OS << " = ";
-        DumpExpr(V->getInit());
+        fprintf(F, " =\n");
+        DumpSubTree(V->getInit());
       }
     }
+    fprintf(F, "\"");
   } else {
     // FIXME: "struct x;"
     assert(0 && "Unexpected decl");
   }
-#endif
 }
 
 
@@ -140,15 +141,18 @@ void StmtDumper::VisitNullStmt(NullStmt *Node) {
 
 void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
   DumpStmt(Node);
-  // FIXME: implement this better :)
-  fprintf(F, ")");
-#if 0
+  fprintf(F, "\n");
   for (Decl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
+    ++IndentLevel;
     Indent();
-    PrintRawDecl(D);
-    OS << ";\n";
+    fprintf(F, "%p ", (void*)D);
+    DumpDeclarator(D);
+    if (D->getNextDeclarator())
+      fprintf(F, "\n");
+    --IndentLevel;
   }
-#endif
+    
+  fprintf(F, ")");
 }
 
 void StmtDumper::VisitCompoundStmt(CompoundStmt *Node) {
@@ -472,7 +476,9 @@ void StmtDumper::VisitChooseExpr(ChooseExpr *Node) {
   fprintf(F, ")");
 }
 
-// C++
+//===----------------------------------------------------------------------===//
+// C++ Expressions
+//===----------------------------------------------------------------------===//
 
 void StmtDumper::VisitCXXCastExpr(CXXCastExpr *Node) {
   DumpExpr(Node);
