@@ -355,21 +355,17 @@ void StmtDumper::VisitParenExpr(ParenExpr *Node) {
   fprintf(F, ")");
 }
 void StmtDumper::VisitUnaryOperator(UnaryOperator *Node) {
-#if 0
-  if (!Node->isPostfix())
-    OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
-  DumpExpr(Node->getSubExpr());
-  
-  if (Node->isPostfix())
-    OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
-
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s '%s'\n", Node->isPostfix() ? "postfix" : "prefix",
+          UnaryOperator::getOpcodeStr(Node->getOpcode()));
+  DumpSubTree(Node->getSubExpr());
+  fprintf(F, ")");
 }
 void StmtDumper::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
-#if 0
-  OS << (Node->isSizeOf() ? "sizeof(" : "__alignof(");
-  OS << Node->getArgumentType().getAsString() << ")";
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s ", Node->isSizeOf() ? "sizeof" : "alignof");
+  DumpType(Node->getArgumentType());
+  fprintf(F, ")");
 }
 void StmtDumper::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   DumpExpr(Node);
@@ -391,34 +387,31 @@ void StmtDumper::VisitCallExpr(CallExpr *Node) {
   }
   fprintf(F, ")");
 }
+
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
-#if 0
-  DumpExpr(Node->getBase());
-  OS << (Node->isArrow() ? "->" : ".");
-  
-  FieldDecl *Field = Node->getMemberDecl();
-  assert(Field && "MemberExpr should alway reference a field!");
-  OS << Field->getName();
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s%s %p\n", Node->isArrow() ? "->" : ".",
+          Node->getMemberDecl()->getName(), (void*)Node->getMemberDecl());
+  DumpSubTree(Node->getBase());
+  fprintf(F, ")");
 }
 void StmtDumper::VisitOCUVectorElementExpr(OCUVectorElementExpr *Node) {
-#if 0
-  DumpExpr(Node->getBase());
-  OS << ".";
-  OS << Node->getAccessor().getName();
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s\n", Node->getAccessor().getName());
+  DumpSubTree(Node->getBase());
+  fprintf(F, ")");
 }
 void StmtDumper::VisitCastExpr(CastExpr *Node) {
-#if 0
-  OS << "(" << Node->getType().getAsString() << ")";
-  DumpExpr(Node->getSubExpr());
-#endif
+  DumpExpr(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getSubExpr());
+  fprintf(F, ")");
 }
 void StmtDumper::VisitCompoundLiteralExpr(CompoundLiteralExpr *Node) {
-#if 0
-  OS << "(" << Node->getType().getAsString() << ")";
-  DumpExpr(Node->getInitializer());
-#endif
+  DumpExpr(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getInitializer());
+  fprintf(F, ")");
 }
 void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
   DumpExpr(Node);
@@ -448,63 +441,49 @@ void StmtDumper::VisitConditionalOperator(ConditionalOperator *Node) {
 // GNU extensions.
 
 void StmtDumper::VisitAddrLabelExpr(AddrLabelExpr *Node) {
-#if 0
-  OS << "&&" << Node->getLabel()->getName();
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s %p)", Node->getLabel()->getName(), (void*)Node->getLabel());
 }
 
-void StmtDumper::VisitStmtExpr(StmtExpr *E) {
-#if 0
-  OS << "(";
-  DumpSubTree(E->getSubStmt());
-  OS << ")";
-#endif
+void StmtDumper::VisitStmtExpr(StmtExpr *Node) {
+  DumpExpr(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getSubStmt());
+  fprintf(F, ")");
 }
 
 void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
-#if 0
-  OS << "__builtin_types_compatible_p(";
-  OS << Node->getArgType1().getAsString() << ",";
-  OS << Node->getArgType2().getAsString() << ")";
-#endif
+  DumpExpr(Node);
+  fprintf(F, " ");
+  DumpType(Node->getArgType1());
+  fprintf(F, " ");
+  DumpType(Node->getArgType2());
+  fprintf(F, ")");
 }
 
 void StmtDumper::VisitChooseExpr(ChooseExpr *Node) {
-#if 0
-  OS << "__builtin_choose_expr(";
-  DumpExpr(Node->getCond());
-  OS << ", ";
-  DumpExpr(Node->getLHS());
-  OS << ", ";
-  DumpExpr(Node->getRHS());
-  OS << ")";
-#endif
+  DumpExpr(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getCond());
+  fprintf(F, "\n");
+  DumpSubTree(Node->getLHS());
+  fprintf(F, "\n");
+  DumpSubTree(Node->getRHS());
+  fprintf(F, ")");
 }
 
 // C++
 
 void StmtDumper::VisitCXXCastExpr(CXXCastExpr *Node) {
-#if 0
-  switch (Node->getOpcode()) {
-    default:
-      assert(0 && "Not a C++ cast expression");
-      abort();
-    case CXXCastExpr::ConstCast:       OS << "const_cast<";       break;
-    case CXXCastExpr::DynamicCast:     OS << "dynamic_cast<";     break;
-    case CXXCastExpr::ReinterpretCast: OS << "reinterpret_cast<"; break;
-    case CXXCastExpr::StaticCast:      OS << "static_cast<";      break;
-  }
-  
-  OS << Node->getDestType().getAsString() << ">(";
-  DumpExpr(Node->getSubExpr());
-  OS << ")";
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s\n", CXXCastExpr::getOpcodeStr(Node->getOpcode()));
+  DumpSubTree(Node->getSubExpr());
+  fprintf(F, ")");
 }
 
 void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
-#if 0
-  OS << (Node->getValue() ? "true" : "false");
-#endif
+  DumpExpr(Node);
+  fprintf(F, " %s)", Node->getValue() ? "true" : "false");
 }
 
 
