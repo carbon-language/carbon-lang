@@ -525,11 +525,17 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       }
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
-      if (CFP->getType() == Type::FloatTy) {
+      const Type *Ty = CFP->getType();
+      if (Ty == Type::FloatTy) {
         Record.push_back(FloatToBits((float)CFP->getValue()));
-      } else {
-        assert (CFP->getType() == Type::DoubleTy && "Unknown FP type!");
+      } else if (Ty == Type::DoubleTy) {
         Record.push_back(DoubleToBits((double)CFP->getValue()));
+      // FIXME: make long double constants work.
+      } else if (Ty == Type::X86_FP80Ty ||
+                 Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {
+        assert (0 && "Long double constants not handled yet.");
+      } else {
+        assert (0 && "Unknown FP type!");
       }
     } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
       // Emit constant strings specially.

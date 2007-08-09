@@ -108,6 +108,9 @@ Constant *Constant::getNullValue(const Type *Ty) {
     return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
   case Type::DoubleTyID:
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID:
     return ConstantFP::get(Ty, 0.0);
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
@@ -288,12 +291,17 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
     ConstantFP *&Slot = (*FloatConstants)[std::make_pair(IntVal, Ty)];
     if (Slot) return Slot;
     return Slot = new ConstantFP(Ty, (float)V);
-  } else {
-    assert(Ty == Type::DoubleTy);
+  } else if (Ty == Type::DoubleTy) { 
     uint64_t IntVal = DoubleToBits(V);
     ConstantFP *&Slot = (*DoubleConstants)[std::make_pair(IntVal, Ty)];
     if (Slot) return Slot;
     return Slot = new ConstantFP(Ty, V);
+  // FIXME:  Make long double constants work.
+  } else if (Ty == Type::X86_FP80Ty ||
+             Ty == Type::PPC_FP128Ty || Ty == Type::FP128Ty) {
+    assert(0 && "Long double constants not handled yet.");
+  } else {
+    assert(0 && "Unknown FP Type!");
   }
 }
 
@@ -696,10 +704,13 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
   default:
     return false;         // These can't be represented as floating point!
 
-    // TODO: Figure out how to test if a double can be cast to a float!
+    // TODO: Figure out how to test if we can use a shorter type instead!
   case Type::FloatTyID:
   case Type::DoubleTyID:
-    return true;          // This is the largest type...
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID:
+    return true;
   }
 }
 
