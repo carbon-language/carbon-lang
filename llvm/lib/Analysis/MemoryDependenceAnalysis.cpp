@@ -26,8 +26,8 @@ using namespace llvm;
 
 char MemoryDependenceAnalysis::ID = 0;
   
-const Instruction* MemoryDependenceAnalysis::NonLocal = (Instruction*)-3;
-const Instruction* MemoryDependenceAnalysis::None = (Instruction*)-4;
+Instruction* const MemoryDependenceAnalysis::NonLocal = (Instruction*)-3;
+Instruction* const MemoryDependenceAnalysis::None = (Instruction*)-4;
   
 // Register this pass...
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
@@ -43,7 +43,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// getCallSiteDependency - Private helper for finding the local dependencies
 /// of a call site.
-const Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
+Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
                                                            Instruction* start,
                                                             BasicBlock* block) {
   
@@ -147,9 +147,9 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     if (BB != block) {
       visited.insert(BB);
       
-      const Instruction* localDep = getDependency(query, 0, BB);
+      Instruction* localDep = getDependency(query, 0, BB);
       if (localDep != NonLocal) {
-        resp.insert(std::make_pair(BB, const_cast<Instruction*>(localDep)));
+        resp.insert(std::make_pair(BB, localDep));
         stack.pop_back();
         
         continue;
@@ -160,9 +160,9 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     } else if (BB == block && stack.size() > 1) {
       visited.insert(BB);
       
-      const Instruction* localDep = getDependency(query, 0, BB);
+      Instruction* localDep = getDependency(query, 0, BB);
       if (localDep != query)
-        resp.insert(std::make_pair(BB, const_cast<Instruction*>(localDep)));
+        resp.insert(std::make_pair(BB, localDep));
       
       stack.pop_back();
       
@@ -186,12 +186,12 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
     // If we didn't insert because we have no predecessors, then this
     // query has no dependency at all.
     else if (!inserted && !predOnStack) {
-      resp.insert(std::make_pair(BB, const_cast<Instruction*>(None)));
+      resp.insert(std::make_pair(BB, None));
     // If we didn't insert because our predecessors are already on the stack,
     // then we might still have a dependency, but it will be discovered during
     // backtracking.
     } else if (!inserted && predOnStack){
-      resp.insert(std::make_pair(BB, const_cast<Instruction*>(NonLocal)));
+      resp.insert(std::make_pair(BB, NonLocal));
     }
     
     stack.pop_back();
@@ -204,10 +204,9 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
 void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
                                          DenseMap<BasicBlock*, Value*>& resp) {
   // First check that we don't actually have a local dependency.
-  const Instruction* localDep = getDependency(query);
+  Instruction* localDep = getDependency(query);
   if (localDep != NonLocal) {
-    resp.insert(std::make_pair(query->getParent(),
-                               const_cast<Instruction*>(localDep)));
+    resp.insert(std::make_pair(query->getParent(),localDep));
     return;
   }
   
@@ -218,20 +217,20 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
 /// getDependency - Return the instruction on which a memory operation
 /// depends.  The local paramter indicates if the query should only
 /// evaluate dependencies within the same basic block.
-const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
+Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
                                                      Instruction* start,
                                                      BasicBlock* block) {
   // Start looking for dependencies with the queried inst
   BasicBlock::iterator QI = query;
   
   // Check for a cached result
-  std::pair<const Instruction*, bool> cachedResult = depGraphLocal[query];
+  std::pair<Instruction*, bool> cachedResult = depGraphLocal[query];
   // If we have a _confirmed_ cached entry, return it
   if (cachedResult.second)
     return cachedResult.first;
   else if (cachedResult.first && cachedResult.first != NonLocal)
   // If we have an unconfirmed cached entry, we can start our search from there
-    QI = const_cast<Instruction*>(cachedResult.first);
+    QI = cachedResult.first;
   
   if (start)
     QI = start;
@@ -378,7 +377,7 @@ const Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
 /// This method attempts to keep the cache coherent using the reverse map.
 void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   // Figure out the new dep for things that currently depend on rem
-  const Instruction* newDep = NonLocal;
+  Instruction* newDep = NonLocal;
 
   depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
   // We assume here that it's not in the reverse map if it's not in
@@ -388,8 +387,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     if (depGraphEntry->second.first != NonLocal &&
         depGraphEntry->second.second) {
       // If we have dep info for rem, set them to it
-      BasicBlock::iterator RI =
-                         const_cast<Instruction*>(depGraphEntry->second.first);
+      BasicBlock::iterator RI = depGraphEntry->second.first;
       RI++;
       newDep = RI;
     } else if (depGraphEntry->second.first == NonLocal &&

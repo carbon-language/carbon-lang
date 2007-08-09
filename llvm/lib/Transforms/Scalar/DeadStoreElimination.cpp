@@ -121,14 +121,14 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       
     // ... to a pointer that has been stored to before...
     if (last) {
-      Instruction* dep = const_cast<Instruction*>(MD.getDependency(BBI));
+      Instruction* dep = MD.getDependency(BBI);
         
       // ... and no other memory dependencies are between them....
       while (dep != MemoryDependenceAnalysis::None &&
              dep != MemoryDependenceAnalysis::NonLocal &&
              isa<StoreInst>(dep)) {
         if (dep != last) {
-          dep = const_cast<Instruction*>(MD.getDependency(BBI, dep));
+          dep = MD.getDependency(BBI, dep);
           continue;
         }
         
@@ -154,7 +154,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (FreeInst* F = dyn_cast<FreeInst>(BBI)) {
       if (!deletedStore)
         MadeChange |= handleFreeWithNonTrivialDependency(F,
-                        const_cast<Instruction*>(MD.getDependency(F)),
+                                                         MD.getDependency(F),
                                                          possiblyDead);
       // No known stores after the free
       last = 0;

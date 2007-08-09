@@ -33,23 +33,23 @@ class MemoryDependenceAnalysis : public FunctionPass {
   private:
     // A map from instructions to their dependency, with a boolean
     // flags for whether this mapping is confirmed or not
-    typedef DenseMap<Instruction*, std::pair<const Instruction*, bool> > 
+    typedef DenseMap<Instruction*, std::pair<Instruction*, bool> > 
             depMapType;
     depMapType depGraphLocal;
 
     // A reverse mapping form dependencies to the dependees.  This is
     // used when removing instructions to keep the cache coherent.
-    typedef DenseMap<const Instruction*, SmallPtrSet<Instruction*, 4> >
+    typedef DenseMap<Instruction*, SmallPtrSet<Instruction*, 4> >
             reverseDepMapType;
     reverseDepMapType reverseDep;
     
   public:
     // Special marker indicating that the query has no dependency
     // in the specified block.
-    static const Instruction* NonLocal;
+    static Instruction* const NonLocal;
     
     // Special marker indicating that the query has no dependency at all
-    static const Instruction* None;
+    static Instruction* const None;
     
     static char ID; // Class identification, replacement for typeinfo
     MemoryDependenceAnalysis() : FunctionPass((intptr_t)&ID) {}
@@ -71,7 +71,7 @@ class MemoryDependenceAnalysis : public FunctionPass {
     
     /// getDependency - Return the instruction on which a memory operation
     /// depends, starting with start.
-    const Instruction* getDependency(Instruction* query, Instruction* start = 0,
+    Instruction* getDependency(Instruction* query, Instruction* start = 0,
                                BasicBlock* block = 0);
     
     /// getNonLocalDependency - Fills the passed-in map with the non-local 
@@ -85,7 +85,7 @@ class MemoryDependenceAnalysis : public FunctionPass {
     void removeInstruction(Instruction* rem);
     
   private:
-    const Instruction* getCallSiteDependency(CallSite C, Instruction* start,
+    Instruction* getCallSiteDependency(CallSite C, Instruction* start,
                                        BasicBlock* block);
     void nonLocalHelper(Instruction* query, BasicBlock* block,
                         DenseMap<BasicBlock*, Value*>& resp);
