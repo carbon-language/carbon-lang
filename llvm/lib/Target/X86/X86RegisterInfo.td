@@ -417,13 +417,14 @@ def GR64 : RegisterClass<"X86", [i64], 64,
 }
 
 
-// GR16, GR32 subclasses which contain registers that have R8 sub-registers.
+// GR16, GR32 subclasses which contain registers that have GR8 sub-registers.
 // These should only be used for 32-bit mode.
+def GR8_ : RegisterClass<"X86", [i8], 8, [AL, CL, DL, BL, AH, CH, DH, BH]>;
 def GR16_ : RegisterClass<"X86", [i16], 16, [AX, CX, DX, BX]> {
-  let SubRegClassList = [GR8];
+  let SubRegClassList = [GR8_];
 }
 def GR32_ : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX, EBX]> {
-  let SubRegClassList = [GR8, GR16];
+  let SubRegClassList = [GR8_, GR16_];
 }
 
 // Scalar SSE2 floating point registers.
