@@ -163,12 +163,18 @@ class VX2_Int<bits<11> xo, string opc, Intrinsic IntID>
 def IMPLICIT_DEF_VRRC : Pseudo<(outs VRRC:$rD), (ins),"; IMPLICIT_DEF_VRRC $rD",
                                [(set VRRC:$rD, (v4i32 (undef)))]>;
 
-def DSS   : DSS_Form<822, (outs), (ins u5imm:$A, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
-                     "dss $STRM, $A", LdStGeneral /*FIXME*/, []>;
-def DST   : DSS_Form<342, (outs), (ins u5imm:$T, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
-                     "dst $rA, $rB, $STRM, $T", LdStGeneral /*FIXME*/, []>;
-def DSTST : DSS_Form<374, (outs), (ins u5imm:$T, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
-                   "dstst $rA, $rB, $STRM, $T", LdStGeneral /*FIXME*/, []>;
+def DSS   : DSS_Form<822, (outs), (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
+                     "dss $STRM", LdStGeneral /*FIXME*/, []>;
+def DSSALL: DSS_Form<822, (outs), (ins u5imm:$ONE, u5imm:$ZERO0,u5imm:$ZERO1,u5imm:$ZERO2),
+                     "dssall", LdStGeneral /*FIXME*/, []>;
+def DST   : DSS_Form<342, (outs), (ins u5imm:$ZERO, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
+                     "dst $rA, $rB, $STRM", LdStGeneral /*FIXME*/, []>;
+def DSTT  : DSS_Form<342, (outs), (ins u5imm:$ONE, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
+                     "dstt $rA, $rB, $STRM", LdStGeneral /*FIXME*/, []>;
+def DSTST : DSS_Form<374, (outs), (ins u5imm:$ZERO, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
+                   "dstst $rA, $rB, $STRM", LdStGeneral /*FIXME*/, []>;
+def DSTSTT: DSS_Form<374, (outs), (ins u5imm:$ONE, u5imm:$STRM, GPRC:$rA, GPRC:$rB),
+                   "dststt $rA, $rB, $STRM", LdStGeneral /*FIXME*/, []>;
 
 def MFVSCR : VXForm_4<1540, (outs VRRC:$vD), (ins),
                       "mfvscr $vD", LdStGeneral,
@@ -532,15 +538,15 @@ def V_SET0 : VXForm_setzero<1220, (outs VRRC:$vD), (ins),
 
 // DS* intrinsics.
 def : Pat<(int_ppc_altivec_dss imm:$STRM), (DSS 0, imm:$STRM, 0, 0)>;
-def : Pat<(int_ppc_altivec_dssall), (DSS 1, 0, 0, 0)>;
+def : Pat<(int_ppc_altivec_dssall), (DSSALL 1, 0, 0, 0)>;
 def : Pat<(int_ppc_altivec_dst GPRC:$rA, GPRC:$rB, imm:$STRM),
           (DST 0, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
 def : Pat<(int_ppc_altivec_dstt GPRC:$rA, GPRC:$rB, imm:$STRM),
-          (DST 1, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
+          (DSTT 1, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
 def : Pat<(int_ppc_altivec_dstst GPRC:$rA, GPRC:$rB, imm:$STRM),
           (DSTST 0, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
 def : Pat<(int_ppc_altivec_dststt GPRC:$rA, GPRC:$rB, imm:$STRM),
-          (DSTST 1, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
+          (DSTSTT 1, imm:$STRM, GPRC:$rA, GPRC:$rB)>;
 
 // Undef.
 def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VRRC)>;
