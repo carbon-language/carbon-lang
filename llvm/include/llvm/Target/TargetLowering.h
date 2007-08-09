@@ -333,8 +333,8 @@ public:
   /// for it.
   LegalizeAction
   getConvertAction(MVT::ValueType FromVT, MVT::ValueType ToVT) const {
-    if (MVT::isExtendedVT(ToVT) || MVT::isExtendedVT(FromVT))
-      return Expand;
+    assert(FromVT < MVT::LAST_VALUETYPE && ToVT < 32 && 
+           "Table isn't big enough!");
     return (LegalizeAction)((ConvertActions[FromVT] >> (2*ToVT)) & 3);
   }
 

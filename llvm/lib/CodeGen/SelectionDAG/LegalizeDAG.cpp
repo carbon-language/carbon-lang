@@ -3194,51 +3194,36 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
-  case ISD::FP_EXTEND: {
-      MVT::ValueType newVT = Op.getValueType();
-      MVT::ValueType oldVT = Op.getOperand(0).getValueType();
-      if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
-        // The only way we can lower this is to turn it into a STORE,
-        // EXTLOAD pair, targetting a temporary location (a stack slot).
-
-        // NOTE: there is a choice here between constantly creating new stack
-        // slots and always reusing the same one.  We currently always create
-        // new ones, as reuse may inhibit scheduling.
-        const Type *Ty = MVT::getTypeForValueType(oldVT);
-        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
-        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI =
-          MF.getFrameInfo()->CreateStackObject(TySize, Align);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-        Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
-                                   StackSlot, NULL, 0);
-        Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
-                                   Result, StackSlot, NULL, 0, oldVT);
-        break;
-      }
-    }
-    // FALL THROUGH (to ANY_EXTEND case)
+  case ISD::FP_EXTEND: 
   case ISD::FP_ROUND: {
       MVT::ValueType newVT = Op.getValueType();
       MVT::ValueType oldVT = Op.getOperand(0).getValueType();
       if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
-        // The only way we can lower this is to turn it into a TRUNCSTORE,
+        // The only way we can lower this is to turn it into a STORE,
         // LOAD pair, targetting a temporary location (a stack slot).
 
         // NOTE: there is a choice here between constantly creating new stack
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
-        const Type *Ty = MVT::getTypeForValueType(newVT);
+        MVT::ValueType slotVT = 
+                (Node->getOpcode() == ISD::FP_EXTEND) ? oldVT : newVT;
+        const Type *Ty = MVT::getTypeForValueType(slotVT);
         uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
         unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI =
           MF.getFrameInfo()->CreateStackObject(TySize, Align);
         SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-        Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
-                                   StackSlot, NULL, 0, newVT);
-        Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0, newVT);
+        if (Node->getOpcode() == ISD::FP_EXTEND) {
+          Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
+                                     StackSlot, NULL, 0);
+          Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
+                                     Result, StackSlot, NULL, 0, oldVT);
+        } else {
+          Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
+                                     StackSlot, NULL, 0, newVT);
+          Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0, newVT);
+        }
         break;
       }
     }
