@@ -645,7 +645,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
           // Otherwise, use the specified value #.
           LHSValNoAssignments[VN] = RHSValID;
           if (VN != (unsigned)RHSValID)
-            ValueNumberInfo[VN].def = RHSValNoInfo.def;
+            ValueNumberInfo[VN]->def = ~1U;  // Now this val# is dead.
           else
             ValueNumberInfo[VN] = RHSValNoInfo;
         }
