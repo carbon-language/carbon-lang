@@ -916,12 +916,14 @@ bool Parser::isDeclarationSpecifier() const {
     
     // function-specifier
   case tok::kw_inline:
+
+    // attributes.
+  case tok::kw___attribute:
     return true;
     
     // typedef-name
   case tok::identifier:
     return Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope) != 0;
-    // TODO: Attributes.
   }
 }
 
