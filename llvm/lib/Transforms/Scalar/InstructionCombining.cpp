@@ -7492,13 +7492,23 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   return 0;
 }
 
-/// GetKnownAlignment - If the specified pointer has an alignment that we can
-/// determine, return it, otherwise return 0.
-static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
+/// GetOrEnforceKnownAlignment - If the specified pointer has an alignment that
+/// we can determine, return it, otherwise return 0.  If PrefAlign is specified,
+/// and it is more than the alignment of the ultimate object, see if we can
+/// increase the alignment of the ultimate object, making this check succeed.
+static unsigned GetOrEnforceKnownAlignment(Value *V, TargetData *TD,
+                                           unsigned PrefAlign = 0) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     unsigned Align = GV->getAlignment();
     if (Align == 0 && TD) 
       Align = TD->getPrefTypeAlignment(GV->getType()->getElementType());
+
+    // If there is a large requested alignment and we can, bump up the alignment
+    // of the global.
+    if (PrefAlign > Align && GV->hasInitializer()) {
+      GV->setAlignment(PrefAlign);
+      Align = PrefAlign;
+    }
     return Align;
   } else if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
     unsigned Align = AI->getAlignment();
@@ -7516,18 +7526,20 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
                    (unsigned)TD->getABITypeAlignment(Type::Int64Ty));
       }
     }
+    
+    // If there is a requested alignment and if this is an alloca, round up.  We
+    // don't do this for malloc, because some systems can't respect the request.
+    if (PrefAlign > Align && isa<AllocaInst>(AI)) {
+      AI->setAlignment(PrefAlign);
+      Align = PrefAlign;
+    }
     return Align;
   } else if (isa<BitCastInst>(V) ||
              (isa<ConstantExpr>(V) && 
               cast<ConstantExpr>(V)->getOpcode() == Instruction::BitCast)) {
-    User *CI = cast<User>(V);
-    if (isa<PointerType>(CI->getOperand(0)->getType()))
-      return GetKnownAlignment(CI->getOperand(0), TD);
-    return 0;
+    return GetOrEnforceKnownAlignment(cast<User>(V)->getOperand(0),
+                                      TD, PrefAlign);
   } else if (User *GEPI = dyn_castGetElementPtr(V)) {
-    unsigned BaseAlignment = GetKnownAlignment(GEPI->getOperand(0), TD);
-    if (BaseAlignment == 0) return 0;
-    
     // If all indexes are zero, it is just the alignment of the base pointer.
     bool AllZeroOperands = true;
     for (unsigned i = 1, e = GEPI->getNumOperands(); i != e; ++i)
@@ -7536,9 +7548,15 @@ static unsigned GetKnownAlignment(Value *V, TargetData *TD) {
         AllZeroOperands = false;
         break;
       }
-    if (AllZeroOperands)
-      return BaseAlignment;
-    
+
+    if (AllZeroOperands) {
+      // Treat this like a bitcast.
+      return GetOrEnforceKnownAlignment(GEPI->getOperand(0), TD, PrefAlign);
+    }
+
+    unsigned BaseAlignment = GetOrEnforceKnownAlignment(GEPI->getOperand(0),TD);
+    if (BaseAlignment == 0) return 0;
+
     // Otherwise, if the base alignment is >= the alignment we expect for the
     // base pointer type, then we know that the resultant pointer is aligned at
     // least as much as its type requires.
@@ -7608,15 +7626,15 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // If we can determine a pointer alignment that is bigger than currently
     // set, update the alignment.
     if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
-      unsigned Alignment1 = GetKnownAlignment(MI->getOperand(1), TD);
-      unsigned Alignment2 = GetKnownAlignment(MI->getOperand(2), TD);
+      unsigned Alignment1 = GetOrEnforceKnownAlignment(MI->getOperand(1), TD);
+      unsigned Alignment2 = GetOrEnforceKnownAlignment(MI->getOperand(2), TD);
       unsigned Align = std::min(Alignment1, Alignment2);
       if (MI->getAlignment()->getZExtValue() < Align) {
         MI->setAlignment(ConstantInt::get(Type::Int32Ty, Align));
         Changed = true;
       }
     } else if (isa<MemSetInst>(MI)) {
-      unsigned Alignment = GetKnownAlignment(MI->getDest(), TD);
+      unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest(), TD);
       if (MI->getAlignment()->getZExtValue() < Alignment) {
         MI->setAlignment(ConstantInt::get(Type::Int32Ty, Alignment));
         Changed = true;
@@ -7634,7 +7652,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::x86_sse2_loadu_dq:
       // Turn PPC lvx     -> load if the pointer is known aligned.
       // Turn X86 loadups -> load if the pointer is known aligned.
-      if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
+      if (GetOrEnforceKnownAlignment(II->getOperand(1), TD, 16) >= 16) {
         Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(1),
                                       PointerType::get(II->getType()), CI);
         return new LoadInst(Ptr);
@@ -7643,7 +7661,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::ppc_altivec_stvx:
     case Intrinsic::ppc_altivec_stvxl:
       // Turn stvx -> store if the pointer is known aligned.
-      if (GetKnownAlignment(II->getOperand(2), TD) >= 16) {
+      if (GetOrEnforceKnownAlignment(II->getOperand(2), TD, 16) >= 16) {
         const Type *OpPtrTy = PointerType::get(II->getOperand(1)->getType());
         Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(2),
                                       OpPtrTy, CI);
@@ -7655,7 +7673,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::x86_sse2_storeu_dq:
     case Intrinsic::x86_sse2_storel_dq:
       // Turn X86 storeu -> store if the pointer is known aligned.
-      if (GetKnownAlignment(II->getOperand(1), TD) >= 16) {
+      if (GetOrEnforceKnownAlignment(II->getOperand(1), TD, 16) >= 16) {
         const Type *OpPtrTy = PointerType::get(II->getOperand(2)->getType());
         Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(1),
                                       OpPtrTy, CI);
@@ -8768,7 +8786,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
   // Attempt to improve the alignment.
-  unsigned KnownAlign = GetKnownAlignment(Op, TD);
+  unsigned KnownAlign = GetOrEnforceKnownAlignment(Op, TD);
   if (KnownAlign > LI.getAlignment())
     LI.setAlignment(KnownAlign);
 
@@ -8968,7 +8986,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   }
 
   // Attempt to improve the alignment.
-  unsigned KnownAlign = GetKnownAlignment(Ptr, TD);
+  unsigned KnownAlign = GetOrEnforceKnownAlignment(Ptr, TD);
   if (KnownAlign > SI.getAlignment())
     SI.setAlignment(KnownAlign);
 
