@@ -3836,8 +3836,15 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags |= ISD::ParamFlags::InReg;
     if (Attrs && Attrs->paramHasAttr(j, ParamAttr::StructRet))
       Flags |= ISD::ParamFlags::StructReturn;
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ByVal))
+    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ByVal)) {
       Flags |= ISD::ParamFlags::ByVal;
+      const PointerType *Ty = cast<PointerType>(I->getType());
+      const StructType *STy = cast<StructType>(Ty->getElementType());
+      unsigned StructAlign = Log2_32(getTargetData()->getABITypeAlignment(STy));
+      unsigned StructSize  = getTargetData()->getTypeSize(STy);
+      Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
+      Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
+    }
     if (Attrs && Attrs->paramHasAttr(j, ParamAttr::Nest))
       Flags |= ISD::ParamFlags::Nest;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);

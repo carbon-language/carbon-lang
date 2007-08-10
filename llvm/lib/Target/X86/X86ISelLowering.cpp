@@ -1260,7 +1260,12 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
       int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
                                       VA.getLocMemOffset());
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+
+      unsigned Flags =  cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
+      if (Flags & ISD::ParamFlags::ByVal)
+        ArgValues.push_back(FIN);
+      else
+        ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
     }
   }
   

@@ -130,7 +130,9 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << IndentStr << "else\n"
         << IndentStr << IndentStr << "LocInfo = CCValAssign::AExt;\n";
     } else if (Action->isSubClassOf("CCStructAssign")) {
-      O << "assert(0 && \"Not Implemented\");\n";
+      O << IndentStr <<
+          "State.HandleStruct(ValNo, ValVT, LocVT, LocInfo, ArgFlags);\n";
+      O << IndentStr << "return false;\n";
     } else {
       Action->dump();
       throw "Unknown CCAction!";

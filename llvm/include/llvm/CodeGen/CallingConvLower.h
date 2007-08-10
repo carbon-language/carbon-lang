@@ -190,6 +190,10 @@ public:
     StackOffset += Size;
     return Result;
   }
+
+  void HandleStruct(unsigned ValNo, MVT::ValueType ValVT,
+                    MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+                    unsigned ArgFlags);
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.
   void MarkAllocated(unsigned Reg);

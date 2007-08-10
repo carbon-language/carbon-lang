@@ -68,6 +68,10 @@ namespace ISD {
     ByValOffs         = 4,
     Nest              = 1<<5,  ///< Parameter is nested function static chain
     NestOffs          = 5,
+    ByValAlign        = 0xF << 6, //< The alignment of the struct
+    ByValAlignOffs    = 6,
+    ByValSize         = 0x1ffff << 10, //< The size of the struct
+    ByValSizeOffs     = 10,
     OrigAlignment     = 0x1F<<27,
     OrigAlignmentOffs = 27
   };
@@ -200,6 +204,10 @@ namespace ISD {
     /// Bit 0 - signness
     /// Bit 1 - 'inreg' attribute
     /// Bit 2 - 'sret' attribute
+    /// Bit 4 - 'byval' attribute
+    /// Bit 5 - 'nest' attribute
+    /// Bit 6-9 - alignment of byval structures
+    /// Bit 10-26 - size of byval structures
     /// Bits 31:27 - argument ABI alignment in the first argument piece and
     /// alignment '1' in other argument pieces.
     CALL,

@@ -28,6 +28,17 @@ CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
   UsedRegs.resize(MRI.getNumRegs());
 }
 
+void CCState::HandleStruct(unsigned ValNo, MVT::ValueType ValVT,
+                           MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+                           unsigned ArgFlags) {
+  unsigned Align  = 1 << ((ArgFlags & ISD::ParamFlags::ByValAlign) >>
+                          ISD::ParamFlags::ByValAlignOffs);
+  unsigned Size   = (ArgFlags & ISD::ParamFlags::ByValSize) >>
+      ISD::ParamFlags::ByValSizeOffs;
+  unsigned Offset = AllocateStack(Size, Align);
+
+  addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+}
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.
 void CCState::MarkAllocated(unsigned Reg) {
@@ -99,4 +110,3 @@ void CCState::AnalyzeCallResult(SDNode *TheCall, CCAssignFn Fn) {
     }
   }
 }
-
