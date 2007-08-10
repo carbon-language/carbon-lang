@@ -282,11 +282,11 @@ void Parser::ParseTranslationUnit() {
 
 /// ParseExternalDeclaration:
 ///       external-declaration: [C99 6.9]
-///         function-definition        [TODO]
-///         declaration                [TODO]
+///         function-definition
+///         declaration
 /// [EXT]   ';'
 /// [GNU]   asm-definition
-/// [GNU]   __extension__ external-declaration     [TODO]
+/// [GNU]   __extension__ external-declaration
 /// [OBJC]  objc-class-definition
 /// [OBJC]  objc-class-declaration
 /// [OBJC]  objc-alias-declaration
@@ -304,6 +304,13 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     ConsumeToken();
     // TODO: Invoke action for top-level semicolon.
     return 0;
+  case tok::kw___extension__: {
+    ConsumeToken();
+    // FIXME: Disable extension warnings.
+    DeclTy *RV = ParseExternalDeclaration();
+    // FIXME: Restore extension warnings.
+    return RV;
+  }
   case tok::kw_asm:
     ParseSimpleAsm();
     ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
