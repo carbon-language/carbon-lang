@@ -216,13 +216,13 @@ static bool CheckResults(Preprocessor &PP,
 
 /// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
 bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
+  // Parse the specified input file.
+  BuildASTs(PP, MainFileID, false);
+
   // Gather the set of expected diagnostics.
   DiagList ExpectedErrors, ExpectedWarnings;
   FindExpectedDiags(PP, MainFileID, ExpectedErrors, ExpectedWarnings);
   
-  // Parse the specified input file.
-  BuildASTs(PP, MainFileID, false);
-
   // Check that the expected diagnostics occurred.
   return CheckResults(PP, ExpectedErrors, ExpectedWarnings);
 }
