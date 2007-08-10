@@ -402,9 +402,7 @@ L4:
 There are 3 issues:
 
 1. Lack of post regalloc LICM.
-2. Poor sub-regclass support. That leads to inability to promote the 16-bit
-   arithmetic op to 32-bit and making use of leal.
-3. LSR unable to reused IV for a different type (i16 vs. i32) even though
+2. LSR unable to reused IV for a different type (i16 vs. i32) even though
    the cast would be free.
 
 //===---------------------------------------------------------------------===//
