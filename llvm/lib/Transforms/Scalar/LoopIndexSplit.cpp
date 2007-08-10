@@ -379,19 +379,6 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) 
   if (SD.SplitCondition->getParent() != Header)
     return false;
   
-  // If one of the Header block's successor is not an exit block then this
-  // loop is not a suitable candidate.
-  BasicBlock *ExitBlock = NULL;
-  for (succ_iterator SI = succ_begin(Header), E = succ_end(Header); SI != E; ++SI) {
-    if (L->isLoopExit(*SI)) {
-      ExitBlock = *SI;
-      break;
-    }
-  }
-
-  if (!ExitBlock)
-    return false;
-
   // If loop header includes loop variant instruction operands then
   // this loop may not be eliminated.
   if (!safeHeader(SD, Header)) 
@@ -399,7 +386,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) 
 
   // If Exit block includes loop variant instructions then this
   // loop may not be eliminated.
-  if (!safeExitBlock(SD, ExitBlock)) 
+  if (!safeExitBlock(SD, ExitCondition->getParent())) 
     return false;
 
   // Update CFG.
