@@ -1372,6 +1372,39 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       return NULL;
     }
+
+    case ISD::ANY_EXTEND: {
+      SDOperand N0 = Node->getOperand(0);
+      AddToISelQueue(N0);
+      if (NVT == MVT::i64 || NVT == MVT::i32 || NVT == MVT::i16) {
+        SDOperand SRIdx;
+        switch(N0.getValueType()) {
+        case MVT::i32:
+          SRIdx = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
+          break;
+        case MVT::i16:
+          SRIdx = CurDAG->getTargetConstant(2, MVT::i32); // SubRegSet 2
+          break;
+        case MVT::i8:
+          if (Subtarget->is64Bit())
+            SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+          break;
+        default: assert(0 && "Unknown any_extend!");
+        }
+        if (SRIdx.Val) {
+          SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG, NVT, N0, SRIdx);
+
+#ifndef NDEBUG
+          DOUT << std::string(Indent-2, ' ') << "=> ";
+          DEBUG(ResNode->dump(CurDAG));
+          DOUT << "\n";
+          Indent -= 2;
+#endif
+          return ResNode;
+        } // Otherwise let generated ISel handle it.
+      }
+      break;
+    }
     
     case ISD::SIGN_EXTEND_INREG: {
       SDOperand N0 = Node->getOperand(0);
