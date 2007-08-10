@@ -128,6 +128,11 @@ def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
 def memopfsf64 : PatFrag<(ops node:$ptr), (f64   (memop node:$ptr))>;
 def memopv4f32 : PatFrag<(ops node:$ptr), (v4f32 (memop node:$ptr))>;
 def memopv2f64 : PatFrag<(ops node:$ptr), (v2f64 (memop node:$ptr))>;
+def memopv8i8  : PatFrag<(ops node:$ptr), (v8i8  (memop node:$ptr))>;
+def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
+def memopv4i16 : PatFrag<(ops node:$ptr), (v4i16 (memop node:$ptr))>;
+def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop node:$ptr))>;
+def memopv2i32 : PatFrag<(ops node:$ptr), (v2i32 (memop node:$ptr))>;
 def memopv4i32 : PatFrag<(ops node:$ptr), (v4i32 (memop node:$ptr))>;
 def memopv2i64 : PatFrag<(ops node:$ptr), (v2i64 (memop node:$ptr))>;
 
@@ -2281,35 +2286,297 @@ let AddedComplexity = 20 in
 
 // SSE3 Instruction Templates:
 // 
-//   SS38I - SSSE3 instructions with T8 and OpSize prefixes.
-//   SS3AI - SSSE3 instructions with TA and OpSize prefixes.
+//   SS38I - SSSE3 instructions with T8 prefix.
+//   SS3AI - SSSE3 instructions with TA prefix.
 
 class SS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8, OpSize, Requires<[HasSSSE3]>;
+      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3]>;
 class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TA, OpSize, Requires<[HasSSSE3]>;
+      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3]>;
 
-/// SS3I_binop_rm_int - Simple SSSE3 binary operatr whose type is v2i64.
+/// SS3I_unop_rm_int_8 - Simple SSSE3 unary operator whose type is v*i8.
 let isTwoAddress = 1 in {
-  multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr, Intrinsic IntId,
-                               bit Commutable = 0> {
-    def rr : SS38I<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
-                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                   [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2))]> {
+  multiclass SS3I_unop_rm_int_8<bits<8> opc, string OpcodeStr,
+                                Intrinsic IntId64, Intrinsic IntId128,
+                                bit Commutable = 0> {
+    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR64:$dst, (IntId64 VR64:$src))]> {
       let isCommutable = Commutable;
     }
-    def rm : SS38I<opc, MRMSrcMem, (outs VR128:$dst), (ins VR128:$src1, i128mem:$src2),
-                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                   [(set VR128:$dst,
-                     (IntId VR128:$src1,
-                      (bitconvert (memopv2i64 addr:$src2))))]>;
+    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR64:$dst,
+                       (IntId64 (bitconvert (memopv8i8 addr:$src))))]>;
+
+    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins i128mem:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst,
+                        (IntId128
+                         (bitconvert (memopv16i8 addr:$src))))]>, OpSize;
   }
 }
 
-defm PMULHRSW128 : SS3I_binop_rm_int<0x0B, "pmulhrsw",
-                                     int_x86_ssse3_pmulhrsw_128, 1>;
+/// SS3I_unop_rm_int_16 - Simple SSSE3 unary operator whose type is v*i16.
+let isTwoAddress = 1 in {
+  multiclass SS3I_unop_rm_int_16<bits<8> opc, string OpcodeStr,
+                                 Intrinsic IntId64, Intrinsic IntId128,
+                                 bit Commutable = 0> {
+    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+                     (ins VR64:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR64:$dst, (IntId64 VR64:$src))]> {
+      let isCommutable = Commutable;
+    }
+    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+                     (ins i64mem:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR64:$dst,
+                       (IntId64
+                        (bitconvert (memopv4i16 addr:$src))))]>;
+
+    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins i128mem:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst,
+                        (IntId128
+                         (bitconvert (memopv8i16 addr:$src))))]>, OpSize;
+  }
+}
+
+/// SS3I_unop_rm_int_32 - Simple SSSE3 unary operator whose type is v*i32.
+let isTwoAddress = 1 in {
+  multiclass SS3I_unop_rm_int_32<bits<8> opc, string OpcodeStr,
+                                 Intrinsic IntId64, Intrinsic IntId128,
+                                 bit Commutable = 0> {
+    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+                     (ins VR64:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR64:$dst, (IntId64 VR64:$src))]> {
+      let isCommutable = Commutable;
+    }
+    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+                     (ins i64mem:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set VR64:$dst,
+                       (IntId64
+                        (bitconvert (memopv2i32 addr:$src))))]>;
+
+    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins i128mem:$src),
+                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                      [(set VR128:$dst,
+                        (IntId128
+                         (bitconvert (memopv4i32 addr:$src))))]>, OpSize;
+  }
+}
+
+defm PABSB       : SS3I_unop_rm_int_8 <0x1C, "pabsb",
+                                       int_x86_ssse3_pabs_b,
+                                       int_x86_ssse3_pabs_b_128>;
+defm PABSW       : SS3I_unop_rm_int_16<0x1D, "pabsw",
+                                       int_x86_ssse3_pabs_w,
+                                       int_x86_ssse3_pabs_w_128>;
+defm PABSD       : SS3I_unop_rm_int_32<0x1E, "pabsd",
+                                       int_x86_ssse3_pabs_d,
+                                       int_x86_ssse3_pabs_d_128>;
+
+/// SS3I_binop_rm_int_8 - Simple SSSE3 binary operator whose type is v*i8.
+let isTwoAddress = 1 in {
+  multiclass SS3I_binop_rm_int_8<bits<8> opc, string OpcodeStr,
+                                 Intrinsic IntId64, Intrinsic IntId128,
+                                 bit Commutable = 0> {
+    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+                     (ins VR64:$src1, VR64:$src2),
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]> {
+      let isCommutable = Commutable;
+    }
+    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+                     (ins VR64:$src1, i64mem:$src2),
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     [(set VR64:$dst,
+                       (IntId64 VR64:$src1,
+                        (bitconvert (memopv8i8 addr:$src2))))]>;
+
+    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, i128mem:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst,
+                        (IntId128 VR128:$src1,
+                         (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
+  }
+}
+
+/// SS3I_binop_rm_int_16 - Simple SSSE3 binary operator whose type is v*i16.
+let isTwoAddress = 1 in {
+  multiclass SS3I_binop_rm_int_16<bits<8> opc, string OpcodeStr,
+                                  Intrinsic IntId64, Intrinsic IntId128,
+                                  bit Commutable = 0> {
+    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+                     (ins VR64:$src1, VR64:$src2),
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]> {
+      let isCommutable = Commutable;
+    }
+    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+                     (ins VR64:$src1, i64mem:$src2),
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     [(set VR64:$dst,
+                       (IntId64 VR64:$src1,
+                        (bitconvert (memopv4i16 addr:$src2))))]>;
+
+    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, i128mem:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst,
+                        (IntId128 VR128:$src1,
+                         (bitconvert (memopv8i16 addr:$src2))))]>, OpSize;
+  }
+}
+
+/// SS3I_binop_rm_int_32 - Simple SSSE3 binary operator whose type is v*i32.
+let isTwoAddress = 1 in {
+  multiclass SS3I_binop_rm_int_32<bits<8> opc, string OpcodeStr,
+                                  Intrinsic IntId64, Intrinsic IntId128,
+                                  bit Commutable = 0> {
+    def rr64 : SS38I<opc, MRMSrcReg, (outs VR64:$dst),
+                     (ins VR64:$src1, VR64:$src2),
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     [(set VR64:$dst, (IntId64 VR64:$src1, VR64:$src2))]> {
+      let isCommutable = Commutable;
+    }
+    def rm64 : SS38I<opc, MRMSrcMem, (outs VR64:$dst),
+                     (ins VR64:$src1, i64mem:$src2),
+                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                     [(set VR64:$dst,
+                       (IntId64 VR64:$src1,
+                        (bitconvert (memopv2i32 addr:$src2))))]>;
+
+    def rr128 : SS38I<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+                      OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm128 : SS38I<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, i128mem:$src2),
+                      !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                      [(set VR128:$dst,
+                        (IntId128 VR128:$src1,
+                         (bitconvert (memopv4i32 addr:$src2))))]>, OpSize;
+  }
+}
+
+defm PHADDW      : SS3I_binop_rm_int_16<0x01, "phaddw",
+                                        int_x86_ssse3_phadd_w,
+                                        int_x86_ssse3_phadd_w_128, 1>;
+defm PHADDD      : SS3I_binop_rm_int_32<0x02, "phaddd",
+                                        int_x86_ssse3_phadd_d,
+                                        int_x86_ssse3_phadd_d_128, 1>;
+defm PHADDSW     : SS3I_binop_rm_int_16<0x03, "phaddsw",
+                                        int_x86_ssse3_phadd_sw,
+                                        int_x86_ssse3_phadd_sw_128, 1>;
+defm PHSUBW      : SS3I_binop_rm_int_16<0x05, "phsubw",
+                                        int_x86_ssse3_phsub_w,
+                                        int_x86_ssse3_phsub_w_128>;
+defm PHSUBD      : SS3I_binop_rm_int_32<0x06, "phsubd",
+                                        int_x86_ssse3_phsub_d,
+                                        int_x86_ssse3_phsub_d_128>;
+defm PHSUBSW     : SS3I_binop_rm_int_16<0x07, "phsubsw",
+                                        int_x86_ssse3_phsub_sw,
+                                        int_x86_ssse3_phsub_sw_128>;
+defm PMADDUBSW   : SS3I_binop_rm_int_8 <0x04, "pmaddubsw",
+                                        int_x86_ssse3_pmadd_ub_sw,
+                                        int_x86_ssse3_pmadd_ub_sw_128, 1>;
+defm PMULHRSW    : SS3I_binop_rm_int_16<0x0B, "pmulhrsw",
+                                        int_x86_ssse3_pmul_hr_sw,
+                                        int_x86_ssse3_pmul_hr_sw_128, 1>;
+defm PSHUFB      : SS3I_binop_rm_int_8 <0x00, "pshufb",
+                                        int_x86_ssse3_pshuf_b,
+                                        int_x86_ssse3_pshuf_b_128>;
+defm PSIGNB      : SS3I_binop_rm_int_8 <0x08, "psignb",
+                                        int_x86_ssse3_psign_b,
+                                        int_x86_ssse3_psign_b_128>;
+defm PSIGNW      : SS3I_binop_rm_int_16<0x09, "psignw",
+                                        int_x86_ssse3_psign_w,
+                                        int_x86_ssse3_psign_w_128>;
+defm PSIGND      : SS3I_binop_rm_int_32<0x09, "psignd",
+                                        int_x86_ssse3_psign_d,
+                                        int_x86_ssse3_psign_d_128>;
+
+let isTwoAddress = 1 in {
+  def PALIGN64rr  : SS38I<0x0F, MRMSrcReg, (outs VR64:$dst),
+                          (ins VR64:$src1, VR64:$src2, i16imm:$src3),
+                          "palignr\t{$src2, $dst|$dst, $src2}",
+                          [(set VR64:$dst,
+                            (int_x86_ssse3_palign_r
+                             VR64:$src1, VR64:$src2,
+                             imm:$src3))]>;
+  def PALIGN64rm  : SS38I<0x0F, MRMSrcReg, (outs VR64:$dst),
+                          (ins VR64:$src1, i64mem:$src2, i16imm:$src3),
+                          "palignr\t{$src2, $dst|$dst, $src2}",
+                          [(set VR64:$dst,
+                            (int_x86_ssse3_palign_r
+                             VR64:$src1,
+                             (bitconvert (memopv2i32 addr:$src2)),
+                             imm:$src3))]>;
+
+  def PALIGN128rr : SS38I<0x0F, MRMSrcReg, (outs VR128:$dst),
+                         (ins VR128:$src1, VR128:$src2, i32imm:$src3),
+                         "palignr\t{$src2, $dst|$dst, $src2}",
+                         [(set VR128:$dst,
+                           (int_x86_ssse3_palign_r_128
+                            VR128:$src1, VR128:$src2,
+                            imm:$src3))]>, OpSize;
+  def PALIGN128rm : SS38I<0x0F, MRMSrcReg, (outs VR128:$dst),
+                          (ins VR128:$src1, i128mem:$src2, i32imm:$src3),
+                          "palignr\t{$src2, $dst|$dst, $src2}",
+                          [(set VR128:$dst,
+                            (int_x86_ssse3_palign_r_128
+                             VR128:$src1,
+                             (bitconvert (memopv4i32 addr:$src2)),
+                             imm:$src3))]>, OpSize;
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
