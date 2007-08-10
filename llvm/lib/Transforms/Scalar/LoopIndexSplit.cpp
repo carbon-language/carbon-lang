@@ -53,45 +53,31 @@ namespace {
 
     class SplitInfo {
     public:
-      SplitInfo() : IndVar(NULL), SplitValue(NULL), ExitValue(NULL),
-                    SplitCondition(NULL), ExitCondition(NULL), 
-                    IndVarIncrement(NULL) {}
+      SplitInfo() : SplitValue(NULL), SplitCondition(NULL) {}
 
-      // Induction variable whose range is being split by this transformation.
-      PHINode *IndVar;
-      
       // Induction variable's range is split at this value.
       Value *SplitValue;
-      
-      // Induction variable's final loop exit value.
-      Value *ExitValue;
       
       // This compare instruction compares IndVar against SplitValue.
       ICmpInst *SplitCondition;
 
-      // Loop exit condition.
-      ICmpInst *ExitCondition;
-
-      Instruction *IndVarIncrement;
-
       // Clear split info.
       void clear() {
-        IndVar = NULL;
         SplitValue = NULL;
-        ExitValue = NULL;
         SplitCondition = NULL;
-        ExitCondition = NULL;
-        IndVarIncrement = NULL;
       }
 
-      /// Return true if V is a induction variable or induction variable's
-      /// increment for loop L.
-      bool findIndVar(Value *V, Loop *L);
     };
-
+    
   private:
     /// Find condition inside a loop that is suitable candidate for index split.
     void findSplitCondition();
+
+    /// Find loop's exit condition.
+    void findLoopConditionals();
+
+    /// Return induction variable associated with value V.
+    void findIndVar(Value *V, Loop *L);
 
     /// processOneIterationLoop - Current loop L contains compare instruction
     /// that compares induction variable, IndVar, agains loop invariant. If
@@ -112,6 +98,13 @@ namespace {
     unsigned findSplitCost(Loop *L, SplitInfo &SD);
     bool splitLoop(SplitInfo &SD);
 
+    void initialize() {
+      IndVar = NULL; 
+      IndVarIncrement = NULL;
+      ExitCondition = NULL;
+      StartValue = ExitValue = NULL;
+    }
+
   private:
 
     // Current Loop.
@@ -119,6 +112,19 @@ namespace {
     ScalarEvolution *SE;
     DominatorTree *DT;
     SmallVector<SplitInfo, 4> SplitData;
+
+    // Induction variable whose range is being split by this transformation.
+    PHINode *IndVar;
+    Instruction *IndVarIncrement;
+      
+    // Loop exit condition.
+    ICmpInst *ExitCondition;
+
+    // Induction variable's initial value.
+    Value *StartValue;
+
+    // Induction variable's final loop exit value.
+    Value *ExitValue;
   };
 
   char LoopIndexSplit::ID = 0;
@@ -136,6 +142,13 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
 
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
+
+  initialize();
+
+  findLoopConditionals();
+
+  if (!ExitCondition)
+    return false;
 
   findSplitCondition();
 
@@ -183,24 +196,24 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
 
 /// Return true if V is a induction variable or induction variable's
 /// increment for loop L.
-bool LoopIndexSplit::SplitInfo::findIndVar(Value *V, Loop *L) {
+void LoopIndexSplit::findIndVar(Value *V, Loop *L) {
   
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I)
-    return false;
+    return;
 
   // Check if I is a phi node from loop header or not.
   if (PHINode *PN = dyn_cast<PHINode>(V)) {
     if (PN->getParent() == L->getHeader()) {
-            IndVar = PN;
-            return true;
+      IndVar = PN;
+      return;
     }
   }
  
   // Check if I is a add instruction whose one operand is
   // phi node from loop header and second operand is constant.
   if (I->getOpcode() != Instruction::Add)
-    return false;
+    return;
   
   Value *Op0 = I->getOperand(0);
   Value *Op1 = I->getOperand(1);
@@ -210,7 +223,7 @@ bool LoopIndexSplit::SplitInfo::findIndVar(Value *V, Loop *L) {
         && isa<ConstantInt>(Op1)) {
       IndVar = PN;
       IndVarIncrement = I;
-      return true;
+      return;
     }
   }
   
@@ -219,11 +232,66 @@ bool LoopIndexSplit::SplitInfo::findIndVar(Value *V, Loop *L) {
         && isa<ConstantInt>(Op0)) {
       IndVar = PN;
       IndVarIncrement = I;
-      return true;
+      return;
     }
   }
   
-  return false;
+  return;
+}
+
+// Find loop's exit condition and associated induction variable.
+void LoopIndexSplit::findLoopConditionals() {
+
+  BasicBlock *ExitBlock = NULL;
+
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    if (!L->isLoopExit(BB))
+      continue;
+    if (ExitBlock)
+      return;
+    ExitBlock = BB;
+  }
+
+  if (!ExitBlock)
+    return;
+  
+  // If exit block's terminator is conditional branch inst then we have found
+  // exit condition.
+  BranchInst *BR = dyn_cast<BranchInst>(ExitBlock->getTerminator());
+  if (!BR || BR->isUnconditional())
+    return;
+  
+  ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
+  if (!CI)
+    return;
+  
+  ExitCondition = CI;
+
+  // Exit condition's one operand is loop invariant exit value and second 
+  // operand is SCEVAddRecExpr based on induction variable.
+  Value *V0 = CI->getOperand(0);
+  Value *V1 = CI->getOperand(1);
+  
+  SCEVHandle SH0 = SE->getSCEV(V0);
+  SCEVHandle SH1 = SE->getSCEV(V1);
+  
+  if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
+    ExitValue = V0;
+    findIndVar(V1, L);
+  }
+  else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
+    ExitValue =  V1;
+    findIndVar(V0, L);
+  }
+
+  if (!ExitValue || !IndVar)
+    ExitCondition = NULL;
+  else if (IndVar) {
+    BasicBlock *Preheader = L->getLoopPreheader();
+    StartValue = IndVar->getIncomingValueForBlock(Preheader);
+  }
 }
 
 /// Find condition inside a loop that is suitable candidate for index split.
@@ -246,7 +314,7 @@ void LoopIndexSplit::findSplitCondition() {
       continue;
 
     ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
-    if (!CI)
+    if (!CI || CI == ExitCondition)
       return;
 
     // If one operand is loop invariant and second operand is SCEVAddRecExpr
@@ -260,14 +328,26 @@ void LoopIndexSplit::findSplitCondition() {
     if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
       SD.SplitValue = V0;
       SD.SplitCondition = CI;
-      if (SD.findIndVar(V1, L))
-        SplitData.push_back(SD);
+      if (PHINode *PN = dyn_cast<PHINode>(V1)) {
+        if (PN == IndVar)
+          SplitData.push_back(SD);
+      }
+      else  if (Instruction *Insn = dyn_cast<Instruction>(V1)) {
+        if (IndVarIncrement && IndVarIncrement == Insn)
+          SplitData.push_back(SD);
+      }
     }
     else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
       SD.SplitValue =  V1;
       SD.SplitCondition = CI;
-      if (SD.findIndVar(V0, L))
-        SplitData.push_back(SD);
+      if (PHINode *PN = dyn_cast<PHINode>(V0)) {
+        if (PN == IndVar)
+          SplitData.push_back(SD);
+      }
+      else  if (Instruction *Insn = dyn_cast<Instruction>(V0)) {
+        if (IndVarIncrement && IndVarIncrement == Insn)
+          SplitData.push_back(SD);
+      }
     }
   }
 }
@@ -340,7 +420,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) 
 
   BasicBlock *Preheader = L->getLoopPreheader();
   Instruction *Terminator = Header->getTerminator();
-  Value *StartValue = SD.IndVar->getIncomingValueForBlock(Preheader);
+  StartValue = IndVar->getIncomingValueForBlock(Preheader);
 
   // Replace split condition in header.
   // Transform 
@@ -349,14 +429,14 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) 
   //      c1 = icmp uge i32 SplitValue, StartValue
   //      c2 = icmp ult i32 vSplitValue, ExitValue
   //      and i32 c1, c2 
-  bool SignedPredicate = SD.ExitCondition->isSignedPredicate();
+  bool SignedPredicate = ExitCondition->isSignedPredicate();
   Instruction *C1 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
                                  SD.SplitValue, StartValue, "lisplit", 
                                  Terminator);
   Instruction *C2 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                                 SD.SplitValue, SD.ExitValue, "lisplit", 
+                                 SD.SplitValue, ExitValue, "lisplit", 
                                  Terminator);
   Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", 
                                                       Terminator);
@@ -413,11 +493,11 @@ bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
       continue;
 
     // Induction variable is OK.
-    if (I == SD.IndVar)
+    if (I == IndVar)
       continue;
 
     // Induction variable increment is OK.
-    if (I == SD.IndVarIncrement)
+    if (I == IndVarIncrement)
       continue;
 
     // Terminator is also harmless.
@@ -444,11 +524,11 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
       continue;
 
     // Induction variable increment is OK.
-    if (SD.IndVarIncrement && SD.IndVarIncrement == I)
+    if (IndVarIncrement && IndVarIncrement == I)
       continue;
 
     // Check if I is induction variable increment instruction.
-    if (!SD.IndVarIncrement && I->getOpcode() == Instruction::Add) {
+    if (!IndVarIncrement && I->getOpcode() == Instruction::Add) {
 
       Value *Op0 = I->getOperand(0);
       Value *Op1 = I->getOperand(1);
@@ -457,14 +537,14 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
 
       if ((PN = dyn_cast<PHINode>(Op0))) {
         if ((CI = dyn_cast<ConstantInt>(Op1)))
-          SD.IndVarIncrement = I;
+          IndVarIncrement = I;
       } else 
         if ((PN = dyn_cast<PHINode>(Op1))) {
           if ((CI = dyn_cast<ConstantInt>(Op0)))
-            SD.IndVarIncrement = I;
+            IndVarIncrement = I;
       }
           
-      if (SD.IndVarIncrement && PN == SD.IndVar && CI->isOne())
+      if (IndVarIncrement && PN == IndVar && CI->isOne())
         continue;
     }
 
@@ -472,36 +552,15 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
     // Exit condition is OK if it compares loop invariant exit value,
     // which is checked below.
     else if (ICmpInst *EC = dyn_cast<ICmpInst>(I)) {
-      ++BI;
-      Instruction *N = BI;
-      if (N == ExitBlock->getTerminator()) {
-        SD.ExitCondition = EC;
+      if (EC == ExitCondition)
         continue;
-      }
     }
+
+    if (I == ExitBlock->getTerminator())
+      continue;
 
     // Otherwise we have instruction that may not be safe.
     return false;
-  }
-
-  // Check if Exit condition is comparing induction variable against 
-  // loop invariant value. If one operand is induction variable and 
-  // the other operand is loop invaraint then Exit condition is safe.
-  if (SD.ExitCondition) {
-    Value *Op0 = SD.ExitCondition->getOperand(0);
-    Value *Op1 = SD.ExitCondition->getOperand(1);
-
-    Instruction *Insn0 = dyn_cast<Instruction>(Op0);
-    Instruction *Insn1 = dyn_cast<Instruction>(Op1);
-    
-    if (Insn0 && Insn0 == SD.IndVarIncrement)
-      SD.ExitValue = Op1;
-    else if (Insn1 && Insn1 == SD.IndVarIncrement)
-      SD.ExitValue = Op0;
-
-    SCEVHandle ValueSCEV = SE->getSCEV(SD.ExitValue);
-    if (!ValueSCEV->isLoopInvariant(L))
-      return false;
   }
 
   // We could not find any reason to consider ExitBlock unsafe.
@@ -528,6 +587,21 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
 }
 
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
-  // FIXME :)
+  // True loop is original loop. False loop is cloned loop.
+  //[*] Calculate True loop's new Exit Value in loop preheader.
+  //      NewExitValue = min(SplitValue, ExitValue)
+  //[*] Calculate False loop's new Start Value in loop preheader.
+  //      NewStartValue = min(SplitValue, TrueLoop.StartValue)
+  //[*] Split Exit Edge.
+  //[*] Clone loop. Avoid true destination of split condition and 
+  //    the blocks dominated by true destination. 
+  //[*] True loops exit edge enters False loop.
+  //[*] Eliminate split condition's false branch from True loop.
+  //    Update true loop dom info.
+  //[*] Update True loop's exit value using NewExitValue.
+  //[*] Update False loop's start value using NewStartValue.
+  //[*] Fix lack of true branch in False loop CFG.
+  //    Update false loop dom info.
+  //[*] Update dom info in general.
   return false;
 }
