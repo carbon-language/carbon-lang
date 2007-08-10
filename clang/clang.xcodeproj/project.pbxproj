@@ -119,6 +119,7 @@
 		DEF2E9340C5FBA02000C4259 /* ASTStreamers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */; };
 		DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */; };
 		DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */; };
+		DEF2EFF30C6CDD74000C4259 /* CGAggExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EFF20C6CDD74000C4259 /* CGAggExpr.cpp */; };
 		F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */; };
 		F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */; };
 /* End PBXBuildFile section */
@@ -305,6 +306,7 @@
 		DEF2E9330C5FBA02000C4259 /* ASTStreamers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStreamers.cpp; path = Driver/ASTStreamers.cpp; sourceTree = "<group>"; };
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = AST/StmtDumper.cpp; sourceTree = "<group>"; };
+		DEF2EFF20C6CDD74000C4259 /* CGAggExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGAggExpr.cpp; path = CodeGen/CGAggExpr.cpp; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -426,6 +428,7 @@
 				DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */,
 				DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */,
 				DE4264FB0C113592005A861D /* CGDecl.cpp */,
+				DEF2EFF20C6CDD74000C4259 /* CGAggExpr.cpp */,
 				DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,
@@ -679,6 +682,7 @@
 				DEEBCBE50C33703100A9FE82 /* TextDiagnosticBuffer.cpp in Sources */,
 				DEF2E9340C5FBA02000C4259 /* ASTStreamers.cpp in Sources */,
 				DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */,
+				DEF2EFF30C6CDD74000C4259 /* CGAggExpr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
