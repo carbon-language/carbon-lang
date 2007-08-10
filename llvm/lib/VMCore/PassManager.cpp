@@ -650,7 +650,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void PMDataManager::removeDeadPasses(Pass *P, std::string Msg,
+void PMDataManager::removeDeadPasses(Pass *P, const std::string &Msg,
                                      enum PassDebuggingString DBG_STR) {
 
   SmallVector<Pass *, 12> DeadPasses;
@@ -854,9 +854,9 @@ void PMDataManager::dumpPassArguments() const {
   }
 }
 
-void PMDataManager:: dumpPassInfo(Pass *P, enum PassDebuggingString S1,
-                                  enum PassDebuggingString S2,
-                                  std::string Msg) {
+void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
+                                 enum PassDebuggingString S2,
+                                 const std::string &Msg) {
   if (PassDebugging < Executions)
     return;
   cerr << (void*)this << std::string(getDepth()*2+1, ' ');

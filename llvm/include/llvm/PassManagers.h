@@ -218,7 +218,8 @@ public:
   void removeNotPreservedAnalysis(Pass *P);
   
   /// Remove dead passes
-  void removeDeadPasses(Pass *P, std::string Msg, enum PassDebuggingString);
+  void removeDeadPasses(Pass *P, const std::string &Msg,
+                        enum PassDebuggingString);
 
   /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
@@ -273,7 +274,7 @@ public:
   void dumpLastUses(Pass *P, unsigned Offset) const;
   void dumpPassArguments() const;
   void dumpPassInfo(Pass *P, enum PassDebuggingString S1,
-                    enum PassDebuggingString S2, std::string Msg);
+                    enum PassDebuggingString S2, const std::string &Msg);
   void dumpAnalysisSetInfo(const char *Msg, Pass *P,
                            const std::vector<AnalysisID> &Set) const;
 
