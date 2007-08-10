@@ -1,23 +1,22 @@
 // RUN: clang -parse-ast-check %s
 
-extern void funcInt(int);
-extern void funcFloat(float);
-extern void funcDouble(double);
+extern int funcInt(int);
+extern float funcFloat(float);
+extern double funcDouble(double);
 // figure out why "char *" doesn't work (with gcc, nothing to do with clang)
 //extern void funcCharPtr(char *);
 
 #define func(expr) \
-  ({ \
+  do { \
     typeof(expr) tmp; \
     if (__builtin_types_compatible_p(typeof(expr), int)) funcInt(tmp); \
     else if (__builtin_types_compatible_p(typeof(expr), float)) funcFloat(tmp); \
     else if (__builtin_types_compatible_p(typeof(expr), double)) funcDouble(tmp); \
-  })
+  } while (0)
 #define func_choose(expr) \
   __builtin_choose_expr(__builtin_types_compatible_p(typeof(expr), int), funcInt(expr), \
     __builtin_choose_expr(__builtin_types_compatible_p(typeof(expr), float), funcFloat(expr), \
-      __builtin_choose_expr(__builtin_types_compatible_p(typeof(expr), double), funcDouble(expr), \
-  (void)0)))
+      __builtin_choose_expr(__builtin_types_compatible_p(typeof(expr), double), funcDouble(expr), (void)0)))
 
 static void test()
 {
@@ -28,9 +27,9 @@ static void test()
   func(a);
   func(b);
   func(d);
-  func_choose(a);
-  func_choose(b);
-  func_choose(d);
+  a = func_choose(a);
+  b = func_choose(b);
+  d = func_choose(d);
 
   int c; 
   struct xx { int a; } x, y;
