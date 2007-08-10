@@ -718,6 +718,8 @@ static void getCopyToParts(SelectionDAG &DAG,
                            SDOperand *Parts,
                            unsigned NumParts,
                            MVT::ValueType PartVT) {
+  TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  MVT::ValueType PtrVT = TLI.getPointerTy();
   MVT::ValueType ValueVT = Val.getValueType();
 
   if (!MVT::isVector(ValueVT) || NumParts == 1) {
@@ -725,7 +727,7 @@ static void getCopyToParts(SelectionDAG &DAG,
     if (NumParts > 1) {
       for (unsigned i = 0; i != NumParts; ++i)
         Parts[i] = DAG.getNode(ISD::EXTRACT_ELEMENT, PartVT, Val,
-                               DAG.getConstant(i, MVT::i32));
+                               DAG.getConstant(i, PtrVT));
       if (!DAG.getTargetLoweringInfo().isLittleEndian())
         std::reverse(Parts, Parts + NumParts);
       return;
@@ -776,11 +778,11 @@ static void getCopyToParts(SelectionDAG &DAG,
       Ops[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR,
                            IntermediateVT, Val,
                            DAG.getConstant(i * (NumElements / NumIntermediates),
-                                           MVT::i32));
+                                           PtrVT));
     else
       Ops[i] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
                            IntermediateVT, Val, 
-                           DAG.getConstant(i, MVT::i32));
+                           DAG.getConstant(i, PtrVT));
 
   // Split the intermediate operands into legal parts.
   if (NumParts == NumIntermediates) {
