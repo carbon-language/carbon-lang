@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_TRANSFORMS_RSPROFILING_H
+#define LLVM_TRANSFORMS_RSPROFILING_H
+
 namespace llvm {
   //===--------------------------------------------------------------------===//
   /// RSProfilers - The basic Random Sampling Profiler Interface  Any profiler 
@@ -31,3 +34,5 @@ namespace llvm {
     virtual bool isProfiling(Value* v) = 0;
   };
 }
+
+#endif
