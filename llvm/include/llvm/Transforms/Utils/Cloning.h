@@ -25,6 +25,10 @@ namespace llvm {
 
 class Module;
 class Function;
+class Loop;
+class LoopInfo;
+class Pass;
+class LPPassManager;
 class BasicBlock;
 class Value;
 class CallInst;
@@ -98,6 +102,11 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
                             const char *NameSuffix = "", Function *F = 0,
                             ClonedCodeInfo *CodeInfo = 0);
 
+
+/// CloneLoop - Clone Loop. Clone dominator info for loop insiders. Populate ValueMap
+/// using old blocks to new blocks mapping.
+Loop *CloneLoop(Loop *L, LPPassManager  *LPM, LoopInfo *LI, 
+                DenseMap<const Value *, Value *> &ValueMap, Pass *P);
 
 /// CloneFunction - Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
