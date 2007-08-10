@@ -587,11 +587,37 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
 }
 
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
+
+  BasicBlock *Preheader = L->getLoopPreheader();
+
   // True loop is original loop. False loop is cloned loop.
+
+  bool SignedPredicate = ExitCondition->isSignedPredicate();  
   //[*] Calculate True loop's new Exit Value in loop preheader.
-  //      NewExitValue = min(SplitValue, ExitValue)
+  //      TLExitValue = min(SplitValue, ExitValue)
   //[*] Calculate False loop's new Start Value in loop preheader.
-  //      NewStartValue = min(SplitValue, TrueLoop.StartValue)
+  //      FLStartValue = min(SplitValue, TrueLoop.StartValue)
+  Value *TLExitValue = NULL;
+  Value *FLStartValue = NULL;
+  if (isa<ConstantInt>(SD.SplitValue)) {
+    TLExitValue = SD.SplitValue;
+    FLStartValue = SD.SplitValue;
+  }
+  else {
+    Value *C1 = new ICmpInst(SignedPredicate ? 
+                            ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                            SD.SplitValue, ExitValue, "lsplit.ev",
+                            Preheader->getTerminator());
+    TLExitValue = new SelectInst(C1, SD.SplitValue, ExitValue, 
+                                 "lsplit.ev", Preheader->getTerminator());
+
+    Value *C2 = new ICmpInst(SignedPredicate ? 
+                             ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                             SD.SplitValue, StartValue, "lsplit.sv",
+                             Preheader->getTerminator());
+    FLStartValue = new SelectInst(C2, SD.SplitValue, StartValue,
+                                  "lsplit.sv", Preheader->getTerminator());
+  }
   //[*] Split Exit Edge.
   //[*] Clone loop. Avoid true destination of split condition and 
   //    the blocks dominated by true destination. 
