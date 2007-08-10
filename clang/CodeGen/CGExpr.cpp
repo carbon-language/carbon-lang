@@ -91,6 +91,9 @@ RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
   if (isa<PointerType>(DstTy)) {
     const llvm::Type *DestTy = ConvertType(DstTy);
     
+    if (Val.getVal()->getType() == DestTy)
+      return Val;
+    
     // The source value may be an integer, or a pointer.
     assert(Val.isScalar() && "Can only convert from integer or pointer");
     if (isa<llvm::PointerType>(Val.getVal()->getType()))
@@ -260,8 +263,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 /// this method emits the address of the lvalue, then loads the result as an
 /// rvalue, returning the rvalue.
 RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
-  ExprType = ExprType.getCanonicalType();
-  
   if (LV.isSimple()) {
     llvm::Value *Ptr = LV.getAddress();
     const llvm::Type *EltTy =
@@ -270,6 +271,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
     // Simple scalar l-value.
     if (EltTy->isFirstClassType())
       return RValue::get(Builder.CreateLoad(Ptr, "tmp"));
+    
+    if (ExprType->isFunctionType())
+      return RValue::get(Ptr);
     
     // Otherwise, we have an aggregate lvalue.
     return RValue::getAggregate(Ptr);
