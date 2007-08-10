@@ -380,7 +380,11 @@ SmallVectorImpl<T>::operator=(const SmallVectorImpl<T> &RHS) {
   unsigned CurSize = unsigned(size());
   if (CurSize >= RHSSize) {
     // Assign common elements.
-    iterator NewEnd = std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
+    iterator NewEnd;
+    if (RHSSize)
+      NewEnd = std::copy(RHS.Begin, RHS.Begin+RHSSize, Begin);
+    else
+      NewEnd = Begin;
     
     // Destroy excess elements.
     destroy_range(NewEnd, End);
