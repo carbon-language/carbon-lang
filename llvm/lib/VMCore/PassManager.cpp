@@ -650,7 +650,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void PMDataManager::removeDeadPasses(Pass *P, const std::string &Msg,
+void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
                                      enum PassDebuggingString DBG_STR) {
 
   SmallVector<Pass *, 12> DeadPasses;
@@ -856,7 +856,7 @@ void PMDataManager::dumpPassArguments() const {
 
 void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                                  enum PassDebuggingString S2,
-                                 const std::string &Msg) {
+                                 const char *Msg) {
   if (PassDebugging < Executions)
     return;
   cerr << (void*)this << std::string(getDepth()*2+1, ' ');
@@ -961,7 +961,7 @@ BBPassManager::runOnFunction(Function &F) {
       AnalysisUsage AnUsage;
       BP->getAnalysisUsage(AnUsage);
 
-      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getName());
+      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getNameStart());
       dumpAnalysisSetInfo("Required", BP, AnUsage.getRequiredSet());
 
       initializeAnalysisImpl(BP);
@@ -971,13 +971,13 @@ BBPassManager::runOnFunction(Function &F) {
       if (TheTimeInfo) TheTimeInfo->passEnded(BP);
 
       if (Changed) 
-        dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG, I->getName());
+        dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG, I->getNameStart());
       dumpAnalysisSetInfo("Preserved", BP, AnUsage.getPreservedSet());
 
       verifyPreservedAnalysis(BP);
       removeNotPreservedAnalysis(BP);
       recordAvailableAnalysis(BP);
-      removeDeadPasses(BP, I->getName(), ON_BASICBLOCK_MSG);
+      removeDeadPasses(BP, I->getNameStart(), ON_BASICBLOCK_MSG);
     }
 
   return Changed |= doFinalization(F);
@@ -1159,7 +1159,7 @@ bool FPPassManager::runOnFunction(Function &F) {
     AnalysisUsage AnUsage;
     FP->getAnalysisUsage(AnUsage);
 
-    dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getName());
+    dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getNameStart());
     dumpAnalysisSetInfo("Required", FP, AnUsage.getRequiredSet());
 
     initializeAnalysisImpl(FP);
@@ -1169,13 +1169,13 @@ bool FPPassManager::runOnFunction(Function &F) {
     if (TheTimeInfo) TheTimeInfo->passEnded(FP);
 
     if (Changed) 
-      dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getName());
+      dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getNameStart());
     dumpAnalysisSetInfo("Preserved", FP, AnUsage.getPreservedSet());
 
     verifyPreservedAnalysis(FP);
     removeNotPreservedAnalysis(FP);
     recordAvailableAnalysis(FP);
-    removeDeadPasses(FP, F.getName(), ON_FUNCTION_MSG);
+    removeDeadPasses(FP, F.getNameStart(), ON_FUNCTION_MSG);
   }
   return Changed;
 }
@@ -1228,7 +1228,7 @@ MPPassManager::runOnModule(Module &M) {
     AnalysisUsage AnUsage;
     MP->getAnalysisUsage(AnUsage);
 
-    dumpPassInfo(MP, EXECUTION_MSG, ON_MODULE_MSG, M.getModuleIdentifier());
+    dumpPassInfo(MP, EXECUTION_MSG, ON_MODULE_MSG, M.getModuleIdentifier().c_str());
     dumpAnalysisSetInfo("Required", MP, AnUsage.getRequiredSet());
 
     initializeAnalysisImpl(MP);
@@ -1238,13 +1238,13 @@ MPPassManager::runOnModule(Module &M) {
     if (TheTimeInfo) TheTimeInfo->passEnded(MP);
 
     if (Changed) 
-      dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG, M.getModuleIdentifier());
+      dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG, M.getModuleIdentifier().c_str());
     dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
       
     verifyPreservedAnalysis(MP);
     removeNotPreservedAnalysis(MP);
     recordAvailableAnalysis(MP);
-    removeDeadPasses(MP, M.getModuleIdentifier(), ON_MODULE_MSG);
+    removeDeadPasses(MP, M.getModuleIdentifier().c_str(), ON_MODULE_MSG);
   }
   return Changed;
 }
