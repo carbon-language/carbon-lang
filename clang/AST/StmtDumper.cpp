@@ -503,10 +503,12 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 void Stmt::dump() const {
   StmtDumper P(stderr, 4);
   const_cast<Stmt*>(this)->visit(P);
+  fprintf(stderr, "\n");
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll() const {
   StmtDumper P(stderr, ~0U);
   const_cast<Stmt*>(this)->visit(P);
+  fprintf(stderr, "\n");
 }
