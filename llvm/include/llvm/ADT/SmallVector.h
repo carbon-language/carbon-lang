@@ -455,7 +455,8 @@ public:
   }
   
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(NumTsAvailable) {
-    operator=(RHS);
+    if (!RHS.empty())
+      operator=(RHS);
   }
   
   const SmallVector &operator=(const SmallVector &RHS) {
