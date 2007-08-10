@@ -88,9 +88,23 @@ public:
 
   // All values can potentially be named...
   inline bool hasName() const { return Name != 0; }
+  ValueName *getValueName() const { return Name; }
+
+  /// getNameStart - Return a pointer to a null terminated string for this name.
+  /// Note that names can have null characters within the string as well as at
+  /// their end.  This always returns a non-null pointer.
+  const char *getNameStart() const;
+  
+  /// getNameLen - Return the length of the string, correctly handling nul
+  /// characters embedded into them.
+  unsigned getNameLen() const;
+
+  /// getName()/getNameStr() - Return the name of the specified value, 
+  /// *constructing a string* to hold it.  Because these are guaranteed to
+  /// construct a string, they are very expensive and should be avoided.
   std::string getName() const { return getNameStr(); }
   std::string getNameStr() const;
-  ValueName *getValueName() const { return Name; }
+
 
   void setName(const std::string &name);
   void setName(const char *Name, unsigned NameLen);
