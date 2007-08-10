@@ -7,3 +7,13 @@ int main(void)
 
   return a * b != b * a;
 }
+
+_Complex double bar(int);
+void test(_Complex double*);
+
+void test2(int c) {
+  _Complex double X;
+  X = bar(1);
+  test(&X);
+}
+
