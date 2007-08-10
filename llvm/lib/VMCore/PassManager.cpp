@@ -961,7 +961,7 @@ BBPassManager::runOnFunction(Function &F) {
       AnalysisUsage AnUsage;
       BP->getAnalysisUsage(AnUsage);
 
-      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, (*I).getName());
+      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getName());
       dumpAnalysisSetInfo("Required", BP, AnUsage.getRequiredSet());
 
       initializeAnalysisImpl(BP);
@@ -971,15 +971,15 @@ BBPassManager::runOnFunction(Function &F) {
       if (TheTimeInfo) TheTimeInfo->passEnded(BP);
 
       if (Changed) 
-        dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG, (*I).getName());
+        dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG, I->getName());
       dumpAnalysisSetInfo("Preserved", BP, AnUsage.getPreservedSet());
 
       verifyPreservedAnalysis(BP);
       removeNotPreservedAnalysis(BP);
       recordAvailableAnalysis(BP);
-      removeDeadPasses(BP, (*I).getName(), ON_BASICBLOCK_MSG);
-                       
+      removeDeadPasses(BP, I->getName(), ON_BASICBLOCK_MSG);
     }
+
   return Changed |= doFinalization(F);
 }
 
@@ -1238,8 +1238,7 @@ MPPassManager::runOnModule(Module &M) {
     if (TheTimeInfo) TheTimeInfo->passEnded(MP);
 
     if (Changed) 
-      dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG,
-                   M.getModuleIdentifier());
+      dumpPassInfo(MP, MODIFICATION_MSG, ON_MODULE_MSG, M.getModuleIdentifier());
     dumpAnalysisSetInfo("Preserved", MP, AnUsage.getPreservedSet());
       
     verifyPreservedAnalysis(MP);
@@ -1418,10 +1417,10 @@ void PMStack::dump() {
   for(std::deque<PMDataManager *>::iterator I = S.begin(),
         E = S.end(); I != E; ++I) {
     Pass *P = dynamic_cast<Pass *>(*I);
-    printf ("%s ", P->getPassName());
+    printf("%s ", P->getPassName());
   }
   if (!S.empty())
-    printf ("\n");
+    printf("\n");
 }
 
 /// Find appropriate Module Pass Manager in the PM Stack and
@@ -1497,9 +1496,8 @@ void BasicBlockPass::assignPassManager(PMStack &PMS,
 
   // Basic Pass Manager is a leaf pass manager. It does not handle
   // any other pass manager.
-  if (!PMS.empty()) {
+  if (!PMS.empty())
     BBP = dynamic_cast<BBPassManager *>(PMS.top());
-  }
 
   // If leaf manager is not Basic Block Pass manager then create new
   // basic Block Pass manager.
