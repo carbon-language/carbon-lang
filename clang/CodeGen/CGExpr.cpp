@@ -296,14 +296,15 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
 // If this is a reference to a subset of the elements of a vector, either
 // shuffle the input or extract/insert them as appropriate.
 RValue CodeGenFunction::EmitLoadOfOCUElementLValue(LValue LV,
-                                                     QualType ExprType) {
+                                                   QualType ExprType) {
   llvm::Value *Vec = Builder.CreateLoad(LV.getOCUVectorAddr(), "tmp");
   
   unsigned EncFields = LV.getOCUVectorElts();
   
   // If the result of the expression is a non-vector type, we must be
   // extracting a single element.  Just codegen as an extractelement.
-  if (!isa<VectorType>(ExprType)) {
+  const VectorType *ExprVT = ExprType->getAsVectorType();
+  if (!ExprVT) {
     unsigned InIdx = OCUVectorElementExpr::getAccessedFieldNo(0, EncFields);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
@@ -311,7 +312,7 @@ RValue CodeGenFunction::EmitLoadOfOCUElementLValue(LValue LV,
   
   // If the source and destination have the same number of elements, use a
   // vector shuffle instead of insert/extracts.
-  unsigned NumResultElts = cast<VectorType>(ExprType)->getNumElements();
+  unsigned NumResultElts = ExprVT->getNumElements();
   unsigned NumSourceElts =
     cast<llvm::VectorType>(Vec->getType())->getNumElements();
   
