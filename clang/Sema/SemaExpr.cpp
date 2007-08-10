@@ -1026,8 +1026,13 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
 inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
   Expr *&lex, Expr *&rex, SourceLocation loc)
 {
-  UsualUnaryConversions(lex);
-  UsualUnaryConversions(rex);
+  // C99 6.5.8p3
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+    UsualArithmeticConversions(lex, rex);
+  else {
+    UsualUnaryConversions(lex);
+    UsualUnaryConversions(rex);
+  }
   QualType lType = lex->getType();
   QualType rType = rex->getType();
   
@@ -1058,8 +1063,13 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
 inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
   Expr *&lex, Expr *&rex, SourceLocation loc)
 {
-  UsualUnaryConversions(lex);
-  UsualUnaryConversions(rex);
+  // C99 6.5.9p4
+  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
+    UsualArithmeticConversions(lex, rex);
+  else {
+    UsualUnaryConversions(lex);
+    UsualUnaryConversions(rex);
+  }
   QualType lType = lex->getType();
   QualType rType = rex->getType();
   
