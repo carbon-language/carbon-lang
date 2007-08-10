@@ -45,7 +45,7 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
 
 bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
   return !T->isRealType() && !T->isPointerType() && !T->isVoidType() &&
-         !T->isVectorType();
+         !T->isVectorType() && !T->isFunctionType();
 }
 
 

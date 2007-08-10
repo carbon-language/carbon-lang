@@ -721,7 +721,14 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   
   llvm::SmallVector<llvm::Value*, 16> Args;
   
-  // FIXME: Handle struct return.
+  // Handle struct-return functions by passing a pointer to the location that
+  // we would like to return into.
+  if (hasAggregateLLVMType(E->getType())) {
+    // Create a temporary alloca to hold the result of the call. :(
+    Args.push_back(CreateTempAlloca(ConvertType(E->getType())));
+    // FIXME: set the stret attribute on the argument.
+  }
+  
   for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
     QualType ArgTy = E->getArg(i)->getType();
     RValue ArgVal = EmitExpr(E->getArg(i));
@@ -752,8 +759,10 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   llvm::Value *V = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
   if (V->getType() != llvm::Type::VoidTy)
     V->setName("call");
-  
-  // FIXME: Struct return;
+  else if (hasAggregateLLVMType(E->getType()))
+    // Struct return.
+    return RValue::getAggregate(Args[0]);
+      
   return RValue::get(V);
 }
 
