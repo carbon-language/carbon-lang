@@ -18,6 +18,8 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 
@@ -41,6 +43,7 @@ namespace {
       AU.addPreserved<ScalarEvolution>();
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
+      AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
@@ -84,7 +87,7 @@ namespace {
     /// entire (i.e. meaningful) loop body is dominated by this compare
     /// instruction then loop body is executed only for one iteration. In
     /// such case eliminate loop structure surrounding this loop body. For
-    bool processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM);
+    bool processOneIterationLoop(SplitInfo &SD);
     
     /// If loop header includes loop variant instruction operands then
     /// this loop may not be eliminated.
@@ -109,6 +112,8 @@ namespace {
 
     // Current Loop.
     Loop *L;
+    LPPassManager *LPM;
+    LoopInfo *LI;
     ScalarEvolution *SE;
     DominatorTree *DT;
     SmallVector<SplitInfo, 4> SplitData;
@@ -136,12 +141,14 @@ LoopPass *llvm::createLoopIndexSplitPass() {
 }
 
 // Index split Loop L. Return true if loop is split.
-bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
+bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   bool Changed = false;
   L = IncomingLoop;
+  LPM = &LPM_Ref;
 
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
+  LI = &getAnalysis<LoopInfo>();
 
   initialize();
 
@@ -160,7 +167,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM) {
          E = SplitData.end(); SI != E; ++SI) {
     SplitInfo &SD = *SI;
     if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) {
-      Changed = processOneIterationLoop(SD,LPM);
+      Changed = processOneIterationLoop(SD);
       if (Changed) {
         ++NumIndexSplit;
         // If is loop is eliminated then nothing else to do here.
@@ -367,7 +374,7 @@ void LoopIndexSplit::findSplitCondition() {
 ///        i = somevalue;
 ///        loop_body
 ///     }
-bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) {
+bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
 
   BasicBlock *Header = L->getHeader();
 
@@ -444,7 +451,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD, LPPassManager &LPM) 
     I->eraseFromParent();
   }
 
-  LPM.deleteLoopFromQueue(L);
+  LPM->deleteLoopFromQueue(L);
 
   // Update Dominator Info.
   // Only CFG change done is to remove Latch to Header edge. This
@@ -605,9 +612,22 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     FLStartValue = new SelectInst(C2, SD.SplitValue, StartValue,
                                   "lsplit.sv", Preheader->getTerminator());
   }
+
   //[*] Split Exit Edge.
+  BasicBlock *ExitBlock = ExitCondition->getParent();
+  BranchInst *ExitInsn = dyn_cast<BranchInst>(ExitBlock->getTerminator());
+  assert (ExitInsn && "Unable to find suitable loop exit branch");
+  BasicBlock *ExitDest = ExitInsn->getSuccessor(1);
+  if (L->contains(ExitDest))
+    ExitDest = ExitInsn->getSuccessor(0);
+  assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
+  BasicBlock *ExitSplitBlock = SplitEdge(ExitBlock, ExitDest, this);
+
   //[*] Clone loop. Avoid true destination of split condition and 
   //    the blocks dominated by true destination. 
+  DenseMap<const Value *, Value *> ValueMap;
+  Loop *FalseLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+
   //[*] True loops exit edge enters False loop.
   //[*] Eliminate split condition's false branch from True loop.
   //    Update true loop dom info.
