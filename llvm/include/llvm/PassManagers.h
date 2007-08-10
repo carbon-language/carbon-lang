@@ -84,6 +84,9 @@ class llvm::PMStack;
 // MPPassManagers.
 //===----------------------------------------------------------------------===//
 
+#ifndef PASSMANAGERS_H
+#define PASSMANAGERS_H
+
 namespace llvm {
 
 /// FunctionPassManager and PassManager, two top level managers, serve 
@@ -381,3 +384,6 @@ public:
 
 extern void StartPassTimer(Pass *);
 extern void StopPassTimer(Pass *);
+
+#endif
+
