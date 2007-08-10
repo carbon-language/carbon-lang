@@ -120,6 +120,7 @@
 		DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */; };
 		DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */; };
 		DEF2EFF30C6CDD74000C4259 /* CGAggExpr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EFF20C6CDD74000C4259 /* CGAggExpr.cpp */; };
+		DEF2F0100C6CFED5000C4259 /* SemaChecking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */; };
 		F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */; };
 		F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */; };
 /* End PBXBuildFile section */
@@ -307,6 +308,7 @@
 		DEF2E95E0C5FBD74000C4259 /* InternalsManual.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; name = InternalsManual.html; path = docs/InternalsManual.html; sourceTree = "<group>"; };
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = AST/StmtDumper.cpp; sourceTree = "<group>"; };
 		DEF2EFF20C6CDD74000C4259 /* CGAggExpr.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGAggExpr.cpp; path = CodeGen/CGAggExpr.cpp; sourceTree = "<group>"; };
+		DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaChecking.cpp; path = Sema/SemaChecking.cpp; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -401,6 +403,7 @@
 				DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
+				DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */,
 				DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */,
 				DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */,
 				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
@@ -683,6 +686,7 @@
 				DEF2E9340C5FBA02000C4259 /* ASTStreamers.cpp in Sources */,
 				DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */,
 				DEF2EFF30C6CDD74000C4259 /* CGAggExpr.cpp in Sources */,
+				DEF2F0100C6CFED5000C4259 /* SemaChecking.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

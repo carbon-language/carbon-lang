@@ -68,6 +68,28 @@ class Sema : public Action {
   /// us to associate a raw vector type with one of the OCU type names.
   /// This is only necessary for issuing pretty diagnostics.
   llvm::SmallVector<TypedefDecl*, 24> OCUVectorDecls;
+
+  // Enum values used by KnownFunctionIDs (see below).
+  enum {
+    id_printf,
+    id_fprintf,
+    id_sprintf,
+    id_snprintf,
+    id_vsnprintf,
+    id_asprintf,
+    id_vasprintf,
+    id_vfprintf,
+    id_vsprintf,
+    id_vprintf,
+    id_num_known_functions
+  };
+  
+  /// KnownFunctionIDs - This is a list of IdentifierInfo objects to a set
+  /// of known functions used by the semantic analysis to do various
+  /// kinds of checking (e.g. checking format string errors in printf calls).
+  /// This list is populated upon the creation of a Sema object.    
+  IdentifierInfo* KnownFunctionIDs[ id_num_known_functions ];
+  
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -395,7 +417,17 @@ private:
   /// a constant expression of type int with a value greater than zero.  If the
   /// array has an incomplete type or a valid constant size, return false,
   /// otherwise emit a diagnostic and return true.
-  bool VerifyConstantArrayType(const ArrayType *ary, SourceLocation loc); 
+  bool VerifyConstantArrayType(const ArrayType *ary, SourceLocation loc);
+  
+  //===--------------------------------------------------------------------===//
+  // Extra semantic analysis beyond the C type system
+  private:
+  
+  void CheckFunctionCall(Expr *Fn, FunctionDecl *FDecl,
+                         Expr** Args, unsigned NumArgsInCall);
+
+  void CheckPrintfArguments(Expr *Fn, FunctionDecl *FDecl, unsigned format_idx,
+                            Expr** Args, unsigned NumArgsInCall);
 };
 
 

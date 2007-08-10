@@ -16,10 +16,26 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
+
 using namespace clang;
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
+  
+  // Get IdentifierInfo objects for known functions for which we
+  // do extra checking.  
+  IdentifierTable& IT = PP.getIdentifierTable();  
+
+  KnownFunctionIDs[ id_printf  ] = &IT.get("printf");
+  KnownFunctionIDs[ id_fprintf ] = &IT.get("fprintf");
+  KnownFunctionIDs[ id_sprintf ] = &IT.get("sprintf");
+  KnownFunctionIDs[ id_snprintf ] = &IT.get("snprintf");
+  KnownFunctionIDs[ id_vsnprintf ] = &IT.get("vsnprintf");
+  KnownFunctionIDs[ id_asprintf ] = &IT.get("asprintf");
+  KnownFunctionIDs[ id_vasprintf ] = &IT.get("vasprintf");
+  KnownFunctionIDs[ id_vfprintf ] = &IT.get("vfprintf");
+  KnownFunctionIDs[ id_vsprintf ] = &IT.get("vsprintf");
+  KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
 }
 
 //===----------------------------------------------------------------------===//

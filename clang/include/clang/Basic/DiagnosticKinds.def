@@ -658,6 +658,10 @@ DIAG(err_typecheck_choose_expr_requires_constant, ERROR,
      "'__builtin_choose_expr' requires a constant expression")
 DIAG(warn_unused_expr, WARNING,
      "expression result unused")
+     
+// Printf checking
+DIAG(warn_printf_not_string_constant, WARNING,
+     "format string is not a string literal")
 
 // Statements.
 DIAG(err_continue_not_in_loop, ERROR,
@@ -689,5 +693,7 @@ DIAG(ext_return_missing_expr, EXTENSION,
      "non-void function '%0' should return a value")
 DIAG(ext_return_has_expr, EXTENSION,
      "void function '%0' should not return a value")
+
+
 
 #undef DIAG

@@ -22,6 +22,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
 /// ParseStringLiteral - The specified tokens were lexed as pasted string
@@ -555,6 +556,13 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     if (NumArgsInCall != NumArgsInProto && !proto->isVariadic())
       return true;
   }
+  
+  // Do special checking on direct calls to functions.
+  if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
+    if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
+      if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl()))
+        CheckFunctionCall(Fn, FDecl, Args, NumArgsInCall);
+
   return new CallExpr(Fn, Args, NumArgsInCall, resultType, RParenLoc);
 }
 
