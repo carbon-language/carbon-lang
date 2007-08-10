@@ -30,8 +30,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   KnownFunctionIDs[ id_fprintf ] = &IT.get("fprintf");
   KnownFunctionIDs[ id_sprintf ] = &IT.get("sprintf");
   KnownFunctionIDs[ id_snprintf ] = &IT.get("snprintf");
-  KnownFunctionIDs[ id_vsnprintf ] = &IT.get("vsnprintf");
   KnownFunctionIDs[ id_asprintf ] = &IT.get("asprintf");
+  KnownFunctionIDs[ id_vsnprintf ] = &IT.get("vsnprintf");
   KnownFunctionIDs[ id_vasprintf ] = &IT.get("vasprintf");
   KnownFunctionIDs[ id_vfprintf ] = &IT.get("vfprintf");
   KnownFunctionIDs[ id_vsprintf ] = &IT.get("vsprintf");
