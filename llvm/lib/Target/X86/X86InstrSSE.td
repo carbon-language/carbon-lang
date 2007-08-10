@@ -2545,37 +2545,37 @@ defm PSIGND      : SS3I_binop_rm_int_32<0x09, "psignd",
                                         int_x86_ssse3_psign_d_128>;
 
 let isTwoAddress = 1 in {
-  def PALIGN64rr  : SS38I<0x0F, MRMSrcReg, (outs VR64:$dst),
-                          (ins VR64:$src1, VR64:$src2, i16imm:$src3),
-                          "palignr\t{$src2, $dst|$dst, $src2}",
-                          [(set VR64:$dst,
-                            (int_x86_ssse3_palign_r
-                             VR64:$src1, VR64:$src2,
-                             imm:$src3))]>;
-  def PALIGN64rm  : SS38I<0x0F, MRMSrcReg, (outs VR64:$dst),
-                          (ins VR64:$src1, i64mem:$src2, i16imm:$src3),
-                          "palignr\t{$src2, $dst|$dst, $src2}",
-                          [(set VR64:$dst,
-                            (int_x86_ssse3_palign_r
-                             VR64:$src1,
-                             (bitconvert (memopv2i32 addr:$src2)),
-                             imm:$src3))]>;
+  def PALIGNR64rr  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+                           (ins VR64:$src1, VR64:$src2, i16imm:$src3),
+                           "palignr\t{$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (int_x86_ssse3_palign_r
+                              VR64:$src1, VR64:$src2,
+                              imm:$src3))]>;
+  def PALIGNR64rm  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+                           (ins VR64:$src1, i64mem:$src2, i16imm:$src3),
+                           "palignr\t{$src2, $dst|$dst, $src2}",
+                           [(set VR64:$dst,
+                             (int_x86_ssse3_palign_r
+                              VR64:$src1,
+                              (bitconvert (memopv2i32 addr:$src2)),
+                              imm:$src3))]>;
 
-  def PALIGN128rr : SS38I<0x0F, MRMSrcReg, (outs VR128:$dst),
-                         (ins VR128:$src1, VR128:$src2, i32imm:$src3),
-                         "palignr\t{$src2, $dst|$dst, $src2}",
-                         [(set VR128:$dst,
-                           (int_x86_ssse3_palign_r_128
-                            VR128:$src1, VR128:$src2,
-                            imm:$src3))]>, OpSize;
-  def PALIGN128rm : SS38I<0x0F, MRMSrcReg, (outs VR128:$dst),
-                          (ins VR128:$src1, i128mem:$src2, i32imm:$src3),
-                          "palignr\t{$src2, $dst|$dst, $src2}",
-                          [(set VR128:$dst,
-                            (int_x86_ssse3_palign_r_128
-                             VR128:$src1,
-                             (bitconvert (memopv4i32 addr:$src2)),
-                             imm:$src3))]>, OpSize;
+  def PALIGNR128rr : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
+                           (ins VR128:$src1, VR128:$src2, i32imm:$src3),
+                           "palignr\t{$src2, $dst|$dst, $src2}",
+                           [(set VR128:$dst,
+                             (int_x86_ssse3_palign_r_128
+                              VR128:$src1, VR128:$src2,
+                              imm:$src3))]>, OpSize;
+  def PALIGNR128rm : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
+                           (ins VR128:$src1, i128mem:$src2, i32imm:$src3),
+                           "palignr\t{$src2, $dst|$dst, $src2}",
+                           [(set VR128:$dst,
+                             (int_x86_ssse3_palign_r_128
+                              VR128:$src1,
+                              (bitconvert (memopv4i32 addr:$src2)),
+                              imm:$src3))]>, OpSize;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2583,6 +2583,7 @@ let isTwoAddress = 1 in {
 //===----------------------------------------------------------------------===//
 
 // 128-bit vector undef's.
+def : Pat<(v4f32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2f64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v16i8 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
