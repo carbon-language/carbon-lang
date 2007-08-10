@@ -473,21 +473,6 @@ require a copy to be inserted (in X86InstrInfo::convertToThreeAddress).
 
 //===---------------------------------------------------------------------===//
 
-Bad codegen:
-
-char foo(int x) { return x; }
-
-_foo:
-	movl 4(%esp), %eax
-	shll $24, %eax
-	sarl $24, %eax
-	ret
-
-SIGN_EXTEND_INREG can be implemented as (sext (trunc)) to take advantage of 
-sub-registers.
-
-//===---------------------------------------------------------------------===//
-
 Consider this:
 
 typedef struct pair { float A, B; } pair;

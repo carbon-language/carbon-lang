@@ -157,9 +157,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC        , MVT::Other, Expand);
   setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
   if (Subtarget->is64Bit())
-    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);

@@ -208,6 +208,10 @@ namespace {
     /// base register.  Return the virtual register that holds this value.
     SDNode *getGlobalBaseReg();
 
+    /// getTruncate - return an SDNode that implements a subreg based truncate
+    /// of the specified operand to the the specified value type.
+    SDNode *getTruncate(SDOperand N0, MVT::ValueType VT);
+
 #ifndef NDEBUG
     unsigned Indent;
 #endif
@@ -979,6 +983,44 @@ static SDNode *FindCallStartFromCall(SDNode *Node) {
   return FindCallStartFromCall(Node->getOperand(0).Val);
 }
 
+SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT::ValueType VT) {
+    SDOperand SRIdx;
+    switch (VT) {
+    case MVT::i8:
+      SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
+      // Ensure that the source register has an 8-bit subreg on 32-bit targets
+      if (!Subtarget->is64Bit()) { 
+        unsigned Opc;
+        MVT::ValueType VT;
+        switch (N0.getValueType()) {
+        default: assert(0 && "Unknown truncate!");
+        case MVT::i16:
+          Opc = X86::MOV16to16_;
+          VT = MVT::i16;
+          break;
+        case MVT::i32:
+          Opc = X86::MOV32to32_;
+          VT = MVT::i32;
+          break;
+        }
+        N0 = 
+          SDOperand(CurDAG->getTargetNode(Opc, VT, N0), 0);
+      }
+      break;
+    case MVT::i16:
+      SRIdx = CurDAG->getTargetConstant(2, MVT::i32); // SubRegSet 2
+      break;
+    case MVT::i32:
+      SRIdx = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
+      break;
+    default: assert(0 && "Unknown truncate!");
+    }
+    return CurDAG->getTargetNode(X86::EXTRACT_SUBREG, 
+                                 VT, 
+                                 N0, SRIdx);
+}
+
+
 SDNode *X86DAGToDAGISel::Select(SDOperand N) {
   SDNode *Node = N.Val;
   MVT::ValueType NVT = Node->getValueType(0);
@@ -1330,44 +1372,57 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       return NULL;
     }
+    
+    case ISD::SIGN_EXTEND_INREG: {
+      SDOperand N0 = Node->getOperand(0);
+      AddToISelQueue(N0);
       
-    case ISD::TRUNCATE: {
-      SDOperand Tmp;
-      SDOperand Input = Node->getOperand(0);
-      AddToISelQueue(Node->getOperand(0));
+      MVT::ValueType SVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
+      SDOperand TruncOp = SDOperand(getTruncate(N0, SVT), 0);
+      unsigned Opc;
       switch (NVT) {
-      case MVT::i8:
-        Tmp = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
-        // Ensure that the source register has an 8-bit subreg on 32-bit targets
-        if (!Subtarget->is64Bit()) { 
-          unsigned Opc;
-          MVT::ValueType VT;
-          switch (Node->getOperand(0).getValueType()) {
-          default: assert(0 && "Unknown truncate!");
-          case MVT::i16:
-            Opc = X86::MOV16to16_;
-            VT = MVT::i16;
-            break;
-          case MVT::i32:
-            Opc = X86::MOV32to32_;
-            VT = MVT::i32;
-            break;
-          }
-          Input = 
-            SDOperand(CurDAG->getTargetNode(Opc, VT, Node->getOperand(0)), 0);
-        }
-        break;
       case MVT::i16:
-        Tmp = CurDAG->getTargetConstant(2, MVT::i32); // SubRegSet 2
+        if (SVT == MVT::i8) Opc = X86::MOVSX16rr8;
+        else assert(0 && "Unknown sign_extend_inreg!");
         break;
       case MVT::i32:
-        Tmp = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
+        switch (SVT) {
+        case MVT::i8:  Opc = X86::MOVSX32rr8;  break;
+        case MVT::i16: Opc = X86::MOVSX32rr16; break;
+        default: assert(0 && "Unknown sign_extend_inreg!");
+        }
         break;
-      default: assert(0 && "Unknown truncate!");
+      case MVT::i64:
+        switch (SVT) {
+        case MVT::i8:  Opc = X86::MOVSX64rr8;  break;
+        case MVT::i16: Opc = X86::MOVSX64rr16; break;
+        case MVT::i32: Opc = X86::MOVSX64rr32; break;
+        default: assert(0 && "Unknown sign_extend_inreg!");
+        }
+        break;
+      default: assert(0 && "Unknown sign_extend_inreg!");
       }
-      SDNode *ResNode = CurDAG->getTargetNode(X86::EXTRACT_SUBREG, 
-                                              NVT, 
-                                              Input, Tmp);
+      
+      SDNode *ResNode = CurDAG->getTargetNode(Opc, NVT, TruncOp);
+      
+#ifndef NDEBUG
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(TruncOp.Val->dump(CurDAG));
+      DOUT << "\n";
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(ResNode->dump(CurDAG));
+      DOUT << "\n";
+      Indent -= 2;
+#endif
+      return ResNode;
+      break;
+    }
+    
+    case ISD::TRUNCATE: {
+      SDOperand Input = Node->getOperand(0);
+      AddToISelQueue(Node->getOperand(0));
+      SDNode *ResNode = getTruncate(Input, NVT);
+      
 #ifndef NDEBUG
         DOUT << std::string(Indent-2, ' ') << "=> ";
         DEBUG(ResNode->dump(CurDAG));
