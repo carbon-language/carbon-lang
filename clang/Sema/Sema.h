@@ -426,8 +426,9 @@ private:
   void CheckFunctionCall(Expr *Fn, FunctionDecl *FDecl,
                          Expr** Args, unsigned NumArgsInCall);
 
-  void CheckPrintfArguments(Expr *Fn, FunctionDecl *FDecl, unsigned format_idx,
-                            Expr** Args, unsigned NumArgsInCall);
+  void CheckPrintfArguments(Expr *Fn, unsigned id_idx, FunctionDecl *FDecl,
+                            unsigned format_idx, Expr** Args,
+                            unsigned NumArgsInCall);
 };
 
 

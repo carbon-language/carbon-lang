@@ -57,7 +57,7 @@ Sema::CheckFunctionCall(Expr *Fn, FunctionDecl *FDecl,
       case id_vsprintf:  format_idx = 1; break;
       case id_vprintf:   format_idx = 1; break;
     }    
-    CheckPrintfArguments(Fn, FDecl, format_idx, Args, NumArgsInCall);
+    CheckPrintfArguments(Fn, i, FDecl, format_idx, Args, NumArgsInCall);
   }
 }
 
@@ -70,8 +70,9 @@ Sema::CheckFunctionCall(Expr *Fn, FunctionDecl *FDecl,
 ///  FormatGuard: Automatic Protection From printf Format String
 ///  Vulnerabilities, Proceedings of the 10th USENIX Security Symposium, 2001.
 void
-Sema::CheckPrintfArguments(Expr *Fn, FunctionDecl *FDecl, unsigned format_idx,
-                           Expr** Args, unsigned NumArgsInCall) {
+Sema::CheckPrintfArguments(Expr *Fn, unsigned id_idx, FunctionDecl *FDecl,
+                           unsigned format_idx, Expr** Args, 
+                           unsigned NumArgsInCall) {
                            
   assert( format_idx < NumArgsInCall );
 
