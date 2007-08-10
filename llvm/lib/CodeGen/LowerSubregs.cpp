@@ -59,17 +59,6 @@ static const TargetRegisterClass *getPhysicalRegisterRegClass(
   return 0;
 }
 
-static bool isSubRegOf(const MRegisterInfo &MRI,
-                       unsigned SubReg,
-                       unsigned SupReg) {
-  const TargetRegisterDesc &RD = MRI[SubReg];
-  for (const unsigned *reg = RD.SuperRegs; *reg != 0; ++reg)
-    if (*reg == SupReg)
-      return true;
-      
-  return false;
-}
-
 bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
    MachineBasicBlock *MBB = MI->getParent();
    MachineFunction &MF = *MBB->getParent();
@@ -105,7 +94,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
    }
 
    DOUT << "\n";
-   MBB->erase(MI);
+   MBB->remove(MI);
    return true;
 }
 
@@ -157,8 +146,8 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   // of the destination, we copy the subreg into the source
   // However, this is only safe if the insert instruction is the kill
   // of the source register
-  bool revCopyOrder = isSubRegOf(MRI, InsReg, DstReg);    
-  if (revCopyOrder) {
+  bool revCopyOrder = MRI.isSubRegOf(InsReg, DstReg);    
+  if (revCopyOrder && InsReg != DstSubReg) {
     if (MI->getOperand(1).isKill()) {
       DstSubReg = MRI.getSubReg(SrcReg, SubIdx);
       // Insert sub-register copy
@@ -168,14 +157,21 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
       } else {
         TRC1 = MF.getSSARegMap()->getRegClass(InsReg);
       }
-    
       MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1);
+
+#ifndef NDEBUG
       MachineBasicBlock::iterator dMI = MI;
       DOUT << "subreg: " << *(--dMI);
+#endif
     } else {
       assert(0 && "Don't know how to convert this insert");
     }
   }
+#ifndef NDEBUG
+  if (InsReg == DstSubReg) {
+     DOUT << "subreg: Eliminated subreg copy\n";
+  }
+#endif
 
   if (SrcReg != DstReg) {
     // Insert super-register copy
@@ -189,9 +185,18 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
             "Insert superreg and Dst must be of same register class");
 
     MRI.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC0);
+
+#ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
     DOUT << "subreg: " << *(--dMI);
+#endif
   }
+  
+#ifndef NDEBUG
+  if (SrcReg == DstReg) {
+     DOUT << "subreg: Eliminated superreg copy\n";
+  }
+#endif
 
   if (!revCopyOrder && InsReg != DstSubReg) {
     // Insert sub-register copy
@@ -201,14 +206,16 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     } else {
       TRC1 = MF.getSSARegMap()->getRegClass(InsReg);
     }
-  
     MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1);
+
+#ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
     DOUT << "subreg: " << *(--dMI);
+#endif
   }
 
   DOUT << "\n";
-  MBB->erase(MI);
+  MBB->remove(MI);
   return true;                    
 }
 

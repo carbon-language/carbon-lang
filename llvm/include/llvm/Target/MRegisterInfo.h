@@ -360,6 +360,17 @@ public:
     return get(RegNo).SuperRegs;
   }
 
+  /// isSubRegOf - Predicate which returns true if RegA is a sub-register of 
+  /// RegB. Returns false otherwise.
+  ///
+  bool isSubRegOf(unsigned RegA, unsigned RegB) const {
+    const TargetRegisterDesc &RD = (*this)[RegA];
+    for (const unsigned *reg = RD.SuperRegs; *reg != 0; ++reg)
+      if (*reg == RegB)
+        return true;
+    return false;
+  }
+
   /// getName - Return the symbolic target specific name for the specified
   /// physical register.
   const char *getName(unsigned RegNo) const {
