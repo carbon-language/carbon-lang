@@ -437,6 +437,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned DefIndex = getDefIndex(getInstructionIndex(vi.DefInst));
       unsigned RedefIndex = getDefIndex(MIIdx);
 
+      const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
+      unsigned OldEnd = OldLR->end;
+
       // Delete the initial value, which should be short and continuous,
       // because the 2-addr copy must be in the same MBB as the redef.
       interval.removeRange(DefIndex, RedefIndex);
@@ -448,16 +451,18 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // The new value number (#1) is defined by the instruction we claimed
       // defined value #0.
       unsigned ValNo = interval.getNextValue(0, 0);
-      interval.setValueNumberInfo(1, interval.getValNumInfo(0));
+      interval.copyValNumInfo(ValNo, 0);
       
       // Value#0 is now defined by the 2-addr instruction.
-      interval.setValueNumberInfo(0, LiveInterval::VNInfo(DefIndex, 0U));
+      interval.setDefForValNum(0, RedefIndex);
+      interval.setSrcRegForValNum(0, 0);
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
       DOUT << " replace range with " << LR;
       interval.addRange(LR);
       interval.addKillForValNum(ValNo, RedefIndex);
+      interval.removeKillForValNum(ValNo, RedefIndex, OldEnd);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
@@ -482,8 +487,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        bool replaced = interval.replaceKillForValNum(0, End, Start);
-        assert(replaced && "Incorrect kill info?");
+        interval.addKillForValNum(0, Start);
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this

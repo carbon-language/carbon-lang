@@ -121,7 +121,10 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
 
   // Erase any dead ranges.
   ranges.erase(next(I), MergeTo);
-  
+
+  // Update kill info.
+  removeKillForValNum(ValId, I->start, I->end-1);
+
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
   Ranges::iterator Next = next(I);
@@ -228,9 +231,10 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
 
   // If the span we are removing is at the start of the LiveRange, adjust it.
   if (I->start == Start) {
-    if (I->end == End)
+    if (I->end == End) {
+      removeKillForValNum(I->ValId, End);
       ranges.erase(I);  // Removed the whole LiveRange.
-    else
+    } else
       I->start = End;
     return;
   }
@@ -238,6 +242,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // Otherwise if the span we are removing is at the end of the LiveRange,
   // adjust the other way.
   if (I->end == End) {
+    replaceKillForValNum(I->ValId, End, Start);
     I->end = Start;
     return;
   }
@@ -336,7 +341,11 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
     // If we merge some live ranges, chop off the end.
     ranges.erase(OutIt, end());
   }
-  
+
+  // Update val# info first. Increasing live ranges may invalidate some kills.
+  ValueNumberInfo.clear();
+  ValueNumberInfo.append(NewValueNumberInfo.begin(), NewValueNumberInfo.end());
+
   // Okay, now insert the RHS live ranges into the LHS.
   iterator InsertPos = begin();
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I) {
@@ -345,8 +354,6 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
     InsertPos = addRangeFrom(*I, InsertPos);
   }
 
-  ValueNumberInfo.clear();
-  ValueNumberInfo.append(NewValueNumberInfo.begin(), NewValueNumberInfo.end());
   weight += Other.weight;
   if (Other.preference && !preference)
     preference = Other.preference;
@@ -417,7 +424,7 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
 
   // Make sure V2 is smaller than V1.
   if (V1 < V2) {
-    setValueNumberInfo(V1, getValNumInfo(V2));
+    copyValNumInfo(V1, V2);
     std::swap(V1, V2);
   }
 
@@ -431,6 +438,8 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
     if (LR != begin()) {
       iterator Prev = LR-1;
       if (Prev->ValId == V2 && Prev->end == LR->start) {
+        bool Replaced = replaceKillForValNum(V2, Prev->end, LR->end);
+        assert(Replaced);
         Prev->end = LR->end;
 
         // Erase this live-range.
@@ -449,6 +458,7 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
     // of the loop.
     if (I != end()) {
       if (I->start == LR->end && I->ValId == V2) {
+        removeKillForValNum(V2, LR->end);
         LR->end = I->end;
         ranges.erase(I);
         I = LR+1;
@@ -506,12 +516,23 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
     for (unsigned i = 0; i != getNumValNums(); ++i) {
       if (i) OS << " ";
       OS << i << "@";
-      if (ValueNumberInfo[i].def == ~0U) {
-        OS << "?";
-      } else if (ValueNumberInfo[i].def == ~1U) {
+      if (ValueNumberInfo[i].def == ~1U) {
         OS << "x";
       } else {
-        OS << ValueNumberInfo[i].def;
+        if (ValueNumberInfo[i].def == ~0U)
+          OS << "?";
+        else
+          OS << ValueNumberInfo[i].def;
+        unsigned e = ValueNumberInfo[i].kills.size();
+        if (e) {
+          OS << "-(";
+          for (unsigned j = 0; j != e; ++j) {
+            OS << ValueNumberInfo[i].kills[j];
+            if (j != e-1)
+              OS << " ";
+          }
+          OS << ")";
+        }
       }
     }
   }

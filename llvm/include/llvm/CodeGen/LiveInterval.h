@@ -144,55 +144,162 @@ namespace llvm {
       return ValueNumberInfo.size()-1;
     }
     
-    /// getInstForValNum - Return the machine instruction index that defines the
+    /// getDefForValNum - Return the machine instruction index that defines the
     /// specified value number.
-    unsigned getInstForValNum(unsigned ValNo) const {
+    unsigned getDefForValNum(unsigned ValNo) const {
       assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].def;
     }
     
+    /// getSrcRegForValNum - If the machine instruction that defines the
+    /// specified value number is a copy, returns the source register. Otherwise,
+    /// returns zero.
     unsigned getSrcRegForValNum(unsigned ValNo) const {
       assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].reg;
     }
+
+    /// setDefForValNum - Set the machine instruction index that defines the
+    /// specified value number. 
+    void setDefForValNum(unsigned ValNo, unsigned NewDef) {
+      assert(ValNo < ValueNumberInfo.size());
+      ValueNumberInfo[ValNo].def = NewDef;
+    }
     
+    /// setSrcRegForValNum - Set the source register of the specified value
+    /// number. 
+    void setSrcRegForValNum(unsigned ValNo, unsigned NewReg) {
+      assert(ValNo < ValueNumberInfo.size());
+      ValueNumberInfo[ValNo].reg = NewReg;
+    }
+
     /// getKillsForValNum - Return the kill instruction indexes of the specified
     /// value number.
     const SmallVector<unsigned, 4> &getKillsForValNum(unsigned ValNo) const {
       assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo].kills;
     }
-    
+
     /// addKillForValNum - Add a kill instruction index to the specified value
     /// number.
     void addKillForValNum(unsigned ValNo, unsigned KillIdx) {
       assert(ValNo < ValueNumberInfo.size());
-      ValueNumberInfo[ValNo].kills.push_back(KillIdx);
+      SmallVector<unsigned, 4> &kills = ValueNumberInfo[ValNo].kills;
+      if (kills.empty()) {
+        kills.push_back(KillIdx);
+      } else {
+        SmallVector<unsigned, 4>::iterator
+          I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
+        kills.insert(I, KillIdx);
+      }
     }
 
-    /// replaceKillForValNum - Replace a kill index of the specified value with
-    /// a new kill index.
-    bool replaceKillForValNum(unsigned ValNo, unsigned OldKill,
-                              unsigned NewKill) {
-      SmallVector<unsigned, 4> kills = ValueNumberInfo[ValNo].kills;
-      SmallVector<unsigned, 4>::iterator I =
-        std::find(kills.begin(), kills.end(), OldKill);
+    /// addKills - Add a number of kills into the VNInfo kill vector. If this
+    /// interval is live at a kill point, then the kill is not added.
+    void addKills(VNInfo &VNI, const SmallVector<unsigned, 4> &kills) {
+      for (unsigned i = 0, e = kills.size(); i != e; ++i) {
+        unsigned KillIdx = kills[i];
+        if (!liveAt(KillIdx)) {
+          SmallVector<unsigned, 4>::iterator
+            I = std::lower_bound(VNI.kills.begin(), VNI.kills.end(), KillIdx);
+          VNI.kills.insert(I, KillIdx);
+        }
+      }
+    }
+
+    /// addKillsForValNum - Add a number of kills into the kills vector of
+    /// the specified value number.
+    void addKillsForValNum(unsigned ValNo,
+                           const SmallVector<unsigned, 4> &kills) {
+      addKills(ValueNumberInfo[ValNo], kills);
+    }
+
+    /// isKillForValNum - Returns true if KillIdx is a kill of the specified
+    /// val#.
+    bool isKillForValNum(unsigned ValNo, unsigned KillIdx) const {
+      assert(ValNo < ValueNumberInfo.size());
+      const SmallVector<unsigned, 4> &kills = ValueNumberInfo[ValNo].kills;
+      SmallVector<unsigned, 4>::const_iterator
+        I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
       if (I == kills.end())
         return false;
-      kills.erase(I);
-      kills.push_back(NewKill);
-      return true;
+      return *I == KillIdx;
+    }
+
+    /// removeKill - Remove the specified kill from the list of kills of
+    /// the specified val#.
+    static bool removeKill(VNInfo &VNI, unsigned KillIdx) {
+      SmallVector<unsigned, 4> &kills = VNI.kills;
+      SmallVector<unsigned, 4>::iterator
+        I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
+      if (I != kills.end() && *I == KillIdx) {
+        kills.erase(I);
+        return true;
+      }
+      return false;
+    }
+
+    /// removeKillForValNum - Remove the specified kill from the list of kills
+    /// of the specified val#.
+    bool removeKillForValNum(unsigned ValNo, unsigned KillIdx) {
+      assert(ValNo < ValueNumberInfo.size());
+      return removeKill(ValueNumberInfo[ValNo], KillIdx);
+    }
+
+    /// removeKillForValNum - Remove all the kills in specified range
+    /// [Start, End] of the specified val#.
+    void removeKillForValNum(unsigned ValNo, unsigned Start, unsigned End) {
+      assert(ValNo < ValueNumberInfo.size());
+      SmallVector<unsigned, 4> &kills = ValueNumberInfo[ValNo].kills;
+      SmallVector<unsigned, 4>::iterator
+        I = std::lower_bound(kills.begin(), kills.end(), Start);
+      SmallVector<unsigned, 4>::iterator
+        E = std::upper_bound(kills.begin(), kills.end(), End);
+      kills.erase(I, E);
+    }
+
+    /// replaceKill - Replace a kill index of the specified value# with a new
+    /// kill. Returns true if OldKill was indeed a kill point.
+    static bool replaceKill(VNInfo &VNI, unsigned OldKill, unsigned NewKill) {
+      SmallVector<unsigned, 4> &kills = VNI.kills;
+      SmallVector<unsigned, 4>::iterator
+        I = std::lower_bound(kills.begin(), kills.end(), OldKill);
+      if (I != kills.end() && *I == OldKill) {
+        *I = NewKill;
+        return true;
+      }
+      return false;
+    }
+
+    /// replaceKillForValNum - Replace a kill index of the specified value# with
+    /// a new kill. Returns true if OldKill was indeed a kill point.
+    bool replaceKillForValNum(unsigned ValNo, unsigned OldKill,
+                              unsigned NewKill) {
+      assert(ValNo < ValueNumberInfo.size());
+      return replaceKill(ValueNumberInfo[ValNo], OldKill, NewKill);
     }
     
+    /// getValNumInfo - Returns a copy of the specified val#.
+    ///
     VNInfo getValNumInfo(unsigned ValNo) const {
       assert(ValNo < ValueNumberInfo.size());
       return ValueNumberInfo[ValNo];
     }
     
-    /// setValueNumberInfo - Change the value number info for the specified
+    /// setValNumInfo - Change the value number info for the specified
     /// value number.
-    void setValueNumberInfo(unsigned ValNo, const VNInfo &I) {
+    void setValNumInfo(unsigned ValNo, const VNInfo &I) {
       ValueNumberInfo[ValNo] = I;
+    }
+
+    /// copyValNumInfo - Copy the value number info for one value number to
+    /// another.
+    void copyValNumInfo(unsigned DstValNo, unsigned SrcValNo) {
+      ValueNumberInfo[DstValNo] = ValueNumberInfo[SrcValNo];
+    }
+    void copyValNumInfo(unsigned DstValNo, const LiveInterval &SrcLI,
+                        unsigned SrcValNo) {
+      ValueNumberInfo[DstValNo] = SrcLI.ValueNumberInfo[SrcValNo];
     }
 
     /// MergeValueNumberInto - This method is called when two value nubmers
