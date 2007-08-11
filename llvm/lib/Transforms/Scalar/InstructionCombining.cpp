@@ -8782,6 +8782,28 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
   return false;
 }
 
+/// GetUnderlyingObject - Trace through a series of getelementptrs and bitcasts
+/// until we find the underlying object a pointer is referring to or something
+/// we don't understand.  Note that the returned pointer may be offset from the
+/// input, because we ignore GEP indices.
+static Value *GetUnderlyingObject(Value *Ptr) {
+  while (1) {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
+      if (CE->getOpcode() == Instruction::BitCast ||
+          CE->getOpcode() == Instruction::GetElementPtr)
+        Ptr = CE->getOperand(0);
+      else
+        return Ptr;
+    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(Ptr)) {
+      Ptr = BCI->getOperand(0);
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
+      Ptr = GEP->getOperand(0);
+    } else {
+      return Ptr;
+    }
+  }
+}
+
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
@@ -8859,6 +8881,17 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         if (Instruction *Res = InstCombineLoadCast(*this, LI))
           return Res;
       }
+  }
+    
+  // If this load comes from anywhere in a constant global, and if the global
+  // is all undef or zero, we know what it loads.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GetUnderlyingObject(Op))) {
+    if (GV->isConstant() && GV->hasInitializer()) {
+      if (GV->getInitializer()->isNullValue())
+        return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
+      else if (isa<UndefValue>(GV->getInitializer()))
+        return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
+    }
   }
 
   if (Op->hasOneUse()) {
