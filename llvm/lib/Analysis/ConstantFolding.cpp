@@ -217,6 +217,23 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   case Instruction::FCmp:
     return ConstantExpr::getCompare(cast<CmpInst>(I)->getPredicate(), Ops[0], 
                                     Ops[1]);
+  case Instruction::PtrToInt:
+    // If the input is a inttoptr, eliminate the pair.  This requires knowing
+    // the width of a pointer, so it can't be done in ConstantExpr::getCast.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0])) {
+      if (TD && CE->getOpcode() == Instruction::IntToPtr) {
+        Constant *Input = CE->getOperand(0);
+        unsigned InWidth = Input->getType()->getPrimitiveSizeInBits();
+        Constant *Mask = 
+          ConstantInt::get(APInt::getLowBitsSet(InWidth,
+                                                TD->getPointerSizeInBits()));
+        Input = ConstantExpr::getAnd(Input, Mask);
+        // Do a zext or trunc to get to the dest size.
+        return ConstantExpr::getIntegerCast(Input, I->getType(), false);
+      }
+    }
+    // FALL THROUGH.
+  case Instruction::IntToPtr:
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
@@ -226,8 +243,6 @@ Constant *llvm::ConstantFoldInstOperands(const Instruction* I,
   case Instruction::SIToFP:
   case Instruction::FPToUI:
   case Instruction::FPToSI:
-  case Instruction::PtrToInt:
-  case Instruction::IntToPtr:
   case Instruction::BitCast:
     return ConstantExpr::getCast(Opc, Ops[0], DestTy);
   case Instruction::Select:
