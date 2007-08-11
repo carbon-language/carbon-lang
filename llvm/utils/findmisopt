@@ -95,8 +95,8 @@ ex1=$?
 # Define the list of optimizations to run. This comprises the same set of 
 # optimizations that opt -std-compile-opts and gccld run, in the same order.
 opt_switches=`llvm-as < /dev/null -o - | opt -std-compile-opts -disable-output -debug-pass=Arguments 2>&1 | sed 's/Pass Arguments: //'`
-gccld_switches="-internalize -ipsccp -globalopt -constmerge -deadargelim -inline -prune-eh -globalopt -globaldce -argpromotion -instcombine -predsimplify -scalarrepl -globalsmodref-aa -licm -load-vn -gcse -dse -instcombine -simplifycfg -verify"
-all_switches="$opt_switches $gccld_switches"
+ld_switches=`llvm-as < /dev/null -o - | llvm-ld - -std-link-opts -disable-output -debug-pass=Arguments 2>&1 | sed 's/Pass Arguments: //'`
+all_switches="$opt_switches $ld_switches"
 echo "Passes : $all_switches"
 
 # Current set of switches is empty
