@@ -336,7 +336,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 
 /// This function converts a Constant* into a GenericValue. The interesting 
 /// part is if C is a ConstantExpr.
-/// @brief Get a GenericValue for a Constnat*
+/// @brief Get a GenericValue for a Constant*
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   // If its undefined, return the garbage.
   if (isa<UndefValue>(C)) 
