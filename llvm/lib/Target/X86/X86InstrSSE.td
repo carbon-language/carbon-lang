@@ -128,13 +128,24 @@ def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
 def memopfsf64 : PatFrag<(ops node:$ptr), (f64   (memop node:$ptr))>;
 def memopv4f32 : PatFrag<(ops node:$ptr), (v4f32 (memop node:$ptr))>;
 def memopv2f64 : PatFrag<(ops node:$ptr), (v2f64 (memop node:$ptr))>;
-def memopv8i8  : PatFrag<(ops node:$ptr), (v8i8  (memop node:$ptr))>;
-def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
-def memopv4i16 : PatFrag<(ops node:$ptr), (v4i16 (memop node:$ptr))>;
-def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop node:$ptr))>;
-def memopv2i32 : PatFrag<(ops node:$ptr), (v2i32 (memop node:$ptr))>;
 def memopv4i32 : PatFrag<(ops node:$ptr), (v4i32 (memop node:$ptr))>;
 def memopv2i64 : PatFrag<(ops node:$ptr), (v2i64 (memop node:$ptr))>;
+
+// SSSE3 uses MMX registers for some instructions. They aren't aligned on a
+// 16-byte boundary.
+def memop64 : PatFrag<(ops node:$ptr), (ld node:$ptr), [{
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N))
+    return LD->getExtensionType() == ISD::NON_EXTLOAD &&
+           LD->getAddressingMode() == ISD::UNINDEXED &&
+           LD->getAlignment() >= 8;
+  return false;
+}]>;
+
+def memopv8i8  : PatFrag<(ops node:$ptr), (v8i8  (memop64 node:$ptr))>;
+def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop64 node:$ptr))>;
+def memopv4i16 : PatFrag<(ops node:$ptr), (v4i16 (memop64 node:$ptr))>;
+def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop64 node:$ptr))>;
+def memopv2i32 : PatFrag<(ops node:$ptr), (v2i32 (memop64 node:$ptr))>;
 
 def bc_v4f32 : PatFrag<(ops node:$in), (v4f32 (bitconvert node:$in))>;
 def bc_v2f64 : PatFrag<(ops node:$in), (v2f64 (bitconvert node:$in))>;
@@ -2284,10 +2295,14 @@ let AddedComplexity = 20 in
 // SSSE3 Instructions
 //===----------------------------------------------------------------------===//
 
-// SSE3 Instruction Templates:
+// SSSE3 Instruction Templates:
 // 
 //   SS38I - SSSE3 instructions with T8 prefix.
 //   SS3AI - SSSE3 instructions with TA prefix.
+//
+// Note: SSSE3 instructions have 64-bit and 128-bit versions. The 64-bit version
+// uses the MMX registers. We put those instructions here because they better
+// fit into the SSSE3 instruction category rather than the MMX category.
 
 class SS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
