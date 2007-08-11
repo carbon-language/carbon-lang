@@ -31,7 +31,10 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     // Must be an expression in a stmt context.  Emit the value and ignore the
     // result.
     if (const Expr *E = dyn_cast<Expr>(S)) {
-      EmitExpr(E);
+      if (hasAggregateLLVMType(E->getType()))
+        EmitAggExpr(E, 0, false);  // Emit an aggregate, ignoring the result.
+      else
+        EmitExpr(E);
     } else {
       printf("Unimplemented stmt!\n");
       S->dump();
@@ -257,7 +260,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
   
   // If there is an increment, emit it next.
   if (S.getInc())
-    EmitExpr(S.getInc());
+    EmitStmt(S.getInc());
       
   // Finally, branch back up to the condition for the next iteration.
   Builder.CreateBr(CondBlock);
@@ -274,6 +277,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
+  // FIXME: Handle return of an aggregate!
   if (RV)
     RetVal = EmitExpr(RV);
   else  // Silence a bogus GCC warning. 

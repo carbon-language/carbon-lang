@@ -47,10 +47,12 @@ void CodeGenFunction::EmitLoadOfComplex(RValue V,
   
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
+  // FIXME: It would be nice to make this "Ptr->getName()+realp"
   llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Zero, Zero, "realp");
   llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Zero, One, "imagp");
   
   // FIXME: Handle volatility.
+  // FIXME: It would be nice to make this "Ptr->getName()+real"
   Real = Builder.CreateLoad(RealPtr, "real");
   Imag = Builder.CreateLoad(ImagPtr, "imag");
 }
@@ -272,11 +274,8 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
     if (EltTy->isFirstClassType())
       return RValue::get(Builder.CreateLoad(Ptr, "tmp"));
     
-    if (ExprType->isFunctionType())
-      return RValue::get(Ptr);
-    
-    // Otherwise, we have an aggregate lvalue.
-    return RValue::getAggregate(Ptr);
+    assert(ExprType->isFunctionType() && "Unknown scalar value");
+    return RValue::get(Ptr);
   }
   
   if (LV.isVectorElt()) {
@@ -376,48 +375,16 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   }
   
   llvm::Value *DstAddr = Dst.getAddress();
-  if (Src.isScalar()) {
-    // FIXME: Handle volatility etc.
-    const llvm::Type *SrcTy = Src.getVal()->getType();
-    const llvm::Type *AddrTy = 
-      cast<llvm::PointerType>(DstAddr->getType())->getElementType();
-    
-    if (AddrTy != SrcTy)
-      DstAddr = Builder.CreateBitCast(DstAddr, llvm::PointerType::get(SrcTy),
-                                      "storetmp");
-    Builder.CreateStore(Src.getVal(), DstAddr);
-    return;
-  }
+  assert(Src.isScalar() && "Can't emit an agg store with this method");
+  // FIXME: Handle volatility etc.
+  const llvm::Type *SrcTy = Src.getVal()->getType();
+  const llvm::Type *AddrTy = 
+    cast<llvm::PointerType>(DstAddr->getType())->getElementType();
   
-  // Don't use memcpy for complex numbers.
-  if (Ty->isComplexType()) {
-    llvm::Value *Real, *Imag;
-    EmitLoadOfComplex(Src, Real, Imag);
-    EmitStoreOfComplex(Real, Imag, Dst.getAddress());
-    return;
-  }
-  
-  // Aggregate assignment turns into llvm.memcpy.
-  const llvm::Type *SBP = llvm::PointerType::get(llvm::Type::Int8Ty);
-  llvm::Value *SrcAddr = Src.getAggregateAddr();
-  
-  if (DstAddr->getType() != SBP)
-    DstAddr = Builder.CreateBitCast(DstAddr, SBP, "tmp");
-  if (SrcAddr->getType() != SBP)
-    SrcAddr = Builder.CreateBitCast(SrcAddr, SBP, "tmp");
-
-  unsigned Align = 1;   // FIXME: Compute type alignments.
-  unsigned Size = 1234; // FIXME: Compute type sizes.
-  
-  // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
-  llvm::Value *SizeVal = llvm::ConstantInt::get(IntPtr, Size);
-  
-  llvm::Value *MemCpyOps[4] = {
-    DstAddr, SrcAddr, SizeVal,llvm::ConstantInt::get(llvm::Type::Int32Ty, Align)
-  };
-  
-  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
+  if (AddrTy != SrcTy)
+    DstAddr = Builder.CreateBitCast(DstAddr, llvm::PointerType::get(SrcTy),
+                                    "storetmp");
+  Builder.CreateStore(Src.getVal(), DstAddr);
 }
 
 void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, 
@@ -585,7 +552,8 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 //===--------------------------------------------------------------------===//
 
 RValue CodeGenFunction::EmitExpr(const Expr *E) {
-  assert(E && "Null expression?");
+  assert(E && !hasAggregateLLVMType(E->getType()) &&
+         "Invalid scalar expression to emit");
   
   switch (E->getStmtClass()) {
   default:
@@ -641,7 +609,6 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
   case Expr::ChooseExprClass:
     return EmitChooseExpr(cast<ChooseExpr>(E));
   }
-  
 }
 
 RValue CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
@@ -1401,8 +1368,8 @@ RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
   
   // Store the value into the LHS.
   EmitStoreThroughLValue(RHS, LHS, E->getType());
-  
-  // Return the converted RHS.
+
+  // Return the RHS.
   return RHS;
 }
 
@@ -1419,8 +1386,6 @@ RValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator *E) {
   
   llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
   Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
-  
-  // FIXME: Implement this for aggregate values.
   
   EmitBlock(LHSBlock);
   // Handle the GNU extension for missing LHS.

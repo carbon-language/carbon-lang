@@ -336,14 +336,13 @@ public:
   LValue EmitOCUVectorElementExpr(const OCUVectorElementExpr *E);
     
   //===--------------------------------------------------------------------===//
-  //                             Expression Emission
+  //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
 
   void EmitCompoundAssignmentOperands(const CompoundAssignOperator *CAO,
                                       LValue &LHSLV, RValue &LHS, RValue &RHS);
   RValue EmitCompoundAssignmentResult(const CompoundAssignOperator *E,
                                       LValue LHSLV, RValue ResV);
-  
   
   RValue EmitExpr(const Expr *E);
   RValue EmitIntegerLiteral(const IntegerLiteral *E);
@@ -396,6 +395,36 @@ public:
   // Conditional Operator.
   RValue EmitConditionalOperator(const ConditionalOperator *E);
   RValue EmitChooseExpr(const ChooseExpr *E);
+  
+  //===--------------------------------------------------------------------===//
+  //                       Aggregate Expression Emission
+  //===--------------------------------------------------------------------===//
+  
+  void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
+                         QualType EltTy);
+  
+  /// EmitAggExpr - Emit the computation of the specified expression of
+  /// aggregate type.  The result is computed into DestPtr.  Note that if
+  /// DestPtr is null, the value of the aggregate expression is not needed.
+  void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest);
+  
+  /// EmitAggLoadOfLValue - Given an expression with aggregate type that
+  /// represents a value lvalue, this method emits the address of the lvalue,
+  /// then loads the result into DestPtr.
+  void EmitAggLoadOfLValue(const Expr *E, llvm::Value *DestPtr, bool VolDest);
+  
+  
+  
+  // Binary Operators.
+  void EmitAggBinaryOperator(const BinaryOperator *E,
+                             llvm::Value *DestPtr, bool VolatileDest);
+
+  
+  void EmitAggBinaryAssign(const BinaryOperator *E, llvm::Value *DestPtr,
+                           bool VolatileDest);
+
+  void EmitAggConditionalOperator(const ConditionalOperator *E,
+                                  llvm::Value *DestPtr, bool VolatileDest);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
