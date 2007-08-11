@@ -959,7 +959,7 @@ Though this probably isn't worth it.
 //===---------------------------------------------------------------------===//
 
 We need to teach the codegen to convert two-address INC instructions to LEA
-when the flags are dead.  For example, on X86-64, compile:
+when the flags are dead (likewise dec).  For example, on X86-64, compile:
 
 int foo(int A, int B) {
   return A+1;
