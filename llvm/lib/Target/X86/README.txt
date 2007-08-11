@@ -559,7 +559,25 @@ shorter than movl + leal.
 
 //===---------------------------------------------------------------------===//
 
-Implement CTTZ, CTLZ with bsf and bsr.
+Implement CTTZ, CTLZ with bsf and bsr. GCC produces:
+
+int ctz_(unsigned X) { return __builtin_ctz(X); }
+int clz_(unsigned X) { return __builtin_clz(X); }
+int ffs_(unsigned X) { return __builtin_ffs(X); }
+
+_ctz_:
+        bsfl    4(%esp), %eax
+        ret
+_clz_:
+        bsrl    4(%esp), %eax
+        xorl    $31, %eax
+        ret
+_ffs_:
+        movl    $-1, %edx
+        bsfl    4(%esp), %eax
+        cmove   %edx, %eax
+        addl    $1, %eax
+        ret
 
 //===---------------------------------------------------------------------===//
 
@@ -1077,8 +1095,9 @@ This is a "commutable two-address" register coallescing deficiency:
 
 define <4 x float> @test1(<4 x float> %V) {
 entry:
-        %tmp8 = shufflevector <4 x float> %V, <4 x float> undef, <4 x i32> < i32 3, i32 2, i32 1, i32 0 >               ; <<4 x float>> [#uses=1]
-        %add = add <4 x float> %tmp8, %V                ; <<4 x float>> [#uses=1]
+        %tmp8 = shufflevector <4 x float> %V, <4 x float> undef,
+                                        <4 x i32> < i32 3, i32 2, i32 1, i32 0 >
+        %add = add <4 x float> %tmp8, %V
         ret <4 x float> %add
 }
 
