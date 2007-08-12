@@ -1,7 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep load
-; END.
 
 %X = constant int 42
 %X2 = constant int 47

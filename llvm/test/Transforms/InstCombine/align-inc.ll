@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {GLOBAL.*align 16}
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {tmp = load}
 
-@GLOBAL = internal constant [4 x i32] zeroinitializer
+@GLOBAL = internal global [4 x i32] zeroinitializer
 
 declare <16 x i8> @llvm.x86.sse2.loadu.dq(i8*)
 
