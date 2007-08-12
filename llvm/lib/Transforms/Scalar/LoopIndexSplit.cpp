@@ -97,6 +97,9 @@ namespace {
     /// loop may not be eliminated.
     bool safeExitBlock(SplitInfo &SD, BasicBlock *BB);
 
+    /// removeBlocks - Remove basic block BB and all blocks dominated by BB.
+    void removeBlocks(BasicBlock *InBB);
+
     /// Find cost of spliting loop L.
     unsigned findSplitCost(Loop *L, SplitInfo &SD);
     bool splitLoop(SplitInfo &SD);
@@ -105,7 +108,9 @@ namespace {
       IndVar = NULL; 
       IndVarIncrement = NULL;
       ExitCondition = NULL;
-      StartValue = ExitValue = NULL;
+      StartValue = NULL;
+      ExitValueNum = 0;
+      SplitData.clear();
     }
 
   private:
@@ -128,8 +133,8 @@ namespace {
     // Induction variable's initial value.
     Value *StartValue;
 
-    // Induction variable's final loop exit value.
-    Value *ExitValue;
+    // Induction variable's final loop exit value operand number in exit condition..
+    unsigned ExitValueNum;
   };
 
   char LoopIndexSplit::ID = 0;
@@ -285,15 +290,15 @@ void LoopIndexSplit::findLoopConditionals() {
   SCEVHandle SH1 = SE->getSCEV(V1);
   
   if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
-    ExitValue = V0;
+    ExitValueNum = 0;
     findIndVar(V1, L);
   }
   else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
-    ExitValue =  V1;
+    ExitValueNum =  1;
     findIndVar(V0, L);
   }
 
-  if (!ExitValue || !IndVar)
+  if (!IndVar) 
     ExitCondition = NULL;
   else if (IndVar) {
     BasicBlock *Preheader = L->getLoopPreheader();
@@ -430,7 +435,8 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
                                  Terminator);
   Instruction *C2 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                                 SD.SplitValue, ExitValue, "lisplit", 
+                                 SD.SplitValue, 
+                                 ExitCondition->getOperand(ExitValueNum), "lisplit", 
                                  Terminator);
   Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", 
                                                       Terminator);
@@ -580,6 +586,45 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
   return Cost;
 }
 
+/// removeBlocks - Remove basic block BB and all blocks dominated by BB.
+void LoopIndexSplit::removeBlocks(BasicBlock *InBB) {
+
+  SmallVector<BasicBlock *, 8> WorkList;
+  WorkList.push_back(InBB);
+  while (!WorkList.empty()) {
+    BasicBlock *BB = WorkList.back(); WorkList.pop_back();
+    
+    // First process all successor
+    for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI) {
+      BasicBlock *SuccBB = *SI;
+      if (DT->dominates(BB, SuccBB)) {
+        WorkList.push_back(SuccBB);
+        continue;
+      }
+      
+      // If SuccBB is not dominated by BB then it is not removed, however remove
+      // any PHI incoming edge from BB.
+      for(BasicBlock::iterator SBI = SuccBB->begin(), SBE = SuccBB->end();
+          SBI != SBE; ++SBI) {
+        if (PHINode *PN = dyn_cast<PHINode>(SBI)) 
+          PN->removeIncomingValue(BB);
+        else
+          break;
+      }
+    }
+
+    // Now delete BB;
+    for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
+        BBI != BBE; ++BBI) {
+      Instruction *I = BBI;
+      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+      I->eraseFromParent();
+    }
+    LI->removeBlock(BB);
+    BB->eraseFromParent();
+  }
+}
+
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -600,9 +645,12 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   else {
     Value *C1 = new ICmpInst(SignedPredicate ? 
                             ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                            SD.SplitValue, ExitValue, "lsplit.ev",
+                            SD.SplitValue, 
+                             ExitCondition->getOperand(ExitValueNum), 
+                             "lsplit.ev",
                             Preheader->getTerminator());
-    TLExitValue = new SelectInst(C1, SD.SplitValue, ExitValue, 
+    TLExitValue = new SelectInst(C1, SD.SplitValue, 
+                                 ExitCondition->getOperand(ExitValueNum), 
                                  "lsplit.ev", Preheader->getTerminator());
 
     Value *C2 = new ICmpInst(SignedPredicate ? 
@@ -613,28 +661,62 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
                                   "lsplit.sv", Preheader->getTerminator());
   }
 
-  //[*] Split Exit Edge.
+  //[*] Clone loop. Avoid true destination of split condition and 
+  //    the blocks dominated by true destination. 
+  DenseMap<const Value *, Value *> ValueMap;
+  Loop *FalseLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+  BasicBlock *FalseHeader = FalseLoop->getHeader();
+
+  //[*] True loop's exit edge enters False loop.
+  PHINode *IndVarClone = cast<PHINode>(ValueMap[IndVar]);
   BasicBlock *ExitBlock = ExitCondition->getParent();
   BranchInst *ExitInsn = dyn_cast<BranchInst>(ExitBlock->getTerminator());
   assert (ExitInsn && "Unable to find suitable loop exit branch");
   BasicBlock *ExitDest = ExitInsn->getSuccessor(1);
-  if (L->contains(ExitDest))
+
+  for (BasicBlock::iterator BI = FalseHeader->begin(), BE = FalseHeader->end();
+       BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      PN->removeIncomingValue(Preheader);
+      if (PN == IndVarClone)
+        PN->addIncoming(FLStartValue, ExitBlock);
+      // else { FIXME : Handl last value assignments.}
+    }
+    else
+      break;
+  }
+
+  if (L->contains(ExitDest)) {
     ExitDest = ExitInsn->getSuccessor(0);
+    ExitInsn->setSuccessor(0, FalseHeader);
+  } else
+    ExitInsn->setSuccessor(1, FalseHeader);
+
   assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
-  SplitEdge(ExitBlock, ExitDest, this);
 
-  //[*] Clone loop. Avoid true destination of split condition and 
-  //    the blocks dominated by true destination. 
-  DenseMap<const Value *, Value *> ValueMap;
-  CloneLoop(L, LPM, LI, ValueMap, this);
+  //[*] Split Exit Edge. 
+  SplitEdge(ExitBlock, FalseHeader, this);
 
-  //[*] True loops exit edge enters False loop.
   //[*] Eliminate split condition's false branch from True loop.
-  //    Update true loop dom info.
-  //[*] Update True loop's exit value using NewExitValue.
-  //[*] Update False loop's start value using NewStartValue.
-  //[*] Fix lack of true branch in False loop CFG.
-  //    Update false loop dom info.
-  //[*] Update dom info in general.
-  return false;
+  //    Update true loop dom info (FIXME).
+  BasicBlock *SplitBlock = SD.SplitCondition->getParent();
+  BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
+  BasicBlock *FBB = BR->getSuccessor(1);
+  BR->setUnconditionalDest(BR->getSuccessor(0));
+  removeBlocks(FBB);
+
+  //[*] Update True loop's exit value using new exit value.
+  ExitCondition->setOperand(ExitValueNum, TLExitValue);
+
+  //[*] Eliminate split condition's  true branch in False loop CFG.
+  //    Update false loop dom info (FXME).
+  BasicBlock *FSplitBlock = cast<BasicBlock>(ValueMap[SplitBlock]);
+  BranchInst *FBR = cast<BranchInst>(FSplitBlock->getTerminator());
+  BasicBlock *TBB = FBR->getSuccessor(0);
+  FBR->setUnconditionalDest(FBR->getSuccessor(1));
+  removeBlocks(TBB);
+
+  //[*] Update dom info in general (FIXME).
+  return true;
 }
+
