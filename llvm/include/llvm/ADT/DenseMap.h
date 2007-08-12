@@ -32,11 +32,11 @@ struct DenseMapKeyInfo {
 // Provide DenseMapKeyInfo for all pointers.
 template<typename T>
 struct DenseMapKeyInfo<T*> {
-  static inline T* getEmptyKey() { return (T*)-1; }
-  static inline T* getTombstoneKey() { return (T*)-2; }
+  static inline T* getEmptyKey() { return reinterpret_cast<T*>(-1); }
+  static inline T* getTombstoneKey() { return reinterpret_cast<T*>(-2); }
   static unsigned getHashValue(const T *PtrVal) {
-    return (unsigned)((uintptr_t)PtrVal >> 4) ^
-           (unsigned)((uintptr_t)PtrVal >> 9);
+    return (unsigned(uintptr_t(PtrVal)) >> 4) ^ 
+           (unsigned(uintptr_t(PtrVal)) >> 9);
   }
   static bool isPod() { return true; }
 };
@@ -69,7 +69,7 @@ public:
         P->second.~ValueT();
       P->first.~KeyT();
     }
-    delete[] (char*)Buckets;
+    delete[] reinterpret_cast<char*>(Buckets);
   }
   
   typedef DenseMapIterator<KeyT, ValueT, KeyInfoT> iterator;
@@ -258,7 +258,7 @@ private:
     NumBuckets = InitBuckets;
     assert(InitBuckets && (InitBuckets & InitBuckets-1) == 0 &&
            "# initial buckets must be a power of two!");
-    Buckets = (BucketT*)new char[sizeof(BucketT)*InitBuckets];
+    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*InitBuckets]);
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
     for (unsigned i = 0; i != InitBuckets; ++i)
@@ -272,7 +272,7 @@ private:
     // Double the number of buckets.
     NumBuckets <<= 1;
     NumTombstones = 0;
-    Buckets = (BucketT*)new char[sizeof(BucketT)*NumBuckets];
+    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*NumBuckets]);
 
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
@@ -298,7 +298,7 @@ private:
     }
     
     // Free the old table.
-    delete[] (char*)OldBuckets;
+    delete[] reinterpret_cast<char*>(OldBuckets);
   }
   
   void shrink_and_clear() {
@@ -309,7 +309,7 @@ private:
     NumBuckets = NumEntries > 32 ? 1 << (Log2_32_Ceil(NumEntries) + 1)
                                  : 64;
     NumTombstones = 0;
-    Buckets = (BucketT*)new char[sizeof(BucketT)*NumBuckets];
+    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*NumBuckets]);
 
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
@@ -327,7 +327,7 @@ private:
     }
     
     // Free the old table.
-    delete[] (char*)OldBuckets;
+    delete[] reinterpret_cast<char*>(OldBuckets);
     
     NumEntries = 0;
   }

@@ -73,7 +73,9 @@ protected:
 public:
   // Default ctor - Initialize to empty.
   SmallVectorImpl(unsigned N)
-    : Begin((T*)&FirstEl), End((T*)&FirstEl), Capacity((T*)&FirstEl+N) {
+    : Begin(reinterpret_cast<T*>(&FirstEl)), 
+      End(reinterpret_cast<T*>(&FirstEl)), 
+      Capacity(reinterpret_cast<T*>(&FirstEl)+N) {
   }
   
   ~SmallVectorImpl() {
@@ -82,7 +84,7 @@ public:
 
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!isSmall())
-      delete[] (char*)Begin;
+      delete[] reinterpret_cast<char*>(Begin);
   }
   
   typedef size_t size_type;
@@ -285,7 +287,8 @@ private:
   /// isSmall - Return true if this is a smallvector which has not had dynamic
   /// memory allocated for it.
   bool isSmall() const {
-    return (void*)Begin == (void*)&FirstEl;
+    return reinterpret_cast<const void*>(Begin) == 
+           reinterpret_cast<const void*>(&FirstEl);
   }
 
   /// grow - double the size of the allocated memory, guaranteeing space for at
@@ -323,7 +326,7 @@ void SmallVectorImpl<T>::grow(unsigned MinSize) {
   
   // If this wasn't grown from the inline copy, deallocate the old space.
   if (!isSmall())
-    delete[] (char*)Begin;
+    delete[] reinterpret_cast<char*>(Begin);
   
   Begin = NewElts;
   End = NewElts+CurSize;

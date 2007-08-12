@@ -170,7 +170,7 @@ public:
 
   template<typename AnalysisClass>
   static const PassInfo *getClassPassInfo() {
-    return lookupPassInfo((intptr_t)&AnalysisClass::ID);
+    return lookupPassInfo(intptr_t(&AnalysisClass::ID));
   }
 
   // lookupPassInfo - Return the pass info object for the specified pass class,

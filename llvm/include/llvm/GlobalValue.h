@@ -74,7 +74,7 @@ public:
     Alignment = Align;
   }
 
-  VisibilityTypes getVisibility() const { return (VisibilityTypes)Visibility; }
+  VisibilityTypes getVisibility() const { return VisibilityTypes(Visibility); }
   bool hasHiddenVisibility() const { return Visibility == HiddenVisibility; }
   bool hasProtectedVisibility() const {
     return Visibility == ProtectedVisibility;

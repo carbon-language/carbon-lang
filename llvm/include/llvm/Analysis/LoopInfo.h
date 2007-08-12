@@ -246,7 +246,7 @@ class LoopInfo : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  LoopInfo() : FunctionPass((intptr_t)&ID) {}
+  LoopInfo() : FunctionPass(intptr_t(&ID)) {}
   ~LoopInfo() { releaseMemory(); }
 
   /// iterator/begin/end - The interface to the top-level loops in the current

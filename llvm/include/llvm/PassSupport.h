@@ -165,8 +165,8 @@ struct RegisterPass : public RegisterPassBase {
 
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false)
-    : RegisterPassBase(Name, PassArg, (intptr_t)&PassName::ID,
-                     (RegisterPassBase::NormalCtor_t)callDefaultCtor<PassName>, CFGOnly) {
+    : RegisterPassBase(Name, PassArg, intptr_t(&PassName::ID),
+                     RegisterPassBase::NormalCtor_t(callDefaultCtor<PassName>), CFGOnly) {
   }
 };
 
@@ -204,12 +204,12 @@ protected:
 template<typename Interface, bool Default = false>
 struct RegisterAnalysisGroup : public RegisterAGBase {
   explicit RegisterAnalysisGroup(RegisterPassBase &RPB)
-    : RegisterAGBase((intptr_t) &Interface::ID, RPB.getPassInfo()->getTypeInfo(),
+    : RegisterAGBase(intptr_t(&Interface::ID), RPB.getPassInfo()->getTypeInfo(),
                      Default) {
   }
 
   explicit RegisterAnalysisGroup(const char *Name)
-    : RegisterAGBase((intptr_t) &Interface::ID) {
+    : RegisterAGBase(intptr_t(&Interface::ID)) {
     setGroupName(Name);
   }
 };

@@ -282,7 +282,7 @@ protected:
 class DominatorTree : public DominatorTreeBase {
 public:
   static char ID; // Pass ID, replacement for typeid
-  DominatorTree() : DominatorTreeBase((intptr_t)&ID, false) {}
+  DominatorTree() : DominatorTreeBase(intptr_t(&ID), false) {}
   
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");
@@ -399,7 +399,7 @@ class DominanceFrontier : public DominanceFrontierBase {
 public:
   static char ID; // Pass ID, replacement for typeid
   DominanceFrontier() : 
-    DominanceFrontierBase((intptr_t)& ID, false) {}
+    DominanceFrontierBase(intptr_t(&ID), false) {}
 
   BasicBlock *getRoot() const {
     assert(Roots.size() == 1 && "Should always have entry node!");

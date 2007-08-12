@@ -45,7 +45,7 @@ public:
   /// getListOwner - Return the object that owns this list.  If this is a list
   /// of instructions, it returns the BasicBlock that owns them.
   ItemParentClass *getListOwner() {
-    return reinterpret_cast<ItemParentClass*>((char*)this-
+    return reinterpret_cast<ItemParentClass*>(reinterpret_cast<char*>(this)-
                                               TraitsClass::getListOffset());
   }
   static ValueSubClass *getPrev(ValueSubClass *V) { return V->getPrev(); }
