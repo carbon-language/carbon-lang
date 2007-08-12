@@ -621,12 +621,12 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   if (L->contains(ExitDest))
     ExitDest = ExitInsn->getSuccessor(0);
   assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
-  BasicBlock *ExitSplitBlock = SplitEdge(ExitBlock, ExitDest, this);
+  SplitEdge(ExitBlock, ExitDest, this);
 
   //[*] Clone loop. Avoid true destination of split condition and 
   //    the blocks dominated by true destination. 
   DenseMap<const Value *, Value *> ValueMap;
-  Loop *FalseLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+  CloneLoop(L, LPM, LI, ValueMap, this);
 
   //[*] True loops exit edge enters False loop.
   //[*] Eliminate split condition's false branch from True loop.
