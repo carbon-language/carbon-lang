@@ -316,9 +316,9 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     }
 
     if (isShorten || isDead) {
-      // Shorten the live interval.
-      LiveInterval &LiveInInt = (repSrcReg == DstInt.reg) ? DstInt : SrcInt;
-      LiveInInt.removeRange(RemoveStart, RemoveEnd);
+      // Shorten the destination live interval.
+      if (repSrcReg == DstInt.reg)
+        DstInt.removeRange(RemoveStart, RemoveEnd);
     }
   } else {
     // Coalescing failed.
