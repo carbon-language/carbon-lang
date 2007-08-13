@@ -98,7 +98,7 @@ namespace {
     bool safeExitBlock(SplitInfo &SD, BasicBlock *BB);
 
     /// removeBlocks - Remove basic block BB and all blocks dominated by BB.
-    void removeBlocks(BasicBlock *InBB);
+    void removeBlocks(BasicBlock *InBB, Loop *LP);
 
     /// Find cost of spliting loop L.
     unsigned findSplitCost(Loop *L, SplitInfo &SD);
@@ -589,7 +589,7 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
 }
 
 /// removeBlocks - Remove basic block BB and all blocks dominated by BB.
-void LoopIndexSplit::removeBlocks(BasicBlock *InBB) {
+void LoopIndexSplit::removeBlocks(BasicBlock *InBB, Loop *LP) {
 
   SmallVector<std::pair<BasicBlock *, succ_iterator>, 8> WorkList;
   WorkList.push_back(std::make_pair(InBB, succ_begin(InBB)));
@@ -606,6 +606,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *InBB) {
         I->replaceAllUsesWith(UndefValue::get(I->getType()));
         I->eraseFromParent();
       }
+      LPM->deleteSimpleAnalysisValue(BB, LP);
       DT->eraseNode(BB);
       DF->removeBlock(BB);
       LI->removeBlock(BB);
@@ -719,7 +720,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
   BasicBlock *FBB = BR->getSuccessor(1);
   BR->setUnconditionalDest(BR->getSuccessor(0));
-  removeBlocks(FBB);
+  removeBlocks(FBB, L);
 
   //[*] Update True loop's exit value using new exit value.
   ExitCondition->setOperand(ExitValueNum, TLExitValue);
@@ -729,7 +730,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   BranchInst *FBR = cast<BranchInst>(FSplitBlock->getTerminator());
   BasicBlock *TBB = FBR->getSuccessor(0);
   FBR->setUnconditionalDest(FBR->getSuccessor(1));
-  removeBlocks(TBB);
+  removeBlocks(TBB, FalseLoop);
 
   return true;
 }
