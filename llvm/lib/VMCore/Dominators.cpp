@@ -559,6 +559,30 @@ static void PrintDomTree(const DomTreeNode *N, std::ostream &o,
     PrintDomTree(*I, o, Lev+1);
 }
 
+/// eraseNode - Removes a node from  the domiantor tree. Block must not
+/// domiante any other blocks. Removes node from its immediate dominator's
+/// children list. Deletes dominator node associated with basic block BB.
+void DominatorTreeBase::eraseNode(BasicBlock *BB) {
+  DomTreeNode *Node = getNode(BB);
+  assert (Node && "Removing node that isn't in dominator tree.");
+  
+    // Remove node from immediate dominator's children list.
+  DomTreeNode *IDom = Node->getIDom();
+  if (IDom) {
+    std::vector<DomTreeNode*>::iterator I =
+      std::find(IDom->Children.begin(), IDom->Children.end(), Node);
+    assert(I != IDom->Children.end() &&
+           "Not in immediate dominator children set!");
+    // I am no longer your child...
+    IDom->Children.erase(I);
+  }
+  
+  assert (Node->getChildren().empty() && "Children list is not empty");
+  
+  DomTreeNodes.erase(BB);
+  delete Node;
+}
+
 void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
   o << "=============================--------------------------------\n";
   o << "Inorder Dominator Tree: ";
