@@ -232,7 +232,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // If the span we are removing is at the start of the LiveRange, adjust it.
   if (I->start == Start) {
     if (I->end == End) {
-      removeKillForValNum(I->ValId, End);
+      removeKillForValNum(I->ValId, Start, End);
       ranges.erase(I);  // Removed the whole LiveRange.
     } else
       I->start = End;
@@ -242,7 +242,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // Otherwise if the span we are removing is at the end of the LiveRange,
   // adjust the other way.
   if (I->end == End) {
-    replaceKillForValNum(I->ValId, End, Start);
+    removeKillForValNum(I->ValId, Start, End);
     I->end = Start;
     return;
   }
@@ -438,8 +438,6 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
     if (LR != begin()) {
       iterator Prev = LR-1;
       if (Prev->ValId == V2 && Prev->end == LR->start) {
-        bool Replaced = replaceKillForValNum(V2, Prev->end, LR->end);
-        assert(Replaced);
         Prev->end = LR->end;
 
         // Erase this live-range.
@@ -458,7 +456,6 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
     // of the loop.
     if (I != end()) {
       if (I->start == LR->end && I->ValId == V2) {
-        removeKillForValNum(V2, LR->end);
         LR->end = I->end;
         ranges.erase(I);
         I = LR+1;
