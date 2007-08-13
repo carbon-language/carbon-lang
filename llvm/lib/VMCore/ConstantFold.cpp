@@ -1427,7 +1427,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     //                        long 0, long 0)
     // To: int* getelementptr ([3 x int]* %X, long 0, long 0)
     //
-    if (CE->isCast() && NumIdx > 1 && Idx0->isNullValue())
+    if (CE->isCast() && NumIdx > 1 && Idx0->isNullValue()) {
       if (const PointerType *SPT =
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
@@ -1436,6 +1436,28 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
             if (CAT->getElementType() == SAT->getElementType())
               return ConstantExpr::getGetElementPtr(
                       (Constant*)CE->getOperand(0), Idxs, NumIdx);
+    }
+    
+    // Fold: getelementptr (i8* inttoptr (i64 1 to i8*), i32 -1)
+    // Into: inttoptr (i64 0 to i8*)
+    // This happens with pointers to member functions in C++.
+    if (CE->getOpcode() == Instruction::IntToPtr && NumIdx == 1 &&
+        isa<ConstantInt>(CE->getOperand(0)) && isa<ConstantInt>(Idxs[0]) &&
+        cast<PointerType>(CE->getType())->getElementType() == Type::Int8Ty) {
+      Constant *Base = CE->getOperand(0);
+      Constant *Offset = Idxs[0];
+      
+      // Convert the smaller integer to the larger type.
+      if (Offset->getType()->getPrimitiveSizeInBits() < 
+          Base->getType()->getPrimitiveSizeInBits())
+        Offset = ConstantExpr::getSExt(Offset, Base->getType());
+      else if (Base->getType()->getPrimitiveSizeInBits() <
+               Offset->getType()->getPrimitiveSizeInBits())
+        Base = ConstantExpr::getZExt(Base, Base->getType());
+      
+      Base = ConstantExpr::getAdd(Base, Offset);
+      return ConstantExpr::getIntToPtr(Base, CE->getType());
+    }
   }
   return 0;
 }
