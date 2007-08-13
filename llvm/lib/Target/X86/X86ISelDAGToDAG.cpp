@@ -142,6 +142,8 @@ namespace {
 
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM,
                       bool isRoot = true, unsigned Depth = 0);
+    bool MatchAddressBase(SDOperand N, X86ISelAddressMode &AM,
+                          bool isRoot, unsigned Depth);
     bool SelectAddr(SDOperand Op, SDOperand N, SDOperand &Base,
                     SDOperand &Scale, SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand Op, SDOperand N, SDOperand &Base,
@@ -572,12 +574,9 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 /// addressing mode
 bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
                                    bool isRoot, unsigned Depth) {
-  if (Depth > 5) {
-    // Default, generate it as a register.
-    AM.BaseType = X86ISelAddressMode::RegBase;
-    AM.Base.Reg = N;
-    return false;
-  }
+  // Limit recursion.
+  if (Depth > 5)
+    return MatchAddressBase(N, AM, isRoot, Depth);
   
   // RIP relative addressing: %rip + 32-bit displacement!
   if (AM.isRIPRel) {
@@ -763,6 +762,13 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
   }
 
+  return MatchAddressBase(N, AM, isRoot, Depth);
+}
+
+/// MatchAddressBase - Helper for MatchAddress. Add the specified node to the
+/// specified addressing mode without any further recursion.
+bool X86DAGToDAGISel::MatchAddressBase(SDOperand N, X86ISelAddressMode &AM,
+                                       bool isRoot, unsigned Depth) {
   // Is the base register already occupied?
   if (AM.BaseType != X86ISelAddressMode::RegBase || AM.Base.Reg.Val) {
     // If so, check to see if the scale index register is set.
