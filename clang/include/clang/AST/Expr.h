@@ -222,6 +222,10 @@ public:
   static bool classof(const FloatingLiteral *) { return true; }
 };
 
+/// StringLiteral - This represents a string literal expression, e.g. "foo"
+/// or L"bar" (wide strings).  The actual string is returned by getStrData()
+/// is NOT null-terminated, and the length of the string is determined by
+/// calling getByteLength().
 class StringLiteral : public Expr {
   const char *StrData;
   unsigned ByteLength;
