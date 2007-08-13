@@ -1123,12 +1123,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
               continue;
             LiveInterval &RegInt = li_->getInterval(reg);
             float w = (mop.isUse()+mop.isDef()) * powf(10.0F, (float)loopDepth);
-            // If the definition instruction is re-materializable, its spill
-            // weight is half of what it would have been normally unless it's
-            // a load from fixed stack slot.
-            int Dummy;
-            if (RegInt.remat && !tii_->isLoadFromStackSlot(RegInt.remat, Dummy))
-              w /= 2;
             RegInt.weight += w;
             UniqueUses.insert(reg);
           }

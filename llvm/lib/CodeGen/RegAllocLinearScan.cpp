@@ -305,7 +305,7 @@ void RALinScan::linearScan()
     for (unsigned i = 0, e = handled_.size(); i != e; ++i) { 
       LiveInterval *HI = handled_[i];
       unsigned Reg = HI->reg;
-      if (!vrm_->hasStackSlot(Reg) && HI->liveAt(StartIdx)) {
+      if (vrm_->isAssignedReg(Reg) && HI->liveAt(StartIdx)) {
         assert(MRegisterInfo::isVirtualRegister(Reg));
         Reg = vrm_->getPhys(Reg);
         MBB->addLiveIn(Reg);
@@ -605,14 +605,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // linearscan.
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DOUT << "\t\t\tspilling(c): " << *cur << '\n';
-    // if the current interval is re-materializable, remember so and don't
-    // assign it a spill slot.
-    if (cur->remat)
-      vrm_->setVirtIsReMaterialized(cur->reg, cur->remat);
-    int slot = cur->remat ? vrm_->assignVirtReMatId(cur->reg)
-      : vrm_->assignVirt2StackSlot(cur->reg);
     std::vector<LiveInterval*> added =
-      li_->addIntervalsForSpills(*cur, *vrm_, slot);
+      li_->addIntervalsForSpills(*cur, *vrm_, cur->reg);
     if (added.empty())
       return;  // Early exit if all spills were folded.
 
@@ -663,12 +657,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         cur->overlapsFrom(*i->first, i->second)) {
       DOUT << "\t\t\tspilling(a): " << *i->first << '\n';
       earliestStart = std::min(earliestStart, i->first->beginNumber());
-      if (i->first->remat)
-        vrm_->setVirtIsReMaterialized(reg, i->first->remat);
-      int slot = i->first->remat ? vrm_->assignVirtReMatId(reg)
-        : vrm_->assignVirt2StackSlot(reg);
       std::vector<LiveInterval*> newIs =
-        li_->addIntervalsForSpills(*i->first, *vrm_, slot);
+        li_->addIntervalsForSpills(*i->first, *vrm_, reg);
       std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
       spilled.insert(reg);
     }
@@ -680,12 +670,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         cur->overlapsFrom(*i->first, i->second-1)) {
       DOUT << "\t\t\tspilling(i): " << *i->first << '\n';
       earliestStart = std::min(earliestStart, i->first->beginNumber());
-      if (i->first->remat)
-        vrm_->setVirtIsReMaterialized(reg, i->first->remat);
-      int slot = i->first->remat ? vrm_->assignVirtReMatId(reg)
-        : vrm_->assignVirt2StackSlot(reg);
       std::vector<LiveInterval*> newIs =
-        li_->addIntervalsForSpills(*i->first, *vrm_, slot);
+        li_->addIntervalsForSpills(*i->first, *vrm_, reg);
       std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
       spilled.insert(reg);
     }

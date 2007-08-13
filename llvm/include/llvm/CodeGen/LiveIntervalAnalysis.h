@@ -25,6 +25,8 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -41,9 +43,9 @@ namespace llvm {
     const TargetInstrInfo* tii_;
     LiveVariables* lv_;
 
-    /// MBB2IdxMap - The index of the first instruction in the specified basic
-    /// block.
-    std::vector<unsigned> MBB2IdxMap;
+    /// MBB2IdxMap - The indexes of the first and last instructions in the
+    /// specified basic block.
+    std::vector<std::pair<unsigned, unsigned> > MBB2IdxMap;
 
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
@@ -55,6 +57,8 @@ namespace llvm {
     Reg2IntervalMap r2iMap_;
 
     BitVector allocatableRegs_;
+
+    std::vector<MachineInstr*> ClonedMIs;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -118,10 +122,19 @@ namespace llvm {
     unsigned getMBBStartIdx(MachineBasicBlock *MBB) const {
       return getMBBStartIdx(MBB->getNumber());
     }
-    
     unsigned getMBBStartIdx(unsigned MBBNo) const {
       assert(MBBNo < MBB2IdxMap.size() && "Invalid MBB number!");
-      return MBB2IdxMap[MBBNo];
+      return MBB2IdxMap[MBBNo].first;
+    }
+
+    /// getMBBEndIdx - Return the store index of the last instruction in the
+    /// specified MachineBasicBlock.
+    unsigned getMBBEndIdx(MachineBasicBlock *MBB) const {
+      return getMBBEndIdx(MBB->getNumber());
+    }
+    unsigned getMBBEndIdx(unsigned MBBNo) const {
+      assert(MBBNo < MBB2IdxMap.size() && "Invalid MBB number!");
+      return MBB2IdxMap[MBBNo].second;
     }
 
     /// getInstructionIndex - returns the base index of instr
@@ -155,8 +168,7 @@ namespace llvm {
                                         const std::vector<LiveRange> &LRs);
 
     std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
-                                                     VirtRegMap& vrm,
-                                                     int slot);
+                                                 VirtRegMap& vrm, unsigned reg);
 
     // Interval removal
 
@@ -224,6 +236,17 @@ namespace llvm {
     void handleLiveInRegister(MachineBasicBlock* mbb,
                               unsigned MIIdx,
                               LiveInterval &interval, bool isAlias = false);
+
+    /// isReMaterializable - Returns true if the definition MI of the specified
+    /// val# of the specified interval is re-materializable.
+    bool isReMaterializable(const LiveInterval &li, unsigned ValNum,
+                            MachineInstr *MI);
+
+    /// tryFoldMemoryOperand - Attempts to fold a spill / restore from slot
+    /// to reg into ith operand of specified MI. If it is successul, MI is
+    /// updated with the newly created MI and returns true.
+    bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm, unsigned index,
+                              unsigned i, int slot, unsigned reg);
 
     static LiveInterval createInterval(unsigned Reg);
 

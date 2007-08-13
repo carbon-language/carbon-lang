@@ -30,7 +30,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -60,6 +59,8 @@ void LiveIntervals::releaseMemory() {
   mi2iMap_.clear();
   i2miMap_.clear();
   r2iMap_.clear();
+  for (unsigned i = 0, e = ClonedMIs.size(); i != e; ++i)
+    delete ClonedMIs[i];
 }
 
 /// runOnMachineFunction - Register allocate the whole function
@@ -74,13 +75,12 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   // Number MachineInstrs and MachineBasicBlocks.
   // Initialize MBB indexes to a sentinal.
-  MBB2IdxMap.resize(mf_->getNumBlockIDs(), ~0U);
+  MBB2IdxMap.resize(mf_->getNumBlockIDs(), std::make_pair(~0U,~0U));
   
   unsigned MIIndex = 0;
   for (MachineFunction::iterator MBB = mf_->begin(), E = mf_->end();
        MBB != E; ++MBB) {
-    // Set the MBB2IdxMap entry for this MBB.
-    MBB2IdxMap[MBB->getNumber()] = MIIndex;
+    unsigned StartIdx = MIIndex;
 
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
@@ -89,6 +89,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
       i2miMap_.push_back(I);
       MIIndex += InstrSlots::NUM;
     }
+
+    // Set the MBB2IdxMap entry for this MBB.
+    MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
   }
 
   computeIntervals();
@@ -175,135 +178,6 @@ LiveIntervals::CreateNewLiveInterval(const LiveInterval *LI,
   return NewLI;
 }
 
-std::vector<LiveInterval*> LiveIntervals::
-addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
-  // since this is called after the analysis is done we don't know if
-  // LiveVariables is available
-  lv_ = getAnalysisToUpdate<LiveVariables>();
-
-  std::vector<LiveInterval*> added;
-
-  assert(li.weight != HUGE_VALF &&
-         "attempt to spill already spilled interval!");
-
-  DOUT << "\t\t\t\tadding intervals for spills for interval: ";
-  li.print(DOUT, mri_);
-  DOUT << '\n';
-
-  const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(li.reg);
-
-  for (LiveInterval::Ranges::const_iterator
-         i = li.ranges.begin(), e = li.ranges.end(); i != e; ++i) {
-    unsigned index = getBaseIndex(i->start);
-    unsigned end = getBaseIndex(i->end-1) + InstrSlots::NUM;
-    for (; index != end; index += InstrSlots::NUM) {
-      // skip deleted instructions
-      while (index != end && !getInstructionFromIndex(index))
-        index += InstrSlots::NUM;
-      if (index == end) break;
-
-      MachineInstr *MI = getInstructionFromIndex(index);
-
-    RestartInstruction:
-      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
-        MachineOperand& mop = MI->getOperand(i);
-        if (mop.isRegister() && mop.getReg() == li.reg) {
-          MachineInstr *fmi = li.remat ? NULL
-            : mri_->foldMemoryOperand(MI, i, slot);
-          if (fmi) {
-            // Attempt to fold the memory reference into the instruction.  If we
-            // can do this, we don't need to insert spill code.
-            if (lv_)
-              lv_->instructionChanged(MI, fmi);
-            MachineBasicBlock &MBB = *MI->getParent();
-            vrm.virtFolded(li.reg, MI, i, fmi);
-            mi2iMap_.erase(MI);
-            i2miMap_[index/InstrSlots::NUM] = fmi;
-            mi2iMap_[fmi] = index;
-            MI = MBB.insert(MBB.erase(MI), fmi);
-            ++numFolded;
-            // Folding the load/store can completely change the instruction in
-            // unpredictable ways, rescan it from the beginning.
-            goto RestartInstruction;
-          } else {
-            // Create a new virtual register for the spill interval.
-            unsigned NewVReg = mf_->getSSARegMap()->createVirtualRegister(rc);
-            
-            // Scan all of the operands of this instruction rewriting operands
-            // to use NewVReg instead of li.reg as appropriate.  We do this for
-            // two reasons:
-            //
-            //   1. If the instr reads the same spilled vreg multiple times, we
-            //      want to reuse the NewVReg.
-            //   2. If the instr is a two-addr instruction, we are required to
-            //      keep the src/dst regs pinned.
-            //
-            // Keep track of whether we replace a use and/or def so that we can
-            // create the spill interval with the appropriate range. 
-            mop.setReg(NewVReg);
-            
-            bool HasUse = mop.isUse();
-            bool HasDef = mop.isDef();
-            for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
-              if (MI->getOperand(j).isReg() &&
-                  MI->getOperand(j).getReg() == li.reg) {
-                MI->getOperand(j).setReg(NewVReg);
-                HasUse |= MI->getOperand(j).isUse();
-                HasDef |= MI->getOperand(j).isDef();
-              }
-            }
-
-            // create a new register for this spill
-            vrm.grow();
-            if (li.remat)
-              vrm.setVirtIsReMaterialized(NewVReg, li.remat);
-            vrm.assignVirt2StackSlot(NewVReg, slot);
-            LiveInterval &nI = getOrCreateInterval(NewVReg);
-            nI.remat = li.remat;
-            assert(nI.empty());
-
-            // the spill weight is now infinity as it
-            // cannot be spilled again
-            nI.weight = HUGE_VALF;
-
-            if (HasUse) {
-              LiveRange LR(getLoadIndex(index), getUseIndex(index),
-                           nI.getNextValue(~0U, 0));
-              DOUT << " +" << LR;
-              nI.addRange(LR);
-            }
-            if (HasDef) {
-              LiveRange LR(getDefIndex(index), getStoreIndex(index),
-                           nI.getNextValue(~0U, 0));
-              DOUT << " +" << LR;
-              nI.addRange(LR);
-            }
-            
-            added.push_back(&nI);
-
-            // update live variables if it is available
-            if (lv_)
-              lv_->addVirtualRegisterKilled(NewVReg, MI);
-            
-            DOUT << "\t\t\t\tadded new interval: ";
-            nI.print(DOUT, mri_);
-            DOUT << '\n';
-          }
-        }
-      }
-    }
-  }
-
-  return added;
-}
-
-void LiveIntervals::printRegName(unsigned reg) const {
-  if (MRegisterInfo::isPhysicalRegister(reg))
-    cerr << mri_->getName(reg);
-  else
-    cerr << "%reg" << reg;
-}
-
 /// isReDefinedByTwoAddr - Returns true if the Reg re-definition is due to
 /// two addr elimination.
 static bool isReDefinedByTwoAddr(MachineInstr *MI, unsigned Reg,
@@ -323,6 +197,268 @@ static bool isReDefinedByTwoAddr(MachineInstr *MI, unsigned Reg,
   return false;
 }
 
+/// isReMaterializable - Returns true if the definition MI of the specified
+/// val# of the specified interval is re-materializable.
+bool LiveIntervals::isReMaterializable(const LiveInterval &li, unsigned ValNum,
+                                       MachineInstr *MI) {
+  if (tii_->isTriviallyReMaterializable(MI))
+    return true;
+
+  int FrameIdx = 0;
+  if (!tii_->isLoadFromStackSlot(MI, FrameIdx) ||
+      !mf_->getFrameInfo()->isFixedObjectIndex(FrameIdx))
+    return false;
+
+  // This is a load from fixed stack slot. It can be rematerialized unless it's
+  // re-defined by a two-address instruction.
+  for (unsigned i = 0, e = li.getNumValNums(); i != e; ++i) {
+    if (i == ValNum)
+      continue;
+    unsigned DefIdx = li.getDefForValNum(i);
+    if (DefIdx == ~1U)
+      continue; // Dead val#.
+    MachineInstr *DefMI = (DefIdx == ~0u)
+      ? NULL : getInstructionFromIndex(DefIdx);
+    if (DefMI && isReDefinedByTwoAddr(DefMI, li.reg, tii_))
+      return false;
+  }
+  return true;
+}
+
+bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
+                                         unsigned index, unsigned i,
+                                         int slot, unsigned reg) {
+  MachineInstr *fmi = mri_->foldMemoryOperand(MI, i, slot);
+  if (fmi) {
+    // Attempt to fold the memory reference into the instruction. If
+    // we can do this, we don't need to insert spill code.
+    if (lv_)
+      lv_->instructionChanged(MI, fmi);
+    MachineBasicBlock &MBB = *MI->getParent();
+    vrm.virtFolded(reg, MI, i, fmi);
+    mi2iMap_.erase(MI);
+    i2miMap_[index/InstrSlots::NUM] = fmi;
+    mi2iMap_[fmi] = index;
+    MI = MBB.insert(MBB.erase(MI), fmi);
+    ++numFolded;
+    return true;
+  }
+  return false;
+}
+
+std::vector<LiveInterval*> LiveIntervals::
+addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
+  // since this is called after the analysis is done we don't know if
+  // LiveVariables is available
+  lv_ = getAnalysisToUpdate<LiveVariables>();
+
+  std::vector<LiveInterval*> added;
+
+  assert(li.weight != HUGE_VALF &&
+         "attempt to spill already spilled interval!");
+
+  DOUT << "\t\t\t\tadding intervals for spills for interval: ";
+  li.print(DOUT, mri_);
+  DOUT << '\n';
+
+  const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(li.reg);
+
+  unsigned NumValNums = li.getNumValNums();
+  SmallVector<MachineInstr*, 4> ReMatDefs;
+  ReMatDefs.resize(NumValNums, NULL);
+  SmallVector<MachineInstr*, 4> ReMatOrigDefs;
+  ReMatOrigDefs.resize(NumValNums, NULL);
+  SmallVector<int, 4> ReMatIds;
+  ReMatIds.resize(NumValNums, VirtRegMap::MAX_STACK_SLOT);
+  BitVector ReMatDelete(NumValNums);
+  unsigned slot = VirtRegMap::MAX_STACK_SLOT;
+
+  bool NeedStackSlot = false;
+  for (unsigned i = 0; i != NumValNums; ++i) {
+    unsigned DefIdx = li.getDefForValNum(i);
+    if (DefIdx == ~1U)
+      continue; // Dead val#.
+    // Is the def for the val# rematerializable?
+    MachineInstr *DefMI = (DefIdx == ~0u)
+      ? NULL : getInstructionFromIndex(DefIdx);
+    if (DefMI && isReMaterializable(li, i, DefMI)) {
+      // Remember how to remat the def of this val#.
+      ReMatOrigDefs[i] = DefMI;
+      // Original def may be modified so we have to make a copy here. vrm must
+      // delete these!
+      ReMatDefs[i] = DefMI = DefMI->clone();
+      vrm.setVirtIsReMaterialized(reg, DefMI);
+
+      bool CanDelete = true;
+      const SmallVector<unsigned, 4> &kills = li.getKillsForValNum(i);
+      for (unsigned j = 0, ee = kills.size(); j != ee; ++j) {
+        unsigned KillIdx = kills[j];
+        MachineInstr *KillMI = (KillIdx & 1)
+          ? NULL : getInstructionFromIndex(KillIdx);
+        // Kill is a phi node, not all of its uses can be rematerialized.
+        // It must not be deleted.
+        if (!KillMI) {
+          CanDelete = false;
+          // Need a stack slot if there is any live range where uses cannot be
+          // rematerialized.
+          NeedStackSlot = true;
+          break;
+        }
+      }
+
+      if (CanDelete)
+        ReMatDelete.set(i);
+    } else {
+      // Need a stack slot if there is any live range where uses cannot be
+      // rematerialized.
+      NeedStackSlot = true;
+    }
+  }
+
+  // One stack slot per live interval.
+  if (NeedStackSlot)
+    slot = vrm.assignVirt2StackSlot(reg);
+
+  for (LiveInterval::Ranges::const_iterator
+         I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
+    MachineInstr *DefMI = ReMatDefs[I->ValId];
+    MachineInstr *OrigDefMI = ReMatOrigDefs[I->ValId];
+    bool DefIsReMat = DefMI != NULL;
+    bool CanDelete = ReMatDelete[I->ValId];
+    int LdSlot = 0;
+    bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(DefMI, LdSlot);
+    unsigned index = getBaseIndex(I->start);
+    unsigned end = getBaseIndex(I->end-1) + InstrSlots::NUM;
+    for (; index != end; index += InstrSlots::NUM) {
+      // skip deleted instructions
+      while (index != end && !getInstructionFromIndex(index))
+        index += InstrSlots::NUM;
+      if (index == end) break;
+
+      MachineInstr *MI = getInstructionFromIndex(index);
+
+    RestartInstruction:
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& mop = MI->getOperand(i);
+        if (mop.isRegister() && mop.getReg() == li.reg) {
+          if (DefIsReMat) {
+            // If this is the rematerializable definition MI itself and
+            // all of its uses are rematerialized, simply delete it.
+            if (MI == OrigDefMI) {
+              if (CanDelete) {
+                RemoveMachineInstrFromMaps(MI);
+                MI->eraseFromParent();
+                break;
+              } else if (tryFoldMemoryOperand(MI, vrm, index, i, slot, li.reg))
+                // Folding the load/store can completely change the instruction
+                // in unpredictable ways, rescan it from the beginning.
+                goto RestartInstruction;
+            } else if (isLoadSS &&
+                       tryFoldMemoryOperand(MI, vrm, index, i, LdSlot, li.reg)){
+              // FIXME: Other rematerializable loads can be folded as well.
+              // Folding the load/store can completely change the
+              // instruction in unpredictable ways, rescan it from
+              // the beginning.
+              goto RestartInstruction;
+            }
+          } else {
+            if (tryFoldMemoryOperand(MI, vrm, index, i, slot, li.reg))
+              // Folding the load/store can completely change the instruction in
+              // unpredictable ways, rescan it from the beginning.
+              goto RestartInstruction;
+          }
+
+          // Create a new virtual register for the spill interval.
+          unsigned NewVReg = mf_->getSSARegMap()->createVirtualRegister(rc);
+            
+          // Scan all of the operands of this instruction rewriting operands
+          // to use NewVReg instead of li.reg as appropriate.  We do this for
+          // two reasons:
+          //
+          //   1. If the instr reads the same spilled vreg multiple times, we
+          //      want to reuse the NewVReg.
+          //   2. If the instr is a two-addr instruction, we are required to
+          //      keep the src/dst regs pinned.
+          //
+          // Keep track of whether we replace a use and/or def so that we can
+          // create the spill interval with the appropriate range. 
+          mop.setReg(NewVReg);
+            
+          bool HasUse = mop.isUse();
+          bool HasDef = mop.isDef();
+          for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
+            if (MI->getOperand(j).isReg() &&
+                MI->getOperand(j).getReg() == li.reg) {
+              MI->getOperand(j).setReg(NewVReg);
+              HasUse |= MI->getOperand(j).isUse();
+              HasDef |= MI->getOperand(j).isDef();
+            }
+          }
+
+          vrm.grow();
+          if (DefIsReMat) {
+            vrm.setVirtIsReMaterialized(NewVReg, DefMI/*, CanDelete*/);
+            if (ReMatIds[I->ValId] == VirtRegMap::MAX_STACK_SLOT) {
+              // Each valnum may have its own remat id.
+              ReMatIds[I->ValId] = vrm.assignVirtReMatId(NewVReg);
+            } else {
+              vrm.assignVirtReMatId(NewVReg, ReMatIds[I->ValId]);
+            }
+            if (!CanDelete || (HasUse && HasDef)) {
+              // If this is a two-addr instruction then its use operands are
+              // rematerializable but its def is not. It should be assigned a
+              // stack slot.
+              vrm.assignVirt2StackSlot(NewVReg, slot);
+            }
+          } else {
+            vrm.assignVirt2StackSlot(NewVReg, slot);
+          }
+
+          // create a new register interval for this spill / remat.
+          LiveInterval &nI = getOrCreateInterval(NewVReg);
+          assert(nI.empty());
+
+          // the spill weight is now infinity as it
+          // cannot be spilled again
+          nI.weight = HUGE_VALF;
+
+          if (HasUse) {
+            LiveRange LR(getLoadIndex(index), getUseIndex(index),
+                         nI.getNextValue(~0U, 0));
+            DOUT << " +" << LR;
+            nI.addRange(LR);
+          }
+          if (HasDef) {
+            LiveRange LR(getDefIndex(index), getStoreIndex(index),
+                         nI.getNextValue(~0U, 0));
+            DOUT << " +" << LR;
+            nI.addRange(LR);
+          }
+            
+          added.push_back(&nI);
+
+          // update live variables if it is available
+          if (lv_)
+            lv_->addVirtualRegisterKilled(NewVReg, MI);
+            
+          DOUT << "\t\t\t\tadded new interval: ";
+          nI.print(DOUT, mri_);
+          DOUT << '\n';
+        }
+      }
+    }
+  }
+
+  return added;
+}
+
+void LiveIntervals::printRegName(unsigned reg) const {
+  if (MRegisterInfo::isPhysicalRegister(reg))
+    cerr << mri_->getName(reg);
+  else
+    cerr << "%reg" << reg;
+}
+
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
                                              unsigned MIIdx,
@@ -335,16 +471,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   // done once for the vreg.  We use an empty interval to detect the first
   // time we see a vreg.
   if (interval.empty()) {
-    // Remember if the definition can be rematerialized. All load's from fixed
-    // stack slots are re-materializable. The target may permit other
-    // instructions to be re-materialized as well.
-    int FrameIdx = 0;
-    if (vi.DefInst &&
-        (tii_->isTriviallyReMaterializable(vi.DefInst) ||
-         (tii_->isLoadFromStackSlot(vi.DefInst, FrameIdx) &&
-          mf_->getFrameInfo()->isFixedObjectIndex(FrameIdx))))
-      interval.remat = vi.DefInst;
-
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
     unsigned ValNum;
@@ -421,9 +547,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     }
 
   } else {
-    // Can no longer safely assume definition is rematerializable.
-    interval.remat = NULL;
-
     // If this is the second time we see a virtual register definition, it
     // must be due to phi elimination or two addr elimination.  If this is
     // the result of two address elimination, then the vreg is one of the
@@ -487,7 +610,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        interval.addKillForValNum(0, Start);
+        interval.addKillForValNum(0, Start-1); // odd # means phi node
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
@@ -514,7 +637,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
       LiveRange LR(defIndex, killIndex, ValNum);
       interval.addRange(LR);
-      interval.addKillForValNum(ValNum, killIndex);
+      interval.addKillForValNum(ValNum, killIndex-1); // odd # means phi node
       DOUT << " +" << LR;
     }
   }

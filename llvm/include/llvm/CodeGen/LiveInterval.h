@@ -83,7 +83,6 @@ namespace llvm {
     unsigned reg;        // the register of this interval
     unsigned preference; // preferred register to allocate for this interval
     float weight;        // weight of this interval
-    MachineInstr* remat; // definition if the definition rematerializable
     Ranges ranges;       // the ranges in which this register is live
 
     /// ValueNumberInfo - If the value number definition is undefined (e.g. phi
@@ -101,7 +100,7 @@ namespace llvm {
   public:
 
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), preference(0), weight(Weight), remat(NULL) {
+      : reg(Reg), preference(0), weight(Weight) {
     }
 
     typedef Ranges::iterator iterator;
@@ -128,7 +127,6 @@ namespace llvm {
     void swap(LiveInterval& other) {
       std::swap(reg, other.reg);
       std::swap(weight, other.weight);
-      std::swap(remat, other.remat);
       std::swap(ranges, other.ranges);
       std::swap(ValueNumberInfo, other.ValueNumberInfo);
     }

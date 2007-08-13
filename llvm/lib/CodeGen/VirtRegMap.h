@@ -55,6 +55,7 @@ namespace llvm {
     /// which corresponds to the stack slot this register is spilled
     /// at.
     IndexedMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
+    IndexedMap<int, VirtReg2IndexFunctor> Virt2ReMatIdMap;
     /// MI2VirtMap - This is MachineInstr to virtual register
     /// mapping. In the case of memory spill code being folded into
     /// instructions, we need to know which virtual register was
@@ -64,7 +65,7 @@ namespace llvm {
     /// ReMatMap - This is virtual register to re-materialized instruction
     /// mapping. Each virtual register whose definition is going to be
     /// re-materialized has an entry in it.
-    std::map<unsigned, const MachineInstr*> ReMatMap;
+    IndexedMap<MachineInstr*, VirtReg2IndexFunctor> ReMatMap;
 
     /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
     /// virtual register, an unique id is being assigned. This keeps track of
@@ -119,10 +120,11 @@ namespace llvm {
       grow();
     }
 
-    /// @brief returns true is the specified virtual register is
-    /// mapped to a stack slot
-    bool hasStackSlot(unsigned virtReg) const {
-      return getStackSlot(virtReg) != NO_STACK_SLOT;
+    /// @brief returns true is the specified virtual register is not
+    /// mapped to a stack slot or rematerialized.
+    bool isAssignedReg(unsigned virtReg) const {
+      return getStackSlot(virtReg) == NO_STACK_SLOT &&
+        getReMatId(virtReg) == NO_STACK_SLOT;
     }
 
     /// @brief returns the stack slot mapped to the specified virtual
@@ -130,6 +132,13 @@ namespace llvm {
     int getStackSlot(unsigned virtReg) const {
       assert(MRegisterInfo::isVirtualRegister(virtReg));
       return Virt2StackSlotMap[virtReg];
+    }
+
+    /// @brief returns the rematerialization id mapped to the specified virtual
+    /// register
+    int getReMatId(unsigned virtReg) const {
+      assert(MRegisterInfo::isVirtualRegister(virtReg));
+      return Virt2ReMatIdMap[virtReg];
     }
 
     /// @brief create a mapping for the specifed virtual register to
@@ -142,22 +151,26 @@ namespace llvm {
     /// @brief assign an unique re-materialization id to the specified
     /// virtual register.
     int assignVirtReMatId(unsigned virtReg);
+    /// @brief assign an unique re-materialization id to the specified
+    /// virtual register.
+    void assignVirtReMatId(unsigned virtReg, int id);
 
     /// @brief returns true if the specified virtual register is being
     /// re-materialized.
     bool isReMaterialized(unsigned virtReg) const {
-      return ReMatMap.count(virtReg) != 0;
+      return ReMatMap[virtReg] != NULL;
     }
 
     /// @brief returns the original machine instruction being re-issued
     /// to re-materialize the specified virtual register.
-    const MachineInstr *getReMaterializedMI(unsigned virtReg) {
+    MachineInstr *getReMaterializedMI(unsigned virtReg) const {
       return ReMatMap[virtReg];
     }
 
     /// @brief records the specified virtual register will be
     /// re-materialized and the original instruction which will be re-issed
-    /// for this purpose.
+    /// for this purpose.  If parameter all is true, then all uses of the
+    /// registers are rematerialized and it's safe to delete the definition.
     void setVirtIsReMaterialized(unsigned virtReg, MachineInstr *def) {
       ReMatMap[virtReg] = def;
     }
