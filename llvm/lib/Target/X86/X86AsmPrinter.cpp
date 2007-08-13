@@ -231,12 +231,12 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << "\t.weak\t" << name << "\n";
       }
       break;
-    case GlobalValue::AppendingLinkage:
-      // FIXME: appending linkage variables should go into a section of
-      // their name or something.  For now, just emit them as external.
     case GlobalValue::DLLExportLinkage:
       DLLExportedGVs.insert(Mang->makeNameProper(I->getName(),""));
       // FALL THROUGH
+    case GlobalValue::AppendingLinkage:
+      // FIXME: appending linkage variables should go into a section of
+      // their name or something.  For now, just emit them as external.
     case GlobalValue::ExternalLinkage:
       // If external or appending, declare as a global symbol
       O << "\t.globl " << name << "\n";
