@@ -121,6 +121,7 @@ namespace {
     LoopInfo *LI;
     ScalarEvolution *SE;
     DominatorTree *DT;
+    DominanceFrontier *DF;
     SmallVector<SplitInfo, 4> SplitData;
 
     // Induction variable whose range is being split by this transformation.
@@ -154,6 +155,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
+  DF = getAnalysisToUpdate<DominanceFrontier>();
 
   initialize();
 
@@ -463,7 +465,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   // Only CFG change done is to remove Latch to Header edge. This
   // does not change dominator tree because Latch did not dominate
   // Header.
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
+  if (DF) {
     DominanceFrontier::iterator HeaderDF = DF->find(Header);
     if (HeaderDF != DF->end()) 
       DF->removeFromFrontier(HeaderDF, Header);
@@ -589,39 +591,49 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
 /// removeBlocks - Remove basic block BB and all blocks dominated by BB.
 void LoopIndexSplit::removeBlocks(BasicBlock *InBB) {
 
-  SmallVector<BasicBlock *, 8> WorkList;
-  WorkList.push_back(InBB);
+  SmallVector<std::pair<BasicBlock *, succ_iterator>, 8> WorkList;
+  WorkList.push_back(std::make_pair(InBB, succ_begin(InBB)));
   while (!WorkList.empty()) {
-    BasicBlock *BB = WorkList.back(); WorkList.pop_back();
-    
-    // First process all successor
-    for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI) {
-      BasicBlock *SuccBB = *SI;
-      if (DT->dominates(BB, SuccBB)) {
-        WorkList.push_back(SuccBB);
-        continue;
-      }
-      
-      // If SuccBB is not dominated by BB then it is not removed, however remove
-      // any PHI incoming edge from BB.
-      for(BasicBlock::iterator SBI = SuccBB->begin(), SBE = SuccBB->end();
-          SBI != SBE; ++SBI) {
-        if (PHINode *PN = dyn_cast<PHINode>(SBI)) 
-          PN->removeIncomingValue(BB);
-        else
-          break;
-      }
-    }
+    BasicBlock *BB = WorkList.back(). first; 
+    succ_iterator SIter =WorkList.back().second;
 
-    // Now delete BB;
-    for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
-        BBI != BBE; ++BBI) {
-      Instruction *I = BBI;
-      I->replaceAllUsesWith(UndefValue::get(I->getType()));
-      I->eraseFromParent();
+    // If all successor's are processed then remove this block.
+    if (SIter == succ_end(BB)) {
+      WorkList.pop_back();
+      for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
+          BBI != BBE; ++BBI) {
+        Instruction *I = BBI;
+        I->replaceAllUsesWith(UndefValue::get(I->getType()));
+        I->eraseFromParent();
+      }
+      DT->eraseNode(BB);
+      DF->removeBlock(BB);
+      LI->removeBlock(BB);
+      BB->eraseFromParent();
+    } else {
+      BasicBlock *SuccBB = *SIter;
+      ++WorkList.back().second;
+      
+      if (DT->dominates(BB, SuccBB)) {
+        WorkList.push_back(std::make_pair(SuccBB, succ_begin(SuccBB)));
+        continue;
+      } else {
+        // If SuccBB is not dominated by BB then it is not removed, however remove
+        // any PHI incoming edge from BB.
+        for(BasicBlock::iterator SBI = SuccBB->begin(), SBE = SuccBB->end();
+            SBI != SBE; ++SBI) {
+          if (PHINode *PN = dyn_cast<PHINode>(SBI)) 
+            PN->removeIncomingValue(BB);
+          else
+            break;
+        }
+
+        // If BB is not dominating SuccBB then SuccBB is in BB's dominance
+        // frontiner. 
+        DominanceFrontier::iterator BBDF = DF->find(BB);
+        DF->removeFromFrontier(BBDF, SuccBB);
+      }
     }
-    LI->removeBlock(BB);
-    BB->eraseFromParent();
   }
 }
 
@@ -692,13 +704,17 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   } else
     ExitInsn->setSuccessor(1, FalseHeader);
 
+  if (DT) {
+    DT->changeImmediateDominator(FalseHeader, ExitBlock);
+    DT->changeImmediateDominator(ExitDest, cast<BasicBlock>(ValueMap[ExitBlock]));
+  }
+
   assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
 
   //[*] Split Exit Edge. 
   SplitEdge(ExitBlock, FalseHeader, this);
 
   //[*] Eliminate split condition's false branch from True loop.
-  //    Update true loop dom info (FIXME).
   BasicBlock *SplitBlock = SD.SplitCondition->getParent();
   BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
   BasicBlock *FBB = BR->getSuccessor(1);
@@ -709,14 +725,12 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   ExitCondition->setOperand(ExitValueNum, TLExitValue);
 
   //[*] Eliminate split condition's  true branch in False loop CFG.
-  //    Update false loop dom info (FXME).
   BasicBlock *FSplitBlock = cast<BasicBlock>(ValueMap[SplitBlock]);
   BranchInst *FBR = cast<BranchInst>(FSplitBlock->getTerminator());
   BasicBlock *TBB = FBR->getSuccessor(0);
   FBR->setUnconditionalDest(FBR->getSuccessor(1));
   removeBlocks(TBB);
 
-  //[*] Update dom info in general (FIXME).
   return true;
 }
 
