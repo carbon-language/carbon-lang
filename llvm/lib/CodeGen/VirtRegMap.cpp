@@ -554,7 +554,7 @@ namespace {
     /// a new register to use, or evict the previous reload and use this reg. 
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
-                             std::map<int, MachineInstr*> &MaybeDeadStores,
+                             std::vector<MachineInstr*> &MaybeDeadStores,
                              SmallSet<unsigned, 8> &Rejected,
                              BitVector &RegKills,
                              std::vector<MachineOperand*> &KillOps,
@@ -609,13 +609,12 @@ namespace {
             } else {
               MRI->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
                                         NewOp.StackSlotOrReMat, AliasRC);
+              // Any stores to this stack slot are not dead anymore.
+              MaybeDeadStores[NewOp.StackSlotOrReMat] = NULL;            
               ++NumLoads;
             }
             Spills.ClobberPhysReg(NewPhysReg);
             Spills.ClobberPhysReg(NewOp.PhysRegReused);
-            
-            // Any stores to this stack slot are not dead anymore.
-            MaybeDeadStores.erase(NewOp.StackSlotOrReMat);
             
             MI->getOperand(NewOp.Operand).setReg(NewPhysReg);
             
@@ -649,7 +648,7 @@ namespace {
     ///       sees r1 is taken by t2, tries t2's reload register r0 ...
     unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
                              AvailableSpills &Spills,
-                             std::map<int, MachineInstr*> &MaybeDeadStores,
+                             std::vector<MachineInstr*> &MaybeDeadStores,
                              BitVector &RegKills,
                              std::vector<MachineOperand*> &KillOps,
                              VirtRegMap &VRM) {
@@ -666,6 +665,8 @@ namespace {
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   DOUT << MBB.getBasicBlock()->getName() << ":\n";
 
+  MachineFunction &MF = *MBB.getParent();
+
   // Spills - Keep track of which spilled values are available in physregs so
   // that we can choose to reuse the physregs instead of emitting reloads.
   AvailableSpills Spills(MRI, TII);
@@ -676,14 +677,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   // subsequently stored to, the original store is dead.  This map keeps track
   // of inserted stores that are not used.  If we see a subsequent store to the
   // same stack slot, the original store is deleted.
-  std::map<int, MachineInstr*> MaybeDeadStores;
+  std::vector<MachineInstr*> MaybeDeadStores;
+  MaybeDeadStores.resize(MF.getFrameInfo()->getObjectIndexEnd(), NULL);
 
   // Keep track of kill information.
   BitVector RegKills(MRI->getNumRegs());
   std::vector<MachineOperand*>  KillOps;
   KillOps.resize(MRI->getNumRegs(), NULL);
 
-  MachineFunction &MF = *MBB.getParent();
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineInstr &MI = *MII;
@@ -806,6 +807,21 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             // Only mark it clobbered if this is a use&def operand.
             ReusedOperands.markClobbered(PhysReg);
           ++NumReused;
+
+          if (MI.getOperand(i).isKill() &&
+              ReuseSlot <= VirtRegMap::MAX_STACK_SLOT) {
+            // This was the last use and the spilled value is still available
+            // for reuse. That means the spill was unnecessary!
+            MachineInstr* DeadStore = MaybeDeadStores[ReuseSlot];
+            if (DeadStore) {
+              DOUT << "Removed dead store:\t" << *DeadStore;
+              InvalidateKills(*DeadStore, RegKills, KillOps);
+              MBB.erase(DeadStore);
+              VRM.RemoveFromFoldedVirtMap(DeadStore);
+              MaybeDeadStores[ReuseSlot] = NULL;
+              ++NumDSE;
+            }
+          }
           continue;
         }
         
@@ -892,7 +908,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
       // Any stores to this stack slot are not dead anymore.
       if (!DoReMat)
-        MaybeDeadStores.erase(SSorRMId);
+        MaybeDeadStores[SSorRMId] = NULL;
       Spills.addAvailable(SSorRMId, &MI, PhysReg);
       // Assumes this is the last use. IsKill will be unset if reg is reused
       // unless it's a two-address operand.
@@ -953,20 +969,18 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
       // If this reference is not a use, any previous store is now dead.
       // Otherwise, the store to this stack slot is not dead anymore.
-      std::map<int, MachineInstr*>::iterator MDSI = MaybeDeadStores.find(SS);
-      if (MDSI != MaybeDeadStores.end()) {
-        if (MR & VirtRegMap::isRef)   // Previous store is not dead.
-          MaybeDeadStores.erase(MDSI);
-        else {
+      MachineInstr* DeadStore = MaybeDeadStores[SS];
+      if (DeadStore) {
+        if (!(MR & VirtRegMap::isRef)) {  // Previous store is dead.
           // If we get here, the store is dead, nuke it now.
           assert(VirtRegMap::isMod && "Can't be modref!");
-          DOUT << "Removed dead store:\t" << *MDSI->second;
-          InvalidateKills(*MDSI->second, RegKills, KillOps);
-          MBB.erase(MDSI->second);
-          VRM.RemoveFromFoldedVirtMap(MDSI->second);
-          MaybeDeadStores.erase(MDSI);
+          DOUT << "Removed dead store:\t" << *DeadStore;
+          InvalidateKills(*DeadStore, RegKills, KillOps);
+          MBB.erase(DeadStore);
+          VRM.RemoveFromFoldedVirtMap(DeadStore);
           ++NumDSE;
         }
+        MaybeDeadStores[SS] = NULL;
       }
 
       // If the spill slot value is available, and this is a new definition of
