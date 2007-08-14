@@ -421,7 +421,6 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
 
   BasicBlock *Preheader = L->getLoopPreheader();
   Instruction *Terminator = Header->getTerminator();
-  StartValue = IndVar->getIncomingValueForBlock(Preheader);
 
   // Replace split condition in header.
   // Transform 
