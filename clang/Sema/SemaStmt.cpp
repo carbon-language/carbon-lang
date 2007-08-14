@@ -324,8 +324,7 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   // function return.  
   AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType, 
                                                                   RetValExp);
-  bool hadError = false;
-  
+
   // decode the result (notice that extensions still return a type).
   switch (result) {
   case Compatible:
@@ -334,7 +333,6 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
     Diag(ReturnLoc, diag::err_typecheck_return_incompatible, 
          lhsType.getAsString(), rhsType.getAsString(),
          RetValExp->getSourceRange());
-    hadError = true;
     break;
   case PointerFromInt:
     // check for null pointer constant (C99 6.3.2.3p3)
