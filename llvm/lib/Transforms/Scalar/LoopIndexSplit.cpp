@@ -419,8 +419,8 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   }
   BR->setUnconditionalDest(LatchSucc);
 
-  BasicBlock *Preheader = L->getLoopPreheader();
   Instruction *Terminator = Header->getTerminator();
+  Value *ExitValue = ExitCondition->getOperand(ExitValueNum);
 
   // Replace split condition in header.
   // Transform 
@@ -436,8 +436,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
                                  Terminator);
   Instruction *C2 = new ICmpInst(SignedPredicate ? 
                                  ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                                 SD.SplitValue, 
-                                 ExitCondition->getOperand(ExitValueNum), "lisplit", 
+                                 SD.SplitValue, ExitValue, "lisplit", 
                                  Terminator);
   Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", 
                                                       Terminator);
@@ -454,7 +453,10 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
     if (isa<PHINode>(I) || I == LTerminator)
       continue;
 
-    I->replaceAllUsesWith(UndefValue::get(I->getType()));
+    if (I == IndVarIncrement) 
+      I->replaceAllUsesWith(ExitValue);
+    else
+      I->replaceAllUsesWith(UndefValue::get(I->getType()));
     I->eraseFromParent();
   }
 
@@ -485,7 +487,7 @@ bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
       BI != BE; ++BI) {
     Instruction *I = BI;
 
-    // PHI Nodes are OK. FIXME : Handle last value assignments.
+    // PHI Nodes are OK.
     if (isa<PHINode>(I))
       continue;
 
@@ -520,7 +522,7 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
        BI != BE; ++BI) {
     Instruction *I = BI;
 
-    // PHI Nodes are OK. FIXME : Handle last value assignments.
+    // PHI Nodes are OK.
     if (isa<PHINode>(I))
       continue;
 
@@ -686,23 +688,49 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   assert (ExitInsn && "Unable to find suitable loop exit branch");
   BasicBlock *ExitDest = ExitInsn->getSuccessor(1);
 
+  if (L->contains(ExitDest)) {
+    ExitDest = ExitInsn->getSuccessor(0);
+    ExitInsn->setSuccessor(0, FalseHeader);
+  } else
+    ExitInsn->setSuccessor(1, FalseHeader);
+
+  // Collect inverse map of Header PHINodes.
+  DenseMap<Value *, Value *> InverseMap;
+  for (BasicBlock::iterator BI = L->getHeader()->begin(), 
+         BE = L->getHeader()->end(); BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      PHINode *PNClone = cast<PHINode>(ValueMap[PN]);
+      InverseMap[PNClone] = PN;
+    } else
+      break;
+  }
+
+  // Update False loop's header
   for (BasicBlock::iterator BI = FalseHeader->begin(), BE = FalseHeader->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
       PN->removeIncomingValue(Preheader);
       if (PN == IndVarClone)
         PN->addIncoming(FLStartValue, ExitBlock);
-      // else { FIXME : Handl last value assignments.}
-    }
-    else
+      else { 
+        PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
+        Value *V2 = OrigPN->getIncomingValueForBlock(ExitBlock);
+        PN->addIncoming(V2, ExitBlock);
+      }
+    } else
       break;
   }
 
-  if (L->contains(ExitDest)) {
-    ExitDest = ExitInsn->getSuccessor(0);
-    ExitInsn->setSuccessor(0, FalseHeader);
-  } else
-    ExitInsn->setSuccessor(1, FalseHeader);
+  // Update ExitDest. Now it's predecessor is False loop's exit block.
+  BasicBlock *ExitBlockClone = cast<BasicBlock>(ValueMap[ExitBlock]);
+  for (BasicBlock::iterator BI = ExitDest->begin(), BE = ExitDest->end();
+       BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(ExitBlock)], ExitBlockClone);
+      PN->removeIncomingValue(ExitBlock);
+    } else
+      break;
+  }
 
   if (DT) {
     DT->changeImmediateDominator(FalseHeader, ExitBlock);
