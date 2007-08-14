@@ -559,8 +559,8 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
   
   // Okay, the final step is to loop over the RHS live intervals, adding them to
   // the LHS.
-  LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.addKillsForValNum(LHSValNo, VNI.kills);
+  LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.weight += RHS.weight;
   if (RHS.preference && !LHS.preference)
     LHS.preference = RHS.preference;

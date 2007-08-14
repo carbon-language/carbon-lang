@@ -109,6 +109,7 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
 void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   assert(I != ranges.end() && "Not a valid interval!");
   unsigned ValId = I->ValId;
+  unsigned OldEnd = I->end;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = next(I);
@@ -123,7 +124,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   ranges.erase(next(I), MergeTo);
 
   // Update kill info.
-  removeKillForValNum(ValId, I->start, I->end-1);
+  removeKillForValNum(ValId, OldEnd, I->end-1);
 
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
