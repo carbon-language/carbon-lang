@@ -856,10 +856,19 @@ bool GVN::processLoad(LoadInst* L,
   
   // ... to a pointer that has been loaded from before...
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+  bool removedNonLocal = false;
   Instruction* dep = MD.getDependency(L);
   if (dep == MemoryDependenceAnalysis::NonLocal &&
-      L->getParent() != &L->getParent()->getParent()->getEntryBlock())
-    processNonLocalLoad(L, toErase);
+      L->getParent() != &L->getParent()->getParent()->getEntryBlock()) {
+    removedNonLocal = processNonLocalLoad(L, toErase);
+    
+    if (!removedNonLocal)
+      last = L;
+    
+    return removedNonLocal;
+  }
+  
+  
   bool deletedLoad = false;
   
   while (dep != MemoryDependenceAnalysis::None &&
