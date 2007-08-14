@@ -671,6 +671,7 @@ namespace {
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
     void dump(DenseMap<BasicBlock*, Value*>& d);
+    bool iterateOnFunction(Function &F);
   };
   
   char GVN::ID = 0;
@@ -944,7 +945,21 @@ bool GVN::processInstruction(Instruction* I,
 // GVN::runOnFunction - This is the main transformation entry point for a
 // function.
 //
-bool GVN::runOnFunction(Function &F) {
+bool GVN::runOnFunction(Function& F) {
+  bool changed = false;
+  bool shouldContinue = true;
+  
+  while (shouldContinue) {
+    shouldContinue = iterateOnFunction(F);
+    changed |= shouldContinue;
+  }
+  
+  return changed;
+}
+
+
+// GVN::iterateOnFunction - Executes one iteration of GVN
+bool GVN::iterateOnFunction(Function &F) {
   // Clean out global sets from any previous functions
   VN.clear();
   availableOut.clear();
