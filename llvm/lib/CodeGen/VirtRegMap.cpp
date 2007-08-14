@@ -36,6 +36,7 @@ using namespace llvm;
 
 STATISTIC(NumSpills, "Number of register spills");
 STATISTIC(NumReMats, "Number of re-materialization");
+STATISTIC(NumDRM   , "Number of re-materializable defs elided");
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
 STATISTIC(NumReused, "Number of values reused");
@@ -434,43 +435,64 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
 /// marked kill, then invalidate the information.
 static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
                             std::vector<MachineOperand*> &KillOps,
-                            MachineInstr *NewDef = NULL) {
+                            SmallVector<unsigned, 1> *KillRegs = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || !MO.isKill())
       continue;
     unsigned Reg = MO.getReg();
-    if (NewDef) {
-      // Due to remat, it's possible this reg isn't being reused. That is,
-      // the def of this reg (by prev MI) is now dead.
-      bool FoundUse = false, Done = false;
-      MachineBasicBlock::iterator I = MI, E = NewDef;
-      ++I; ++E;
-      for (; !Done && I != E; ++I) {
-        MachineInstr *NMI = I;
-        for (unsigned j = 0, ee = NMI->getNumOperands(); j != ee; ++j) {
-          MachineOperand &MO = NMI->getOperand(j);
-          if (!MO.isReg() || MO.getReg() != Reg)
-            continue;
-          if (MO.isUse())
-            FoundUse = true;
-          Done = true; // Stop after scanning all the operands of this MI.
-        }
-      }
-      if (!FoundUse) {
-        // Def is dead!
-        MachineBasicBlock::iterator MII = MI;
-        MachineInstr *DefMI = prior(MII);
-        MachineOperand *DefOp = DefMI->findRegisterDefOperand(Reg);
-        assert(DefOp && "Missing def?");
-        DefOp->setIsDead();
-      }
-    }
+    if (KillRegs)
+      KillRegs->push_back(Reg);
     if (KillOps[Reg] == &MO) {
       RegKills.reset(Reg);
       KillOps[Reg] = NULL;
     }
   }
+}
+
+/// InvalidateRegDef - If the def operand of the specified def MI is now dead
+/// (since it's spill instruction is removed), mark it isDead. Also checks if
+/// the def MI has other definition operands that are not dead. Returns it by
+/// reference.
+static bool InvalidateRegDef(MachineBasicBlock::iterator I,
+                             MachineInstr &NewDef, unsigned Reg,
+                             bool &HasLiveDef) {
+  // Due to remat, it's possible this reg isn't being reused. That is,
+  // the def of this reg (by prev MI) is now dead.
+  MachineInstr *DefMI = I;
+  MachineOperand *DefOp = NULL;
+  for (unsigned i = 0, e = DefMI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = DefMI->getOperand(i);
+    if (MO.isReg() && MO.isDef()) {
+      if (MO.getReg() == Reg)
+        DefOp = &MO;
+      else if (!MO.isDead())
+        HasLiveDef = true;
+    }
+  }
+  if (!DefOp)
+    return false;
+
+  bool FoundUse = false, Done = false;
+  MachineBasicBlock::iterator E = NewDef;
+  ++I; ++E;
+  for (; !Done && I != E; ++I) {
+    MachineInstr *NMI = I;
+    for (unsigned j = 0, ee = NMI->getNumOperands(); j != ee; ++j) {
+      MachineOperand &MO = NMI->getOperand(j);
+      if (!MO.isReg() || MO.getReg() != Reg)
+        continue;
+      if (MO.isUse())
+        FoundUse = true;
+      Done = true; // Stop after scanning all the operands of this MI.
+    }
+  }
+  if (!FoundUse) {
+    // Def is dead!
+    DefOp->setIsDead();
+    return true;
+  }
+  return false;
 }
 
 /// UpdateKills - Track and update kill info. If a MI reads a register that is
@@ -706,6 +728,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   // same stack slot, the original store is deleted.
   std::vector<MachineInstr*> MaybeDeadStores;
   MaybeDeadStores.resize(MF.getFrameInfo()->getObjectIndexEnd(), NULL);
+
+  // ReMatDefs - These are rematerializable def MIs which are not deleted.
+  SmallSet<MachineInstr*, 4> ReMatDefs;
 
   // Keep track of kill information.
   BitVector RegKills(MRI->getNumRegs());
@@ -1077,6 +1102,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           continue;
         }
 
+        bool DoReMat = VRM.isReMaterialized(VirtReg);
+        if (DoReMat)
+          ReMatDefs.insert(&MI);
+
         // The only vregs left are stack slot definitions.
         int StackSlot = VRM.getStackSlot(VirtReg);
         const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(VirtReg);
@@ -1099,43 +1128,68 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
         MF.setPhysRegUsed(PhysReg);
         ReusedOperands.markClobbered(PhysReg);
-        MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
-        DOUT << "Store:\t" << *next(MII);
         MI.getOperand(i).setReg(PhysReg);
+        if (!MO.isDead()) {
+          MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
+          DOUT << "Store:\t" << *next(MII);
 
-        // If there is a dead store to this stack slot, nuke it now.
-        MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
-        if (LastStore) {
-          DOUT << "Removed dead store:\t" << *LastStore;
-          ++NumDSE;
-          InvalidateKills(*LastStore, RegKills, KillOps, &MI);
-          MBB.erase(LastStore);
-          VRM.RemoveFromFoldedVirtMap(LastStore);
-        }
-        LastStore = next(MII);
-
-        // If the stack slot value was previously available in some other
-        // register, change it now.  Otherwise, make the register available,
-        // in PhysReg.
-        Spills.ModifyStackSlotOrReMat(StackSlot);
-        Spills.ClobberPhysReg(PhysReg);
-        Spills.addAvailable(StackSlot, LastStore, PhysReg);
-        ++NumStores;
-
-        // Check to see if this is a noop copy.  If so, eliminate the
-        // instruction before considering the dest reg to be changed.
-        {
-          unsigned Src, Dst;
-          if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
-            ++NumDCE;
-            DOUT << "Removing now-noop copy: " << MI;
-            MBB.erase(&MI);
-            Erased = true;
-            VRM.RemoveFromFoldedVirtMap(&MI);
-            UpdateKills(*LastStore, RegKills, KillOps);
-            goto ProcessNextInst;
+          // If there is a dead store to this stack slot, nuke it now.
+          MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
+          if (LastStore) {
+            DOUT << "Removed dead store:\t" << *LastStore;
+            ++NumDSE;
+            SmallVector<unsigned, 1> KillRegs;
+            InvalidateKills(*LastStore, RegKills, KillOps, &KillRegs);
+            MachineBasicBlock::iterator PrevMII = LastStore;
+            bool CheckDef = PrevMII != MBB.begin();
+            if (CheckDef)
+              --PrevMII;
+            MBB.erase(LastStore);
+            VRM.RemoveFromFoldedVirtMap(LastStore);
+            if (CheckDef) {
+              // Look at defs of killed registers on the store. Mark the defs
+              // as dead since the store has been deleted and they aren't
+              // being reused.
+              for (unsigned j = 0, ee = KillRegs.size(); j != ee; ++j) {
+                bool HasOtherDef = false;
+                if (InvalidateRegDef(PrevMII, MI, KillRegs[j], HasOtherDef)) {
+                  MachineInstr *DeadDef = PrevMII;
+                  if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
+                    // FIXME: This assumes a remat def does not have side
+                    // effects.
+                    MBB.erase(DeadDef);
+                    VRM.RemoveFromFoldedVirtMap(DeadDef);
+                    ++NumDRM;
+                  }
+                }
+              }
+            }
           }
-        }        
+          LastStore = next(MII);
+
+          // If the stack slot value was previously available in some other
+          // register, change it now.  Otherwise, make the register available,
+          // in PhysReg.
+          Spills.ModifyStackSlotOrReMat(StackSlot);
+          Spills.ClobberPhysReg(PhysReg);
+          Spills.addAvailable(StackSlot, LastStore, PhysReg);
+          ++NumStores;
+
+          // Check to see if this is a noop copy.  If so, eliminate the
+          // instruction before considering the dest reg to be changed.
+          {
+            unsigned Src, Dst;
+            if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+              ++NumDCE;
+              DOUT << "Removing now-noop copy: " << MI;
+              MBB.erase(&MI);
+              Erased = true;
+              VRM.RemoveFromFoldedVirtMap(&MI);
+              UpdateKills(*LastStore, RegKills, KillOps);
+              goto ProcessNextInst;
+            }
+          }
+        }    
       }
     }
   ProcessNextInst:
