@@ -744,10 +744,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       bool DoReMat = VRM.isReMaterialized(VirtReg);
       int SSorRMId = DoReMat
         ? VRM.getReMatId(VirtReg) : VRM.getStackSlot(VirtReg);
-      unsigned PhysReg;
+      int ReuseSlot = SSorRMId;
 
       // Check to see if this stack slot is available.
-      if ((PhysReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId))) {
+      unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
+      if (!PhysReg && DoReMat) {
+        // This use is rematerializable. But perhaps the value is available in
+        // stack if the definition is not deleted. If so, check if we can
+        // reuse the value.
+        ReuseSlot = VRM.getStackSlot(VirtReg);
+        if (ReuseSlot != VirtRegMap::NO_STACK_SLOT)
+          PhysReg = Spills.getSpillSlotOrReMatPhysReg(ReuseSlot);
+      }
+      if (PhysReg) {
         // This spilled operand might be part of a two-address operand.  If this
         // is the case, then changing it will necessarily require changing the 
         // def part of the instruction as well.  However, in some cases, we
@@ -761,16 +770,16 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value and there isn't an
           // earlier def that has already clobbered the physreg.
-          CanReuse = Spills.canClobberPhysReg(SSorRMId) &&
+          CanReuse = Spills.canClobberPhysReg(ReuseSlot) &&
             !ReusedOperands.isClobbered(PhysReg);
         }
         
         if (CanReuse) {
           // If this stack slot value is already available, reuse it!
-          if (SSorRMId > VirtRegMap::MAX_STACK_SLOT)
-            DOUT << "Reusing RM#" << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1;
+          if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
+            DOUT << "Reusing RM#" << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1;
           else
-            DOUT << "Reusing SS#" << SSorRMId;
+            DOUT << "Reusing SS#" << ReuseSlot;
           DOUT << " from physreg "
                << MRI->getName(PhysReg) << " for vreg"
                << VirtReg <<" instead of reloading into physreg "
@@ -791,7 +800,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // or R0 and R1 might not be compatible with each other.  In this
           // case, we actually insert a reload for V1 in R1, ensuring that
           // we can get at R0 or its alias.
-          ReusedOperands.addReuse(i, SSorRMId, PhysReg,
+          ReusedOperands.addReuse(i, ReuseSlot, PhysReg,
                                   VRM.getPhys(VirtReg), VirtReg);
           if (ti != -1)
             // Only mark it clobbered if this is a use&def operand.
@@ -825,10 +834,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // incoming, we don't need to inserted a dead copy.
         if (DesignatedReg == PhysReg) {
           // If this stack slot value is already available, reuse it!
-          if (SSorRMId > VirtRegMap::MAX_STACK_SLOT)
-            DOUT << "Reusing RM#" << SSorRMId-VirtRegMap::MAX_STACK_SLOT-1;
+          if (ReuseSlot > VirtRegMap::MAX_STACK_SLOT)
+            DOUT << "Reusing RM#" << ReuseSlot-VirtRegMap::MAX_STACK_SLOT-1;
           else
-            DOUT << "Reusing SS#" << SSorRMId;
+            DOUT << "Reusing SS#" << ReuseSlot;
           DOUT << " from physreg " << MRI->getName(PhysReg) << " for vreg"
                << VirtReg
                << " instead of reloading into same physreg.\n";
@@ -849,7 +858,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // This invalidates DesignatedReg.
         Spills.ClobberPhysReg(DesignatedReg);
         
-        Spills.addAvailable(SSorRMId, &MI, DesignatedReg);
+        Spills.addAvailable(ReuseSlot, &MI, DesignatedReg);
         MI.getOperand(i).setReg(DesignatedReg);
         DOUT << '\t' << *prior(MII);
         ++NumReused;
