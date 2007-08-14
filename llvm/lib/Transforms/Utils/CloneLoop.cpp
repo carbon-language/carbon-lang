@@ -84,22 +84,21 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
   }
 
   SmallVector<BasicBlock *, 16> NewBlocks;
-  SmallVector<std::pair<Loop *, Loop::iterator>, 8> LoopNest;
-  LoopNest.push_back(std::make_pair(OrigL, OrigL->begin()));
-  
-  Loop *NewLoop = NULL;
-  while (!LoopNest.empty()) {
-    Loop *L = LoopNest.back().first;
-    Loop::iterator SubLoop = LoopNest.back().second;
-    
-    // Handle sub loops.
-    if (SubLoop != L->end()) {
-      Loop *SL  = *SubLoop;
-      LoopNest.push_back(std::make_pair(SL, SL->begin()));
-    } 
 
+  // Populate loop nest.
+  SmallVector<Loop *, 8> LoopNest;
+  LoopNest.push_back(OrigL);
+
+
+  Loop *NewParentLoop = NULL;
+  while (!LoopNest.empty()) {
+    Loop *L = LoopNest.back();
     LoopNest.pop_back();
-    NewLoop = new Loop();
+    Loop *NewLoop = new Loop();
+
+    if (!NewParentLoop)
+      NewParentLoop = NewLoop;
+
     LPM->insertLoop(NewLoop, L->getParentLoop());
 
     // Clone Basic Blocks.
@@ -122,6 +121,9 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
         CloneDominatorInfo(BB, ValueMap, DT, DF);
       }
 
+    // Process sub loops
+    for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+      LoopNest.push_back(*I);
   }
 
   // Remap instructions to reference operands from ValueMap.
@@ -145,5 +147,5 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
   Function *F = Latch->getParent();
   F->getBasicBlockList().insert(Latch, NewBlocks.begin(), NewBlocks.end());
 
-  return NewLoop;
+  return NewParentLoop;
 }
