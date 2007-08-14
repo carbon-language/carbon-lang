@@ -749,40 +749,59 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   if (Phis.count(BB) == 0)
     Phis.insert(std::make_pair(BB, PN));
   
-  bool all_same = true;
-  Value* first = 0;
-  
   // Fill in the incoming values for the block.
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
     Value* val = GetValueForBlock(*PI, orig, Phis);
-    if (first == 0)
-      first = val;
-    else if (all_same && first != val)
-      all_same = false;
     
     PN->addIncoming(val, *PI);
   }
   
-  if (all_same) {
-    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-    
-    MD.removeInstruction(PN);
-    PN->replaceAllUsesWith(first);
-    
-    SmallVector<BasicBlock*, 4> toRemove;
-    for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
-         E = Phis.end(); I != E; ++I)
-      if (I->second == PN)
-        toRemove.push_back(I->first);
-    for (SmallVector<BasicBlock*, 4>::iterator I = toRemove.begin(),
-         E= toRemove.end(); I != E; ++I)
-      Phis[*I] = first;
-    
-    PN->eraseFromParent();
-    
-    Phis[BB] = first;
-    
-    return first;
+  Value* v = PN->hasConstantValue();
+  if (v) {
+    if (Instruction* inst = dyn_cast<Instruction>(v)) {
+      DominatorTree &DT = getAnalysis<DominatorTree>();  
+      if (DT.dominates(inst, PN)) {
+        MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+
+        MD.removeInstruction(PN);
+        PN->replaceAllUsesWith(inst);
+
+        SmallVector<BasicBlock*, 4> toRemove;
+        for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
+             E = Phis.end(); I != E; ++I)
+          if (I->second == PN)
+            toRemove.push_back(I->first);
+        for (SmallVector<BasicBlock*, 4>::iterator I = toRemove.begin(),
+             E= toRemove.end(); I != E; ++I)
+          Phis[*I] = inst;
+
+        PN->eraseFromParent();
+
+        Phis[BB] = inst;
+
+        return inst;
+      }
+    } else {
+      MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+
+      MD.removeInstruction(PN);
+      PN->replaceAllUsesWith(v);
+
+      SmallVector<BasicBlock*, 4> toRemove;
+      for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
+           E = Phis.end(); I != E; ++I)
+        if (I->second == PN)
+          toRemove.push_back(I->first);
+      for (SmallVector<BasicBlock*, 4>::iterator I = toRemove.begin(),
+           E= toRemove.end(); I != E; ++I)
+        Phis[*I] = v;
+
+      PN->eraseFromParent();
+
+      Phis[BB] = v;
+
+      return v;
+    }
   }
 
   phiMap[orig->getPointerOperand()].insert(PN);
@@ -915,7 +934,7 @@ bool GVN::processLoad(LoadInst* L,
   return deletedLoad;
 }
 
-/// buildsets_availout - When calculating availability, handle an instruction
+/// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction* I,
                                 ValueNumberedSet& currAvail,
