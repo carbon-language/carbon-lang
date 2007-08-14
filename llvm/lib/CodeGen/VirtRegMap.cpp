@@ -433,12 +433,39 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
 /// InvalidateKills - MI is going to be deleted. If any of its operands are
 /// marked kill, then invalidate the information.
 static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
-                           std::vector<MachineOperand*> &KillOps) {
+                            std::vector<MachineOperand*> &KillOps,
+                            MachineInstr *NewDef = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || !MO.isKill())
       continue;
     unsigned Reg = MO.getReg();
+    if (NewDef) {
+      // Due to remat, it's possible this reg isn't being reused. That is,
+      // the def of this reg (by prev MI) is now dead.
+      bool FoundUse = false, Done = false;
+      MachineBasicBlock::iterator I = MI, E = NewDef;
+      ++I; ++E;
+      for (; !Done && I != E; ++I) {
+        MachineInstr *NMI = I;
+        for (unsigned j = 0, ee = NMI->getNumOperands(); j != ee; ++j) {
+          MachineOperand &MO = NMI->getOperand(j);
+          if (!MO.isReg() || MO.getReg() != Reg)
+            continue;
+          if (MO.isUse())
+            FoundUse = true;
+          Done = true; // Stop after scanning all the operands of this MI.
+        }
+      }
+      if (!FoundUse) {
+        // Def is dead!
+        MachineBasicBlock::iterator MII = MI;
+        MachineInstr *DefMI = prior(MII);
+        MachineOperand *DefOp = DefMI->findRegisterDefOperand(Reg);
+        assert(DefOp && "Missing def?");
+        DefOp->setIsDead();
+      }
+    }
     if (KillOps[Reg] == &MO) {
       RegKills.reset(Reg);
       KillOps[Reg] = NULL;
@@ -1081,7 +1108,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         if (LastStore) {
           DOUT << "Removed dead store:\t" << *LastStore;
           ++NumDSE;
-          InvalidateKills(*LastStore, RegKills, KillOps);
+          InvalidateKills(*LastStore, RegKills, KillOps, &MI);
           MBB.erase(LastStore);
           VRM.RemoveFromFoldedVirtMap(LastStore);
         }
