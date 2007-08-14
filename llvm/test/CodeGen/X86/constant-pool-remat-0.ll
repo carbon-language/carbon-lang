@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep LCPI | count 3
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep LCPI | count 3
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& | grep asm-printer | grep 13
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats -info-output-file - | grep asm-printer | grep 9
 
 declare fastcc float @qux(float %y)
 
