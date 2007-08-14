@@ -565,7 +565,8 @@ static void PrintDomTree(const DomTreeNode *N, std::ostream &o,
 void DominatorTreeBase::eraseNode(BasicBlock *BB) {
   DomTreeNode *Node = getNode(BB);
   assert (Node && "Removing node that isn't in dominator tree.");
-  
+  assert (Node->getChildren().empty() && "Node is not a leaf node.");
+
     // Remove node from immediate dominator's children list.
   DomTreeNode *IDom = Node->getIDom();
   if (IDom) {
@@ -576,8 +577,6 @@ void DominatorTreeBase::eraseNode(BasicBlock *BB) {
     // I am no longer your child...
     IDom->Children.erase(I);
   }
-  
-  assert (Node->getChildren().empty() && "Children list is not empty");
   
   DomTreeNodes.erase(BB);
   delete Node;
