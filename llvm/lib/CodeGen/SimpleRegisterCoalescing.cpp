@@ -125,6 +125,19 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   // live-range starts.  If there are no intervening live ranges between them in
   // IntB, we can merge them.
   if (ValLR+1 != BLR) return false;
+
+  // If a live interval is a physical register, conservatively check if any
+  // of its sub-registers is overlapping the live interval of the virtual
+  // register. If so, do not coalesce.
+  if (MRegisterInfo::isPhysicalRegister(IntB.reg) &&
+      *mri_->getSubRegisters(IntB.reg)) {
+    for (const unsigned* SR = mri_->getSubRegisters(IntB.reg); *SR; ++SR)
+      if (li_->hasInterval(*SR) && IntA.overlaps(li_->getInterval(*SR))) {
+        DOUT << "Interfere with sub-register ";
+        DEBUG(li_->getInterval(*SR).print(DOUT, mri_));
+        return false;
+      }
+  }
   
   DOUT << "\nExtending: "; IntB.print(DOUT, mri_);
   
