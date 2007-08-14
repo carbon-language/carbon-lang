@@ -423,10 +423,14 @@ private:
   // Extra semantic analysis beyond the C type system
   private:
   
-  void CheckFunctionCall(Expr *Fn, FunctionDecl *FDecl,
+  void CheckFunctionCall(Expr *Fn,
+                         SourceLocation LParenLoc, SourceLocation RParenLoc,
+                         FunctionDecl *FDecl,
                          Expr** Args, unsigned NumArgsInCall);
 
-  void CheckPrintfArguments(Expr *Fn, unsigned id_idx, FunctionDecl *FDecl,
+  void CheckPrintfArguments(Expr *Fn,
+                            SourceLocation LParenLoc, SourceLocation RParenLoc,
+                            bool HasVAListArg, FunctionDecl *FDecl,
                             unsigned format_idx, Expr** Args,
                             unsigned NumArgsInCall);
 };
