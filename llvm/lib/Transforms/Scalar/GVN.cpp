@@ -946,7 +946,27 @@ bool GVN::processInstruction(Instruction* I,
   
   unsigned num = VN.lookup_or_add(I);
   
-  if (currAvail.test(num)) {
+  if (PHINode* p = dyn_cast<PHINode>(I)) {
+    Value* constVal = p->hasConstantValue();
+    
+    if (constVal) {
+      if (Instruction* inst = dyn_cast<Instruction>(constVal)) {
+        DominatorTree &DT = getAnalysis<DominatorTree>();  
+        if (DT.dominates(inst, p)) {
+          for (PhiMapType::iterator PI = phiMap.begin(), PE = phiMap.end();
+               PI != PE; ++PI)
+            if (PI->second.count(p))
+              PI->second.erase(p);
+        
+          p->replaceAllUsesWith(inst);
+          toErase.push_back(p);
+        }
+      } else {
+        p->replaceAllUsesWith(constVal);
+        toErase.push_back(p);
+      }
+    }
+  } else if (currAvail.test(num)) {
     Value* repl = find_leader(currAvail, num);
     
     VN.erase(I);
