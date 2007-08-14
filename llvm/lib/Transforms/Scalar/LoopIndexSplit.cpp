@@ -97,8 +97,10 @@ namespace {
     /// loop may not be eliminated.
     bool safeExitBlock(SplitInfo &SD, BasicBlock *BB);
 
-    /// removeBlocks - Remove basic block BB and all blocks dominated by BB.
-    void removeBlocks(BasicBlock *InBB, Loop *LP);
+    /// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
+    /// This routine is used to remove split condition's dead branch, dominated by
+    /// DeadBB. LiveBB dominates split conidition's other branch.
+    void removeBlocks(BasicBlock *DeadBB, Loop *LP, BasicBlock *LiveBB);
 
     /// Find cost of spliting loop L.
     unsigned findSplitCost(Loop *L, SplitInfo &SD);
@@ -589,11 +591,14 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
   return Cost;
 }
 
-/// removeBlocks - Remove basic block BB and all blocks dominated by BB.
-void LoopIndexSplit::removeBlocks(BasicBlock *InBB, Loop *LP) {
+/// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
+/// This routine is used to remove split condition's dead branch, dominated by
+/// DeadBB. LiveBB dominates split conidition's other branch.
+void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP, 
+                                  BasicBlock *LiveBB) {
 
   SmallVector<std::pair<BasicBlock *, succ_iterator>, 8> WorkList;
-  WorkList.push_back(std::make_pair(InBB, succ_begin(InBB)));
+  WorkList.push_back(std::make_pair(DeadBB, succ_begin(DeadBB)));
   while (!WorkList.empty()) {
     BasicBlock *BB = WorkList.back(). first; 
     succ_iterator SIter =WorkList.back().second;
@@ -630,10 +635,28 @@ void LoopIndexSplit::removeBlocks(BasicBlock *InBB, Loop *LP) {
             break;
         }
 
+        DT->changeImmediateDominator(SuccBB, LiveBB);
+
         // If BB is not dominating SuccBB then SuccBB is in BB's dominance
         // frontiner. 
         DominanceFrontier::iterator BBDF = DF->find(BB);
         DF->removeFromFrontier(BBDF, SuccBB);
+
+        // LiveBB is now  dominating SuccBB. Which means SuccBB's dominance
+        // frontier is member of LiveBB's dominance frontier. However, SuccBB
+        // itself is not member of LiveBB's dominance frontier.
+        DominanceFrontier::iterator LiveDF = DF->find(LiveBB);
+        DominanceFrontier::iterator SuccDF = DF->find(SuccBB);
+        DominanceFrontier::DomSetType SuccBBSet = SuccDF->second;
+        for (DominanceFrontier::DomSetType::iterator SuccBBSetI = SuccBBSet.begin(),
+               SuccBBSetE = SuccBBSet.end(); SuccBBSetI != SuccBBSetE; ++SuccBBSetI) {
+          BasicBlock *DFMember = *SuccBBSetI;
+          // Insert only if LiveBB dominates DFMember.
+          if (!DT->dominates(LiveBB, DFMember))
+            LiveDF->second.insert(DFMember);
+        }
+        DF->removeFromFrontier(LiveDF, SuccBB);
+
       }
     }
   }
@@ -747,7 +770,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
   BasicBlock *FBB = BR->getSuccessor(1);
   BR->setUnconditionalDest(BR->getSuccessor(0));
-  removeBlocks(FBB, L);
+  removeBlocks(FBB, L, BR->getSuccessor(0));
 
   //[*] Update True loop's exit value using new exit value.
   ExitCondition->setOperand(ExitValueNum, TLExitValue);
@@ -757,7 +780,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   BranchInst *FBR = cast<BranchInst>(FSplitBlock->getTerminator());
   BasicBlock *TBB = FBR->getSuccessor(0);
   FBR->setUnconditionalDest(FBR->getSuccessor(1));
-  removeBlocks(TBB, FalseLoop);
+  removeBlocks(TBB, FalseLoop, cast<BasicBlock>(FBR->getSuccessor(0)));
 
   return true;
 }
