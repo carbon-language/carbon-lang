@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep LCPI | wc -l | grep 3
-; RUN: llvm-as < %s | llc -march=x86 | grep LCPI | wc -l | grep 3
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep LCPI | wc -l | grep 3
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& | grep asm-printer | grep 13
 
 declare float @qux(float %y)
 
