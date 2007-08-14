@@ -154,6 +154,10 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   L = IncomingLoop;
   LPM = &LPM_Ref;
 
+  // FIXME - Nested loops makes dominator info updates tricky. 
+  if (!L->getSubLoops().empty())
+    return false;
+
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
