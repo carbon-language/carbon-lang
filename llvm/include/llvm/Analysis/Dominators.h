@@ -253,7 +253,7 @@ public:
     changeImmediateDominator(getNode(BB), getNode(NewBB));
   }
 
-  /// eraseNode - Removes a node from  the domiantor tree. Block must not
+  /// eraseNode - Removes a node from  the dominator tree. Block must not
   /// domiante any other blocks. Removes node from its immediate dominator's
   /// children list. Deletes dominator node associated with basic block BB.
   void eraseNode(BasicBlock *BB);
@@ -378,8 +378,10 @@ public:
   /// removeBlock - Remove basic block BB's frontier.
   void removeBlock(BasicBlock *BB) {
     assert(find(BB) != end() && "Block is not in DominanceFrontier!");
-    iterator BBDF = Frontiers.find(BB);
-    Frontiers.erase(BBDF);
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      if (I->second.count(BB))
+        I->second.erase(BB);
+    Frontiers.erase(BB);
   }
 
   void addToFrontier(iterator I, BasicBlock *Node) {
