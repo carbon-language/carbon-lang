@@ -1723,11 +1723,12 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
-        SmallVector<Value *, 2> Args;
-        Args.push_back(new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI));
-        Args.push_back(new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI));
+        Value *Args[2] = {
+          new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI),
+          new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI)         
+        };
         new StoreInst(CI->getOperand(1), Args[1], CI);
-        new CallInst(NF, Args.begin(), Args.end(), "", CI);
+        new CallInst(NF, Args, Args + 2, "", CI);
         Value* foo = new LoadInst(Args[0], "vacopy.fix.3", CI);
         CI->replaceAllUsesWith(foo);
         CI->getParent()->getInstList().erase(CI);
