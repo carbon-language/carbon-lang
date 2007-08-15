@@ -20,6 +20,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
@@ -47,6 +48,7 @@ namespace {
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequired<DominatorTree>();
+      AU.addRequired<DominanceFrontier>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
     }
@@ -600,68 +602,80 @@ unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
 void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP, 
                                   BasicBlock *LiveBB) {
 
-  SmallVector<std::pair<BasicBlock *, succ_iterator>, 8> WorkList;
-  WorkList.push_back(std::make_pair(DeadBB, succ_begin(DeadBB)));
-  while (!WorkList.empty()) {
-    BasicBlock *BB = WorkList.back(). first; 
-    succ_iterator SIter = WorkList.back().second;
-
-    // If all successor's are processed then remove this block.
-    if (SIter == succ_end(BB)) {
-      WorkList.pop_back();
-      for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
-          BBI != BBE; ++BBI) {
-        Instruction *I = BBI;
-        I->replaceAllUsesWith(UndefValue::get(I->getType()));
-        I->eraseFromParent();
-      }
-      LPM->deleteSimpleAnalysisValue(BB, LP);
-      DT->eraseNode(BB);
-      DF->removeBlock(BB);
-      LI->removeBlock(BB);
-      BB->eraseFromParent();
-    } else {
-      BasicBlock *SuccBB = *SIter;
-      ++WorkList.back().second;
+  // First update DeadBB's dominance frontier. 
+  DominanceFrontier::iterator DeadBBDF = DF->find(DeadBB);
+  if (DeadBBDF != DF->end()) {
+    SmallVector<BasicBlock *, 8> PredBlocks;
+    
+    DominanceFrontier::DomSetType DeadBBSet = DeadBBDF->second;
+    for (DominanceFrontier::DomSetType::iterator DeadBBSetI = DeadBBSet.begin(),
+           DeadBBSetE = DeadBBSet.end(); DeadBBSetI != DeadBBSetE; ++DeadBBSetI) {
+      BasicBlock *FrontierBB = *DeadBBSetI;
       
-      if (DT->dominates(BB, SuccBB)) {
-        WorkList.push_back(std::make_pair(SuccBB, succ_begin(SuccBB)));
-        continue;
-      } else {
-        // If SuccBB is not dominated by BB then it is not removed, however remove
-        // any PHI incoming edge from BB.
-        for(BasicBlock::iterator SBI = SuccBB->begin(), SBE = SuccBB->end();
-            SBI != SBE; ++SBI) {
-          if (PHINode *PN = dyn_cast<PHINode>(SBI)) 
-            PN->removeIncomingValue(BB);
-          else
-            break;
-        }
-
-        DT->changeImmediateDominator(SuccBB, LiveBB);
-
-        // If BB is not dominating SuccBB then SuccBB is in BB's dominance
-        // frontiner. 
-        DominanceFrontier::iterator BBDF = DF->find(BB);
-        DF->removeFromFrontier(BBDF, SuccBB);
-
-        // LiveBB is now  dominating SuccBB. Which means SuccBB's dominance
-        // frontier is member of LiveBB's dominance frontier. However, SuccBB
-        // itself is not member of LiveBB's dominance frontier.
-        DominanceFrontier::iterator LiveDF = DF->find(LiveBB);
-        DominanceFrontier::iterator SuccDF = DF->find(SuccBB);
-        DominanceFrontier::DomSetType SuccBBSet = SuccDF->second;
-        for (DominanceFrontier::DomSetType::iterator SuccBBSetI = SuccBBSet.begin(),
-               SuccBBSetE = SuccBBSet.end(); SuccBBSetI != SuccBBSetE; ++SuccBBSetI) {
-          BasicBlock *DFMember = *SuccBBSetI;
-          // Insert only if LiveBB dominates DFMember.
-          if (!DT->dominates(LiveBB, DFMember))
-            LiveDF->second.insert(DFMember);
-        }
-
-        DF->removeFromFrontier(LiveDF, SuccBB);
+      // Rremove any PHI incoming edge from blocks dominated by DeadBB.
+      PredBlocks.clear();
+      for(pred_iterator PI = pred_begin(FrontierBB), PE = pred_end(FrontierBB);
+          PI != PE; ++PI) {
+        BasicBlock *P = *PI;
+        if (P == DeadBB || DT->dominates(DeadBB, P))
+          PredBlocks.push_back(P);
       }
+      
+      for(BasicBlock::iterator FBI = FrontierBB->begin(), FBE = FrontierBB->end();
+          FBI != FBE; ++FBI) {
+        if (PHINode *PN = dyn_cast<PHINode>(FBI)) {
+          for(SmallVector<BasicBlock *, 8>::iterator PI = PredBlocks.begin(),
+                PE = PredBlocks.end(); PI != PE; ++PI) {
+            BasicBlock *P = *PI;
+            PN->removeIncomingValue(P);
+          }
+        }
+        else
+          break;
+      }
+
+      DT->changeImmediateDominator(FrontierBB, LiveBB);
+
+      // LiveBB is now  dominating FrontierBB. Which means FrontierBB's dominance
+      // frontier is member of LiveBB's dominance frontier. However, FrontierBB
+      // itself is not member of LiveBB's dominance frontier.
+      DominanceFrontier::iterator LiveDF = DF->find(LiveBB);
+      DominanceFrontier::iterator FrontierDF = DF->find(FrontierBB);
+      DominanceFrontier::DomSetType FrontierBBSet = FrontierDF->second;
+      for (DominanceFrontier::DomSetType::iterator FrontierBBSetI = FrontierBBSet.begin(),
+             FrontierBBSetE = FrontierBBSet.end(); FrontierBBSetI != FrontierBBSetE; ++FrontierBBSetI) {
+        BasicBlock *DFMember = *FrontierBBSetI;
+        // Insert only if LiveBB dominates DFMember.
+        if (!DT->dominates(LiveBB, DFMember))
+          LiveDF->second.insert(DFMember);
+      }
+      LiveDF->second.erase(FrontierBB);
     }
+  }
+  
+  // Now remove DeadBB and all nodes dominated by DeadBB in df order.
+  SmallVector<BasicBlock *, 32> WorkList;
+  DomTreeNode *DN = DT->getNode(DeadBB);
+  for (df_iterator<DomTreeNode*> DI = df_begin(DN),
+         E = df_end(DN); DI != E; ++DI) {
+    BasicBlock *BB = DI->getBlock();
+    WorkList.push_back(BB);
+    BB->getTerminator()->eraseFromParent();
+  }
+
+  while (!WorkList.empty()) {
+    BasicBlock *BB = WorkList.back(); WorkList.pop_back();
+    for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
+        BBI != BBE; ++BBI) {
+      Instruction *I = BBI;
+      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+      I->eraseFromParent();
+    }
+    LPM->deleteSimpleAnalysisValue(BB, LP);
+    DT->eraseNode(BB);
+    DF->removeBlock(BB);
+    LI->removeBlock(BB);
+    BB->eraseFromParent();
   }
 }
 
