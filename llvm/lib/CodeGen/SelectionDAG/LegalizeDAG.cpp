@@ -5604,6 +5604,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::FP_ROUND:
     Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::FPROUND_F64_F32),Node,true,Hi);
     break;
+  case ISD::FPOWI:
+    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32)
+                                          ? RTLIB::POWI_F32 : RTLIB::POWI_F64),
+                       Node, false, Hi);
+    break;
   case ISD::FSQRT:
   case ISD::FSIN:
   case ISD::FCOS: {
