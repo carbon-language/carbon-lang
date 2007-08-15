@@ -781,12 +781,11 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
     
     BytesCallerReserves = StackSize;
   }
-  
+    
   RegSaveFrameIndex = 0xAAAAAAA;  // X86-64 only.
-  ReturnAddrIndex = 0;            // No return address slot generated yet.
 
-  MF.getInfo<X86MachineFunctionInfo>()
-    ->setBytesToPopOnReturn(BytesToPopOnReturn);
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  FuncInfo->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
@@ -1027,12 +1026,11 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
   VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
   RegSaveFrameIndex = 0xAAAAAAA;   // X86-64 only.
-  ReturnAddrIndex = 0;             // No return address slot generated yet.
   BytesToPopOnReturn = StackSize;  // Callee pops all stack arguments.
   BytesCallerReserves = 0;
 
-  MF.getInfo<X86MachineFunctionInfo>()
-    ->setBytesToPopOnReturn(BytesToPopOnReturn);
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  FuncInfo->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
@@ -1319,9 +1317,11 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
   ArgValues.push_back(Root);
 
-  ReturnAddrIndex = 0;     // No return address slot generated yet.
   BytesToPopOnReturn = 0;  // Callee pops nothing.
   BytesCallerReserves = StackSize;
+
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  FuncInfo->setBytesToPopOnReturn(BytesToPopOnReturn);
 
   // Return the new list of results.
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
@@ -1471,13 +1471,18 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
 
 SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  int ReturnAddrIndex = FuncInfo->getRAIndex();
+
   if (ReturnAddrIndex == 0) {
     // Set up a frame object for the return address.
-    MachineFunction &MF = DAG.getMachineFunction();
     if (Subtarget->is64Bit())
       ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(8, -8);
     else
       ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, -4);
+
+    FuncInfo->setRAIndex(ReturnAddrIndex);
   }
 
   return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());

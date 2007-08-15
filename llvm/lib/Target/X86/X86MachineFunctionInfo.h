@@ -44,17 +44,21 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// If the function requires additional name decoration, DecorationStyle holds
   /// the right way to do so.
   NameDecorationStyle DecorationStyle;
-  
+
+  // FrameIndex for return slot.
+  int ReturnAddrIndex;
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
                              CalleeSavedFrameSize(0),
                              BytesToPopOnReturn(0),
-                             DecorationStyle(None) {}
+                             DecorationStyle(None),
+                             ReturnAddrIndex(0) {}
   
   X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
                                                 CalleeSavedFrameSize(0),
                                                 BytesToPopOnReturn(0),
-                                                DecorationStyle(None) {}
+                                                DecorationStyle(None),
+                                                ReturnAddrIndex(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -67,7 +71,9 @@ public:
 
   NameDecorationStyle getDecorationStyle() const { return DecorationStyle; }
   void setDecorationStyle(NameDecorationStyle style) { DecorationStyle = style;}
-  
+
+  int getRAIndex() const { return ReturnAddrIndex; }
+  void setRAIndex(int Index) { ReturnAddrIndex = Index; }
 };
 } // End llvm namespace
 

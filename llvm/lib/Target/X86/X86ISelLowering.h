@@ -282,7 +282,6 @@ namespace llvm {
     int RegSaveFrameIndex;            // X86-64 vararg func register save area.
     unsigned VarArgsGPOffset;         // X86-64 vararg func int reg offset.
     unsigned VarArgsFPOffset;         // X86-64 vararg func fp reg offset.
-    int ReturnAddrIndex;              // FrameIndex for return slot.
     int BytesToPopOnReturn;           // Number of arg bytes ret should pop.
     int BytesCallerReserves;          // Number of arg bytes caller makes.
   public:
