@@ -2,7 +2,7 @@
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
 ; RUN: llvm-as < %s | llc -march=x86 | grep {\\(and\\)\\|\\(test.*\\\$1\\)} | \
-; RUN:   wc -l | grep 6
+; RUN:   count 6
 
 define i1 @test1(i32 %X) zeroext {
     %Y = trunc i32 %X to i1
