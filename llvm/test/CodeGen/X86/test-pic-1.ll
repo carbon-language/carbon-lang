@@ -3,7 +3,7 @@
 ; RUN: grep _GLOBAL_OFFSET_TABLE_ %t
 ; RUN: grep piclabel %t | count 3
 ; RUN: grep GOT %t | count 3
-; RUN: not grep GOTOFF %t | wc -l 
+; RUN: not grep GOTOFF %t
 
 @ptr = external global i32* 
 @dst = external global i32 

@@ -2,7 +2,7 @@
 ; fixed, the movb should go away as well.
 
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -relocation-model=static | \
-; RUN:   grep movl | wc -l
+; RUN:   grep movl
 
 %B = external global uint
 %C = external global ushort*
