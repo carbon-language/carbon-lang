@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=arm -o %t -f
-; RUN: grep -c ldrb %t | grep 4
-; RUN: grep -c strb %t | grep 4
+; RUN: grep ldrb %t | count 4
+; RUN: grep strb %t | count 4
 
 
 	%struct.p = type <{ i8, i32 }>

@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | \
 ; RUN:   opt -predsimplify -instcombine -simplifycfg  | llvm-dis > %t
 ; RUN: grep -v declare %t | not grep fail
-; RUN: grep -v declare %t | grep -c pass | grep 3
+; RUN: grep -v declare %t | grep pass | count 3
 
 int %test1(int %x, int %y) {
 entry:

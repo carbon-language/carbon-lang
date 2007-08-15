@@ -1,5 +1,5 @@
 // RUN: %llvmgxx -c -emit-llvm %s -o - | llvm-dis | grep llvm.global.annotations
-// RUN: %llvmgxx -c -emit-llvm %s -o - | llvm-dis | grep -c llvm.var.annotation | grep 3 
+// RUN: %llvmgxx -c -emit-llvm %s -o - | llvm-dis | grep llvm.var.annotation | count 3 
 
 #include <stdio.h>
 

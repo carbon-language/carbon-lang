@@ -1,6 +1,6 @@
 ; Test that the ExitInMainOptimization pass works correctly
 ; RUN: llvm-upgrade < %s | llvm-as | opt -simplify-libcalls | llvm-dis | \
-; RUN:    grep -c {ret i32 3} | grep 1
+; RUN:    grep {ret i32 3} | count 1
 ; END.
 
 declare void %exit(int)

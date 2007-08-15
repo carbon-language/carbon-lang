@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=arm-linux-gnueabi -o %t -f
-; RUN: grep -c set %t   | grep 5
-; RUN: grep -c globl %t | grep 4
-; RUN: grep -c weak %t  | grep 1
+; RUN: grep set %t   | count 5
+; RUN: grep globl %t | count 4
+; RUN: grep weak %t  | count 1
 
 @bar = external global i32
 @foo1 = alias i32* @bar

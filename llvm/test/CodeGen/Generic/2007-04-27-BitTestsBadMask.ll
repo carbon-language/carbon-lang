@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep -c je | grep 3
+; RUN: llvm-as < %s | llc -march=x86 | grep je | count 3
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep 4297064449
 ; PR 1325+
 

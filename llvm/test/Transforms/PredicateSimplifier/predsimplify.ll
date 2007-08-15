@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | \
 ; RUN:   opt -predsimplify -instcombine -simplifycfg | llvm-dis > %t
 ; RUN: grep -v declare %t | not grep fail 
-; RUN: grep -v declare %t | grep -c pass | grep 4
+; RUN: grep -v declare %t | grep pass | count 4
 
 void %test1(int %x) {
 entry:
