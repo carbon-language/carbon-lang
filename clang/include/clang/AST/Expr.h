@@ -375,6 +375,11 @@ public:
     Expr(ArraySubscriptExprClass, t),
     Base(base), Idx(idx), RBracketLoc(rbracketloc) {}
   
+  // NOTE: An array access can be written A[4] or 4[A] (both are equivalent).
+  // In the second case, getBase() actually returns the index and getIdx()
+  // returns the offset.  Only one of the subexpressions will have a pointer
+  // type (the base), so the second case can be identified using the
+  // expression getBase()->getType()->isPointerType().
   Expr *getBase() { return Base; }
   const Expr *getBase() const { return Base; }
   Expr *getIdx() { return Idx; }
