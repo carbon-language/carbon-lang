@@ -2,6 +2,9 @@
 // Random ideas for the X86 backend: SSE-specific stuff.
 //===---------------------------------------------------------------------===//
 
+- Consider eliminating the unaligned SSE load intrinsics, replacing them with
+  unaligned LLVM load instructions.
+
 //===---------------------------------------------------------------------===//
 
 Expand libm rounding functions inline:  Significant speedups possible.
