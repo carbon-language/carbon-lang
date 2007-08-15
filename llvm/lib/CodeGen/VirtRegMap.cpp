@@ -320,7 +320,7 @@ public:
     ModifyStackSlotOrReMat(SlotOrReMat);
     
     PhysRegsAvailable.insert(std::make_pair(Reg, SlotOrReMat));
-    SpillSlotsOrReMatsAvailable[SlotOrReMat] = (Reg << 1) | (unsigned)CanClobber;
+    SpillSlotsOrReMatsAvailable[SlotOrReMat]= (Reg << 1) | (unsigned)CanClobber;
   
     if (SlotOrReMat > VirtRegMap::MAX_STACK_SLOT)
       DOUT << "Remembering RM#" << SlotOrReMat-VirtRegMap::MAX_STACK_SLOT-1;
@@ -333,7 +333,8 @@ public:
   /// value of the specified stackslot register if it desires.  The specified
   /// stack slot must be available in a physreg for this query to make sense.
   bool canClobberPhysReg(int SlotOrReMat) const {
-    assert(SpillSlotsOrReMatsAvailable.count(SlotOrReMat) && "Value not available!");
+    assert(SpillSlotsOrReMatsAvailable.count(SlotOrReMat) &&
+           "Value not available!");
     return SpillSlotsOrReMatsAvailable.find(SlotOrReMat)->second & 1;
   }
   
@@ -347,9 +348,9 @@ public:
   /// it and any of its aliases.
   void ClobberPhysReg(unsigned PhysReg);
 
-  /// ModifyStackSlotOrReMat - This method is called when the value in a stack slot
-  /// changes.  This removes information about which register the previous value
-  /// for this slot lives in (as the previous value is dead now).
+  /// ModifyStackSlotOrReMat - This method is called when the value in a stack
+  /// slot changes.  This removes information about which register the previous
+  /// value for this slot lives in (as the previous value is dead now).
   void ModifyStackSlotOrReMat(int SlotOrReMat);
 };
 }
@@ -409,11 +410,12 @@ void AvailableSpills::ClobberPhysReg(unsigned PhysReg) {
   ClobberPhysRegOnly(PhysReg);
 }
 
-/// ModifyStackSlotOrReMat - This method is called when the value in a stack slot
-/// changes.  This removes information about which register the previous value
-/// for this slot lives in (as the previous value is dead now).
+/// ModifyStackSlotOrReMat - This method is called when the value in a stack
+/// slot changes.  This removes information about which register the previous
+/// value for this slot lives in (as the previous value is dead now).
 void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
-  std::map<int, unsigned>::iterator It = SpillSlotsOrReMatsAvailable.find(SlotOrReMat);
+  std::map<int, unsigned>::iterator It =
+    SpillSlotsOrReMatsAvailable.find(SlotOrReMat);
   if (It == SpillSlotsOrReMatsAvailable.end()) return;
   unsigned Reg = It->second >> 1;
   SpillSlotsOrReMatsAvailable.erase(It);
@@ -557,8 +559,8 @@ namespace {
 
     ReusedOp(unsigned o, unsigned ss, unsigned prr, unsigned apr,
              unsigned vreg)
-      : Operand(o), StackSlotOrReMat(ss), PhysRegReused(prr), AssignedPhysReg(apr),
-      VirtReg(vreg) {}
+      : Operand(o), StackSlotOrReMat(ss), PhysRegReused(prr),
+        AssignedPhysReg(apr), VirtReg(vreg) {}
   };
   
   /// ReuseInfo - This maintains a collection of ReuseOp's for each operand that
@@ -976,6 +978,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     // If we have folded references to memory operands, make sure we clear all
     // physical registers that may contain the value of the spilled virtual
     // register
+    SmallSet<int, 1> FoldedSS;
     for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
       DOUT << "Folded vreg: " << I->second.first << "  MR: "
            << I->second.second;
@@ -986,6 +989,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         continue;
       }
       int SS = VRM.getStackSlot(VirtReg);
+      FoldedSS.insert(SS);
       DOUT << " - StackSlot: " << SS << "\n";
       
       // If this folded instruction is just a use, check to see if it's a
@@ -1093,9 +1097,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           int FrameIdx;
           if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
             assert(DestReg == VirtReg && "Unknown load situation!");
-            
+
+            // If it is a folded reference, then it's not safe to clobber.
+            bool Folded = FoldedSS.count(FrameIdx);
             // Otherwise, if it wasn't available, remember that it is now!
-            Spills.addAvailable(FrameIdx, &MI, DestReg);
+            Spills.addAvailable(FrameIdx, &MI, DestReg, !Folded);
             goto ProcessNextInst;
           }
             
