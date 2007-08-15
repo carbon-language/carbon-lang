@@ -1,19 +1,19 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fabs | wc -l | grep 2
+; RUN:   grep fabs | count 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fmscs | wc -l | grep 1
+; RUN:   grep fmscs | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fcvt | wc -l | grep 2
+; RUN:   grep fcvt | count 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fuito | wc -l | grep 2
+; RUN:   grep fuito | count 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fto.i | wc -l | grep 4
+; RUN:   grep fto.i | count 4
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep bmi | wc -l | grep 1
+; RUN:   grep bmi | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep bgt | wc -l | grep 1
+; RUN:   grep bgt | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fcmpezs | wc -l | grep 1
+; RUN:   grep fcmpezs | count 1
 
 void %test(float *%P, double* %D) {
   %A = load float* %P

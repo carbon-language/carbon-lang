@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 > %t
-; RUN: grep shuf %t | wc -l | grep 2
+; RUN: grep shuf %t | count 2
 ; RUN: not grep unpck %t
 void %test(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B, <4 x float>* %C) {
 	%tmp3 = load <4 x float>* %B

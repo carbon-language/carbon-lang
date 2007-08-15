@@ -4,8 +4,8 @@
 ; RUN: grep movgt %t
 ; RUN: grep movge %t
 ; RUN: grep movne %t
-; RUN: grep fcmped %t | wc -l | grep 1
-; RUN: grep fcmpes %t | wc -l | grep 6
+; RUN: grep fcmped %t | count 1
+; RUN: grep fcmpes %t | count 6
 
 int %f1(float %a) {
 entry:

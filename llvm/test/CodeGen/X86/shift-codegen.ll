@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -relocation-model=static -march=x86 | \
-; RUN:   grep {shll	\$3} | wc -l | grep 2
+; RUN:   grep {shll	\$3} | count 2
 
 ; This should produce two shll instructions, not any lea's.
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep xorps | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep xorps | count 2
 
 void %foo(<4 x float> *%P) {
 	%T = load <4 x float> * %P

@@ -4,7 +4,7 @@
 ; RUN: not grep srawi %t 
 ; RUN: not grep srwi %t 
 ; RUN: not grep slwi %t 
-; RUN: grep rlwinm %t | wc -l | grep 8
+; RUN: grep rlwinm %t | count 8
 
 implementation   ; Functions:
 

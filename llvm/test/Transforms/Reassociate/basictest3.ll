@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -gcse | llvm-dis | grep add | wc -l | grep 6
+; RUN: llvm-upgrade < %s | llvm-as | opt -reassociate -gcse | llvm-dis | grep add | count 6
 ; Each of these functions should turn into two adds each.
 
 %e = external global int

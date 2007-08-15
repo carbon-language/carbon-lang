@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*baz | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*quux | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*baz | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*quux | count 1
 ; Check that calls to baz and quux are tail-merged.
 
 ; ModuleID = 'tail.c'

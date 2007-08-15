@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    grep {ret i32 %.toremerge} | wc -l | grep 2
+; RUN:    grep {ret i32 %.toremerge} | count 2
 ;; Simple sinking tests
 
 ; "if then else"

@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep movss  %t | wc -l | grep 1
-; RUN: grep pinsrw %t | wc -l | grep 2
+; RUN: grep movss  %t | count 1
+; RUN: grep pinsrw %t | count 2
 
 void %test(<4 x float>* %F, int %I) {
 	%tmp = load <4 x float>* %F

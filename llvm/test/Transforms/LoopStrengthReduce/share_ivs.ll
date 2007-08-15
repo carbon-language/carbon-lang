@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | count 1
 
 ; This testcase should have ONE stride 18 indvar, the other use should have a
 ; loop invariant value (B) added to it inside of the loop, instead of having

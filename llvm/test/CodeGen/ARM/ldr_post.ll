@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {ldr.*\\\[.*\],} | wc -l | grep 1
+; RUN:   grep {ldr.*\\\[.*\],} | count 1
 
 int %test(int %a, int %b, int %c) {
 	%tmp1 = mul int %a, %b

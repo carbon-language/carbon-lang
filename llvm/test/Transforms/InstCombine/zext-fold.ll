@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {zext } | wc -l | grep 1
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {zext } | count 1
 ; PR1570
 ; XFAIL: *
 

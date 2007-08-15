@@ -2,8 +2,8 @@
 
 ; RUN: llvm-upgrade < %s | llvm-as | \
 ; RUN:   opt -instcombine -reassociate -instcombine | llvm-dis -o %t 
-; RUN: grep mul %t | wc -l | grep 1
-; RUN: grep add %t | wc -l | grep 1
+; RUN: grep mul %t | count 1
+; RUN: grep add %t | count 1
 
 int %main(int %t) {
         %tmp.3 = mul int %t, 12         ; <int> [#uses=1]

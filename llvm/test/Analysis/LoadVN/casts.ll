@@ -1,7 +1,7 @@
 ; Check to make sure that Value Numbering doesn't merge casts of different
 ; flavors.
 ; RUN: llvm-upgrade < %s | llvm-as | opt -load-vn -gcse | llvm-dis | \
-; RUN:   grep {\[sz\]ext} | wc -l | grep 2
+; RUN:   grep {\[sz\]ext} | count 2
 
 declare void %external(int)
 

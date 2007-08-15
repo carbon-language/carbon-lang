@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:   grep shufflevec | wc -l | grep 1
+; RUN:   grep shufflevec | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
 ; RUN:   not grep insertelement
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \

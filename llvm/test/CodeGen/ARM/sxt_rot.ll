@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
-; RUN:   grep sxtb  | wc -l | grep 1
+; RUN:   grep sxtb | count 1
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
-; RUN:   grep sxtab | wc -l | grep 1
+; RUN:   grep sxtab | count 1
 
 define i8 @test1(i32 %A) signext {
 	%B = lshr i32 %A, 8

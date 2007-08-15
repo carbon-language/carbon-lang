@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
-; RUN:   grep smmul | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep umull | wc -l | grep 1
+; RUN:   grep smmul | count 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep umull | count 1
 
 int %smulhi(int %x, int %y) {
         %tmp = cast int %x to ulong             ; <ulong> [#uses=1]

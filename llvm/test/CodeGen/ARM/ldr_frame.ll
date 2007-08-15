@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=arm | not grep mov
-; RUN: llvm-as < %s | llc -march=thumb | grep cpy | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=thumb | grep cpy | count 2
 
 define i32 @f1() {
 	%buf = alloca [32 x i32], align 4

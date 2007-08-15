@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mcpu=i686 | grep jmp | wc -l | grep 1
+; RUN: llvm-as < %s | llc -mcpu=i686 | grep jmp | count 1
 ; check that branch folding understands FP_REG_KILL is not a branch
 ; the remaining jmp can be removed if we take advantage of knowing
 ; abort does not return

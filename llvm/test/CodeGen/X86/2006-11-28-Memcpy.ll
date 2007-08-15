@@ -1,8 +1,8 @@
 ; PR1022, PR1023
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
-; RUN:   grep 3721182122 | wc -l | grep 2
+; RUN:   grep 3721182122 | count 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
-; RUN:   grep -E {movl	_?bytes2} | wc -l | grep 1
+; RUN:   grep -E {movl	_?bytes2} | count 1
 
 %fmt = constant [4 x sbyte] c"%x\0A\00"
 %bytes = constant [4 x sbyte] c"\AA\BB\CC\DD"

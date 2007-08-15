@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:    grep {call.*llvm.bswap} | wc -l | grep 5
+; RUN:    grep {call.*llvm.bswap} | count 5
 ; END.
 
 uint %test1(uint %i) {

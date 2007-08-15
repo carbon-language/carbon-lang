@@ -1,5 +1,5 @@
 ; Check that this test makes INDVAR and related stuff dead.
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | count 2
 
 declare bool %pred()
 

@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse1,+sse2 | \
-; RUN:   grep mins | wc -l | grep 3
+; RUN:   grep mins | count 3
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse1,+sse2 | \
-; RUN:   grep maxs | wc -l | grep 2
+; RUN:   grep maxs | count 2
 
 declare bool %llvm.isunordered.f64( double %x, double %y )
 declare bool %llvm.isunordered.f32( float %x, float %y )

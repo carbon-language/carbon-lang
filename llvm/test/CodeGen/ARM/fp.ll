@@ -1,10 +1,10 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+vfp2 > %t
-; RUN: grep fmsr %t | wc -l | grep 4
+; RUN: grep fmsr %t | count 4
 ; RUN: grep fsitos %t
-; RUN: grep fmrs %t | wc -l | grep 2
+; RUN: grep fmrs %t | count 2
 ; RUN: grep fsitod %t
-; RUN: grep fmrrd %t | wc -l | grep 5
-; RUN: grep fmdrr %t | wc -l | grep 2
+; RUN: grep fmrrd %t | count 5
+; RUN: grep fmdrr %t | count 2
 ; RUN: grep fldd %t
 ; RUN: grep fuitod %t
 ; RUN: grep fuitos %t

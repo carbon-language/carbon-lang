@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps | count 2
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep andnps
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | count 2
 
 define void @t(<4 x float> %A) {
 	%tmp1277 = sub <4 x float> < float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00 >, %A

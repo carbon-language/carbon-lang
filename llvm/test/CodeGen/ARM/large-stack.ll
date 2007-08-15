@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=arm
-; RUN: llvm-as < %s | llc -march=thumb | grep {ldr.*LCP} | wc -l | grep 5
+; RUN: llvm-as < %s | llc -march=thumb | grep {ldr.*LCP} | count 5
 
 define void @test1() {
     %tmp = alloca [ 64 x i32 ] , align 4

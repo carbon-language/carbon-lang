@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | \
-; RUN:   grep movsd | wc -l | grep 1
+; RUN:   grep movsd | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah | \
 ; RUN:   grep ucomisd
 declare bool %llvm.isunordered.f64(double,double)

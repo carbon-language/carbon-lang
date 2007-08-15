@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
-; RUN:   grep pop | wc -l | grep 2
+; RUN:   grep pop | count 2
 
 %str = internal constant [4 x sbyte] c"%d\0A\00"		; <[4 x sbyte]*> [#uses=1]
 

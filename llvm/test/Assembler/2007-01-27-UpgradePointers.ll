@@ -1,6 +1,6 @@
 ; PR1137
 ; RUN: llvm-upgrade < %s | llvm-as -o /dev/null -f
-; RUN: llvm-upgrade < %s | grep {tmp = alloca} | wc -l | grep 1
+; RUN: llvm-upgrade < %s | grep {tmp = alloca} | count 1
 ;
 target datalayout = "e-p:32:32"
 target endian = little

@@ -1,10 +1,10 @@
 ; Test that vectors are scalarized/lowered correctly.
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g3 | \
-; RUN:    grep stfs | wc -l | grep 4
+; RUN:    grep stfs | count 4
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 -o %t -f
-; RUN: grep vspltw %t | wc -l | grep 2
-; RUN: grep vsplti %t | wc -l | grep 3
-; RUN: grep vsplth %t | wc -l | grep 1
+; RUN: grep vspltw %t | count 2
+; RUN: grep vsplti %t | count 3
+; RUN: grep vsplth %t | count 1
 
 %f4 = type <4 x float>
 %i4 = type <4 x int>

@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
-; RUN:   grep {A(} | wc -l | grep 1
+; RUN:   grep {A(} | count 1
 ;
 ; Make sure the common loop invariant _A(reg) is hoisted up to preheader.
 

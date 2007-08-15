@@ -1,21 +1,21 @@
 ;test all the shifted and signextending adds and subs with and without consts
 ;
 ; RUN: llvm-as < %s | llc -march=alpha -o %t.s -f
-; RUN: grep {	addl} %t.s | wc -l | grep 2
-; RUN: grep {	addq} %t.s | wc -l | grep 2
-; RUN: grep {	subl} %t.s | wc -l | grep 2
-; RUN: grep {	subq} %t.s | wc -l | grep 1
+; RUN: grep {	addl} %t.s | count 2
+; RUN: grep {	addq} %t.s | count 2
+; RUN: grep {	subl} %t.s | count 2
+; RUN: grep {	subq} %t.s | count 1
 ;
-; RUN: grep {lda \$0,-100(\$16)} %t.s | wc -l | grep 1
-; RUN: grep {s4addl} %t.s | wc -l | grep 2
-; RUN: grep {s8addl} %t.s | wc -l | grep 2
-; RUN: grep {s4addq} %t.s | wc -l | grep 2
-; RUN: grep {s8addq} %t.s | wc -l | grep 2
+; RUN: grep {lda \$0,-100(\$16)} %t.s | count 1
+; RUN: grep {s4addl} %t.s | count 2
+; RUN: grep {s8addl} %t.s | count 2
+; RUN: grep {s4addq} %t.s | count 2
+; RUN: grep {s8addq} %t.s | count 2
 ;
-; RUN: grep {s4subl} %t.s | wc -l | grep 2
-; RUN: grep {s8subl} %t.s | wc -l | grep 2
-; RUN: grep {s4subq} %t.s | wc -l | grep 2
-; RUN: grep {s8subq} %t.s | wc -l | grep 2
+; RUN: grep {s4subl} %t.s | count 2
+; RUN: grep {s8subl} %t.s | count 2
+; RUN: grep {s4subq} %t.s | count 2
+; RUN: grep {s8subq} %t.s | count 2
 
 
 define i32 @al(i32 signext %x.s, i32 signext %y.s) signext {

@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | \
-; RUN:   grep {sh\[lr\]d} | wc -l | grep 5
+; RUN:   grep {sh\[lr\]d} | count 5
 
 long %test1(long %X, ubyte %C) {
 	%Y = shl long %X, ubyte %C

@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm | grep bic | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=arm | grep bic | count 2
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | \
-; RUN:   grep fneg | wc -l | grep 2
+; RUN:   grep fneg | count 2
 
 define float @test1(float %x, double %y) {
 	%tmp = fpext float %x to double

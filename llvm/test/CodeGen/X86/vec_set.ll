@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep punpckl | wc -l | grep 7
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep punpckl | count 7
 
 void %test(<8 x short>* %b, short %a0, short %a1, short %a2, short %a3, short %a4, short %a5, short %a6, short %a7) {
 	%tmp = insertelement <8 x short> zeroinitializer, short %a0, uint 0

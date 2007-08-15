@@ -1,17 +1,17 @@
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xglobWeak | grep linkonce | wc -l | grep 1
+// RUN:   grep xglobWeak | grep linkonce | count 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xextWeak | grep linkonce | wc -l | grep 1
+// RUN:   grep xextWeak | grep linkonce | count 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xWeaknoinline | grep weak | wc -l | grep 1
+// RUN:   grep xWeaknoinline | grep weak | count 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xWeakextnoinline | grep weak | wc -l | grep 1
+// RUN:   grep xWeakextnoinline | grep weak | count 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xglobnoWeak | grep linkonce | wc -l | grep 1
+// RUN:   grep xglobnoWeak | grep linkonce | count 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xstatnoWeak | grep internal | wc -l | grep 1
+// RUN:   grep xstatnoWeak | grep internal | count 1
 // RUN: %llvmgxx %s -S -emit-llvm -O0 -o - | grep define | \
-// RUN:   grep xextnoWeak | grep linkonce | wc -l | grep 1
+// RUN:   grep xextnoWeak | grep linkonce | count 1
 inline int xglobWeak(int) __attribute__((weak));
 inline int xglobWeak (int i) {
   return i*2;

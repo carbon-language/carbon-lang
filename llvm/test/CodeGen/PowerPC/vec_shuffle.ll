@@ -1,11 +1,11 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | \
 ; RUN:   llc -march=ppc32 -mcpu=g5 | not grep vperm
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 > %t 
-; RUN: grep vsldoi  %t | wc -l | grep 2
-; RUN: grep vmrgh   %t | wc -l | grep 7
-; RUN: grep vmrgl   %t | wc -l | grep 6
-; RUN: grep vpkuhum %t | wc -l | grep 1
-; RUN: grep vpkuwum %t | wc -l | grep 1
+; RUN: grep vsldoi  %t | count 2
+; RUN: grep vmrgh   %t | count 7
+; RUN: grep vmrgl   %t | count 6
+; RUN: grep vpkuhum %t | count 1
+; RUN: grep vpkuwum %t | count 1
 
 void %VSLDOI_xy(<8 x short>* %A, <8 x short>* %B) {
 entry:

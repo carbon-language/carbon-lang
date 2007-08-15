@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=powerpc64-apple-darwin | grep extsw | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=powerpc64-apple-darwin | grep extsw | count 2
 
 %lens = external global ubyte*
 %vals = external global int*

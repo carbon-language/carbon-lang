@@ -1,20 +1,20 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep -- {-2147483648} | wc -l | grep 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | wc -l | grep 3
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adds | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adc | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep {subs } | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep sbc | wc -l | grep 1
+; RUN:   grep -- {-2147483648} | count 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep mvn | count 3
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adds | count 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep adc | count 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep {subs } | count 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | grep sbc | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep smull | wc -l | grep 1
+; RUN:   grep smull | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep umull | wc -l | grep 1 
+; RUN:   grep umull | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
-; RUN:   grep mvn | wc -l | grep 1 
+; RUN:   grep mvn | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
-; RUN:   grep adc | wc -l | grep 1 
+; RUN:   grep adc | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | \
-; RUN:   grep sbc | wc -l | grep 1 
+; RUN:   grep sbc | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=thumb | grep __muldi3
 ; END.
 

@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep mul | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep mul | count 1
 ; LSR should not make two copies of the Q*L expression in the preheader!
 
 sbyte %test(sbyte* %A, sbyte* %B, int %L, int %Q, int %N.s) {

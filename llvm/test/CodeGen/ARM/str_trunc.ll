@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep strb | wc -l | grep 1
+; RUN:   grep strb | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep strh | wc -l | grep 1
+; RUN:   grep strh | count 1
 
 void %test1(int %v, short* %ptr) {
         %tmp = cast int %v to short

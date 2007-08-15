@@ -2,10 +2,10 @@
 ; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
-; RUN:   grep cmpne | wc -l | grep 1
+; RUN:   grep cmpne | count 1
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
-; RUN:   grep ldmhi | wc -l | grep 1
+; RUN:   grep ldmhi | count 1
 
 define void @foo(i32 %X, i32 %Y) {
 entry:

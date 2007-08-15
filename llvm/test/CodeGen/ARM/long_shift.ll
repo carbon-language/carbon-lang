@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=thumb
 ; RUN: llvm-as < %s | llc -march=arm > %t
-; RUN: grep rrx %t | wc -l | grep 1
+; RUN: grep rrx %t | count 1
 ; RUN: grep __ashldi3 %t
 ; RUN: grep __ashrdi3 %t
 ; RUN: grep __lshrdi3 %t

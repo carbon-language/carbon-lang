@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep cmp | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep cmp | count 1
 ; PR964
 
 sbyte* %FindChar(sbyte* %CurPtr) {

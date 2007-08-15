@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep min | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=x86-64 | grep max | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=x86-64 | grep mov | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep min | count 1
+; RUN: llvm-as < %s | llc -march=x86-64 | grep max | count 1
+; RUN: llvm-as < %s | llc -march=x86-64 | grep mov | count 2
 
 declare float @bar()
 

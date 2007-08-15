@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxlt | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxgt | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxge | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxlt | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxgt | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bxge | count 1
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 	%tmp2 = icmp sgt i32 %c, 10

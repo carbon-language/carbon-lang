@@ -1,5 +1,5 @@
 ; There should be exactly two calls here (memset and malloc), no more.
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep jsr | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep jsr | count 2
 
 %typedef.bc_struct = type opaque
 

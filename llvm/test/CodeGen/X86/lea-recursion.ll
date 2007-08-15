@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep lea | wc -l | grep 12
+; RUN: llvm-as < %s | llc -march=x86-64 | grep lea | count 12
 
 ; This testcase was written to demonstrate an instruction-selection problem,
 ; however it also happens to expose a limitation in the DAGCombiner's

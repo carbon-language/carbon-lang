@@ -1,9 +1,9 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
-; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | wc -l | grep 4
+; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | count 4
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwinm
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep rlwimi
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | \
-; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | wc -l | grep 4
+; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | count 4
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | not grep rlwinm
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc64 | not grep rlwimi
 

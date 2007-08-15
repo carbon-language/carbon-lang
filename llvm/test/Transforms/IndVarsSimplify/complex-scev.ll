@@ -1,7 +1,7 @@
 ; The i induction variable looks like a wrap-around, but it really is just
 ; a simple affine IV.  Make sure that indvars eliminates it.
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep phi | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -indvars | llvm-dis | grep phi | count 1
 
 void %foo() {
 entry:

@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep movlhps %t | wc -l | grep 1 
-; RUN: grep movhlps %t | wc -l | grep 1
+; RUN: grep movlhps %t | count 1
+; RUN: grep movhlps %t | count 1
 
 <4 x float> %test1(<4 x float>* %x, <4 x float>* %y) {
 	%tmp = load <4 x float>* %y

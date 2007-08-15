@@ -3,7 +3,7 @@
 ; RUN: not grep mulhwu %t
 ; RUN: not grep srawi %t 
 ; RUN: not grep add %t 
-; RUN: grep mulhw %t | wc -l | grep 1
+; RUN: grep mulhw %t | count 1
 
 implementation   ; Functions:
 

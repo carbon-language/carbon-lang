@@ -1,13 +1,13 @@
 ; RUN: llvm-as < %s | llc -march=x86 -o %t -f
-; RUN: grep jb %t | wc -l | grep 1
-; RUN: grep \\\$6 %t | wc -l | grep 2 
-; RUN: grep 1024 %t | wc -l | grep 1 
-; RUN: grep 1023 %t | wc -l | grep 1 
-; RUN: grep 119  %t | wc -l | grep 1 
-; RUN: grep JTI %t | wc -l | grep 2 
-; RUN: grep jg %t | wc -l | grep 1 
-; RUN: grep ja %t | wc -l | grep 1 
-; RUN: grep js %t | wc -l | grep 1
+; RUN: grep jb %t | count 1
+; RUN: grep \\\$6 %t | count 2
+; RUN: grep 1024 %t | count 1
+; RUN: grep 1023 %t | count 1
+; RUN: grep 119  %t | count 1
+; RUN: grep JTI %t | count 2
+; RUN: grep jg %t | count 1
+; RUN: grep ja %t | count 1
+; RUN: grep js %t | count 1
 
 target triple = "i686-pc-linux-gnu"
 

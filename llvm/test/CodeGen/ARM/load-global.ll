@@ -3,13 +3,13 @@
 ; RUN:   not grep {L_G\$non_lazy_ptr}
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=arm-apple-darwin -relocation-model=dynamic-no-pic | \
-; RUN:   grep {L_G\$non_lazy_ptr} | wc -l | grep 2
+; RUN:   grep {L_G\$non_lazy_ptr} | count 2
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=arm-apple-darwin -relocation-model=pic | \
-; RUN:   grep {ldr.*pc} | wc -l | grep 1
+; RUN:   grep {ldr.*pc} | count 1
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -mtriple=arm-linux-gnueabi -relocation-model=pic | \
-; RUN:   grep {GOT} | wc -l | grep 1
+; RUN:   grep {GOT} | count 1
 
 @G = external global i32
 

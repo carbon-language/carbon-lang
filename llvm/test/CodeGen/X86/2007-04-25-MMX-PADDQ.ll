@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -o - -march=x86 -mattr=+mmx | grep paddq | wc -l | grep 2
-; RUN: llvm-as < %s | llc -o - -march=x86 -mattr=+mmx | grep movq | wc -l | grep 3
+; RUN: llvm-as < %s | llc -o - -march=x86 -mattr=+mmx | grep paddq | count 2
+; RUN: llvm-as < %s | llc -o - -march=x86 -mattr=+mmx | grep movq | count 3
 
 define <1 x i64> @unsigned_add3(<1 x i64>* %a, <1 x i64>* %b, i32 %count) {
 entry:

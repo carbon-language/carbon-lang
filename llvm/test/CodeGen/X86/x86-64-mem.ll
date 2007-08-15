@@ -1,13 +1,13 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -mtriple=x86_64-apple-darwin -o %t1 -f
-; RUN: grep GOTPCREL %t1 | wc -l | grep 4 
-; RUN: grep rip      %t1 | wc -l | grep 6 
-; RUN: grep movq     %t1 | wc -l | grep 6 
-; RUN: grep leaq     %t1 | wc -l | grep 1 
+; RUN: grep GOTPCREL %t1 | count 4
+; RUN: grep rip      %t1 | count 6
+; RUN: grep movq     %t1 | count 6
+; RUN: grep leaq     %t1 | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | \
 ; RUN:   llc -mtriple=x86_64-pc-linux -relocation-model=static -o %t2 -f
-; RUN: grep rip  %t2 | wc -l | grep 4 
-; RUN: grep movl %t2 | wc -l | grep 2 
-; RUN: grep movq %t2 | wc -l | grep 2
+; RUN: grep rip  %t2 | count 4
+; RUN: grep movl %t2 | count 2
+; RUN: grep movq %t2 | count 2
 
 %ptr = external global int*
 %src = external global [0 x int]

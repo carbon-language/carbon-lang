@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstpl | wc -l | grep 4
-; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstps | wc -l | grep 3
+; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstpl | count 4
+; RUN: llvm-as < %s | llc -mcpu=i486 | grep fstps | count 3
 
 ; ModuleID = '<stdin>'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"

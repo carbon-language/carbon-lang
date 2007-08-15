@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep pshufhw %t | wc -l | grep 1
-; RUN: grep pshuflw %t | wc -l | grep 1
-; RUN: grep movhps  %t | wc -l | grep 1
+; RUN: grep pshufhw %t | count 1
+; RUN: grep pshuflw %t | count 1
+; RUN: grep movhps  %t | count 1
 
 void %test1(<2 x long>* %res, <2 x long>* %A) {
 	%tmp = load <2 x long>* %A

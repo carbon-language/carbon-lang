@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep fmul | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=ppc32 | grep fmul | count 2
 ; RUN: llvm-as < %s | llc -march=ppc32 -enable-unsafe-fp-math | \
-; RUN:   grep fmul | wc -l | grep 1
+; RUN:   grep fmul | count 1
 
 define double @foo(double %X) {
         %tmp1 = mul double %X, 1.23

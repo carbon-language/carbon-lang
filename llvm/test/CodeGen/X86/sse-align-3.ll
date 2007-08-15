@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movap | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep movap | count 2
 
 define void @foo(<4 x float>* %p, <4 x float> %x)
 {

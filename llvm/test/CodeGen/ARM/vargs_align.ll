@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
-; RUN:   grep {add sp, sp, #16} | wc -l | grep 1
+; RUN:   grep {add sp, sp, #16} | count 1
 ; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnu | \
-; RUN:   grep {add sp, sp, #12} | wc -l | grep 2
+; RUN:   grep {add sp, sp, #12} | count 2
 
 define i32 @f(i32 %a, ...) {
 entry:

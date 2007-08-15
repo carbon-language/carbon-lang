@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep shufps %t | wc -l | grep 1
-; RUN: grep pshufd %t | wc -l | grep 1
+; RUN: grep shufps %t | count 1
+; RUN: grep pshufd %t | count 1
 
 <4 x float> %test(float %a) {
 	%tmp = insertelement <4 x float> zeroinitializer, float %a, uint 1

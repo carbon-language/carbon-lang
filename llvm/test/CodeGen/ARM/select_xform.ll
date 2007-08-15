@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=arm
-; RUN: llvm-as < %s | llc -march=arm | grep mov | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=arm | grep mov | count 2
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) {
         %tmp1 = icmp sgt i32 %c, 10

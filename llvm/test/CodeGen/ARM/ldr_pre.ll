@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {ldr.*\\!}  | wc -l | grep 2
+; RUN:   grep {ldr.*\\!} | count 2
 
 int *%test1(int *%X, int *%dest) {
         %Y = getelementptr int* %X, int 4

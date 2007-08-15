@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movq | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movq | count 1
 
 <2 x long> %test(<2 x long>* %p) {
 	%tmp = cast <2 x long>* %p to double*

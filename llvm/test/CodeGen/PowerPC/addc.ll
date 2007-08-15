@@ -1,10 +1,10 @@
 ; All of these should be codegen'd without loading immediates
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -o %t -f
-; RUN: grep addc %t | wc -l | grep 1
-; RUN: grep adde %t | wc -l | grep 1
-; RUN: grep addze %t | wc -l | grep 1
-; RUN: grep addme %t | wc -l | grep 1
-; RUN: grep addic %t | wc -l | grep 2
+; RUN: grep addc %t | count 1
+; RUN: grep adde %t | count 1
+; RUN: grep addze %t | count 1
+; RUN: grep addme %t | count 1
+; RUN: grep addic %t | count 2
 
 implementation   ; Functions:
 

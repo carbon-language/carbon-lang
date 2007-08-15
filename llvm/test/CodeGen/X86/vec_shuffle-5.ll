@@ -1,6 +1,6 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t  -f
-; RUN: grep movhlps %t | wc -l | grep 1
-; RUN: grep shufps  %t | wc -l | grep 1
+; RUN: grep movhlps %t | count 1
+; RUN: grep shufps  %t | count 1
 
 void %test() {
 	%tmp1 = load <4 x float>* null

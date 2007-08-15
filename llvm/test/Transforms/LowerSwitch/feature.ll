@@ -1,7 +1,7 @@
 ; RUN: llvm-as %s -o - | opt -lowerswitch | llvm-dis > %t
-; RUN: grep slt %t | wc -l | grep 10
-; RUN: grep ule %t | wc -l | grep 3
-; RUN: grep eq  %t | wc -l | grep 9
+; RUN: grep slt %t | count 10
+; RUN: grep ule %t | count 3
+; RUN: grep eq  %t | count 9
 
 define i32 @main(i32 %tmp158) {
 entry:

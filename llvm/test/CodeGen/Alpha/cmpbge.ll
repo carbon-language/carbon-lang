@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep cmpbge | wc -l | grep 2
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | grep cmpbge | count 2
 
 bool %test1(ulong %A, ulong %B) {
 	%C = and ulong %A, 255

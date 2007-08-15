@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {ldr r0} | wc -l | grep 3
+; RUN:   grep {ldr r0} | count 3
 
 int %f1(int* %v) {
 entry:

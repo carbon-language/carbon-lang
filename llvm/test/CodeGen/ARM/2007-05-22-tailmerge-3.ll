@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=arm | grep bl.*baz | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm | grep bl.*quux | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 | grep bl.*baz | wc -l | grep 2
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 | grep bl.*quux | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=arm | grep bl.*baz | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep bl.*quux | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 | grep bl.*baz | count 2
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 | grep bl.*quux | count 2
 ; Check that tail merging is the default on ARM, and that -enable-tail-merge=0 works.
 
 ; ModuleID = 'tail.c'

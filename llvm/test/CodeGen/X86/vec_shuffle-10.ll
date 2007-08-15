@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
-; RUN:   grep unpcklps | wc -l | grep 1
+; RUN:   grep unpcklps | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
-; RUN:   grep unpckhps | wc -l | grep 1
+; RUN:   grep unpckhps | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | \
 ; RUN:   not grep {sub.*esp}
 

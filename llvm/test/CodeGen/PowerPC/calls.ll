@@ -1,11 +1,11 @@
 ; Test various forms of calls.
 
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
-; RUN:   grep {bl } | wc -l | grep 2
+; RUN:   grep {bl } | count 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
-; RUN:   grep {bctrl} | wc -l | grep 1
+; RUN:   grep {bctrl} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
-; RUN:   grep {bla } | wc -l | grep 1
+; RUN:   grep {bla } | count 1
 
 declare void %foo()
 

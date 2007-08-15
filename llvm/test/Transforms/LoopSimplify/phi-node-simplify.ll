@@ -1,5 +1,5 @@
 ; Loop Simplify should turn phi nodes like X = phi [X, Y]  into just Y, eliminating them.
-; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify | llvm-dis | grep phi | wc -l | grep 6
+; RUN: llvm-upgrade < %s | llvm-as | opt -loopsimplify | llvm-dis | grep phi | count 6
 
 %A = weak global [3000000 x int] zeroinitializer		; <[3000000 x int]*> [#uses=1]
 %B = weak global [20000 x int] zeroinitializer		; <[20000 x int]*> [#uses=1]

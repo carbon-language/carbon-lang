@@ -1,6 +1,6 @@
 ; This should fold the "vcmpbfp." and "vcmpbfp" instructions into a single 
 ; "vcmpbfp.".
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vcmpbfp | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 -mcpu=g5 | grep vcmpbfp | count 1
 
 void %test(<4 x float>* %x, <4 x float>* %y, int* %P) {
 entry:

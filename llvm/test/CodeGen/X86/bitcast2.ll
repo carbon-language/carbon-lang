@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movd | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep movd | count 2
 ; RUN: llvm-as < %s | llc -march=x86-64 | not grep rsp
 
 define i64 @test1(double %A) {

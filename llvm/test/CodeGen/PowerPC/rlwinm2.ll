@@ -4,8 +4,8 @@
 ; RUN: not grep srawi %t 
 ; RUN: not grep srwi %t 
 ; RUN: not grep slwi %t 
-; RUN: grep rlwnm %t | wc -l | grep 1
-; RUN: grep rlwinm %t | wc -l | grep 1
+; RUN: grep rlwnm %t | count 1
+; RUN: grep rlwinm %t | count 1
 
 define i32 @test1(i32 %X, i32 %Y) {
 entry:

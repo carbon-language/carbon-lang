@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | \
-; RUN:   grep {s\[ah\]\[rl\]l} | wc -l | grep 1
+; RUN:   grep {s\[ah\]\[rl\]l} | count 1
 
 int* %test1(int *%P, uint %X) {
 	%Y = shr uint %X, ubyte 2

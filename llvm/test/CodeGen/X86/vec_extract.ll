@@ -1,8 +1,8 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep movss    %t | wc -l | grep 3 
-; RUN: grep movhlps  %t | wc -l | grep 1 
-; RUN: grep pshufd   %t | wc -l | grep 1 
-; RUN: grep unpckhpd %t | wc -l | grep 1
+; RUN: grep movss    %t | count 3
+; RUN: grep movhlps  %t | count 1
+; RUN: grep pshufd   %t | count 1
+; RUN: grep unpckhpd %t | count 1
 
 void %test1(<4 x float>* %F, float* %f) {
 	%tmp = load <4 x float>* %F

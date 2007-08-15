@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwinm | wc -l | grep 4 
-; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwnm | wc -l | grep 2 
+; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwinm | count 4
+; RUN: llvm-as < %s | llc -march=ppc32 | grep rlwnm | count 2
 ; RUN: llvm-as < %s | llc -march=ppc32 | not grep or
 
 define i32 @rotl32(i32 %A, i8 %Amt) {

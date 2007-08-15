@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pshufd | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep pshufd | count 1
 
 void %test(<2 x long>* %P, sbyte %x) {
 	%tmp = insertelement <16 x sbyte> zeroinitializer, sbyte %x, uint 0		; <<16 x sbyte>> [#uses=1]

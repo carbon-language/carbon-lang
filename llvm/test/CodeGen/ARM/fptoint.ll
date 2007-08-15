@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | grep fmrs | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | grep fmrs | count 1
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | not grep fmrrd
 
 @i = weak global i32 0		; <i32*> [#uses=2]

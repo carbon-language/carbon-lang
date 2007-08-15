@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -mattr=+v6 | \
-; RUN:   grep uxt | wc -l | grep 10
+; RUN:   grep uxt | count 10
 ; END.
 
 uint %test1(uint %x) {

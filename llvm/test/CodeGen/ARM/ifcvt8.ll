@@ -2,7 +2,7 @@
 ; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
-; RUN:   grep ldmne | wc -l | grep 1
+; RUN:   grep ldmne | count 1
 
 	%struct.SString = type { i8*, i32, i32 }
 

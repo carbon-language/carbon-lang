@@ -1,5 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep movzx | wc -l | grep 1
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep movsx | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep movzx | count 1
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -x86-asm-syntax=intel | grep movsx | count 1
 
 %G1 = internal global ubyte 0		; <ubyte*> [#uses=1]
 %G2 = internal global sbyte 0		; <sbyte*> [#uses=1]

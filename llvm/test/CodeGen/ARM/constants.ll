@@ -1,17 +1,17 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0, #0} | wc -l | grep 1
+; RUN:   grep {mov r0, #0} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0, #255$} | wc -l | grep 1
+; RUN:   grep {mov r0, #255$} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0.*256} | wc -l | grep 1
+; RUN:   grep {mov r0.*256} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {orr.*256} | wc -l | grep 1
+; RUN:   grep {orr.*256} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0, .*-1073741761} | wc -l | grep 1
+; RUN:   grep {mov r0, .*-1073741761} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {mov r0, .*1008} | wc -l | grep 1
+; RUN:   grep {mov r0, .*1008} | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm | \
-; RUN:   grep {cmp r0, #1, 16} | wc -l | grep 1
+; RUN:   grep {cmp r0, #1, 16} | count 1
 
 uint %f1() {
   ret uint 0

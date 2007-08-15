@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep movq | wc -l | grep 3
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep movq | count 3
 
 ; FIXME: This code outputs:
 ;

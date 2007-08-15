@@ -2,8 +2,8 @@
 
 ; RUN: llvm-upgrade < %s | llvm-as | \
 ; RUN:   opt -reassociate -instcombine | llvm-dis > %t 
-; RUN: grep mul %t | wc -l | grep 2
-; RUN: grep add %t | wc -l | grep 1
+; RUN: grep mul %t | count 2
+; RUN: grep add %t | count 1
 
 int %test(int %A, int %B, int %C) {
 	%aa = mul int %A, %A

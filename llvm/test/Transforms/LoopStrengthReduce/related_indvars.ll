@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | wc -l | grep 1
+; RUN: llvm-upgrade < %s | llvm-as | opt -loop-reduce | llvm-dis | grep phi | count 1
 
 ; This should only result in one PHI node!
 

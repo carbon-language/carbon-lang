@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:    grep and | wc -l | grep 1
+; RUN:    grep and | count 1
 
 ; Should be optimized to one and.
 bool %test1(uint %a, uint %b) {

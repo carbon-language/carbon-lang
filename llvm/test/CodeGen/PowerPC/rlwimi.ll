@@ -1,6 +1,6 @@
 ; All of these ands and shifts should be folded into rlwimi's
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | not grep and
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwimi | wc -l | grep 8
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | grep rlwimi | count 8
 
 implementation   ; Functions:
 

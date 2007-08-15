@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=ppc32 | \
-; RUN:   egrep {fn?madd|fn?msub} | wc -l | grep 8
+; RUN:   egrep {fn?madd|fn?msub} | count 8
 
 double %test_FMADD1(double %A, double %B, double %C) {
 	%D = mul double %A, %B

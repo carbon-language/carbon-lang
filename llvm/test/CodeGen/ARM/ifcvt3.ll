@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep cmpne | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bx | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep cmpne | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep bx | count 2
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 	switch i32 %c, label %cond_next [

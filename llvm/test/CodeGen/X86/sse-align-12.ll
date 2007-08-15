@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep unpck | wc -l | grep 2
-; RUN: llvm-as < %s | llc -march=x86-64 | grep shuf  | wc -l | grep 2
-; RUN: llvm-as < %s | llc -march=x86-64 | grep ps    | wc -l | grep 4
-; RUN: llvm-as < %s | llc -march=x86-64 | grep pd    | wc -l | grep 4
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movup | wc -l | grep 4
+; RUN: llvm-as < %s | llc -march=x86-64 | grep unpck | count 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep shuf | count 2
+; RUN: llvm-as < %s | llc -march=x86-64 | grep ps | count 4
+; RUN: llvm-as < %s | llc -march=x86-64 | grep pd | count 4
+; RUN: llvm-as < %s | llc -march=x86-64 | grep movup | count 4
 
 define <4 x float> @a(<4 x float>* %y)
 {

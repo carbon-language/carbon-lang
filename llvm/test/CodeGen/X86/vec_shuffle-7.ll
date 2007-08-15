@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t  -f
-; RUN: grep xorps %t | wc -l | grep 1
+; RUN: grep xorps %t | count 1
 ; RUN: not grep shufps %t
 
 void %test() {

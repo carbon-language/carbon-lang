@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    egrep {shl|lshr|ashr} | wc -l | grep 3
+; RUN:    egrep {shl|lshr|ashr} | count 3
 
 define i41 @test0(i41 %A, i41 %B, i41 %C) {
 	%X = shl i41 %A, %C

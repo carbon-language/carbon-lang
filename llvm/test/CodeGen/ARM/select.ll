@@ -1,17 +1,17 @@
-; RUN: llvm-as < %s | llc -march=arm | grep moveq | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm | grep movgt | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm | grep movlt | wc -l | grep 3
-; RUN: llvm-as < %s | llc -march=arm | grep movle | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm | grep movls | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=arm | grep movhi | wc -l | grep 1 
+; RUN: llvm-as < %s | llc -march=arm | grep moveq | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep movgt | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep movlt | count 3
+; RUN: llvm-as < %s | llc -march=arm | grep movle | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep movls | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep movhi | count 1
 ; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
-; RUN:   grep fcpydmi | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=thumb | grep beq | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=thumb | grep bgt | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=thumb | grep blt | wc -l | grep 3
-; RUN: llvm-as < %s | llc -march=thumb | grep ble | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=thumb | grep bls | wc -l | grep 1
-; RUN: llvm-as < %s | llc -march=thumb | grep bhi | wc -l | grep 1
+; RUN:   grep fcpydmi | count 1
+; RUN: llvm-as < %s | llc -march=thumb | grep beq | count 1
+; RUN: llvm-as < %s | llc -march=thumb | grep bgt | count 1
+; RUN: llvm-as < %s | llc -march=thumb | grep blt | count 3
+; RUN: llvm-as < %s | llc -march=thumb | grep ble | count 1
+; RUN: llvm-as < %s | llc -march=thumb | grep bls | count 1
+; RUN: llvm-as < %s | llc -march=thumb | grep bhi | count 1
 ; RUN: llvm-as < %s | llc -march=thumb | grep __ltdf2
 
 define i32 @f1(i32 %a.s) {
