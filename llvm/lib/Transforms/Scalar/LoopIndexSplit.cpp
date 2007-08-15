@@ -154,7 +154,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   L = IncomingLoop;
   LPM = &LPM_Ref;
 
-  // FIXME - Nested loops makes dominator info updates tricky. 
+  // FIXME - Nested loops make dominator info updates tricky. 
   if (!L->getSubLoops().empty())
     return false;
 
@@ -605,7 +605,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
   WorkList.push_back(std::make_pair(DeadBB, succ_begin(DeadBB)));
   while (!WorkList.empty()) {
     BasicBlock *BB = WorkList.back(). first; 
-    succ_iterator SIter =WorkList.back().second;
+    succ_iterator SIter = WorkList.back().second;
 
     // If all successor's are processed then remove this block.
     if (SIter == succ_end(BB)) {
@@ -659,8 +659,8 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
           if (!DT->dominates(LiveBB, DFMember))
             LiveDF->second.insert(DFMember);
         }
-        DF->removeFromFrontier(LiveDF, SuccBB);
 
+        DF->removeFromFrontier(LiveDF, SuccBB);
       }
     }
   }
@@ -669,6 +669,19 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
   BasicBlock *Preheader = L->getLoopPreheader();
+  BasicBlock *SplitBlock = SD.SplitCondition->getParent();
+  BasicBlock *Latch = L->getLoopLatch();
+  BasicBlock *Header = L->getHeader();
+  BranchInst *SplitTerminator = cast<BranchInst>(SplitBlock->getTerminator());
+
+  // FIXME - Unable to handle triange loops at the moment.
+  // In triangle loop, split condition is in header and one of the
+  // the split destination is loop latch. If split condition is EQ
+  // then such loops are already handle in processOneIterationLoop().
+  if (Header == SplitBlock 
+      && (Latch == SplitTerminator->getSuccessor(0) 
+          || Latch == SplitTerminator->getSuccessor(1)))
+    return false;
 
   // True loop is original loop. False loop is cloned loop.
 
@@ -770,7 +783,6 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   SplitEdge(ExitBlock, FalseHeader, this);
 
   //[*] Eliminate split condition's false branch from True loop.
-  BasicBlock *SplitBlock = SD.SplitCondition->getParent();
   BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
   BasicBlock *FBB = BR->getSuccessor(1);
   BR->setUnconditionalDest(BR->getSuccessor(0));
