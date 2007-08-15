@@ -162,7 +162,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTree>();
   LI = &getAnalysis<LoopInfo>();
-  DF = getAnalysisToUpdate<DominanceFrontier>();
+  DF = &getAnalysis<DominanceFrontier>();
 
   initialize();
 
