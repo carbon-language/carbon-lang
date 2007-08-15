@@ -103,9 +103,9 @@ public:
   
   /// erase - If the set contains the specified pointer, remove it and return
   /// true, otherwise return false.
-  bool erase(void * const Ptr);
+  bool erase(const void * Ptr);
   
-  bool count(void * const Ptr) const {
+  bool count(const void * Ptr) const {
     if (isSmall()) {
       // Linear search for the item.
       for (const void *const *APtr = SmallArray,

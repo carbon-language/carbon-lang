@@ -69,7 +69,7 @@ bool SmallPtrSetImpl::insert(const void * Ptr) {
   return true;
 }
 
-bool SmallPtrSetImpl::erase(void * const Ptr) {
+bool SmallPtrSetImpl::erase(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is in the set.
     for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
