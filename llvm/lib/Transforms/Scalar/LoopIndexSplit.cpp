@@ -14,7 +14,6 @@
 #define DEBUG_TYPE "loop-index-split"
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Function.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Analysis/Dominators.h"
