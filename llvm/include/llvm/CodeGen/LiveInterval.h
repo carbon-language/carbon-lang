@@ -88,10 +88,14 @@ namespace llvm {
     /// ValueNumberInfo - If the value number definition is undefined (e.g. phi
     /// merge point), it contains ~0u,x. If the value number is not in use, it
     /// contains ~1u,x to indicate that the value # is not used. 
+    ///   def   - Instruction # of the definition.
+    ///   reg   - Source reg iff val# is defined by a copy; zero otherwise.
+    ///   kills - Instruction # of the kills. If a kill is an odd #, it means
+    ///           the kill is a phi join point.
     struct VNInfo {
-      unsigned def;  // instruction # of the definition
-      unsigned reg;  // src reg: non-zero iff val# is defined by a copy
-      SmallVector<unsigned, 4> kills;  // instruction #s of the kills
+      unsigned def;
+      unsigned reg;
+      SmallVector<unsigned, 4> kills;
       VNInfo() : def(~1U), reg(0) {};
       VNInfo(unsigned d, unsigned r) : def(d), reg(r) {};
     };
