@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1355,6 +1356,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
   case ISD::DYNAMIC_STACKALLOC: {
+    MVT::ValueType VT = Node->getValueType(0);
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the size.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the alignment.
@@ -1362,8 +1364,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     Tmp1 = Result.getValue(0);
     Tmp2 = Result.getValue(1);
-    switch (TLI.getOperationAction(Node->getOpcode(),
-                                   Node->getValueType(0))) {
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
       unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
@@ -1371,9 +1372,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
              " not tell us which reg is the stack pointer!");
       SDOperand Chain = Tmp1.getOperand(0);
       SDOperand Size  = Tmp2.getOperand(1);
-      SDOperand SP = DAG.getCopyFromReg(Chain, SPReg, Node->getValueType(0));
-      Tmp1 = DAG.getNode(ISD::SUB, Node->getValueType(0), SP, Size);    // Value
-      Tmp2 = DAG.getCopyToReg(SP.getValue(1), SPReg, Tmp1);      // Output chain
+      SDOperand SP = DAG.getCopyFromReg(Chain, SPReg, VT);
+      Chain = SP.getValue(1);
+      unsigned Align = cast<ConstantSDNode>(Tmp3)->getValue();
+      unsigned StackAlign =
+        TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
+      if (Align > StackAlign)
+        SP = DAG.getNode(ISD::AND, VT, SP, DAG.getConstant(-Align, VT));
+      Tmp1 = DAG.getNode(ISD::SUB, VT, SP, Size);       // Value
+      Tmp2 = DAG.getCopyToReg(Chain, SPReg, Tmp1);      // Output chain
       Tmp1 = LegalizeOp(Tmp1);
       Tmp2 = LegalizeOp(Tmp2);
       break;
