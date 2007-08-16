@@ -1047,22 +1047,34 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
   if (lType->isRealType() && rType->isRealType())
     return Context.IntTy;
   
-  if (lType->isPointerType()) {
-    if (rType->isPointerType())
-      return Context.IntTy;
-    if (rType->isIntegerType()) {
-      if (!rex->isNullPointerConstant(Context))
-        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
-             lex->getSourceRange(), rex->getSourceRange());
-      return Context.IntTy; // the previous diagnostic is a GCC extension.
+  // All of the following pointer related warnings are GCC extensions. One
+  // day, we can consider making them errors (when -pedantic-errors is enabled).
+  if (lType->isPointerType() && rType->isPointerType()) {
+    if (!Type::pointerTypesAreCompatible(lType, rType)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      promoteExprToType(rex, lType); // promote the pointer to pointer
     }
-  } else if (rType->isPointerType()) {
-    if (lType->isIntegerType()) {
-      if (!lex->isNullPointerConstant(Context))
-        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
-             lex->getSourceRange(), rex->getSourceRange());
-      return Context.IntTy; // the previous diagnostic is a GCC extension.
+    return Context.IntTy;
+  }
+  if (lType->isPointerType() && rType->isIntegerType()) {
+    if (!rex->isNullPointerConstant(Context)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      promoteExprToType(rex, lType); // promote the integer to pointer
     }
+    return Context.IntTy;
+  }
+  if (lType->isIntegerType() && rType->isPointerType()) {
+    if (!lex->isNullPointerConstant(Context)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      promoteExprToType(lex, rType); // promote the integer to pointer
+    }
+    return Context.IntTy;
   }
   InvalidOperands(loc, lex, rex);
   return QualType();
@@ -1084,22 +1096,34 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
   if (lType->isArithmeticType() && rType->isArithmeticType())
     return Context.IntTy;
     
-  if (lType->isPointerType()) {
-    if (rType->isPointerType())
-      return Context.IntTy;
-    if (rType->isIntegerType()) {
-      if (!rex->isNullPointerConstant(Context))
-        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
-             lex->getSourceRange(), rex->getSourceRange());
-      return Context.IntTy; // the previous diagnostic is a GCC extension.
+  // All of the following pointer related warnings are GCC extensions. One
+  // day, we can consider making them errors (when -pedantic-errors is enabled).
+  if (lType->isPointerType() && rType->isPointerType()) {
+    if (!Type::pointerTypesAreCompatible(lType, rType)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      promoteExprToType(rex, lType); // promote the pointer to pointer
     }
-  } else if (rType->isPointerType()) {
-    if (lType->isIntegerType()) {
-      if (!lex->isNullPointerConstant(Context))
-        Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
-             lex->getSourceRange(), rex->getSourceRange());
-      return Context.IntTy; // the previous diagnostic is a GCC extension.
+    return Context.IntTy;
+  }
+  if (lType->isPointerType() && rType->isIntegerType()) {
+    if (!rex->isNullPointerConstant(Context)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      promoteExprToType(rex, lType); // promote the integer to pointer
     }
+    return Context.IntTy;
+  }
+  if (lType->isIntegerType() && rType->isPointerType()) {
+    if (!lex->isNullPointerConstant(Context)) {
+      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
+           lType.getAsString(), rType.getAsString(),
+           lex->getSourceRange(), rex->getSourceRange());
+      promoteExprToType(lex, rType); // promote the integer to pointer
+    }
+    return Context.IntTy;
   }
   InvalidOperands(loc, lex, rex);
   return QualType();
