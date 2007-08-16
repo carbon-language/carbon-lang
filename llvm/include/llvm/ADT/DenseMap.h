@@ -176,6 +176,7 @@ public:
   
   DenseMap& operator=(const DenseMap& other) {
     CopyFrom(other);
+    return *this;
   }
   
 private:
