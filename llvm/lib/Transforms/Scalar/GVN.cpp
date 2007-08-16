@@ -756,6 +756,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     PN->addIncoming(val, *PI);
   }
   
+  // Attempt to collapse PHI nodes that are trivially redundant
   Value* v = PN->hasConstantValue();
   if (v) {
     if (Instruction* inst = dyn_cast<Instruction>(v)) {
@@ -804,19 +805,24 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     }
   }
 
+  // Cache our phi construction results
   phiMap[orig->getPointerOperand()].insert(PN);
   return PN;
 }
 
+/// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
+/// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst* L,
                               SmallVector<Instruction*, 4>& toErase) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   
+  // Find the non-local dependencies of the load
   DenseMap<BasicBlock*, Value*> deps;
   MD.getNonLocalDependency(L, deps);
   
   DenseMap<BasicBlock*, Value*> repl;
   
+  // Filter out useless results (non-locals, etc)
   for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(), E = deps.end();
        I != E; ++I)
     if (I->second == MemoryDependenceAnalysis::None) {
@@ -837,6 +843,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
       return false;
     }
   
+  // Use cached PHI construction information from previous runs
   SmallPtrSet<Instruction*, 4>& p = phiMap[L->getPointerOperand()];
   for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
        I != E; ++I) {
@@ -852,6 +859,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
     }
   }
   
+  // Perform PHI construction
   SmallPtrSet<BasicBlock*, 4> visited;
   Value* v = GetValueForBlock(L->getParent(), L, repl, true);
   
@@ -863,6 +871,8 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   return true;
 }
 
+/// processLoad - Attempt to eliminate a load, first by eliminating it
+/// locally, and then attempting non-local elimination if that fails.
 bool GVN::processLoad(LoadInst* L,
                          DenseMap<Value*, LoadInst*>& lastLoad,
                          SmallVector<Instruction*, 4>& toErase) {
@@ -891,6 +901,8 @@ bool GVN::processLoad(LoadInst* L,
   
   bool deletedLoad = false;
   
+  // Walk up the dependency chain until we either find
+  // a dependency we can use, or we can't walk any further
   while (dep != MemoryDependenceAnalysis::None &&
          dep != MemoryDependenceAnalysis::NonLocal &&
          (isa<LoadInst>(dep) || isa<StoreInst>(dep))) {
@@ -946,6 +958,7 @@ bool GVN::processInstruction(Instruction* I,
   
   unsigned num = VN.lookup_or_add(I);
   
+  // Collapse PHI nodes
   if (PHINode* p = dyn_cast<PHINode>(I)) {
     Value* constVal = p->hasConstantValue();
     
@@ -966,6 +979,7 @@ bool GVN::processInstruction(Instruction* I,
         toErase.push_back(p);
       }
     }
+  // Perform value-number based elimination
   } else if (currAvail.test(num)) {
     Value* repl = find_leader(currAvail, num);
     
