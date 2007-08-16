@@ -1144,6 +1144,15 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
         }
       }
     } else if (VT == MVT::iAny) {
+      if (!EltTy->isInteger()) {
+        if (ArgNo == 0)
+          CheckFailed("Intrinsic result type is not "
+                      "an integer type.", F);
+        else
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not "
+                      "an integer type.", F);
+        break;
+      }
       unsigned GotBits = cast<IntegerType>(EltTy)->getBitWidth();
       Suffix += ".";
       if (EltTy != Ty)
@@ -1158,10 +1167,6 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
           break;
       }
     } else if (VT == MVT::fAny) {
-      Suffix += ".";
-      if (EltTy != Ty)
-        Suffix += "v" + utostr(NumElts);
-      Suffix += MVT::getValueTypeString(MVT::getValueType(EltTy));
       if (!EltTy->isFloatingPoint()) {
         if (ArgNo == 0)
           CheckFailed("Intrinsic result type is not "
@@ -1171,10 +1176,18 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
                       "a floating-point type.", F);
         break;
       }
+      Suffix += ".";
+      if (EltTy != Ty)
+        Suffix += "v" + utostr(NumElts);
+      Suffix += MVT::getValueTypeString(MVT::getValueType(EltTy));
     } else if (VT == MVT::iPTR) {
       if (!isa<PointerType>(Ty)) {
-        CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
-                    "pointer and a pointer is required.", F);
+        if (ArgNo == 0)
+          CheckFailed("Intrinsic result type is not a "
+                      "pointer and a pointer is required.", F);
+        else
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "
+                      "pointer and a pointer is required.", F);
         break;
       }
     } else if (MVT::isVector(VT)) {
