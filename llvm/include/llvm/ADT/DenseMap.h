@@ -57,11 +57,16 @@ class DenseMap {
   
   unsigned NumEntries;
   unsigned NumTombstones;
-  DenseMap(const DenseMap &); // not implemented.
 public:
+  DenseMap(const DenseMap& other) {
+    NumBuckets = 0;
+    CopyFrom(other);
+  }
+  
   explicit DenseMap(unsigned NumInitBuckets = 64) {
     init(NumInitBuckets);
   }
+  
   ~DenseMap() {
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
@@ -169,7 +174,33 @@ public:
     return InsertIntoBucket(Key, ValueT(), TheBucket)->second;
   }
   
+  DenseMap& operator=(const DenseMap& other) {
+    CopyFrom(other);
+  }
+  
 private:
+  void CopyFrom(const DenseMap& other) {
+    if (NumEntries != 0) {
+      const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
+      for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
+        if (P->first != EmptyKey && P->first != TombstoneKey)
+          P->second.~ValueT();
+        P->first.~KeyT();
+      }
+    }
+    
+    NumEntries = other.NumEntries;
+    NumTombstones = other.NumTombstones;
+    
+    if (NumBuckets)
+      delete[] reinterpret_cast<char*>(Buckets);
+    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT) *
+                                                  other.NumBuckets]);
+    memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
+    
+    NumBuckets = other.NumBuckets;
+  }
+  
   BucketT *InsertIntoBucket(const KeyT &Key, const ValueT &Value,
                             BucketT *TheBucket) {
     // If the load of the hash table is more than 3/4, or if fewer than 1/8 of
