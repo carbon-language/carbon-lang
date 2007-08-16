@@ -146,7 +146,7 @@ static void EmitTypeGenerate(std::ostream &OS, Record *ArgType,
     unsigned Number = ArgType->getValueAsInt("Number");
     assert(Number < ArgNo && "Invalid matching number!");
     OS << "Tys[" << Number << "]";
-  } else if (VT == MVT::iAny) {
+  } else if (VT == MVT::iAny || VT == MVT::fAny) {
     // NOTE: The ArgNo variable here is not the absolute argument number, it is
     // the index of the "arbitrary" type in the Tys array passed to the
     // Intrinsic::getDeclaration function. Consequently, we only want to

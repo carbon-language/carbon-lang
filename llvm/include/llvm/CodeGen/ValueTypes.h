@@ -67,6 +67,11 @@ namespace MVT {  // MVT = Machine Value Types
 
     LAST_VALUETYPE =  27,   // This always remains at the end of the list.
 
+    // fAny - Any floating-point or vector floating-point value. This is used
+    // for intrinsics that have overloadings based on floating-point types.
+    // This is only for tblgen's consumption!
+    fAny           =  253,   
+
     // iAny - An integer or vector integer value of any bit width. This is
     // used for intrinsics that have overloadings based on integer bit widths.
     // This is only for tblgen's consumption!

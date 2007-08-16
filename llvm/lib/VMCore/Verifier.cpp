@@ -1157,6 +1157,20 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
             CheckFailed("Intrinsic requires even byte width argument", F);
           break;
       }
+    } else if (VT == MVT::fAny) {
+      Suffix += ".";
+      if (EltTy != Ty)
+        Suffix += "v" + utostr(NumElts);
+      Suffix += MVT::getValueTypeString(MVT::getValueType(EltTy));
+      if (!EltTy->isFloatingPoint()) {
+        if (ArgNo == 0)
+          CheckFailed("Intrinsic result type is not "
+                      "a floating-point type.", F);
+        else
+          CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not "
+                      "a floating-point type.", F);
+        break;
+      }
     } else if (VT == MVT::iPTR) {
       if (!isa<PointerType>(Ty)) {
         CheckFailed("Intrinsic parameter #" + utostr(ArgNo-1) + " is not a "

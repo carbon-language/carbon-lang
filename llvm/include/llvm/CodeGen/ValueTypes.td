@@ -49,6 +49,9 @@ def v3f32  : ValueType<96 , 24>;   //  3 x f32 vector value
 def v4f32  : ValueType<128, 25>;   //  4 x f32 vector value
 def v2f64  : ValueType<128, 26>;   //  2 x f64 vector value
 
+// Pseudo valuetype to represent "float of any format"
+def fAny   : ValueType<0  , 253>;
+
 // Pseudo valuetype to represent "integer of any bit width"
 def iAny   : ValueType<0  , 254>;
 

@@ -44,6 +44,7 @@ std::string llvm::getName(MVT::ValueType T) {
   case MVT::i64:   return "MVT::i64";
   case MVT::i128:  return "MVT::i128";
   case MVT::iAny:  return "MVT::iAny";
+  case MVT::fAny:  return "MVT::fAny";
   case MVT::f32:   return "MVT::f32";
   case MVT::f64:   return "MVT::f64";
   case MVT::f80:   return "MVT::f80";
@@ -78,6 +79,7 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   case MVT::i64:   return "MVT::i64";
   case MVT::i128:  return "MVT::i128";
   case MVT::iAny:  return "MVT::iAny";
+  case MVT::fAny:  return "MVT::fAny";
   case MVT::f32:   return "MVT::f32";
   case MVT::f64:   return "MVT::f64";
   case MVT::f80:   return "MVT::f80";
@@ -652,7 +654,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R, CodeGenTarget *CGT) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
     MVT::ValueType VT = getValueType(TyEl->getValueAsDef("VT"));
-    isOverloaded |= VT == MVT::iAny;
+    isOverloaded |= VT == MVT::iAny || VT == MVT::fAny;
     ArgVTs.push_back(VT);
     ArgTypeDefs.push_back(TyEl);
   }
