@@ -683,6 +683,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
     RHSValNoAssignments[0] = RHSValID;
     if (RHSVal0DefinedFromLHS != -1) {
       int LHSValId = LHSValNoAssignments[RHSVal0DefinedFromLHS];
+      unsigned DefIdx = RHS.getDefForValNum(0);
+      LiveInterval::removeKill(ValueNumberInfo[LHSValId], DefIdx);
       LHS.addKills(ValueNumberInfo[LHSValId], RHS.getKillsForValNum(0));
     }
   } else {
@@ -797,6 +799,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
     if (LHSValId == -1)
       continue;
     unsigned RHSValId = RHSValNoAssignments[i];
+    unsigned DefIdx = RHS.getDefForValNum(i);
+    LiveInterval::removeKill(ValueNumberInfo[RHSValId], DefIdx);
     LHS.addKills(ValueNumberInfo[RHSValId], RHS.getKillsForValNum(i));
   }
   for (unsigned i = 0, e = LHSValsDefinedFromRHS.size(); i != e; ++i) {
@@ -804,6 +808,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
     if (RHSValId == -1)
       continue;
     unsigned LHSValId = LHSValNoAssignments[i];
+    unsigned DefIdx = LHS.getDefForValNum(i);
+    LiveInterval::removeKill(ValueNumberInfo[LHSValId], DefIdx);
     RHS.addKills(ValueNumberInfo[LHSValId], LHS.getKillsForValNum(i));
   }
 

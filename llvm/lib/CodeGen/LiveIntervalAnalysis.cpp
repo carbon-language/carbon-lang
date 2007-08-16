@@ -36,6 +36,12 @@
 #include <cmath>
 using namespace llvm;
 
+namespace {
+  // Hidden options for help debugging.
+  cl::opt<bool> DisableReMat("disable-rematerialization", 
+                              cl::init(false), cl::Hidden);
+}
+
 STATISTIC(numIntervals, "Number of original intervals");
 STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
 STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
@@ -201,6 +207,9 @@ static bool isReDefinedByTwoAddr(MachineInstr *MI, unsigned Reg,
 /// val# of the specified interval is re-materializable.
 bool LiveIntervals::isReMaterializable(const LiveInterval &li, unsigned ValNum,
                                        MachineInstr *MI) {
+  if (DisableReMat)
+    return false;
+
   if (tii_->isTriviallyReMaterializable(MI))
     return true;
 
@@ -610,7 +619,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        interval.addKillForValNum(0, Start-1); // odd # means phi node
+        interval.addKillForValNum(0, Start+1); // odd # means phi node
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
