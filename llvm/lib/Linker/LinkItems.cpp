@@ -162,8 +162,9 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
     if (MemoryBuffer *Buffer = MemoryBuffer::getSTDIN()) {
       M.reset(ParseBitcodeFile(Buffer, &Error));
       delete Buffer;
-      if (!LinkInModule(M.get()))
-        return false;
+      if (M.get())
+        if (!LinkInModule(M.get(), &Error))
+          return false;
     } else 
       Error = "standard input is empty";
     return error("Cannot link stdin: " + Error);
@@ -195,7 +196,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
       std::auto_ptr<Module> M(LoadObject(File));
       if (M.get() == 0)
         return error("Cannot load file '" + File.toString() + "'" + Error);
-      if (LinkInModule(M.get()))
+      if (LinkInModule(M.get(), &Error))
         return error("Cannot link file '" + File.toString() + "'" + Error);
 
       verbose("Linked in file '" + File.toString() + "'");
