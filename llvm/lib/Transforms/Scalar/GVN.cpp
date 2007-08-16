@@ -672,6 +672,7 @@ namespace {
                             bool top_level = false);
     void dump(DenseMap<BasicBlock*, Value*>& d);
     bool iterateOnFunction(Function &F);
+    Value* CollapsePhi(PHINode* p);
   };
   
   char GVN::ID = 0;
@@ -723,6 +724,21 @@ void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
   printf("}\n");
 }
 
+Value* GVN::CollapsePhi(PHINode* p) {
+  DominatorTree &DT = getAnalysis<DominatorTree>();
+  Value* constVal = p->hasConstantValue();
+  
+  if (constVal) {
+    if (Instruction* inst = dyn_cast<Instruction>(constVal)) {
+      if (DT.dominates(inst, p))
+        return inst;
+    } else {
+      return constVal;
+    }
+  }
+  
+  return 0;
+}
 
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
@@ -757,52 +773,23 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   }
   
   // Attempt to collapse PHI nodes that are trivially redundant
-  Value* v = PN->hasConstantValue();
+  Value* v = CollapsePhi(PN);
   if (v) {
-    if (Instruction* inst = dyn_cast<Instruction>(v)) {
-      DominatorTree &DT = getAnalysis<DominatorTree>();  
-      if (DT.dominates(inst, PN)) {
-        MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
 
-        MD.removeInstruction(PN);
-        PN->replaceAllUsesWith(inst);
+    MD.removeInstruction(PN);
+    PN->replaceAllUsesWith(v);
 
-        SmallVector<BasicBlock*, 4> toRemove;
-        for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
-             E = Phis.end(); I != E; ++I)
-          if (I->second == PN)
-            toRemove.push_back(I->first);
-        for (SmallVector<BasicBlock*, 4>::iterator I = toRemove.begin(),
-             E= toRemove.end(); I != E; ++I)
-          Phis[*I] = inst;
+    for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
+         E = Phis.end(); I != E; ++I)
+      if (I->second == PN)
+        I->second = v;
 
-        PN->eraseFromParent();
+    PN->eraseFromParent();
 
-        Phis[BB] = inst;
+    Phis[BB] = v;
 
-        return inst;
-      }
-    } else {
-      MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-
-      MD.removeInstruction(PN);
-      PN->replaceAllUsesWith(v);
-
-      SmallVector<BasicBlock*, 4> toRemove;
-      for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
-           E = Phis.end(); I != E; ++I)
-        if (I->second == PN)
-          toRemove.push_back(I->first);
-      for (SmallVector<BasicBlock*, 4>::iterator I = toRemove.begin(),
-           E= toRemove.end(); I != E; ++I)
-        Phis[*I] = v;
-
-      PN->eraseFromParent();
-
-      Phis[BB] = v;
-
-      return v;
-    }
+    return v;
   }
 
   // Cache our phi construction results
@@ -960,24 +947,16 @@ bool GVN::processInstruction(Instruction* I,
   
   // Collapse PHI nodes
   if (PHINode* p = dyn_cast<PHINode>(I)) {
-    Value* constVal = p->hasConstantValue();
+    Value* constVal = CollapsePhi(p);
     
     if (constVal) {
-      if (Instruction* inst = dyn_cast<Instruction>(constVal)) {
-        DominatorTree &DT = getAnalysis<DominatorTree>();  
-        if (DT.dominates(inst, p)) {
-          for (PhiMapType::iterator PI = phiMap.begin(), PE = phiMap.end();
-               PI != PE; ++PI)
-            if (PI->second.count(p))
-              PI->second.erase(p);
+      for (PhiMapType::iterator PI = phiMap.begin(), PE = phiMap.end();
+           PI != PE; ++PI)
+        if (PI->second.count(p))
+          PI->second.erase(p);
         
-          p->replaceAllUsesWith(inst);
-          toErase.push_back(p);
-        }
-      } else {
-        p->replaceAllUsesWith(constVal);
-        toErase.push_back(p);
-      }
+      p->replaceAllUsesWith(constVal);
+      toErase.push_back(p);
     }
   // Perform value-number based elimination
   } else if (currAvail.test(num)) {
