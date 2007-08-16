@@ -87,7 +87,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
     case sys::Bitcode_FileType:
       // LLVM ".so" file.
       if (LinkInFile(Pathname, is_native))
-        return error("Cannot link file '" + Pathname.toString() + "'");
+        return true;
       break;
 
     case sys::Archive_FileType:
@@ -180,24 +180,24 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
     default: assert(0 && "Bad file type identification");
     case sys::Unknown_FileType:
-      return warning("Supposed object file '" + File.toString() + 
-                     "' not recognized as such");
+      return warning("Ignoring file '" + File.toString() + 
+                   "' because does not contain bitcode.");
 
     case sys::Archive_FileType:
       // A user may specify an ar archive without -l, perhaps because it
       // is not installed as a library. Detect that and link the archive.
       verbose("Linking archive file '" + File.toString() + "'");
       if (LinkInArchive(File, is_native))
-        return error("Cannot link archive '" + File.toString() + "'");
+        return true;
       break;
 
     case sys::Bitcode_FileType: {
       verbose("Linking bitcode file '" + File.toString() + "'");
       std::auto_ptr<Module> M(LoadObject(File));
       if (M.get() == 0)
-        return error("Cannot load file '" + File.toString() + "'" + Error);
+        return error("Cannot load file '" + File.toString() + "': " + Error);
       if (LinkInModule(M.get(), &Error))
-        return error("Cannot link file '" + File.toString() + "'" + Error);
+        return error("Cannot link file '" + File.toString() + "': " + Error);
 
       verbose("Linked in file '" + File.toString() + "'");
       break;
