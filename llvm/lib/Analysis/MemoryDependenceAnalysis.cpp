@@ -203,6 +203,11 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
 /// blocks between the query and its dependencies.
 void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
                                          DenseMap<BasicBlock*, Value*>& resp) {
+  if (depGraphNonLocal.count(query)) {
+    resp = depGraphNonLocal[query];
+    return;
+  }
+  
   // First check that we don't actually have a local dependency.
   Instruction* localDep = getDependency(query);
   if (localDep != NonLocal) {
@@ -212,6 +217,13 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
   
   // If not, go ahead and search for non-local ones.
   nonLocalHelper(query, query->getParent(), resp);
+  
+  // Update the non-local dependency cache
+  for (DenseMap<BasicBlock*, Value*>::iterator I = resp.begin(), E = resp.end();
+       I != E; ++I) {
+    depGraphNonLocal[query].insert(*I);
+    reverseDepNonLocal[I->second].insert(query);
+  }
 }
 
 /// getDependency - Return the instruction on which a memory operation
@@ -380,8 +392,6 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   Instruction* newDep = NonLocal;
 
   depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
-  // We assume here that it's not in the reverse map if it's not in
-  // the dep map.  Checking it could be expensive, so don't do it.
 
   if (depGraphEntry != depGraphLocal.end()) {
     if (depGraphEntry->second.first != NonLocal &&
@@ -410,7 +420,17 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
       // Mark it as unconfirmed as long as it is not the non-local flag
       depGraphLocal[*I] = std::make_pair(newDep, !newDep);
     }
+    
     reverseDep.erase(rem);
+  }
+  
+  if (depGraphNonLocal.count(rem)) {
+    SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[rem];
+    for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
+         I != E; ++I)
+      depGraphNonLocal.erase(*I);
+    
+    reverseDepNonLocal.erase(rem);
   }
 
   getAnalysis<AliasAnalysis>().deleteValue(rem);

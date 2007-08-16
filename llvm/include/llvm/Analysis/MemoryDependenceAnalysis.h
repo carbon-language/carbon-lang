@@ -37,11 +37,19 @@ class MemoryDependenceAnalysis : public FunctionPass {
             depMapType;
     depMapType depGraphLocal;
 
+    // A map from instructions to their non-local dependencies.
+    typedef DenseMap<Instruction*, DenseMap<BasicBlock*, Value*> >
+            nonLocalDepMapType;
+    nonLocalDepMapType depGraphNonLocal;
+    
     // A reverse mapping form dependencies to the dependees.  This is
     // used when removing instructions to keep the cache coherent.
-    typedef DenseMap<Instruction*, SmallPtrSet<Instruction*, 4> >
+    typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> >
             reverseDepMapType;
     reverseDepMapType reverseDep;
+    
+    // A reverse mapping form dependencies to the non-local dependees.
+    reverseDepMapType reverseDepNonLocal;
     
   public:
     // Special marker indicating that the query has no dependency
@@ -61,7 +69,9 @@ class MemoryDependenceAnalysis : public FunctionPass {
     /// Clean up memory in between runs
     void releaseMemory() {
       depGraphLocal.clear();
+      depGraphNonLocal.clear();
       reverseDep.clear();
+      reverseDepNonLocal.clear();
     }
 
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
