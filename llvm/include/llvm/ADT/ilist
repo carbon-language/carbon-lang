@@ -212,13 +212,29 @@ template<typename NodeTy> struct simplify_type<const ilist_iterator<NodeTy> > {
 
 //===----------------------------------------------------------------------===//
 //
-// iplist - The subset of list functionality that can safely be used on nodes of
-// polymorphic types, i.e. a heterogenous list with a common base class that
-// holds the next/prev pointers...
-//
+/// iplist - The subset of list functionality that can safely be used on nodes
+/// of polymorphic types, i.e. a heterogenous list with a common base class that
+/// holds the next/prev pointers.  The only state of the list itself is a single
+/// pointer to the head of the list.
+///
+/// This list can be in one of three interesting states:
+/// 1. The list may be completely unconstructed.  In this case, the head
+///    pointer is null.  When in this form, any query for an iterator (e.g.
+///    begin() or end()) causes the list to transparently change to state #2.
+/// 2. The list may be empty, but contain a sentinal for the end iterator. This
+///    sentinal is created by the Traits::createSentinel method and is a link
+///    in the list.  When the list is empty, the pointer in the iplist points
+///    to the sentinal.  Once the sentinal is constructed, it
+///    is not destroyed until the list is.
+/// 3. The list may contain actual objects in it, which are stored as a doubly
+///    linked list of nodes.  One invariant of the list is that the predecessor
+///    of the first node in the list always points to the last node in the list,
+///    and the successor pointer for the sentinal (which always stays at the
+///    end of the list) is always null.  
+///
 template<typename NodeTy, typename Traits=ilist_traits<NodeTy> >
 class iplist : public Traits {
-  NodeTy *Head;
+  mutable NodeTy *Head;
 
   // Use the prev node pointer of 'head' as the tail pointer.  This is really a
   // circularly linked list where we snip the 'next' link from the sentinel node
@@ -226,7 +242,16 @@ class iplist : public Traits {
   // the end of the list).
   NodeTy *getTail() { return getPrev(Head); }
   const NodeTy *getTail() const { return getPrev(Head); }
-  void setTail(NodeTy *N) { setPrev(Head, N); }
+  void setTail(NodeTy *N) const { setPrev(Head, N); }
+  
+  /// CreateLazySentinal - This method verifies whether the sentinal for the
+  /// list has been created and lazily makes it if not.
+  void CreateLazySentinal() const {
+    if (Head != 0) return;
+    Head = Traits::createSentinel();
+    setNext(Head, 0);
+    setTail(Head);
+  }
 
   static bool op_less(NodeTy &L, NodeTy &R) { return L < R; }
   static bool op_equal(NodeTy &L, NodeTy &R) { return L == R; }
@@ -243,28 +268,41 @@ public:
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
   typedef std::reverse_iterator<iterator>  reverse_iterator;
 
-  iplist() : Head(Traits::createSentinel()) {
-    setNext(Head, 0);
-    setTail(Head);
+  iplist() : Head(0) {}
+  ~iplist() {
+    if (!Head) return;
+    clear();
+    Traits::destroySentinel(getTail());
   }
-  ~iplist() { clear(); Traits::destroySentinel(getTail()); }
 
   // Iterator creation methods.
-  iterator begin()             { return iterator(Head); }
-  const_iterator begin() const { return const_iterator(Head); }
-  iterator end()               { return iterator(getTail()); }
-  const_iterator end() const   { return const_iterator(getTail()); }
+  iterator begin() {
+    CreateLazySentinal(); 
+    return iterator(Head); 
+  }
+  const_iterator begin() const {
+    CreateLazySentinal();
+    return const_iterator(Head);
+  }
+  iterator end() {
+    CreateLazySentinal();
+    return iterator(getTail());
+  }
+  const_iterator end() const {
+    CreateLazySentinal();
+    return const_iterator(getTail());
+  }
 
   // reverse iterator creation methods.
   reverse_iterator rbegin()            { return reverse_iterator(end()); }
   const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
   reverse_iterator rend()              { return reverse_iterator(begin()); }
-  const_reverse_iterator rend() const  { return const_reverse_iterator(begin()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
 
 
   // Miscellaneous inspection routines.
   size_type max_size() const { return size_type(-1); }
-  bool empty() const { return Head == getTail(); }
+  bool empty() const { return Head == 0 || Head == getTail(); }
 
   // Front and back accessor functions...
   reference front() {
@@ -386,6 +424,7 @@ public:
   //
 
   size_type size() const {
+    if (Head == 0) return 0; // Don't require construction of sentinal if empty.
 #if __GNUC__ == 2
     // GCC 2.95 has a broken std::distance
     size_type Result = 0;
@@ -402,7 +441,7 @@ public:
     return last;
   }
 
-  void clear() { erase(begin(), end()); }
+  void clear() { if (Head) erase(begin(), end()); }
 
   // Front and back inserters...
   void push_front(NodeTy *val) { insert(begin(), val); }
