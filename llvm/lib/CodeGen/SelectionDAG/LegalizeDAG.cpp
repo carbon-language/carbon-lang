@@ -1378,7 +1378,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       unsigned StackAlign =
         TLI.getTargetMachine().getFrameInfo()->getStackAlignment();
       if (Align > StackAlign)
-        SP = DAG.getNode(ISD::AND, VT, SP, DAG.getConstant(-Align, VT));
+        SP = DAG.getNode(ISD::AND, VT, SP,
+                         DAG.getConstant(-(uint64_t)Align, VT));
       Tmp1 = DAG.getNode(ISD::SUB, VT, SP, Size);       // Value
       Tmp2 = DAG.getCopyToReg(Chain, SPReg, Tmp1);      // Output chain
       Tmp1 = LegalizeOp(Tmp1);
