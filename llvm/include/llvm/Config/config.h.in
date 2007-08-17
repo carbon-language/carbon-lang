@@ -282,6 +282,9 @@
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
 
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
+
 /* Have pthread_mutex_lock */
 #undef HAVE_PTHREAD_MUTEX_LOCK
 
