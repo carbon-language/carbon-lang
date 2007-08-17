@@ -15,12 +15,13 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 
 using namespace clang;
 using namespace CodeGen;
 
-CodeGenTypes::CodeGenTypes(ASTContext &Ctx)
-  : Context(Ctx), Target(Ctx.Target) {
+CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M)
+  : Context(Ctx), Target(Ctx.Target), TheModule(M) {
 }
 
 /// ConvertType - Convert the specified type to its LLVM form.
@@ -133,7 +134,29 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     return llvm::FunctionType::get(ResultType, ArgTys, isVarArg, 0);
   }
   case Type::Tagged:
-    break;
+    const TagType &TT = cast<TagType>(Ty);
+    const TagDecl *TD = TT.getDecl();
+    llvm::Type *ResultType;
+      
+    if (!TD->isDefinition()) {
+      ResultType = llvm::OpaqueType::get();    
+    } else {
+      if (TD->getKind() == Decl::Struct) {
+        const RecordDecl *RD = cast<const RecordDecl>(TD);
+        std::vector<const llvm::Type*> Fields;
+        for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
+          Fields.push_back(ConvertType(RD->getMember(i)->getType()));
+        ResultType = llvm::StructType::get(Fields);
+      } else 
+        assert(0 && "FIXME: Implement tag decl kind!");
+    }
+          
+    std::string TypeName(TD->getKindName());
+    TypeName += '.';
+    TypeName += TD->getName();
+          
+    TheModule.addTypeName(TypeName, ResultType);  
+    return ResultType;
   }
   
   // FIXME: implement.

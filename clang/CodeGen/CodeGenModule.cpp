@@ -26,7 +26,7 @@ using namespace CodeGen;
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M)
-  : Context(C), TheModule(M), Types(C) {}
+  : Context(C), TheModule(M), Types(C, M) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const Decl *D) {
   // See if it is already in the map.

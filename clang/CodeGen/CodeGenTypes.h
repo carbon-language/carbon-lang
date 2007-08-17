@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace llvm {
+  class Module;
   class Type;
 }
 
@@ -33,9 +34,9 @@ namespace CodeGen {
 class CodeGenTypes {
   ASTContext &Context;
   TargetInfo &Target;
-  
+  llvm::Module& TheModule;
 public:
-  CodeGenTypes(ASTContext &Ctx);
+  CodeGenTypes(ASTContext &Ctx, llvm::Module &M);
   
   TargetInfo &getTarget() const { return Target; }
   
