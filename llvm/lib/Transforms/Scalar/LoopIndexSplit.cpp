@@ -603,6 +603,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
                                   BasicBlock *LiveBB) {
 
   // First update DeadBB's dominance frontier. 
+  SmallVector<BasicBlock *, 8> FrontierBBs;
   DominanceFrontier::iterator DeadBBDF = DF->find(DeadBB);
   if (DeadBBDF != DF->end()) {
     SmallVector<BasicBlock *, 8> PredBlocks;
@@ -611,7 +612,8 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
     for (DominanceFrontier::DomSetType::iterator DeadBBSetI = DeadBBSet.begin(),
            DeadBBSetE = DeadBBSet.end(); DeadBBSetI != DeadBBSetE; ++DeadBBSetI) {
       BasicBlock *FrontierBB = *DeadBBSetI;
-      
+      FrontierBBs.push_back(FrontierBB);
+
       // Rremove any PHI incoming edge from blocks dominated by DeadBB.
       PredBlocks.clear();
       for(pred_iterator PI = pred_begin(FrontierBB), PE = pred_end(FrontierBB);
@@ -620,7 +622,8 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
         if (P == DeadBB || DT->dominates(DeadBB, P))
           PredBlocks.push_back(P);
       }
-      
+
+      BasicBlock *NewDominator = NULL;
       for(BasicBlock::iterator FBI = FrontierBB->begin(), FBE = FrontierBB->end();
           FBI != FBE; ++FBI) {
         if (PHINode *PN = dyn_cast<PHINode>(FBI)) {
@@ -629,27 +632,14 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
             BasicBlock *P = *PI;
             PN->removeIncomingValue(P);
           }
+          // If we have not identified new dominator then see if we can identify
+          // one based on remaining incoming PHINode values.
+          if (NewDominator == NULL && PN->getNumIncomingValues() == 1)
+            NewDominator = PN->getIncomingBlock(0);
         }
         else
           break;
-      }
-
-      DT->changeImmediateDominator(FrontierBB, LiveBB);
-
-      // LiveBB is now  dominating FrontierBB. Which means FrontierBB's dominance
-      // frontier is member of LiveBB's dominance frontier. However, FrontierBB
-      // itself is not member of LiveBB's dominance frontier.
-      DominanceFrontier::iterator LiveDF = DF->find(LiveBB);
-      DominanceFrontier::iterator FrontierDF = DF->find(FrontierBB);
-      DominanceFrontier::DomSetType FrontierBBSet = FrontierDF->second;
-      for (DominanceFrontier::DomSetType::iterator FrontierBBSetI = FrontierBBSet.begin(),
-             FrontierBBSetE = FrontierBBSet.end(); FrontierBBSetI != FrontierBBSetE; ++FrontierBBSetI) {
-        BasicBlock *DFMember = *FrontierBBSetI;
-        // Insert only if LiveBB dominates DFMember.
-        if (!DT->dominates(LiveBB, DFMember))
-          LiveDF->second.insert(DFMember);
-      }
-      LiveDF->second.erase(FrontierBB);
+      }      
     }
   }
   
@@ -660,7 +650,7 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
          E = df_end(DN); DI != E; ++DI) {
     BasicBlock *BB = DI->getBlock();
     WorkList.push_back(BB);
-    BB->getTerminator()->eraseFromParent();
+    BB->replaceAllUsesWith(UndefValue::get(Type::LabelTy));
   }
 
   while (!WorkList.empty()) {
@@ -677,6 +667,31 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
     LI->removeBlock(BB);
     BB->eraseFromParent();
   }
+
+  // Update Frontier BBs' dominator info.
+  while (!FrontierBBs.empty()) {
+    BasicBlock *FBB = FrontierBBs.back(); FrontierBBs.pop_back();
+    BasicBlock *NewDominator = FBB->getSinglePredecessor();
+    if (!NewDominator) {
+      pred_iterator PI = pred_begin(FBB), PE = pred_end(FBB);
+      NewDominator = *PI;
+      ++PI;
+      if (NewDominator != LiveBB) {
+        for(; PI != PE; ++PI) {
+          BasicBlock *P = *PI;
+          if (P == LiveBB) {
+            NewDominator = LiveBB;
+            break;
+          }
+          NewDominator = DT->findNearestCommonDominator(NewDominator, P);
+        }
+      }
+    }
+    assert (NewDominator && "Unable to fix dominator info.");
+    DT->changeImmediateDominator(FBB, NewDominator);
+    DF->changeImmediateDominator(FBB, NewDominator, DT);
+  }
+
 }
 
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
@@ -694,6 +709,12 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   if (Header == SplitBlock 
       && (Latch == SplitTerminator->getSuccessor(0) 
           || Latch == SplitTerminator->getSuccessor(1)))
+    return false;
+
+
+  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
+  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
+  if (DT->dominates(Succ0, Latch) || DT->dominates(Succ1, Latch))
     return false;
 
   // True loop is original loop. False loop is cloned loop.

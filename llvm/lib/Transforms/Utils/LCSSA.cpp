@@ -107,7 +107,8 @@ bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
   
   LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
-    
+  DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
+
   // Speed up queries by creating a sorted list of blocks
   LoopBlocks.clear();
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
