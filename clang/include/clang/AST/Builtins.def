@@ -29,6 +29,7 @@
 //  i -> int
 //  f -> float
 //  d -> double
+//  F -> constant CFString
 //  . -> "...".  This may only occur at the end of the function list.
 //
 // Types maybe prefixed with the following modifiers:
@@ -36,6 +37,10 @@
 //  LL -> long long
 //  S  -> signed
 //  U  -> unsigned
+//
+// Types may be postfixed with the following modifiers:
+// * -> pointer
+// C -> const
 
 // The third value provided to the macro specifies information about attributes
 // of the function.  Currently we have:
@@ -50,5 +55,6 @@ BUILTIN(__builtin_fabsf, "ff"  , "nc")
 BUILTIN(__builtin_fabsl, "LdLd", "nc")
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
+BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 
 #undef BUILTIN

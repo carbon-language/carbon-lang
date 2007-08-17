@@ -84,34 +84,71 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
     }
   }
 
+  QualType Type;
+  
   // Read the base type.
   switch (*Str++) {
   default: assert(0 && "Unknown builtin type letter!");
   case 'v':
     assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'v'!");
-    return Context.VoidTy;
+    Type = Context.VoidTy;
+    break;
   case 'f':
     assert(!Long && !Signed && !Unsigned && "Bad modifiers used with 'f'!");
-    return Context.FloatTy;
+    Type = Context.FloatTy;
+    break;
   case 'd':
     assert(!LongLong && !Signed && !Unsigned && "Bad modifiers used with 'd'!");
     if (Long)
-      return Context.LongDoubleTy;
-    return Context.DoubleTy;
+      Type = Context.LongDoubleTy;
+    else
+      Type = Context.DoubleTy;
+    break;
   case 's':
     assert(!LongLong && "Bad modifiers used with 's'!");
     if (Unsigned)
-      return Context.UnsignedShortTy;
-    return Context.ShortTy;
+      Type = Context.UnsignedShortTy;
+    else
+      Type = Context.ShortTy;
+      break;
   case 'i':
     if (Long)
-      return Unsigned ? Context.UnsignedLongTy : Context.LongTy;
-    if (LongLong)
-      return Unsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
-    if (Unsigned)
-      return Context.UnsignedIntTy;
-    return Context.IntTy; // default is signed.
+      Type = Unsigned ? Context.UnsignedLongTy : Context.LongTy;
+    else if (LongLong)
+      Type = Unsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
+    else if (Unsigned)
+      Type = Context.UnsignedIntTy;
+    else 
+      Type = Context.IntTy; // default is signed.
+    break;
+  case 'c':
+    assert(!Long && !LongLong && "Bad modifiers used with 'c'!");
+    if (Signed)
+      Type = Context.SignedCharTy;
+    else if (Unsigned)
+      Type = Context.UnsignedCharTy;
+    else
+      Type = Context.CharTy;
+    break;
+  case 'F':
+    Type = Context.getCFConstantStringType();
+    break;
   }
+  
+  Done = false;
+  while (!Done) {
+    switch (*Str++) {
+      default: Done = true; --Str; break; 
+      case '*':
+        Type = Context.getPointerType(Type);
+        break;
+      case 'C':
+        Type = Type.getQualifiedType(QualType::Const);
+        break;
+    }
+  }
+  
+  return Type;
 }
 
 /// GetBuiltinType - Return the type for the specified builtin.

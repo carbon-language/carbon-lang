@@ -28,7 +28,7 @@ using namespace clang;
 
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
-void
+bool
 Sema::CheckFunctionCall(Expr *Fn,
                         SourceLocation LParenLoc, SourceLocation RParenLoc,
                         FunctionDecl *FDecl,
@@ -37,10 +37,17 @@ Sema::CheckFunctionCall(Expr *Fn,
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
   
+  if (FnInfo->getBuiltinID() == 
+      Builtin::BI__builtin___CFStringMakeConstantString) {
+    assert(NumArgsInCall == 1 &&
+           "Wrong number of arguments to builtin CFStringMakeConstantString");    
+    return CheckBuiltinCFStringArgument(Args[0]);
+  }
+  
   // Search the KnownFunctionIDs for the identifier.
   unsigned i = 0, e = id_num_known_functions;
   for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
-  if (i == e) return;
+  if (i == e) return true;
   
   // Printf checking.
   if (i <= id_vprintf) {
@@ -66,6 +73,46 @@ Sema::CheckFunctionCall(Expr *Fn,
     CheckPrintfArguments(Fn, LParenLoc, RParenLoc, HasVAListArg,
 			 FDecl, format_idx, Args, NumArgsInCall);
   }
+  
+  return true;
+}
+
+/// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
+/// CFString constructor is correct
+bool Sema::CheckBuiltinCFStringArgument(Expr* Arg)
+{
+  while (ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
+    Arg = PE->getSubExpr();
+  
+  StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
+
+  if (!Literal || Literal->isWide()) {
+    Diag(Arg->getLocStart(),
+         diag::err_cfstring_literal_not_string_constant,
+         Arg->getSourceRange());
+    return false;
+  }
+  
+  const char *Data = Literal->getStrData();
+  unsigned Length = Literal->getByteLength();
+  
+  for (unsigned i = 0; i < Length; ++i) {
+    if (!isascii(Data[i])) {
+      Diag(PP.AdvanceToTokenCharacter(Arg->getLocStart(), i + 1),
+           diag::warn_cfstring_literal_contains_non_ascii_character,
+           Arg->getSourceRange());
+      break;
+    }
+    
+    if (!Data[i]) {
+      Diag(PP.AdvanceToTokenCharacter(Arg->getLocStart(), i + 1),
+           diag::warn_cfstring_literal_contains_nul_character,
+           Arg->getSourceRange());
+      break;
+    }
+  }
+  
+  return true;
 }
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for

@@ -36,8 +36,10 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
+  RecordDecl *CFConstantStringTypeDecl;
 public:
   TargetInfo &Target;
+  IdentifierTable &Idents;
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.
@@ -50,7 +52,8 @@ public:
   QualType FloatTy, DoubleTy, LongDoubleTy;
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
-  ASTContext(TargetInfo &t, IdentifierTable &idents) : Target(t) {
+  ASTContext(TargetInfo &t, IdentifierTable &idents) : 
+    CFConstantStringTypeDecl(0), Target(t), Idents(idents) {
     InitBuiltinTypes();
     BuiltinInfo.InitializeBuiltins(idents, Target);
   }    
@@ -115,6 +118,9 @@ public:
   /// getPointerDiffType - Return the unique type for "ptrdiff_t" (ref?)
   /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
   QualType getPointerDiffType() const;
+  
+  // getCFConstantStringType - Return the type used for constant CFStrings. 
+  QualType getCFConstantStringType(); 
   
   //===--------------------------------------------------------------------===//
   //                         Type Sizing and Analysis

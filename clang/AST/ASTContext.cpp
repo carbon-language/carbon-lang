@@ -740,3 +740,32 @@ QualType ASTContext::maxIntegerType(QualType lhs, QualType rhs) {
     return signedType; 
   }
 }
+
+// getCFConstantStringType - Return the type used for constant CFStrings. 
+QualType ASTContext::getCFConstantStringType() {
+  if (!CFConstantStringTypeDecl) {
+    CFConstantStringTypeDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                              &Idents.get("__builtin_CFString"), 
+                                              0);
+  
+    QualType FieldTypes[4];
+  
+    // const int *isa;
+    FieldTypes[0] = getPointerType(IntTy.getQualifiedType(QualType::Const));  
+    // int flags;
+    FieldTypes[1] = IntTy;  
+    // const char *str;
+    FieldTypes[2] = getPointerType(CharTy.getQualifiedType(QualType::Const));  
+    // long length;
+    FieldTypes[3] = LongTy;  
+    // Create fields
+    FieldDecl *FieldDecls[4];
+  
+    for (unsigned i = 0; i < 4; ++i)
+      FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i], 0);
+  
+    CFConstantStringTypeDecl->defineBody(FieldDecls, 4);
+  }
+  
+  return getTagDeclType(CFConstantStringTypeDecl);
+}

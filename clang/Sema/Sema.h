@@ -423,7 +423,7 @@ private:
   // Extra semantic analysis beyond the C type system
   private:
   
-  void CheckFunctionCall(Expr *Fn,
+  bool CheckFunctionCall(Expr *Fn,
                          SourceLocation LParenLoc, SourceLocation RParenLoc,
                          FunctionDecl *FDecl,
                          Expr** Args, unsigned NumArgsInCall);
@@ -433,6 +433,8 @@ private:
                             bool HasVAListArg, FunctionDecl *FDecl,
                             unsigned format_idx, Expr** Args,
                             unsigned NumArgsInCall);
+  
+  bool CheckBuiltinCFStringArgument(Expr* Arg);
 };
 
 

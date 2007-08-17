@@ -561,7 +561,8 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
     if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
       if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl()))
-        CheckFunctionCall(Fn, LParenLoc, RParenLoc, FDecl, Args, NumArgsInCall);
+        if (!CheckFunctionCall(Fn, LParenLoc, RParenLoc, FDecl, Args, NumArgsInCall))
+          return true;
 
   return new CallExpr(Fn, Args, NumArgsInCall, resultType, RParenLoc);
 }
