@@ -164,12 +164,14 @@ private:
   NodeInfo   *NI;                       // Node info
   NIIterator NGI;                       // Node group iterator
   NIIterator NGE;                       // Node group iterator end
+  bool iter_valid;
 
 public:
   // Ctor.
-  NodeGroupIterator(NodeInfo *N) : NI(N) {
+  NodeGroupIterator(NodeInfo *N) : NI(N), iter_valid(false) {
     // If the node is in a group then set up the group iterator.  Otherwise
     // the group iterators will trip first time out.
+    assert(N && "Bad node info");
     if (N->isInGroup()) {
       // get Group
       NodeGroup *Group = NI->Group;
@@ -177,14 +179,17 @@ public:
       NGE = Group->group_end();
       // Prevent this node from being used (will be in members list
       NI = NULL;
+      iter_valid = true;
     }
   }
 
   /// next - Return the next node info, otherwise NULL.
   ///
   NodeInfo *next() {
-    // If members list
-    if (NGI != NGE) return *NGI++;
+    if (iter_valid) {
+      // If members list
+      if (NGI != NGE) return *NGI++;
+    }
     // Use node as the result (may be NULL)
     NodeInfo *Result = NI;
     // Only use once
