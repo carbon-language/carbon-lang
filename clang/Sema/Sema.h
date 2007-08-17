@@ -433,6 +433,10 @@ private:
                             bool HasVAListArg, FunctionDecl *FDecl,
                             unsigned format_idx, Expr** Args,
                             unsigned NumArgsInCall);
+                            
+  void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
+                            SourceLocation ReturnLoc);
+
   
   bool CheckBuiltinCFStringArgument(Expr* Arg);
 };

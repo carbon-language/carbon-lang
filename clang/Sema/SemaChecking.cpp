@@ -71,7 +71,7 @@ Sema::CheckFunctionCall(Expr *Fn,
     }
     
     CheckPrintfArguments(Fn, LParenLoc, RParenLoc, HasVAListArg,
-			 FDecl, format_idx, Args, NumArgsInCall);
+			 FDecl, format_idx, Args, NumArgsInCall);       
   }
   
   return false;
@@ -347,7 +347,7 @@ Sema::CheckPrintfArguments(Expr *Fn,
                                  LastConversionIdx+1);
     
     Diag(Loc, diag::warn_printf_invalid_conversion,
-	 std::string(Str+LastConversionIdx, Str+StrIdx),
+         std::string(Str+LastConversionIdx, Str+StrIdx),
          Fn->getSourceRange());
     return;
   }
@@ -368,5 +368,230 @@ Sema::CheckPrintfArguments(Expr *Fn,
     else if (numConversions < numDataArgs)
       Diag(Args[format_idx+numConversions+1]->getLocStart(),
            diag::warn_printf_too_many_data_args, Fn->getSourceRange());
+  }
+}
+
+//===--- CHECK: Return Address of Stack Variable --------------------------===//
+
+static DeclRefExpr* EvalVal(Expr *E);
+static DeclRefExpr* EvalAddr(Expr* E);
+
+/// CheckReturnStackAddr - Check if a return statement returns the address
+///   of a stack variable.
+void
+Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
+                           SourceLocation ReturnLoc) {
+  
+  // Perform checking for returned stack addresses.
+  if (lhsType->isPointerType()) {
+    if (DeclRefExpr *DR = EvalAddr(RetValExp))
+      Diag(DR->getLocStart(), diag::warn_ret_stack_addr,
+           DR->getDecl()->getIdentifier()->getName(),
+           RetValExp->getSourceRange());
+  }
+  // Perform checking for stack values returned by reference.
+  else if (lhsType->isReferenceType()) {
+    if (DeclRefExpr *DR = EvalVal(RetValExp))
+      Diag(DR->getLocStart(), diag::warn_ret_stack_ref,
+           DR->getDecl()->getIdentifier()->getName(),
+           RetValExp->getSourceRange());
+  }
+}
+
+/// EvalAddr - EvalAddr and EvalVal are mutually recursive functions that
+///  check if the expression in a return statement evaluates to an address
+///  to a location on the stack.  The recursion is used to traverse the
+///  AST of the return expression, with recursion backtracking when we
+///  encounter a subexpression that (1) clearly does not lead to the address
+///  of a stack variable or (2) is something we cannot determine leads to
+///  the address of a stack variable based on such local checking.
+///
+///  EvalAddr processes expressions that are pointers, and EvalVal handles
+///  expressions that are rvalues or variable references.
+///  At the base case of the recursion is a check for a DeclRefExpr* in 
+///  the refers to a stack variable.
+///
+///  This implementation handles:
+///
+///   * pointer-to-pointer casts
+///   * implicit conversions from array references to pointers
+///   * taking the address of fields
+///   * arbitrary interplay between "&" and "*" operators
+///   * pointer arithmetic from an address of a stack variable
+///   * taking the address of an array element where the array is on the stack
+static DeclRefExpr* EvalAddr(Expr *E) {
+
+  // We should only be called for evaluating pointer expressions.
+  assert (E->getType()->isPointerType() && "EvalAddr only works on pointers");
+    
+  // Our "symbolic interpreter" is just a dispatch off the currently
+  // viewed AST node.  We then recursively traverse the AST by calling
+  // EvalAddr and EvalVal appropriately.
+  switch (E->getStmtClass()) {
+
+    case Stmt::ParenExprClass:
+      // Ignore parentheses.
+      return EvalAddr(cast<ParenExpr>(E)->getSubExpr());
+
+    case Stmt::UnaryOperatorClass: {
+      // The only unary operator that make sense to handle here
+      // is AddrOf.  All others don't make sense as pointers.
+      UnaryOperator *U = cast<UnaryOperator>(E);
+      
+      if (U->getOpcode() == UnaryOperator::AddrOf)
+        return EvalVal(U->getSubExpr());
+      else
+        return NULL;
+    }
+    
+    case Stmt::BinaryOperatorClass: {
+      // Handle pointer arithmetic.  All other binary operators are not valid
+      // in this context.
+      BinaryOperator *B = cast<BinaryOperator>(E);
+      BinaryOperator::Opcode op = B->getOpcode();
+        
+      if (op != BinaryOperator::Add && op != BinaryOperator::Sub)
+        return NULL;
+        
+      Expr *Base = B->getLHS();
+
+      // Determine which argument is the real pointer base.  It could be
+      // the RHS argument instead of the LHS.
+      if (!Base->getType()->isPointerType()) Base = B->getRHS();
+        
+      assert (Base->getType()->isPointerType());
+      return EvalAddr(Base);
+    }
+      
+    // For conditional operators we need to see if either the LHS or RHS are
+    // valid DeclRefExpr*s.  If one of them is valid, we return it.
+    case Stmt::ConditionalOperatorClass: {
+      ConditionalOperator *C = cast<ConditionalOperator>(E);
+      
+      if (DeclRefExpr* LHS = EvalAddr(C->getLHS()))
+        return LHS;
+      else
+        return EvalAddr(C->getRHS());
+    }
+      
+    // For implicit casts, we need to handle conversions from arrays to
+    // pointer values, and implicit pointer-to-pointer conversions.
+    case Stmt::ImplicitCastExprClass: {
+      ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
+      Expr* SubExpr = IE->getSubExpr();
+      
+      if (SubExpr->getType()->isPointerType())
+        return EvalAddr(SubExpr);
+      else
+        return EvalVal(SubExpr);
+    }
+
+    // For casts, we handle pointer-to-pointer conversions (which
+    // is essentially a no-op from our mini-interpreter's standpoint).
+    // For other casts we abort.
+    case Stmt::CastExprClass: {
+      CastExpr *C = cast<CastExpr>(E);
+      Expr *SubExpr = C->getSubExpr();
+      
+      if (SubExpr->getType()->isPointerType())
+        return EvalAddr(SubExpr);
+      else
+        return NULL;
+    }
+      
+    // TODO: C++ casts.
+    case Stmt::CXXCastExprClass:
+      return NULL;
+      
+    // Everything else: we simply don't reason about them.
+    default:
+      return NULL;
+  }
+}
+  
+
+///  EvalVal - This function is complements EvalAddr in the mutual recursion.
+///   See the comments for EvalAddr for more details.
+static DeclRefExpr* EvalVal(Expr *E) {
+  
+  // We should only be called for evaluating non-pointer expressions.
+  assert (!E->getType()->isPointerType() && "EvalVal doesn't work on pointers");
+  
+  // Our "symbolic interpreter" is just a dispatch off the currently
+  // viewed AST node.  We then recursively traverse the AST by calling
+  // EvalAddr and EvalVal appropriately.
+  switch (E->getStmtClass()) {
+  
+  case Stmt::DeclRefExprClass: {
+    // DeclRefExpr: the base case.  When we hit a DeclRefExpr we are looking
+    //  at code that refers to a variable's name.  We check if it has local
+    //  storage within the function, and if so, return the expression.
+    DeclRefExpr *DR = cast<DeclRefExpr>(E);
+      
+    if (VarDecl *V = dyn_cast<VarDecl>(DR->getDecl()))
+      if(V->hasLocalStorage()) return DR;
+      
+    return NULL;
+  }
+        
+  case Stmt::ParenExprClass:
+    // Ignore parentheses.
+    return EvalVal(cast<ParenExpr>(E)->getSubExpr());
+  
+  case Stmt::UnaryOperatorClass: {
+    // The only unary operator that make sense to handle here
+    // is Deref.  All others don't resolve to a "name."  This includes
+    // handling all sorts of rvalues passed to a unary operator.
+    UnaryOperator *U = cast<UnaryOperator>(E);
+              
+    if (U->getOpcode() == UnaryOperator::Deref)
+      return EvalAddr(U->getSubExpr());
+
+    return NULL;
+  }
+  
+  case Stmt::ArraySubscriptExprClass: {
+    // Array subscripts are potential references to data on the stack.  We
+    // retrieve the DeclRefExpr* for the array variable if it indeed
+    // has local storage.
+    ArraySubscriptExpr *A = cast<ArraySubscriptExpr>(E);
+
+    // The array access could be written A[4] or 4[A] (both are equivalent).
+    // In the second case, the "base" is the offset and the "Idx" is
+    // the base.  We test for this case by seeing if the Base expression
+    // has a pointer type.
+    Expr* Base = A->getBase();
+    
+    if (Base->getType()->isPointerType())
+      return EvalAddr(Base);
+    else
+      return EvalAddr(A->getIdx());
+  }
+    
+  case Stmt::ConditionalOperatorClass: {
+    // For conditional operators we need to see if either the LHS or RHS are
+    // non-NULL DeclRefExpr's.  If one is non-NULL, we return it.
+    ConditionalOperator *C = cast<ConditionalOperator>(E);
+
+    if (DeclRefExpr *LHS = EvalVal(C->getLHS()))
+      return LHS;
+    else
+      return EvalVal(C->getRHS());
+  }
+  
+  // Accesses to members are potential references to data on the stack.
+  case Stmt::MemberExprClass: {
+    MemberExpr *M = cast<MemberExpr>(E);
+      
+    // Check for indirect access.  We only want direct field accesses.
+    if (!M->isArrow())
+      return EvalVal(M->getBase());
+    else
+      return NULL;
+  }
+    
+  // Everything else: we simply don't reason about them.
+  default:
+    return NULL;
   }
 }

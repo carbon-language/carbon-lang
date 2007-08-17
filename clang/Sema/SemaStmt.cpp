@@ -358,6 +358,9 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
          RetValExp->getSourceRange());
     break;
   }
+  
+  if (RetValExp) CheckReturnStackAddr(RetValExp, lhsType, ReturnLoc);
+  
   return new ReturnStmt((Expr*)RetValExp);
 }
 
