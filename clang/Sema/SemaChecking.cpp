@@ -47,7 +47,7 @@ Sema::CheckFunctionCall(Expr *Fn,
   // Search the KnownFunctionIDs for the identifier.
   unsigned i = 0, e = id_num_known_functions;
   for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
-  if (i == e) return true;
+  if (i == e) return false;
   
   // Printf checking.
   if (i <= id_vprintf) {
@@ -74,7 +74,7 @@ Sema::CheckFunctionCall(Expr *Fn,
 			 FDecl, format_idx, Args, NumArgsInCall);
   }
   
-  return true;
+  return false;
 }
 
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
@@ -90,7 +90,7 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg)
     Diag(Arg->getLocStart(),
          diag::err_cfstring_literal_not_string_constant,
          Arg->getSourceRange());
-    return false;
+    return true;
   }
   
   const char *Data = Literal->getStrData();
@@ -112,7 +112,7 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg)
     }
   }
   
-  return true;
+  return false;
 }
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
