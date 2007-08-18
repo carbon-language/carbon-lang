@@ -265,7 +265,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   //
   // Traverse the body of the loop in depth first order on the dominator tree so
   // that we are guaranteed to see definitions before we see uses.  This allows
-  // us to sink instructions in one pass, without iteration.  AFter sinking
+  // us to sink instructions in one pass, without iteration.  After sinking
   // instructions, we perform another pass to hoist them out of the loop.
   //
   SinkRegion(DT->getNode(L->getHeader()));
