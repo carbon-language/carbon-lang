@@ -271,15 +271,15 @@ emitPrologue(MachineFunction &MF) const
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
 
-  // Get the number of bytes to allocate from the FrameInfo
+  // Get the number of bytes to allocate from the FrameInfo.
   int NumBytes = (int) MFI->getStackSize();
 
   #ifndef NDEBUG
-  DOUT << "\n<--- EMIT PROLOGUE --->";
+  DOUT << "\n<--- EMIT PROLOGUE --->\n";
   DOUT << "Stack size :" << NumBytes << "\n";
   #endif
 
-  // Do we need to allocate space on the stack?
+  // Don't need to allocate space on the stack.
   if (NumBytes == 0) return;
 
   int FPOffset, RAOffset;
@@ -289,13 +289,13 @@ emitPrologue(MachineFunction &MF) const
   // using FP, the last stack slot becomes empty
   // and RA is saved before it.
   if ((hasFP(MF)) && (MFI->hasCalls())) {
-    FPOffset = NumBytes;
-    RAOffset = (NumBytes+4);
+    FPOffset = NumBytes+4;
+    RAOffset = (NumBytes+8);
   } else if ((!hasFP(MF)) && (MFI->hasCalls())) {
     FPOffset = 0;
-    RAOffset = NumBytes;
+    RAOffset = NumBytes+4;
   } else if ((hasFP(MF)) && (!MFI->hasCalls())) {
-    FPOffset = NumBytes;
+    FPOffset = NumBytes+4;
     RAOffset = 0;
   }
 
@@ -310,7 +310,7 @@ emitPrologue(MachineFunction &MF) const
   #endif
 
   // Align stack. 
-  NumBytes += 8;
+  NumBytes += 12;
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
   NumBytes = ((NumBytes+Align-1)/Align*Align);
 
