@@ -17,7 +17,8 @@
 using namespace llvm;
 
 MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M, 
-                             const std::string &FS) : isR3000(false) 
+                             const std::string &FS) : 
+  IsMipsIII(false)
 {
   std::string CPU = "generic";
 

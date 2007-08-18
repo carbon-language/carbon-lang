@@ -6,58 +6,44 @@
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+// This is the top level entry point for the Mips target.
+//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Target-independent interfaces which we are implementing
+// Target-independent interfaces
 //===----------------------------------------------------------------------===//
 
 include "../Target.td"
 
 //===----------------------------------------------------------------------===//
-// Register File Description
+// Descriptions
 //===----------------------------------------------------------------------===//
 
 include "MipsRegisterInfo.td"
-
-//===----------------------------------------------------------------------===//
-// Subtarget features
-//===----------------------------------------------------------------------===//
-
-// TODO: dummy, needed to compile
-def FeatureCIX : SubtargetFeature<"r3000", "isR3000", "true",
-                                  "Enable r3000 extentions">;
-
-//===----------------------------------------------------------------------===//
-// Instruction Description
-//===----------------------------------------------------------------------===//
-
+include "MipsSchedule.td"
 include "MipsInstrInfo.td"
+include "MipsCallingConv.td"
 
 def MipsInstrInfo : InstrInfo {
-  // Define how we want to layout our target-specific information field.
   let TSFlagsFields = [];
   let TSFlagsShifts = [];
 }
+
 //===----------------------------------------------------------------------===//
-// Calling Conventions
+// CPU Directives                                                             //
 //===----------------------------------------------------------------------===//
 
-include "MipsCallingConv.td"
+def FeatureMipsIII : SubtargetFeature<"mips3", "IsMipsIII", "true",
+                                      "MipsIII ISA Support">;
 
 //===----------------------------------------------------------------------===//
 // Mips processors supported.
 //===----------------------------------------------------------------------===//
 
-class Proc<string Name, list<SubtargetFeature> Features>
- : Processor<Name, NoItineraries, Features>;
-
-def : Proc<"generic", []>;
-
-//===----------------------------------------------------------------------===//
-// Declare the target which we are implementing
-//===----------------------------------------------------------------------===//
+def : Processor<"generic", MipsGenericItineraries, []>;
+//def : Processor<"r4000",   MipsR4000Itineraries,   [FeatureMipsIII]>;
 
 def Mips : Target {
-  // Pull in Instruction Info:
   let InstructionSet = MipsInstrInfo;
 }
+
