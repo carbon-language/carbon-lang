@@ -379,8 +379,7 @@ public:
   void removeBlock(BasicBlock *BB) {
     assert(find(BB) != end() && "Block is not in DominanceFrontier!");
     for (iterator I = begin(), E = end(); I != E; ++I)
-      if (I->second.count(BB))
-        I->second.erase(BB);
+      I->second.erase(BB);
     Frontiers.erase(BB);
   }
 
