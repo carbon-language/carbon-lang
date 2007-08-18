@@ -712,8 +712,6 @@ namespace {
         }
 
         if (J != E && J->To == n) {
-          assert(J->Subtree->dominates(Subtree));
-
           edge.LV = static_cast<LatticeVal>(J->LV & R);
           assert(validPredicate(edge.LV) && "Invalid union of lattice values.");
 
