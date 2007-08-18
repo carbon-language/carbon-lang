@@ -23,9 +23,10 @@ namespace llvm {
   class FunctionPass;
   class MachineCodeEmitter;
 
+  FunctionPass *createMipsISelDag(MipsTargetMachine &TM);
+  FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
   FunctionPass *createMipsCodePrinterPass(std::ostream &OS, 
                                           MipsTargetMachine &TM);
-  FunctionPass *createMipsISelDag(MipsTargetMachine &TM);
 } // end namespace llvm;
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

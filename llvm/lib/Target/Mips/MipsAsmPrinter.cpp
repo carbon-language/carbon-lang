@@ -209,9 +209,9 @@ emitFunctionStart(MachineFunction &MF)
   emitFrameDirective(MF);
   emitMaskDirective(MF);
   emitFMaskDirective();
-
   emitSetDirective(NOREORDER);
   emitSetDirective(NOMACRO);
+  O << "\n";
 }
 
 /// Emit the directives used by GAS on the end of functions
