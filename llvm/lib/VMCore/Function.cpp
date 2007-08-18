@@ -152,13 +152,10 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)
          && "LLVM functions cannot return aggregate values!");
 
-  // Create the arguments vector, all arguments start out unnamed.
-  for (unsigned i = 0, e = Ty->getNumParams(); i != e; ++i) {
-    assert(Ty->getParamType(i) != Type::VoidTy &&
-           "Cannot have void typed arguments!");
-    ArgumentList.push_back(new Argument(Ty->getParamType(i)));
-  }
-
+  // If the function has arguments, mark them as lazily built.
+  if (Ty->getNumParams())
+    SubclassData = 1;   // Set the "has lazy arguments" bit.
+  
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
 
@@ -176,6 +173,26 @@ Function::~Function() {
   // Drop our reference to the parameter attributes, if any.
   if (ParamAttrs)
     ParamAttrs->dropRef();
+}
+
+void Function::BuildLazyArguments() const {
+  // Create the arguments vector, all arguments start out unnamed.
+  const FunctionType *FT = getFunctionType();
+  for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
+    assert(FT->getParamType(i) != Type::VoidTy &&
+           "Cannot have void typed arguments!");
+    ArgumentList.push_back(new Argument(FT->getParamType(i)));
+  }
+  
+  // Clear the lazy arguments bit.
+  const_cast<Function*>(this)->SubclassData &= ~1;
+}
+
+size_t Function::arg_size() const {
+  return getFunctionType()->getNumParams();
+}
+bool Function::arg_empty() const {
+  return getFunctionType()->getNumParams() == 0;
 }
 
 void Function::setParent(Module *parent) {

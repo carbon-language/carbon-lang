@@ -65,11 +65,10 @@ public:
 
 private:
   // Important things that make up a function!
-  BasicBlockListType  BasicBlocks;   ///< The basic blocks
-  ArgumentListType ArgumentList;     ///< The formal arguments
-  ValueSymbolTable *SymTab;          ///< Symbol table of args/instructions
-  ParamAttrsList *ParamAttrs;        ///< Parameter attributes
-
+  BasicBlockListType  BasicBlocks;        ///< The basic blocks
+  mutable ArgumentListType ArgumentList;  ///< The formal arguments
+  ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
+  ParamAttrsList *ParamAttrs;             ///< Parameter attributes
   
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
@@ -90,6 +89,18 @@ private:
   Function *getPrev()             { return Prev; }
   const Function *getPrev() const { return Prev; }
 
+  /// hasLazyArguments/CheckLazyArguments - The argument list of a function is
+  /// built on demand, so that the list isn't allocated until the first client
+  /// needs it.  The hasLazyArguments predicate returns true if the arg list
+  /// hasn't been set up yet.
+  bool hasLazyArguments() const {
+    return SubclassData & 1;
+  }
+  void CheckLazyArguments() const {
+    if (hasLazyArguments())
+      BuildLazyArguments();
+  }
+  void BuildLazyArguments() const;
 public:
   /// Function ctor - If the (optional) Module argument is specified, the
   /// function is automatically inserted into the end of the function list for
@@ -125,9 +136,11 @@ public:
   /// getCallingConv()/setCallingConv(uint) - These method get and set the
   /// calling convention of this function.  The enum values for the known
   /// calling conventions are defined in CallingConv.h.
-  unsigned getCallingConv() const { return SubclassData; }
-  void setCallingConv(unsigned CC) { SubclassData = CC; }
-
+  unsigned getCallingConv() const { return SubclassData >> 1; }
+  void setCallingConv(unsigned CC) {
+    SubclassData = (SubclassData & 1) | CC << 1;
+  }
+  
   /// Obtains a constant pointer to the ParamAttrsList object which holds the
   /// parameter attributes information, if any. 
   /// @returns 0 if no parameter attributes have been set.
@@ -161,8 +174,14 @@ public:
   /// Get the underlying elements of the Function... the basic block list is
   /// empty for external functions.
   ///
-  const ArgumentListType &getArgumentList() const { return ArgumentList; }
-        ArgumentListType &getArgumentList()       { return ArgumentList; }
+  const ArgumentListType &getArgumentList() const {
+    CheckLazyArguments();
+    return ArgumentList;
+  }
+  ArgumentListType &getArgumentList() {
+    CheckLazyArguments();
+    return ArgumentList;
+  }
 
   const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
         BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
@@ -197,13 +216,25 @@ public:
   //===--------------------------------------------------------------------===//
   // Argument iterator forwarding functions
   //
-  arg_iterator                arg_begin()       { return ArgumentList.begin(); }
-  const_arg_iterator          arg_begin() const { return ArgumentList.begin(); }
-  arg_iterator                arg_end  ()       { return ArgumentList.end();   }
-  const_arg_iterator          arg_end  () const { return ArgumentList.end();   }
+  arg_iterator arg_begin() {
+    CheckLazyArguments();
+    return ArgumentList.begin();
+  }
+  const_arg_iterator arg_begin() const {
+    CheckLazyArguments();
+    return ArgumentList.begin();
+  }
+  arg_iterator arg_end() {
+    CheckLazyArguments();
+    return ArgumentList.end();
+  }
+  const_arg_iterator arg_end() const {
+    CheckLazyArguments();
+    return ArgumentList.end();
+  }
 
-  size_t                      arg_size () const { return ArgumentList.size();  }
-  bool                        arg_empty() const { return ArgumentList.empty(); }
+  size_t arg_size() const;
+  bool arg_empty() const;
 
   virtual void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream *OS) const { if (OS) print(*OS); }
