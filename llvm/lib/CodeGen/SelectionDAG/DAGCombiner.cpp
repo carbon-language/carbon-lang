@@ -2249,6 +2249,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
   MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType VT0 = N0.getValueType();
 
   // fold select C, X, X -> X
   if (N1 == N2)
@@ -2262,15 +2263,25 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   // fold select C, 1, X -> C | X
   if (MVT::i1 == VT && N1C && N1C->getValue() == 1)
     return DAG.getNode(ISD::OR, VT, N0, N2);
+  // fold select C, 0, 1 -> ~C
+  if (MVT::isInteger(VT) && MVT::isInteger(VT0) &&
+      N1C && N2C && N1C->isNullValue() && N2C->getValue() == 1) {
+    SDOperand XORNode = DAG.getNode(ISD::XOR, VT0, N0, DAG.getConstant(1, VT0));
+    if (VT == VT0)
+      return XORNode;
+    AddToWorkList(XORNode.Val);
+    if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(VT0))
+      return DAG.getNode(ISD::ZERO_EXTEND, VT, XORNode);
+    return DAG.getNode(ISD::TRUNCATE, VT, XORNode);
+  }
   // fold select C, 0, X -> ~C & X
-  // FIXME: this should check for C type == X type, not i1?
-  if (MVT::i1 == VT && N1C && N1C->isNullValue()) {
+  if (VT == VT0 && N1C && N1C->isNullValue()) {
     SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
     AddToWorkList(XORNode.Val);
     return DAG.getNode(ISD::AND, VT, XORNode, N2);
   }
   // fold select C, X, 1 -> ~C | X
-  if (MVT::i1 == VT && N2C && N2C->getValue() == 1) {
+  if (VT == VT0 && N2C && N2C->getValue() == 1) {
     SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
     AddToWorkList(XORNode.Val);
     return DAG.getNode(ISD::OR, VT, XORNode, N1);
