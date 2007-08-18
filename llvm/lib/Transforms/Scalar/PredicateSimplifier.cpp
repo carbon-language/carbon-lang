@@ -711,23 +711,27 @@ namespace {
           ++J;
         }
 
-        if (J != E && J->To == n && J->Subtree->dominates(Subtree)) {
+        if (J != E && J->To == n) {
+          assert(J->Subtree->dominates(Subtree));
+
           edge.LV = static_cast<LatticeVal>(J->LV & R);
           assert(validPredicate(edge.LV) && "Invalid union of lattice values.");
-          if (edge.LV != J->LV) {
 
-            // We have to tighten any edge beneath our update.
-            for (iterator K = I; K->To == n; --K) {
-              if (K->Subtree->DominatedBy(Subtree)) {
-                LatticeVal LV = static_cast<LatticeVal>(K->LV & edge.LV);
-                assert(validPredicate(LV) && "Invalid union of lattice values");
-                K->LV = LV;
-              }
-              if (K == B) break;
+          if (edge.LV == J->LV)
+            return; // This update adds nothing new.
+	}
+
+        if (I != B) {
+          // We also have to tighten any edge beneath our update.
+          for (iterator K = I - 1; K->To == n; --K) {
+            if (K->Subtree->DominatedBy(Subtree)) {
+              LatticeVal LV = static_cast<LatticeVal>(K->LV & edge.LV);
+              assert(validPredicate(LV) && "Invalid union of lattice values");
+              K->LV = LV;
             }
-
+            if (K == B) break;
           }
-        }
+	}
 
         // Insert new edge at Subtree if it isn't already there.
         if (I == E || I->To != n || Subtree != I->Subtree)
