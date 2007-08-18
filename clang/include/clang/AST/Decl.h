@@ -157,7 +157,7 @@ public:
   //  implicitly "auto", but are represented internally with a storage
   //  class of None.
   bool hasAutoStorage() {
-    return (SClass == Auto || (SClass == None && getKind() == BlockVariable));
+    return (SClass == Auto || (SClass == None && getKind() != FileVariable));
   }
 
   // hasStaticStorage - Returns true if either the implicit or
