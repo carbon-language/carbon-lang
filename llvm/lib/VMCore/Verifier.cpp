@@ -347,7 +347,7 @@ void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 void Verifier::visitFunction(Function &F) {
   // Check function arguments.
   const FunctionType *FT = F.getFunctionType();
-  unsigned NumArgs = F.getArgumentList().size();
+  unsigned NumArgs = F.arg_size();
 
   Assert2(FT->getNumParams() == NumArgs,
           "# formal arguments must match # of arguments for function type!",
