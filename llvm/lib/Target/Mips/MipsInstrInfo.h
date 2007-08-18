@@ -20,6 +20,29 @@
 
 namespace llvm {
 
+namespace Mips {
+
+  // All CC branch operations on Mips I are turned
+  // into BEQ and BNE CC branches instructions.
+  enum CondCode {
+    COND_E,
+    COND_GZ,
+    COND_GEZ,
+    COND_LZ,
+    COND_LEZ,
+    COND_NE,
+    COND_INVALID
+  };
+  
+  // Turn condition code into conditional branch opcode.
+  unsigned GetCondBranchFromCond(CondCode CC);
+  
+  /// GetOppositeBranchCondition - Return the inverse of the specified cond,
+  /// e.g. turning COND_E to COND_NE.
+  CondCode GetOppositeBranchCondition(Mips::CondCode CC);
+
+}
+
 class MipsInstrInfo : public TargetInstrInfo 
 {
   MipsTargetMachine &TM;
@@ -52,10 +75,21 @@ public:
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than storing to the stack slot.
   virtual unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
-  
+ 
+  /// Branch Analysis
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             std::vector<MachineOperand> &Cond) const;
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB, 
+                                MachineBasicBlock *FBB,
                                 const std::vector<MachineOperand> &Cond) const;
+  virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
+  virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
+
+  /// Insert nop instruction when hazard condition is found
+  virtual void insertNoop(MachineBasicBlock &MBB, 
+                          MachineBasicBlock::iterator MI) const;
 };
 
 }
