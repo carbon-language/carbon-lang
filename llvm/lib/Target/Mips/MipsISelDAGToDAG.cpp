@@ -142,7 +142,7 @@ SelectAddr(SDOperand Op, SDOperand Addr, SDOperand &Offset, SDOperand &Base)
        Addr.getOpcode() == ISD::TargetGlobalAddress))
     return false;
   
-  // Operand is an result from an ADD.
+  // Operand is a result from an ADD.
   if (Addr.getOpcode() == ISD::ADD) 
   {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) 

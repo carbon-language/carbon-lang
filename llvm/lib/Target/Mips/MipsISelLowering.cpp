@@ -42,6 +42,7 @@ getTargetNodeName(unsigned Opcode) const
     case MipsISD::Hi        : return "MipsISD::Hi";
     case MipsISD::Lo        : return "MipsISD::Lo";
     case MipsISD::Ret       : return "MipsISD::Ret";
+    case MipsISD::Add       : return "MipsISD::Add";
     default                 : return NULL;
   }
 }
@@ -119,7 +120,6 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG)
     case ISD::RET:              return LowerRET(Op, DAG);
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
-    case ISD::RETURNADDR:       return LowerRETURNADDR(Op, DAG);
   }
   return SDOperand();
 }
@@ -140,17 +140,6 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
   return VReg;
 }
 
-// Set up a frame object for the return address.
-//SDOperand MipsTargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
-//  if (ReturnAddrIndex == 0) {
-//    MachineFunction &MF = DAG.getMachineFunction();
-//    ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, 0);
-//  }
-//
-//  return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());
-//}
-
-
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
@@ -160,10 +149,15 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG)
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
   SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
-  SDOperand Hi = DAG.getNode(MipsISD::Hi, MVT::i32, GA);
+
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
+  SDOperand Ops[] = { GA };
+
+  SDOperand Hi = DAG.getNode(MipsISD::Hi, VTs, 2, Ops, 1);
   SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
 
-  return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
+  SDOperand InFlag = Hi.getValue(1);
+  return DAG.getNode(MipsISD::Add, MVT::i32, Lo, Hi, InFlag);
 }
 
 SDOperand MipsTargetLowering::
@@ -370,8 +364,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   SmallVector<SDOperand, 8> ResultVals;
 
   // Returns void
-  if (!RVLocs.size())
-    return Chain.Val;
+  //if (!RVLocs.size())
+  //  return Chain.Val;
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
