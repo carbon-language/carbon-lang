@@ -64,11 +64,11 @@ addInstSelector(FunctionPassManager &PM, bool Fast)
 // Implemented by targets that want to run passes immediately before 
 // machine code is emitted. return true if -print-machineinstrs should 
 // print out the code after the passes.
-// TODO: Delay slot must be implemented here.
 bool MipsTargetMachine::
 addPreEmitPass(FunctionPassManager &PM, bool Fast) 
 {
-  return false;
+  PM.add(createMipsDelaySlotFillerPass(*this));
+  return true;
 }
 
 // Implements the AssemblyEmitter for the target. Must return
