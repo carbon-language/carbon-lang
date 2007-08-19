@@ -440,8 +440,9 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
 
   // Check visibility
   if (Dest && Src->getVisibility() != Dest->getVisibility())
-    return Error(Err, "Linking globals named '" + Src->getName() +
-                 "': symbols have different visibilities!");
+    if (!Src->isDeclaration() && !Dest->isDeclaration())
+      return Error(Err, "Linking globals named '" + Src->getName() +
+                   "': symbols have different visibilities!");
   return false;
 }
 
@@ -651,9 +652,13 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
 
     // Check visibility
     if (DF && !DF->hasInternalLinkage() &&
-        SF->getVisibility() != DF->getVisibility())
-      return Error(Err, "Linking functions named '" + SF->getName() +
-                   "': symbols have different visibilities!");
+        SF->getVisibility() != DF->getVisibility()) {
+      // If one is a prototype, ignore its visibility.  Prototypes are always
+      // overridden by the definition.
+      if (!SF->isDeclaration() && !DF->isDeclaration())
+        return Error(Err, "Linking functions named '" + SF->getName() +
+                     "': symbols have different visibilities!");
+    }
     
     if (DF && DF->getType() != SF->getType()) {
       if (DF->isDeclaration() && !SF->isDeclaration()) {
@@ -695,7 +700,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       }
     } else if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
       // Function does not already exist, simply insert an function signature
-      // identical to SF into the dest module...
+      // identical to SF into the dest module.
       Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
                                      SF->getName(), Dest);
       CopyGVAttributes(NewDF, SF);
@@ -724,6 +729,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // Link the external functions, update linkage qualifiers
       ValueMap.insert(std::make_pair(SF, DF));
       DF->setLinkage(SF->getLinkage());
+      // Visibility of prototype is overridden by vis of definition.
+      DF->setVisibility(SF->getVisibility());
     } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage()) {
       // At this point we know that DF has LinkOnce, Weak, or External* linkage.
       ValueMap.insert(std::make_pair(SF, DF));
