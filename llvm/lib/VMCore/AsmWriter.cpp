@@ -995,32 +995,28 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (AnnotationWriter) AnnotationWriter->emitFunctionAnnot(F, Out);
 
   if (F->isDeclaration())
-    switch (F->getLinkage()) {
-    case GlobalValue::DLLImportLinkage:    Out << "declare dllimport "; break;
-    case GlobalValue::ExternalWeakLinkage: Out << "declare extern_weak "; break;
-    default: Out << "declare ";
-    }
-  else {
+    Out << "declare ";
+  else
     Out << "define ";
-    switch (F->getLinkage()) {
-    case GlobalValue::InternalLinkage:     Out << "internal "; break;
-    case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
-    case GlobalValue::WeakLinkage:         Out << "weak "; break;
-    case GlobalValue::AppendingLinkage:    Out << "appending "; break;
-    case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
-    case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;
-    case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
-    case GlobalValue::ExternalLinkage: break;
-    case GlobalValue::GhostLinkage:
-      cerr << "GhostLinkage not allowed in AsmWriter!\n";
-      abort();
-    }
-    switch (F->getVisibility()) {
-    default: assert(0 && "Invalid visibility style!");
-    case GlobalValue::DefaultVisibility: break;
-    case GlobalValue::HiddenVisibility: Out << "hidden "; break;
-    case GlobalValue::ProtectedVisibility: Out << "protected "; break;
-    }
+    
+  switch (F->getLinkage()) {
+  case GlobalValue::InternalLinkage:     Out << "internal "; break;
+  case GlobalValue::LinkOnceLinkage:     Out << "linkonce "; break;
+  case GlobalValue::WeakLinkage:         Out << "weak "; break;
+  case GlobalValue::AppendingLinkage:    Out << "appending "; break;
+  case GlobalValue::DLLImportLinkage:    Out << "dllimport "; break;
+  case GlobalValue::DLLExportLinkage:    Out << "dllexport "; break;
+  case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;      
+  case GlobalValue::ExternalLinkage: break;
+  case GlobalValue::GhostLinkage:
+    cerr << "GhostLinkage not allowed in AsmWriter!\n";
+    abort();
+  }
+  switch (F->getVisibility()) {
+  default: assert(0 && "Invalid visibility style!");
+  case GlobalValue::DefaultVisibility: break;
+  case GlobalValue::HiddenVisibility: Out << "hidden "; break;
+  case GlobalValue::ProtectedVisibility: Out << "protected "; break;
   }
 
   // Print the calling convention.
