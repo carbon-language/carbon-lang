@@ -178,7 +178,7 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
 
   // First see if it is possible to eliminate loop itself or not.
   for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
-         E = SplitData.end(); SI != E; ++SI) {
+         E = SplitData.end(); SI != E;) {
     SplitInfo &SD = *SI;
     if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) {
       Changed = processOneIterationLoop(SD);
@@ -186,8 +186,13 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
         ++NumIndexSplit;
         // If is loop is eliminated then nothing else to do here.
         return Changed;
+      } else {
+        SmallVector<SplitInfo, 4>::iterator Delete_SI = SI;
+        ++SI;
+        SplitData.erase(Delete_SI);
       }
-    }
+    } else
+      ++SI;
   }
 
   unsigned MaxCost = 99;
@@ -198,8 +203,8 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
     SplitInfo SD = *SI;
 
     // ICM_EQs are already handled above.
-    if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ)
-      continue;
+    assert (SD.SplitCondition->getPredicate() != ICmpInst::ICMP_EQ &&
+            "Unexpected split condition predicate");
     
     unsigned Cost = findSplitCost(L, SD);
     if (Cost < MaxCost)
@@ -207,7 +212,8 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   }
 
   // Split most profitiable condition.
-  Changed = splitLoop(SplitData[MostProfitableSDIndex]);
+  if (!SplitData.empty())
+    Changed = splitLoop(SplitData[MostProfitableSDIndex]);
 
   if (Changed)
     ++NumIndexSplit;

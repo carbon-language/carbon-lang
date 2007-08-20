@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output -stats |& \
-; RUN: grep "loop-index-split" | count 1
+; RUN: llvm-as < %s | opt -loop-index-split -disable-output 
 
         %struct._edit_script = type { %struct._edit_script*, i32, i8 }
 
