@@ -15,6 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "SymbolTableListTraitsImpl.h"
@@ -287,7 +288,7 @@ std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) {
   std::string Result(Table[id]);
   for (unsigned i = 0; i < numTys; ++i) 
     if (Tys[i])
-      Result += "." + Tys[i]->getDescription();
+      Result += "." + MVT::getValueTypeString(MVT::getValueType(Tys[i]));
   return Result;
 }
 
