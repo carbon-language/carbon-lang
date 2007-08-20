@@ -418,7 +418,11 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
 
   // Update CFG.
 
-  // As a first step to break this loop, remove Latch to Header edge.
+  // Replace index variable with split value in loop body. Loop body is executed
+  // only when index variable is equal to split value.
+  IndVar->replaceAllUsesWith(SD.SplitValue);
+
+  // Remove Latch to Header edge.
   BasicBlock *Latch = L->getLoopLatch();
   BasicBlock *LatchSucc = NULL;
   BranchInst *BR = dyn_cast<BranchInst>(Latch->getTerminator());
