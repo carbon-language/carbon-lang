@@ -374,9 +374,9 @@ void StmtDumper::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
 void StmtDumper::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   DumpExpr(Node);
   fprintf(F, "\n");
-  DumpSubTree(Node->getBase());
+  DumpSubTree(Node->getLHS());
   fprintf(F, "\n");
-  DumpSubTree(Node->getIdx());
+  DumpSubTree(Node->getRHS());
   fprintf(F, ")");
 }
 

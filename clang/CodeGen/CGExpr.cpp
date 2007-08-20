@@ -495,35 +495,24 @@ LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
 }
 
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
-  // The index must always be a pointer or integer, neither of which is an
-  // aggregate.  Emit it.
+  // The index must always be an integer, which is not an aggregate.  Emit it.
   llvm::Value *Idx = EmitExpr(E->getIdx()).getVal();
   
   // If the base is a vector type, then we are forming a vector element lvalue
   // with this subscript.
-  if (E->getBase()->getType()->isVectorType()) {
+  if (E->getLHS()->getType()->isVectorType()) {
     // Emit the vector as an lvalue to get its address.
-    LValue Base = EmitLValue(E->getBase());
-    assert(Base.isSimple() && "Can only subscript lvalue vectors here!");
+    LValue LHS = EmitLValue(E->getLHS());
+    assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
     // FIXME: This should properly sign/zero/extend or truncate Idx to i32.
-    return LValue::MakeVectorElt(Base.getAddress(), Idx);
+    return LValue::MakeVectorElt(LHS.getAddress(), Idx);
   }
   
-  // At this point, the base must be a pointer or integer, neither of which are
-  // aggregates.  Emit it.
+  // The base must be a pointer, which is not an aggregate.  Emit it.
   llvm::Value *Base = EmitExpr(E->getBase()).getVal();
   
-  // Usually the base is the pointer type, but sometimes it is the index.
-  // Canonicalize to have the pointer as the base.
-  QualType BaseTy = E->getBase()->getType();
+  // Extend or truncate the index type to 32 or 64-bits.
   QualType IdxTy  = E->getIdx()->getType();
-  if (isa<llvm::PointerType>(Idx->getType())) {
-    std::swap(Base, Idx);
-    std::swap(BaseTy, IdxTy);
-  }
-  
-  // The pointer is now the base.  Extend or truncate the index type to 32 or
-  // 64-bits.
   bool IdxSigned = IdxTy->isSignedIntegerType();
   unsigned IdxBitwidth = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
   if (IdxBitwidth != LLVMPointerWidth)

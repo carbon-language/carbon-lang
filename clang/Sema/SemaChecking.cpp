@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/SourceManager.h"
@@ -499,9 +500,24 @@ static DeclRefExpr* EvalAddr(Expr *E) {
         return NULL;
     }
       
-    // TODO: C++ casts.
-    case Stmt::CXXCastExprClass:
-      return NULL;
+    // C++ casts.  For dynamic casts, static casts, and const casts, we
+    // are always converting from a pointer-to-pointer, so we just blow
+    // through the cast.  In the case the dynamic cast doesn't fail
+    // (and return NULL), we take the conservative route and report cases
+    // where we return the address of a stack variable.  For Reinterpre
+    case Stmt::CXXCastExprClass: {
+      CXXCastExpr *C = cast<CXXCastExpr>(E);
+      
+      if (C->getOpcode() == CXXCastExpr::ReinterpretCast) {
+        Expr *S = C->getSubExpr();
+        if (S->getType()->isPointerType())
+          return EvalAddr(S);
+        else
+          return NULL;
+      }
+      else
+        return EvalAddr(C->getSubExpr());
+    }
       
     // Everything else: we simply don't reason about them.
     default:
@@ -554,18 +570,7 @@ static DeclRefExpr* EvalVal(Expr *E) {
     // Array subscripts are potential references to data on the stack.  We
     // retrieve the DeclRefExpr* for the array variable if it indeed
     // has local storage.
-    ArraySubscriptExpr *A = cast<ArraySubscriptExpr>(E);
-
-    // The array access could be written A[4] or 4[A] (both are equivalent).
-    // In the second case, the "base" is the offset and the "Idx" is
-    // the base.  We test for this case by seeing if the Base expression
-    // has a pointer type.
-    Expr* Base = A->getBase();
-    
-    if (Base->getType()->isPointerType())
-      return EvalAddr(Base);
-    else
-      return EvalAddr(A->getIdx());
+    return EvalAddr(cast<ArraySubscriptExpr>(E)->getBase());
   }
     
   case Stmt::ConditionalOperatorClass: {

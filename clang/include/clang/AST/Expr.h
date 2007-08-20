@@ -367,26 +367,38 @@ public:
 
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {
-  Expr *Base, *Idx;
+  Expr *LHS, *RHS;
   SourceLocation RBracketLoc;
 public:
-  ArraySubscriptExpr(Expr *base, Expr *idx, QualType t,
+  ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
                      SourceLocation rbracketloc) : 
     Expr(ArraySubscriptExprClass, t),
-    Base(base), Idx(idx), RBracketLoc(rbracketloc) {}
+    LHS(lhs), RHS(rhs), RBracketLoc(rbracketloc) {}
   
-  // NOTE: An array access can be written A[4] or 4[A] (both are equivalent).
-  // In the second case, getBase() actually returns the index and getIdx()
-  // returns the offset.  Only one of the subexpressions will have a pointer
-  // type (the base), so the second case can be identified using the
-  // expression getBase()->getType()->isPointerType().
-  Expr *getBase() { return Base; }
-  const Expr *getBase() const { return Base; }
-  Expr *getIdx() { return Idx; }
-  const Expr *getIdx() const { return Idx; }
+  /// An array access can be written A[4] or 4[A] (both are equivalent).
+  /// - getBase() and getIdx() always present the normalized view: A[4].
+  ///    In this case getBase() returns "A" and getIdx() returns "4".
+  /// - getLHS() and getRHS() present the syntactic view. e.g. for
+  ///    4[A] getLHS() returns "4".
+  
+  Expr *getBase() { return (LHS->getType()->isIntegerType()) ? RHS : LHS; }
+  const Expr *getBase() const { 
+    return (LHS->getType()->isIntegerType()) ? RHS : LHS;
+  }
+  
+  Expr *getIdx() { return (LHS->getType()->isIntegerType()) ? LHS : RHS; }
+  const Expr *getIdx() const {
+    return (LHS->getType()->isIntegerType()) ? LHS : RHS; 
+  }
+  
+  Expr *getLHS() { return LHS; }
+  const Expr *getLHS() const { return LHS; }
+  
+  Expr *getRHS() { return RHS; }
+  const Expr *getRHS() const { return RHS; }
   
   SourceRange getSourceRange() const { 
-    return SourceRange(Base->getLocStart(), RBracketLoc);
+    return SourceRange(LHS->getLocStart(), RBracketLoc);
   }
   virtual SourceLocation getExprLoc() const { return RBracketLoc; }
 

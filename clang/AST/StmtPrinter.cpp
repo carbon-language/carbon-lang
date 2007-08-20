@@ -417,9 +417,9 @@ void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   OS << Node->getArgumentType().getAsString() << ")";
 }
 void StmtPrinter::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
-  PrintExpr(Node->getBase());
+  PrintExpr(Node->getLHS());
   OS << "[";
-  PrintExpr(Node->getIdx());
+  PrintExpr(Node->getRHS());
   OS << "]";
 }
 
