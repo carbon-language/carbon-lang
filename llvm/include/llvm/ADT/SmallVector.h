@@ -14,8 +14,8 @@
 #ifndef LLVM_ADT_SMALLVECTOR_H
 #define LLVM_ADT_SMALLVECTOR_H
 
+#include "llvm/ADT/iterator"
 #include <algorithm>
-#include <iterator>
 #include <memory>
 
 #ifdef _MSC_VER
@@ -90,17 +90,28 @@ public:
   typedef size_t size_type;
   typedef T* iterator;
   typedef const T* const_iterator;
+  
+  typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>  reverse_iterator;
+  
   typedef T& reference;
   typedef const T& const_reference;
 
   bool empty() const { return Begin == End; }
   size_type size() const { return End-Begin; }
-  
+
+  // forward iterator creation methods.
   iterator begin() { return Begin; }
   const_iterator begin() const { return Begin; }
-
   iterator end() { return End; }
   const_iterator end() const { return End; }
+  
+  // reverse iterator creation methods.
+  reverse_iterator rbegin()            { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin() const{ return const_reverse_iterator(end()); }
+  reverse_iterator rend()              { return reverse_iterator(begin()); }
+  const_reverse_iterator rend() const { return const_reverse_iterator(begin());}
+  
   
   reference operator[](unsigned idx) {
     return Begin[idx];
