@@ -93,17 +93,8 @@ namespace llvm {
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
                               Value *RHS, Instruction *&InsertPt);
   protected:
-    Value *expand(SCEV *S) {
-      // Check to see if we already expanded this.
-      std::map<SCEVHandle, Value*>::iterator I = InsertedExpressions.find(S);
-      if (I != InsertedExpressions.end())
-        return I->second;
-
-      Value *V = visit(S);
-      InsertedExpressions[S] = V;
-      return V;
-    }
-
+    Value *expand(SCEV *S);
+    
     Value *visitConstant(SCEVConstant *S) {
       return S->getValue();
     }

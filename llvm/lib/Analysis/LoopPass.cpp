@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

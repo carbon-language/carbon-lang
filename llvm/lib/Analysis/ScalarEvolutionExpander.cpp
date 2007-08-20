@@ -207,3 +207,15 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
 
   return expand(V);
 }
+
+Value *SCEVExpander::expand(SCEV *S) {
+  // Check to see if we already expanded this.
+  std::map<SCEVHandle, Value*>::iterator I = InsertedExpressions.find(S);
+  if (I != InsertedExpressions.end())
+    return I->second;
+  
+  Value *V = visit(S);
+  InsertedExpressions[S] = V;
+  return V;
+}
+
