@@ -138,7 +138,7 @@ public:
   /// calling conventions are defined in CallingConv.h.
   unsigned getCallingConv() const { return SubclassData >> 1; }
   void setCallingConv(unsigned CC) {
-    SubclassData = (SubclassData & 1) | CC << 1;
+    SubclassData = (SubclassData & 1) | (CC << 1);
   }
   
   /// Obtains a constant pointer to the ParamAttrsList object which holds the
