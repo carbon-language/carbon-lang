@@ -2905,6 +2905,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Entry.isInReg = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::InReg);
     Entry.isSRet  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::StructRet);
     Entry.isNest  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::Nest);
+    Entry.isByVal = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::ByVal);
     Args.push_back(Entry);
   }
 
@@ -3967,6 +3968,15 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Flags |= ISD::ParamFlags::InReg;
     if (Args[i].isSRet)
       Flags |= ISD::ParamFlags::StructReturn;
+    if (Args[i].isByVal) {
+      Flags |= ISD::ParamFlags::ByVal;
+      const PointerType *Ty = cast<PointerType>(Args[i].Ty);
+      const StructType *STy = cast<StructType>(Ty->getElementType());
+      unsigned StructAlign = Log2_32(getTargetData()->getABITypeAlignment(STy));
+      unsigned StructSize  = getTargetData()->getTypeSize(STy);
+      Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
+      Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
+    }
     if (Args[i].isNest)
       Flags |= ISD::ParamFlags::Nest;
     Flags |= OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs;
