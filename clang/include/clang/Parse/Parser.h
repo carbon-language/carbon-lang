@@ -254,13 +254,17 @@ private:
   void ParseAsmStringLiteral();
 
   // Objective-C External Declarations 
-  void ParseObjCAtDirectives(); 
-  void ParseObjCAtClassDeclaration(SourceLocation atLoc);
-  void ParseObjCAtInterfaceDeclaration();
-  void ParseObjCAtProtocolDeclaration();
-  void ParseObjCAtImplementationDeclaration();
-  void ParseObjCAtEndDeclaration();
-  void ParseObjCAtAliasDeclaration();
+  DeclTy *ParseObjCAtDirectives(); 
+  DeclTy *ParseObjCAtClassDeclaration(SourceLocation atLoc);
+  DeclTy *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc, 
+                                          AttributeList *prefixAttrs = 0);
+  void ParseObjCClassInstanceVariables();
+  bool ParseObjCProtocolReferences();
+  void ParseObjCInterfaceDeclList();
+  DeclTy *ParseObjCAtProtocolDeclaration();
+  DeclTy *ParseObjCAtImplementationDeclaration();
+  DeclTy *ParseObjCAtEndDeclaration();
+  DeclTy *ParseObjCAtAliasDeclaration();
   
   void ParseObjCInstanceMethodDeclaration();
   void ParseObjCClassMethodDeclaration();

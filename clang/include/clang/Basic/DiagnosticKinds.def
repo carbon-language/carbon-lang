@@ -377,6 +377,12 @@ DIAG(err_unexpected_at, ERROR,
 DIAG(err_matching, ERROR,
      "to match this '%0'")
 
+/// Objective-C parser diagnostics
+DIAG(err_objc_no_attributes_on_category, ERROR,
+     "attributes may not be specified on a category")
+DIAG(err_objc_missing_end, ERROR,
+     "missing @end")
+
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
 //===----------------------------------------------------------------------===//
