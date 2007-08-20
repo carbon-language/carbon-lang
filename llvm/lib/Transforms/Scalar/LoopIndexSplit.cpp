@@ -94,9 +94,9 @@ namespace {
     /// this loop may not be eliminated.
     bool safeHeader(SplitInfo &SD,  BasicBlock *BB);
 
-    /// If Exit block includes loop variant instructions then this
+    /// If Exiting block includes loop variant instructions then this
     /// loop may not be eliminated.
-    bool safeExitBlock(SplitInfo &SD, BasicBlock *BB);
+    bool safeExitingBlock(SplitInfo &SD, BasicBlock *BB);
 
     /// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
     /// This routine is used to remove split condition's dead branch, dominated by
@@ -269,24 +269,24 @@ void LoopIndexSplit::findIndVar(Value *V, Loop *L) {
 // Find loop's exit condition and associated induction variable.
 void LoopIndexSplit::findLoopConditionals() {
 
-  BasicBlock *ExitBlock = NULL;
+  BasicBlock *ExitingBlock = NULL;
 
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
     BasicBlock *BB = *I;
     if (!L->isLoopExit(BB))
       continue;
-    if (ExitBlock)
+    if (ExitingBlock)
       return;
-    ExitBlock = BB;
+    ExitingBlock = BB;
   }
 
-  if (!ExitBlock)
+  if (!ExitingBlock)
     return;
   
   // If exit block's terminator is conditional branch inst then we have found
   // exit condition.
-  BranchInst *BR = dyn_cast<BranchInst>(ExitBlock->getTerminator());
+  BranchInst *BR = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   if (!BR || BR->isUnconditional())
     return;
   
@@ -411,9 +411,9 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   if (!safeHeader(SD, Header)) 
     return false;
 
-  // If Exit block includes loop variant instructions then this
+  // If Exiting block includes loop variant instructions then this
   // loop may not be eliminated.
-  if (!safeExitBlock(SD, ExitCondition->getParent())) 
+  if (!safeExitingBlock(SD, ExitCondition->getParent())) 
     return false;
 
   // Update CFG.
@@ -531,12 +531,13 @@ bool LoopIndexSplit::safeHeader(SplitInfo &SD, BasicBlock *Header) {
   return true;
 }
 
-// If Exit block includes loop variant instructions then this
+// If Exiting block includes loop variant instructions then this
 // loop may not be eliminated. This is used by processOneIterationLoop().
-bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
+bool LoopIndexSplit::safeExitingBlock(SplitInfo &SD, 
+                                       BasicBlock *ExitingBlock) {
 
-  for (BasicBlock::iterator BI = ExitBlock->begin(), BE = ExitBlock->end();
-       BI != BE; ++BI) {
+  for (BasicBlock::iterator BI = ExitingBlock->begin(), 
+         BE = ExitingBlock->end(); BI != BE; ++BI) {
     Instruction *I = BI;
 
     // PHI Nodes are OK.
@@ -576,14 +577,14 @@ bool LoopIndexSplit::safeExitBlock(SplitInfo &SD, BasicBlock *ExitBlock) {
         continue;
     }
 
-    if (I == ExitBlock->getTerminator())
+    if (I == ExitingBlock->getTerminator())
       continue;
 
     // Otherwise we have instruction that may not be safe.
     return false;
   }
 
-  // We could not find any reason to consider ExitBlock unsafe.
+  // We could not find any reason to consider ExitingBlock unsafe.
   return true;
 }
 
@@ -777,8 +778,8 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
   //[*] True loop's exit edge enters False loop.
   PHINode *IndVarClone = cast<PHINode>(ValueMap[IndVar]);
-  BasicBlock *ExitBlock = ExitCondition->getParent();
-  BranchInst *ExitInsn = dyn_cast<BranchInst>(ExitBlock->getTerminator());
+  BasicBlock *ExitingBlock = ExitCondition->getParent();
+  BranchInst *ExitInsn = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
   assert (ExitInsn && "Unable to find suitable loop exit branch");
   BasicBlock *ExitDest = ExitInsn->getSuccessor(1);
 
@@ -805,36 +806,36 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
       PN->removeIncomingValue(Preheader);
       if (PN == IndVarClone)
-        PN->addIncoming(FLStartValue, ExitBlock);
+        PN->addIncoming(FLStartValue, ExitingBlock);
       else { 
         PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
-        Value *V2 = OrigPN->getIncomingValueForBlock(ExitBlock);
-        PN->addIncoming(V2, ExitBlock);
+        Value *V2 = OrigPN->getIncomingValueForBlock(ExitingBlock);
+        PN->addIncoming(V2, ExitingBlock);
       }
     } else
       break;
   }
 
   // Update ExitDest. Now it's predecessor is False loop's exit block.
-  BasicBlock *ExitBlockClone = cast<BasicBlock>(ValueMap[ExitBlock]);
+  BasicBlock *ExitingBlockClone = cast<BasicBlock>(ValueMap[ExitingBlock]);
   for (BasicBlock::iterator BI = ExitDest->begin(), BE = ExitDest->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(ExitBlock)], ExitBlockClone);
-      PN->removeIncomingValue(ExitBlock);
+      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(ExitingBlock)], ExitingBlockClone);
+      PN->removeIncomingValue(ExitingBlock);
     } else
       break;
   }
 
   if (DT) {
-    DT->changeImmediateDominator(FalseHeader, ExitBlock);
-    DT->changeImmediateDominator(ExitDest, cast<BasicBlock>(ValueMap[ExitBlock]));
+    DT->changeImmediateDominator(FalseHeader, ExitingBlock);
+    DT->changeImmediateDominator(ExitDest, cast<BasicBlock>(ValueMap[ExitingBlock]));
   }
 
   assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
 
   //[*] Split Exit Edge. 
-  SplitEdge(ExitBlock, FalseHeader, this);
+  SplitEdge(ExitingBlock, FalseHeader, this);
 
   //[*] Eliminate split condition's false branch from True loop.
   BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
