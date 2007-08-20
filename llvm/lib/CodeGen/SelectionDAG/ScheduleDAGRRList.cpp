@@ -45,7 +45,6 @@ namespace {
 /// ScheduleDAGRRList - The actual register reduction list scheduler
 /// implementation.  This supports both top-down and bottom-up scheduling.
 ///
-
 class VISIBILITY_HIDDEN ScheduleDAGRRList : public ScheduleDAG {
 private:
   /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
@@ -95,7 +94,7 @@ void ScheduleDAGRRList::Schedule() {
   CalculateHeights();
 
   AvailableQueue->initNodes(SUnitMap, SUnits);
-
+  
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
   if (isBottomUp)
     ListScheduleBottomUp();
@@ -103,7 +102,7 @@ void ScheduleDAGRRList::Schedule() {
     ListScheduleTopDown();
   
   AvailableQueue->releaseState();
-
+  
   CommuteNodesToReducePressure();
   
   DOUT << "*** Final schedule ***\n";
@@ -169,7 +168,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
 //===----------------------------------------------------------------------===//
 
 /// ReleasePred - Decrement the NumSuccsLeft count of a predecessor. Add it to
-/// the Available queue is the count reaches zero. Also update its cycle bound.
+/// the AvailableQueue if the count reaches zero. Also update its cycle bound.
 void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain, 
                                     unsigned CurCycle) {
   // FIXME: the distance between two nodes is not always == the predecessor's
@@ -233,7 +232,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   AvailableQueue->push(SUnitMap[DAG.getRoot().Val]);
 
   // While Available queue is not empty, grab the node with the highest
-  // priority. If it is not ready put it back. Schedule the node.
+  // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
   while (!AvailableQueue->empty()) {
     SUnit *CurNode = AvailableQueue->pop();
@@ -282,7 +281,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
 //===----------------------------------------------------------------------===//
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
-/// the PendingQueue if the count reaches zero.
+/// the AvailableQueue if the count reaches zero. Also update its cycle bound.
 void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain, 
                                     unsigned CurCycle) {
   // FIXME: the distance between two nodes is not always == the predecessor's
@@ -330,6 +329,8 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   SU->isScheduled = true;
 }
 
+/// ListScheduleTopDown - The main loop of list scheduling for top-down
+/// schedulers.
 void ScheduleDAGRRList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
   SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
@@ -348,7 +349,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   CurCycle++;
 
   // While Available queue is not empty, grab the node with the highest
-  // priority. If it is not ready put it back. Schedule the node.
+  // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
   while (!AvailableQueue->empty()) {
     SUnit *CurNode = AvailableQueue->pop();
@@ -474,7 +475,7 @@ namespace {
 
     const TargetInstrInfo *TII;
   public:
-    BURegReductionPriorityQueue(const TargetInstrInfo *tii)
+    explicit BURegReductionPriorityQueue(const TargetInstrInfo *tii)
       : TII(tii) {}
 
     void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
@@ -539,7 +540,8 @@ namespace {
 
 
   template<class SF>
-  class TDRegReductionPriorityQueue : public RegReductionPriorityQueue<SF> {
+  class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
+   : public RegReductionPriorityQueue<SF> {
     // SUnitMap SDNode to SUnit mapping (n -> 1).
     DenseMap<SDNode*, SUnit*> *SUnitMap;
 
