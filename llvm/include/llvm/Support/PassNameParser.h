@@ -24,9 +24,9 @@
 #define LLVM_SUPPORT_PASS_NAME_PARSER_H
 
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Pass.h"
 #include <algorithm>
+#include <cstring>
 
 namespace llvm {
 
@@ -89,6 +89,44 @@ public:
   }
 };
 
-} // End llvm namespace
+//===----------------------------------------------------------------------===//
+// FilteredPassNameParser class - Make use of the pass registration
+// mechanism to automatically add a command line argument to opt for
+// each pass that satisfies a filter criteria.  Filter should return
+// true for passes to be registered as command-line options.
+//
+template<typename Filter>
+class FilteredPassNameParser : public PassNameParser {
+private:
+  Filter filter;
 
+public:
+  bool ignorablePassImpl(const PassInfo *P) const { return !filter(*P); }
+};
+
+//===----------------------------------------------------------------------===//
+// PassArgFilter - A filter for use with PassNameFilterParser that only
+// accepts a Pass whose Arg matches certain strings.
+//
+// Use like this:
+//
+// extern const char AllowedPassArgs[] = "-anders_aa -dse";
+//
+// static cl::list<
+//   const PassInfo*,
+//   bool,
+//   FilteredPassNameParser<PassArgFilter<AllowedPassArgs> > >
+// PassList(cl::desc("LLVM optimizations available:"));
+//
+// Only the -anders_aa and -dse options will be available to the user.
+//
+template<const char *Args>
+class PassArgFilter {
+public:
+  bool operator()(const PassInfo &P) const {
+    return(std::strstr(Args, P.getPassArgument()));
+  }
+};
+
+} // End llvm namespace
 #endif
