@@ -1116,3 +1116,21 @@ _test1:
         addps   %xmm1, %xmm0
         ret
 
+//===---------------------------------------------------------------------===//
+
+Leaf functions that require one 4-byte spill slot have a prolog like this:
+
+_foo:
+        pushl   %esi
+        subl    $4, %esp
+...
+and an epilog like this:
+        addl    $4, %esp
+        popl    %esi
+        ret
+
+It would be smaller, and potentially faster, to push eax on entry and to
+pop into a dummy register instead of using addl/subl of esp.  Just don't pop 
+into any return registers :)
+
+//===---------------------------------------------------------------------===//
