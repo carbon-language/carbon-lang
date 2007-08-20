@@ -586,7 +586,7 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
                            E->getType(),
                            cast<SizeOfAlignOfTypeExpr>(E)->isSizeOf());
   case Expr::ImplicitCastExprClass:
-    return EmitCastExpr(cast<ImplicitCastExpr>(E)->getSubExpr(), E->getType());
+    return EmitImplicitCastExpr(cast<ImplicitCastExpr>(E));
   case Expr::CastExprClass: 
     return EmitCastExpr(cast<CastExpr>(E)->getSubExpr(), E->getType());
   case Expr::CallExprClass:
@@ -658,6 +658,31 @@ RValue CodeGenFunction::EmitCastExpr(const Expr *Op, QualType DestTy) {
     return RValue::getAggregate(0);
   
   return EmitConversion(Src, Op->getType(), DestTy);
+}
+
+/// EmitImplicitCastExpr - Implicit casts are the same as normal casts, but also
+/// handle things like function to pointer-to-function decay, and array to
+/// pointer decay.
+RValue CodeGenFunction::EmitImplicitCastExpr(const ImplicitCastExpr *E) {
+  const Expr *Op = E->getSubExpr();
+  QualType OpTy = Op->getType().getCanonicalType();
+  
+  // If this is due to array->pointer conversion, emit the array expression as
+  // an l-value.
+  if (isa<ArrayType>(OpTy)) {
+    // FIXME: For now we assume that all source arrays map to LLVM arrays.  This
+    // will not true when we add support for VLAs.
+    llvm::Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
+    
+    assert(isa<llvm::PointerType>(V->getType()) &&
+           isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
+                                ->getElementType()) &&
+           "Doesn't support VLAs yet!");
+    llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    return RValue::get(Builder.CreateGEP(V, Idx0, Idx0, "arraydecay"));
+  }
+  
+  return EmitCastExpr(Op, E->getType());
 }
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {

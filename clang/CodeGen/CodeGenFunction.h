@@ -50,6 +50,7 @@ namespace clang {
   class CharacterLiteral;
   class TypesCompatibleExpr;
   
+  class ImplicitCastExpr;
   class CastExpr;
   class CallExpr;
   class UnaryOperator;
@@ -350,6 +351,7 @@ public:
   RValue EmitCharacterLiteral(const CharacterLiteral *E);
   RValue EmitTypesCompatibleExpr(const TypesCompatibleExpr *E);
    
+  RValue EmitImplicitCastExpr(const ImplicitCastExpr *Op);
   RValue EmitCastExpr(const Expr *Op, QualType DestTy);
   RValue EmitCallExpr(const CallExpr *E);
   RValue EmitBuiltinExpr(unsigned builtinID, const CallExpr *E);
