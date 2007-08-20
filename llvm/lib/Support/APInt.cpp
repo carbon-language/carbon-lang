@@ -2018,19 +2018,39 @@ void APInt::dump() const
 
 /* Assumed by lowHalf, highHalf, partMSB and partLSB.  A fairly safe
    and unrestricting assumption.  */
-compileTimeAssert(integerPartWidth % 2 == 0);
-
-#define lowBitMask(bits) (~(integerPart) 0 >> (integerPartWidth - (bits)))
-#define lowHalf(part) ((part) & lowBitMask(integerPartWidth / 2))
-#define highHalf(part) ((part) >> (integerPartWidth / 2))
+COMPILE_TIME_ASSERT(integerPartWidth % 2 == 0);
 
 /* Some handy functions local to this file.  */
 namespace {
 
+  /* Returns the integer part with the least significant BITS set.
+     BITS cannot be zero.  */
+  inline integerPart
+  lowBitMask(unsigned int bits)
+  {
+    assert (bits != 0 && bits <= integerPartWidth);
+
+    return ~(integerPart) 0 >> (integerPartWidth - bits);
+  }
+
+  /* Returns the value of the lower nibble of PART.  */
+  inline integerPart
+  lowHalf(integerPart part)
+  {
+    return part & lowBitMask(integerPartWidth / 2);
+  }
+
+  /* Returns the value of the upper nibble of PART.  */
+  inline integerPart
+  highHalf(integerPart part)
+  {
+    return part >> (integerPartWidth / 2);
+  }
+
   /* Returns the bit number of the most significant bit of a part.  If
      the input number has no bits set -1U is returned.  */
   unsigned int
-  PartMSB(integerPart value)
+  partMSB(integerPart value)
   {
     unsigned int n, msb;
 
@@ -2157,7 +2177,7 @@ APInt::tcMSB(const integerPart *parts, unsigned int n)
       --n;
 
       if (parts[n] != 0) {
-          msb = PartMSB(parts[n]);
+          msb = partMSB(parts[n]);
 
           return msb + n * integerPartWidth;
       }
@@ -2388,11 +2408,11 @@ APInt::tcDivide(integerPart *lhs, const integerPart *rhs,
 
   assert(lhs != remainder && lhs != srhs && remainder != srhs);
 
-  shiftCount = tcMSB(rhs, parts);
-  if (shiftCount == -1U)
+  shiftCount = tcMSB(rhs, parts) + 1;
+  if (shiftCount == 0)
     return true;
 
-  shiftCount = parts * integerPartWidth - shiftCount - 1;
+  shiftCount = parts * integerPartWidth - shiftCount;
   n = shiftCount / integerPartWidth;
   mask = (integerPart) 1 << (shiftCount % integerPartWidth);
 

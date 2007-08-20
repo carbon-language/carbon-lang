@@ -19,15 +19,16 @@
 #include <cassert>
 #include <string>
 
-#define HOST_CHAR_BIT 8
-#define compileTimeAssert(cond) extern int CTAssert[(cond) ? 1 : -1]
-#define integerPartWidth (HOST_CHAR_BIT * sizeof(llvm::integerPart))
+#define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
 
 namespace llvm {
 
   /* An unsigned host type used as a single part of a multi-part
      bignum.  */
   typedef uint64_t integerPart;
+
+  const unsigned int host_char_bit = 8;
+  const unsigned int integerPartWidth = host_char_bit * sizeof(integerPart);
 
 //===----------------------------------------------------------------------===//
 //                              APInt Class
