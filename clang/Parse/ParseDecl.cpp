@@ -599,16 +599,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
-
-/// ParseStructUnionBody
-///       struct-contents:
-///         struct-declaration-list
-/// [EXT]   empty
-/// [GNU]   "struct-declaration-list" without terminatoring ';'
-///       struct-declaration-list:
-///         struct-declaration
-///         struct-declaration-list struct-declaration
-/// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
+/// ParseStructDeclaration
 ///       struct-declaration:
 ///         specifier-qualifier-list struct-declarator-list ';'
 /// [GNU]   __extension__ struct-declaration
@@ -622,6 +613,83 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 /// [GNU]   declarator attributes[opt]
 ///         declarator[opt] ':' constant-expression
 /// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
+///
+void Parser::ParseStructDeclaration(DeclTy *TagDecl,
+  llvm::SmallVector<DeclTy*, 32> &FieldDecls) {
+  // FIXME: When __extension__ is specified, disable extension diagnostics.
+  if (Tok.getKind() == tok::kw___extension__)
+    ConsumeToken();
+  
+  // Parse the common specifier-qualifiers-list piece.
+  DeclSpec DS;
+  SourceLocation SpecQualLoc = Tok.getLocation();
+  ParseSpecifierQualifierList(DS);
+  // TODO: Does specifier-qualifier list correctly check that *something* is
+  // specified?
+  
+  // If there are no declarators, issue a warning.
+  if (Tok.getKind() == tok::semi) {
+    Diag(SpecQualLoc, diag::w_no_declarators);
+    ConsumeToken();
+    return;
+  }
+
+  // Read struct-declarators until we find the semicolon.
+  Declarator DeclaratorInfo(DS, Declarator::MemberContext);
+
+  while (1) {
+    /// struct-declarator: declarator
+    /// struct-declarator: declarator[opt] ':' constant-expression
+    if (Tok.getKind() != tok::colon)
+      ParseDeclarator(DeclaratorInfo);
+    
+    ExprTy *BitfieldSize = 0;
+    if (Tok.getKind() == tok::colon) {
+      ConsumeToken();
+      ExprResult Res = ParseConstantExpression();
+      if (Res.isInvalid) {
+        SkipUntil(tok::semi, true, true);
+      } else {
+        BitfieldSize = Res.Val;
+      }
+    }
+    
+    // If attributes exist after the declarator, parse them.
+    if (Tok.getKind() == tok::kw___attribute)
+      DeclaratorInfo.AddAttributes(ParseAttributes());
+    
+    // Install the declarator into the current TagDecl.
+    DeclTy *Field = Actions.ParseField(CurScope, TagDecl, SpecQualLoc,
+                                       DeclaratorInfo, BitfieldSize);
+    FieldDecls.push_back(Field);
+    
+    // If we don't have a comma, it is either the end of the list (a ';')
+    // or an error, bail out.
+    if (Tok.getKind() != tok::comma)
+      break;
+    
+    // Consume the comma.
+    ConsumeToken();
+    
+    // Parse the next declarator.
+    DeclaratorInfo.clear();
+    
+    // Attributes are only allowed on the second declarator.
+    if (Tok.getKind() == tok::kw___attribute)
+      DeclaratorInfo.AddAttributes(ParseAttributes());
+  }
+  return;
+}
+
+/// ParseStructUnionBody
+///       struct-contents:
+///         struct-declaration-list
+/// [EXT]   empty
+/// [GNU]   "struct-declaration-list" without terminatoring ';'
+///       struct-declaration-list:
+///         struct-declaration
+///         struct-declaration-list struct-declaration
+/// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
 ///
 void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                                   unsigned TagType, DeclTy *TagDecl) {
@@ -646,70 +714,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       ConsumeToken();
       continue;
     }
+    ParseStructDeclaration(TagDecl, FieldDecls);
 
-    // FIXME: When __extension__ is specified, disable extension diagnostics.
-    if (Tok.getKind() == tok::kw___extension__)
-      ConsumeToken();
-    
-    // Parse the common specifier-qualifiers-list piece.
-    DeclSpec DS;
-    SourceLocation SpecQualLoc = Tok.getLocation();
-    ParseSpecifierQualifierList(DS);
-    // TODO: Does specifier-qualifier list correctly check that *something* is
-    // specified?
-    
-    // If there are no declarators, issue a warning.
-    if (Tok.getKind() == tok::semi) {
-      Diag(SpecQualLoc, diag::w_no_declarators);
-      ConsumeToken();
-      continue;
-    }
-
-    // Read struct-declarators until we find the semicolon.
-    Declarator DeclaratorInfo(DS, Declarator::MemberContext);
-
-    while (1) {
-      /// struct-declarator: declarator
-      /// struct-declarator: declarator[opt] ':' constant-expression
-      if (Tok.getKind() != tok::colon)
-        ParseDeclarator(DeclaratorInfo);
-      
-      ExprTy *BitfieldSize = 0;
-      if (Tok.getKind() == tok::colon) {
-        ConsumeToken();
-        ExprResult Res = ParseConstantExpression();
-        if (Res.isInvalid) {
-          SkipUntil(tok::semi, true, true);
-        } else {
-          BitfieldSize = Res.Val;
-        }
-      }
-      
-      // If attributes exist after the declarator, parse them.
-      if (Tok.getKind() == tok::kw___attribute)
-        DeclaratorInfo.AddAttributes(ParseAttributes());
-      
-      // Install the declarator into the current TagDecl.
-      DeclTy *Field = Actions.ParseField(CurScope, TagDecl, SpecQualLoc,
-                                         DeclaratorInfo, BitfieldSize);
-      FieldDecls.push_back(Field);
-      
-      // If we don't have a comma, it is either the end of the list (a ';')
-      // or an error, bail out.
-      if (Tok.getKind() != tok::comma)
-        break;
-      
-      // Consume the comma.
-      ConsumeToken();
-      
-      // Parse the next declarator.
-      DeclaratorInfo.clear();
-      
-      // Attributes are only allowed on the second declarator.
-      if (Tok.getKind() == tok::kw___attribute)
-        DeclaratorInfo.AddAttributes(ParseAttributes());
-    }
-    
     if (Tok.getKind() == tok::semi) {
       ConsumeToken();
     } else if (Tok.getKind() == tok::r_brace) {

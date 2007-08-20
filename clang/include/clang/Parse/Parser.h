@@ -359,7 +359,9 @@ private:
   void ParseStructUnionSpecifier(DeclSpec &DS);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclTy *TagDecl);
-
+  void ParseStructDeclaration(DeclTy *TagDecl,
+     llvm::SmallVector<DeclTy*, 32> &FieldDecls);
+  
   bool isDeclarationSpecifier() const;
   bool isTypeSpecifierQualifier() const;
 
