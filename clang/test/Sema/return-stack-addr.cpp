@@ -87,3 +87,27 @@ int z = 1;
 int* ret_global() {
   return &z;  // no warning.
 }
+
+int* ret_parameter(int x) {
+  return &x;  // expected-warning {{address of stack memory}}
+}
+
+
+int* ret_cpp_static_cast(short x) {
+  return static_cast<int*>(&x); // expected-warning {{address of stack memory}}
+}
+
+int* ret_cpp_reinterpret_cast(double x) {
+  return reinterpret_cast<int*>(&x); // expected-warning {{address of stack me}}
+}
+
+int* ret_cpp_reinterpret_cast_no_warning(double x) {
+  return reinterpret_cast<int*>(x); // no-warning
+}
+
+int* ret_cpp_const_cast(const x) {
+  return const_cast<int*>(&x);  // expected-warning {{address of stack memory}}
+}
+
+// TODO: test case for dynamic_cast.  clang does not yet have
+// support for C++ classes to write such a test case.
