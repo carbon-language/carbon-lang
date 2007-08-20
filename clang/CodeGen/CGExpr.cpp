@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/AST.h"
+#include "clang/Lex/IdentifierTable.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -660,6 +661,15 @@ RValue CodeGenFunction::EmitCastExpr(const Expr *Op, QualType DestTy) {
 }
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
+  if (const ImplicitCastExpr *IcExpr = 
+      dyn_cast<const ImplicitCastExpr>(E->getCallee()))
+    if (const DeclRefExpr *DRExpr = 
+        dyn_cast<const DeclRefExpr>(IcExpr->getSubExpr()))
+      if (const FunctionDecl *FDecl = 
+          dyn_cast<const FunctionDecl>(DRExpr->getDecl()))
+        if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
+          return EmitBuiltinExpr(builtinID, E);
+        
   llvm::Value *Callee = EmitExpr(E->getCallee()).getVal();
   
   // The callee type will always be a pointer to function type, get the function

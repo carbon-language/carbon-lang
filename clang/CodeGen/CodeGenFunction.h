@@ -352,6 +352,7 @@ public:
    
   RValue EmitCastExpr(const Expr *Op, QualType DestTy);
   RValue EmitCallExpr(const CallExpr *E);
+  RValue EmitBuiltinExpr(unsigned builtinID, const CallExpr *E);
   RValue EmitArraySubscriptExprRV(const ArraySubscriptExpr *E);
 
   // Unary Operators.
