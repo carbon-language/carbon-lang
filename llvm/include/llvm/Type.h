@@ -180,6 +180,11 @@ public:
   ///
   bool isInteger() const { return ID == IntegerTyID; } 
 
+  /// isIntOrIntVector - Return true if this is an integer type or a vector of
+  /// integer types.
+  ///
+  bool isIntOrIntVector() const;
+  
   /// isFloatingPoint - Return true if this is one of the two floating point
   /// types
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID ||

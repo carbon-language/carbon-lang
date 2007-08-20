@@ -126,6 +126,17 @@ const Type *Type::getVAArgsPromotedType() const {
     return this;
 }
 
+/// isIntOrIntVector - Return true if this is an integer type or a vector of
+/// integer types.
+///
+bool Type::isIntOrIntVector() const {
+  if (isInteger())
+    return true;
+  if (ID != Type::VectorTyID) return false;
+  
+  return cast<VectorType>(this)->getElementType()->isInteger();
+}
+
 /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
 ///
 bool Type::isFPOrFPVector() const {
