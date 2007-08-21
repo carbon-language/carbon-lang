@@ -13,6 +13,7 @@
 
 #include "ASTStreamers.h"
 #include "clang/AST/AST.h"
+#include "clang/AST/CFG.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/ASTStreamer.h"
 using namespace clang;
@@ -130,6 +131,32 @@ void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       PrintTypeDefDecl(TD);
     } else {
       fprintf(stderr, "Read top-level variable decl: '%s'\n", D->getName());
+    }
+  }
+  
+  if (Stats) {
+    fprintf(stderr, "\nSTATISTICS:\n");
+    ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
+  }
+  
+  ASTStreamer_Terminate(Streamer);
+}
+
+void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
+  
+  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {      
+      if (FD->getBody()) {
+        PrintFunctionDeclStart(FD);
+        fprintf(stderr,"\n");
+        if (CFG* C = CFG::BuildCFG(FD->getBody()))
+          C->dump();
+        else
+          fprintf(stderr," Error processing CFG.\n");
+      }
     }
   }
   
