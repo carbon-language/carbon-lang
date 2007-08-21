@@ -73,7 +73,11 @@ STMT(53, ChooseExpr           , Expr)
 // C++ Expressions.
 STMT(54, CXXCastExpr          , Expr)
 STMT(55, CXXBoolLiteralExpr   , Expr)
-LAST_EXPR(55)
+
+// Obj-C Expressions.
+STMT(56, ObjCStringLiteral    , Expr)
+
+LAST_EXPR(56)
 
 #undef STMT
 #undef FIRST_STMT

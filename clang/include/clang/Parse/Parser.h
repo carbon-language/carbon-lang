@@ -324,6 +324,11 @@ private:
   ExprResult ParseInitializerWithPotentialDesignator();
   
   //===--------------------------------------------------------------------===//
+  // Objective-C Expressions
+  ExprResult ParseObjCExpression();
+  ExprResult ParseObjCStringLiteral();
+  
+  //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
   
   StmtResult ParseStatement() { return ParseStatementOrDeclaration(true); }

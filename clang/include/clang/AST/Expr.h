@@ -811,6 +811,28 @@ public:
   static bool classof(const ChooseExpr *) { return true; }
 };
 
+/// ObjCStringLiteral, used for Objective-C string literals
+/// i.e. @"foo".
+class ObjCStringLiteral : public Expr {
+  StringLiteral *String;
+public:
+  ObjCStringLiteral(StringLiteral *SL, QualType T)
+    : Expr(ObjCStringLiteralClass, T), String(SL) {}
+  
+  StringLiteral* getString() { return String; }
+
+  const StringLiteral* getString() const { return String; }
+
+  virtual SourceRange getSourceRange() const { 
+    return String->getSourceRange();
+  }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCStringLiteralClass; 
+  }
+  static bool classof(const ObjCStringLiteral *) { return true; }  
+};
+  
 }  // end namespace clang
 
 #endif

@@ -492,6 +492,16 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   fprintf(F, " %s)", Node->getValue() ? "true" : "false");
 }
 
+//===----------------------------------------------------------------------===//
+// Obj-C Expressions
+//===----------------------------------------------------------------------===//
+
+void StmtDumper::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
+  DumpExpr(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getString());
+  fprintf(F, ")");
+}
 
 //===----------------------------------------------------------------------===//
 // Stmt method implementations

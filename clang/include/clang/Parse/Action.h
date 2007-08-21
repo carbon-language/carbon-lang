@@ -404,6 +404,12 @@ public:
                                          tok::TokenKind Kind) {
     return 0;
   }
+  
+  //===----------------------- Obj-C Expressions --------------------------===//
+  virtual ExprResult ParseObjCStringLiteral(ExprTy *string) {
+    return 0;
+  }
+  
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

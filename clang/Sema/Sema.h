@@ -323,6 +323,9 @@ public:
   /// ParseCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
+  
+  // ParseObjCStringLiteral - Parse Objective-C string literals.
+  virtual ExprResult ParseObjCStringLiteral(ExprTy *string);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

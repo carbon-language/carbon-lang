@@ -566,6 +566,8 @@ RValue CodeGenFunction::EmitExpr(const Expr *E) {
     return EmitConditionalOperator(cast<ConditionalOperator>(E));
   case Expr::ChooseExprClass:
     return EmitChooseExpr(cast<ChooseExpr>(E));
+  case Expr::ObjCStringLiteralClass:
+    return EmitObjCStringLiteral(cast<ObjCStringLiteral>(E));
   }
 }
 

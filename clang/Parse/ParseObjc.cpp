@@ -310,3 +310,27 @@ void Parser::ParseObjCInstanceMethodDeclaration() {
 void Parser::ParseObjCClassMethodDeclaration() {
   assert(0 && "Unimp");
 }
+
+Parser::ExprResult Parser::ParseObjCExpression() {
+  SourceLocation AtLoc = ConsumeToken(); // the "@"
+
+  switch (Tok.getKind()) {
+    case tok::string_literal:    // primary-expression: string-literal
+    case tok::wide_string_literal:
+      return ParseObjCStringLiteral();
+    default:
+      Diag(AtLoc, diag::err_unexpected_at);
+      SkipUntil(tok::semi);
+      break;
+  }
+  
+  return 0;
+}
+
+Parser::ExprResult Parser::ParseObjCStringLiteral() {
+  ExprResult Res = ParseStringLiteralExpression();
+
+  if (Res.isInvalid) return Res;
+
+  return Actions.ParseObjCStringLiteral(Res.Val);
+}

@@ -1657,3 +1657,17 @@ Sema::ExprResult Sema::ParseChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
 }
 
+// TODO: Move this to SemaObjC.cpp
+Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string)
+{
+  StringLiteral* S = static_cast<StringLiteral *>(string);
+  
+  if (CheckBuiltinCFStringArgument(S))
+    return true;
+  
+  QualType t = Context.getCFConstantStringType();
+  t = t.getQualifiedType(QualType::Const);
+  t = Context.getPointerType(t);
+
+  return new ObjCStringLiteral(S, t);
+}

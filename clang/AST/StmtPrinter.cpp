@@ -511,6 +511,12 @@ void StmtPrinter::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   OS << (Node->getValue() ? "true" : "false");
 }
 
+// Obj-C 
+
+void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
+  OS << "@";
+  VisitStringLiteral(Node->getString());
+}
 
 //===----------------------------------------------------------------------===//
 // Stmt method implementations

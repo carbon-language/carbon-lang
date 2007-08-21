@@ -61,6 +61,7 @@ namespace clang {
   class ConditionalOperator;
   class ChooseExpr;
   class PreDefinedExpr;
+  class ObjCStringLiteral;
   
   class BlockVarDecl;
   class EnumConstantDecl;
@@ -393,6 +394,8 @@ public:
   RValue EmitConditionalOperator(const ConditionalOperator *E);
   RValue EmitChooseExpr(const ChooseExpr *E);
   
+  RValue EmitObjCStringLiteral(const ObjCStringLiteral* E);
+
   //===--------------------------------------------------------------------===//
   //                       Aggregate Expression Emission
   //===--------------------------------------------------------------------===//
