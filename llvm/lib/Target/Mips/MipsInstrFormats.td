@@ -39,6 +39,7 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 
   let AsmString   = asmstr;
   let Pattern     = pattern;
+  let Itinerary   = itin;
 }
 
 
