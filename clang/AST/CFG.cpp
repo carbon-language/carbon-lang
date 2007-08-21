@@ -15,6 +15,7 @@
 #include "clang/AST/CFG.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
+#include "llvm/ADT/DenseMap.h"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -56,6 +57,12 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* Succ;
   unsigned NumBlocks;
   
+  typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
+  LabelMapTy LabelMap;
+  
+  typedef std::list<CFGBlock*> BackpatchBlocksTy;
+  BackpatchBlocksTy BackpatchBlocks;
+  
 public:  
   explicit CFGBuilder() : cfg(NULL), Block(NULL), Exit(NULL), Succ(NULL), 
                           NumBlocks(0) {
@@ -73,7 +80,7 @@ public:
   CFG* buildCFG(Stmt* Statement) {
     if (!Statement) return NULL;
   
-    assert (cfg && "CFGBuilder should only be used to construct one CFG");
+    assert (!Exit && "CFGBuilder should only be used to construct one CFG");
 
     // Create the exit block.
     Block = createBlock();
@@ -84,17 +91,28 @@ public:
       // Reverse the statements in the last constructed block.  Statements
       // are inserted into the blocks in reverse order.
       B->reverseStmts();
+      
+      // Backpatch the gotos whose label -> block mappings we didn't know
+      // when we encountered them.
+      for (BackpatchBlocksTy::iterator I = BackpatchBlocks.begin(), 
+           E = BackpatchBlocks.end(); I != E; ++I ) {
+       
+        CFGBlock* B = *I;
+        GotoStmt* G = cast<GotoStmt>(B->getTerminator());
+        LabelMapTy::iterator LI = LabelMap.find(G->getLabel());
+
+        if (LI == LabelMap.end())
+          return NULL; // No matching label.  Bad CFG.
+        
+        B->addSuccessor(LI->second);                   
+      }        
+      
       // NULL out cfg so that repeated calls
       CFG* t = cfg;
       cfg = NULL;
       return t;
     }
-    else {
-      // Error occured while building CFG: Delete the partially constructed CFG.
-      delete cfg;
-      cfg = NULL;
-      return NULL;
-    }
+    else return NULL;
   }
   
   // createBlock - Used to lazily create blocks that are connected
@@ -218,7 +236,51 @@ public:
     if (R->getRetValue()) Block->appendStmt(R->getRetValue());
     
     return Block;
-  }  
+  }
+  
+  CFGBlock* VisitLabelStmt(LabelStmt* L) {
+    // Get the block of the labeled statement.  Add it to our map.
+    CFGBlock* LabelBlock = Visit(L->getSubStmt());
+    
+
+    assert (LabelMap.find(L) == LabelMap.end() && "label already in map");
+    LabelMap[ L ] = LabelBlock;
+    
+    // Labels partition blocks, so this is the end of the basic block
+    // we were processing (the label is the first statement).    
+    assert (Block);
+    Block->appendStmt(L);
+    Block->reverseStmts();
+    
+    // We set Block to NULL to allow lazy creation of a new block
+    // (if necessary);
+    Block = NULL;
+    
+    // This block is now the implicit successor of other blocks.
+    Succ = LabelBlock;
+    
+    return LabelBlock;
+  }
+  
+  CFGBlock* VisitGotoStmt(GotoStmt* G) {
+    // Goto is a control-flow statement.  Thus we stop processing the
+    // current block and create a new one.
+    if (Block) Block->reverseStmts();
+    Block = createBlock(false);
+    Block->setTerminator(G);
+    
+    // If we already know the mapping to the label block add the
+    // successor now.
+    LabelMapTy::iterator I = LabelMap.find(G->getLabel());
+    
+    if (I == LabelMap.end())
+      // We will need to backpatch this block later.
+      BackpatchBlocks.push_back(Block);
+    else
+      Block->addSuccessor(I->second);
+
+    return Block;            
+  }
 };
 
 // BuildCFG - A helper function that builds CFGs from ASTS.
@@ -240,8 +302,8 @@ void CFG::print(std::ostream& OS) {
   // designate the Entry and Exit blocks.
   for (iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
     OS << "\n  [ B" << I->getBlockID();
-    if (&(*I) == getExit()) OS << " (EXIT) ]\n";
-    else if (&(*I) == getEntry()) OS << " (ENTRY) ]\n";
+    if (&(*I) == &getExit()) OS << " (EXIT) ]\n";
+    else if (&(*I) == &getEntry()) OS << " (ENTRY) ]\n";
     else OS << " ]\n";
     I->print(OS);
   }
@@ -259,8 +321,18 @@ void CFGBlock::print(std::ostream& OS) {
   OS << "    ------------------------\n";
   unsigned j = 1;
   for (iterator I = Stmts.begin(), E = Stmts.end() ; I != E ; ++I, ++j ) {
-    OS << "    " << std::setw(3) << j << ": ";
-    (*I)->printPretty(OS);
+    // Print the statement # in the basic block.
+    OS << "    " << std::setw(3) << j << ": ";    
+
+    // Print the statement/expression.
+    Stmt* S = *I;
+    
+    if (LabelStmt* L = dyn_cast<LabelStmt>(S))
+      OS << L->getName() << ": (LABEL)\n";
+    else
+      (*I)->printPretty(OS);
+      
+    // Expressions need a newline.
     if (isa<Expr>(*I)) OS << '\n';
   }
   OS << "    ------------------------\n";
@@ -287,14 +359,9 @@ void CFGBlock::print(std::ostream& OS) {
         break;
       }
       
-      case Stmt::ReturnStmtClass: {
-        ReturnStmt* R = cast<ReturnStmt>(ControlFlowStmt);
-        R->printPretty(std::cerr);
-        break;
-      }
-      
       default:
-        assert(false && "terminator print not fully implemented");
+        ControlFlowStmt->printPretty(std::cerr);
+        break;
     }
   }
   else OS << "<NULL>\n";

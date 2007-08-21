@@ -128,6 +128,8 @@ public:
   
   void appendStmt(Stmt* Statement) { Stmts.push_back(Statement); }
   void setTerminator(Stmt* Statement) { ControlFlowStmt = Statement; }
+  Stmt* getTerminator() { return ControlFlowStmt; }
+  
   void reverseStmts();
   
   void addSuccessor(CFGBlock* Block) {
@@ -160,7 +162,7 @@ public:
   
   CFGBlock* createBlock(unsigned blockID) { 
     Blocks.push_front(CFGBlock(blockID));
-    return front();
+    return &front();
   }
   
   // Block iterators
@@ -169,8 +171,8 @@ public:
   typedef std::reverse_iterator<iterator>                     reverse_iterator;
   typedef std::reverse_iterator<const_iterator>         const_reverse_iterator;
 
-  CFGBlock*                    front()             { return &Blocks.front();  }
-  CFGBlock*                    back()              { return &Blocks.back();   }
+  CFGBlock&                    front()             { return Blocks.front();  }
+  CFGBlock&                    back()              { return Blocks.back();   }
   
   iterator                     begin()             { return Blocks.begin();   }
   iterator                     end()               { return Blocks.end();     }
@@ -182,8 +184,8 @@ public:
   const_reverse_iterator       rbegin()      const { return Blocks.rbegin();  }
   const_reverse_iterator       rend()        const { return Blocks.rend();    }
   
-  CFGBlock*                    getEntry()          { return front();          }
-  CFGBlock*                    getExit()           { return back();           }
+  CFGBlock&                    getEntry()          { return front();          }
+  CFGBlock&                    getExit()           { return back();           }
   
   // Utility
   
