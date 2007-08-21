@@ -34,8 +34,6 @@ public:
     : CGF(cgf), DestPtr(destPtr), VolatileDest(volatileDest) {
   }
 
-  typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
-  
   //===--------------------------------------------------------------------===//
   //                               Utilities
   //===--------------------------------------------------------------------===//
@@ -163,6 +161,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty) {
   // Don't use memcpy for complex numbers.
+  // FIXME: split complex number handling out of here.
   if (Ty->isComplexType()) {
     llvm::Value *Real, *Imag;
     EmitLoadOfComplex(SrcPtr, Real, Imag);

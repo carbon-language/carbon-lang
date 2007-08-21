@@ -21,7 +21,7 @@ using namespace clang;
 using namespace CodeGen;
 
 //===----------------------------------------------------------------------===//
-//                        Aggregate Expression Emitter
+//                        Complex Expression Emitter
 //===----------------------------------------------------------------------===//
 
 typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
@@ -99,7 +99,7 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(const Expr *E) {
 //===----------------------------------------------------------------------===//
 
 ComplexPairTy ComplexExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  fprintf(stderr, "Unimplemented aggregate binary expr!\n");
+  fprintf(stderr, "Unimplemented complex binary expr!\n");
   E->dump();
   return ComplexPairTy();
 #if 0
@@ -269,7 +269,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.EmitBlock(LHSBlock);
   
   // Handle the GNU extension for missing LHS.
-  assert(E->getLHS() && "Must have LHS for aggregate value");
+  assert(E->getLHS() && "Must have LHS for complex value");
 
   ComplexPairTy LHS = Visit(E->getLHS());
   CGF.Builder.CreateBr(ContBlock);
