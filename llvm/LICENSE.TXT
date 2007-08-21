@@ -66,4 +66,3 @@ Compiler Driver     llvm/tools/llvmc
 Autoconf            llvm/autoconf
                     llvm/projects/ModuleMaker/autoconf
                     llvm/projects/sample/autoconf
-GNU Libc            llvm/runtime/GCCLibraries/libc
