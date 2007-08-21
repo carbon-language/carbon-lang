@@ -44,16 +44,18 @@ public:
   /// value l-value, this method emits the address of the l-value, then loads
   /// and returns the result.
   ComplexPairTy EmitLoadOfLValue(const Expr *E) {
-    return EmitLoadOfComplex(CGF.EmitLValue(E).getAddress());
+    LValue LV = CGF.EmitLValue(E);
+    // FIXME: Volatile
+    return EmitLoadOfComplex(LV.getAddress(), false);
   }
   
   /// EmitLoadOfComplex - Given a pointer to a complex value, emit code to load
   /// the real and imaginary pieces.
-  ComplexPairTy EmitLoadOfComplex(llvm::Value *SrcPtr);
+  ComplexPairTy EmitLoadOfComplex(llvm::Value *SrcPtr, bool isVolatile);
   
   /// EmitStoreOfComplex - Store the specified real/imag parts into the
   /// specified value pointer.
-  void EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *ResPtr);
+  void EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *ResPtr, bool isVol);
   
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -101,31 +103,31 @@ public:
 
 /// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
 /// load the real and imaginary pieces, returning them as Real/Imag.
-ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr) {
+ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
+                                                    bool isVolatile) {
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
   // FIXME: It would be nice to make this "Ptr->getName()+realp"
   llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, "realp");
   llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, "imagp");
   
-  // FIXME: Handle volatility.
   // FIXME: It would be nice to make this "Ptr->getName()+real"
-  llvm::Value *Real = Builder.CreateLoad(RealPtr, "real");
-  llvm::Value *Imag = Builder.CreateLoad(ImagPtr, "imag");
+  llvm::Value *Real = Builder.CreateLoad(RealPtr, isVolatile, "real");
+  llvm::Value *Imag = Builder.CreateLoad(ImagPtr, isVolatile, "imag");
   return ComplexPairTy(Real, Imag);
 }
 
 /// EmitStoreOfComplex - Store the specified real/imag parts into the
 /// specified value pointer.
-void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy V, llvm::Value *Ptr) {
+void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
+                                            bool isVolatile) {
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
   llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Zero, Zero, "real");
   llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Zero, One, "imag");
   
-  // FIXME: Handle volatility.
-  Builder.CreateStore(V.first, RealPtr);
-  Builder.CreateStore(V.second, ImagPtr);
+  Builder.CreateStore(Val.first, RealPtr, isVolatile);
+  Builder.CreateStore(Val.second, ImagPtr, isVolatile);
 }
 
 
@@ -176,7 +178,7 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   
   // Store into it.
   // FIXME: Volatility!
-  EmitStoreOfComplex(Val, LHS.getAddress());
+  EmitStoreOfComplex(Val, LHS.getAddress(), false);
   return Val;
 }
 
