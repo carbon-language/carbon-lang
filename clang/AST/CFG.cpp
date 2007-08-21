@@ -14,6 +14,7 @@
 
 #include "clang/AST/CFG.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/StmtVisitor.h"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -42,7 +43,13 @@ namespace {
 ///     CFGBuilder builder;
 ///     CFG* cfg = builder.BuildAST(stmt1);
 ///
-class CFGBuilder {    
+///  CFG construction is done via a recursive walk of an AST.
+///  We actually parse the AST in reverse order so that the successor
+///  of a basic block is constructed prior to its predecessor.  This
+///  allows us to nicely capture implicit fall-throughs without extra
+///  basic blocks.
+///
+class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {    
   CFG* cfg;
   CFGBlock* Block;
   CFGBlock* Exit;
@@ -73,7 +80,7 @@ public:
     Exit = Block;
     
     // Visit the statements and create the CFG.
-    if (CFGBlock* B = visitStmt(Statement)) {
+    if (CFGBlock* B = Visit(Statement)) {
       // Reverse the statements in the last constructed block.  Statements
       // are inserted into the blocks in reverse order.
       B->reverseStmts();
@@ -89,9 +96,7 @@ public:
       return NULL;
     }
   }
-
-private:
-
+  
   // createBlock - Used to lazily create blocks that are connected
   //  to the current (global) succcessor.
   CFGBlock* createBlock( bool add_successor = true ) { 
@@ -99,169 +104,125 @@ private:
     if (add_successor && Succ) B->addSuccessor(Succ);
     return B;
   }
-  
-  // visitStmt - CFG construction is done via a recursive walk of an AST.
-  //   We actually parse the AST in reverse order so that the successor
-  //   of a basic block is constructed prior to its predecessor.  This
-  //   allows us to nicely capture implicit fall-throughs without extra
-  //   basic blocks.
-  //
-  //   The value returned from this function is the last created CFGBlock
-  //   that represents the "entry" point for the translated AST node.
-  CFGBlock* visitStmt(Stmt* Statement) {
-    assert (Statement && "visitStmt does not accept NULL Stmt*");
-  
-    switch (Statement->getStmtClass()) {    
-      default:
-        assert (false && "statement case for CFGBuilder not yet implemented");
-        return NULL;
-      
-      // Statements with no branching control flow.
-      case Stmt::NullStmtClass:
-      case Stmt::DeclStmtClass:
-      case Stmt::PreDefinedExprClass:
-      case Stmt::DeclRefExprClass:
-      case Stmt::IntegerLiteralClass:
-      case Stmt::FloatingLiteralClass:
-      case Stmt::StringLiteralClass:
-      case Stmt::CharacterLiteralClass:
-      case Stmt::ParenExprClass:
-      case Stmt::UnaryOperatorClass:
-      case Stmt::SizeOfAlignOfTypeExprClass:
-      case Stmt::ArraySubscriptExprClass:
-      case Stmt::CallExprClass:
-      case Stmt::BinaryOperatorClass:
-      case Stmt::ImplicitCastExprClass:
-      case Stmt::CompoundLiteralExprClass:
-      case Stmt::OCUVectorElementExprClass:
-        // We cannot assume that we are in the middle of a basic block, since
-        // the CFG might only be constructed for this single statement.  If
-        // we have no current basic block, just create one lazily.
-        if (!Block) Block = createBlock();
-          
-        // Simply add the statement to the current block.  We actually
-        // insert statements in reverse order; this order is reversed later
-        // when processing the containing element in the AST.
-        Block->appendStmt(Statement);
-        break;
-        
-      case Stmt::CompoundStmtClass: {
-        // Iterate through the statements of the compound statement in reverse
-        // order.  Because this statement may contain statements that have
-        // complicated control flow, the value of "Block" may change at any
-        // time.  This means that statements in the compound statement will
-        // automatically be distributed across multiple basic blocks when
-        // necessary.
-        CompoundStmt* C = cast<CompoundStmt>(Statement);
 
-        for (CompoundStmt::reverse_body_iterator I = C->body_rbegin(),
-             E = C->body_rend(); I != E; ++I )
-          // Add the statement to the current block.
-          if (!visitStmt(*I)) return NULL;
-
-        break;
-      }
-      
-      case Stmt::IfStmtClass: {
-        IfStmt* I = cast<IfStmt>(Statement);
-        
-        // We may see an if statement in the middle of a basic block, or
-        // it may be the first statement we are processing.  In either case,
-        // we create a new basic block.  First, we create the blocks for
-        // the then...else statements, and then we create the block containing
-        // the if statement.  If we were in the middle of a block, we
-        // stop processing that block and reverse its statements.  That block
-        // is then the implicit successor for the "then" and "else" clauses.
-        
-        // The block we were proccessing is now finished.  Make it the
-        // successor block.
-        if (Block) { 
-          Succ = Block;
-          Block->reverseStmts();
-        }
-        
-        // Process the false branch.  NULL out Block so that the recursive
-        // call to visitStmt will create a new basic block.
-        // Null out Block so that all successor
-        CFGBlock* ElseBlock = Succ;
-        
-        if (Stmt* Else = I->getElse()) {
-          SaveAndRestore<CFGBlock*> sv(Succ);
-          
-          // NULL out Block so that the recursive call to visitStmt will
-          // create a new basic block.          
-          Block = NULL;
-          ElseBlock = visitStmt(Else);          
-          if (!ElseBlock) return NULL;
-          ElseBlock->reverseStmts();        
-        }
-        
-        // Process the true branch.  NULL out Block so that the recursive
-        // call to visitStmt will create a new basic block.
-        // Null out Block so that all successor
-        CFGBlock* ThenBlock;
-        {
-          Stmt* Then = I->getThen();
-          assert (Then);
-          SaveAndRestore<CFGBlock*> sv(Succ);
-          Block = NULL;        
-          ThenBlock = visitStmt(Then);        
-          if (!ThenBlock) return NULL;
-          ThenBlock->reverseStmts();
-        }
-
-        // Now create a new block containing the if statement.        
-        Block = createBlock(false);
-      
-        // Add the condition as the last statement in the new block.
-        Block->appendStmt(I->getCond());
-        
-        // Set the terminator of the new block to the If statement.
-        Block->setTerminator(I);
-        
-        // Now add the successors.
-        Block->addSuccessor(ThenBlock);
-        Block->addSuccessor(ElseBlock);
-
-        break;
-      }
-      
-      case Stmt::ReturnStmtClass: {
-        ReturnStmt* R = cast<ReturnStmt>(Statement);
-
-        // If we were in the middle of a block we stop processing that block
-        // and reverse its statements.
-        //
-        // NOTE: If a "return" appears in the middle of a block, this means
-        //       that the code afterwards is DEAD (unreachable).  We still
-        //       keep a basic block for that code; a simple "mark-and-sweep"
-        //       from the entry block will be able to report such dead
-        //       blocks.
-        if (Block) Block->reverseStmts();        
-
-        // Create the new block.
-        Block = createBlock(false);
-        
-        // The Exit block is the only successor.
-        Block->addSuccessor(Exit);
-        
-        // Add the return expression to the block.
-        Block->appendStmt(R);
-        
-        // Add the return statement itself to the block.
-        if (R->getRetValue()) Block->appendStmt(R->getRetValue());
-        
-        break; 
-      }
-    } // end dispatch on statement class
+  /// Here we handle statements with no branching control flow.
+  CFGBlock* VisitStmt(Stmt* Statement) {
+    // We cannot assume that we are in the middle of a basic block, since
+    // the CFG might only be constructed for this single statement.  If
+    // we have no current basic block, just create one lazily.
+    if (!Block) Block = createBlock();
+    
+    // Simply add the statement to the current block.  We actually
+    // insert statements in reverse order; this order is reversed later
+    // when processing the containing element in the AST.
+    Block->appendStmt(Statement);
     
     return Block;
   }
   
+  CFGBlock* VisitCompoundStmt(CompoundStmt* C) {
+    //   The value returned from this function is the last created CFGBlock
+    //   that represents the "entry" point for the translated AST node.
+    for (CompoundStmt::reverse_body_iterator I = C->body_rbegin(),
+          E = C->body_rend(); I != E; ++I )
+      // Add the statement to the current block.
+      if (!Visit(*I)) return NULL;
+
+    return Block;
+  }
+  
+  CFGBlock* VisitIfStmt(IfStmt* I) {
+  
+    // We may see an if statement in the middle of a basic block, or
+    // it may be the first statement we are processing.  In either case,
+    // we create a new basic block.  First, we create the blocks for
+    // the then...else statements, and then we create the block containing
+    // the if statement.  If we were in the middle of a block, we
+    // stop processing that block and reverse its statements.  That block
+    // is then the implicit successor for the "then" and "else" clauses.
+    
+    // The block we were proccessing is now finished.  Make it the
+    // successor block.
+    if (Block) { 
+      Succ = Block;
+      Block->reverseStmts();
+    }
+    
+    // Process the false branch.  NULL out Block so that the recursive
+    // call to Visit will create a new basic block.
+    // Null out Block so that all successor
+    CFGBlock* ElseBlock = Succ;
+    
+    if (Stmt* Else = I->getElse()) {
+      SaveAndRestore<CFGBlock*> sv(Succ);
+      
+      // NULL out Block so that the recursive call to Visit will
+      // create a new basic block.          
+      Block = NULL;
+      ElseBlock = Visit(Else);          
+      if (!ElseBlock) return NULL;
+      ElseBlock->reverseStmts();        
+    }
+    
+    // Process the true branch.  NULL out Block so that the recursive
+    // call to Visit will create a new basic block.
+    // Null out Block so that all successor
+    CFGBlock* ThenBlock;
+    {
+      Stmt* Then = I->getThen();
+      assert (Then);
+      SaveAndRestore<CFGBlock*> sv(Succ);
+      Block = NULL;        
+      ThenBlock = Visit(Then);        
+      if (!ThenBlock) return NULL;
+      ThenBlock->reverseStmts();
+    }
+
+    // Now create a new block containing the if statement.        
+    Block = createBlock(false);
+  
+    // Add the condition as the last statement in the new block.
+    Block->appendStmt(I->getCond());
+    
+    // Set the terminator of the new block to the If statement.
+    Block->setTerminator(I);
+    
+    // Now add the successors.
+    Block->addSuccessor(ThenBlock);
+    Block->addSuccessor(ElseBlock);
+
+    return Block;
+  }
+      
+  CFGBlock* VisitReturnStmt(ReturnStmt* R) {
+    // If we were in the middle of a block we stop processing that block
+    // and reverse its statements.
+    //
+    // NOTE: If a "return" appears in the middle of a block, this means
+    //       that the code afterwards is DEAD (unreachable).  We still
+    //       keep a basic block for that code; a simple "mark-and-sweep"
+    //       from the entry block will be able to report such dead
+    //       blocks.
+    if (Block) Block->reverseStmts();        
+
+    // Create the new block.
+    Block = createBlock(false);
+    
+    // The Exit block is the only successor.
+    Block->addSuccessor(Exit);
+    
+    // Add the return expression to the block.
+    Block->appendStmt(R);
+    
+    // Add the return statement itself to the block.
+    if (R->getRetValue()) Block->appendStmt(R->getRetValue());
+    
+    return Block;
+  }  
 };
 
 // BuildCFG - A helper function that builds CFGs from ASTS.
-CFG* CFG::BuildCFG( Stmt* Statement ) {
+CFG* CFG::BuildCFG(Stmt* Statement) {
   CFGBuilder Builder;
   return Builder.buildCFG(Statement);
 }
