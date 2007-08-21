@@ -1251,10 +1251,11 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
       ResultI = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
                                    LHS.second, RHS.second, "cmp.i");
     } else {
-      unsigned Opc = CETy->isUnsignedIntegerType() ? UICmpOpc : SICmpOpc;
-      ResultR = Builder.CreateICmp((llvm::ICmpInst::Predicate)Opc,
+      // Complex comparisons can only be equality comparisons.  As such, signed
+      // and unsigned opcodes are the same.
+      ResultR = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
                                    LHS.first, RHS.first, "cmp.r");
-      ResultI = Builder.CreateICmp((llvm::ICmpInst::Predicate)Opc,
+      ResultI = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
                                    LHS.second, RHS.second, "cmp.i");
     }
       
