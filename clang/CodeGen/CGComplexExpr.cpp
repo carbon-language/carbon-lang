@@ -24,7 +24,7 @@ using namespace CodeGen;
 //                        Complex Expression Emitter
 //===----------------------------------------------------------------------===//
 
-typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
+typedef CodeGenFunction::ComplexPairTy ComplexPairTy;
 
 namespace  {
 class VISIBILITY_HIDDEN ComplexExprEmitter
@@ -70,6 +70,8 @@ public:
   ComplexPairTy VisitBinaryOperator(const BinaryOperator *BO);
   ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
+
+  // No comparisons produce a complex result.
   ComplexPairTy VisitBinAssign     (const BinaryOperator *E);
 
   
@@ -319,10 +321,10 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 
 /// EmitComplexExpr - Emit the computation of the specified expression of
 /// complex type, ignoring the result.
-void CodeGenFunction::EmitComplexExpr(const Expr *E) {
+ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E) {
   assert(E && E->getType()->isComplexType() &&
          "Invalid complex expression to emit");
   
-  ComplexExprEmitter(*this).Visit(const_cast<Expr*>(E));
+  return ComplexExprEmitter(*this).Visit(const_cast<Expr*>(E));
 }
 

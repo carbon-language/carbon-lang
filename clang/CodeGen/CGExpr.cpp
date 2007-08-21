@@ -1217,15 +1217,16 @@ RValue CodeGenFunction::EmitShr(RValue LHSV, RValue RHSV, QualType ResTy) {
 RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
                                           unsigned UICmpOpc, unsigned SICmpOpc,
                                           unsigned FCmpOpc) {
-  RValue LHS = EmitExpr(E->getLHS());
-  RValue RHS = EmitExpr(E->getRHS());
-
   llvm::Value *Result;
-  if (LHS.isScalar()) {
-    if (LHS.getVal()->getType()->isFloatingPoint()) {
+  QualType LHSTy = E->getLHS()->getType();
+  if (!LHSTy->isComplexType()) {
+    RValue LHS = EmitExpr(E->getLHS());
+    RValue RHS = EmitExpr(E->getRHS());
+    
+    if (LHSTy->isRealFloatingType()) {
       Result = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
                                   LHS.getVal(), RHS.getVal(), "cmp");
-    } else if (E->getLHS()->getType()->isUnsignedIntegerType()) {
+    } else if (LHSTy->isUnsignedIntegerType()) {
       // FIXME: This check isn't right for "unsigned short < int" where ushort
       // promotes to int and does a signed compare.
       Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
@@ -1236,26 +1237,34 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
                                   LHS.getVal(), RHS.getVal(), "cmp");
     }
   } else {
-#if 0
-    // Struct/union/complex
-    llvm::Value *LHSR, *LHSI, *RHSR, *RHSI, *ResultR, *ResultI;
-    EmitLoadOfComplex(LHS, LHSR, LHSI);
-    EmitLoadOfComplex(RHS, RHSR, RHSI);
+    // Complex Comparison: can only be an equality comparison.
+    ComplexPairTy LHS = EmitComplexExpr(E->getLHS());
+    ComplexPairTy RHS = EmitComplexExpr(E->getRHS());
 
-    // FIXME: need to consider _Complex over integers too!
-
-    ResultR = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
-				 LHSR, RHSR, "cmp.r");
-    ResultI = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
-				 LHSI, RHSI, "cmp.i");
-    if (BinaryOperator::EQ == E->getOpcode()) {
-      Result = Builder.CreateAnd(ResultR, ResultI, "and.ri");
-    } else if (BinaryOperator::NE == E->getOpcode()) {
-      Result = Builder.CreateOr(ResultR, ResultI, "or.ri");
+    QualType CETy = 
+      cast<ComplexType>(LHSTy.getCanonicalType())->getElementType();
+    
+    llvm::Value *ResultR, *ResultI;
+    if (CETy->isRealFloatingType()) {
+      ResultR = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
+                                   LHS.first, RHS.first, "cmp.r");
+      ResultI = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
+                                   LHS.second, RHS.second, "cmp.i");
     } else {
-      assert(0 && "Complex comparison other than == or != ?");
+      unsigned Opc = CETy->isUnsignedIntegerType() ? UICmpOpc : SICmpOpc;
+      ResultR = Builder.CreateICmp((llvm::ICmpInst::Predicate)Opc,
+                                   LHS.first, RHS.first, "cmp.r");
+      ResultI = Builder.CreateICmp((llvm::ICmpInst::Predicate)Opc,
+                                   LHS.second, RHS.second, "cmp.i");
     }
-#endif
+      
+    if (E->getOpcode() == BinaryOperator::EQ) {
+      Result = Builder.CreateAnd(ResultR, ResultI, "and.ri");
+    } else {
+      assert(E->getOpcode() == BinaryOperator::NE &&
+             "Complex comparison other than == or != ?");
+      Result = Builder.CreateOr(ResultR, ResultI, "or.ri");
+    }
   }
 
   // ZExt result to int.

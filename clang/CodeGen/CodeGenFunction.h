@@ -182,6 +182,7 @@ class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
 public:
+  typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   llvm::LLVMBuilder Builder;
 private:
   
@@ -416,7 +417,7 @@ public:
   
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, ignoring the result.
-  void EmitComplexExpr(const Expr *E);
+  ComplexPairTy EmitComplexExpr(const Expr *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
