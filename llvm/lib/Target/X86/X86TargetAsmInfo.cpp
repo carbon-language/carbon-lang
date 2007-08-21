@@ -95,6 +95,14 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
     DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
+
+    // Exceptions handling
+    if (!Subtarget->is64Bit())
+      SupportsExceptionHandling = true;
+    AbsoluteEHSectionOffsets = false;
+    DwarfEHFrameSection =
+    ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
+    DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
     break;
 
   case X86Subtarget::isELF:
