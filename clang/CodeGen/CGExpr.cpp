@@ -1353,7 +1353,7 @@ RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
 
 
 RValue CodeGenFunction::EmitBinaryComma(const BinaryOperator *E) {
-  EmitExpr(E->getLHS());
+  EmitStmt(E->getLHS());
   return EmitExpr(E->getRHS());
 }
 

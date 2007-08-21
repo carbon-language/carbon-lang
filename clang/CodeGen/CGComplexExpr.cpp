@@ -77,6 +77,8 @@ public:
   // No comparisons produce a complex result.
   ComplexPairTy VisitBinAssign     (const BinaryOperator *E);
 
+  ComplexPairTy VisitBinComma      (const BinaryOperator *E);
+
   
   ComplexPairTy VisitConditionalOperator(const ConditionalOperator *CO);
   //  case Expr::ChooseExprClass:
@@ -150,6 +152,10 @@ ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   return Val;
 }
 
+ComplexPairTy ComplexExprEmitter::VisitBinComma(const BinaryOperator *E) {
+  CGF.EmitStmt(E->getLHS());
+  return Visit(E->getRHS());
+}
 
 ComplexPairTy ComplexExprEmitter::
 VisitConditionalOperator(const ConditionalOperator *E) {
