@@ -20,40 +20,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-// FIXME: Handle volatility!
-void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
-                                        llvm::Value *SrcPtr, QualType Ty) {
-  // Don't use memcpy for complex numbers.
-  if (Ty->isComplexType()) {
-    llvm::Value *Real, *Imag;
-    EmitLoadOfComplex(RValue::getAggregate(SrcPtr), Real, Imag);
-    EmitStoreOfComplex(Real, Imag, DestPtr);
-    return;
-  }
-  
-  // Aggregate assignment turns into llvm.memcpy.
-  const llvm::Type *BP = llvm::PointerType::get(llvm::Type::Int8Ty);
-  if (DestPtr->getType() != BP)
-    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
-  if (SrcPtr->getType() != BP)
-    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
-  
-  // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo =
-    getContext().getTypeInfo(Ty, SourceLocation());
-  
-  // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
-  
-  llvm::Value *MemCpyOps[4] = {
-    DestPtr, SrcPtr,
-    llvm::ConstantInt::get(IntPtr, TypeInfo.first),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second)
-  };
-  
-  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
-}
-
 //===----------------------------------------------------------------------===//
 //                        Aggregate Expression Emitter
 //===----------------------------------------------------------------------===//
@@ -68,10 +34,25 @@ public:
     : CGF(cgf), DestPtr(destPtr), VolatileDest(volatileDest) {
   }
 
+  typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
+  
+  //===--------------------------------------------------------------------===//
+  //                               Utilities
+  //===--------------------------------------------------------------------===//
+
   /// EmitAggLoadOfLValue - Given an expression with aggregate type that
   /// represents a value lvalue, this method emits the address of the lvalue,
   /// then loads the result into DestPtr.
   void EmitAggLoadOfLValue(const Expr *E);
+  
+  /// EmitComplexExpr - Emit the specified complex expression, returning the
+  /// real and imaginary values.
+  ComplexPairTy EmitComplexExpr(const Expr *E);
+
+  
+  //===--------------------------------------------------------------------===//
+  //                            Visitor Methods
+  //===--------------------------------------------------------------------===//
   
   void VisitStmt(Stmt *S) {
     fprintf(stderr, "Unimplemented agg expr!\n");
@@ -89,6 +70,7 @@ public:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
   void VisitBinaryOperator(const BinaryOperator *BO);
+  void VisitBinAdd(const BinaryOperator *E);
   void VisitBinAssign(const BinaryOperator *E);
 
   
@@ -97,19 +79,25 @@ public:
 };
 }  // end anonymous namespace.
 
+//===----------------------------------------------------------------------===//
+//                                Utilities
+//===----------------------------------------------------------------------===//
 
+/// EmitComplexExpr - Emit the specified complex expression, returning the
+/// real and imaginary values.
+AggExprEmitter::ComplexPairTy AggExprEmitter::EmitComplexExpr(const Expr *E) {
+  // Create a temporary alloca to hold this result.
+  llvm::Value *TmpPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()));
 
+  // Emit the expression into TmpPtr.
+  AggExprEmitter(CGF, TmpPtr, false).Visit(const_cast<Expr*>(E));
 
-/// EmitAggExpr - Emit the computation of the specified expression of
-/// aggregate type.  The result is computed into DestPtr.  Note that if
-/// DestPtr is null, the value of the aggregate expression is not needed.
-void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
-                                  bool VolatileDest) {
-  assert(E && hasAggregateLLVMType(E->getType()) &&
-         "Invalid aggregate expression to emit");
-  
-  AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
+  // Return the real/imag values by reloading them from the stack.
+  llvm::Value *Real, *Imag;
+  CGF.EmitLoadOfComplex(TmpPtr, Real, Imag);
+  return std::make_pair(Real, Imag);
 }
+
 
 /// EmitAggLoadOfLValue - Given an expression with aggregate type that
 /// represents a value lvalue, this method emits the address of the lvalue,
@@ -126,6 +114,10 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 
   CGF.EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
 }
+
+//===----------------------------------------------------------------------===//
+//                            Visitor Methods
+//===----------------------------------------------------------------------===//
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
   fprintf(stderr, "Unimplemented aggregate binary expr!\n");
@@ -258,6 +250,17 @@ void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
 #endif
 }
 
+void AggExprEmitter::VisitBinAdd(const BinaryOperator *E) {
+  // This must be a complex number.
+  ComplexPairTy LHS = EmitComplexExpr(E->getLHS());
+  ComplexPairTy RHS = EmitComplexExpr(E->getRHS());
+  
+  llvm::Value *ResR = CGF.Builder.CreateAdd(LHS.first,  RHS.first,  "add.r");
+  llvm::Value *ResI = CGF.Builder.CreateAdd(LHS.second, RHS.second, "add.i");
+  
+  CGF.EmitStoreOfComplex(ResR, ResI, DestPtr /*FIXME: Volatile!*/);
+}
+
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   assert(E->getLHS()->getType().getCanonicalType() ==
          E->getRHS()->getType().getCanonicalType() && "Invalid assignment");
@@ -297,4 +300,54 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   RHSBlock = CGF.Builder.GetInsertBlock();
   
   CGF.EmitBlock(ContBlock);
+}
+
+//===----------------------------------------------------------------------===//
+//                        Entry Points into this File
+//===----------------------------------------------------------------------===//
+
+/// EmitAggExpr - Emit the computation of the specified expression of
+/// aggregate type.  The result is computed into DestPtr.  Note that if
+/// DestPtr is null, the value of the aggregate expression is not needed.
+void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
+                                  bool VolatileDest) {
+  assert(E && hasAggregateLLVMType(E->getType()) &&
+         "Invalid aggregate expression to emit");
+  
+  AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
+}
+
+
+// FIXME: Handle volatility!
+void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
+                                        llvm::Value *SrcPtr, QualType Ty) {
+  // Don't use memcpy for complex numbers.
+  if (Ty->isComplexType()) {
+    llvm::Value *Real, *Imag;
+    EmitLoadOfComplex(SrcPtr, Real, Imag);
+    EmitStoreOfComplex(Real, Imag, DestPtr);
+    return;
+  }
+  
+  // Aggregate assignment turns into llvm.memcpy.
+  const llvm::Type *BP = llvm::PointerType::get(llvm::Type::Int8Ty);
+  if (DestPtr->getType() != BP)
+    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
+  if (SrcPtr->getType() != BP)
+    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+  
+  // Get size and alignment info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo =
+    getContext().getTypeInfo(Ty, SourceLocation());
+  
+  // FIXME: Handle variable sized types.
+  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
+  
+  llvm::Value *MemCpyOps[4] = {
+    DestPtr, SrcPtr,
+    llvm::ConstantInt::get(IntPtr, TypeInfo.first),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second)
+  };
+  
+  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
 }

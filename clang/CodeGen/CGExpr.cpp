@@ -42,15 +42,13 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
 
 /// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
 /// load the real and imaginary pieces, returning them as Real/Imag.
-void CodeGenFunction::EmitLoadOfComplex(RValue V,
+void CodeGenFunction::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                         llvm::Value *&Real, llvm::Value *&Imag){
-  llvm::Value *Ptr = V.getAggregateAddr();
-  
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
   // FIXME: It would be nice to make this "Ptr->getName()+realp"
-  llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Zero, Zero, "realp");
-  llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Zero, One, "imagp");
+  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, "realp");
+  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, "imagp");
   
   // FIXME: Handle volatility.
   // FIXME: It would be nice to make this "Ptr->getName()+real"
@@ -1106,12 +1104,12 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
 }
 
 RValue CodeGenFunction::EmitMul(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar())
-    return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
+  return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
   
+#if 0
   // Otherwise, this must be a complex number.
   llvm::Value *LHSR, *LHSI, *RHSR, *RHSI;
-  
+
   EmitLoadOfComplex(LHS, LHSR, LHSI);
   EmitLoadOfComplex(RHS, RHSR, RHSI);
   
@@ -1126,6 +1124,7 @@ RValue CodeGenFunction::EmitMul(RValue LHS, RValue RHS, QualType ResTy) {
   llvm::Value *Res = CreateTempAlloca(ConvertType(ResTy));
   EmitStoreOfComplex(ResR, ResI, Res);
   return RValue::getAggregate(Res);
+#endif
 }
 
 RValue CodeGenFunction::EmitDiv(RValue LHS, RValue RHS, QualType ResTy) {
@@ -1157,21 +1156,7 @@ RValue CodeGenFunction::EmitRem(RValue LHS, RValue RHS, QualType ResTy) {
 }
 
 RValue CodeGenFunction::EmitAdd(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar())
-    return RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
-  
-  // Otherwise, this must be a complex number.
-  llvm::Value *LHSR, *LHSI, *RHSR, *RHSI;
-  
-  EmitLoadOfComplex(LHS, LHSR, LHSI);
-  EmitLoadOfComplex(RHS, RHSR, RHSI);
-  
-  llvm::Value *ResR = Builder.CreateAdd(LHSR, RHSR, "add.r");
-  llvm::Value *ResI = Builder.CreateAdd(LHSI, RHSI, "add.i");
-  
-  llvm::Value *Res = CreateTempAlloca(ConvertType(ResTy));
-  EmitStoreOfComplex(ResR, ResI, Res);
-  return RValue::getAggregate(Res);
+  return RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
 }
 
 RValue CodeGenFunction::EmitPointerAdd(RValue LHS, QualType LHSTy,
@@ -1285,6 +1270,7 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
                                   LHS.getVal(), RHS.getVal(), "cmp");
     }
   } else {
+#if 0
     // Struct/union/complex
     llvm::Value *LHSR, *LHSI, *RHSR, *RHSI, *ResultR, *ResultI;
     EmitLoadOfComplex(LHS, LHSR, LHSI);
@@ -1303,6 +1289,7 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
     } else {
       assert(0 && "Complex comparison other than == or != ?");
     }
+#endif
   }
 
   // ZExt result to int.

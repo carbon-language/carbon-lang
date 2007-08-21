@@ -249,7 +249,8 @@ public:
   
   /// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
   /// load the real and imaginary pieces, returning them as Real/Imag.
-  void EmitLoadOfComplex(RValue V, llvm::Value *&Real, llvm::Value *&Imag);
+  void EmitLoadOfComplex(llvm::Value *SrcPtr, llvm::Value *&Real,
+                         llvm::Value *&Imag);
   
   /// EmitStoreOfComplex - Store the specified real/imag parts into the
   /// specified value pointer.
