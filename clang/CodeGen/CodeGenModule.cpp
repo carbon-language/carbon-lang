@@ -26,7 +26,7 @@ using namespace CodeGen;
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M)
-  : Context(C), TheModule(M), Types(C, M) {}
+  : Context(C), TheModule(M), Types(C, M), CFConstantStringClassRef(0) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const Decl *D) {
   // See if it is already in the map.
@@ -112,4 +112,60 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   case 64: IID = llvm::Intrinsic::memcpy_i64; break;
   }
   return MemCpyFn = llvm::Intrinsic::getDeclaration(&TheModule, IID);
+}
+
+llvm::Constant *CodeGenModule::GetAddrOfConstantCFString(const std::string &str)
+{
+  llvm::StringMapEntry<llvm::Constant *> &Entry = 
+    CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
+  
+  if (Entry.getValue())
+    return Entry.getValue();
+  
+  std::vector<llvm::Constant*> Fields;
+  
+  if (!CFConstantStringClassRef) {
+    const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
+    Ty = llvm::ArrayType::get(Ty, 0);
+  
+    CFConstantStringClassRef = 
+      new llvm::GlobalVariable(Ty, false,
+                               llvm::GlobalVariable::ExternalLinkage, 0, 
+                               "__CFConstantStringClassReference", 
+                               &getModule());
+  }
+  
+  // Class pointer.
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zeros[] = { Zero, Zero };
+  llvm::Constant *C = 
+    llvm::ConstantExpr::getGetElementPtr(CFConstantStringClassRef, Zeros, 2);
+  Fields.push_back(C);
+  
+  // Flags.
+  const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
+  Fields.push_back(llvm::ConstantInt::get(Ty, 1992));
+    
+  // String pointer.
+  C = llvm::ConstantArray::get(str);
+  C = new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, ".str", &getModule());
+  
+  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
+  Fields.push_back(C);
+  
+  // String length.
+  Ty = getTypes().ConvertType(getContext().LongTy);
+  Fields.push_back(llvm::ConstantInt::get(Ty, str.length()));
+  
+  // The struct.
+  Ty = getTypes().ConvertType(getContext().getCFConstantStringType());
+  C = llvm::ConstantStruct::get(cast<llvm::StructType>(Ty), Fields);
+  C = new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalVariable::InternalLinkage, 
+                               C, "", &getModule());
+  
+  Entry.setValue(C);
+  return C;
 }

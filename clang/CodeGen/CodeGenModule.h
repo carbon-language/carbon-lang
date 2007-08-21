@@ -16,6 +16,7 @@
 
 #include "CodeGenTypes.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
   class Module;
@@ -40,6 +41,9 @@ class CodeGenModule {
 
   llvm::Function *MemCpyFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
+  
+  llvm::StringMap<llvm::Constant*> CFConstantStringMap;
+  llvm::Constant *CFConstantStringClassRef;
 public:
   CodeGenModule(ASTContext &C, llvm::Module &M);
   
@@ -48,7 +52,7 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   
   llvm::Constant *GetAddrOfGlobalDecl(const Decl *D);
-  
+  llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
   llvm::Function *getMemCpyFn();
   
   void EmitFunction(const FunctionDecl *FD);

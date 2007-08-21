@@ -136,8 +136,11 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   case Type::Tagged:
     const TagType &TT = cast<TagType>(Ty);
     const TagDecl *TD = TT.getDecl();
-    llvm::Type *ResultType;
+    llvm::Type *&ResultType = TagDeclTypes[TD];
       
+    if (ResultType)
+      return ResultType;
+    
     if (!TD->isDefinition()) {
       ResultType = llvm::OpaqueType::get();    
     } else {

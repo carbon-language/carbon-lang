@@ -14,6 +14,7 @@
 #ifndef CODEGEN_CODEGENTYPES_H
 #define CODEGEN_CODEGENTYPES_H
 
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
 
 namespace llvm {
@@ -23,6 +24,7 @@ namespace llvm {
 
 namespace clang {
   class ASTContext;
+  class TagDecl;
   class TargetInfo;
   class QualType;
   class FunctionTypeProto;
@@ -35,6 +37,8 @@ class CodeGenTypes {
   ASTContext &Context;
   TargetInfo &Target;
   llvm::Module& TheModule;
+  
+  llvm::DenseMap<const TagDecl*, llvm::Type*> TagDeclTypes;
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M);
   

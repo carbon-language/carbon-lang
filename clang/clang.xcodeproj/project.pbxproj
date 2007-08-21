@@ -10,6 +10,7 @@
 		1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A30A9E80B93A4C800201A91 /* ExprCXX.h */; };
 		1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A869A6E0BA2164C008DA07A /* LiteralSupport.h */; };
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
+		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
@@ -197,6 +198,7 @@
 		1A30A9E80B93A4C800201A91 /* ExprCXX.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ExprCXX.h; path = clang/AST/ExprCXX.h; sourceTree = "<group>"; };
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
+		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -430,6 +432,7 @@
 				DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */,
 				DEEBC3BB0C2363BC00A9FE82 /* CodeGenTypes.cpp */,
 				DEEBC3B90C2363B800A9FE82 /* CodeGenTypes.h */,
+				1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */,
 				DE4264FB0C113592005A861D /* CGDecl.cpp */,
 				DEF2EFF20C6CDD74000C4259 /* CGAggExpr.cpp */,
 				DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */,
@@ -613,9 +616,11 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8DD76F620486A84900D96B5E /* clang */,
 			);
@@ -687,6 +692,7 @@
 				DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */,
 				DEF2EFF30C6CDD74000C4259 /* CGAggExpr.cpp in Sources */,
 				DEF2F0100C6CFED5000C4259 /* SemaChecking.cpp in Sources */,
+				1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
