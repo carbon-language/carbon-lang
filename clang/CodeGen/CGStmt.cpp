@@ -31,7 +31,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     // Must be an expression in a stmt context.  Emit the value and ignore the
     // result.
     if (const Expr *E = dyn_cast<Expr>(S)) {
-      if (hasAggregateLLVMType(E->getType()))
+      if (E->getType()->isComplexType()) {
+        EmitComplexExpr(E);
+      } else if (hasAggregateLLVMType(E->getType()))
         EmitAggExpr(E, 0, false);  // Emit an aggregate, ignoring the result.
       else
         EmitExpr(E);

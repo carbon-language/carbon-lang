@@ -413,6 +413,10 @@ public:
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest);
+  
+  /// EmitComplexExpr - Emit the computation of the specified expression of
+  /// complex type, ignoring the result.
+  void EmitComplexExpr(const Expr *E);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

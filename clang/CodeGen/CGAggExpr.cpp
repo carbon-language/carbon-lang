@@ -45,10 +45,6 @@ public:
   /// then loads the result into DestPtr.
   void EmitAggLoadOfLValue(const Expr *E);
   
-  /// EmitComplexExpr - Emit the specified complex expression, returning the
-  /// real and imaginary values.
-  ComplexPairTy EmitComplexExpr(const Expr *E);
-
   
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -70,7 +66,6 @@ public:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
   void VisitBinaryOperator(const BinaryOperator *BO);
-  void VisitBinAdd(const BinaryOperator *E);
   void VisitBinAssign(const BinaryOperator *E);
 
   
@@ -82,22 +77,6 @@ public:
 //===----------------------------------------------------------------------===//
 //                                Utilities
 //===----------------------------------------------------------------------===//
-
-/// EmitComplexExpr - Emit the specified complex expression, returning the
-/// real and imaginary values.
-AggExprEmitter::ComplexPairTy AggExprEmitter::EmitComplexExpr(const Expr *E) {
-  // Create a temporary alloca to hold this result.
-  llvm::Value *TmpPtr = CGF.CreateTempAlloca(CGF.ConvertType(E->getType()));
-
-  // Emit the expression into TmpPtr.
-  AggExprEmitter(CGF, TmpPtr, false).Visit(const_cast<Expr*>(E));
-
-  // Return the real/imag values by reloading them from the stack.
-  llvm::Value *Real, *Imag;
-  CGF.EmitLoadOfComplex(TmpPtr, Real, Imag);
-  return std::make_pair(Real, Imag);
-}
-
 
 /// EmitAggLoadOfLValue - Given an expression with aggregate type that
 /// represents a value lvalue, this method emits the address of the lvalue,
@@ -122,143 +101,6 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
   fprintf(stderr, "Unimplemented aggregate binary expr!\n");
   E->dump();
-#if 0
-  switch (E->getOpcode()) {
-  default:
-    return;
-  case BinaryOperator::Mul:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitMul(LHS, RHS, E->getType());
-  case BinaryOperator::Div:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitDiv(LHS, RHS, E->getType());
-  case BinaryOperator::Rem:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitRem(LHS, RHS, E->getType());
-  case BinaryOperator::Add:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    if (!E->getType()->isPointerType())
-      return EmitAdd(LHS, RHS, E->getType());
-      
-      return EmitPointerAdd(LHS, E->getLHS()->getType(),
-                            RHS, E->getRHS()->getType(), E->getType());
-  case BinaryOperator::Sub:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    
-    if (!E->getLHS()->getType()->isPointerType())
-      return EmitSub(LHS, RHS, E->getType());
-      
-      return EmitPointerSub(LHS, E->getLHS()->getType(),
-                            RHS, E->getRHS()->getType(), E->getType());
-  case BinaryOperator::Shl:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitShl(LHS, RHS, E->getType());
-  case BinaryOperator::Shr:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitShr(LHS, RHS, E->getType());
-  case BinaryOperator::And:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitAnd(LHS, RHS, E->getType());
-  case BinaryOperator::Xor:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitXor(LHS, RHS, E->getType());
-  case BinaryOperator::Or :
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitOr(LHS, RHS, E->getType());
-  case BinaryOperator::MulAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitMul(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::DivAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitDiv(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::RemAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitRem(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::AddAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitAdd(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::SubAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitSub(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::ShlAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitShl(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::ShrAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitShr(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::AndAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitAnd(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::OrAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitOr(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::XorAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitXor(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::Comma: return EmitBinaryComma(E);
-  }
-#endif
-}
-
-void AggExprEmitter::VisitBinAdd(const BinaryOperator *E) {
-  // This must be a complex number.
-  ComplexPairTy LHS = EmitComplexExpr(E->getLHS());
-  ComplexPairTy RHS = EmitComplexExpr(E->getRHS());
-  
-  llvm::Value *ResR = CGF.Builder.CreateAdd(LHS.first,  RHS.first,  "add.r");
-  llvm::Value *ResI = CGF.Builder.CreateAdd(LHS.second, RHS.second, "add.i");
-  
-  CGF.EmitStoreOfComplex(ResR, ResI, DestPtr /*FIXME: Volatile!*/);
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
@@ -274,7 +116,6 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     assert(0 && "FIXME: Chained agg assignment not implemented yet");
   }
 }
-
 
 void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *LHSBlock = new llvm::BasicBlock("cond.?");
