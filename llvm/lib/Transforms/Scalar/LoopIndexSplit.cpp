@@ -705,90 +705,95 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 
 }
 
+/// splitLoop - Split current loop L in two loops using split information
+/// SD. Update dominator information. Maintain LCSSA form.
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
-  BasicBlock *Preheader = L->getLoopPreheader();
-  BasicBlock *SplitBlock = SD.SplitCondition->getParent();
-  BasicBlock *Latch = L->getLoopLatch();
-  BasicBlock *Header = L->getHeader();
-  BranchInst *SplitTerminator = cast<BranchInst>(SplitBlock->getTerminator());
+  // True loop is original loop. False loop is cloned loop.
 
+  BasicBlock *TL_Preheader = L->getLoopPreheader();
+  BasicBlock *TL_SplitCondBlock = SD.SplitCondition->getParent();
+  BasicBlock *TL_Latch = L->getLoopLatch();
+  BasicBlock *TL_Header = L->getHeader();
+  BranchInst *TL_SplitTerminator = 
+    cast<BranchInst>(TL_SplitCondBlock->getTerminator());
+  
   // FIXME - Unable to handle triange loops at the moment.
   // In triangle loop, split condition is in header and one of the
   // the split destination is loop latch. If split condition is EQ
   // then such loops are already handle in processOneIterationLoop().
-  if (Header == SplitBlock 
-      && (Latch == SplitTerminator->getSuccessor(0) 
-          || Latch == SplitTerminator->getSuccessor(1)))
+  BasicBlock *Succ0 = TL_SplitTerminator->getSuccessor(0);
+  BasicBlock *Succ1 = TL_SplitTerminator->getSuccessor(1);
+  if (TL_Header == TL_SplitCondBlock 
+      && (TL_Latch == Succ0 || TL_Latch == Succ1))
     return false;
-
+  
   // If one of the split condition branch is post dominating other then loop 
   // index split is not appropriate.
-  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
-  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
-  if (DT->dominates(Succ0, Latch) || DT->dominates(Succ1, Latch))
+  if (DT->dominates(Succ0, TL_Latch) || DT->dominates(Succ1, TL_Latch))
     return false;
-
+  
   // If one of the split condition branch is a predecessor of the other
   // split condition branch head then do not split loop on this condition.
-  for(pred_iterator PI = pred_begin(Succ0), PE = pred_end(Succ0); PI != PE; ++PI)
+  for(pred_iterator PI = pred_begin(Succ0), PE = pred_end(Succ0); 
+      PI != PE; ++PI)
     if (Succ1 == *PI)
       return false;
-  for(pred_iterator PI = pred_begin(Succ1), PE = pred_end(Succ1); PI != PE; ++PI)
+  for(pred_iterator PI = pred_begin(Succ1), PE = pred_end(Succ1); 
+      PI != PE; ++PI)
     if (Succ0 == *PI)
       return false;
 
-  // True loop is original loop. False loop is cloned loop.
-
   bool SignedPredicate = ExitCondition->isSignedPredicate();  
   //[*] Calculate True loop's new Exit Value in loop preheader.
-  //      TLExitValue = min(SplitValue, ExitValue)
+  //      TL_ExitValue = min(SplitValue, ExitValue)
   //[*] Calculate False loop's new Start Value in loop preheader.
-  //      FLStartValue = min(SplitValue, TrueLoop.StartValue)
-  Value *TLExitValue = NULL;
-  Value *FLStartValue = NULL;
+  //      FL_StartValue = min(SplitValue, TrueLoop.StartValue)
+  Value *TL_ExitValue = NULL;
+  Value *FL_StartValue = NULL;
   if (isa<ConstantInt>(SD.SplitValue)) {
-    TLExitValue = SD.SplitValue;
-    FLStartValue = SD.SplitValue;
+    TL_ExitValue = SD.SplitValue;
+    FL_StartValue = SD.SplitValue;
   }
   else {
+    Instruction *TL_PHTerminator = TL_Preheader->getTerminator();
     Value *C1 = new ICmpInst(SignedPredicate ? 
                             ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                             SD.SplitValue, 
                              ExitCondition->getOperand(ExitValueNum), 
-                             "lsplit.ev",
-                            Preheader->getTerminator());
-    TLExitValue = new SelectInst(C1, SD.SplitValue, 
+                             "lsplit.ev", TL_PHTerminator);
+    TL_ExitValue = new SelectInst(C1, SD.SplitValue, 
                                  ExitCondition->getOperand(ExitValueNum), 
-                                 "lsplit.ev", Preheader->getTerminator());
+                                 "lsplit.ev", TL_PHTerminator);
 
     Value *C2 = new ICmpInst(SignedPredicate ? 
                              ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                              SD.SplitValue, StartValue, "lsplit.sv",
-                             Preheader->getTerminator());
-    FLStartValue = new SelectInst(C2, SD.SplitValue, StartValue,
-                                  "lsplit.sv", Preheader->getTerminator());
+                             TL_PHTerminator);
+    FL_StartValue = new SelectInst(C2, SD.SplitValue, StartValue,
+                                   "lsplit.sv", TL_Preheader->getTerminator());
   }
 
   //[*] Clone loop. Avoid true destination of split condition and 
   //    the blocks dominated by true destination. 
   DenseMap<const Value *, Value *> ValueMap;
   Loop *FalseLoop = CloneLoop(L, LPM, LI, ValueMap, this);
-  BasicBlock *FalseHeader = FalseLoop->getHeader();
+  BasicBlock *FL_Header = FalseLoop->getHeader();
 
   //[*] True loop's exit edge enters False loop.
-  PHINode *IndVarClone = cast<PHINode>(ValueMap[IndVar]);
-  BasicBlock *ExitingBlock = ExitCondition->getParent();
-  BranchInst *ExitInsn = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
-  assert (ExitInsn && "Unable to find suitable loop exit branch");
-  BasicBlock *ExitDest = ExitInsn->getSuccessor(1);
-
-  if (L->contains(ExitDest)) {
-    ExitDest = ExitInsn->getSuccessor(0);
-    ExitInsn->setSuccessor(0, FalseHeader);
+  PHINode *FL_IndVar = cast<PHINode>(ValueMap[IndVar]);
+  BasicBlock *TL_ExitingBlock = ExitCondition->getParent();
+  BranchInst *TL_ExitInsn =
+    dyn_cast<BranchInst>(TL_ExitingBlock->getTerminator());
+  assert (TL_ExitInsn && "Unable to find suitable loop exit branch");
+  BasicBlock *TL_ExitDest = TL_ExitInsn->getSuccessor(1);
+  
+  if (L->contains(TL_ExitDest)) {
+    TL_ExitDest = TL_ExitInsn->getSuccessor(0);
+    TL_ExitInsn->setSuccessor(0, FL_Header);
   } else
-    ExitInsn->setSuccessor(1, FalseHeader);
-
+    TL_ExitInsn->setSuccessor(1, FL_Header);
+  
   // Collect inverse map of Header PHINodes.
   DenseMap<Value *, Value *> InverseMap;
   for (BasicBlock::iterator BI = L->getHeader()->begin(), 
@@ -799,67 +804,70 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     } else
       break;
   }
-
+  
   // Update False loop's header
-  for (BasicBlock::iterator BI = FalseHeader->begin(), BE = FalseHeader->end();
+  for (BasicBlock::iterator BI = FL_Header->begin(), BE = FL_Header->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->removeIncomingValue(Preheader);
-      if (PN == IndVarClone)
-        PN->addIncoming(FLStartValue, ExitingBlock);
+      PN->removeIncomingValue(TL_Preheader);
+      if (PN == FL_IndVar)
+        PN->addIncoming(FL_StartValue, TL_ExitingBlock);
       else { 
         PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
-        Value *V2 = OrigPN->getIncomingValueForBlock(ExitingBlock);
-        PN->addIncoming(V2, ExitingBlock);
+        Value *V2 = OrigPN->getIncomingValueForBlock(TL_ExitingBlock);
+        PN->addIncoming(V2, TL_ExitingBlock);
       }
     } else
       break;
   }
-
-  // Update ExitDest. Now it's predecessor is False loop's exit block.
-  BasicBlock *ExitingBlockClone = cast<BasicBlock>(ValueMap[ExitingBlock]);
-  for (BasicBlock::iterator BI = ExitDest->begin(), BE = ExitDest->end();
+  
+  // Update TL_ExitDest. Now it's predecessor is False loop's exit block.
+  BasicBlock *FL_ExitingBlock = cast<BasicBlock>(ValueMap[TL_ExitingBlock]);
+  for (BasicBlock::iterator BI = TL_ExitDest->begin(), BE = TL_ExitDest->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(ExitingBlock)], ExitingBlockClone);
-      PN->removeIncomingValue(ExitingBlock);
+      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(TL_ExitingBlock)], 
+                                                            FL_ExitingBlock);
+      PN->removeIncomingValue(TL_ExitingBlock);
     } else
       break;
   }
 
   if (DT) {
-    DT->changeImmediateDominator(FalseHeader, ExitingBlock);
-    DT->changeImmediateDominator(ExitDest, cast<BasicBlock>(ValueMap[ExitingBlock]));
+    DT->changeImmediateDominator(FL_Header, TL_ExitingBlock);
+    DT->changeImmediateDominator(TL_ExitDest, 
+                                 cast<BasicBlock>(ValueMap[TL_ExitingBlock]));
   }
 
-  assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
+  assert (!L->contains(TL_ExitDest) && " Unable to find exit edge destination");
 
   //[*] Split Exit Edge. 
-  BasicBlock *TL_ExitBlock = SplitEdge(ExitingBlock, FalseHeader, this);
+  BasicBlock *TL_ExitBlock = SplitEdge(TL_ExitingBlock, FL_Header, this);
 
   //[*] Eliminate split condition's false branch from True loop.
-  BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
-  BasicBlock *FBB = BR->getSuccessor(1);
-  BR->setUnconditionalDest(BR->getSuccessor(0));
-  removeBlocks(FBB, L, BR->getSuccessor(0));
+  BranchInst *TL_BR = cast<BranchInst>(TL_SplitCondBlock->getTerminator());
+  BasicBlock *TL_FalseBlock = TL_BR->getSuccessor(1);
+  TL_BR->setUnconditionalDest(TL_BR->getSuccessor(0));
+  removeBlocks(TL_FalseBlock, L, TL_BR->getSuccessor(0));
 
   //[*] Update True loop's exit value using new exit value.
-  ExitCondition->setOperand(ExitValueNum, TLExitValue);
+  ExitCondition->setOperand(ExitValueNum, TL_ExitValue);
 
   //[*] Eliminate split condition's  true branch in False loop CFG.
-  BasicBlock *FSplitBlock = cast<BasicBlock>(ValueMap[SplitBlock]);
-  BranchInst *FBR = cast<BranchInst>(FSplitBlock->getTerminator());
-  BasicBlock *TBB = FBR->getSuccessor(0);
-  FBR->setUnconditionalDest(FBR->getSuccessor(1));
-  removeBlocks(TBB, FalseLoop, cast<BasicBlock>(FBR->getSuccessor(0)));
+  BasicBlock *FL_SplitCondBlock = cast<BasicBlock>(ValueMap[TL_SplitCondBlock]);
+  BranchInst *FL_BR = cast<BranchInst>(FL_SplitCondBlock->getTerminator());
+  BasicBlock *FL_TrueBlock = FL_BR->getSuccessor(0);
+  FL_BR->setUnconditionalDest(FL_BR->getSuccessor(1));
+  removeBlocks(FL_TrueBlock, FalseLoop, 
+               cast<BasicBlock>(FL_BR->getSuccessor(0)));
 
   //[*] Preserve LCSSA
-  for(BasicBlock::iterator BI = FalseHeader->begin(), BE = FalseHeader->end();
+  for(BasicBlock::iterator BI = FL_Header->begin(), BE = FL_Header->end();
       BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
       Value *V1 = PN->getIncomingValueForBlock(TL_ExitBlock);
       PHINode *newPHI = new PHINode(PN->getType(), PN->getName());
-      newPHI->addIncoming(V1, ExitingBlock);
+      newPHI->addIncoming(V1, TL_ExitingBlock);
       TL_ExitBlock->getInstList().push_front(newPHI);
       PN->removeIncomingValue(TL_ExitBlock);
       PN->addIncoming(newPHI, TL_ExitBlock);
@@ -869,4 +877,3 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
   return true;
 }
-
