@@ -353,7 +353,7 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
 void Loop::getExitingBlocks(SmallVectorImpl<BasicBlock*> &ExitingBlocks) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
-  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  SmallVector<BasicBlock*, 128> LoopBBs(block_begin(), block_end());
   std::sort(LoopBBs.begin(), LoopBBs.end());
   
   for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
@@ -372,7 +372,7 @@ void Loop::getExitingBlocks(SmallVectorImpl<BasicBlock*> &ExitingBlocks) const {
 void Loop::getExitBlocks(SmallVectorImpl<BasicBlock*> &ExitBlocks) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
-  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  SmallVector<BasicBlock*, 128> LoopBBs(block_begin(), block_end());
   std::sort(LoopBBs.begin(), LoopBBs.end());
   
   for (std::vector<BasicBlock*>::const_iterator BI = Blocks.begin(),
@@ -390,7 +390,7 @@ void Loop::getExitBlocks(SmallVectorImpl<BasicBlock*> &ExitBlocks) const {
 void Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock*> &ExitBlocks) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
-  std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
+  SmallVector<BasicBlock*, 128> LoopBBs(block_begin(), block_end());
   std::sort(LoopBBs.begin(), LoopBBs.end());
 
   std::vector<BasicBlock*> switchExitBlocks;  
