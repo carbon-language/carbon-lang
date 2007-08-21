@@ -60,12 +60,13 @@ public:
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
-  
+
   ComplexPairTy VisitStmt(Stmt *S) {
-    fprintf(stderr, "Unimplemented agg expr!\n");
     S->dump();
+    assert(0 && "Stmt can't have complex result type!");
     return ComplexPairTy();
   }
+  ComplexPairTy VisitExpr(Expr *S);
   ComplexPairTy VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr());}
 
   // l-values.
@@ -77,7 +78,6 @@ public:
   //  case Expr::ImplicitCastExprClass:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
-  ComplexPairTy VisitBinaryOperator(const BinaryOperator *BO);
   ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
   // FIXME: div/rem
@@ -134,10 +134,13 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
 
-ComplexPairTy ComplexExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  fprintf(stderr, "Unimplemented complex binary expr!\n");
+ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
+  fprintf(stderr, "Unimplemented complex expr!\n");
   E->dump();
-  return ComplexPairTy();
+  const llvm::Type *EltTy = 
+    CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
+  llvm::Value *U = llvm::UndefValue::get(EltTy);
+  return ComplexPairTy(U, U);
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
