@@ -30,8 +30,9 @@ namespace  {
 class VISIBILITY_HIDDEN ComplexExprEmitter
   : public StmtVisitor<ComplexExprEmitter, ComplexPairTy> {
   CodeGenFunction &CGF;
+  llvm::LLVMBuilder &Builder;
 public:
-  ComplexExprEmitter(CodeGenFunction &cgf) : CGF(cgf) {
+  ComplexExprEmitter(CodeGenFunction &cgf) : CGF(cgf), Builder(CGF.Builder) {
   }
 
   
@@ -104,13 +105,13 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr) {
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
   // FIXME: It would be nice to make this "Ptr->getName()+realp"
-  llvm::Value *RealPtr = CGF.Builder.CreateGEP(SrcPtr, Zero, Zero, "realp");
-  llvm::Value *ImagPtr = CGF.Builder.CreateGEP(SrcPtr, Zero, One, "imagp");
+  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, "realp");
+  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, "imagp");
   
   // FIXME: Handle volatility.
   // FIXME: It would be nice to make this "Ptr->getName()+real"
-  llvm::Value *Real = CGF.Builder.CreateLoad(RealPtr, "real");
-  llvm::Value *Imag = CGF.Builder.CreateLoad(ImagPtr, "imag");
+  llvm::Value *Real = Builder.CreateLoad(RealPtr, "real");
+  llvm::Value *Imag = Builder.CreateLoad(ImagPtr, "imag");
   return ComplexPairTy(Real, Imag);
 }
 
@@ -119,12 +120,12 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr) {
 void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy V, llvm::Value *Ptr) {
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-  llvm::Value *RealPtr = CGF.Builder.CreateGEP(Ptr, Zero, Zero, "real");
-  llvm::Value *ImagPtr = CGF.Builder.CreateGEP(Ptr, Zero, One, "imag");
+  llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Zero, Zero, "real");
+  llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Zero, One, "imag");
   
   // FIXME: Handle volatility.
-  CGF.Builder.CreateStore(V.first, RealPtr);
-  CGF.Builder.CreateStore(V.second, ImagPtr);
+  Builder.CreateStore(V.first, RealPtr);
+  Builder.CreateStore(V.second, ImagPtr);
 }
 
 
@@ -143,8 +144,8 @@ ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
   ComplexPairTy LHS = Visit(E->getLHS());
   ComplexPairTy RHS = Visit(E->getRHS());
   
-  llvm::Value *ResR = CGF.Builder.CreateAdd(LHS.first,  RHS.first,  "add.r");
-  llvm::Value *ResI = CGF.Builder.CreateAdd(LHS.second, RHS.second, "add.i");
+  llvm::Value *ResR = Builder.CreateAdd(LHS.first,  RHS.first,  "add.r");
+  llvm::Value *ResI = Builder.CreateAdd(LHS.second, RHS.second, "add.i");
 
   return ComplexPairTy(ResR, ResI);
 }
@@ -153,13 +154,13 @@ ComplexPairTy ComplexExprEmitter::VisitBinMul(const BinaryOperator *E) {
   ComplexPairTy LHS = Visit(E->getLHS());
   ComplexPairTy RHS = Visit(E->getRHS());
   
-  llvm::Value *ResRl = CGF.Builder.CreateMul(LHS.first, RHS.first, "mul.rl");
-  llvm::Value *ResRr = CGF.Builder.CreateMul(LHS.second, RHS.second, "mul.rr");
-  llvm::Value *ResR  = CGF.Builder.CreateSub(ResRl, ResRr, "mul.r");
+  llvm::Value *ResRl = Builder.CreateMul(LHS.first, RHS.first, "mul.rl");
+  llvm::Value *ResRr = Builder.CreateMul(LHS.second, RHS.second, "mul.rr");
+  llvm::Value *ResR  = Builder.CreateSub(ResRl, ResRr, "mul.r");
   
-  llvm::Value *ResIl = CGF.Builder.CreateMul(LHS.second, RHS.first, "mul.il");
-  llvm::Value *ResIr = CGF.Builder.CreateMul(LHS.first, RHS.second, "mul.ir");
-  llvm::Value *ResI  = CGF.Builder.CreateAdd(ResIl, ResIr, "mul.i");
+  llvm::Value *ResIl = Builder.CreateMul(LHS.second, RHS.first, "mul.il");
+  llvm::Value *ResIr = Builder.CreateMul(LHS.first, RHS.second, "mul.ir");
+  llvm::Value *ResI  = Builder.CreateAdd(ResIl, ResIr, "mul.i");
 
   return ComplexPairTy(ResR, ResI);
 }
@@ -191,7 +192,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *ContBlock = new llvm::BasicBlock("cond.cont");
   
   llvm::Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
-  CGF.Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
   
   CGF.EmitBlock(LHSBlock);
   
@@ -199,25 +200,25 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   assert(E->getLHS() && "Must have LHS for complex value");
 
   ComplexPairTy LHS = Visit(E->getLHS());
-  CGF.Builder.CreateBr(ContBlock);
-  LHSBlock = CGF.Builder.GetInsertBlock();
+  Builder.CreateBr(ContBlock);
+  LHSBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(RHSBlock);
   
   ComplexPairTy RHS = Visit(E->getRHS());
-  CGF.Builder.CreateBr(ContBlock);
-  RHSBlock = CGF.Builder.GetInsertBlock();
+  Builder.CreateBr(ContBlock);
+  RHSBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(ContBlock);
   
   // Create a PHI node for the real part.
-  llvm::PHINode *RealPN = CGF.Builder.CreatePHI(LHS.first->getType(), "cond.r");
+  llvm::PHINode *RealPN = Builder.CreatePHI(LHS.first->getType(), "cond.r");
   RealPN->reserveOperandSpace(2);
   RealPN->addIncoming(LHS.first, LHSBlock);
   RealPN->addIncoming(RHS.first, RHSBlock);
 
   // Create a PHI node for the imaginary part.
-  llvm::PHINode *ImagPN = CGF.Builder.CreatePHI(LHS.first->getType(), "cond.i");
+  llvm::PHINode *ImagPN = Builder.CreatePHI(LHS.first->getType(), "cond.i");
   ImagPN->reserveOperandSpace(2);
   ImagPN->addIncoming(LHS.second, LHSBlock);
   ImagPN->addIncoming(RHS.second, RHSBlock);
