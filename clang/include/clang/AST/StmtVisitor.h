@@ -41,9 +41,19 @@ public:
       case BinaryOperator::Sub:       DISPATCH(BinSub,       BinaryOperator);
       case BinaryOperator::Shl:       DISPATCH(BinShl,       BinaryOperator);
       case BinaryOperator::Shr:       DISPATCH(BinShr,       BinaryOperator);
+
+      case BinaryOperator::LT:        DISPATCH(BinLT,        BinaryOperator);
+      case BinaryOperator::GT:        DISPATCH(BinGT,        BinaryOperator);
+      case BinaryOperator::LE:        DISPATCH(BinLE,        BinaryOperator);
+      case BinaryOperator::GE:        DISPATCH(BinGE,        BinaryOperator);
+      case BinaryOperator::EQ:        DISPATCH(BinEQ,        BinaryOperator);
+      case BinaryOperator::NE:        DISPATCH(BinNE,        BinaryOperator);
+        
       case BinaryOperator::And:       DISPATCH(BinAnd,       BinaryOperator);
       case BinaryOperator::Xor:       DISPATCH(BinXor,       BinaryOperator);
       case BinaryOperator::Or :       DISPATCH(BinOr,        BinaryOperator);
+      case BinaryOperator::LAnd:      DISPATCH(BinLAnd,      BinaryOperator);
+      case BinaryOperator::LOr :      DISPATCH(BinLOr,       BinaryOperator);
       case BinaryOperator::Assign:    DISPATCH(BinAssign,    BinaryOperator);
       case BinaryOperator::MulAssign: DISPATCH(BinMulAssign, BinaryOperator);
       case BinaryOperator::DivAssign: DISPATCH(BinDivAssign, BinaryOperator);
@@ -83,9 +93,17 @@ public:
   RetTy VisitBinSub(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
   RetTy VisitBinShl(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
   RetTy VisitBinShr(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinLT (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinGT (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinLE (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinGE (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinEQ (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinNE (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
   RetTy VisitBinAnd(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
   RetTy VisitBinXor(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinOr(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinOr (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinLAnd(BinaryOperator*S){DISPATCH(BinaryOperator,BinaryOperator);}
+  RetTy VisitBinLOr (BinaryOperator*S){DISPATCH(BinaryOperator,BinaryOperator);}
   RetTy VisitBinAssign(BinaryOperator *S) {
     DISPATCH(BinaryOperator,BinaryOperator);
   }
