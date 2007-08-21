@@ -122,7 +122,16 @@ public:
   const_body_iterator body_begin() const { return Body.begin(); }
   const_body_iterator body_end() const { return Body.end(); }
   const Stmt *body_back() const { return Body.back(); }
-  
+
+  typedef llvm::SmallVector<Stmt*, 16>::reverse_iterator reverse_body_iterator;
+  reverse_body_iterator body_rbegin() { return Body.rbegin(); }
+  reverse_body_iterator body_rend() { return Body.rend(); }
+
+  typedef llvm::SmallVector<Stmt*, 16>::const_reverse_iterator 
+    const_reverse_body_iterator;
+  const_reverse_body_iterator body_rbegin() const { return Body.rbegin(); }
+  const_reverse_body_iterator body_rend() const { return Body.rend(); }
+    
   void push_back(Stmt *S) { Body.push_back(S); }
     
   static bool classof(const Stmt *T) { 
