@@ -62,7 +62,6 @@ namespace clang {
     virtual SourceRange getSourceRange() const {
       return SourceRange(Loc, getSubExpr()->getSourceRange().End());
     }
-    virtual void visit(StmtVisitor &Visitor);
     static bool classof(const Stmt *T) { 
       return T->getStmtClass() == CXXCastExprClass;
     }
@@ -82,7 +81,6 @@ namespace clang {
 
     virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
       
-    virtual void visit(StmtVisitor &Visitor);
     static bool classof(const Stmt *T) { 
       return T->getStmtClass() == CXXBoolLiteralExprClass;
     }

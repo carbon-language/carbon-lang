@@ -32,7 +32,6 @@
 		DE3452410AEF1A2D00DBC861 /* Stmt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3452400AEF1A2D00DBC861 /* Stmt.cpp */; };
 		DE3452810AEF1B1800DBC861 /* Stmt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3452800AEF1B1800DBC861 /* Stmt.h */; };
 		DE345C1A0AFC658B00DBC861 /* StmtVisitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE345C190AFC658B00DBC861 /* StmtVisitor.h */; };
-		DE345C570AFC69E800DBC861 /* StmtVisitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE345C560AFC69E800DBC861 /* StmtVisitor.cpp */; };
 		DE345F220AFD347900DBC861 /* StmtNodes.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE345F210AFD347900DBC861 /* StmtNodes.def */; };
 		DE3460000AFDCC1900DBC861 /* ParseObjc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE345FFF0AFDCC1900DBC861 /* ParseObjc.cpp */; };
 		DE3460050AFDCC6500DBC861 /* ParseInit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE3460040AFDCC6500DBC861 /* ParseInit.cpp */; };
@@ -221,7 +220,6 @@
 		DE3452400AEF1A2D00DBC861 /* Stmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Stmt.cpp; path = AST/Stmt.cpp; sourceTree = "<group>"; };
 		DE3452800AEF1B1800DBC861 /* Stmt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Stmt.h; path = clang/AST/Stmt.h; sourceTree = "<group>"; };
 		DE345C190AFC658B00DBC861 /* StmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = StmtVisitor.h; path = clang/AST/StmtVisitor.h; sourceTree = "<group>"; };
-		DE345C560AFC69E800DBC861 /* StmtVisitor.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtVisitor.cpp; path = AST/StmtVisitor.cpp; sourceTree = "<group>"; };
 		DE345F210AFD347900DBC861 /* StmtNodes.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = StmtNodes.def; path = clang/AST/StmtNodes.def; sourceTree = "<group>"; };
 		DE345FFF0AFDCC1900DBC861 /* ParseObjc.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseObjc.cpp; path = Parse/ParseObjc.cpp; sourceTree = "<group>"; };
 		DE3460040AFDCC6500DBC861 /* ParseInit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseInit.cpp; path = Parse/ParseInit.cpp; sourceTree = "<group>"; };
@@ -504,7 +502,6 @@
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
 				DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */,
 				DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */,
-				DE345C560AFC69E800DBC861 /* StmtVisitor.cpp */,
 			);
 			name = AST;
 			sourceTree = "<group>";
@@ -616,7 +613,6 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
@@ -654,7 +650,6 @@
 				DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */,
 				DE3451580AEC176100DBC861 /* MacroExpander.cpp in Sources */,
 				DE3452410AEF1A2D00DBC861 /* Stmt.cpp in Sources */,
-				DE345C570AFC69E800DBC861 /* StmtVisitor.cpp in Sources */,
 				DE3460000AFDCC1900DBC861 /* ParseObjc.cpp in Sources */,
 				DE3460050AFDCC6500DBC861 /* ParseInit.cpp in Sources */,
 				DE34600B0AFDCCBF00DBC861 /* ParseStmt.cpp in Sources */,

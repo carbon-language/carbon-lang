@@ -103,7 +103,6 @@ public:
     return isIntegerConstantExpr(X, Ctx, Loc);
   }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
            T->getStmtClass() <= lastExprConstant; 
@@ -129,7 +128,6 @@ public:
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclRefExprClass; 
   }
@@ -156,7 +154,6 @@ public:
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == PreDefinedExprClass; 
   }
@@ -176,7 +173,6 @@ public:
   const llvm::APInt &getValue() const { return Value; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IntegerLiteralClass; 
   }
@@ -197,7 +193,6 @@ public:
   
   unsigned getValue() const { return Value; }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CharacterLiteralClass; 
   }
@@ -215,7 +210,6 @@ public:
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == FloatingLiteralClass; 
   }
@@ -246,7 +240,6 @@ public:
   virtual SourceRange getSourceRange() const { 
     return SourceRange(firstTokLoc,lastTokLoc); 
   }
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == StringLiteralClass; 
   }
@@ -266,7 +259,6 @@ public:
   Expr *getSubExpr() { return Val; }
   SourceRange getSourceRange() const { return SourceRange(L, R); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ParenExprClass; 
   }
@@ -329,7 +321,6 @@ public:
   }
   virtual SourceLocation getExprLoc() const { return Loc; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == UnaryOperatorClass; 
   }
@@ -354,7 +345,6 @@ public:
   SourceLocation getOperatorLoc() const { return OpLoc; }
   SourceRange getSourceRange() const { return SourceRange(OpLoc, RParenLoc); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == SizeOfAlignOfTypeExprClass; 
   }
@@ -402,7 +392,6 @@ public:
   }
   virtual SourceLocation getExprLoc() const { return RBracketLoc; }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ArraySubscriptExprClass; 
   }
@@ -451,7 +440,6 @@ public:
     return SourceRange(Fn->getLocStart(), RParenLoc);
   }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CallExprClass; 
   }
@@ -479,7 +467,6 @@ public:
   }
   virtual SourceLocation getExprLoc() const { return MemberLoc; }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == MemberExprClass; 
   }
@@ -536,7 +523,6 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);
   }
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == OCUVectorElementExprClass; 
   }
@@ -556,7 +542,6 @@ public:
   
   virtual SourceRange getSourceRange() const { return Init->getSourceRange(); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundLiteralExprClass; 
   }
@@ -578,7 +563,6 @@ public:
 
   virtual SourceRange getSourceRange() const { return Op->getSourceRange(); }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ImplicitCastExprClass; 
   }
@@ -601,7 +585,6 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, getSubExpr()->getSourceRange().End());
   }
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CastExprClass; 
   }
@@ -660,7 +643,6 @@ public:
   bool isCompoundAssignmentOp() const { return Opc > Assign && Opc <= OrAssign;}
   bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BinaryOperatorClass; 
   }
@@ -717,7 +699,6 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());
   }
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ConditionalOperatorClass; 
   }
@@ -739,7 +720,6 @@ public:
   
   LabelStmt *getLabel() const { return Label; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AddrLabelExprClass; 
   }
@@ -764,7 +744,6 @@ public:
     return SourceRange(LParenLoc, RParenLoc);
   }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == StmtExprClass; 
   }
@@ -793,7 +772,6 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == TypesCompatibleExprClass; 
   }
@@ -826,7 +804,6 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ChooseExprClass; 
   }

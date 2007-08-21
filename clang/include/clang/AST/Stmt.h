@@ -22,7 +22,6 @@ namespace clang {
   class Expr;
   class Decl;
   class IdentifierInfo;
-  class StmtVisitor;
   class SwitchStmt;
   
 /// Stmt - This represents one statement.
@@ -66,9 +65,6 @@ public:
   void dumpPretty() const;
   void printPretty(std::ostream &OS) const;
   
-  // Implement visitor support.
-  virtual void visit(StmtVisitor &Visitor);
-
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }
 };
@@ -86,7 +82,6 @@ public:
   const Decl *getDecl() const { return TheDecl; }
   Decl *getDecl() { return TheDecl; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclStmtClass; 
   }
@@ -102,7 +97,6 @@ public:
 
   SourceLocation getSemiLoc() const { return SemiLoc; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == NullStmtClass; 
   }
@@ -131,7 +125,6 @@ public:
   
   void push_back(Stmt *S) { Body.push_back(S); }
     
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundStmtClass; 
   }
@@ -158,8 +151,6 @@ public:
     T->getStmtClass() == DefaultStmtClass;
   }
   static bool classof(const SwitchCase *) { return true; }
-
-  virtual void visit(StmtVisitor &Visitor) = 0;
 };
 
 class CaseStmt : public SwitchCase {
@@ -174,7 +165,6 @@ public:
   Expr *getRHS() { return RHSVal; }
   Stmt *getSubStmt() { return SubStmt; }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass; 
   }
@@ -191,7 +181,6 @@ public:
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
   Stmt *getSubStmt() { return SubStmt; }
 
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DefaultStmtClass; 
   }
@@ -215,7 +204,6 @@ public:
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == LabelStmtClass; 
   }
@@ -240,7 +228,6 @@ public:
   Stmt *getThen() { return Then; }
   Stmt *getElse() { return Else; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IfStmtClass; 
   }
@@ -276,7 +263,6 @@ public:
     FirstCase = SC;
   }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == SwitchStmtClass; 
   }
@@ -298,7 +284,6 @@ public:
   Stmt *getBody() { return Body; }
   const Stmt *getBody() const { return Body; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == WhileStmtClass; 
   }
@@ -319,7 +304,6 @@ public:
   Expr *getCond() { return Cond; }
   const Expr *getCond() const { return Cond; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DoStmtClass; 
   }
@@ -349,7 +333,6 @@ public:
   const Expr *getInc()  const { return Inc; }
   const Stmt *getBody() const { return Body; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ForStmtClass; 
   }
@@ -365,7 +348,6 @@ public:
   
   LabelStmt *getLabel() const { return Label; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == GotoStmtClass; 
   }
@@ -382,7 +364,6 @@ public:
   Expr *getTarget() { return Target; }
   const Expr *getTarget() const { return Target; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IndirectGotoStmtClass; 
   }
@@ -395,7 +376,6 @@ public:
 class ContinueStmt : public Stmt {
 public:
   ContinueStmt() : Stmt(ContinueStmtClass) {}
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ContinueStmtClass; 
   }
@@ -407,7 +387,6 @@ public:
 class BreakStmt : public Stmt {
 public:
   BreakStmt() : Stmt(BreakStmtClass) {}
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BreakStmtClass; 
   }
@@ -425,7 +404,6 @@ public:
   const Expr *getRetValue() const { return RetExpr; }
   Expr *getRetValue() { return RetExpr; }
   
-  virtual void visit(StmtVisitor &Visitor);
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ReturnStmtClass; 
   }

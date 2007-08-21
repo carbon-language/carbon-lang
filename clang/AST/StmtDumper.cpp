@@ -25,7 +25,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace  {
-  class VISIBILITY_HIDDEN StmtDumper : public StmtVisitor {
+  class VISIBILITY_HIDDEN StmtDumper : public StmtVisitor<StmtDumper> {
     FILE *F;
     unsigned IndentLevel;
     
@@ -43,7 +43,7 @@ namespace  {
       
       ++IndentLevel;
       if (S) {
-        S->visit(*this);
+        Visit(S);
       } else {
         Indent();
         fprintf(F, "<<<NULL>>>\n");
@@ -78,9 +78,9 @@ namespace  {
       DumpType(Node->getType());
     }
     
-    virtual void VisitStmt(Stmt *Node);
+    void VisitStmt(Stmt *Node);
 #define STMT(N, CLASS, PARENT) \
-    virtual void Visit##CLASS(CLASS *Node);
+    void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.def"
   };
 }
@@ -502,13 +502,13 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 /// This is useful in a debugger.
 void Stmt::dump() const {
   StmtDumper P(stderr, 4);
-  const_cast<Stmt*>(this)->visit(P);
+  P.Visit(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll() const {
   StmtDumper P(stderr, ~0U);
-  const_cast<Stmt*>(this)->visit(P);
+  P.Visit(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }

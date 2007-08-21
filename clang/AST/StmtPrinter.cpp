@@ -26,7 +26,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace  {
-  class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor {
+  class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
     std::ostream &OS;
     unsigned IndentLevel;
   public:
@@ -37,10 +37,10 @@ namespace  {
       if (S && isa<Expr>(S)) {
         // If this is an expr used in a stmt context, indent and newline it.
         Indent();
-        S->visit(*this);
+        Visit(S);
         OS << ";\n";
       } else if (S) {
-        S->visit(*this);
+        Visit(S);
       } else {
         Indent() << "<<<NULL STATEMENT>>>\n";
       }
@@ -53,7 +53,7 @@ namespace  {
     
     void PrintExpr(Expr *E) {
       if (E)
-        E->visit(*this);
+        Visit(E);
       else
         OS << "<null expr>";
     }
@@ -64,9 +64,9 @@ namespace  {
       return OS;
     }
     
-    virtual void VisitStmt(Stmt *Node);
+    void VisitStmt(Stmt *Node);
 #define STMT(N, CLASS, PARENT) \
-    virtual void Visit##CLASS(CLASS *Node);
+    void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.def"
   };
 }
@@ -528,5 +528,5 @@ void Stmt::printPretty(std::ostream &OS) const {
   }
 
   StmtPrinter P(OS);
-  const_cast<Stmt*>(this)->visit(P);
+  P.Visit(const_cast<Stmt*>(this));
 }
