@@ -89,7 +89,7 @@ public:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
   void VisitBinaryOperator(const BinaryOperator *BO);
-  void VisitBinaryAssign(const BinaryOperator *E);
+  void VisitBinAssign(const BinaryOperator *E);
 
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
@@ -128,12 +128,12 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
+  fprintf(stderr, "Unimplemented aggregate binary expr!\n");
+  E->dump();
+#if 0
   switch (E->getOpcode()) {
   default:
-    fprintf(stderr, "Unimplemented aggregate binary expr!\n");
-    E->dump();
     return;
-#if 0
   case BinaryOperator::Mul:
     LHS = EmitExpr(E->getLHS());
     RHS = EmitExpr(E->getRHS());
@@ -183,10 +183,6 @@ void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
     LHS = EmitExpr(E->getLHS());
     RHS = EmitExpr(E->getRHS());
     return EmitOr(LHS, RHS, E->getType());
-#endif
-  case BinaryOperator::Assign: return VisitBinaryAssign(E);
-
-#if 0
   case BinaryOperator::MulAssign: {
     const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
     LValue LHSLV;
@@ -258,11 +254,11 @@ void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
     return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
   }
   case BinaryOperator::Comma: return EmitBinaryComma(E);
-#endif
   }
+#endif
 }
 
-void AggExprEmitter::VisitBinaryAssign(const BinaryOperator *E) {
+void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   assert(E->getLHS()->getType().getCanonicalType() ==
          E->getRHS()->getType().getCanonicalType() && "Invalid assignment");
   LValue LHS = CGF.EmitLValue(E->getLHS());
