@@ -69,10 +69,8 @@ public:
   ComplexPairTy VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr());}
 
   // l-values.
-  ComplexPairTy VisitDeclRefExpr(DeclRefExpr *DRE) {
-    return EmitLoadOfLValue(DRE);
-  }
-  //  case Expr::ArraySubscriptExprClass:
+  ComplexPairTy VisitDeclRefExpr(Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
 
   // Operators.
   //  case Expr::UnaryOperatorClass:
