@@ -1273,24 +1273,15 @@ RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
 }
 
 RValue CodeGenFunction::EmitAnd(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar())
-    return RValue::get(Builder.CreateAnd(LHS.getVal(), RHS.getVal(), "and"));
-  
-  assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
+  return RValue::get(Builder.CreateAnd(LHS.getVal(), RHS.getVal(), "and"));
 }
 
 RValue CodeGenFunction::EmitXor(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar())
-    return RValue::get(Builder.CreateXor(LHS.getVal(), RHS.getVal(), "xor"));
-  
-  assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
+  return RValue::get(Builder.CreateXor(LHS.getVal(), RHS.getVal(), "xor"));
 }
 
 RValue CodeGenFunction::EmitOr(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar())
-    return RValue::get(Builder.CreateOr(LHS.getVal(), RHS.getVal(), "or"));
-  
-  assert(0 && "FIXME: This doesn't handle complex integer operands yet (GNU)");
+  return RValue::get(Builder.CreateOr(LHS.getVal(), RHS.getVal(), "or"));
 }
 
 RValue CodeGenFunction::EmitBinaryLAnd(const BinaryOperator *E) {
