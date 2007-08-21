@@ -276,15 +276,15 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
   while (!use_empty()) {
     Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
-    // constant!
+    // constant because they are uniqued.
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
-      if (!isa<GlobalValue>(C))
+      if (!isa<GlobalValue>(C)) {
         C->replaceUsesOfWithOnConstant(this, New, &U);
-      else
-        U.set(New);
-    } else {
-      U.set(New);
+        continue;
+      }
     }
+    
+    U.set(New);
   }
 }
 
