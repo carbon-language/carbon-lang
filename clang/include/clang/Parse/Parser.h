@@ -258,7 +258,7 @@ private:
   DeclTy *ParseObjCAtClassDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc, 
                                           AttributeList *prefixAttrs = 0);
-  void ParseObjCClassInstanceVariables();
+  void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl);
   bool ParseObjCProtocolReferences();
   void ParseObjCInterfaceDeclList();
   DeclTy *ParseObjCAtProtocolDeclaration();

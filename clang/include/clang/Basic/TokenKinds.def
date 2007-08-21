@@ -349,6 +349,7 @@ OBJC1_AT_KEYWORD(synchronized)
 
 // I'm guessing this is an objc2 keyword, what are the others?
 OBJC2_AT_KEYWORD(property)
+OBJC2_AT_KEYWORD(package)
 
 // TODO: What to do about context-sensitive keywords like:
 //       bycopy/byref/in/inout/oneway/out?

@@ -179,8 +179,9 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (ParseObjCProtocolReferences())
       return 0;
   }
+  // FIXME: add Actions.StartObjCClassInterface(nameId, superClassId, ...)
   if (Tok.getKind() == tok::l_brace)
-    ParseObjCClassInstanceVariables();
+    ParseObjCClassInstanceVariables(0/*FIXME*/);
 
   //ParseObjCInterfaceDeclList();
   
@@ -249,12 +250,62 @@ bool Parser::ParseObjCProtocolReferences() {
 ///     @private
 ///     @protected
 ///     @public
+///     @package [OBJC2]
 ///
 ///   objc-instance-variable-decl:
 ///     struct-declaration 
 ///
-void Parser::ParseObjCClassInstanceVariables() {
-  assert(0 && "Unimp");
+void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
+  assert(Tok.getKind() == tok::l_brace && "expected {");
+  
+  SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
+  llvm::SmallVector<DeclTy*, 32> IvarDecls;
+  
+  // While we still have something to read, read the instance variables.
+  while (Tok.getKind() != tok::r_brace && 
+         Tok.getKind() != tok::eof) {
+    // Each iteration of this loop reads one objc-instance-variable-decl.
+    
+    // Check for extraneous top-level semicolon.
+    if (Tok.getKind() == tok::semi) {
+      Diag(Tok, diag::ext_extra_struct_semi);
+      ConsumeToken();
+      continue;
+    }
+    // Set the default visibility to private.
+    tok::ObjCKeywordKind visibility = tok::objc_private;
+    if (Tok.getKind() == tok::at) { // parse objc-visibility-spec
+      ConsumeToken(); // eat the @ sign
+      IdentifierInfo *specId = Tok.getIdentifierInfo();
+      switch (specId->getObjCKeywordID()) {
+      case tok::objc_private:
+      case tok::objc_public:
+      case tok::objc_protected:
+      case tok::objc_package:
+        visibility = specId->getObjCKeywordID();
+        ConsumeToken();
+        continue; 
+      default:
+        Diag(Tok, diag::err_objc_illegal_visibility_spec);
+        ConsumeToken();
+        continue;
+      }
+    }
+    ParseStructDeclaration(interfaceDecl, IvarDecls);
+
+    if (Tok.getKind() == tok::semi) {
+      ConsumeToken();
+    } else if (Tok.getKind() == tok::r_brace) {
+      Diag(Tok.getLocation(), diag::ext_expected_semi_decl_list);
+      break;
+    } else {
+      Diag(Tok, diag::err_expected_semi_decl_list);
+      // Skip to end of block or statement
+      SkipUntil(tok::r_brace, true, true);
+    }
+  }
+  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  return;
 }
 
 ///   objc-protocol-declaration:

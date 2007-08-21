@@ -382,6 +382,8 @@ DIAG(err_objc_no_attributes_on_category, ERROR,
      "attributes may not be specified on a category")
 DIAG(err_objc_missing_end, ERROR,
      "missing @end")
+DIAG(err_objc_illegal_visibility_spec, ERROR,
+     "illegal visibility specification")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
