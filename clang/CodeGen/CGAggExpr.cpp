@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -53,6 +54,51 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
 }
 
+//===----------------------------------------------------------------------===//
+//                        Aggregate Expression Emitter
+//===----------------------------------------------------------------------===//
+
+namespace  {
+class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
+  CodeGenFunction &CGF;
+  llvm::Value *DestPtr;
+  bool VolatileDest;
+public:
+  AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool volatileDest)
+    : CGF(cgf), DestPtr(destPtr), VolatileDest(volatileDest) {
+  }
+
+  /// EmitAggLoadOfLValue - Given an expression with aggregate type that
+  /// represents a value lvalue, this method emits the address of the lvalue,
+  /// then loads the result into DestPtr.
+  void EmitAggLoadOfLValue(const Expr *E);
+  
+  void VisitStmt(Stmt *S) {
+    fprintf(stderr, "Unimplemented agg expr!\n");
+    S->dump();
+  }
+  void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
+
+  // l-values.
+  void VisitDeclRefExpr(DeclRefExpr *DRE) { return EmitAggLoadOfLValue(DRE); }
+  //  case Expr::ArraySubscriptExprClass:
+
+  // Operators.
+  //  case Expr::UnaryOperatorClass:
+  //  case Expr::ImplicitCastExprClass:
+  //  case Expr::CastExprClass: 
+  //  case Expr::CallExprClass:
+  void VisitBinaryOperator(const BinaryOperator *BO);
+  void VisitBinaryAssign(const BinaryOperator *E);
+
+  
+  void VisitConditionalOperator(const ConditionalOperator *CO);
+  //  case Expr::ChooseExprClass:
+};
+}  // end anonymous namespace.
+
+
+
 
 /// EmitAggExpr - Emit the computation of the specified expression of
 /// aggregate type.  The result is computed into DestPtr.  Note that if
@@ -62,46 +108,14 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   
-  switch (E->getStmtClass()) {
-  default:
-    fprintf(stderr, "Unimplemented agg expr!\n");
-    E->dump();
-    return;
-    
-    // l-values.
-  case Expr::DeclRefExprClass:
-    return EmitAggLoadOfLValue(E, DestPtr, VolatileDest);
-//  case Expr::ArraySubscriptExprClass:
-//    return EmitArraySubscriptExprRV(cast<ArraySubscriptExpr>(E));
-
-    // Operators.
-  case Expr::ParenExprClass:
-    return EmitAggExpr(cast<ParenExpr>(E)->getSubExpr(), DestPtr, VolatileDest);
-//  case Expr::UnaryOperatorClass:
-//    return EmitUnaryOperator(cast<UnaryOperator>(E));
-//  case Expr::ImplicitCastExprClass:
-//    return EmitCastExpr(cast<ImplicitCastExpr>(E)->getSubExpr(),E->getType());
-//  case Expr::CastExprClass: 
-//    return EmitCastExpr(cast<CastExpr>(E)->getSubExpr(), E->getType());
-//  case Expr::CallExprClass:
-//    return EmitCallExpr(cast<CallExpr>(E));
-  case Expr::BinaryOperatorClass:
-    return EmitAggBinaryOperator(cast<BinaryOperator>(E), DestPtr,VolatileDest);
-    
-  case Expr::ConditionalOperatorClass:
-    return EmitAggConditionalOperator(cast<ConditionalOperator>(E),
-                                      DestPtr, VolatileDest);
-//  case Expr::ChooseExprClass:
-//    return EmitChooseExpr(cast<ChooseExpr>(E));
-  }
+  AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
 }
 
 /// EmitAggLoadOfLValue - Given an expression with aggregate type that
 /// represents a value lvalue, this method emits the address of the lvalue,
 /// then loads the result into DestPtr.
-void CodeGenFunction::EmitAggLoadOfLValue(const Expr *E, llvm::Value *DestPtr,
-                                          bool VolatileDest) {
-  LValue LV = EmitLValue(E);
+void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
+  LValue LV = CGF.EmitLValue(E);
   assert(LV.isSimple() && "Can't have aggregate bitfield, vector, etc");
   llvm::Value *SrcPtr = LV.getAddress();
   
@@ -110,12 +124,10 @@ void CodeGenFunction::EmitAggLoadOfLValue(const Expr *E, llvm::Value *DestPtr,
     // FIXME: If the source is volatile, we must read from it.
     return;
 
-  EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
+  CGF.EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
 }
 
-void CodeGenFunction::EmitAggBinaryOperator(const BinaryOperator *E,
-                                            llvm::Value *DestPtr,
-                                            bool VolatileDest) {
+void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
   switch (E->getOpcode()) {
   default:
     fprintf(stderr, "Unimplemented aggregate binary expr!\n");
@@ -172,8 +184,7 @@ void CodeGenFunction::EmitAggBinaryOperator(const BinaryOperator *E,
     RHS = EmitExpr(E->getRHS());
     return EmitOr(LHS, RHS, E->getType());
 #endif
-  case BinaryOperator::Assign:
-    return EmitAggBinaryAssign(E, DestPtr, VolatileDest);
+  case BinaryOperator::Assign: return VisitBinaryAssign(E);
 
 #if 0
   case BinaryOperator::MulAssign: {
@@ -251,15 +262,13 @@ void CodeGenFunction::EmitAggBinaryOperator(const BinaryOperator *E,
   }
 }
 
-void CodeGenFunction::EmitAggBinaryAssign(const BinaryOperator *E, 
-                                          llvm::Value *DestPtr,
-                                          bool VolatileDest) {
+void AggExprEmitter::VisitBinaryAssign(const BinaryOperator *E) {
   assert(E->getLHS()->getType().getCanonicalType() ==
          E->getRHS()->getType().getCanonicalType() && "Invalid assignment");
-  LValue LHS = EmitLValue(E->getLHS());
+  LValue LHS = CGF.EmitLValue(E->getLHS());
 
   // Codegen the RHS so that it stores directly into the LHS.
-  EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);
+  CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), false /*FIXME: VOLATILE LHS*/);
 
   // If the result of the assignment is used, copy the RHS there also.
   if (DestPtr) {
@@ -268,30 +277,28 @@ void CodeGenFunction::EmitAggBinaryAssign(const BinaryOperator *E,
 }
 
 
-void CodeGenFunction::EmitAggConditionalOperator(const ConditionalOperator *E,
-                                                 llvm::Value *DestPtr,
-                                                 bool VolatileDest) {
+void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *LHSBlock = new llvm::BasicBlock("cond.?");
   llvm::BasicBlock *RHSBlock = new llvm::BasicBlock("cond.:");
   llvm::BasicBlock *ContBlock = new llvm::BasicBlock("cond.cont");
   
-  llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
-  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+  llvm::Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
+  CGF.Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
   
-  EmitBlock(LHSBlock);
+  CGF.EmitBlock(LHSBlock);
   
   // Handle the GNU extension for missing LHS.
   assert(E->getLHS() && "Must have LHS for aggregate value");
 
-  EmitAggExpr(E->getLHS(), DestPtr, VolatileDest);
-  Builder.CreateBr(ContBlock);
-  LHSBlock = Builder.GetInsertBlock();
+  CGF.EmitAggExpr(E->getLHS(), DestPtr, VolatileDest);
+  CGF.Builder.CreateBr(ContBlock);
+  LHSBlock =CGF. Builder.GetInsertBlock();
   
-  EmitBlock(RHSBlock);
+  CGF.EmitBlock(RHSBlock);
   
-  EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
-  Builder.CreateBr(ContBlock);
-  RHSBlock = Builder.GetInsertBlock();
+  CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
+  CGF.Builder.CreateBr(ContBlock);
+  RHSBlock = CGF.Builder.GetInsertBlock();
   
-  EmitBlock(ContBlock);
+  CGF.EmitBlock(ContBlock);
 }

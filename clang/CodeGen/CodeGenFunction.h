@@ -181,7 +181,9 @@ public:
 class CodeGenFunction {
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
+public:
   llvm::LLVMBuilder Builder;
+private:
   
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
@@ -410,24 +412,6 @@ public:
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest);
-  
-  /// EmitAggLoadOfLValue - Given an expression with aggregate type that
-  /// represents a value lvalue, this method emits the address of the lvalue,
-  /// then loads the result into DestPtr.
-  void EmitAggLoadOfLValue(const Expr *E, llvm::Value *DestPtr, bool VolDest);
-  
-  
-  
-  // Binary Operators.
-  void EmitAggBinaryOperator(const BinaryOperator *E,
-                             llvm::Value *DestPtr, bool VolatileDest);
-
-  
-  void EmitAggBinaryAssign(const BinaryOperator *E, llvm::Value *DestPtr,
-                           bool VolatileDest);
-
-  void EmitAggConditionalOperator(const ConditionalOperator *E,
-                                  llvm::Value *DestPtr, bool VolatileDest);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
