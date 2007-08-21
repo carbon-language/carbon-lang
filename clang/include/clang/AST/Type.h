@@ -37,6 +37,7 @@ namespace clang {
   class VectorType;
   class ArrayType;
   class RecordType;
+  class ComplexType;
   class TagType;
   class FunctionType;
   class OCUVectorType;
@@ -269,6 +270,7 @@ public:
   const RecordType *getAsStructureType() const;   
   const RecordType *getAsUnionType() const;
   const VectorType *getAsVectorType() const; // GCC vector type.
+  const ComplexType *getAsComplexType() const;
   const OCUVectorType *getAsOCUVectorType() const; // OCU vector type.
   
   /// More type predicates useful for type checking/promotion

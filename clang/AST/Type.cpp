@@ -71,6 +71,10 @@ bool Type::isUnionType() const {
   return false;
 }
 
+bool Type::isComplexType() const {
+  return isa<ComplexType>(CanonicalType);
+}
+
 const FunctionType *Type::getAsFunctionType() const {
   // If this is directly a function type, return it.
   if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
@@ -161,8 +165,17 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
-bool Type::isComplexType() const {
-  return isa<ComplexType>(CanonicalType);
+const ComplexType *Type::getAsComplexType() const {
+  // Are we directly a complex type?
+  if (const ComplexType *CTy = dyn_cast<ComplexType>(this))
+    return CTy;
+  
+  // If this is a typedef for a complex type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<ComplexType>(CanonicalType))
+    return cast<ComplexType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  
+  return 0;
 }
 
 const VectorType *Type::getAsVectorType() const {
