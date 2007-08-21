@@ -74,7 +74,10 @@ public:
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
 
   // Operators.
-  //  case Expr::UnaryOperatorClass:
+  ComplexPairTy VisitUnaryPlus     (const UnaryOperator *E) {
+    return Visit(E->getSubExpr());
+  }
+  ComplexPairTy VisitUnaryMinus    (const UnaryOperator *E);
   //  case Expr::ImplicitCastExprClass:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
@@ -142,6 +145,14 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
   llvm::Value *U = llvm::UndefValue::get(EltTy);
   return ComplexPairTy(U, U);
 }
+
+ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
+  ComplexPairTy Op = Visit(E->getSubExpr());
+  llvm::Value *ResR = Builder.CreateNeg(Op.first,  "neg.r");
+  llvm::Value *ResI = Builder.CreateNeg(Op.second, "neg.i");
+  return ComplexPairTy(ResR, ResI);
+}
+
 
 ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
   ComplexPairTy LHS = Visit(E->getLHS());
