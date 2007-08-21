@@ -1105,54 +1105,23 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
 
 RValue CodeGenFunction::EmitMul(RValue LHS, RValue RHS, QualType ResTy) {
   return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
-  
-#if 0
-  // Otherwise, this must be a complex number.
-  llvm::Value *LHSR, *LHSI, *RHSR, *RHSI;
-
-  EmitLoadOfComplex(LHS, LHSR, LHSI);
-  EmitLoadOfComplex(RHS, RHSR, RHSI);
-  
-  llvm::Value *ResRl = Builder.CreateMul(LHSR, RHSR, "mul.rl");
-  llvm::Value *ResRr = Builder.CreateMul(LHSI, RHSI, "mul.rr");
-  llvm::Value *ResR = Builder.CreateSub(ResRl, ResRr, "mul.r");
-
-  llvm::Value *ResIl = Builder.CreateMul(LHSI, RHSR, "mul.il");
-  llvm::Value *ResIr = Builder.CreateMul(LHSR, RHSI, "mul.ir");
-  llvm::Value *ResI = Builder.CreateAdd(ResIl, ResIr, "mul.i");
-  
-  llvm::Value *Res = CreateTempAlloca(ConvertType(ResTy));
-  EmitStoreOfComplex(ResR, ResI, Res);
-  return RValue::getAggregate(Res);
-#endif
 }
 
 RValue CodeGenFunction::EmitDiv(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar()) {
-    llvm::Value *RV;
-    if (LHS.getVal()->getType()->isFloatingPoint())
-      RV = Builder.CreateFDiv(LHS.getVal(), RHS.getVal(), "div");
-    else if (ResTy->isUnsignedIntegerType())
-      RV = Builder.CreateUDiv(LHS.getVal(), RHS.getVal(), "div");
-    else
-      RV = Builder.CreateSDiv(LHS.getVal(), RHS.getVal(), "div");
-    return RValue::get(RV);
-  }
-  assert(0 && "FIXME: This doesn't handle complex operands yet");
+  if (LHS.getVal()->getType()->isFloatingPoint())
+    return RValue::get(Builder.CreateFDiv(LHS.getVal(), RHS.getVal(), "div"));
+  else if (ResTy->isUnsignedIntegerType())
+    return RValue::get(Builder.CreateUDiv(LHS.getVal(), RHS.getVal(), "div"));
+  else
+    return RValue::get(Builder.CreateSDiv(LHS.getVal(), RHS.getVal(), "div"));
 }
 
 RValue CodeGenFunction::EmitRem(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar()) {
-    llvm::Value *RV;
-    // Rem in C can't be a floating point type: C99 6.5.5p2.
-    if (ResTy->isUnsignedIntegerType())
-      RV = Builder.CreateURem(LHS.getVal(), RHS.getVal(), "rem");
-    else
-      RV = Builder.CreateSRem(LHS.getVal(), RHS.getVal(), "rem");
-    return RValue::get(RV);
-  }
-  
-  assert(0 && "FIXME: This doesn't handle complex operands yet");
+  // Rem in C can't be a floating point type: C99 6.5.5p2.
+  if (ResTy->isUnsignedIntegerType())
+    return RValue::get(Builder.CreateURem(LHS.getVal(), RHS.getVal(), "rem"));
+  else
+    return RValue::get(Builder.CreateSRem(LHS.getVal(), RHS.getVal(), "rem"));
 }
 
 RValue CodeGenFunction::EmitAdd(RValue LHS, RValue RHS, QualType ResTy) {
@@ -1174,10 +1143,7 @@ RValue CodeGenFunction::EmitPointerAdd(RValue LHS, QualType LHSTy,
 }
 
 RValue CodeGenFunction::EmitSub(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.isScalar())
-    return RValue::get(Builder.CreateSub(LHS.getVal(), RHS.getVal(), "sub"));
-  
-  assert(0 && "FIXME: This doesn't handle complex operands yet");
+  return RValue::get(Builder.CreateSub(LHS.getVal(), RHS.getVal(), "sub"));
 }
 
 RValue CodeGenFunction::EmitPointerSub(RValue LHS, QualType LHSTy,

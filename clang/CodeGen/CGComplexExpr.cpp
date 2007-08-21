@@ -68,6 +68,7 @@ public:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
   ComplexPairTy VisitBinaryOperator(const BinaryOperator *BO);
+  ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
   ComplexPairTy VisitBinAssign     (const BinaryOperator *E);
 
@@ -231,12 +232,26 @@ ComplexPairTy ComplexExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
-  // This must be a complex number.
   ComplexPairTy LHS = Visit(E->getLHS());
   ComplexPairTy RHS = Visit(E->getRHS());
   
   llvm::Value *ResR = CGF.Builder.CreateAdd(LHS.first,  RHS.first,  "add.r");
   llvm::Value *ResI = CGF.Builder.CreateAdd(LHS.second, RHS.second, "add.i");
+
+  return ComplexPairTy(ResR, ResI);
+}
+
+ComplexPairTy ComplexExprEmitter::VisitBinMul(const BinaryOperator *E) {
+  ComplexPairTy LHS = Visit(E->getLHS());
+  ComplexPairTy RHS = Visit(E->getRHS());
+  
+  llvm::Value *ResRl = CGF.Builder.CreateMul(LHS.first, RHS.first, "mul.rl");
+  llvm::Value *ResRr = CGF.Builder.CreateMul(LHS.second, RHS.second, "mul.rr");
+  llvm::Value *ResR  = CGF.Builder.CreateSub(ResRl, ResRr, "mul.r");
+  
+  llvm::Value *ResIl = CGF.Builder.CreateMul(LHS.second, RHS.first, "mul.il");
+  llvm::Value *ResIr = CGF.Builder.CreateMul(LHS.first, RHS.second, "mul.ir");
+  llvm::Value *ResI  = CGF.Builder.CreateAdd(ResIl, ResIr, "mul.i");
 
   return ComplexPairTy(ResR, ResI);
 }
