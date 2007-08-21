@@ -1927,13 +1927,20 @@ const char *ConstantExpr::getOpcodeName() const {
 //===----------------------------------------------------------------------===//
 //                replaceUsesOfWithOnConstant implementations
 
+/// replaceUsesOfWithOnConstant - Update this constant array to change uses of
+/// 'From' to be uses of 'To'.  This must update the uniquing data structures
+/// etc.
+///
+/// Note that we intentionally replace all uses of From with To here.  Consider
+/// a large array that uses 'From' 1000 times.  By handling this case all here,
+/// ConstantArray::replaceUsesOfWithOnConstant is only invoked once, and that
+/// single invocation handles all 1000 uses.  Handling them one at a time would
+/// work, but would be really slow because it would have to unique each updated
+/// array instance.
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
-
-  unsigned OperandToUpdate = U-OperandList;
-  assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
   std::pair<ArrayConstantsTy::MapKey, Constant*> Lookup;
   Lookup.first.first = getType();
@@ -1945,18 +1952,28 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   // Fill values with the modified operands of the constant array.  Also, 
   // compute whether this turns into an all-zeros array.
   bool isAllZeros = false;
+  unsigned NumUpdated = 0;
   if (!ToC->isNullValue()) {
-    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O)
-      Values.push_back(cast<Constant>(O->get()));
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      if (Val == From) {
+        Val = ToC;
+        ++NumUpdated;
+      }
+      Values.push_back(Val);
+    }
   } else {
     isAllZeros = true;
     for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
       Constant *Val = cast<Constant>(O->get());
+      if (Val == From) {
+        Val = ToC;
+        ++NumUpdated;
+      }
       Values.push_back(Val);
       if (isAllZeros) isAllZeros = Val->isNullValue();
     }
   }
-  Values[OperandToUpdate] = ToC;
   
   Constant *Replacement = 0;
   if (isAllZeros) {
@@ -1976,8 +1993,18 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // in place!
       ArrayConstants->MoveConstantToNewSlot(this, I);
       
-      // Update to the new value.
-      setOperand(OperandToUpdate, ToC);
+      // Update to the new value.  Optimize for the case when we have a single
+      // operand that we're changing, but handle bulk updates efficiently.
+      if (NumUpdated == 1) {
+        unsigned OperandToUpdate = U-OperandList;
+        assert(getOperand(OperandToUpdate) == From &&
+               "ReplaceAllUsesWith broken!");
+        setOperand(OperandToUpdate, ToC);
+      } else {
+        for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+          if (getOperand(i) == From)
+            setOperand(i, ToC);
+      }
       return;
     }
   }
