@@ -248,16 +248,6 @@ public:
   llvm::Value *EvaluateExprAsBool(const Expr *E);
 
   
-  /// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
-  /// load the real and imaginary pieces, returning them as Real/Imag.
-  void EmitLoadOfComplex(llvm::Value *SrcPtr, llvm::Value *&Real,
-                         llvm::Value *&Imag);
-  
-  /// EmitStoreOfComplex - Store the specified real/imag parts into the
-  /// specified value pointer.
-  void EmitStoreOfComplex(llvm::Value *Real, llvm::Value *Imag,
-                          llvm::Value *ResPtr);
-
   //===--------------------------------------------------------------------===//
   //                                Conversions
   //===--------------------------------------------------------------------===//

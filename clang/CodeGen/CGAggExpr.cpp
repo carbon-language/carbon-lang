@@ -160,14 +160,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
 // FIXME: Handle volatility!
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty) {
-  // Don't use memcpy for complex numbers.
-  // FIXME: split complex number handling out of here.
-  if (Ty->isComplexType()) {
-    llvm::Value *Real, *Imag;
-    EmitLoadOfComplex(SrcPtr, Real, Imag);
-    EmitStoreOfComplex(Real, Imag, DestPtr);
-    return;
-  }
+  assert(!Ty->isComplexType() && "Shouldn't happen for complex");
   
   // Aggregate assignment turns into llvm.memcpy.
   const llvm::Type *BP = llvm::PointerType::get(llvm::Type::Int8Ty);

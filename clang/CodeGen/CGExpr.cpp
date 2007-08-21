@@ -40,36 +40,6 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   return ConvertScalarValueToBool(EmitExpr(E), E->getType());
 }
 
-/// EmitLoadOfComplex - Given an RValue reference for a complex, emit code to
-/// load the real and imaginary pieces, returning them as Real/Imag.
-void CodeGenFunction::EmitLoadOfComplex(llvm::Value *SrcPtr,
-                                        llvm::Value *&Real, llvm::Value *&Imag){
-  llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-  llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-  // FIXME: It would be nice to make this "Ptr->getName()+realp"
-  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, "realp");
-  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, "imagp");
-  
-  // FIXME: Handle volatility.
-  // FIXME: It would be nice to make this "Ptr->getName()+real"
-  Real = Builder.CreateLoad(RealPtr, "real");
-  Imag = Builder.CreateLoad(ImagPtr, "imag");
-}
-
-/// EmitStoreOfComplex - Store the specified real/imag parts into the
-/// specified value pointer.
-void CodeGenFunction::EmitStoreOfComplex(llvm::Value *Real, llvm::Value *Imag,
-                                         llvm::Value *ResPtr) {
-  llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-  llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-  llvm::Value *RealPtr = Builder.CreateGEP(ResPtr, Zero, Zero, "real");
-  llvm::Value *ImagPtr = Builder.CreateGEP(ResPtr, Zero, One, "imag");
-  
-  // FIXME: Handle volatility.
-  Builder.CreateStore(Real, RealPtr);
-  Builder.CreateStore(Imag, ImagPtr);
-}
-
 //===--------------------------------------------------------------------===//
 //                               Conversions
 //===--------------------------------------------------------------------===//
