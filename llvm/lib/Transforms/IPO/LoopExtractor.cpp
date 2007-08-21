@@ -104,7 +104,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
     else {
       // Check to see if any exits from the loop are more than just return
       // blocks.
-      std::vector<BasicBlock*> ExitBlocks;
+      SmallVector<BasicBlock*, 8> ExitBlocks;
       TLL->getExitBlocks(ExitBlocks);
       for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
         if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator())) {

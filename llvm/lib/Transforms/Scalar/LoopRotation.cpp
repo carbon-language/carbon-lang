@@ -157,7 +157,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // Keep it simple, and restrict loop rotation to loops with one exit only.
   // In future, lift this restriction and support for multiple exits if
   // required.
-  std::vector<BasicBlock *> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() > 1)
     return false;

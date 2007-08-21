@@ -446,7 +446,7 @@ bool LICM::isLoopInvariantInst(Instruction &I) {
 void LICM::sink(Instruction &I) {
   DOUT << "LICM sinking instruction: " << I;
 
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
 
   if (isa<LoadInst>(I)) ++NumMovedLoads;
@@ -623,7 +623,7 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
       return true;
 
   // Get the exit blocks for the current loop.
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
 
   // For each exit block, get the DT node and walk up the DT until the
@@ -725,7 +725,7 @@ void LICM::PromoteValuesInLoop() {
   //
   std::set<BasicBlock*> ProcessedBlocks;
 
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     if (ProcessedBlocks.insert(ExitBlocks[i]).second) {

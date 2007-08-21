@@ -59,7 +59,7 @@ namespace {
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     void ProcessInstruction(Instruction* Instr,
-                            const std::vector<BasicBlock*>& exitBlocks);
+                            const SmallVector<BasicBlock*, 8>& exitBlocks);
     
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG.  It maintains both of these,
@@ -107,7 +107,6 @@ bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
   
   LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
-  DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
 
   // Speed up queries by creating a sorted list of blocks
   LoopBlocks.clear();
@@ -122,9 +121,8 @@ bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (AffectedValues.empty())
     return false;
   
-  std::vector<BasicBlock*> exitBlocks;
-  L->getExitBlocks(exitBlocks);
-  
+  SmallVector<BasicBlock*, 8> exitBlocks;
+  L->getExitBlocks(exitBlocks);  
   
   // Iterate over all affected values for this loop and insert Phi nodes
   // for them in the appropriate exit blocks
@@ -141,7 +139,7 @@ bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {
 /// processInstruction - Given a live-out instruction, insert LCSSA Phi nodes,
 /// eliminate all out-of-loop uses.
 void LCSSA::ProcessInstruction(Instruction *Instr,
-                               const std::vector<BasicBlock*>& exitBlocks) {
+                               const SmallVector<BasicBlock*, 8>& exitBlocks) {
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
@@ -151,7 +149,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
 
   // Insert the LCSSA phi's into the exit blocks (dominated by the value), and
   // add them to the Phi's map.
-  for (std::vector<BasicBlock*>::const_iterator BBI = exitBlocks.begin(),
+  for (SmallVector<BasicBlock*, 8>::const_iterator BBI = exitBlocks.begin(),
       BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     DomTreeNode *ExitBBNode = DT->getNode(BB);

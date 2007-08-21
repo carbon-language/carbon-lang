@@ -224,7 +224,7 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
                                                        SCEVExpander &RW) {
   // Find the exit block for the loop.  We can currently only handle loops with
   // a single exit.
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1) return 0;
   BasicBlock *ExitBlock = ExitBlocks[0];
@@ -309,7 +309,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   // We insert the code into the preheader of the loop if the loop contains
   // multiple exit blocks, or in the exit block if there is exactly one.
   BasicBlock *BlockToInsertInto;
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
   if (ExitBlocks.size() == 1)
     BlockToInsertInto = ExitBlocks[0];

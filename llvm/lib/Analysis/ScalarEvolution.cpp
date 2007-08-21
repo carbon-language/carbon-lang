@@ -1569,7 +1569,7 @@ SCEVHandle ScalarEvolutionsImpl::getIterationCount(const Loop *L) {
 /// will iterate.
 SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   // If the loop has a non-one exit block count, we can't analyze it.
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1) return UnknownValue;
 
@@ -2620,7 +2620,7 @@ static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
 
   cerr << "Loop " << L->getHeader()->getName() << ": ";
 
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1)
     cerr << "<multiple exits> ";

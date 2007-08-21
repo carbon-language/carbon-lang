@@ -622,7 +622,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // We want the loop to come after the preheader, but before the exit blocks.
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
 
-  std::vector<BasicBlock*> ExitBlocks;
+  SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
 
   // Split all of the edges from inside the loop to their exit blocks.  Update
