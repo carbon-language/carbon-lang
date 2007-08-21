@@ -78,6 +78,12 @@ public:
     return Visit(E->getSubExpr());
   }
   ComplexPairTy VisitUnaryMinus    (const UnaryOperator *E);
+  ComplexPairTy VisitUnaryNot      (const UnaryOperator *E);
+  // LNot,SizeOf,AlignOf,Real,Imag never return complex.
+  ComplexPairTy VisitUnaryExtension(const UnaryOperator *E) {
+    return Visit(E->getSubExpr());
+  }
+  
   //  case Expr::ImplicitCastExprClass:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
@@ -153,6 +159,12 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
   return ComplexPairTy(ResR, ResI);
 }
 
+ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
+  // ~(a+ib) = a + i*-b
+  ComplexPairTy Op = Visit(E->getSubExpr());
+  llvm::Value *ResI = Builder.CreateNeg(Op.second, "conj.i");
+  return ComplexPairTy(Op.first, ResI);
+}
 
 ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
   ComplexPairTy LHS = Visit(E->getLHS());
