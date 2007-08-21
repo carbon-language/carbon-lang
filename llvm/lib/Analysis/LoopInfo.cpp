@@ -350,7 +350,7 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
 /// outside of the loop.  These are the blocks _inside of the current loop_
 /// which branch out.  The returned list is always unique.
 ///
-void Loop::getExitingBlocks(SmallVector<BasicBlock*, 8> &ExitingBlocks) const {
+void Loop::getExitingBlocks(SmallVectorImpl<BasicBlock*> &ExitingBlocks) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
   std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
@@ -369,7 +369,7 @@ void Loop::getExitingBlocks(SmallVector<BasicBlock*, 8> &ExitingBlocks) const {
 /// getExitBlocks - Return all of the successor blocks of this loop.  These
 /// are the blocks _outside of the current loop_ which are branched to.
 ///
-void Loop::getExitBlocks(SmallVector<BasicBlock*, 8> &ExitBlocks) const {
+void Loop::getExitBlocks(SmallVectorImpl<BasicBlock*> &ExitBlocks) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
   std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
@@ -387,7 +387,7 @@ void Loop::getExitBlocks(SmallVector<BasicBlock*, 8> &ExitBlocks) const {
 /// are the blocks _outside of the current loop_ which are branched to. This
 /// assumes that loop is in canonical form.
 //
-void Loop::getUniqueExitBlocks(SmallVector<BasicBlock*, 8> &ExitBlocks) const {
+void Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock*> &ExitBlocks) const {
   // Sort the blocks vector so that we can use binary search to do quick
   // lookups.
   std::vector<BasicBlock*> LoopBBs(block_begin(), block_end());
