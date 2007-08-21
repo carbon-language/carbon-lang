@@ -72,7 +72,13 @@ public:
   // l-values.
   ComplexPairTy VisitDeclRefExpr(Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitMemberExpr(Expr *E) { return EmitLoadOfLValue(E); }
 
+  // FIXME: Call
+  // FIXME: CompoundLiteralExpr
+  // FIXME: ImplicitCastExpr
+  // FIXME: CastExpr
+  
   // Operators.
   ComplexPairTy VisitPrePostIncDec(const UnaryOperator *E,
                                    bool isInc, bool isPre);
@@ -99,9 +105,6 @@ public:
     return Visit(E->getSubExpr());
   }
   
-  //  case Expr::ImplicitCastExprClass:
-  //  case Expr::CastExprClass: 
-  //  case Expr::CallExprClass:
   ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
   // FIXME: div/rem
@@ -110,7 +113,7 @@ public:
 
   // No comparisons produce a complex result.
   ComplexPairTy VisitBinAssign     (const BinaryOperator *E);
-
+  // FIXME: Compound assignment operators.
   ComplexPairTy VisitBinComma      (const BinaryOperator *E);
 
   
