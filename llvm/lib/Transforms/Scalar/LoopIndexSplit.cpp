@@ -835,7 +835,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   assert (!L->contains(ExitDest) && " Unable to find exit edge destination");
 
   //[*] Split Exit Edge. 
-  SplitEdge(ExitingBlock, FalseHeader, this);
+  BasicBlock *TL_ExitBlock = SplitEdge(ExitingBlock, FalseHeader, this);
 
   //[*] Eliminate split condition's false branch from True loop.
   BranchInst *BR = cast<BranchInst>(SplitBlock->getTerminator());
@@ -852,6 +852,20 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   BasicBlock *TBB = FBR->getSuccessor(0);
   FBR->setUnconditionalDest(FBR->getSuccessor(1));
   removeBlocks(TBB, FalseLoop, cast<BasicBlock>(FBR->getSuccessor(0)));
+
+  //[*] Preserve LCSSA
+  for(BasicBlock::iterator BI = FalseHeader->begin(), BE = FalseHeader->end();
+      BI != BE; ++BI) {
+    if (PHINode *PN = dyn_cast<PHINode>(BI)) {
+      Value *V1 = PN->getIncomingValueForBlock(TL_ExitBlock);
+      PHINode *newPHI = new PHINode(PN->getType(), PN->getName());
+      newPHI->addIncoming(V1, ExitingBlock);
+      TL_ExitBlock->getInstList().push_front(newPHI);
+      PN->removeIncomingValue(TL_ExitBlock);
+      PN->addIncoming(newPHI, TL_ExitBlock);
+    } else
+      break;
+  }
 
   return true;
 }
