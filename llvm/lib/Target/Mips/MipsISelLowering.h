@@ -40,6 +40,7 @@ namespace llvm {
       // Return 
       Ret,
 
+      // Need to support addition with a input flag
       Add
     };
   }
@@ -79,6 +80,16 @@ namespace llvm {
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
 
+    // Inline asm support
+    ConstraintType getConstraintType(const std::string &Constraint) const;
+
+    std::pair<unsigned, const TargetRegisterClass*> 
+              getRegForInlineAsmConstraint(const std::string &Constraint,
+              MVT::ValueType VT) const;
+
+    std::vector<unsigned>
+    getRegClassForInlineAsmConstraint(const std::string &Constraint,
+              MVT::ValueType VT) const;
   };
 }
 

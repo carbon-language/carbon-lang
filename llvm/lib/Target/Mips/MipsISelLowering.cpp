@@ -20,6 +20,7 @@
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
+#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -550,4 +551,73 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
   else // Return Void
     return DAG.getNode(MipsISD::Ret, MVT::Other, 
                            Chain, DAG.getRegister(Mips::RA, MVT::i32));
+}
+
+//===----------------------------------------------------------------------===//
+//                           Mips Inline Assembly Support
+//===----------------------------------------------------------------------===//
+
+/// getConstraintType - Given a constraint letter, return the type of
+/// constraint it is for this target.
+MipsTargetLowering::ConstraintType MipsTargetLowering::
+getConstraintType(const std::string &Constraint) const 
+{
+  if (Constraint.size() == 1) {
+    // Mips specific constrainy 
+    // GCC config/mips/constraints.md
+    //
+    // 'd' : An address register. Equivalent to r 
+    //       unless generating MIPS16 code. 
+    // 'y' : Equivalent to r; retained for 
+    //       backwards compatibility. 
+    //
+    switch (Constraint[0]) {
+      default : break;
+      case 'd':     
+      case 'y': 
+        return C_RegisterClass;
+        break;
+    }
+  }
+  return TargetLowering::getConstraintType(Constraint);
+}
+
+std::pair<unsigned, const TargetRegisterClass*> MipsTargetLowering::
+getRegForInlineAsmConstraint(const std::string &Constraint,
+                             MVT::ValueType VT) const 
+{
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    case 'r':
+      return std::make_pair(0U, Mips::CPURegsRegisterClass);
+      break;
+    }
+  }
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+}
+
+std::vector<unsigned> MipsTargetLowering::
+getRegClassForInlineAsmConstraint(const std::string &Constraint,
+                                  MVT::ValueType VT) const 
+{
+  if (Constraint.size() != 1)
+    return std::vector<unsigned>();
+
+  switch (Constraint[0]) {         
+    default : break;
+    case 'r':
+    // GCC Mips Constraint Letters
+    case 'd':     
+    case 'y': 
+      return make_vector<unsigned>(Mips::V0, Mips::V1, Mips::A0, 
+                                   Mips::A1, Mips::A2, Mips::A3, 
+                                   Mips::T0, Mips::T1, Mips::T2, 
+                                   Mips::T3, Mips::T4, Mips::T5, 
+                                   Mips::T6, Mips::T7, Mips::S0, 
+                                   Mips::S1, Mips::S2, Mips::S3, 
+                                   Mips::S4, Mips::S5, Mips::S6, 
+                                   Mips::S7, Mips::T8, Mips::T9, 0);
+      break;
+  }
+  return std::vector<unsigned>();
 }
