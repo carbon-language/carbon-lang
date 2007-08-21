@@ -289,13 +289,13 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   // Handle the GNU extension for missing LHS.
   assert(E->getLHS() && "Must have LHS for aggregate value");
 
-  CGF.EmitAggExpr(E->getLHS(), DestPtr, VolatileDest);
+  Visit(E->getLHS());
   CGF.Builder.CreateBr(ContBlock);
-  LHSBlock =CGF. Builder.GetInsertBlock();
+  LHSBlock = CGF.Builder.GetInsertBlock();
   
   CGF.EmitBlock(RHSBlock);
   
-  CGF.EmitAggExpr(E->getRHS(), DestPtr, VolatileDest);
+  Visit(E->getRHS());
   CGF.Builder.CreateBr(ContBlock);
   RHSBlock = CGF.Builder.GetInsertBlock();
   
