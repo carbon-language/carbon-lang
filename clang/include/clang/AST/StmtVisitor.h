@@ -67,6 +67,25 @@ public:
       case BinaryOperator::XorAssign: DISPATCH(BinXorAssign, BinaryOperator);
       case BinaryOperator::Comma:     DISPATCH(BinComma,     BinaryOperator);
       }
+    } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(S)) {
+      switch (UnOp->getOpcode()) {
+      default: assert(0 && "Unknown unary operator!");
+      case UnaryOperator::PostInc:      DISPATCH(UnaryPostInc,   UnaryOperator);
+      case UnaryOperator::PostDec:      DISPATCH(UnaryPostDec,   UnaryOperator);
+      case UnaryOperator::PreInc:       DISPATCH(UnaryPreInc,    UnaryOperator);
+      case UnaryOperator::PreDec:       DISPATCH(UnaryPreDec,    UnaryOperator);
+      case UnaryOperator::AddrOf:       DISPATCH(UnaryAddrOf,    UnaryOperator);
+      case UnaryOperator::Deref:        DISPATCH(UnaryDeref,     UnaryOperator);
+      case UnaryOperator::Plus:         DISPATCH(UnaryPlus,      UnaryOperator);
+      case UnaryOperator::Minus:        DISPATCH(UnaryMinus,     UnaryOperator);
+      case UnaryOperator::Not:          DISPATCH(UnaryNot,       UnaryOperator);
+      case UnaryOperator::LNot:         DISPATCH(UnaryLNot,      UnaryOperator);
+      case UnaryOperator::SizeOf:       DISPATCH(UnarySizeOf,    UnaryOperator);
+      case UnaryOperator::AlignOf:      DISPATCH(UnaryAlignOf,   UnaryOperator);
+      case UnaryOperator::Real:         DISPATCH(UnaryReal,      UnaryOperator);
+      case UnaryOperator::Imag:         DISPATCH(UnaryImag,      UnaryOperator);
+      case UnaryOperator::Extension:    DISPATCH(UnaryExtension, UnaryOperator);
+      }          
     }
     
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
@@ -86,60 +105,44 @@ public:
 
   // If the implementation doesn't implement binary operator methods, fall back
   // on VisitBinaryOperator.
-  RetTy VisitBinMul(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinDiv(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinRem(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinAdd(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinSub(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinShl(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinShr(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinLT (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinGT (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinLE (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinGE (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinEQ (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinNE (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinAnd(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinXor(BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinOr (BinaryOperator *S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinLAnd(BinaryOperator*S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinLOr (BinaryOperator*S){DISPATCH(BinaryOperator,BinaryOperator);}
-  RetTy VisitBinAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
+#define BINOP_FALLBACK(NAME) \
+  RetTy VisitBin ## NAME(BinaryOperator *S) { \
+    DISPATCH(BinaryOperator, BinaryOperator); \
   }
-  RetTy VisitBinMulAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
+  BINOP_FALLBACK(Mul)   BINOP_FALLBACK(Div)  BINOP_FALLBACK(Rem)
+  BINOP_FALLBACK(Add)   BINOP_FALLBACK(Sub)  BINOP_FALLBACK(Shl)
+  BINOP_FALLBACK(Shr)
+  
+  BINOP_FALLBACK(LT)    BINOP_FALLBACK(GT)   BINOP_FALLBACK(LE)
+  BINOP_FALLBACK(GE)    BINOP_FALLBACK(EQ)   BINOP_FALLBACK(NE)
+  BINOP_FALLBACK(And)   BINOP_FALLBACK(Xor)  BINOP_FALLBACK(Or)
+  BINOP_FALLBACK(LAnd)  BINOP_FALLBACK(LOr)
+
+  BINOP_FALLBACK(Assign)
+  BINOP_FALLBACK(MulAssign) BINOP_FALLBACK(DivAssign) BINOP_FALLBACK(RemAssign)
+  BINOP_FALLBACK(AddAssign) BINOP_FALLBACK(SubAssign) BINOP_FALLBACK(ShlAssign)
+  BINOP_FALLBACK(ShrAssign) BINOP_FALLBACK(AndAssign) BINOP_FALLBACK(OrAssign)
+  BINOP_FALLBACK(XorAssign)
+  
+  BINOP_FALLBACK(Comma)
+#undef BINOP_FALLBACK
+  
+  // If the implementation doesn't implement unary operator methods, fall back
+  // on VisitUnaryOperator.
+#define UNARYOP_FALLBACK(NAME) \
+  RetTy VisitUnary ## NAME(UnaryOperator *S) { \
+    DISPATCH(UnaryOperator, UnaryOperator);    \
   }
-  RetTy VisitBinDivAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinRemAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinAddAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinSubAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinShlAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinShrAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinAndAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinOrAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinXorAssign(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
-  RetTy VisitBinComma(BinaryOperator *S) {
-    DISPATCH(BinaryOperator,BinaryOperator);
-  }
+  UNARYOP_FALLBACK(PostInc)   UNARYOP_FALLBACK(PostDec)
+  UNARYOP_FALLBACK(PreInc)    UNARYOP_FALLBACK(PreDec)
+  UNARYOP_FALLBACK(AddrOf)    UNARYOP_FALLBACK(Deref)
+  
+  UNARYOP_FALLBACK(Plus)      UNARYOP_FALLBACK(Minus)
+  UNARYOP_FALLBACK(Not)       UNARYOP_FALLBACK(LNot)
+  UNARYOP_FALLBACK(SizeOf)    UNARYOP_FALLBACK(AlignOf)
+  UNARYOP_FALLBACK(Real)      UNARYOP_FALLBACK(Imag)
+  UNARYOP_FALLBACK(Extension)
+#undef UNARYOP_FALLBACK
   
   // Base case, ignore it. :)
   RetTy VisitStmt(Stmt *Node) { return RetTy(); }

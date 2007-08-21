@@ -271,6 +271,7 @@ public:
 /// extensions.
 class UnaryOperator : public Expr {
 public:
+  // Note that additions to this should also update the StmtVisitor class.
   enum Opcode {
     PostInc, PostDec, // [C99 6.5.2.4] Postfix increment and decrement operators
     PreInc, PreDec,   // [C99 6.5.3.1] Prefix increment and decrement operators.
