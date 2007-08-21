@@ -281,7 +281,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   
   Diag(Tok, diag::err_parse_error);
   // Skip to end of block or statement
-  SkipUntil(tok::r_brace, true);
+  SkipUntil(tok::r_brace, true, true);
   if (Tok.getKind() == tok::semi)
     ConsumeToken();
   return 0;
