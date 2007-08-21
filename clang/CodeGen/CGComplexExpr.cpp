@@ -74,6 +74,21 @@ public:
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
 
   // Operators.
+  ComplexPairTy VisitPrePostIncDec(const UnaryOperator *E,
+                                   bool isInc, bool isPre);
+  ComplexPairTy VisitUnaryPostDec(const UnaryOperator *E) {
+    return VisitPrePostIncDec(E, false, false);
+  }
+  ComplexPairTy VisitUnaryPostInc(const UnaryOperator *E) {
+    return VisitPrePostIncDec(E, true, false);
+  }
+  ComplexPairTy VisitUnaryPreDec(const UnaryOperator *E) {
+    return VisitPrePostIncDec(E, false, true);
+  }
+  ComplexPairTy VisitUnaryPreInc(const UnaryOperator *E) {
+    return VisitPrePostIncDec(E, true, true);
+  }
+  ComplexPairTy VisitUnaryDeref(const Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitUnaryPlus     (const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
@@ -150,6 +165,33 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
     CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
   llvm::Value *U = llvm::UndefValue::get(EltTy);
   return ComplexPairTy(U, U);
+}
+
+ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
+                                                     bool isInc, bool isPre) {
+  LValue LV = CGF.EmitLValue(E->getSubExpr());
+  // FIXME: Handle volatile!
+  ComplexPairTy InVal = EmitLoadOfComplex(LV.getAddress(), false);
+  
+  int AmountVal = isInc ? 1 : -1;
+  
+  llvm::Value *NextVal;
+  if (isa<llvm::IntegerType>(InVal.first->getType()))
+    NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal);
+  else
+    NextVal = llvm::ConstantFP::get(InVal.first->getType(), AmountVal);
+  
+  // Add the inc/dec to the real part.
+  NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
+  
+  ComplexPairTy IncVal(NextVal, InVal.second);
+  
+  // Store the updated result through the lvalue.
+  EmitStoreOfComplex(IncVal, LV.getAddress(), false);  /* FIXME: Volatile */
+  
+  // If this is a postinc, return the value read from memory, otherwise use the
+  // updated value.
+  return isPre ? IncVal : InVal;
 }
 
 ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {
