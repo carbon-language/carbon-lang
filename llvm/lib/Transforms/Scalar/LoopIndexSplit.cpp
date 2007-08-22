@@ -641,7 +641,6 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
           PredBlocks.push_back(P);
       }
 
-      BasicBlock *NewDominator = NULL;
       for(BasicBlock::iterator FBI = FrontierBB->begin(), FBE = FrontierBB->end();
           FBI != FBE; ++FBI) {
         if (PHINode *PN = dyn_cast<PHINode>(FBI)) {
@@ -650,10 +649,6 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
             BasicBlock *P = *PI;
             PN->removeIncomingValue(P);
           }
-          // If we have not identified new dominator then see if we can identify
-          // one based on remaining incoming PHINode values.
-          if (NewDominator == NULL && PN->getNumIncomingValues() == 1)
-            NewDominator = PN->getIncomingBlock(0);
         }
         else
           break;
