@@ -757,60 +757,73 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   if (!safeSplitCondition(SD))
     return false;
 
-  // True loop is original loop. False loop is cloned loop.
-  BasicBlock *TL_SplitCondBlock = SD.SplitCondition->getParent();
-  BasicBlock *TL_Preheader = L->getLoopPreheader();
+  // After loop is cloned there are two loops.
+  //
+  // First loop, referred as ALoop, executes first part of loop's iteration
+  // space split.  Second loop, referred as BLoop, executes remaining
+  // part of loop's iteration space. 
+  //
+  // ALoop's exit edge enters BLoop's header through a forwarding block which 
+  // acts as a BLoop's preheader.
 
-  bool SignedPredicate = ExitCondition->isSignedPredicate();  
-  //[*] Calculate True loop's new Exit Value in loop preheader.
-  //      TL_ExitValue = min(SplitValue, ExitValue)
-  //[*] Calculate False loop's new Start Value in loop preheader.
-  //      FL_StartValue = max(SplitValue, TrueLoop.StartValue)
-  Value *TL_ExitValue = NULL;
-  Value *FL_StartValue = NULL;
+  //[*] Calculate ALoop induction variable's new exiting value and
+  //    BLoop induction variable's new starting value. Calculuate these
+  //    values in original loop's preheader.
+  //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
+  //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
+  Value *A_ExitValue = NULL;
+  Value *B_StartValue = NULL;
   if (isa<ConstantInt>(SD.SplitValue)) {
-    TL_ExitValue = SD.SplitValue;
-    FL_StartValue = SD.SplitValue;
+    A_ExitValue = SD.SplitValue;
+    B_StartValue = SD.SplitValue;
   }
   else {
-    Instruction *TL_PHTerminator = TL_Preheader->getTerminator();
+    BasicBlock *Preheader = L->getLoopPreheader();
+    Instruction *PHTerminator = Preheader->getTerminator();
+    bool SignedPredicate = ExitCondition->isSignedPredicate();  
     Value *C1 = new ICmpInst(SignedPredicate ? 
                             ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                             SD.SplitValue, 
                              ExitCondition->getOperand(ExitValueNum), 
-                             "lsplit.ev", TL_PHTerminator);
-    TL_ExitValue = new SelectInst(C1, SD.SplitValue, 
+                             "lsplit.ev", PHTerminator);
+    A_ExitValue = new SelectInst(C1, SD.SplitValue, 
                                  ExitCondition->getOperand(ExitValueNum), 
-                                 "lsplit.ev", TL_PHTerminator);
+                                 "lsplit.ev", PHTerminator);
 
     Value *C2 = new ICmpInst(SignedPredicate ? 
                              ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                              SD.SplitValue, StartValue, "lsplit.sv",
-                             TL_PHTerminator);
-    FL_StartValue = new SelectInst(C2, StartValue, SD.SplitValue,
-                                   "lsplit.sv", TL_PHTerminator);
+                             PHTerminator);
+    B_StartValue = new SelectInst(C2, StartValue, SD.SplitValue,
+                                   "lsplit.sv", PHTerminator);
   }
 
-  //[*] Clone loop. Avoid true destination of split condition and 
-  //    the blocks dominated by true destination. 
+  //[*] Clone loop.
   DenseMap<const Value *, Value *> ValueMap;
-  Loop *FalseLoop = CloneLoop(L, LPM, LI, ValueMap, this);
-  BasicBlock *FL_Header = FalseLoop->getHeader();
+  Loop *BLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+  BasicBlock *B_Header = BLoop->getHeader();
 
-  //[*] True loop's exit edge enters False loop.
-  PHINode *FL_IndVar = cast<PHINode>(ValueMap[IndVar]);
-  BasicBlock *TL_ExitingBlock = ExitCondition->getParent();
-  BranchInst *TL_ExitInsn =
-    dyn_cast<BranchInst>(TL_ExitingBlock->getTerminator());
-  assert (TL_ExitInsn && "Unable to find suitable loop exit branch");
-  BasicBlock *TL_ExitDest = TL_ExitInsn->getSuccessor(1);
-  
-  if (L->contains(TL_ExitDest)) {
-    TL_ExitDest = TL_ExitInsn->getSuccessor(0);
-    TL_ExitInsn->setSuccessor(0, FL_Header);
+  //[*] ALoop's exiting edge BLoop's header.
+  //    ALoop's original exit block becomes BLoop's exit block.
+  PHINode *B_IndVar = cast<PHINode>(ValueMap[IndVar]);
+  BasicBlock *A_ExitingBlock = ExitCondition->getParent();
+  BranchInst *A_ExitInsn =
+    dyn_cast<BranchInst>(A_ExitingBlock->getTerminator());
+  assert (A_ExitInsn && "Unable to find suitable loop exit branch");
+  BasicBlock *B_ExitBlock = A_ExitInsn->getSuccessor(1);
+  if (L->contains(B_ExitBlock)) {
+    B_ExitBlock = A_ExitInsn->getSuccessor(0);
+    A_ExitInsn->setSuccessor(0, B_Header);
   } else
-    TL_ExitInsn->setSuccessor(1, FL_Header);
+    A_ExitInsn->setSuccessor(1, B_Header);
+
+  //[*] Update ALoop's exit value using new exit value.
+  ExitCondition->setOperand(ExitValueNum, A_ExitValue);
   
+  // [*] Update BLoop's header phi nodes. Remove incoming PHINode's from
+  //     original loop's preheader. Add incoming PHINode values from
+  //     ALoop's exiting block. Update BLoop header's domiantor info.
+
   // Collect inverse map of Header PHINodes.
   DenseMap<Value *, Value *> InverseMap;
   for (BasicBlock::iterator BI = L->getHeader()->begin(), 
@@ -821,76 +834,81 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     } else
       break;
   }
-  
-  // Update False loop's header
-  for (BasicBlock::iterator BI = FL_Header->begin(), BE = FL_Header->end();
+  BasicBlock *Preheader = L->getLoopPreheader();
+  for (BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->removeIncomingValue(TL_Preheader);
-      if (PN == FL_IndVar)
-        PN->addIncoming(FL_StartValue, TL_ExitingBlock);
+      // Remove incoming value from original preheader.
+      PN->removeIncomingValue(Preheader);
+
+      // Add incoming value from A_ExitingBlock.
+      if (PN == B_IndVar)
+        PN->addIncoming(B_StartValue, A_ExitingBlock);
       else { 
         PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
-        Value *V2 = OrigPN->getIncomingValueForBlock(TL_ExitingBlock);
-        PN->addIncoming(V2, TL_ExitingBlock);
+        Value *V2 = OrigPN->getIncomingValueForBlock(A_ExitingBlock);
+        PN->addIncoming(V2, A_ExitingBlock);
       }
     } else
       break;
   }
+  DT->changeImmediateDominator(B_Header, A_ExitingBlock);
+  DF->changeImmediateDominator(B_Header, A_ExitingBlock, DT);
   
-  // Update TL_ExitDest. Now it's predecessor is False loop's exit block.
-  BasicBlock *FL_ExitingBlock = cast<BasicBlock>(ValueMap[TL_ExitingBlock]);
-  for (BasicBlock::iterator BI = TL_ExitDest->begin(), BE = TL_ExitDest->end();
+  // [*] Update BLoop's exit block. Its new predecessor is BLoop's exit
+  //     block. Remove incoming PHINode values from ALoop's exiting block.
+  //     Add new incoming values from BLoop's incoming exiting value.
+  //     Update BLoop exit block's dominator info..
+  BasicBlock *B_ExitingBlock = cast<BasicBlock>(ValueMap[A_ExitingBlock]);
+  for (BasicBlock::iterator BI = B_ExitBlock->begin(), BE = B_ExitBlock->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(TL_ExitingBlock)], 
-                                                            FL_ExitingBlock);
-      PN->removeIncomingValue(TL_ExitingBlock);
+      PN->addIncoming(ValueMap[PN->getIncomingValueForBlock(A_ExitingBlock)], 
+                                                            B_ExitingBlock);
+      PN->removeIncomingValue(A_ExitingBlock);
     } else
       break;
   }
 
-  if (DT) {
-    DT->changeImmediateDominator(FL_Header, TL_ExitingBlock);
-    DT->changeImmediateDominator(TL_ExitDest, 
-                                 cast<BasicBlock>(ValueMap[TL_ExitingBlock]));
-  }
+  DT->changeImmediateDominator(B_ExitBlock, B_ExitingBlock);
+  DF->changeImmediateDominator(B_ExitBlock, B_ExitingBlock, DT);
 
-  assert (!L->contains(TL_ExitDest) && " Unable to find exit edge destination");
+  //[*] Split ALoop's exit edge. This creates a new block which
+  //    serves two purposes. First one is to hold PHINode defnitions
+  //    to ensure that ALoop's LCSSA form. Second use it to act
+  //    as a preheader for BLoop.
+  BasicBlock *A_ExitBlock = SplitEdge(A_ExitingBlock, B_Header, this);
 
-  //[*] Split Exit Edge. 
-  BasicBlock *TL_ExitBlock = SplitEdge(TL_ExitingBlock, FL_Header, this);
-
-  //[*] Eliminate split condition's false branch from True loop.
-  BranchInst *TL_BR = cast<BranchInst>(TL_SplitCondBlock->getTerminator());
-  BasicBlock *TL_FalseBlock = TL_BR->getSuccessor(1);
-  TL_BR->setUnconditionalDest(TL_BR->getSuccessor(0));
-  removeBlocks(TL_FalseBlock, L, TL_BR->getSuccessor(0));
-
-  //[*] Update True loop's exit value using new exit value.
-  ExitCondition->setOperand(ExitValueNum, TL_ExitValue);
-
-  //[*] Eliminate split condition's  true branch in False loop CFG.
-  BasicBlock *FL_SplitCondBlock = cast<BasicBlock>(ValueMap[TL_SplitCondBlock]);
-  BranchInst *FL_BR = cast<BranchInst>(FL_SplitCondBlock->getTerminator());
-  BasicBlock *FL_TrueBlock = FL_BR->getSuccessor(0);
-  FL_BR->setUnconditionalDest(FL_BR->getSuccessor(1));
-  removeBlocks(FL_TrueBlock, FalseLoop, 
-               cast<BasicBlock>(FL_BR->getSuccessor(0)));
-
-  //[*] Preserve LCSSA
-  for(BasicBlock::iterator BI = FL_Header->begin(), BE = FL_Header->end();
+  //[*] Preserve ALoop's LCSSA form. Create new forwarding PHINodes
+  //    in A_ExitBlock to redefine outgoing PHI definitions from ALoop.
+  for(BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
       BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
-      Value *V1 = PN->getIncomingValueForBlock(TL_ExitBlock);
+      Value *V1 = PN->getIncomingValueForBlock(A_ExitBlock);
       PHINode *newPHI = new PHINode(PN->getType(), PN->getName());
-      newPHI->addIncoming(V1, TL_ExitingBlock);
-      TL_ExitBlock->getInstList().push_front(newPHI);
-      PN->removeIncomingValue(TL_ExitBlock);
-      PN->addIncoming(newPHI, TL_ExitBlock);
+      newPHI->addIncoming(V1, A_ExitingBlock);
+      A_ExitBlock->getInstList().push_front(newPHI);
+      PN->removeIncomingValue(A_ExitBlock);
+      PN->addIncoming(newPHI, A_ExitBlock);
     } else
       break;
   }
+
+  //[*] Eliminate split condition's inactive branch from ALoop.
+  BasicBlock *A_SplitCondBlock = SD.SplitCondition->getParent();
+  BranchInst *A_BR = cast<BranchInst>(A_SplitCondBlock->getTerminator());
+  BasicBlock *A_InactiveBranch = A_BR->getSuccessor(1);
+  BasicBlock *A_ActiveBranch = A_BR->getSuccessor(1);
+  A_BR->setUnconditionalDest(A_BR->getSuccessor(0));
+  removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
+
+  //[*] Eliminate split condition's inactive branch in from BLoop.
+  BasicBlock *B_SplitCondBlock = cast<BasicBlock>(ValueMap[A_SplitCondBlock]);
+  BranchInst *B_BR = cast<BranchInst>(B_SplitCondBlock->getTerminator());
+  BasicBlock *B_InactiveBranch = B_BR->getSuccessor(0);
+  BasicBlock *B_ActiveBranch = B_BR->getSuccessor(1);
+  B_BR->setUnconditionalDest(B_BR->getSuccessor(1));
+  removeBlocks(B_InactiveBranch, BLoop, B_ActiveBranch);
 
   return true;
 }
