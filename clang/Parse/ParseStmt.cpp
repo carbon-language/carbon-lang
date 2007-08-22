@@ -434,8 +434,10 @@ Parser::StmtResult Parser::ParseIfStatement() {
   }
   
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
-  // there is no compound stmt.  C90 does not have this clause.
-  if (getLang().C99) EnterScope(0);
+  // there is no compound stmt.  C90 does not have this clause.  We only do this
+  // if the body isn't a compound statement to avoid push/pop in common cases.
+  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  if (NeedsInnerScope) EnterScope(0);
   
   // Read the if condition.
   StmtResult CondStmt = ParseStatement();
@@ -445,7 +447,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     CondStmt = Actions.ParseNullStmt(Tok.getLocation());
   
   // Pop the 'if' scope if needed.
-  if (getLang().C99) ExitScope();
+  if (NeedsInnerScope) ExitScope();
   
   // If it has an else, parse it.
   SourceLocation ElseLoc;
@@ -454,13 +456,16 @@ Parser::StmtResult Parser::ParseIfStatement() {
     ElseLoc = ConsumeToken();
     
     // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
-    // there is no compound stmt.  C90 does not have this clause.
-    if (getLang().C99) EnterScope(0);
+    // there is no compound stmt.  C90 does not have this clause.  We only do
+    // this if the body isn't a compound statement to avoid push/pop in common
+    // cases.
+    NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+    if (NeedsInnerScope) EnterScope(0);
     
     ElseStmt = ParseStatement();
 
     // Pop the 'else' scope if needed.
-    if (getLang().C99) ExitScope();
+    if (NeedsInnerScope) ExitScope();
     
     if (ElseStmt.isInvalid)
       ElseStmt = Actions.ParseNullStmt(ElseLoc);
@@ -497,14 +502,16 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   StmtResult Switch = Actions.StartSwitchStmt(Cond.Val);
   
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
-  // there is no compound stmt.  C90 does not have this clause.
-  if (getLang().C99) EnterScope(0);
+  // there is no compound stmt.  C90 does not have this clause.  We only do this
+  // if the body isn't a compound statement to avoid push/pop in common cases.
+  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  if (NeedsInnerScope) EnterScope(0);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
 
   // Pop the body scope if needed.
-  if (getLang().C99) ExitScope();
+  if (NeedsInnerScope) ExitScope();
   
   if (Body.isInvalid) {
     Body = Actions.ParseNullStmt(Tok.getLocation());
@@ -537,14 +544,16 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   ExprResult Cond = ParseSimpleParenExpression();
   
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
-  // there is no compound stmt.  C90 does not have this clause.
-  if (getLang().C99) EnterScope(0);
+  // there is no compound stmt.  C90 does not have this clause.  We only do this
+  // if the body isn't a compound statement to avoid push/pop in common cases.
+  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  if (NeedsInnerScope) EnterScope(0);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
 
   // Pop the body scope if needed.
-  if (getLang().C99) ExitScope();
+  if (NeedsInnerScope) ExitScope();
 
   ExitScope();
   
@@ -565,14 +574,16 @@ Parser::StmtResult Parser::ParseDoStatement() {
   EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
-  // there is no compound stmt.  C90 does not have this clause.
-  if (getLang().C99) EnterScope(0);
+  // there is no compound stmt.  C90 does not have this clause. We only do this
+  // if the body isn't a compound statement to avoid push/pop in common cases.
+  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  if (NeedsInnerScope) EnterScope(0);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
 
   // Pop the body scope if needed.
-  if (getLang().C99) ExitScope();
+  if (NeedsInnerScope) ExitScope();
 
   if (Tok.getKind() != tok::kw_while) {
     ExitScope();
@@ -687,14 +698,16 @@ Parser::StmtResult Parser::ParseForStatement() {
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
-  // there is no compound stmt.  C90 does not have this clause.
-  if (getLang().C99) EnterScope(0);
+  // there is no compound stmt.  C90 does not have this clause.  We only do this
+  // if the body isn't a compound statement to avoid push/pop in common cases.
+  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  if (NeedsInnerScope) EnterScope(0);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
   
   // Pop the body scope if needed.
-  if (getLang().C99) ExitScope();
+  if (NeedsInnerScope) ExitScope();
 
   // Leave the for-scope.
   ExitScope();
