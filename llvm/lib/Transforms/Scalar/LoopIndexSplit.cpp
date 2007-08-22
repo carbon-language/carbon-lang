@@ -105,6 +105,13 @@ namespace {
 
     /// Find cost of spliting loop L.
     unsigned findSplitCost(Loop *L, SplitInfo &SD);
+
+    /// safeSplitCondition - Return true if it is possible to
+    /// split loop using given split condition.
+    bool safeSplitCondition(SplitInfo &SD);
+
+    /// splitLoop - Split current loop L in two loops using split information
+    /// SD. Update dominator information. Maintain LCSSA form.
     bool splitLoop(SplitInfo &SD);
 
     void initialize() {
@@ -705,32 +712,28 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 
 }
 
-/// splitLoop - Split current loop L in two loops using split information
-/// SD. Update dominator information. Maintain LCSSA form.
-bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
+/// safeSplitCondition - Return true if it is possible to
+/// split loop using given split condition.
+bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
 
-  // True loop is original loop. False loop is cloned loop.
-
-  BasicBlock *TL_Preheader = L->getLoopPreheader();
-  BasicBlock *TL_SplitCondBlock = SD.SplitCondition->getParent();
-  BasicBlock *TL_Latch = L->getLoopLatch();
-  BasicBlock *TL_Header = L->getHeader();
-  BranchInst *TL_SplitTerminator = 
-    cast<BranchInst>(TL_SplitCondBlock->getTerminator());
+  BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
   
-  // FIXME - Unable to handle triange loops at the moment.
+  // Unable to handle triange loops at the moment.
   // In triangle loop, split condition is in header and one of the
   // the split destination is loop latch. If split condition is EQ
   // then such loops are already handle in processOneIterationLoop().
-  BasicBlock *Succ0 = TL_SplitTerminator->getSuccessor(0);
-  BasicBlock *Succ1 = TL_SplitTerminator->getSuccessor(1);
-  if (TL_Header == TL_SplitCondBlock 
-      && (TL_Latch == Succ0 || TL_Latch == Succ1))
+  BasicBlock *Latch = L->getLoopLatch();
+  BranchInst *SplitTerminator = 
+    cast<BranchInst>(SplitCondBlock->getTerminator());
+  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
+  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
+  if (L->getHeader() == SplitCondBlock 
+      && (Latch == Succ0 || Latch == Succ1))
     return false;
   
   // If one of the split condition branch is post dominating other then loop 
   // index split is not appropriate.
-  if (DT->dominates(Succ0, TL_Latch) || DT->dominates(Succ1, TL_Latch))
+  if (DT->dominates(Succ0, Latch) || DT->dominates(Succ1, Latch))
     return false;
   
   // If one of the split condition branch is a predecessor of the other
@@ -743,6 +746,20 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
       PI != PE; ++PI)
     if (Succ0 == *PI)
       return false;
+
+  return true;
+}
+
+/// splitLoop - Split current loop L in two loops using split information
+/// SD. Update dominator information. Maintain LCSSA form.
+bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
+
+  if (!safeSplitCondition(SD))
+    return false;
+
+  // True loop is original loop. False loop is cloned loop.
+  BasicBlock *TL_SplitCondBlock = SD.SplitCondition->getParent();
+  BasicBlock *TL_Preheader = L->getLoopPreheader();
 
   bool SignedPredicate = ExitCondition->isSignedPredicate();  
   //[*] Calculate True loop's new Exit Value in loop preheader.
