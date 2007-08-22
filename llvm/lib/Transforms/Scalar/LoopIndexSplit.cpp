@@ -898,7 +898,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   BasicBlock *A_SplitCondBlock = SD.SplitCondition->getParent();
   BranchInst *A_BR = cast<BranchInst>(A_SplitCondBlock->getTerminator());
   BasicBlock *A_InactiveBranch = A_BR->getSuccessor(1);
-  BasicBlock *A_ActiveBranch = A_BR->getSuccessor(1);
+  BasicBlock *A_ActiveBranch = A_BR->getSuccessor(0);
   A_BR->setUnconditionalDest(A_BR->getSuccessor(0));
   removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
 
