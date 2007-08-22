@@ -71,6 +71,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";
+    PCSymbol = ".";
     UsedDirective = "\t.no_dead_strip\t";
     WeakRefDirective = "\t.weak_reference\t";
     HiddenDirective = "\t.private_extern\t";
