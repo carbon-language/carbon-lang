@@ -310,22 +310,21 @@ public:
   }
   
   CFGBlock* VisitForStmt(ForStmt* F) {
-    // For is a control-flow statement.  Thus we stop processing the
+    // "for" is a control-flow statement.  Thus we stop processing the
     // current block.
-    if (Block) FinishBlock(Block);
     
-    // Besides the loop body, we actually create two new blocks:
-    //
-    // The first contains the initialization statement for the loop.
-    //
-    // The second block evaluates the loop condition.
-    //
-    // We create the initialization block last, as that will be the block
-    // we return for the recursion.
+    CFGBlock* LoopSuccessor = NULL;
     
+    if (Block) {
+      FinishBlock(Block);
+      LoopSuccessor = Block;
+    }
+    else LoopSuccessor = Succ;
+    
+    // Create the condition block.
     CFGBlock* ConditionBlock = createBlock(false);
-    if (Stmt* C = F->getCond()) ConditionBlock->appendStmt(C);
     ConditionBlock->setTerminator(F);
+    if (Stmt* C = F->getCond()) ConditionBlock->appendStmt(C);
 
     // The condition block is the implicit successor for the loop body as
     // well as any code above the loop.
@@ -335,18 +334,18 @@ public:
     {
       assert (F->getBody());
       
-      // Save the current values for Block, Succ, and ContinueTargetBlock
+      // Save the current values for Block, Succ, and continue and break targets
       SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-                                save_continue(ContinueTargetBlock),
-                                save_break(BreakTargetBlock);
-      
+      save_continue(ContinueTargetBlock),
+      save_break(BreakTargetBlock);      
+
       // All continues within this loop should go to the condition block
       ContinueTargetBlock = ConditionBlock;
       
-      // All breaks should go to the code that follows the loop.
-      BreakTargetBlock = Block;
+      // All breaks should go to the code following the loop.
+      BreakTargetBlock = LoopSuccessor;
       
-      // create a new block to contain the body.      
+      // Create a new block to contain the (bottom) of the loop body.      
       Block = createBlock();
       
       // If we have increment code, insert it at the end of the body block.
@@ -354,35 +353,50 @@ public:
       
       // Now populate the body block, and in the process create new blocks
       // as we walk the body of the loop.
-      CFGBlock* BodyBlock = Visit(F->getBody());
-      
+      CFGBlock* BodyBlock = Visit(F->getBody());      
       assert (BodyBlock);      
       FinishBlock(BodyBlock);
       
       // This new body block is a successor to our condition block.
       ConditionBlock->addSuccessor(BodyBlock);
     }
-
+    
     // Link up the condition block with the code that follows the loop.
     // (the false branch).
-    ConditionBlock->addSuccessor(Block);
+    ConditionBlock->addSuccessor(LoopSuccessor);
 
-    // Now create the block to contain the initialization.
-    Block = createBlock();
-    
-    if (Stmt* I = F->getInit()) Block->appendStmt(I);
-    return Block;    
+    // If the loop contains initialization, create a new block for those
+    // statements.  This block can also contain statements that precede
+    // the loop.
+    if (Stmt* I = F->getInit()) {
+      Block = createBlock();
+      Block->appendStmt(I);
+      return Block;
+    }
+    else {
+      // There is no loop initialization.   We are thus basically a while 
+      // loop.  NULL out Block to force lazy block construction.
+      Block = NULL;
+      return ConditionBlock;    
+    }
   }
   
   CFGBlock* VisitWhileStmt(WhileStmt* W) {
-    // While is a control-flow statement.  Thus we stop processing the
+    // "while" is a control-flow statement.  Thus we stop processing the
     // current block.
-    if (Block) FinishBlock(Block);
+    
+    CFGBlock* LoopSuccessor = NULL;
+    
+    if (Block) {
+      FinishBlock(Block);
+      LoopSuccessor = Block;
+    }
+    else LoopSuccessor = Succ;
         
     // Create the condition block.
     CFGBlock* ConditionBlock = createBlock(false);
     ConditionBlock->setTerminator(W);
-    if (Stmt* C = W->getCond()) ConditionBlock->appendStmt(C);
+    if (Stmt* C = W->getCond()) ConditionBlock->appendStmt(C);        
     
     // The condition block is the implicit successor for the loop body as
     // well as any code above the loop.
@@ -391,36 +405,40 @@ public:
     // Process the loop body.
     {
       assert (W->getBody());
-      
-      // Save the current values for Block, Succ, and ContinueTargetBlock
+
+      // Save the current values for Block, Succ, and continue and break targets
       SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
                                 save_continue(ContinueTargetBlock),
                                 save_break(BreakTargetBlock);
-
+            
       // All continues within this loop should go to the condition block
       ContinueTargetBlock = ConditionBlock;
       
-      // All breaks should go to the code that follows the loop.
-      BreakTargetBlock = Block;
+      // All breaks should go to the code following the loop.
+      BreakTargetBlock = LoopSuccessor;
       
       // NULL out Block to force lazy instantiation of blocks for the body.
       Block = NULL;
       
+      // Create the body.  The returned block is the entry to the loop body.
       CFGBlock* BodyBlock = Visit(W->getBody());
       assert (BodyBlock);
+      FinishBlock(BodyBlock);
       
+      // Add the loop body entry as a successor to the condition.
       ConditionBlock->addSuccessor(BodyBlock);
     }
     
     // Link up the condition block with the code that follows the loop.
     // (the false branch).
-    ConditionBlock->addSuccessor(Block);
+    ConditionBlock->addSuccessor(LoopSuccessor);
     
     // There can be no more statements in the condition block
     // since we loop back to this block.  NULL out Block to force
     // lazy creation of another block.
     Block = NULL;
     
+    // Return the condition block, which is the dominating block for the loop.
     return ConditionBlock;
   }
   
