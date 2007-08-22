@@ -56,6 +56,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* Exit;
   CFGBlock* Succ;
   CFGBlock* ContinueTargetBlock;
+  CFGBlock* BreakTargetBlock;
   unsigned NumBlocks;
   
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -66,7 +67,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   
 public:  
   explicit CFGBuilder() : cfg(NULL), Block(NULL), Exit(NULL), Succ(NULL),
-                          ContinueTargetBlock(NULL),
+                          ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
                           NumBlocks(0) {
     // Create an empty CFG.
     cfg = new CFG();                        
@@ -336,10 +337,14 @@ public:
       
       // Save the current values for Block, Succ, and ContinueTargetBlock
       SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-                                save_continue(ContinueTargetBlock);
+                                save_continue(ContinueTargetBlock),
+                                save_break(BreakTargetBlock);
       
       // All continues within this loop should go to the condition block
       ContinueTargetBlock = ConditionBlock;
+      
+      // All breaks should go to the code that follows the loop.
+      BreakTargetBlock = Block;
       
       // create a new block to contain the body.      
       Block = createBlock();
@@ -389,10 +394,14 @@ public:
       
       // Save the current values for Block, Succ, and ContinueTargetBlock
       SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
-                                save_continue(ContinueTargetBlock);
+                                save_continue(ContinueTargetBlock),
+                                save_break(BreakTargetBlock);
 
       // All continues within this loop should go to the condition block
       ContinueTargetBlock = ConditionBlock;
+      
+      // All breaks should go to the code that follows the loop.
+      BreakTargetBlock = Block;
       
       // NULL out Block to force lazy instantiation of blocks for the body.
       Block = NULL;
@@ -403,6 +412,8 @@ public:
       ConditionBlock->addSuccessor(BodyBlock);
     }
     
+    // Link up the condition block with the code that follows the loop.
+    // (the false branch).
     ConditionBlock->addSuccessor(Block);
     
     // There can be no more statements in the condition block
@@ -414,7 +425,7 @@ public:
   }
   
   CFGBlock* VisitContinueStmt(ContinueStmt* C) {
-    // While is a control-flow statement.  Thus we stop processing the
+    // "continue" is a control-flow statement.  Thus we stop processing the
     // current block.
     if (Block) FinishBlock(Block);
     
@@ -427,6 +438,22 @@ public:
     
     Block->addSuccessor(ContinueTargetBlock);
     return Block;
+  }
+  
+  CFGBlock* VisitBreakStmt(BreakStmt* B) {
+    // "break" is a control-flow statement.  Thus we stop processing the
+    // current block.
+    if (Block) FinishBlock(Block);
+    
+    // Now create a new block that ends with the continue statement.
+    Block = createBlock(false);
+    Block->setTerminator(B);
+    
+    // FIXME: We should gracefully handle breaks without resolved targets.
+    assert (BreakTargetBlock);
+    
+    Block->addSuccessor(BreakTargetBlock);
+    return Block;  
   }
   
 };
