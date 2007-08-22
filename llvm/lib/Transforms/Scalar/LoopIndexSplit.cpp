@@ -748,7 +748,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   //[*] Calculate True loop's new Exit Value in loop preheader.
   //      TL_ExitValue = min(SplitValue, ExitValue)
   //[*] Calculate False loop's new Start Value in loop preheader.
-  //      FL_StartValue = min(SplitValue, TrueLoop.StartValue)
+  //      FL_StartValue = max(SplitValue, TrueLoop.StartValue)
   Value *TL_ExitValue = NULL;
   Value *FL_StartValue = NULL;
   if (isa<ConstantInt>(SD.SplitValue)) {
@@ -770,8 +770,8 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
                              ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                              SD.SplitValue, StartValue, "lsplit.sv",
                              TL_PHTerminator);
-    FL_StartValue = new SelectInst(C2, SD.SplitValue, StartValue,
-                                   "lsplit.sv", TL_Preheader->getTerminator());
+    FL_StartValue = new SelectInst(C2, StartValue, SD.SplitValue,
+                                   "lsplit.sv", TL_PHTerminator);
   }
 
   //[*] Clone loop. Avoid true destination of split condition and 
