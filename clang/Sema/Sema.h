@@ -326,6 +326,11 @@ public:
   
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(ExprTy *string);
+  virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
+                                               SourceLocation LParenLoc,
+                                               TypeTy *Ty,
+                                               SourceLocation RParenLoc);
+  
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

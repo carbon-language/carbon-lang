@@ -327,7 +327,8 @@ private:
   // Objective-C Expressions
   ExprResult ParseObjCExpression();
   ExprResult ParseObjCStringLiteral();
-  
+  ExprResult ParseObjCEncodeExpression();
+
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
   

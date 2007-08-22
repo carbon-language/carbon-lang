@@ -76,6 +76,7 @@ STMT(55, CXXBoolLiteralExpr   , Expr)
 
 // Obj-C Expressions.
 STMT(56, ObjCStringLiteral    , Expr)
+STMT(57, ObjCEncodeExpr       , Expr)
 
 LAST_EXPR(56)
 

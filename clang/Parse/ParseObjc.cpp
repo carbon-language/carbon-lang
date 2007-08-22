@@ -369,6 +369,9 @@ Parser::ExprResult Parser::ParseObjCExpression() {
     case tok::string_literal:    // primary-expression: string-literal
     case tok::wide_string_literal:
       return ParseObjCStringLiteral();
+    case tok::objc_encode:
+      return ParseObjCEncodeExpression();
+      break;
     default:
       Diag(AtLoc, diag::err_unexpected_at);
       SkipUntil(tok::semi);
@@ -384,4 +387,30 @@ Parser::ExprResult Parser::ParseObjCStringLiteral() {
   if (Res.isInvalid) return Res;
 
   return Actions.ParseObjCStringLiteral(Res.Val);
+}
+
+///    objc-encode-expression:
+///      @encode ( type-name )
+Parser::ExprResult Parser::ParseObjCEncodeExpression() {
+  assert(Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_encode && 
+         "Not an @encode expression!");
+  
+  SourceLocation EncLoc = ConsumeToken();
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "@encode");
+    return true;
+  }
+   
+  SourceLocation LParenLoc = ConsumeParen();
+  
+  TypeTy *Ty = ParseTypeName();
+  
+  if (Tok.getKind() != tok::r_paren) {
+    Diag(Tok, diag::err_expected_rparen);
+    return true;
+  }
+   
+  return Actions.ParseObjCEncodeExpression(EncLoc, LParenLoc, Ty, 
+                                           ConsumeParen());
 }

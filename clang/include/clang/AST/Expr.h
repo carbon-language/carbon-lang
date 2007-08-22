@@ -834,6 +834,25 @@ public:
   static bool classof(const ObjCStringLiteral *) { return true; }  
 };
   
+/// ObjCEncodeExpr, used for @encode in Objective-C.
+class ObjCEncodeExpr : public Expr {
+  QualType EncType;
+  SourceLocation EncLoc, RParenLoc;
+public:
+  ObjCEncodeExpr(QualType T, QualType ET, 
+                 SourceLocation enc, SourceLocation rp)
+    : Expr(ObjCEncodeExprClass, T), EncType(ET), EncLoc(enc), RParenLoc(rp) {}
+  
+  SourceRange getSourceRange() const { return SourceRange(EncLoc, RParenLoc); }
+
+  QualType getEncodedType() const { return EncType; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCEncodeExprClass;
+  }
+  static bool classof(const ObjCEncodeExpr *) { return true; }
+};
+
 }  // end namespace clang
 
 #endif

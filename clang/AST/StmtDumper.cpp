@@ -503,6 +503,14 @@ void StmtDumper::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
   fprintf(F, ")");
 }
 
+void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
+  DumpExpr(Node);
+ 
+  fprintf(F, " ");
+  DumpType(Node->getEncodedType());
+  fprintf(F, ")");  
+}
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//

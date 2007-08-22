@@ -409,6 +409,13 @@ public:
   virtual ExprResult ParseObjCStringLiteral(ExprTy *string) {
     return 0;
   }
+
+  virtual ExprResult ParseObjCEncodeExpression(SourceLocation EncLoc,
+                                               SourceLocation LParenLoc,
+                                               TypeTy *Ty,
+                                               SourceLocation RParenLoc) {
+    return 0;
+  }
   
 };
 

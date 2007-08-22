@@ -518,6 +518,11 @@ void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
   VisitStringLiteral(Node->getString());
 }
 
+void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
+  OS << "@encode(";
+  OS << Node->getEncodedType().getAsString() << ")";
+}
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
