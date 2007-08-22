@@ -433,6 +433,10 @@ Parser::StmtResult Parser::ParseIfStatement() {
     return true;
   }
   
+  // In C99, the body of the if statement is a scope, even if there is no
+  // compound stmt.
+  if (getLang().C99) EnterScope(0);
+  
   // Read the if condition.
   StmtResult CondStmt = ParseStatement();
 
@@ -440,13 +444,23 @@ Parser::StmtResult Parser::ParseIfStatement() {
   if (CondStmt.isInvalid)
     CondStmt = Actions.ParseNullStmt(Tok.getLocation());
   
+  // Pop the 'if' scope if needed.
+  if (getLang().C99) ExitScope();
   
   // If it has an else, parse it.
   SourceLocation ElseLoc;
   StmtResult ElseStmt(false);
   if (Tok.getKind() == tok::kw_else) {
     ElseLoc = ConsumeToken();
+    
+    // In C99, the body of the if statement is a scope, even if there is no
+    // compound stmt.
+    if (getLang().C99) EnterScope(0);
+    
     ElseStmt = ParseStatement();
+
+    // Pop the 'else' scope if needed.
+    if (getLang().C99) ExitScope();
     
     if (ElseStmt.isInvalid)
       ElseStmt = Actions.ParseNullStmt(ElseLoc);
