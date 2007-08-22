@@ -314,6 +314,12 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 /// special global used by LLVM.  If so, emit it and return true, otherwise
 /// do nothing and return false.
 bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
+  if (GV->getName() == "llvm.used") {
+    if (TAI->getUsedDirective() != 0)    // No need to emit this at all.
+      EmitLLVMUsedList(GV->getInitializer());
+    return true;
+  }
+
   // Ignore debug and non-emitted data.
   if (GV->getSection() == "llvm.metadata") return true;
   
@@ -321,12 +327,6 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
 
   assert(GV->hasInitializer() && "Not a special LLVM global!");
   
-  if (GV->getName() == "llvm.used") {
-    if (TAI->getUsedDirective() != 0)    // No need to emit this at all.
-      EmitLLVMUsedList(GV->getInitializer());
-    return true;
-  }
-
   const TargetData *TD = TM.getTargetData();
   unsigned Align = Log2_32(TD->getPointerPrefAlignment());
   if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
