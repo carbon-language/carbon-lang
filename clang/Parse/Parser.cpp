@@ -352,10 +352,10 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 ///
 ///       function-definition: [C99 6.9.1]
 ///         declaration-specifiers[opt] declarator declaration-list[opt] 
-///                 compound-statement                           [TODO]
+///                 compound-statement
 ///       declaration: [C99 6.7]
-///         declaration-specifiers init-declarator-list[opt] ';' [TODO]
-/// [!C99]  init-declarator-list ';'                             [TODO]
+///         declaration-specifiers init-declarator-list[opt] ';'
+/// [!C99]  init-declarator-list ';'                   [TODO: warn in c99 mode]
 /// [OMP]   threadprivate-directive                              [TODO]
 ///
 Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
