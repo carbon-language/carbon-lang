@@ -261,7 +261,7 @@ private:
   void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl);
   bool ParseObjCProtocolReferences();
   void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl);
-  DeclTy *ParseObjCAtProtocolDeclaration();
+  DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtImplementationDeclaration();
   DeclTy *ParseObjCAtEndDeclaration();
   DeclTy *ParseObjCAtAliasDeclaration();
@@ -273,8 +273,8 @@ private:
   void ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
   void ParseObjCPropertyDecl(SourceLocation atLoc);
   
-  void ParseObjCInstanceMethodDeclaration();
-  void ParseObjCClassMethodDeclaration();
+  void ParseObjCInstanceMethodDefinition();
+  void ParseObjCClassMethodDefinition();
 
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
