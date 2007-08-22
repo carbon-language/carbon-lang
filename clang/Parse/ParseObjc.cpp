@@ -120,7 +120,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     return 0;
   }
   // We have a class or category name - consume it.
-  IdentifierInfo *nameId = Tok.getIdentifierInfo();
+  // IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
   
   if (Tok.getKind() == tok::l_paren) { // we have a category
@@ -147,18 +147,15 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    //ParseObjCInterfaceDeclList();
+    ParseObjCInterfaceDeclList(0/*FIXME*/);
 
-    if (Tok.getKind() != tok::at) { // check for @end
-      Diag(Tok, diag::err_objc_missing_end);
+    // The @ sign was already consumed by ParseObjCInterfaceDeclList().
+    if (Tok.getKind() == tok::identifier &&
+        Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_end) {
+      ConsumeToken(); // the "end" identifier
       return 0;
     }
-    SourceLocation atEndLoc = ConsumeToken(); // eat the @ sign
-    if (Tok.getIdentifierInfo()->getObjCKeywordID() != tok::objc_end) {
-      Diag(Tok, diag::err_objc_missing_end);
-      return 0;
-    }
-    ConsumeToken(); // the "end" identifier
+    Diag(Tok, diag::err_objc_missing_end);
     return 0;
   }
   // Parse a class interface.
@@ -183,30 +180,171 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   if (Tok.getKind() == tok::l_brace)
     ParseObjCClassInstanceVariables(0/*FIXME*/);
 
-  //ParseObjCInterfaceDeclList();
-  
-  if (Tok.getKind() != tok::at) { // check for @end
-    Diag(Tok, diag::err_objc_missing_end);
+  ParseObjCInterfaceDeclList(0/*FIXME*/);
+
+  // The @ sign was already consumed by ParseObjCInterfaceDeclList().
+  if (Tok.getKind() == tok::identifier &&
+      Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_end) {
+    ConsumeToken(); // the "end" identifier
     return 0;
   }
-  SourceLocation atEndLoc = ConsumeToken(); // eat the @ sign
-  if (Tok.getIdentifierInfo()->getObjCKeywordID() != tok::objc_end) {
-    Diag(Tok, diag::err_objc_missing_end);
-    return 0;
-  }
-  ConsumeToken(); // the "end" identifier
+  Diag(Tok, diag::err_objc_missing_end);
   return 0;
 }
 
 ///   objc-interface-decl-list:
 ///     empty
-///     objc-interface-decl-list objc-method-proto
 ///     objc-interface-decl-list objc-property-decl [OBJC2]
+///     objc-interface-decl-list objc-method-requirement [OBJC2]
+///     objc-interface-decl-list objc-method-proto
 ///     objc-interface-decl-list declaration
 ///     objc-interface-decl-list ';'
 ///
-void Parser::ParseObjCInterfaceDeclList() {
+///   objc-method-requirement: [OBJC2]
+///     @required
+///     @optional
+///
+void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
+  while (1) {
+    if (Tok.getKind() == tok::at) {
+      SourceLocation AtLoc = ConsumeToken(); // the "@"
+      tok::ObjCKeywordKind ocKind = Tok.getIdentifierInfo()->getObjCKeywordID();
+      
+      if (ocKind == tok::objc_end) { // terminate list
+        return;
+      } else if (ocKind == tok::objc_required) { // protocols only
+        ConsumeToken();
+        continue;
+      } else if (ocKind == tok::objc_optional) { // protocols only
+        ConsumeToken();
+        continue;
+      } else if (ocKind == tok::objc_property) {
+        ParseObjCPropertyDecl(AtLoc);
+        continue;
+      } else {
+        Diag(Tok, diag::err_objc_illegal_interface_qual);
+        ConsumeToken();
+      }
+    }
+    if (Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) {
+      ParseObjCMethodPrototype();
+      continue;
+    }
+    if (Tok.getKind() == tok::semi)
+      ConsumeToken();
+    else if (Tok.getKind() == tok::eof)
+      return;
+    else
+      ParseDeclarationOrFunctionDefinition();
+  }
+}
+
+void Parser::ParseObjCPropertyDecl(SourceLocation atLoc) {
   assert(0 && "Unimp");
+}
+
+///   objc-methodproto:
+///     objc-instance-method objc-method-decl ';'
+///     objc-class-method objc-method-decl ';'
+///
+///   objc-instance-method: '-'
+///   objc-class-method: '+'
+///
+void Parser::ParseObjCMethodPrototype() {
+  assert((Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) && 
+         "expected +/-");
+
+  tok::TokenKind methodType = Tok.getKind();  
+  SourceLocation methodLoc = ConsumeToken();
+  
+  // FIXME: deal with "context sensitive" protocol qualifiers in prototypes
+  ParseObjCMethodDecl(methodType, methodLoc);
+  
+  // Consume the ';'.
+  ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "method proto");
+}
+
+///   objc-selector:
+///     identifier
+///     one of
+///       enum struct union if else while do for switch case default
+///       break continue return goto asm sizeof typeof __alignof
+///       unsigned long const short volatile signed restrict _Complex
+///       in out inout bycopy byref oneway int char float double void _Bool
+///
+IdentifierInfo *Parser::ParseObjCSelector() {
+  tok::TokenKind tKind = Tok.getKind();
+  IdentifierInfo *II = 0;
+  
+  if (tKind == tok::identifier || 
+      (tKind >= tok::kw_auto && tKind <= tok::kw__Complex)) {
+    // FIXME: make sure the list of keywords jives with gcc. For example,
+    // the above test does not include in/out/inout/bycopy/byref/oneway.
+    II = Tok.getIdentifierInfo();
+    ConsumeToken();
+  } 
+  return II;
+}
+
+///   objc-type-name:
+///     '(' objc-type-qualifiers[opt] type-name ')'
+///     '(' objc-type-qualifiers[opt] ')'
+///
+///   objc-type-qualifiers:
+///     objc-type-qualifier
+///     objc-type-qualifiers objc-type-qualifier
+///
+///   objc-type-qualifier: one of
+///     in out inout bycopy byref oneway
+///
+void Parser::ParseObjCTypeName() {
+  assert(Tok.getKind() == tok::l_paren && "expected (");
+  
+  SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
+  
+  if (isTypeSpecifierQualifier()) {
+    TypeTy *Ty = ParseTypeName();
+
+    assert(Ty && "Parser::ParseObjCTypeName(): missing type");
+  }
+  if (Tok.getKind() != tok::r_paren) {
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    return;
+  }
+  RParenLoc = ConsumeParen();
+}
+
+///   objc-method-decl:
+///     objc-selector
+///     objc-keyword-selector objc-optparmlist
+///     objc-type-name objc-selector
+///     objc-type-name objc-keyword-selector objc-optparmlist
+///
+///   objc-keyword-selector:
+///     objc-keyword-decl
+///     objc-keyword-selector objc-keyword-decl
+///
+///   objc-keyword-decl:
+///     objc-selector ':' objc-type-name identifier
+///     objc-selector ':' identifier
+///     ':' objc-type-name identifier
+///     ':' identifier
+///
+///   objc-optparmlist:
+///     objc-optparms objc-optellipsis
+///
+///   objc-optparms:
+///     empty
+///     objc-opt-parms , parameter-declaration
+///
+///   objc-optellipsis:
+///     empty
+///     , ...
+///
+void Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc) {
+  if (Tok.getKind() == tok::l_paren)
+    ParseObjCTypeName();
+  ParseObjCSelector();
 }
 
 ///   objc-protocol-refs:

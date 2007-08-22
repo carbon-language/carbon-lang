@@ -260,11 +260,18 @@ private:
                                           AttributeList *prefixAttrs = 0);
   void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl);
   bool ParseObjCProtocolReferences();
-  void ParseObjCInterfaceDeclList();
+  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl);
   DeclTy *ParseObjCAtProtocolDeclaration();
   DeclTy *ParseObjCAtImplementationDeclaration();
   DeclTy *ParseObjCAtEndDeclaration();
   DeclTy *ParseObjCAtAliasDeclaration();
+  
+  IdentifierInfo *ParseObjCSelector();
+  void ParseObjCTypeName();
+  void ParseObjCMethodRequirement();
+  void ParseObjCMethodPrototype();
+  void ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
+  void ParseObjCPropertyDecl(SourceLocation atLoc);
   
   void ParseObjCInstanceMethodDeclaration();
   void ParseObjCClassMethodDeclaration();

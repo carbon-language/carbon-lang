@@ -384,6 +384,8 @@ DIAG(err_objc_missing_end, ERROR,
      "missing @end")
 DIAG(err_objc_illegal_visibility_spec, ERROR,
      "illegal visibility specification")
+DIAG(err_objc_illegal_interface_qual, ERROR,
+     "illegal interface qualifier")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
