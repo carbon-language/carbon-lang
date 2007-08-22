@@ -71,7 +71,7 @@ public:
   }
   
   ~CFGBuilder() { delete cfg; }
-  
+    
   /// buildCFG - Constructs a CFG from an AST (a Stmt*).  The AST can
   ///  represent an arbitrary statement.  Examples include a single expression
   ///  or a function body (compound statement).  The ownership of the returned
@@ -88,9 +88,9 @@ public:
     
     // Visit the statements and create the CFG.
     if (CFGBlock* B = Visit(Statement)) {
-      // Reverse the statements in the last constructed block.  Statements
-      // are inserted into the blocks in reverse order.
-      B->reverseStmts();
+      // Finalize the last constructed block.  This usually involves
+      // reversing the order of the statements in the block.
+      FinishBlock(B);
       
       // Backpatch the gotos whose label -> block mappings we didn't know
       // when we encountered them.
@@ -122,6 +122,23 @@ public:
     if (add_successor && Succ) B->addSuccessor(Succ);
     return B;
   }
+  
+  // FinishBlock - When the last statement has been added to the block,
+  //  usually we must reverse the statements because they have been inserted
+  //  in reverse order.  When processing labels, however, there are cases
+  //  in the recursion where we may have already reversed the statements
+  //  in a block.  This method safely tidies up a block: if the block
+  //  has a label at the front, it has already been reversed.  Otherwise,
+  //  we reverse it.
+  void FinishBlock(CFGBlock* B) {
+    assert (B);
+    CFGBlock::iterator I = B->begin();
+    if (I != B->end()) {
+      Stmt* S = *I;
+      if (S->getStmtClass() != Stmt::LabelStmtClass)
+        B->reverseStmts();
+    }
+  }
 
   /// Here we handle statements with no branching control flow.
   CFGBlock* VisitStmt(Stmt* Statement) {
@@ -138,15 +155,22 @@ public:
     return Block;
   }
   
+  CFGBlock* VisitNullStmt(NullStmt* Statement) {
+    return Block;
+  }
+  
   CFGBlock* VisitCompoundStmt(CompoundStmt* C) {
     //   The value returned from this function is the last created CFGBlock
     //   that represents the "entry" point for the translated AST node.
+    CFGBlock* LastBlock;
+    
     for (CompoundStmt::reverse_body_iterator I = C->body_rbegin(),
-          E = C->body_rend(); I != E; ++I )
+         E = C->body_rend(); I != E; ++I )
       // Add the statement to the current block.
-      if (!Visit(*I)) return NULL;
+      if (!(LastBlock=Visit(*I)))
+        return NULL;
 
-    return Block;
+    return LastBlock;
   }
   
   CFGBlock* VisitIfStmt(IfStmt* I) {
@@ -163,7 +187,7 @@ public:
     // successor block.
     if (Block) { 
       Succ = Block;
-      Block->reverseStmts();
+      FinishBlock(Block);
     }
     
     // Process the false branch.  NULL out Block so that the recursive
@@ -179,7 +203,7 @@ public:
       Block = NULL;
       ElseBlock = Visit(Else);          
       if (!ElseBlock) return NULL;
-      ElseBlock->reverseStmts();        
+      FinishBlock(ElseBlock);
     }
     
     // Process the true branch.  NULL out Block so that the recursive
@@ -193,7 +217,7 @@ public:
       Block = NULL;        
       ThenBlock = Visit(Then);        
       if (!ThenBlock) return NULL;
-      ThenBlock->reverseStmts();
+      FinishBlock(ThenBlock);
     }
 
     // Now create a new block containing the if statement.        
@@ -221,7 +245,7 @@ public:
     //       keep a basic block for that code; a simple "mark-and-sweep"
     //       from the entry block will be able to report such dead
     //       blocks.
-    if (Block) Block->reverseStmts();        
+    if (Block) FinishBlock(Block);
 
     // Create the new block.
     Block = createBlock(false);
@@ -241,16 +265,15 @@ public:
   CFGBlock* VisitLabelStmt(LabelStmt* L) {
     // Get the block of the labeled statement.  Add it to our map.
     CFGBlock* LabelBlock = Visit(L->getSubStmt());
-    
+    assert (LabelBlock);    
 
     assert (LabelMap.find(L) == LabelMap.end() && "label already in map");
     LabelMap[ L ] = LabelBlock;
     
     // Labels partition blocks, so this is the end of the basic block
     // we were processing (the label is the first statement).    
-    assert (Block);
-    Block->appendStmt(L);
-    Block->reverseStmts();
+    LabelBlock->appendStmt(L);
+    FinishBlock(LabelBlock);
     
     // We set Block to NULL to allow lazy creation of a new block
     // (if necessary);
@@ -265,7 +288,7 @@ public:
   CFGBlock* VisitGotoStmt(GotoStmt* G) {
     // Goto is a control-flow statement.  Thus we stop processing the
     // current block and create a new one.
-    if (Block) Block->reverseStmts();
+    if (Block) FinishBlock(Block);
     Block = createBlock(false);
     Block->setTerminator(G);
     
@@ -280,6 +303,59 @@ public:
       Block->addSuccessor(I->second);
 
     return Block;            
+  }
+  
+  CFGBlock* VisitForStmt(ForStmt* F) {
+    // For is a control-flow statement.  Thus we stop processing the
+    // current block.
+    if (Block) FinishBlock(Block);
+    
+    // Besides the loop body, we actually create two new blocks:
+    //
+    // The first contains the initialization statement for the loop.
+    //
+    // The second block evaluates the loop condition.
+    //
+    // We create the initialization block last, as that will be the block
+    // we return for the recursion.
+    
+    CFGBlock* CondBlock = createBlock(false);
+    if (Stmt* C = F->getCond()) CondBlock->appendStmt(C);
+    CondBlock->setTerminator(F);
+    Succ = CondBlock;
+    
+    // Now create the loop body.
+    {
+      assert (F->getBody());
+      SaveAndRestore<CFGBlock*> sv(Block);
+      
+      // create a new block to contain the body.      
+      Block = createBlock();
+      
+      // If we have increment code, insert it at the end of the body block.
+      if (Stmt* I = F->getInc()) Block->appendStmt(I);
+      
+      // Now populate the body block, and in the process create new blocks
+      // as we walk the body of the loop.
+      CFGBlock* BodyBlock = Visit(F->getBody());
+      
+      assert (BodyBlock);      
+      FinishBlock(BodyBlock);
+      
+      // This new body block is a successor to our condition block.
+      CondBlock->addSuccessor(BodyBlock);
+    }
+
+    // Link up the condition block with the code that follows the loop.
+    // (the false branch).
+    CondBlock->addSuccessor(Block);
+
+    // Now create the block to contain the initialization.
+    Succ = CondBlock;    
+    Block = createBlock();
+    
+    if (Stmt* I = F->getInit()) Block->appendStmt(I);
+    return Block;    
   }
 };
 
@@ -308,6 +384,36 @@ void CFG::print(std::ostream& OS) {
     I->print(OS);
   }
   OS << "\n";
+}
+
+
+namespace {
+
+  class CFGBlockTerminatorPrint : public StmtVisitor<CFGBlockTerminatorPrint,
+                                                     void > {
+    std::ostream& OS;
+  public:
+    CFGBlockTerminatorPrint(std::ostream& os) : OS(os) {}
+    
+    void VisitIfStmt(IfStmt* I) {
+      OS << "if ";
+      I->getCond()->printPretty(std::cerr);
+      OS << "\n";
+    }
+    
+    // Default case.
+    void VisitStmt(Stmt* S) { S->printPretty(OS); }
+    
+    void VisitForStmt(ForStmt* F) {
+      OS << "for (" ;
+      if (Stmt* I = F->getInit()) I->printPretty(OS);
+      OS << " ; ";
+      if (Stmt* C = F->getCond()) C->printPretty(OS);
+      OS << " ; ";
+      if (Stmt* I = F->getInc()) I->printPretty(OS);
+      OS << ")\n";                                                       
+    }        
+  };
 }
 
 // dump - A simply pretty printer of a CFGBlock that outputs to stderr.
@@ -349,22 +455,10 @@ void CFGBlock::print(std::ostream& OS) {
   
   // Print the terminator of this block.
   OS << "\n    Terminator: ";
-  if (ControlFlowStmt) {
-    switch (ControlFlowStmt->getStmtClass()) {
-      case Stmt::IfStmtClass: {
-        IfStmt* I = cast<IfStmt>(ControlFlowStmt);
-        OS << "if ";
-        I->getCond()->printPretty(std::cerr);
-        OS << "\n";
-        break;
-      }
-      
-      default:
-        ControlFlowStmt->printPretty(std::cerr);
-        break;
-    }
-  }
-  else OS << "<NULL>\n";
+  if (ControlFlowStmt)
+    CFGBlockTerminatorPrint(OS).Visit(ControlFlowStmt);
+  else
+    OS << "<NULL>\n";
 
   // Print the successors of this block.
   OS << "    Successors (" << succ_size() << "):";
