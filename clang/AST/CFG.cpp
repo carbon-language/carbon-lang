@@ -72,12 +72,12 @@ public:
   
   ~CFGBuilder() { delete cfg; }
     
-  /// buildCFG - Constructs a CFG from an AST (a Stmt*).  The AST can
+  /// BuildCFG - Constructs a CFG from an AST (a Stmt*).  The AST can
   ///  represent an arbitrary statement.  Examples include a single expression
   ///  or a function body (compound statement).  The ownership of the returned
   ///  CFG is transferred to the caller.  If CFG construction fails, this method
   ///  returns NULL.
-  CFG* buildCFG(Stmt* Statement) {
+  CFG* BuildCFG(Stmt* Statement) {
     if (!Statement) return NULL;
   
     assert (!Exit && "CFGBuilder should only be used to construct one CFG");
@@ -91,6 +91,7 @@ public:
       // Finalize the last constructed block.  This usually involves
       // reversing the order of the statements in the block.
       FinishBlock(B);
+      cfg->setEntry(B);
       
       // Backpatch the gotos whose label -> block mappings we didn't know
       // when we encountered them.
@@ -105,7 +106,7 @@ public:
           return NULL; // No matching label.  Bad CFG.
         
         B->addSuccessor(LI->second);                   
-      }        
+      }                          
       
       // NULL out cfg so that repeated calls
       CFG* t = cfg;
@@ -357,12 +358,47 @@ public:
     if (Stmt* I = F->getInit()) Block->appendStmt(I);
     return Block;    
   }
+  
+  CFGBlock* VisitWhileStmt(WhileStmt* W) {
+    // While is a control-flow statement.  Thus we stop processing the
+    // current block.
+    if (Block) FinishBlock(Block);
+    
+    CFGBlock* ConditionBlock = createBlock(false);
+    ConditionBlock->setTerminator(W);
+    if (Stmt* C = W->getCond()) ConditionBlock->appendStmt(C);
+    
+    // Process the loop body.
+    {
+      assert (W->getBody());
+      SaveAndRestore<CFGBlock*> sv(Block);
+      
+      Succ = ConditionBlock;
+      Block = NULL;
+      CFGBlock* BodyBlock = Visit(W->getBody());
+
+      assert (BodyBlock);
+      
+      ConditionBlock->addSuccessor(BodyBlock);
+    }
+    
+    ConditionBlock->addSuccessor(Block);
+    
+    // There can be no more statements in the condition block
+    // since we loop back to this block.  NULL out Block to force
+    // lazy creation of another block.
+    Block = NULL;
+    Succ = ConditionBlock;
+    
+    return ConditionBlock;
+  }
+  
 };
 
 // BuildCFG - A helper function that builds CFGs from ASTS.
 CFG* CFG::BuildCFG(Stmt* Statement) {
   CFGBuilder Builder;
-  return Builder.buildCFG(Statement);
+  return Builder.BuildCFG(Statement);
 }
 
 // reverseStmts - A method that reverses the order of the statements within
@@ -374,13 +410,26 @@ void CFG::dump() { print(std::cerr); }
 
 // print - A simple pretty printer of a CFG that outputs to an ostream.
 void CFG::print(std::ostream& OS) {
+  // First print out the Entry block, which may not be the first block
+  // in our list of blocks
+  if (begin() != end()) {
+    CFGBlock& Entry = getEntry();
+    OS << "\n [ B" << Entry.getBlockID() << " (ENTRY) ]\n";
+    Entry.print(OS);
+  }
+
   // Iterate through the CFGBlocks and print them one by one.  Specially
   // designate the Entry and Exit blocks.
   for (iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
+    // Skip the entry block, because we already printed it.
+    if (&(*I) == &getEntry())
+      continue;
+      
     OS << "\n  [ B" << I->getBlockID();
+    
     if (&(*I) == &getExit()) OS << " (EXIT) ]\n";
-    else if (&(*I) == &getEntry()) OS << " (ENTRY) ]\n";
     else OS << " ]\n";
+    
     I->print(OS);
   }
   OS << "\n";
@@ -412,7 +461,13 @@ namespace {
       OS << " ; ";
       if (Stmt* I = F->getInc()) I->printPretty(OS);
       OS << ")\n";                                                       
-    }        
+    }
+    
+    void VisitWhileStmt(WhileStmt* W) {
+      OS << "while " ;
+      if (Stmt* C = W->getCond()) C->printPretty(OS);
+      OS << "\n";
+    }                                                       
   };
 }
 
