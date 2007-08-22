@@ -55,6 +55,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* Block;
   CFGBlock* Exit;
   CFGBlock* Succ;
+  CFGBlock* ContinueTargetBlock;
   unsigned NumBlocks;
   
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -64,7 +65,8 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   BackpatchBlocksTy BackpatchBlocks;
   
 public:  
-  explicit CFGBuilder() : cfg(NULL), Block(NULL), Exit(NULL), Succ(NULL), 
+  explicit CFGBuilder() : cfg(NULL), Block(NULL), Exit(NULL), Succ(NULL),
+                          ContinueTargetBlock(NULL),
                           NumBlocks(0) {
     // Create an empty CFG.
     cfg = new CFG();                        
@@ -320,15 +322,24 @@ public:
     // We create the initialization block last, as that will be the block
     // we return for the recursion.
     
-    CFGBlock* CondBlock = createBlock(false);
-    if (Stmt* C = F->getCond()) CondBlock->appendStmt(C);
-    CondBlock->setTerminator(F);
-    Succ = CondBlock;
+    CFGBlock* ConditionBlock = createBlock(false);
+    if (Stmt* C = F->getCond()) ConditionBlock->appendStmt(C);
+    ConditionBlock->setTerminator(F);
+
+    // The condition block is the implicit successor for the loop body as
+    // well as any code above the loop.
+    Succ = ConditionBlock;
     
     // Now create the loop body.
     {
       assert (F->getBody());
-      SaveAndRestore<CFGBlock*> sv(Block);
+      
+      // Save the current values for Block, Succ, and ContinueTargetBlock
+      SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
+                                save_continue(ContinueTargetBlock);
+      
+      // All continues within this loop should go to the condition block
+      ContinueTargetBlock = ConditionBlock;
       
       // create a new block to contain the body.      
       Block = createBlock();
@@ -344,15 +355,14 @@ public:
       FinishBlock(BodyBlock);
       
       // This new body block is a successor to our condition block.
-      CondBlock->addSuccessor(BodyBlock);
+      ConditionBlock->addSuccessor(BodyBlock);
     }
 
     // Link up the condition block with the code that follows the loop.
     // (the false branch).
-    CondBlock->addSuccessor(Block);
+    ConditionBlock->addSuccessor(Block);
 
     // Now create the block to contain the initialization.
-    Succ = CondBlock;    
     Block = createBlock();
     
     if (Stmt* I = F->getInit()) Block->appendStmt(I);
@@ -363,20 +373,31 @@ public:
     // While is a control-flow statement.  Thus we stop processing the
     // current block.
     if (Block) FinishBlock(Block);
-    
+        
+    // Create the condition block.
     CFGBlock* ConditionBlock = createBlock(false);
     ConditionBlock->setTerminator(W);
     if (Stmt* C = W->getCond()) ConditionBlock->appendStmt(C);
     
+    // The condition block is the implicit successor for the loop body as
+    // well as any code above the loop.
+    Succ = ConditionBlock;
+    
     // Process the loop body.
     {
       assert (W->getBody());
-      SaveAndRestore<CFGBlock*> sv(Block);
       
-      Succ = ConditionBlock;
-      Block = NULL;
-      CFGBlock* BodyBlock = Visit(W->getBody());
+      // Save the current values for Block, Succ, and ContinueTargetBlock
+      SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
+                                save_continue(ContinueTargetBlock);
 
+      // All continues within this loop should go to the condition block
+      ContinueTargetBlock = ConditionBlock;
+      
+      // NULL out Block to force lazy instantiation of blocks for the body.
+      Block = NULL;
+      
+      CFGBlock* BodyBlock = Visit(W->getBody());
       assert (BodyBlock);
       
       ConditionBlock->addSuccessor(BodyBlock);
@@ -388,9 +409,24 @@ public:
     // since we loop back to this block.  NULL out Block to force
     // lazy creation of another block.
     Block = NULL;
-    Succ = ConditionBlock;
     
     return ConditionBlock;
+  }
+  
+  CFGBlock* VisitContinueStmt(ContinueStmt* C) {
+    // While is a control-flow statement.  Thus we stop processing the
+    // current block.
+    if (Block) FinishBlock(Block);
+    
+    // Now create a new block that ends with the continue statement.
+    Block = createBlock(false);
+    Block->setTerminator(C);
+    
+    // FIXME: We should gracefully handle continues without resolved targets.
+    assert (ContinueTargetBlock);
+    
+    Block->addSuccessor(ContinueTargetBlock);
+    return Block;
   }
   
 };
