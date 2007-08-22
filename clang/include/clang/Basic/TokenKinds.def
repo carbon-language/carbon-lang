@@ -87,7 +87,7 @@ PPKEYWORD(define_other_target)
 // Language keywords.
 //===----------------------------------------------------------------------===//
 
-// These define members of the tok::kw_* namespace.
+// These define members of the tok::* namespace.
 
 TOK(unknown)             // Not a token.
 TOK(eof)                 // End of file.
