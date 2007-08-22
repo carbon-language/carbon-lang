@@ -5171,9 +5171,6 @@ declare void @llvm.memory.barrier( i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, 
   The call <tt>%val = call i32 %fp( i32 %x, i32 %y )</tt> is then equivalent to
   <tt>%val = call i32 %f( i8* %nval, i32 %x, i32 %y )</tt>.
 </p>
-<p>
-  Trampolines are currently only supported on the X86 architecture.
-</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -5194,9 +5191,10 @@ declare void @llvm.init.trampoline(i8* &lt;tramp&gt;, i8* &lt;func&gt;, i8* &lt;
   The <tt>llvm.init.trampoline</tt> intrinsic takes three arguments, all
   pointers.  The <tt>tramp</tt> argument must point to a sufficiently large
   and sufficiently aligned block of memory; this memory is written to by the
-  intrinsic.  Currently LLVM provides no help in determining just how big and
-  aligned the memory needs to be.  The <tt>func</tt> argument must hold a
-  function bitcast to an <tt>i8*</tt>.
+  intrinsic.  Note that the size and the alignment are target-specific - LLVM
+  currently provides no portable way of determining them, so a front-end that
+  generates this intrinsic needs to have some target-specific knowledge.
+  The <tt>func</tt> argument must hold a function bitcast to an <tt>i8*</tt>.
 </p>
 <h5>Semantics:</h5>
 <p>
