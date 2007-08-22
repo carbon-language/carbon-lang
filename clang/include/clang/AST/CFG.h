@@ -153,11 +153,11 @@ public:
 ///  was constructed from.
 class CFG {
   typedef std::list<CFGBlock> CFGBlockListTy;
+  CFGBlock* Entry;
   CFGBlockListTy Blocks;
-
+  
 public:
-
-  CFG() {};
+  CFG() : Entry(NULL) {};
   ~CFG() {};
   
   CFGBlock* createBlock(unsigned blockID) { 
@@ -171,28 +171,28 @@ public:
   typedef std::reverse_iterator<iterator>                     reverse_iterator;
   typedef std::reverse_iterator<const_iterator>         const_reverse_iterator;
 
-  CFGBlock&                    front()             { return Blocks.front();  }
-  CFGBlock&                    back()              { return Blocks.back();   }
+  CFGBlock&                    front()             { return Blocks.front();    }
+  CFGBlock&                    back()              { return Blocks.back();     }
   
-  iterator                     begin()             { return Blocks.begin();   }
-  iterator                     end()               { return Blocks.end();     }
-  const_iterator               begin()       const { return Blocks.begin();   }
-  const_iterator               end()         const { return Blocks.end();     } 
+  iterator                     begin()             { return Blocks.begin();    }
+  iterator                     end()               { return Blocks.end();      }
+  const_iterator               begin()       const { return Blocks.begin();    }
+  const_iterator               end()         const { return Blocks.end();      } 
   
-  reverse_iterator             rbegin()            { return Blocks.rbegin();  }
-  reverse_iterator             rend()              { return Blocks.rend();    }
-  const_reverse_iterator       rbegin()      const { return Blocks.rbegin();  }
-  const_reverse_iterator       rend()        const { return Blocks.rend();    }
+  reverse_iterator             rbegin()            { return Blocks.rbegin();   }
+  reverse_iterator             rend()              { return Blocks.rend();     }
+  const_reverse_iterator       rbegin()      const { return Blocks.rbegin();   }
+  const_reverse_iterator       rend()        const { return Blocks.rend();     }
   
-  CFGBlock&                    getEntry()          { return front();          }
-  CFGBlock&                    getExit()           { return back();           }
+  CFGBlock&                    getEntry()   { return Entry ? *Entry : front(); }
+  CFGBlock&                    getExit()           { return back();            }
   
   // Utility
   
   static CFG* BuildCFG(Stmt* AST);
   void print(std::ostream& OS);
   void dump();
-      
+  void setEntry(CFGBlock *B) { Entry = B; }      
 };
 
 } // end namespace clang
