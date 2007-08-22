@@ -60,7 +60,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
   LabelMapTy LabelMap;
   
-  typedef std::list<CFGBlock*> BackpatchBlocksTy;
+  typedef std::vector<CFGBlock*> BackpatchBlocksTy;
   BackpatchBlocksTy BackpatchBlocks;
   
 public:  
