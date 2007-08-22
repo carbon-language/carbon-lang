@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Parse/Parser.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
@@ -234,7 +235,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
       ConsumeToken();
     else if (Tok.getKind() == tok::eof)
       return;
-    else
+    else 
+      // FIXME: as the name implies, this rule allows function definitions.
+      // We could pass a flag or check for functions during semantic analysis.
       ParseDeclarationOrFunctionDefinition();
   }
 }
@@ -244,11 +247,14 @@ void Parser::ParseObjCPropertyDecl(SourceLocation atLoc) {
 }
 
 ///   objc-methodproto:
-///     objc-instance-method objc-method-decl ';'
-///     objc-class-method objc-method-decl ';'
+///     objc-instance-method objc-method-decl objc-method-attributes[opt] ';'
+///     objc-class-method objc-method-decl objc-method-attributes[opt] ';'
 ///
 ///   objc-instance-method: '-'
 ///   objc-class-method: '+'
+///
+///   objc-method-attributes:         [OBJC2]
+///     __attribute__((deprecated))
 ///
 void Parser::ParseObjCMethodPrototype() {
   assert((Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) && 
@@ -260,6 +266,10 @@ void Parser::ParseObjCMethodPrototype() {
   // FIXME: deal with "context sensitive" protocol qualifiers in prototypes
   ParseObjCMethodDecl(methodType, methodLoc);
   
+  // If attributes exist after the method, parse them.
+  if (Tok.getKind() == tok::kw___attribute)
+    ParseAttributes();
+    
   // Consume the ';'.
   ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "method proto");
 }
@@ -316,9 +326,9 @@ void Parser::ParseObjCTypeName() {
 
 ///   objc-method-decl:
 ///     objc-selector
-///     objc-keyword-selector objc-optparmlist
+///     objc-keyword-selector objc-parmlist[opt]
 ///     objc-type-name objc-selector
-///     objc-type-name objc-keyword-selector objc-optparmlist
+///     objc-type-name objc-keyword-selector objc-parmlist[opt]
 ///
 ///   objc-keyword-selector:
 ///     objc-keyword-decl
@@ -330,21 +340,58 @@ void Parser::ParseObjCTypeName() {
 ///     ':' objc-type-name identifier
 ///     ':' identifier
 ///
-///   objc-optparmlist:
-///     objc-optparms objc-optellipsis
+///   objc-parmlist:
+///     objc-parms objc-ellipsis[opt]
 ///
-///   objc-optparms:
-///     empty
-///     objc-opt-parms , parameter-declaration
+///   objc-parms:
+///     objc-parms , parameter-declaration
 ///
-///   objc-optellipsis:
-///     empty
+///   objc-ellipsis:
 ///     , ...
 ///
 void Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc) {
+
+  // Parse the return type.
   if (Tok.getKind() == tok::l_paren)
     ParseObjCTypeName();
-  ParseObjCSelector();
+  IdentifierInfo *selIdent = ParseObjCSelector();
+  
+  if (Tok.getKind() == tok::colon) {
+    IdentifierInfo *keywordSelector = selIdent;
+    while (1) {
+      // Each iteration parses a single keyword argument.
+      if (Tok.getKind() != tok::colon) {
+        Diag(Tok, diag::err_expected_colon);
+        break;
+      }
+      ConsumeToken(); // Eat the ':'.
+      if (Tok.getKind() == tok::l_paren) // Parse the argument type.
+        ParseObjCTypeName();
+      if (Tok.getKind() != tok::identifier) {
+        Diag(Tok, diag::err_expected_ident); // missing argument name.
+        break;
+      }
+      ConsumeToken(); // Eat the identifier.
+      // FIXME: add Actions.BuildObjCKeyword()
+      
+      keywordSelector = ParseObjCSelector();
+      if (!keywordSelector && Tok.getKind() != tok::colon)
+        break;
+      // We have a selector or a colon, continue parsing.
+    }
+    // Parse the (optional) parameter list.
+    while (Tok.getKind() == tok::comma) {
+      ConsumeToken();
+      if (Tok.getKind() == tok::ellipsis) {
+        ConsumeToken();
+        break;
+      }
+      ParseDeclaration(Declarator::PrototypeContext);
+    }
+  } else if (!selIdent) {
+    Diag(Tok, diag::err_expected_ident); // missing selector name.
+  }
+  // FIXME: add Actions.BuildMethodSignature().
 }
 
 ///   objc-protocol-refs:
