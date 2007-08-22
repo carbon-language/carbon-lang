@@ -356,8 +356,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
 /// [GNU]   '_Decimal128'
 /// [GNU]   typeof-specifier
 /// [OBJC]  class-name objc-protocol-refs[opt]    [TODO]
-/// [OBJC]  typedef-name objc-protocol-refs       [TODO]
-/// [OBJC]  objc-protocol-refs                    [TODO]
+/// [OBJC]  typedef-name objc-protocol-refs[opt]  [TODO]
 ///       type-qualifier:
 ///         'const'
 ///         'volatile'
@@ -384,7 +383,15 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
                                                CurScope)) {
           isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
                                          TypeRep);
-          break;
+          if (isInvalid)
+            break;
+          else { // FIXME: restrict this to "id" and ObjC classnames.
+            DS.Range.setEnd(Tok.getLocation());
+            ConsumeToken(); // The identifier
+            if (Tok.getKind() == tok::less)
+              ParseObjCProtocolReferences();
+            continue;
+          }
         }
       }
       // FALL THROUGH.

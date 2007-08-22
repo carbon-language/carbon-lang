@@ -267,6 +267,7 @@ private:
   DeclTy *ParseObjCAtAliasDeclaration();
   
   IdentifierInfo *ParseObjCSelector();
+  bool isObjCTypeQualifier();
   void ParseObjCTypeName();
   void ParseObjCMethodRequirement();
   void ParseObjCMethodPrototype();

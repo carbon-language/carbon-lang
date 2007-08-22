@@ -301,6 +301,20 @@ IdentifierInfo *Parser::ParseObjCSelector() {
   return II;
 }
 
+///   objc-type-qualifier: one of
+///     in out inout bycopy byref oneway
+///
+///   FIXME: remove the string compares...
+bool Parser::isObjCTypeQualifier() {
+  if (Tok.getKind() == tok::identifier) {
+    const char *qual = Tok.getIdentifierInfo()->getName();
+    return (strcmp(qual, "in") == 0) || (strcmp(qual, "out") == 0) ||
+           (strcmp(qual, "inout") == 0) || (strcmp(qual, "oneway") == 0) ||
+           (strcmp(qual, "bycopy") == 0) || (strcmp(qual, "byref") == 0);
+  }
+  return false;
+}
+
 ///   objc-type-name:
 ///     '(' objc-type-qualifiers[opt] type-name ')'
 ///     '(' objc-type-qualifiers[opt] ')'
@@ -309,14 +323,14 @@ IdentifierInfo *Parser::ParseObjCSelector() {
 ///     objc-type-qualifier
 ///     objc-type-qualifiers objc-type-qualifier
 ///
-///   objc-type-qualifier: one of
-///     in out inout bycopy byref oneway
-///
 void Parser::ParseObjCTypeName() {
   assert(Tok.getKind() == tok::l_paren && "expected (");
   
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   
+  while (isObjCTypeQualifier())
+    ConsumeToken();
+
   if (isTypeSpecifierQualifier()) {
     //TypeTy *Ty = ParseTypeName();
     //assert(Ty && "Parser::ParseObjCTypeName(): missing type");
