@@ -117,6 +117,23 @@ mode.
 Note that this (and the static variable version) is discussed here for GCC:
 http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
 
+Here's another example (the sgn function):
+double testf(double a) {
+       return a == 0.0 ? 0.0 : (a > 0.0 ? 1.0 : -1.0);
+}
+
+it produces a BB like this:
+LBB1_1: ; cond_true
+        lis r2, ha16(LCPI1_0)
+        lfs f0, lo16(LCPI1_0)(r2)
+        lis r2, ha16(LCPI1_1)
+        lis r3, ha16(LCPI1_2)
+        lfs f2, lo16(LCPI1_2)(r3)
+        lfs f3, lo16(LCPI1_1)(r2)
+        fsub f0, f0, f1
+        fsel f1, f0, f2, f3
+        blr 
+
 ===-------------------------------------------------------------------------===
 
 PIC Code Gen IPO optimization:
