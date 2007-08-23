@@ -54,7 +54,7 @@ public:
   
   /// This is used internally to convert an APInt to a string.
   /// @brief Converts an APInt to a std::string
-  std::string toString(uint8_t Radix) const {
+  std::string toString(uint8_t Radix = 10) const {
     return APInt::toString(Radix, isSigned());
   }
   
