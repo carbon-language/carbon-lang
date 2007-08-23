@@ -198,6 +198,19 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
   }
 }
 
+namespace {
+  struct CaseCompareFunctor {
+    bool operator()(const std::pair<llvm::APSInt, CaseStmt*> &LHS,
+                    const llvm::APSInt &RHS) {
+      return LHS.first < RHS;
+    }
+    bool operator()(const llvm::APSInt &LHS,
+                    const std::pair<llvm::APSInt, CaseStmt*> &RHS) {
+      return LHS < RHS.first;
+    }
+  };
+}
+
 Action::StmtResult
 Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   Stmt *BodyStmt = (Stmt*)Body;
@@ -225,7 +238,8 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   // Accumulate all of the case values in a vector so that we can sort them
   // and detect duplicates.  This vector contains the APInt for the case after
   // it has been converted to the condition type.
-  llvm::SmallVector<std::pair<llvm::APSInt, CaseStmt*>, 64> CaseVals;
+  typedef llvm::SmallVector<std::pair<llvm::APSInt, CaseStmt*>, 64> CaseValsTy;
+  CaseValsTy CaseVals;
   
   // Keep track of any GNU case ranges we see.  The APSInt is the low value.
   std::vector<std::pair<llvm::APSInt, CaseStmt*> > CaseRanges;
@@ -294,7 +308,7 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   if (!CaseRanges.empty()) {
     // Sort all the case ranges by their low value so we can easily detect
     // overlaps between ranges.
-    std::stable_sort(CaseVals.begin(), CaseVals.end());
+    std::stable_sort(CaseRanges.begin(), CaseRanges.end());
     
     // Scan the ranges, computing the high values and removing empty ranges.
     std::vector<llvm::APSInt> HiVals;
@@ -321,12 +335,50 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
     }
 
     // Rescan the ranges, looking for overlap with singleton values and other
-    // ranges.
+    // ranges.  Since the range list is sorted, we only need to compare case
+    // ranges with their neighbors.
     for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
-      //llvm::APSInt &CRLow = CaseRanges[i].first;
-      //CaseStmt *CR = CaseRanges[i].second;
+      llvm::APSInt &CRLo = CaseRanges[i].first;
+      llvm::APSInt &CRHi = HiVals[i];
+      CaseStmt *CR = CaseRanges[i].second;
       
-      // FIXME: TODO.
+      // Check to see whether the case range overlaps with any singleton cases.
+      CaseStmt *OverlapStmt = 0;
+      llvm::APSInt OverlapVal(32);
+      
+      // Find the smallest value >= the lower bound.  If I is in the case range,
+      // then we have overlap.
+      CaseValsTy::iterator I = std::lower_bound(CaseVals.begin(),
+                                                CaseVals.end(), CRLo,
+                                                CaseCompareFunctor());
+      if (I != CaseVals.end() && I->first < CRHi) {
+        OverlapVal  = I->first;   // Found overlap with scalar.
+        OverlapStmt = I->second;
+      }
+
+      // Find the smallest value bigger than the upper bound.
+      I = std::upper_bound(I, CaseVals.end(), CRHi, CaseCompareFunctor());
+      if (I != CaseVals.begin() && (I-1)->first >= CRLo) {
+        OverlapVal  = (I-1)->first;      // Found overlap with scalar.
+        OverlapStmt = (I-1)->second;
+      }
+
+      // Check to see if this case stmt overlaps with the subsequent case range.
+      if (i && CRLo <= HiVals[i-1]) {
+        OverlapVal  = HiVals[i-1];       // Found overlap with range.
+        OverlapStmt = CaseRanges[i-1].second;
+      }
+      
+      if (OverlapStmt) {
+        // If we have a duplicate, report it.
+        Diag(CR->getLHS()->getLocStart(),
+             diag::err_duplicate_case, OverlapVal.toString());
+        Diag(OverlapStmt->getLHS()->getLocStart(), 
+             diag::err_duplicate_case_prev);
+        // FIXME: We really want to remove the bogus case stmt from the substmt,
+        // but we have no way to do this right now.
+        CaseListIsErroneous = true;
+      }
     }
   }
   
