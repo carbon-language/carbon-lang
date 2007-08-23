@@ -8,8 +8,9 @@ void f (int z) {
 
 void foo(int X) {
   switch (X) {
+  case 42: ;          // expected-error {{previous case value}}
   case 5000000000LL:  // expected-warning {{overflow}}
-  case 42:
+  case 42:            // expected-error {{duplicate case value}}
    ;
   }
 }

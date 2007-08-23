@@ -715,6 +715,10 @@ DIAG(err_case_not_in_switch, ERROR,
      "'case' statement not in switch statement")
 DIAG(warn_case_value_overflow, WARNING,
      "overflow converting case value to switch condition type (%0 to %1)")
+DIAG(err_duplicate_case, ERROR,
+     "duplicate case value '%0'")
+DIAG(err_duplicate_case_prev, ERROR,
+     "previous case value occurrence defined here")
 DIAG(err_typecheck_return_incompatible, ERROR,
      "incompatible type returning '%1', expected '%0'")
 DIAG(ext_typecheck_return_pointer_int, WARNING,

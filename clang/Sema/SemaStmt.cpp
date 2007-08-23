@@ -232,9 +232,11 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   
   DefaultStmt *TheDefaultStmt = 0;
   
-  // FIXME: The list of cases is backwards and needs to be reversed.
-  for (SwitchCase *SC = SS->getSwitchCaseList(); SC; 
+  bool CaseListIsErroneous = false;
+  
+  for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
        SC = SC->getNextSwitchCase()) {
+    
     if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC)) {
       if (TheDefaultStmt) {
         Diag(DS->getDefaultLoc(), diag::err_multiple_default_labels_defined);
@@ -244,7 +246,7 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
         // we'll return a valid AST.  This requires recursing down the
         // AST and finding it, not something we are set up to do right now.  For
         // now, just lop the entire switch stmt out of the AST.
-        return true;
+        CaseListIsErroneous = true;
       }
       TheDefaultStmt = DS;
       
@@ -261,34 +263,69 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
                                          CS->getLHS()->getLocStart(),
                                          diag::warn_case_value_overflow);
 
-      // Remember the converted value.
-      CaseVals.push_back(std::make_pair(LoVal, CS));
-      
-      // Just remember where the case range was.
+      // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
       if (CS->getRHS())
         CaseRanges.push_back(std::make_pair(LoVal, CS));
+      else 
+        CaseVals.push_back(std::make_pair(LoVal, CS));
     }
   }
   
+  // Sort all the scalar case values so we can easily detect duplicates.
+  std::stable_sort(CaseVals.begin(), CaseVals.end());
   
+  for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
+    if (CaseVals[i].first == CaseVals[i+1].first) {
+      // If we have a duplicate, report it.
+      Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
+           diag::err_duplicate_case, CaseVals[i].first.toString());
+      Diag(CaseVals[i].second->getLHS()->getLocStart(), 
+           diag::err_duplicate_case_prev);
+      // FIXME: We really want to remove the bogus case stmt from the substmt,
+      // but we have no way to do this right now.
+      CaseListIsErroneous = true;
+    }
+  }
   
-#if 0
-  assert(CaseRanges.empty() && "FIXME: Check case ranges for overlap etc");
-  // TODO: if the low value is bigger than the high value, the case is
-  // empty: emit "empty range specified" warning and drop the c
+  // Detect duplicate case ranges, which usually don't exist at all in the first
+  // place.
+  if (!CaseRanges.empty()) {
+    // Sort all the case ranges by their low value so we can easily detect
+    // overlaps between ranges.
+    std::stable_sort(CaseVals.begin(), CaseVals.end());
+    
+    // Scan the ranges, computing the high values and removing empty ranges.
+    std::vector<llvm::APSInt> HiVals;
+    for (unsigned i = 0, e = CaseVals.size(); i != e; ++i) {
+      CaseStmt *CR = CaseRanges[i].second;
+      llvm::APSInt HiVal(32);
+      CR->getRHS()->isIntegerConstantExpr(HiVal, Context);
+
+      // Convert the value to the same width/sign as the condition.
+      ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
+                                         CR->getRHS()->getLocStart(),
+                                         diag::warn_case_value_overflow);
+      
+      // FIXME: if the low value is bigger than the high value, the case is
+      // empty: emit "empty range specified" warning and drop it.
+
+      HiVals.push_back(HiVal);
+    }
+
+    // Rescan the ranges, looking for overlap with singleton values and other
+    // ranges.
+    for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
+      //llvm::APSInt &CRLow = CaseRanges[i].first;
+      //CaseStmt *CR = CaseRanges[i].second;
+      
+      // FIXME: TODO.
+    }
+  }
   
-  llvm::APSInt HiVal(32);
-  RHS->isIntegerConstantExpr(HiVal, Context);
-  
-  // Convert the value to the same width/sign as the condition.
-  ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned);
-  
-  // If low value and high value equal, just forget about it as a range
-  // for the purposes of checking: it identifies a single value.
-  if (LoVal == HiVal)
-    continue;
-  
-#endif
+  // FIXME: If the case list was broken is some way, we don't have a good system
+  // to patch it up.  Instead, just return the whole substmt as broken.
+  if (CaseListIsErroneous)
+    return true;
   
   return SS;
 }
