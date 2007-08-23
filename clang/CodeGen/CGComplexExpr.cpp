@@ -106,7 +106,8 @@ public:
   
   ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
-  // FIXME: sub/div/rem
+  ComplexPairTy VisitBinSub        (const BinaryOperator *E);
+  // FIXME: div/rem
   // GCC rejects and/or/xor for integer complex.
   // Logical and/or always return int, never complex.
 
@@ -224,6 +225,17 @@ ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
 
   return ComplexPairTy(ResR, ResI);
 }
+
+ComplexPairTy ComplexExprEmitter::VisitBinSub(const BinaryOperator *E) {
+  ComplexPairTy LHS = Visit(E->getLHS());
+  ComplexPairTy RHS = Visit(E->getRHS());
+  
+  llvm::Value *ResR = Builder.CreateSub(LHS.first,  RHS.first,  "sub.r");
+  llvm::Value *ResI = Builder.CreateSub(LHS.second, RHS.second, "sub.i");
+  
+  return ComplexPairTy(ResR, ResI);
+}
+
 
 ComplexPairTy ComplexExprEmitter::VisitBinMul(const BinaryOperator *E) {
   ComplexPairTy LHS = Visit(E->getLHS());
