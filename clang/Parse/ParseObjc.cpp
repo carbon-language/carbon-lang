@@ -677,13 +677,10 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression() {
   
   TypeTy *Ty = ParseTypeName();
   
-  if (Tok.getKind() != tok::r_paren) {
-    Diag(Tok, diag::err_expected_rparen);
-    return true;
-  }
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
    
   return Actions.ParseObjCEncodeExpression(EncLoc, LParenLoc, Ty, 
-                                           ConsumeParen());
+                                           RParenLoc);
 }
 
 ///     objc-protocol-expression
@@ -708,12 +705,7 @@ Parser::ExprResult Parser::ParseObjCProtocolExpression()
   // FIXME: Do something with the protocol name
   ConsumeToken();
   
-  if (Tok.getKind() != tok::r_paren) {
-    Diag(Tok, diag::err_expected_rparen);
-    return true;
-  }
-  
-  ConsumeParen();
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
   // FIXME 
   return 0;
