@@ -162,7 +162,8 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
       bool AllowUnsigned = Literal.isUnsigned || Literal.getRadix() != 10;
 
       // Check from smallest to largest, picking the smallest type we can.
-      if (!Literal.isLong) {  // Are int/unsigned possibilities?
+      if (!Literal.isLong && !Literal.isLongLong) {
+        // Are int/unsigned possibilities?
         unsigned IntSize = Context.getTypeSize(Context.IntTy,Tok.getLocation());
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
