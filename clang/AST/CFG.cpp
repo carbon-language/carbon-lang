@@ -23,17 +23,16 @@ using namespace clang;
 
 namespace {
 
-  // SaveAndRestore - A utility class that uses RIIA to save and restore
-  //  the value of a variable.
-  template<typename T>
-  struct SaveAndRestore {
-    SaveAndRestore(T& x) : X(x), old_value(x) {}
-    ~SaveAndRestore() { X = old_value; }
-    
-    T& X;
-    T old_value;
-  };
-}
+// SaveAndRestore - A utility class that uses RIIA to save and restore
+//  the value of a variable.
+template<typename T>
+struct SaveAndRestore {
+  SaveAndRestore(T& x) : X(x), old_value(x) {}
+  ~SaveAndRestore() { X = old_value; }
+  
+  T& X;
+  T old_value;
+};
   
 /// CFGBuilder - This class is implements CFG construction from an AST.
 ///   The builder is stateful: an instance of the builder should be used to only
@@ -607,7 +606,7 @@ public:
   }
 
 };
-
+} // end anonymous namespace
 
 /// createBlock - Constructs and adds a new CFGBlock to the CFG.  The
 ///  block has no successors or predecessors.  If this is the first block
