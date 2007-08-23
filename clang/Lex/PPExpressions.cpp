@@ -434,10 +434,10 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       if (ValueLive && Res.isUnsigned()) {
         if (!LHS.isUnsigned() && LHS.isNegative())
           PP.Diag(OpToken, diag::warn_pp_convert_lhs_to_positive,
-                  LHS.toString(10, true) + " to " + LHS.toString(10, false));
+                  LHS.toStringSigned() + " to " + LHS.toStringUnsigned());
         if (!RHS.isUnsigned() && RHS.isNegative())
           PP.Diag(OpToken, diag::warn_pp_convert_rhs_to_positive,
-                  RHS.toString(10, true) + " to " + RHS.toString(10, false));
+                  RHS.toStringSigned() + " to " + RHS.toStringUnsigned());
       }
       LHS.setIsUnsigned(Res.isUnsigned());
       RHS.setIsUnsigned(Res.isUnsigned());
