@@ -104,8 +104,9 @@ public:
         GotoStmt* G = cast<GotoStmt>(B->getTerminator());
         LabelMapTy::iterator LI = LabelMap.find(G->getLabel());
 
-        if (LI == LabelMap.end())
-          return NULL; // No matching label.  Bad CFG.
+        // If there is no target for the goto, then we are looking at an
+        // incomplete AST.  Handle this by not registering a successor.
+        if (LI == LabelMap.end()) continue;
         
         B->addSuccessor(LI->second);                   
       }                          
@@ -511,10 +512,10 @@ public:
     Block = createBlock(false);
     Block->setTerminator(C);
     
-    // FIXME: We should gracefully handle continues without resolved targets.
-    assert (ContinueTargetBlock);
+    // If there is no target for the continue, then we are looking at an
+    // incomplete AST.  Handle this by not registering a successor.
+    if (ContinueTargetBlock) Block->addSuccessor(ContinueTargetBlock);
     
-    Block->addSuccessor(ContinueTargetBlock);
     return Block;
   }
   
@@ -527,10 +528,10 @@ public:
     Block = createBlock(false);
     Block->setTerminator(B);
     
-    // FIXME: We should gracefully handle breaks without resolved targets.
-    assert (BreakTargetBlock);
-    
-    Block->addSuccessor(BreakTargetBlock);
+    // If there is no target for the break, then we are looking at an
+    // incomplete AST.  Handle this by not registering a successor.
+    if (BreakTargetBlock) Block->addSuccessor(BreakTargetBlock);
+
     return Block;  
   }
   
