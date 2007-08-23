@@ -15,3 +15,7 @@ void foo(int X) {
   }
 }
 
+void test3(void) { 
+  switch (0); 
+}
+

@@ -274,16 +274,18 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   // Sort all the scalar case values so we can easily detect duplicates.
   std::stable_sort(CaseVals.begin(), CaseVals.end());
   
-  for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
-    if (CaseVals[i].first == CaseVals[i+1].first) {
-      // If we have a duplicate, report it.
-      Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
-           diag::err_duplicate_case, CaseVals[i].first.toString());
-      Diag(CaseVals[i].second->getLHS()->getLocStart(), 
-           diag::err_duplicate_case_prev);
-      // FIXME: We really want to remove the bogus case stmt from the substmt,
-      // but we have no way to do this right now.
-      CaseListIsErroneous = true;
+  if (!CaseVals.empty()) {
+    for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
+      if (CaseVals[i].first == CaseVals[i+1].first) {
+        // If we have a duplicate, report it.
+        Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
+             diag::err_duplicate_case, CaseVals[i].first.toString());
+        Diag(CaseVals[i].second->getLHS()->getLocStart(), 
+             diag::err_duplicate_case_prev);
+        // FIXME: We really want to remove the bogus case stmt from the substmt,
+        // but we have no way to do this right now.
+        CaseListIsErroneous = true;
+      }
     }
   }
   
