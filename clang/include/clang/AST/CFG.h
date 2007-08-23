@@ -154,16 +154,12 @@ public:
 class CFG {
   typedef std::list<CFGBlock> CFGBlockListTy;
   CFGBlock* Entry;
+  CFGBlock* Exit;
   CFGBlockListTy Blocks;
   
 public:
-  CFG() : Entry(NULL) {};
+  CFG() : Entry(NULL), Exit(NULL) {};
   ~CFG() {};
-  
-  CFGBlock* createBlock(unsigned blockID) { 
-    Blocks.push_front(CFGBlock(blockID));
-    return &front();
-  }
   
   // Block iterators
   typedef CFGBlockListTy::iterator                                    iterator;
@@ -184,12 +180,13 @@ public:
   const_reverse_iterator       rbegin()      const { return Blocks.rbegin();   }
   const_reverse_iterator       rend()        const { return Blocks.rend();     }
   
-  CFGBlock&                    getEntry()   { return Entry ? *Entry : front(); }
-  CFGBlock&                    getExit()           { return back();            }
+  CFGBlock&                    getEntry()          { return *Entry;            }
+  CFGBlock&                    getExit()           { return *Exit;             }
   
   // Utility
   
-  static CFG* BuildCFG(Stmt* AST);
+  CFGBlock* createBlock(unsigned blockID);
+  static CFG* buildCFG(Stmt* AST);
   void print(std::ostream& OS);
   void dump();
   void setEntry(CFGBlock *B) { Entry = B; }      
