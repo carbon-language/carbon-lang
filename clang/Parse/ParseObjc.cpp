@@ -634,9 +634,15 @@ Parser::ExprResult Parser::ParseObjCExpression() {
     case tok::string_literal:    // primary-expression: string-literal
     case tok::wide_string_literal:
       return ParseObjCStringLiteral();
+    default:
+      break;
+  }
+  
+  switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
     case tok::objc_encode:
       return ParseObjCEncodeExpression();
-      break;
+    case tok::objc_protocol:
+      return ParseObjCProtocolExpression();
     default:
       Diag(AtLoc, diag::err_unexpected_at);
       SkipUntil(tok::semi);
@@ -678,4 +684,37 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression() {
    
   return Actions.ParseObjCEncodeExpression(EncLoc, LParenLoc, Ty, 
                                            ConsumeParen());
+}
+
+///     objc-protocol-expression
+///       @protocol ( protocol-name )
+
+Parser::ExprResult Parser::ParseObjCProtocolExpression()
+{
+  SourceLocation ProtoLoc = ConsumeToken();
+  
+  if (Tok.getKind() != tok::l_paren) {
+    Diag(Tok, diag::err_expected_lparen_after, "@protocol");
+    return true;
+  }
+  
+  SourceLocation LParenLoc = ConsumeParen();
+  
+  if (Tok.getKind() != tok::identifier) {
+    Diag(Tok, diag::err_expected_ident);
+    return true;
+  }
+
+  // FIXME: Do something with the protocol name
+  ConsumeToken();
+  
+  if (Tok.getKind() != tok::r_paren) {
+    Diag(Tok, diag::err_expected_rparen);
+    return true;
+  }
+  
+  ConsumeParen();
+
+  // FIXME 
+  return 0;
 }
