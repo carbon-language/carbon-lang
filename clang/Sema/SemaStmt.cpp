@@ -180,13 +180,16 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     // If this is a truncation, check for overflow.
     llvm::APSInt ConvVal(Val);
     ConvVal.trunc(NewWidth);
+    ConvVal.setIsSigned(NewSign);
     ConvVal.extend(Val.getBitWidth());
+    ConvVal.setIsSigned(Val.isSigned());
     if (ConvVal != Val)
       Diag(Loc, DiagID, Val.toString(), ConvVal.toString());
     
     // Regardless of whether a diagnostic was emitted, really do the
     // truncation.
     Val.trunc(NewWidth);
+    Val.setIsSigned(NewSign);
   } else if (NewSign != Val.isSigned()) {
     // Convert the sign to match the sign of the condition.  This can cause
     // overflow as well: unsigned(INTMIN)
