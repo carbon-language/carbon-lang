@@ -441,6 +441,67 @@ public:
     return ConditionBlock;
   }
   
+  CFGBlock* VisitDoStmt(DoStmt* D) {
+    // "do...while" is a control-flow statement.  Thus we stop processing the
+    // current block.
+    
+    CFGBlock* LoopSuccessor = NULL;
+    
+    if (Block) {
+      FinishBlock(Block);
+      LoopSuccessor = Block;
+    }
+    else LoopSuccessor = Succ;
+    
+    // Create the condition block.
+    CFGBlock* ConditionBlock = createBlock(false);
+    ConditionBlock->setTerminator(D);
+    if (Stmt* C = D->getCond()) ConditionBlock->appendStmt(C);        
+    
+    // The condition block is the implicit successor for the loop body.
+    Succ = ConditionBlock;
+    
+    CFGBlock* BodyBlock = NULL;
+    // Process the loop body.
+    {
+      assert (D->getBody());
+      
+      // Save the current values for Block, Succ, and continue and break targets
+      SaveAndRestore<CFGBlock*> save_Block(Block), save_Succ(Succ),
+      save_continue(ContinueTargetBlock),
+      save_break(BreakTargetBlock);
+      
+      // All continues within this loop should go to the condition block
+      ContinueTargetBlock = ConditionBlock;
+      
+      // All breaks should go to the code following the loop.
+      BreakTargetBlock = LoopSuccessor;
+      
+      // NULL out Block to force lazy instantiation of blocks for the body.
+      Block = NULL;
+      
+      // Create the body.  The returned block is the entry to the loop body.
+      BodyBlock = Visit(D->getBody());
+      assert (BodyBlock);
+      FinishBlock(BodyBlock);
+      
+      // Add the loop body entry as a successor to the condition.
+      ConditionBlock->addSuccessor(BodyBlock);
+    }
+    
+    // Link up the condition block with the code that follows the loop.
+    // (the false branch).
+    ConditionBlock->addSuccessor(LoopSuccessor);
+    
+    // There can be no more statements in the condition block
+    // since we loop back to this block.  NULL out Block to force
+    // lazy creation of another block.
+    Block = NULL;
+    
+    // Return the loop body, which is the dominating block for the loop.
+    return BodyBlock;
+  }
+  
   CFGBlock* VisitContinueStmt(ContinueStmt* C) {
     // "continue" is a control-flow statement.  Thus we stop processing the
     // current block.
@@ -566,6 +627,12 @@ namespace {
     void VisitWhileStmt(WhileStmt* W) {
       OS << "while " ;
       if (Stmt* C = W->getCond()) C->printPretty(OS);
+      OS << "\n";
+    }
+    
+    void VisitDoStmt(DoStmt* D) {
+      OS << "do ... while ";
+      if (Stmt* C = D->getCond()) C->printPretty(OS);
       OS << "\n";
     }                                                       
   };
