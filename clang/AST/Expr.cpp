@@ -401,8 +401,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
-    if (Exp->isSizeOfAlignOfOp()) isEvaluated = false;
-    if (!Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx,Loc, isEvaluated))
+    if (!Exp->isSizeOfAlignOfOp() &&
+        !Exp->getSubExpr()->isIntegerConstantExpr(Result, Ctx, Loc,isEvaluated))
       return false;
 
     switch (Exp->getOpcode()) {
