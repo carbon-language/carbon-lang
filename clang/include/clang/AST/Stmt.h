@@ -145,8 +145,10 @@ class SwitchCase : public Stmt {
   // A pointer to the following CaseStmt or DefaultStmt class,
   // used by SwitchStmt.
   SwitchCase *NextSwitchCase;
+  Stmt *SubStmt;
 protected:
-  SwitchCase(StmtClass SC) : Stmt(SC), NextSwitchCase(0) {}
+  SwitchCase(StmtClass SC, Stmt* substmt) : Stmt(SC), NextSwitchCase(0),
+                                            SubStmt(substmt) {}
   
 public:
   const SwitchCase *getNextSwitchCase() const { return NextSwitchCase; }
@@ -154,6 +156,8 @@ public:
   SwitchCase *getNextSwitchCase() { return NextSwitchCase; }
 
   void setNextSwitchCase(SwitchCase *SC) { NextSwitchCase = SC; }
+  
+  Stmt *getSubStmt() { return SubStmt; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass || 
@@ -165,14 +169,12 @@ public:
 class CaseStmt : public SwitchCase {
   Expr *LHSVal;
   Expr *RHSVal;  // Non-null for GNU "case 1 ... 4" extension
-  Stmt *SubStmt;
 public:
   CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
-    : SwitchCase(CaseStmtClass), LHSVal(lhs), RHSVal(rhs), SubStmt(substmt) {}
+    : SwitchCase(CaseStmtClass,substmt), LHSVal(lhs), RHSVal(rhs) {}
   
   Expr *getLHS() { return LHSVal; }
   Expr *getRHS() { return RHSVal; }
-  Stmt *getSubStmt() { return SubStmt; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass; 
@@ -182,13 +184,11 @@ public:
 
 class DefaultStmt : public SwitchCase {
   SourceLocation DefaultLoc;
-  Stmt *SubStmt;
 public:
-  DefaultStmt(SourceLocation DL, Stmt *substmt) : SwitchCase(DefaultStmtClass), 
-    DefaultLoc(DL), SubStmt(substmt) {}
+  DefaultStmt(SourceLocation DL, Stmt *substmt) : 
+    SwitchCase(DefaultStmtClass,substmt), DefaultLoc(DL) {}
   
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
-  Stmt *getSubStmt() { return SubStmt; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DefaultStmtClass; 
