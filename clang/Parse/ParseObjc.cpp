@@ -122,15 +122,18 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
   
-  if (Tok.getKind() == tok::l_paren) { // we have a category
+  if (Tok.getKind() == tok::l_paren) { // we have a category.
     SourceLocation lparenLoc = ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
     
-    // OBJC2: The cateogry name is optional (not an error).
+    // For ObjC2, the category name is optional (not an error).
     if (Tok.getKind() == tok::identifier) {
       categoryId = Tok.getIdentifierInfo();
       categoryLoc = ConsumeToken();
+    } else if (!getLang().ObjC2) {
+      Diag(Tok, diag::err_expected_ident); // missing category name.
+      return 0;
     }
     if (Tok.getKind() != tok::r_paren) {
       Diag(Tok, diag::err_expected_rparen);
@@ -268,7 +271,7 @@ void Parser::ParseObjCMethodPrototype() {
   ParseObjCMethodDecl(methodType, methodLoc);
   
   // If attributes exist after the method, parse them.
-  if (Tok.getKind() == tok::kw___attribute)
+  if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute)
     ParseAttributes();
     
   // Consume the ';'.
@@ -387,7 +390,7 @@ void Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc) {
         ParseObjCTypeName();
 
       // If attributes exist before the argument name, parse them.
-      if (Tok.getKind() == tok::kw___attribute)
+      if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute)
         ParseAttributes();
 
       if (Tok.getKind() != tok::identifier) {

@@ -370,8 +370,8 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
     return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
   }
   
-  // OBJC: This grammar hack allows prefix attributes on class interfaces.
-  if (Tok.getKind() == tok::at) {
+  // ObjC2 allows prefix attributes on class interfaces.
+  if (getLang().ObjC2 && Tok.getKind() == tok::at) {
     SourceLocation AtLoc = ConsumeToken(); // the "@"
     if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_interface)
       return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes()); 
