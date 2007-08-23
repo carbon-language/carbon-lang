@@ -1256,7 +1256,8 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   QualType resType = op->getType();
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
-  // C99 6.5.2.4p1
+  // C99 6.5.2.4p1: C99 does not support ++/-- on complex types.
+  // We allow complex as a GCC extension.
   if (const PointerType *pt = dyn_cast<PointerType>(resType)) {
     if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
       Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
@@ -1264,7 +1265,6 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
       return QualType();
     }
   } else if (!resType->isRealType() && !resType->isComplexType()) { 
-    // Allowing Complex is a GCC extension.
     Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
          resType.getAsString(), op->getSourceRange());
     return QualType(); 
@@ -1555,7 +1555,9 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
-    if (!resultType->isIntegerType())  // C99 6.5.3.3p1
+    // C99 6.5.3.3p1. C99 does not support '~' for complex conjugation.
+    // We allow complex as a GCC extension.
+    if (!resultType->isIntegerType() && !resultType->isComplexType())
       return Diag(OpLoc, diag::err_typecheck_unary_expr,
                   resultType.getAsString());
     break;
