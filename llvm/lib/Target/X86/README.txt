@@ -1134,3 +1134,47 @@ pop into a dummy register instead of using addl/subl of esp.  Just don't pop
 into any return registers :)
 
 //===---------------------------------------------------------------------===//
+
+The X86 backend should fold (branch (or (setcc, setcc))) into multiple 
+branches.  We generate really poor code for:
+
+double testf(double a) {
+       return a == 0.0 ? 0.0 : (a > 0.0 ? 1.0 : -1.0);
+}
+
+For example, the entry BB is:
+
+_testf:
+        subl    $20, %esp
+        pxor    %xmm0, %xmm0
+        movsd   24(%esp), %xmm1
+        ucomisd %xmm0, %xmm1
+        setnp   %al
+        sete    %cl
+        testb   %cl, %al
+        jne     LBB1_5  # UnifiedReturnBlock
+LBB1_1: # cond_true
+
+
+it would be better to replace the last four instructions with:
+
+	jp LBB1_1
+	je LBB1_5
+LBB1_1:
+
+We also codegen the inner ?: into a diamond:
+
+       cvtss2sd        LCPI1_0(%rip), %xmm2
+        cvtss2sd        LCPI1_1(%rip), %xmm3
+        ucomisd %xmm1, %xmm0
+        ja      LBB1_3  # cond_true
+LBB1_2: # cond_true
+        movapd  %xmm3, %xmm2
+LBB1_3: # cond_true
+        movapd  %xmm2, %xmm0
+        ret
+
+We should sink the load into xmm3 into the LBB1_2 block.  This should
+be pretty easy, and will nuke all the copies.
+
+//===---------------------------------------------------------------------===//
