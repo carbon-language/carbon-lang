@@ -21,6 +21,10 @@
 #include <vector>
 #include <string>
 
+namespace llvm {
+  class APSInt;
+}
+
 namespace clang {
   class ASTContext;
   class Preprocessor;
@@ -426,6 +430,13 @@ private:
   /// array has an incomplete type or a valid constant size, return false,
   /// otherwise emit a diagnostic and return true.
   bool VerifyConstantArrayType(const ArrayType *ary, SourceLocation loc);
+  
+  /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
+  /// the specified width and sign.  If an overflow occurs, detect it and emit
+  /// the specified diagnostic.
+  void ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &OldVal, 
+                                          unsigned NewWidth, bool NewSign,
+                                          SourceLocation Loc, unsigned DiagID);
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system

@@ -12,13 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "clang/AST/Stmt.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Lex/IdentifierTable.h"
-
 using namespace clang;
 
 Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
@@ -71,7 +71,7 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
   if (RHSVal && !RHSVal->isIntegerConstantExpr(Context, &ExpLoc)) {
     Diag(ExpLoc, diag::err_case_label_not_integer_constant_expr,
          RHSVal->getSourceRange());
-    return SubStmt;
+    RHSVal = 0;  // Recover by just forgetting about it.
   }
   
   if (SwitchStack.empty()) {
@@ -146,10 +146,56 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
 }
 
 Action::StmtResult
-Sema::StartSwitchStmt(ExprTy *Cond) {
-  SwitchStmt *SS = new SwitchStmt((Expr*)Cond);
+Sema::StartSwitchStmt(ExprTy *cond) {
+  Expr *Cond = static_cast<Expr*>(cond);
+  
+  // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
+  UsualUnaryConversions(Cond);
+  
+  SwitchStmt *SS = new SwitchStmt(Cond);
   SwitchStack.push_back(SS);
   return SS;
+}
+
+/// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
+/// the specified width and sign.  If an overflow occurs, detect it and emit
+/// the specified diagnostic.
+void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
+                                              unsigned NewWidth, bool NewSign,
+                                              SourceLocation Loc, 
+                                              unsigned DiagID) {
+  // Perform a conversion to the promoted condition type if needed.
+  if (NewWidth > Val.getBitWidth()) {
+    // If this is an extension, just do it.
+    llvm::APSInt OldVal(Val);
+    Val.extend(NewWidth);
+    
+    // If the input was signed and negative and the output is unsigned,
+    // warn.
+    if (!NewSign && OldVal.isSigned() && OldVal.isNegative())
+      Diag(Loc, DiagID, OldVal.toString(), Val.toString());
+    
+    Val.setIsSigned(NewSign);
+  } else if (NewWidth < Val.getBitWidth()) {
+    // If this is a truncation, check for overflow.
+    llvm::APSInt ConvVal(Val);
+    ConvVal.trunc(NewWidth);
+    ConvVal.extend(Val.getBitWidth());
+    if (ConvVal != Val)
+      Diag(Loc, DiagID, Val.toString(), ConvVal.toString());
+    
+    // Regardless of whether a diagnostic was emitted, really do the
+    // truncation.
+    Val.trunc(NewWidth);
+  } else if (NewSign != Val.isSigned()) {
+    // Convert the sign to match the sign of the condition.  This can cause
+    // overflow as well: unsigned(INTMIN)
+    llvm::APSInt OldVal(Val);
+    Val.setIsSigned(NewSign);
+    
+    if (Val.isNegative())  // Sign bit changes meaning.
+      Diag(Loc, DiagID, OldVal.toString(), Val.toString());
+  }
 }
 
 Action::StmtResult
@@ -162,37 +208,88 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   SS->setBody(BodyStmt);
   SwitchStack.pop_back(); 
 
-  Expr *condExpr = SS->getCond();
-  QualType condType = condExpr->getType();
+  Expr *CondExpr = SS->getCond();
+  QualType CondType = CondExpr->getType();
   
-  if (!condType->isIntegerType()) { // C99 6.8.4.2p1
+  if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
     Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer,
-         condType.getAsString(), condExpr->getSourceRange());
-    return false;
+         CondType.getAsString(), CondExpr->getSourceRange());
+    return true;
   }
-
-  DefaultStmt *CurDefaultStmt = 0;
+  
+  // Get the bitwidth of the switched-on value before promotions.  We must
+  // convert the integer case values to this width before comparison.
+  unsigned CondWidth = Context.getTypeSize(CondType, SwitchLoc);
+  bool CondIsSigned = CondType->isSignedIntegerType();
+  
+  // Accumulate all of the case values in a vector so that we can sort them
+  // and detect duplicates.  This vector contains the APInt for the case after
+  // it has been converted to the condition type.
+  llvm::SmallVector<std::pair<llvm::APSInt, CaseStmt*>, 64> CaseVals;
+  
+  // Keep track of any GNU case ranges we see.  The APSInt is the low value.
+  std::vector<std::pair<llvm::APSInt, CaseStmt*> > CaseRanges;
+  
+  DefaultStmt *TheDefaultStmt = 0;
   
   // FIXME: The list of cases is backwards and needs to be reversed.
   for (SwitchCase *SC = SS->getSwitchCaseList(); SC; 
        SC = SC->getNextSwitchCase()) {
     if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC)) {
-      if (CurDefaultStmt) {
-        Diag(DS->getDefaultLoc(), 
-            diag::err_multiple_default_labels_defined);
-        Diag(CurDefaultStmt->getDefaultLoc(), 
-            diag::err_first_label);
+      if (TheDefaultStmt) {
+        Diag(DS->getDefaultLoc(), diag::err_multiple_default_labels_defined);
+        Diag(TheDefaultStmt->getDefaultLoc(), diag::err_first_label);
             
-        // FIXME: Remove the default statement from the switch block
-        // so that we'll return a valid AST.
-      } else {
-        CurDefaultStmt = DS;
+        // FIXME: Remove the default statement from the switch block so that
+        // we'll return a valid AST.  This requires recursing down the
+        // AST and finding it, not something we are set up to do right now.  For
+        // now, just lop the entire switch stmt out of the AST.
+        return true;
       }
+      TheDefaultStmt = DS;
       
-      // FIXME: Check that case values are unique here.
-    }    
-  }
+    } else {
+      CaseStmt *CS = cast<CaseStmt>(SC);
+      
+      // We already verified that the expression has a i-c-e value (C99
+      // 6.8.4.2p3) - get that value now.
+      llvm::APSInt LoVal(32);
+      CS->getLHS()->isIntegerConstantExpr(LoVal, Context);
+      
+      // Convert the value to the same width/sign as the condition.
+      ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
+                                         CS->getLHS()->getLocStart(),
+                                         diag::warn_case_value_overflow);
 
+      // Remember the converted value.
+      CaseVals.push_back(std::make_pair(LoVal, CS));
+      
+      // Just remember where the case range was.
+      if (CS->getRHS())
+        CaseRanges.push_back(std::make_pair(LoVal, CS));
+    }
+  }
+  
+  
+  
+#if 0
+  assert(CaseRanges.empty() && "FIXME: Check case ranges for overlap etc");
+  // TODO: if the low value is bigger than the high value, the case is
+  // empty: emit "empty range specified" warning and drop the c
+  
+  llvm::APSInt HiVal(32);
+  RHS->isIntegerConstantExpr(HiVal, Context);
+  
+  // Convert the value to the same width/sign as the condition.
+  ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned);
+  
+  // If low value and high value equal, just forget about it as a range
+  // for the purposes of checking: it identifies a single value.
+  if (LoVal == HiVal)
+    continue;
+  
+#endif
+  
   return SS;
 }
 
