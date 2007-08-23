@@ -105,7 +105,13 @@ public:
   /// isExpandDisabled - Return true if this identifier token should never
   /// be expanded in the future, due to C99 6.10.3.4p2.
   bool isExpandDisabled() const { return Flags & DisableExpand; }
-    
+  
+  /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
+  bool isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const;
+  
+  /// getObjCKeywordID - Return the ObjC keyword kind.
+  tok::ObjCKeywordKind getObjCKeywordID() const;
+  
   /// needsCleaning - Return true if this token has trigraphs or escaped
   /// newlines in it.
   ///

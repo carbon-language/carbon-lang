@@ -18,6 +18,22 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
+// Token Implementation
+//===----------------------------------------------------------------------===//
+
+/// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
+bool Token::isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const {
+  return getKind() == tok::identifier && 
+         getIdentifierInfo()->getObjCKeywordID() == objcKey;
+}
+
+/// getObjCKeywordID - Return the ObjC keyword kind.
+tok::ObjCKeywordKind Token::getObjCKeywordID() const {
+  IdentifierInfo *specId = getIdentifierInfo();
+  return specId ? specId->getObjCKeywordID() : tok::objc_not_keyword;
+}
+
+//===----------------------------------------------------------------------===//
 // IdentifierInfo Implementation
 //===----------------------------------------------------------------------===//
 

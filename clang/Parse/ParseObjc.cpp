@@ -29,8 +29,7 @@ using namespace clang;
 Parser::DeclTy *Parser::ParseObjCAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
   
-  IdentifierInfo *II = Tok.getIdentifierInfo();
-  switch (II ? II->getObjCKeywordID() : tok::objc_not_keyword) {
+  switch (Tok.getObjCKeywordID()) {
     case tok::objc_class:
       return ParseObjCAtClassDeclaration(AtLoc);
     case tok::objc_interface:
@@ -111,8 +110,7 @@ Parser::DeclTy *Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 ///
 Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   SourceLocation atLoc, AttributeList *attrList) {
-  assert((Tok.getKind() == tok::identifier &&
-          Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_interface) &&
+  assert(Tok.isObjCAtKeyword(tok::objc_interface) &&
          "ParseObjCAtInterfaceDeclaration(): Expected @interface");
   ConsumeToken(); // the "interface" identifier
   
@@ -151,8 +149,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     ParseObjCInterfaceDeclList(0/*FIXME*/);
 
     // The @ sign was already consumed by ParseObjCInterfaceDeclList().
-    if (Tok.getKind() == tok::identifier &&
-        Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_end) {
+    if (Tok.isObjCAtKeyword(tok::objc_end)) {
       ConsumeToken(); // the "end" identifier
       return 0;
     }
@@ -189,8 +186,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   ParseObjCInterfaceDeclList(0/*FIXME*/);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().
-  if (Tok.getKind() == tok::identifier &&
-      Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_end) {
+  if (Tok.isObjCAtKeyword(tok::objc_end)) {
     ConsumeToken(); // the "end" identifier
     return 0;
   }
@@ -214,7 +210,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
   while (1) {
     if (Tok.getKind() == tok::at) {
       SourceLocation AtLoc = ConsumeToken(); // the "@"
-      tok::ObjCKeywordKind ocKind = Tok.getIdentifierInfo()->getObjCKeywordID();
+      tok::ObjCKeywordKind ocKind = Tok.getObjCKeywordID();
       
       if (ocKind == tok::objc_end) { // terminate list
         return;
@@ -488,13 +484,12 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
     tok::ObjCKeywordKind visibility = tok::objc_private;
     if (Tok.getKind() == tok::at) { // parse objc-visibility-spec
       ConsumeToken(); // eat the @ sign
-      IdentifierInfo *specId = Tok.getIdentifierInfo();
-      switch (specId->getObjCKeywordID()) {
+      switch (Tok.getObjCKeywordID()) {
       case tok::objc_private:
       case tok::objc_public:
       case tok::objc_protected:
       case tok::objc_package:
-        visibility = specId->getObjCKeywordID();
+        visibility = Tok.getObjCKeywordID();
         ConsumeToken();
         continue; 
       default:
@@ -538,8 +533,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
 ///   semicolon in the first alternative if objc-protocol-refs are omitted.
 
 Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
-  assert((Tok.getKind() == tok::identifier &&
-          Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_protocol) &&
+  assert(Tok.isObjCAtKeyword(tok::objc_protocol) &&
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
   ConsumeToken(); // the "protocol" identifier
   
@@ -586,8 +580,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   ParseObjCInterfaceDeclList(0/*FIXME*/);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().
-  if (Tok.getKind() == tok::identifier &&
-      Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_end) {
+  if (Tok.isObjCAtKeyword(tok::objc_end)) {
     ConsumeToken(); // the "end" identifier
     return 0;
   }
@@ -663,8 +656,7 @@ Parser::ExprResult Parser::ParseObjCStringLiteral() {
 ///    objc-encode-expression:
 ///      @encode ( type-name )
 Parser::ExprResult Parser::ParseObjCEncodeExpression() {
-  assert(Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_encode && 
-         "Not an @encode expression!");
+  assert(Tok.isObjCAtKeyword(tok::objc_encode) && "Not an @encode expression!");
   
   SourceLocation EncLoc = ConsumeToken();
   
