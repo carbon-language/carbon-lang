@@ -298,7 +298,7 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
     
     // Scan the ranges, computing the high values and removing empty ranges.
     std::vector<llvm::APSInt> HiVals;
-    for (unsigned i = 0, e = CaseVals.size(); i != e; ++i) {
+    for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
       CaseStmt *CR = CaseRanges[i].second;
       llvm::APSInt HiVal(32);
       CR->getRHS()->isIntegerConstantExpr(HiVal, Context);
@@ -308,9 +308,15 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
                                          CR->getRHS()->getLocStart(),
                                          diag::warn_case_value_overflow);
       
-      // FIXME: if the low value is bigger than the high value, the case is
-      // empty: emit "empty range specified" warning and drop it.
-
+      // If the low value is bigger than the high value, the case is empty.
+      if (CaseRanges[i].first > HiVal) {
+        Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range,
+             SourceRange(CR->getLHS()->getLocStart(),
+                         CR->getRHS()->getLocEnd()));
+        CaseRanges.erase(CaseRanges.begin()+i);
+        --i, --e;
+        continue;
+      }
       HiVals.push_back(HiVal);
     }
 

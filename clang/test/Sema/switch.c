@@ -12,6 +12,8 @@ void foo(int X) {
   case 5000000000LL:  // expected-warning {{overflow}}
   case 42:            // expected-error {{duplicate case value}}
    ;
+
+  case 100 ... 99: ;  // expected-warning {{empty case range}}
   }
 }
 
