@@ -2751,11 +2751,19 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
    case Intrinsic::eh_dwarf_cfa: {
      if (ExceptionHandling) {
        MVT::ValueType VT = getValue(I.getOperand(1)).getValueType();
+       SDOperand CfaArg;
+       if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
+         CfaArg = DAG.getNode(ISD::TRUNCATE,
+                              TLI.getPointerTy(), getValue(I.getOperand(1)));
+       else
+         CfaArg = DAG.getNode(ISD::SIGN_EXTEND,
+                              TLI.getPointerTy(), getValue(I.getOperand(1)));
+       
        SDOperand Offset = DAG.getNode(ISD::ADD,
                                       TLI.getPointerTy(),
                                       DAG.getNode(ISD::FRAME_TO_ARGS_OFFSET,
-                                                  VT),
-                                      getValue(I.getOperand(1)));
+                                                  TLI.getPointerTy()),
+                                      CfaArg);
        setValue(&I, DAG.getNode(ISD::ADD,
                                 TLI.getPointerTy(),
                                 DAG.getNode(ISD::FRAMEADDR,
