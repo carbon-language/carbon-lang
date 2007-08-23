@@ -404,8 +404,21 @@ void StmtPrinter::VisitParenExpr(ParenExpr *Node) {
   OS << ")";
 }
 void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
-  if (!Node->isPostfix())
+  if (!Node->isPostfix()) {
     OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
+    
+    // Print a space if this is an "identifier operator" like sizeof or __real.
+    switch (Node->getOpcode()) {
+    default: break;
+    case UnaryOperator::SizeOf:
+    case UnaryOperator::AlignOf:
+    case UnaryOperator::Real:
+    case UnaryOperator::Imag:
+    case UnaryOperator::Extension:
+      OS << ' ';
+      break;
+    }
+  }
   PrintExpr(Node->getSubExpr());
   
   if (Node->isPostfix())
