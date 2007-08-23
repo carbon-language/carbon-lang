@@ -932,7 +932,7 @@ public:
   /// radix given. The radix can be 2, 8, 10 or 16.
   /// @returns a character interpretation of the APInt
   /// @brief Convert unsigned APInt to string representation.
-  inline std::string toString(uint8_t radix = 10) const {
+  inline std::string toStringUnsigned(uint8_t radix = 10) const {
     return toString(radix, false);
   }
 

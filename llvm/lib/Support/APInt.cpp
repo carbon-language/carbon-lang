@@ -2008,8 +2008,8 @@ void APInt::dump() const
   else for (unsigned i = getNumWords(); i > 0; i--) {
     cerr << pVal[i-1] << " ";
   }
-  cerr << " U(" << this->toString(10) << ") S(" << this->toStringSigned(10)
-       << ")\n" << std::setbase(10);
+  cerr << " U(" << this->toStringUnsigned(10) << ") S("
+       << this->toStringSigned(10) << ")\n" << std::setbase(10);
 }
 #endif
 

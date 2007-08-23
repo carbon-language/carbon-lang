@@ -519,7 +519,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
           std::string NewName = I->getName();
           for (unsigned i = 0, e = Operands.size(); i != e; ++i)
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Operands[i]))
-              NewName += "." + CI->getValue().toString(10);
+              NewName += "." + CI->getValue().toStringUnsigned(10);
             else
               NewName += ".x";
           TheArg->setName(NewName+".val");

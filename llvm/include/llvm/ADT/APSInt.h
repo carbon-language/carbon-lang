@@ -52,6 +52,12 @@ public:
   void setIsUnsigned(bool Val) { IsUnsigned = Val; }
   void setIsSigned(bool Val) { IsUnsigned = !Val; }
   
+  /// This is used internally to convert an APInt to a string.
+  /// @brief Converts an APInt to a std::string
+  std::string toString(uint8_t Radix) const {
+    return toString(Radix, isSigned());
+  }
+  
   
   const APSInt &operator%=(const APSInt &RHS) {
     assert(IsUnsigned == RHS.IsUnsigned && "Signedness mismatch!");
