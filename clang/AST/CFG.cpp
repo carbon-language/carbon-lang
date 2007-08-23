@@ -56,6 +56,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* Succ;
   CFGBlock* ContinueTargetBlock;
   CFGBlock* BreakTargetBlock;
+  CFGBlock* SwitchTerminatedBlock;
   unsigned NumBlocks;
   
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -67,6 +68,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
 public:  
   explicit CFGBuilder() : cfg(NULL), Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
+                          SwitchTerminatedBlock(NULL),
                           NumBlocks(0) {
     // Create an empty CFG.
     cfg = new CFG();                        
@@ -139,8 +141,11 @@ public:
     CFGBlock::iterator I = B->begin();
     if (I != B->end()) {
       Stmt* S = *I;
-      if (S->getStmtClass() != Stmt::LabelStmtClass)
-        B->reverseStmts();
+
+      if (isa<LabelStmt>(S) || isa<SwitchCase>(S))
+        return;
+        
+      B->reverseStmts();
     }
   }
 
@@ -535,6 +540,72 @@ public:
     return Block;  
   }
   
+  CFGBlock* VisitSwitchStmt(SwitchStmt* S) {
+    // "switch" is a control-flow statement.  Thus we stop processing the
+    // current block.    
+    CFGBlock* SwitchSuccessor = NULL;
+    
+    if (Block) {
+      FinishBlock(Block);
+      SwitchSuccessor = Block;
+    }
+    else SwitchSuccessor = Succ;
+  
+    // Save the current "switch" context.
+    SaveAndRestore<CFGBlock*> save_switch(SwitchTerminatedBlock),
+                              save_break(BreakTargetBlock);
+    
+    // Create a new block that will contain the switch statement.
+    SwitchTerminatedBlock = createBlock(false);
+    
+    // Add the terminator and condition in the switch block.
+    assert (S->getCond() && "switch condition must be non-NULL");
+    SwitchTerminatedBlock->appendStmt(S->getCond());
+    SwitchTerminatedBlock->setTerminator(S);
+    
+    
+    // Now process the switch body.  The code after the switch is the implicit
+    // successor.
+    Succ = SwitchSuccessor;
+    BreakTargetBlock = SwitchSuccessor;
+
+    assert (S->getBody() && "switch must contain a non-NULL body");
+    Block = NULL;
+    
+    // When visiting the body, the case statements should automatically get
+    // linked up to the switch.  We also don't keep a pointer to the body,
+    // since all control-flow from the switch goes to case/default statements.
+    Visit(S->getBody());
+    
+    Block = SwitchTerminatedBlock;
+    return SwitchTerminatedBlock;
+  }
+  
+  CFGBlock* VisitSwitchCase(SwitchCase* S) {
+    // A SwitchCase is either a "default" or "case" statement.  We handle
+    // both in the same way.  They are essentially labels, so they are the
+    // first statement in a block.      
+    CFGBlock* CaseBlock = Visit(S->getSubStmt());
+    assert (CaseBlock);
+    
+    // Cases/Default statements parition block, so this is the top of
+    // the basic block we were processing (the case/default is the first stmt).
+    CaseBlock->appendStmt(S);
+    FinishBlock(CaseBlock);
+    
+    // Add this block to the list of successors for the block with the
+    // switch statement.
+    if (SwitchTerminatedBlock) SwitchTerminatedBlock->addSuccessor(CaseBlock);
+    
+    // We set Block to NULL to allow lazy creation of a new block (if necessary)
+    Block = NULL;
+    
+    // This block is now the implicit successor of other blocks.
+    Succ = CaseBlock;
+    
+    return CaseBlock;    
+  }
+
 };
 
 
