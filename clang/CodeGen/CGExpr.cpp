@@ -509,6 +509,27 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 //                             Expression Emission
 //===--------------------------------------------------------------------===//
 
+/// EmitAnyExpr - Emit an expression of any type: scalar, complex, aggregate,
+/// returning an rvalue corresponding to it.  If NeedResult is false, the
+/// result of the expression doesn't need to be generated into memory.
+RValue CodeGenFunction::EmitAnyExpr(const Expr *E, bool NeedResult) {
+  if (!hasAggregateLLVMType(E->getType()))
+    return EmitExpr(E);
+  
+  llvm::Value *DestMem = 0;
+  if (NeedResult)
+    DestMem = CreateTempAlloca(ConvertType(E->getType()));
+  
+  if (!E->getType()->isComplexType()) {
+    EmitAggExpr(E, DestMem, false);
+  } else if (NeedResult)
+    EmitComplexExprIntoAddr(E, DestMem);
+  else
+    EmitComplexExpr(E);
+  
+  return RValue::getAggregate(DestMem);
+}
+
 RValue CodeGenFunction::EmitExpr(const Expr *E) {
   assert(E && !hasAggregateLLVMType(E->getType()) &&
          "Invalid scalar expression to emit");
@@ -693,7 +714,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   
   for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
     QualType ArgTy = E->getArg(i)->getType();
-    RValue ArgVal = EmitExpr(E->getArg(i));
+    RValue ArgVal = EmitAnyExpr(E->getArg(i));
     
     // If this argument has prototype information, convert it.
     if (ArgTyIt != ArgTyEnd) {
@@ -710,7 +731,6 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
                                                    llvm::Type::DoubleTy,"tmp"));
       }
     }
-    
     
     if (ArgVal.isScalar())
       Args.push_back(ArgVal.getVal());

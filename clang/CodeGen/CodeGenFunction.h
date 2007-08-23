@@ -340,6 +340,11 @@ public:
   RValue EmitCompoundAssignmentResult(const CompoundAssignOperator *E,
                                       LValue LHSLV, RValue ResV);
   
+  /// EmitAnyExpr - Emit an expression of any type: scalar, complex, aggregate,
+  /// returning an rvalue corresponding to it.  If NeedResult is false, the
+  /// result of the expression doesn't need to be generated into memory.
+  RValue EmitAnyExpr(const Expr *E, bool NeedResult = true);
+  
   RValue EmitExpr(const Expr *E);
   RValue EmitIntegerLiteral(const IntegerLiteral *E);
   RValue EmitFloatingLiteral(const FloatingLiteral *E);
@@ -409,8 +414,12 @@ public:
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest);
   
   /// EmitComplexExpr - Emit the computation of the specified expression of
-  /// complex type, ignoring the result.
+  /// complex type, returning the result.
   ComplexPairTy EmitComplexExpr(const Expr *E);
+  
+  /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
+  /// of complex type, storing into the specified Value*.
+  void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
