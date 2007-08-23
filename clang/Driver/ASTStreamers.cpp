@@ -152,7 +152,7 @@ void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       if (FD->getBody()) {
         PrintFunctionDeclStart(FD);
         fprintf(stderr,"\n");
-        if (CFG* C = CFG::BuildCFG(FD->getBody()))
+        if (CFG* C = CFG::buildCFG(FD->getBody()))
           C->dump();
         else
           fprintf(stderr," Error processing CFG.\n");

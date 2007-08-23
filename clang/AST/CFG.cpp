@@ -53,7 +53,6 @@ namespace {
 class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {    
   CFG* cfg;
   CFGBlock* Block;
-  CFGBlock* Exit;
   CFGBlock* Succ;
   CFGBlock* ContinueTargetBlock;
   CFGBlock* BreakTargetBlock;
@@ -66,7 +65,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   BackpatchBlocksTy BackpatchBlocks;
   
 public:  
-  explicit CFGBuilder() : cfg(NULL), Block(NULL), Exit(NULL), Succ(NULL),
+  explicit CFGBuilder() : cfg(NULL), Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
                           NumBlocks(0) {
     // Create an empty CFG.
@@ -80,14 +79,14 @@ public:
   ///  or a function body (compound statement).  The ownership of the returned
   ///  CFG is transferred to the caller.  If CFG construction fails, this method
   ///  returns NULL.
-  CFG* BuildCFG(Stmt* Statement) {
+  CFG* buildCFG(Stmt* Statement) {
     if (!Statement) return NULL;
   
-    assert (!Exit && "CFGBuilder should only be used to construct one CFG");
-
-    // Create the exit block.
+    // Create an empty block that will serve as the exit block for the CFG.
+    // Since this is the first block added to the CFG, it will be implicitly
+    // registered as the exit block.
     Block = createBlock();
-    Exit = Block;
+    assert (Block == &cfg->getExit());
     
     // Visit the statements and create the CFG.
     if (CFGBlock* B = Visit(Statement)) {
@@ -255,13 +254,13 @@ public:
     Block = createBlock(false);
     
     // The Exit block is the only successor.
-    Block->addSuccessor(Exit);
+    Block->addSuccessor(&cfg->getExit());
     
-    // Add the return expression to the block.
+    // Add the return statement to the block.
     Block->appendStmt(R);
     
-    // Add the return statement itself to the block.
-    if (R->getRetValue()) Block->appendStmt(R->getRetValue());
+    // Also add the return statement as the terminator.
+    Block->setTerminator(R);
     
     return Block;
   }
@@ -476,43 +475,63 @@ public:
   
 };
 
-// BuildCFG - A helper function that builds CFGs from ASTS.
-CFG* CFG::BuildCFG(Stmt* Statement) {
-  CFGBuilder Builder;
-  return Builder.BuildCFG(Statement);
+
+/// createBlock - Constructs and adds a new CFGBlock to the CFG.  The
+///  block has no successors or predecessors.  If this is the first block
+///  created in the CFG, it is automatically set to be the Entry and Exit
+///  of the CFG.
+CFGBlock* CFG::createBlock(unsigned blockID) {
+  bool first_block = begin() == end();
+
+  // Create the block.
+  Blocks.push_front(CFGBlock(blockID));
+
+  // If this is the first block, set it as the Entry and Exit.
+  if (first_block) Entry = Exit = &front();
+
+  // Return the block.
+  return &front();
 }
 
-// reverseStmts - A method that reverses the order of the statements within
-//  a CFGBlock.
+/// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
+///  CFG is returned to the caller.
+CFG* CFG::buildCFG(Stmt* Statement) {
+  CFGBuilder Builder;
+  return Builder.buildCFG(Statement);
+}
+
+/// reverseStmts - Reverses the orders of statements within a CFGBlock.
 void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 
-// dump - A simple pretty printer of a CFG that outputs to stderr.
+/// dump - A simple pretty printer of a CFG that outputs to stderr.
 void CFG::dump() { print(std::cerr); }
 
-// print - A simple pretty printer of a CFG that outputs to an ostream.
+/// print - A simple pretty printer of a CFG that outputs to an ostream.
 void CFG::print(std::ostream& OS) {
-  // First print out the Entry block, which may not be the first block
-  // in our list of blocks
+
+  // Print the Entry block.
   if (begin() != end()) {
     CFGBlock& Entry = getEntry();
     OS << "\n [ B" << Entry.getBlockID() << " (ENTRY) ]\n";
     Entry.print(OS);
   }
 
-  // Iterate through the CFGBlocks and print them one by one.  Specially
-  // designate the Entry and Exit blocks.
+  // Iterate through the CFGBlocks and print them one by one.
   for (iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
     // Skip the entry block, because we already printed it.
-    if (&(*I) == &getEntry())
-      continue;
+    if (&(*I) == &getEntry() || &(*I) == &getExit()) continue;
       
-    OS << "\n  [ B" << I->getBlockID();
-    
-    if (&(*I) == &getExit()) OS << " (EXIT) ]\n";
-    else OS << " ]\n";
-    
+    OS << "\n  [ B" << I->getBlockID() << " ]\n";    
     I->print(OS);
   }
+  
+  // Print the Exit Block.  
+  if (begin() != end()) {
+    CFGBlock& Exit = getExit();
+    OS << "\n [ B" << Exit.getBlockID() << " (EXIT) ]\n";
+    Exit.print(OS);
+  }    
+  
   OS << "\n";
 }
 
@@ -552,11 +571,11 @@ namespace {
   };
 }
 
-// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
+/// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
 void CFGBlock::dump() { print(std::cerr); }
 
-// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
-//   Generally this will only be called from CFG::print.
+/// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
+///   Generally this will only be called from CFG::print.
 void CFGBlock::print(std::ostream& OS) {
 
   // Iterate through the statements in the block and print them.
