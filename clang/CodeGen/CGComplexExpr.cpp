@@ -74,10 +74,9 @@ public:
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitMemberExpr(Expr *E) { return EmitLoadOfLValue(E); }
 
-  // FIXME: Call
   // FIXME: CompoundLiteralExpr
   // FIXME: ImplicitCastExpr
-  // FIXME: CastExpr
+  ComplexPairTy VisitCallExpr(const CallExpr *E);
   
   // Operators.
   ComplexPairTy VisitPrePostIncDec(const UnaryOperator *E,
@@ -107,7 +106,7 @@ public:
   
   ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
-  // FIXME: div/rem
+  // FIXME: sub/div/rem
   // GCC rejects and/or/xor for integer complex.
   // Logical and/or always return int, never complex.
 
@@ -168,6 +167,11 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
     CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
   llvm::Value *U = llvm::UndefValue::get(EltTy);
   return ComplexPairTy(U, U);
+}
+
+ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
+  llvm::Value *AggPtr = CGF.EmitCallExpr(E).getAggregateAddr();
+  return EmitLoadOfComplex(AggPtr, false);
 }
 
 ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
