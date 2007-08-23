@@ -1262,14 +1262,14 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
            resType.getAsString(), op->getSourceRange());
       return QualType();
     }
-  } else if (!resType->isRealType()) { 
-    // FIXME: Allow Complex as a GCC extension.
+  } else if (!resType->isRealType() && !resType->isComplexType()) { 
+    // Allowing Complex is a GCC extension.
     Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
          resType.getAsString(), op->getSourceRange());
     return QualType(); 
   }
-  // At this point, we know we have a real or pointer type. Now make sure
-  // the operand is a modifiable lvalue.
+  // At this point, we know we have a real, complex or pointer type. 
+  // Now make sure the operand is a modifiable lvalue.
   Expr::isModifiableLvalueResult mlval = op->isModifiableLvalue();
   if (mlval != Expr::MLV_Valid) {
     // FIXME: emit a more precise diagnostic...
