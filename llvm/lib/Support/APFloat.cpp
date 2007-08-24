@@ -46,6 +46,7 @@ namespace llvm {
   const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53, true };
   const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113, true };
   const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, false };
+  const fltSemantics APFloat::Bogus = { 0, 0, 0, false };
 }
 
 /* Put a bunch of private, handy routines in an anonymous namespace.  */
@@ -271,6 +272,31 @@ APFloat::operator=(const APFloat &rhs)
   }
 
   return *this;
+}
+
+bool
+APFloat::operator==(const APFloat &rhs) const {
+  if (this == &rhs)
+    return true;
+  if (semantics != rhs.semantics ||
+      category != rhs.category)
+    return false;
+  if (category==fcQNaN)
+    return true;
+  else if (category==fcZero || category==fcInfinity)
+    return sign==rhs.sign;
+  else {
+    if (sign!=rhs.sign || exponent!=rhs.exponent)
+      return false;
+    int i= partCount();
+    const integerPart* p=significandParts();
+    const integerPart* q=rhs.significandParts();
+    for (; i>0; i--, p++, q++) {
+      if (*p != *q)
+        return false;
+    }
+    return true;
+  }
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
@@ -1482,7 +1508,167 @@ APFloat::convertFromString(const char *p, roundingMode rounding_mode)
     return convertFromHexadecimalString(p + 2, rounding_mode);
   else
     {
-      assert(0 && "Decimal to binary conversions not yet imlemented");
+      assert(0 && "Decimal to binary conversions not yet implemented");
       abort();
     }
+}
+
+// For good performance it is desirable for different APFloats
+// to produce different integers.
+uint32_t
+APFloat::getHashValue() const { 
+  if (category==fcZero) return sign<<8 | semantics->precision ;
+  else if (category==fcInfinity) return sign<<9 | semantics->precision;
+  else if (category==fcQNaN) return 1<<10 | semantics->precision;
+  else {
+    uint32_t hash = sign<<11 | semantics->precision | exponent<<12;
+    const integerPart* p = significandParts();
+    for (int i=partCount(); i>0; i--, p++)
+      hash ^= ((uint32_t)*p) ^ (*p)>>32;
+    return hash;
+  }
+}
+
+// Conversion from APFloat to/from host float/double.  It may eventually be
+// possible to eliminate these and have everybody deal with APFloats, but that
+// will take a while.  This approach will not easily extend to long double.
+// Current implementation requires partCount()==1, which is correct at the
+// moment but could be made more general.
+
+double
+APFloat::convertToDouble() const {
+  union { 
+    double d;
+    uint64_t i;
+  } u;
+  assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
+  assert (partCount()==1);
+
+  uint64_t myexponent, mysign, mysignificand;
+
+  if (category==fcNormal) {
+    mysign = sign;
+    mysignificand = *significandParts();
+    myexponent = exponent+1023; //bias
+  } else if (category==fcZero) {
+    mysign = sign;
+    myexponent = 0;
+    mysignificand = 0;
+  } else if (category==fcInfinity) {
+    mysign = sign;
+    myexponent = 0x7ff;
+    mysignificand = 0;
+  } else if (category==fcQNaN) {
+    mysign = 0;
+    myexponent = 0x7ff;
+    mysignificand = 0xfffffffffffffLL;
+  } else
+    assert(0);
+
+  u.i = ((mysign & 1) << 63) | ((myexponent & 0x7ff) <<  52) | 
+        (mysignificand & 0xfffffffffffffLL);
+  return u.d;
+}
+
+float
+APFloat::convertToFloat() const {
+  union { 
+    float f;
+    int32_t i;
+  } u;
+  assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
+  assert (partCount()==1);
+
+  uint32_t mysign, myexponent, mysignificand;
+
+  if (category==fcNormal) {
+    mysign = sign;
+    myexponent = exponent+127; //bias
+    mysignificand = *significandParts();
+  } else if (category==fcZero) {
+    mysign = sign;
+    myexponent = 0;
+    mysignificand = 0;
+  } else if (category==fcInfinity) {
+    mysign = sign;
+    myexponent = 0xff;
+    mysignificand = 0;
+  } else if (category==fcQNaN) {
+    mysign = sign;
+    myexponent = 0x7ff;
+    mysignificand = 0x7fffff;
+  } else
+    assert(0);
+
+  u.i = ((mysign&1) << 31) | ((myexponent&0xff) << 23) | 
+        ((mysignificand & 0x7fffff));
+  return u.f;
+}
+
+APFloat::APFloat(double d) {
+  initialize(&APFloat::IEEEdouble);
+  union { 
+    double d; 
+    uint64_t i;
+  } u;
+  u.d = d;
+  assert(partCount()==1);
+
+  uint64_t mysign, myexponent, mysignificand;
+
+  mysign = u.i >> 63;
+  myexponent = (u.i >> 52) & 0x7ff;
+  mysignificand = u.i & 0xfffffffffffffLL;
+
+  if (myexponent==0 && mysignificand==0) {
+    // exponent, significand meaningless
+    category = fcZero;
+    sign = mysign;
+  } else if (myexponent==0x7ff && mysignificand==0) {
+    // exponent, significand meaningless
+    category = fcInfinity;
+    sign = mysign;
+  } else if (myexponent==0x7ff && (mysignificand & 0x8000000000000LL)) {
+    // sign, exponent, significand meaningless
+    category = fcQNaN;
+  } else {
+    sign = mysign;
+    category = fcNormal;
+    exponent = myexponent - 1023;
+    *significandParts() = mysignificand | 0x100000000000000LL;
+  }
+}
+
+APFloat::APFloat(float f) {
+  initialize(&APFloat::IEEEsingle);
+  union { 
+    float f;
+    uint32_t i;
+  } u;
+  u.f = f;
+  assert(partCount()==1);
+
+  uint32_t mysign, myexponent, mysignificand;
+
+  mysign = u.i >> 31;
+  myexponent = (u.i >> 23) & 0xff;
+  mysignificand = u.i & 0x7fffff;
+
+  if (myexponent==0 && mysignificand==0) {
+    // exponent, significand meaningless
+    category = fcZero;
+    sign = mysign;
+  } else if (myexponent==0xff && mysignificand==0) {
+    // exponent, significand meaningless
+    category = fcInfinity;
+    sign = mysign;
+  } else if (myexponent==0xff && (mysignificand & 0x400000)) {
+    // sign, exponent, significand meaningless
+    category = fcQNaN;
+  } else {
+    category = fcNormal;
+    sign = mysign;
+    exponent = myexponent - 127;  //bias
+    *significandParts() = mysignificand | 0x800000; // integer bit
+  }
 }

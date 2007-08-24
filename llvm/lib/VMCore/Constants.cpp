@@ -202,7 +202,7 @@ namespace {
       return DenseMapKeyInfo<void*>::getHashValue(Key.type) ^ 
         Key.val.getHashValue();
     }
-    static bool isPod() { return true; }
+    static bool isPod() { return false; }
   };
 }
 
@@ -240,63 +240,63 @@ ConstantInt *ConstantInt::get(const APInt& V) {
 
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
-  : Constant(Ty, ConstantFPVal, 0, 0) {
-  Val = V;
+  : Constant(Ty, ConstantFPVal, 0, 0), Val(APFloat(V)) {
 }
 
 bool ConstantFP::isNullValue() const {
-  return DoubleToBits(Val) == 0;
+  return Val.isZero() && !Val.isNegative();
 }
 
 bool ConstantFP::isExactlyValue(double V) const {
-  return DoubleToBits(V) == DoubleToBits(Val);
+  return Val == APFloat(V);
 }
 
-
 namespace {
-  struct DenseMapInt64KeyInfo {
-    typedef std::pair<uint64_t, const Type*> KeyTy;
-    static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
-    static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
-    static unsigned getHashValue(const KeyTy &Key) {
-      return DenseMapKeyInfo<void*>::getHashValue(Key.second) ^ Key.first;
+  struct DenseMapAPFloatKeyInfo {
+    struct KeyTy {
+      APFloat val;
+      KeyTy(const APFloat& V) : val(V){}
+      KeyTy(const KeyTy& that) : val(that.val) {}
+      bool operator==(const KeyTy& that) const {
+        return this->val == that.val;
+      }
+      bool operator!=(const KeyTy& that) const {
+        return !this->operator==(that);
+      }
+    };
+    static inline KeyTy getEmptyKey() { 
+      return KeyTy(APFloat(APFloat::Bogus,1));
     }
-    static bool isPod() { return true; }
-  };
-  struct DenseMapInt32KeyInfo {
-    typedef std::pair<uint32_t, const Type*> KeyTy;
-    static inline KeyTy getEmptyKey() { return KeyTy(0, 0); }
-    static inline KeyTy getTombstoneKey() { return KeyTy(1, 0); }
-    static unsigned getHashValue(const KeyTy &Key) {
-      return DenseMapKeyInfo<void*>::getHashValue(Key.second) ^ Key.first;
+    static inline KeyTy getTombstoneKey() { 
+      return KeyTy(APFloat(APFloat::Bogus,2)); 
     }
-    static bool isPod() { return true; }
+    static unsigned getHashValue(const KeyTy &Key) {
+      return Key.val.getHashValue();
+    }
+    static bool isPod() { return false; }
   };
 }
 
 //---- ConstantFP::get() implementation...
 //
-typedef DenseMap<DenseMapInt32KeyInfo::KeyTy, ConstantFP*, 
-                 DenseMapInt32KeyInfo> FloatMapTy;
-typedef DenseMap<DenseMapInt64KeyInfo::KeyTy, ConstantFP*, 
-                 DenseMapInt64KeyInfo> DoubleMapTy;
+typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*, 
+                 DenseMapAPFloatKeyInfo> FPMapTy;
 
-static ManagedStatic<FloatMapTy> FloatConstants;
-static ManagedStatic<DoubleMapTy> DoubleConstants;
+static ManagedStatic<FPMapTy> FPConstants;
 
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   if (Ty == Type::FloatTy) {
-    uint32_t IntVal = FloatToBits((float)V);
-    
-    ConstantFP *&Slot = (*FloatConstants)[std::make_pair(IntVal, Ty)];
+    DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((float)V));
+    ConstantFP *&Slot = (*FPConstants)[Key];
     if (Slot) return Slot;
     return Slot = new ConstantFP(Ty, (float)V);
-  } else if (Ty == Type::DoubleTy) { 
-    uint64_t IntVal = DoubleToBits(V);
-    ConstantFP *&Slot = (*DoubleConstants)[std::make_pair(IntVal, Ty)];
+  } else if (Ty == Type::DoubleTy) {
+    // Without the redundant cast, the following is taken to be
+    // a function declaration.  What a language.
+    DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((double)V));
+    ConstantFP *&Slot = (*FPConstants)[Key];
     if (Slot) return Slot;
     return Slot = new ConstantFP(Ty, V);
-  // FIXME:  Make long double constants work.
   } else if (Ty == Type::X86_FP80Ty ||
              Ty == Type::PPC_FP128Ty || Ty == Type::FP128Ty) {
     assert(0 && "Long double constants not handled yet.");

@@ -118,6 +118,9 @@ namespace llvm {
     static const fltSemantics IEEEdouble;
     static const fltSemantics IEEEquad;
     static const fltSemantics x87DoubleExtended;
+    /* And this psuedo, used to construct APFloats that cannot
+       conflict with anything real. */
+    static const fltSemantics Bogus;
 
     static unsigned int semanticsPrecision(const fltSemantics &);
 
@@ -161,6 +164,8 @@ namespace llvm {
     APFloat(const fltSemantics &, const char *);
     APFloat(const fltSemantics &, integerPart);
     APFloat(const fltSemantics &, fltCategory, bool negative);
+    APFloat(double d);
+    APFloat(float f);
     APFloat(const APFloat &);
     ~APFloat();
 
@@ -179,9 +184,15 @@ namespace llvm {
     opStatus convertFromInteger(const integerPart *, unsigned int, bool,
 				roundingMode);
     opStatus convertFromString(const char *, roundingMode);
+    double convertToDouble() const;
+    float convertToFloat() const;
 
-    /* Comparison with another floating point number.  */
+    /* IEEE comparison with another floating point number (QNaNs
+       compare unordered, 0==-0). */
     cmpResult compare(const APFloat &) const;
+
+    /* Bitwise comparison for equality (QNaNs compare equal, 0!=-0). */
+    bool operator==(const APFloat &) const;
 
     /* Simple queries.  */
     fltCategory getCategory() const { return category; }
@@ -191,6 +202,9 @@ namespace llvm {
     bool isNegative() const { return sign; }
 
     APFloat& operator=(const APFloat &);
+
+    /* Return an arbitrary integer value usable for hashing. */
+    uint32_t getHashValue() const;
 
   private:
 

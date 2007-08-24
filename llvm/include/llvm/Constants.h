@@ -23,6 +23,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APFloat.h"
 
 namespace llvm {
 
@@ -213,7 +214,7 @@ private:
 /// ConstantFP - Floating Point Values [float, double]
 ///
 class ConstantFP : public Constant {
-  double Val;
+  APFloat Val;
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
   ConstantFP(const Type *Ty, double V);
@@ -223,7 +224,14 @@ public:
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, double V);
-  inline double getValue() const { return Val; }
+  inline double getValue() const { 
+    if (&Val.getSemantics() == &APFloat::IEEEdouble)
+      return Val.convertToDouble();
+    else if (&Val.getSemantics() == &APFloat::IEEEsingle)
+      return (double)Val.convertToFloat();
+    else
+      assert(0);
+  }
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  Don't depend on == for doubles to tell us it's zero, it
