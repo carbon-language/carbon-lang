@@ -147,7 +147,8 @@ public:
   }
   Value *EmitSizeAlignOf(QualType TypeToSize, QualType RetType,
                                bool isSizeOf);
-  // FIXME: Real,Imag.
+  Value *VisitUnaryReal     (const UnaryOperator *E);
+  Value *VisitUnaryImag     (const UnaryOperator *E);
   Value *VisitUnaryExtension(const UnaryOperator *E) {
     return Visit(E->getSubExpr());
   }
@@ -363,7 +364,7 @@ Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
 /// EmitSizeAlignOf - Return the size or alignment of the 'TypeToSize' type as
 /// an integer (RetType).
 Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize, 
-                                                QualType RetType,bool isSizeOf){
+                                          QualType RetType,bool isSizeOf){
   /// FIXME: This doesn't handle VLAs yet!
   std::pair<uint64_t, unsigned> Info =
     CGF.getContext().getTypeInfo(TypeToSize, SourceLocation());
@@ -376,6 +377,22 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
   unsigned ResultWidth = CGF.getContext().getTypeSize(RetType,SourceLocation());
   return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
 }
+
+Value *ScalarExprEmitter::VisitUnaryReal(const UnaryOperator *E) {
+  Expr *Op = E->getSubExpr();
+  if (Op->getType()->isComplexType())
+    return CGF.EmitComplexExpr(Op).first;
+  return Visit(Op);
+}
+Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
+  Expr *Op = E->getSubExpr();
+  if (Op->getType()->isComplexType())
+    return CGF.EmitComplexExpr(Op).second;
+
+  // FIXME: does this evaluate the subexpr??
+  return 0;  // FIXME:  Return zero of the right int/fp type.
+}
+
 
 //===----------------------------------------------------------------------===//
 //                           Binary Operators

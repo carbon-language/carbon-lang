@@ -26,4 +26,6 @@ void test3() {
   g1 = g1 - g2;
   g1 = g1 * g2;
   g1 = +-~g1;
+
+  double Gr = __real g1;
 }
