@@ -1,4 +1,4 @@
-//===--- CGComplexExpr.cpp - Emit LLVM Code for Complex Exprs -------------===//
+//===--- CGExprComplex.cpp - Emit LLVM Code for Complex Exprs -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

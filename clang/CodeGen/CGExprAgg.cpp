@@ -1,4 +1,4 @@
-//===--- CGAggExpr.cpp - Emit LLVM Code from Aggregate Expressions --------===//
+//===--- CGExprAgg.cpp - Emit LLVM Code from Aggregate Expressions --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
