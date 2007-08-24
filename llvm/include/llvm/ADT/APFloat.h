@@ -187,17 +187,17 @@ namespace llvm {
     double convertToDouble() const;
     float convertToFloat() const;
 
+    /* The definition of equality is not straightforward for floating point,
+       so we won't use operator==.  Use one of the following, or write
+       whatever it is you really mean. */
+    bool operator==(const APFloat &) const;     // DO NOT IMPLEMENT
+    
     /* IEEE comparison with another floating point number (QNaNs
        compare unordered, 0==-0). */
     cmpResult compare(const APFloat &) const;
 
     /* Bitwise comparison for equality (QNaNs compare equal, 0!=-0). */
-    bool operator==(const APFloat &) const;
-
-    /* Inversion of the preceding. */
-    inline bool operator!=(const APFloat &RHS) const { 
-      return !((*this)==RHS); 
-    }
+    bool bitwiseIsEqual(const APFloat &) const;
 
     /* Simple queries.  */
     fltCategory getCategory() const { return category; }

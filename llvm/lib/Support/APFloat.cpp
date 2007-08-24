@@ -276,7 +276,7 @@ APFloat::operator=(const APFloat &rhs)
 }
 
 bool
-APFloat::operator==(const APFloat &rhs) const {
+APFloat::bitwiseIsEqual(const APFloat &rhs) const {
   if (this == &rhs)
     return true;
   if (semantics != rhs.semantics ||
