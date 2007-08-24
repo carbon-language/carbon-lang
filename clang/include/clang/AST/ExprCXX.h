@@ -66,6 +66,10 @@ namespace clang {
       return T->getStmtClass() == CXXCastExprClass;
     }
     static bool classof(const CXXCastExpr *) { return true; }
+        
+    // Iterators
+    virtual child_iterator child_begin();
+    virtual child_iterator child_end();
   };
 
   /// CXXBoolLiteralExpr - [C++ 2.13.5] C++ Boolean Literal.
@@ -85,6 +89,10 @@ namespace clang {
       return T->getStmtClass() == CXXBoolLiteralExprClass;
     }
     static bool classof(const CXXBoolLiteralExpr *) { return true; }
+        
+    // Iterators
+    virtual child_iterator child_begin();
+    virtual child_iterator child_end();
   };
 
 }  // end namespace clang
