@@ -415,8 +415,12 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
-    
-    NewVD->setInit(Init);
+    if (Init) {
+      AssignmentCheckResult result;
+      result = CheckSingleAssignmentConstraints(R, Init);
+      // FIXME: emit errors if appropriate.
+      NewVD->setInit(Init);
+    }
     New = NewVD;
   }
   

@@ -407,7 +407,7 @@ private:
   // For simple assignment, pass both expressions and a null converted type.
   // For compound assignment, pass both expressions and the converted type.
   inline QualType CheckAssignmentOperands( // C99 6.5.16.[1,2]
-    Expr *lex, Expr *rex, SourceLocation OpLoc, QualType convertedType);
+    Expr *lex, Expr *&rex, SourceLocation OpLoc, QualType convertedType);
   inline QualType CheckCommaOperands( // C99 6.5.17
     Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckConditionalOperands( // C99 6.5.15

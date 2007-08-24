@@ -527,6 +527,8 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
 
       AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
                                                                       argExpr);
+      if (Args[i] != argExpr) // The expression was converted.
+        Args[i] = argExpr; // Make sure we store the converted expression.
       SourceLocation l = argExpr->getLocStart();
 
       // decode the result (notice that AST's are still created for extensions).
@@ -929,8 +931,16 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
   DefaultFunctionArrayConversion(rExpr);
+
+  Sema::AssignmentCheckResult result;
   
-  return CheckAssignmentConstraints(lhsType, rExpr->getType());
+  result = CheckAssignmentConstraints(lhsType, rExpr->getType());
+  
+  // C99 6.5.16.1p2: The value of the right operand is converted to the
+  // type of the assignment expression.
+  if (rExpr->getType() != lhsType)
+    promoteExprToType(rExpr, lhsType);
+  return result;
 }
 
 Sema::AssignmentCheckResult
@@ -1166,7 +1176,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
 }
 
 inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
-  Expr *lex, Expr *rex, SourceLocation loc, QualType compoundType) 
+  Expr *lex, Expr *&rex, SourceLocation loc, QualType compoundType) 
 {
   QualType lhsType = lex->getType();
   QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
