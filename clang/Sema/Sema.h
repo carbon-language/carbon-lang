@@ -349,8 +349,8 @@ private:
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
   // routine returns the first non-arithmetic type found. The client is 
   // responsible for emitting appropriate error diagnostics.
-  void UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr);
-                                     
+  QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
+                                      bool isCompAssign = false);
   enum AssignmentCheckResult {
     Compatible,
     Incompatible,
@@ -386,21 +386,21 @@ private:
   inline void InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
   inline QualType CheckRemainderOperands( // C99 6.5.5
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
   inline QualType CheckAdditionOperands( // C99 6.5.6
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckSubtractionOperands( // C99 6.5.6
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckShiftOperands( // C99 6.5.7
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckRelationalOperands( // C99 6.5.8
     Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckEqualityOperands( // C99 6.5.9
     Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
   inline QualType CheckBitwiseOperands( // C99 6.5.[10...12]
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
   inline QualType CheckLogicalOperands( // C99 6.5.[13,14]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   // CheckAssignmentOperands is used for both simple and compound assignment.

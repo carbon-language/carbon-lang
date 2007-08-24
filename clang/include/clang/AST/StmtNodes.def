@@ -78,7 +78,7 @@ STMT(55, CXXBoolLiteralExpr   , Expr)
 STMT(56, ObjCStringLiteral    , Expr)
 STMT(57, ObjCEncodeExpr       , Expr)
 
-LAST_EXPR(56)
+LAST_EXPR(57)
 
 #undef STMT
 #undef FIRST_STMT

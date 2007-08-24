@@ -752,7 +752,8 @@ void Sema::UsualUnaryConversions(Expr *&expr) {
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
-void Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
+QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
+                                          bool isCompAssign) {
   UsualUnaryConversions(lhsExpr);
   UsualUnaryConversions(rhsExpr);
   
@@ -761,12 +762,12 @@ void Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs) 
-    return;
+    return lhs;
   
   // If either side is a non-arithmetic type (e.g. a pointer), we are done.
   // The caller can deal with this (e.g. pointer + int).
   if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
-    return;
+    return lhs;
     
   // At this point, we have two different arithmetic types. 
   
@@ -774,48 +775,48 @@ void Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr) {
   if (lhs->isComplexType() || rhs->isComplexType()) {
     // if we have an integer operand, the result is the complex type.
     if (rhs->isIntegerType()) { // convert the rhs to the lhs complex type.
-      promoteExprToType(rhsExpr, lhs);
-      return;
+      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      return lhs;
     }
     if (lhs->isIntegerType()) { // convert the lhs to the rhs complex type.
-      promoteExprToType(lhsExpr, rhs);
-      return;
+      if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+      return rhs;
     }
     // Two complex types. Convert the smaller operand to the bigger result.
     if (Context.maxComplexType(lhs, rhs) == lhs) { // convert the rhs
-      promoteExprToType(rhsExpr, lhs);
-      return;
+      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      return lhs;
     }
-    promoteExprToType(lhsExpr, rhs); // convert the lhs
-    return;
+    if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+    return rhs;
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
     // if we have an integer operand, the result is the real floating type.
     if (rhs->isIntegerType()) { // convert rhs to the lhs floating point type.
-      promoteExprToType(rhsExpr, lhs);
-      return;
+      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      return lhs;
     }
     if (lhs->isIntegerType()) { // convert lhs to the rhs floating point type.
-      promoteExprToType(lhsExpr, rhs);
-      return;
+      if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+      return rhs;
     }
     // We have two real floating types, float/complex combos were handled above.
     // Convert the smaller operand to the bigger result.
     if (Context.maxFloatingType(lhs, rhs) == lhs) { // convert the rhs
-      promoteExprToType(rhsExpr, lhs);
-      return;
+      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      return lhs;
     }
-    promoteExprToType(lhsExpr, rhs); // convert the lhs
-    return;
+    if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+    return rhs;
   }
   // Finally, we have two differing integer types.
   if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs
-    promoteExprToType(rhsExpr, lhs);
-    return;
+    if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+    return lhs;
   }
-  promoteExprToType(lhsExpr, rhs); // convert the lhs
-  return;
+  if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+  return rhs;
 }
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite
@@ -949,47 +950,45 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
 }    
 
 inline QualType Sema::CheckMultiplyDivideOperands(
-  Expr *&lex, Expr *&rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
   if (lhsType->isVectorType() || rhsType->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
     
-  UsualArithmeticConversions(lex, rex);
+  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
-  // handle the common case first (both operands are arithmetic).
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
-    return lex->getType();
+    return compType;
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
 
 inline QualType Sema::CheckRemainderOperands(
-  Expr *&lex, Expr *&rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
 {
   QualType lhsType = lex->getType(), rhsType = rex->getType();
 
-  UsualArithmeticConversions(lex, rex);
+  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
-  // handle the common case first (both operands are arithmetic).
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
-    return lex->getType();
+    return compType;
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
 
 inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
-  Expr *&lex, Expr *&rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
 {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
 
-  UsualArithmeticConversions(lex, rex);
+  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
   // handle the common case first (both operands are arithmetic).
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
-    return lex->getType();
+    return compType;
 
   if (lex->getType()->isPointerType() && rex->getType()->isIntegerType())
     return lex->getType();
@@ -1000,19 +999,19 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
 }
 
 inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
-  Expr *&lex, Expr *&rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
 {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
     
-  UsualArithmeticConversions(lex, rex);
+  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
   // handle the common case first (both operands are arithmetic).
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
-    return lex->getType();
+    return compType;
     
   if (lex->getType()->isPointerType() && rex->getType()->isIntegerType())
-    return lex->getType();
+    return compType;
   if (lex->getType()->isPointerType() && rex->getType()->isPointerType())
     return Context.getPointerDiffType();
   InvalidOperands(loc, lex, rex);
@@ -1020,15 +1019,15 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
 }
 
 inline QualType Sema::CheckShiftOperands( // C99 6.5.7
-  Expr *&lex, Expr *&rex, SourceLocation loc)
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign)
 {
   // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
   // for int << longlong -> the result type should be int, not long long.
-  UsualArithmeticConversions(lex, rex);
+  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
   // handle the common case first (both operands are arithmetic).
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
-    return lex->getType();
+    return compType;
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -1132,15 +1131,15 @@ inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
 }
 
 inline QualType Sema::CheckBitwiseOperands(
-  Expr *&lex, Expr *&rex, SourceLocation loc) 
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) 
 {
   if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
     return CheckVectorOperands(loc, lex, rex);
 
-  UsualArithmeticConversions(lex, rex);
+  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
-    return lex->getType();
+    return compType;
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
@@ -1486,35 +1485,35 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
     break;
   case BinaryOperator::MulAssign:
   case BinaryOperator::DivAssign:
-    CompTy = CheckMultiplyDivideOperands(lhs, rhs, TokLoc);
+    CompTy = CheckMultiplyDivideOperands(lhs, rhs, TokLoc, true);
     if (!CompTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::RemAssign:
-    CompTy = CheckRemainderOperands(lhs, rhs, TokLoc);
+    CompTy = CheckRemainderOperands(lhs, rhs, TokLoc, true);
     if (!CompTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::AddAssign:
-    CompTy = CheckAdditionOperands(lhs, rhs, TokLoc);
+    CompTy = CheckAdditionOperands(lhs, rhs, TokLoc, true);
     if (!CompTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::SubAssign:
-    CompTy = CheckSubtractionOperands(lhs, rhs, TokLoc);
+    CompTy = CheckSubtractionOperands(lhs, rhs, TokLoc, true);
     if (!CompTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::ShlAssign:
   case BinaryOperator::ShrAssign:
-    CompTy = CheckShiftOperands(lhs, rhs, TokLoc);
+    CompTy = CheckShiftOperands(lhs, rhs, TokLoc, true);
     if (!CompTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
   case BinaryOperator::AndAssign:
   case BinaryOperator::XorAssign:
   case BinaryOperator::OrAssign:
-    CompTy = CheckBitwiseOperands(lhs, rhs, TokLoc);
+    CompTy = CheckBitwiseOperands(lhs, rhs, TokLoc, true);
     if (!CompTy.isNull())
       ResultTy = CheckAssignmentOperands(lhs, rhs, TokLoc, CompTy);
     break;
