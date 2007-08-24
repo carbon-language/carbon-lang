@@ -338,6 +338,9 @@ void LoopIndexSplit::findSplitCondition() {
     if (!CI || CI == ExitCondition)
       return;
 
+    if (CI->getPredicate() == ICmpInst::ICMP_NE)
+      return;
+
     // If one operand is loop invariant and second operand is SCEVAddRecExpr
     // based on induction variable then CI is a candidate split condition.
     Value *V0 = CI->getOperand(0);
