@@ -527,6 +527,10 @@ public:
     return T->getStmtClass() == MemberExprClass; 
   }
   static bool classof(const MemberExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// OCUVectorElementExpr - This represents access to specific elements of a
@@ -583,6 +587,10 @@ public:
     return T->getStmtClass() == OCUVectorElementExprClass; 
   }
   static bool classof(const OCUVectorElementExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// CompoundLiteralExpr - [C99 6.5.2.5] 
@@ -602,6 +610,10 @@ public:
     return T->getStmtClass() == CompoundLiteralExprClass; 
   }
   static bool classof(const CompoundLiteralExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// ImplicitCastExpr - Allows us to explicitly represent implicit type 
@@ -623,6 +635,10 @@ public:
     return T->getStmtClass() == ImplicitCastExprClass; 
   }
   static bool classof(const ImplicitCastExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// CastExpr - [C99 6.5.4] Cast Operators.
@@ -645,6 +661,10 @@ public:
     return T->getStmtClass() == CastExprClass; 
   }
   static bool classof(const CastExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 class BinaryOperator : public Expr {
@@ -672,14 +692,16 @@ public:
   };
   
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy)
-    : Expr(BinaryOperatorClass, ResTy), LHS(lhs), RHS(rhs), Opc(opc) {
+    : Expr(BinaryOperatorClass, ResTy), Opc(opc) {
+    SubExprs[LHS] = lhs;
+    SubExprs[RHS] = rhs;
     assert(!isCompoundAssignmentOp() && 
            "Use ArithAssignBinaryOperator for compound assignments");
   }
 
   Opcode getOpcode() const { return Opc; }
-  Expr *getLHS() const { return LHS; }
-  Expr *getRHS() const { return RHS; }
+  Expr *getLHS() const { return SubExprs[LHS]; }
+  Expr *getRHS() const { return SubExprs[RHS]; }
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLHS()->getLocStart(), getRHS()->getLocEnd());
   }
@@ -704,12 +726,21 @@ public:
     return T->getStmtClass() == BinaryOperatorClass; 
   }
   static bool classof(const BinaryOperator *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+
 private:
-  Expr *LHS, *RHS;
+  enum { LHS, RHS, END_EXPR };
+  Expr* SubExprs[END_EXPR];
   Opcode Opc;
+
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy, bool dead)
-    : Expr(BinaryOperatorClass, ResTy), LHS(lhs), RHS(rhs), Opc(opc) {
+    : Expr(BinaryOperatorClass, ResTy), Opc(opc) {
+    SubExprs[LHS] = lhs;
+    SubExprs[RHS] = rhs;
   }
 };
 
@@ -744,14 +775,19 @@ public:
 /// GNU "missing LHS" extension is in use.
 ///
 class ConditionalOperator : public Expr {
-  Expr *Cond, *LHS, *RHS;  // Left/Middle/Right hand sides.
+  enum { COND, LHS, RHS, END_EXPR };
+  Expr* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs, QualType t)
-    : Expr(ConditionalOperatorClass, t), Cond(cond), LHS(lhs), RHS(rhs) {}
+    : Expr(ConditionalOperatorClass, t) {
+    SubExprs[COND] = cond;
+    SubExprs[LHS] = lhs;
+    SubExprs[RHS] = rhs;
+  }
 
-  Expr *getCond() const { return Cond; }
-  Expr *getLHS() const { return LHS; }
-  Expr *getRHS() const { return RHS; }
+  Expr *getCond() const { return SubExprs[COND]; }
+  Expr *getLHS() const { return SubExprs[LHS]; }
+  Expr *getRHS() const { return SubExprs[RHS]; }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());
@@ -760,6 +796,10 @@ public:
     return T->getStmtClass() == ConditionalOperatorClass; 
   }
   static bool classof(const ConditionalOperator *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// AddrLabelExpr - The GNU address of label extension, representing &&label.
@@ -781,6 +821,10 @@ public:
     return T->getStmtClass() == AddrLabelExprClass; 
   }
   static bool classof(const AddrLabelExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// StmtExpr - This is the GNU Statement Expression extension: ({int X=4; X;}).
@@ -805,6 +849,10 @@ public:
     return T->getStmtClass() == StmtExprClass; 
   }
   static bool classof(const StmtExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// TypesCompatibleExpr - GNU builtin-in function __builtin_type_compatible_p.
@@ -833,6 +881,10 @@ public:
     return T->getStmtClass() == TypesCompatibleExprClass; 
   }
   static bool classof(const TypesCompatibleExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
@@ -842,22 +894,23 @@ public:
 /// - the expression returned has it's type unaltered by promotion rules.
 /// - does not evaluate the expression that was not chosen.
 class ChooseExpr : public Expr {
-  Expr *Cond, *LHS, *RHS;  // First, second, and third arguments.
+  enum { COND, LHS, RHS, END_EXPR };
+  Expr* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
   SourceLocation BuiltinLoc, RParenLoc;
 public:
   ChooseExpr(SourceLocation BLoc, Expr *cond, Expr *lhs, Expr *rhs, QualType t,
              SourceLocation RP)
     : Expr(ChooseExprClass, t),  
-      Cond(cond), LHS(lhs), RHS(rhs), BuiltinLoc(BLoc), RParenLoc(RP) {}
-    
-  Expr *getCond() { return Cond; }
-  Expr *getLHS() { return LHS; }
-  Expr *getRHS() { return RHS; }
-
-  const Expr *getCond() const { return Cond; }
-  const Expr *getLHS() const { return LHS; }
-  const Expr *getRHS() const { return RHS; }
+      BuiltinLoc(BLoc), RParenLoc(RP) {
+      SubExprs[COND] = cond;
+      SubExprs[LHS] = lhs;
+      SubExprs[RHS] = rhs;
+    }        
   
+  Expr *getCond() const { return SubExprs[COND]; }
+  Expr *getLHS() const { return SubExprs[LHS]; }
+  Expr *getRHS() const { return SubExprs[RHS]; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
@@ -865,6 +918,10 @@ public:
     return T->getStmtClass() == ChooseExprClass; 
   }
   static bool classof(const ChooseExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// ObjCStringLiteral, used for Objective-C string literals
@@ -887,6 +944,10 @@ public:
     return T->getStmtClass() == ObjCStringLiteralClass; 
   }
   static bool classof(const ObjCStringLiteral *) { return true; }  
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
   
 /// ObjCEncodeExpr, used for @encode in Objective-C.
@@ -906,6 +967,10 @@ public:
     return T->getStmtClass() == ObjCEncodeExprClass;
   }
   static bool classof(const ObjCEncodeExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 }  // end namespace clang
