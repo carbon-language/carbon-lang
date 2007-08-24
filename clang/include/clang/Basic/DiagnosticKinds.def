@@ -275,6 +275,10 @@ DIAG(ext_integer_complex, EXTENSION,
      "ISO C does not support complex integer types")
 DIAG(ext_thread_before, EXTENSION,
      "'__thread' before 'static'")
+DIAG(ext_integer_increment_complex, EXTENSION,
+     "ISO C does not support '++'/'--' on complex integer types")
+DIAG(ext_integer_complement_complex, EXTENSION,
+     "ISO C does not support '~' for complex conjugation")
 
 DIAG(ext_empty_struct_union_enum, EXTENSION,
      "use of empty %0 extension")

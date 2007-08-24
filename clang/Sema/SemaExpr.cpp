@@ -1256,18 +1256,23 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   QualType resType = op->getType();
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
-  // C99 6.5.2.4p1: C99 does not support ++/-- on complex types.
-  // We allow complex as a GCC extension.
+  // C99 6.5.2.4p1: We allow complex as a GCC extension.
   if (const PointerType *pt = dyn_cast<PointerType>(resType)) {
     if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
       Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
            resType.getAsString(), op->getSourceRange());
       return QualType();
     }
-  } else if (!resType->isRealType() && !resType->isComplexType()) { 
-    Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
-         resType.getAsString(), op->getSourceRange());
-    return QualType(); 
+  } else if (!resType->isRealType()) {
+    if (resType->isComplexType()) 
+      // C99 does not support ++/-- on complex types.
+      Diag(OpLoc, diag::ext_integer_increment_complex,
+           resType.getAsString(), op->getSourceRange());
+    else {
+      Diag(OpLoc, diag::err_typecheck_illegal_increment_decrement,
+           resType.getAsString(), op->getSourceRange());
+      return QualType();
+    }
   }
   // At this point, we know we have a real, complex or pointer type. 
   // Now make sure the operand is a modifiable lvalue.
@@ -1555,11 +1560,16 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
-    // C99 6.5.3.3p1. C99 does not support '~' for complex conjugation.
-    // We allow complex as a GCC extension.
-    if (!resultType->isIntegerType() && !resultType->isComplexType())
-      return Diag(OpLoc, diag::err_typecheck_unary_expr,
-                  resultType.getAsString());
+    // C99 6.5.3.3p1. We allow complex as a GCC extension.
+    if (!resultType->isIntegerType()) {
+      if (resultType->isComplexType())
+        // C99 does not support '~' for complex conjugation.
+        Diag(OpLoc, diag::ext_integer_complement_complex,
+                    resultType.getAsString());
+      else
+        return Diag(OpLoc, diag::err_typecheck_unary_expr,
+                    resultType.getAsString());
+    }
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
