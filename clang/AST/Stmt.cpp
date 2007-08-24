@@ -72,3 +72,73 @@ const char *LabelStmt::getName() const {
   return getID()->getName();
 }
 
+//===----------------------------------------------------------------------===//
+//  Child Iterators for iterating over subexpressions/substatements
+//===----------------------------------------------------------------------===//
+
+// DeclStmt
+Stmt::child_iterator DeclStmt::child_begin() { return NULL; }
+Stmt::child_iterator DeclStmt::child_end() { return NULL; }
+
+// NullStmt
+Stmt::child_iterator NullStmt::child_begin() { return NULL; }
+Stmt::child_iterator NullStmt::child_end() { return NULL; }
+
+// CompoundStmt
+Stmt::child_iterator CompoundStmt::child_begin() { return &Body[0]; }
+Stmt::child_iterator CompoundStmt::child_end() { return &Body[0]+Body.size(); }
+
+// SwitchCase
+Stmt::child_iterator SwitchCase::child_begin() { return &SubStmt; }
+Stmt::child_iterator SwitchCase::child_end() { return child_begin()+1; }
+
+// LabelStmt
+Stmt::child_iterator LabelStmt::child_begin() { return &SubStmt; }
+Stmt::child_iterator LabelStmt::child_end() { return child_begin()+1; }
+
+// IfStmt
+Stmt::child_iterator IfStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator IfStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+
+// SwitchStmt
+Stmt::child_iterator SwitchStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator SwitchStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+
+// WhileStmt
+Stmt::child_iterator WhileStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator WhileStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+
+// DoStmt
+Stmt::child_iterator DoStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator DoStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+
+// ForStmt
+Stmt::child_iterator ForStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator ForStmt::child_end() { return &SubExprs[0]+END_EXPR; }
+
+// GotoStmt
+Stmt::child_iterator GotoStmt::child_begin() { return NULL; }
+Stmt::child_iterator GotoStmt::child_end() { return NULL; }
+
+// IndirectGotoStmt
+Stmt::child_iterator IndirectGotoStmt::child_begin() { 
+  return reinterpret_cast<Stmt**>(&Target); 
+}
+
+Stmt::child_iterator IndirectGotoStmt::child_end() { return child_begin()+1; }
+
+// ContinueStmt
+Stmt::child_iterator ContinueStmt::child_begin() { return NULL; }
+Stmt::child_iterator ContinueStmt::child_end() { return NULL; }
+
+// BreakStmt
+Stmt::child_iterator BreakStmt::child_begin() { return NULL; }
+Stmt::child_iterator BreakStmt::child_end() { return NULL; }
+
+// ReturnStmt
+Stmt::child_iterator ReturnStmt::child_begin() { 
+  return reinterpret_cast<Stmt**>(&RetExpr); 
+}
+
+Stmt::child_iterator ReturnStmt::child_end() { return child_begin()+1; }
+

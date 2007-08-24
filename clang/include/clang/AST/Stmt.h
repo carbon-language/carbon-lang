@@ -67,8 +67,7 @@ public:
   void printPretty(std::ostream &OS) const;
   
   // Implement isa<T> support.
-  static bool classof(const Stmt *) { return true; }
-  
+  static bool classof(const Stmt *) { return true; }  
   
   /// Child Iterators: All subclasses must implement child_begin and child_end
   ///  to permit easy iteration over the substatements/subexpessions of an
@@ -81,11 +80,8 @@ public:
   typedef std::reverse_iterator<const_child_iterator> 
   const_reverse_child_iterator;
   
-  // FIXME: Still implementing the the child_begin and child_end functions
-  // for all subclasses.
-#if 0
-  virtual child_iterator         child_begin() = 0;
-  virtual child_iterator         child_end()   = 0;
+  virtual child_iterator child_begin() = 0;
+  virtual child_iterator child_end()   = 0;
   
   const_child_iterator child_begin() const {
     return (child_iterator) const_cast<Stmt*>(this)->child_begin();
@@ -109,8 +105,7 @@ public:
   
   const_reverse_child_iterator child_rend() const {
     return const_reverse_child_iterator(child_begin());
-  }  
-#endif  
+  }
 };
 
 /// DeclStmt - Adaptor class for mixing declarations with statements and
@@ -130,6 +125,10 @@ public:
     return T->getStmtClass() == DeclStmtClass; 
   }
   static bool classof(const DeclStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.
@@ -145,6 +144,10 @@ public:
     return T->getStmtClass() == NullStmtClass; 
   }
   static bool classof(const NullStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -182,6 +185,10 @@ public:
     return T->getStmtClass() == CompoundStmtClass; 
   }
   static bool classof(const CompoundStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
@@ -208,6 +215,10 @@ public:
     T->getStmtClass() == DefaultStmtClass;
   }
   static bool classof(const SwitchCase *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 class CaseStmt : public SwitchCase {
@@ -261,53 +272,65 @@ public:
     return T->getStmtClass() == LabelStmtClass; 
   }
   static bool classof(const LabelStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
 /// IfStmt - This represents an if/then/else.
 ///
 class IfStmt : public Stmt {
-  Expr *Cond;
-  Stmt *Then, *Else;
+  enum { COND, THEN, ELSE, END_EXPR };
+  Stmt* SubExprs[END_EXPR];
 public:
-  IfStmt(Expr *cond, Stmt *then, Stmt *elsev = 0)
-    : Stmt(IfStmtClass), Cond(cond), Then(then), Else(elsev) {}
+  IfStmt(Expr *cond, Stmt *then, Stmt *elsev = 0) : Stmt(IfStmtClass)  {
+    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+    SubExprs[THEN] = then;
+    SubExprs[ELSE] = elsev;
+  }
   
-  const Expr *getCond() const { return Cond; }
-  const Stmt *getThen() const { return Then; }
-  const Stmt *getElse() const { return Else; }
+  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  const Stmt *getThen() const { return SubExprs[THEN]; }
+  const Stmt *getElse() const { return SubExprs[ELSE]; }
 
-  Expr *getCond() { return Cond; }
-  Stmt *getThen() { return Then; }
-  Stmt *getElse() { return Else; }
+  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
+  Stmt *getThen() { return SubExprs[THEN]; }
+  Stmt *getElse() { return SubExprs[ELSE]; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IfStmtClass; 
   }
   static bool classof(const IfStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
 ///
 class SwitchStmt : public Stmt {
-  Expr *Cond;
-  Stmt *Body;
-  
+  enum { COND, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR];  
   // This points to a linked list of case and default statements.
   SwitchCase *FirstCase;
 public:
-  SwitchStmt(Expr *cond)
-    : Stmt(SwitchStmtClass), Cond(cond), Body(0), FirstCase(0) {}
+  SwitchStmt(Expr *cond) : Stmt(SwitchStmtClass), FirstCase(0) {
+      SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+      SubExprs[BODY] = NULL;
+    }
   
-  const Expr *getCond() const { return Cond; }
-  const Stmt *getBody() const { return Body; }
+  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  const Stmt *getBody() const { return SubExprs[BODY]; }
   const SwitchCase *getSwitchCaseList() const { return FirstCase; }
 
-  Expr *getCond() { return Cond; }
-  Stmt *getBody() { return Body; }
+  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  Stmt *getBody() { return SubExprs[BODY]; }
   SwitchCase *getSwitchCaseList() { return FirstCase; }
 
-  void setBody(Stmt *S) { Body = S; }  
+  void setBody(Stmt *S) { SubExprs[BODY] = S; }  
   
   void addSwitchCase(SwitchCase *SC) {
     if (FirstCase)
@@ -320,47 +343,63 @@ public:
     return T->getStmtClass() == SwitchStmtClass; 
   }
   static bool classof(const SwitchStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
 /// WhileStmt - This represents a 'while' stmt.
 ///
 class WhileStmt : public Stmt {
-  Expr *Cond;
-  Stmt *Body;
+  enum { COND, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR];
 public:
-  WhileStmt(Expr *cond, Stmt *body)
-    : Stmt(WhileStmtClass), Cond(cond), Body(body) {}
+  WhileStmt(Expr *cond, Stmt *body) : Stmt(WhileStmtClass) {
+    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+    SubExprs[BODY] = body;
+  }
   
-  Expr *getCond() { return Cond; }
-  const Expr *getCond() const { return Cond; }
-  Stmt *getBody() { return Body; }
-  const Stmt *getBody() const { return Body; }
+  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
+  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  Stmt *getBody() { return SubExprs[BODY]; }
+  const Stmt *getBody() const { return SubExprs[BODY]; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == WhileStmtClass; 
   }
   static bool classof(const WhileStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// DoStmt - This represents a 'do/while' stmt.
 ///
 class DoStmt : public Stmt {
-  Stmt *Body;
-  Expr *Cond;
+  enum { COND, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR];
 public:
-  DoStmt(Stmt *body, Expr *cond)
-    : Stmt(DoStmtClass), Body(body), Cond(cond) {}
+  DoStmt(Stmt *body, Expr *cond) : Stmt(DoStmtClass) {
+    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
+    SubExprs[BODY] = body;
+  }  
   
-  Stmt *getBody() { return Body; }
-  const Stmt *getBody() const { return Body; }
-  Expr *getCond() { return Cond; }
-  const Expr *getCond() const { return Cond; }
+  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
+  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  Stmt *getBody() { return SubExprs[BODY]; }
+  const Stmt *getBody() const { return SubExprs[BODY]; }  
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DoStmtClass; 
   }
   static bool classof(const DoStmt *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
@@ -369,27 +408,34 @@ public:
 /// specified in the source.
 ///
 class ForStmt : public Stmt {
-  Stmt *Init;  // Expression or declstmt.
+  enum { INIT, COND, INC, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
+  
+  Stmt *Init;  
   Expr *Cond, *Inc;
   Stmt *Body;
 public:
   ForStmt(Stmt *init, Expr *cond, Expr *inc, Stmt *body)
     : Stmt(ForStmtClass), Init(init), Cond(cond), Inc(inc), Body(body) {}
   
-  Stmt *getInit() { return Init; }
-  Expr *getCond() { return Cond; }
-  Expr *getInc()  { return Inc; }
-  Stmt *getBody() { return Body; }
- 
-  const Stmt *getInit() const { return Init; }
-  const Expr *getCond() const { return Cond; }
-  const Expr *getInc()  const { return Inc; }
-  const Stmt *getBody() const { return Body; }
+  Stmt *getInit() { return SubExprs[INIT]; }
+  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
+  Expr *getInc()  { return reinterpret_cast<Expr*>(SubExprs[INC]); }
+  Stmt *getBody() { return SubExprs[BODY]; }
+
+  const Stmt *getInit() const { return SubExprs[INIT]; }
+  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
+  const Expr *getInc()  const { return reinterpret_cast<Expr*>(SubExprs[INC]); }
+  const Stmt *getBody() const { return SubExprs[BODY]; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ForStmtClass; 
   }
   static bool classof(const ForStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// GotoStmt - This represents a direct goto.
@@ -405,6 +451,10 @@ public:
     return T->getStmtClass() == GotoStmtClass; 
   }
   static bool classof(const GotoStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// IndirectGotoStmt - This represents an indirect goto.
@@ -421,6 +471,10 @@ public:
     return T->getStmtClass() == IndirectGotoStmtClass; 
   }
   static bool classof(const IndirectGotoStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
@@ -433,6 +487,10 @@ public:
     return T->getStmtClass() == ContinueStmtClass; 
   }
   static bool classof(const ContinueStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// BreakStmt - This represents a break.
@@ -444,6 +502,10 @@ public:
     return T->getStmtClass() == BreakStmtClass; 
   }
   static bool classof(const BreakStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
@@ -461,6 +523,10 @@ public:
     return T->getStmtClass() == ReturnStmtClass; 
   }
   static bool classof(const ReturnStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 }  // end namespace clang
