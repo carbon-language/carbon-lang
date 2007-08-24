@@ -903,7 +903,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     A_ActiveBranch = A_BR->getSuccessor(1);
     A_InactiveBranch = A_BR->getSuccessor(0);
   }
-  A_BR->setUnconditionalDest(A_BR->getSuccessor(0));
+  A_BR->setUnconditionalDest(A_ActiveBranch);
   removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
 
   //[*] Eliminate split condition's inactive branch in from BLoop.
@@ -918,7 +918,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     B_ActiveBranch = B_BR->getSuccessor(0);
     B_InactiveBranch = B_BR->getSuccessor(1);
   }
-  B_BR->setUnconditionalDest(B_BR->getSuccessor(1));
+  B_BR->setUnconditionalDest(B_ActiveBranch);
   removeBlocks(B_InactiveBranch, BLoop, B_ActiveBranch);
 
   return true;
