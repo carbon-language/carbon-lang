@@ -118,6 +118,7 @@ public:
 
   
   ComplexPairTy VisitConditionalOperator(const ConditionalOperator *CO);
+  ComplexPairTy VisitChooseExpr(ChooseExpr *CE);
   //  case Expr::ChooseExprClass:
 };
 }  // end anonymous namespace.
@@ -311,6 +312,15 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   ImagPN->addIncoming(RHS.second, RHSBlock);
   
   return ComplexPairTy(RealPN, ImagPN);
+}
+
+ComplexPairTy ComplexExprEmitter::VisitChooseExpr(ChooseExpr *E) {
+  llvm::APSInt CondVal(32);
+  bool IsConst = E->getCond()->isIntegerConstantExpr(CondVal, CGF.getContext());
+  assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
+  
+  // Emit the LHS or RHS as appropriate.
+  return Visit(CondVal != 0 ? E->getLHS() : E->getRHS());
 }
 
 //===----------------------------------------------------------------------===//
