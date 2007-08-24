@@ -103,9 +103,6 @@ namespace {
     /// DeadBB. LiveBB dominates split conidition's other branch.
     void removeBlocks(BasicBlock *DeadBB, Loop *LP, BasicBlock *LiveBB);
 
-    /// Find cost of spliting loop L.
-    unsigned findSplitCost(Loop *L, SplitInfo &SD);
-
     /// safeSplitCondition - Return true if it is possible to
     /// split loop using given split condition.
     bool safeSplitCondition(SplitInfo &SD);
@@ -202,25 +199,10 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
       ++SI;
   }
 
-  unsigned MaxCost = 99;
-  unsigned Index = 0;
-  unsigned MostProfitableSDIndex = 0;
-  for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
-         E = SplitData.end(); SI != E; ++SI, ++Index) {
-    SplitInfo SD = *SI;
-
-    // ICM_EQs are already handled above.
-    assert (SD.SplitCondition->getPredicate() != ICmpInst::ICMP_EQ &&
-            "Unexpected split condition predicate");
-    
-    unsigned Cost = findSplitCost(L, SD);
-    if (Cost < MaxCost)
-      MostProfitableSDIndex = Index;
-  }
-
   // Split most profitiable condition.
-  if (!SplitData.empty())
-    Changed = splitLoop(SplitData[MostProfitableSDIndex]);
+  // FIXME : Implement cost analysis.
+  unsigned MostProfitableSDIndex = 0;
+  Changed = splitLoop(SplitData[MostProfitableSDIndex]);
 
   if (Changed)
     ++NumIndexSplit;
@@ -593,25 +575,6 @@ bool LoopIndexSplit::safeExitingBlock(SplitInfo &SD,
 
   // We could not find any reason to consider ExitingBlock unsafe.
   return true;
-}
-
-/// Find cost of spliting loop L. Cost is measured in terms of size growth.
-/// Size is growth is calculated based on amount of code duplicated in second
-/// loop.
-unsigned LoopIndexSplit::findSplitCost(Loop *L, SplitInfo &SD) {
-
-  unsigned Cost = 0;
-  BasicBlock *SDBlock = SD.SplitCondition->getParent();
-  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    BasicBlock *BB = *I;
-    // If a block is not dominated by split condition block then
-    // it must be duplicated in both loops.
-    if (!DT->dominates(SDBlock, BB))
-      Cost += BB->size();
-  }
-
-  return Cost;
 }
 
 /// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
