@@ -78,10 +78,11 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
                    SourceLocation rparenloc)
-  : Expr(CallExprClass, t), Fn(fn), NumArgs(numargs) {
-  Args = new Expr*[numargs];
+  : Expr(CallExprClass, t), NumArgs(numargs) {
+  SubExprs = new Expr*[numargs+1];
+  SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i)
-    Args[i] = args[i];
+    SubExprs[i+ARGS_START] = args[i];
   RParenLoc = rparenloc;
 }
 
@@ -711,3 +712,75 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
   return Result;
 }
 
+//===----------------------------------------------------------------------===//
+//  Child Iterators for iterating over subexpressions/substatements
+//===----------------------------------------------------------------------===//
+
+// DeclRefExpr
+Stmt::child_iterator       DeclRefExpr::child_begin() { return NULL; }
+Stmt::child_iterator       DeclRefExpr::child_end() { return NULL; }
+
+// PreDefinedExpr
+Stmt::child_iterator       PreDefinedExpr::child_begin() { return NULL; }
+Stmt::child_iterator       PreDefinedExpr::child_end() { return NULL; }
+
+// IntegerLiteral
+Stmt::child_iterator       IntegerLiteral::child_begin() { return NULL; }
+Stmt::child_iterator       IntegerLiteral::child_end() { return NULL; }
+
+// CharacterLiteral
+Stmt::child_iterator       CharacterLiteral::child_begin() { return NULL; }
+Stmt::child_iterator       CharacterLiteral::child_end() { return NULL; }
+
+// FloatingLiteral
+Stmt::child_iterator       FloatingLiteral::child_begin() { return NULL; }
+Stmt::child_iterator       FloatingLiteral::child_end() { return NULL; }
+
+// StringLiteral
+Stmt::child_iterator       StringLiteral::child_begin() { return NULL; }
+Stmt::child_iterator       StringLiteral::child_end() { return NULL; }
+
+// ParenExpr
+Stmt::child_iterator ParenExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&Val);
+}
+  
+Stmt::child_iterator ParenExpr::child_end() {
+  return child_begin()+1;
+}
+
+// UnaryOperator
+Stmt::child_iterator UnaryOperator::child_begin() {
+  return reinterpret_cast<Stmt**>(&Val);
+}
+
+Stmt::child_iterator UnaryOperator::child_end() {
+  return child_begin()+1;
+}
+
+// SizeOfAlignOfTypeExpr
+Stmt::child_iterator       SizeOfAlignOfTypeExpr::child_begin() { 
+  return NULL;
+}
+
+Stmt::child_iterator       SizeOfAlignOfTypeExpr::child_end() {
+  return NULL;
+}
+
+// ArraySubscriptExpr
+Stmt::child_iterator       ArraySubscriptExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&SubExprs);
+}
+ 
+Stmt::child_iterator       ArraySubscriptExpr::child_end() {
+  return child_begin()+END_EXPR;
+}
+
+// CallExpr
+Stmt::child_iterator       CallExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&SubExprs);
+}
+
+Stmt::child_iterator       CallExpr::child_end() {
+  return child_begin()+NumArgs+ARGS_START;
+}

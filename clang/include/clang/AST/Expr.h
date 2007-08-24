@@ -36,7 +36,7 @@ protected:
 public:  
   QualType getType() const { return TR; }
   void setType(QualType t) { TR = t; }
-  
+
   /// SourceLocation tokens are not useful in isolation - they are low level
   /// value objects created/interpreted by SourceManager. We assume AST
   /// clients will have a pointer to the respective SourceManager.
@@ -132,6 +132,10 @@ public:
     return T->getStmtClass() == DeclRefExprClass; 
   }
   static bool classof(const DeclRefExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__.
@@ -157,7 +161,11 @@ public:
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == PreDefinedExprClass; 
   }
-  static bool classof(const PreDefinedExpr *) { return true; }  
+  static bool classof(const PreDefinedExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 class IntegerLiteral : public Expr {
@@ -177,6 +185,10 @@ public:
     return T->getStmtClass() == IntegerLiteralClass; 
   }
   static bool classof(const IntegerLiteral *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 class CharacterLiteral : public Expr {
@@ -197,6 +209,10 @@ public:
     return T->getStmtClass() == CharacterLiteralClass; 
   }
   static bool classof(const CharacterLiteral *) { return true; }
+
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 class FloatingLiteral : public Expr {
@@ -214,6 +230,10 @@ public:
     return T->getStmtClass() == FloatingLiteralClass; 
   }
   static bool classof(const FloatingLiteral *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
@@ -244,6 +264,10 @@ public:
     return T->getStmtClass() == StringLiteralClass; 
   }
   static bool classof(const StringLiteral *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
@@ -263,6 +287,10 @@ public:
     return T->getStmtClass() == ParenExprClass; 
   }
   static bool classof(const ParenExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
@@ -326,6 +354,10 @@ public:
     return T->getStmtClass() == UnaryOperatorClass; 
   }
   static bool classof(const UnaryOperator *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of
@@ -350,6 +382,10 @@ public:
     return T->getStmtClass() == SizeOfAlignOfTypeExprClass; 
   }
   static bool classof(const SizeOfAlignOfTypeExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 //===----------------------------------------------------------------------===//
@@ -358,38 +394,49 @@ public:
 
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {
-  Expr *LHS, *RHS;
+  enum { LHS, RHS, END_EXPR=2 };
+  Expr* SubExprs[END_EXPR]; 
   SourceLocation RBracketLoc;
 public:
   ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
                      SourceLocation rbracketloc) : 
     Expr(ArraySubscriptExprClass, t),
-    LHS(lhs), RHS(rhs), RBracketLoc(rbracketloc) {}
+    RBracketLoc(rbracketloc) {
+      SubExprs[LHS] = lhs;
+      SubExprs[RHS] = rhs;
+    }
   
   /// An array access can be written A[4] or 4[A] (both are equivalent).
   /// - getBase() and getIdx() always present the normalized view: A[4].
   ///    In this case getBase() returns "A" and getIdx() returns "4".
   /// - getLHS() and getRHS() present the syntactic view. e.g. for
   ///    4[A] getLHS() returns "4".
+
+  Expr *getLHS() { return SubExprs[LHS]; }
+  const Expr *getLHS() const { return SubExprs[LHS]; }
   
-  Expr *getBase() { return (LHS->getType()->isIntegerType()) ? RHS : LHS; }
+  Expr *getRHS() { return SubExprs[RHS]; }
+  const Expr *getRHS() const { return SubExprs[RHS]; }
+  
+  Expr *getBase() { 
+    return (getLHS()->getType()->isIntegerType()) ? getRHS() : getLHS();
+  }
+    
   const Expr *getBase() const { 
-    return (LHS->getType()->isIntegerType()) ? RHS : LHS;
+    return (getLHS()->getType()->isIntegerType()) ? getRHS() : getLHS();
   }
   
-  Expr *getIdx() { return (LHS->getType()->isIntegerType()) ? LHS : RHS; }
+  Expr *getIdx() { 
+    return (getLHS()->getType()->isIntegerType()) ? getLHS() : getRHS();
+  }
+  
   const Expr *getIdx() const {
-    return (LHS->getType()->isIntegerType()) ? LHS : RHS; 
-  }
-  
-  Expr *getLHS() { return LHS; }
-  const Expr *getLHS() const { return LHS; }
-  
-  Expr *getRHS() { return RHS; }
-  const Expr *getRHS() const { return RHS; }
+    return (getLHS()->getType()->isIntegerType()) ? getLHS() : getRHS(); 
+  }  
+
   
   SourceRange getSourceRange() const { 
-    return SourceRange(LHS->getLocStart(), RBracketLoc);
+    return SourceRange(getLHS()->getLocStart(), RBracketLoc);
   }
   virtual SourceLocation getExprLoc() const { return RBracketLoc; }
 
@@ -397,25 +444,29 @@ public:
     return T->getStmtClass() == ArraySubscriptExprClass; 
   }
   static bool classof(const ArraySubscriptExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 
 /// CallExpr - [C99 6.5.2.2] Function Calls.
 ///
 class CallExpr : public Expr {
-  Expr *Fn;
-  Expr **Args;
+  enum { FN=0, ARGS_START=1 };
+  Expr **SubExprs;
   unsigned NumArgs;
   SourceLocation RParenLoc;
 public:
   CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
            SourceLocation rparenloc);
   ~CallExpr() {
-    delete [] Args;
+    delete [] SubExprs;
   }
   
-  const Expr *getCallee() const { return Fn; }
-  Expr *getCallee() { return Fn; }
+  const Expr *getCallee() const { return SubExprs[FN]; }
+  Expr *getCallee() { return SubExprs[FN]; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
@@ -424,11 +475,11 @@ public:
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return Args[Arg];
+    return SubExprs[Arg+ARGS_START];
   }
   const Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return Args[Arg];
+    return SubExprs[Arg+ARGS_START];
   }
   
   /// getNumCommas - Return the number of commas that must have been present in
@@ -438,13 +489,17 @@ public:
   bool isBuiltinClassifyType(llvm::APSInt &Result) const;
   
   SourceRange getSourceRange() const { 
-    return SourceRange(Fn->getLocStart(), RParenLoc);
+    return SourceRange(getCallee()->getLocStart(), RParenLoc);
   }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CallExprClass; 
   }
   static bool classof(const CallExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.

@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator"
 #include <iosfwd>
 
 namespace clang {
@@ -67,6 +68,49 @@ public:
   
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }
+  
+  
+  /// Child Iterators: All subclasses must implement child_begin and child_end
+  ///  to permit easy iteration over the substatements/subexpessions of an
+  ///  AST node.  This permits easy iteration over all nodes in the AST.
+  typedef Stmt**                                               child_iterator;
+  typedef Stmt* const *                                  const_child_iterator;
+  
+  typedef std::reverse_iterator<child_iterator>                
+  reverse_child_iterator;
+  typedef std::reverse_iterator<const_child_iterator> 
+  const_reverse_child_iterator;
+  
+  // FIXME: Still implementing the the child_begin and child_end functions
+  // for all subclasses.
+#if 0
+  virtual child_iterator         child_begin() = 0;
+  virtual child_iterator         child_end()   = 0;
+  
+  const_child_iterator child_begin() const {
+    return (child_iterator) const_cast<Stmt*>(this)->child_begin();
+  }
+  
+  const_child_iterator child_end() const {
+    return (child_iterator) const_cast<Stmt*>(this)->child_end();  
+  }
+  
+  reverse_child_iterator child_rbegin() {
+    return reverse_child_iterator(child_end());
+  }
+  
+  reverse_child_iterator child_rend() {
+    return reverse_child_iterator(child_begin());
+  }
+  
+  const_reverse_child_iterator child_rbegin() const {
+    return const_reverse_child_iterator(child_end());
+  }
+  
+  const_reverse_child_iterator child_rend() const {
+    return const_reverse_child_iterator(child_begin());
+  }  
+#endif  
 };
 
 /// DeclStmt - Adaptor class for mixing declarations with statements and
