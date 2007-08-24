@@ -915,20 +915,20 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
     APFloat temp_rhs(rhs);
     bool reverse;
 
-    if(bits == 0) {
+    if (bits == 0) {
       reverse = compareAbsoluteValue(temp_rhs) == cmpLessThan;
       lost_fraction = lfExactlyZero;
-    } else if(bits > 0) {
+    } else if (bits > 0) {
       lost_fraction = temp_rhs.shiftSignificandRight(bits - 1);
       shiftSignificandLeft(1);
       reverse = false;
-    } else if(bits < 0) {
+    } else {
       lost_fraction = shiftSignificandRight(-bits - 1);
       temp_rhs.shiftSignificandLeft(1);
       reverse = true;
     }
 
-    if(reverse) {
+    if (reverse) {
       carry = temp_rhs.subtractSignificand
 	(*this, lost_fraction != lfExactlyZero);
       copySignificand(temp_rhs);
@@ -1496,8 +1496,7 @@ APFloat::convertFromHexadecimalString(const char *p,
 }
 
 APFloat::opStatus
-APFloat::convertFromString(const char *p, roundingMode rounding_mode)
-{
+APFloat::convertFromString(const char *p, roundingMode rounding_mode) {
   /* Handle a leading minus sign.  */
   if(*p == '-')
     sign = 1, p++;
@@ -1506,11 +1505,9 @@ APFloat::convertFromString(const char *p, roundingMode rounding_mode)
 
   if(p[0] == '0' && (p[1] == 'x' || p[1] == 'X'))
     return convertFromHexadecimalString(p + 2, rounding_mode);
-  else
-    {
-      assert(0 && "Decimal to binary conversions not yet implemented");
-      abort();
-    }
+
+  assert(0 && "Decimal to binary conversions not yet implemented");
+  abort();
 }
 
 // For good performance it is desirable for different APFloats
