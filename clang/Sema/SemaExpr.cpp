@@ -271,6 +271,15 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   return new SizeOfAlignOfTypeExpr(isSizeof, ArgTy, resultType, OpLoc, RPLoc);
 }
 
+QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isImag) {
+  DefaultFunctionArrayConversion(V);
+  
+  if (const ComplexType *CT = V->getType()->getAsComplexType())
+    return CT->getElementType();
+  return V->getType();
+}
+
+
 
 Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc, 
                                              tok::TokenKind Kind,
@@ -1586,8 +1595,13 @@ Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   case UnaryOperator::AlignOf:
     resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc, false);
     break;
+  case UnaryOperator::Real:
+    resultType = CheckRealImagOperand(Input, OpLoc, false);
+    break;
+  case UnaryOperator::Imag:
+    resultType = CheckRealImagOperand(Input, OpLoc, true);
+    break;
   case UnaryOperator::Extension:
-    // FIXME: does __extension__ cause any promotions? I would think not.
     resultType = Input->getType();
     break;
   }

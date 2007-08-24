@@ -297,6 +297,13 @@ public:
 /// UnaryOperator - This represents the unary-expression's (except sizeof of
 /// types), the postinc/postdec operators from postfix-expression, and various
 /// extensions.
+///
+/// Notes on various nodes:
+///
+/// Real/Imag - These return the real/imag part of a complex operand.  If
+///   applied to a non-complex value, the former returns its operand and the
+///   later returns zero in the type of the operand.
+///
 class UnaryOperator : public Expr {
 public:
   // Note that additions to this should also update the StmtVisitor class.
