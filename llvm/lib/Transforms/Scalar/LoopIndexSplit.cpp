@@ -57,7 +57,8 @@ namespace {
 
     class SplitInfo {
     public:
-      SplitInfo() : SplitValue(NULL), SplitCondition(NULL) {}
+      SplitInfo() : SplitValue(NULL), SplitCondition(NULL), 
+                    UseTrueBranchFirst(true) {}
 
       // Induction variable's range is split at this value.
       Value *SplitValue;
@@ -65,10 +66,14 @@ namespace {
       // This compare instruction compares IndVar against SplitValue.
       ICmpInst *SplitCondition;
 
+      // True if after loop index split, first loop will execute split condition's
+      // true branch.
+      bool UseTrueBranchFirst;
       // Clear split info.
       void clear() {
         SplitValue = NULL;
         SplitCondition = NULL;
+        UseTrueBranchFirst = true;
       }
 
     };
@@ -198,6 +203,9 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
     } else
       ++SI;
   }
+
+  if (SplitData.empty())
+    return false;
 
   // Split most profitiable condition.
   // FIXME : Implement cost analysis.
@@ -340,6 +348,14 @@ void LoopIndexSplit::findSplitCondition() {
 
     if (CI->getPredicate() == ICmpInst::ICMP_NE)
       return;
+
+    // If split condition predicate is GT or GE then first execute
+    // false branch of split condition.
+    if (CI->getPredicate() != ICmpInst::ICMP_ULT
+        && CI->getPredicate() != ICmpInst::ICMP_SLT
+        && CI->getPredicate() != ICmpInst::ICMP_ULE
+        && CI->getPredicate() != ICmpInst::ICMP_SLE)
+      SD.UseTrueBranchFirst = false;
 
     // If one operand is loop invariant and second operand is SCEVAddRecExpr
     // based on induction variable then CI is a candidate split condition.
@@ -878,16 +894,30 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   //[*] Eliminate split condition's inactive branch from ALoop.
   BasicBlock *A_SplitCondBlock = SD.SplitCondition->getParent();
   BranchInst *A_BR = cast<BranchInst>(A_SplitCondBlock->getTerminator());
-  BasicBlock *A_InactiveBranch = A_BR->getSuccessor(1);
-  BasicBlock *A_ActiveBranch = A_BR->getSuccessor(0);
+  BasicBlock *A_InactiveBranch = NULL;
+  BasicBlock *A_ActiveBranch = NULL;
+  if (SD.UseTrueBranchFirst) {
+    A_ActiveBranch = A_BR->getSuccessor(0);
+    A_InactiveBranch = A_BR->getSuccessor(1);
+  } else {
+    A_ActiveBranch = A_BR->getSuccessor(1);
+    A_InactiveBranch = A_BR->getSuccessor(0);
+  }
   A_BR->setUnconditionalDest(A_BR->getSuccessor(0));
   removeBlocks(A_InactiveBranch, L, A_ActiveBranch);
 
   //[*] Eliminate split condition's inactive branch in from BLoop.
   BasicBlock *B_SplitCondBlock = cast<BasicBlock>(ValueMap[A_SplitCondBlock]);
   BranchInst *B_BR = cast<BranchInst>(B_SplitCondBlock->getTerminator());
-  BasicBlock *B_InactiveBranch = B_BR->getSuccessor(0);
-  BasicBlock *B_ActiveBranch = B_BR->getSuccessor(1);
+  BasicBlock *B_InactiveBranch = NULL;
+  BasicBlock *B_ActiveBranch = NULL;
+  if (SD.UseTrueBranchFirst) {
+    B_ActiveBranch = B_BR->getSuccessor(1);
+    B_InactiveBranch = B_BR->getSuccessor(0);
+  } else {
+    B_ActiveBranch = B_BR->getSuccessor(0);
+    B_InactiveBranch = B_BR->getSuccessor(1);
+  }
   B_BR->setUnconditionalDest(B_BR->getSuccessor(1));
   removeBlocks(B_InactiveBranch, BLoop, B_ActiveBranch);
 
