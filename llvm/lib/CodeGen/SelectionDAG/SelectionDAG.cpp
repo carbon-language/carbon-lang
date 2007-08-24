@@ -49,7 +49,7 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
 /// As such, this method can be used to do an exact bit-for-bit comparison of
 /// two floating point values.
 bool ConstantFPSDNode::isExactlyValue(double V) const {
-  return DoubleToBits(V) == DoubleToBits(Value);
+  return Value == APFloat(V);
 }
 
 //===----------------------------------------------------------------------===//

@@ -23,6 +23,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
@@ -1144,17 +1145,17 @@ public:
 };
 
 class ConstantFPSDNode : public SDNode {
-  double Value;
+  APFloat Value;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, double val, MVT::ValueType VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
-             getSDVTList(VT)), Value(val) {
+             getSDVTList(VT)), Value(APFloat(val)) {
   }
 public:
 
-  double getValue() const { return Value; }
+  double getValue() const { return Value.convertToDouble(); }
 
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
