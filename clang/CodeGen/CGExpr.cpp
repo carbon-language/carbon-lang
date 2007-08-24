@@ -37,7 +37,7 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
 /// expression and compare the result against zero, returning an Int1Ty value.
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
-  return ConvertScalarValueToBool(EmitExpr(E), E->getType());
+  return ConvertScalarValueToBool(EmitAnyExpr(E), E->getType());
 }
 
 //===--------------------------------------------------------------------===//
@@ -160,12 +160,15 @@ llvm::Value *CodeGenFunction::ConvertScalarValueToBool(RValue Val, QualType Ty){
       return Result;
     }
     }
-  } else if (isa<PointerType>(Ty) || 
-             cast<TagType>(Ty)->getDecl()->getKind() == Decl::Enum) {
-    // Code below handles this fine.
+  } else if (isa<ComplexType>(Ty)) {
+    assert(0 && "implement complex -> bool");
+    
   } else {
-    assert(isa<ComplexType>(Ty) && "Unknwon type!");
-    assert(0 && "FIXME: comparisons against complex not implemented yet");
+    assert((isa<PointerType>(Ty) ||
+            (isa<TagType>(Ty) &&
+             cast<TagType>(Ty)->getDecl()->getKind() == Decl::Enum)) &&
+           "Unknown Type");
+    // Code below handles this case fine.
   }
   
   // Usual case for integers, pointers, and enums: compare against zero.
@@ -642,7 +645,7 @@ RValue CodeGenFunction::EmitArraySubscriptExprRV(const ArraySubscriptExpr *E) {
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
 RValue CodeGenFunction::EmitCastExpr(const Expr *Op, QualType DestTy) {
-  RValue Src = EmitExpr(Op);
+  RValue Src = EmitAnyExpr(Op);
   
   // If the destination is void, just evaluate the source.
   if (DestTy->isVoidType())
