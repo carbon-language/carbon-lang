@@ -272,7 +272,12 @@ void LoopIndexSplit::findLoopConditionals() {
 
   if (!ExitingBlock)
     return;
-  
+
+  // If exiting block is neither loop header nor loop latch then this loop is
+  // not suitable. 
+  if (ExitingBlock != L->getHeader() && ExitingBlock != L->getLoopLatch())
+    return;
+
   // If exit block's terminator is conditional branch inst then we have found
   // exit condition.
   BranchInst *BR = dyn_cast<BranchInst>(ExitingBlock->getTerminator());
@@ -705,7 +710,22 @@ bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
     if (Succ0 == *PI)
       return false;
 
-  return true;
+  // Finally this split condition is safe only if merge point for
+  // split condition branch is loop latch. This check along with previous
+  // check, to ensure that exit condition is in either loop latch or header,
+  // filters all loops with non-empty loop body between merge point
+  // and exit condition.
+  DominanceFrontier::iterator Succ0DF = DF->find(Succ0);
+  assert (Succ0DF != DF->end() && "Unable to find Succ0 dominance frontier");
+  if (Succ0DF->second.count(Latch))
+    return true;
+
+  DominanceFrontier::iterator Succ1DF = DF->find(Succ1);
+  assert (Succ1DF != DF->end() && "Unable to find Succ1 dominance frontier");
+  if (Succ1DF->second.count(Latch))
+    return true;
+  
+  return false;
 }
 
 /// splitLoop - Split current loop L in two loops using split information
