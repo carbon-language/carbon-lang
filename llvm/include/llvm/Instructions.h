@@ -603,6 +603,8 @@ public:
     std::swap(Ops[0], Ops[1]);
   }
 
+  virtual ICmpInst *clone() const;
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ICmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -724,6 +726,8 @@ public:
     SubclassData = getSwappedPredicate();
     std::swap(Ops[0], Ops[1]);
   }
+
+  virtual FCmpInst *clone() const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FCmpInst *) { return true; }

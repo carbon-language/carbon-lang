@@ -2595,8 +2595,11 @@ BinaryOperator *BinaryOperator::clone() const {
   return create(getOpcode(), Ops[0], Ops[1]);
 }
 
-CmpInst* CmpInst::clone() const {
-  return create(getOpcode(), getPredicate(), Ops[0], Ops[1]);
+FCmpInst* FCmpInst::clone() const {
+  return new FCmpInst(getPredicate(), Ops[0], Ops[1]);
+}
+ICmpInst* ICmpInst::clone() const {
+  return new ICmpInst(getPredicate(), Ops[0], Ops[1]);
 }
 
 MallocInst *MallocInst::clone()   const { return new MallocInst(*this); }

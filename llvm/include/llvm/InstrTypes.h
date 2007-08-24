@@ -494,9 +494,6 @@ public:
                          Value *S2, const std::string &Name, 
                          BasicBlock *InsertAtEnd);
 
-  /// @brief Implement superclass method.
-  virtual CmpInst *clone() const;
-
   /// @brief Get the opcode casted to the right type
   OtherOps getOpcode() const {
     return static_cast<OtherOps>(Instruction::getOpcode());
