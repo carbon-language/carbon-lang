@@ -420,7 +420,7 @@ private:
   QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation loc, 
                                      bool isSizeof);
-  QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc, bool isImag);
+  QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc);
   
   /// type checking primary expressions.
   QualType CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
