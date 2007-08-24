@@ -253,25 +253,14 @@ bool ConstantFP::isExactlyValue(double V) const {
 
 namespace {
   struct DenseMapAPFloatKeyInfo {
-    struct KeyTy {
-      APFloat val;
-      KeyTy(const APFloat& V) : val(V){}
-      KeyTy(const KeyTy& that) : val(that.val) {}
-      bool operator==(const KeyTy& that) const {
-        return this->val == that.val;
-      }
-      bool operator!=(const KeyTy& that) const {
-        return !this->operator==(that);
-      }
-    };
-    static inline KeyTy getEmptyKey() { 
-      return KeyTy(APFloat(APFloat::Bogus,1));
+    static inline APFloat getEmptyKey() { 
+      return APFloat(APFloat::Bogus,1);
     }
-    static inline KeyTy getTombstoneKey() { 
-      return KeyTy(APFloat(APFloat::Bogus,2)); 
+    static inline APFloat getTombstoneKey() { 
+      return APFloat(APFloat::Bogus,2); 
     }
-    static unsigned getHashValue(const KeyTy &Key) {
-      return Key.val.getHashValue();
+    static unsigned getHashValue(const APFloat &Key) {
+      return Key.getHashValue();
     }
     static bool isPod() { return false; }
   };
@@ -279,21 +268,21 @@ namespace {
 
 //---- ConstantFP::get() implementation...
 //
-typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*, 
+typedef DenseMap<APFloat, ConstantFP*, 
                  DenseMapAPFloatKeyInfo> FPMapTy;
 
 static ManagedStatic<FPMapTy> FPConstants;
 
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   if (Ty == Type::FloatTy) {
-    DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((float)V));
+    APFloat Key(APFloat((float)V));
     ConstantFP *&Slot = (*FPConstants)[Key];
     if (Slot) return Slot;
     return Slot = new ConstantFP(Ty, (float)V);
   } else if (Ty == Type::DoubleTy) {
     // Without the redundant cast, the following is taken to be
     // a function declaration.  What a language.
-    DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((double)V));
+    APFloat Key(APFloat((double)V));
     ConstantFP *&Slot = (*FPConstants)[Key];
     if (Slot) return Slot;
     return Slot = new ConstantFP(Ty, V);

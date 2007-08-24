@@ -194,6 +194,11 @@ namespace llvm {
     /* Bitwise comparison for equality (QNaNs compare equal, 0!=-0). */
     bool operator==(const APFloat &) const;
 
+    /* Inversion of the preceding. */
+    inline bool operator!=(const APFloat &RHS) const { 
+      return !((*this)==RHS); 
+    }
+
     /* Simple queries.  */
     fltCategory getCategory() const { return category; }
     const fltSemantics &getSemantics() const { return *semantics; }

@@ -14,6 +14,7 @@
 
 #include <cassert>
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -1534,10 +1535,6 @@ APFloat::getHashValue() const {
 
 double
 APFloat::convertToDouble() const {
-  union { 
-    double d;
-    uint64_t i;
-  } u;
   assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
   assert (partCount()==1);
 
@@ -1562,17 +1559,12 @@ APFloat::convertToDouble() const {
   } else
     assert(0);
 
-  u.i = ((mysign & 1) << 63) | ((myexponent & 0x7ff) <<  52) | 
-        (mysignificand & 0xfffffffffffffLL);
-  return u.d;
+  return BitsToDouble(((mysign & 1) << 63) | ((myexponent & 0x7ff) <<  52) | 
+        (mysignificand & 0xfffffffffffffLL));
 }
 
 float
 APFloat::convertToFloat() const {
-  union { 
-    float f;
-    int32_t i;
-  } u;
   assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
   assert (partCount()==1);
 
@@ -1597,25 +1589,18 @@ APFloat::convertToFloat() const {
   } else
     assert(0);
 
-  u.i = ((mysign&1) << 31) | ((myexponent&0xff) << 23) | 
-        ((mysignificand & 0x7fffff));
-  return u.f;
+  return BitsToFloat(((mysign&1) << 31) | ((myexponent&0xff) << 23) | 
+        (mysignificand & 0x7fffff));
 }
 
 APFloat::APFloat(double d) {
+  uint64_t i = DoubleToBits(d);
+  uint64_t mysign = i >> 63;
+  uint64_t myexponent = (i >> 52) & 0x7ff;
+  uint64_t mysignificand = i & 0xfffffffffffffLL;
+
   initialize(&APFloat::IEEEdouble);
-  union { 
-    double d; 
-    uint64_t i;
-  } u;
-  u.d = d;
   assert(partCount()==1);
-
-  uint64_t mysign, myexponent, mysignificand;
-
-  mysign = u.i >> 63;
-  myexponent = (u.i >> 52) & 0x7ff;
-  mysignificand = u.i & 0xfffffffffffffLL;
 
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
@@ -1637,19 +1622,13 @@ APFloat::APFloat(double d) {
 }
 
 APFloat::APFloat(float f) {
+  uint32_t i = FloatToBits(f);
+  uint32_t mysign = i >> 31;
+  uint32_t myexponent = (i >> 23) & 0xff;
+  uint32_t mysignificand = i & 0x7fffff;
+
   initialize(&APFloat::IEEEsingle);
-  union { 
-    float f;
-    uint32_t i;
-  } u;
-  u.f = f;
   assert(partCount()==1);
-
-  uint32_t mysign, myexponent, mysignificand;
-
-  mysign = u.i >> 31;
-  myexponent = (u.i >> 23) & 0xff;
-  mysignificand = u.i & 0x7fffff;
 
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
