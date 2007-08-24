@@ -425,7 +425,12 @@ void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
 }
 void StmtDumper::VisitBinaryOperator(BinaryOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " '%s'\n", BinaryOperator::getOpcodeStr(Node->getOpcode()));
+  fprintf(F, " '%s'", BinaryOperator::getOpcodeStr(Node->getOpcode()));
+  if (CompoundAssignOperator *CAO = dyn_cast<CompoundAssignOperator>(Node)) {
+    fprintf(F, " ComputeTy=");
+    DumpType(CAO->getComputationType());
+  }
+  fprintf(F, "\n");
   DumpSubTree(Node->getLHS());
   fprintf(F, "\n");
   DumpSubTree(Node->getRHS());

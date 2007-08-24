@@ -293,7 +293,7 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
 //===----------------------------------------------------------------------===//
 
 Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
-                                                    bool isInc, bool isPre) {
+                                             bool isInc, bool isPre) {
   LValue LV = EmitLValue(E->getSubExpr());
   // FIXME: Handle volatile!
   Value *InVal = CGF.EmitLoadOfLValue(LV/* false*/,
