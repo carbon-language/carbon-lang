@@ -630,3 +630,17 @@ _bar:
         ret
 
 //===---------------------------------------------------------------------===//
+
+We should materialize vecetor constants like "all ones" and "signbit" with 
+code like:
+
+     cmpeqps xmm1, xmm1   ; xmm1 = all-ones
+
+and:
+     cmpeqps xmm1, xmm1   ; xmm1 = all-ones
+     psrlq   xmm1, 31     ; xmm1 = all 100000000000...
+
+instead of using a load from the constant pool.  The later is important for
+ABS/NEG/copysign etc.
+
+//===---------------------------------------------------------------------===//
