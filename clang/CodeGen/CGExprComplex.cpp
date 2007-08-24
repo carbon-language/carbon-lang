@@ -119,7 +119,6 @@ public:
   
   ComplexPairTy VisitConditionalOperator(const ConditionalOperator *CO);
   ComplexPairTy VisitChooseExpr(ChooseExpr *CE);
-  //  case Expr::ChooseExprClass:
 };
 }  // end anonymous namespace.
 

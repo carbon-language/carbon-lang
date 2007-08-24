@@ -84,8 +84,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   DMEntry = DeclPtr;
   
   // If this local has an initializer, emit it now.
-  if (const Expr *Init = D.getInit())
-    EmitStoreThroughLValue(EmitExpr(Init), LValue::MakeAddr(DeclPtr), Ty);
+  if (const Expr *Init = D.getInit()) {
+    // FIXME: This could be much better for aggregates / complex.
+    EmitStoreThroughLValue(EmitAnyExpr(Init), LValue::MakeAddr(DeclPtr), Ty);
+  }
 }
 
 /// Emit an alloca for the specified parameter and set up LocalDeclMap.

@@ -275,8 +275,9 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
   // FIXME: Handle return of an aggregate!
-  if (RV)
-    RetVal = EmitExpr(RV);
+  if (RV) 
+    // FIXME: This could be much better for return of aggregate: return inplace.
+    RetVal = EmitAnyExpr(RV);
   else  // Silence a bogus GCC warning. 
     RetVal = RValue::get(0);
   

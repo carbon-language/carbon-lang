@@ -185,7 +185,6 @@ class CodeGenFunction {
 public:
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   llvm::LLVMBuilder Builder;
-private:
   
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;
@@ -197,6 +196,7 @@ private:
   const llvm::Type *LLVMIntTy;
   unsigned LLVMPointerWidth;
   
+private:
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
   llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
@@ -345,29 +345,12 @@ public:
   /// result of the expression doesn't need to be generated into memory.
   RValue EmitAnyExpr(const Expr *E, bool NeedResult = true);
   
-  RValue EmitExpr(const Expr *E);
-  RValue EmitIntegerLiteral(const IntegerLiteral *E);
-  RValue EmitFloatingLiteral(const FloatingLiteral *E);
-  RValue EmitCharacterLiteral(const CharacterLiteral *E);
-  RValue EmitTypesCompatibleExpr(const TypesCompatibleExpr *E);
-   
-  RValue EmitImplicitCastExpr(const ImplicitCastExpr *Op);
-  RValue EmitCastExpr(const Expr *Op, QualType DestTy);
   RValue EmitCallExpr(const CallExpr *E);
   RValue EmitBuiltinExpr(unsigned builtinID, const CallExpr *E);
-  RValue EmitArraySubscriptExprRV(const ArraySubscriptExpr *E);
 
-  // Unary Operators.
-  RValue EmitUnaryOperator(const UnaryOperator *E);
-  RValue EmitUnaryIncDec  (const UnaryOperator *E);
-  RValue EmitUnaryAddrOf  (const UnaryOperator *E);
-  RValue EmitUnaryPlus    (const UnaryOperator *E);
-  RValue EmitUnaryMinus   (const UnaryOperator *E);
-  RValue EmitUnaryNot     (const UnaryOperator *E);
-  RValue EmitUnaryLNot    (const UnaryOperator *E);
-  RValue EmitSizeAlignOf  (QualType TypeToSize, QualType RetType,bool isSizeOf);
-  // FIXME: real/imag
-  
+#if 0
+  RValue EmitExpr(const Expr *E);
+   
   // Binary Operators.
   RValue EmitBinaryOperator(const BinaryOperator *E);
   RValue EmitBinaryMul(const BinaryOperator *E);
@@ -398,8 +381,9 @@ public:
   // Conditional Operator.
   RValue EmitConditionalOperator(const ConditionalOperator *E);
   RValue EmitChooseExpr(const ChooseExpr *E);
+#endif
   
-  RValue EmitObjCStringLiteral(const ObjCStringLiteral* E);
+  llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
 
   //===--------------------------------------------------------------------===//
   //                       Aggregate Expression Emission
@@ -407,6 +391,10 @@ public:
   
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                          QualType EltTy);
+  
+  /// EmitScalarExpr - Emit the computation of the specified expression of
+  /// LLVM scalar type, returning the result.
+  llvm::Value *EmitScalarExpr(const Expr *E);
   
   /// EmitAggExpr - Emit the computation of the specified expression of
   /// aggregate type.  The result is computed into DestPtr.  Note that if

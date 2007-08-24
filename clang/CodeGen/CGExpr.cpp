@@ -411,7 +411,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   
   assert(E->getOpcode() == UnaryOperator::Deref &&
          "'*' is the only unary operator that produces an lvalue");
-  return LValue::MakeAddr(EmitExpr(E->getSubExpr()).getVal());
+  return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()));
 }
 
 LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
@@ -468,7 +468,7 @@ LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
 
 LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // The index must always be an integer, which is not an aggregate.  Emit it.
-  llvm::Value *Idx = EmitExpr(E->getIdx()).getVal();
+  llvm::Value *Idx = EmitScalarExpr(E->getIdx());
   
   // If the base is a vector type, then we are forming a vector element lvalue
   // with this subscript.
@@ -481,7 +481,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   }
   
   // The base must be a pointer, which is not an aggregate.  Emit it.
-  llvm::Value *Base = EmitExpr(E->getBase()).getVal();
+  llvm::Value *Base = EmitScalarExpr(E->getBase());
   
   // Extend or truncate the index type to 32 or 64-bits.
   QualType IdxTy  = E->getIdx()->getType();
@@ -517,7 +517,7 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 /// result of the expression doesn't need to be generated into memory.
 RValue CodeGenFunction::EmitAnyExpr(const Expr *E, bool NeedResult) {
   if (!hasAggregateLLVMType(E->getType()))
-    return EmitExpr(E);
+    return RValue::get(EmitScalarExpr(E));
   
   llvm::Value *DestMem = 0;
   if (NeedResult)
@@ -533,151 +533,6 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, bool NeedResult) {
   return RValue::getAggregate(DestMem);
 }
 
-RValue CodeGenFunction::EmitExpr(const Expr *E) {
-  assert(E && !hasAggregateLLVMType(E->getType()) &&
-         "Invalid scalar expression to emit");
-  
-  switch (E->getStmtClass()) {
-  default:
-    fprintf(stderr, "Unimplemented expr!\n");
-    E->dump();
-    return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
-    
-  // l-values.
-  case Expr::DeclRefExprClass:
-    // DeclRef's of EnumConstantDecl's are simple rvalues.
-    if (const EnumConstantDecl *EC = 
-          dyn_cast<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
-      return RValue::get(llvm::ConstantInt::get(EC->getInitVal()));
-    return EmitLoadOfLValue(E);
-  case Expr::ArraySubscriptExprClass:
-    return EmitArraySubscriptExprRV(cast<ArraySubscriptExpr>(E));
-  case Expr::OCUVectorElementExprClass:
-    return EmitLoadOfLValue(E);
-  case Expr::PreDefinedExprClass:
-  case Expr::StringLiteralClass:
-    return RValue::get(EmitLValue(E).getAddress());
-    
-  // Leaf expressions.
-  case Expr::IntegerLiteralClass:
-    return EmitIntegerLiteral(cast<IntegerLiteral>(E)); 
-  case Expr::FloatingLiteralClass:
-    return EmitFloatingLiteral(cast<FloatingLiteral>(E));
-  case Expr::CharacterLiteralClass:
-    return EmitCharacterLiteral(cast<CharacterLiteral>(E));
-  case Expr::TypesCompatibleExprClass:
-    return EmitTypesCompatibleExpr(cast<TypesCompatibleExpr>(E));
-    
-  // Operators.  
-  case Expr::ParenExprClass:
-    return EmitExpr(cast<ParenExpr>(E)->getSubExpr());
-  case Expr::UnaryOperatorClass:
-    return EmitUnaryOperator(cast<UnaryOperator>(E));
-  case Expr::SizeOfAlignOfTypeExprClass:
-    return EmitSizeAlignOf(cast<SizeOfAlignOfTypeExpr>(E)->getArgumentType(),
-                           E->getType(),
-                           cast<SizeOfAlignOfTypeExpr>(E)->isSizeOf());
-  case Expr::ImplicitCastExprClass:
-    return EmitImplicitCastExpr(cast<ImplicitCastExpr>(E));
-  case Expr::CastExprClass: 
-    return EmitCastExpr(cast<CastExpr>(E)->getSubExpr(), E->getType());
-  case Expr::CallExprClass:
-    return EmitCallExpr(cast<CallExpr>(E));
-  case Expr::BinaryOperatorClass:
-    return EmitBinaryOperator(cast<BinaryOperator>(E));
-  
-  case Expr::ConditionalOperatorClass:
-    return EmitConditionalOperator(cast<ConditionalOperator>(E));
-  case Expr::ChooseExprClass:
-    return EmitChooseExpr(cast<ChooseExpr>(E));
-  case Expr::ObjCStringLiteralClass:
-    return EmitObjCStringLiteral(cast<ObjCStringLiteral>(E));
-  }
-}
-
-RValue CodeGenFunction::EmitIntegerLiteral(const IntegerLiteral *E) {
-  return RValue::get(llvm::ConstantInt::get(E->getValue()));
-}
-RValue CodeGenFunction::EmitFloatingLiteral(const FloatingLiteral *E) {
-  return RValue::get(llvm::ConstantFP::get(ConvertType(E->getType()),
-                                           E->getValue()));
-}
-RValue CodeGenFunction::EmitCharacterLiteral(const CharacterLiteral *E) {
-  return RValue::get(llvm::ConstantInt::get(ConvertType(E->getType()),
-                                            E->getValue()));
-}
-
-RValue CodeGenFunction::EmitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
-  return RValue::get(llvm::ConstantInt::get(ConvertType(E->getType()),
-                                            E->typesAreCompatible()));
-}
-
-/// EmitChooseExpr - Implement __builtin_choose_expr.
-RValue CodeGenFunction::EmitChooseExpr(const ChooseExpr *E) {
-  llvm::APSInt CondVal(32);
-  bool IsConst = E->getCond()->isIntegerConstantExpr(CondVal, getContext());
-  assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
-  
-  // Emit the LHS or RHS as appropriate.
-  return EmitExpr(CondVal != 0 ? E->getLHS() : E->getRHS());
-}
-
-
-RValue CodeGenFunction::EmitArraySubscriptExprRV(const ArraySubscriptExpr *E) {
-  // Emit subscript expressions in rvalue context's.  For most cases, this just
-  // loads the lvalue formed by the subscript expr.  However, we have to be
-  // careful, because the base of a vector subscript is occasionally an rvalue,
-  // so we can't get it as an lvalue.
-  if (!E->getBase()->getType()->isVectorType())
-    return EmitLoadOfLValue(E);
-
-  // Handle the vector case.  The base must be a vector, the index must be an
-  // integer value.
-  llvm::Value *Base = EmitExpr(E->getBase()).getVal();
-  llvm::Value *Idx  = EmitExpr(E->getIdx()).getVal();
-  
-  // FIXME: Convert Idx to i32 type.
-  
-  return RValue::get(Builder.CreateExtractElement(Base, Idx, "vecext"));
-}
-
-// EmitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
-// have to handle a more broad range of conversions than explicit casts, as they
-// handle things like function to ptr-to-function decay etc.
-RValue CodeGenFunction::EmitCastExpr(const Expr *Op, QualType DestTy) {
-  RValue Src = EmitAnyExpr(Op);
-  
-  // If the destination is void, just evaluate the source.
-  if (DestTy->isVoidType())
-    return RValue::getAggregate(0);
-  
-  return EmitConversion(Src, Op->getType(), DestTy);
-}
-
-/// EmitImplicitCastExpr - Implicit casts are the same as normal casts, but also
-/// handle things like function to pointer-to-function decay, and array to
-/// pointer decay.
-RValue CodeGenFunction::EmitImplicitCastExpr(const ImplicitCastExpr *E) {
-  const Expr *Op = E->getSubExpr();
-  QualType OpTy = Op->getType().getCanonicalType();
-  
-  // If this is due to array->pointer conversion, emit the array expression as
-  // an l-value.
-  if (isa<ArrayType>(OpTy)) {
-    // FIXME: For now we assume that all source arrays map to LLVM arrays.  This
-    // will not true when we add support for VLAs.
-    llvm::Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
-    
-    assert(isa<llvm::PointerType>(V->getType()) &&
-           isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
-                                ->getElementType()) &&
-           "Doesn't support VLAs yet!");
-    llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    return RValue::get(Builder.CreateGEP(V, Idx0, Idx0, "arraydecay"));
-  }
-  
-  return EmitCastExpr(Op, E->getType());
-}
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   if (const ImplicitCastExpr *IcExpr = 
@@ -689,7 +544,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
         if (unsigned builtinID = FDecl->getIdentifier()->getBuiltinID())
           return EmitBuiltinExpr(builtinID, E);
         
-  llvm::Value *Callee = EmitExpr(E->getCallee()).getVal();
+  llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   
   // The callee type will always be a pointer to function type, get the function
   // type.
@@ -756,145 +611,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
 //                           Unary Operator Emission
 //===----------------------------------------------------------------------===//
 
-RValue CodeGenFunction::EmitUnaryOperator(const UnaryOperator *E) {
-  switch (E->getOpcode()) {
-  default:
-    printf("Unimplemented unary expr!\n");
-    E->dump();
-    return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
-  case UnaryOperator::PostInc:
-  case UnaryOperator::PostDec:
-  case UnaryOperator::PreInc :
-  case UnaryOperator::PreDec : return EmitUnaryIncDec(E);
-  case UnaryOperator::AddrOf : return EmitUnaryAddrOf(E);
-  case UnaryOperator::Deref  : return EmitLoadOfLValue(E);
-  case UnaryOperator::Plus   : return EmitUnaryPlus(E);
-  case UnaryOperator::Minus  : return EmitUnaryMinus(E);
-  case UnaryOperator::Not    : return EmitUnaryNot(E);
-  case UnaryOperator::LNot   : return EmitUnaryLNot(E);
-  case UnaryOperator::SizeOf :
-    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), true);
-  case UnaryOperator::AlignOf :
-    return EmitSizeAlignOf(E->getSubExpr()->getType(), E->getType(), false);
-  // FIXME: real/imag
-  case UnaryOperator::Extension: return EmitExpr(E->getSubExpr());
-  }
-}
-
-RValue CodeGenFunction::EmitUnaryIncDec(const UnaryOperator *E) {
-  LValue LV = EmitLValue(E->getSubExpr());
-  RValue InVal = EmitLoadOfLValue(LV, E->getSubExpr()->getType());
-  
-  // We know the operand is real or pointer type, so it must be an LLVM scalar.
-  assert(InVal.isScalar() && "Unknown thing to increment");
-  llvm::Value *InV = InVal.getVal();
-
-  int AmountVal = 1;
-  if (E->getOpcode() == UnaryOperator::PreDec ||
-      E->getOpcode() == UnaryOperator::PostDec)
-    AmountVal = -1;
-  
-  llvm::Value *NextVal;
-  if (isa<llvm::IntegerType>(InV->getType())) {
-    NextVal = llvm::ConstantInt::get(InV->getType(), AmountVal);
-    NextVal = Builder.CreateAdd(InV, NextVal, AmountVal == 1 ? "inc" : "dec");
-  } else if (InV->getType()->isFloatingPoint()) {
-    NextVal = llvm::ConstantFP::get(InV->getType(), AmountVal);
-    NextVal = Builder.CreateAdd(InV, NextVal, AmountVal == 1 ? "inc" : "dec");
-  } else {
-    // FIXME: This is not right for pointers to VLA types.
-    assert(isa<llvm::PointerType>(InV->getType()));
-    NextVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
-    NextVal = Builder.CreateGEP(InV, NextVal, AmountVal == 1 ? "inc" : "dec");
-  }
-
-  RValue NextValToStore = RValue::get(NextVal);
-
-  // Store the updated result through the lvalue.
-  EmitStoreThroughLValue(NextValToStore, LV, E->getSubExpr()->getType());
-                         
-  // If this is a postinc, return the value read from memory, otherwise use the
-  // updated value.
-  if (E->getOpcode() == UnaryOperator::PreDec ||
-      E->getOpcode() == UnaryOperator::PreInc)
-    return NextValToStore;
-  else
-    return InVal;
-}
-
-/// C99 6.5.3.2
-RValue CodeGenFunction::EmitUnaryAddrOf(const UnaryOperator *E) {
-  // The address of the operand is just its lvalue.  It cannot be a bitfield.
-  return RValue::get(EmitLValue(E->getSubExpr()).getAddress());
-}
-
-RValue CodeGenFunction::EmitUnaryPlus(const UnaryOperator *E) {
-  assert(E->getType().getCanonicalType() == 
-         E->getSubExpr()->getType().getCanonicalType() && "Bad unary plus!");
-  // Unary plus just returns its value.
-  return EmitExpr(E->getSubExpr());
-}
-
-RValue CodeGenFunction::EmitUnaryMinus(const UnaryOperator *E) {
-  assert(E->getType().getCanonicalType() == 
-         E->getSubExpr()->getType().getCanonicalType() && "Bad unary minus!");
-
-  // Unary minus performs promotions, then negates its arithmetic operand.
-  RValue V = EmitExpr(E->getSubExpr());
-  
-  if (V.isScalar())
-    return RValue::get(Builder.CreateNeg(V.getVal(), "neg"));
-  
-  assert(0 && "FIXME: This doesn't handle complex operands yet");
-}
-
-RValue CodeGenFunction::EmitUnaryNot(const UnaryOperator *E) {
-  // Unary not performs promotions, then complements its integer operand.
-  RValue V = EmitExpr(E->getSubExpr());
-  
-  if (V.isScalar())
-    return RValue::get(Builder.CreateNot(V.getVal(), "neg"));
-                      
-  assert(0 && "FIXME: This doesn't handle integer complex operands yet (GNU)");
-}
-
-
-/// C99 6.5.3.3
-RValue CodeGenFunction::EmitUnaryLNot(const UnaryOperator *E) {
-  // Compare operand to zero.
-  llvm::Value *BoolVal = EvaluateExprAsBool(E->getSubExpr());
-  
-  // Invert value.
-  // TODO: Could dynamically modify easy computations here.  For example, if
-  // the operand is an icmp ne, turn into icmp eq.
-  BoolVal = Builder.CreateNot(BoolVal, "lnot");
-  
-  // ZExt result to int.
-  return RValue::get(Builder.CreateZExt(BoolVal, LLVMIntTy, "lnot.ext"));
-}
-
-/// EmitSizeAlignOf - Return the size or alignment of the 'TypeToSize' type as
-/// an integer (RetType).
-RValue CodeGenFunction::EmitSizeAlignOf(QualType TypeToSize,
-                                        QualType RetType, bool isSizeOf) {
-  /// FIXME: This doesn't handle VLAs yet!
-  std::pair<uint64_t, unsigned> Info =
-    getContext().getTypeInfo(TypeToSize, SourceLocation());
-  
-  uint64_t Val = isSizeOf ? Info.first : Info.second;
-  Val /= 8;  // Return size in bytes, not bits.
-  
-  assert(RetType->isIntegerType() && "Result type must be an integer!");
-
-  unsigned ResultWidth = getContext().getTypeSize(RetType, SourceLocation());
-  return RValue::get(llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val)));
-}
-
-
-//===--------------------------------------------------------------------===//
-//                         Binary Operator Emission
-//===--------------------------------------------------------------------===//
-
+#if 0
 
 /// EmitCompoundAssignmentOperands - Compound assignment operations (like +=)
 /// are strange in that the result of the operation is not the same type as the
@@ -946,18 +663,6 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     fprintf(stderr, "Unimplemented binary expr!\n");
     E->dump();
     return RValue::get(llvm::UndefValue::get(llvm::Type::Int32Ty));
-  case BinaryOperator::Mul:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitMul(LHS, RHS, E->getType());
-  case BinaryOperator::Div:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitDiv(LHS, RHS, E->getType());
-  case BinaryOperator::Rem:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitRem(LHS, RHS, E->getType());
   case BinaryOperator::Add:
     LHS = EmitExpr(E->getLHS());
     RHS = EmitExpr(E->getRHS());
@@ -966,61 +671,6 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
       
     return EmitPointerAdd(LHS, E->getLHS()->getType(),
                           RHS, E->getRHS()->getType(), E->getType());
-  case BinaryOperator::Sub:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-
-    if (!E->getLHS()->getType()->isPointerType())
-      return EmitSub(LHS, RHS, E->getType());
-      
-    return EmitPointerSub(LHS, E->getLHS()->getType(),
-                          RHS, E->getRHS()->getType(), E->getType());
-  case BinaryOperator::Shl:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitShl(LHS, RHS, E->getType());
-  case BinaryOperator::Shr:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitShr(LHS, RHS, E->getType());
-  case BinaryOperator::And:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitAnd(LHS, RHS, E->getType());
-  case BinaryOperator::Xor:
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitXor(LHS, RHS, E->getType());
-  case BinaryOperator::Or :
-    LHS = EmitExpr(E->getLHS());
-    RHS = EmitExpr(E->getRHS());
-    return EmitOr(LHS, RHS, E->getType());
-  case BinaryOperator::LAnd: return EmitBinaryLAnd(E);
-  case BinaryOperator::LOr: return EmitBinaryLOr(E);
-  case BinaryOperator::LT:
-    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_ULT,
-                             llvm::ICmpInst::ICMP_SLT,
-                             llvm::FCmpInst::FCMP_OLT);
-  case BinaryOperator::GT:
-    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_UGT,
-                             llvm::ICmpInst::ICMP_SGT,
-                             llvm::FCmpInst::FCMP_OGT);
-  case BinaryOperator::LE:
-    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_ULE,
-                             llvm::ICmpInst::ICMP_SLE,
-                             llvm::FCmpInst::FCMP_OLE);
-  case BinaryOperator::GE:
-    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_UGE,
-                             llvm::ICmpInst::ICMP_SGE,
-                             llvm::FCmpInst::FCMP_OGE);
-  case BinaryOperator::EQ:
-    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_EQ,
-                             llvm::ICmpInst::ICMP_EQ,
-                             llvm::FCmpInst::FCMP_OEQ);
-  case BinaryOperator::NE:
-    return EmitBinaryCompare(E, llvm::ICmpInst::ICMP_NE,
-                             llvm::ICmpInst::ICMP_NE, 
-                             llvm::FCmpInst::FCMP_UNE);
   case BinaryOperator::Assign:
     return EmitBinaryAssign(E);
     
@@ -1059,327 +709,8 @@ RValue CodeGenFunction::EmitBinaryOperator(const BinaryOperator *E) {
     LHS = EmitSub(LHS, RHS, CAO->getComputationType());
     return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
   }
-  case BinaryOperator::ShlAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitShl(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::ShrAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitShr(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::AndAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitAnd(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::OrAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitOr(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::XorAssign: {
-    const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-    LValue LHSLV;
-    EmitCompoundAssignmentOperands(CAO, LHSLV, LHS, RHS);
-    LHS = EmitXor(LHS, RHS, CAO->getComputationType());
-    return EmitCompoundAssignmentResult(CAO, LHSLV, LHS);
-  }
-  case BinaryOperator::Comma: return EmitBinaryComma(E);
   }
 }
 
-RValue CodeGenFunction::EmitMul(RValue LHS, RValue RHS, QualType ResTy) {
-  return RValue::get(Builder.CreateMul(LHS.getVal(), RHS.getVal(), "mul"));
-}
 
-RValue CodeGenFunction::EmitDiv(RValue LHS, RValue RHS, QualType ResTy) {
-  if (LHS.getVal()->getType()->isFloatingPoint())
-    return RValue::get(Builder.CreateFDiv(LHS.getVal(), RHS.getVal(), "div"));
-  else if (ResTy->isUnsignedIntegerType())
-    return RValue::get(Builder.CreateUDiv(LHS.getVal(), RHS.getVal(), "div"));
-  else
-    return RValue::get(Builder.CreateSDiv(LHS.getVal(), RHS.getVal(), "div"));
-}
-
-RValue CodeGenFunction::EmitRem(RValue LHS, RValue RHS, QualType ResTy) {
-  // Rem in C can't be a floating point type: C99 6.5.5p2.
-  if (ResTy->isUnsignedIntegerType())
-    return RValue::get(Builder.CreateURem(LHS.getVal(), RHS.getVal(), "rem"));
-  else
-    return RValue::get(Builder.CreateSRem(LHS.getVal(), RHS.getVal(), "rem"));
-}
-
-RValue CodeGenFunction::EmitAdd(RValue LHS, RValue RHS, QualType ResTy) {
-  return RValue::get(Builder.CreateAdd(LHS.getVal(), RHS.getVal(), "add"));
-}
-
-RValue CodeGenFunction::EmitPointerAdd(RValue LHS, QualType LHSTy,
-                                       RValue RHS, QualType RHSTy,
-                                       QualType ResTy) {
-  llvm::Value *LHSValue = LHS.getVal();
-  llvm::Value *RHSValue = RHS.getVal();
-  if (LHSTy->isPointerType()) {
-    // pointer + int
-    return RValue::get(Builder.CreateGEP(LHSValue, RHSValue, "add.ptr"));
-  } else {
-    // int + pointer
-    return RValue::get(Builder.CreateGEP(RHSValue, LHSValue, "add.ptr"));
-  }
-}
-
-RValue CodeGenFunction::EmitSub(RValue LHS, RValue RHS, QualType ResTy) {
-  return RValue::get(Builder.CreateSub(LHS.getVal(), RHS.getVal(), "sub"));
-}
-
-RValue CodeGenFunction::EmitPointerSub(RValue LHS, QualType LHSTy,
-                                       RValue RHS, QualType RHSTy,
-                                       QualType ResTy) {
-  llvm::Value *LHSValue = LHS.getVal();
-  llvm::Value *RHSValue = RHS.getVal();
-  if (const PointerType *RHSPtrType =
-        dyn_cast<PointerType>(RHSTy.getTypePtr())) {
-    // pointer - pointer
-    const PointerType *LHSPtrType = cast<PointerType>(LHSTy.getTypePtr());
-    QualType LHSElementType = LHSPtrType->getPointeeType();
-    assert(LHSElementType == RHSPtrType->getPointeeType() &&
-      "can't subtract pointers with differing element types");
-    uint64_t ElementSize = getContext().getTypeSize(LHSElementType,
-                                                    SourceLocation()) / 8;
-    const llvm::Type *ResultType = ConvertType(ResTy);
-    llvm::Value *CastLHS = Builder.CreatePtrToInt(LHSValue, ResultType,
-                                                  "sub.ptr.lhs.cast");
-    llvm::Value *CastRHS = Builder.CreatePtrToInt(RHSValue, ResultType,
-                                                  "sub.ptr.rhs.cast");
-    llvm::Value *BytesBetween = Builder.CreateSub(CastLHS, CastRHS,
-                                                  "sub.ptr.sub");
-    
-    // HACK: LLVM doesn't have an divide instruction that 'knows' there is no
-    // remainder.  As such, we handle common power-of-two cases here to generate
-    // better code.
-    if (llvm::isPowerOf2_64(ElementSize)) {
-      llvm::Value *ShAmt =
-        llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
-      return RValue::get(Builder.CreateAShr(BytesBetween, ShAmt,"sub.ptr.shr"));
-    } else {
-      // Otherwise, do a full sdiv.
-      llvm::Value *BytesPerElement =
-        llvm::ConstantInt::get(ResultType, ElementSize);
-      return RValue::get(Builder.CreateSDiv(BytesBetween, BytesPerElement,
-                                            "sub.ptr.div"));
-    }
-  } else {
-    // pointer - int
-    llvm::Value *NegatedRHS = Builder.CreateNeg(RHSValue, "sub.ptr.neg");
-    return RValue::get(Builder.CreateGEP(LHSValue, NegatedRHS, "sub.ptr"));
-  }
-}
-
-RValue CodeGenFunction::EmitShl(RValue LHSV, RValue RHSV, QualType ResTy) {
-  llvm::Value *LHS = LHSV.getVal(), *RHS = RHSV.getVal();
-  
-  // LLVM requires the LHS and RHS to be the same type, promote or truncate the
-  // RHS to the same size as the LHS.
-  if (LHS->getType() != RHS->getType())
-    RHS = Builder.CreateIntCast(RHS, LHS->getType(), false, "sh_prom");
-  
-  return RValue::get(Builder.CreateShl(LHS, RHS, "shl"));
-}
-
-RValue CodeGenFunction::EmitShr(RValue LHSV, RValue RHSV, QualType ResTy) {
-  llvm::Value *LHS = LHSV.getVal(), *RHS = RHSV.getVal();
-  
-  // LLVM requires the LHS and RHS to be the same type, promote or truncate the
-  // RHS to the same size as the LHS.
-  if (LHS->getType() != RHS->getType())
-    RHS = Builder.CreateIntCast(RHS, LHS->getType(), false, "sh_prom");
-  
-  if (ResTy->isUnsignedIntegerType())
-    return RValue::get(Builder.CreateLShr(LHS, RHS, "shr"));
-  else
-    return RValue::get(Builder.CreateAShr(LHS, RHS, "shr"));
-}
-
-RValue CodeGenFunction::EmitBinaryCompare(const BinaryOperator *E,
-                                          unsigned UICmpOpc, unsigned SICmpOpc,
-                                          unsigned FCmpOpc) {
-  llvm::Value *Result;
-  QualType LHSTy = E->getLHS()->getType();
-  if (!LHSTy->isComplexType()) {
-    RValue LHS = EmitExpr(E->getLHS());
-    RValue RHS = EmitExpr(E->getRHS());
-    
-    if (LHSTy->isRealFloatingType()) {
-      Result = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
-                                  LHS.getVal(), RHS.getVal(), "cmp");
-    } else if (LHSTy->isUnsignedIntegerType()) {
-      // FIXME: This check isn't right for "unsigned short < int" where ushort
-      // promotes to int and does a signed compare.
-      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
-                                  LHS.getVal(), RHS.getVal(), "cmp");
-    } else {
-      // Signed integers and pointers.
-      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)SICmpOpc,
-                                  LHS.getVal(), RHS.getVal(), "cmp");
-    }
-  } else {
-    // Complex Comparison: can only be an equality comparison.
-    ComplexPairTy LHS = EmitComplexExpr(E->getLHS());
-    ComplexPairTy RHS = EmitComplexExpr(E->getRHS());
-
-    QualType CETy = 
-      cast<ComplexType>(LHSTy.getCanonicalType())->getElementType();
-    
-    llvm::Value *ResultR, *ResultI;
-    if (CETy->isRealFloatingType()) {
-      ResultR = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
-                                   LHS.first, RHS.first, "cmp.r");
-      ResultI = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
-                                   LHS.second, RHS.second, "cmp.i");
-    } else {
-      // Complex comparisons can only be equality comparisons.  As such, signed
-      // and unsigned opcodes are the same.
-      ResultR = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
-                                   LHS.first, RHS.first, "cmp.r");
-      ResultI = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
-                                   LHS.second, RHS.second, "cmp.i");
-    }
-      
-    if (E->getOpcode() == BinaryOperator::EQ) {
-      Result = Builder.CreateAnd(ResultR, ResultI, "and.ri");
-    } else {
-      assert(E->getOpcode() == BinaryOperator::NE &&
-             "Complex comparison other than == or != ?");
-      Result = Builder.CreateOr(ResultR, ResultI, "or.ri");
-    }
-  }
-
-  // ZExt result to int.
-  return RValue::get(Builder.CreateZExt(Result, LLVMIntTy, "cmp.ext"));
-}
-
-RValue CodeGenFunction::EmitAnd(RValue LHS, RValue RHS, QualType ResTy) {
-  return RValue::get(Builder.CreateAnd(LHS.getVal(), RHS.getVal(), "and"));
-}
-
-RValue CodeGenFunction::EmitXor(RValue LHS, RValue RHS, QualType ResTy) {
-  return RValue::get(Builder.CreateXor(LHS.getVal(), RHS.getVal(), "xor"));
-}
-
-RValue CodeGenFunction::EmitOr(RValue LHS, RValue RHS, QualType ResTy) {
-  return RValue::get(Builder.CreateOr(LHS.getVal(), RHS.getVal(), "or"));
-}
-
-RValue CodeGenFunction::EmitBinaryLAnd(const BinaryOperator *E) {
-  llvm::Value *LHSCond = EvaluateExprAsBool(E->getLHS());
-  
-  llvm::BasicBlock *ContBlock = new llvm::BasicBlock("land_cont");
-  llvm::BasicBlock *RHSBlock = new llvm::BasicBlock("land_rhs");
-
-  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
-  Builder.CreateCondBr(LHSCond, RHSBlock, ContBlock);
-  
-  EmitBlock(RHSBlock);
-  llvm::Value *RHSCond = EvaluateExprAsBool(E->getRHS());
-  
-  // Reaquire the RHS block, as there may be subblocks inserted.
-  RHSBlock = Builder.GetInsertBlock();
-  EmitBlock(ContBlock);
-  
-  // Create a PHI node.  If we just evaluted the LHS condition, the result is
-  // false.  If we evaluated both, the result is the RHS condition.
-  llvm::PHINode *PN = Builder.CreatePHI(llvm::Type::Int1Ty, "land");
-  PN->reserveOperandSpace(2);
-  PN->addIncoming(llvm::ConstantInt::getFalse(), OrigBlock);
-  PN->addIncoming(RHSCond, RHSBlock);
-  
-  // ZExt result to int.
-  return RValue::get(Builder.CreateZExt(PN, LLVMIntTy, "land.ext"));
-}
-
-RValue CodeGenFunction::EmitBinaryLOr(const BinaryOperator *E) {
-  llvm::Value *LHSCond = EvaluateExprAsBool(E->getLHS());
-  
-  llvm::BasicBlock *ContBlock = new llvm::BasicBlock("lor_cont");
-  llvm::BasicBlock *RHSBlock = new llvm::BasicBlock("lor_rhs");
-  
-  llvm::BasicBlock *OrigBlock = Builder.GetInsertBlock();
-  Builder.CreateCondBr(LHSCond, ContBlock, RHSBlock);
-  
-  EmitBlock(RHSBlock);
-  llvm::Value *RHSCond = EvaluateExprAsBool(E->getRHS());
-  
-  // Reaquire the RHS block, as there may be subblocks inserted.
-  RHSBlock = Builder.GetInsertBlock();
-  EmitBlock(ContBlock);
-  
-  // Create a PHI node.  If we just evaluted the LHS condition, the result is
-  // true.  If we evaluated both, the result is the RHS condition.
-  llvm::PHINode *PN = Builder.CreatePHI(llvm::Type::Int1Ty, "lor");
-  PN->reserveOperandSpace(2);
-  PN->addIncoming(llvm::ConstantInt::getTrue(), OrigBlock);
-  PN->addIncoming(RHSCond, RHSBlock);
-  
-  // ZExt result to int.
-  return RValue::get(Builder.CreateZExt(PN, LLVMIntTy, "lor.ext"));
-}
-
-RValue CodeGenFunction::EmitBinaryAssign(const BinaryOperator *E) {
-  assert(E->getLHS()->getType().getCanonicalType() ==
-         E->getRHS()->getType().getCanonicalType() && "Invalid assignment");
-  LValue LHS = EmitLValue(E->getLHS());
-  RValue RHS = EmitExpr(E->getRHS());
-  
-  // Store the value into the LHS.
-  EmitStoreThroughLValue(RHS, LHS, E->getType());
-
-  // Return the RHS.
-  return RHS;
-}
-
-
-RValue CodeGenFunction::EmitBinaryComma(const BinaryOperator *E) {
-  EmitStmt(E->getLHS());
-  return EmitExpr(E->getRHS());
-}
-
-RValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator *E) {
-  llvm::BasicBlock *LHSBlock = new llvm::BasicBlock("cond.?");
-  llvm::BasicBlock *RHSBlock = new llvm::BasicBlock("cond.:");
-  llvm::BasicBlock *ContBlock = new llvm::BasicBlock("cond.cont");
-  
-  llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
-  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
-  
-  EmitBlock(LHSBlock);
-  // Handle the GNU extension for missing LHS.
-  llvm::Value *LHSValue = E->getLHS() ? EmitExpr(E->getLHS()).getVal() : Cond;
-  Builder.CreateBr(ContBlock);
-  LHSBlock = Builder.GetInsertBlock();
-  
-  EmitBlock(RHSBlock);
-
-  llvm::Value *RHSValue = EmitExpr(E->getRHS()).getVal();
-  Builder.CreateBr(ContBlock);
-  RHSBlock = Builder.GetInsertBlock();
-  
-  const llvm::Type *LHSType = LHSValue->getType();
-  assert(LHSType == RHSValue->getType() && "?: LHS & RHS must have same type");
-  
-  EmitBlock(ContBlock);
-  llvm::PHINode *PN = Builder.CreatePHI(LHSType, "cond");
-  PN->reserveOperandSpace(2);
-  PN->addIncoming(LHSValue, LHSBlock);
-  PN->addIncoming(RHSValue, RHSBlock);
-  
-  return RValue::get(PN);
-}
+#endif

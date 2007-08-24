@@ -15,14 +15,11 @@
 #include "CodeGenModule.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Constant.h"
-
 using namespace clang;
 using namespace CodeGen;
 
-RValue CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral* E)
-{
+llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E){
   std::string S(E->getString()->getStrData(), E->getString()->getByteLength());
-  
-  return RValue::get(CGM.GetAddrOfConstantCFString(S));
+  return CGM.GetAddrOfConstantCFString(S);
 }
 

@@ -27,6 +27,7 @@
 		DE1733700B068DC60080B521 /* DeclSpec.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE17336F0B068DC60080B521 /* DeclSpec.h */; };
 		DE1F22030A7D852A00FBF588 /* Parser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE1F22020A7D852A00FBF588 /* Parser.h */; };
 		DE224FF80C7AA98800D370A5 /* CGExprComplex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE224FF70C7AA98800D370A5 /* CGExprComplex.cpp */; };
+		DE2252700C7E82D000D370A5 /* CGExprScalar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE22526F0C7E82D000D370A5 /* CGExprScalar.cpp */; };
 		DE344AB80AE5DF6D00DBC861 /* HeaderSearch.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */; };
 		DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */; };
 		DE3450D70AEB543100DBC861 /* DirectoryLookup.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE3450D60AEB543100DBC861 /* DirectoryLookup.h */; };
@@ -220,6 +221,7 @@
 		DE17336F0B068DC60080B521 /* DeclSpec.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DeclSpec.h; path = clang/Parse/DeclSpec.h; sourceTree = "<group>"; };
 		DE1F22020A7D852A00FBF588 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Parser.h; path = clang/Parse/Parser.h; sourceTree = "<group>"; };
 		DE224FF70C7AA98800D370A5 /* CGExprComplex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprComplex.cpp; path = CodeGen/CGExprComplex.cpp; sourceTree = "<group>"; };
+		DE22526F0C7E82D000D370A5 /* CGExprScalar.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprScalar.cpp; path = CodeGen/CGExprScalar.cpp; sourceTree = "<group>"; };
 		DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = HeaderSearch.h; sourceTree = "<group>"; };
 		DE344B530AE5E46C00DBC861 /* HeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = HeaderSearch.cpp; sourceTree = "<group>"; };
 		DE3450D60AEB543100DBC861 /* DirectoryLookup.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DirectoryLookup.h; sourceTree = "<group>"; };
@@ -444,6 +446,7 @@
 				DE4772FB0C10EAEC002239E8 /* CGExpr.cpp */,
 				DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */,
 				DE224FF70C7AA98800D370A5 /* CGExprComplex.cpp */,
+				DE22526F0C7E82D000D370A5 /* CGExprScalar.cpp */,
 				1A7342470C7B57D500122F56 /* CGObjC.cpp */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				DE928B120C05659200231DA4 /* ModuleBuilder.cpp */,
@@ -704,6 +707,7 @@
 				DE224FF80C7AA98800D370A5 /* CGExprComplex.cpp in Sources */,
 				1A7342480C7B57D500122F56 /* CGObjC.cpp in Sources */,
 				DEC63B1A0C7B940200DBF169 /* CFG.cpp in Sources */,
+				DE2252700C7E82D000D370A5 /* CGExprScalar.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
