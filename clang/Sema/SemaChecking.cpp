@@ -80,10 +80,15 @@ Sema::CheckFunctionCall(Expr *Fn,
 
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
 /// CFString constructor is correct
-bool Sema::CheckBuiltinCFStringArgument(Expr* Arg)
-{
-  while (ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
-    Arg = PE->getSubExpr();
+bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
+  while (1) {
+    if (ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
+      Arg = PE->getSubExpr();
+    else if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg))
+      Arg = ICE->getSubExpr();
+    else
+      break;
+  }
   
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
 
