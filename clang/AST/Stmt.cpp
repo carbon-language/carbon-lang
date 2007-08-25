@@ -18,54 +18,63 @@
 using namespace clang;
 
 static struct StmtClassNameTable {
-  int enumValue;
-  const char *className;
-  unsigned counter;
-  unsigned size;
-} sNames[] = {
-#define STMT(N, CLASS, PARENT) { N, #CLASS, 0, sizeof(CLASS) },
+  const char *Name;
+  unsigned Counter;
+  unsigned Size;
+} StmtClassInfo[Stmt::lastExprConstant];
+
+static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
+  static bool Initialized = false;
+  if (Initialized)
+    return StmtClassInfo[E];
+
+  // Intialize the table on the first use.
+  Initialized = true;
+#define STMT(N, CLASS, PARENT) \
+  StmtClassInfo[N].Name = #CLASS; \
+  StmtClassInfo[N].Size = sizeof(CLASS);
 #include "clang/AST/StmtNodes.def"
-  { 0, 0, 0, 0 }
-};
   
+  return StmtClassInfo[E];
+}
+
 const char *Stmt::getStmtClassName() const {
-  for (int i = 0; sNames[i].className; i++) {
-    if (sClass == sNames[i].enumValue)
-      return sNames[i].className;
-  }
-  return 0; // should never happen....
+  return getStmtInfoTableEntry(sClass).Name;
 }
 
 void Stmt::PrintStats() {
+  // Ensure the table is primed.
+  getStmtInfoTableEntry(Stmt::NullStmtClass);
+  
   unsigned sum = 0;
   fprintf(stderr, "*** Stmt/Expr Stats:\n");
-  for (int i = 0; sNames[i].className; i++) {
-    sum += sNames[i].counter;
+  for (int i = 0; i != Stmt::lastExprConstant; i++) {
+    if (StmtClassInfo[i].Name == 0) continue;
+    sum += StmtClassInfo[i].Counter;
   }
   fprintf(stderr, "  %d stmts/exprs total.\n", sum);
   sum = 0;
-  for (int i = 0; sNames[i].className; i++) {
+  for (int i = 0; i != Stmt::lastExprConstant; i++) {
+    if (StmtClassInfo[i].Name == 0) continue;
     fprintf(stderr, "    %d %s, %d each (%d bytes)\n", 
-      sNames[i].counter, sNames[i].className, sNames[i].size, sNames[i].counter*sNames[i].size);
-    sum += sNames[i].counter*sNames[i].size;
+            StmtClassInfo[i].Counter, StmtClassInfo[i].Name,
+            StmtClassInfo[i].Size,
+            StmtClassInfo[i].Counter*StmtClassInfo[i].Size);
+    sum += StmtClassInfo[i].Counter*StmtClassInfo[i].Size;
   }
   fprintf(stderr, "Total bytes = %d\n", sum);
 }
 
 void Stmt::addStmtClass(StmtClass s) {
-  for (int i = 0; sNames[i].className; i++) {
-    if (s == sNames[i].enumValue)
-      sNames[i].counter++;
-  }
+  ++getStmtInfoTableEntry(s).Counter;
 }
 
 static bool StatSwitch = false;
 
 bool Stmt::CollectingStats(bool enable) {
   if (enable) StatSwitch = true;
-	return StatSwitch;
+  return StatSwitch;
 }
-
 
 
 const char *LabelStmt::getName() const {
