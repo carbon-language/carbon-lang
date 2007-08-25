@@ -3623,20 +3623,20 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         assert(!OpInfo.isIndirect && 
                "Don't know how to handle indirect other inputs yet!");
         
-        InOperandVal = TLI.isOperandValidForConstraint(InOperandVal,
-                                                       OpInfo.ConstraintCode[0],
-                                                       DAG);
-        if (!InOperandVal.Val) {
+        std::vector<SDOperand> Ops;
+        TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
+                                         Ops, DAG);
+        if (Ops.empty()) {
           cerr << "Invalid operand for inline asm constraint '"
                << OpInfo.ConstraintCode << "'!\n";
           exit(1);
         }
         
         // Add information to the INLINEASM node to know about this input.
-        unsigned ResOpType = 3 /*IMM*/ | (1 << 3);
+        unsigned ResOpType = 3 /*IMM*/ | (Ops.size() << 3);
         AsmNodeOperands.push_back(DAG.getTargetConstant(ResOpType, 
                                                         TLI.getPointerTy()));
-        AsmNodeOperands.push_back(InOperandVal);
+        AsmNodeOperands.insert(AsmNodeOperands.end(), Ops.begin(), Ops.end());
         break;
       } else if (OpInfo.ConstraintType == TargetLowering::C_Memory) {
         assert(OpInfo.isIndirect && "Operand must be indirect to be a mem!");

@@ -244,9 +244,14 @@ namespace llvm {
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    MVT::ValueType VT) const;
-    SDOperand isOperandValidForConstraint(SDOperand Op, char ConstraintLetter,
-                                          SelectionDAG &DAG);
 
+    /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+    /// vector.  If it is invalid, don't add anything to Ops.
+    virtual void LowerAsmOperandForConstraint(SDOperand Op,
+                                              char ConstraintLetter,
+                                              std::vector<SDOperand> &Ops,
+                                              SelectionDAG &DAG);
+    
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;

@@ -1354,12 +1354,12 @@ TargetLowering::getConstraintType(const std::string &Constraint) const {
   return C_Unknown;
 }
 
-/// isOperandValidForConstraint - Return the specified operand (possibly
-/// modified) if the specified SDOperand is valid for the specified target
-/// constraint letter, otherwise return null.
-SDOperand TargetLowering::isOperandValidForConstraint(SDOperand Op,
-                                                      char ConstraintLetter,
-                                                      SelectionDAG &DAG) {
+/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+/// vector.  If it is invalid, don't add anything to Ops.
+void TargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
+                                                  char ConstraintLetter,
+                                                  std::vector<SDOperand> &Ops,
+                                                  SelectionDAG &DAG) {
   switch (ConstraintLetter) {
   default: break;
   case 'i':    // Simple Integer or Relocatable Constant
@@ -1390,19 +1390,21 @@ SDOperand TargetLowering::isOperandValidForConstraint(SDOperand Op,
       if (ConstraintLetter != 'n') {
         int64_t Offs = GA->getOffset();
         if (C) Offs += C->getValue();
-        return DAG.getTargetGlobalAddress(GA->getGlobal(), Op.getValueType(),
-                                          Offs);
+        Ops.push_back(DAG.getTargetGlobalAddress(GA->getGlobal(),
+                                                 Op.getValueType(), Offs));
+        return;
       }
     }
     if (C) {   // just C, no GV.
       // Simple constants are not allowed for 's'.
-      if (ConstraintLetter != 's')
-        return DAG.getTargetConstant(C->getValue(), Op.getValueType());
+      if (ConstraintLetter != 's') {
+        Ops.push_back(DAG.getTargetConstant(C->getValue(), Op.getValueType()));
+        return;
+      }
     }
     break;
   }
   }
-  return SDOperand(0,0);
 }
 
 std::vector<unsigned> TargetLowering::

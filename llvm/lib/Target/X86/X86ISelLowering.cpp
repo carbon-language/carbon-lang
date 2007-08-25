@@ -5002,29 +5002,38 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
   return TargetLowering::getConstraintType(Constraint);
 }
 
-/// isOperandValidForConstraint - Return the specified operand (possibly
-/// modified) if the specified SDOperand is valid for the specified target
-/// constraint letter, otherwise return null.
-SDOperand X86TargetLowering::
-isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
+/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+/// vector.  If it is invalid, don't add anything to Ops.
+void X86TargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
+                                                     char Constraint,
+                                                     std::vector<SDOperand>&Ops,
+                                                     SelectionDAG &DAG) {
+  SDOperand Result(0, 0);
+  
   switch (Constraint) {
   default: break;
   case 'I':
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-      if (C->getValue() <= 31)
-        return DAG.getTargetConstant(C->getValue(), Op.getValueType());
+      if (C->getValue() <= 31) {
+        Result = DAG.getTargetConstant(C->getValue(), Op.getValueType());
+        break;
+      }
     }
-    return SDOperand(0,0);
+    return;
   case 'N':
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
-      if (C->getValue() <= 255)
-        return DAG.getTargetConstant(C->getValue(), Op.getValueType());
+      if (C->getValue() <= 255) {
+        Result = DAG.getTargetConstant(C->getValue(), Op.getValueType());
+        break;
+      }
     }
-    return SDOperand(0,0);
+    return;
   case 'i': {
     // Literal immediates are always ok.
-    if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op))
-      return DAG.getTargetConstant(CST->getValue(), Op.getValueType());
+    if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op)) {
+      Result = DAG.getTargetConstant(CST->getValue(), Op.getValueType());
+      break;
+    }
 
     // If we are in non-pic codegen mode, we allow the address of a global (with
     // an optional displacement) to be used with 'i'.
@@ -5054,18 +5063,24 @@ isOperandValidForConstraint(SDOperand Op, char Constraint, SelectionDAG &DAG) {
       // match.
       if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine(),
                                          false))
-        return SDOperand(0, 0);
+        return;
 
       Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
                                       Offset);
-      return Op;
+      Result = Op;
+      break;
     }
 
     // Otherwise, not valid for this mode.
-    return SDOperand(0, 0);
+    return;
   }
   }
-  return TargetLowering::isOperandValidForConstraint(Op, Constraint, DAG);
+  
+  if (Result.Val) {
+    Ops.push_back(Result);
+    return;
+  }
+  return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
 std::vector<unsigned> X86TargetLowering::

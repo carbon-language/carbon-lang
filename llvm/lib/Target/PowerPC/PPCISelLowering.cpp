@@ -3338,9 +3338,12 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 }
 
 
-// isOperandValidForConstraint
-SDOperand PPCTargetLowering::
-isOperandValidForConstraint(SDOperand Op, char Letter, SelectionDAG &DAG) {
+/// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+/// vector.  If it is invalid, don't add anything to Ops.
+void PPCTargetLowering::LowerAsmOperandForConstraint(SDOperand Op, char Letter,
+                                                     std::vector<SDOperand>&Ops,
+                                                     SelectionDAG &DAG) {
+  SDOperand Result(0,0);
   switch (Letter) {
   default: break;
   case 'I':
@@ -3352,46 +3355,51 @@ isOperandValidForConstraint(SDOperand Op, char Letter, SelectionDAG &DAG) {
   case 'O':
   case 'P': {
     ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op);
-    if (!CST) return SDOperand(0, 0); // Must be an immediate to match.
+    if (!CST) return; // Must be an immediate to match.
     unsigned Value = CST->getValue();
     switch (Letter) {
     default: assert(0 && "Unknown constraint letter!");
     case 'I':  // "I" is a signed 16-bit constant.
       if ((short)Value == (int)Value)
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     case 'J':  // "J" is a constant with only the high-order 16 bits nonzero.
     case 'L':  // "L" is a signed 16-bit constant shifted left 16 bits.
       if ((short)Value == 0)
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     case 'K':  // "K" is a constant with only the low-order 16 bits nonzero.
       if ((Value >> 16) == 0)
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     case 'M':  // "M" is a constant that is greater than 31.
       if (Value > 31)
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     case 'N':  // "N" is a positive constant that is an exact power of two.
       if ((int)Value > 0 && isPowerOf2_32(Value))
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     case 'O':  // "O" is the constant zero. 
       if (Value == 0)
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     case 'P':  // "P" is a constant whose negation is a signed 16-bit constant.
       if ((short)-Value == (int)-Value)
-        return DAG.getTargetConstant(Value, Op.getValueType());
+        Result = DAG.getTargetConstant(Value, Op.getValueType());
       break;
     }
     break;
   }
   }
   
+  if (Result.Val) {
+    Ops.push_back(Result);
+    return;
+  }
+  
   // Handle standard constraint letters.
-  return TargetLowering::isOperandValidForConstraint(Op, Letter, DAG);
+  TargetLowering::LowerAsmOperandForConstraint(Op, Letter, Ops, DAG);
 }
 
 // isLegalAddressingMode - Return true if the addressing mode represented
