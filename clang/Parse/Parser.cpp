@@ -338,6 +338,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
       ConsumeToken();
     }
     return 0;
+  case tok::kw_namespace:
   case tok::kw_typedef:
     // A function definition cannot start with a 'typedef' keyword.
     return ParseDeclaration(Declarator::FileContext);

@@ -364,6 +364,7 @@ private:
   // C99 6.7: Declarations.
   
   DeclTy *ParseDeclaration(unsigned Context);
+  DeclTy *ParseSimpleDeclaration(unsigned Context);
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);
@@ -391,6 +392,12 @@ private:
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseBracketDeclarator(Declarator &D);
+  
+  //===--------------------------------------------------------------------===//
+  // C++ 7: Declarations [dcl.dcl]
+  
+  DeclTy *ParseNamespace(unsigned Context);
+
 };
 
 }  // end namespace clang

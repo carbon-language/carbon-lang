@@ -190,7 +190,28 @@ AttributeList *Parser::ParseAttributes() {
 /// ParseDeclaration - Parse a full 'declaration', which consists of
 /// declaration-specifiers, some number of declarators, and a semicolon.
 /// 'Context' should be a Declarator::TheContext value.
+///
+///       declaration: [C99 6.7]
+///         block-declaration ->
+///           simple-declaration
+///           others                   [FIXME]
+/// [C++]   namespace-definition
+///         others... [FIXME]
+///
 Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
+  switch (Tok.getKind()) {
+  case tok::kw_namespace:
+    return ParseNamespace(Context);
+  default:
+    return ParseSimpleDeclaration(Context);
+  }
+}
+
+///       simple-declaration: [C99 6.7: declaration] [C++ 7p1: dcl.dcl]
+///         declaration-specifiers init-declarator-list[opt] ';'
+///[C90/C++]init-declarator-list ';'                             [TODO]
+/// [OMP]   threadprivate-directive                              [TODO]
+Parser::DeclTy *Parser::ParseSimpleDeclaration(unsigned Context) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
@@ -208,15 +229,11 @@ Parser::DeclTy *Parser::ParseDeclaration(unsigned Context) {
   return ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 }
 
+
 /// ParseInitDeclaratorListAfterFirstDeclarator - Parse 'declaration' after
 /// parsing 'declaration-specifiers declarator'.  This method is split out this
 /// way to handle the ambiguity between top-level function-definitions and
 /// declarations.
-///
-///       declaration: [C99 6.7]
-///         declaration-specifiers init-declarator-list[opt] ';' [TODO]
-/// [!C99]  init-declarator-list ';'                             [TODO]
-/// [OMP]   threadprivate-directive                              [TODO]
 ///
 ///       init-declarator-list: [C99 6.7]
 ///         init-declarator

@@ -326,6 +326,8 @@ DIAG(err_expected_ident_lparen, ERROR,
      "expected identifier or '('")
 DIAG(err_expected_ident_lbrace, ERROR,
      "expected identifier or '{'")
+DIAG(err_expected_lbrace, ERROR,
+     "expected '{'")
 DIAG(err_expected_rparen, ERROR,
      "expected ')'")
 DIAG(err_expected_rsquare, ERROR,
