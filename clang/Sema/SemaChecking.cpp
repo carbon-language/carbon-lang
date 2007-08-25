@@ -81,6 +81,7 @@ Sema::CheckFunctionCall(Expr *Fn,
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
 /// CFString constructor is correct
 bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
+  // FIXME: This should go in a helper.
   while (1) {
     if (ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
       Arg = PE->getSubExpr();
@@ -180,6 +181,17 @@ Sema::CheckPrintfArguments(Expr *Fn,
     return;
   }
   
+  Expr *OrigFormatExpr = Args[format_idx];
+  // FIXME: This should go in a helper.
+  while (1) {
+    if (ParenExpr *PE = dyn_cast<ParenExpr>(OrigFormatExpr))
+      OrigFormatExpr = PE->getSubExpr();
+    else if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(OrigFormatExpr))
+      OrigFormatExpr = ICE->getSubExpr();
+    else
+      break;
+  }
+  
   // CHECK: format string is not a string literal.
   // 
   // Dynamically generated format strings are difficult to
@@ -187,7 +199,7 @@ Sema::CheckPrintfArguments(Expr *Fn,
   // are string literals: (1) permits the checking of format strings by
   // the compiler and thereby (2) can practically remove the source of
   // many format string exploits.
-  StringLiteral *FExpr = dyn_cast<StringLiteral>(Args[format_idx]);
+  StringLiteral *FExpr = dyn_cast<StringLiteral>(OrigFormatExpr);
   
   if (FExpr == NULL) {
     Diag(Args[format_idx]->getLocStart(), 
