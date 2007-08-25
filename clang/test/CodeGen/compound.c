@@ -3,7 +3,7 @@ int A;
 long long B;
 int C;
 int *P;
-void foo() {
+void test1() {
   C = (A /= B);
 
   P -= 4;
@@ -11,4 +11,6 @@ void foo() {
   C = P - (P+10);
 }
 
+short x; 
+void test2(char c) { x += c; }
 
