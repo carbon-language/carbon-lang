@@ -190,7 +190,7 @@ namespace llvm {
     /* The definition of equality is not straightforward for floating point,
        so we won't use operator==.  Use one of the following, or write
        whatever it is you really mean. */
-    bool operator==(const APFloat &) const;     // DO NOT IMPLEMENT
+    // bool operator==(const APFloat &) const;     // DO NOT IMPLEMENT
     
     /* IEEE comparison with another floating point number (QNaNs
        compare unordered, 0==-0). */
