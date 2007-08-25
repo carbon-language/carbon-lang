@@ -753,15 +753,16 @@ void ScheduleDAG::EmitNode(SDNode *Node,
           }
           break;
         case 3: { // Immediate.
-          assert(NumVals == 1 && "Unknown immediate value!");
-          if (ConstantSDNode *CS=dyn_cast<ConstantSDNode>(Node->getOperand(i))){
-            MI->addImmOperand(CS->getValue());
-          } else {
-            GlobalAddressSDNode *GA = 
-              cast<GlobalAddressSDNode>(Node->getOperand(i));
-            MI->addGlobalAddressOperand(GA->getGlobal(), GA->getOffset());
+          for (; NumVals; --NumVals, ++i) {
+            if (ConstantSDNode *CS =
+                   dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
+              MI->addImmOperand(CS->getValue());
+            } else {
+              GlobalAddressSDNode *GA = 
+                  cast<GlobalAddressSDNode>(Node->getOperand(i));
+              MI->addGlobalAddressOperand(GA->getGlobal(), GA->getOffset());
+            }
           }
-          ++i;
           break;
         }
         case 4:  // Addressing mode.
