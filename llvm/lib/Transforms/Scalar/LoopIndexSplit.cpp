@@ -946,12 +946,6 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
   // values in original loop's preheader.
   //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
   //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
-  if (isa<ConstantInt>(SD.SplitValue)) {
-    SD.A_ExitValue = AEV;
-    SD.B_StartValue = BSV;
-    return;
-  }
-
   Value *C1 = new ICmpInst(Sign ?
                            ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                            AEV,
