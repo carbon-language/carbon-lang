@@ -58,7 +58,8 @@ namespace {
     class SplitInfo {
     public:
       SplitInfo() : SplitValue(NULL), SplitCondition(NULL), 
-                    UseTrueBranchFirst(true) {}
+                    UseTrueBranchFirst(true), A_ExitValue(NULL), 
+                    B_StartValue(NULL) {}
 
       // Induction variable's range is split at this value.
       Value *SplitValue;
@@ -69,11 +70,20 @@ namespace {
       // True if after loop index split, first loop will execute split condition's
       // true branch.
       bool UseTrueBranchFirst;
+
+      // Exit value for first loop after loop split.
+      Value *A_ExitValue;
+
+      // Start value for second loop after loop split.
+      Value *B_StartValue;
+
       // Clear split info.
       void clear() {
         SplitValue = NULL;
         SplitCondition = NULL;
         UseTrueBranchFirst = true;
+        A_ExitValue = NULL;
+        B_StartValue = NULL;
       }
 
     };
@@ -111,6 +121,10 @@ namespace {
     /// safeSplitCondition - Return true if it is possible to
     /// split loop using given split condition.
     bool safeSplitCondition(SplitInfo &SD);
+
+    /// calculateLoopBounds - ALoop exit value and BLoop start values are calculated
+    /// based on split value. 
+    void calculateLoopBounds(SplitInfo &SD);
 
     /// splitLoop - Split current loop L in two loops using split information
     /// SD. Update dominator information. Maintain LCSSA form.
@@ -295,7 +309,14 @@ void LoopIndexSplit::findLoopConditionals() {
   ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
   if (!CI)
     return;
-  
+
+  // FIXME 
+  if (CI->getPredicate() == ICmpInst::ICMP_SGT
+      || CI->getPredicate() == ICmpInst::ICMP_UGT
+      || CI->getPredicate() == ICmpInst::ICMP_SGE
+      || CI->getPredicate() == ICmpInst::ICMP_UGE)
+    return;
+
   ExitCondition = CI;
 
   // Exit condition's one operand is loop invariant exit value and second 
@@ -747,6 +768,207 @@ bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
   return false;
 }
 
+/// calculateLoopBounds - ALoop exit value and BLoop start values are calculated
+/// based on split value. 
+void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
+
+  ICmpInst::Predicate SP = SD.SplitCondition->getPredicate();
+  const Type *Ty = SD.SplitValue->getType();
+  bool Sign = ExitCondition->isSignedPredicate();
+  BasicBlock *Preheader = L->getLoopPreheader();
+  Instruction *PHTerminator = Preheader->getTerminator();
+
+  // Initially use split value as upper loop bound for first loop and lower loop
+  // bound for second loop.
+  Value *AEV = SD.SplitValue;
+  Value *BSV = SD.SplitValue;
+
+  switch (ExitCondition->getPredicate()) {
+  case ICmpInst::ICMP_SGT:
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGE:
+  case ICmpInst::ICMP_UGE:
+  default:
+    assert (0 && "Unexpected exit condition predicate");
+
+  case ICmpInst::ICMP_SLT:
+  case ICmpInst::ICMP_ULT:
+    {
+      switch (SP) {
+      case ICmpInst::ICMP_SLT:
+      case ICmpInst::ICMP_ULT:
+        //
+        // for (i = LB; i < UB; ++i) { if (i < SV) A; else B; }
+        //
+        // is transformed into
+        // AEV = BSV = SV
+        // for (i = LB; i < min(UB, AEV); ++i)
+        //    A;
+        // for (i = max(LB, BSV); i < UB; ++i);
+        //    B;
+        break;
+      case ICmpInst::ICMP_SLE:
+      case ICmpInst::ICMP_ULE:
+        {
+          //
+          // for (i = LB; i < UB; ++i) { if (i <= SV) A; else B; }
+          //
+          // is transformed into
+          //
+          // AEV = SV + 1
+          // BSV = SV + 1
+          // for (i = LB; i < min(UB, AEV); ++i) 
+          //       A;
+          // for (i = max(LB, BSV); i < UB; ++i) 
+          //       B;
+          BSV = BinaryOperator::createAdd(SD.SplitValue,
+                                          ConstantInt::get(Ty, 1, Sign),
+                                          "lsplit.add", PHTerminator);
+          AEV = BSV;
+        }
+        break;
+      case ICmpInst::ICMP_SGE:
+      case ICmpInst::ICMP_UGE: 
+        //
+        // for (i = LB; i < UB; ++i) { if (i >= SV) A; else B; }
+        // 
+        // is transformed into
+        // AEV = BSV = SV
+        // for (i = LB; i < min(UB, AEV); ++i)
+        //    B;
+        // for (i = max(BSV, LB); i < UB; ++i)
+        //    A;
+        break;
+      case ICmpInst::ICMP_SGT:
+      case ICmpInst::ICMP_UGT: 
+        {
+          //
+          // for (i = LB; i < UB; ++i) { if (i > SV) A; else B; }
+          //
+          // is transformed into
+          //
+          // BSV = AEV = SV + 1
+          // for (i = LB; i < min(UB, AEV); ++i) 
+          //       B;
+          // for (i = max(LB, BSV); i < UB; ++i) 
+          //       A;
+          BSV = BinaryOperator::createAdd(SD.SplitValue,
+                                          ConstantInt::get(Ty, 1, Sign),
+                                          "lsplit.add", PHTerminator);
+          AEV = BSV;
+        }
+        break;
+      default:
+        assert (0 && "Unexpected split condition predicate");
+        break;
+      } // end switch (SP)
+    }
+    break;
+  case ICmpInst::ICMP_SLE:
+  case ICmpInst::ICMP_ULE:
+    {
+      switch (SP) {
+      case ICmpInst::ICMP_SLT:
+      case ICmpInst::ICMP_ULT:
+        //
+        // for (i = LB; i <= UB; ++i) { if (i < SV) A; else B; }
+        //
+        // is transformed into
+        // AEV = SV - 1;
+        // BSV = SV;
+        // for (i = LB; i <= min(UB, AEV); ++i) 
+        //       A;
+        // for (i = max(LB, BSV); i <= UB; ++i) 
+        //       B;
+        AEV = BinaryOperator::createSub(SD.SplitValue,
+                                        ConstantInt::get(Ty, 1, Sign),
+                                        "lsplit.sub", PHTerminator);
+        break;
+      case ICmpInst::ICMP_SLE:
+      case ICmpInst::ICMP_ULE:
+        //
+        // for (i = LB; i <= UB; ++i) { if (i <= SV) A; else B; }
+        //
+        // is transformed into
+        // AEV = SV;
+        // BSV = SV + 1;
+        // for (i = LB; i <= min(UB, AEV); ++i) 
+        //       A;
+        // for (i = max(LB, BSV); i <= UB; ++i) 
+        //       B;
+        BSV = BinaryOperator::createAdd(SD.SplitValue,
+                                        ConstantInt::get(Ty, 1, Sign),
+                                        "lsplit.add", PHTerminator);
+        break;
+      case ICmpInst::ICMP_SGT:
+      case ICmpInst::ICMP_UGT: 
+        //
+        // for (i = LB; i <= UB; ++i) { if (i > SV) A; else B; }
+        //
+        // is transformed into
+        // AEV = SV;
+        // BSV = SV + 1;
+        // for (i = LB; i <= min(AEV, UB); ++i)
+        //      B;
+        // for (i = max(LB, BSV); i <= UB; ++i)
+        //      A;
+        BSV = BinaryOperator::createAdd(SD.SplitValue,
+                                        ConstantInt::get(Ty, 1, Sign),
+                                        "lsplit.add", PHTerminator);
+        break;
+      case ICmpInst::ICMP_SGE:
+      case ICmpInst::ICMP_UGE: 
+        // ** TODO **
+        //
+        // for (i = LB; i <= UB; ++i) { if (i >= SV) A; else B; }
+        //
+        // is transformed into
+        // AEV = SV - 1;
+        // BSV = SV;
+        // for (i = LB; i <= min(AEV, UB); ++i)
+        //      B;
+        // for (i = max(LB, BSV); i <= UB; ++i)
+        //      A;
+        AEV = BinaryOperator::createSub(SD.SplitValue,
+                                        ConstantInt::get(Ty, 1, Sign),
+                                        "lsplit.sub", PHTerminator);
+        break;
+      default:
+        assert (0 && "Unexpected split condition predicate");
+        break;
+      } // end switch (SP)
+    }
+    break;
+  }
+
+  // Calculate ALoop induction variable's new exiting value and
+  // BLoop induction variable's new starting value. Calculuate these
+  // values in original loop's preheader.
+  //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
+  //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
+  if (isa<ConstantInt>(SD.SplitValue)) {
+    SD.A_ExitValue = AEV;
+    SD.B_StartValue = BSV;
+    return;
+  }
+
+  Value *C1 = new ICmpInst(Sign ?
+                           ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                           AEV,
+                           ExitCondition->getOperand(ExitValueNum), 
+                           "lsplit.ev", PHTerminator);
+  SD.A_ExitValue = new SelectInst(C1, AEV,
+                                  ExitCondition->getOperand(ExitValueNum), 
+                                  "lsplit.ev", PHTerminator);
+  
+  Value *C2 = new ICmpInst(Sign ?
+                           ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                           BSV, StartValue, "lsplit.sv",
+                           PHTerminator);
+  SD.B_StartValue = new SelectInst(C2, StartValue, BSV,
+                                   "lsplit.sv", PHTerminator);
+}
+
 /// splitLoop - Split current loop L in two loops using split information
 /// SD. Update dominator information. Maintain LCSSA form.
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
@@ -762,38 +984,11 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   //
   // ALoop's exit edge enters BLoop's header through a forwarding block which 
   // acts as a BLoop's preheader.
+  BasicBlock *Preheader = L->getLoopPreheader();
 
-  //[*] Calculate ALoop induction variable's new exiting value and
-  //    BLoop induction variable's new starting value. Calculuate these
-  //    values in original loop's preheader.
-  //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
-  //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
-  Value *A_ExitValue = NULL;
-  Value *B_StartValue = NULL;
-  if (isa<ConstantInt>(SD.SplitValue)) {
-    A_ExitValue = SD.SplitValue;
-    B_StartValue = SD.SplitValue;
-  }
-  else {
-    BasicBlock *Preheader = L->getLoopPreheader();
-    Instruction *PHTerminator = Preheader->getTerminator();
-    bool SignedPredicate = ExitCondition->isSignedPredicate();  
-    Value *C1 = new ICmpInst(SignedPredicate ? 
-                            ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                            SD.SplitValue, 
-                             ExitCondition->getOperand(ExitValueNum), 
-                             "lsplit.ev", PHTerminator);
-    A_ExitValue = new SelectInst(C1, SD.SplitValue, 
-                                 ExitCondition->getOperand(ExitValueNum), 
-                                 "lsplit.ev", PHTerminator);
-
-    Value *C2 = new ICmpInst(SignedPredicate ? 
-                             ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                             SD.SplitValue, StartValue, "lsplit.sv",
-                             PHTerminator);
-    B_StartValue = new SelectInst(C2, StartValue, SD.SplitValue,
-                                   "lsplit.sv", PHTerminator);
-  }
+  // Calculate ALoop induction variable's new exiting value and
+  // BLoop induction variable's new starting value.
+  calculateLoopBounds(SD);
 
   //[*] Clone loop.
   DenseMap<const Value *, Value *> ValueMap;
@@ -815,7 +1010,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     A_ExitInsn->setSuccessor(1, B_Header);
 
   //[*] Update ALoop's exit value using new exit value.
-  ExitCondition->setOperand(ExitValueNum, A_ExitValue);
+  ExitCondition->setOperand(ExitValueNum, SD.A_ExitValue);
   
   // [*] Update BLoop's header phi nodes. Remove incoming PHINode's from
   //     original loop's preheader. Add incoming PHINode values from
@@ -831,7 +1026,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
     } else
       break;
   }
-  BasicBlock *Preheader = L->getLoopPreheader();
+
   for (BasicBlock::iterator BI = B_Header->begin(), BE = B_Header->end();
        BI != BE; ++BI) {
     if (PHINode *PN = dyn_cast<PHINode>(BI)) {
@@ -840,7 +1035,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
       // Add incoming value from A_ExitingBlock.
       if (PN == B_IndVar)
-        PN->addIncoming(B_StartValue, A_ExitingBlock);
+        PN->addIncoming(SD.B_StartValue, A_ExitingBlock);
       else { 
         PHINode *OrigPN = cast<PHINode>(InverseMap[PN]);
         Value *V2 = OrigPN->getIncomingValueForBlock(A_ExitingBlock);
