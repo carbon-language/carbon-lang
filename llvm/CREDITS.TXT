@@ -30,6 +30,10 @@ N: Daniel Berlin
 E: dberlin@dberlin.org
 D: ET-Forest implementation.
 
+N: Neil Booth
+E: neil@daikokuya.co.uk
+D: APFloat implementation.
+
 N: Misha Brukman
 E: brukman+llvm@uiuc.edu
 W: http://misha.brukman.net
