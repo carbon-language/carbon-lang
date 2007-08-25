@@ -21,7 +21,7 @@ static struct StmtClassNameTable {
   const char *Name;
   unsigned Counter;
   unsigned Size;
-} StmtClassInfo[Stmt::lastExprConstant];
+} StmtClassInfo[Stmt::lastExprConstant+1];
 
 static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
   static bool Initialized = false;
@@ -48,13 +48,13 @@ void Stmt::PrintStats() {
   
   unsigned sum = 0;
   fprintf(stderr, "*** Stmt/Expr Stats:\n");
-  for (int i = 0; i != Stmt::lastExprConstant; i++) {
+  for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
     sum += StmtClassInfo[i].Counter;
   }
   fprintf(stderr, "  %d stmts/exprs total.\n", sum);
   sum = 0;
-  for (int i = 0; i != Stmt::lastExprConstant; i++) {
+  for (int i = 0; i != Stmt::lastExprConstant+1; i++) {
     if (StmtClassInfo[i].Name == 0) continue;
     fprintf(stderr, "    %d %s, %d each (%d bytes)\n", 
             StmtClassInfo[i].Counter, StmtClassInfo[i].Name,

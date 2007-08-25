@@ -231,6 +231,8 @@ bool Expr::hasLocalSideEffect() const {
   }
   case BinaryOperatorClass:
     return cast<BinaryOperator>(this)->isAssignmentOp();
+  case CompoundAssignOperator:
+    return true;
 
   case MemberExprClass:
   case ArraySubscriptExprClass:
