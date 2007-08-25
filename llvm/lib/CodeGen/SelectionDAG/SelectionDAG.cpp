@@ -48,8 +48,8 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
 /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
 /// As such, this method can be used to do an exact bit-for-bit comparison of
 /// two floating point values.
-bool ConstantFPSDNode::isExactlyValue(double V) const {
-  return Value.bitwiseIsEqual(APFloat(V));
+bool ConstantFPSDNode::isExactlyValue(APFloat V) const {
+  return Value.bitwiseIsEqual(V);
 }
 
 //===----------------------------------------------------------------------===//
@@ -668,7 +668,6 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
-
 
 SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
                                       bool isTarget) {

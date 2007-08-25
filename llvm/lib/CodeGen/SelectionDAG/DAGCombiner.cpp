@@ -3195,14 +3195,10 @@ SDOperand DAGCombiner::visitFCOPYSIGN(SDNode *N) {
     return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1);
   
   if (N1CFP) {
+    APFloat V = N1CFP->getValueAPF();
     // copysign(x, c1) -> fabs(x)       iff ispos(c1)
     // copysign(x, c1) -> fneg(fabs(x)) iff isneg(c1)
-    union {
-      double d;
-      int64_t i;
-    } u;
-    u.d = N1CFP->getValue();
-    if (u.i >= 0)
+    if (!V.isNegative())
       return DAG.getNode(ISD::FABS, VT, N0);
     else
       return DAG.getNode(ISD::FNEG, VT, DAG.getNode(ISD::FABS, VT, N0));
@@ -3792,7 +3788,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       default: assert(0 && "Unknown FP type");
       case MVT::f32:
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i32)) {
-          Tmp = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
+          Tmp = DAG.getConstant(FloatToBits(CFP->getValueAPF().convertToFloat()), MVT::i32);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
@@ -3800,7 +3796,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
         break;
       case MVT::f64:
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i64)) {
-          Tmp = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
+          Tmp = DAG.getConstant(DoubleToBits(CFP->getValueAPF().convertToDouble()), MVT::i64);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
@@ -3808,7 +3804,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
           // Many FP stores are not make apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
           // 64-bit integer store into two 32-bit stores.
-          uint64_t Val = DoubleToBits(CFP->getValue());
+          uint64_t Val = DoubleToBits(CFP->getValueAPF().convertToDouble());
           SDOperand Lo = DAG.getConstant(Val & 0xFFFFFFFF, MVT::i32);
           SDOperand Hi = DAG.getConstant(Val >> 32, MVT::i32);
           if (!TLI.isLittleEndian()) std::swap(Lo, Hi);
@@ -4365,7 +4361,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   // Check to see if we can simplify the select into an fabs node
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1)) {
     // Allow either -0.0 or 0.0
-    if (CFP->getValue() == 0.0) {
+    if (CFP->getValueAPF().isZero()) {
       // select (setg[te] X, +/-0.0), X, fneg(X) -> fabs
       if ((CC == ISD::SETGE || CC == ISD::SETGT) &&
           N0 == N2 && N3.getOpcode() == ISD::FNEG &&

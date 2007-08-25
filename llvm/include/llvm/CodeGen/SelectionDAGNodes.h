@@ -1151,17 +1151,36 @@ protected:
   friend class SelectionDAG;
   ConstantFPSDNode(bool isTarget, double val, MVT::ValueType VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
-             getSDVTList(VT)), Value(APFloat(val)) {
+             getSDVTList(VT)), 
+             Value(VT==MVT::f64 ? APFloat(val) : APFloat((float)val)) {
+  }
+  ConstantFPSDNode(bool isTarget, APFloat val, MVT::ValueType VT)
+    : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
+             getSDVTList(VT)), Value(val) {
   }
 public:
 
-  double getValue() const { return Value.convertToDouble(); }
+  // Longterm plan: replace all uses of getValue with getValueAPF, remove
+  // getValue, rename getValueAPF to getValue.
+  double getValue() const { 
+    if ( getValueType(0)==MVT::f64)
+      return Value.convertToDouble();
+    else
+      return Value.convertToFloat();
+  }
+  APFloat getValueAPF() const { return Value; }
 
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
   /// As such, this method can be used to do an exact bit-for-bit comparison of
   /// two floating point values.
-  bool isExactlyValue(double V) const;
+  bool isExactlyValue(double V) const { 
+    if (getValueType(0)==MVT::f64)
+      return isExactlyValue(APFloat(V));
+    else
+      return isExactlyValue(APFloat((float)V));
+  }
+  bool isExactlyValue(APFloat V) const;
 
   static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {
