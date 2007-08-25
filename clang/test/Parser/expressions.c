@@ -1,13 +1,11 @@
-// RUN: clang -fsyntax-only %s
-// XFAIL: *
-// FIXME: This is xfailed because we're not analyzing brace initializers yet.
+// RUN: clang -parse-noop %s
 
 void test1() {
   if (sizeof (int){ 1});   // sizeof compound literal
   if (sizeof (int));       // sizeof type
 
   (int)4;   // cast.
-  (int){4}; // compound literal.
+  //(int){4}; // compound literal.
 
   // FIXME: change this to the struct version when we can.
   //int A = (struct{ int a;}){ 1}.a;
