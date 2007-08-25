@@ -457,6 +457,8 @@ void SelectionDAGLegalize::HandleOp(SDOperand Op) {
       // If this is an illegal scalar, expand it into its two component
       // pieces.
       SDOperand X, Y;
+      if (Op.getOpcode() == ISD::TargetConstant)
+        break;  // Allow illegal target nodes.
       ExpandOp(Op, X, Y);
     } else if (MVT::getVectorNumElements(VT) == 1) {
       // If this is an illegal single element vector, convert it to a
@@ -644,6 +646,9 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
 /// is legal, recursively ensuring that the operands' operations remain
 /// legal.
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
+  if (Op.getOpcode() == ISD::TargetConstant) // Allow illegal target nodes.
+    return Op;
+  
   assert(isTypeLegal(Op.getValueType()) &&
          "Caller should expand or promote operands that are not legal!");
   SDNode *Node = Op.Val;
