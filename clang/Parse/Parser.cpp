@@ -245,7 +245,8 @@ void Parser::Initialize() {
     Actions.ParseDeclarator(CurScope, D, 0, 0);
   }
   
-  if (Tok.getKind() == tok::eof)  // Empty source file is an extension.
+  if (Tok.getKind() == tok::eof &&
+      !getLang().CPlusPlus)  // Empty source file is an extension in C
     Diag(Tok, diag::ext_empty_source_file);
 }
 
