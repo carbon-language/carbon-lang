@@ -2803,11 +2803,24 @@ private:
       Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
       Asm->EOL("Personality (pcrel sdata4)");
       
-      O << TAI->getData32bitsDirective();
-      Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
-      O << "-" << TAI->getPCSymbol();
-      Asm->EOL("Personality");
-      
+      if (TAI->needsSet()) {
+        O << "\t.set\t";
+        PrintLabelName("set", SetCounter);
+        O << ",";
+        Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
+        O << "-" << TAI->getPCSymbol();
+        Asm->EOL("Set Personality");
+        O << TAI->getData32bitsDirective();
+        PrintLabelName("set", SetCounter);
+        Asm->EOL("Personality");
+        ++SetCounter;
+      } else {
+        O << TAI->getData32bitsDirective();
+        Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
+        O << "-" << TAI->getPCSymbol();
+        Asm->EOL("Personality");
+      }
+
       Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
       Asm->EOL("LSDA Encoding (pcrel)");
       Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
