@@ -64,7 +64,10 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     SourceLocation LBrace = ConsumeBrace();
     // FIXME: push a scope, push a namespace decl.
     
-    // FIXME: Parse namespace-body
+    while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
+      // FIXME capture the decls.
+      ParseExternalDeclaration();
+    }
     
     SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
     

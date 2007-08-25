@@ -340,7 +340,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return 0;
   case tok::kw_namespace:
   case tok::kw_typedef:
-    // A function definition cannot start with a 'typedef' keyword.
+    // A function definition cannot start with a these keywords.
     return ParseDeclaration(Declarator::FileContext);
   default:
     // We can't tell whether this is a function-definition or declaration yet.
