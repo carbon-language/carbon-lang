@@ -302,6 +302,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     if (cast<OCUVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;
     return LV_Valid;
+  case ImplicitCastExprClass: // A side-effect of our implementation.
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->isLvalue();
   default:
     break;
   }
