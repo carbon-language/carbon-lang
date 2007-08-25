@@ -126,6 +126,24 @@ namespace {
     /// based on split value. 
     void calculateLoopBounds(SplitInfo &SD);
 
+    /// updatePHINodes - CFG has been changed. 
+    /// Before 
+    ///   - ExitBB's single predecessor was Latch
+    ///   - Latch's second successor was Header
+    /// Now
+    ///   - ExitBB's single predecessor was Header
+    ///   - Latch's one and only successor was Header
+    ///
+    /// Update ExitBB PHINodes' to reflect this change.
+    void updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch, 
+                        BasicBlock *Header,
+                        PHINode *IV, Instruction *IVIncrement);
+
+    /// moveExitCondition - Move exit condition EC into split condition block CondBB.
+    void moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
+                           BasicBlock *ExitBB, ICmpInst *EC, ICmpInst *SC,
+                           PHINode *IV, Instruction *IVAdd, Loop *LP);
+
     /// splitLoop - Split current loop L in two loops using split information
     /// SD. Update dominator information. Maintain LCSSA form.
     bool splitLoop(SplitInfo &SD);
@@ -987,6 +1005,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   //[*] Clone loop.
   DenseMap<const Value *, Value *> ValueMap;
   Loop *BLoop = CloneLoop(L, LPM, LI, ValueMap, this);
+  Loop *ALoop = L;
   BasicBlock *B_Header = BLoop->getHeader();
 
   //[*] ALoop's exiting edge BLoop's header.
@@ -1110,5 +1129,141 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   B_BR->setUnconditionalDest(B_ActiveBranch);
   removeBlocks(B_InactiveBranch, BLoop, B_ActiveBranch);
 
+  BasicBlock *A_Header = L->getHeader();
+  if (A_ExitingBlock == A_Header)
+    return true;
+
+  //[*] Move exit condition into split condition block to avoid
+  //    executing dead loop iteration.
+  ICmpInst *B_ExitCondition = cast<ICmpInst>(ValueMap[ExitCondition]);
+  Instruction *B_IndVarIncrement = cast<Instruction>(ValueMap[IndVarIncrement]);
+  ICmpInst *B_SplitCondition = cast<ICmpInst>(ValueMap[SD.SplitCondition]);
+
+  moveExitCondition(A_SplitCondBlock, A_ActiveBranch, A_ExitBlock, ExitCondition,
+                    SD.SplitCondition, IndVar, IndVarIncrement, ALoop);
+
+  moveExitCondition(B_SplitCondBlock, B_ActiveBranch, B_ExitBlock, B_ExitCondition,
+                    B_SplitCondition, B_IndVar, B_IndVarIncrement, BLoop);
+
   return true;
+}
+
+// moveExitCondition - Move exit condition EC into split condition block CondBB.
+void LoopIndexSplit::moveExitCondition(BasicBlock *CondBB, BasicBlock *ActiveBB,
+                                       BasicBlock *ExitBB, ICmpInst *EC, ICmpInst *SC,
+                                       PHINode *IV, Instruction *IVAdd, Loop *LP) {
+
+  BasicBlock *ExitingBB = EC->getParent();
+  Instruction *CurrentBR = CondBB->getTerminator();
+
+  // Move exit condition into split condition block.
+  EC->moveBefore(CurrentBR);
+  EC->setOperand(ExitValueNum == 0 ? 1 : 0, IV);
+
+  // Move exiting block's branch into split condition block. Update its branch
+  // destination.
+  BranchInst *ExitingBR = cast<BranchInst>(ExitingBB->getTerminator());
+  ExitingBR->moveBefore(CurrentBR);
+  if (ExitingBR->getSuccessor(0) == ExitBB)
+    ExitingBR->setSuccessor(1, ActiveBB);
+  else
+    ExitingBR->setSuccessor(0, ActiveBB);
+    
+  // Remove split condition and current split condition branch.
+  SC->eraseFromParent();
+  CurrentBR->eraseFromParent();
+
+  // Connect exiting block to split condition block.
+  new BranchInst(CondBB, ExitingBB);
+
+  // Update PHINodes
+  updatePHINodes(ExitBB, ExitingBB, CondBB, IV, IVAdd);
+
+  // Fix dominator info.
+  // ExitBB is now dominated by CondBB
+  DT->changeImmediateDominator(ExitBB, CondBB);
+  DF->changeImmediateDominator(ExitBB, CondBB, DT);
+  
+  // Basicblocks dominated by ActiveBB may have ExitingBB or
+  // a basic block outside the loop in their DF list. If so,
+  // replace it with CondBB.
+  DomTreeNode *Node = DT->getNode(ActiveBB);
+  for (df_iterator<DomTreeNode *> DI = df_begin(Node), DE = df_end(Node);
+       DI != DE; ++DI) {
+    BasicBlock *BB = DI->getBlock();
+    DominanceFrontier::iterator BBDF = DF->find(BB);
+    DominanceFrontier::DomSetType::iterator DomSetI = BBDF->second.begin();
+    DominanceFrontier::DomSetType::iterator DomSetE = BBDF->second.end();
+    while (DomSetI != DomSetE) {
+      DominanceFrontier::DomSetType::iterator CurrentItr = DomSetI;
+      ++DomSetI;
+      BasicBlock *DFBB = *CurrentItr;
+      if (DFBB == ExitingBB || !L->contains(DFBB)) {
+        BBDF->second.erase(DFBB);
+        BBDF->second.insert(CondBB);
+      }
+    }
+  }
+}
+
+/// updatePHINodes - CFG has been changed. 
+/// Before 
+///   - ExitBB's single predecessor was Latch
+///   - Latch's second successor was Header
+/// Now
+///   - ExitBB's single predecessor was Header
+///   - Latch's one and only successor was Header
+///
+/// Update ExitBB PHINodes' to reflect this change.
+void LoopIndexSplit::updatePHINodes(BasicBlock *ExitBB, BasicBlock *Latch, 
+                                    BasicBlock *Header,
+                                    PHINode *IV, Instruction *IVIncrement) {
+
+  for (BasicBlock::iterator BI = ExitBB->begin(), BE = ExitBB->end(); 
+       BI != BE; ++BI) {
+    PHINode *PN = dyn_cast<PHINode>(BI);
+    if (!PN)
+      break;
+
+    Value *V = PN->getIncomingValueForBlock(Latch);
+    if (PHINode *PHV = dyn_cast<PHINode>(V)) {
+      // PHV is in Latch. PHV has two uses, one use is in ExitBB PHINode 
+      // (i.e. PN :)). 
+      // The second use is in Header and it is new incoming value for PN.
+      PHINode *U1 = NULL;
+      PHINode *U2 = NULL;
+      Value *NewV = NULL;
+      for (Value::use_iterator UI = PHV->use_begin(), E = PHV->use_end(); 
+           UI != E; ++UI) {
+        if (!U1)
+          U1 = cast<PHINode>(*UI);
+        else if (!U2)
+          U2 = cast<PHINode>(*UI);
+        else
+          assert ( 0 && "Unexpected third use of this PHINode");
+      }
+      assert (U1 && U2 && "Unable to find two uses");
+      
+      if (U1->getParent() == Header) 
+        NewV = U1;
+      else
+        NewV = U2;
+      PN->addIncoming(NewV, Header);
+
+    } else if (Instruction *PHI = dyn_cast<Instruction>(V)) {
+      // If this instruction is IVIncrement then IV is new incoming value 
+      // from header otherwise this instruction must be incoming value from 
+      // header because loop is in LCSSA form.
+      if (PHI == IVIncrement)
+        PN->addIncoming(IV, Header);
+      else
+        PN->addIncoming(V, Header);
+    } else
+      // Otherwise this is an incoming value from header because loop is in 
+      // LCSSA form.
+      PN->addIncoming(V, Header);
+    
+    // Remove incoming value from Latch.
+    PN->removeIncomingValue(Latch);
+  }
 }
