@@ -765,9 +765,10 @@ void Sema::UsualUnaryConversions(Expr *&expr) {
 /// responsible for emitting appropriate error diagnostics.
 QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
                                           bool isCompAssign) {
-  UsualUnaryConversions(lhsExpr);
-  UsualUnaryConversions(rhsExpr);
-  
+  if (!isCompAssign) {
+    UsualUnaryConversions(lhsExpr);
+    UsualUnaryConversions(rhsExpr);
+  }
   QualType lhs = lhsExpr->getType();
   QualType rhs = rhsExpr->getType();
   
