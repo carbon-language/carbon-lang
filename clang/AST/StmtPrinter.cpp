@@ -475,6 +475,11 @@ void StmtPrinter::VisitBinaryOperator(BinaryOperator *Node) {
   OS << " " << BinaryOperator::getOpcodeStr(Node->getOpcode()) << " ";
   PrintExpr(Node->getRHS());
 }
+void StmtPrinter::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
+  PrintExpr(Node->getLHS());
+  OS << " " << BinaryOperator::getOpcodeStr(Node->getOpcode()) << " ";
+  PrintExpr(Node->getRHS());
+}
 void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
   PrintExpr(Node->getCond());
   OS << " ? ";

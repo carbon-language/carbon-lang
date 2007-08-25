@@ -729,8 +729,9 @@ public:
   bool isCompoundAssignmentOp() const { return Opc > Assign && Opc <= OrAssign;}
   bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
   
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == BinaryOperatorClass; 
+  static bool classof(const Stmt *S) { 
+    return S->getStmtClass() == BinaryOperatorClass ||
+           S->getStmtClass() == CompoundAssignOperatorClass; 
   }
   static bool classof(const BinaryOperator *) { return true; }
 
@@ -745,7 +746,7 @@ private:
 
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy, bool dead)
-    : Expr(BinaryOperatorClass, ResTy), Opc(opc) {
+    : Expr(CompoundAssignOperatorClass, ResTy), Opc(opc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
   }
@@ -770,11 +771,8 @@ public:
   QualType getComputationType() const { return ComputationType; }
   
   static bool classof(const CompoundAssignOperator *) { return true; }
-  static bool classof(const BinaryOperator *B) { 
-    return B->isCompoundAssignmentOp(); 
-  }
   static bool classof(const Stmt *S) { 
-    return isa<BinaryOperator>(S) && classof(cast<BinaryOperator>(S));
+    return S->getStmtClass() == CompoundAssignOperatorClass; 
   }
 };
 
