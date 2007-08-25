@@ -430,8 +430,8 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const BinaryOperator *E,
                                   ComputeType).getVal();
   
   // Do not merge types for -= where the LHS is a pointer.
-  if (E->getOpcode() != BinaryOperator::SubAssign &&
-      E->getLHS()->getType()->isPointerType()) {
+  if (E->getOpcode() != BinaryOperator::SubAssign ||
+      !E->getLHS()->getType()->isPointerType()) {
     OpInfo.RHS = CGF.EmitConversion(RValue::get(OpInfo.RHS), RHSTy,
                                     ComputeType).getVal();
   }
