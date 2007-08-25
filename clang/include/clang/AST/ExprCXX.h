@@ -78,8 +78,8 @@ namespace clang {
     bool Value;
     SourceLocation Loc;
   public:
-    CXXBoolLiteralExpr(bool val, SourceLocation l) : 
-      Expr(CXXBoolLiteralExprClass, QualType()), Value(val), Loc(l) {}
+    CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) : 
+      Expr(CXXBoolLiteralExprClass, Ty), Value(val), Loc(l) {}
     
     bool getValue() const { return Value; }
 

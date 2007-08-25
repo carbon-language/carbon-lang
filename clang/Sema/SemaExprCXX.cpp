@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ASTContext.h"
 using namespace clang;
 
 /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
@@ -40,5 +41,5 @@ Action::ExprResult
 Sema::ParseCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind != tok::kw_true || Kind != tok::kw_false) &&
          "Unknown C++ Boolean value!");
-  return new CXXBoolLiteralExpr(Kind == tok::kw_true, OpLoc);
+  return new CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);
 }
