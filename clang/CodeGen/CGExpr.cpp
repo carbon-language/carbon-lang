@@ -174,10 +174,6 @@ RValue CodeGenFunction::EmitLoadOfOCUElementLValue(LValue LV,
 }
 
 
-RValue CodeGenFunction::EmitLoadOfLValue(const Expr *E) {
-  return EmitLoadOfLValue(EmitLValue(E), E->getType());
-}
-
 
 /// EmitStoreThroughLValue - Store the specified rvalue into the specified
 /// lvalue, where both are guaranteed to the have the same type, and that type

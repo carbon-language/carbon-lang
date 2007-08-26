@@ -301,7 +301,6 @@ public:
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
-  RValue EmitLoadOfLValue(const Expr *E);
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
   RValue EmitLoadOfOCUElementLValue(LValue V, QualType LVType);
 
