@@ -239,9 +239,9 @@ public:
     None, Extern, Static
   };
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-               StorageClass S = None, Decl *PrevDecl = 0)
+               StorageClass S = None, bool isInline, Decl *PrevDecl = 0)
     : ValueDecl(Function, L, Id, T, PrevDecl), 
-      ParamInfo(0), Body(0), DeclChain(0), SClass(S) {}
+      ParamInfo(0), Body(0), DeclChain(0), SClass(S), IsInline(isInline) {}
   virtual ~FunctionDecl();
 
   Stmt *getBody() const { return Body; }
@@ -265,6 +265,7 @@ public:
     return cast<FunctionType>(getType())->getResultType();
   }
   StorageClass getStorageClass() const { return SClass; }
+  bool isInline() const { return IsInline; }
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
@@ -282,7 +283,8 @@ private:
   /// function.
   Decl *DeclChain;
 
-  StorageClass SClass;
+  StorageClass SClass : 2;
+  bool IsInline : 1;
 };
 
 

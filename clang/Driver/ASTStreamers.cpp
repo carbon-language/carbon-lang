@@ -47,6 +47,18 @@ void clang::BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
 static void PrintFunctionDeclStart(FunctionDecl *FD) {
   bool HasBody = FD->getBody();
   
+  fprintf(stderr, "\n");
+
+  switch (FD->getStorageClass()) {
+  default: assert(0 && "Unknown storage class");
+  case FunctionDecl::None: break;
+  case FunctionDecl::Extern: fprintf(stderr, "extern "); break;
+  case FunctionDecl::Static: fprintf(stderr, "static "); break;
+  }
+  
+  if (FD->isInline())
+    fprintf(stderr, "inline ");
+  
   std::string Proto = FD->getName();
   FunctionType *AFT = cast<FunctionType>(FD->getType());
 
@@ -72,7 +84,7 @@ static void PrintFunctionDeclStart(FunctionDecl *FD) {
   }
 
   AFT->getResultType().getAsStringInternal(Proto);
-  fprintf(stderr, "\n%s", Proto.c_str());
+  fprintf(stderr, "%s", Proto.c_str());
   
   if (!FD->getBody())
     fprintf(stderr, ";\n");

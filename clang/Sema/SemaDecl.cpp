@@ -156,7 +156,7 @@ Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
 
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
   FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R,
-                                       FunctionDecl::Extern, 0);
+                                       FunctionDecl::Extern, false, 0);
   
   // Find translation-unit scope to insert this function into.
   while (S->getParent())
@@ -334,6 +334,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
     }
 
     FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
+                                           D.getDeclSpec().isInlineSpecified(),
                                            LastDeclarator);
     
     // Merge the decl with the existing one if appropriate.
