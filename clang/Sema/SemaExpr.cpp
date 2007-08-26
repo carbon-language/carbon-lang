@@ -283,9 +283,17 @@ ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
 QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
   DefaultFunctionArrayConversion(V);
   
+  // These operators return the element type of a complex type.
   if (const ComplexType *CT = V->getType()->getAsComplexType())
     return CT->getElementType();
-  return V->getType();
+  
+  // Otherwise they pass through real integer and floating point types here.
+  if (V->getType()->isArithmeticType())
+    return V->getType();
+  
+  // Reject anything else.
+  Diag(Loc, diag::err_realimag_invalid_type, V->getType().getAsString());
+  return QualType();
 }
 
 
