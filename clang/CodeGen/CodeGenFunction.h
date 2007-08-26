@@ -323,11 +323,6 @@ public:
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//
 
-  void EmitCompoundAssignmentOperands(const CompoundAssignOperator *CAO,
-                                      LValue &LHSLV, RValue &LHS, RValue &RHS);
-  RValue EmitCompoundAssignmentResult(const CompoundAssignOperator *E,
-                                      LValue LHSLV, RValue ResV);
-  
   RValue EmitCallExpr(const CallExpr *E);
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
