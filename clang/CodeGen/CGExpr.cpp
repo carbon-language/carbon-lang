@@ -211,11 +211,12 @@ llvm::Value *CodeGenFunction::ConvertScalarValueToBool(RValue Val, QualType Ty){
 ///
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
-  default:
+  default: {
     fprintf(stderr, "Unimplemented lvalue expr!\n");
     E->dump();
-    return LValue::MakeAddr(llvm::UndefValue::get(
-                              llvm::PointerType::get(llvm::Type::Int32Ty)));
+    llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
+    return LValue::MakeAddr(llvm::UndefValue::get(Ty));
+  }
 
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
