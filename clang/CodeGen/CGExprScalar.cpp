@@ -554,21 +554,31 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // Load the LHS and RHS operands.
   LValue LHSLV = EmitLValue(E->getLHS());
   OpInfo.LHS = EmitLoadOfLValue(LHSLV, LHSTy);
-  
-  // FIXME: It is possible for the RHS to be complex.
-  OpInfo.RHS = Visit(E->getRHS());
-  
-  // Convert the LHS/RHS values to the computation type.
+
+  // Determine the computation type.  If the RHS is complex, then this is one of
+  // the add/sub/mul/div operators.  All of these operators can be computed in
+  // with just their real component even though the computation domain really is
+  // complex.
   QualType ComputeType = E->getComputationType();
   
-  // FIXME: it's possible for the computation type to be complex if the RHS
-  // is complex.  Handle this!
+  // If the computation type is complex, then the RHS is complex.  Emit the RHS.
+  if (const ComplexType *CT = ComputeType->getAsComplexType()) {
+    ComputeType = CT->getElementType();
+    
+    // Emit the RHS, only keeping the real component.
+    OpInfo.RHS = CGF.EmitComplexExpr(E->getRHS()).first;
+    RHSTy = RHSTy->getAsComplexType()->getElementType();
+  } else {
+    // Otherwise the RHS is a simple scalar value.
+    OpInfo.RHS = Visit(E->getRHS());
+  }
+  
+  // Convert the LHS/RHS values to the computation type.
   OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy, ComputeType);
   
   // Do not merge types for -= where the LHS is a pointer.
   if (E->getOpcode() != BinaryOperator::SubAssign ||
       !E->getLHS()->getType()->isPointerType()) {
-    // FIXME: the computation type may be complex.
     OpInfo.RHS = EmitScalarConversion(OpInfo.RHS, RHSTy, ComputeType);
   }
   OpInfo.Ty = ComputeType;
