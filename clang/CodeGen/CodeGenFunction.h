@@ -348,41 +348,6 @@ public:
   RValue EmitCallExpr(const CallExpr *E);
   RValue EmitBuiltinExpr(unsigned builtinID, const CallExpr *E);
 
-#if 0
-  RValue EmitExpr(const Expr *E);
-   
-  // Binary Operators.
-  RValue EmitBinaryOperator(const BinaryOperator *E);
-  RValue EmitBinaryMul(const BinaryOperator *E);
-  RValue EmitBinaryDiv(const BinaryOperator *E);
-  RValue EmitBinaryRem(const BinaryOperator *E);
-  RValue EmitMul(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitDiv(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitRem(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitAdd(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitPointerAdd(RValue LHS, QualType LHSTy,
-                        RValue RHS, QualType RHSTy, QualType EltTy);
-  RValue EmitSub(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitPointerSub(RValue LHS, QualType LHSTy,
-                        RValue RHS, QualType RHSTy, QualType EltTy);
-  RValue EmitShl(RValue LHS, RValue RHS, QualType ResTy);
-  RValue EmitShr(RValue LHS, RValue RHS, QualType ResTy);
-  RValue EmitBinaryCompare(const BinaryOperator *E, unsigned UICmpOpc,
-                           unsigned SICmpOpc, unsigned FCmpOpc);
-  RValue EmitAnd(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitOr (RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitXor(RValue LHS, RValue RHS, QualType EltTy);
-  RValue EmitBinaryLAnd(const BinaryOperator *E);
-  RValue EmitBinaryLOr(const BinaryOperator *E);
-  
-  RValue EmitBinaryAssign(const BinaryOperator *E);
-  RValue EmitBinaryComma(const BinaryOperator *E);
-  
-  // Conditional Operator.
-  RValue EmitConditionalOperator(const ConditionalOperator *E);
-  RValue EmitChooseExpr(const ChooseExpr *E);
-#endif
-  
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
 
   //===--------------------------------------------------------------------===//
