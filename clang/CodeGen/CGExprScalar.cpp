@@ -365,30 +365,23 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
 Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
-  // Handle cases where the source is an LLVM Scalar type.
-  if (!CGF.hasAggregateLLVMType(E->getType())) {
+  // Handle cases where the source is an non-complex type.
+  const ComplexType *CT = E->getType()->getAsComplexType();
+  if (!CT) {
     Value *Src = Visit(const_cast<Expr*>(E));
 
     // Use EmitScalarConversion to perform the conversion.
     return EmitScalarConversion(Src, E->getType(), DestTy);
   }
-  
-  if (const ComplexType *CT = E->getType()->getAsComplexType()) {
-    // Emit the complex value, only keeping the real component.  C99 6.3.1.7p2:
-    // "When a value of complex type is converted to a real type, the imaginary
-    // part of the complex value is discarded and the value of the real part is
-    // converted according to the conversion rules for the corresponding real
-    // type. 
-    Value *Src = CGF.EmitComplexExpr(E).first;
-    return EmitScalarConversion(Src, CT->getElementType(), DestTy);
-  }
-  
-  RValue Src = CGF.EmitAnyExpr(E);
-  
-  // If the destination is void, just evaluate the source.
-  if (DestTy->isVoidType()) return 0;
 
-  assert(0 && "Can't convert from an aggregate yet!");
+  // Handle cases where the source is a complex type.
+  
+  // C99 6.3.1.7p2: "When a value of complex type is converted to a real type,
+  // the imaginary part of the complex value is discarded and the value of the
+  // real part is converted according to the conversion rules for the
+  // corresponding real type. 
+  Value *Src = CGF.EmitComplexExpr(E).first;
+  return EmitScalarConversion(Src, CT->getElementType(), DestTy);
 }
 
 //===----------------------------------------------------------------------===//
