@@ -143,15 +143,38 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     
     if (!TD->isDefinition()) {
       ResultType = llvm::OpaqueType::get();    
+    } else if (TD->getKind() == Decl::Struct) {
+      const RecordDecl *RD = cast<const RecordDecl>(TD);
+      std::vector<const llvm::Type*> Fields;
+      for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
+        Fields.push_back(ConvertType(RD->getMember(i)->getType()));
+      ResultType = llvm::StructType::get(Fields);
+    } else if (TD->getKind() == Decl::Union) {
+      const RecordDecl *RD = cast<const RecordDecl>(TD);
+      // Just use the largest element of the union, breaking ties with the
+      // highest aligned member.
+      std::vector<const llvm::Type*> Fields;
+      if (RD->getNumMembers() != 0) {
+        std::pair<uint64_t, unsigned> MaxElt = 
+          Context.getTypeInfo(RD->getMember(0)->getType(), SourceLocation());
+        unsigned MaxEltNo = 0;
+        
+        for (unsigned i = 1, e = RD->getNumMembers(); i != e; ++i) {
+          std::pair<uint64_t, unsigned> EltInfo = 
+            Context.getTypeInfo(RD->getMember(i)->getType(), SourceLocation());
+          if (EltInfo.first > MaxElt.first ||
+              (EltInfo.first == MaxElt.first &&
+               EltInfo.second > MaxElt.second)) {
+            MaxElt = EltInfo;
+            MaxEltNo = i;
+          }
+        }
+        
+        Fields.push_back(ConvertType(RD->getMember(MaxEltNo)->getType()));
+      }        
+      ResultType = llvm::StructType::get(Fields);
     } else {
-      if (TD->getKind() == Decl::Struct) {
-        const RecordDecl *RD = cast<const RecordDecl>(TD);
-        std::vector<const llvm::Type*> Fields;
-        for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
-          Fields.push_back(ConvertType(RD->getMember(i)->getType()));
-        ResultType = llvm::StructType::get(Fields);
-      } else 
-        assert(0 && "FIXME: Implement tag decl kind!");
+      assert(0 && "FIXME: Implement tag decl kind!");
     }
           
     std::string TypeName(TD->getKindName());
