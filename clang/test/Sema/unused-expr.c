@@ -7,7 +7,7 @@ void bar(volatile int *VP, int *P, int A,
   
   VP == P;             // expected-warning {{expression result unused}} \
                           expected-warning {{comparison}}
-  (void)A;             // expected-warning {{expression result unused}}
+  (void)A;
   (void)foo(1,2);      // no warning.
   
   A == foo(1, 2);      // expected-warning {{expression result unused}}
@@ -23,5 +23,11 @@ void bar(volatile int *VP, int *P, int A,
   // FIXME: SEMA explodes on these.
   //__real__ C;
   //__real__ VC;
+}
+
+extern void t1();
+extern void t2();
+void t3(int c) {
+  c ? t1() : t2();
 }
 
