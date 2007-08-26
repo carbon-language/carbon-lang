@@ -118,8 +118,7 @@ public:
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
   ComplexPairTy VisitBinSub        (const BinaryOperator *E);
   ComplexPairTy VisitBinDiv        (const BinaryOperator *E);
-  // FIXME: div/rem
-  // GCC rejects and/or/xor for integer complex.
+  // GCC rejects rem/and/or/xor for integer complex.
   // Logical and/or always return int, never complex.
 
   // No comparisons produce a complex result.
