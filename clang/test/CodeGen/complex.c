@@ -20,6 +20,8 @@ void test2(int c) {
 }
 
 _Complex double g1, g2;
+_Complex float cf;
+double D;
 
 void test3() {
   g1 = g1 + g2;
@@ -28,4 +30,8 @@ void test3() {
   g1 = +-~g1;
 
   double Gr = __real g1;
+
+  //cf += D;  // fixme: sema bug
+  D += cf;
+  cf /= g1;
 }
