@@ -46,7 +46,7 @@ namespace  {
         Visit(S);
       } else {
         Indent();
-        fprintf(F, "<<<NULL>>>\n");
+        fprintf(F, "<<<NULL>>>");
       }
       --IndentLevel;
     }
