@@ -361,6 +361,12 @@ public:
   /// LLVM scalar type, returning the result.
   llvm::Value *EmitScalarExpr(const Expr *E);
   
+  /// EmitScalarConversion - Emit a conversion from the specified type to the
+  /// specified destination type, both of which are LLVM scalar types.
+  llvm::Value *EmitScalarConversion(llvm::Value *Src, QualType SrcTy,
+                                    QualType DstTy);
+  
+  
   /// EmitAggExpr - Emit the computation of the specified expression of
   /// aggregate type.  The result is computed into DestPtr.  Note that if
   /// DestPtr is null, the value of the aggregate expression is not needed.

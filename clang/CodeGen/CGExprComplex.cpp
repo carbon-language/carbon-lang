@@ -203,10 +203,8 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
     // rules for the corresponding real types.
     ComplexPairTy Res = Visit(Op);
     QualType SrcEltTy = CT->getElementType();
-    Res.first = CGF.EmitConversion(RValue::get(Res.first), SrcEltTy,
-                                   DestTy).getVal();
-    Res.second = CGF.EmitConversion(RValue::get(Res.second), SrcEltTy,
-                                    DestTy).getVal();
+    Res.first = CGF.EmitScalarConversion(Res.first, SrcEltTy, DestTy);
+    Res.second = CGF.EmitScalarConversion(Res.second, SrcEltTy, DestTy);
     return Res;
   }
   // C99 6.3.1.7: When a value of real type is converted to a complex type, the
@@ -216,7 +214,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   llvm::Value *Elt = CGF.EmitScalarExpr(Op);
 
   // Convert the input element to the element type of the complex.
-  Elt = CGF.EmitConversion(RValue::get(Elt), Op->getType(), DestTy).getVal();
+  Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
   
   // Return (realval, 0).
   return ComplexPairTy(Elt, llvm::Constant::getNullValue(Elt->getType()));

@@ -62,6 +62,12 @@ public:
     return EmitLoadOfLValue(EmitLValue(E), E->getType());
   }
     
+  /// EmitScalarConversion - Emit a conversion from the specified type to the
+  /// specified destination type, both of which are LLVM scalar types.
+  llvm::Value *EmitScalarConversion(llvm::Value *Src, QualType SrcTy,
+                                    QualType DstTy);
+    
+    
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -237,6 +243,68 @@ public:
 //                                Utilities
 //===----------------------------------------------------------------------===//
 
+/// EmitScalarConversion - Emit a conversion from the specified type to the
+/// specified destination type, both of which are LLVM scalar types.
+llvm::Value *ScalarExprEmitter::EmitScalarConversion(llvm::Value *Src, 
+                                                     QualType SrcType,
+                                                     QualType DstType) {
+  SrcType = SrcType.getCanonicalType();
+  DstType = DstType.getCanonicalType();
+  if (SrcType == DstType) return Src;
+
+  // Handle conversions to bool first, they are special: comparisons against 0.
+  if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstType))
+    if (DestBT->getKind() == BuiltinType::Bool)
+      return CGF.ConvertScalarValueToBool(RValue::get(Src), SrcType);
+  
+  const llvm::Type *DstTy = ConvertType(DstType);
+
+  // Ignore conversions like int -> uint.
+  if (Src->getType() == DstTy)
+    return Src;
+
+  // Handle pointer conversions next: pointers can only be converted to/from
+  // other pointers and integers.
+  if (isa<PointerType>(DstType)) {
+    // The source value may be an integer, or a pointer.
+    if (isa<llvm::PointerType>(Src->getType()))
+      return Builder.CreateBitCast(Src, DstTy, "conv");
+    assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
+    return Builder.CreateIntToPtr(Src, DstTy, "conv");
+  }
+  
+  if (isa<PointerType>(SrcType)) {
+    // Must be an ptr to int cast.
+    assert(isa<llvm::IntegerType>(DstTy) && "not ptr->int?");
+    return Builder.CreateIntToPtr(Src, DstTy, "conv");
+  }
+  
+  // Finally, we have the arithmetic types: real int/float.
+  if (isa<llvm::IntegerType>(Src->getType())) {
+    bool InputSigned = SrcType->isSignedIntegerType();
+    if (isa<llvm::IntegerType>(DstTy))
+      return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
+    else if (InputSigned)
+      return Builder.CreateSIToFP(Src, DstTy, "conv");
+    else
+      return Builder.CreateUIToFP(Src, DstTy, "conv");
+  }
+  
+  assert(Src->getType()->isFloatingPoint() && "Unknown real conversion");
+  if (isa<llvm::IntegerType>(DstTy)) {
+    if (DstType->isSignedIntegerType())
+      return Builder.CreateFPToSI(Src, DstTy, "conv");
+    else
+      return Builder.CreateFPToUI(Src, DstTy, "conv");
+  }
+
+  assert(DstTy->isFloatingPoint() && "Unknown real conversion");
+  if (DstTy->getTypeID() < Src->getType()->getTypeID())
+    return Builder.CreateFPTrunc(Src, DstTy, "conv");
+  else
+    return Builder.CreateFPExt(Src, DstTy, "conv");
+}
+
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
@@ -295,11 +363,21 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
 Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
+  // Handle cases where the source is an LLVM Scalar type.
+  if (!CGF.hasAggregateLLVMType(E->getType())) {
+    Value *Src = Visit(const_cast<Expr*>(E));
+
+    // If the destination is void, just evaluate the source.
+    if (DestTy->isVoidType()) return 0;
+
+    // Use EmitScalarConversion to perform the conversion.
+    return EmitScalarConversion(Src, E->getType(), DestTy);
+  }
+  
   RValue Src = CGF.EmitAnyExpr(E);
   
   // If the destination is void, just evaluate the source.
-  if (DestTy->isVoidType())
-    return 0;
+  if (DestTy->isVoidType()) return 0;
   
   // FIXME: Refactor EmitConversion to not return an RValue.  Sink it into this
   // method.
@@ -741,4 +819,14 @@ Value *CodeGenFunction::EmitScalarExpr(const Expr *E) {
          "Invalid scalar expression to emit");
   
   return ScalarExprEmitter(*this).Visit(const_cast<Expr*>(E));
+}
+
+/// EmitScalarConversion - Emit a conversion from the specified type to the
+/// specified destination type, both of which are LLVM scalar types.
+llvm::Value *CodeGenFunction::EmitScalarConversion(llvm::Value *Src, 
+                                                   QualType SrcTy,
+                                                   QualType DstTy) {
+  assert(!hasAggregateLLVMType(SrcTy) && !hasAggregateLLVMType(DstTy) &&
+         "Invalid scalar expression to emit");
+  return ScalarExprEmitter(*this).EmitScalarConversion(Src, SrcTy, DstTy);
 }
