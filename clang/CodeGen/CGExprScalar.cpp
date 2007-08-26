@@ -511,14 +511,13 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const BinaryOperator *E,
   
   // FIXME: it's possible for the computation type to be complex if the RHS
   // is complex.  Handle this!
-  OpInfo.LHS = CGF.EmitConversion(RValue::get(OpInfo.LHS), LHSTy,
-                                  ComputeType).getVal();
+  OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy, ComputeType);
   
   // Do not merge types for -= where the LHS is a pointer.
   if (E->getOpcode() != BinaryOperator::SubAssign ||
       !E->getLHS()->getType()->isPointerType()) {
-    OpInfo.RHS = CGF.EmitConversion(RValue::get(OpInfo.RHS), RHSTy,
-                                    ComputeType).getVal();
+    // FIXME: the computation type may be complex.
+    OpInfo.RHS = EmitScalarConversion(OpInfo.RHS, RHSTy, ComputeType);
   }
   OpInfo.Ty = ComputeType;
   OpInfo.E = E;
@@ -527,7 +526,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const BinaryOperator *E,
   Value *Result = (this->*Func)(OpInfo);
   
   // Truncate the result back to the LHS type.
-  Result = CGF.EmitConversion(RValue::get(Result), ComputeType, LHSTy).getVal();
+  Result = EmitScalarConversion(Result, ComputeType, LHSTy);
   
   // Store the result value into the LHS lvalue.
   CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, E->getType());
