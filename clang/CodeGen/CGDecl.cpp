@@ -85,8 +85,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   
   // If this local has an initializer, emit it now.
   if (const Expr *Init = D.getInit()) {
-    // FIXME: This could be much better for aggregates / complex.
-    EmitStoreThroughLValue(EmitAnyExpr(Init), LValue::MakeAddr(DeclPtr), Ty);
+    if (Init->getType()->isComplexType()) {
+      EmitComplexExprIntoAddr(Init, DeclPtr);
+    } else {
+      // FIXME: This could be much better for aggregates.
+      EmitStoreThroughLValue(EmitAnyExpr(Init), LValue::MakeAddr(DeclPtr), Ty);
+    }
   }
 }
 
