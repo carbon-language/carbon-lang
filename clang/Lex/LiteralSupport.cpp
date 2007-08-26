@@ -206,6 +206,7 @@ NumericLiteralParser(const char *begin, const char *end,
   isLong = false;
   isUnsigned = false;
   isLongLong = false;
+  isImaginary = false;
   hadError = false;
   
   if (*s == '0') { // parse radix
@@ -313,65 +314,62 @@ NumericLiteralParser(const char *begin, const char *end,
   }
 
   SuffixBegin = s;
-
-  if (saw_period || saw_exponent) {    
-    if (s < ThisTokEnd) { // parse size suffix (float, long double)
-      if (*s == 'f' || *s == 'F') {
-        saw_float_suffix = true;
-        s++;
-      } else if (*s == 'l' || *s == 'L') {
+  
+  // Parse the suffix.  At this point we can classify whether we have an FP or
+  // integer constant.
+  bool isFPConstant = isFloatingLiteral();
+  
+  // Loop over all of the characters of the suffix.  If we see something bad,
+  // we break out of the loop.
+  for (; s != ThisTokEnd; ++s) {
+    switch (*s) {
+    case 'f':      // FP Suffix for "float"
+    case 'F':
+      if (!isFPConstant) break;  // Error for integer constant.
+      if (saw_float_suffix || isLong) break; // FF, LF invalid.
+      saw_float_suffix = true;
+      continue;  // Success.
+    case 'u':
+    case 'U':
+      if (isFPConstant) break;  // Error for floating constant.
+      if (isUnsigned) break;    // Cannot be repeated.
+      isUnsigned = true;
+      continue;  // Success.
+    case 'l':
+    case 'L':
+      if (isLong || isLongLong) break;  // Cannot be repeated.
+      if (saw_float_suffix) break;      // LF invalid.
+      
+      // Check for long long.  The L's need to be adjacent and the same case.
+      if (s+1 != ThisTokEnd && s[1] == s[0]) {
+        if (isFPConstant) break;        // long long invalid for floats.
+        isLongLong = true;
+        ++s;  // Eat both of them.
+      } else {
         isLong = true;
-        s++;
       }
-      if (s != ThisTokEnd) {
-        Diag(TokLoc, diag::err_invalid_suffix_float_constant, 
-             std::string(SuffixBegin, ThisTokEnd));
-        return;
-      }
+      continue;  // Success.
+    case 'i':
+    case 'I':
+    case 'j':
+    case 'J':
+      if (isImaginary) break;   // Cannot be repeated.
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+              diag::ext_imaginary_constant);
+      isImaginary = true;
+      continue;  // Success.
     }
-  } else {    
-    if (s < ThisTokEnd) {
-      // parse int suffix - they can appear in any order ("ul", "lu", "llu").
-      if (*s == 'u' || *s == 'U') {
-        s++;
-        isUnsigned = true; // unsigned
-
-        if ((s < ThisTokEnd) && (*s == 'l' || *s == 'L')) {
-          s++;
-          // handle "long long" type - l's need to be adjacent and same case.
-          if ((s < ThisTokEnd) && (*s == *(s-1))) {
-            isLongLong = true; // unsigned long long
-            s++;
-          } else {
-            isLong = true; // unsigned long 
-          }
-        }
-      } else if (*s == 'l' || *s == 'L') {
-        s++;
-        // handle "long long" types - l's need to be adjacent and same case.
-        if ((s < ThisTokEnd) && (*s == *(s-1))) {
-          s++;
-          if ((s < ThisTokEnd) && (*s == 'u' || *s == 'U')) {
-            isUnsigned = true; // unsigned long long
-            s++;
-          } else {
-            isLongLong = true; // long long
-          }
-        } else { // handle "long" types
-          if ((s < ThisTokEnd) && (*s == 'u' || *s == 'U')) {
-            isUnsigned = true; // unsigned  long
-            s++;
-          } else {
-            isLong = true; // long 
-          }
-        }
-      } 
-      if (s != ThisTokEnd) {
-        Diag(TokLoc, diag::err_invalid_suffix_integer_constant, 
-             std::string(SuffixBegin, ThisTokEnd));
-        return;
-      }
-    }
+    // If we reached here, there was an error.
+    break;
+  }
+  
+  // Report an error if there are any.
+  if (s != ThisTokEnd) {
+    TokLoc = PP.AdvanceToTokenCharacter(TokLoc, s-begin);
+    Diag(TokLoc, isFPConstant ? diag::err_invalid_suffix_float_constant :
+                                diag::err_invalid_suffix_integer_constant, 
+         std::string(SuffixBegin, ThisTokEnd));
+    return;
   }
 }
 

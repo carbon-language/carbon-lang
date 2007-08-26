@@ -44,21 +44,22 @@ class NumericLiteralParser {
   unsigned radix;
   
   bool saw_exponent, saw_period;
-  bool saw_float_suffix;
+  bool saw_float_suffix;    // 1.0f
   
 public:
   NumericLiteralParser(const char *begin, const char *end,
                        SourceLocation Loc, Preprocessor &PP);
   bool hadError;
   bool isUnsigned;
-  bool isLong;       // This is also set for long long.
+  bool isLong;        // This is *not* set for long long.
   bool isLongLong;
+  bool isImaginary;   // 1.0i
   
   bool isIntegerLiteral() const { 
-    return !saw_period && !saw_exponent ? true : false;
+    return !saw_period && !saw_exponent;
   }
   bool isFloatingLiteral() const {
-    return saw_period || saw_exponent ? true : false;
+    return saw_period || saw_exponent;
   }
   bool hasSuffix() const {
     return SuffixBegin != ThisTokEnd;

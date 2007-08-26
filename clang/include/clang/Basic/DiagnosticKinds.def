@@ -570,6 +570,8 @@ DIAG(err_invalid_suffix_integer_constant, ERROR,
      "invalid suffix '%0' on integer constant")
 DIAG(err_invalid_suffix_float_constant, ERROR,
      "invalid suffix '%0' on floating constant")
+DIAG(ext_imaginary_constant, EXTENSION,
+     "imaginary constants are an extension")
 DIAG(warn_integer_too_large, WARNING,
      "integer constant is too large for its type")
 DIAG(warn_integer_too_large_for_signed, WARNING,
