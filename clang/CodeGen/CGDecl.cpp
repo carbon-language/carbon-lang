@@ -85,11 +85,15 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   
   // If this local has an initializer, emit it now.
   if (const Expr *Init = D.getInit()) {
-    if (Init->getType()->isComplexType()) {
+    if (!hasAggregateLLVMType(Init->getType())) {
+      llvm::Value *V = EmitScalarExpr(Init);
+      // FIXME: Handle volatile.
+      Builder.CreateStore(V, DeclPtr);
+    } else if (Init->getType()->isComplexType()) {
       EmitComplexExprIntoAddr(Init, DeclPtr);
     } else {
-      // FIXME: This could be much better for aggregates.
-      EmitStoreThroughLValue(EmitAnyExpr(Init), LValue::MakeAddr(DeclPtr), Ty);
+      // FIXME: Handle volatile.
+      EmitAggExpr(Init, DeclPtr, false);
     }
   }
 }
