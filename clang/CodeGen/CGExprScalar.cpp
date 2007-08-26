@@ -63,7 +63,7 @@ public:
   }
     
   /// EmitConversionToBool - Convert the specified expression value to a
-  /// boolean (i1) truth value.  This is equivalent to "Val == 0".
+  /// boolean (i1) truth value.  This is equivalent to "Val != 0".
   Value *EmitConversionToBool(Value *Src, QualType DstTy);
     
   /// EmitScalarConversion - Emit a conversion from the specified type to the
@@ -250,7 +250,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// EmitConversionToBool - Convert the specified expression value to a
-/// boolean (i1) truth value.  This is equivalent to "Val == 0".
+/// boolean (i1) truth value.  This is equivalent to "Val != 0".
 Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   assert(SrcType->isCanonical() && "EmitScalarConversion strips typedefs");
   
