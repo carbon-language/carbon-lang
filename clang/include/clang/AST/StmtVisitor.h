@@ -129,13 +129,20 @@ public:
   BINOP_FALLBACK(LAnd)  BINOP_FALLBACK(LOr)
 
   BINOP_FALLBACK(Assign)
-  BINOP_FALLBACK(MulAssign) BINOP_FALLBACK(DivAssign) BINOP_FALLBACK(RemAssign)
-  BINOP_FALLBACK(AddAssign) BINOP_FALLBACK(SubAssign) BINOP_FALLBACK(ShlAssign)
-  BINOP_FALLBACK(ShrAssign) BINOP_FALLBACK(AndAssign) BINOP_FALLBACK(OrAssign)
-  BINOP_FALLBACK(XorAssign)
-  
   BINOP_FALLBACK(Comma)
 #undef BINOP_FALLBACK
+
+  // If the implementation doesn't implement compound assignment operator
+  // methods, fall back on VisitCompoundAssignOperator.
+#define CAO_FALLBACK(NAME) \
+  RetTy VisitBin ## NAME(CompoundAssignOperator *S) { \
+    DISPATCH(CompoundAssignOperator, CompoundAssignOperator); \
+  }
+  CAO_FALLBACK(MulAssign) CAO_FALLBACK(DivAssign) CAO_FALLBACK(RemAssign)
+  CAO_FALLBACK(AddAssign) CAO_FALLBACK(SubAssign) CAO_FALLBACK(ShlAssign)
+  CAO_FALLBACK(ShrAssign) CAO_FALLBACK(AndAssign) CAO_FALLBACK(OrAssign)
+  CAO_FALLBACK(XorAssign)
+#undef CAO_FALLBACK
   
   // If the implementation doesn't implement unary operator methods, fall back
   // on VisitUnaryOperator.
