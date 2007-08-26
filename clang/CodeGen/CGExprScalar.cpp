@@ -62,6 +62,10 @@ public:
     return EmitLoadOfLValue(EmitLValue(E), E->getType());
   }
     
+  /// EmitConversionToBool - Convert the specified expression value to a
+  /// boolean (i1) truth value.  This is equivalent to "Val == 0".
+  Value *EmitConversionToBool(Value *Src, QualType DstTy);
+    
   /// EmitScalarConversion - Emit a conversion from the specified type to the
   /// specified destination type, both of which are LLVM scalar types.
   Value *EmitScalarConversion(Value *Src, QualType SrcTy, QualType DstTy);
@@ -247,6 +251,37 @@ public:
 //                                Utilities
 //===----------------------------------------------------------------------===//
 
+/// EmitConversionToBool - Convert the specified expression value to a
+/// boolean (i1) truth value.  This is equivalent to "Val == 0".
+Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
+  assert(SrcType->isCanonical() && "EmitScalarConversion strips typedefs");
+  
+  if (SrcType->isRealFloatingType()) {
+    // Compare against 0.0 for fp scalars.
+    llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
+    // FIXME: llvm-gcc produces a une comparison: validate this is right.
+    return Builder.CreateFCmpUNE(Src, Zero, "tobool");
+  }
+  
+  assert((SrcType->isIntegerType() || SrcType->isPointerType()) &&
+         "Unknown scalar type to convert");
+  
+  // Because of the type rules of C, we often end up computing a logical value,
+  // then zero extending it to int, then wanting it as a logical value again.
+  // Optimize this common case.
+  if (llvm::ZExtInst *ZI = dyn_cast<llvm::ZExtInst>(Src)) {
+    if (ZI->getOperand(0)->getType() == llvm::Type::Int1Ty) {
+      Value *Result = ZI->getOperand(0);
+      ZI->eraseFromParent();
+      return Result;
+    }
+  }
+  
+  // Compare against an integer or pointer null.
+  llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
+  return Builder.CreateICmpNE(Src, Zero, "tobool");
+}
+
 /// EmitScalarConversion - Emit a conversion from the specified type to the
 /// specified destination type, both of which are LLVM scalar types.
 Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
@@ -260,7 +295,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // Handle conversions to bool first, they are special: comparisons against 0.
   if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstType))
     if (DestBT->getKind() == BuiltinType::Bool)
-      return CGF.ConvertScalarValueToBool(RValue::get(Src), SrcType);
+      return EmitConversionToBool(Src, SrcType);
   
   const llvm::Type *DstTy = ConvertType(DstType);
 
