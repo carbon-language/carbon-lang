@@ -68,7 +68,8 @@ public:
   }
   ComplexPairTy VisitExpr(Expr *S);
   ComplexPairTy VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr());}
-
+  ComplexPairTy VisitImaginaryLiteral(ImaginaryLiteral *IL);
+  
   // l-values.
   ComplexPairTy VisitDeclRefExpr(Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
@@ -169,6 +170,12 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
   llvm::Value *U = llvm::UndefValue::get(EltTy);
   return ComplexPairTy(U, U);
 }
+
+ComplexPairTy ComplexExprEmitter::VisitImaginaryLiteral(ImaginaryLiteral *IL) {
+  llvm::Value *Imag = CGF.EmitScalarExpr(IL->getSubExpr());
+  return ComplexPairTy(llvm::Constant::getNullValue(Imag->getType()), Imag);
+}
+
 
 ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
   llvm::Value *AggPtr = CGF.EmitCallExpr(E).getAggregateAddr();
