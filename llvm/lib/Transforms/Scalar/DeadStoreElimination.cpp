@@ -111,9 +111,12 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       continue;
       
     Value* pointer = 0;
-    if (StoreInst* S = dyn_cast<StoreInst>(BBI))
-      pointer = S->getPointerOperand();
-    else
+    if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
+      if (!S->isVolatile())
+        pointer = S->getPointerOperand();
+      else
+        continue;
+    } else
       pointer = cast<FreeInst>(BBI)->getPointerOperand();
       
     StoreInst*& last = lastStore[pointer];
@@ -194,6 +197,8 @@ bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
   StoreInst* dependency = dyn_cast<StoreInst>(dep);
   if (!dependency)
     return false;
+  else if (dependency->isVolatile())
+    return false;
   
   Value* depPointer = dependency->getPointerOperand();
   const Type* depType = dependency->getOperand(0)->getType();
@@ -253,24 +258,26 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     
     // If we find a store whose pointer is dead...
     if (StoreInst* S = dyn_cast<StoreInst>(BBI)) {
-      Value* pointerOperand = S->getPointerOperand();
-      // See through pointer-to-pointer bitcasts
-      TranslatePointerBitCasts(pointerOperand);
+      if (!S->isVolatile()) {
+        Value* pointerOperand = S->getPointerOperand();
+        // See through pointer-to-pointer bitcasts
+        TranslatePointerBitCasts(pointerOperand);
       
-      if (deadPointers.count(pointerOperand)){
-        // Remove it!
-        MD.removeInstruction(S);
+        if (deadPointers.count(pointerOperand)){
+          // Remove it!
+          MD.removeInstruction(S);
         
-        // DCE instructions only used to calculate that store
-        if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
-          possiblyDead.insert(D);
-        if (Instruction* D = dyn_cast<Instruction>(S->getOperand(1)))
-          possiblyDead.insert(D);
+          // DCE instructions only used to calculate that store
+          if (Instruction* D = dyn_cast<Instruction>(S->getOperand(0)))
+            possiblyDead.insert(D);
+          if (Instruction* D = dyn_cast<Instruction>(S->getOperand(1)))
+            possiblyDead.insert(D);
         
-        BBI++;
-        S->eraseFromParent();
-        NumFastStores++;
-        MadeChange = true;
+          BBI++;
+          S->eraseFromParent();
+          NumFastStores++;
+          MadeChange = true;
+        }
       }
       
       continue;
