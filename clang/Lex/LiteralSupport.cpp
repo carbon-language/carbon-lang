@@ -202,10 +202,10 @@ NumericLiteralParser(const char *begin, const char *end,
   s = DigitsBegin = begin;
   saw_exponent = false;
   saw_period = false;
-  saw_float_suffix = false;
   isLong = false;
   isUnsigned = false;
   isLongLong = false;
+  isFloat = false;
   isImaginary = false;
   hadError = false;
   
@@ -326,8 +326,8 @@ NumericLiteralParser(const char *begin, const char *end,
     case 'f':      // FP Suffix for "float"
     case 'F':
       if (!isFPConstant) break;  // Error for integer constant.
-      if (saw_float_suffix || isLong) break; // FF, LF invalid.
-      saw_float_suffix = true;
+      if (isFloat || isLong) break; // FF, LF invalid.
+      isFloat = true;
       continue;  // Success.
     case 'u':
     case 'U':
@@ -338,7 +338,7 @@ NumericLiteralParser(const char *begin, const char *end,
     case 'l':
     case 'L':
       if (isLong || isLongLong) break;  // Cannot be repeated.
-      if (saw_float_suffix) break;      // LF invalid.
+      if (isFloat) break;               // LF invalid.
       
       // Check for long long.  The L's need to be adjacent and the same case.
       if (s+1 != ThisTokEnd && s[1] == s[0]) {

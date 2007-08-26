@@ -221,8 +221,8 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
     return new IntegerLiteral(ResultVal, t, Tok.getLocation());
   } else if (Literal.isFloatingLiteral()) {
     // FIXME: handle float values > 32 (including compute the real type...).
-    return new FloatingLiteral(Literal.GetFloatValue(), Context.FloatTy, 
-                               Tok.getLocation());
+    QualType Ty = Literal.isFloat ? Context.FloatTy : Context.DoubleTy;
+    return new FloatingLiteral(Literal.GetFloatValue(), Ty, Tok.getLocation());
   }
   return ExprResult(true);
 }

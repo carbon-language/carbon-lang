@@ -44,7 +44,6 @@ class NumericLiteralParser {
   unsigned radix;
   
   bool saw_exponent, saw_period;
-  bool saw_float_suffix;    // 1.0f
   
 public:
   NumericLiteralParser(const char *begin, const char *end,
@@ -53,6 +52,7 @@ public:
   bool isUnsigned;
   bool isLong;        // This is *not* set for long long.
   bool isLongLong;
+  bool isFloat;       // 1.0f
   bool isImaginary;   // 1.0i
   
   bool isIntegerLiteral() const { 

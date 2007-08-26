@@ -161,7 +161,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     if (Literal.hadError)
       return true; // a diagnostic was already reported.
     
-    if (Literal.isFloatingLiteral()) {
+    if (Literal.isFloatingLiteral() || Literal.isImaginary) {
       PP.Diag(PeekTok, diag::err_pp_illegal_floating_literal);
       return true;
     }
