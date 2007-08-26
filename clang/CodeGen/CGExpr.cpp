@@ -44,27 +44,6 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
 //                               Conversions
 //===--------------------------------------------------------------------===//
 
-/// EmitConversion - Convert the value specied by Val, whose type is ValTy, to
-/// the type specified by DstTy, following the rules of C99 6.3.
-RValue CodeGenFunction::EmitConversion(RValue Val, QualType ValTy,
-                                       QualType DstTy) {
-  ValTy = ValTy.getCanonicalType();
-  DstTy = DstTy.getCanonicalType();
-  if (ValTy == DstTy) return Val;
-
-  // Handle conversions to bool first, they are special: comparisons against 0.
-  if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstTy))
-    if (DestBT->getKind() == BuiltinType::Bool)
-      return RValue::get(ConvertScalarValueToBool(Val, ValTy));
-  
-  if (Val.isScalar() && !hasAggregateLLVMType(DstTy))
-    return RValue::get(EmitScalarConversion(Val.getVal(), ValTy, DstTy));
-  
-  
-  assert(0 && "FIXME: We don't support complex conversions yet!");
-}
-
-
 /// ConvertScalarValueToBool - Convert the specified expression value to a
 /// boolean (i1) truth value.  This is equivalent to "Val == 0".
 llvm::Value *CodeGenFunction::ConvertScalarValueToBool(RValue Val, QualType Ty){

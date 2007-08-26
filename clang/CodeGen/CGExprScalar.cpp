@@ -378,10 +378,8 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
   
   // If the destination is void, just evaluate the source.
   if (DestTy->isVoidType()) return 0;
-  
-  // FIXME: Refactor EmitConversion to not return an RValue.  Sink it into this
-  // method.
-  return CGF.EmitConversion(Src, E->getType(), DestTy).getVal();
+
+  assert(0 && "Can't convert from an aggregate yet!");
 }
 
 //===----------------------------------------------------------------------===//
