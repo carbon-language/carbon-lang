@@ -64,9 +64,13 @@ public:
     
   /// EmitScalarConversion - Emit a conversion from the specified type to the
   /// specified destination type, both of which are LLVM scalar types.
-  llvm::Value *EmitScalarConversion(llvm::Value *Src, QualType SrcTy,
-                                    QualType DstTy);
-    
+  Value *EmitScalarConversion(Value *Src, QualType SrcTy, QualType DstTy);
+
+  /// EmitComplexToScalarConversion - Emit a conversion from the specified
+  /// complex type to the specified destination type, where the destination
+  /// type is an LLVM scalar type.
+  Value *EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
+                                       QualType SrcTy, QualType DstTy);
     
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -245,9 +249,8 @@ public:
 
 /// EmitScalarConversion - Emit a conversion from the specified type to the
 /// specified destination type, both of which are LLVM scalar types.
-llvm::Value *ScalarExprEmitter::EmitScalarConversion(llvm::Value *Src, 
-                                                     QualType SrcType,
-                                                     QualType DstType) {
+Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
+                                               QualType DstType) {
   SrcType = SrcType.getCanonicalType();
   DstType = DstType.getCanonicalType();
   if (SrcType == DstType) return Src;
@@ -307,6 +310,21 @@ llvm::Value *ScalarExprEmitter::EmitScalarConversion(llvm::Value *Src,
     return Builder.CreateFPExt(Src, DstTy, "conv");
 }
 
+/// EmitComplexToScalarConversion - Emit a conversion from the specified
+/// complex type to the specified destination type, where the destination
+/// type is an LLVM scalar type.
+Value *ScalarExprEmitter::
+EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
+                              QualType SrcTy, QualType DstTy) {
+  // C99 6.3.1.7p2: "When a value of complex type is converted to a real type,
+  // the imaginary part of the complex value is discarded and the value of the
+  // real part is converted according to the conversion rules for the
+  // corresponding real type. 
+  SrcTy = cast<ComplexType>(SrcTy.getCanonicalType())->getElementType();
+  return EmitScalarConversion(Src.first, SrcTy, DstTy);
+}
+
+
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
@@ -347,7 +365,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
   if (Op->getType()->isArrayType()) {
     // FIXME: For now we assume that all source arrays map to LLVM arrays.  This
     // will not true when we add support for VLAs.
-    llvm::Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
+    Value *V = EmitLValue(Op).getAddress();  // Bitfields can't be arrays.
     
     assert(isa<llvm::PointerType>(V->getType()) &&
            isa<llvm::ArrayType>(cast<llvm::PointerType>(V->getType())
@@ -366,8 +384,7 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
 // handle things like function to ptr-to-function decay etc.
 Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
   // Handle cases where the source is an non-complex type.
-  const ComplexType *CT = E->getType()->getAsComplexType();
-  if (!CT) {
+  if (!E->getType()->isComplexType()) {
     Value *Src = Visit(const_cast<Expr*>(E));
 
     // Use EmitScalarConversion to perform the conversion.
@@ -375,13 +392,8 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
   }
 
   // Handle cases where the source is a complex type.
-  
-  // C99 6.3.1.7p2: "When a value of complex type is converted to a real type,
-  // the imaginary part of the complex value is discarded and the value of the
-  // real part is converted according to the conversion rules for the
-  // corresponding real type. 
-  Value *Src = CGF.EmitComplexExpr(E).first;
-  return EmitScalarConversion(Src, CT->getElementType(), DestTy);
+  return EmitComplexToScalarConversion(CGF.EmitComplexExpr(E), E->getType(),
+                                       DestTy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -638,7 +650,7 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
                                       unsigned SICmpOpc, unsigned FCmpOpc) {
-  llvm::Value *Result;
+  Value *Result;
   QualType LHSTy = E->getLHS()->getType();
   if (!LHSTy->isComplexType()) {
     Value *LHS = Visit(E->getLHS());
@@ -663,7 +675,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     QualType CETy = 
       cast<ComplexType>(LHSTy.getCanonicalType())->getElementType();
     
-    llvm::Value *ResultR, *ResultI;
+    Value *ResultR, *ResultI;
     if (CETy->isRealFloatingType()) {
       ResultR = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
                                    LHS.first, RHS.first, "cmp.r");
@@ -822,10 +834,21 @@ Value *CodeGenFunction::EmitScalarExpr(const Expr *E) {
 
 /// EmitScalarConversion - Emit a conversion from the specified type to the
 /// specified destination type, both of which are LLVM scalar types.
-llvm::Value *CodeGenFunction::EmitScalarConversion(llvm::Value *Src, 
-                                                   QualType SrcTy,
-                                                   QualType DstTy) {
+Value *CodeGenFunction::EmitScalarConversion(Value *Src, QualType SrcTy,
+                                             QualType DstTy) {
   assert(!hasAggregateLLVMType(SrcTy) && !hasAggregateLLVMType(DstTy) &&
          "Invalid scalar expression to emit");
   return ScalarExprEmitter(*this).EmitScalarConversion(Src, SrcTy, DstTy);
+}
+
+/// EmitComplexToScalarConversion - Emit a conversion from the specified
+/// complex type to the specified destination type, where the destination
+/// type is an LLVM scalar type.
+Value *CodeGenFunction::EmitComplexToScalarConversion(ComplexPairTy Src,
+                                                      QualType SrcTy,
+                                                      QualType DstTy) {
+  assert(SrcTy->isComplexType() && !hasAggregateLLVMType(DstTy) &&
+         "Invalid complex -> scalar conversion");
+  return ScalarExprEmitter(*this).EmitComplexToScalarConversion(Src, SrcTy,
+                                                                DstTy);
 }
