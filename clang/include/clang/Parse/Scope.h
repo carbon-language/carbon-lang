@@ -38,15 +38,7 @@ public:
     
     /// ContinueScope - This is a while,do,for, which can have continue
     /// stmt embedded into it.
-    ContinueScope = 0x04,
-    
-    /// HasBreak - This flag is set on 'BreakScope' scopes, when they actually
-    /// do contain a break stmt.
-    HasBreak      = 0x08,
-    
-    /// HasContinue - This flag is set on 'ContinueScope' scopes, when they
-    /// actually do contain a continue stmt.
-    HasContinue   = 0x10
+    ContinueScope = 0x04
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -118,8 +110,6 @@ public:
   /// Init - This is used by the parser to implement scope caching.
   ///
   void Init(Scope *Parent, unsigned ScopeFlags) {
-    assert((ScopeFlags & (HasBreak|HasContinue)) == 0 &&
-           "These flags can't be set in ctor!");
     AnyParent = Parent;
     Depth = AnyParent ? AnyParent->Depth+1 : 0;
     Flags = ScopeFlags;
