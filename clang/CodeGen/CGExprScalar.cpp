@@ -188,16 +188,16 @@ public:
   }
 
   BinOpInfo EmitBinOps(const BinaryOperator *E);
-  Value *EmitCompoundAssign(const BinaryOperator *E,
+  Value *EmitCompoundAssign(const CompoundAssignOperator *E,
                             Value *(ScalarExprEmitter::*F)(const BinOpInfo &));
 
   // Binary operators and binary compound assignment operators.
 #define HANDLEBINOP(OP) \
-  Value *VisitBin ## OP(const BinaryOperator *E) {                 \
-    return Emit ## OP(EmitBinOps(E));                              \
-  }                                                                \
-  Value *VisitBin ## OP ## Assign(const BinaryOperator *E) {       \
-    return EmitCompoundAssign(E, &ScalarExprEmitter::Emit ## OP);  \
+  Value *VisitBin ## OP(const BinaryOperator *E) {                         \
+    return Emit ## OP(EmitBinOps(E));                                      \
+  }                                                                        \
+  Value *VisitBin ## OP ## Assign(const CompoundAssignOperator *E) {       \
+    return EmitCompoundAssign(E, &ScalarExprEmitter::Emit ## OP);          \
   }
   HANDLEBINOP(Mul);
   HANDLEBINOP(Div);
@@ -211,7 +211,7 @@ public:
   HANDLEBINOP(Or);
 #undef HANDLEBINOP
   Value *VisitBinSub(const BinaryOperator *E);
-  Value *VisitBinSubAssign(const BinaryOperator *E) {
+  Value *VisitBinSubAssign(const CompoundAssignOperator *E) {
     return EmitCompoundAssign(E, &ScalarExprEmitter::EmitSub);
   }
   
@@ -545,7 +545,7 @@ BinOpInfo ScalarExprEmitter::EmitBinOps(const BinaryOperator *E) {
   return Result;
 }
 
-Value *ScalarExprEmitter::EmitCompoundAssign(const BinaryOperator *E,
+Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
                       Value *(ScalarExprEmitter::*Func)(const BinOpInfo &)) {
   QualType LHSTy = E->getLHS()->getType(), RHSTy = E->getRHS()->getType();
 
@@ -559,8 +559,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const BinaryOperator *E,
   OpInfo.RHS = Visit(E->getRHS());
   
   // Convert the LHS/RHS values to the computation type.
-  const CompoundAssignOperator *CAO = cast<CompoundAssignOperator>(E);
-  QualType ComputeType = CAO->getComputationType();
+  QualType ComputeType = E->getComputationType();
   
   // FIXME: it's possible for the computation type to be complex if the RHS
   // is complex.  Handle this!
