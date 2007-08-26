@@ -251,6 +251,8 @@ llvm::Value *ScalarExprEmitter::EmitScalarConversion(llvm::Value *Src,
   SrcType = SrcType.getCanonicalType();
   DstType = DstType.getCanonicalType();
   if (SrcType == DstType) return Src;
+  
+  if (DstType->isVoidType()) return 0;
 
   // Handle conversions to bool first, they are special: comparisons against 0.
   if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstType))
@@ -367,11 +369,18 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
   if (!CGF.hasAggregateLLVMType(E->getType())) {
     Value *Src = Visit(const_cast<Expr*>(E));
 
-    // If the destination is void, just evaluate the source.
-    if (DestTy->isVoidType()) return 0;
-
     // Use EmitScalarConversion to perform the conversion.
     return EmitScalarConversion(Src, E->getType(), DestTy);
+  }
+  
+  if (const ComplexType *CT = E->getType()->getAsComplexType()) {
+    // Emit the complex value, only keeping the real component.  C99 6.3.1.7p2:
+    // "When a value of complex type is converted to a real type, the imaginary
+    // part of the complex value is discarded and the value of the real part is
+    // converted according to the conversion rules for the corresponding real
+    // type. 
+    Value *Src = CGF.EmitComplexExpr(E).first;
+    return EmitScalarConversion(Src, CT->getElementType(), DestTy);
   }
   
   RValue Src = CGF.EmitAnyExpr(E);
