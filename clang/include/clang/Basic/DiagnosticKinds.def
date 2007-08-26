@@ -731,11 +731,11 @@ DIAG(warn_case_empty_range, WARNING,
      "empty case range specified")
 DIAG(err_typecheck_return_incompatible, ERROR,
      "incompatible type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_pointer_int, WARNING,
+DIAG(ext_typecheck_return_pointer_int, EXTENSION,
      "incompatible type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_incompatible_pointer, WARNING,
+DIAG(ext_typecheck_return_incompatible_pointer, EXTENSION,
      "incompatible pointer type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_discards_qualifiers, WARNING,
+DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
      "returning '%1' from function expecting '%0' discards qualifiers")
 DIAG(err_typecheck_statement_requires_scalar, ERROR,
      "statement requires expression of scalar type ('%0' invalid)")
