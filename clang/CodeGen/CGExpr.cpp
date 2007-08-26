@@ -368,27 +368,6 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 //                             Expression Emission
 //===--------------------------------------------------------------------===//
 
-/// EmitAnyExpr - Emit an expression of any type: scalar, complex, aggregate,
-/// returning an rvalue corresponding to it.  If NeedResult is false, the
-/// result of the expression doesn't need to be generated into memory.
-RValue CodeGenFunction::EmitAnyExpr(const Expr *E, bool NeedResult) {
-  if (!hasAggregateLLVMType(E->getType()))
-    return RValue::get(EmitScalarExpr(E));
-  
-  llvm::Value *DestMem = 0;
-  if (NeedResult)
-    DestMem = CreateTempAlloca(ConvertType(E->getType()));
-  
-  if (!E->getType()->isComplexType()) {
-    EmitAggExpr(E, DestMem, false);
-  } else if (NeedResult)
-    EmitComplexExprIntoAddr(E, DestMem, false);
-  else
-    EmitComplexExpr(E);
-  
-  return RValue::getAggregate(DestMem);
-}
-
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
   if (const ImplicitCastExpr *IcExpr = 

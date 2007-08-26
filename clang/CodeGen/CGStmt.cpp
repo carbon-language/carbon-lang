@@ -28,10 +28,15 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   
   switch (S->getStmtClass()) {
   default:
-    // Must be an expression in a stmt context.  Emit the value and ignore the
-    // result.
+    // Must be an expression in a stmt context.  Emit the value (to get
+    // side-effects) and ignore the result.
     if (const Expr *E = dyn_cast<Expr>(S)) {
-      EmitAnyExpr(E, false);
+      if (!hasAggregateLLVMType(E->getType()))
+        EmitScalarExpr(E);
+      else if (E->getType()->isComplexType())
+        EmitComplexExpr(E);
+      else
+        EmitAggExpr(E, 0, false);
     } else {
       printf("Unimplemented stmt!\n");
       S->dump();
