@@ -37,79 +37,11 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
 /// expression and compare the result against zero, returning an Int1Ty value.
 llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
-  return ConvertScalarValueToBool(EmitAnyExpr(E), E->getType());
-}
+  QualType BoolTy = getContext().BoolTy;
+  if (!E->getType()->isComplexType())
+    return EmitScalarConversion(EmitScalarExpr(E), E->getType(), BoolTy);
 
-//===--------------------------------------------------------------------===//
-//                               Conversions
-//===--------------------------------------------------------------------===//
-
-/// ConvertScalarValueToBool - Convert the specified expression value to a
-/// boolean (i1) truth value.  This is equivalent to "Val == 0".
-llvm::Value *CodeGenFunction::ConvertScalarValueToBool(RValue Val, QualType Ty){
-  Ty = Ty.getCanonicalType();
-  llvm::Value *Result;
-  if (const BuiltinType *BT = dyn_cast<BuiltinType>(Ty)) {
-    switch (BT->getKind()) {
-    default: assert(0 && "Unknown scalar value");
-    case BuiltinType::Bool:
-      Result = Val.getVal();
-      // Bool is already evaluated right.
-      assert(Result->getType() == llvm::Type::Int1Ty &&
-             "Unexpected bool value type!");
-      return Result;
-    case BuiltinType::Char_S:
-    case BuiltinType::Char_U:
-    case BuiltinType::SChar:
-    case BuiltinType::UChar:
-    case BuiltinType::Short:
-    case BuiltinType::UShort:
-    case BuiltinType::Int:
-    case BuiltinType::UInt:
-    case BuiltinType::Long:
-    case BuiltinType::ULong:
-    case BuiltinType::LongLong:
-    case BuiltinType::ULongLong:
-      // Code below handles simple integers.
-      break;
-    case BuiltinType::Float:
-    case BuiltinType::Double:
-    case BuiltinType::LongDouble: {
-      // Compare against 0.0 for fp scalars.
-      Result = Val.getVal();
-      llvm::Value *Zero = llvm::Constant::getNullValue(Result->getType());
-      // FIXME: llvm-gcc produces a une comparison: validate this is right.
-      Result = Builder.CreateFCmpUNE(Result, Zero, "tobool");
-      return Result;
-    }
-    }
-  } else if (isa<ComplexType>(Ty)) {
-    assert(0 && "implement complex -> bool");
-    
-  } else {
-    assert((isa<PointerType>(Ty) ||
-            (isa<TagType>(Ty) &&
-             cast<TagType>(Ty)->getDecl()->getKind() == Decl::Enum)) &&
-           "Unknown Type");
-    // Code below handles this case fine.
-  }
-  
-  // Usual case for integers, pointers, and enums: compare against zero.
-  Result = Val.getVal();
-  
-  // Because of the type rules of C, we often end up computing a logical value,
-  // then zero extending it to int, then wanting it as a logical value again.
-  // Optimize this common case.
-  if (llvm::ZExtInst *ZI = dyn_cast<llvm::ZExtInst>(Result)) {
-    if (ZI->getOperand(0)->getType() == llvm::Type::Int1Ty) {
-      Result = ZI->getOperand(0);
-      ZI->eraseFromParent();
-      return Result;
-    }
-  }
-  
-  llvm::Value *Zero = llvm::Constant::getNullValue(Result->getType());
-  return Builder.CreateICmpNE(Result, Zero, "tobool");
+  return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(),BoolTy);
 }
 
 //===----------------------------------------------------------------------===//

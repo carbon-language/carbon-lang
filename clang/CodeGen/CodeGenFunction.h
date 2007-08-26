@@ -250,14 +250,6 @@ public:
 
   
   //===--------------------------------------------------------------------===//
-  //                                Conversions
-  //===--------------------------------------------------------------------===//
-  
-  /// ConvertScalarValueToBool - Convert the specified expression value to a
-  /// boolean (i1) truth value.  This is equivalent to "Val == 0".
-  llvm::Value *ConvertScalarValueToBool(RValue Val, QualType Ty);
-  
-  //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
   
