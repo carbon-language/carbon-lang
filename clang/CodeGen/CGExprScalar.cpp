@@ -393,9 +393,11 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
   Expr *Op = E->getSubExpr();
   if (Op->getType()->isComplexType())
     return CGF.EmitComplexExpr(Op).second;
-
-  // FIXME: does this evaluate the subexpr??
-  return 0;  // FIXME:  Return zero of the right int/fp type.
+  
+  // __imag on a scalar returns zero.  Emit it the subexpr to ensure side
+  // effects are evaluated.
+  CGF.EmitScalarExpr(Op);
+  return llvm::Constant::getNullValue(ConvertType(E->getType()));
 }
 
 
