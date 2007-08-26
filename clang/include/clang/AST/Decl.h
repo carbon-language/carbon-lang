@@ -239,7 +239,7 @@ public:
     None, Extern, Static
   };
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-               StorageClass S = None, bool isInline, Decl *PrevDecl = 0)
+               StorageClass S = None, bool isInline = false, Decl *PrevDecl = 0)
     : ValueDecl(Function, L, Id, T, PrevDecl), 
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), IsInline(isInline) {}
   virtual ~FunctionDecl();
