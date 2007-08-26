@@ -456,7 +456,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
 // object takes a very simple interface: a list of directories to search for
 // 
 // FIXME: -nostdinc,-nostdinc++
-// FIXME: -isysroot,-imultilib
+// FIXME: -imultilib
 //
 // FIXME: -include,-imacros
 
@@ -492,6 +492,10 @@ iwithprefixbefore_vals("iwithprefixbefore", llvm::cl::value_desc("dir"),
                        llvm::cl::Prefix,
             llvm::cl::desc("Set directory to include search path with prefix"));
 
+static llvm::cl::opt<std::string>
+isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
+         llvm::cl::desc("Set the system root directory (usually /)"));
+
 // Finally, implement the code that groks the options above.
 enum IncludeDirGroup {
   Quoted = 0,
@@ -507,7 +511,12 @@ static std::vector<DirectoryLookup> IncludeGroup[4];
 static void AddPath(const std::string &Path, IncludeDirGroup Group,
                     bool isCXXAware, bool isUserSupplied,
                     bool isFramework, FileManager &FM) {
-  const DirectoryEntry *DE = FM.getDirectory(Path);
+  const DirectoryEntry *DE;
+  if (Group == System)
+    DE = FM.getDirectory(isysroot + "/" + Path);
+  else
+    DE = FM.getDirectory(Path);
+  
   if (DE == 0) {
     if (Verbose)
       fprintf(stderr, "ignoring nonexistent directory \"%s\"\n",
