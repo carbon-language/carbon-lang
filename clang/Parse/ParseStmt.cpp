@@ -372,8 +372,9 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 Parser::StmtResult Parser::ParseCompoundStatement() {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
   
-  // Enter a scope to hold everything within the compound stmt.
-  EnterScope(0);
+  // Enter a scope to hold everything within the compound stmt.  Compound
+  // statements can always hold declarations.
+  EnterScope(Scope::DeclScope);
 
   // Parse the statements in the body.
   StmtResult Body = ParseCompoundStatementBody();
@@ -437,7 +438,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
-  if (NeedsInnerScope) EnterScope(0);
+  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the if condition.
   StmtResult CondStmt = ParseStatement();
@@ -460,7 +461,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
     // this if the body isn't a compound statement to avoid push/pop in common
     // cases.
     NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
-    if (NeedsInnerScope) EnterScope(0);
+    if (NeedsInnerScope) EnterScope(Scope::DeclScope);
     
     ElseStmt = ParseStatement();
 
@@ -489,7 +490,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   }
   
   // Start the switch scope.
-  EnterScope(Scope::BreakScope);
+  EnterScope(Scope::BreakScope|Scope::DeclScope);
 
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
@@ -505,7 +506,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
-  if (NeedsInnerScope) EnterScope(0);
+  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
@@ -538,7 +539,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   }
   
   // Start the loop scope.
-  EnterScope(Scope::BreakScope | Scope::ContinueScope);
+  EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
 
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
@@ -547,7 +548,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
-  if (NeedsInnerScope) EnterScope(0);
+  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
@@ -571,13 +572,13 @@ Parser::StmtResult Parser::ParseDoStatement() {
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
   
   // Start the loop scope.
-  EnterScope(Scope::BreakScope | Scope::ContinueScope);
+  EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause. We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
-  if (NeedsInnerScope) EnterScope(0);
+  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();
@@ -625,7 +626,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     return true;
   }
   
-  EnterScope(Scope::BreakScope | Scope::ContinueScope);
+  EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
 
   SourceLocation LParenLoc = ConsumeParen();
   ExprResult Value;
@@ -701,7 +702,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
   bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
-  if (NeedsInnerScope) EnterScope(0);
+  if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
   StmtResult Body = ParseStatement();

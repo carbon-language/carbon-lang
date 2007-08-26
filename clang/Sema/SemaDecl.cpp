@@ -78,6 +78,9 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
 }
 
 void Sema::PopScope(SourceLocation Loc, Scope *S) {
+  if (S->decl_empty()) return;
+  assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
+         
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     Decl *D = static_cast<Decl*>(*I);
@@ -159,6 +162,8 @@ Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
                                        FunctionDecl::Extern, false, 0);
   
   // Find translation-unit scope to insert this function into.
+  if (Scope *FnS = S->getFnParent())
+    S = FnS->getParent();   // Skip all scopes in a function at once.
   while (S->getParent())
     S = S->getParent();
   S->AddDecl(New);
@@ -285,6 +290,11 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
          D.getDeclSpec().getSourceRange(), D.getSourceRange());
     return 0;
   }
+  
+  // The scope passed in may not be a decl scope.  Zip up the scope tree until
+  // we find one that is.
+  while ((S->getFlags() & Scope::DeclScope) == 0)
+    S = S->getParent();
   
   // See if this is a redefinition of a variable in the same scope.
   Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
@@ -616,6 +626,8 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   D.SetIdentifier(&II, Loc);
   
   // Find translation-unit scope to insert this function into.
+  if (Scope *FnS = S->getFnParent())
+    S = FnS->getParent();   // Skip all scopes in a function at once.
   while (S->getParent())
     S = S->getParent();
   
@@ -724,6 +736,12 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
+    // The scope passed in may not be a decl scope.  Zip up the scope tree until
+    // we find one that is.
+    while ((S->getFlags() & Scope::DeclScope) == 0)
+      S = S->getParent();
+    
+    // Add it to the decl chain.
     New->setNext(Name->getFETokenInfo<Decl>());
     Name->setFETokenInfo(New);
     S->AddDecl(New);
@@ -896,6 +914,11 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
     cast_or_null<EnumConstantDecl>(static_cast<Decl*>(lastEnumConst));
   Expr *Val = static_cast<Expr*>(val);
 
+  // The scope passed in may not be a decl scope.  Zip up the scope tree until
+  // we find one that is.
+  while ((S->getFlags() & Scope::DeclScope) == 0)
+    S = S->getParent();
+  
   // Verify that there isn't already something declared with this name in this
   // scope.
   if (Decl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary, IdLoc, S)) {

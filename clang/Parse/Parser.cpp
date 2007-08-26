@@ -221,11 +221,10 @@ void Parser::Initialize() {
   // Prime the lexer look-ahead.
   ConsumeToken();
   
-  // Create the global scope, install it as the current scope.
+  // Create the translation unit scope.  Install it as the current scope.
   assert(CurScope == 0 && "A scope is already active?");
-  EnterScope(0);
-  
-  
+  EnterScope(Scope::DeclScope);
+    
   // Install builtin types.
   // TODO: Move this someplace more useful.
   {
@@ -435,7 +434,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     ParseKNRParamDeclarations(D);
 
   // Enter a scope for the function body.
-  EnterScope(Scope::FnScope);
+  EnterScope(Scope::FnScope|Scope::DeclScope);
   
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.

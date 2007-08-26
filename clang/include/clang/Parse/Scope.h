@@ -38,7 +38,11 @@ public:
     
     /// ContinueScope - This is a while,do,for, which can have continue
     /// stmt embedded into it.
-    ContinueScope = 0x04
+    ContinueScope = 0x04,
+    
+    /// DeclScope - This is a scope that can contain a declaration.  Some scopes
+    /// just contain loop constructs but don't contain decls.
+    DeclScope = 0x08
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -75,27 +79,36 @@ public:
   Scope(Scope *Parent, unsigned ScopeFlags) {
     Init(Parent, ScopeFlags);
   }
-  
+
+  /// getFlags - Return the flags for this scope.
+  ///
+  unsigned getFlags() const { return Flags; }
+
   /// getParent - Return the scope that this is nested in.
   ///
-  Scope *getParent() const { return AnyParent; }
+  const Scope *getParent() const { return AnyParent; }
+  Scope *getParent() { return AnyParent; }
+
+  /// getFnParent - Return the closest scope that is a function body.
+  ///
+  const Scope *getFnParent() const { return FnParent; }
+  Scope *getFnParent() { return FnParent; }
   
   /// getContinueParent - Return the closest scope that a continue statement
   /// would be affected by.
-  Scope *getContinueParent() const {
-    return ContinueParent;
-  }
+  const Scope *getContinueParent() const { return ContinueParent; }
+  Scope *getContinueParent() { return ContinueParent; }
   
   /// getBreakParent - Return the closest scope that a break statement
   /// would be affected by.
-  Scope *getBreakParent() const {
-    return BreakParent;
-  }
+  const Scope *getBreakParent() const { return BreakParent; }
+  Scope *getBreakParent() { return BreakParent; }
   
-  
+ 
   typedef DeclSetTy::iterator decl_iterator;
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
   decl_iterator decl_end()   const { return DeclsInScope.end(); }
+  bool decl_empty()          const { return DeclsInScope.empty(); }
 
   void AddDecl(Action::DeclTy *D) {
     DeclsInScope.insert(D);

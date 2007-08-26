@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Scope.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
 
@@ -1268,7 +1269,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // Enter function-declaration scope, limiting any declarators for struct
     // tags to the function prototype scope.
     // FIXME: is this needed?
-    EnterScope(0);
+    EnterScope(Scope::DeclScope);
     
     IsVariadic = false;
     while (1) {
