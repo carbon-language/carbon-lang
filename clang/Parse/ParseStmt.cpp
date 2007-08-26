@@ -427,10 +427,17 @@ Parser::StmtResult Parser::ParseIfStatement() {
     return true;
   }
   
+  // C99 6.8.4p3 - In C99, the if statement is a block.  This is not
+  // the case for C90.
+  if (getLang().C99)
+    EnterScope(Scope::DeclScope);
+
   // Parse the condition.
   ExprResult CondExp = ParseSimpleParenExpression();
   if (CondExp.isInvalid) {
     SkipUntil(tok::semi);
+    if (getLang().C99)
+      ExitScope();
     return true;
   }
   
@@ -472,6 +479,9 @@ Parser::StmtResult Parser::ParseIfStatement() {
       ElseStmt = Actions.ParseNullStmt(ElseLoc);
   }
   
+  if (getLang().C99)
+    ExitScope();
+
   return Actions.ParseIfStmt(IfLoc, CondExp.Val, CondStmt.Val,
                              ElseLoc, ElseStmt.Val);
 }
@@ -488,9 +498,13 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     SkipUntil(tok::semi);
     return true;
   }
-  
-  // Start the switch scope.
-  EnterScope(Scope::BreakScope|Scope::DeclScope);
+
+  // C99 6.8.4p3 - In C99, the switch statement is a block.  This is
+  // not the case for C90.  Start the switch scope.
+  if (getLang().C99)
+    EnterScope(Scope::BreakScope|Scope::DeclScope);
+  else
+    EnterScope(Scope::BreakScope);
 
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
@@ -538,8 +552,12 @@ Parser::StmtResult Parser::ParseWhileStatement() {
     return true;
   }
   
-  // Start the loop scope.
-  EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  // C99 6.8.5p5 - In C99, the while statement is a block.  This is not
+  // the case for C90.  Start the loop scope.
+  if (getLang().C99)
+    EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  else
+    EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   // Parse the condition.
   ExprResult Cond = ParseSimpleParenExpression();
@@ -571,8 +589,12 @@ Parser::StmtResult Parser::ParseDoStatement() {
   assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
   
-  // Start the loop scope.
-  EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  // C99 6.8.5p5 - In C99, the do statement is a block.  This is not
+  // the case for C90.  Start the loop scope.
+  if (getLang().C99)
+    EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  else
+    EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause. We only do this
@@ -626,7 +648,12 @@ Parser::StmtResult Parser::ParseForStatement() {
     return true;
   }
   
-  EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  // C99 6.8.5p5 - In C99, the for statement is a block.  This is not
+  // the case for C90.  Start the loop scope.
+  if (getLang().C99)
+    EnterScope(Scope::BreakScope | Scope::ContinueScope | Scope::DeclScope);
+  else
+    EnterScope(Scope::BreakScope | Scope::ContinueScope);
 
   SourceLocation LParenLoc = ConsumeParen();
   ExprResult Value;
