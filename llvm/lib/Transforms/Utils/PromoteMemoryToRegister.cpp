@@ -63,14 +63,17 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
   // assignments to subsections of the memory unit.
 
-  // Only allow direct loads and stores...
+  // Only allow direct and non-volatile loads and stores...
   for (Value::use_const_iterator UI = AI->use_begin(), UE = AI->use_end();
        UI != UE; ++UI)     // Loop over all of the uses of the alloca
-    if (isa<LoadInst>(*UI)) {
-      // noop
+    if (const LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
+      if (LI->isVolatile())
+        return false;
     } else if (const StoreInst *SI = dyn_cast<StoreInst>(*UI)) {
       if (SI->getOperand(0) == AI)
         return false;   // Don't allow a store OF the AI, only INTO the AI.
+      if (SI->isVolatile())
+        return false;
     } else {
       return false;   // Not a load or store.
     }
