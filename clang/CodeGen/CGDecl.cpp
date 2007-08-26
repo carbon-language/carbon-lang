@@ -87,13 +87,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
   if (const Expr *Init = D.getInit()) {
     if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      // FIXME: Handle volatile.
-      Builder.CreateStore(V, DeclPtr);
+      Builder.CreateStore(V, DeclPtr, D.getType().isVolatileQualified());
     } else if (Init->getType()->isComplexType()) {
       EmitComplexExprIntoAddr(Init, DeclPtr);
     } else {
-      // FIXME: Handle volatile.
-      EmitAggExpr(Init, DeclPtr, false);
+      EmitAggExpr(Init, DeclPtr, D.getType().isVolatileQualified());
     }
   }
 }
