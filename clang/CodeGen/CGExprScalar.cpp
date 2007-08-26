@@ -257,7 +257,6 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
   if (SrcType->isRealFloatingType()) {
     // Compare against 0.0 for fp scalars.
     llvm::Value *Zero = llvm::Constant::getNullValue(Src->getType());
-    // FIXME: llvm-gcc produces a une comparison: validate this is right.
     return Builder.CreateFCmpUNE(Src, Zero, "tobool");
   }
   
