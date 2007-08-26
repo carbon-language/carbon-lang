@@ -1154,7 +1154,7 @@ protected:
              getSDVTList(VT)), 
              Value(VT==MVT::f64 ? APFloat(val) : APFloat((float)val)) {
   }
-  ConstantFPSDNode(bool isTarget, APFloat val, MVT::ValueType VT)
+  ConstantFPSDNode(bool isTarget, const APFloat& val, MVT::ValueType VT)
     : SDNode(isTarget ? ISD::TargetConstantFP : ISD::ConstantFP,
              getSDVTList(VT)), Value(val) {
   }
@@ -1168,7 +1168,7 @@ public:
     else
       return Value.convertToFloat();
   }
-  APFloat getValueAPF() const { return Value; }
+  const APFloat& getValueAPF() const { return Value; }
 
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
@@ -1180,7 +1180,7 @@ public:
     else
       return isExactlyValue(APFloat((float)V));
   }
-  bool isExactlyValue(APFloat V) const;
+  bool isExactlyValue(const APFloat& V) const;
 
   static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {

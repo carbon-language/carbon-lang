@@ -3195,7 +3195,7 @@ SDOperand DAGCombiner::visitFCOPYSIGN(SDNode *N) {
     return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1);
   
   if (N1CFP) {
-    APFloat V = N1CFP->getValueAPF();
+    const APFloat& V = N1CFP->getValueAPF();
     // copysign(x, c1) -> fabs(x)       iff ispos(c1)
     // copysign(x, c1) -> fneg(fabs(x)) iff isneg(c1)
     if (!V.isNegative())

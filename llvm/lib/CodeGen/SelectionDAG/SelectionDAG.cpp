@@ -48,7 +48,7 @@ static SDVTList makeVTList(const MVT::ValueType *VTs, unsigned NumVTs) {
 /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
 /// As such, this method can be used to do an exact bit-for-bit comparison of
 /// two floating point values.
-bool ConstantFPSDNode::isExactlyValue(APFloat V) const {
+bool ConstantFPSDNode::isExactlyValue(const APFloat& V) const {
   return Value.bitwiseIsEqual(V);
 }
 
