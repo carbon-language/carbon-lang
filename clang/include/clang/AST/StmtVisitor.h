@@ -55,16 +55,26 @@ public:
       case BinaryOperator::LAnd:      DISPATCH(BinLAnd,      BinaryOperator);
       case BinaryOperator::LOr :      DISPATCH(BinLOr,       BinaryOperator);
       case BinaryOperator::Assign:    DISPATCH(BinAssign,    BinaryOperator);
-      case BinaryOperator::MulAssign: DISPATCH(BinMulAssign, BinaryOperator);
-      case BinaryOperator::DivAssign: DISPATCH(BinDivAssign, BinaryOperator);
-      case BinaryOperator::RemAssign: DISPATCH(BinRemAssign, BinaryOperator);
-      case BinaryOperator::AddAssign: DISPATCH(BinAddAssign, BinaryOperator);
-      case BinaryOperator::SubAssign: DISPATCH(BinSubAssign, BinaryOperator);
-      case BinaryOperator::ShlAssign: DISPATCH(BinShlAssign, BinaryOperator);
-      case BinaryOperator::ShrAssign: DISPATCH(BinShrAssign, BinaryOperator);
-      case BinaryOperator::AndAssign: DISPATCH(BinAndAssign, BinaryOperator);
-      case BinaryOperator::OrAssign:  DISPATCH(BinOrAssign,  BinaryOperator);
-      case BinaryOperator::XorAssign: DISPATCH(BinXorAssign, BinaryOperator);
+      case BinaryOperator::MulAssign:
+        DISPATCH(BinMulAssign, CompoundAssignOperator);
+      case BinaryOperator::DivAssign:
+        DISPATCH(BinDivAssign, CompoundAssignOperator);
+      case BinaryOperator::RemAssign:
+        DISPATCH(BinRemAssign, CompoundAssignOperator);
+      case BinaryOperator::AddAssign:
+        DISPATCH(BinAddAssign, CompoundAssignOperator);
+      case BinaryOperator::SubAssign:
+        DISPATCH(BinSubAssign, CompoundAssignOperator);
+      case BinaryOperator::ShlAssign:
+        DISPATCH(BinShlAssign, CompoundAssignOperator);
+      case BinaryOperator::ShrAssign:
+        DISPATCH(BinShrAssign, CompoundAssignOperator);
+      case BinaryOperator::AndAssign:
+        DISPATCH(BinAndAssign, CompoundAssignOperator);
+      case BinaryOperator::OrAssign:
+        DISPATCH(BinOrAssign,  CompoundAssignOperator);
+      case BinaryOperator::XorAssign:
+        DISPATCH(BinXorAssign, CompoundAssignOperator);
       case BinaryOperator::Comma:     DISPATCH(BinComma,     BinaryOperator);
       }
     } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(S)) {
