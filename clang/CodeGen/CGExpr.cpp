@@ -520,13 +520,12 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     RValue ArgVal = EmitAnyExpr(E->getArg(i));
     
     // If this argument has prototype information, convert it.
-    if (ArgTyIt != ArgTyEnd) {
-      ArgVal = EmitConversion(ArgVal, ArgTy, *ArgTyIt++);
-    } else {
+    if (ArgTyIt == ArgTyEnd) {
       // Otherwise, if passing through "..." or to a function with no prototype,
       // perform the "default argument promotions" (C99 6.5.2.2p6), which
       // includes the usual unary conversions, but also promotes float to
       // double.
+      // FIXME: remove this when the impcast is in place.
       if (const BuiltinType *BT = 
           dyn_cast<BuiltinType>(ArgTy.getCanonicalType())) {
         if (BT->getKind() == BuiltinType::Float)
