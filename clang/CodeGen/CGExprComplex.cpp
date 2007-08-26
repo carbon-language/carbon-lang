@@ -57,6 +57,10 @@ public:
   /// specified value pointer.
   void EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *ResPtr, bool isVol);
   
+  /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
+  ComplexPairTy EmitComplexToComplexCast(ComplexPairTy Val, QualType SrcType,
+                                         QualType DestType);
+  
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -114,16 +118,54 @@ public:
     return Visit(E->getSubExpr());
   }
   
-  ComplexPairTy VisitBinMul        (const BinaryOperator *E);
-  ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
-  ComplexPairTy VisitBinSub        (const BinaryOperator *E);
-  ComplexPairTy VisitBinDiv        (const BinaryOperator *E);
+  struct BinOpInfo {
+    ComplexPairTy LHS;
+    ComplexPairTy RHS;
+    QualType Ty;  // Computation Type.
+  };    
+  
+  BinOpInfo EmitBinOps(const BinaryOperator *E);
+  ComplexPairTy EmitCompoundAssign(const CompoundAssignOperator *E,
+                                   ComplexPairTy (ComplexExprEmitter::*Func)
+                                   (const BinOpInfo &));
+
+  ComplexPairTy EmitBinAdd(const BinOpInfo &Op);
+  ComplexPairTy EmitBinSub(const BinOpInfo &Op);
+  ComplexPairTy EmitBinMul(const BinOpInfo &Op);
+  ComplexPairTy EmitBinDiv(const BinOpInfo &Op);
+  
+  ComplexPairTy VisitBinMul(const BinaryOperator *E) {
+    return EmitBinMul(EmitBinOps(E));
+  }
+  ComplexPairTy VisitBinAdd(const BinaryOperator *E) {
+    return EmitBinAdd(EmitBinOps(E));
+  }
+  ComplexPairTy VisitBinSub(const BinaryOperator *E) {
+    return EmitBinSub(EmitBinOps(E));
+  }
+  ComplexPairTy VisitBinDiv(const BinaryOperator *E) {
+    return EmitBinDiv(EmitBinOps(E));
+  }
+  
+  // Compound assignments.
+  ComplexPairTy VisitBinAddAssign(const CompoundAssignOperator *E) {
+    return EmitCompoundAssign(E, &ComplexExprEmitter::EmitBinAdd);
+  }
+  ComplexPairTy VisitBinSubAssign(const CompoundAssignOperator *E) {
+    return EmitCompoundAssign(E, &ComplexExprEmitter::EmitBinSub);
+  }
+  ComplexPairTy VisitBinMulAssign(const CompoundAssignOperator *E) {
+    return EmitCompoundAssign(E, &ComplexExprEmitter::EmitBinMul);
+  }
+  ComplexPairTy VisitBinDivAssign(const CompoundAssignOperator *E) {
+    return EmitCompoundAssign(E, &ComplexExprEmitter::EmitBinDiv);
+  }
+  
   // GCC rejects rem/and/or/xor for integer complex.
   // Logical and/or always return int, never complex.
 
   // No comparisons produce a complex result.
   ComplexPairTy VisitBinAssign     (const BinaryOperator *E);
-  // FIXME: Compound assignment operators.
   ComplexPairTy VisitBinComma      (const BinaryOperator *E);
 
   
@@ -192,21 +234,27 @@ ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
   return EmitLoadOfComplex(AggPtr, false);
 }
 
-ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
-  // Get the destination element type.
-  DestTy = cast<ComplexType>(DestTy.getCanonicalType())->getElementType();
+/// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
+ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
+                                                           QualType SrcType,
+                                                           QualType DestType) {
+  // Get the src/dest element type.
+  SrcType = cast<ComplexType>(SrcType.getCanonicalType())->getElementType();
+  DestType = cast<ComplexType>(DestType.getCanonicalType())->getElementType();
 
+  // C99 6.3.1.6: When a value of complextype is converted to another
+  // complex type, both the real and imaginary parts followthe conversion
+  // rules for the corresponding real types.
+  Val.first = CGF.EmitScalarConversion(Val.first, SrcType, DestType);
+  Val.second = CGF.EmitScalarConversion(Val.second, SrcType, DestType);
+  return Val;
+}
+
+ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   // Two cases here: cast from (complex to complex) and (scalar to complex).
-  if (const ComplexType *CT = Op->getType()->getAsComplexType()) {
-    // C99 6.3.1.6: When a value of complextype is converted to another
-    // complex type, both the real and imaginary parts followthe conversion
-    // rules for the corresponding real types.
-    ComplexPairTy Res = Visit(Op);
-    QualType SrcEltTy = CT->getElementType();
-    Res.first = CGF.EmitScalarConversion(Res.first, SrcEltTy, DestTy);
-    Res.second = CGF.EmitScalarConversion(Res.second, SrcEltTy, DestTy);
-    return Res;
-  }
+  if (Op->getType()->isComplexType())
+    return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy);
+  
   // C99 6.3.1.7: When a value of real type is converted to a complex type, the
   // real part of the complex  result value is determined by the rules of
   // conversion to the corresponding real type and the imaginary part of the
@@ -214,6 +262,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   llvm::Value *Elt = CGF.EmitScalarExpr(Op);
 
   // Convert the input element to the element type of the complex.
+  DestTy = cast<ComplexType>(DestTy.getCanonicalType())->getElementType();
   Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
   
   // Return (realval, 0).
@@ -261,47 +310,33 @@ ComplexPairTy ComplexExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
   return ComplexPairTy(Op.first, ResI);
 }
 
-ComplexPairTy ComplexExprEmitter::VisitBinAdd(const BinaryOperator *E) {
-  ComplexPairTy LHS = Visit(E->getLHS());
-  ComplexPairTy RHS = Visit(E->getRHS());
-  
-  llvm::Value *ResR = Builder.CreateAdd(LHS.first,  RHS.first,  "add.r");
-  llvm::Value *ResI = Builder.CreateAdd(LHS.second, RHS.second, "add.i");
-
+ComplexPairTy ComplexExprEmitter::EmitBinAdd(const BinOpInfo &Op) {
+  llvm::Value *ResR = Builder.CreateAdd(Op.LHS.first,  Op.RHS.first,  "add.r");
+  llvm::Value *ResI = Builder.CreateAdd(Op.LHS.second, Op.RHS.second, "add.i");
   return ComplexPairTy(ResR, ResI);
 }
 
-ComplexPairTy ComplexExprEmitter::VisitBinSub(const BinaryOperator *E) {
-  ComplexPairTy LHS = Visit(E->getLHS());
-  ComplexPairTy RHS = Visit(E->getRHS());
-  
-  llvm::Value *ResR = Builder.CreateSub(LHS.first,  RHS.first,  "sub.r");
-  llvm::Value *ResI = Builder.CreateSub(LHS.second, RHS.second, "sub.i");
-  
+ComplexPairTy ComplexExprEmitter::EmitBinSub(const BinOpInfo &Op) {
+  llvm::Value *ResR = Builder.CreateSub(Op.LHS.first,  Op.RHS.first,  "sub.r");
+  llvm::Value *ResI = Builder.CreateSub(Op.LHS.second, Op.RHS.second, "sub.i");
   return ComplexPairTy(ResR, ResI);
 }
 
 
-ComplexPairTy ComplexExprEmitter::VisitBinMul(const BinaryOperator *E) {
-  ComplexPairTy LHS = Visit(E->getLHS());
-  ComplexPairTy RHS = Visit(E->getRHS());
-  
-  llvm::Value *ResRl = Builder.CreateMul(LHS.first, RHS.first, "mul.rl");
-  llvm::Value *ResRr = Builder.CreateMul(LHS.second, RHS.second, "mul.rr");
+ComplexPairTy ComplexExprEmitter::EmitBinMul(const BinOpInfo &Op) {
+  llvm::Value *ResRl = Builder.CreateMul(Op.LHS.first, Op.RHS.first, "mul.rl");
+  llvm::Value *ResRr = Builder.CreateMul(Op.LHS.second, Op.RHS.second,"mul.rr");
   llvm::Value *ResR  = Builder.CreateSub(ResRl, ResRr, "mul.r");
   
-  llvm::Value *ResIl = Builder.CreateMul(LHS.second, RHS.first, "mul.il");
-  llvm::Value *ResIr = Builder.CreateMul(LHS.first, RHS.second, "mul.ir");
+  llvm::Value *ResIl = Builder.CreateMul(Op.LHS.second, Op.RHS.first, "mul.il");
+  llvm::Value *ResIr = Builder.CreateMul(Op.LHS.first, Op.RHS.second, "mul.ir");
   llvm::Value *ResI  = Builder.CreateAdd(ResIl, ResIr, "mul.i");
-
   return ComplexPairTy(ResR, ResI);
 }
 
-ComplexPairTy ComplexExprEmitter::VisitBinDiv(const BinaryOperator *E) {
-  ComplexPairTy LHS = Visit(E->getLHS());
-  ComplexPairTy RHS = Visit(E->getRHS());
-  llvm::Value *LHSr = LHS.first, *LHSi = LHS.second;
-  llvm::Value *RHSr = RHS.first, *RHSi = RHS.second;
+ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
+  llvm::Value *LHSr = Op.LHS.first, *LHSi = Op.LHS.second;
+  llvm::Value *RHSr = Op.RHS.first, *RHSi = Op.RHS.second;
   
   // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
   llvm::Value *Tmp1 = Builder.CreateMul(LHSr, RHSr, "tmp"); // a*c
@@ -321,8 +356,7 @@ ComplexPairTy ComplexExprEmitter::VisitBinDiv(const BinaryOperator *E) {
     DSTr = Builder.CreateFDiv(Tmp3, Tmp6, "tmp");
     DSTi = Builder.CreateFDiv(Tmp9, Tmp6, "tmp");
   } else {
-    QualType ExprTy = E->getType().getCanonicalType();
-    if (cast<ComplexType>(ExprTy)->getElementType()->isUnsignedIntegerType()) {
+    if (Op.Ty->getAsComplexType()->getElementType()->isUnsignedIntegerType()) {
       DSTr = Builder.CreateUDiv(Tmp3, Tmp6, "tmp");
       DSTi = Builder.CreateUDiv(Tmp9, Tmp6, "tmp");
     } else {
@@ -334,6 +368,45 @@ ComplexPairTy ComplexExprEmitter::VisitBinDiv(const BinaryOperator *E) {
   return ComplexPairTy(DSTr, DSTi);
 }
 
+ComplexExprEmitter::BinOpInfo 
+ComplexExprEmitter::EmitBinOps(const BinaryOperator *E) {
+  BinOpInfo Ops;
+  Ops.LHS = Visit(E->getLHS());
+  Ops.RHS = Visit(E->getRHS());
+  Ops.Ty = E->getType();
+  return Ops;
+}
+
+
+// Compound assignments.
+ComplexPairTy ComplexExprEmitter::
+EmitCompoundAssign(const CompoundAssignOperator *E,
+                   ComplexPairTy (ComplexExprEmitter::*Func)(const BinOpInfo&)){
+  QualType LHSTy = E->getLHS()->getType(), RHSTy = E->getRHS()->getType();
+  
+  // Load the LHS and RHS operands.
+  LValue LHSLV = CGF.EmitLValue(E->getLHS());
+
+  BinOpInfo OpInfo;
+  OpInfo.Ty = E->getComputationType();
+
+  // We know the LHS is a complex lvalue.
+  OpInfo.LHS = EmitLoadOfComplex(LHSLV.getAddress(), false);// FIXME: Volatile.
+  OpInfo.LHS = EmitComplexToComplexCast(OpInfo.LHS, LHSTy, OpInfo.Ty);
+    
+  // It is possible for the RHS to be complex or scalar.
+  OpInfo.RHS = EmitCast(E->getRHS(), OpInfo.Ty);
+  
+  // Expand the binary operator.
+  ComplexPairTy Result = (this->*Func)(OpInfo);
+  
+  // Truncate the result back to the LHS type.
+  Result = EmitComplexToComplexCast(Result, OpInfo.Ty, LHSTy);
+  
+  // Store the result value into the LHS lvalue.
+  EmitStoreOfComplex(Result, LHSLV.getAddress(), false); // FIXME: VOLATILE
+  return Result;
+}
 
 ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   assert(E->getLHS()->getType().getCanonicalType() ==
