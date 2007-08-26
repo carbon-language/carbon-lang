@@ -308,7 +308,7 @@ Sema::CheckPrintfArguments(Expr *Fn,
       case 'C':
       case 'S':
       case 's':
-      case 'P': 
+      case 'p': 
         ++numConversions;
         CurrentState = state_OrdChr;
         break;
