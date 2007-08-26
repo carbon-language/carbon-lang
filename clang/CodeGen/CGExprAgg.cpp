@@ -27,11 +27,13 @@ using namespace CodeGen;
 namespace  {
 class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CodeGenFunction &CGF;
+  llvm::LLVMBuilder &Builder;
   llvm::Value *DestPtr;
   bool VolatileDest;
 public:
   AggExprEmitter(CodeGenFunction &cgf, llvm::Value *destPtr, bool volatileDest)
-    : CGF(cgf), DestPtr(destPtr), VolatileDest(volatileDest) {
+    : CGF(cgf), Builder(CGF.Builder),
+      DestPtr(destPtr), VolatileDest(volatileDest) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -43,6 +45,8 @@ public:
   /// then loads the result into DestPtr.
   void EmitAggLoadOfLValue(const Expr *E);
   
+  void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
+                         QualType EltTy);
   
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
@@ -76,6 +80,34 @@ public:
 //                                Utilities
 //===----------------------------------------------------------------------===//
 
+void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
+                                       llvm::Value *SrcPtr, QualType Ty) {
+  assert(!Ty->isComplexType() && "Shouldn't happen for complex");
+  
+  // Aggregate assignment turns into llvm.memcpy.
+  const llvm::Type *BP = llvm::PointerType::get(llvm::Type::Int8Ty);
+  if (DestPtr->getType() != BP)
+    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
+  if (SrcPtr->getType() != BP)
+    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
+  
+  // Get size and alignment info for this aggregate.
+  std::pair<uint64_t, unsigned> TypeInfo =
+    CGF.getContext().getTypeInfo(Ty, SourceLocation());
+  
+  // FIXME: Handle variable sized types.
+  const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+  
+  llvm::Value *MemCpyOps[4] = {
+    DestPtr, SrcPtr,
+    llvm::ConstantInt::get(IntPtr, TypeInfo.first),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second)
+  };
+  
+  Builder.CreateCall(CGF.CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
+}
+
+
 /// EmitAggLoadOfLValue - Given an expression with aggregate type that
 /// represents a value lvalue, this method emits the address of the lvalue,
 /// then loads the result into DestPtr.
@@ -89,7 +121,7 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
     // FIXME: If the source is volatile, we must read from it.
     return;
 
-  CGF.EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
+  EmitAggregateCopy(DestPtr, SrcPtr, E->getType());
 }
 
 //===----------------------------------------------------------------------===//
@@ -121,7 +153,7 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *ContBlock = new llvm::BasicBlock("cond.cont");
   
   llvm::Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
-  CGF.Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
   
   CGF.EmitBlock(LHSBlock);
   
@@ -129,14 +161,14 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   assert(E->getLHS() && "Must have LHS for aggregate value");
 
   Visit(E->getLHS());
-  CGF.Builder.CreateBr(ContBlock);
-  LHSBlock = CGF.Builder.GetInsertBlock();
+  Builder.CreateBr(ContBlock);
+  LHSBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(RHSBlock);
   
   Visit(E->getRHS());
-  CGF.Builder.CreateBr(ContBlock);
-  RHSBlock = CGF.Builder.GetInsertBlock();
+  Builder.CreateBr(ContBlock);
+  RHSBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(ContBlock);
 }
@@ -154,33 +186,4 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
          "Invalid aggregate expression to emit");
   
   AggExprEmitter(*this, DestPtr, VolatileDest).Visit(const_cast<Expr*>(E));
-}
-
-
-// FIXME: Handle volatility!
-void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
-                                        llvm::Value *SrcPtr, QualType Ty) {
-  assert(!Ty->isComplexType() && "Shouldn't happen for complex");
-  
-  // Aggregate assignment turns into llvm.memcpy.
-  const llvm::Type *BP = llvm::PointerType::get(llvm::Type::Int8Ty);
-  if (DestPtr->getType() != BP)
-    DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
-  if (SrcPtr->getType() != BP)
-    SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
-  
-  // Get size and alignment info for this aggregate.
-  std::pair<uint64_t, unsigned> TypeInfo =
-    getContext().getTypeInfo(Ty, SourceLocation());
-  
-  // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
-  
-  llvm::Value *MemCpyOps[4] = {
-    DestPtr, SrcPtr,
-    llvm::ConstantInt::get(IntPtr, TypeInfo.first),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second)
-  };
-  
-  Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
 }

@@ -180,9 +180,10 @@ public:
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction {
+public:
   CodeGenModule &CGM;  // Per-module state.
   TargetInfo &Target;
-public:
+  
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
   llvm::LLVMBuilder Builder;
   
@@ -328,11 +329,10 @@ public:
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
 
   //===--------------------------------------------------------------------===//
-  //                       Aggregate Expression Emission
+  //                           Expression Emission
   //===--------------------------------------------------------------------===//
-  
-  void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                         QualType EltTy);
+
+  // Expressions are broken into three classes: scalar, complex, aggregate.
   
   /// EmitScalarExpr - Emit the computation of the specified expression of
   /// LLVM scalar type, returning the result.
