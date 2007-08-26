@@ -170,23 +170,19 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       if (T->isIncompleteType()) { 
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
              T.getAsString());
-        T = Context.IntTy;
       } else if (T->isFunctionType()) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
              D.getIdentifier()->getName());
-        T = Context.getPointerType(T);
       } else if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier()->getName());
-        T = RT->getReferenceeType();
       } else if (const RecordType *EltTy = T->getAsRecordType()) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
           Diag(DeclType.Loc, diag::err_flexible_array_in_array,
                T.getAsString());
-          T = Context.IntTy;
         }
       }
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
