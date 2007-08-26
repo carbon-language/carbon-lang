@@ -270,37 +270,30 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S) {
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
 void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
-  RValue RetVal;
-  
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
-  // FIXME: Handle return of an aggregate!
-  if (RV) 
-    // FIXME: This could be much better for return of aggregate: return inplace.
-    RetVal = EmitAnyExpr(RV);
-  else  // Silence a bogus GCC warning. 
-    RetVal = RValue::get(0);
-  
+
   QualType FnRetTy = CurFuncDecl->getType().getCanonicalType();
   FnRetTy = cast<FunctionType>(FnRetTy)->getResultType();
   
   if (FnRetTy->isVoidType()) {
-    // If the function returns void, emit ret void, and ignore the retval.
+    // If the function returns void, emit ret void.
     Builder.CreateRetVoid();
   } else if (RV == 0) {
-    // "return;" in a function that returns a value.
+    // Handle "return;" in a function that returns a value.
     const llvm::Type *RetTy = CurFn->getFunctionType()->getReturnType();
     if (RetTy == llvm::Type::VoidTy)
       Builder.CreateRetVoid();   // struct return etc.
     else
       Builder.CreateRet(llvm::UndefValue::get(RetTy));
+  } else if (!hasAggregateLLVMType(RV->getType())) {
+    Builder.CreateRet(EmitScalarExpr(RV));
+  } else if (RV->getType()->isComplexType()) {
+    llvm::Value *SRetPtr = CurFn->arg_begin();
+    EmitComplexExprIntoAddr(RV, SRetPtr);
   } else {
-    if (RetVal.isScalar()) {
-      Builder.CreateRet(RetVal.getVal());
-    } else {
-      llvm::Value *SRetPtr = CurFn->arg_begin();
-      EmitStoreThroughLValue(RetVal, LValue::MakeAddr(SRetPtr), FnRetTy);
-    }
+    llvm::Value *SRetPtr = CurFn->arg_begin();
+    EmitAggExpr(RV, SRetPtr, false);
   }
   
   // Emit a block after the branch so that dead code after a return has some
