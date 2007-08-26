@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace CodeGen;
@@ -184,13 +185,21 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                                     bool isVolatile) {
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-  // FIXME: It would be nice to make this "Ptr->getName()+realp"
-  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, "realp");
-  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, "imagp");
   
-  // FIXME: It would be nice to make this "Ptr->getName()+real"
-  llvm::Value *Real = Builder.CreateLoad(RealPtr, isVolatile, "real");
-  llvm::Value *Imag = Builder.CreateLoad(ImagPtr, isVolatile, "imag");
+  llvm::SmallString<64> Name(SrcPtr->getNameStart(),
+                             SrcPtr->getNameStart()+SrcPtr->getNameLen());
+  
+  Name += ".realp";
+  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, Name.c_str());
+
+  Name.pop_back();  // .realp -> .real
+  llvm::Value *Real = Builder.CreateLoad(RealPtr, isVolatile, Name.c_str());
+  
+  Name.resize(Name.size()-4); // .real -> .imagp
+  Name += "imagp";
+  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, Name.c_str());
+  Name.pop_back();  // .imagp -> .imag
+  llvm::Value *Imag = Builder.CreateLoad(ImagPtr, isVolatile, Name.c_str());
   return ComplexPairTy(Real, Imag);
 }
 
