@@ -365,7 +365,8 @@ Sema::CheckPrintfArguments(Expr *Fn,
                                  LastConversionIdx+1);
     
     Diag(Loc, diag::warn_printf_invalid_conversion,
-         std::string(Str+LastConversionIdx, Str+StrIdx),
+         std::string(Str+LastConversionIdx,
+                     Str+std::min(LastConversionIdx+2, StrLen)),
          Fn->getSourceRange());
     return;
   }
