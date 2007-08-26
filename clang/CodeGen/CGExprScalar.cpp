@@ -234,8 +234,6 @@ public:
 
   Value *VisitBinLAnd       (const BinaryOperator *E);
   Value *VisitBinLOr        (const BinaryOperator *E);
-
-  // FIXME: Compound assignment operators.
   Value *VisitBinComma      (const BinaryOperator *E);
 
   // Other Operators.
