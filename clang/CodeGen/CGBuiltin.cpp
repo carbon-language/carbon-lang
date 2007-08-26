@@ -15,27 +15,32 @@
 #include "CodeGenModule.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
-#include "llvm/Constant.h"
-
+#include "llvm/Constants.h"
 using namespace clang;
 using namespace CodeGen;
 
-RValue CodeGenFunction::EmitBuiltinExpr(unsigned builtinID, const CallExpr *E)
-{
-  switch (builtinID) {
-    case Builtin::BI__builtin___CFStringMakeConstantString: {
-      const Expr *Arg = E->getArg(0);
-      
-      while (const ParenExpr *PE = dyn_cast<const ParenExpr>(Arg))
-        Arg = PE->getSubExpr();
-      
-      const StringLiteral *Literal = cast<const StringLiteral>(Arg);
-      std::string S(Literal->getStrData(), Literal->getByteLength());
-      
-      return RValue::get(CGM.GetAddrOfConstantCFString(S));
-    }      
-    default:
-      assert(0 && "Unknown builtin id");
+RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
+  switch (BuiltinID) {
+  default:
+    fprintf(stderr, "Unimplemented builtin!!\n");
+    E->dump();
+
+    // Unknown builtin, for now just dump it out and return undef.
+    if (hasAggregateLLVMType(E->getType()))
+      return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
+    return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
+    
+  case Builtin::BI__builtin___CFStringMakeConstantString: {
+    const Expr *Arg = E->getArg(0);
+    
+    while (const ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
+      Arg = PE->getSubExpr();
+    
+    const StringLiteral *Literal = cast<StringLiteral>(Arg);
+    std::string S(Literal->getStrData(), Literal->getByteLength());
+    
+    return RValue::get(CGM.GetAddrOfConstantCFString(S));
+  }      
   }
       
   return RValue::get(0);
