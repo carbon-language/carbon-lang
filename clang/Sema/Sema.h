@@ -395,10 +395,8 @@ private:
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
   inline QualType CheckShiftOperands( // C99 6.5.7
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false);
-  inline QualType CheckRelationalOperands( // C99 6.5.8
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc);
-  inline QualType CheckEqualityOperands( // C99 6.5.9
-    Expr *&lex, Expr *&rex, SourceLocation OpLoc); 
+  inline QualType CheckCompareOperands( // C99 6.5.8/9
+    Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isRelational);
   inline QualType CheckBitwiseOperands( // C99 6.5.[10...12]
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
   inline QualType CheckLogicalOperands( // C99 6.5.[13,14]

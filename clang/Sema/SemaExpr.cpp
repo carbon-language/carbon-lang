@@ -1052,10 +1052,10 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   return QualType();
 }
 
-inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
-  Expr *&lex, Expr *&rex, SourceLocation loc)
+inline QualType Sema::CheckCompareOperands( // C99 6.5.8
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isRelational)
 {
-  // C99 6.5.8p3
+  // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     UsualArithmeticConversions(lex, rex);
   else {
@@ -1065,14 +1065,20 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
   QualType lType = lex->getType();
   QualType rType = rex->getType();
   
-  if (lType->isRealType() && rType->isRealType())
-    return Context.IntTy;
+  if (isRelational) {
+    if (lType->isRealType() && rType->isRealType())
+      return Context.IntTy;
+  } else {
+    if (lType->isArithmeticType() && rType->isArithmeticType())
+      return Context.IntTy;
+  }
   
   bool LHSIsNull = lex->isNullPointerConstant(Context);
   bool RHSIsNull = rex->isNullPointerConstant(Context);
   
-  // All of the following pointer related warnings are GCC extensions. One
-  // day, we can consider making them errors (when -pedantic-errors is enabled).
+  // All of the following pointer related warnings are GCC extensions, except
+  // when handling null pointer constants. One day, we can consider making them
+  // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) {
     if (!LHSIsNull && !RHSIsNull &&
         !Type::pointerTypesAreCompatible(lType, rType)) {
@@ -1096,59 +1102,6 @@ inline QualType Sema::CheckRelationalOperands( // C99 6.5.8
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
-    promoteExprToType(lex, rType); // promote the integer to pointer
-    return Context.IntTy;
-  }
-  InvalidOperands(loc, lex, rex);
-  return QualType();
-}
-
-inline QualType Sema::CheckEqualityOperands( // C99 6.5.9
-  Expr *&lex, Expr *&rex, SourceLocation loc)
-{
-  // C99 6.5.9p4
-  if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
-    UsualArithmeticConversions(lex, rex);
-  else {
-    UsualUnaryConversions(lex);
-    UsualUnaryConversions(rex);
-  }
-  QualType lType = lex->getType();
-  QualType rType = rex->getType();
-  
-  if (lType->isArithmeticType() && rType->isArithmeticType())
-    return Context.IntTy;
-    
-  bool LHSIsNull = lex->isNullPointerConstant(Context);
-  bool RHSIsNull = rex->isNullPointerConstant(Context);
-
-  // All of the following pointer related warnings are GCC extensions. One
-  // day, we can consider making them errors (when -pedantic-errors is enabled).
-  if (lType->isPointerType() && rType->isPointerType()) {
-    if (!LHSIsNull && !RHSIsNull &&
-        !Type::pointerTypesAreCompatible(lType, rType)) {
-      Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
-    }
-    promoteExprToType(rex, lType); // promote the pointer to pointer
-    return Context.IntTy;
-  }
-  if (lType->isPointerType() && rType->isIntegerType()) {
-    if (!RHSIsNull) {
-      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
-    }
-    promoteExprToType(rex, lType); // promote the integer to pointer
-    return Context.IntTy;
-  }
-  if (lType->isIntegerType() && rType->isPointerType()) {
-    if (!LHSIsNull) {
-      Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
-           lType.getAsString(), rType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
-    }
     promoteExprToType(lex, rType); // promote the integer to pointer
     return Context.IntTy;
   }
@@ -1494,11 +1447,11 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   case BinaryOperator::LT:
   case BinaryOperator::GE:
   case BinaryOperator::GT:
-    ResultTy = CheckRelationalOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckCompareOperands(lhs, rhs, TokLoc, true);
     break;
   case BinaryOperator::EQ:
   case BinaryOperator::NE:
-    ResultTy = CheckEqualityOperands(lhs, rhs, TokLoc);
+    ResultTy = CheckCompareOperands(lhs, rhs, TokLoc, false);
     break;
   case BinaryOperator::And:
   case BinaryOperator::Xor:
