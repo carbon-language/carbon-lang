@@ -290,7 +290,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     Builder.CreateRet(EmitScalarExpr(RV));
   } else if (RV->getType()->isComplexType()) {
     llvm::Value *SRetPtr = CurFn->arg_begin();
-    EmitComplexExprIntoAddr(RV, SRetPtr);
+    EmitComplexExprIntoAddr(RV, SRetPtr, false);
   } else {
     llvm::Value *SRetPtr = CurFn->arg_begin();
     EmitAggExpr(RV, SRetPtr, false);

@@ -450,7 +450,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, bool NeedResult) {
   if (!E->getType()->isComplexType()) {
     EmitAggExpr(E, DestMem, false);
   } else if (NeedResult)
-    EmitComplexExprIntoAddr(E, DestMem);
+    EmitComplexExprIntoAddr(E, DestMem, false);
   else
     EmitComplexExpr(E);
   

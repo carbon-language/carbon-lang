@@ -374,7 +374,8 @@ public:
   
   /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
   /// of complex type, storing into the specified Value*.
-  void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr);
+  void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr,
+                               bool DestIsVolatile);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

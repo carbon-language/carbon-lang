@@ -383,10 +383,11 @@ ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E) {
 /// EmitComplexExprIntoAddr - Emit the computation of the specified expression
 /// of complex type, storing into the specified Value*.
 void CodeGenFunction::EmitComplexExprIntoAddr(const Expr *E,
-                                              llvm::Value *DestAddr) {
+                                              llvm::Value *DestAddr,
+                                              bool DestIsVolatile) {
   assert(E && E->getType()->isComplexType() &&
          "Invalid complex expression to emit");
   ComplexExprEmitter Emitter(*this);
   ComplexPairTy Val = Emitter.Visit(const_cast<Expr*>(E));
-  Emitter.EmitStoreOfComplex(Val, DestAddr, false);
+  Emitter.EmitStoreOfComplex(Val, DestAddr, DestIsVolatile);
 }
