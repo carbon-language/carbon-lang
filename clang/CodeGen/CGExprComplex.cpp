@@ -117,6 +117,7 @@ public:
   ComplexPairTy VisitBinMul        (const BinaryOperator *E);
   ComplexPairTy VisitBinAdd        (const BinaryOperator *E);
   ComplexPairTy VisitBinSub        (const BinaryOperator *E);
+  ComplexPairTy VisitBinDiv        (const BinaryOperator *E);
   // FIXME: div/rem
   // GCC rejects and/or/xor for integer complex.
   // Logical and/or always return int, never complex.
@@ -296,6 +297,44 @@ ComplexPairTy ComplexExprEmitter::VisitBinMul(const BinaryOperator *E) {
 
   return ComplexPairTy(ResR, ResI);
 }
+
+ComplexPairTy ComplexExprEmitter::VisitBinDiv(const BinaryOperator *E) {
+  ComplexPairTy LHS = Visit(E->getLHS());
+  ComplexPairTy RHS = Visit(E->getRHS());
+  llvm::Value *LHSr = LHS.first, *LHSi = LHS.second;
+  llvm::Value *RHSr = RHS.first, *RHSi = RHS.second;
+  
+  // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
+  llvm::Value *Tmp1 = Builder.CreateMul(LHSr, RHSr, "tmp"); // a*c
+  llvm::Value *Tmp2 = Builder.CreateMul(LHSi, RHSi, "tmp"); // b*d
+  llvm::Value *Tmp3 = Builder.CreateAdd(Tmp1, Tmp2, "tmp"); // ac+bd
+  
+  llvm::Value *Tmp4 = Builder.CreateMul(RHSr, RHSr, "tmp"); // c*c
+  llvm::Value *Tmp5 = Builder.CreateMul(RHSi, RHSi, "tmp"); // d*d
+  llvm::Value *Tmp6 = Builder.CreateAdd(Tmp4, Tmp5, "tmp"); // cc+dd
+  
+  llvm::Value *Tmp7 = Builder.CreateMul(LHSi, RHSr, "tmp"); // b*c
+  llvm::Value *Tmp8 = Builder.CreateMul(LHSr, RHSi, "tmp"); // a*d
+  llvm::Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8, "tmp"); // bc-ad
+
+  llvm::Value *DSTr, *DSTi;
+  if (Tmp3->getType()->isFloatingPoint()) {
+    DSTr = Builder.CreateFDiv(Tmp3, Tmp6, "tmp");
+    DSTi = Builder.CreateFDiv(Tmp9, Tmp6, "tmp");
+  } else {
+    QualType ExprTy = E->getType().getCanonicalType();
+    if (cast<ComplexType>(ExprTy)->getElementType()->isUnsignedIntegerType()) {
+      DSTr = Builder.CreateUDiv(Tmp3, Tmp6, "tmp");
+      DSTi = Builder.CreateUDiv(Tmp9, Tmp6, "tmp");
+    } else {
+      DSTr = Builder.CreateSDiv(Tmp3, Tmp6, "tmp");
+      DSTi = Builder.CreateSDiv(Tmp9, Tmp6, "tmp");
+    }
+  }
+    
+  return ComplexPairTy(DSTr, DSTi);
+}
+
 
 ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   assert(E->getLHS()->getType().getCanonicalType() ==
