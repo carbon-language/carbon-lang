@@ -295,9 +295,6 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
     else
       Builder.CreateRet(llvm::UndefValue::get(RetTy));
   } else {
-    // Do implicit conversions to the returned type.
-    RetVal = EmitConversion(RetVal, RV->getType(), FnRetTy);
-    
     if (RetVal.isScalar()) {
       Builder.CreateRet(RetVal.getVal());
     } else {
