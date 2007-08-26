@@ -68,15 +68,24 @@ public:
   }
   ComplexPairTy VisitExpr(Expr *S);
   ComplexPairTy VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr());}
-  ComplexPairTy VisitImaginaryLiteral(ImaginaryLiteral *IL);
+  ComplexPairTy VisitImaginaryLiteral(const ImaginaryLiteral *IL);
   
   // l-values.
-  ComplexPairTy VisitDeclRefExpr(Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitDeclRefExpr(const Expr *E) { return EmitLoadOfLValue(E); }
   ComplexPairTy VisitArraySubscriptExpr(Expr *E) { return EmitLoadOfLValue(E); }
-  ComplexPairTy VisitMemberExpr(Expr *E) { return EmitLoadOfLValue(E); }
+  ComplexPairTy VisitMemberExpr(const Expr *E) { return EmitLoadOfLValue(E); }
 
   // FIXME: CompoundLiteralExpr
-  // FIXME: ImplicitCastExpr
+  
+  ComplexPairTy EmitCast(Expr *Op, QualType DestTy);
+  ComplexPairTy VisitImplicitCastExpr(ImplicitCastExpr *E) {
+    // Unlike for scalars, we don't have to worry about function->ptr demotion
+    // here.
+    return EmitCast(E->getSubExpr(), E->getType());
+  }
+  ComplexPairTy VisitCastExpr(CastExpr *E) {
+    return EmitCast(E->getSubExpr(), E->getType());
+  }
   ComplexPairTy VisitCallExpr(const CallExpr *E);
   
   // Operators.
@@ -171,7 +180,8 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
   return ComplexPairTy(U, U);
 }
 
-ComplexPairTy ComplexExprEmitter::VisitImaginaryLiteral(ImaginaryLiteral *IL) {
+ComplexPairTy ComplexExprEmitter::
+VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
   llvm::Value *Imag = CGF.EmitScalarExpr(IL->getSubExpr());
   return ComplexPairTy(llvm::Constant::getNullValue(Imag->getType()), Imag);
 }
@@ -180,6 +190,36 @@ ComplexPairTy ComplexExprEmitter::VisitImaginaryLiteral(ImaginaryLiteral *IL) {
 ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
   llvm::Value *AggPtr = CGF.EmitCallExpr(E).getAggregateAddr();
   return EmitLoadOfComplex(AggPtr, false);
+}
+
+ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
+  // Get the destination element type.
+  DestTy = cast<ComplexType>(DestTy.getCanonicalType())->getElementType();
+
+  // Two cases here: cast from (complex to complex) and (scalar to complex).
+  if (const ComplexType *CT = Op->getType()->getAsComplexType()) {
+    // C99 6.3.1.6: When a value of complextype is converted to another
+    // complex type, both the real and imaginary parts followthe conversion
+    // rules for the corresponding real types.
+    ComplexPairTy Res = Visit(Op);
+    QualType SrcEltTy = CT->getElementType();
+    Res.first = CGF.EmitConversion(RValue::get(Res.first), SrcEltTy,
+                                   DestTy).getVal();
+    Res.second = CGF.EmitConversion(RValue::get(Res.second), SrcEltTy,
+                                    DestTy).getVal();
+    return Res;
+  }
+  // C99 6.3.1.7: When a value of real type is converted to a complex type, the
+  // real part of the complex  result value is determined by the rules of
+  // conversion to the corresponding real type and the imaginary part of the
+  // complex result value is a positive zero or an unsigned zero.
+  llvm::Value *Elt = CGF.EmitScalarExpr(Op);
+
+  // Convert the input element to the element type of the complex.
+  Elt = CGF.EmitConversion(RValue::get(Elt), Op->getType(), DestTy).getVal();
+  
+  // Return (realval, 0).
+  return ComplexPairTy(Elt, llvm::Constant::getNullValue(Elt->getType()));
 }
 
 ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
