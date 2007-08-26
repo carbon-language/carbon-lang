@@ -314,19 +314,24 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
                                              bool isInc, bool isPre) {
   LValue LV = EmitLValue(E->getSubExpr());
   // FIXME: Handle volatile!
-  Value *InVal = CGF.EmitLoadOfLValue(LV/* false*/,
-                                           E->getSubExpr()->getType()).getVal();
+  Value *InVal = CGF.EmitLoadOfLValue(LV, // false
+                                      E->getSubExpr()->getType()).getVal();
   
   int AmountVal = isInc ? 1 : -1;
   
   Value *NextVal;
-  if (isa<llvm::IntegerType>(InVal->getType()))
-    NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
-  else
-    NextVal = llvm::ConstantFP::get(InVal->getType(), AmountVal);
-  
-  // Add the inc/dec to the real part.
-  NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+  if (isa<llvm::PointerType>(InVal->getType())) {
+    // FIXME: This isn't right for VLAs.
+    NextVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
+    NextVal = Builder.CreateGEP(InVal, NextVal);
+  } else {
+    // Add the inc/dec to the real part.
+    if (isa<llvm::IntegerType>(InVal->getType()))
+      NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
+    else
+      NextVal = llvm::ConstantFP::get(InVal->getType(), AmountVal);
+    NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
+  }
   
   // Store the updated result through the lvalue.
   CGF.EmitStoreThroughLValue(RValue::get(NextVal), LV, 
