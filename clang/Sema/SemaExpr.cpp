@@ -141,7 +141,15 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
   if (Literal.hadError)
     return ExprResult(true);
   
-  if (Literal.isIntegerLiteral()) {
+  Expr *Res;
+  
+  if (Literal.isFloatingLiteral()) {
+    // FIXME: handle float values > 32 (including compute the real type...).
+    QualType Ty = Literal.isFloat ? Context.FloatTy : Context.DoubleTy;
+    Res = new FloatingLiteral(Literal.GetFloatValue(), Ty, Tok.getLocation());
+  } else if (!Literal.isIntegerLiteral()) {
+    return ExprResult(true);
+  } else {
     QualType t;
 
     // Get the value in the widest-possible width.
@@ -218,13 +226,14 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
       }
     }
 
-    return new IntegerLiteral(ResultVal, t, Tok.getLocation());
-  } else if (Literal.isFloatingLiteral()) {
-    // FIXME: handle float values > 32 (including compute the real type...).
-    QualType Ty = Literal.isFloat ? Context.FloatTy : Context.DoubleTy;
-    return new FloatingLiteral(Literal.GetFloatValue(), Ty, Tok.getLocation());
+    Res = new IntegerLiteral(ResultVal, t, Tok.getLocation());
   }
-  return ExprResult(true);
+  
+  // If this is an imaginary literal, create the ImaginaryLiteral wrapper.
+  if (Literal.isImaginary)
+    Res = new ImaginaryLiteral(Res, Context.getComplexType(Res->getType()));
+  
+  return Res;
 }
 
 Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,

@@ -738,6 +738,14 @@ Stmt::child_iterator CharacterLiteral::child_end() { return NULL; }
 Stmt::child_iterator FloatingLiteral::child_begin() { return NULL; }
 Stmt::child_iterator FloatingLiteral::child_end() { return NULL; }
 
+// ImaginaryLiteral
+Stmt::child_iterator ImaginaryLiteral::child_begin() {
+  return reinterpret_cast<Stmt**>(&Val);
+}
+Stmt::child_iterator ImaginaryLiteral::child_end() {
+  return reinterpret_cast<Stmt**>(&Val)+1;
+}
+
 // StringLiteral
 Stmt::child_iterator StringLiteral::child_begin() { return NULL; }
 Stmt::child_iterator StringLiteral::child_end() { return NULL; }
@@ -746,122 +754,104 @@ Stmt::child_iterator StringLiteral::child_end() { return NULL; }
 Stmt::child_iterator ParenExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Val);
 }
-  
 Stmt::child_iterator ParenExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Val)+1;
 }
 
 // UnaryOperator
 Stmt::child_iterator UnaryOperator::child_begin() {
   return reinterpret_cast<Stmt**>(&Val);
 }
-
 Stmt::child_iterator UnaryOperator::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Val)+1;
 }
 
 // SizeOfAlignOfTypeExpr
-Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { 
-  return NULL;
-}
-
-Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() {
-  return NULL;
-}
+Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { return NULL; }
+Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() { return NULL; }
 
 // ArraySubscriptExpr
 Stmt::child_iterator ArraySubscriptExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs);
 }
- 
 Stmt::child_iterator ArraySubscriptExpr::child_end() {
-  return child_begin()+END_EXPR;
+  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
 }
 
 // CallExpr
 Stmt::child_iterator CallExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs);
 }
-
 Stmt::child_iterator CallExpr::child_end() {
-  return child_begin()+NumArgs+ARGS_START;
+  return reinterpret_cast<Stmt**>(&SubExprs)+NumArgs+ARGS_START;
 }
 
 // MemberExpr
 Stmt::child_iterator MemberExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Base);
 }
-
 Stmt::child_iterator MemberExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Base)+1;
 }
 
 // OCUVectorElementExpr
 Stmt::child_iterator OCUVectorElementExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Base);
 }
-
 Stmt::child_iterator OCUVectorElementExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Base)+1;
 }
 
 // CompoundLiteralExpr
 Stmt::child_iterator CompoundLiteralExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Init);
 }
-
 Stmt::child_iterator CompoundLiteralExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Init)+1;
 }
 
 // ImplicitCastExpr
 Stmt::child_iterator ImplicitCastExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Op);
 }
-
 Stmt::child_iterator ImplicitCastExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Op)+1;
 }
 
 // CastExpr
 Stmt::child_iterator CastExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Op);
 }
-
 Stmt::child_iterator CastExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&Op)+1;
 }
 
 // BinaryOperator
 Stmt::child_iterator BinaryOperator::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs);
 }
-
 Stmt::child_iterator BinaryOperator::child_end() {
-  return child_begin()+END_EXPR;
+  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
 }
 
 // ConditionalOperator
 Stmt::child_iterator ConditionalOperator::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs);
 }
-
 Stmt::child_iterator ConditionalOperator::child_end() {
-  return child_begin()+END_EXPR;
+  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
 }
 
 // AddrLabelExpr
 Stmt::child_iterator AddrLabelExpr::child_begin() { return NULL; }
 Stmt::child_iterator AddrLabelExpr::child_end() { return NULL; }
 
-
 // StmtExpr
 Stmt::child_iterator StmtExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubStmt);
 }
-
 Stmt::child_iterator StmtExpr::child_end() {
-  return child_begin()+1;
+  return reinterpret_cast<Stmt**>(&SubStmt)+1;
 }
 
 // TypesCompatibleExpr
@@ -874,7 +864,7 @@ Stmt::child_iterator ChooseExpr::child_begin() {
 }
 
 Stmt::child_iterator ChooseExpr::child_end() {
-  return child_begin()+END_EXPR;
+  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
 }
 
 // ObjCStringLiteral

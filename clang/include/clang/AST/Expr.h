@@ -216,7 +216,7 @@ public:
 };
 
 class FloatingLiteral : public Expr {
-  float Value; // FIXME
+  float Value; // FIXME: Change to APFloat
   SourceLocation Loc;
 public:
   FloatingLiteral(float value, QualType type, SourceLocation l)
@@ -230,6 +230,31 @@ public:
     return T->getStmtClass() == FloatingLiteralClass; 
   }
   static bool classof(const FloatingLiteral *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+/// ImaginaryLiteral - We support imaginary integer and floating point literals,
+/// like "1.0i".  We represent these as a wrapper around FloatingLiteral and
+/// IntegerLiteral classes.  Instances of this class always have a Complex type
+/// whose element type matches the subexpression.
+///
+class ImaginaryLiteral : public Expr {
+  Expr *Val;
+public:
+  ImaginaryLiteral(Expr *val, QualType Ty)
+    : Expr(ImaginaryLiteralClass, Ty), Val(val) {}
+  
+  const Expr *getSubExpr() const { return Val; }
+  Expr *getSubExpr() { return Val; }
+  
+  virtual SourceRange getSourceRange() const { return Val->getSourceRange(); }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ImaginaryLiteralClass; 
+  }
+  static bool classof(const ImaginaryLiteral *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();

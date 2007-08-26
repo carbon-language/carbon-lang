@@ -328,6 +328,14 @@ void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   DumpExpr(Node);
   fprintf(F, " %f)", Node->getValue());
 }
+
+void StmtDumper::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
+  DumpExpr(Node);
+  fprintf(F, "\n");
+  DumpSubTree(Node->getSubExpr());
+  fprintf(F, ")");
+}
+
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   DumpExpr(Str);
   // FIXME: this doesn't print wstrings right.
