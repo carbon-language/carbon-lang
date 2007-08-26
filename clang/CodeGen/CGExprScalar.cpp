@@ -293,9 +293,8 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   if (DstType->isVoidType()) return 0;
 
   // Handle conversions to bool first, they are special: comparisons against 0.
-  if (const BuiltinType *DestBT = dyn_cast<BuiltinType>(DstType))
-    if (DestBT->getKind() == BuiltinType::Bool)
-      return EmitConversionToBool(Src, SrcType);
+  if (DstType->isBooleanType())
+    return EmitConversionToBool(Src, SrcType);
   
   const llvm::Type *DstTy = ConvertType(DstType);
 
@@ -351,11 +350,21 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 Value *ScalarExprEmitter::
 EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
                               QualType SrcTy, QualType DstTy) {
+  // Get the source element type.
+  SrcTy = cast<ComplexType>(SrcTy.getCanonicalType())->getElementType();
+  
+  // Handle conversions to bool first, they are special: comparisons against 0.
+  if (DstTy->isBooleanType()) {
+    //  Complex != 0  -> (Real != 0) | (Imag != 0)
+    Src.first  = EmitScalarConversion(Src.first, SrcTy, DstTy);
+    Src.second = EmitScalarConversion(Src.second, SrcTy, DstTy);
+    return Builder.CreateOr(Src.first, Src.second, "tobool");
+  }
+  
   // C99 6.3.1.7p2: "When a value of complex type is converted to a real type,
   // the imaginary part of the complex value is discarded and the value of the
   // real part is converted according to the conversion rules for the
   // corresponding real type. 
-  SrcTy = cast<ComplexType>(SrcTy.getCanonicalType())->getElementType();
   return EmitScalarConversion(Src.first, SrcTy, DstTy);
 }
 
