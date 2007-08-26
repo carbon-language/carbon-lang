@@ -410,13 +410,13 @@ public:
 class ForStmt : public Stmt {
   enum { INIT, COND, INC, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
-  
-  Stmt *Init;  
-  Expr *Cond, *Inc;
-  Stmt *Body;
 public:
-  ForStmt(Stmt *init, Expr *cond, Expr *inc, Stmt *body)
-    : Stmt(ForStmtClass), Init(init), Cond(cond), Inc(inc), Body(body) {}
+  ForStmt(Stmt *Init, Expr *Cond, Expr *Inc, Stmt *Body) : Stmt(ForStmtClass) {
+    SubExprs[INIT] = Init;
+    SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
+    SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
+    SubExprs[BODY] = Body;
+  }
   
   Stmt *getInit() { return SubExprs[INIT]; }
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
