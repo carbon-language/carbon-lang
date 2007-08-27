@@ -942,19 +942,23 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
       Diag(ExpLoc, diag::err_enum_value_not_integer_constant_expr, 
            Id->getName());
       // FIXME: Don't leak memory: delete Val;
-      return 0;
+      Val = 0;  // Just forget about it.
     }
     EltTy = Val->getType();
-  } else if (LastEnumConst) {
-    // Assign the last value + 1.
-    EnumVal = LastEnumConst->getInitVal();
-    ++EnumVal;
-    // FIXME: detect overflow!
-    EltTy = LastEnumConst->getType();
-  } else {
-    // First value, set to zero.
-    EltTy = Context.IntTy;
-    // FIXME: Resize EnumVal to the size of int.
+  }
+  
+  if (!Val) {
+    if (LastEnumConst) {
+      // Assign the last value + 1.
+      EnumVal = LastEnumConst->getInitVal();
+      ++EnumVal;
+      // FIXME: detect overflow!
+      EltTy = LastEnumConst->getType();
+    } else {
+      // First value, set to zero.
+      EltTy = Context.IntTy;
+      // FIXME: Resize EnumVal to the size of int.
+    }
   }
   
   // TODO: Default promotions to int/uint.
