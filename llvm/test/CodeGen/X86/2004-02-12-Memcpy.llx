@@ -1,24 +1,26 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | grep movs
-declare void %llvm.memcpy.i32(sbyte* %A, sbyte* %B, uint %amt, uint %align)
+; RUN: llvm-as < %s | llc -march=x86 | grep movs | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep memcpy | count 2
 
-%A = global [1000 x int] zeroinitializer
-%B = global [1000 x int] zeroinitializer
+@A = global [32 x i32] zeroinitializer
+@B = global [32 x i32] zeroinitializer
 
+declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 
-void %main() {
+define void @main() {
   ; dword copy
-  call void %llvm.memcpy.i32(sbyte* cast (int* getelementptr ([1000 x int]* %A, long 0, long 0) to sbyte*),
-                           sbyte* cast (int* getelementptr ([1000 x int]* %B, long 0, long 0) to sbyte*),
-                           uint 4000, uint 4)
+  call void @llvm.memcpy.i32(i8* bitcast ([32 x i32]* @A to i8*),
+                           i8* bitcast ([32 x i32]* @B to i8*),
+                           i32 128, i32 4 )
 
   ; word copy
-  call void %llvm.memcpy.i32(sbyte* cast (int* getelementptr ([1000 x int]* %A, long 0, long 0) to sbyte*),
-                           sbyte* cast (int* getelementptr ([1000 x int]* %B, long 0, long 0) to sbyte*),
-                           uint 4000, uint 2)
+  call void @llvm.memcpy.i32( i8* bitcast ([32 x i32]* @A to i8*),
+                           i8* bitcast ([32 x i32]* @B to i8*),
+                           i32 128, i32 2 )
 
   ; byte copy
-  call void %llvm.memcpy.i32(sbyte* cast (int* getelementptr ([1000 x int]* %A, long 0, long 0) to sbyte*),
-                           sbyte* cast (int* getelementptr ([1000 x int]* %B, long 0, long 0) to sbyte*),
-                           uint 4000, uint 1)
+  call void @llvm.memcpy.i32( i8* bitcast ([32 x i32]* @A to i8*),
+                           i8* bitcast ([32 x i32]* @B to i8*),
+                            i32 128, i32 1 )
+
   ret void
 }

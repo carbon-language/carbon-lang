@@ -3753,10 +3753,10 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   if (Align == 0) Align = 1;
 
   ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
-  // If not DWORD aligned, call memset if size is less than the threshold.
+  // If not DWORD aligned or size is more than the threshold, call memset.
   // It knows how to align to the right boundary first.
   if ((Align & 3) != 0 ||
-      (I && I->getValue() < Subtarget->getMinRepStrSizeThreshold())) {
+      (I && I->getValue() > Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
     const Type *IntPtrTy = getTargetData()->getIntPtrType();
     TargetLowering::ArgListTy Args; 
@@ -3909,10 +3909,10 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   if (Align == 0) Align = 1;
 
   ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
-  // If not DWORD aligned, call memcpy if size is less than the threshold.
+  // If not DWORD aligned or size is more than the threshold, call memcpy.
   // It knows how to align to the right boundary first.
   if ((Align & 3) != 0 ||
-      (I && I->getValue() < Subtarget->getMinRepStrSizeThreshold())) {
+      (I && I->getValue() > Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
     TargetLowering::ArgListTy Args;
     TargetLowering::ArgListEntry Entry;
