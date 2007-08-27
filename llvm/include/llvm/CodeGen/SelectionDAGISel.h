@@ -104,7 +104,7 @@ public:
   };
   struct JumpTable {
     JumpTable(unsigned R, unsigned J, MachineBasicBlock *M,
-              MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {};
+              MachineBasicBlock *D): Reg(R), JTI(J), MBB(M), Default(D) {}
     
     /// Reg - the virtual register containing the index of the jump table entry
     //. to jump to.
@@ -120,7 +120,7 @@ public:
   struct JumpTableHeader {
     JumpTableHeader(uint64_t F, uint64_t L, Value* SV, MachineBasicBlock* H,
                     bool E = false):
-      First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {};
+      First(F), Last(L), SValue(SV), HeaderBB(H), Emitted(E) {}
     uint64_t First;
     uint64_t Last;
     Value *SValue;
@@ -131,7 +131,7 @@ public:
 
   struct BitTestCase {
     BitTestCase(uint64_t M, MachineBasicBlock* T, MachineBasicBlock* Tr):
-      Mask(M), ThisBB(T), TargetBB(Tr) { };
+      Mask(M), ThisBB(T), TargetBB(Tr) { }
     uint64_t Mask;
     MachineBasicBlock* ThisBB;
     MachineBasicBlock* TargetBB;
@@ -145,7 +145,7 @@ public:
                  MachineBasicBlock* P, MachineBasicBlock* D,
                  const BitTestInfo& C):
       First(F), Range(R), SValue(SV), Reg(Rg), Emitted(E),
-      Parent(P), Default(D), Cases(C) { };
+      Parent(P), Default(D), Cases(C) { }
     uint64_t First;
     uint64_t Range;
     Value  *SValue;

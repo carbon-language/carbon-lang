@@ -96,8 +96,8 @@ namespace llvm {
       unsigned def;
       unsigned reg;
       SmallVector<unsigned, 4> kills;
-      VNInfo() : def(~1U), reg(0) {};
-      VNInfo(unsigned d, unsigned r) : def(d), reg(r) {};
+      VNInfo() : def(~1U), reg(0) {}
+      VNInfo(unsigned d, unsigned r) : def(d), reg(r) {}
     };
   private:
     SmallVector<VNInfo, 4> ValueNumberInfo;

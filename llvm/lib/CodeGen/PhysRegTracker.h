@@ -26,7 +26,7 @@ namespace llvm {
         std::vector<unsigned> regUse_;
 
     public:
-        PhysRegTracker(const MRegisterInfo& mri)
+        explicit PhysRegTracker(const MRegisterInfo& mri)
             : mri_(&mri),
               regUse_(mri_->getNumRegs(), 0) {
         }

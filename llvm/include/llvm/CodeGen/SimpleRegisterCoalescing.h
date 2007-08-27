@@ -47,7 +47,7 @@ namespace llvm {
 
   public:
     static char ID; // Pass identifcation, replacement for typeid
-    SimpleRegisterCoalescing() : MachineFunctionPass((intptr_t)&ID) {};
+    SimpleRegisterCoalescing() : MachineFunctionPass((intptr_t)&ID) {}
 
     struct CopyRec {
       MachineInstr *MI;

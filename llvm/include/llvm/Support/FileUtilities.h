@@ -40,7 +40,7 @@ namespace llvm {
     sys::Path Filename;
     bool DeleteIt;
   public:
-    FileRemover(const sys::Path &filename, bool deleteIt = true)
+    explicit FileRemover(const sys::Path &filename, bool deleteIt = true)
       : Filename(filename), DeleteIt(deleteIt) {}
 
     ~FileRemover() {

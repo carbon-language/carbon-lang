@@ -221,7 +221,7 @@ protected:
   std::vector<DIEValue *> Values;
   
 public:
-  DIE(unsigned Tag)
+  explicit DIE(unsigned Tag)
   : Abbrev(Tag, DW_CHILDREN_no)
   , Offset(0)
   , Size(0)
@@ -304,7 +304,7 @@ public:
   ///
   unsigned Type;
   
-  DIEValue(unsigned T)
+  explicit DIEValue(unsigned T)
   : Type(T)
   {}
   virtual ~DIEValue() {}
@@ -344,7 +344,7 @@ private:
   uint64_t Integer;
   
 public:
-  DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
+  explicit DIEInteger(uint64_t I) : DIEValue(isInteger), Integer(I) {}
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEInteger *) { return true; }
@@ -396,7 +396,7 @@ class DIEString : public DIEValue {
 public:
   const std::string String;
   
-  DIEString(const std::string &S) : DIEValue(isString), String(S) {}
+  explicit DIEString(const std::string &S) : DIEValue(isString), String(S) {}
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEString *) { return true; }
@@ -435,7 +435,7 @@ public:
 
   const DWLabel Label;
   
-  DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
+  explicit DIEDwarfLabel(const DWLabel &L) : DIEValue(isLabel), Label(L) {}
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEDwarfLabel *)  { return true; }
@@ -473,7 +473,8 @@ class DIEObjectLabel : public DIEValue {
 public:
   const std::string Label;
   
-  DIEObjectLabel(const std::string &L) : DIEValue(isAsIsLabel), Label(L) {}
+  explicit DIEObjectLabel(const std::string &L)
+  : DIEValue(isAsIsLabel), Label(L) {}
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEObjectLabel *) { return true; }
@@ -553,7 +554,7 @@ class DIEntry : public DIEValue {
 public:
   DIE *Entry;
   
-  DIEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
+  explicit DIEntry(DIE *E) : DIEValue(isEntry), Entry(E) {}
   
   // Implement isa/cast/dyncast.
   static bool classof(const DIEntry *)   { return true; }
@@ -1117,7 +1118,7 @@ private:
     std::vector<MachineMove> Moves;
 
     FunctionDebugFrameInfo(unsigned Num, const std::vector<MachineMove> &M):
-      Number(Num), Moves(M) { };
+      Number(Num), Moves(M) { }
   };
 
   std::vector<FunctionDebugFrameInfo> DebugFrames;
@@ -2745,7 +2746,7 @@ private:
                         bool hC, bool hL,
                         const std::vector<MachineMove> &M):
       FnName(FN), Number(Num), PersonalityIndex(P),
-      hasCalls(hC), hasLandingPads(hL), Moves(M) { };
+      hasCalls(hC), hasLandingPads(hL), Moves(M) { }
   };
 
   std::vector<FunctionEHFrameInfo> EHFrames;

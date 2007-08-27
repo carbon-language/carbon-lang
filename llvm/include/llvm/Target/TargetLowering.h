@@ -844,7 +844,7 @@ public:
     bool isByVal;
 
     ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
-      isSRet(false), isNest(false), isByVal(false) { };
+      isSRet(false), isNest(false), isByVal(false) { }
   };
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDOperand, SDOperand>

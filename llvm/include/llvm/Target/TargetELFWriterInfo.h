@@ -32,7 +32,7 @@ namespace llvm {
       EM_386 = 3
     };
 
-    TargetELFWriterInfo(MachineType machine) : EMachine(machine) {}
+    explicit TargetELFWriterInfo(MachineType machine) : EMachine(machine) {}
     virtual ~TargetELFWriterInfo() {}
 
     unsigned short getEMachine() const { return EMachine; }

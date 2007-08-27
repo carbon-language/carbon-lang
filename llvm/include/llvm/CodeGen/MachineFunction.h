@@ -73,7 +73,7 @@ public:
 /// of type are accessed/created with MF::getInfo and destroyed when the
 /// MachineFunction is destroyed.
 struct MachineFunctionInfo {
-  virtual ~MachineFunctionInfo() {};
+  virtual ~MachineFunctionInfo() {}
 };
 
 class MachineFunction : private Annotation {
