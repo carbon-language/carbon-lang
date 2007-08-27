@@ -780,10 +780,10 @@ Stmt::child_iterator ArraySubscriptExpr::child_end() {
 
 // CallExpr
 Stmt::child_iterator CallExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs);
+  return reinterpret_cast<Stmt**>(&SubExprs[0]);
 }
 Stmt::child_iterator CallExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs)+NumArgs+ARGS_START;
+  return reinterpret_cast<Stmt**>(&SubExprs[NumArgs+ARGS_START]);
 }
 
 // MemberExpr
