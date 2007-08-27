@@ -424,6 +424,11 @@ public:
     setDefinition(true);
   }
   
+  /// getEnumConstantList - Return the first EnumConstantDecl in the enum.
+  ///
+  EnumConstantDecl *getEnumConstantList() { return ElementList; }
+  const EnumConstantDecl *getEnumConstantList() const { return ElementList; }
+  
   static bool classof(const Decl *D) {
     return D->getKind() == Enum;
   }
