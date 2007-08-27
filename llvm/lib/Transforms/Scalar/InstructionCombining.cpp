@@ -8006,7 +8006,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
     NC = new InvokeInst(Callee, II->getNormalDest(), II->getUnwindDest(),
-                        &Args[0], Args.size(), Caller->getName(), Caller);
+                        Args.begin(), Args.end(), Caller->getName(), Caller);
     cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
   } else {
     NC = new CallInst(Callee, Args.begin(), Args.end(),

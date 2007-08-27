@@ -85,7 +85,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           SmallVector<Value*, 8> InvokeArgs(CI->op_begin()+1, CI->op_end());
           InvokeInst *II =
             new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
-                           &InvokeArgs[0], InvokeArgs.size(),
+                           InvokeArgs.begin(), InvokeArgs.end(),
                            CI->getName(), BB->getTerminator());
           II->setCallingConv(CI->getCallingConv());
           

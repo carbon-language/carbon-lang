@@ -174,7 +174,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
-                           &Args[0], Args.size(), "", Call);
+                           Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
@@ -540,7 +540,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
-                           &Args[0], Args.size(), "", Call);
+                           Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);

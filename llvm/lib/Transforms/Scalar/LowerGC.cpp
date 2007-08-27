@@ -331,7 +331,7 @@ bool LowerGC::runOnFunction(Function &F) {
       std::vector<Value*> Args(CI->op_begin()+1, CI->op_end());
 
       Value *II = new InvokeInst(CI->getCalledValue(), NewBB, Cleanup,
-                                 &Args[0], Args.size(), CI->getName(), CBB);
+                                 Args.begin(), Args.end(), CI->getName(), CBB);
       CI->replaceAllUsesWith(II);
       delete CI;
     }

@@ -115,12 +115,12 @@ public:
   }
   
   /// CreateInvoke - Create an invoke instruction.
+  template<typename InputIterator>
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest, 
-                           BasicBlock *UnwindDest,
-                           Value *const* Args, unsigned NumArgs,
-                           const char *Name = "") {
-    return Insert(new InvokeInst(Callee, NormalDest, UnwindDest, Args, NumArgs,
-                                 Name));
+                           BasicBlock *UnwindDest, InputIterator ArgBegin, 
+                           InputIterator ArgEnd, const char *Name = "") {
+    return(Insert(new InvokeInst(Callee, NormalDest, UnwindDest,
+                                 ArgBegin, ArgEnd, Name)));
   }
   
   UnwindInst *CreateUnwind() {

@@ -475,7 +475,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
   std::vector<Value*> Params(CI.op_begin() + 1, CI.op_end());
   InvokeInst* II = new
     InvokeInst(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
-               &Params[0], Params.size(), CI.getName(), Term);
+               Params.begin(), Params.end(), CI.getName(), Term);
 
   // Replace the old call inst with the invoke inst and remove the call.
   CI.replaceAllUsesWith(II);

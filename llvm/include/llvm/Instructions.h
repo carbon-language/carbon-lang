@@ -1544,13 +1544,65 @@ class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
   void init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
             Value* const *Args, unsigned NumArgs);
+
+  template<typename InputIterator>
+  void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
+            InputIterator ArgBegin, InputIterator ArgEnd,
+            const std::string &Name,
+            // This argument ensures that we have an iterator we can
+            // do arithmetic on in constant time
+            std::random_access_iterator_tag) {
+    typename std::iterator_traits<InputIterator>::difference_type NumArgs = 
+      std::distance(ArgBegin, ArgEnd);
+    
+    if (NumArgs > 0) {
+      // This requires that the iterator points to contiguous memory.
+      init(Func, IfNormal, IfException, &*ArgBegin, NumArgs);
+    }
+    else {
+      init(Func, IfNormal, IfException, 0, NumArgs);
+    }
+    
+    setName(Name);
+  }
+
 public:
-  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-             Value* const* Args, unsigned NumArgs, const std::string &Name = "",
-             Instruction *InsertBefore = 0);
-  InvokeInst(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
-             Value* const* Args, unsigned NumArgs, const std::string &Name,
-             BasicBlock *InsertAtEnd);
+  /// Construct an InvokeInst given a range of arguments.
+  /// InputIterator must be a random-access iterator pointing to
+  /// contiguous storage (e.g. a std::vector<>::iterator).  Checks are
+  /// made for random-accessness but not for contiguous storage as
+  /// that would incur runtime overhead.
+  ///
+  /// @brief Construct an InvokeInst from a range of arguments
+  template<typename InputIterator>
+  InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
+             InputIterator ArgBegin, InputIterator ArgEnd,
+             const std::string &Name = "", Instruction *InsertBefore = 0)
+      : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                          ->getElementType())->getReturnType(),
+                       Instruction::Invoke, 0, 0, InsertBefore) {
+    init(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name,
+         typename std::iterator_traits<InputIterator>::iterator_category());
+  }
+
+  /// Construct an InvokeInst given a range of arguments.
+  /// InputIterator must be a random-access iterator pointing to
+  /// contiguous storage (e.g. a std::vector<>::iterator).  Checks are
+  /// made for random-accessness but not for contiguous storage as
+  /// that would incur runtime overhead.
+  ///
+  /// @brief Construct an InvokeInst from a range of arguments
+  template<typename InputIterator>
+  InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
+             InputIterator ArgBegin, InputIterator ArgEnd,
+             const std::string &Name, BasicBlock *InsertAtEnd)
+      : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
+                                          ->getElementType())->getReturnType(),
+                       Instruction::Invoke, 0, 0, InsertAtEnd) {
+    init(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name,
+         typename std::iterator_traits<InputIterator>::iterator_category());
+  }
+
   ~InvokeInst();
 
   virtual InvokeInst *clone() const;

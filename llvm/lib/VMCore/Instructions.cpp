@@ -395,28 +395,6 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
   }
 }
 
-InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
-                       BasicBlock *IfException,
-                       Value* const *Args, unsigned NumArgs,
-                       const std::string &Name, Instruction *InsertBefore)
-  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
-                                    ->getElementType())->getReturnType(),
-                   Instruction::Invoke, 0, 0, InsertBefore) {
-  init(Fn, IfNormal, IfException, Args, NumArgs);
-  setName(Name);
-}
-
-InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
-                       BasicBlock *IfException,
-                       Value* const *Args, unsigned NumArgs,
-                       const std::string &Name, BasicBlock *InsertAtEnd)
-  : TerminatorInst(cast<FunctionType>(cast<PointerType>(Fn->getType())
-                                    ->getElementType())->getReturnType(),
-                   Instruction::Invoke, 0, 0, InsertAtEnd) {
-  init(Fn, IfNormal, IfException, Args, NumArgs);
-  setName(Name);
-}
-
 InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
                    new Use[II.getNumOperands()], II.getNumOperands()) {

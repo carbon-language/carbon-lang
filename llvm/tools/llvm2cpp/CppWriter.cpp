@@ -1083,8 +1083,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
           << opNames[0] << ", "
           << opNames[1] << ", "
           << opNames[2] << ", "
-          << "&" << iName << "_params[0], " << inv->getNumOperands() - 3 
-          << ", \"";
+          << iName << "_params.begin(), " << iName << "_params.end(), \"";    
       printEscapedString(inv->getName());
       Out << "\", " << bbname << ");";
       nl(Out) << iName << "->setCallingConv(";

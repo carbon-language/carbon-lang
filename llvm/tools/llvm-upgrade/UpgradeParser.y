@@ -3342,7 +3342,8 @@ BBTerminatorInst
 
     // Create the call node...
     if (!$6) {                                   // Has no arguments?
-      $$.TI = new InvokeInst(V, Normal, Except, 0, 0);
+      std::vector<Value*> Args;
+      $$.TI = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
@@ -3362,7 +3363,7 @@ BBTerminatorInst
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         error("Invalid number of parameters detected");
 
-      $$.TI = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
+      $$.TI = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     }
     cast<InvokeInst>($$.TI)->setCallingConv(upgradeCallingConv($2));
     delete $3.PAT;
