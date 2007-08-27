@@ -314,8 +314,8 @@ const RecordLayout &ASTContext::getRecordLayout(const RecordDecl *D,
 
 /// getEnumDeclIntegerType - returns the integer type compatible with the
 /// given enum type.
-QualType ASTContext::getEnumDeclIntegerType(EnumDecl *ED) const {
-  if (EnumConstantDecl *C = ED->getEnumConstantList())
+QualType ASTContext::getEnumDeclIntegerType(const EnumDecl *ED) const {
+  if (const EnumConstantDecl *C = ED->getEnumConstantList())
     return C->getType();
 
   // If the enum list is empty, it is typed as if it contained a single zero 

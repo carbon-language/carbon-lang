@@ -149,7 +149,7 @@ public:
   
   /// getEnumDeclIntegerType - returns the integer type compatible with the
   /// given enum type.
-  QualType getEnumDeclIntegerType(EnumDecl *ED) const;
+  QualType getEnumDeclIntegerType(const EnumDecl *ED) const;
   
   //===--------------------------------------------------------------------===//
   //                            Type Operators
