@@ -83,6 +83,7 @@ public:
   
   CFGBlock* VisitStmt(Stmt* Statement);
   CFGBlock* VisitNullStmt(NullStmt* Statement);
+  CFGBlock* VisitParenExpr(ParenExpr* Statement);
   CFGBlock* VisitCompoundStmt(CompoundStmt* C);
   CFGBlock* VisitIfStmt(IfStmt* I);
   CFGBlock* VisitReturnStmt(ReturnStmt* R);
@@ -98,7 +99,9 @@ public:
   
 private:
   CFGBlock* createBlock(bool add_successor = true);
-  CFGBlock* addStmt(Stmt* S) { Block->appendStmt(S); return Block; }
+  CFGBlock* addStmt(Stmt* S);
+  CFGBlock* WalkAST(Stmt* S, bool AlwaysAddStmt);
+  CFGBlock* WalkAST_VisitChildren(Stmt* S);
   void FinishBlock(CFGBlock* B);
   
 };
@@ -171,6 +174,60 @@ void CFGBuilder::FinishBlock(CFGBlock* B) {
   B->reverseStmts();
 }
 
+/// addStmt - Used to add statements/expressions to the current CFGBlock 
+///  "Block".  This method calls WalkAST on the passed statement to see if it
+///  contains any short-circuit expressions.  If so, it recursively creates
+///  the necessary blocks for such expressions.  It returns the "topmost" block
+///  of the created blocks, or the original value of "Block" when this method
+///  was called if no additional blocks are created.
+CFGBlock* CFGBuilder::addStmt(Stmt* S) {
+  assert (Block);
+  return WalkAST(S,true);
+}
+
+/// WalkAST - Used by addStmt to walk the subtree of a statement and
+///   add extra blocks for ternary operators, &&, and ||.
+CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {    
+  switch (S->getStmtClass()) {
+    case Stmt::ConditionalOperatorClass: {
+      ConditionalOperator* C = cast<ConditionalOperator>(S);
+      
+      CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
+      ConfluenceBlock->appendStmt(C);
+      FinishBlock(ConfluenceBlock);
+      
+      Succ = ConfluenceBlock;
+      Block = NULL;
+      CFGBlock* LHSBlock = Visit(C->getLHS());
+      
+      Succ = ConfluenceBlock;
+      Block = NULL;
+      CFGBlock* RHSBlock = Visit(C->getRHS());
+      
+      Block = createBlock(false);
+      Block->addSuccessor(LHSBlock);
+      Block->addSuccessor(RHSBlock);
+      Block->setTerminator(C);
+      return addStmt(C->getCond());
+    }
+    default:
+      if (AlwaysAddStmt) Block->appendStmt(S);
+      return WalkAST_VisitChildren(S);
+  };
+}
+
+/// WalkAST_VisitChildren - Utility method to call WalkAST on the
+///  children of a Stmt.
+CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S)
+{
+  CFGBlock* B = Block;
+  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end() ;
+       I != E; ++I)
+    B = WalkAST(*I);
+  
+  return B;
+}
+
 /// VisitStmt - Handle statements with no branching control flow.
 CFGBlock* CFGBuilder::VisitStmt(Stmt* Statement) {
   // We cannot assume that we are in the middle of a basic block, since
@@ -189,6 +246,11 @@ CFGBlock* CFGBuilder::VisitStmt(Stmt* Statement) {
 CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
   return Block;
 }
+
+CFGBlock* CFGBuilder::VisitParenExpr(ParenExpr* Statement) {
+  return Visit(Statement->getSubExpr());
+}
+  
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
   //   The value returned from this function is the last created CFGBlock
@@ -762,8 +824,20 @@ public:
   void VisitDoStmt(DoStmt* D) {
     OS << "do ... while ";
     if (Stmt* C = D->getCond()) C->printPretty(OS);
-    OS << "\n";
-  }                                                       
+    OS << '\n';
+  }
+                                                       
+  void VisitSwitchStmt(SwitchStmt* S) {
+    OS << "switch ";
+    S->getCond()->printPretty(OS);
+    OS << '\n';
+  }
+  
+  void VisitConditionalOperator(ConditionalOperator* C) {
+    C->printPretty(OS);
+    OS << '\n';
+  }
+                                                     
 };
 } // end anonymous namespace
 
