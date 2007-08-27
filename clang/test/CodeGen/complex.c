@@ -31,7 +31,9 @@ void test3() {
 
   double Gr = __real g1;
 
-  //cf += D;  // fixme: sema bug
+  cf += D;
   D += cf;
   cf /= g1;
+  g1 = g1 + D;
+  g1 = D + g1;
 }
