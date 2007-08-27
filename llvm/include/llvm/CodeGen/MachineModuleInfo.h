@@ -966,7 +966,6 @@ struct LandingPadInfo {
   : LandingPadBlock(MBB)
   , LandingPadLabel(0)
   , Personality(NULL)  
-  , TypeIds(1, 0) // Always have cleanups
   {}
 };
 
@@ -1238,6 +1237,10 @@ public:
   ///
   void addFilterTypeInfo(MachineBasicBlock *LandingPad,
                          std::vector<GlobalVariable *> &TyInfo);
+
+  /// addCleanup - Add a cleanup action for a landing pad.
+  ///
+  void addCleanup(MachineBasicBlock *LandingPad);
 
   /// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
   /// function wide.

@@ -1726,6 +1726,13 @@ void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
   LP.TypeIds.push_back(getFilterIDFor(IdsInFilter));
 }
 
+/// addCleanup - Add a cleanup action for a landing pad.
+///
+void MachineModuleInfo::addCleanup(MachineBasicBlock *LandingPad) {
+  LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
+  LP.TypeIds.push_back(0);
+}
+
 /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
 /// pads.
 void MachineModuleInfo::TidyLandingPads() {

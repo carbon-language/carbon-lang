@@ -2519,7 +2519,7 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   for (unsigned i = N - 1; i > 2; --i) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(i))) {
       unsigned FilterLength = CI->getZExtValue();
-      unsigned FirstCatch = i + FilterLength + 1;
+      unsigned FirstCatch = i + FilterLength + !FilterLength;
       assert (FirstCatch <= N && "Invalid filter length");
 
       if (FirstCatch < N) {
@@ -2530,11 +2530,17 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
         TyInfo.clear();
       }
 
-      TyInfo.reserve(FilterLength);
-      for (unsigned j = i + 1; j < FirstCatch; ++j)
-        TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
-      MMI->addFilterTypeInfo(MBB, TyInfo);
-      TyInfo.clear();
+      if (!FilterLength) {
+        // Cleanup.
+        MMI->addCleanup(MBB);
+      } else {
+        // Filter.
+        TyInfo.reserve(FilterLength - 1);
+        for (unsigned j = i + 1; j < FirstCatch; ++j)
+          TyInfo.push_back(ExtractTypeInfo(I.getOperand(j)));
+        MMI->addFilterTypeInfo(MBB, TyInfo);
+        TyInfo.clear();
+      }
 
       N = i;
     }
