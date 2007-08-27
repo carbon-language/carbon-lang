@@ -936,6 +936,9 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
   llvm::APSInt EnumVal(32);
   QualType EltTy;
   if (Val) {
+    // Make sure to promote the operand type to int.
+    UsualUnaryConversions(Val);
+    
     // C99 6.7.2.2p2: Make sure we have an integer constant expression.
     SourceLocation ExpLoc;
     if (!Val->isIntegerConstantExpr(EnumVal, Context, &ExpLoc)) {
@@ -952,16 +955,18 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
       // Assign the last value + 1.
       EnumVal = LastEnumConst->getInitVal();
       ++EnumVal;
-      // FIXME: detect overflow!
+
+      // Check for overflow on increment.
+      if (EnumVal < LastEnumConst->getInitVal())
+        Diag(IdLoc, diag::warn_enum_value_overflow);
+      
       EltTy = LastEnumConst->getType();
     } else {
       // First value, set to zero.
       EltTy = Context.IntTy;
-      // FIXME: Resize EnumVal to the size of int.
+      EnumVal.zextOrTrunc(Context.getTypeSize(EltTy, IdLoc));
     }
   }
-  
-  // TODO: Default promotions to int/uint.
   
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,

@@ -285,6 +285,8 @@ DIAG(ext_mixed_decls_code, EXTENSION,
 
 DIAG(ext_empty_struct_union_enum, EXTENSION,
      "use of empty %0 extension")
+DIAG(warn_enum_value_overflow, WARNING,
+     "overflow in enumeration value")
 
 DIAG(ext_ident_list_in_param, EXTENSION,
      "type-less parameter names in function declaration")
