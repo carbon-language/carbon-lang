@@ -3754,7 +3754,8 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
 
   ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
   // If not DWORD aligned or size is more than the threshold, call memset.
-  // It knows how to align to the right boundary first.
+  // The libc version is likely to be faster for these cases. It can use the
+  // address value and run time information about the CPU.
   if ((Align & 3) != 0 ||
       (I && I->getValue() > Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
@@ -3910,7 +3911,9 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
 
   ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
   // If not DWORD aligned or size is more than the threshold, call memcpy.
-  // It knows how to align to the right boundary first.
+  // The libc version is likely to be faster for these cases. It can use the
+  // address value and run time information about the CPU.
+  // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
   if ((Align & 3) != 0 ||
       (I && I->getValue() > Subtarget->getMinRepStrSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
