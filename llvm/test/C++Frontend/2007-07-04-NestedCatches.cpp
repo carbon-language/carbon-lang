@@ -1,6 +1,6 @@
-// RUN: %llvmgxx %s -S -emit-llvm -O2 -o - | \
+// RUN: %llvmgxx %s -S -O2 -o - | \
 // RUN:   ignore grep {eh\.selector.*One.*Two.*Three.*Four.*Five.*Six.*null} | \
-// RUN:     wc -l | grep {\[02\]}
+// RUN:     wc -l | grep {\[01\]}
 
 extern void X(void);
 
