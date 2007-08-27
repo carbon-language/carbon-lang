@@ -160,14 +160,15 @@ public:
   /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
   static QualType maxIntegerType(QualType lhs, QualType rhs);
   
-  /// maxFloatingType - Returns the highest ranked float type. Both input 
-  /// types are required to be floats.
+  /// maxFloatingType - Returns the highest ranked float type. Handles 3
+  /// different combos: float/float, float/complex, complex/complex.
   static QualType maxFloatingType(QualType lt, QualType rt);
 
-  /// maxComplexType - Returns the highest ranked complex type. Handles 3
-  /// different type combos: complex/complex, complex/float, float/complex. 
-  QualType maxComplexType(QualType lt, QualType rt) const;
-  
+  /// getFloatingTypeOfSizeWithinDomain - Returns the either a real floating 
+  /// point type or a complex type (based on typeDomain) of typeSize. 
+  /// typeSize is expected to be a floating point type (real or complex).
+  QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize, 
+                                             QualType typeDomain) const;
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT

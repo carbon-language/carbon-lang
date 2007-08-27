@@ -685,28 +685,28 @@ static int getFloatingRank(QualType T) {
   }
 }
 
-// maxComplexType - the following code handles 3 different combinations:
-// complex/complex, complex/float, float/complex. 
-// When both operands are complex, the shorter operand is converted to the 
-// type of the longer, and that is the type of the result. This corresponds 
-// to what is done when combining two real floating-point operands. 
-// The fun begins when size promotion occur across type domains. g
-// getFloatingRank & convertFloatingRankToComplexType handle this without 
-// enumerating all permutations. 
-// It also allows us to add new types without breakage.
-// From H&S 6.3.4: When one operand is complex and the other is a real
-// floating-point type, the less precise type is converted, within it's 
-// real or complex domain, to the precision of the other type. For example,
-// when combining a "long double" with a "double _Complex", the 
-// "double _Complex" is promoted to "long double _Complex".
-
-QualType ASTContext::maxComplexType(QualType lt, QualType rt) const {
-  switch (std::max(getFloatingRank(lt), getFloatingRank(rt))) {
-  default: assert(0 && "convertRankToComplex(): illegal value for rank");
-  case FloatRank:      return FloatComplexTy;
-  case DoubleRank:     return DoubleComplexTy;
-  case LongDoubleRank: return LongDoubleComplexTy;
+/// getFloatingTypeOfSizeWithinDomain - Returns the either a real floating 
+/// point type or a complex type (based on typeDomain) of typeSize. 
+/// typeSize is expected to be a floating point type (real or complex).
+QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
+  QualType typeSize, QualType typeDomain) const {
+  if (typeDomain->isComplexType()) {
+    switch (getFloatingRank(typeSize)) {
+    default: assert(0 && "convertRankToComplex(): illegal value for rank");
+    case FloatRank:      return FloatComplexTy;
+    case DoubleRank:     return DoubleComplexTy;
+    case LongDoubleRank: return LongDoubleComplexTy;
+    }
   }
+  if (typeDomain->isRealFloatingType()) {
+    switch (getFloatingRank(typeSize)) {
+    default: assert(0 && "convertRankToComplex(): illegal value for rank");
+    case FloatRank:      return FloatTy;
+    case DoubleRank:     return DoubleTy;
+    case LongDoubleRank: return LongDoubleTy;
+    }
+  }
+  assert(0 && "getFloatingTypeOfSizeWithinDomain(): illegal domain");
 }
 
 // maxFloatingType - handles the simple case, both operands are floats.

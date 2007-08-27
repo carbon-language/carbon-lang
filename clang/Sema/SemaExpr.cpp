@@ -811,13 +811,26 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
       if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
       return rhs;
     }
-    // Two complex types. Convert the smaller operand to the bigger result.
-    if (Context.maxComplexType(lhs, rhs) == lhs) { // convert the rhs
-      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
-      return lhs;
+    // This handles complex/complex, complex/float, or float/complex.
+    // When both operands are complex, the shorter operand is converted to the 
+    // type of the longer, and that is the type of the result. This corresponds 
+    // to what is done when combining two real floating-point operands. 
+    // The fun begins when size promotion occur across type domains. 
+    // From H&S 6.3.4: When one operand is complex and the other is a real
+    // floating-point type, the less precise type is converted, within it's 
+    // real or complex domain, to the precision of the other type. For example,
+    // when combining a "long double" with a "double _Complex", the 
+    // "double _Complex" is promoted to "long double _Complex".
+    if (Context.maxFloatingType(lhs, rhs) == lhs) {
+      // The left side is bigger, convert rhs within it's domain. 
+      QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
+      if (!isCompAssign) promoteExprToType(rhsExpr, tMax);
+      return tMax;
     }
-    if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
-    return rhs;
+    // The right side is bigger, convert lhs within it's domain. 
+    QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
+    if (!isCompAssign) promoteExprToType(lhsExpr, tMax);
+    return tMax;
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
