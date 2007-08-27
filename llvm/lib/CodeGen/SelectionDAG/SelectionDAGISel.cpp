@@ -409,6 +409,7 @@ public:
   TargetLowering &TLI;
   SelectionDAG &DAG;
   const TargetData *TD;
+  AliasAnalysis &AA;
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
@@ -423,8 +424,9 @@ public:
   FunctionLoweringInfo &FuncInfo;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
+                       AliasAnalysis &aa,
                        FunctionLoweringInfo &funcinfo)
-    : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()),
+    : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()), AA(aa),
       FuncInfo(funcinfo) {
   }
 
@@ -4196,6 +4198,17 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
   unsigned Align = (unsigned)cast<ConstantSDNode>(Op4)->getValue();
   if (Align == 0) Align = 1;
 
+  // If the source and destination are known to not be aliases, we can
+  // lower memmove as memcpy.
+  if (Op == ISD::MEMMOVE) {
+    uint64_t Size = -1;
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
+      Size = C->getValue();
+    if (AA.alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
+        AliasAnalysis::NoAlias)
+      Op = ISD::MEMCPY;
+  }
+
   if (ConstantSDNode *Size = dyn_cast<ConstantSDNode>(Op3)) {
     std::vector<MVT::ValueType> MemOps;
 
@@ -4307,6 +4320,9 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
 
 
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
+  // Get alias analysis for load/store combining.
+  AA = &getAnalysis<AliasAnalysis>();
+
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
@@ -4404,7 +4420,7 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                          FunctionLoweringInfo &FuncInfo) {
-  SelectionDAGLowering SDL(DAG, TLI, FuncInfo);
+  SelectionDAGLowering SDL(DAG, TLI, *AA, FuncInfo);
 
   std::vector<SDOperand> UnorderedChains;
 
@@ -4581,11 +4597,8 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
-  // Get alias analysis for load/store combining.
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
   // Run the DAG combiner in pre-legalize mode.
-  DAG.Combine(false, AA);
+  DAG.Combine(false, *AA);
   
   DOUT << "Lowered selection DAG:\n";
   DEBUG(DAG.dump());
@@ -4598,7 +4611,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DEBUG(DAG.dump());
   
   // Run the DAG combiner in post-legalize mode.
-  DAG.Combine(true, AA);
+  DAG.Combine(true, *AA);
   
   if (ViewISelDAGs) DAG.viewGraph();
 
@@ -4649,7 +4662,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     if (!BitTestCases[i].Emitted) {
       SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &HSDAG;
-      SelectionDAGLowering HSDL(HSDAG, TLI, FuncInfo);    
+      SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo);
       // Set the current basic block to the mbb we wish to insert the code into
       BB = BitTestCases[i].Parent;
       HSDL.setCurrentBasicBlock(BB);
@@ -4662,7 +4675,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
       SelectionDAG BSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &BSDAG;
-      SelectionDAGLowering BSDL(BSDAG, TLI, FuncInfo);
+      SelectionDAGLowering BSDL(BSDAG, TLI, *AA, FuncInfo);
       // Set the current basic block to the mbb we wish to insert the code into
       BB = BitTestCases[i].Cases[j].ThisBB;
       BSDL.setCurrentBasicBlock(BB);
@@ -4715,7 +4728,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     if (!JTCases[i].first.Emitted) {
       SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &HSDAG;
-      SelectionDAGLowering HSDL(HSDAG, TLI, FuncInfo);    
+      SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo);
       // Set the current basic block to the mbb we wish to insert the code into
       BB = JTCases[i].first.HeaderBB;
       HSDL.setCurrentBasicBlock(BB);
@@ -4727,7 +4740,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     
     SelectionDAG JSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &JSDAG;
-    SelectionDAGLowering JSDL(JSDAG, TLI, FuncInfo);
+    SelectionDAGLowering JSDL(JSDAG, TLI, *AA, FuncInfo);
     // Set the current basic block to the mbb we wish to insert the code into
     BB = JTCases[i].second.MBB;
     JSDL.setCurrentBasicBlock(BB);
@@ -4772,7 +4785,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
     SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &SDAG;
-    SelectionDAGLowering SDL(SDAG, TLI, FuncInfo);
+    SelectionDAGLowering SDL(SDAG, TLI, *AA, FuncInfo);
     
     // Set the current basic block to the mbb we wish to insert the code into
     BB = SwitchCases[i].ThisBB;

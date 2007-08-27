@@ -39,6 +39,7 @@ public:
   SSARegMap *RegMap;
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
+  AliasAnalysis *AA;
   std::vector<SDNode*> TopOrder;
   unsigned DAGSize;
   static char ID;
