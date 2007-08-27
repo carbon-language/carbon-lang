@@ -824,23 +824,32 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     int result = Context.compareFloatingType(lhs, rhs);
     
     if (result > 0) { // The left side is bigger, convert rhs. 
-      QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
-      if (!isCompAssign) promoteExprToType(rhsExpr, tMax);
-      return tMax;
+      rhs = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
+      if (!isCompAssign)
+        promoteExprToType(rhsExpr, rhs);
+    } else if (result < 0) { // The right side is bigger, convert lhs. 
+      lhs = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
+      if (!isCompAssign)
+        promoteExprToType(lhsExpr, lhs);
+    } 
+    // At this point, lhs and rhs have the same rank/size. Now, make sure the
+    // domains match. This is a requirement for our implementation, C99
+    // does not require this promotion.
+    if (lhs != rhs) { // Domains don't match, we have complex/float mix.
+      if (lhs->isRealFloatingType()) { // handle "double, _Complex double".
+        if (isCompAssign)
+          return rhs;
+        promoteExprToType(lhsExpr, rhs);
+      } else { // handle "_Complex double, double".
+        if (isCompAssign)
+          return lhs;
+        promoteExprToType(rhsExpr, lhs);
+      }
+      // Both expressions now have the same rank/domain.
+      return lhsExpr->getType();
     }
-    if (result < 0) { // The right side is bigger, convert lhs. 
-      QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
-      if (!isCompAssign) promoteExprToType(lhsExpr, tMax);
-      return tMax;
-    }
-    // The floating point types were ranked equally.
-    if (lhs->isComplexType()) { // handle "_Complex double, double".
-      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
-      return lhs;
-    }
-    // The right side is complex, handle "double, _Complex double".
-    if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
-    return rhs;
+    // The domain/size match, simply return lhs (which may have been converted).
+    return lhs;
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
