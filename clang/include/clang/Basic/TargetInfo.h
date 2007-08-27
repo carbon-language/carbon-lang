@@ -172,6 +172,20 @@ public:
     Align = WCharAlign;
   }
   
+  /// EnumTypePolicy - This enum value contains a list of the various policies
+  /// that a target can have about how enums are converted to integer types.
+  enum EnumTypePolicy {
+    AlwaysInt,      // 'int' or 'unsigned'
+    ShortestType    // -fshort-enums
+  };
+  
+  /// getEnumTypePolicy - get the target's policy for what type an enum should
+  /// be compatible with.
+  EnumTypePolicy getEnumTypePolicy(SourceLocation Loc) {
+    // FIXME: implement correctly
+    return AlwaysInt;
+  }
+  
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
   unsigned getIntMaxTWidth(SourceLocation Loc) {
