@@ -1,4 +1,4 @@
-//===- RaiseAllocations.cpp - Convert %malloc & %free calls to insts ------===//
+//===- RaiseAllocations.cpp - Convert @malloc & @free calls to insts ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -28,7 +28,7 @@ using namespace llvm;
 STATISTIC(NumRaised, "Number of allocations raised");
 
 namespace {
-  // RaiseAllocations - Turn %malloc and %free calls into the appropriate
+  // RaiseAllocations - Turn @malloc and @free calls into the appropriate
   // instruction.
   //
   class VISIBILITY_HIDDEN RaiseAllocations : public ModulePass {
@@ -65,7 +65,7 @@ ModulePass *llvm::createRaiseAllocationsPass() {
 // free functions.  If this is the case, grab the method pointers that the
 // module is using.
 //
-// Lookup %malloc and %free in the symbol table, for later use.  If they don't
+// Lookup @malloc and @free in the symbol table, for later use.  If they don't
 // exist, or are not external, we do not worry about converting calls to that
 // function into the appropriate instruction.
 //
