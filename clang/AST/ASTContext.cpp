@@ -685,14 +685,15 @@ static int getFloatingRank(QualType T) {
   }
 }
 
-/// getFloatingTypeOfSizeWithinDomain - Returns the either a real floating 
-/// point type or a complex type (based on typeDomain) of typeSize. 
-/// typeSize is expected to be a floating point type (real or complex).
+/// getFloatingTypeOfSizeWithinDomain - Returns a real floating 
+/// point or a complex type (based on typeDomain/typeSize). 
+/// 'typeDomain' is a real floating point or complex type.
+/// 'typeSize' is a real floating point or complex type.
 QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
   QualType typeSize, QualType typeDomain) const {
   if (typeDomain->isComplexType()) {
     switch (getFloatingRank(typeSize)) {
-    default: assert(0 && "convertRankToComplex(): illegal value for rank");
+    default: assert(0 && "getFloatingRank(): illegal value for rank");
     case FloatRank:      return FloatComplexTy;
     case DoubleRank:     return DoubleComplexTy;
     case LongDoubleRank: return LongDoubleComplexTy;
@@ -700,7 +701,7 @@ QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
   }
   if (typeDomain->isRealFloatingType()) {
     switch (getFloatingRank(typeSize)) {
-    default: assert(0 && "convertRankToComplex(): illegal value for rank");
+    default: assert(0 && "getFloatingRank(): illegal value for rank");
     case FloatRank:      return FloatTy;
     case DoubleRank:     return DoubleTy;
     case LongDoubleRank: return LongDoubleTy;

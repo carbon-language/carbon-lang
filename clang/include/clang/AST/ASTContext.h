@@ -164,9 +164,10 @@ public:
   /// different combos: float/float, float/complex, complex/complex.
   static QualType maxFloatingType(QualType lt, QualType rt);
 
-  /// getFloatingTypeOfSizeWithinDomain - Returns the either a real floating 
-  /// point type or a complex type (based on typeDomain) of typeSize. 
-  /// typeSize is expected to be a floating point type (real or complex).
+  /// getFloatingTypeOfSizeWithinDomain - Returns a real floating 
+  /// point or a complex type (based on typeDomain/typeSize). 
+  /// 'typeDomain' is a real floating point or complex type.
+  /// 'typeSize' is a real floating point or complex type.
   QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize, 
                                              QualType typeDomain) const;
 private:
