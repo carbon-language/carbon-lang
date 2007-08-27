@@ -803,7 +803,8 @@ void Parser::ParseEnumSpecifier(DeclSpec &DS) {
 void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   SourceLocation LBraceLoc = ConsumeBrace();
   
-  if (Tok.getKind() == tok::r_brace)
+  // C does not allow an empty enumerator-list, C++ does [dcl.enum].
+  if (Tok.getKind() == tok::r_brace && !getLang().CPlusPlus)
     Diag(Tok, diag::ext_empty_struct_union_enum, "enum");
   
   llvm::SmallVector<DeclTy*, 32> EnumConstantDecls;
