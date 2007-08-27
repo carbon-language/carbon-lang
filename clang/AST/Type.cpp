@@ -75,6 +75,18 @@ bool Type::isComplexType() const {
   return isa<ComplexType>(CanonicalType);
 }
 
+const BuiltinType *Type::getAsBuiltinType() const {
+  // If this is directly a builtin type, return it.
+  if (const BuiltinType *BTy = dyn_cast<BuiltinType>(this))
+    return BTy;
+  
+  // If this is a typedef for a builtin type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<BuiltinType>(CanonicalType))
+    return cast<BuiltinType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
+}
+
 const FunctionType *Type::getAsFunctionType() const {
   // If this is directly a function type, return it.
   if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
@@ -204,6 +216,12 @@ const OCUVectorType *Type::getAsOCUVectorType() const {
   return 0;
 }
 
+bool Type::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
+  const BuiltinType *lBuiltin = lhs->getAsBuiltinType();
+  const BuiltinType *rBuiltin = rhs->getAsBuiltinType();
+  
+  return lBuiltin->getKind() == rBuiltin->getKind();
+}
 
 // C99 6.2.7p1: If both are complete types, then the following additional
 // requirements apply...FIXME (handle compatibility across source files).
@@ -334,7 +352,7 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
     case Type::Tagged: // handle structures, unions
       return tagTypesAreCompatible(lcanon, rcanon);
     case Type::Builtin:
-      return false; 
+      return builtinTypesAreCompatible(lcanon, rcanon); 
     default:
       assert(0 && "unexpected type");
   }

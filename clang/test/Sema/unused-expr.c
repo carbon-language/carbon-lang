@@ -5,8 +5,7 @@ int foo(int X, int Y);
 void bar(volatile int *VP, int *P, int A,
          _Complex double C, volatile _Complex double VC) {
   
-  VP == P;             // expected-warning {{expression result unused}} \
-                          expected-warning {{comparison}}
+  VP == P;             // expected-warning {{expression result unused}}
   (void)A;
   (void)foo(1,2);      // no warning.
   

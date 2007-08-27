@@ -41,6 +41,7 @@ namespace clang {
   class TagType;
   class FunctionType;
   class OCUVectorType;
+  class BuiltinType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -262,6 +263,7 @@ public:
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs, and return a pointer to the best type
   // we can.
+  const BuiltinType *getAsBuiltinType() const;   
   const FunctionType *getAsFunctionType() const;   
   const PointerType *getAsPointerType() const;
   const ReferenceType *getAsReferenceType() const;
@@ -297,6 +299,7 @@ public:
   static bool referenceTypesAreCompatible(QualType, QualType); // C++ 5.17p6
   static bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
+  static bool builtinTypesAreCompatible(QualType, QualType);
 private:  
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;

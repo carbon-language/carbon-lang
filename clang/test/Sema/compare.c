@@ -6,3 +6,7 @@ int test(char *C) { // nothing here should warn.
   return C != 0;
 }
 
+int equal(char *a, const char *b)
+{
+    return a == b;
+}

@@ -1109,9 +1109,10 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   // All of the following pointer related warnings are GCC extensions, except
   // when handling null pointer constants. One day, we can consider making them
   // errors (when -pedantic-errors is enabled).
-  if (lType->isPointerType() && rType->isPointerType()) {
+  if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
     if (!LHSIsNull && !RHSIsNull &&
-        !Type::pointerTypesAreCompatible(lType, rType)) {
+        !Type::pointerTypesAreCompatible(lType.getUnqualifiedType(),
+                                         rType.getUnqualifiedType())) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());
