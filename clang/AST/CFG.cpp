@@ -210,6 +210,37 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       Block->setTerminator(C);
       return addStmt(C->getCond());
     }
+    
+    case Stmt::ParenExprClass:
+      return WalkAST(cast<ParenExpr>(S)->getSubExpr(),AlwaysAddStmt);
+    
+    case Stmt::BinaryOperatorClass: {
+      BinaryOperator* B = cast<BinaryOperator>(S);
+
+      if (B->isLogicalOp()) { // && or ||
+        CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
+        ConfluenceBlock->appendStmt(B);
+        FinishBlock(ConfluenceBlock);
+
+        // create the block evaluating the LHS
+        CFGBlock* LHSBlock = createBlock(false);
+        LHSBlock->addSuccessor(ConfluenceBlock);
+        LHSBlock->setTerminator(B);        
+        
+        // create the block evaluating the RHS
+        Succ = ConfluenceBlock;
+        Block = NULL;
+        CFGBlock* RHSBlock = Visit(B->getRHS());
+        LHSBlock->addSuccessor(RHSBlock);
+        
+        // Generate the blocks for evaluating the LHS.
+        Block = LHSBlock;
+        return addStmt(B->getLHS());                                    
+      }    
+
+      // Fall through to the default case.
+    }
+    
     default:
       if (AlwaysAddStmt) Block->appendStmt(S);
       return WalkAST_VisitChildren(S);
@@ -218,8 +249,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
 
 /// WalkAST_VisitChildren - Utility method to call WalkAST on the
 ///  children of a Stmt.
-CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S)
-{
+CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
   CFGBlock* B = Block;
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end() ;
        I != E; ++I)
@@ -833,11 +863,10 @@ public:
     OS << '\n';
   }
   
-  void VisitConditionalOperator(ConditionalOperator* C) {
-    C->printPretty(OS);
+  void VisitExpr(Expr* E) {
+    E->printPretty(OS);
     OS << '\n';
-  }
-                                                     
+  }                                                       
 };
 } // end anonymous namespace
 
