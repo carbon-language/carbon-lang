@@ -410,10 +410,12 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
   }
   // Perform checking for stack values returned by reference.
   else if (lhsType->isReferenceType()) {
-    if (DeclRefExpr *DR = EvalVal(RetValExp))
-      Diag(DR->getLocStart(), diag::warn_ret_stack_ref,
-           DR->getDecl()->getIdentifier()->getName(),
-           RetValExp->getSourceRange());
+    // Check for an implicit cast to a reference.
+    if (ImplicitCastExpr *I = dyn_cast<ImplicitCastExpr>(RetValExp))
+      if (DeclRefExpr *DR = EvalVal(I->getSubExpr()))
+        Diag(DR->getLocStart(), diag::warn_ret_stack_ref,
+             DR->getDecl()->getIdentifier()->getName(),
+             RetValExp->getSourceRange());
   }
 }
 
