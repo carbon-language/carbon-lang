@@ -145,9 +145,13 @@ Stmt::child_iterator BreakStmt::child_begin() { return NULL; }
 Stmt::child_iterator BreakStmt::child_end() { return NULL; }
 
 // ReturnStmt
-Stmt::child_iterator ReturnStmt::child_begin() { 
-  return reinterpret_cast<Stmt**>(&RetExpr); 
+Stmt::child_iterator ReturnStmt::child_begin() {
+  if (RetExpr) return reinterpret_cast<Stmt**>(&RetExpr);
+  else return NULL;
 }
 
-Stmt::child_iterator ReturnStmt::child_end() { return child_begin()+1; }
+Stmt::child_iterator ReturnStmt::child_end() { 
+  if (RetExpr) return reinterpret_cast<Stmt**>(&RetExpr)+1;
+  else return NULL;
+}
 
