@@ -821,16 +821,26 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // real or complex domain, to the precision of the other type. For example,
     // when combining a "long double" with a "double _Complex", the 
     // "double _Complex" is promoted to "long double _Complex".
-    if (Context.maxFloatingType(lhs, rhs) == lhs) {
-      // The left side is bigger, convert rhs within it's domain. 
+    int result = Context.compareFloatingType(lhs, rhs);
+    
+    if (result > 0) { // The left side is bigger, convert rhs. 
       QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
       if (!isCompAssign) promoteExprToType(rhsExpr, tMax);
       return tMax;
     }
-    // The right side is bigger, convert lhs within it's domain. 
-    QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
-    if (!isCompAssign) promoteExprToType(lhsExpr, tMax);
-    return tMax;
+    if (result < 0) { // The right side is bigger, convert lhs. 
+      QualType tMax = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
+      if (!isCompAssign) promoteExprToType(lhsExpr, tMax);
+      return tMax;
+    }
+    // The floating point types were ranked equally.
+    if (lhs->isComplexType()) { // handle "_Complex double, double".
+      if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
+      return lhs;
+    }
+    // The right side is complex, handle "double, _Complex double".
+    if (!isCompAssign) promoteExprToType(lhsExpr, rhs);
+    return rhs;
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
@@ -845,12 +855,17 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     }
     // We have two real floating types, float/complex combos were handled above.
     // Convert the smaller operand to the bigger result.
-    if (Context.maxFloatingType(lhs, rhs) == lhs) { // convert the rhs
+    int result = Context.compareFloatingType(lhs, rhs);
+    
+    if (result > 0) { // convert the rhs
       if (!isCompAssign) promoteExprToType(rhsExpr, lhs);
       return lhs;
     }
-    if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
-    return rhs;
+    if (result < 0) { // convert the lhs
+      if (!isCompAssign) promoteExprToType(lhsExpr, rhs); // convert the lhs
+      return rhs;
+    }
+    assert(0 && "Sema::UsualArithmeticConversions(): illegal float comparison");
   }
   // Finally, we have two differing integer types.
   if (Context.maxIntegerType(lhs, rhs) == lhs) { // convert the rhs

@@ -710,9 +710,15 @@ QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
   assert(0 && "getFloatingTypeOfSizeWithinDomain(): illegal domain");
 }
 
-// maxFloatingType - handles the simple case, both operands are floats.
-QualType ASTContext::maxFloatingType(QualType lt, QualType rt) {
-  return getFloatingRank(lt) > getFloatingRank(rt) ? lt : rt;
+/// compareFloatingType - Handles 3 different combos: 
+/// float/float, float/complex, complex/complex. 
+/// If lt > rt, return 1. If lt == rt, return 0. If lt < rt, return -1. 
+int ASTContext::compareFloatingType(QualType lt, QualType rt) {
+  if (getFloatingRank(lt) == getFloatingRank(rt))
+    return 0;
+  if (getFloatingRank(lt) > getFloatingRank(rt))
+    return 1;
+  return -1;
 }
 
 // maxIntegerType - Returns the highest ranked integer type. Handles 3 case:

@@ -160,9 +160,10 @@ public:
   /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
   static QualType maxIntegerType(QualType lhs, QualType rhs);
   
-  /// maxFloatingType - Returns the highest ranked float type. Handles 3
-  /// different combos: float/float, float/complex, complex/complex.
-  static QualType maxFloatingType(QualType lt, QualType rt);
+  /// compareFloatingType - Handles 3 different combos: 
+  /// float/float, float/complex, complex/complex. 
+  /// If lt > rt, return 1. If lt == rt, return 0. If lt < rt, return -1. 
+  static int compareFloatingType(QualType lt, QualType rt);
 
   /// getFloatingTypeOfSizeWithinDomain - Returns a real floating 
   /// point or a complex type (based on typeDomain/typeSize). 
