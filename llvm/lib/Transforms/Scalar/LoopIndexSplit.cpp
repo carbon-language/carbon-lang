@@ -752,21 +752,10 @@ bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
       && (Latch == Succ0 || Latch == Succ1))
     return false;
   
-  // If one of the split condition branch is post dominating other then loop 
-  // index split is not appropriate.
-  if (DT->dominates(Succ0, Latch) || DT->dominates(Succ1, Latch))
+  // If split condition branches heads do not have single predecessor, 
+  // SplitCondBlock, then is not possible to remove inactive branch.
+  if (!Succ0->getSinglePredecessor() || !Succ1->getSinglePredecessor())
     return false;
-  
-  // If one of the split condition branch is a predecessor of the other
-  // split condition branch head then do not split loop on this condition.
-  for(pred_iterator PI = pred_begin(Succ0), PE = pred_end(Succ0); 
-      PI != PE; ++PI)
-    if (Succ1 == *PI)
-      return false;
-  for(pred_iterator PI = pred_begin(Succ1), PE = pred_end(Succ1); 
-      PI != PE; ++PI)
-    if (Succ0 == *PI)
-      return false;
 
   // Finally this split condition is safe only if merge point for
   // split condition branch is loop latch. This check along with previous
