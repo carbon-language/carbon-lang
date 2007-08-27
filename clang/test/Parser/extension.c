@@ -7,3 +7,11 @@ __extension__ typedef struct
     long long int quot; 
     long long int rem; 
 }lldiv_t; 
+
+
+// Compound expr __extension__ marker.
+void bar() {
+  __extension__ int i;
+  int j;
+}
+

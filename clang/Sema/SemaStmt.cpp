@@ -48,6 +48,10 @@ Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
 Action::StmtResult 
 Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
                         StmtTy **Elts, unsigned NumElts) {
+  // FIXME: ISO C90 forbids mixed declarations and code
+  // Note that __extension__ can be around a decl.
+  
+  
   return new CompoundStmt((Stmt**)Elts, NumElts);
 }
 

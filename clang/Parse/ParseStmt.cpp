@@ -354,7 +354,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 ///
 ///       block-item:
 ///         declaration
-/// [GNU]   '__extension__' declaration [TODO]
+/// [GNU]   '__extension__' declaration
 ///         statement
 /// [OMP]   openmp-directive            [TODO]
 ///
@@ -392,11 +392,47 @@ Parser::StmtResult Parser::ParseCompoundStatementBody() {
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
-  // only allowed at the start of a compound stmt.
+  // only allowed at the start of a compound stmt regardless of the language.
   
   llvm::SmallVector<StmtTy*, 32> Stmts;
   while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
-    StmtResult R = ParseStatementOrDeclaration(false);
+    StmtResult R;
+    if (Tok.getKind() != tok::kw___extension__) {
+      R = ParseStatementOrDeclaration(false);
+    } else {
+      // __extension__ can start declarations and it can also be a unary
+      // operator for expressions.  Consume multiple __extension__ markers here
+      // until we can determine which is which.
+      SourceLocation ExtLoc = ConsumeToken();
+      while (Tok.getKind() == tok::kw___extension__)
+        ConsumeToken();
+      
+      // If this is the start of a declaration, parse it as such.
+      if (isDeclarationSpecifier()) {
+        // FIXME: Save the __extension__ on the decl as a node somehow.
+        // FIXME: disable extwarns.
+        R = Actions.ParseDeclStmt(ParseDeclaration(Declarator::BlockContext));
+      } else {
+        // Otherwise this was a unary __extension__ marker.  Parse the
+        // subexpression and add the __extension__ unary op. 
+        // FIXME: disable extwarns.
+        ExprResult Res = ParseCastExpression(false);
+        if (Res.isInvalid) {
+          SkipUntil(tok::semi);
+          continue;
+        }
+        
+        // Add the __extension__ node to the AST.
+        Res = Actions.ParseUnaryOp(ExtLoc, tok::kw___extension__, Res.Val);
+        if (Res.isInvalid)
+          continue;
+        
+        // Eat the semicolon at the end of stmt and convert the expr into a stmt.
+        ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+        R = Actions.ParseExprStmt(Res.Val);
+      }
+    }
+    
     if (!R.isInvalid && R.Val)
       Stmts.push_back(R.Val);
   }
