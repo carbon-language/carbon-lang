@@ -84,7 +84,6 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 
   default:
     if (!OnlyStatement && isDeclarationSpecifier()) {
-      // TODO: warn/disable if declaration is in the middle of a block and !C99.
       return Actions.ParseDeclStmt(ParseDeclaration(Declarator::BlockContext));
     } else if (Tok.getKind() == tok::r_brace) {
       Diag(Tok, diag::err_expected_statement);
@@ -305,7 +304,6 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   if (SubStmt.isInvalid)
     SubStmt = Actions.ParseNullStmt(ColonLoc);
   
-  // TODO: look up enclosing switch stmt.
   return Actions.ParseCaseStmt(CaseLoc, LHS.Val, DotDotDotLoc, RHSVal, ColonLoc,
                                SubStmt.Val);
 }
@@ -337,7 +335,6 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
   if (SubStmt.isInvalid)
     return true;
   
-  // TODO: look up enclosing switch stmt.
   return Actions.ParseDefaultStmt(DefaultLoc, ColonLoc, SubStmt.Val, CurScope);
 }
 

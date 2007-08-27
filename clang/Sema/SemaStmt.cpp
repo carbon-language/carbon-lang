@@ -47,12 +47,28 @@ Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
 
 Action::StmtResult 
 Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
-                        StmtTy **Elts, unsigned NumElts) {
-  // FIXME: ISO C90 forbids mixed declarations and code
-  // Note that __extension__ can be around a decl.
+                        StmtTy **elts, unsigned NumElts) {
+  Stmt **Elts = reinterpret_cast<Stmt**>(elts);
+  // If we're in C89 mode, check that we don't have any decls after stmts.  If
+  // so, emit an extension diagnostic.
+  if (!getLangOptions().C99 && !getLangOptions().CPlusPlus) {
+    // Note that __extension__ can be around a decl.
+    unsigned i = 0;
+    // Skip over all declarations.
+    for (; i != NumElts && isa<DeclStmt>(Elts[i]); ++i)
+      /*empty*/;
+
+    // We found the end of the list or a statement.  Scan for another declstmt.
+    for (; i != NumElts && !isa<DeclStmt>(Elts[i]); ++i)
+      /*empty*/;
+    
+    if (i != NumElts) {
+      Decl *D = cast<DeclStmt>(Elts[i])->getDecl();
+      Diag(D->getLocation(), diag::ext_mixed_decls_code);
+    }
+  }
   
-  
-  return new CompoundStmt((Stmt**)Elts, NumElts);
+  return new CompoundStmt(Elts, NumElts);
 }
 
 Action::StmtResult
