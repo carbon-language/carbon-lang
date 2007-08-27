@@ -227,13 +227,16 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     break;
   }
   case Type::Tagged:
-    RecordType *RT = dyn_cast<RecordType>(cast<TagType>(T));
-    if (!RT)
-      // FIXME: Handle enums.
+    TagType *TT = cast<TagType>(T);
+    if (RecordType *RT = dyn_cast<RecordType>(TT)) {
+      const RecordLayout &Layout = getRecordLayout(RT->getDecl(), L);
+      Size = Layout.getSize();
+      Align = Layout.getAlignment();
+    } else if (EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl())) {
+      return getTypeInfo(getEnumDeclIntegerType(ED), L);
+    } else {
       assert(0 && "Unimplemented type sizes!");
-    const RecordLayout &Layout = getRecordLayout(RT->getDecl(), L);
-    Size = Layout.getSize();
-    Align = Layout.getAlignment();
+    }
     break;
   }
   
@@ -307,6 +310,22 @@ const RecordLayout &ASTContext::getRecordLayout(const RecordDecl *D,
   
   NewEntry->SetLayout(RecordSize, RecordAlign, FieldOffsets);
   return *NewEntry;
+}
+
+/// getEnumDeclIntegerType - returns the integer type compatible with the
+/// given enum type.
+QualType ASTContext::getEnumDeclIntegerType(EnumDecl *ED) const {
+  if (EnumConstantDecl *C = ED->getEnumConstantList())
+    return C->getType();
+
+  // If the enum list is empty, it is typed as if it contained a single zero 
+  // element [C++ dcl.enum] and is illegal in C (as an extension, we treat it 
+  // the same as C++ does).
+  switch (Target.getEnumTypePolicy(ED->getLocation())) {
+  default: assert(0 && "Unknown enum layout policy");
+  case TargetInfo::AlwaysInt:    return UnsignedIntTy;   // 0 -> unsigned
+  case TargetInfo::ShortestType: return UnsignedCharTy;  // 0 -> unsigned char
+  }
 }
 
 
