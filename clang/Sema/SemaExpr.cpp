@@ -837,19 +837,16 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     // does not require this promotion.
     if (lhs != rhs) { // Domains don't match, we have complex/float mix.
       if (lhs->isRealFloatingType()) { // handle "double, _Complex double".
-        if (isCompAssign)
-          return rhs;
-        promoteExprToType(lhsExpr, rhs);
+        if (!isCompAssign)
+          promoteExprToType(lhsExpr, rhs);
+        return rhs;
       } else { // handle "_Complex double, double".
-        if (isCompAssign)
-          return lhs;
-        promoteExprToType(rhsExpr, lhs);
+        if (!isCompAssign)
+          promoteExprToType(rhsExpr, lhs);
+        return lhs;
       }
-      // Both expressions now have the same rank/domain.
-      return lhsExpr->getType();
     }
-    // The domain/size match, simply return lhs (which may have been converted).
-    return lhs;
+    return lhs; // The domain/size match exactly.
   }
   // Now handle "real" floating types (i.e. float, double, long double).
   if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
