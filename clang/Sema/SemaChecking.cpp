@@ -427,8 +427,8 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 ///  of a stack variable or (2) is something we cannot determine leads to
 ///  the address of a stack variable based on such local checking.
 ///
-///  EvalAddr processes expressions that are pointers, and EvalVal handles
-///  expressions that are rvalues or variable references.
+///  EvalAddr processes expressions that are pointers that are used as
+///  references (and not L-values).  EvalVal handles all other values.
 ///  At the base case of the recursion is a check for a DeclRefExpr* in 
 ///  the refers to a stack variable.
 ///
@@ -550,9 +550,10 @@ static DeclRefExpr* EvalAddr(Expr *E) {
 ///   See the comments for EvalAddr for more details.
 static DeclRefExpr* EvalVal(Expr *E) {
   
-  // We should only be called for evaluating non-pointer expressions.
-  assert (!E->getType()->isPointerType() && "EvalVal doesn't work on pointers");
-  
+  // We should only be called for evaluating non-pointer expressions, or
+  // expressions with a pointer type that are not used as references but instead
+  // are l-values (e.g., DeclRefExpr with a pointer type).
+    
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
