@@ -99,12 +99,17 @@ namespace llvm {
       VNInfo() : def(~1U), reg(0) {}
       VNInfo(unsigned d, unsigned r) : def(d), reg(r) {}
     };
-  private:
-    SmallVector<VNInfo, 4> ValueNumberInfo;
-  public:
 
+    typedef std::vector<VNInfo> VNInfoList;
+    VNInfoList ValueNumberInfo;
+
+  public:
     LiveInterval(unsigned Reg, float Weight)
       : reg(Reg), preference(0), weight(Weight) {
+    }
+
+    ~LiveInterval() {
+      ValueNumberInfo.clear();
     }
 
     typedef Ranges::iterator iterator;
@@ -115,6 +120,13 @@ namespace llvm {
     const_iterator begin() const { return ranges.begin(); }
     const_iterator end() const  { return ranges.end(); }
 
+    typedef VNInfoList::iterator vni_iterator;
+    vni_iterator vni_begin() { return ValueNumberInfo.begin(); }
+    vni_iterator vni_end() { return ValueNumberInfo.end(); }
+
+    typedef VNInfoList::const_iterator const_vni_iterator;
+    const_vni_iterator vni_begin() const { return ValueNumberInfo.begin(); }
+    const_vni_iterator vni_end() const { return ValueNumberInfo.end(); }
 
     /// advanceTo - Advance the specified iterator to point to the LiveRange
     /// containing the specified position, or end() if the position is past the
@@ -128,17 +140,37 @@ namespace llvm {
       return I;
     }
 
-    void swap(LiveInterval& other) {
-      std::swap(reg, other.reg);
-      std::swap(weight, other.weight);
-      std::swap(ranges, other.ranges);
-      std::swap(ValueNumberInfo, other.ValueNumberInfo);
-    }
-
     bool containsOneValue() const { return ValueNumberInfo.size() == 1; }
 
     unsigned getNumValNums() const { return ValueNumberInfo.size(); }
     
+    /// getValNumInfo - Returns a copy of the specified val#.
+    ///
+    inline VNInfo& getValNumInfo(unsigned ValNo) {
+      return ValueNumberInfo[ValNo];
+    }
+    inline const VNInfo& getValNumInfo(unsigned ValNo) const {
+      return ValueNumberInfo[ValNo];
+    }
+    
+    /// copyValNumInfo - Copy the value number info for one value number to
+    /// another.
+    void copyValNumInfo(unsigned DstValNo, unsigned SrcValNo) {
+      VNInfo &vnd = getValNumInfo(DstValNo);
+      const VNInfo &vns = getValNumInfo(SrcValNo);
+      vnd.def = vns.def;
+      vnd.reg = vns.reg;
+      vnd.kills = vns.kills;
+    }
+    void copyValNumInfo(unsigned DstValNo, const LiveInterval &SrcLI,
+                        unsigned SrcValNo) {
+      VNInfo &vnd = getValNumInfo(DstValNo);
+      const VNInfo &vns = SrcLI.getValNumInfo(SrcValNo);
+      vnd.def = vns.def;
+      vnd.reg = vns.reg;
+      vnd.kills = vns.kills;
+    }
+
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     unsigned getNextValue(unsigned MIIdx, unsigned SrcReg) {
@@ -149,44 +181,38 @@ namespace llvm {
     /// getDefForValNum - Return the machine instruction index that defines the
     /// specified value number.
     unsigned getDefForValNum(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
-      return ValueNumberInfo[ValNo].def;
+      return getValNumInfo(ValNo).def;
     }
     
     /// getSrcRegForValNum - If the machine instruction that defines the
     /// specified value number is a copy, returns the source register. Otherwise,
     /// returns zero.
     unsigned getSrcRegForValNum(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
-      return ValueNumberInfo[ValNo].reg;
+      return getValNumInfo(ValNo).reg;
     }
 
     /// setDefForValNum - Set the machine instruction index that defines the
     /// specified value number. 
     void setDefForValNum(unsigned ValNo, unsigned NewDef) {
-      assert(ValNo < ValueNumberInfo.size());
-      ValueNumberInfo[ValNo].def = NewDef;
+      getValNumInfo(ValNo).def = NewDef;
     }
     
     /// setSrcRegForValNum - Set the source register of the specified value
     /// number. 
     void setSrcRegForValNum(unsigned ValNo, unsigned NewReg) {
-      assert(ValNo < ValueNumberInfo.size());
-      ValueNumberInfo[ValNo].reg = NewReg;
+      getValNumInfo(ValNo).reg = NewReg;
     }
 
     /// getKillsForValNum - Return the kill instruction indexes of the specified
     /// value number.
     const SmallVector<unsigned, 4> &getKillsForValNum(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
-      return ValueNumberInfo[ValNo].kills;
+      return getValNumInfo(ValNo).kills;
     }
 
     /// addKillForValNum - Add a kill instruction index to the specified value
     /// number.
     void addKillForValNum(unsigned ValNo, unsigned KillIdx) {
-      assert(ValNo < ValueNumberInfo.size());
-      SmallVector<unsigned, 4> &kills = ValueNumberInfo[ValNo].kills;
+      SmallVector<unsigned, 4> &kills = getValNumInfo(ValNo).kills;
       if (kills.empty()) {
         kills.push_back(KillIdx);
       } else {
@@ -213,14 +239,13 @@ namespace llvm {
     /// the specified value number.
     void addKillsForValNum(unsigned ValNo,
                            const SmallVector<unsigned, 4> &kills) {
-      addKills(ValueNumberInfo[ValNo], kills);
+      addKills(getValNumInfo(ValNo), kills);
     }
 
     /// isKillForValNum - Returns true if KillIdx is a kill of the specified
     /// val#.
     bool isKillForValNum(unsigned ValNo, unsigned KillIdx) const {
-      assert(ValNo < ValueNumberInfo.size());
-      const SmallVector<unsigned, 4> &kills = ValueNumberInfo[ValNo].kills;
+      const SmallVector<unsigned, 4> &kills = getValNumInfo(ValNo).kills;
       SmallVector<unsigned, 4>::const_iterator
         I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
       if (I == kills.end())
@@ -244,15 +269,13 @@ namespace llvm {
     /// removeKillForValNum - Remove the specified kill from the list of kills
     /// of the specified val#.
     bool removeKillForValNum(unsigned ValNo, unsigned KillIdx) {
-      assert(ValNo < ValueNumberInfo.size());
-      return removeKill(ValueNumberInfo[ValNo], KillIdx);
+      return removeKill(getValNumInfo(ValNo), KillIdx);
     }
 
     /// removeKillForValNum - Remove all the kills in specified range
     /// [Start, End] of the specified val#.
     void removeKillForValNum(unsigned ValNo, unsigned Start, unsigned End) {
-      assert(ValNo < ValueNumberInfo.size());
-      SmallVector<unsigned, 4> &kills = ValueNumberInfo[ValNo].kills;
+      SmallVector<unsigned, 4> &kills = getValNumInfo(ValNo).kills;
       SmallVector<unsigned, 4>::iterator
         I = std::lower_bound(kills.begin(), kills.end(), Start);
       SmallVector<unsigned, 4>::iterator
@@ -278,32 +301,9 @@ namespace llvm {
     bool replaceKillForValNum(unsigned ValNo, unsigned OldKill,
                               unsigned NewKill) {
       assert(ValNo < ValueNumberInfo.size());
-      return replaceKill(ValueNumberInfo[ValNo], OldKill, NewKill);
+      return replaceKill(getValNumInfo(ValNo), OldKill, NewKill);
     }
     
-    /// getValNumInfo - Returns a copy of the specified val#.
-    ///
-    VNInfo getValNumInfo(unsigned ValNo) const {
-      assert(ValNo < ValueNumberInfo.size());
-      return ValueNumberInfo[ValNo];
-    }
-    
-    /// setValNumInfo - Change the value number info for the specified
-    /// value number.
-    void setValNumInfo(unsigned ValNo, const VNInfo &I) {
-      ValueNumberInfo[ValNo] = I;
-    }
-
-    /// copyValNumInfo - Copy the value number info for one value number to
-    /// another.
-    void copyValNumInfo(unsigned DstValNo, unsigned SrcValNo) {
-      ValueNumberInfo[DstValNo] = ValueNumberInfo[SrcValNo];
-    }
-    void copyValNumInfo(unsigned DstValNo, const LiveInterval &SrcLI,
-                        unsigned SrcValNo) {
-      ValueNumberInfo[DstValNo] = SrcLI.ValueNumberInfo[SrcValNo];
-    }
-
     /// MergeValueNumberInto - This method is called when two value nubmers
     /// are found to be equivalent.  This eliminates V1, replacing all
     /// LiveRanges with the V1 value number with the V2 value number.  This can

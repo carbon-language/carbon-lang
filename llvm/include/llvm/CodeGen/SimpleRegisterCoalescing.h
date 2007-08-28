@@ -105,7 +105,7 @@ namespace llvm {
     /// physreg, this method always canonicalizes DestInt to be it.  The output
     /// "SrcInt" will not have been modified, so we can use this information
     /// below to update aliases.
-    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS);
+    bool JoinIntervals(LiveInterval &LHS, LiveInterval &RHS, bool &Swapped);
     
     /// SimpleJoin - Attempt to join the specified interval into this one. The
     /// caller of this method must guarantee that the RHS only contains a single

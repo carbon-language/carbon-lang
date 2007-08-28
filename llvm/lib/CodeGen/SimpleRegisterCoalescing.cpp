@@ -309,7 +309,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   // Otherwise, if one of the intervals being joined is a physreg, this method
   // always canonicalizes DstInt to be it.  The output "SrcInt" will not have
   // been modified, so we can use this information below to update aliases.
-  if (JoinIntervals(DstInt, SrcInt)) {
+  bool Swapped = false;
+  if (JoinIntervals(DstInt, SrcInt, Swapped)) {
     if (isDead) {
       // Result of the copy is dead. Propagate this property.
       if (SrcStart == 0) {
@@ -330,8 +331,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 
     if (isShorten || isDead) {
       // Shorten the destination live interval.
-      if (repSrcReg == DstInt.reg)
-        DstInt.removeRange(RemoveStart, RemoveEnd);
+      if (Swapped)
+        SrcInt.removeRange(RemoveStart, RemoveEnd);
     }
   } else {
     // Coalescing failed.
@@ -345,9 +346,12 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     return false;
   }
 
-  bool Swapped = repSrcReg == DstInt.reg;
-  if (Swapped)
+  LiveInterval *ResSrcInt = &SrcInt;
+  LiveInterval *ResDstInt = &DstInt;
+  if (Swapped) {
     std::swap(repSrcReg, repDstReg);
+    std::swap(ResSrcInt, ResDstInt);
+  }
   assert(MRegisterInfo::isVirtualRegister(repSrcReg) &&
          "LiveInterval::join didn't work right!");
                                
@@ -356,15 +360,15 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   // have clobbered values for this range.
   if (MRegisterInfo::isPhysicalRegister(repDstReg)) {
     // Unset unnecessary kills.
-    if (!DstInt.containsOneValue()) {
-      for (LiveInterval::Ranges::const_iterator I = SrcInt.begin(),
-             E = SrcInt.end(); I != E; ++I)
+    if (!ResDstInt->containsOneValue()) {
+      for (LiveInterval::Ranges::const_iterator I = ResSrcInt->begin(),
+             E = ResSrcInt->end(); I != E; ++I)
         unsetRegisterKills(I->start, I->end, repDstReg);
     }
 
     // Update the liveintervals of sub-registers.
     for (const unsigned *AS = mri_->getSubRegisters(repDstReg); *AS; ++AS)
-      li_->getInterval(*AS).MergeInClobberRanges(SrcInt);
+      li_->getInterval(*AS).MergeInClobberRanges(*ResSrcInt);
   } else {
     // Merge use info if the destination is a virtual register.
     LiveVariables::VarInfo& dVI = lv_->getVarInfo(repDstReg);
@@ -372,17 +376,13 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     dVI.NumUses += sVI.NumUses;
   }
 
-  DOUT << "\n\t\tJoined.  Result = "; DstInt.print(DOUT, mri_);
+  DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, mri_);
   DOUT << "\n";
 
   // Remember these liveintervals have been joined.
   JoinedLIs.set(repSrcReg - MRegisterInfo::FirstVirtualRegister);
   if (MRegisterInfo::isVirtualRegister(repDstReg))
     JoinedLIs.set(repDstReg - MRegisterInfo::FirstVirtualRegister);
-
-  // If the intervals were swapped by Join, swap them back so that the register
-  // mapping (in the r2i map) is correct.
-  if (Swapped) SrcInt.swap(DstInt);
 
   // repSrcReg is guarateed to be the register whose live interval that is
   // being merged.
@@ -586,7 +586,8 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
 /// physreg, this method always canonicalizes LHS to be it.  The output
 /// "RHS" will not have been modified, so we can use this information
 /// below to update aliases.
-bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RHS) {
+bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
+                                             LiveInterval &RHS, bool &Swapped) {
   // Compute the final value assignment, assuming that the live ranges can be
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
@@ -815,8 +816,17 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS, LiveInterval &RH
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
   // intervals to coalesce themselves now.
-  LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0],
-           ValueNumberInfo);
+  if ((RHS.ranges.size() > LHS.ranges.size() &&
+      MRegisterInfo::isVirtualRegister(LHS.reg)) ||
+      MRegisterInfo::isPhysicalRegister(RHS.reg)) {
+    RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0],
+             ValueNumberInfo);
+    Swapped = true;
+  } else {
+    LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0],
+             ValueNumberInfo);
+    Swapped = false;
+  }
   return true;
 }
 

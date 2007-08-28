@@ -288,25 +288,12 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
                         int *RHSValNoAssignments, 
                         SmallVector<VNInfo, 16> &NewValueNumberInfo) {
-  
-  // Try to do the least amount of work possible.  In particular, if there are
-  // more liverange chunks in the other set than there are in the 'this' set,
-  // swap sets to merge the fewest chunks in possible.
-  //
-  // Also, if one range is a physreg and one is a vreg, we always merge from the
-  // vreg into the physreg, which leaves the vreg intervals pristine.
-  if ((Other.ranges.size() > ranges.size() &&
-      MRegisterInfo::isVirtualRegister(reg)) ||
-      MRegisterInfo::isPhysicalRegister(Other.reg)) {
-    swap(Other);
-    std::swap(LHSValNoAssignments, RHSValNoAssignments);
-  }
 
   // Determine if any of our live range values are mapped.  This is uncommon, so
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
   for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
-    if (ValueNumberInfo[i].def == ~1U) continue;  // tombstone value #
+    if (getDefForValNum(i) == ~1U) continue;  // tombstone value #
     if (i != (unsigned)LHSValNoAssignments[i]) {
       MustMapCurValNos = true;
       break;
@@ -345,7 +332,9 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
 
   // Update val# info first. Increasing live ranges may invalidate some kills.
   ValueNumberInfo.clear();
-  ValueNumberInfo.append(NewValueNumberInfo.begin(), NewValueNumberInfo.end());
+  for (SmallVector<VNInfo, 16>::iterator I = NewValueNumberInfo.begin(),
+         E = NewValueNumberInfo.end(); I != E; ++I)
+    ValueNumberInfo.push_back(*I);
 
   // Okay, now insert the RHS live ranges into the LHS.
   iterator InsertPos = begin();
@@ -472,7 +461,7 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
       ValueNumberInfo.pop_back();
     } while (ValueNumberInfo.back().def == ~1U);
   } else {
-    ValueNumberInfo[V1].def = ~1U;
+    setDefForValNum(V1, ~1U);
   }
 }
 
@@ -511,22 +500,25 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
   // Print value number info.
   if (getNumValNums()) {
     OS << "  ";
-    for (unsigned i = 0; i != getNumValNums(); ++i) {
-      if (i) OS << " ";
-      OS << i << "@";
-      if (ValueNumberInfo[i].def == ~1U) {
+    unsigned vnum = 0;
+    for (const_vni_iterator i = vni_begin(), e = vni_end(); i != e;
+         ++i, ++vnum) {
+      const VNInfo &vni = *i;
+      if (vnum) OS << " ";
+      OS << vnum << "@";
+      if (vni.def == ~1U) {
         OS << "x";
       } else {
-        if (ValueNumberInfo[i].def == ~0U)
+        if (vni.def == ~0U)
           OS << "?";
         else
-          OS << ValueNumberInfo[i].def;
-        unsigned e = ValueNumberInfo[i].kills.size();
-        if (e) {
+          OS << vni.def;
+        unsigned ee = vni.kills.size();
+        if (ee) {
           OS << "-(";
-          for (unsigned j = 0; j != e; ++j) {
-            OS << ValueNumberInfo[i].kills[j];
-            if (j != e-1)
+          for (unsigned j = 0; j != ee; ++j) {
+            OS << vni.kills[j];
+            if (j != ee-1)
               OS << " ";
           }
           OS << ")";
