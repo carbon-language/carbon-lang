@@ -83,7 +83,6 @@ public:
   
   CFGBlock* VisitStmt(Stmt* Statement);
   CFGBlock* VisitNullStmt(NullStmt* Statement);
-  CFGBlock* VisitParenExpr(ParenExpr* Statement);
   CFGBlock* VisitCompoundStmt(CompoundStmt* C);
   CFGBlock* VisitIfStmt(IfStmt* I);
   CFGBlock* VisitReturnStmt(ReturnStmt* R);
@@ -210,10 +209,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       Block->setTerminator(C);
       return addStmt(C->getCond());
     }
-    
-    case Stmt::ParenExprClass:
-      return WalkAST(cast<ParenExpr>(S)->getSubExpr(),AlwaysAddStmt);
-    
+
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
 
@@ -276,11 +272,6 @@ CFGBlock* CFGBuilder::VisitStmt(Stmt* Statement) {
 CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
   return Block;
 }
-
-CFGBlock* CFGBuilder::VisitParenExpr(ParenExpr* Statement) {
-  return Visit(Statement->getSubExpr());
-}
-  
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
   //   The value returned from this function is the last created CFGBlock
