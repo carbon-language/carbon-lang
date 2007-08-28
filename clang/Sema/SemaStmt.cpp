@@ -446,23 +446,27 @@ Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
 
 Action::StmtResult 
 Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
-                   StmtTy *First, ExprTy *Second, ExprTy *Third,
-                   SourceLocation RParenLoc, StmtTy *Body) {
+                   StmtTy *first, ExprTy *second, ExprTy *third,
+                   SourceLocation RParenLoc, StmtTy *body) {
+  Stmt *First  = static_cast<Stmt*>(first);
+  Expr *Second = static_cast<Expr*>(second);
+  Expr *Third  = static_cast<Expr*>(third);
+  Stmt *Body  = static_cast<Stmt*>(body);
+  
   if (First) {
     // C99 6.8.5p3: FIXME. Need to hack Parser::ParseForStatement() and
     // declaration support to create a DeclStmt node. Once this is done, 
     // we can test for DeclStmt vs. Expr (already a sub-class of Stmt).
   }
   if (Second) {
-    Expr *testExpr = (Expr *)Second;
-    DefaultFunctionArrayConversion(testExpr);
-    QualType testType = testExpr->getType();
+    DefaultFunctionArrayConversion(Second);
+    QualType SecondType = Second->getType();
     
-    if (!testType->isScalarType()) // C99 6.8.5p2
+    if (!SecondType->isScalarType()) // C99 6.8.5p2
       return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
-               testType.getAsString(), testExpr->getSourceRange());
+               SecondType.getAsString(), Second->getSourceRange());
   }
-  return new ForStmt((Stmt*)First, (Expr*)Second, (Expr*)Third, (Stmt*)Body);
+  return new ForStmt(First, Second, Third, Body);
 }
 
 
