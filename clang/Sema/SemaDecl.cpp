@@ -969,10 +969,6 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
     }
   }
   
-  // TODO: If the result value doesn't fit in an int, it must be a long or long
-  // long value.  ISO C does not support this, but GCC does as an extension,
-  // emit a warning.
-  
   EnumConstantDecl *New = new EnumConstantDecl(IdLoc, Id, EltTy, Val, EnumVal,
                                                LastEnumConst);
   
@@ -987,6 +983,11 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
                          DeclTy **Elements, unsigned NumElements) {
   EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
   assert(!Enum->isDefinition() && "Enum redefinitions can't reach here");
+  
+  // TODO: If the result value doesn't fit in an int, it must be a long or long
+  // long value.  ISO C does not support this, but GCC does as an extension,
+  // emit a warning.
+  
   
   // Verify that all the values are okay, and reverse the list.
   EnumConstantDecl *EltList = 0;
