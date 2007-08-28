@@ -31,13 +31,14 @@ createTargetAsmInfo() const
 }
 
 // DataLayout --> Big-endian, 32-bit pointer/ABI/alignment
-//
-// FrameInfo  --> StackGrowsDown, 8 bytes aligned, 
-//                LOA : 0
+// The stack is always 8 byte aligned
+// On function prologue, the stack is created by decrementing
+// its pointer. Once decremented, all references are done with positive
+// offset from the stack/frame pointer, so StackGrowsUp is used.
 MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS): 
   Subtarget(*this, M, FS), DataLayout("E-p:32:32:32"), 
-  InstrInfo(*this), FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0),
+  InstrInfo(*this), FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
   TLInfo(*this) {}
 
 // return 0 and must specify -march to gen MIPS code.

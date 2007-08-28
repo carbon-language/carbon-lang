@@ -27,6 +27,10 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   
   MipsRegisterInfo(const TargetInstrInfo &tii);
 
+  /// getRegisterNumbering - Given the enum value for some register, e.g.
+  /// Mips::RA, return the number that it corresponds to (e.g. 31).
+  static unsigned getRegisterNumbering(unsigned RegEnum);
+
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI,
@@ -62,6 +66,7 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
+  /// Stack Frame Processing Methods
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 
@@ -70,11 +75,11 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
   
-  // Debug information queries.
+  /// Debug information queries.
   unsigned getRARegister() const;
   unsigned getFrameRegister(MachineFunction &MF) const;
 
-  // Exception handling queries.
+  /// Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
 };
