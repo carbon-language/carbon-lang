@@ -54,8 +54,11 @@ ViewISelDAGs("view-isel-dags", cl::Hidden,
 static cl::opt<bool>
 ViewSchedDAGs("view-sched-dags", cl::Hidden,
           cl::desc("Pop up a window to show sched dags as they are processed"));
+static cl::opt<bool>
+ViewSUnitDAGs("view-sunit-dags", cl::Hidden,
+          cl::desc("Pop up a window to show SUnit dags after they are processed"));
 #else
-static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0;
+static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0, ViewSUnitDAGs = 0;
 #endif
 
 //===---------------------------------------------------------------------===//
@@ -4842,6 +4845,9 @@ void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   
   ScheduleDAG *SL = Ctor(this, &DAG, BB);
   BB = SL->Run();
+
+  if (ViewSUnitDAGs) SL->viewGraph();
+
   delete SL;
 }
 

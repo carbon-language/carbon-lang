@@ -17,6 +17,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
@@ -191,6 +192,11 @@ namespace llvm {
 
     virtual ~ScheduleDAG() {}
 
+    /// viewGraph - Pop up a GraphViz/gv window with the ScheduleDAG rendered
+    /// using 'dot'.
+    ///
+    void viewGraph();
+  
     /// Run - perform scheduling.
     ///
     MachineBasicBlock *Run();
@@ -315,6 +321,68 @@ namespace llvm {
   ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
                                       SelectionDAG *DAG,
                                       MachineBasicBlock *BB);
+
+  class SUnitIterator : public forward_iterator<SUnit, ptrdiff_t> {
+    SUnit *Node;
+    unsigned Operand;
+
+    SUnitIterator(SUnit *N, unsigned Op) : Node(N), Operand(Op) {}
+  public:
+    bool operator==(const SUnitIterator& x) const {
+      return Operand == x.Operand;
+    }
+    bool operator!=(const SUnitIterator& x) const { return !operator==(x); }
+
+    const SUnitIterator &operator=(const SUnitIterator &I) {
+      assert(I.Node == Node && "Cannot assign iterators to two different nodes!");
+      Operand = I.Operand;
+      return *this;
+    }
+
+    pointer operator*() const {
+      return Node->Preds[Operand].first;
+    }
+    pointer operator->() const { return operator*(); }
+
+    SUnitIterator& operator++() {                // Preincrement
+      ++Operand;
+      return *this;
+    }
+    SUnitIterator operator++(int) { // Postincrement
+      SUnitIterator tmp = *this; ++*this; return tmp;
+    }
+
+    static SUnitIterator begin(SUnit *N) { return SUnitIterator(N, 0); }
+    static SUnitIterator end  (SUnit *N) {
+      return SUnitIterator(N, N->Preds.size());
+    }
+
+    unsigned getOperand() const { return Operand; }
+    const SUnit *getNode() const { return Node; }
+    bool isChain() const { return Node->Preds[Operand].second; }
+  };
+
+  template <> struct GraphTraits<SUnit*> {
+    typedef SUnit NodeType;
+    typedef SUnitIterator ChildIteratorType;
+    static inline NodeType *getEntryNode(SUnit *N) { return N; }
+    static inline ChildIteratorType child_begin(NodeType *N) {
+      return SUnitIterator::begin(N);
+    }
+    static inline ChildIteratorType child_end(NodeType *N) {
+      return SUnitIterator::end(N);
+    }
+  };
+
+  template <> struct GraphTraits<ScheduleDAG*> : public GraphTraits<SUnit*> {
+    typedef std::vector<SUnit>::iterator nodes_iterator;
+    static nodes_iterator nodes_begin(ScheduleDAG *G) {
+      return G->SUnits.begin();
+    }
+    static nodes_iterator nodes_end(ScheduleDAG *G) {
+      return G->SUnits.end();
+    }
+  };
 }
 
 #endif

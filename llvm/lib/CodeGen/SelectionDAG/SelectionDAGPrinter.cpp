@@ -15,6 +15,7 @@
 #include "llvm/Function.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -243,3 +244,72 @@ void SelectionDAG::setGraphColor(const SDNode *N, const char *Color) {
 #endif
 }
 
+namespace llvm {
+  template<>
+  struct DOTGraphTraits<ScheduleDAG*> : public DefaultDOTGraphTraits {
+    static std::string getGraphName(const ScheduleDAG *G) {
+      return DOTGraphTraits<SelectionDAG*>::getGraphName(&G->DAG);
+    }
+
+    static bool renderGraphFromBottomUp() {
+      return true;
+    }
+    
+    static bool hasNodeAddressLabel(const SUnit *Node,
+                                    const ScheduleDAG *Graph) {
+      return true;
+    }
+    
+    /// If you want to override the dot attributes printed for a particular
+    /// edge, override this method.
+    template<typename EdgeIter>
+    static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
+      if (EI.isChain())
+        return "color=blue,style=dashed";
+      return "";
+    }
+    
+
+    static std::string getNodeLabel(const SUnit *Node,
+                                    const ScheduleDAG *Graph);
+    static std::string getNodeAttributes(const SUnit *N,
+                                         const ScheduleDAG *Graph) {
+      return "shape=Mrecord";
+    }
+
+    static void addCustomGraphFeatures(ScheduleDAG *G,
+                                       GraphWriter<ScheduleDAG*> &GW) {
+      GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
+      if (G->DAG.getRoot().Val)
+        GW.emitEdge(0, -1, G->SUnitMap[G->DAG.getRoot().Val], -1, "");
+    }
+  };
+}
+
+std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
+                                                       const ScheduleDAG *G) {
+  std::string Op;
+
+  for (unsigned i = 0; i < SU->FlaggedNodes.size(); ++i) {
+    Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->FlaggedNodes[i],
+                                                      &G->DAG) + "\n";
+  }
+
+  Op += DOTGraphTraits<SelectionDAG*>::getNodeLabel(SU->Node, &G->DAG);
+
+  return Op;
+}
+
+
+/// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
+/// rendered using 'dot'.
+///
+void ScheduleDAG::viewGraph() {
+// This code is only for debugging!
+#ifndef NDEBUG
+  ViewGraph(this, "dag." + DAG.getMachineFunction().getFunction()->getName());
+#else
+  cerr << "ScheduleDAG::viewGraph is only available in debug builds on "
+       << "systems with Graphviz or gv!\n";
+#endif  // NDEBUG
+}
