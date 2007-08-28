@@ -367,6 +367,8 @@ DIAG(err_expected_semi_after_expr, ERROR,
      "expected ';' after expression")
 DIAG(err_expected_semi_for, ERROR,
      "expected ';' in 'for' statement specifier")
+DIAG(err_non_variable_decl_in_for, ERROR,
+     "declaration of non-local variable in 'for' loop")
 DIAG(err_expected_colon_after, ERROR,
      "expected ':' after %0")
 DIAG(err_label_end_of_compound_statement, ERROR,

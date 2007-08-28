@@ -453,10 +453,17 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   Expr *Third  = static_cast<Expr*>(third);
   Stmt *Body  = static_cast<Stmt*>(body);
   
-  if (First) {
-    // C99 6.8.5p3: FIXME. Need to hack Parser::ParseForStatement() and
-    // declaration support to create a DeclStmt node. Once this is done, 
-    // we can test for DeclStmt vs. Expr (already a sub-class of Stmt).
+  if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
+    // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
+    // identifiers for objects having storage class 'auto' or 'register'.
+    for (Decl *D = DS->getDecl(); D; D = D->getNextDeclarator()) {
+      BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(D);
+      if (BVD && !BVD->hasLocalStorage())
+        BVD = 0;
+      if (BVD == 0)
+        Diag(D->getLocation(), diag::err_non_variable_decl_in_for);
+      // FIXME: mark decl erroneous!
+    }
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
