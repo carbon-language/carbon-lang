@@ -640,7 +640,7 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
 /// [GNU]   declarator[opt] ':' constant-expression attributes[opt]
 ///
 void Parser::ParseStructDeclaration(DeclTy *TagDecl,
-  llvm::SmallVector<DeclTy*, 32> &FieldDecls) {
+  llvm::SmallVectorImpl<DeclTy*> &FieldDecls) {
   // FIXME: When __extension__ is specified, disable extension diagnostics.
   if (Tok.getKind() == tok::kw___extension__)
     ConsumeToken();
