@@ -155,11 +155,6 @@ public:
   //                            Type Operators
   //===--------------------------------------------------------------------===//
   
-  /// getIntegerBitwidth - Return the bitwidth of the specified integer type
-  /// according to the target.  'Loc' specifies the source location that
-  /// requires evaluation of this property.
-  unsigned getIntegerBitwidth(QualType T, SourceLocation Loc);
-  
   /// maxIntegerType - Returns the highest ranked integer type. Handles 3
   /// different type combos: unsigned/unsigned, signed/signed, signed/unsigned.
   static QualType maxIntegerType(QualType lhs, QualType rhs);
