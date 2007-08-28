@@ -286,7 +286,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
   // All of these full declarators require an identifier.  If it doesn't have
   // one, the ParsedFreeStandingDeclSpec action should be used.
   if (II == 0) {
-    Diag(D.getDeclSpec().getSourceRange().Begin(), diag::err_declarator_need_ident,
+    Diag(D.getDeclSpec().getSourceRange().Begin(),
+         diag::err_declarator_need_ident,
          D.getDeclSpec().getSourceRange(), D.getSourceRange());
     return 0;
   }
