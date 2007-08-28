@@ -101,6 +101,7 @@ private:
   CFGBlock* addStmt(Stmt* S);
   CFGBlock* WalkAST(Stmt* S, bool AlwaysAddStmt);
   CFGBlock* WalkAST_VisitChildren(Stmt* S);
+  CFGBlock* WalkAST_VisitVarDecl(VarDecl* D);
   void FinishBlock(CFGBlock* B);
   
 };
@@ -185,7 +186,8 @@ CFGBlock* CFGBuilder::addStmt(Stmt* S) {
 }
 
 /// WalkAST - Used by addStmt to walk the subtree of a statement and
-///   add extra blocks for ternary operators, &&, and ||.
+///   add extra blocks for ternary operators, &&, and ||.  We also
+///   process "," and DeclStmts (which may contain nested control-flow).
 CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {    
   switch (S->getStmtClass()) {
     case Stmt::ConditionalOperatorClass: {
@@ -210,6 +212,13 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       return addStmt(C->getCond());
     }
 
+    case Stmt::DeclStmtClass:      
+      if (VarDecl* V = dyn_cast<VarDecl>(cast<DeclStmt>(S)->getDecl())) {      
+        Block->appendStmt(S);
+        return WalkAST_VisitVarDecl(V);
+      }
+      else return Block;
+
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
 
@@ -232,6 +241,11 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
         // Generate the blocks for evaluating the LHS.
         Block = LHSBlock;
         return addStmt(B->getLHS());                                    
+      }
+      else if (B->getOpcode() == BinaryOperator::Comma) { // ,
+        Block->appendStmt(B);
+        addStmt(B->getRHS());
+        return addStmt(B->getLHS());
       }    
 
       // Fall through to the default case.
@@ -241,6 +255,25 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       if (AlwaysAddStmt) Block->appendStmt(S);
       return WalkAST_VisitChildren(S);
   };
+}
+
+/// WalkAST_VisitVarDecl - Utility method to handle VarDecls contained in
+///  DeclStmts.  Because the initialization code for declarations can
+///  contain arbitrary expressions, we must linearize declarations
+///  to handle arbitrary control-flow induced by those expressions.
+CFGBlock* CFGBuilder::WalkAST_VisitVarDecl(VarDecl* V) {
+  // We actually must parse the LAST declaration in a chain of
+  // declarations first, because we are building the CFG in reverse
+  // order.
+  if (Decl* D = V->getNextDeclarator())
+    if (VarDecl* Next = cast<VarDecl>(D))
+      Block = WalkAST_VisitVarDecl(Next);
+    
+  if (Expr* E = V->getInit())
+    return addStmt(E);
+
+  assert (Block);
+  return Block;
 }
 
 /// WalkAST_VisitChildren - Utility method to call WalkAST on the
@@ -365,9 +398,6 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
   
   // The Exit block is the only successor.
   Block->addSuccessor(&cfg->getExit());
-
-  // Also add the return statement as the terminator.
-  Block->setTerminator(R);
     
   // Add the return statement to the block.  This may create new blocks
   // if R contains control-flow (short-circuit operations).
