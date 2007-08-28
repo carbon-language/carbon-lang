@@ -21,6 +21,20 @@
 #include "clang/Lex/IdentifierTable.h"
 using namespace clang;
 
+/// DiagnoseDeadExpr - The specified expression is side-effect free and
+/// evaluated in a context where the result is unused.  Emit a diagnostic to
+/// warn about this if appropriate.
+static void DiagnoseDeadExpr(Expr *E, Sema &S) {
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E))
+    S.Diag(BO->getOperatorLoc(), diag::warn_unused_expr,
+           BO->getLHS()->getSourceRange(), BO->getRHS()->getSourceRange());
+  else if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
+    S.Diag(UO->getOperatorLoc(), diag::warn_unused_expr,
+           UO->getSubExpr()->getSourceRange());
+  else 
+    S.Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
+}
+
 Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
   Expr *E = static_cast<Expr*>(expr);
   assert(E && "ParseExprStmt(): missing expression");
@@ -28,7 +42,7 @@ Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
   // Exprs are statements, so there is no need to do a conversion here. However,
   // diagnose some potentially bad code.
   if (!E->hasLocalSideEffect() && !E->getType()->isVoidType())
-    Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
+    DiagnoseDeadExpr(E, *this);
   
   return E;
 }
