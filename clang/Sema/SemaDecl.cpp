@@ -987,10 +987,17 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
-  unsigned IntWidth = Context.getTypeSize(Context.IntTy, Enum->getLocation());
+  unsigned IntWidth = Context.Target.getIntWidth(Enum->getLocation());
   
   
-  // Verify that all the values are okay, and reverse the list.
+  // Verify that all the values are okay, compute the size of the values, and
+  // reverse the list.
+  unsigned NumNegativeBits = 0;
+  unsigned NumPositiveBits = 0;
+  
+  // Keep track of whether all elements have type int.
+  bool AllElementsInt = true;
+  
   EnumConstantDecl *EltList = 0;
   for (unsigned i = 0; i != NumElements; ++i) {
     EnumConstantDecl *ECD =
@@ -1009,10 +1016,57 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
         Diag(ECD->getLocation(), diag::ext_enum_value_not_int,
              InitVal.toString());
     }
+    
+    // Keep track of the size of positive and negative values.
+    if (InitVal.isUnsigned() || !InitVal.isNegative())
+      NumPositiveBits = std::max(NumPositiveBits, InitVal.getActiveBits());
+    else
+      NumNegativeBits = std::max(NumNegativeBits, InitVal.getMinSignedBits());
 
+    // Keep track of whether every enum element has type int (very commmon).
+    if (AllElementsInt)
+      AllElementsInt = ECD->getType() == Context.IntTy; 
+    
     ECD->setNextDeclarator(EltList);
     EltList = ECD;
   }
+  
+  // Figure out the type that should be used for this enum.
+  // FIXME: Support attribute(packed) on enums and -fshort-enums.
+  QualType BestType;
+  
+  if (NumNegativeBits) {
+    // If there is a negative value, figure out the smallest integer type (of 
+    // int/long/longlong) that fits.
+    if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth)
+      BestType = Context.IntTy;
+    else {
+      unsigned LongWidth = Context.Target.getLongWidth(Enum->getLocation());
+      if (NumNegativeBits <= LongWidth && NumPositiveBits < LongWidth)
+        BestType = Context.LongTy;
+      else {
+        unsigned LLWidth = Context.Target.getLongLongWidth(Enum->getLocation());
+        if (NumNegativeBits > LLWidth || NumPositiveBits >= LLWidth)
+          Diag(Enum->getLocation(), diag::warn_enum_too_large);
+        BestType = Context.LongLongTy;
+      }
+    }
+  } else {
+    // If there is no negative value, figure out which of uint, ulong, ulonglong
+    // fits.
+    if (NumPositiveBits <= IntWidth)
+      BestType = Context.UnsignedIntTy;
+    else if (NumPositiveBits <=Context.Target.getLongWidth(Enum->getLocation()))
+      BestType = Context.UnsignedLongTy;
+    else {
+      assert(NumPositiveBits <=
+             Context.Target.getLongLongWidth(Enum->getLocation()) &&
+             "How could an initializer get larger than ULL?");
+      BestType = Context.UnsignedLongLongTy;
+    }
+  }
+  
+  // FIXME: Install type in Enum and constant values.
   
   Enum->defineElements(EltList);
 }

@@ -522,6 +522,8 @@ DIAG(err_enum_value_not_integer_constant_expr, ERROR,
      "enumerator value for '%0' is not an integer constant")
 DIAG(ext_enum_value_not_int, EXTENSION,
      "ISO C restricts enumerator values to range of 'int' (%0 is too large)")
+DIAG(warn_enum_too_large, WARNING,
+     "enumeration values exceed range of largest integer")
 DIAG(err_case_label_not_integer_constant_expr, ERROR,
      "case label does not reduce to an integer constant")
 DIAG(err_typecheck_illegal_vla, ERROR,

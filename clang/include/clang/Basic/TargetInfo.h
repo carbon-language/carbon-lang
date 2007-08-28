@@ -219,6 +219,17 @@ public:
     return Size;
   }
   
+  unsigned getLongWidth(SourceLocation Loc) {
+    uint64_t Size; unsigned Align;
+    getLongInfo(Size, Align, Loc);
+    return Size;
+  }
+
+  unsigned getLongLongWidth(SourceLocation Loc) {
+    uint64_t Size; unsigned Align;
+    getLongLongInfo(Size, Align, Loc);
+    return Size;
+  }
 private:
   void ComputeWCharInfo(SourceLocation Loc);
 };
