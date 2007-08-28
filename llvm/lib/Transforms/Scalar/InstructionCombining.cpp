@@ -8283,6 +8283,10 @@ static bool DeadPHICycle(PHINode *PN,
   // Remember this node, and if we find the cycle, return.
   if (!PotentiallyDeadPHIs.insert(PN))
     return true;
+  
+  // Don't scan crazily complex things.
+  if (PotentiallyDeadPHIs.size() == 16)
+    return false;
 
   if (PHINode *PU = dyn_cast<PHINode>(PN->use_back()))
     return DeadPHICycle(PU, PotentiallyDeadPHIs);
