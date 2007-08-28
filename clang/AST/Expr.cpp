@@ -647,6 +647,14 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
           CE->getSubExpr()->getType()->isIntegerType())            // from int.
         return CE->getSubExpr()->isNullPointerConstant(Ctx);
     }
+  } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(this)) {
+    // Check that it is a cast to void*.
+    if (const PointerType *PT = dyn_cast<PointerType>(ICE->getType())) {
+      QualType Pointee = PT->getPointeeType();
+      if (Pointee.getQualifiers() == 0 && Pointee->isVoidType() && // to void*
+          ICE->getSubExpr()->getType()->isIntegerType())           // from int.
+        return ICE->getSubExpr()->isNullPointerConstant(Ctx);
+    }
   } else if (const ParenExpr *PE = dyn_cast<ParenExpr>(this)) {
     // Accept ((void*)0) as a null pointer constant, as many other
     // implementations do.
