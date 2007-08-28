@@ -22,8 +22,7 @@ namespace llvm {
 
 namespace Mips {
 
-  // All CC branch operations on Mips I are turned
-  // into BEQ and BNE CC branches instructions.
+  // Mips Condition Codes
   enum CondCode {
     COND_E,
     COND_GZ,
