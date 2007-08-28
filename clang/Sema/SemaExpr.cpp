@@ -585,11 +585,31 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
                  Fn->getSourceRange(), argExpr->getSourceRange());
       }
     }
-    // Even if the types checked, bail if we had the wrong number of arguments.
-    if (NumArgsInCall != NumArgsInProto && !proto->isVariadic())
+    if (NumArgsInCall > NumArgsInProto && proto->isVariadic()) {
+      // Promote the arguments (C99 6.5.2.2p7).
+      for (unsigned i = NumArgsInProto; i < NumArgsInCall; i++) {
+        Expr *argExpr = Args[i];
+        assert(argExpr && "ParseCallExpr(): missing argument expression");
+        
+        DefaultArgumentPromotion(argExpr);
+        if (Args[i] != argExpr) // The expression was converted.
+          Args[i] = argExpr; // Make sure we store the converted expression.
+      }
+    } else if (NumArgsInCall != NumArgsInProto && !proto->isVariadic()) {
+      // Even if the types checked, bail if the number of arguments don't match.
       return true;
+    }
+  } else if (isa<FunctionTypeNoProto>(funcT)) {
+    // Promote the arguments (C99 6.5.2.2p6).
+    for (unsigned i = 0; i < NumArgsInCall; i++) {
+      Expr *argExpr = Args[i];
+      assert(argExpr && "ParseCallExpr(): missing argument expression");
+      
+      DefaultArgumentPromotion(argExpr);
+      if (Args[i] != argExpr) // The expression was converted.
+        Args[i] = argExpr; // Make sure we store the converted expression.
+    }
   }
-  
   // Do special checking on direct calls to functions.
   if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
     if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
@@ -744,6 +764,19 @@ static void promoteExprToType(Expr *&expr, QualType type) {
   else 
     expr = new ImplicitCastExpr(type, expr);
   return;
+}
+
+/// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
+/// do not have a prototype. Integer promotions are performed on each 
+/// argument, and arguments that have type float are promoted to double.
+void Sema::DefaultArgumentPromotion(Expr *&expr) {
+  QualType t = expr->getType();
+  assert(!t.isNull() && "DefaultArgumentPromotion - missing type");
+
+  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
+    promoteExprToType(expr, Context.IntTy);
+  if (t == Context.FloatTy)
+    promoteExprToType(expr, Context.DoubleTy);
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).

@@ -344,6 +344,11 @@ private:
   // to their respective pointers (C99 6.3.2.1). 
   void DefaultFunctionArrayConversion(Expr *&expr);
   
+  // DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
+  // do not have a prototype. Integer promotions are performed on each 
+  // argument, and arguments that have type float are promoted to double.
+  void DefaultArgumentPromotion(Expr *&expr);
+  
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
   // operators (C99 6.3.1.8). If both operands aren't arithmetic, this
