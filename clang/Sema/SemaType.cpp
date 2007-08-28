@@ -165,6 +165,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       break;
     case DeclaratorChunk::Array: {
       const DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
+      Expr *ArraySize = static_cast<Expr*>(ATI.NumElts);
       ArrayType::ArraySizeModifier ASM;
       if (ATI.isStar)
         ASM = ArrayType::Star;
@@ -201,8 +202,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           D.setInvalidType(true);
         }
       }
-      T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
-                               static_cast<Expr *>(ATI.NumElts));
+      T = Context.getArrayType(T, ASM, ATI.TypeQuals, ArraySize);
+      
+      // If this is not C99, extwarn about VLA's and C99 array size modifiers.
+      if (!getLangOptions().C99 && 
+          (ASM != ArrayType::Normal ||
+           (ArraySize && !ArraySize->isIntegerConstantExpr(Context))))
+        Diag(D.getIdentifierLoc(), diag::ext_vla);
       break;
     }
     case DeclaratorChunk::Function:

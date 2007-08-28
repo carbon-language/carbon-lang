@@ -1,6 +1,6 @@
 /* RUN: clang %s -std=c89 -pedantic -parse-ast-check
  */
-void foo() {
+void test1() {
   {
     int i;
     i = i + 1;
@@ -18,5 +18,9 @@ void foo() {
   }
 }
 
-long long x;   /* expected-warning {{extension}} */
+long long test2;   /* expected-warning {{extension}} */
 
+
+void test3(int i) {
+  int A[i];        /* expected-warning {{variable length array}} */
+}
