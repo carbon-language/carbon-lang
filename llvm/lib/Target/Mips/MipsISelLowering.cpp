@@ -15,12 +15,12 @@
 #define DEBUG_TYPE "mips-lower"
 
 #include "MipsISelLowering.h"
+#include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -76,8 +76,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::BR_JT,     MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,     MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
+  setOperationAction(ISD::SELECT,    MVT::i32,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
-  setOperationAction(ISD::SELECT, MVT::i32, Expand);
 
   // Mips not supported intrinsics.
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
@@ -224,7 +225,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   // To meet ABI, Mips must always allocate 16 bytes on
   // the stack (even if less than 4 are used as arguments)
   int VTsize = MVT::getSizeInBits(MVT::i32)/8;
-  MFI->CreateFixedObject(VTsize, -(VTsize*3));
+  MFI->CreateFixedObject(VTsize, (VTsize*3));
 
   CCInfo.AnalyzeCallOperands(Op.Val, CC_Mips);
   
@@ -272,10 +273,10 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
         StackPtr = DAG.getRegister(StackReg, getPointerTy());
      
       // Create the frame index object for this incoming parameter
-      // This guarantees that when allocating Local Area our room
-      // will not be overwritten.
+      // This guarantees that when allocating Local Area the firsts
+      // 16 bytes which are alwayes reserved won't be overwritten.
       int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      -(16 + VA.getLocMemOffset()) );
+                                      (16 + VA.getLocMemOffset()));
 
       SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -364,10 +365,6 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   CCInfo.AnalyzeCallResult(TheCall, RetCC_Mips);
   SmallVector<SDOperand, 8> ResultVals;
 
-  // Returns void
-  //if (!RVLocs.size())
-  //  return Chain.Val;
-
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     Chain = DAG.getCopyFromReg(Chain, RVLocs[i].getLocReg(),
@@ -410,6 +407,7 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
   SDOperand Root        = Op.getOperand(0);
   MachineFunction &MF   = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
@@ -437,7 +435,6 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
         RC = Mips::CPURegsRegisterClass;
       else
         assert(0 && "support only Mips::CPURegsRegisterClass");
-      
 
       // Transform the arguments stored on 
       // physical registers into virtual ones
@@ -460,17 +457,22 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
       ArgValues.push_back(ArgValue);
 
       // To meet ABI, when VARARGS are passed on registers, the registers
-      // containt must be written to the their always reserved home location 
-      // on the stack.
+      // must have their values written to the caller stack frame. 
       if (isVarArg) {
 
         if (StackPtr.Val == 0)
           StackPtr = DAG.getRegister(StackReg, getPointerTy());
      
-        // Create the frame index object for this incoming parameter
-        // The first 16 bytes are reserved.
-        int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                        i*4);
+        // The stack pointer offset is relative to the caller stack frame. 
+        // Since the real stack size is unknown here, a negative SPOffset 
+        // is used so there's a way to adjust these offsets when the stack
+        // size get known (on EliminateFrameIndex). A dummy SPOffset is 
+        // used instead of a direct negative address (which is recorded to
+        // be used on emitPrologue) to avoid mis-calc of the first stack 
+        // offset on PEI::calculateFrameObjectOffsets.
+        // Arguments are always 32-bit.
+        int FI = MFI->CreateFixedObject(4, 0);
+        MipsFI->recordStoreVarArgsFI(FI, -(4+(i*4)));
         SDOperand PtrOff = DAG.getFrameIndex(FI, getPointerTy());
       
         // emit ISD::STORE whichs stores the 
@@ -482,9 +484,16 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
       // sanity check
       assert(VA.isMemLoc());
       
-      // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      (16 + VA.getLocMemOffset()));
+      // The stack pointer offset is relative to the caller stack frame. 
+      // Since the real stack size is unknown here, a negative SPOffset 
+      // is used so there's a way to adjust these offsets when the stack
+      // size get known (on EliminateFrameIndex). A dummy SPOffset is 
+      // used instead of a direct negative address (which is recorded to
+      // be used on emitPrologue) to avoid mis-calc of the first stack 
+      // offset on PEI::calculateFrameObjectOffsets.
+      // Arguments are always 32-bit.
+      int FI = MFI->CreateFixedObject(4, 0);
+      MipsFI->recordLoadArgsFI(FI, -(4+(16+VA.getLocMemOffset())));
 
       // Create load nodes to retrieve arguments from the stack
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
