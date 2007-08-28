@@ -76,7 +76,7 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     // Only create DeclRefExpr's for valid Decl's.
-    if (VD->getInvalidDecl())
+    if (VD->isInvalidDecl())
       return true;
     return new DeclRefExpr(VD, VD->getType(), Loc);
   }

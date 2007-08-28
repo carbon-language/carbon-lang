@@ -304,6 +304,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
     PrevDecl = 0;   // If in outer scope, it isn't the same thing.
 
   Decl *New;
+  bool InvalidDecl = false;
+  
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
     assert(Init == 0 && "Can't have initializer for a typedef!");
     TypedefDecl *NewTD = ParseTypedefDecl(S, D, LastDeclarator);
@@ -323,13 +325,14 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       // then it shall have block scope.
       if (ArrayType *ary = dyn_cast<ArrayType>(NewTD->getUnderlyingType())) {
         if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
-          return 0;
+          InvalidDecl = true;
       }
     }
   } else if (D.isFunctionDeclarator()) {
     assert(Init == 0 && "Can't have an initializer for a functiondecl!");
+    
     QualType R = GetTypeForDeclarator(D, S);
-    if (R.isNull()) return 0; // FIXME: "auto func();" passes through...
+    assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
     FunctionDecl::StorageClass SC;
     switch (D.getDeclSpec().getStorageClassSpec()) {
@@ -338,7 +341,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       case DeclSpec::SCS_register:
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_func,
              R.getAsString());
-        return 0;
+        InvalidDecl = true;
+        break;
       case DeclSpec::SCS_unspecified: SC = FunctionDecl::None; break;
       case DeclSpec::SCS_extern:      SC = FunctionDecl::Extern; break;
       case DeclSpec::SCS_static:      SC = FunctionDecl::Static; break;
@@ -356,9 +360,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
     New = NewFD;
   } else {
     QualType R = GetTypeForDeclarator(D, S);
-    
     assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
-    bool InvalidDecl = false;
 
     VarDecl *NewVD;
     VarDecl::StorageClass SC;
@@ -420,9 +422,6 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       }
       NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     }
-    if (InvalidDecl)
-      NewVD->setInvalidDecl();
-      
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
@@ -450,6 +449,10 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
   
   if (S->getParent() == 0)
     AddTopLevelDecl(New, LastDeclarator);
+
+  // If any semantic error occurred, mark the decl as invalid.
+  if (D.getInvalidType() || InvalidDecl)
+    New->setInvalidDecl();
   
   return New;
 }
@@ -649,11 +652,14 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   
   QualType T = GetTypeForDeclarator(D, S);
-  if (T.isNull()) return 0;
+  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
   // Scope manipulation handled by caller.
-  return new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), T,
-                         LastDeclarator);
+  TypedefDecl *NewTD = new TypedefDecl(D.getIdentifierLoc(), D.getIdentifier(), 
+                                       T, LastDeclarator);
+  if (D.getInvalidType())
+    NewTD->setInvalidDecl();
+  return NewTD;
 }
 
 
@@ -789,17 +795,21 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   }
   
   QualType T = GetTypeForDeclarator(D, S);
-  if (T.isNull()) return 0;
+  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
+  bool InvalidDecl = false;
   
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (const ArrayType *ary = T->getAsArrayType()) {
     if (VerifyConstantArrayType(ary, Loc))
-      return 0;
+      InvalidDecl = true;
   }
   
   // FIXME: Chain fielddecls together.
-  return new FieldDecl(Loc, II, T, 0);
+  FieldDecl *NewFD = new FieldDecl(Loc, II, T, 0);
+  if (D.getInvalidType() || InvalidDecl)
+    NewFD->setInvalidDecl();
+  return NewFD;
 }
 
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,

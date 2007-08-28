@@ -278,11 +278,12 @@ Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
   
   QualType T = GetTypeForDeclarator(D, S);
+
+  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
-  // If the type of the declarator was invalid, this is an invalid typename.
-  if (T.isNull())
-    return true;
-  
+  // In this context, we *do not* check D.getInvalidType(). If the declarator
+  // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
+  // though it will not reflect the user specified type.
   return T.getAsOpaquePtr();
 }
 
@@ -292,9 +293,10 @@ Sema::TypeResult Sema::ParseParamDeclaratorType(Scope *S, Declarator &D) {
   // just want the type converted.
   QualType T = GetTypeForDeclarator(D, S);
   
-  // If the type of the declarator was invalid, this is an invalid typename.
-  if (T.isNull())
-    return true;
-  
+  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
+
+  // In this context, we *do not* check D.getInvalidType(). If the declarator
+  // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
+  // though it will not reflect the user specified type.
   return T.getAsOpaquePtr();
 }

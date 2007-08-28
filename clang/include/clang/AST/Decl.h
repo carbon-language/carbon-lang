@@ -92,7 +92,7 @@ public:
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
-  int getInvalidDecl() const { return InvalidDecl; }
+  int isInvalidDecl() const { return InvalidDecl; }
   
   /// getNextDeclarator - If this decl was part of a multi-declarator
   /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
