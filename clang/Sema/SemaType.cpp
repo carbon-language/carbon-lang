@@ -123,7 +123,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 /// instances.
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   QualType T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
-
+  
   // Apply const/volatile/restrict qualifiers to T.
   T = T.getQualifiedType(D.getDeclSpec().getTypeQualifiers());
   
@@ -138,6 +138,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         // C++ 8.3.2p4: There shall be no ... pointers to references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_pointer_to_reference,
              D.getIdentifier()->getName());
+        D.setInvalidType(true);
         T = Context.IntTy;
       }
 
@@ -150,6 +151,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         Diag(D.getIdentifierLoc(),
              diag::err_illegal_decl_reference_to_reference,
              D.getIdentifier()->getName());
+        D.setInvalidType(true);
         T = RT->getReferenceeType();
       }
 
@@ -170,19 +172,27 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       if (T->isIncompleteType()) { 
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_incomplete_type,
              T.getAsString());
+        T = Context.IntTy;
+        D.setInvalidType(true);
       } else if (T->isFunctionType()) {
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_functions,
              D.getIdentifier()->getName());
+        T = Context.getPointerType(T);
+        D.setInvalidType(true);
       } else if (const ReferenceType *RT = T->getAsReferenceType()) {
         // C++ 8.3.2p4: There shall be no ... arrays of references ...
         Diag(D.getIdentifierLoc(), diag::err_illegal_decl_array_of_references,
              D.getIdentifier()->getName());
+        T = RT->getReferenceeType();
+        D.setInvalidType(true);
       } else if (const RecordType *EltTy = T->getAsRecordType()) {
         // If the element type is a struct or union that contains a variadic
         // array, reject it: C99 6.7.2.1p2.
         if (EltTy->getDecl()->hasFlexibleArrayMember()) {
           Diag(DeclType.Loc, diag::err_flexible_array_in_array,
                T.getAsString());
+          T = Context.IntTy;
+          D.setInvalidType(true);
         }
       }
       T = Context.getArrayType(T, ASM, ATI.TypeQuals, 
@@ -264,6 +274,7 @@ Sema::TypeResult Sema::ParseTypeName(Scope *S, Declarator &D) {
   return T.getAsOpaquePtr();
 }
 
+// Called from Parser::ParseParenDeclarator().
 Sema::TypeResult Sema::ParseParamDeclaratorType(Scope *S, Declarator &D) {
   // Note: parameters have identifiers, but we don't care about them here, we
   // just want the type converted.

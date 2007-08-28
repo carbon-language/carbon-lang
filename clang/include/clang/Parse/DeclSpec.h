@@ -315,10 +315,12 @@ struct DeclaratorChunk {
     IdentifierInfo *Ident;
     SourceLocation IdentLoc;
     Action::TypeTy *TypeInfo;
+    bool InvalidType;
     // FIXME: this also needs an attribute list.
     ParamInfo() {}
-    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::TypeTy *typ)
-      : Ident(ident), IdentLoc(iloc), TypeInfo(typ) {
+    ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::TypeTy *typ,
+              bool flag = false)
+      : Ident(ident), IdentLoc(iloc), TypeInfo(typ), InvalidType(flag) {
     }
   };
   
@@ -447,11 +449,14 @@ private:
   /// DeclTypeInfo.back() will be the least closely bound.
   llvm::SmallVector<DeclaratorChunk, 8> DeclTypeInfo;
 
+  // InvalidType - Set by Sema::GetTypeForDeclarator().
+  bool InvalidType;
+
   // attributes.
-  AttributeList *AttrList;  
+  AttributeList *AttrList;
 public:
   Declarator(const DeclSpec &ds, TheContext C)
-    : DS(ds), Identifier(0), Context(C), AttrList(0) {
+    : DS(ds), Identifier(0), Context(C), InvalidType(false), AttrList(0) {
   }
   
   ~Declarator() {
@@ -552,6 +557,9 @@ public:
     AttrList = alist;
   }
   AttributeList *getAttributes() const { return AttrList; }
+  
+  void setInvalidType(bool flag) { InvalidType = flag; }
+  bool getInvalidType() { return InvalidType; }
 };
 
   

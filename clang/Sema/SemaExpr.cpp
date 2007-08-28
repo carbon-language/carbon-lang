@@ -74,8 +74,14 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
       return Diag(Loc, diag::err_undeclared_var_use, II.getName());
     }
   }
-  if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+    ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD);
+    
+    // FIXME: generalize this for all decls.
+    if (PVD && PVD->getInvalidType())
+      return true;
     return new DeclRefExpr(VD, VD->getType(), Loc);
+  }
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
 

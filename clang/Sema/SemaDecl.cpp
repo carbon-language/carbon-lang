@@ -463,7 +463,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   }
   return NewGroup;
 }
-  
+
+// Called from Sema::ParseStartOfFunctionDef().
 ParmVarDecl *
 Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
                            Scope *FnScope) {
@@ -505,7 +506,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
     parmDeclType = Context.getPointerType(parmDeclType);
   
   ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, parmDeclType, 
-                                     VarDecl::None, 0);
+                                     VarDecl::None, 0, PI.InvalidType);
 
   // If this has an identifier, add it to the scope stack.
   if (II) {

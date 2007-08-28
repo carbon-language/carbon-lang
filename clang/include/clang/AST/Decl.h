@@ -221,11 +221,14 @@ public:
 
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
+  bool InvalidType;
 public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-              Decl *PrevDecl)
-    : VarDecl(ParmVariable, L, Id, T, S, PrevDecl) {}
+              Decl *PrevDecl, bool flag)
+    : VarDecl(ParmVariable, L, Id, T, S, PrevDecl), InvalidType(flag) {}
 
+  bool getInvalidType() const { return InvalidType; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVariable; }
   static bool classof(const ParmVarDecl *D) { return true; }

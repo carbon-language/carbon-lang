@@ -1332,9 +1332,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
         ParmII = 0;
       }
         
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
-                                                    ParmDecl.getIdentifierLoc(),
-                                                     ParamTy.Val));
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
+        ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType()));
       
       // If the next token is a comma, consume it and keep reading arguments.
       if (Tok.getKind() != tok::comma) break;
