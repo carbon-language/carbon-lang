@@ -987,6 +987,7 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
+  unsigned IntWidth = Context.getTypeSize(Context.IntTy, Enum->getLocation());
   
   
   // Verify that all the values are okay, and reverse the list.
@@ -995,6 +996,19 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
     EnumConstantDecl *ECD =
       cast_or_null<EnumConstantDecl>(static_cast<Decl*>(Elements[i]));
     if (!ECD) continue;  // Already issued a diagnostic.
+    
+    // If the enum value doesn't fit in an int, emit an extension warning.
+    assert(ECD->getInitVal().getBitWidth() >= IntWidth &&
+           "Should have promoted value to int");
+    const llvm::APSInt &InitVal = ECD->getInitVal();
+    if (InitVal.getBitWidth() > IntWidth) {
+      llvm::APSInt V(InitVal);
+      V.trunc(IntWidth);
+      V.extend(InitVal.getBitWidth());
+      if (V != InitVal)
+        Diag(ECD->getLocation(), diag::ext_enum_value_not_int,
+             InitVal.toString());
+    }
 
     ECD->setNextDeclarator(EltList);
     EltList = ECD;
