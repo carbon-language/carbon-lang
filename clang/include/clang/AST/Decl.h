@@ -412,6 +412,11 @@ class EnumDecl : public TagDecl {
   /// ElementList - this is a linked list of EnumConstantDecl's which are linked
   /// together through their getNextDeclarator pointers.
   EnumConstantDecl *ElementList;
+  
+  /// IntegerType - This represent the integer type that the enum corresponds
+  /// to for code generation purposes.  Note that the enumerator constants may
+  /// have a different type than this does.
+  QualType IntegerType;
 public:
   EnumDecl(SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
     : TagDecl(Enum, L, Id, PrevDecl) {
@@ -421,11 +426,17 @@ public:
   /// defineElements - When created, EnumDecl correspond to a forward declared
   /// enum.  This method is used to mark the decl as being defined, with the
   /// specified list of enums.
-  void defineElements(EnumConstantDecl *ListHead) {
+  void defineElements(EnumConstantDecl *ListHead, QualType NewType) {
     assert(!isDefinition() && "Cannot redefine enums!");
     ElementList = ListHead;
     setDefinition(true);
+    
+    IntegerType = NewType;
   }
+  
+  /// getIntegerType - Return the integer type this enum decl corresponds to.
+  /// This returns a null qualtype for an enum forward definition.
+  QualType getIntegerType() const { return IntegerType; }
   
   /// getEnumConstantList - Return the first EnumConstantDecl in the enum.
   ///

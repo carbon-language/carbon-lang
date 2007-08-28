@@ -1069,7 +1069,7 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   
   // FIXME: Install type in Enum and constant values.
   
-  Enum->defineElements(EltList);
+  Enum->defineElements(EltList, BestType);
 }
 
 void Sema::AddTopLevelDecl(Decl *current, Decl *last) {

@@ -146,7 +146,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     if (!TD->isDefinition()) {
       ResultType = llvm::OpaqueType::get();  
     } else if (TD->getKind() == Decl::Enum) {
-      return ConvertType(Context.getEnumDeclIntegerType(cast<EnumDecl>(TD)));
+      return ConvertType(cast<EnumDecl>(TD)->getIntegerType());
     } else if (TD->getKind() == Decl::Struct) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
       std::vector<const llvm::Type*> Fields;
