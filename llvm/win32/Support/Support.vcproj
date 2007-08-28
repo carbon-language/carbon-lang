@@ -49,10 +49,11 @@
 				ForceConformanceInForLoopScope="true"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				BrowseInformation="1"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 				DisableSpecificWarnings="4355,4146,4800"
 			/>
 			<Tool
@@ -116,6 +117,7 @@
 				ForceConformanceInForLoopScope="true"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
@@ -165,6 +167,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Support\Annotation.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Support\APFloat.cpp"
 				>
 			</File>
 			<File
@@ -222,13 +228,6 @@
 			<File
 				RelativePath="..\..\lib\Support\SlowOperationInformer.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					ExcludedFromBuild="true"
@@ -306,10 +305,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\ConstantRange.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Support\DataTypes.h"
 				>
 			</File>
 			<File
@@ -442,6 +437,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\ADT\BitVector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\DataTypes.h.in"
 				>
 			</File>
 			<File

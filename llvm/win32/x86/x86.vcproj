@@ -217,6 +217,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86InstrFormats.td"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86InstrInfo.cpp"
 				>
 			</File>

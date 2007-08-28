@@ -167,6 +167,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\AutoUpgrade.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\BasicBlock.cpp"
 				>
 			</File>

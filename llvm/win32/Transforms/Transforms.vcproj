@@ -309,10 +309,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\FastDSE.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\GCSE.cpp"
 					>
 				</File>
@@ -334,6 +330,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LICM.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\LoopIndexSplit.cpp"
 					>
 				</File>
 				<File
@@ -414,6 +414,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\CloneFunction.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\CloneLoop.cpp"
 					>
 				</File>
 				<File
