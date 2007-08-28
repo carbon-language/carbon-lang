@@ -5,6 +5,12 @@ struct s* t (struct s z[]) {   // expected-error {{array has incomplete element 
   return z;
 }
 
+void ff() { 
+  struct s v, *p; // expected-error {{variable has incomplete type 'struct s'}}
+
+  p = &v;
+}
+
 void *k (void l[2]) {          // expected-error {{array has incomplete element type}}
   return l; 
 }

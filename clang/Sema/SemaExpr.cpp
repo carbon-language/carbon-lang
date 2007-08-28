@@ -75,10 +75,8 @@ Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
     }
   }
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-    ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD);
-    
-    // FIXME: generalize this for all decls.
-    if (PVD && PVD->getInvalidType())
+    // Only create DeclRefExpr's for valid Decl's.
+    if (VD->getInvalidDecl())
       return true;
     return new DeclRefExpr(VD, VD->getType(), Loc);
   }

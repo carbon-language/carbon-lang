@@ -356,7 +356,9 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
     New = NewFD;
   } else {
     QualType R = GetTypeForDeclarator(D, S);
-    if (R.isNull()) return 0;
+    
+    assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
+    bool InvalidDecl = false;
 
     VarDecl *NewVD;
     VarDecl::StorageClass SC;
@@ -381,7 +383,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
         if (R->isIncompleteType()) {
           Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type,
                R.getAsString());
-          return 0;
+          InvalidDecl = true;
         }
       }
       // C99 6.9p2: The storage-class specifiers auto and register shall not
@@ -389,13 +391,13 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       if (SC == VarDecl::Auto || SC == VarDecl::Register) {
         Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope,
              R.getAsString());
-        return 0;
+        InvalidDecl = true;
       }
       // C99 6.7.5.2p2: If an identifier is declared to be an object with 
       // static storage duration, it shall not have a variable length array.
       if (const ArrayType *ary = R->getAsArrayType()) {
         if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
-          return 0;
+          InvalidDecl = true;
       }
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     } else { 
@@ -405,7 +407,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
         if (R->isIncompleteType()) {
           Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type,
                R.getAsString());
-          return 0;
+          InvalidDecl = true;
         }
       }
       if (SC == VarDecl::Static) {
@@ -413,11 +415,14 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
         // static storage duration, it shall not have a variable length array.
         if (const ArrayType *ary = R->getAsArrayType()) {
           if (VerifyConstantArrayType(ary, D.getIdentifierLoc()))
-            return 0;
+            InvalidDecl = true;
         }
       }
       NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
-    }    
+    }
+    if (InvalidDecl)
+      NewVD->setInvalidDecl();
+      
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
                          D.getAttributes());
@@ -507,8 +512,10 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
     parmDeclType = Context.getPointerType(parmDeclType);
   
   ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, parmDeclType, 
-                                     VarDecl::None, 0, PI.InvalidType);
-
+                                     VarDecl::None, 0);
+  if (PI.InvalidType)
+    New->setInvalidDecl();
+    
   // If this has an identifier, add it to the scope stack.
   if (II) {
     New->setNext(II->getFETokenInfo<Decl>());

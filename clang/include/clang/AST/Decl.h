@@ -49,8 +49,11 @@ public:
   };
 private:
   /// DeclKind - This indicates which class this is.
-  Kind DeclKind;
+  Kind DeclKind   :  8;
   
+  /// InvalidDecl - This indicates a semantic error occurred.
+  int InvalidDecl :  1;
+
   /// Loc - The location that this decl.
   SourceLocation Loc;
   
@@ -70,7 +73,8 @@ private:
   
 protected:
   Decl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *NextDecl)
-    : DeclKind(DK), Loc(L), Identifier(Id), Next(0), NextDeclarator(NextDecl) {
+    : DeclKind(DK), InvalidDecl(0), Loc(L), Identifier(Id), Next(0), 
+      NextDeclarator(NextDecl) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   virtual ~Decl();
@@ -84,6 +88,11 @@ public:
   Kind getKind() const { return DeclKind; }
   Decl *getNext() const { return Next; }
   void setNext(Decl *N) { Next = N; }
+
+  /// setInvalidDecl - Indicates the Decl had a semantic error. This
+  /// allows for graceful error recovery.
+  void setInvalidDecl() { InvalidDecl = 1; }
+  int getInvalidDecl() const { return InvalidDecl; }
   
   /// getNextDeclarator - If this decl was part of a multi-declarator
   /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
@@ -221,13 +230,10 @@ public:
 
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
-  bool InvalidType;
 public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-              Decl *PrevDecl, bool flag)
-    : VarDecl(ParmVariable, L, Id, T, S, PrevDecl), InvalidType(flag) {}
-
-  bool getInvalidType() const { return InvalidType; }
+              Decl *PrevDecl)
+    : VarDecl(ParmVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVariable; }
