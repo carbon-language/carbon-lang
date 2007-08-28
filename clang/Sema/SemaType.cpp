@@ -124,7 +124,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 /// instances.
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   // long long is a C99 feature.
-  if (!getLangOptions().C99 &&
+  if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
       D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
     Diag(D.getDeclSpec().getTypeSpecWidthLoc(), diag::ext_longlong);
   
