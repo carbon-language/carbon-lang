@@ -16,6 +16,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/LangOptions.h"
 using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
@@ -122,6 +123,11 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
 /// GetTypeForDeclarator - Convert the type for the specified declarator to Type
 /// instances.
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
+  // long long is a C99 feature.
+  if (!getLangOptions().C99 &&
+      D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
+    Diag(D.getDeclSpec().getTypeSpecWidthLoc(), diag::ext_longlong);
+  
   QualType T = ConvertDeclSpecToType(D.getDeclSpec(), Context);
   
   // Apply const/volatile/restrict qualifiers to T.

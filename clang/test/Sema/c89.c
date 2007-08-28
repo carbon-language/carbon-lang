@@ -17,3 +17,6 @@ void foo() {
     __extension__ int j; /* expected-warning {{mixing declarations and code}} */
   }
 }
+
+long long x;   /* expected-warning {{extension}} */
+

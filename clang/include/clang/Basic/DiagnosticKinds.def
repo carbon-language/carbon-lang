@@ -438,6 +438,8 @@ DIAG(err_invalid_long_spec, ERROR,
      "'long %0' is invalid")
 DIAG(err_invalid_longlong_spec, ERROR,
      "'long long %0' is invalid")
+DIAG(ext_longlong, EXTENSION,
+     "'long long' is an extension when C99 mode is not enabled")
 DIAG(err_invalid_complex_spec, ERROR,
      "'_Complex %0' is invalid")
 DIAG(err_invalid_thread_spec, ERROR,
