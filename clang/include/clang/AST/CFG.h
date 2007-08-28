@@ -155,10 +155,12 @@ class CFG {
   typedef std::list<CFGBlock> CFGBlockListTy;
   CFGBlock* Entry;
   CFGBlock* Exit;
+  CFGBlock* IndirectGotoBlock;  // Special block to contain collective dispatch
+                                // for indirect gotos
   CFGBlockListTy Blocks;
   
 public:
-  CFG() : Entry(NULL), Exit(NULL) {};
+  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL) {};
   ~CFG() {};
   
   // Block iterators
@@ -167,21 +169,22 @@ public:
   typedef std::reverse_iterator<iterator>                     reverse_iterator;
   typedef std::reverse_iterator<const_iterator>         const_reverse_iterator;
 
-  CFGBlock&                    front()             { return Blocks.front();    }
-  CFGBlock&                    back()              { return Blocks.back();     }
+  CFGBlock&                 front()                { return Blocks.front(); }
+  CFGBlock&                 back()                 { return Blocks.back(); }
   
-  iterator                     begin()             { return Blocks.begin();    }
-  iterator                     end()               { return Blocks.end();      }
-  const_iterator               begin()       const { return Blocks.begin();    }
-  const_iterator               end()         const { return Blocks.end();      } 
+  iterator                  begin()                { return Blocks.begin(); }
+  iterator                  end()                  { return Blocks.end(); }
+  const_iterator            begin()       const    { return Blocks.begin(); }
+  const_iterator            end()         const    { return Blocks.end(); } 
   
-  reverse_iterator             rbegin()            { return Blocks.rbegin();   }
-  reverse_iterator             rend()              { return Blocks.rend();     }
-  const_reverse_iterator       rbegin()      const { return Blocks.rbegin();   }
-  const_reverse_iterator       rend()        const { return Blocks.rend();     }
+  reverse_iterator          rbegin()               { return Blocks.rbegin(); }
+  reverse_iterator          rend()                 { return Blocks.rend(); }
+  const_reverse_iterator    rbegin()      const    { return Blocks.rbegin(); }
+  const_reverse_iterator    rend()        const    { return Blocks.rend(); }
   
-  CFGBlock&                    getEntry()          { return *Entry;            }
-  CFGBlock&                    getExit()           { return *Exit;             }
+  CFGBlock&                 getEntry()             { return *Entry; }
+  CFGBlock&                 getExit()              { return *Exit; }
+  CFGBlock*                 getIndirectGotoBlock() { return IndirectGotoBlock; }
   
   // Utility
   
@@ -189,7 +192,8 @@ public:
   static CFG* buildCFG(Stmt* AST);
   void print(std::ostream& OS);
   void dump();
-  void setEntry(CFGBlock *B) { Entry = B; }      
+  void setEntry(CFGBlock *B) { Entry = B; }
+  void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }   
 };
 
 } // end namespace clang

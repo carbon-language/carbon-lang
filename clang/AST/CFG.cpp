@@ -16,6 +16,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -58,11 +59,18 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* SwitchTerminatedBlock;
   unsigned NumBlocks;
   
+  // LabelMap records the mapping from Label expressions to their blocks.
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
   LabelMapTy LabelMap;
   
+  // A list of blocks that end with a "goto" that must be backpatched to
+  // their resolved targets upon completion of CFG construction.
   typedef std::vector<CFGBlock*> BackpatchBlocksTy;
   BackpatchBlocksTy BackpatchBlocks;
+  
+  // A list of labels whose address has been taken (for indirect gotos).
+  typedef llvm::SmallPtrSet<LabelStmt*,5> LabelSetTy;
+  LabelSetTy AddressTakenLabels;
   
 public:  
   explicit CFGBuilder() : cfg(NULL), Block(NULL), Succ(NULL),
@@ -95,6 +103,7 @@ public:
   CFGBlock* VisitBreakStmt(BreakStmt* B);
   CFGBlock* VisitSwitchStmt(SwitchStmt* S);
   CFGBlock* VisitSwitchCase(SwitchCase* S);
+  CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
   
 private:
   CFGBlock* createBlock(bool add_successor = true);
@@ -113,6 +122,7 @@ private:
 ///  CFG is transferred to the caller.  If CFG construction fails, this method
 ///  returns NULL.
 CFG* CFGBuilder::buildCFG(Stmt* Statement) {
+  assert (cfg);
   if (!Statement) return NULL;
 
   // Create an empty block that will serve as the exit block for the CFG.
@@ -142,16 +152,32 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
       if (LI == LabelMap.end()) continue;
       
       B->addSuccessor(LI->second);                   
-    }                          
+    }
     
+    // Add successors to the Indirect Goto Dispatch block (if we have one).
+    if (CFGBlock* B = cfg->getIndirectGotoBlock())
+      for (LabelSetTy::iterator I = AddressTakenLabels.begin(),
+           E = AddressTakenLabels.end(); I != E; ++I ) {
+
+        // Lookup the target block.
+        LabelMapTy::iterator LI = LabelMap.find(*I);
+
+        // If there is no target block that contains label, then we are looking
+        // at an incomplete AST.  Handle this by not registering a successor.
+        if (LI == LabelMap.end()) continue;
+        
+        B->addSuccessor(LI->second);           
+      }
+                                                        
+    // Create an empty entry block that has no predecessors.    
     if (B->pred_size() > 0) {
-      // create an empty entry block that has no predecessors.
       Succ = B;
       cfg->setEntry(createBlock());
     }
     else cfg->setEntry(B);
     
-    // NULL out cfg so that repeated calls
+    // NULL out cfg so that repeated calls to the builder will fail and that
+    // the ownership of the constructed CFG is passed to the caller.
     CFG* t = cfg;
     cfg = NULL;
     return t;
@@ -219,6 +245,14 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
         return WalkAST_VisitVarDecl(V);
       }
       else return Block;
+      
+    case Stmt::AddrLabelExprClass: {
+      AddrLabelExpr* A = cast<AddrLabelExpr>(S);
+      AddressTakenLabels.insert(A->getLabel());
+      
+      if (AlwaysAddStmt) Block->appendStmt(S);
+      return Block;
+    }
       
     case Stmt::StmtExprClass:
       return WalkAST_VisitStmtExpr(cast<StmtExpr>(S));
@@ -788,6 +822,25 @@ CFGBlock* CFGBuilder::VisitSwitchCase(SwitchCase* S) {
   return CaseBlock;    
 }
 
+CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
+  // Lazily create the indirect-goto dispatch block if there isn't one
+  // already.
+  CFGBlock* IBlock = cfg->getIndirectGotoBlock();
+  
+  if (!IBlock) {
+    IBlock = createBlock(false);
+    cfg->setIndirectGotoBlock(IBlock);
+  }
+  
+  // IndirectGoto is a control-flow statement.  Thus we stop processing the
+  // current block and create a new one.
+  if (Block) FinishBlock(Block);
+  Block = createBlock(false);
+  Block->setTerminator(I);
+  Block->addSuccessor(IBlock);
+  return addStmt(I->getTarget());
+}
+
 
 } // end anonymous namespace
 
@@ -835,7 +888,13 @@ void CFG::print(std::ostream& OS) {
     // Skip the entry block, because we already printed it.
     if (&(*I) == &getEntry() || &(*I) == &getExit()) continue;
       
-    OS << "\n  [ B" << I->getBlockID() << " ]\n";    
+    OS << "\n  [ B" << I->getBlockID();
+
+    if (&(*I) == getIndirectGotoBlock())
+      OS << " (INDIRECT GOTO DISPATCH) ]\n";
+    else
+      OS << " ]\n";
+      
     I->print(OS);
   }
 
