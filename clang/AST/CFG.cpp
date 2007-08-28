@@ -102,6 +102,7 @@ private:
   CFGBlock* WalkAST(Stmt* S, bool AlwaysAddStmt);
   CFGBlock* WalkAST_VisitChildren(Stmt* S);
   CFGBlock* WalkAST_VisitVarDecl(VarDecl* D);
+  CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* S);
   void FinishBlock(CFGBlock* B);
   
 };
@@ -218,6 +219,9 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
         return WalkAST_VisitVarDecl(V);
       }
       else return Block;
+      
+    case Stmt::StmtExprClass:
+      return WalkAST_VisitStmtExpr(cast<StmtExpr>(S));
 
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
@@ -285,6 +289,13 @@ CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
     B = WalkAST(*I);
   
   return B;
+}
+
+/// WalkAST_VisitStmtExpr - Utility method to handle (nested) statement
+///  expressions (a GCC extension).
+CFGBlock* CFGBuilder::WalkAST_VisitStmtExpr(StmtExpr* S) {
+  Block->appendStmt(S);
+  return VisitCompoundStmt(S->getSubStmt());  
 }
 
 /// VisitStmt - Handle statements with no branching control flow.
