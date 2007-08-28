@@ -1561,9 +1561,9 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
   if (ResultTy.isNull())
     return true;
   if (CompTy.isNull())
-    return new BinaryOperator(lhs, rhs, Opc, ResultTy);
+    return new BinaryOperator(lhs, rhs, Opc, ResultTy, TokLoc);
   else
-    return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, CompTy);
+    return new CompoundAssignOperator(lhs, rhs, Opc, ResultTy, CompTy, TokLoc);
 }
 
 // Unary Operators.  'Tok' is the token for the operator.

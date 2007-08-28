@@ -722,15 +722,23 @@ public:
     OrAssign,
     Comma             // [C99 6.5.17] Comma operator.
   };
+private:
+  enum { LHS, RHS, END_EXPR };
+  Expr* SubExprs[END_EXPR];
+  Opcode Opc;
+  SourceLocation OpLoc;
+public:  
   
-  BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy)
-    : Expr(BinaryOperatorClass, ResTy), Opc(opc) {
+  BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
+                 SourceLocation opLoc)
+    : Expr(BinaryOperatorClass, ResTy), Opc(opc), OpLoc(opLoc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
     assert(!isCompoundAssignmentOp() && 
            "Use ArithAssignBinaryOperator for compound assignments");
   }
 
+  SourceLocation getOperatorLoc() const { return OpLoc; }
   Opcode getOpcode() const { return Opc; }
   Expr *getLHS() const { return SubExprs[LHS]; }
   Expr *getRHS() const { return SubExprs[RHS]; }
@@ -764,14 +772,10 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 
-private:
-  enum { LHS, RHS, END_EXPR };
-  Expr* SubExprs[END_EXPR];
-  Opcode Opc;
-
 protected:
-  BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy, bool dead)
-    : Expr(CompoundAssignOperatorClass, ResTy), Opc(opc) {
+  BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
+                 SourceLocation oploc, bool dead)
+    : Expr(CompoundAssignOperatorClass, ResTy), Opc(opc), OpLoc(oploc) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
   }
@@ -787,8 +791,10 @@ class CompoundAssignOperator : public BinaryOperator {
   QualType ComputationType;
 public:
   CompoundAssignOperator(Expr *lhs, Expr *rhs, Opcode opc,
-                         QualType ResType, QualType CompType)
-    : BinaryOperator(lhs, rhs, opc, ResType, true), ComputationType(CompType) {
+                         QualType ResType, QualType CompType,
+                         SourceLocation OpLoc)
+    : BinaryOperator(lhs, rhs, opc, ResType, OpLoc, true),
+      ComputationType(CompType) {
     assert(isCompoundAssignmentOp() && 
            "Only should be used for compound assignments");
   }
