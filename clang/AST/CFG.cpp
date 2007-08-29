@@ -462,11 +462,10 @@ CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
   LabelMap[ L ] = LabelBlock;
   
   // Labels partition blocks, so this is the end of the basic block
-  // we were processing (the label is the first statement).  Add the label
-  // the to end (really the beginning) of the block.  Because this is
+  // we were processing (L is the block's label).  Because this is
   // label (and we have already processed the substatement) there is no
   // extra control-flow to worry about.
-  LabelBlock->appendStmt(L);
+  LabelBlock->setLabel(L);
   FinishBlock(LabelBlock);
   
   // We set Block to NULL to allow lazy creation of a new block
@@ -808,9 +807,9 @@ CFGBlock* CFGBuilder::VisitSwitchCase(SwitchCase* S) {
   CFGBlock* CaseBlock = Visit(S->getSubStmt());
   assert (CaseBlock);
   
-  // Cases/Default statements parition block, so this is the top of
-  // the basic block we were processing (the case/default is the first stmt).
-  CaseBlock->appendStmt(S);
+  // Cases/Default statements partition block, so this is the top of
+  // the basic block we were processing (the case/default is the label).
+  CaseBlock->setLabel(S);
   FinishBlock(CaseBlock);
   
   // Add this block to the list of successors for the block with the
@@ -898,8 +897,6 @@ void CFG::print(std::ostream& OS) const {
   
   // Print the exit block.
   getExit().print(OS,this);
-
-  OS << "\n";
 }
 
 namespace {
@@ -959,7 +956,7 @@ void CFGBlock::dump(const CFG* cfg) const { print(std::cerr,cfg); }
 
 /// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
 ///   Generally this will only be called from CFG::print.
-void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
+void CFGBlock::print(std::ostream& OS, const CFG* cfg, bool print_edges) const {
 
   // Print the header.
   OS << "\n [ B" << getBlockID();  
@@ -970,53 +967,69 @@ void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
   }
   else OS << " ]\n";
 
+  // Print the label of this block.
+  if (Stmt* S = const_cast<Stmt*>(getLabel())) {
+    if (print_edges) OS << "    ";
+    if (LabelStmt* L = dyn_cast<LabelStmt>(S))
+      OS << L->getName();
+    else if (CaseStmt* C = dyn_cast<CaseStmt>(S)) {
+      OS << "case ";
+      C->getLHS()->printPretty(OS);
+      if (C->getRHS()) {
+        OS << " ... ";
+        C->getRHS()->printPretty(OS);
+      }
+    }
+    else if (DefaultStmt* D = dyn_cast<DefaultStmt>(D)) {
+      OS << "default";
+    }
+    else assert(false && "Invalid label statement in CFGBlock.");
+    
+    OS << ":\n";
+  }
+  
   // Iterate through the statements in the block and print them.
-  OS << "    ------------------------\n";
   unsigned j = 1;
   for (const_iterator I = Stmts.begin(), E = Stmts.end() ; I != E ; ++I, ++j ) {
-    // Print the statement # in the basic block.
-    OS << "    " << std::setw(3) << j << ": ";    
-
-    // Print the statement/expression.
-    Stmt* S = *I;
-    
-    if (LabelStmt* L = dyn_cast<LabelStmt>(S))
-      OS << L->getName() << ": (LABEL)\n";
-    else
-      (*I)->printPretty(OS);
-      
+    // Print the statement # in the basic block and the statement itself.
+    if (print_edges) OS << "    ";
+    OS << std::setw(3) << j << ": ";        
+    (*I)->printPretty(OS);
+          
     // Expressions need a newline.
     if (isa<Expr>(*I)) OS << '\n';
   }
-  OS << "    ------------------------\n";
 
-  // Print the predecessors of this block.
-  OS << "    Predecessors (" << pred_size() << "):";
-  unsigned i = 0;
-  for (const_pred_iterator I = pred_begin(), E = pred_end(); I != E; ++I, ++i) {
-    if (i == 8 || (i-8) == 0) {
-      OS << "\n     ";
-    }
-    OS << " B" << (*I)->getBlockID();
+  // Print the terminator of this block.
+  if (getTerminator()) {
+    if (print_edges) OS << "    ";
+    OS << "  T: ";
+    CFGBlockTerminatorPrint(OS).Visit(const_cast<Stmt*>(getTerminator()));
   }
   
-  // Print the terminator of this block.
-  OS << "\n    Terminator: ";
-  if (ControlFlowStmt)
-    CFGBlockTerminatorPrint(OS).Visit(ControlFlowStmt);
-  else
-    OS << "<NULL>\n";
-
-  // Print the successors of this block.
-  OS << "    Successors (" << succ_size() << "):";
-  i = 0;
-  for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I, ++i) {
-    if (i == 8 || (i-8) % 10 == 0) {
-      OS << "\n    ";
+  if (print_edges) {
+    // Print the predecessors of this block.
+    OS << "    Predecessors (" << pred_size() << "):";
+    unsigned i = 0;
+    for (const_pred_iterator I = pred_begin(), E = pred_end(); I != E; ++I, ++i) {
+      if (i == 8 || (i-8) == 0) {
+        OS << "\n     ";
+      }
+      OS << " B" << (*I)->getBlockID();
     }
-    OS << " B" << (*I)->getBlockID();
+    OS << '\n';
+
+    // Print the successors of this block.
+    OS << "    Successors (" << succ_size() << "):";
+    i = 0;
+    for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I, ++i) {
+      if (i == 8 || (i-8) % 10 == 0) {
+        OS << "\n    ";
+      }
+      OS << " B" << (*I)->getBlockID();
+    }
+    OS << '\n';
   }
-  OS << '\n';
 }
 
 //===----------------------------------------------------------------------===//
@@ -1029,7 +1042,7 @@ struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph) {
 
     std::ostringstream Out;
-    Node->print(Out,Graph);
+    Node->print(Out,Graph,false);
     std::string OutStr = Out.str();
 
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());

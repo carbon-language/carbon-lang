@@ -43,15 +43,24 @@ class CFG;
 ///     Terminator       Successor Ordering
 ///  -----------------------------------------------------
 ///       if            Then Block;  Else Block
+///     ? operator      LHS expression;  RHS expression
+///     &&, ||          expression that uses result of && or ||, RHS
 ///
 class CFGBlock {
   typedef std::vector<Stmt*> StatementListTy;
   /// Stmts - The set of statements in the basic block.
   StatementListTy Stmts;
-  /// ControlFlowStmt - The terminator for a basic block that
+
+  /// Label - An (optional) label that prefixes the executable
+  ///  statements in the block.  When this variable is non-NULL, it is
+  ///  either an instance of LabelStmt or SwitchCase.
+  Stmt* Label;
+  
+  /// Terminator - The terminator for a basic block that
   ///  indicates the type of control-flow that occurs between a block
   ///  and its successors.
-  Stmt* ControlFlowStmt;
+  Stmt* Terminator;
+  
   /// BlockID - A numerical ID assigned to a CFGBlock during construction
   ///   of the CFG.
   unsigned BlockID;
@@ -63,7 +72,7 @@ class CFGBlock {
   AdjacentBlocks Succs;
   
 public:
-  explicit CFGBlock(unsigned blockid) : ControlFlowStmt(NULL), 
+  explicit CFGBlock(unsigned blockid) : Label(NULL), Terminator(NULL),
                                         BlockID(blockid) {}
   ~CFGBlock() {};
 
@@ -129,8 +138,14 @@ public:
   // Manipulation of block contents
   
   void appendStmt(Stmt* Statement) { Stmts.push_back(Statement); }
-  void setTerminator(Stmt* Statement) { ControlFlowStmt = Statement; }
-  Stmt* getTerminator() { return ControlFlowStmt; }
+  void setTerminator(Stmt* Statement) { Terminator = Statement; }
+  void setLabel(Stmt* Statement) { Label = Statement; }
+
+  Stmt* getTerminator() { return Terminator; }
+  const Stmt* getTerminator() const { return Terminator; }
+  
+  Stmt* getLabel() { return Label; }
+  const Stmt* getLabel() const { return Label; }
   
   void reverseStmts();
   
@@ -142,7 +157,7 @@ public:
   unsigned getBlockID() const { return BlockID; }
   
   void dump(const CFG* cfg) const;
-  void print(std::ostream& OS, const CFG* cfg) const;
+  void print(std::ostream& OS, const CFG* cfg, bool print_edges = true) const;
 };
   
 
