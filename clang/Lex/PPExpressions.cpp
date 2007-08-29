@@ -167,6 +167,11 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     }
     assert(Literal.isIntegerLiteral() && "Unknown ppnumber");
 
+    // long long is a C99 feature.
+    if (!PP.getLangOptions().C99 && !PP.getLangOptions().CPlusPlus0x
+	&& Literal.isLongLong)
+      PP.Diag(PeekTok, diag::ext_longlong);
+
     // Parse the integer literal into Result.
     if (Literal.GetIntegerValue(Result)) {
       // Overflow parsing integer literal.
