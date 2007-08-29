@@ -762,17 +762,10 @@ class CallInst : public Instruction {
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
-    typename std::iterator_traits<InputIterator>::difference_type NumArgs = 
-      std::distance(ArgBegin, ArgEnd);
+    unsigned NumArgs = (unsigned)std::distance(ArgBegin, ArgEnd);
     
-    if (NumArgs > 0) {
-      // This requires that the iterator points to contiguous memory.
-      init(Func, &*ArgBegin, NumArgs);
-    }
-    else {
-      init(Func, 0, NumArgs);
-    }
-    
+    // This requires that the iterator points to contiguous memory.
+    init(Func, NumArgs ? &*ArgBegin : 0, NumArgs);
     setName(Name);
   }
 
@@ -1552,17 +1545,10 @@ class InvokeInst : public TerminatorInst {
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
-    typename std::iterator_traits<InputIterator>::difference_type NumArgs = 
-      std::distance(ArgBegin, ArgEnd);
+    unsigned NumArgs = (unsigned)std::distance(ArgBegin, ArgEnd);
     
-    if (NumArgs > 0) {
-      // This requires that the iterator points to contiguous memory.
-      init(Func, IfNormal, IfException, &*ArgBegin, NumArgs);
-    }
-    else {
-      init(Func, IfNormal, IfException, 0, NumArgs);
-    }
-    
+    // This requires that the iterator points to contiguous memory.
+    init(Func, IfNormal, IfException, NumArgs ? &*ArgBegin : 0, NumArgs);
     setName(Name);
   }
 
