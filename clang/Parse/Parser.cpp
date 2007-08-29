@@ -247,6 +247,17 @@ void Parser::Initialize() {
   if (Tok.getKind() == tok::eof &&
       !getLang().CPlusPlus)  // Empty source file is an extension in C
     Diag(Tok, diag::ext_empty_source_file);
+  
+  // Initialization for Objective-C context sensitive keywords recognition.
+  // Referenced in Parser::isObjCTypeQualifier.
+  if (getLang().ObjC1) {
+    ObjcTypeQuals[objc_in] = &PP.getIdentifierTable().get("in");
+    ObjcTypeQuals[objc_out] = &PP.getIdentifierTable().get("out");
+    ObjcTypeQuals[objc_inout] = &PP.getIdentifierTable().get("inout");
+    ObjcTypeQuals[objc_oneway] = &PP.getIdentifierTable().get("oneway");
+    ObjcTypeQuals[objc_bycopy] = &PP.getIdentifierTable().get("bycopy");
+    ObjcTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
+  }
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the

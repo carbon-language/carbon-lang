@@ -303,13 +303,11 @@ IdentifierInfo *Parser::ParseObjCSelector() {
 ///   objc-type-qualifier: one of
 ///     in out inout bycopy byref oneway
 ///
-///   FIXME: remove the string compares...
 bool Parser::isObjCTypeQualifier() {
   if (Tok.getKind() == tok::identifier) {
-    const char *qual = Tok.getIdentifierInfo()->getName();
-    return (strcmp(qual, "in") == 0) || (strcmp(qual, "out") == 0) ||
-           (strcmp(qual, "inout") == 0) || (strcmp(qual, "oneway") == 0) ||
-           (strcmp(qual, "bycopy") == 0) || (strcmp(qual, "byref") == 0);
+    const IdentifierInfo *II = Tok.getIdentifierInfo();
+    for (unsigned i = 0; i < objc_NumQuals; ++i)
+      if (II == ObjcTypeQuals[i]) return true;
   }
   return false;
 }

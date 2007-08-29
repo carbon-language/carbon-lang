@@ -267,6 +267,12 @@ private:
   DeclTy *ParseObjCAtAliasDeclaration();
   
   IdentifierInfo *ParseObjCSelector();
+  // Definitions for Objective-c context sensitive keywords recognition.
+  enum ObjCTypeQual {
+    objc_in=0, objc_out, objc_inout, objc_oneway, objc_bycopy, objc_byref,
+    objc_NumQuals
+  };
+  IdentifierInfo *ObjcTypeQuals[objc_NumQuals];
   bool isObjCTypeQualifier();
   void ParseObjCTypeName();
   void ParseObjCMethodRequirement();
