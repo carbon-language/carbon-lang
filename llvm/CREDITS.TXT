@@ -105,6 +105,10 @@ E: greened@obbligato.org
 D: Miscellaneous bug fixes
 D: Register allocation refactoring
 
+N: Raul Fernandes Herbster
+E: raul@dsc.ufcg.edu.br
+D: JIT support for ARM
+
 N: Paolo Invernizzi
 E: arathorn@fastwebnet.it
 D: Visual C++ compatibility fixes 
@@ -240,6 +244,3 @@ W: http://web.mac.com/bwendling/
 D: MMX & SSSE3 instructions
 D: SPEC2006 support
 
-N: Raul Fernandes Herbster
-E: raul@dsc.ufcg.edu.br
-D: JIT support for ARM
