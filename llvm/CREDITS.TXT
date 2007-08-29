@@ -240,4 +240,6 @@ W: http://web.mac.com/bwendling/
 D: MMX & SSSE3 instructions
 D: SPEC2006 support
 
-
+N: Raul Fernandes Herbster
+E: raul@dsc.ufcg.edu.br
+D: JIT support for ARM
