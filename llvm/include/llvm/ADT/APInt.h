@@ -856,7 +856,7 @@ public:
   inline uint32_t getMinSignedBits() const {
     if (isNegative())
       return BitWidth - countLeadingOnes() + 1;
-    return getActiveBits();
+    return getActiveBits()+1;
   }
 
   /// This method attempts to return the value of this APInt as a zero extended
