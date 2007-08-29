@@ -1053,19 +1053,21 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // Figure out the type that should be used for this enum.
   // FIXME: Support attribute(packed) on enums and -fshort-enums.
   QualType BestType;
+  unsigned BestWidth;
   
   if (NumNegativeBits) {
     // If there is a negative value, figure out the smallest integer type (of 
     // int/long/longlong) that fits.
-    if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth)
+    if (NumNegativeBits <= IntWidth && NumPositiveBits < IntWidth) {
       BestType = Context.IntTy;
-    else {
-      unsigned LongWidth = Context.Target.getLongWidth(Enum->getLocation());
-      if (NumNegativeBits <= LongWidth && NumPositiveBits < LongWidth)
+      BestWidth = IntWidth;
+    } else {
+      BestWidth = Context.Target.getLongWidth(Enum->getLocation());
+      if (NumNegativeBits <= BestWidth && NumPositiveBits < BestWidth)
         BestType = Context.LongTy;
       else {
-        unsigned LLWidth = Context.Target.getLongLongWidth(Enum->getLocation());
-        if (NumNegativeBits > LLWidth || NumPositiveBits >= LLWidth)
+        BestWidth = Context.Target.getLongLongWidth(Enum->getLocation());
+        if (NumNegativeBits > BestWidth || NumPositiveBits >= BestWidth)
           Diag(Enum->getLocation(), diag::warn_enum_too_large);
         BestType = Context.LongLongTy;
       }
@@ -1073,19 +1075,70 @@ void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   } else {
     // If there is no negative value, figure out which of uint, ulong, ulonglong
     // fits.
-    if (NumPositiveBits <= IntWidth)
+    if (NumPositiveBits <= IntWidth) {
       BestType = Context.UnsignedIntTy;
-    else if (NumPositiveBits <=Context.Target.getLongWidth(Enum->getLocation()))
+      BestWidth = IntWidth;
+    } else if (NumPositiveBits <=
+               (BestWidth = Context.Target.getLongWidth(Enum->getLocation())))
       BestType = Context.UnsignedLongTy;
     else {
-      assert(NumPositiveBits <=
-             Context.Target.getLongLongWidth(Enum->getLocation()) &&
+      BestWidth = Context.Target.getLongLongWidth(Enum->getLocation());
+      assert(NumPositiveBits <= BestWidth &&
              "How could an initializer get larger than ULL?");
       BestType = Context.UnsignedLongLongTy;
     }
   }
   
-  // FIXME: Install type in Enum and constant values.
+  // Loop over all of the enumerator constants, changing their types to match
+  // the type of the enum if needed.
+  for (unsigned i = 0; i != NumElements; ++i) {
+    EnumConstantDecl *ECD =
+      cast_or_null<EnumConstantDecl>(static_cast<Decl*>(Elements[i]));
+    if (!ECD) continue;  // Already issued a diagnostic.
+
+    // Standard C says the enumerators have int type, but we allow, as an
+    // extension, the enumerators to be larger than int size.  If each
+    // enumerator value fits in an int, type it as an int, otherwise type it the
+    // same as the enumerator decl itself.  This means that in "enum { X = 1U }"
+    // that X has type 'int', not 'unsigned'.
+    if (ECD->getType() == Context.IntTy)
+      continue;  // Already int type.
+
+    // Determine whether the value fits into an int.
+    llvm::APSInt InitVal = ECD->getInitVal();
+    bool FitsInInt;
+    if (InitVal.isUnsigned() || !InitVal.isNegative())
+      FitsInInt = InitVal.getActiveBits() < IntWidth;
+    else
+      FitsInInt = InitVal.getMinSignedBits() <= IntWidth;
+
+    // If it fits into an integer type, force it.  Otherwise force it to match
+    // the enum decl type.
+    QualType NewTy;
+    unsigned NewWidth;
+    bool NewSign;
+    if (FitsInInt) {
+      NewTy = Context.IntTy;
+      NewWidth = IntWidth;
+      NewSign = true;
+    } else if (ECD->getType() == BestType) {
+      // Already the right type!
+      continue;
+    } else {
+      NewTy = BestType;
+      NewWidth = BestWidth;
+      NewSign = BestType->isSignedIntegerType();
+    }
+
+    // Adjust the APSInt value.
+    InitVal.extOrTrunc(NewWidth);
+    InitVal.setIsSigned(NewSign);
+    ECD->setInitVal(InitVal);
+    
+    // Adjust the Expr initializer and type.
+    ECD->setInitExpr(new ImplicitCastExpr(NewTy, ECD->getInitExpr()));
+    ECD->setType(NewTy);
+  }
   
   Enum->defineElements(EltList, BestType);
 }
