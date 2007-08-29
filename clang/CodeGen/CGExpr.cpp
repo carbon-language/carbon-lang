@@ -407,18 +407,6 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     if (!hasAggregateLLVMType(ArgTy)) {
       // Scalar argument is passed by-value.
       Args.push_back(EmitScalarExpr(E->getArg(i)));
-      
-      if (ArgTyIt == ArgTyEnd) {
-        // Otherwise, if passing through "..." or to a function with no prototype,
-        // perform the "default argument promotions" (C99 6.5.2.2p6), which
-        // includes the usual unary conversions, but also promotes float to
-        // double.
-        // FIXME: remove this when the impcast is in place.
-        if (Args.back()->getType() == llvm::Type::FloatTy)
-          Args.back() = Builder.CreateFPExt(Args.back(), llvm::Type::DoubleTy,
-                                            "tmp");
-        // FIXME: Remove ArgIt when this is gone.
-      }
     } else if (ArgTy->isComplexType()) {
       // Make a temporary alloca to pass the argument.
       llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
@@ -429,9 +417,6 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
       EmitAggExpr(E->getArg(i), DestMem, false);
       Args.push_back(DestMem);
     }
-    
-    if (ArgTyIt != ArgTyEnd)
-      ++ArgTyIt;
   }
   
   llvm::Value *V = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
