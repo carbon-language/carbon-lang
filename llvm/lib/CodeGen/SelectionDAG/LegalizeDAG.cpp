@@ -733,7 +733,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::FRAMEADDR:
   case ISD::RETURNADDR:
-  case ISD::FRAME_TO_ARGS_OFFSET:
     // The only option for these nodes is to custom lower them.  If the target
     // does not custom lower them, then return zero.
     Tmp1 = TLI.LowerOperation(Op, DAG);
@@ -741,6 +740,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = Tmp1;
     else
       Result = DAG.getConstant(0, TLI.getPointerTy());
+    break;
+  case ISD::FRAME_TO_ARGS_OFFSET:
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.Val) break;
+      // Fall Thru
+    case TargetLowering::Legal:
+      Result = DAG.getConstant(0, VT);
+      break;
+    }
     break;
   case ISD::EXCEPTIONADDR: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
