@@ -85,24 +85,23 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   // BValNo is a value number in B that is defined by a copy from A.  'B3' in
   // the example above.
   LiveInterval::iterator BLR = IntB.FindLiveRangeContaining(CopyIdx);
-  unsigned BValNo = BLR->ValId;
+  VNInfo *BValNo = BLR->valno;
   
   // Get the location that B is defined at.  Two options: either this value has
   // an unknown definition point or it is defined at CopyIdx.  If unknown, we 
   // can't process it.
-  unsigned BValNoDefIdx = IntB.getDefForValNum(BValNo);
-  if (!IntB.getSrcRegForValNum(BValNo)) return false;
-  assert(BValNoDefIdx == CopyIdx &&
+  if (!BValNo->reg) return false;
+  assert(BValNo->def == CopyIdx &&
          "Copy doesn't define the value?");
   
   // AValNo is the value number in A that defines the copy, A0 in the example.
   LiveInterval::iterator AValLR = IntA.FindLiveRangeContaining(CopyIdx-1);
-  unsigned AValNo = AValLR->ValId;
+  VNInfo *AValNo = AValLR->valno;
   
   // If AValNo is defined as a copy from IntB, we can potentially process this.
   
   // Get the instruction that defines this value number.
-  unsigned SrcReg = IntA.getSrcRegForValNum(AValNo);
+  unsigned SrcReg = AValNo->reg;
   if (!SrcReg) return false;  // Not defined by a copy.
     
   // If the value number is not defined by a copy instruction, ignore it.
@@ -112,8 +111,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   if (rep(SrcReg) != IntB.reg) return false;
   
   // Get the LiveRange in IntB that this value number starts with.
-  unsigned AValNoInstIdx = IntA.getDefForValNum(AValNo);
-  LiveInterval::iterator ValLR = IntB.FindLiveRangeContaining(AValNoInstIdx-1);
+  LiveInterval::iterator ValLR = IntB.FindLiveRangeContaining(AValNo->def-1);
   
   // Make sure that the end of the live range is inside the same block as
   // CopyMI.
@@ -145,8 +143,8 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   // We are about to delete CopyMI, so need to remove it as the 'instruction
   // that defines this value #'. Update the the valnum with the new defining
   // instruction #.
-  IntB.setDefForValNum(BValNo, FillerStart);
-  IntB.setSrcRegForValNum(BValNo, 0);
+  BValNo->def = FillerStart;
+  BValNo->reg = 0;
   
   // Okay, we can merge them.  We need to insert a new liverange:
   // [ValLR.end, BLR.begin) of either value number, then we merge the
@@ -165,8 +163,8 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   }
 
   // Okay, merge "B1" into the same value number as "B0".
-  if (BValNo != ValLR->ValId)
-    IntB.MergeValueNumberInto(BValNo, ValLR->ValId);
+  if (BValNo != ValLR->valno)
+    IntB.MergeValueNumberInto(BValNo, ValLR->valno);
   DOUT << "   result = "; IntB.print(DOUT, mri_);
   DOUT << "\n";
 
@@ -412,43 +410,42 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 /// ThisFromOther[x] - If x is defined as a copy from the other interval, this
 /// contains the value number the copy is from.
 ///
-static unsigned ComputeUltimateVN(unsigned VN,
-                        SmallVector<LiveInterval::VNInfo, 16> &ValueNumberInfo,
-                                  SmallVector<int, 16> &ThisFromOther,
-                                  SmallVector<int, 16> &OtherFromThis,
+static unsigned ComputeUltimateVN(VNInfo *VNI,
+                                  SmallVector<VNInfo*, 16> &NewVNInfo,
+                                  SmallVector<VNInfo*, 16> &ThisFromOther,
+                                  SmallVector<VNInfo*, 16> &OtherFromThis,
                                   SmallVector<int, 16> &ThisValNoAssignments,
-                                  SmallVector<int, 16> &OtherValNoAssignments,
-                                  LiveInterval &ThisLI, LiveInterval &OtherLI) {
+                                  SmallVector<int, 16> &OtherValNoAssignments) {
+  unsigned VN = VNI->id;
+
   // If the VN has already been computed, just return it.
   if (ThisValNoAssignments[VN] >= 0)
     return ThisValNoAssignments[VN];
 //  assert(ThisValNoAssignments[VN] != -2 && "Cyclic case?");
-  
+
   // If this val is not a copy from the other val, then it must be a new value
   // number in the destination.
-  int OtherValNo = ThisFromOther[VN];
-  if (OtherValNo == -1) {
-    ValueNumberInfo.push_back(ThisLI.getValNumInfo(VN));
-    return ThisValNoAssignments[VN] = ValueNumberInfo.size()-1;
+  VNInfo *OtherValNo = ThisFromOther[VN];
+  if (!OtherValNo) {
+    NewVNInfo.push_back(VNI);
+    return ThisValNoAssignments[VN] = NewVNInfo.size()-1;
   }
 
   // Otherwise, this *is* a copy from the RHS.  If the other side has already
   // been computed, return it.
-  if (OtherValNoAssignments[OtherValNo] >= 0)
-    return ThisValNoAssignments[VN] = OtherValNoAssignments[OtherValNo];
+  if (OtherValNoAssignments[OtherValNo->id] >= 0)
+    return ThisValNoAssignments[VN] = OtherValNoAssignments[OtherValNo->id];
   
   // Mark this value number as currently being computed, then ask what the
   // ultimate value # of the other value is.
   ThisValNoAssignments[VN] = -2;
   unsigned UltimateVN =
-    ComputeUltimateVN(OtherValNo, ValueNumberInfo,
-                      OtherFromThis, ThisFromOther,
-                      OtherValNoAssignments, ThisValNoAssignments,
-                      OtherLI, ThisLI);
+    ComputeUltimateVN(OtherValNo, NewVNInfo, OtherFromThis, ThisFromOther,
+                      OtherValNoAssignments, ThisValNoAssignments);
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
-static bool InVector(unsigned Val, const SmallVector<unsigned, 8> &V) {
+static bool InVector(VNInfo *Val, const SmallVector<VNInfo*, 8> &V) {
   return std::find(V.begin(), V.end(), Val) != V.end();
 }
 
@@ -477,7 +474,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
     if (RHSIt != RHS.begin()) --RHSIt;
   }
   
-  SmallVector<unsigned, 8> EliminatedLHSVals;
+  SmallVector<VNInfo*, 8> EliminatedLHSVals;
   
   while (1) {
     // Determine if these live intervals overlap.
@@ -493,13 +490,13 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
     // coalesce these live ranges and we bail out.
     if (Overlaps) {
       // If we haven't already recorded that this value # is safe, check it.
-      if (!InVector(LHSIt->ValId, EliminatedLHSVals)) {
+      if (!InVector(LHSIt->valno, EliminatedLHSVals)) {
         // Copy from the RHS?
-        unsigned SrcReg = LHS.getSrcRegForValNum(LHSIt->ValId);
+        unsigned SrcReg = LHSIt->valno->reg;
         if (rep(SrcReg) != RHS.reg)
           return false;    // Nope, bail out.
         
-        EliminatedLHSVals.push_back(LHSIt->ValId);
+        EliminatedLHSVals.push_back(LHSIt->valno);
       }
       
       // We know this entire LHS live range is okay, so skip it now.
@@ -516,15 +513,15 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
       // want to notice this copy (so that it gets coalesced away) even though
       // the live ranges don't actually overlap.
       if (LHSIt->start == RHSIt->end) {
-        if (InVector(LHSIt->ValId, EliminatedLHSVals)) {
+        if (InVector(LHSIt->valno, EliminatedLHSVals)) {
           // We already know that this value number is going to be merged in
           // if coalescing succeeds.  Just skip the liverange.
           if (++LHSIt == LHSEnd) break;
         } else {
           // Otherwise, if this is a copy from the RHS, mark it as being merged
           // in.
-          if (rep(LHS.getSrcRegForValNum(LHSIt->ValId)) == RHS.reg) {
-            EliminatedLHSVals.push_back(LHSIt->ValId);
+          if (rep(LHSIt->valno->reg) == RHS.reg) {
+            EliminatedLHSVals.push_back(LHSIt->valno);
 
             // We know this entire LHS live range is okay, so skip it now.
             if (++LHSIt == LHSEnd) break;
@@ -542,13 +539,13 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
   // optimize for it: if there is more than one value, we merge them all into
   // the lowest numbered one, then handle the interval as if we were merging
   // with one value number.
-  unsigned LHSValNo;
+  VNInfo *LHSValNo;
   if (EliminatedLHSVals.size() > 1) {
     // Loop through all the equal value numbers merging them into the smallest
     // one.
-    unsigned Smallest = EliminatedLHSVals[0];
+    VNInfo *Smallest = EliminatedLHSVals[0];
     for (unsigned i = 1, e = EliminatedLHSVals.size(); i != e; ++i) {
-      if (EliminatedLHSVals[i] < Smallest) {
+      if (EliminatedLHSVals[i]->id < Smallest->id) {
         // Merge the current notion of the smallest into the smaller one.
         LHS.MergeValueNumberInto(Smallest, EliminatedLHSVals[i]);
         Smallest = EliminatedLHSVals[i];
@@ -566,13 +563,13 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
   // Okay, now that there is a single LHS value number that we're merging the
   // RHS into, update the value number info for the LHS to indicate that the
   // value number is defined where the RHS value number was.
-  const LiveInterval::VNInfo VNI = RHS.getValNumInfo(0);
-  LHS.setDefForValNum(LHSValNo, VNI.def);
-  LHS.setSrcRegForValNum(LHSValNo, VNI.reg);
+  const VNInfo *VNI = RHS.getFirstValNumInfo();
+  LHSValNo->def = VNI->def;
+  LHSValNo->reg = VNI->reg;
   
   // Okay, the final step is to loop over the RHS live intervals, adding them to
   // the LHS.
-  LHS.addKillsForValNum(LHSValNo, VNI.kills);
+  LHS.addKills(*LHSValNo, VNI->kills);
   LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.weight += RHS.weight;
   if (RHS.preference && !LHS.preference)
@@ -592,9 +589,9 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
-  SmallVector<int, 16> LHSValsDefinedFromRHS;
-  SmallVector<int, 16> RHSValsDefinedFromLHS;
-  SmallVector<LiveInterval::VNInfo, 16> ValueNumberInfo;
+  SmallVector<VNInfo*, 16> LHSValsDefinedFromRHS;
+  SmallVector<VNInfo*, 16> RHSValsDefinedFromLHS;
+  SmallVector<VNInfo*, 16> NewVNInfo;
                           
   // If a live interval is a physical register, conservatively check if any
   // of its sub-registers is overlapping the live interval of the virtual
@@ -617,6 +614,9 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
       }
   }
                           
+  LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), NULL);
+  RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), NULL);
+
   // Compute ultimate value numbers for the LHS and RHS values.
   if (RHS.containsOneValue()) {
     // Copies from a liveinterval with a single value are simple to handle and
@@ -626,8 +626,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     // Find out if the RHS is defined as a copy from some value in the LHS.
     int RHSVal0DefinedFromLHS = -1;
     int RHSValID = -1;
-    LiveInterval::VNInfo RHSValNoInfo;
-    unsigned RHSSrcReg = RHS.getSrcRegForValNum(0);
+    VNInfo *RHSValNoInfo = NULL;
+    unsigned RHSSrcReg = RHS.getFirstValNumInfo()->reg;
     if ((RHSSrcReg == 0 || rep(RHSSrcReg) != LHS.reg)) {
       // If RHS is not defined as a copy from the LHS, we can use simpler and
       // faster checks to see if the live ranges are coalescable.  This joiner
@@ -635,47 +635,48 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
       if (!MRegisterInfo::isPhysicalRegister(RHS.reg)) {
         return SimpleJoin(LHS, RHS);
       } else {
-        RHSValNoInfo = RHS.getValNumInfo(0);
+        RHSValNoInfo = RHS.getFirstValNumInfo();
       }
     } else {
       // It was defined as a copy from the LHS, find out what value # it is.
-      unsigned ValInst = RHS.getDefForValNum(0);
-      RHSValID = LHS.getLiveRangeContaining(ValInst-1)->ValId;
-      RHSValNoInfo = LHS.getValNumInfo(RHSValID);
+      const VNInfo *VNI = RHS.getFirstValNumInfo();
+      RHSValNoInfo = LHS.getLiveRangeContaining(VNI->def-1)->valno;
+      RHSValID = RHSValNoInfo->id;
       RHSVal0DefinedFromLHS = RHSValID;
     }
     
     LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
     RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-    ValueNumberInfo.resize(LHS.getNumValNums());
+    NewVNInfo.resize(LHS.getNumValNums(), NULL);
     
     // Okay, *all* of the values in LHS that are defined as a copy from RHS
     // should now get updated.
-    for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-      if (unsigned LHSSrcReg = LHS.getSrcRegForValNum(VN)) {
+    for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+         i != e; ++i) {
+      VNInfo *VNI = *i;
+      unsigned VN = VNI->id;
+      if (unsigned LHSSrcReg = VNI->reg) {
         if (rep(LHSSrcReg) != RHS.reg) {
           // If this is not a copy from the RHS, its value number will be
           // unmodified by the coalescing.
-          ValueNumberInfo[VN] = LHS.getValNumInfo(VN);
+          NewVNInfo[VN] = VNI;
           LHSValNoAssignments[VN] = VN;
         } else if (RHSValID == -1) {
           // Otherwise, it is a copy from the RHS, and we don't already have a
           // value# for it.  Keep the current value number, but remember it.
           LHSValNoAssignments[VN] = RHSValID = VN;
-          ValueNumberInfo[VN] = RHSValNoInfo;
-          RHS.addKills(ValueNumberInfo[VN], LHS.getKillsForValNum(VN));
+          NewVNInfo[VN] = RHSValNoInfo;
+          LHSValsDefinedFromRHS[VN] = VNI;
         } else {
           // Otherwise, use the specified value #.
           LHSValNoAssignments[VN] = RHSValID;
-          if (VN != (unsigned)RHSValID)
-            ValueNumberInfo[VN].def = ~1U;  // Now this val# is dead.
-          else {
-            ValueNumberInfo[VN] = RHSValNoInfo;
-            RHS.addKills(ValueNumberInfo[VN], LHS.getKillsForValNum(VN));
+          if (VN == (unsigned)RHSValID) {  // Else this val# is dead.
+            NewVNInfo[VN] = RHSValNoInfo;
+            LHSValsDefinedFromRHS[VN] = VNI;
           }
         }
       } else {
-        ValueNumberInfo[VN] = LHS.getValNumInfo(VN);
+        NewVNInfo[VN] = VNI;
         LHSValNoAssignments[VN] = VN;
       }
     }
@@ -683,17 +684,17 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     assert(RHSValID != -1 && "Didn't find value #?");
     RHSValNoAssignments[0] = RHSValID;
     if (RHSVal0DefinedFromLHS != -1) {
-      int LHSValId = LHSValNoAssignments[RHSVal0DefinedFromLHS];
-      unsigned DefIdx = RHS.getDefForValNum(0);
-      LiveInterval::removeKill(ValueNumberInfo[LHSValId], DefIdx);
-      LHS.addKills(ValueNumberInfo[LHSValId], RHS.getKillsForValNum(0));
+      const VNInfo *VNI = RHS.getFirstValNumInfo();
+      RHSValsDefinedFromLHS[0] = LHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
   } else {
     // Loop over the value numbers of the LHS, seeing if any are defined from
     // the RHS.
-    LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), -1);
-    for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-      unsigned ValSrcReg = LHS.getSrcRegForValNum(VN);
+    for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+         i != e; ++i) {
+      VNInfo *VNI = *i;
+      unsigned VN = VNI->id;
+      unsigned ValSrcReg = VNI->reg;
       if (ValSrcReg == 0)  // Src not defined by a copy?
         continue;
       
@@ -703,15 +704,16 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
         continue;
       
       // Figure out the value # from the RHS.
-      unsigned ValInst = LHS.getDefForValNum(VN);
-      LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(ValInst-1)->ValId;
+      LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
     
     // Loop over the value numbers of the RHS, seeing if any are defined from
     // the LHS.
-    RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), -1);
-    for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
-      unsigned ValSrcReg = RHS.getSrcRegForValNum(VN);
+    for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+         i != e; ++i) {
+      VNInfo *VNI = *i;
+      unsigned VN = VNI->id;
+      unsigned ValSrcReg = VNI->reg;
       if (ValSrcReg == 0)  // Src not defined by a copy?
         continue;
       
@@ -721,34 +723,39 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
         continue;
       
       // Figure out the value # from the LHS.
-      unsigned ValInst = RHS.getDefForValNum(VN);
-      RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(ValInst-1)->ValId;
+      RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
     
     LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
     RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
-    ValueNumberInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
+    NewVNInfo.reserve(LHS.getNumValNums() + RHS.getNumValNums());
     
-    for (unsigned VN = 0, e = LHS.getNumValNums(); VN != e; ++VN) {
-      if (LHSValNoAssignments[VN] >= 0 || LHS.getDefForValNum(VN) == ~1U) 
+    for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+         i != e; ++i) {
+      VNInfo *VNI = *i;
+      unsigned VN = VNI->id;
+      if (LHSValNoAssignments[VN] >= 0 || VNI->def == ~1U) 
         continue;
-      ComputeUltimateVN(VN, ValueNumberInfo,
+      ComputeUltimateVN(VNI, NewVNInfo,
                         LHSValsDefinedFromRHS, RHSValsDefinedFromLHS,
-                        LHSValNoAssignments, RHSValNoAssignments, LHS, RHS);
+                        LHSValNoAssignments, RHSValNoAssignments);
     }
-    for (unsigned VN = 0, e = RHS.getNumValNums(); VN != e; ++VN) {
-      if (RHSValNoAssignments[VN] >= 0 || RHS.getDefForValNum(VN) == ~1U)
+    for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+         i != e; ++i) {
+      VNInfo *VNI = *i;
+      unsigned VN = VNI->id;
+      if (RHSValNoAssignments[VN] >= 0 || VNI->def == ~1U)
         continue;
       // If this value number isn't a copy from the LHS, it's a new number.
-      if (RHSValsDefinedFromLHS[VN] == -1) {
-        ValueNumberInfo.push_back(RHS.getValNumInfo(VN));
-        RHSValNoAssignments[VN] = ValueNumberInfo.size()-1;
+      if (!RHSValsDefinedFromLHS[VN]) {
+        NewVNInfo.push_back(VNI);
+        RHSValNoAssignments[VN] = NewVNInfo.size()-1;
         continue;
       }
       
-      ComputeUltimateVN(VN, ValueNumberInfo,
+      ComputeUltimateVN(VNI, NewVNInfo,
                         RHSValsDefinedFromLHS, LHSValsDefinedFromRHS,
-                        RHSValNoAssignments, LHSValNoAssignments, RHS, LHS);
+                        RHSValNoAssignments, LHSValNoAssignments);
     }
   }
   
@@ -781,7 +788,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     if (Overlaps) {
       // If the live range overlap will map to the same value number in the
       // result liverange, we can still coalesce them.  If not, we can't.
-      if (LHSValNoAssignments[I->ValId] != RHSValNoAssignments[J->ValId])
+      if (LHSValNoAssignments[I->valno->id] !=
+          RHSValNoAssignments[J->valno->id])
         return false;
     }
     
@@ -795,23 +803,25 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   }
 
   // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (unsigned i = 0, e = RHSValsDefinedFromLHS.size(); i != e; ++i) {
-    int LHSValId = RHSValsDefinedFromLHS[i];
-    if (LHSValId == -1)
+  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    unsigned VN = VNI->id;
+    if (VN >= RHSValsDefinedFromLHS.size() || !RHSValsDefinedFromLHS[VN])
       continue;
-    unsigned RHSValId = RHSValNoAssignments[i];
-    unsigned DefIdx = RHS.getDefForValNum(i);
-    LiveInterval::removeKill(ValueNumberInfo[RHSValId], DefIdx);
-    LHS.addKills(ValueNumberInfo[RHSValId], RHS.getKillsForValNum(i));
+    unsigned RHSValID = RHSValNoAssignments[VN];
+    LiveInterval::removeKill(*NewVNInfo[RHSValID], VNI->def);
+    LHS.addKills(*NewVNInfo[RHSValID], VNI->kills);
   }
-  for (unsigned i = 0, e = LHSValsDefinedFromRHS.size(); i != e; ++i) {
-    int RHSValId = LHSValsDefinedFromRHS[i];
-    if (RHSValId == -1)
+  for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    unsigned VN = VNI->id;
+    if (VN >= LHSValsDefinedFromRHS.size() || !LHSValsDefinedFromRHS[VN])
       continue;
-    unsigned LHSValId = LHSValNoAssignments[i];
-    unsigned DefIdx = LHS.getDefForValNum(i);
-    LiveInterval::removeKill(ValueNumberInfo[LHSValId], DefIdx);
-    RHS.addKills(ValueNumberInfo[LHSValId], LHS.getKillsForValNum(i));
+    unsigned LHSValID = LHSValNoAssignments[VN];
+    LiveInterval::removeKill(*NewVNInfo[LHSValID], VNI->def);
+    RHS.addKills(*NewVNInfo[LHSValID], VNI->kills);
   }
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
@@ -819,12 +829,10 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   if ((RHS.ranges.size() > LHS.ranges.size() &&
       MRegisterInfo::isVirtualRegister(LHS.reg)) ||
       MRegisterInfo::isPhysicalRegister(RHS.reg)) {
-    RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0],
-             ValueNumberInfo);
+    RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0], NewVNInfo);
     Swapped = true;
   } else {
-    LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0],
-             ValueNumberInfo);
+    LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
     Swapped = false;
   }
   return true;

@@ -30,6 +30,26 @@
 namespace llvm {
   class MachineInstr;
   class MRegisterInfo;
+  struct LiveInterval;
+
+  /// VNInfo - If the value number definition is undefined (e.g. phi
+  /// merge point), it contains ~0u,x. If the value number is not in use, it
+  /// contains ~1u,x to indicate that the value # is not used. 
+  ///   parent- LiveInterval parent.
+  ///   def   - Instruction # of the definition.
+  ///   reg   - Source reg iff val# is defined by a copy; zero otherwise.
+  ///   kills - Instruction # of the kills. If a kill is an odd #, it means
+  ///           the kill is a phi join point.
+  struct VNInfo {
+    LiveInterval *parent;
+    unsigned id;
+    unsigned def;
+    unsigned reg;
+    SmallVector<unsigned, 4> kills;
+    VNInfo() : parent(0), id(~1U), def(~1U), reg(0) {}
+    VNInfo(LiveInterval *p, unsigned i, unsigned d, unsigned r)
+      : parent(p), id(i), def(d), reg(r) {}
+  };
 
   /// LiveRange structure - This represents a simple register range in the
   /// program, with an inclusive start point and an exclusive end point.
@@ -37,9 +57,9 @@ namespace llvm {
   struct LiveRange {
     unsigned start;  // Start point of the interval (inclusive)
     unsigned end;    // End point of the interval (exclusive)
-    unsigned ValId;  // identifier for the value contained in this interval.
+    VNInfo *valno;   // identifier for the value contained in this interval.
 
-    LiveRange(unsigned S, unsigned E, unsigned V) : start(S), end(E), ValId(V) {
+    LiveRange(unsigned S, unsigned E, VNInfo *V) : start(S), end(E), valno(V) {
       assert(S < E && "Cannot create empty or backwards range");
     }
 
@@ -80,36 +100,18 @@ namespace llvm {
   /// state.
   struct LiveInterval {
     typedef SmallVector<LiveRange,4> Ranges;
+    typedef SmallVector<VNInfo*,4> VNInfoList;
+
     unsigned reg;        // the register of this interval
     unsigned preference; // preferred register to allocate for this interval
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
-
-    /// ValueNumberInfo - If the value number definition is undefined (e.g. phi
-    /// merge point), it contains ~0u,x. If the value number is not in use, it
-    /// contains ~1u,x to indicate that the value # is not used. 
-    ///   def   - Instruction # of the definition.
-    ///   reg   - Source reg iff val# is defined by a copy; zero otherwise.
-    ///   kills - Instruction # of the kills. If a kill is an odd #, it means
-    ///           the kill is a phi join point.
-    struct VNInfo {
-      unsigned def;
-      unsigned reg;
-      SmallVector<unsigned, 4> kills;
-      VNInfo() : def(~1U), reg(0) {}
-      VNInfo(unsigned d, unsigned r) : def(d), reg(r) {}
-    };
-
-    typedef std::vector<VNInfo> VNInfoList;
-    VNInfoList ValueNumberInfo;
+    unsigned numvals;    // number of value#'s
+    VNInfoList valnos;   // value#'s
 
   public:
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), preference(0), weight(Weight) {
-    }
-
-    ~LiveInterval() {
-      ValueNumberInfo.clear();
+      : reg(Reg), preference(0), weight(Weight), numvals(0) {
     }
 
     typedef Ranges::iterator iterator;
@@ -121,12 +123,21 @@ namespace llvm {
     const_iterator end() const  { return ranges.end(); }
 
     typedef VNInfoList::iterator vni_iterator;
-    vni_iterator vni_begin() { return ValueNumberInfo.begin(); }
-    vni_iterator vni_end() { return ValueNumberInfo.end(); }
+    vni_iterator vni_begin() { return valnos.begin(); }
+    vni_iterator vni_end() { return valnos.end(); }
 
     typedef VNInfoList::const_iterator const_vni_iterator;
-    const_vni_iterator vni_begin() const { return ValueNumberInfo.begin(); }
-    const_vni_iterator vni_end() const { return ValueNumberInfo.end(); }
+    const_vni_iterator vni_begin() const { return valnos.begin(); }
+    const_vni_iterator vni_end() const { return valnos.end(); }
+
+    ~LiveInterval() {
+      for (vni_iterator i = vni_begin(), e = vni_end(); i != e; ++i) {
+        VNInfo *VNI = *i;
+        if (VNI->parent == this)
+          delete VNI;
+      }
+      valnos.clear();
+    }
 
     /// advanceTo - Advance the specified iterator to point to the LiveRange
     /// containing the specified position, or end() if the position is past the
@@ -140,79 +151,39 @@ namespace llvm {
       return I;
     }
 
-    bool containsOneValue() const { return ValueNumberInfo.size() == 1; }
+    bool containsOneValue() const { return numvals == 1; }
 
-    unsigned getNumValNums() const { return ValueNumberInfo.size(); }
+    unsigned getNumValNums() const { return numvals; }
     
-    /// getValNumInfo - Returns a copy of the specified val#.
+    /// getFirstValNumInfo - Returns pointer to the first val#.
     ///
-    inline VNInfo& getValNumInfo(unsigned ValNo) {
-      return ValueNumberInfo[ValNo];
+    inline VNInfo *getFirstValNumInfo() {
+      return valnos.front();
     }
-    inline const VNInfo& getValNumInfo(unsigned ValNo) const {
-      return ValueNumberInfo[ValNo];
+    inline const VNInfo *getFirstValNumInfo() const {
+      return valnos.front();
     }
     
     /// copyValNumInfo - Copy the value number info for one value number to
     /// another.
-    void copyValNumInfo(unsigned DstValNo, unsigned SrcValNo) {
-      VNInfo &vnd = getValNumInfo(DstValNo);
-      const VNInfo &vns = getValNumInfo(SrcValNo);
-      vnd.def = vns.def;
-      vnd.reg = vns.reg;
-      vnd.kills = vns.kills;
-    }
-    void copyValNumInfo(unsigned DstValNo, const LiveInterval &SrcLI,
-                        unsigned SrcValNo) {
-      VNInfo &vnd = getValNumInfo(DstValNo);
-      const VNInfo &vns = SrcLI.getValNumInfo(SrcValNo);
-      vnd.def = vns.def;
-      vnd.reg = vns.reg;
-      vnd.kills = vns.kills;
+    void copyValNumInfo(VNInfo &DstValNo, VNInfo &SrcValNo) {
+      DstValNo.def = SrcValNo.def;
+      DstValNo.reg = SrcValNo.reg;
+      DstValNo.kills = SrcValNo.kills;
     }
 
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
-    unsigned getNextValue(unsigned MIIdx, unsigned SrcReg) {
-      ValueNumberInfo.push_back(VNInfo(MIIdx, SrcReg));
-      return ValueNumberInfo.size()-1;
-    }
-    
-    /// getDefForValNum - Return the machine instruction index that defines the
-    /// specified value number.
-    unsigned getDefForValNum(unsigned ValNo) const {
-      return getValNumInfo(ValNo).def;
-    }
-    
-    /// getSrcRegForValNum - If the machine instruction that defines the
-    /// specified value number is a copy, returns the source register. Otherwise,
-    /// returns zero.
-    unsigned getSrcRegForValNum(unsigned ValNo) const {
-      return getValNumInfo(ValNo).reg;
-    }
-
-    /// setDefForValNum - Set the machine instruction index that defines the
-    /// specified value number. 
-    void setDefForValNum(unsigned ValNo, unsigned NewDef) {
-      getValNumInfo(ValNo).def = NewDef;
-    }
-    
-    /// setSrcRegForValNum - Set the source register of the specified value
-    /// number. 
-    void setSrcRegForValNum(unsigned ValNo, unsigned NewReg) {
-      getValNumInfo(ValNo).reg = NewReg;
-    }
-
-    /// getKillsForValNum - Return the kill instruction indexes of the specified
-    /// value number.
-    const SmallVector<unsigned, 4> &getKillsForValNum(unsigned ValNo) const {
-      return getValNumInfo(ValNo).kills;
+    VNInfo *getNextValue(unsigned MIIdx, unsigned SrcReg) {
+      VNInfo *VNI = new VNInfo(this, numvals++, MIIdx, SrcReg);
+      valnos.push_back(VNI);
+      return VNI;
     }
 
     /// addKillForValNum - Add a kill instruction index to the specified value
     /// number.
-    void addKillForValNum(unsigned ValNo, unsigned KillIdx) {
-      SmallVector<unsigned, 4> &kills = getValNumInfo(ValNo).kills;
+    static void addKill(VNInfo &VNI, unsigned KillIdx) {
+      SmallVector<unsigned, 4> &kills = VNI.kills;
       if (kills.empty()) {
         kills.push_back(KillIdx);
       } else {
@@ -235,24 +206,6 @@ namespace llvm {
       }
     }
 
-    /// addKillsForValNum - Add a number of kills into the kills vector of
-    /// the specified value number.
-    void addKillsForValNum(unsigned ValNo,
-                           const SmallVector<unsigned, 4> &kills) {
-      addKills(getValNumInfo(ValNo), kills);
-    }
-
-    /// isKillForValNum - Returns true if KillIdx is a kill of the specified
-    /// val#.
-    bool isKillForValNum(unsigned ValNo, unsigned KillIdx) const {
-      const SmallVector<unsigned, 4> &kills = getValNumInfo(ValNo).kills;
-      SmallVector<unsigned, 4>::const_iterator
-        I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
-      if (I == kills.end())
-        return false;
-      return *I == KillIdx;
-    }
-
     /// removeKill - Remove the specified kill from the list of kills of
     /// the specified val#.
     static bool removeKill(VNInfo &VNI, unsigned KillIdx) {
@@ -266,49 +219,22 @@ namespace llvm {
       return false;
     }
 
-    /// removeKillForValNum - Remove the specified kill from the list of kills
-    /// of the specified val#.
-    bool removeKillForValNum(unsigned ValNo, unsigned KillIdx) {
-      return removeKill(getValNumInfo(ValNo), KillIdx);
-    }
-
-    /// removeKillForValNum - Remove all the kills in specified range
+    /// removeKills - Remove all the kills in specified range
     /// [Start, End] of the specified val#.
-    void removeKillForValNum(unsigned ValNo, unsigned Start, unsigned End) {
-      SmallVector<unsigned, 4> &kills = getValNumInfo(ValNo).kills;
+    void removeKills(VNInfo &VNI, unsigned Start, unsigned End) {
+      SmallVector<unsigned, 4> &kills = VNI.kills;
       SmallVector<unsigned, 4>::iterator
         I = std::lower_bound(kills.begin(), kills.end(), Start);
       SmallVector<unsigned, 4>::iterator
         E = std::upper_bound(kills.begin(), kills.end(), End);
       kills.erase(I, E);
     }
-
-    /// replaceKill - Replace a kill index of the specified value# with a new
-    /// kill. Returns true if OldKill was indeed a kill point.
-    static bool replaceKill(VNInfo &VNI, unsigned OldKill, unsigned NewKill) {
-      SmallVector<unsigned, 4> &kills = VNI.kills;
-      SmallVector<unsigned, 4>::iterator
-        I = std::lower_bound(kills.begin(), kills.end(), OldKill);
-      if (I != kills.end() && *I == OldKill) {
-        *I = NewKill;
-        return true;
-      }
-      return false;
-    }
-
-    /// replaceKillForValNum - Replace a kill index of the specified value# with
-    /// a new kill. Returns true if OldKill was indeed a kill point.
-    bool replaceKillForValNum(unsigned ValNo, unsigned OldKill,
-                              unsigned NewKill) {
-      assert(ValNo < ValueNumberInfo.size());
-      return replaceKill(getValNumInfo(ValNo), OldKill, NewKill);
-    }
     
     /// MergeValueNumberInto - This method is called when two value nubmers
     /// are found to be equivalent.  This eliminates V1, replacing all
     /// LiveRanges with the V1 value number with the V2 value number.  This can
     /// cause merging of V1/V2 values numbers and compaction of the value space.
-    void MergeValueNumberInto(unsigned V1, unsigned V2);
+    void MergeValueNumberInto(VNInfo *V1, VNInfo *V2);
 
     /// MergeInClobberRanges - For any live ranges that are not defined in the
     /// current interval, but are defined in the Clobbers interval, mark them
@@ -320,7 +246,7 @@ namespace llvm {
     /// interval as the specified value number.  The LiveRanges in RHS are
     /// allowed to overlap with LiveRanges in the current interval, but only if
     /// the overlapping LiveRanges have the specified value number.
-    void MergeRangesInAsValue(const LiveInterval &RHS, unsigned LHSValNo);
+    void MergeRangesInAsValue(const LiveInterval &RHS, VNInfo *LHSValNo);
     
     bool empty() const { return ranges.empty(); }
 
@@ -386,8 +312,7 @@ namespace llvm {
     /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
     /// the intervals are not joinable, this aborts.
     void join(LiveInterval &Other, int *ValNoAssignments,
-              int *RHSValNoAssignments,
-              SmallVector<VNInfo,16> &NewValueNumberInfo);
+              int *RHSValNoAssignments, SmallVector<VNInfo*, 16> &NewVNInfo);
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must already be in this interval in its entirety.

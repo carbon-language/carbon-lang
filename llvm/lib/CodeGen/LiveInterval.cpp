@@ -108,13 +108,13 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
 /// not invalidated.
 void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   assert(I != ranges.end() && "Not a valid interval!");
-  unsigned ValId = I->ValId;
+  VNInfo *ValNo = I->valno;
   unsigned OldEnd = I->end;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = next(I);
   for (; MergeTo != ranges.end() && NewEnd >= MergeTo->end; ++MergeTo) {
-    assert(MergeTo->ValId == ValId && "Cannot merge with differing values!");
+    assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
   }
 
   // If NewEnd was in the middle of an interval, make sure to get its endpoint.
@@ -124,12 +124,12 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   ranges.erase(next(I), MergeTo);
 
   // Update kill info.
-  removeKillForValNum(ValId, OldEnd, I->end-1);
+  removeKills(*ValNo, OldEnd, I->end-1);
 
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
   Ranges::iterator Next = next(I);
-  if (Next != ranges.end() && Next->start <= I->end && Next->ValId == ValId) {
+  if (Next != ranges.end() && Next->start <= I->end && Next->valno == ValNo) {
     I->end = Next->end;
     ranges.erase(Next);
   }
@@ -142,7 +142,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
 LiveInterval::Ranges::iterator
 LiveInterval::extendIntervalStartTo(Ranges::iterator I, unsigned NewStart) {
   assert(I != ranges.end() && "Not a valid interval!");
-  unsigned ValId = I->ValId;
+  VNInfo *ValNo = I->valno;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = I;
@@ -152,13 +152,13 @@ LiveInterval::extendIntervalStartTo(Ranges::iterator I, unsigned NewStart) {
       ranges.erase(MergeTo, I);
       return I;
     }
-    assert(MergeTo->ValId == ValId && "Cannot merge with differing values!");
+    assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
     --MergeTo;
   } while (NewStart <= MergeTo->start);
 
   // If we start in the middle of another interval, just delete a range and
   // extend that interval.
-  if (MergeTo->end >= NewStart && MergeTo->ValId == ValId) {
+  if (MergeTo->end >= NewStart && MergeTo->valno == ValNo) {
     MergeTo->end = I->end;
   } else {
     // Otherwise, extend the interval right after.
@@ -180,14 +180,14 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
   // another interval, just extend that interval to contain the range of LR.
   if (it != ranges.begin()) {
     iterator B = prior(it);
-    if (LR.ValId == B->ValId) {
+    if (LR.valno == B->valno) {
       if (B->start <= Start && B->end >= Start) {
         extendIntervalEndTo(B, End);
         return B;
       }
     } else {
       // Check to make sure that we are not overlapping two live ranges with
-      // different ValId's.
+      // different valno's.
       assert(B->end <= Start &&
              "Cannot overlap two LiveRanges with differing ValID's"
              " (did you def the same reg twice in a MachineInstr?)");
@@ -197,7 +197,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
   // Otherwise, if this range ends in the middle of, or right next to, another
   // interval, merge it into that interval.
   if (it != ranges.end())
-    if (LR.ValId == it->ValId) {
+    if (LR.valno == it->valno) {
       if (it->start <= End) {
         it = extendIntervalStartTo(it, Start);
 
@@ -209,7 +209,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
       }
     } else {
       // Check to make sure that we are not overlapping two live ranges with
-      // different ValId's.
+      // different valno's.
       assert(it->start >= End &&
              "Cannot overlap two LiveRanges with differing ValID's");
     }
@@ -233,7 +233,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // If the span we are removing is at the start of the LiveRange, adjust it.
   if (I->start == Start) {
     if (I->end == End) {
-      removeKillForValNum(I->ValId, Start, End);
+      removeKills(*I->valno, Start, End);
       ranges.erase(I);  // Removed the whole LiveRange.
     } else
       I->start = End;
@@ -243,7 +243,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // Otherwise if the span we are removing is at the end of the LiveRange,
   // adjust the other way.
   if (I->end == End) {
-    removeKillForValNum(I->ValId, Start, End);
+    removeKills(*I->valno, Start, End);
     I->end = Start;
     return;
   }
@@ -253,7 +253,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   I->end = Start;   // Trim the old interval.
 
   // Insert the new one.
-  ranges.insert(next(I), LiveRange(End, OldEnd, I->ValId));
+  ranges.insert(next(I), LiveRange(End, OldEnd, I->valno));
 }
 
 /// getLiveRangeContaining - Return the live range that contains the
@@ -287,33 +287,44 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 /// the intervals are not joinable, this aborts.
 void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
                         int *RHSValNoAssignments, 
-                        SmallVector<VNInfo, 16> &NewValueNumberInfo) {
+                        SmallVector<VNInfo*, 16> &NewVNInfo) {
+
+  // There might be some dead val#, create VNInfo for them.
+  for (unsigned i = 0, e = NewVNInfo.size(); i != e; ++i) {
+    VNInfo *VNI = NewVNInfo[i];
+    if (!VNI) {
+      VNI = new VNInfo(this, i, ~1U, 0);
+      NewVNInfo[i] = VNI;
+    }
+  }
 
   // Determine if any of our live range values are mapped.  This is uncommon, so
   // we want to avoid the interval scan if not.
   bool MustMapCurValNos = false;
-  for (unsigned i = 0, e = getNumValNums(); i != e; ++i) {
-    if (getDefForValNum(i) == ~1U) continue;  // tombstone value #
-    if (i != (unsigned)LHSValNoAssignments[i]) {
+  for (vni_iterator i = vni_begin(), e = vni_end(); i != e; ++i) {
+    VNInfo *VNI = *i;
+    unsigned VN = VNI->id;
+    if (VNI->def == ~1U) continue;  // tombstone value #
+    if (VNI != NewVNInfo[LHSValNoAssignments[VN]]) {
       MustMapCurValNos = true;
       break;
     }
   }
-  
+
   // If we have to apply a mapping to our base interval assignment, rewrite it
   // now.
   if (MustMapCurValNos) {
     // Map the first live range.
     iterator OutIt = begin();
-    OutIt->ValId = LHSValNoAssignments[OutIt->ValId];
+    OutIt->valno = NewVNInfo[LHSValNoAssignments[OutIt->valno->id]];
     ++OutIt;
     for (iterator I = OutIt, E = end(); I != E; ++I) {
-      OutIt->ValId = LHSValNoAssignments[I->ValId];
+      OutIt->valno = NewVNInfo[LHSValNoAssignments[I->valno->id]];
       
       // If this live range has the same value # as its immediate predecessor,
       // and if they are neighbors, remove one LiveRange.  This happens when we
       // have [0,3:0)[4,7:1) and map 0/1 onto the same value #.
-      if (OutIt->ValId == (OutIt-1)->ValId && (OutIt-1)->end == OutIt->start) {
+      if (OutIt->valno == (OutIt-1)->valno && (OutIt-1)->end == OutIt->start) {
         (OutIt-1)->end = OutIt->end;
       } else {
         if (I != OutIt) {
@@ -330,17 +341,29 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
     ranges.erase(OutIt, end());
   }
 
-  // Update val# info first. Increasing live ranges may invalidate some kills.
-  ValueNumberInfo.clear();
-  for (SmallVector<VNInfo, 16>::iterator I = NewValueNumberInfo.begin(),
-         E = NewValueNumberInfo.end(); I != E; ++I)
-    ValueNumberInfo.push_back(*I);
+  // Remember assignements because val# ids are changing.
+  std::vector<unsigned> OtherAssignments;
+  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
+    OtherAssignments.push_back(RHSValNoAssignments[I->valno->id]);
+
+  // Update val# info. Renumber them and make sure they all belong to this
+  // LiveInterval now.
+  valnos.clear();
+  numvals = 0;
+  for (unsigned i = 0, e = NewVNInfo.size(); i != e; ++i) {
+    VNInfo *VNI = NewVNInfo[i];
+    VNI->parent = this;
+    VNI->id = i;  // Renumber val#.
+    valnos.push_back(VNI);
+    ++numvals;
+  }
 
   // Okay, now insert the RHS live ranges into the LHS.
   iterator InsertPos = begin();
-  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I) {
-    // Map the ValId in the other live range to the current live range.
-    I->ValId = RHSValNoAssignments[I->ValId];
+  unsigned RangeNo = 0;
+  for (iterator I = Other.begin(), E = Other.end(); I != E; ++I, ++RangeNo) {
+    // Map the valno in the other live range to the current live range.
+    I->valno = NewVNInfo[OtherAssignments[RangeNo]];
     InsertPos = addRangeFrom(*I, InsertPos);
   }
 
@@ -354,13 +377,13 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
 /// allowed to overlap with LiveRanges in the current interval, but only if
 /// the overlapping LiveRanges have the specified value number.
 void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS, 
-                                        unsigned LHSValNo) {
+                                        VNInfo *LHSValNo) {
   // TODO: Make this more efficient.
   iterator InsertPos = begin();
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
-    // Map the ValId in the other live range to the current live range.
+    // Map the valno in the other live range to the current live range.
     LiveRange Tmp = *I;
-    Tmp.ValId = LHSValNo;
+    Tmp.valno = LHSValNo;
     InsertPos = addRangeFrom(Tmp, InsertPos);
   }
 }
@@ -375,7 +398,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers) {
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
   // FIXME: Use a single sentinal number for these!
-  unsigned ClobberValNo = getNextValue(~0U, 0);
+  VNInfo *ClobberValNo = getNextValue(~0U, 0);
   
   iterator IP = begin();
   for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
@@ -404,7 +427,7 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers) {
 /// are found to be equivalent.  This eliminates V1, replacing all
 /// LiveRanges with the V1 value number with the V2 value number.  This can
 /// cause merging of V1/V2 values numbers and compaction of the value space.
-void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
+void LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   assert(V1 != V2 && "Identical value#'s are always equivalent!");
 
   // This code actually merges the (numerically) larger value number into the
@@ -413,21 +436,21 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   // instruction that defines the result value.
 
   // Make sure V2 is smaller than V1.
-  if (V1 < V2) {
-    copyValNumInfo(V1, V2);
+  if (V1->id < V2->id) {
+    copyValNumInfo(*V1, *V2);
     std::swap(V1, V2);
   }
 
   // Merge V1 live ranges into V2.
   for (iterator I = begin(); I != end(); ) {
     iterator LR = I++;
-    if (LR->ValId != V1) continue;  // Not a V1 LiveRange.
+    if (LR->valno != V1) continue;  // Not a V1 LiveRange.
     
     // Okay, we found a V1 live range.  If it had a previous, touching, V2 live
     // range, extend it.
     if (LR != begin()) {
       iterator Prev = LR-1;
-      if (Prev->ValId == V2 && Prev->end == LR->start) {
+      if (Prev->valno == V2 && Prev->end == LR->start) {
         Prev->end = LR->end;
 
         // Erase this live-range.
@@ -439,13 +462,13 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
     
     // Okay, now we have a V1 or V2 live range that is maximally merged forward.
     // Ensure that it is a V2 live-range.
-    LR->ValId = V2;
+    LR->valno = V2;
     
     // If we can merge it into later V2 live ranges, do so now.  We ignore any
     // following V1 live ranges, as they will be merged in subsequent iterations
     // of the loop.
     if (I != end()) {
-      if (I->start == LR->end && I->ValId == V2) {
+      if (I->start == LR->end && I->valno == V2) {
         LR->end = I->end;
         ranges.erase(I);
         I = LR+1;
@@ -456,12 +479,15 @@ void LiveInterval::MergeValueNumberInto(unsigned V1, unsigned V2) {
   // Now that V1 is dead, remove it.  If it is the largest value number, just
   // nuke it (and any other deleted values neighboring it), otherwise mark it as
   // ~1U so it can be nuked later.
-  if (V1 == getNumValNums()-1) {
+  if (V1->id == getNumValNums()-1) {
     do {
-      ValueNumberInfo.pop_back();
-    } while (ValueNumberInfo.back().def == ~1U);
+      VNInfo *VNI = valnos.back();
+      valnos.pop_back();
+      delete VNI;
+      --numvals;
+    } while (valnos.back()->def == ~1U);
   } else {
-    setDefForValNum(V1, ~1U);
+    V1->def = ~1U;
   }
 }
 
@@ -473,7 +499,7 @@ unsigned LiveInterval::getSize() const {
 }
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
-  return os << '[' << LR.start << ',' << LR.end << ':' << LR.ValId << ")";
+  return os << '[' << LR.start << ',' << LR.end << ':' << LR.valno->id << ")";
 }
 
 void LiveRange::dump() const {
@@ -503,21 +529,21 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
     unsigned vnum = 0;
     for (const_vni_iterator i = vni_begin(), e = vni_end(); i != e;
          ++i, ++vnum) {
-      const VNInfo &vni = *i;
+      const VNInfo *vni = *i;
       if (vnum) OS << " ";
       OS << vnum << "@";
-      if (vni.def == ~1U) {
+      if (vni->def == ~1U) {
         OS << "x";
       } else {
-        if (vni.def == ~0U)
+        if (vni->def == ~0U)
           OS << "?";
         else
-          OS << vni.def;
-        unsigned ee = vni.kills.size();
+          OS << vni->def;
+        unsigned ee = vni->kills.size();
         if (ee) {
           OS << "-(";
           for (unsigned j = 0; j != ee; ++j) {
-            OS << vni.kills[j];
+            OS << vni->kills[j];
             if (j != ee-1)
               OS << " ";
           }

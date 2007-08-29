@@ -239,7 +239,7 @@ namespace llvm {
 
     /// isReMaterializable - Returns true if the definition MI of the specified
     /// val# of the specified interval is re-materializable.
-    bool isReMaterializable(const LiveInterval &li, unsigned ValNum,
+    bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
                             MachineInstr *MI);
 
     /// tryFoldMemoryOperand - Attempts to fold a spill / restore from slot

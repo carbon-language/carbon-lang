@@ -205,8 +205,8 @@ static bool isReDefinedByTwoAddr(MachineInstr *MI, unsigned Reg,
 
 /// isReMaterializable - Returns true if the definition MI of the specified
 /// val# of the specified interval is re-materializable.
-bool LiveIntervals::isReMaterializable(const LiveInterval &li, unsigned ValNum,
-                                       MachineInstr *MI) {
+bool LiveIntervals::isReMaterializable(const LiveInterval &li,
+                                       const VNInfo *ValNo, MachineInstr *MI) {
   if (DisableReMat)
     return false;
 
@@ -220,10 +220,12 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li, unsigned ValNum,
 
   // This is a load from fixed stack slot. It can be rematerialized unless it's
   // re-defined by a two-address instruction.
-  for (unsigned i = 0, e = li.getNumValNums(); i != e; ++i) {
-    if (i == ValNum)
+  for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
+       i != e; ++i) {
+    const VNInfo *VNI = *i;
+    if (VNI == ValNo)
       continue;
-    unsigned DefIdx = li.getDefForValNum(i);
+    unsigned DefIdx = VNI->def;
     if (DefIdx == ~1U)
       continue; // Dead val#.
     MachineInstr *DefMI = (DefIdx == ~0u)
@@ -283,25 +285,27 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
   unsigned slot = VirtRegMap::MAX_STACK_SLOT;
 
   bool NeedStackSlot = false;
-  for (unsigned i = 0; i != NumValNums; ++i) {
-    unsigned DefIdx = li.getDefForValNum(i);
+  for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
+       i != e; ++i) {
+    const VNInfo *VNI = *i;
+    unsigned VN = VNI->id;
+    unsigned DefIdx = VNI->def;
     if (DefIdx == ~1U)
       continue; // Dead val#.
     // Is the def for the val# rematerializable?
     MachineInstr *DefMI = (DefIdx == ~0u)
       ? NULL : getInstructionFromIndex(DefIdx);
-    if (DefMI && isReMaterializable(li, i, DefMI)) {
+    if (DefMI && isReMaterializable(li, VNI, DefMI)) {
       // Remember how to remat the def of this val#.
-      ReMatOrigDefs[i] = DefMI;
+      ReMatOrigDefs[VN] = DefMI;
       // Original def may be modified so we have to make a copy here. vrm must
       // delete these!
-      ReMatDefs[i] = DefMI = DefMI->clone();
+      ReMatDefs[VN] = DefMI = DefMI->clone();
       vrm.setVirtIsReMaterialized(reg, DefMI);
 
       bool CanDelete = true;
-      const SmallVector<unsigned, 4> &kills = li.getKillsForValNum(i);
-      for (unsigned j = 0, ee = kills.size(); j != ee; ++j) {
-        unsigned KillIdx = kills[j];
+      for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
+        unsigned KillIdx = VNI->kills[j];
         MachineInstr *KillMI = (KillIdx & 1)
           ? NULL : getInstructionFromIndex(KillIdx);
         // Kill is a phi node, not all of its uses can be rematerialized.
@@ -316,7 +320,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
       }
 
       if (CanDelete)
-        ReMatDelete.set(i);
+        ReMatDelete.set(VN);
     } else {
       // Need a stack slot if there is any live range where uses cannot be
       // rematerialized.
@@ -330,10 +334,10 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
 
   for (LiveInterval::Ranges::const_iterator
          I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
-    MachineInstr *DefMI = ReMatDefs[I->ValId];
-    MachineInstr *OrigDefMI = ReMatOrigDefs[I->ValId];
+    MachineInstr *DefMI = ReMatDefs[I->valno->id];
+    MachineInstr *OrigDefMI = ReMatOrigDefs[I->valno->id];
     bool DefIsReMat = DefMI != NULL;
-    bool CanDelete = ReMatDelete[I->ValId];
+    bool CanDelete = ReMatDelete[I->valno->id];
     int LdSlot = 0;
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(DefMI, LdSlot);
     unsigned index = getBaseIndex(I->start);
@@ -407,11 +411,11 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
           vrm.grow();
           if (DefIsReMat) {
             vrm.setVirtIsReMaterialized(NewVReg, DefMI/*, CanDelete*/);
-            if (ReMatIds[I->ValId] == VirtRegMap::MAX_STACK_SLOT) {
+            if (ReMatIds[I->valno->id] == VirtRegMap::MAX_STACK_SLOT) {
               // Each valnum may have its own remat id.
-              ReMatIds[I->ValId] = vrm.assignVirtReMatId(NewVReg);
+              ReMatIds[I->valno->id] = vrm.assignVirtReMatId(NewVReg);
             } else {
-              vrm.assignVirtReMatId(NewVReg, ReMatIds[I->ValId]);
+              vrm.assignVirtReMatId(NewVReg, ReMatIds[I->valno->id]);
             }
             if (!CanDelete || (HasUse && HasDef)) {
               // If this is a two-addr instruction then its use operands are
@@ -482,15 +486,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
-    unsigned ValNum;
+    VNInfo *ValNo;
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
-      ValNum = interval.getNextValue(defIndex, 0);
+      ValNo = interval.getNextValue(defIndex, 0);
     else
-      ValNum = interval.getNextValue(defIndex, SrcReg);
-    
-    assert(ValNum == 0 && "First value in interval is not 0?");
-    ValNum = 0;  // Clue in the optimizer.
+      ValNo = interval.getNextValue(defIndex, SrcReg);
+
+    assert(ValNo->id == 0 && "First value in interval is not 0?");
 
     // Loop over all of the blocks that the vreg is defined in.  There are
     // two cases we have to handle here.  The most common case is a vreg
@@ -509,10 +512,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       if (killIdx > defIndex) {
         assert(vi.AliveBlocks.none() &&
                "Shouldn't be alive across any blocks!");
-        LiveRange LR(defIndex, killIdx, ValNum);
+        LiveRange LR(defIndex, killIdx, ValNo);
         interval.addRange(LR);
         DOUT << " +" << LR << "\n";
-        interval.addKillForValNum(ValNum, killIdx);
+        interval.addKill(*ValNo, killIdx);
         return;
       }
     }
@@ -523,7 +526,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // range that goes from this definition to the end of the defining block.
     LiveRange NewLR(defIndex,
                     getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
-                    ValNum);
+                    ValNo);
     DOUT << " +" << NewLR;
     interval.addRange(NewLR);
 
@@ -536,7 +539,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         if (!MBB->empty()) {
           LiveRange LR(getMBBStartIdx(i),
                        getInstructionIndex(&MBB->back()) + InstrSlots::NUM,
-                       ValNum);
+                       ValNo);
           interval.addRange(LR);
           DOUT << " +" << LR;
         }
@@ -549,9 +552,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       MachineInstr *Kill = vi.Kills[i];
       unsigned killIdx = getUseIndex(getInstructionIndex(Kill))+1;
       LiveRange LR(getMBBStartIdx(Kill->getParent()),
-                   killIdx, ValNum);
+                   killIdx, ValNo);
       interval.addRange(LR);
-      interval.addKillForValNum(ValNum, killIdx);
+      interval.addKill(*ValNo, killIdx);
       DOUT << " +" << LR;
     }
 
@@ -570,6 +573,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned RedefIndex = getDefIndex(MIIdx);
 
       const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex-1);
+      VNInfo *OldValNo = OldLR->valno;
       unsigned OldEnd = OldLR->end;
 
       // Delete the initial value, which should be short and continuous,
@@ -582,24 +586,24 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // The new value number (#1) is defined by the instruction we claimed
       // defined value #0.
-      unsigned ValNo = interval.getNextValue(0, 0);
-      interval.copyValNumInfo(ValNo, 0);
+      VNInfo *ValNo = interval.getNextValue(0, 0);
+      interval.copyValNumInfo(*ValNo, *OldValNo);
       
       // Value#0 is now defined by the 2-addr instruction.
-      interval.setDefForValNum(0, RedefIndex);
-      interval.setSrcRegForValNum(0, 0);
+      OldValNo->def = RedefIndex;
+      OldValNo->reg = 0;
       
       // Add the new live interval which replaces the range for the input copy.
       LiveRange LR(DefIndex, RedefIndex, ValNo);
       DOUT << " replace range with " << LR;
       interval.addRange(LR);
-      interval.addKillForValNum(ValNo, RedefIndex);
-      interval.removeKillForValNum(ValNo, RedefIndex, OldEnd);
+      interval.addKill(*ValNo, RedefIndex);
+      interval.removeKills(*ValNo, RedefIndex, OldEnd);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
       if (lv_->RegisterDefIsDead(mi, interval.reg))
-        interval.addRange(LiveRange(RedefIndex, RedefIndex+1, 0));
+        interval.addRange(LiveRange(RedefIndex, RedefIndex+1, OldValNo));
 
       DOUT << " RESULT: ";
       interval.print(DOUT, mri_);
@@ -613,13 +617,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                "PHI elimination vreg should have one kill, the PHI itself!");
 
         // Remove the old range that we now know has an incorrect number.
+        VNInfo *VNI = interval.getFirstValNumInfo();
         MachineInstr *Killer = vi.Kills[0];
         unsigned Start = getMBBStartIdx(Killer->getParent());
         unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        interval.addKillForValNum(0, Start+1); // odd # means phi node
+        interval.addKill(*VNI, Start+1); // odd # means phi node
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
@@ -627,7 +632,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LiveRange LR(Start, End, interval.getNextValue(~0, 0));
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
-        interval.addKillForValNum(LR.ValId, End);
+        interval.addKill(*LR.valno, End);
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
       }
 
@@ -636,17 +641,17 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // rest of the live range.
       unsigned defIndex = getDefIndex(MIIdx);
       
-      unsigned ValNum;
+      VNInfo *ValNo;
       unsigned SrcReg, DstReg;
       if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
-        ValNum = interval.getNextValue(defIndex, 0);
+        ValNo = interval.getNextValue(defIndex, 0);
       else
-        ValNum = interval.getNextValue(defIndex, SrcReg);
+        ValNo = interval.getNextValue(defIndex, SrcReg);
       
       unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
-      LiveRange LR(defIndex, killIndex, ValNum);
+      LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      interval.addKillForValNum(ValNum, killIndex-1); // odd # means phi node
+      interval.addKill(*ValNo, killIndex-1); // odd # means phi node
       DOUT << " +" << LR;
     }
   }
@@ -707,11 +712,11 @@ exit:
 
   // Already exists? Extend old live interval.
   LiveInterval::iterator OldLR = interval.FindLiveRangeContaining(start);
-  unsigned Id = (OldLR != interval.end())
-    ? OldLR->ValId : interval.getNextValue(start, SrcReg);
-  LiveRange LR(start, end, Id);
+  VNInfo *ValNo = (OldLR != interval.end())
+    ? OldLR->valno : interval.getNextValue(start, SrcReg);
+  LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
-  interval.addKillForValNum(LR.ValId, end);
+  interval.addKill(*LR.valno, end);
   DOUT << " +" << LR << '\n';
 }
 
@@ -778,7 +783,7 @@ exit:
 
   LiveRange LR(start, end, interval.getNextValue(start, 0));
   interval.addRange(LR);
-  interval.addKillForValNum(LR.ValId, end);
+  interval.addKill(*LR.valno, end);
   DOUT << " +" << LR << '\n';
 }
 
