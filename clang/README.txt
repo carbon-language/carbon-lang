@@ -81,22 +81,31 @@ II. Usage of clang driver:
 
  * -E mode works the same way as GCC.
 
- * -Eonly mode does all preprocessing, but does not print the output, useful for
-   timing the preprocessor.
+ * -Eonly mode does all preprocessing, but does not print the output,
+     useful for timing the preprocessor.
  
- * -fsyntax-only is currently partially implemented, lacking some semantic
-   analysis (some errors and warnings are not produced).
+ * -fsyntax-only is currently partially implemented, lacking some
+     semantic analysis (some errors and warnings are not produced).
 
- * -parse-noop parses code without building an AST.  This is useful for timing
-   the cost of the parser without including AST building time.
+ * -parse-noop parses code without building an AST.  This is useful
+     for timing the cost of the parser without including AST building
+     time.
  
- * -parse-ast builds ASTs, but doesn't print them.  This is most useful for
-   timing AST building vs -parse-noop.
+ * -parse-ast builds ASTs, but doesn't print them.  This is most
+     useful for timing AST building vs -parse-noop.
  
  * -parse-ast-print pretty prints most expression and statements nodes.
 
- * -parse-ast-check checks that diagnostic messages that are expected are
-   reported and that those which are reported are expected.
+ * -parse-ast-check checks that diagnostic messages that are expected
+     are reported and that those which are reported are expected.
+
+ * -dump-cfg builds ASTs and then CFGs.  CFGs are then pretty-printed.
+
+ * -view-cfg builds ASTs and then CFGs.  CFGs are then visualized by
+     invoking Graphviz.
+
+     For more information on getting Graphviz to work with clang/LLVM,
+     see: http://llvm.org/docs/ProgrammersManual.html#ViewGraph
 
 
 III. Current advantages over GCC:
