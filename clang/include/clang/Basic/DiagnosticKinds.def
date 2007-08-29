@@ -696,7 +696,7 @@ DIAG(err_typecheck_choose_expr_requires_constant, ERROR,
 DIAG(warn_unused_expr, WARNING,
      "expression result unused")
 
-// Extra checking for finding simple bugs.
+// CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,
      "format string is not a string literal (potentially insecure)")
 DIAG(warn_printf_write_back, WARNING,
@@ -716,10 +716,15 @@ DIAG(warn_printf_format_string_is_wide_literal, WARNING,
 DIAG(warn_printf_format_string_contains_null_char, WARNING,
   "format string contains '\\0' within the string body")
 
+// CHECK: returning address/reference of stack memory
 DIAG(warn_ret_stack_addr, WARNING,
   "address of stack memory associated with local variable '%0' returned")
 DIAG(warn_ret_stack_ref, WARNING,
   "reference to stack memory associated with local variable '%0' returned")
+
+// CHECK: floating point values should not use "==" or "!="
+DIAG(warn_floatingpoint_eq, WARNING,
+  "comparing floating point with == or != is unsafe")
 
 // CFString checking
 DIAG(err_cfstring_literal_not_string_constant, ERROR,
