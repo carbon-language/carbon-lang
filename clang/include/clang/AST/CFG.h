@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/GraphTraits.h"
 #include <list>
 #include <vector>
 #include <iosfwd>
@@ -19,6 +20,7 @@
 namespace clang {
 
 class Stmt;
+class CFG;
   
 /// CFGBlock - Represents a single basic block in a source-level CFG.
 ///  It consists of:
@@ -139,8 +141,8 @@ public:
   
   unsigned getBlockID() const { return BlockID; }
   
-  void dump();
-  void print(std::ostream& OS);
+  void dump(const CFG* cfg) const;
+  void print(std::ostream& OS, const CFG* cfg) const;
 };
   
 
@@ -183,17 +185,105 @@ public:
   const_reverse_iterator    rend()        const    { return Blocks.rend(); }
   
   CFGBlock&                 getEntry()             { return *Entry; }
+  const CFGBlock&           getEntry()    const    { return *Entry; }
   CFGBlock&                 getExit()              { return *Exit; }
-  CFGBlock*                 getIndirectGotoBlock() { return IndirectGotoBlock; }
+  const CFGBlock&           getExit()     const    { return *Exit; }
+
+  CFGBlock*        getIndirectGotoBlock() { return IndirectGotoBlock; }
+  const CFGBlock*  getIndirectGotoBlock() const { return IndirectGotoBlock; }
   
   // Utility
   
   CFGBlock* createBlock(unsigned blockID);
   static CFG* buildCFG(Stmt* AST);
-  void print(std::ostream& OS);
-  void dump();
+  void viewCFG() const;
+  void print(std::ostream& OS) const;
+  void dump() const;
   void setEntry(CFGBlock *B) { Entry = B; }
   void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }   
 };
-
 } // end namespace clang
+
+//===----------------------------------------------------------------------===//
+// GraphTraits specializations for CFG basic block graphs (source-level CFGs)
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+
+// Traits for: CFGBlock
+
+template <> struct GraphTraits<clang::CFGBlock* > {
+  typedef clang::CFGBlock NodeType;
+  typedef clang::CFGBlock::succ_iterator ChildIteratorType;
+  
+  static NodeType* getEntryNode(clang::CFGBlock* BB)
+  { return BB; }
+
+  static inline ChildIteratorType child_begin(NodeType* N)
+  { return N->succ_begin(); }
+    
+  static inline ChildIteratorType child_end(NodeType* N)
+  { return N->succ_end(); }
+};
+
+template <> struct GraphTraits<const clang::CFGBlock* > {
+  typedef const clang::CFGBlock NodeType;
+  typedef clang::CFGBlock::const_succ_iterator ChildIteratorType;
+  
+  static NodeType* getEntryNode(const clang::CFGBlock* BB)
+  { return BB; }
+  
+  static inline ChildIteratorType child_begin(NodeType* N)
+  { return N->succ_begin(); }
+  
+  static inline ChildIteratorType child_end(NodeType* N)
+  { return N->succ_end(); }
+};
+
+template <> struct GraphTraits<Inverse<const clang::CFGBlock*> > {
+  typedef const clang::CFGBlock NodeType;
+  typedef clang::CFGBlock::const_pred_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(Inverse<const clang::CFGBlock*> G)
+  { return G.Graph; }
+
+  static inline ChildIteratorType child_begin(NodeType* N)
+  { return N->pred_begin(); }
+  
+  static inline ChildIteratorType child_end(NodeType* N)
+  { return N->pred_end(); }
+};
+
+// Traits for: CFG
+
+template <> struct GraphTraits<clang::CFG* > 
+            : public GraphTraits<clang::CFGBlock* >  {
+
+  typedef clang::CFG::iterator nodes_iterator;
+  
+  static NodeType *getEntryNode(clang::CFG* F) { return &F->getEntry(); }  
+  static nodes_iterator nodes_begin(clang::CFG* F) { return F->begin(); }
+  static nodes_iterator nodes_end(clang::CFG* F) { return F->end(); }
+};
+
+template <> struct GraphTraits< const clang::CFG* > 
+            : public GraphTraits< const clang::CFGBlock* >  {
+
+  typedef clang::CFG::const_iterator nodes_iterator;            
+
+  static NodeType *getEntryNode( const clang::CFG* F) { return &F->getEntry(); }
+  static nodes_iterator nodes_begin( const clang::CFG* F) { return F->begin(); }
+  static nodes_iterator nodes_end( const clang::CFG* F) { return F->end(); }
+};
+
+template <> struct GraphTraits<Inverse<const clang::CFG*> >
+            : public GraphTraits<Inverse<const clang::CFGBlock*> > {
+
+  typedef clang::CFG::const_iterator nodes_iterator;
+
+  static NodeType *getEntryNode(const clang::CFG* F) { return &F->getExit(); }
+  static nodes_iterator nodes_begin(const clang::CFG* F) { return F->begin();}
+  static nodes_iterator nodes_end(const clang::CFG* F) { return F->end(); }
+};
+  
+} // end llvm namespace

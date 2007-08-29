@@ -23,7 +23,9 @@ class TypedefDecl;
 void BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 void PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 void DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
-void DumpCFGs(Preprocessor &PP, unsigned MainFileID, bool Stats);  
+
+void DumpCFGs(Preprocessor &PP, unsigned MainFileID,
+              bool Stats, bool use_graphviz = false);  
 
 } // end clang namespace
 

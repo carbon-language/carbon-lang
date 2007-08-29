@@ -17,9 +17,13 @@
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/GraphWriter.h"
+#include "llvm/Config/config.h"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <sstream>
+
 using namespace clang;
 
 namespace {
@@ -871,43 +875,32 @@ CFG* CFG::buildCFG(Stmt* Statement) {
 /// reverseStmts - Reverses the orders of statements within a CFGBlock.
 void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 
+
+//===----------------------------------------------------------------------===//
+// CFG pretty printing
+//===----------------------------------------------------------------------===//
+
 /// dump - A simple pretty printer of a CFG that outputs to stderr.
-void CFG::dump() { print(std::cerr); }
+void CFG::dump() const { print(std::cerr); }
 
 /// print - A simple pretty printer of a CFG that outputs to an ostream.
-void CFG::print(std::ostream& OS) {
-  // Print the Entry block.
-  if (begin() != end()) {
-    CFGBlock& Entry = getEntry();
-    OS << "\n [ B" << Entry.getBlockID() << " (ENTRY) ]\n";
-    Entry.print(OS);
-  }
+void CFG::print(std::ostream& OS) const {
+  
+  // Print the entry block.
+  getEntry().print(OS,this);
 
   // Iterate through the CFGBlocks and print them one by one.
-  for (iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
+  for (const_iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
     // Skip the entry block, because we already printed it.
     if (&(*I) == &getEntry() || &(*I) == &getExit()) continue;
-      
-    OS << "\n  [ B" << I->getBlockID();
-
-    if (&(*I) == getIndirectGotoBlock())
-      OS << " (INDIRECT GOTO DISPATCH) ]\n";
-    else
-      OS << " ]\n";
-      
-    I->print(OS);
+    I->print(OS,this);
   }
-
-  // Print the Exit Block.  
-  if (begin() != end()) {
-    CFGBlock& Exit = getExit();
-    OS << "\n [ B" << Exit.getBlockID() << " (EXIT) ]\n";
-    Exit.print(OS);
-  }    
+  
+  // Print the exit block.
+  getExit().print(OS,this);
 
   OS << "\n";
 }
-
 
 namespace {
 
@@ -919,7 +912,7 @@ public:
   
   void VisitIfStmt(IfStmt* I) {
     OS << "if ";
-    I->getCond()->printPretty(std::cerr);
+    I->getCond()->printPretty(OS);
     OS << "\n";
   }
   
@@ -962,16 +955,25 @@ public:
 } // end anonymous namespace
 
 /// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
-void CFGBlock::dump() { print(std::cerr); }
+void CFGBlock::dump(const CFG* cfg) const { print(std::cerr,cfg); }
 
 /// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
 ///   Generally this will only be called from CFG::print.
-void CFGBlock::print(std::ostream& OS) {
+void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
+
+  // Print the header.
+  OS << "\n [ B" << getBlockID();  
+  if (this == &cfg->getEntry()) { OS << " (ENTRY) ]\n"; }
+  else if (this == &cfg->getExit()) { OS << " (EXIT) ]\n"; }
+  else if (this == cfg->getIndirectGotoBlock()) { 
+    OS << " (INDIRECT GOTO DISPATCH) ]\n";
+  }
+  else OS << " ]\n";
 
   // Iterate through the statements in the block and print them.
   OS << "    ------------------------\n";
   unsigned j = 1;
-  for (iterator I = Stmts.begin(), E = Stmts.end() ; I != E ; ++I, ++j ) {
+  for (const_iterator I = Stmts.begin(), E = Stmts.end() ; I != E ; ++I, ++j ) {
     // Print the statement # in the basic block.
     OS << "    " << std::setw(3) << j << ": ";    
 
@@ -991,7 +993,7 @@ void CFGBlock::print(std::ostream& OS) {
   // Print the predecessors of this block.
   OS << "    Predecessors (" << pred_size() << "):";
   unsigned i = 0;
-  for (pred_iterator I = pred_begin(), E = pred_end(); I != E; ++I, ++i ) {
+  for (const_pred_iterator I = pred_begin(), E = pred_end(); I != E; ++I, ++i) {
     if (i == 8 || (i-8) == 0) {
       OS << "\n     ";
     }
@@ -1008,11 +1010,47 @@ void CFGBlock::print(std::ostream& OS) {
   // Print the successors of this block.
   OS << "    Successors (" << succ_size() << "):";
   i = 0;
-  for (succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I, ++i ) {
+  for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I, ++i) {
     if (i == 8 || (i-8) % 10 == 0) {
       OS << "\n    ";
     }
     OS << " B" << (*I)->getBlockID();
   }
   OS << '\n';
+}
+
+//===----------------------------------------------------------------------===//
+// CFG Graphviz Visualization
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+template<>
+struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
+  static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph) {
+
+    std::ostringstream Out;
+    Node->print(Out,Graph);
+    std::string OutStr = Out.str();
+
+    if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
+
+    // Process string output to make it nicer...
+    for (unsigned i = 0; i != OutStr.length(); ++i)
+      if (OutStr[i] == '\n') {                            // Left justify
+        OutStr[i] = '\\';
+        OutStr.insert(OutStr.begin()+i+1, 'l');
+      }
+      
+    return OutStr;
+  }
+};
+} // end namespace llvm
+
+void CFG::viewCFG() const {
+#ifndef NDEBUG
+  llvm::ViewGraph(this,"CFG");
+#else
+  std::cerr << "CFG::viewCFG is only available in debug builds on "
+            << "systems with Graphviz or gv!" << std::endl;
+#endif
 }

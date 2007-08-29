@@ -155,7 +155,9 @@ void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   ASTStreamer_Terminate(Streamer);
 }
 
-void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
+void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID,
+                     bool Stats, bool use_graphviz) 
+{
   ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
@@ -164,8 +166,9 @@ void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       if (FD->getBody()) {
         PrintFunctionDeclStart(FD);
         fprintf(stderr,"\n");
-        if (CFG* C = CFG::buildCFG(FD->getBody()))
-          C->dump();
+        if (CFG* C = CFG::buildCFG(FD->getBody())) {
+          if (use_graphviz) C->viewCFG(); else C->dump();
+        }
         else
           fprintf(stderr," Error processing CFG.\n");
       }
