@@ -965,8 +965,9 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
            Id->getName());
       // FIXME: Don't leak memory: delete Val;
       Val = 0;  // Just forget about it.
+    } else {
+      EltTy = Val->getType();
     }
-    EltTy = Val->getType();
   }
   
   if (!Val) {
