@@ -158,7 +158,7 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
 
     // long long is a C99 feature.
     if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
-	Literal.isLongLong)
+        Literal.isLongLong)
       Diag(Tok.getLocation(), diag::ext_longlong);
 
     // Get the value in the widest-possible width.

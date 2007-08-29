@@ -169,7 +169,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 
     // long long is a C99 feature.
     if (!PP.getLangOptions().C99 && !PP.getLangOptions().CPlusPlus0x
-	&& Literal.isLongLong)
+        && Literal.isLongLong)
       PP.Diag(PeekTok, diag::ext_longlong);
 
     // Parse the integer literal into Result.
