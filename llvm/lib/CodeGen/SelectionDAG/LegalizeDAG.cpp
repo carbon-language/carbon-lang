@@ -741,7 +741,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     else
       Result = DAG.getConstant(0, TLI.getPointerTy());
     break;
-  case ISD::FRAME_TO_ARGS_OFFSET:
+  case ISD::FRAME_TO_ARGS_OFFSET: {
     MVT::ValueType VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action is not supported yet!");
@@ -752,6 +752,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       Result = DAG.getConstant(0, VT);
       break;
+    }
     }
     break;
   case ISD::EXCEPTIONADDR: {
