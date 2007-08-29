@@ -279,13 +279,17 @@ public:
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
 
   /// isSignedIntegerType - Return true if this is an integer type that is
-  /// signed, according to C99 6.2.5p4.
+  /// signed, according to C99 6.2.5p4 [char, signed char, short, int, long..],
+  /// an enum decl which has a signed representation, or a vector of signed
+  /// integer element type.
   bool isSignedIntegerType() const;
 
   /// isUnsignedIntegerType - Return true if this is an integer type that is
-  /// unsigned, according to C99 6.2.5p6. Note that this returns true for _Bool.
+  /// unsigned, according to C99 6.2.5p6 [which returns true for _Bool], an enum
+  /// decl which has an unsigned representation, or a vector of unsigned integer
+  /// element type.
   bool isUnsignedIntegerType() const;
-  
+
   /// isConstantSizeType - Return true if this is not a variable sized type,
   /// according to the rules of C99 6.7.5p3.  If Loc is non-null, it is set to
   /// the location of the subexpression that makes it a vla type.  It is not

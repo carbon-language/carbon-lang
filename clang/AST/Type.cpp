@@ -391,21 +391,39 @@ bool Type::isCharType() const {
   return false;
 }
 
+/// isSignedIntegerType - Return true if this is an integer type that is
+/// signed, according to C99 6.2.5p4 [char, signed char, short, int, long..],
+/// an enum decl which has a signed representation, or a vector of signed
+/// integer element type.
 bool Type::isSignedIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Char_S &&
            BT->getKind() <= BuiltinType::LongLong;
   }
+  
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    if (const EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl()))
+      return ED->getIntegerType()->isSignedIntegerType();
+  
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
   return false;
 }
 
+/// isUnsignedIntegerType - Return true if this is an integer type that is
+/// unsigned, according to C99 6.2.5p6 [which returns true for _Bool], an enum
+/// decl which has an unsigned representation, or a vector of unsigned integer
+/// element type.
 bool Type::isUnsignedIntegerType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType)) {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::ULongLong;
   }
+
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    if (const EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl()))
+      return ED->getIntegerType()->isUnsignedIntegerType();
+
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
   return false;
