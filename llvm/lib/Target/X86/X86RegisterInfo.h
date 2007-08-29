@@ -22,6 +22,14 @@ namespace llvm {
   class TargetInstrInfo;
   class X86TargetMachine;
 
+/// N86 namespace - Native X86 register numbers
+///
+namespace N86 {
+  enum {
+    EAX = 0, ECX = 1, EDX = 2, EBX = 3, ESP = 4, EBP = 5, ESI = 6, EDI = 7
+  };
+}
+
 class X86RegisterInfo : public X86GenRegisterInfo {
 public:
   X86TargetMachine &TM;
@@ -42,6 +50,10 @@ private:
 
 public:
   X86RegisterInfo(X86TargetMachine &tm, const TargetInstrInfo &tii);
+
+  /// getX86RegNum - Returns the native X86 register number for the given LLVM
+  /// register identifier.
+  unsigned getX86RegNum(unsigned RegNo);
 
   /// Code Generation virtual methods...
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,

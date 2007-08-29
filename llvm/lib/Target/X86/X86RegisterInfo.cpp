@@ -65,6 +65,59 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   }
 }
 
+// getX86RegNum - This function maps LLVM register identifiers to their X86
+// specific numbering, which is used in various places encoding instructions.
+//
+unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
+  switch(RegNo) {
+  case X86::RAX: case X86::EAX: case X86::AX: case X86::AL: return N86::EAX;
+  case X86::RCX: case X86::ECX: case X86::CX: case X86::CL: return N86::ECX;
+  case X86::RDX: case X86::EDX: case X86::DX: case X86::DL: return N86::EDX;
+  case X86::RBX: case X86::EBX: case X86::BX: case X86::BL: return N86::EBX;
+  case X86::RSP: case X86::ESP: case X86::SP: case X86::SPL: case X86::AH:
+    return N86::ESP;
+  case X86::RBP: case X86::EBP: case X86::BP: case X86::BPL: case X86::CH:
+    return N86::EBP;
+  case X86::RSI: case X86::ESI: case X86::SI: case X86::SIL: case X86::DH:
+    return N86::ESI;
+  case X86::RDI: case X86::EDI: case X86::DI: case X86::DIL: case X86::BH:
+    return N86::EDI;
+
+  case X86::R8:  case X86::R8D:  case X86::R8W:  case X86::R8B:
+    return N86::EAX;
+  case X86::R9:  case X86::R9D:  case X86::R9W:  case X86::R9B:
+    return N86::ECX;
+  case X86::R10: case X86::R10D: case X86::R10W: case X86::R10B:
+    return N86::EDX;
+  case X86::R11: case X86::R11D: case X86::R11W: case X86::R11B:
+    return N86::EBX;
+  case X86::R12: case X86::R12D: case X86::R12W: case X86::R12B:
+    return N86::ESP;
+  case X86::R13: case X86::R13D: case X86::R13W: case X86::R13B:
+    return N86::EBP;
+  case X86::R14: case X86::R14D: case X86::R14W: case X86::R14B:
+    return N86::ESI;
+  case X86::R15: case X86::R15D: case X86::R15W: case X86::R15B:
+    return N86::EDI;
+
+  case X86::ST0: case X86::ST1: case X86::ST2: case X86::ST3:
+  case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
+    return RegNo-X86::ST0;
+
+  case X86::XMM0:  case X86::XMM1:  case X86::XMM2:  case X86::XMM3:
+  case X86::XMM4:  case X86::XMM5:  case X86::XMM6:  case X86::XMM7:
+    return getDwarfRegNum(RegNo) - getDwarfRegNum(X86::XMM0);
+  case X86::XMM8:  case X86::XMM9:  case X86::XMM10: case X86::XMM11:
+  case X86::XMM12: case X86::XMM13: case X86::XMM14: case X86::XMM15:
+    return getDwarfRegNum(RegNo) - getDwarfRegNum(X86::XMM8);
+
+  default:
+    assert(isVirtualRegister(RegNo) && "Unknown physical register!");
+    assert(0 && "Register allocator hasn't allocated reg correctly yet!");
+    return 0;
+  }
+}
+
 bool X86RegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                                 MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {

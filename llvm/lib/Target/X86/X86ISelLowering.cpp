@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
-#include "X86CodeEmitter.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
 #include "X86MachineFunctionInfo.h"
@@ -4330,7 +4329,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     Function *Func = (Function *)
       cast<Function>(cast<SrcValueSDNode>(Op.getOperand(5))->getValue());
     unsigned CC = Func->getCallingConv();
-    unsigned char NestReg;
+    unsigned NestReg;
 
     switch (CC) {
     default:
@@ -4340,7 +4339,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     case CallingConv::X86_StdCall: {
       // Pass 'nest' parameter in ECX.
       // Must be kept in sync with X86CallingConv.td
-      NestReg = N86::ECX;
+      NestReg = X86::ECX;
 
       // Check that ECX wasn't needed by an 'inreg' parameter.
       const FunctionType *FTy = Func->getFunctionType();
@@ -4366,9 +4365,12 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     case CallingConv::X86_FastCall:
       // Pass 'nest' parameter in EAX.
       // Must be kept in sync with X86CallingConv.td
-      NestReg = N86::EAX;
+      NestReg = X86::EAX;
       break;
     }
+
+    const X86InstrInfo *TII =
+      ((X86TargetMachine&)getTargetMachine()).getInstrInfo();
 
     SDOperand OutChains[4];
     SDOperand Addr, Disp;
@@ -4376,16 +4378,16 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(10, MVT::i32));
     Disp = DAG.getNode(ISD::SUB, MVT::i32, FPtr, Addr);
 
-    const unsigned char MOV32ri = 0xB8;
-    const unsigned char JMP     = 0xE9;
-
-    OutChains[0] = DAG.getStore(Root, DAG.getConstant(MOV32ri|NestReg, MVT::i8),
+    unsigned char MOV32ri = TII->getBaseOpcodeFor(X86::MOV32ri);
+    unsigned char N86Reg  = ((X86RegisterInfo&)RegInfo).getX86RegNum(NestReg);
+    OutChains[0] = DAG.getStore(Root, DAG.getConstant(MOV32ri|N86Reg, MVT::i8),
                                 Trmp, TrmpSV->getValue(), TrmpSV->getOffset());
 
     Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(1, MVT::i32));
     OutChains[1] = DAG.getStore(Root, Nest, Addr, TrmpSV->getValue(),
                                 TrmpSV->getOffset() + 1, false, 1);
 
+    unsigned char JMP = TII->getBaseOpcodeFor(X86::JMP);
     Addr = DAG.getNode(ISD::ADD, MVT::i32, Trmp, DAG.getConstant(5, MVT::i32));
     OutChains[2] = DAG.getStore(Root, DAG.getConstant(JMP, MVT::i8), Addr,
                                 TrmpSV->getValue() + 5, TrmpSV->getOffset());

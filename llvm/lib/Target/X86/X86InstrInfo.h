@@ -275,10 +275,13 @@ public:
   const TargetRegisterClass *getPointerRegClass() const;
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
-  // specified opcode number.
+  // specified machine instruction.
   //
   unsigned char getBaseOpcodeFor(const TargetInstrDescriptor *TID) const {
     return TID->TSFlags >> X86II::OpcodeShift;
+  }
+  unsigned char getBaseOpcodeFor(MachineOpCode Opcode) const {
+    return getBaseOpcodeFor(&get(Opcode));
   }
 };
 
