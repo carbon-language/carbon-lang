@@ -2652,7 +2652,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     }
 
     // Create the InvokeInst
-    InvokeInst *II = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
+    InvokeInst *II = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     II->setCallingConv($2);
     $$ = II;
     delete $6;

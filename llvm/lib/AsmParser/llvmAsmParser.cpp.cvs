@@ -4549,7 +4549,7 @@ case 272:
     }
 
     // Create the InvokeInst
-    InvokeInst *II = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
+    InvokeInst *II = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     II->setCallingConv(yyvsp[-12].UIntVal);
     yyval.TermInstVal = II;
     delete yyvsp[-8].ValueRefList;
