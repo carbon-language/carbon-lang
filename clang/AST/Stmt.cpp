@@ -99,11 +99,11 @@ Stmt::child_iterator CompoundStmt::child_end() { return &Body[0]+Body.size(); }
 
 // SwitchCase
 Stmt::child_iterator SwitchCase::child_begin() { return &SubStmt; }
-Stmt::child_iterator SwitchCase::child_end() { return child_begin()+1; }
+Stmt::child_iterator SwitchCase::child_end() { return &SubStmt+1; }
 
 // LabelStmt
 Stmt::child_iterator LabelStmt::child_begin() { return &SubStmt; }
-Stmt::child_iterator LabelStmt::child_end() { return child_begin()+1; }
+Stmt::child_iterator LabelStmt::child_end() { return &SubStmt+1; }
 
 // IfStmt
 Stmt::child_iterator IfStmt::child_begin() { return &SubExprs[0]; }

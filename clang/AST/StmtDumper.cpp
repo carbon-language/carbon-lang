@@ -36,7 +36,7 @@ namespace  {
     unsigned MaxDepth;
   public:
     StmtDumper(const SourceManager *sm, FILE *f, unsigned maxDepth)
-      : SM(sm), F(f), IndentLevel(0), MaxDepth(maxDepth) {}
+      : SM(sm), F(f), IndentLevel(0-1), MaxDepth(maxDepth) {}
     
     void DumpSubTree(Stmt *S) {
       // Prune the recursion if not using dump all.
@@ -45,6 +45,16 @@ namespace  {
       ++IndentLevel;
       if (S) {
         Visit(S);
+        
+        // Print out children.
+        Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
+        if (CI != CE) {
+          while (CI != CE) {
+            fprintf(F, "\n");
+            DumpSubTree(*CI++);
+          }
+        }
+        fprintf(F, ")");
       } else {
         Indent();
         fprintf(F, "<<<NULL>>>");
@@ -137,7 +147,6 @@ void StmtDumper::DumpDeclarator(Decl *D) {
 
 void StmtDumper::VisitNullStmt(NullStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
@@ -152,67 +161,31 @@ void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
       fprintf(F, "\n");
     --IndentLevel;
   }
-    
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitCompoundStmt(CompoundStmt *Node) {
   DumpStmt(Node);
-  if (!Node->body_empty()) fprintf(F, "\n");
-  
-  for (CompoundStmt::body_iterator I = Node->body_begin(), E = Node->body_end();
-       I != E; ) {
-    DumpSubTree(*I);
-    ++I;
-    if (I != E)
-      fprintf(F, "\n");
-  }
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitCaseStmt(CaseStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getLHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getRHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubStmt());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitDefaultStmt(DefaultStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubStmt());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitLabelStmt(LabelStmt *Node) {
   DumpStmt(Node);
   fprintf(F, " '%s'\n", Node->getName());
-  DumpSubTree(Node->getSubStmt());
-  fprintf(F, "\n");
 }
 
 void StmtDumper::VisitIfStmt(IfStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getThen());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getElse());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitSwitchStmt(SwitchStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getBody());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitSwitchCase(SwitchCase*) {
@@ -221,65 +194,36 @@ void StmtDumper::VisitSwitchCase(SwitchCase*) {
 
 void StmtDumper::VisitWhileStmt(WhileStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getBody());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitDoStmt(DoStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getBody());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitForStmt(ForStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getInit());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getInc());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getBody());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitGotoStmt(GotoStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, " '%s':%p)", Node->getLabel()->getName(), (void*)Node->getLabel());
+  fprintf(F, " '%s':%p", Node->getLabel()->getName(), (void*)Node->getLabel());
 }
 
 void StmtDumper::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getTarget());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitContinueStmt(ContinueStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitBreakStmt(BreakStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, ")");
 }
 
 
 void StmtDumper::VisitReturnStmt(ReturnStmt *Node) {
   DumpStmt(Node);
-  if (Expr *RV = Node->getRetValue()) {
-    fprintf(F, "\n");
-    DumpSubTree(RV);
-  }
-  fprintf(F, ")");
 }
 
 //===----------------------------------------------------------------------===//
@@ -293,7 +237,7 @@ void StmtDumper::VisitExpr(Expr *Node) {
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " Decl='%s' %p)", Node->getDecl()->getName(),
+  fprintf(F, " Decl='%s' %p", Node->getDecl()->getName(),
           (void*)Node->getDecl());
 }
 
@@ -303,38 +247,35 @@ void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {
   default:
     assert(0 && "unknown case");
   case PreDefinedExpr::Func:
-    fprintf(F, " __func__)");
+    fprintf(F, " __func__");
     break;
   case PreDefinedExpr::Function:
-    fprintf(F, " __FUNCTION__)");
+    fprintf(F, " __FUNCTION__");
     break;
   case PreDefinedExpr::PrettyFunction:
-    fprintf(F, " __PRETTY_FUNCTION__)");
+    fprintf(F, " __PRETTY_FUNCTION__");
     break;
   }
 }
 
 void StmtDumper::VisitCharacterLiteral(CharacterLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, " %d)", Node->getValue());
+  fprintf(F, " %d", Node->getValue());
 }
 
 void StmtDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
   DumpExpr(Node);
 
   bool isSigned = Node->getType()->isSignedIntegerType();
-  fprintf(F, " %s)", Node->getValue().toString(10, isSigned).c_str());
+  fprintf(F, " %s", Node->getValue().toString(10, isSigned).c_str());
 }
 void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, " %f)", Node->getValue());
+  fprintf(F, " %f", Node->getValue());
 }
 
 void StmtDumper::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubExpr());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
@@ -359,121 +300,70 @@ void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
     case '\b': fprintf(F, "\\b"); break;
     }
   }
-  fprintf(F, "\")");
+  fprintf(F, "\"");
 }
 void StmtDumper::VisitParenExpr(ParenExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubExpr());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitUnaryOperator(UnaryOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s '%s'\n", Node->isPostfix() ? "postfix" : "prefix",
+  fprintf(F, " %s '%s'", Node->isPostfix() ? "postfix" : "prefix",
           UnaryOperator::getOpcodeStr(Node->getOpcode()));
-  DumpSubTree(Node->getSubExpr());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s ", Node->isSizeOf() ? "sizeof" : "alignof");
   DumpType(Node->getArgumentType());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getLHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getRHS());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitCallExpr(CallExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCallee());
-  
-  for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i) {
-    fprintf(F, "\n");
-    DumpSubTree(Node->getArg(i));
-  }
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s%s %p\n", Node->isArrow() ? "->" : ".",
+  fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
           Node->getMemberDecl()->getName(), (void*)Node->getMemberDecl());
-  DumpSubTree(Node->getBase());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitOCUVectorElementExpr(OCUVectorElementExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s\n", Node->getAccessor().getName());
-  DumpSubTree(Node->getBase());
-  fprintf(F, ")");
+  fprintf(F, " %s", Node->getAccessor().getName());
 }
 void StmtDumper::VisitCastExpr(CastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubExpr());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitCompoundLiteralExpr(CompoundLiteralExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getInitializer());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubExpr());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitBinaryOperator(BinaryOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, " '%s'\n", BinaryOperator::getOpcodeStr(Node->getOpcode()));
-  DumpSubTree(Node->getLHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getRHS());
-  fprintf(F, ")");
+  fprintf(F, " '%s'", BinaryOperator::getOpcodeStr(Node->getOpcode()));
 }
 void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
   DumpExpr(Node);
   fprintf(F, " '%s' ComputeTy=",
           BinaryOperator::getOpcodeStr(Node->getOpcode()));
   DumpType(Node->getComputationType());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getLHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getRHS());
-  fprintf(F, ")");
 }
 void StmtDumper::VisitConditionalOperator(ConditionalOperator *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getLHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getRHS());
-  fprintf(F, ")");
 }
 
 // GNU extensions.
 
 void StmtDumper::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s %p)", Node->getLabel()->getName(), (void*)Node->getLabel());
+  fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
 }
 
 void StmtDumper::VisitStmtExpr(StmtExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getSubStmt());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
@@ -482,18 +372,10 @@ void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
   DumpType(Node->getArgType1());
   fprintf(F, " ");
   DumpType(Node->getArgType2());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitChooseExpr(ChooseExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getCond());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getLHS());
-  fprintf(F, "\n");
-  DumpSubTree(Node->getRHS());
-  fprintf(F, ")");
 }
 
 //===----------------------------------------------------------------------===//
@@ -502,14 +384,12 @@ void StmtDumper::VisitChooseExpr(ChooseExpr *Node) {
 
 void StmtDumper::VisitCXXCastExpr(CXXCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s\n", CXXCastExpr::getOpcodeStr(Node->getOpcode()));
-  DumpSubTree(Node->getSubExpr());
-  fprintf(F, ")");
+  fprintf(F, " %s", CXXCastExpr::getOpcodeStr(Node->getOpcode()));
 }
 
 void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " %s)", Node->getValue() ? "true" : "false");
+  fprintf(F, " %s", Node->getValue() ? "true" : "false");
 }
 
 //===----------------------------------------------------------------------===//
@@ -518,9 +398,6 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 
 void StmtDumper::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, "\n");
-  DumpSubTree(Node->getString());
-  fprintf(F, ")");
 }
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
@@ -528,7 +405,6 @@ void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
  
   fprintf(F, " ");
   DumpType(Node->getEncodedType());
-  fprintf(F, ")");  
 }
 
 //===----------------------------------------------------------------------===//
@@ -540,7 +416,7 @@ void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 /// This is useful in a debugger.
 void Stmt::dump(const SourceManager &SM) const {
   StmtDumper P(&SM, stderr, 4);
-  P.Visit(const_cast<Stmt*>(this));
+  P.DumpSubTree(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }
 
@@ -549,20 +425,20 @@ void Stmt::dump(const SourceManager &SM) const {
 /// This is useful in a debugger.
 void Stmt::dump() const {
   StmtDumper P(0, stderr, 4);
-  P.Visit(const_cast<Stmt*>(this));
+  P.DumpSubTree(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll(const SourceManager &SM) const {
   StmtDumper P(&SM, stderr, ~0U);
-  P.Visit(const_cast<Stmt*>(this));
+  P.DumpSubTree(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll() const {
   StmtDumper P(0, stderr, ~0U);
-  P.Visit(const_cast<Stmt*>(this));
+  P.DumpSubTree(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }
