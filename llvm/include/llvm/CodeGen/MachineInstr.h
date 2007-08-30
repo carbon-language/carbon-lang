@@ -102,6 +102,18 @@ public:
     return Op;
   }
   
+  static MachineOperand CreateFrameIndex(unsigned Idx) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_FrameIndex;
+    Op.contents.immedVal = Idx;
+    Op.IsDef = false;
+    Op.IsImp = false;
+    Op.IsKill = false;
+    Op.IsDead = false;
+    Op.auxInfo.offset = 0;
+    return Op;
+  }
+
   const MachineOperand &operator=(const MachineOperand &MO) {
     contents = MO.contents;
     IsDef    = MO.IsDef;
