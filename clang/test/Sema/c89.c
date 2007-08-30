@@ -27,5 +27,3 @@ void test3(int i) {
 
 int test4 = 0LL;		/* expected-warning {{long long}} */
 
-#if 1LL				/* expected-warning {{long long}} */
-#endif
