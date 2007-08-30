@@ -521,6 +521,7 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(store (i32 imm:$src), addr:$dst)]>;
 
+let isLoad = 1 in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
                 [(set GR8:$dst, (load addr:$src))]>;
@@ -530,6 +531,7 @@ def MOV16rm : I<0x8B, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
 def MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 [(set GR32:$dst, (load addr:$src))]>;
+}
 
 def MOV8mr  : I<0x88, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
@@ -2332,10 +2334,12 @@ def MOV16_rr : I<0x89, MRMDestReg, (outs GR16_:$dst), (ins GR16_:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_rr : I<0x89, MRMDestReg, (outs GR32_:$dst), (ins GR32_:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
+let isLoad = 1 in {
 def MOV16_rm : I<0x8B, MRMSrcMem, (outs GR16_:$dst), (ins i16mem:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_rm : I<0x8B, MRMSrcMem, (outs GR32_:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
+}
 def MOV16_mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16_:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize;
 def MOV32_mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32_:$src),

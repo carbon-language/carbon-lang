@@ -334,12 +334,14 @@ def CMOVNP_F : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovnu\t{$op, %st(0)|%ST(0), $op}">, DB;
 
 // Floating point loads & stores.
+let isLoad = 1 in {
 def LD_Fp32m   : FpI<(outs RFP32:$dst), (ins f32mem:$src), ZeroArgFP,
                   [(set RFP32:$dst, (loadf32 addr:$src))]>;
 def LD_Fp64m   : FpI<(outs RFP64:$dst), (ins f64mem:$src), ZeroArgFP,
                   [(set RFP64:$dst, (loadf64 addr:$src))]>;
 def LD_Fp80m   : FpI_<(outs RFP80:$dst), (ins f80mem:$src), ZeroArgFP,
                   [(set RFP80:$dst, (loadf80 addr:$src))]>;
+}
 def LD_Fp32m64 : FpI<(outs RFP64:$dst), (ins f32mem:$src), ZeroArgFP,
                   [(set RFP64:$dst, (f64 (extloadf32 addr:$src)))]>;
 def LD_Fp64m80 : FpI_<(outs RFP80:$dst), (ins f64mem:$src), ZeroArgFP,
