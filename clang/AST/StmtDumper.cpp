@@ -89,10 +89,35 @@ namespace  {
       DumpType(Node->getType());
     }
     
+    // Stmts.
     void VisitStmt(Stmt *Node);
-#define STMT(N, CLASS, PARENT) \
-    void Visit##CLASS(CLASS *Node);
-#include "clang/AST/StmtNodes.def"
+    void VisitDeclStmt(DeclStmt *Node);
+    void VisitLabelStmt(LabelStmt *Node);
+    void VisitGotoStmt(GotoStmt *Node);
+    
+    // Exprs
+    void VisitExpr(Expr *Node);
+    void VisitDeclRefExpr(DeclRefExpr *Node);
+    void VisitPreDefinedExpr(PreDefinedExpr *Node);
+    void VisitCharacterLiteral(CharacterLiteral *Node);
+    void VisitIntegerLiteral(IntegerLiteral *Node);
+    void VisitFloatingLiteral(FloatingLiteral *Node);
+    void VisitStringLiteral(StringLiteral *Str);
+    void VisitUnaryOperator(UnaryOperator *Node);
+    void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
+    void VisitMemberExpr(MemberExpr *Node);
+    void VisitOCUVectorElementExpr(OCUVectorElementExpr *Node);
+    void VisitBinaryOperator(BinaryOperator *Node);
+    void VisitCompoundAssignOperator(CompoundAssignOperator *Node);
+    void VisitAddrLabelExpr(AddrLabelExpr *Node);
+    void VisitTypesCompatibleExpr(TypesCompatibleExpr *Node);
+
+    // C++
+    void VisitCXXCastExpr(CXXCastExpr *Node);
+    void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node);
+
+    // ObjC
+    void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
   };
 }
 
@@ -101,8 +126,7 @@ namespace  {
 //===----------------------------------------------------------------------===//
 
 void StmtDumper::VisitStmt(Stmt *Node) {
-  Indent();
-  fprintf(F, "<<unknown stmt type>>\n");
+  DumpStmt(Node);
 }
 
 void StmtDumper::DumpDeclarator(Decl *D) {
@@ -144,11 +168,6 @@ void StmtDumper::DumpDeclarator(Decl *D) {
   }
 }
 
-
-void StmtDumper::VisitNullStmt(NullStmt *Node) {
-  DumpStmt(Node);
-}
-
 void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
   DumpStmt(Node);
   fprintf(F, "\n");
@@ -163,67 +182,14 @@ void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
   }
 }
 
-void StmtDumper::VisitCompoundStmt(CompoundStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitCaseStmt(CaseStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitDefaultStmt(DefaultStmt *Node) {
-  DumpStmt(Node);
-}
-
 void StmtDumper::VisitLabelStmt(LabelStmt *Node) {
   DumpStmt(Node);
   fprintf(F, " '%s'\n", Node->getName());
 }
 
-void StmtDumper::VisitIfStmt(IfStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitSwitchStmt(SwitchStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitSwitchCase(SwitchCase*) {
-  assert(0 && "SwitchCase is an abstract class");
-}
-
-void StmtDumper::VisitWhileStmt(WhileStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitDoStmt(DoStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitForStmt(ForStmt *Node) {
-  DumpStmt(Node);
-}
-
 void StmtDumper::VisitGotoStmt(GotoStmt *Node) {
   DumpStmt(Node);
   fprintf(F, " '%s':%p", Node->getLabel()->getName(), (void*)Node->getLabel());
-}
-
-void StmtDumper::VisitIndirectGotoStmt(IndirectGotoStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitContinueStmt(ContinueStmt *Node) {
-  DumpStmt(Node);
-}
-
-void StmtDumper::VisitBreakStmt(BreakStmt *Node) {
-  DumpStmt(Node);
-}
-
-
-void StmtDumper::VisitReturnStmt(ReturnStmt *Node) {
-  DumpStmt(Node);
 }
 
 //===----------------------------------------------------------------------===//
@@ -232,7 +198,6 @@ void StmtDumper::VisitReturnStmt(ReturnStmt *Node) {
 
 void StmtDumper::VisitExpr(Expr *Node) {
   DumpExpr(Node);
-  fprintf(F, ": UNKNOWN EXPR to StmtDumper)");
 }
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
@@ -274,10 +239,6 @@ void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   fprintf(F, " %f", Node->getValue());
 }
 
-void StmtDumper::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
-  DumpExpr(Node);
-}
-
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   DumpExpr(Str);
   // FIXME: this doesn't print wstrings right.
@@ -302,9 +263,7 @@ void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
   }
   fprintf(F, "\"");
 }
-void StmtDumper::VisitParenExpr(ParenExpr *Node) {
-  DumpExpr(Node);
-}
+
 void StmtDumper::VisitUnaryOperator(UnaryOperator *Node) {
   DumpExpr(Node);
   fprintf(F, " %s '%s'", Node->isPostfix() ? "postfix" : "prefix",
@@ -314,13 +273,6 @@ void StmtDumper::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s ", Node->isSizeOf() ? "sizeof" : "alignof");
   DumpType(Node->getArgumentType());
-}
-void StmtDumper::VisitArraySubscriptExpr(ArraySubscriptExpr *Node) {
-  DumpExpr(Node);
-}
-
-void StmtDumper::VisitCallExpr(CallExpr *Node) {
-  DumpExpr(Node);
 }
 
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
@@ -332,15 +284,6 @@ void StmtDumper::VisitOCUVectorElementExpr(OCUVectorElementExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s", Node->getAccessor().getName());
 }
-void StmtDumper::VisitCastExpr(CastExpr *Node) {
-  DumpExpr(Node);
-}
-void StmtDumper::VisitCompoundLiteralExpr(CompoundLiteralExpr *Node) {
-  DumpExpr(Node);
-}
-void StmtDumper::VisitImplicitCastExpr(ImplicitCastExpr *Node) {
-  DumpExpr(Node);
-}
 void StmtDumper::VisitBinaryOperator(BinaryOperator *Node) {
   DumpExpr(Node);
   fprintf(F, " '%s'", BinaryOperator::getOpcodeStr(Node->getOpcode()));
@@ -351,9 +294,6 @@ void StmtDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
           BinaryOperator::getOpcodeStr(Node->getOpcode()));
   DumpType(Node->getComputationType());
 }
-void StmtDumper::VisitConditionalOperator(ConditionalOperator *Node) {
-  DumpExpr(Node);
-}
 
 // GNU extensions.
 
@@ -362,20 +302,12 @@ void StmtDumper::VisitAddrLabelExpr(AddrLabelExpr *Node) {
   fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
 }
 
-void StmtDumper::VisitStmtExpr(StmtExpr *Node) {
-  DumpExpr(Node);
-}
-
 void StmtDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " ");
   DumpType(Node->getArgType1());
   fprintf(F, " ");
   DumpType(Node->getArgType2());
-}
-
-void StmtDumper::VisitChooseExpr(ChooseExpr *Node) {
-  DumpExpr(Node);
 }
 
 //===----------------------------------------------------------------------===//
@@ -395,10 +327,6 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 //===----------------------------------------------------------------------===//
 // Obj-C Expressions
 //===----------------------------------------------------------------------===//
-
-void StmtDumper::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
-  DumpExpr(Node);
-}
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   DumpExpr(Node);
