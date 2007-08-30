@@ -21,8 +21,6 @@ namespace llvm {
     enum RelocationType {
       reloc_arm_relative,
 
-      reloc_arm_absolute,
-
       reloc_arm_branch
     };
   }
