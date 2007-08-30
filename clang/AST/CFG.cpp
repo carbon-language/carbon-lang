@@ -463,8 +463,10 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
 CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
   // Get the block of the labeled statement.  Add it to our map.
   CFGBlock* LabelBlock = Visit(L->getSubStmt());
-  assert (LabelBlock);    
-
+  
+  if (!LabelBlock)            // This can happen when the body is empty, i.e.
+    LabelBlock=createBlock(); // scopes that only contains NullStmts.
+  
   assert (LabelMap.find(L) == LabelMap.end() && "label already in map");
   LabelMap[ L ] = LabelBlock;
   
