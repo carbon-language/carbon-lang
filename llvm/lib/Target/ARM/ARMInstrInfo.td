@@ -342,33 +342,38 @@ class Format<bits<5> val> {
 
 def Pseudo      : Format<1>;
 def MulFrm      : Format<2>;
-def Branch      : Format<3>;
-def BranchMisc  : Format<4>;
+def MulSMLAW    : Format<3>;
+def MulSMULW    : Format<4>;
+def MulSMLA     : Format<5>;
+def MulSMUL     : Format<6>;
+def Branch      : Format<7>;
+def BranchMisc  : Format<8>;
 
-def DPRdIm      : Format<5>;
-def DPRdReg     : Format<6>;
-def DPRdSoReg   : Format<7>;
-def DPRdMisc    : Format<8>;
-def DPRnIm      : Format<9>;
-def DPRnReg     : Format<10>;
-def DPRnSoReg   : Format<11>;
-def DPRIm       : Format<12>;
-def DPRReg      : Format<13>;
-def DPRSoReg    : Format<14>;
-def DPRImS      : Format<15>;
-def DPRRegS     : Format<16>;
-def DPRSoRegS   : Format<17>;
+def DPRdIm      : Format<9>;
+def DPRdReg     : Format<10>;
+def DPRdSoReg   : Format<11>;
+def DPRdMisc    : Format<12>;
+def DPRnIm      : Format<13>;
+def DPRnReg     : Format<14>;
+def DPRnSoReg   : Format<15>;
+def DPRIm       : Format<16>;
+def DPRReg      : Format<17>;
+def DPRSoReg    : Format<18>;
+def DPRImS      : Format<19>;
+def DPRRegS     : Format<20>;
+def DPRSoRegS   : Format<21>;
 
-def LdFrm       : Format<18>;
-def StFrm       : Format<19>;
+def LdFrm       : Format<22>;
+def StFrm       : Format<23>;
 
-def ArithMisc   : Format<20>;
-def ThumbFrm    : Format<21>;
-def VFPFrm      : Format<22>;
+def ArithMisc   : Format<24>;
+def ThumbFrm    : Format<25>;
+def VFPFrm      : Format<26>;
 
 
 
 //===----------------------------------------------------------------------===//
+
 // ARM Instruction templates.
 //
 
@@ -776,7 +781,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :( 
-  def Bcc : AI<0x0, (outs), (ins brtarget:$target), Branch,
+  def Bcc : AI<0xA, (outs), (ins brtarget:$target), Branch,
                "b", " $target",
                [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]>;
 }
@@ -815,7 +820,7 @@ def LDRSB : AI3<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                 [(set GPR:$dst, (sextloadi8 addrmode3:$addr))]>;
 
 // Load doubleword
-def LDRD  : AI3<0x0, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
+def LDRD  : AI3<0xD, (outs GPR:$dst), (ins addrmode3:$addr), LdFrm,
                  "ldr", "d $dst, $addr",
                 []>, Requires<[IsARM, HasV5T]>;
 
@@ -877,7 +882,7 @@ def STRB : AI2<0x1, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                [(truncstorei8 GPR:$src, addrmode2:$addr)]>;
 
 // Store doubleword
-def STRD : AI3<0x0, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
+def STRD : AI3<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
                "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
 
@@ -1125,76 +1130,86 @@ def SMMLS : AI<0x0, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c), MulFrm,
                [(set GPR:$dst, (sub GPR:$c, (mulhs GPR:$a, GPR:$b)))]>,
                Requires<[IsARM, HasV6]>;
 
-multiclass AI_smul<bits<4> opcod, string opc, PatFrag opnode> {
-  def BB : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+multiclass AI_smul<string opc, PatFrag opnode> {
+  def BB : AI<0x8, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
               !strconcat(opc, "bb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]>;
-  def BT : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+
+  def BT : AI<0xC, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
               !strconcat(opc, "bt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sext_inreg GPR:$a, i16),
                                       (sra GPR:$b, 16)))]>,
            Requires<[IsARM, HasV5TE]>;
-  def TB : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+
+  def TB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
               !strconcat(opc, "tb"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
                                       (sext_inreg GPR:$b, i16)))]>,
            Requires<[IsARM, HasV5TE]>;
-  def TT : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+
+  def TT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMUL,
               !strconcat(opc, "tt"), " $dst, $a, $b",
               [(set GPR:$dst, (opnode (sra GPR:$a, 16),
                                       (sra GPR:$b, 16)))]>,
             Requires<[IsARM, HasV5TE]>;
-  def WB : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+
+  def WB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMULW,
               !strconcat(opc, "wb"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sext_inreg GPR:$b, i16)), 16))]>,
            Requires<[IsARM, HasV5TE]>;
-  def WT : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulFrm,
+
+  def WT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b), MulSMULW,
               !strconcat(opc, "wt"), " $dst, $a, $b",
               [(set GPR:$dst, (sra (opnode GPR:$a,
                                     (sra GPR:$b, 16)), 16))]>,
             Requires<[IsARM, HasV5TE]>;
 }
 
-multiclass AI_smla<bits<4> opcod, string opc, PatFrag opnode> {
-  def BB : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulFrm,
+
+multiclass AI_smla<string opc, PatFrag opnode> {
+  def BB : AI<0x8, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
               !strconcat(opc, "bb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc,
                                (opnode (sext_inreg GPR:$a, i16),
                                        (sext_inreg GPR:$b, i16))))]>,
            Requires<[IsARM, HasV5TE]>;
-  def BT : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulFrm,
+
+  def BT : AI<0xC, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
               !strconcat(opc, "bt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sext_inreg GPR:$a, i16),
                                                      (sra GPR:$b, 16))))]>,
            Requires<[IsARM, HasV5TE]>;
-  def TB : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulFrm,
+
+  def TB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
               !strconcat(opc, "tb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
                                                  (sext_inreg GPR:$b, i16))))]>,
            Requires<[IsARM, HasV5TE]>;
-  def TT : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulFrm,
+
+  def TT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLA,
               !strconcat(opc, "tt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (opnode (sra GPR:$a, 16),
                                                      (sra GPR:$b, 16))))]>,
             Requires<[IsARM, HasV5TE]>;
 
-  def WB : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulFrm,
+  def WB : AI<0xA, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLAW,
               !strconcat(opc, "wb"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                             (sext_inreg GPR:$b, i16)), 16)))]>,
            Requires<[IsARM, HasV5TE]>;
-  def WT : AI<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulFrm,
+
+  def WT : AI<0xE, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$acc), MulSMLAW,
               !strconcat(opc, "wt"), " $dst, $a, $b, $acc",
               [(set GPR:$dst, (add GPR:$acc, (sra (opnode GPR:$a,
                                                    (sra GPR:$b, 16)), 16)))]>,
             Requires<[IsARM, HasV5TE]>;
 }
 
-defm SMUL : AI_smul<0x0, "smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
-defm SMLA : AI_smla<0x0, "smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
+defm SMUL : AI_smul<"smul", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
+defm SMLA : AI_smla<"smla", BinOpFrag<(mul node:$LHS, node:$RHS)>>;
 
 // TODO: Halfword multiple accumulate long: SMLAL<x><y>
 // TODO: Dual halfword multiple: SMUAD, SMUSD, SMLAD, SMLSD, SMLALD, SMLSLD
