@@ -162,16 +162,14 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::FunctionProto:
   default:
     assert(0 && "Incomplete types have no size!");
-  case Type::Array: {
+  case Type::VariableArray:
+    assert(0 && "VLAs not implemented yet!");
+  case Type::ConstantArray: {
+    ConstantArrayType *CAT = cast<ConstantArrayType>(T);
+    
     std::pair<uint64_t, unsigned> EltInfo = 
-      getTypeInfo(cast<ArrayType>(T)->getElementType(), L);
-    
-    // Get the size of the array.
-    llvm::APSInt Sz(32);
-    if (!cast<ArrayType>(T)->getSizeExpr()->isIntegerConstantExpr(Sz, *this))
-      assert(0 && "VLAs not implemented yet!");
-    
-    Size = EltInfo.first*Sz.getZExtValue();
+      getTypeInfo(CAT->getElementType(), L);
+    Size = EltInfo.first*CAT->getSize().getZExtValue();
     Align = EltInfo.second;
     break;
   }    
@@ -403,35 +401,53 @@ QualType ASTContext::getReferenceType(QualType T) {
   return QualType(New, 0);
 }
 
-/// getArrayType - Return the unique reference to the type for an array of the
-/// specified element type.
-QualType ASTContext::getArrayType(QualType EltTy,ArrayType::ArraySizeModifier ASM,
-                                  unsigned EltTypeQuals, Expr *NumElts) {
-  // Unique array types, to guarantee there is only one array of a particular
-  // structure.
+/// getConstantArrayType - Return the unique reference to the type for an 
+/// array of the specified element type.
+QualType ASTContext::getConstantArrayType(QualType EltTy, 
+                                          const llvm::APInt &ArySize) {
   llvm::FoldingSetNodeID ID;
-  ArrayType::Profile(ID, ASM, EltTypeQuals, EltTy, NumElts);
+  ConstantArrayType::Profile(ID, EltTy, ArySize);
       
   void *InsertPos = 0;
-  if (ArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
+  if (ConstantArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(ATP, 0);
   
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
   if (!EltTy->isCanonical()) {
-    Canonical = getArrayType(EltTy.getCanonicalType(), ASM, EltTypeQuals,
-                             NumElts);
+    Canonical = getConstantArrayType(EltTy.getCanonicalType(), ArySize);
     
     // Get the new insert position for the node we care about.
-    ArrayType *NewIP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+    ConstantArrayType *NewIP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
   
-  ArrayType *New = new ArrayType(EltTy, ASM, EltTypeQuals, Canonical, NumElts);
+  ConstantArrayType *New = new ConstantArrayType(EltTy, Canonical, ArySize);
   ArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
+}
+
+/// getArrayType - If NumElts is a constant expression, we return a unique
+/// reference to an AST node of type ConstantArrayType. If NumElts is not
+/// a constant expression, we return an instance of VaribleLengthArrayType.
+QualType ASTContext::getArrayType(QualType EltTy,
+                                  ArrayType::ArraySizeModifier ASM,
+                                  unsigned EltTypeQuals, Expr *NumElts) {
+  llvm::APSInt ArySize(32);
+  // If no expression was provided, we consider it a VLA.
+  if (!NumElts || !NumElts->isIntegerConstantExpr(ArySize, *this)) {
+    // Since we don't unique expressions, it isn't possible to unique VLA's.
+    ArrayType *New = new VariableArrayType(EltTy, ASM, EltTypeQuals, 
+                                           QualType(), NumElts);
+    Types.push_back(New);
+    return QualType(New, 0);
+  }
+  // Unique constant array types, to guarantee there is only one array of a
+  // particular structure.
+  // FIXME: should we warn if ASM != ArrayType::Normal or EltTypeQuals != 0?
+  return getConstantArrayType(EltTy, ArySize);
 }
 
 /// getVectorType - Return the unique reference to a vector type of

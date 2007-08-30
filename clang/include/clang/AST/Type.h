@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/APSInt.h"
 
 using llvm::isa;
 using llvm::cast;
@@ -195,7 +196,9 @@ namespace clang {
 class Type {
 public:
   enum TypeClass {
-    Builtin, Complex, Pointer, Reference, Array, Vector, OCUVector,
+    Builtin, Complex, Pointer, Reference, 
+    ConstantArray, VariableArray, 
+    Vector, OCUVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, 
     TypeOfExp, TypeOfTyp // GNU typeof extension.
@@ -430,15 +433,58 @@ public:
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
 ///
-class ArrayType : public Type, public llvm::FoldingSetNode {
+class ArrayType : public Type {
 public:
   /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
   /// an array with a static size (e.g. int X[static 4]), or with a star size
-  /// (e.g. int X[*]).
+  /// (e.g. int X[*]). FIXME: consider moving this down to VLAArayType.
   enum ArraySizeModifier {
     Normal, Static, Star
   };
 private:
+  /// ElementType - The element type of the array.
+  QualType ElementType;
+protected:
+  ArrayType(TypeClass tc, QualType et, QualType can)
+    : Type(tc, can), ElementType(et) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  QualType getElementType() const { return ElementType; }
+  
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ConstantArray ||
+           T->getTypeClass() == VariableArray;
+  }
+  static bool classof(const ArrayType *) { return true; }
+};
+
+class ConstantArrayType : public ArrayType, public llvm::FoldingSetNode {
+  llvm::APInt Size; // Allows us to unique the type.
+  
+  ConstantArrayType(QualType et, QualType can, llvm::APInt sz)
+    : ArrayType(ConstantArray, et, can), Size(sz) {}
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  llvm::APInt getSize() const { return Size; }
+
+  virtual void getAsStringInternal(std::string &InnerString) const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getElementType(), getSize());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
+                      llvm::APInt ArraySize) {
+    ID.AddPointer(ET.getAsOpaquePtr());
+    ID.AddInteger(ArraySize.getZExtValue());
+  }
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ConstantArray; 
+  }
+  static bool classof(const ConstantArrayType *) { return true; }
+};
+
+// FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
+class VariableArrayType : public ArrayType {
   /// NOTE: These fields are packed into the bitfields space in the Type class.
   ArraySizeModifier SizeModifier : 2;
   
@@ -446,43 +492,26 @@ private:
   /// 'int X[static restrict 4]'.
   unsigned IndexTypeQuals : 3;
   
-  /// ElementType - The element type of the array.
-  QualType ElementType;
-  
-  /// SizeExpr - The size is either a constant or assignment expression (for 
-  /// Variable Length Arrays). VLA's are only permitted within a function block. 
+  /// SizeExpr - An assignment expression. VLA's are only permitted within 
+  /// a function block. 
   Expr *SizeExpr;
   
-  ArrayType(QualType et, ArraySizeModifier sm, unsigned tq, QualType can,
-            Expr *e)
-    : Type(Array, can), SizeModifier(sm), IndexTypeQuals(tq), ElementType(et),
-      SizeExpr(e) {}
+  VariableArrayType(QualType et, ArraySizeModifier sm, unsigned tq, 
+                          QualType can, Expr *e)
+    : ArrayType(VariableArray, et, can), 
+      SizeModifier(sm), IndexTypeQuals(tq), SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-    
-  QualType getElementType() const { return ElementType; }
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   Expr *getSizeExpr() const { return SizeExpr; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getSizeModifier(), getIndexTypeQualifier(), getElementType(),
-            getSizeExpr());
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == VariableArray; 
   }
-  static void Profile(llvm::FoldingSetNodeID &ID,
-                      ArraySizeModifier SizeModifier,
-                      unsigned IndexTypeQuals, QualType ElementType,
-                      Expr *SizeExpr) {
-    ID.AddInteger(SizeModifier);
-    ID.AddInteger(IndexTypeQuals);
-    ID.AddPointer(ElementType.getAsOpaquePtr());
-    ID.AddPointer(SizeExpr);
-  }
-  
-  static bool classof(const Type *T) { return T->getTypeClass() == Array; }
-  static bool classof(const ArrayType *) { return true; }
+  static bool classof(const VariableArrayType *) { return true; }
 };
 
 /// VectorType - GCC generic vector type. This type is created using

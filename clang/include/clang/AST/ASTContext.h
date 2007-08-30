@@ -31,7 +31,7 @@ class ASTContext {
   llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
-  llvm::FoldingSet<ArrayType> ArrayTypes;
+  llvm::FoldingSet<ConstantArrayType> ArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
@@ -77,10 +77,15 @@ public:
   /// reference to the specified type.
   QualType getReferenceType(QualType T);
   
-  /// getArrayType - Return the unique reference to the type for an array of the
-  /// specified element type.
+  /// getArrayType - If NumElts is a constant expression, we return a unique
+  /// reference to an AST node of type ConstantArrayType. If NumElts is not
+  /// a constant expression, we return an instance of VaribleLengthArrayType.
   QualType getArrayType(QualType EltTy, ArrayType::ArraySizeModifier ASM,
                         unsigned EltTypeQuals, Expr *NumElts);
+
+  /// getConstantArrayType - Return the unique reference to the type for an 
+  /// array of the specified element type.
+  QualType getConstantArrayType(QualType EltTy, const llvm::APInt &Sz);
                         
   /// getVectorType - Return the unique reference to a vector type of
   /// the specified element type and size. VectorType must be a built-in type.

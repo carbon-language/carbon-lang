@@ -43,7 +43,8 @@ bool Type::isObjectType() const {
 bool Type::isDerivedType() const {
   switch (CanonicalType->getTypeClass()) {
   case Pointer:
-  case Array:
+  case VariableArray:
+  case ConstantArray:
   case FunctionProto:
   case FunctionNoProto:
   case Reference:
@@ -344,7 +345,8 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
       return pointerTypesAreCompatible(lcanon, rcanon);
     case Type::Reference:
       return referenceTypesAreCompatible(lcanon, rcanon);
-    case Type::Array:
+    case Type::ConstantArray:
+    case Type::VariableArray:
       return arrayTypesAreCompatible(lcanon, rcanon);
     case Type::FunctionNoProto:
     case Type::FunctionProto:
@@ -487,18 +489,16 @@ bool Type::isAggregateType() const {
       return true;
     return false;
   }
-  return CanonicalType->getTypeClass() == Array;
+  return CanonicalType->getTypeClass() == ConstantArray ||
+         CanonicalType->getTypeClass() == VariableArray;
 }
 
 // The only variable size types are auto arrays within a function. Structures 
 // cannot contain a VLA member. They can have a flexible array member, however
 // the structure is still constant size (C99 6.7.2.1p16).
 bool Type::isConstantSizeType(ASTContext &Ctx, SourceLocation *loc) const {
-  if (const ArrayType *Ary = dyn_cast<ArrayType>(CanonicalType)) {
-    assert(Ary->getSizeExpr() && "Incomplete types don't have a size at all!");
-    // Variable Length Array?
-    return Ary->getSizeExpr()->isIntegerConstantExpr(Ctx, loc);
-  }
+  if (isa<VariableArrayType>(CanonicalType))
+    return false;
   return true;
 }
 
@@ -516,9 +516,9 @@ bool Type::isIncompleteType() const {
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
     return !cast<TagType>(CanonicalType)->getDecl()->isDefinition();
-  case Array:
+  case VariableArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
-    return cast<ArrayType>(CanonicalType)->getSizeExpr() == 0;
+    return cast<VariableArrayType>(CanonicalType)->getSizeExpr() == 0;
   }
 }
 
@@ -689,7 +689,15 @@ void ReferenceType::getAsStringInternal(std::string &S) const {
   ReferenceeType.getAsStringInternal(S);
 }
 
-void ArrayType::getAsStringInternal(std::string &S) const {
+void ConstantArrayType::getAsStringInternal(std::string &S) const {
+  S += '[';
+  S += llvm::utostr_32(getSize().getZExtValue());
+  S += ']';
+  
+  getElementType().getAsStringInternal(S);
+}
+
+void VariableArrayType::getAsStringInternal(std::string &S) const {
   S += '[';
   
   if (IndexTypeQuals) {
@@ -702,9 +710,14 @@ void ArrayType::getAsStringInternal(std::string &S) const {
   else if (SizeModifier == Star)
     S += '*';
   
+  if (getSizeExpr()) {
+    std::ostringstream s;
+    getSizeExpr()->printPretty(s);
+    S += s.str();
+  }
   S += ']';
   
-  ElementType.getAsStringInternal(S);
+  getElementType().getAsStringInternal(S);
 }
 
 void VectorType::getAsStringInternal(std::string &S) const {

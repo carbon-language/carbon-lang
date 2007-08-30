@@ -83,22 +83,22 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     return llvm::PointerType::get(ConvertType(R.getReferenceeType()));
   }
     
-  case Type::Array: {
-    const ArrayType &A = cast<ArrayType>(Ty);
+  case Type::VariableArray: {
+    const VariableArrayType &A = cast<VariableArrayType>(Ty);
     assert(A.getSizeModifier() == ArrayType::Normal &&
            A.getIndexTypeQualifier() == 0 &&
            "FIXME: We only handle trivial array types so far!");
-    
-    llvm::APSInt Size(32);
     if (A.getSizeExpr() == 0) {
       // int X[] -> [0 x int]
       return llvm::ArrayType::get(ConvertType(A.getElementType()), 0);
-    } else if (A.getSizeExpr()->isIntegerConstantExpr(Size, Context)) {
-      const llvm::Type *EltTy = ConvertType(A.getElementType());
-      return llvm::ArrayType::get(EltTy, Size.getZExtValue());
     } else {
       assert(0 && "FIXME: VLAs not implemented yet!");
     }
+  }
+  case Type::ConstantArray: {
+    const ConstantArrayType &A = cast<ConstantArrayType>(Ty);
+    const llvm::Type *EltTy = ConvertType(A.getElementType());
+    return llvm::ArrayType::get(EltTy, A.getSize().getZExtValue());
   }
   case Type::OCUVector:
   case Type::Vector: {
