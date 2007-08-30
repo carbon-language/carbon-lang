@@ -26,6 +26,7 @@ using namespace clang;
 
 namespace  {
   class VISIBILITY_HIDDEN StmtDumper : public StmtVisitor<StmtDumper> {
+    const SourceManager *SM;
     FILE *F;
     unsigned IndentLevel;
     
@@ -34,8 +35,8 @@ namespace  {
     /// are left.
     unsigned MaxDepth;
   public:
-    StmtDumper(FILE *f, unsigned maxDepth)
-      : F(f), IndentLevel(0), MaxDepth(maxDepth) {}
+    StmtDumper(const SourceManager *sm, FILE *f, unsigned maxDepth)
+      : SM(sm), F(f), IndentLevel(0), MaxDepth(maxDepth) {}
     
     void DumpSubTree(Stmt *S) {
       // Prune the recursion if not using dump all.
@@ -537,15 +538,31 @@ void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 /// dump - This does a local dump of the specified AST fragment.  It dumps the
 /// specified node and a few nodes underneath it, but not the whole subtree.
 /// This is useful in a debugger.
+void Stmt::dump(const SourceManager &SM) const {
+  StmtDumper P(&SM, stderr, 4);
+  P.Visit(const_cast<Stmt*>(this));
+  fprintf(stderr, "\n");
+}
+
+/// dump - This does a local dump of the specified AST fragment.  It dumps the
+/// specified node and a few nodes underneath it, but not the whole subtree.
+/// This is useful in a debugger.
 void Stmt::dump() const {
-  StmtDumper P(stderr, 4);
+  StmtDumper P(0, stderr, 4);
+  P.Visit(const_cast<Stmt*>(this));
+  fprintf(stderr, "\n");
+}
+
+/// dumpAll - This does a dump of the specified AST fragment and all subtrees.
+void Stmt::dumpAll(const SourceManager &SM) const {
+  StmtDumper P(&SM, stderr, ~0U);
   P.Visit(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
 void Stmt::dumpAll() const {
-  StmtDumper P(stderr, ~0U);
+  StmtDumper P(0, stderr, ~0U);
   P.Visit(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
 }

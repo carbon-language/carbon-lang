@@ -136,7 +136,7 @@ void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       
       if (FD->getBody()) {
         fprintf(stderr, "\n");
-        FD->getBody()->dumpAll();
+        FD->getBody()->dumpAll(PP.getSourceManager());
         fprintf(stderr, "\n");
       }
     } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
