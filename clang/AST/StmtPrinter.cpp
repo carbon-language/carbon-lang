@@ -64,6 +64,9 @@ namespace  {
       return OS;
     }
     
+    bool PrintOffsetOfDesignator(Expr *E);
+    void VisitUnaryOffsetOf(UnaryOperator *Node);
+    
     void VisitStmt(Stmt *Node);
 #define STMT(N, CLASS, PARENT) \
     void Visit##CLASS(CLASS *Node);
@@ -429,8 +432,33 @@ void StmtPrinter::VisitUnaryOperator(UnaryOperator *Node) {
   
   if (Node->isPostfix())
     OS << UnaryOperator::getOpcodeStr(Node->getOpcode());
-
 }
+
+bool StmtPrinter::PrintOffsetOfDesignator(Expr *E) {
+  if (isa<CompoundLiteralExpr>(E)) {
+    // Base case, print the type and comma.
+    OS << E->getType().getAsString() << ", ";
+    return true;
+  } else if (ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(E)) {
+    PrintOffsetOfDesignator(ASE->getLHS());
+    OS << "[";
+    PrintExpr(ASE->getRHS());
+    OS << "]";
+    return false;
+  } else {
+    MemberExpr *ME = cast<MemberExpr>(E);
+    bool IsFirst = PrintOffsetOfDesignator(ME->getBase());
+    OS << (IsFirst ? "" : ".") << ME->getMemberDecl()->getName();
+    return false;
+  }
+}
+
+void StmtPrinter::VisitUnaryOffsetOf(UnaryOperator *Node) {
+  OS << "__builtin_offsetof(";
+  PrintOffsetOfDesignator(Node->getSubExpr());
+  OS << ")";
+}
+
 void StmtPrinter::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
   OS << (Node->isSizeOf() ? "sizeof(" : "__alignof(");
   OS << Node->getArgumentType().getAsString() << ")";

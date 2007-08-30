@@ -95,7 +95,7 @@ public:
       case UnaryOperator::Real:         DISPATCH(UnaryReal,      UnaryOperator);
       case UnaryOperator::Imag:         DISPATCH(UnaryImag,      UnaryOperator);
       case UnaryOperator::Extension:    DISPATCH(UnaryExtension, UnaryOperator);
-      case UnaryOperator::OffsetOf:     DISPATCH(UnaryExtension, UnaryOperator);
+      case UnaryOperator::OffsetOf:     DISPATCH(UnaryOffsetOf,  UnaryOperator);
       }          
     }
     

@@ -1748,6 +1748,8 @@ Sema::ExprResult Sema::ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
                     Res->getType().getAsString());
       }
       
+      // FIXME: C++: Verify that operator[] isn't overloaded.
+
       // C99 6.5.2.1p1
       Expr *Idx = static_cast<Expr*>(OC.U.E);
       if (!Idx->getType()->isIntegerType())
@@ -1772,6 +1774,10 @@ Sema::ExprResult Sema::ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
       return Diag(BuiltinLoc, diag::err_typecheck_no_member,
                   OC.U.IdentInfo->getName(),
                   SourceRange(OC.LocStart, OC.LocEnd));
+    
+    // FIXME: C++: Verify that MemberDecl isn't a static field.
+    // FIXME: Verify that MemberDecl isn't a bitfield.
+    
     Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd);
   }
   
