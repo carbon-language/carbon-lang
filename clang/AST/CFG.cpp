@@ -34,7 +34,8 @@ template<typename T>
 struct SaveAndRestore {
   SaveAndRestore(T& x) : X(x), old_value(x) {}
   ~SaveAndRestore() { X = old_value; }
-  
+  T get() { return old_value; }
+
   T& X;
   T old_value;
 };
@@ -396,9 +397,12 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     // NULL out Block so that the recursive call to Visit will
     // create a new basic block.          
     Block = NULL;
-    ElseBlock = Visit(Else);          
-    if (!ElseBlock) return NULL;
-    if (Block) FinishBlock(ElseBlock);
+    ElseBlock = Visit(Else);
+              
+    if (!ElseBlock) // Can occur when the Else body has all NullStmts.
+      ElseBlock = sv.get();
+    else if (Block) 
+      FinishBlock(ElseBlock);
   }
   
   // Process the true branch.  NULL out Block so that the recursive
@@ -410,9 +414,12 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     assert (Then);
     SaveAndRestore<CFGBlock*> sv(Succ);
     Block = NULL;        
-    ThenBlock = Visit(Then);        
-    if (!ThenBlock) return NULL;
-    if (Block) FinishBlock(ThenBlock);
+    ThenBlock = Visit(Then);
+    
+    if (!ThenBlock) // Can occur when the Then body has all NullStmts.
+      ThenBlock = sv.get();
+    else if (Block)
+      FinishBlock(ThenBlock);
   }
 
   // Now create a new block containing the if statement.        
