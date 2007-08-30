@@ -77,15 +77,14 @@ public:
   /// reference to the specified type.
   QualType getReferenceType(QualType T);
   
-  /// getArrayType - If NumElts is a constant expression, we return a unique
-  /// reference to an AST node of type ConstantArrayType. If NumElts is not
-  /// a constant expression, we return an instance of VaribleLengthArrayType.
+  /// getVariableArrayType - Returns a non-unique reference to the type for a
+  /// variable array of the specified element type.
   QualType getVariableArrayType(QualType EltTy, Expr *NumElts,
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals);
 
-  /// getConstantArrayType - Return the unique reference to the type for an 
-  /// array of the specified element type.
+  /// getConstantArrayType - Return the unique reference to the type for a
+  /// constant array of the specified element type.
   QualType getConstantArrayType(QualType EltTy, const llvm::APInt &ArySize,
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals);

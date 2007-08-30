@@ -432,9 +432,8 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   return QualType(New, 0);
 }
 
-/// getArrayType - If NumElts is a constant expression, we return a unique
-/// reference to an AST node of type ConstantArrayType. If NumElts is not
-/// a constant expression, we return an instance of VaribleLengthArrayType.
+/// getVariableArrayType - Returns a non-unique reference to the type for a
+/// variable array of the specified element type.
 QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
                                           ArrayType::ArraySizeModifier ASM,
                                           unsigned EltTypeQuals) {
