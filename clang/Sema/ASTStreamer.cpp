@@ -91,8 +91,8 @@ ASTStreamerTy *clang::ASTStreamer_Init(Preprocessor &pp, ASTContext &ctxt,
   return new ASTStreamer(pp, ctxt, MainFileID);
 }
 
-/// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration. This
-/// returns null at end of file.
+/// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration.
+/// This returns null at end of file.
 Decl *clang::ASTStreamer_ReadTopLevelDecl(ASTStreamerTy *Streamer) {
   return static_cast<ASTStreamer*>(Streamer)->ReadTopLevelDecl();
 }
