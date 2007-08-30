@@ -51,6 +51,12 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
                                           unsigned OpNum,
                                           int FrameIndex) const;
 
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          unsigned OpNum,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const* getCalleeSavedRegClasses(

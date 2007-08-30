@@ -521,6 +521,15 @@ public:
     return 0;
   }
 
+  /// foldMemoryOperand - Same as the previous version except it allows folding
+  /// of any load and store from / to any address, not just from a specific
+  /// stack slot.
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          unsigned OpNum,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+
   /// targetHandlesStackFrameRounding - Returns true if the target is responsible
   /// for rounding up the stack frame (probably at emitPrologue time).
   virtual bool targetHandlesStackFrameRounding() const {

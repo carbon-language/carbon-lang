@@ -242,11 +242,13 @@ namespace llvm {
     bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
                             MachineInstr *MI);
 
-    /// tryFoldMemoryOperand - Attempts to fold a spill / restore from slot
-    /// to reg into ith operand of specified MI. If it is successul, MI is
-    /// updated with the newly created MI and returns true.
-    bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm, unsigned index,
-                              unsigned i, int slot, unsigned reg);
+    /// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
+    /// slot / to reg or any rematerialized load into ith operand of specified
+    /// MI. If it is successul, MI is updated with the newly created MI and
+    /// returns true.
+    bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
+                              unsigned index, unsigned i, bool isSS,
+                              MachineInstr *DefMI, int slot, unsigned reg);
 
     static LiveInterval createInterval(unsigned Reg);
 

@@ -48,6 +48,11 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
                                   int FrameIndex) const;
 
+  MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
+                                  MachineInstr* LoadMI) const {
+    return 0;
+  }
+
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
           unsigned DestReg, unsigned SrcReg,
           const TargetRegisterClass *RC) const;
