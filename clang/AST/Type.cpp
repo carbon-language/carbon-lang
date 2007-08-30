@@ -691,7 +691,7 @@ void ReferenceType::getAsStringInternal(std::string &S) const {
 
 void ConstantArrayType::getAsStringInternal(std::string &S) const {
   S += '[';
-  S += llvm::utostr_32(getSize().getZExtValue());
+  S += llvm::utostr(getSize().getZExtValue());
   S += ']';
   
   getElementType().getAsStringInternal(S);
