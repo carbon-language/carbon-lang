@@ -97,9 +97,13 @@ Stmt::child_iterator NullStmt::child_end() { return NULL; }
 Stmt::child_iterator CompoundStmt::child_begin() { return &Body[0]; }
 Stmt::child_iterator CompoundStmt::child_end() { return &Body[0]+Body.size(); }
 
-// SwitchCase
-Stmt::child_iterator SwitchCase::child_begin() { return &SubStmt; }
-Stmt::child_iterator SwitchCase::child_end() { return &SubStmt+1; }
+// CaseStmt
+Stmt::child_iterator CaseStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator CaseStmt::child_end() { return &SubExprs[END_EXPR]; }
+
+// DefaultStmt
+Stmt::child_iterator DefaultStmt::child_begin() { return &SubStmt; }
+Stmt::child_iterator DefaultStmt::child_end() { return &SubStmt+1; }
 
 // LabelStmt
 Stmt::child_iterator LabelStmt::child_begin() { return &SubStmt; }

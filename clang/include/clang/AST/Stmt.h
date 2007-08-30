@@ -199,10 +199,8 @@ class SwitchCase : public Stmt {
   // A pointer to the following CaseStmt or DefaultStmt class,
   // used by SwitchStmt.
   SwitchCase *NextSwitchCase;
-  Stmt *SubStmt;
 protected:
-  SwitchCase(StmtClass SC, Stmt* substmt) : Stmt(SC), NextSwitchCase(0),
-                                            SubStmt(substmt) {}
+  SwitchCase(StmtClass SC) : Stmt(SC), NextSwitchCase(0) {}
   
 public:
   const SwitchCase *getNextSwitchCase() const { return NextSwitchCase; }
@@ -210,48 +208,64 @@ public:
   SwitchCase *getNextSwitchCase() { return NextSwitchCase; }
 
   void setNextSwitchCase(SwitchCase *SC) { NextSwitchCase = SC; }
-  
-  Stmt *getSubStmt() { return SubStmt; }
+
+  virtual Stmt* v_getSubStmt() = 0;  
+  Stmt *getSubStmt() { return v_getSubStmt(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass || 
     T->getStmtClass() == DefaultStmtClass;
   }
   static bool classof(const SwitchCase *) { return true; }
+};
+
+class CaseStmt : public SwitchCase {
+  enum { SUBSTMT, LHS, RHS, END_EXPR };
+  Stmt* SubExprs[END_EXPR];  // The expression for the RHS is Non-null for 
+                             // GNU "case 1 ... 4" extension
+public:
+  CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
+    : SwitchCase(CaseStmtClass) {
+    SubExprs[SUBSTMT] = substmt;
+    SubExprs[LHS] = reinterpret_cast<Stmt*>(lhs);
+    SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
+  }
+  
+  Expr *getLHS() { return reinterpret_cast<Expr*>(SubExprs[LHS]); }
+  Expr *getRHS() { return reinterpret_cast<Expr*>(SubExprs[RHS]); }
+  Stmt *getSubStmt() { return SubExprs[SUBSTMT]; }
+  virtual Stmt* v_getSubStmt() { return getSubStmt(); }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == CaseStmtClass; 
+  }
+  static bool classof(const CaseStmt *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
 
-class CaseStmt : public SwitchCase {
-  Expr *LHSVal;
-  Expr *RHSVal;  // Non-null for GNU "case 1 ... 4" extension
-public:
-  CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
-    : SwitchCase(CaseStmtClass,substmt), LHSVal(lhs), RHSVal(rhs) {}
-  
-  Expr *getLHS() { return LHSVal; }
-  Expr *getRHS() { return RHSVal; }
-
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == CaseStmtClass; 
-  }
-  static bool classof(const CaseStmt *) { return true; }
-};
-
 class DefaultStmt : public SwitchCase {
+  Stmt* SubStmt;
   SourceLocation DefaultLoc;
 public:
   DefaultStmt(SourceLocation DL, Stmt *substmt) : 
-    SwitchCase(DefaultStmtClass,substmt), DefaultLoc(DL) {}
-  
+    SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL) {}
+
+  Stmt *getSubStmt() { return SubStmt; }
+  virtual Stmt* v_getSubStmt() { return getSubStmt(); }
+    
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DefaultStmtClass; 
   }
   static bool classof(const DefaultStmt *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
 };
 
 class LabelStmt : public Stmt {
