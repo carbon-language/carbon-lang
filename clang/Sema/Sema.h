@@ -306,7 +306,14 @@ public:
   
   virtual ExprResult ParseStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
                                    SourceLocation RPLoc); // "({..})"
-                                   
+
+  /// __builtin_offsetof(type, a.b[123][456].c)
+  virtual ExprResult ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
+                                          SourceLocation TypeLoc, TypeTy *Arg1,
+                                          OffsetOfComponent *CompPtr,
+                                          unsigned NumComponents,
+                                          SourceLocation RParenLoc);
+    
   // __builtin_types_compatible_p(type1, type2)
   virtual ExprResult ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                               TypeTy *arg1, TypeTy *arg2,

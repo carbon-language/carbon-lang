@@ -32,7 +32,6 @@ class Expr : public Stmt {
   QualType TR;
 protected:
   Expr(StmtClass SC, QualType T) : Stmt(SC), TR(T) {}
-  ~Expr() {}
 public:  
   QualType getType() const { return TR; }
   void setType(QualType t) { TR = t; }
@@ -329,6 +328,10 @@ public:
 ///   applied to a non-complex value, the former returns its operand and the
 ///   later returns zero in the type of the operand.
 ///
+/// __builtin_offsetof(type, a.b[10]) is represented as a unary operator whose
+///   subexpression is a compound literal with the various MemberExpr and 
+///   ArraySubscriptExpr's applied to it.
+///
 class UnaryOperator : public Expr {
 public:
   // Note that additions to this should also update the StmtVisitor class.
@@ -340,7 +343,8 @@ public:
     Not, LNot,        // [C99 6.5.3.3] Unary arithmetic operators.
     SizeOf, AlignOf,  // [C99 6.5.3.4] Sizeof (expr, not type) operator.
     Real, Imag,       // "__real expr"/"__imag expr" Extension.
-    Extension         // __extension__ marker.
+    Extension,        // __extension__ marker.
+    OffsetOf          // __builtin_offsetof
   };
 private:
   Expr *Val;
@@ -431,12 +435,11 @@ class ArraySubscriptExpr : public Expr {
   SourceLocation RBracketLoc;
 public:
   ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
-                     SourceLocation rbracketloc) : 
-    Expr(ArraySubscriptExprClass, t),
-    RBracketLoc(rbracketloc) {
-      SubExprs[LHS] = lhs;
-      SubExprs[RHS] = rhs;
-    }
+                     SourceLocation rbracketloc)
+  : Expr(ArraySubscriptExprClass, t), RBracketLoc(rbracketloc) {
+    SubExprs[LHS] = lhs;
+    SubExprs[RHS] = rhs;
+  }
   
   /// An array access can be written A[4] or 4[A] (both are equivalent).
   /// - getBase() and getIdx() always present the normalized view: A[4].
@@ -636,7 +639,11 @@ public:
   const Expr *getInitializer() const { return Init; }
   Expr *getInitializer() { return Init; }
   
-  virtual SourceRange getSourceRange() const { return Init->getSourceRange(); }
+  virtual SourceRange getSourceRange() const {
+    if (Init)
+      return Init->getSourceRange();
+    return SourceRange();
+  }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundLiteralExprClass; 
@@ -908,7 +915,7 @@ public:
   QualType getArgType1() const { return Type1; }
   QualType getArgType2() const { return Type2; }
   
-  int typesAreCompatible() const { return Type::typesAreCompatible(Type1,Type2); }
+  int typesAreCompatible() const {return Type::typesAreCompatible(Type1,Type2);}
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);

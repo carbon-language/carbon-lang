@@ -69,6 +69,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   case SizeOf:  return "sizeof";
   case AlignOf: return "alignof";
   case Extension: return "__extension__";
+  case OffsetOf: return "__builtin_offsetof";
   }
 }
 

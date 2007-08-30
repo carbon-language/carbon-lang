@@ -581,6 +581,11 @@ DIAG(err_sizeof_incomplete_type, ERROR,
      "invalid application of 'sizeof' to an incomplete type '%0'")
 DIAG(err_alignof_incomplete_type, ERROR,
      "invalid application of '__alignof' to an incomplete type '%0'")
+DIAG(err_offsetof_record_type, ERROR,
+     "offsetof requires struct, union, or class type, '%0' invalid")
+DIAG(err_offsetof_array_type, ERROR,
+     "offsetof requires array type, '%0' invalid")
+     
 DIAG(err_invalid_suffix_integer_constant, ERROR,
      "invalid suffix '%0' on integer constant")
 DIAG(err_invalid_suffix_float_constant, ERROR,

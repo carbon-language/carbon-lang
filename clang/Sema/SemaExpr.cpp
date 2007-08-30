@@ -334,7 +334,7 @@ ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
   QualType LHSTy = LHSExp->getType(), RHSTy = RHSExp->getType();
 
   // C99 6.5.2.1p2: the expression e1[e2] is by definition precisely equivalent
-  // to the expression *((e1)+(e2)). This means the array "Base" may actually be 
+  // to the expression *((e1)+(e2)). This means the array "Base" may actually be
   // in the subscript position. As a result, we need to derive the array base 
   // and index from the expression types.
   Expr *BaseExpr, *IndexExpr;
@@ -619,7 +619,8 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
     if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
       if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl()))
-        if (CheckFunctionCall(Fn, LParenLoc, RParenLoc, FDecl, Args, NumArgsInCall))
+        if (CheckFunctionCall(Fn, LParenLoc, RParenLoc, FDecl, Args,
+                              NumArgsInCall))
           return true;
 
   return new CallExpr(Fn, Args, NumArgsInCall, resultType, RParenLoc);
@@ -693,7 +694,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   if (const RecordType *LHSRT = lexT->getAsRecordType()) {    // C99 6.5.15p3
     if (const RecordType *RHSRT = rexT->getAsRecordType()) {
       
-      if (LHSRT->getDecl()->getIdentifier() ==RHSRT->getDecl()->getIdentifier()) 
+      if (LHSRT->getDecl()->getIdentifier() ==RHSRT->getDecl()->getIdentifier())
         return lexT;
       
       Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
@@ -730,9 +731,10 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
         return lexT; // FIXME: this is an _ext - is this return o.k?
       }
       // The pointer types are compatible.
-      // C99 6.5.15p6: If both operands are pointers to compatible types *or* to 
-      // differently qualified versions of compatible types, the result type is a 
-      // pointer to an appropriately qualified version of the *composite* type.
+      // C99 6.5.15p6: If both operands are pointers to compatible types *or* to
+      // differently qualified versions of compatible types, the result type is
+      // a pointer to an appropriately qualified version of the *composite*
+      // type.
       return lexT; // FIXME: Need to return the composite type.
     }
   }
@@ -818,7 +820,7 @@ void Sema::UsualUnaryConversions(Expr *&expr) {
     DefaultFunctionArrayConversion(expr);
 }
 
-/// UsualArithmeticConversions - Performs various conversions that are common to 
+/// UsualArithmeticConversions - Performs various conversions that are common to
 /// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
 /// routine returns the first non-arithmetic type found. The client is 
 /// responsible for emitting appropriate error diagnostics.
@@ -1315,7 +1317,8 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   // it is the unqualified version of the type of the left operand. 
   // C99 6.5.16.1p2: In simple assignment, the value of the right operand
   // is converted to the type of the assignment expression (above).
-  // C++ 5.17p1: the type of the assignment expression is that of its left oprdu.
+  // C++ 5.17p1: the type of the assignment expression is that of its left
+  // oprdu.
   return hadError ? QualType() : lhsType.getUnqualifiedType();
 }
 
@@ -1715,6 +1718,68 @@ Sema::ExprResult Sema::ParseStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
   return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
 }
 
+Sema::ExprResult Sema::ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
+                                            SourceLocation TypeLoc,
+                                            TypeTy *argty,
+                                            OffsetOfComponent *CompPtr,
+                                            unsigned NumComponents,
+                                            SourceLocation RPLoc) {
+  QualType ArgTy = QualType::getFromOpaquePtr(argty);
+  assert(!ArgTy.isNull() && "Missing type argument!");
+  
+  // We must have at least one component that refers to the type, and the first
+  // one is known to be a field designator.  Verify that the ArgTy represents
+  // a struct/union/class.
+  if (!ArgTy->isRecordType())
+    return Diag(TypeLoc, diag::err_offsetof_record_type,ArgTy.getAsString());
+  
+  // Otherwise, create a compound literal expression as the base, and
+  // iteratively process the offsetof designators.
+  Expr *Res = new CompoundLiteralExpr(ArgTy, 0);
+  
+  for (unsigned i = 0; i != NumComponents; ++i) {
+    const OffsetOfComponent &OC = CompPtr[i];
+    if (OC.isBrackets) {
+      // Offset of an array sub-field.  TODO: Should we allow vector elements?
+      const ArrayType *AT = Res->getType()->getAsArrayType();
+      if (!AT) {
+        delete Res;
+        return Diag(OC.LocEnd, diag::err_offsetof_array_type,
+                    Res->getType().getAsString());
+      }
+      
+      // C99 6.5.2.1p1
+      Expr *Idx = static_cast<Expr*>(OC.U.E);
+      if (!Idx->getType()->isIntegerType())
+        return Diag(Idx->getLocStart(), diag::err_typecheck_subscript,
+                    Idx->getSourceRange());
+      
+      Res = new ArraySubscriptExpr(Res, Idx, AT->getElementType(), OC.LocEnd);
+      continue;
+    }
+    
+    const RecordType *RC = Res->getType()->getAsRecordType();
+    if (!RC) {
+      delete Res;
+      return Diag(OC.LocEnd, diag::err_offsetof_record_type,
+                  Res->getType().getAsString());
+    }
+      
+    // Get the decl corresponding to this.
+    RecordDecl *RD = RC->getDecl();
+    FieldDecl *MemberDecl = RD->getMember(OC.U.IdentInfo);
+    if (!MemberDecl)
+      return Diag(BuiltinLoc, diag::err_typecheck_no_member,
+                  OC.U.IdentInfo->getName(),
+                  SourceRange(OC.LocStart, OC.LocEnd));
+    Res = new MemberExpr(Res, false, MemberDecl, OC.LocEnd);
+  }
+  
+  return new UnaryOperator(Res, UnaryOperator::OffsetOf, Context.getSizeType(),
+                           BuiltinLoc);
+}
+
+
 Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                                 TypeTy *arg1, TypeTy *arg2,
                                                 SourceLocation RPLoc) {
@@ -1723,7 +1788,7 @@ Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation BuiltinLoc,
   
   assert((!argT1.isNull() && !argT2.isNull()) && "Missing type argument(s)");
   
-  return new TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, argT2, RPLoc);
+  return new TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, argT2,RPLoc);
 }
 
 Sema::ExprResult Sema::ParseChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond, 
