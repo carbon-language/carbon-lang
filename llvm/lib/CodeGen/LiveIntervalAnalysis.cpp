@@ -236,10 +236,17 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   return true;
 }
 
+/// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
+/// slot / to reg or any rematerialized load into ith operand of specified
+/// MI. If it is successul, MI is updated with the newly created MI and
+/// returns true.
 bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
                                          unsigned index, unsigned i,
+                                         bool isSS, MachineInstr *DefMI,
                                          int slot, unsigned reg) {
-  MachineInstr *fmi = mri_->foldMemoryOperand(MI, i, slot);
+  MachineInstr *fmi = isSS
+    ? mri_->foldMemoryOperand(MI, i, slot)
+    : mri_->foldMemoryOperand(MI, i, DefMI);
   if (fmi) {
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
@@ -340,6 +347,8 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
     bool CanDelete = ReMatDelete[I->valno->id];
     int LdSlot = 0;
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(DefMI, LdSlot);
+    bool isLoad = isLoadSS ||
+      (DefIsReMat && (DefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG));
     unsigned index = getBaseIndex(I->start);
     unsigned end = getBaseIndex(I->end-1) + InstrSlots::NUM;
     for (; index != end; index += InstrSlots::NUM) {
@@ -362,20 +371,22 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
                 RemoveMachineInstrFromMaps(MI);
                 MI->eraseFromParent();
                 break;
-              } else if (tryFoldMemoryOperand(MI, vrm, index, i, slot, li.reg))
+              } else if (tryFoldMemoryOperand(MI, vrm, index, i, true,
+                                              DefMI, slot, li.reg)) {
                 // Folding the load/store can completely change the instruction
                 // in unpredictable ways, rescan it from the beginning.
                 goto RestartInstruction;
-            } else if (isLoadSS &&
-                       tryFoldMemoryOperand(MI, vrm, index, i, LdSlot, li.reg)){
-              // FIXME: Other rematerializable loads can be folded as well.
-              // Folding the load/store can completely change the
-              // instruction in unpredictable ways, rescan it from
-              // the beginning.
-              goto RestartInstruction;
-            }
+              }
+            } else if (isLoad &&
+                       tryFoldMemoryOperand(MI, vrm, index, i, isLoadSS,
+                                            DefMI, LdSlot, li.reg))
+                // Folding the load/store can completely change the
+                // instruction in unpredictable ways, rescan it from
+                // the beginning.
+                goto RestartInstruction;
           } else {
-            if (tryFoldMemoryOperand(MI, vrm, index, i, slot, li.reg))
+            if (tryFoldMemoryOperand(MI,  vrm, index, i, true, DefMI,
+                                     slot, li.reg))
               // Folding the load/store can completely change the instruction in
               // unpredictable ways, rescan it from the beginning.
               goto RestartInstruction;
