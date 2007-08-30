@@ -174,7 +174,12 @@ public:
     return getConstant(Val, VT, true);
   }
   SDOperand getConstantFP(double Val, MVT::ValueType VT, bool isTarget = false);
+  SDOperand getConstantFP(const APFloat& Val, MVT::ValueType VT, 
+                          bool isTarget = false);
   SDOperand getTargetConstantFP(double Val, MVT::ValueType VT) {
+    return getConstantFP(Val, VT, true);
+  }
+  SDOperand getTargetConstantFP(const APFloat& Val, MVT::ValueType VT) {
     return getConstantFP(Val, VT, true);
   }
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT,

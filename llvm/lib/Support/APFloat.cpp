@@ -1617,7 +1617,7 @@ APFloat::APFloat(double d) {
     sign = mysign;
     category = fcNormal;
     exponent = myexponent - 1023;
-    *significandParts() = mysignificand | 0x100000000000000LL;
+    *significandParts() = mysignificand | 0x10000000000000LL;
   }
 }
 

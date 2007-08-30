@@ -142,8 +142,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
-  addLegalFPImmediate(+0.0); //F31
-  addLegalFPImmediate(-0.0); //-F31
+  addLegalFPImmediate(APFloat(+0.0)); //F31
+  addLegalFPImmediate(APFloat(-0.0)); //-F31
 
   setJumpBufSize(272);
   setJumpBufAlignment(16);

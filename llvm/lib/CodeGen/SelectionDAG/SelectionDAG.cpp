@@ -52,6 +52,32 @@ bool ConstantFPSDNode::isExactlyValue(const APFloat& V) const {
   return Value.bitwiseIsEqual(V);
 }
 
+bool ConstantFPSDNode::isValueValidForType(MVT::ValueType VT, 
+                                           const APFloat& Val) {
+  // convert modifies in place, so make a copy.
+  APFloat Val2 = APFloat(Val);
+  switch (VT) {
+  default:
+    return false;         // These can't be represented as floating point!
+
+  // FIXME rounding mode needs to be more flexible
+  case MVT::f32:
+    return &Val2.getSemantics() == &APFloat::IEEEsingle ||
+           Val2.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven) == 
+              APFloat::opOK;
+  case MVT::f64:
+    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+           &Val2.getSemantics() == &APFloat::IEEEdouble ||
+           Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven) == 
+             APFloat::opOK;
+  // TODO: Figure out how to test if we can use a shorter type instead!
+  case MVT::f80:
+  case MVT::f128:
+  case MVT::ppcf128:
+    return true;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                              ISD Namespace
 //===----------------------------------------------------------------------===//
@@ -669,18 +695,20 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
+SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT::ValueType VT,
                                       bool isTarget) {
   assert(MVT::isFloatingPoint(VT) && "Cannot create integer FP constant!");
+                                
   MVT::ValueType EltVT =
     MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
-  if (EltVT == MVT::f32)
-    Val = (float)Val;  // Mask out extra precision.
+  bool isDouble = (EltVT == MVT::f64);
+  double Val = isDouble ? V.convertToDouble() : (double)V.convertToFloat();
 
   // Do the map lookup using the actual bit pattern for the floating point
   // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
   // we don't have issues with SNANs.
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
+  // ?? Should we store float/double/longdouble separately in ID?
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.AddDouble(Val);
@@ -702,6 +730,16 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
     Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
   return Result;
+}
+
+SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT,
+                                      bool isTarget) {
+  MVT::ValueType EltVT =
+    MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
+  if (EltVT==MVT::f32)
+    return getConstantFP(APFloat((float)Val), VT, isTarget);
+  else
+    return getConstantFP(APFloat(Val), VT, isTarget);
 }
 
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,

@@ -296,7 +296,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // cases we handle.
     setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
     setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
-    addLegalFPImmediate(+0.0); // xorps / xorpd
+    addLegalFPImmediate(APFloat(+0.0)); // xorps / xorpd
 
     // Conversions to long double (in X87) go through memory.
     setConvertAction(MVT::f32, MVT::f80, Expand);
@@ -327,10 +327,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
     setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
     setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
-    addLegalFPImmediate(+0.0); // FLD0
-    addLegalFPImmediate(+1.0); // FLD1
-    addLegalFPImmediate(-0.0); // FLD0/FCHS
-    addLegalFPImmediate(-1.0); // FLD1/FCHS
+    addLegalFPImmediate(APFloat(+0.0)); // FLD0
+    addLegalFPImmediate(APFloat(+1.0)); // FLD1
+    addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
+    addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
   }
 
   // Long double always uses X87.

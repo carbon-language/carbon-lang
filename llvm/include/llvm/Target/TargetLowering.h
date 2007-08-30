@@ -24,6 +24,7 @@
 
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
+#include "llvm/ADT/APFloat.h"
 #include <map>
 #include <vector>
 
@@ -220,7 +221,7 @@ public:
                                   unsigned &NumIntermediates,
                                   MVT::ValueType &RegisterVT) const;
   
-  typedef std::vector<double>::const_iterator legal_fpimm_iterator;
+  typedef std::vector<APFloat>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
     return LegalFPImmediates.begin();
   }
@@ -781,8 +782,18 @@ protected:
 
   /// addLegalFPImmediate - Indicate that this target can instruction select
   /// the specified FP immediate natively.
-  void addLegalFPImmediate(double Imm) {
+  void addLegalFPImmediate(const APFloat& Imm) {
+    // Incoming constants are expected to be double.  We also add
+    // the float version.  It is expected that all constants are exactly
+    // representable as floats.
+    assert(&Imm.getSemantics() == &APFloat::IEEEdouble);
+    APFloat Immf = APFloat(Imm);
+    // Rounding mode is not supposed to matter here...
+    if (Immf.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven) != 
+        APFloat::opOK)
+      assert(0);
     LegalFPImmediates.push_back(Imm);
+    LegalFPImmediates.push_back(Immf);
   }
 
   /// setTargetDAGCombine - Targets should invoke this method for each target
@@ -1118,7 +1129,7 @@ private:
 
   ValueTypeActionImpl ValueTypeActions;
 
-  std::vector<double> LegalFPImmediates;
+  std::vector<APFloat> LegalFPImmediates;
 
   std::vector<std::pair<MVT::ValueType,
                         TargetRegisterClass*> > AvailableRegClasses;

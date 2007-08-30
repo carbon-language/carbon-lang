@@ -240,15 +240,24 @@ ConstantInt *ConstantInt::get(const APInt& V) {
 
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
-  : Constant(Ty, ConstantFPVal, 0, 0), Val(APFloat(V)) {
+  : Constant(Ty, ConstantFPVal, 0, 0), 
+             Val(Ty==Type::FloatTy ? APFloat((float)V) : APFloat(V)) {
+}
+ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
+  : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
+  // temporary
+  if (Ty==Type::FloatTy)
+    assert(&V.getSemantics()==&APFloat::IEEEsingle);
+  else
+    assert(&V.getSemantics()==&APFloat::IEEEdouble);
 }
 
 bool ConstantFP::isNullValue() const {
   return Val.isZero() && !Val.isNegative();
 }
 
-bool ConstantFP::isExactlyValue(double V) const {
-  return Val.bitwiseIsEqual(APFloat(V));
+bool ConstantFP::isExactlyValue(const APFloat& V) const {
+  return Val.bitwiseIsEqual(V);
 }
 
 namespace {
@@ -289,14 +298,14 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
     DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((float)V));
     ConstantFP *&Slot = (*FPConstants)[Key];
     if (Slot) return Slot;
-    return Slot = new ConstantFP(Ty, (float)V);
+    return Slot = new ConstantFP(Ty, APFloat((float)V));
   } else if (Ty == Type::DoubleTy) {
     // Without the redundant cast, the following is taken to be
     // a function declaration.  What a language.
     DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((double)V));
     ConstantFP *&Slot = (*FPConstants)[Key];
     if (Slot) return Slot;
-    return Slot = new ConstantFP(Ty, V);
+    return Slot = new ConstantFP(Ty, APFloat(V));
   } else if (Ty == Type::X86_FP80Ty ||
              Ty == Type::PPC_FP128Ty || Ty == Type::FP128Ty) {
     assert(0 && "Long double constants not handled yet.");
@@ -305,6 +314,18 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   }
 }
 
+ConstantFP *ConstantFP::get(const Type *Ty, const APFloat& V) {
+  // temporary
+  if (Ty==Type::FloatTy)
+    assert(&V.getSemantics()==&APFloat::IEEEsingle);
+  else
+    assert(&V.getSemantics()==&APFloat::IEEEdouble);
+  
+  DenseMapAPFloatKeyInfo::KeyTy Key(V);
+  ConstantFP *&Slot = (*FPConstants)[Key];
+  if (Slot) return Slot;
+  return Slot = new ConstantFP(Ty, V);
+}
 
 //===----------------------------------------------------------------------===//
 //                            ConstantXXX Classes
@@ -699,14 +720,24 @@ bool ConstantInt::isValueValidForType(const Type *Ty, int64_t Val) {
   return (Val >= Min && Val <= Max);
 }
 
-bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
+bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
+  // convert modifies in place, so make a copy.
+  APFloat Val2 = APFloat(Val);
   switch (Ty->getTypeID()) {
   default:
     return false;         // These can't be represented as floating point!
 
-    // TODO: Figure out how to test if we can use a shorter type instead!
+  // FIXME rounding mode needs to be more flexible
   case Type::FloatTyID:
+    return &Val2.getSemantics() == &APFloat::IEEEsingle ||
+           Val2.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven) == 
+              APFloat::opOK;
   case Type::DoubleTyID:
+    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+           &Val2.getSemantics() == &APFloat::IEEEdouble ||
+           Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven) == 
+             APFloat::opOK;
+  // TODO: Figure out how to test if we can use a shorter type instead!
   case Type::X86_FP80TyID:
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:

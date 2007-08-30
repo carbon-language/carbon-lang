@@ -1182,6 +1182,8 @@ public:
   }
   bool isExactlyValue(const APFloat& V) const;
 
+  bool isValueValidForType(MVT::ValueType VT, const APFloat& Val);
+
   static bool classof(const ConstantFPSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::ConstantFP || 

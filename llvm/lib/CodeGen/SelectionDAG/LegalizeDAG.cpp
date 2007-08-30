@@ -487,15 +487,15 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   MVT::ValueType VT = CFP->getValueType(0);
   bool isDouble = VT == MVT::f64;
   ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
-                                      Type::FloatTy, CFP->getValue());
+                                      Type::FloatTy, CFP->getValueAPF());
   if (!UseCP) {
-    double Val = LLVMC->getValue();
+    const APFloat& Val = LLVMC->getValueAPF();
     return isDouble
-      ? DAG.getConstant(DoubleToBits(Val), MVT::i64)
-      : DAG.getConstant(FloatToBits(Val), MVT::i32);
+      ? DAG.getConstant(DoubleToBits(Val.convertToDouble()), MVT::i64)
+      : DAG.getConstant(FloatToBits(Val.convertToFloat()), MVT::i32);
   }
 
-  if (isDouble && CFP->isExactlyValue((float)CFP->getValue()) &&
+  if (isDouble && CFP->isValueValidForType(MVT::f32, CFP->getValueAPF()) &&
       // Only do this if the target has a native EXTLOAD instruction from f32.
       TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
     LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC,Type::FloatTy));
@@ -1017,7 +1017,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     // If this is a legal constant, turn it into a TargetConstantFP node.
     if (isLegal) {
-      Result = DAG.getTargetConstantFP(CFP->getValue(), CFP->getValueType(0));
+      Result = DAG.getTargetConstantFP(CFP->getValueAPF(), 
+                                       CFP->getValueType(0));
       break;
     }
 
@@ -1942,10 +1943,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // together.
       if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
         if (CFP->getValueType(0) == MVT::f32) {
-          Tmp3 = DAG.getConstant(FloatToBits(CFP->getValue()), MVT::i32);
+          Tmp3 = DAG.getConstant(FloatToBits(CFP->getValueAPF().
+                                             convertToFloat()), MVT::i32);
         } else {
           assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
-          Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValue()), MVT::i64);
+          Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValueAPF().
+                                              convertToDouble()), MVT::i64);
         }
         Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                               SVOffset, isVolatile, Alignment);
@@ -4212,7 +4215,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     for (unsigned i = 0, e = NumElems; i != e; ++i) {
       if (ConstantFPSDNode *V = 
           dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantFP::get(OpNTy, V->getValue()));
+        CV.push_back(ConstantFP::get(OpNTy, V->getValueAPF()));
       } else if (ConstantSDNode *V = 
                  dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
         CV.push_back(ConstantInt::get(OpNTy, V->getValue()));
