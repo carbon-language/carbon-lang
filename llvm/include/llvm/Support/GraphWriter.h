@@ -52,7 +52,7 @@ namespace DOT {  // Private functions...
           break;  // don't disturb \l
       case '{': case '}':
       case '<': case '>':
-      case '"':
+      case '|': case '"':
         Str.insert(Str.begin()+i, '\\');  // Escape character...
         ++i;  // don't infinite loop
         break;
