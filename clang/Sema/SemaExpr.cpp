@@ -1162,7 +1162,7 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     if (lType->isRealType() && rType->isRealType())
       return Context.IntTy;
   } else {
-    if (lType->isRealType() && rType->isRealType()) 
+    if (lType->isFloatingType() && rType->isFloatingType()) 
       Diag(loc, diag::warn_floatingpoint_eq);
 
     if (lType->isArithmeticType() && rType->isArithmeticType())
