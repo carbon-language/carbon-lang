@@ -771,6 +771,8 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       return ExprResult(true);
 
     ParseTypeName();
+    
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
     break;
     
   case tok::kw___builtin_offsetof: {
@@ -824,8 +826,9 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
       } else if (Tok.getKind() == tok::r_paren) {
-        return Actions.ParseBuiltinOffsetOf(StartLoc, Ty, &Comps[0],
-                                            Comps.size(), ConsumeParen());
+        Res = Actions.ParseBuiltinOffsetOf(StartLoc, Ty, &Comps[0],
+                                           Comps.size(), ConsumeParen());
+        break;
       } else {
         // Error occurred.
         return ExprResult(true);
@@ -859,8 +862,9 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    return Actions.ParseChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
-                                   ConsumeParen());
+    Res = Actions.ParseChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
+                                  ConsumeParen());
+    break;
   }
   case tok::kw___builtin_types_compatible_p:
     TypeTy *Ty1 = ParseTypeName();
@@ -874,10 +878,9 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    return Actions.ParseTypesCompatibleExpr(StartLoc, Ty1, Ty2, ConsumeParen());
+    Res = Actions.ParseTypesCompatibleExpr(StartLoc, Ty1, Ty2, ConsumeParen());
+    break;
   }      
-  
-  MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
   // These can be followed by postfix-expr pieces because they are
   // primary-expressions.
