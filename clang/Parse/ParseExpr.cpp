@@ -776,6 +776,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     break;
     
   case tok::kw___builtin_offsetof: {
+    SourceLocation TypeLoc = Tok.getLocation();
     TypeTy *Ty = ParseTypeName();
 
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
@@ -826,7 +827,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
       } else if (Tok.getKind() == tok::r_paren) {
-        Res = Actions.ParseBuiltinOffsetOf(StartLoc, Ty, &Comps[0],
+        Res = Actions.ParseBuiltinOffsetOf(StartLoc, TypeLoc, Ty, &Comps[0],
                                            Comps.size(), ConsumeParen());
         break;
       } else {

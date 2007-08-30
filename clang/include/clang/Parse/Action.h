@@ -387,7 +387,7 @@ public:
   };
   
   virtual ExprResult ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
-                                          TypeTy *Arg1,
+                                          SourceLocation TypeLoc, TypeTy *Arg1,
                                           OffsetOfComponent *CompPtr,
                                           unsigned NumComponents,
                                           SourceLocation RParenLoc) {
