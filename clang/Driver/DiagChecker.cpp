@@ -91,6 +91,13 @@ static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
   // Enter the cave.
   PP.EnterSourceFile(MainFileID, 0, true);
 
+  // Turn off all warnings from relexing or preprocessing.
+  PP.getDiagnostics().setWarnOnExtensions(false);
+  PP.getDiagnostics().setErrorOnExtensions(false);
+  for (unsigned i = 0; i != diag::NUM_DIAGNOSTICS; ++i)
+    if (PP.getDiagnostics().isNoteWarningOrExtension((diag::kind)i))
+      PP.getDiagnostics().setDiagnosticMapping((diag::kind)i, diag::MAP_IGNORE);
+  
   Token Tok;
   do {
     PP.Lex(Tok);
