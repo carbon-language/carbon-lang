@@ -773,40 +773,66 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     ParseTypeName();
     break;
     
-  case tok::kw___builtin_offsetof:
-    ParseTypeName();
+  case tok::kw___builtin_offsetof: {
+    TypeTy *Ty = ParseTypeName();
 
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
     
     // We must have at least one identifier here.
-    if (ExpectAndConsume(tok::identifier, diag::err_expected_ident, "",
-                         tok::r_paren))
-      return ExprResult(true);
+    if (Tok.getKind() != tok::identifier) {
+      Diag(Tok, diag::err_expected_ident);
+      SkipUntil(tok::r_paren);
+      return true;
+    }
+    
+    // Keep track of the various subcomponents we see.
+    llvm::SmallVector<Action::OffsetOfComponent, 4> Comps;
+    
+    Comps.push_back(Action::OffsetOfComponent());
+    Comps.back().isBrackets = false;
+    Comps.back().U.IdentInfo = Tok.getIdentifierInfo();
+    Comps.back().LocStart = Comps.back().LocEnd = ConsumeToken();
 
     while (1) {
       if (Tok.getKind() == tok::period) {
         // offsetof-member-designator: offsetof-member-designator '.' identifier
-        ConsumeToken();
+        Comps.push_back(Action::OffsetOfComponent());
+        Comps.back().isBrackets = false;
+        Comps.back().LocStart = ConsumeToken();
         
-        if (ExpectAndConsume(tok::identifier, diag::err_expected_ident, "",
-                             tok::r_paren))
-          return ExprResult(true);
+        if (Tok.getKind() != tok::identifier) {
+          Diag(Tok, diag::err_expected_ident);
+          SkipUntil(tok::r_paren);
+          return true;
+        }
+        Comps.back().U.IdentInfo = Tok.getIdentifierInfo();
+        Comps.back().LocEnd = ConsumeToken();
+        
       } else if (Tok.getKind() == tok::l_square) {
         // offsetof-member-designator: offsetof-member-design '[' expression ']'
-        SourceLocation LSquareLoc = ConsumeBracket();
+        Comps.push_back(Action::OffsetOfComponent());
+        Comps.back().isBrackets = true;
+        Comps.back().LocStart = ConsumeBracket();
         Res = ParseExpression();
         if (Res.isInvalid) {
           SkipUntil(tok::r_paren);
           return Res;
         }
+        Comps.back().U.E = Res.Val;
 
-        MatchRHSPunctuation(tok::r_square, LSquareLoc);
+        Comps.back().LocEnd =
+          MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
+      } else if (Tok.getKind() == tok::r_paren) {
+        return Actions.ParseBuiltinOffsetOf(StartLoc, Ty, &Comps[0],
+                                            Comps.size(), ConsumeParen());
       } else {
-        break;
+        // Error occurred.
+        return ExprResult(true);
       }
     }
     break;
+  }
   case tok::kw___builtin_choose_expr: {
     ExprResult Cond = ParseAssignmentExpression();
     if (Cond.isInvalid) {

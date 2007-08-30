@@ -375,6 +375,25 @@ public:
                                    SourceLocation RPLoc) { // "({..})"
     return 0;
   }
+  
+  // __builtin_offsetof(type, identifier(.identifier|[expr])*)
+  struct OffsetOfComponent {
+    SourceLocation LocStart, LocEnd;
+    bool isBrackets;  // true if [expr], false if .ident
+    union {
+      IdentifierInfo *IdentInfo;
+      ExprTy *E;
+    } U;
+  };
+  
+  virtual ExprResult ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
+                                          TypeTy *Arg1,
+                                          OffsetOfComponent *CompPtr,
+                                          unsigned NumComponents,
+                                          SourceLocation RParenLoc) {
+    return 0;
+  }
+  
   // __builtin_types_compatible_p(type1, type2)
   virtual ExprResult ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                               TypeTy *arg1, TypeTy *arg2,
