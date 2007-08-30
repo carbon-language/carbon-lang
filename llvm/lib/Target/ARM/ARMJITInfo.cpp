@@ -21,12 +21,7 @@
 using namespace llvm;
 
 void ARMJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  unsigned char *OldByte = (unsigned char *)Old;
-  *OldByte++ = 0xEA;                // Emit B opcode.
-  unsigned *OldWord = (unsigned *)OldByte;
-  unsigned NewAddr = (intptr_t)New;
-  unsigned OldAddr = (intptr_t)OldWord;
-  *OldWord = NewAddr - OldAddr - 4; // Emit PC-relative addr of New code.
+  abort();
 }
 
 /// JITCompilerFunction - This contains the address of the JIT function used to
@@ -80,18 +75,16 @@ extern "C" void ARMCompilationCallbackC(intptr_t *StackPtr, intptr_t RetAddr) {
        << ": Resolving call to function: "
        << TheVM->getFunctionReferencedName((void*)RetAddr) << "\n";
 #endif
+  intptr_t Addr = RetAddr - 4;
 
-  // Sanity check to make sure this really is a branch and link instruction.
-  assert(((unsigned char*)RetAddr-1)[3] == 0xEB && "Not a branch and link instr!");
-
-  intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)RetAddr);
+  intptr_t NewVal = (intptr_t)JITCompilerFunction((void*)Addr);
 
   // Rewrite the call target... so that we don't end up here every time we
   // execute the call.
-  *(intptr_t *)RetAddr = (intptr_t)(NewVal-RetAddr-4);
+  *(intptr_t *)Addr = NewVal;
 
   // Change the return address to reexecute the branch and link instruction...
-  *RetAddrLoc -= 1;
+  *RetAddrLoc -= 12;
 }
 
 TargetJITInfo::LazyResolverFn
@@ -101,23 +94,25 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
 }
 
 void *ARMJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
-  unsigned addr = (intptr_t)Fn-MCE.getCurrentPCValue()-4;
+  unsigned addr = (intptr_t)Fn;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
-    MCE.startFunctionStub(4, 2);
-    MCE.emitByte(0xEA);  // branch to the corresponding function addr 
-    MCE.emitByte((unsigned char)(addr >>  0));
-    MCE.emitByte((unsigned char)(addr >>  8));
-    MCE.emitByte((unsigned char)(addr >>  16));
-    return MCE.finishFunctionStub(0);
+    // branch to the corresponding function addr
+    // the stub is 8-byte size and 4-aligned
+    MCE.startFunctionStub(8, 4);
+    MCE.emitWordLE(0xE51FF004); // LDR PC, [PC,#-4]
+    MCE.emitWordLE(addr);       // addr of function
   } else {
-    MCE.startFunctionStub(5, 2);
-    MCE.emitByte(0xEB);  // branch and link to the corresponding function addr
+    // branch and link to the corresponding function addr
+    // the stub is 20-byte size and 4-aligned
+    MCE.startFunctionStub(20, 4);
+    MCE.emitWordLE(0xE92D4800); // STMFD SP!, [R11, LR]
+    MCE.emitWordLE(0xE28FE004); // ADD LR, PC, #4
+    MCE.emitWordLE(0xE51FF004); // LDR PC, [PC,#-4]
+    MCE.emitWordLE(addr);       // addr of function
+    MCE.emitWordLE(0xE8BD8800); // LDMFD SP!, [R11, PC]
   }
-  MCE.emitByte((unsigned char)(addr >>  0));
-  MCE.emitByte((unsigned char)(addr >>  8));
-  MCE.emitByte((unsigned char)(addr >>  16));
 
   return MCE.finishFunctionStub(0);
 }
@@ -132,15 +127,33 @@ void ARMJITInfo::relocate(void *Function, MachineRelocation *MR,
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
     switch ((ARM::RelocationType)MR->getRelocationType()) {
     case ARM::reloc_arm_relative: {
-      // PC relative relocation
-      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      // It is necessary to calculate the correct PC relative value. We
+      // subtract the base addr from the target addr to form a byte offset.
+      ResultPtr = ResultPtr-(intptr_t)RelocPos-8;
+      // If the result is positive, set bit U(23) to 1.
+      if (ResultPtr >= 0)
+        *((unsigned*)RelocPos) |= 1 << 23;
+      else {
+      // otherwise, obtain the absolute value and set
+      // bit U(23) to 0.
+        ResultPtr *= -1;
+        *((unsigned*)RelocPos) &= 0xFF7FFFFF;
+      }
+      // set the immed value calculated
+      *((unsigned*)RelocPos) |= (unsigned)ResultPtr;
+      // set register Rn to PC
+      *((unsigned*)RelocPos) |= 0xF << 16;
       break;
     }
-    case ARM::reloc_arm_absolute:
-      break;
     case ARM::reloc_arm_branch: {
-      // relocation to b and bl instructions
-      ResultPtr = (ResultPtr-(intptr_t)RelocPos) >> 2;
+      // It is necessary to calculate the correct value of signed_immed_24
+      // field. We subtract the base addr from the target addr to form a
+      // byte offset, which must be inside the range -33554432 and +33554428.
+      // Then, we set the signed_immed_24 field of the instruction to bits
+      // [25:2] of the byte offset. More details ARM-ARM p. A4-11.
+      ResultPtr = ResultPtr-(intptr_t)RelocPos-8;
+      ResultPtr = (ResultPtr & 0x03FFFFFC) >> 2;
+      assert(ResultPtr >= -33554432 && ResultPtr <= 33554428);
       *((unsigned*)RelocPos) |= ResultPtr;
       break;
     }
