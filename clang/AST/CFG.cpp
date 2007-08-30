@@ -213,7 +213,7 @@ void CFGBuilder::FinishBlock(CFGBlock* B) {
 ///  of the created blocks, or the original value of "Block" when this method
 ///  was called if no additional blocks are created.
 CFGBlock* CFGBuilder::addStmt(Stmt* S) {
-  assert (Block);
+  if (!Block) Block = createBlock();
   return WalkAST(S,true);
 }
 
@@ -555,8 +555,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     // All breaks should go to the code following the loop.
     BreakTargetBlock = LoopSuccessor;
     
-    // Create a new block to contain the (bottom) of the loop body.      
-    Block = createBlock();
+    // Create a new block to contain the (bottom) of the loop body.
+    Block = NULL;
     
     // If we have increment code, insert it at the end of the body block.
     if (Stmt* I = F->getInc()) Block = addStmt(I);
@@ -564,8 +564,11 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     // Now populate the body block, and in the process create new blocks
     // as we walk the body of the loop.
     CFGBlock* BodyBlock = Visit(F->getBody());      
-    assert (BodyBlock);      
-    if (Block) FinishBlock(BodyBlock);
+
+    if (!BodyBlock)
+      BodyBlock = ExitConditionBlock; // can happen for "for (...;...; ) ;"
+    else if (Block)
+      FinishBlock(BodyBlock);
     
     // This new body block is a successor to our "exit" condition block.
     ExitConditionBlock->addSuccessor(BodyBlock);
@@ -644,8 +647,11 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     
     // Create the body.  The returned block is the entry to the loop body.
     CFGBlock* BodyBlock = Visit(W->getBody());
-    assert (BodyBlock);
-    if (Block) FinishBlock(BodyBlock);
+    
+    if (!BodyBlock)
+      BodyBlock = ExitConditionBlock; // can happen for "while(...) ;"
+    else if (Block)
+      FinishBlock(BodyBlock);
     
     // Add the loop body entry as a successor to the condition.
     ExitConditionBlock->addSuccessor(BodyBlock);
@@ -719,9 +725,12 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     
     // Create the body.  The returned block is the entry to the loop body.
     BodyBlock = Visit(D->getBody());
-    assert (BodyBlock);
-    if (Block) FinishBlock(BodyBlock);
     
+    if (!BodyBlock)
+      BodyBlock = ExitConditionBlock; // can happen for "do ; while(...)"
+    else if (Block)
+      FinishBlock(BodyBlock);
+        
     // Add the loop body entry as a successor to the condition.
     ExitConditionBlock->addSuccessor(BodyBlock);
   }
