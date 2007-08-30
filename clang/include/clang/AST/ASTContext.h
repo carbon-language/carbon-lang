@@ -80,12 +80,15 @@ public:
   /// getArrayType - If NumElts is a constant expression, we return a unique
   /// reference to an AST node of type ConstantArrayType. If NumElts is not
   /// a constant expression, we return an instance of VaribleLengthArrayType.
-  QualType getArrayType(QualType EltTy, ArrayType::ArraySizeModifier ASM,
-                        unsigned EltTypeQuals, Expr *NumElts);
+  QualType getVariableArrayType(QualType EltTy, Expr *NumElts,
+                                ArrayType::ArraySizeModifier ASM,
+                                unsigned EltTypeQuals);
 
   /// getConstantArrayType - Return the unique reference to the type for an 
   /// array of the specified element type.
-  QualType getConstantArrayType(QualType EltTy, const llvm::APInt &Sz);
+  QualType getConstantArrayType(QualType EltTy, const llvm::APInt &ArySize,
+                                ArrayType::ArraySizeModifier ASM,
+                                unsigned EltTypeQuals);
                         
   /// getVectorType - Return the unique reference to a vector type of
   /// the specified element type and size. VectorType must be a built-in type.

@@ -202,8 +202,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           D.setInvalidType(true);
         }
       }
-      T = Context.getArrayType(T, ASM, ATI.TypeQuals, ArraySize);
-      
+      llvm::APSInt ConstVal(32);
+      // If no expression was provided, we consider it a VLA.
+      if (!ArraySize || !ArraySize->isIntegerConstantExpr(ConstVal, Context))
+        T = Context.getVariableArrayType(T, ArraySize, ASM, ATI.TypeQuals);
+      else
+        T = Context.getConstantArrayType(T, ConstVal, ASM, ATI.TypeQuals);
+        
       // If this is not C99, extwarn about VLA's and C99 array size modifiers.
       if (!getLangOptions().C99 && 
           (ASM != ArrayType::Normal ||

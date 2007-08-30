@@ -437,19 +437,30 @@ class ArrayType : public Type {
 public:
   /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
   /// an array with a static size (e.g. int X[static 4]), or with a star size
-  /// (e.g. int X[*]). FIXME: consider moving this down to VLAArayType.
+  /// (e.g. int X[*]). 'static' is only allowed on function parameters.
   enum ArraySizeModifier {
     Normal, Static, Star
   };
 private:
   /// ElementType - The element type of the array.
   QualType ElementType;
+  
+  /// NOTE: These fields are packed into the bitfields space in the Type class.
+  ArraySizeModifier SizeModifier : 2;
+  
+  /// IndexTypeQuals - Capture qualifiers in declarations like:
+  /// 'int X[static restrict 4]'. For function parameters only.
+  unsigned IndexTypeQuals : 3;
+  
 protected:
-  ArrayType(TypeClass tc, QualType et, QualType can)
-    : Type(tc, can), ElementType(et) {}
+  ArrayType(TypeClass tc, QualType et, QualType can,
+            ArraySizeModifier sm, unsigned tq)
+    : Type(tc, can), ElementType(et), SizeModifier(sm), IndexTypeQuals(tq) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   QualType getElementType() const { return ElementType; }
+  ArraySizeModifier getSizeModifier() const { return SizeModifier; }
+  unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
@@ -461,8 +472,9 @@ public:
 class ConstantArrayType : public ArrayType, public llvm::FoldingSetNode {
   llvm::APInt Size; // Allows us to unique the type.
   
-  ConstantArrayType(QualType et, QualType can, llvm::APInt sz)
-    : ArrayType(ConstantArray, et, can), Size(sz) {}
+  ConstantArrayType(QualType et, QualType can, llvm::APInt sz,
+                    ArraySizeModifier sm, unsigned tq)
+    : ArrayType(ConstantArray, et, can, sm, tq), Size(sz) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   llvm::APInt getSize() const { return Size; }
@@ -485,25 +497,15 @@ public:
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
 class VariableArrayType : public ArrayType {
-  /// NOTE: These fields are packed into the bitfields space in the Type class.
-  ArraySizeModifier SizeModifier : 2;
-  
-  /// IndexTypeQuals - Capture qualifiers in declarations like:
-  /// 'int X[static restrict 4]'.
-  unsigned IndexTypeQuals : 3;
-  
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
   /// a function block. 
   Expr *SizeExpr;
   
-  VariableArrayType(QualType et, ArraySizeModifier sm, unsigned tq, 
-                          QualType can, Expr *e)
-    : ArrayType(VariableArray, et, can), 
-      SizeModifier(sm), IndexTypeQuals(tq), SizeExpr(e) {}
+  VariableArrayType(QualType et, QualType can, Expr *e,
+                    ArraySizeModifier sm, unsigned tq)
+    : ArrayType(VariableArray, et, can, sm, tq), SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-  ArraySizeModifier getSizeModifier() const { return SizeModifier; }
-  unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   Expr *getSizeExpr() const { return SizeExpr; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;

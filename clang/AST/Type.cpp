@@ -700,14 +700,14 @@ void ConstantArrayType::getAsStringInternal(std::string &S) const {
 void VariableArrayType::getAsStringInternal(std::string &S) const {
   S += '[';
   
-  if (IndexTypeQuals) {
-    AppendTypeQualList(S, IndexTypeQuals);
+  if (getIndexTypeQualifier()) {
+    AppendTypeQualList(S, getIndexTypeQualifier());
     S += ' ';
   }
   
-  if (SizeModifier == Static)
+  if (getSizeModifier() == Static)
     S += "static";
-  else if (SizeModifier == Star)
+  else if (getSizeModifier() == Star)
     S += '*';
   
   if (getSizeExpr()) {
