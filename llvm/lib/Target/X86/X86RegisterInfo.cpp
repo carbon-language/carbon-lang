@@ -270,63 +270,81 @@ void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
-static MachineInstr *FuseTwoAddrInst(unsigned Opcode, unsigned FrameIndex,
-                                     MachineInstr *MI,
-                                     const TargetInstrInfo &TII) {
+static const MachineInstrBuilder &FuseInstrAddOperand(MachineInstrBuilder &MIB,
+                                                      MachineOperand &MO) {
+  if (MO.isReg())
+    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+  else if (MO.isImm())
+    MIB = MIB.addImm(MO.getImm());
+  else if (MO.isFrameIndex())
+    MIB = MIB.addFrameIndex(MO.getFrameIndex());
+  else if (MO.isGlobalAddress())
+    MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
+  else if (MO.isConstantPoolIndex())
+    MIB = MIB.addConstantPoolIndex(MO.getConstantPoolIndex(), MO.getOffset());
+  else if (MO.isJumpTableIndex())
+    MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+  else if (MO.isExternalSymbol())
+    MIB = MIB.addExternalSymbol(MO.getSymbolName());
+  else
+    assert(0 && "Unknown operand for FuseInst!");
+
+  return MIB;
+}
+
+static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
+                                     SmallVector<MachineOperand,4> &MOs,
+                                 MachineInstr *MI, const TargetInstrInfo &TII) {
   unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
+
   // Create the base instruction with the memory operand as the first part.
-  MachineInstrBuilder MIB = addFrameReference(BuildMI(TII.get(Opcode)),
-                                              FrameIndex);
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
+  unsigned NumAddrOps = MOs.size();
+  for (unsigned i = 0; i != NumAddrOps; ++i)
+    MIB = FuseInstrAddOperand(MIB, MOs[i]);
+  if (NumAddrOps < 4)  // FrameIndex only
+    MIB.addImm(1).addReg(0).addImm(0);
   
   // Loop over the rest of the ri operands, converting them over.
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
-    if (MO.isReg())
-      MIB = MIB.addReg(MO.getReg(), false, MO.isImplicit());
-    else if (MO.isImm())
-      MIB = MIB.addImm(MO.getImm());
-    else if (MO.isGlobalAddress())
-      MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
-    else if (MO.isJumpTableIndex())
-      MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
-    else if (MO.isExternalSymbol())
-      MIB = MIB.addExternalSymbol(MO.getSymbolName());
-    else
-      assert(0 && "Unknown operand type!");
+    MIB = FuseInstrAddOperand(MIB, MO);
   }
   return MIB;
 }
 
 static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
-                              unsigned FrameIndex, MachineInstr *MI,
-                              const TargetInstrInfo &TII) {
+                              SmallVector<MachineOperand,4> &MOs,
+                              MachineInstr *MI, const TargetInstrInfo &TII) {
   MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (i == OpNo) {
       assert(MO.isReg() && "Expected to fold into reg operand!");
-      MIB = addFrameReference(MIB, FrameIndex);
-    } else if (MO.isReg())
-      MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
-    else if (MO.isImm())
-      MIB = MIB.addImm(MO.getImm());
-    else if (MO.isGlobalAddress())
-      MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
-    else if (MO.isJumpTableIndex())
-      MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
-    else if (MO.isExternalSymbol())
-      MIB = MIB.addExternalSymbol(MO.getSymbolName());
-    else
-      assert(0 && "Unknown operand for FuseInst!");
+      unsigned NumAddrOps = MOs.size();
+      for (unsigned i = 0; i != NumAddrOps; ++i)
+        MIB = FuseInstrAddOperand(MIB, MOs[i]);
+      if (NumAddrOps < 4)  // FrameIndex only
+        MIB.addImm(1).addReg(0).addImm(0);
+    } else {
+      MIB = FuseInstrAddOperand(MIB, MO);
+    }
   }
   return MIB;
 }
 
-static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII,
-                                unsigned Opcode, unsigned FrameIndex,
+static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
+                                SmallVector<MachineOperand,4> &MOs,
                                 MachineInstr *MI) {
-  return addFrameReference(BuildMI(TII.get(Opcode)), FrameIndex).addImm(0);
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
+
+  unsigned NumAddrOps = MOs.size();
+  for (unsigned i = 0; i != NumAddrOps; ++i)
+    MIB = FuseInstrAddOperand(MIB, MOs[i]);
+  if (NumAddrOps < 4)  // FrameIndex only
+    MIB.addImm(1).addReg(0).addImm(0);
+  return MIB.addImm(0);
 }
 
 
@@ -390,13 +408,9 @@ static const TableEntry *TableLookup(const TableEntry *Table, unsigned N,
   }
 #endif
 
-
-MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 unsigned i,
-                                                 int FrameIndex) const {
-  // Check switch flag 
-  if (NoFusing) return NULL;
-
+MachineInstr*
+X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
+                                   SmallVector<MachineOperand,4> &MOs) const {
   // Table (and size) to search
   const TableEntry *OpcodeTablePtr = NULL;
   unsigned OpcodeTableSize = 0;
@@ -412,7 +426,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   if (isTwoAddr && NumOps >= 2 && i < 2 &&
       MI->getOperand(0).isReg() && 
       MI->getOperand(1).isReg() &&
-      MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
+      MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) { 
     static const TableEntry OpcodeTable[] = {
       { X86::ADC32ri,     X86::ADC32mi },
       { X86::ADC32ri8,    X86::ADC32mi8 },
@@ -580,13 +594,13 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     isTwoAddrFold = true;
   } else if (i == 0) { // If operand 0
     if (MI->getOpcode() == X86::MOV16r0)
-      NewMI = MakeM0Inst(TII, X86::MOV16mi, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV16mi, MOs, MI);
     else if (MI->getOpcode() == X86::MOV32r0)
-      NewMI = MakeM0Inst(TII, X86::MOV32mi, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV32mi, MOs, MI);
     else if (MI->getOpcode() == X86::MOV64r0)
-      NewMI = MakeM0Inst(TII, X86::MOV64mi32, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV64mi32, MOs, MI);
     else if (MI->getOpcode() == X86::MOV8r0)
-      NewMI = MakeM0Inst(TII, X86::MOV8mi, FrameIndex, MI);
+      NewMI = MakeM0Inst(TII, X86::MOV8mi, MOs, MI);
     if (NewMI) {
       NewMI->copyKillDeadInfo(MI);
       return NewMI;
@@ -658,6 +672,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::XCHG64rr,    X86::XCHG64mr },
       { X86::XCHG8rr,     X86::XCHG8mr }
     };
+
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
     OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
@@ -766,6 +781,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::XCHG64rr,        X86::XCHG64rm },
       { X86::XCHG8rr,         X86::XCHG8rm }
     };
+
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
     OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
@@ -960,6 +976,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       { X86::XORPDrr,         X86::XORPDrm },
       { X86::XORPSrr,         X86::XORPSrm }
     };
+
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
     OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
@@ -973,9 +990,9 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     if (const TableEntry *Entry = TableLookup(OpcodeTablePtr, OpcodeTableSize,
                                               fromOpcode)) {
       if (isTwoAddrFold)
-        NewMI = FuseTwoAddrInst(Entry->to, FrameIndex, MI, TII);
+        NewMI = FuseTwoAddrInst(Entry->to, MOs, MI, TII);
       else
-        NewMI = FuseInst(Entry->to, i, FrameIndex, MI, TII);
+        NewMI = FuseInst(Entry->to, i, MOs, MI, TII);
       NewMI->copyKillDeadInfo(MI);
       return NewMI;
     }
@@ -988,6 +1005,26 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
   return NULL;
 }
 
+
+MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNum,
+                                                 int FrameIndex) const {
+  // Check switch flag 
+  if (NoFusing) return NULL;
+  SmallVector<MachineOperand,4> MOs;
+  MOs.push_back(MachineOperand::CreateFrameIndex(FrameIndex));
+  return foldMemoryOperand(MI, OpNum, MOs);
+}
+
+MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNum,
+                                                 MachineInstr *LoadMI) const {
+  // Check switch flag 
+  if (NoFusing) return NULL;
+  SmallVector<MachineOperand,4> MOs;
+  unsigned NumOps = TII.getNumOperands(LoadMI->getOpcode());
+  for (unsigned i = NumOps - 4; i != NumOps; ++i)
+    MOs.push_back(LoadMI->getOperand(i));
+  return foldMemoryOperand(MI, OpNum, MOs);
+}
 
 const unsigned *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {

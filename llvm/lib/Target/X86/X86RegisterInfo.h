@@ -14,6 +14,7 @@
 #ifndef X86REGISTERINFO_H
 #define X86REGISTERINFO_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "X86GenRegisterInfo.h.inc"
 
@@ -92,6 +93,13 @@ public:
                                   unsigned OpNum,
                                   int FrameIndex) const;
 
+  /// foldMemoryOperand - Same as the previous version except it allows folding
+  /// of any load and store from / to any address, not just from a specific
+  /// stack slot.
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  unsigned OpNum,
+                                  MachineInstr* LoadMI) const;
+
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
@@ -132,6 +140,11 @@ public:
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
+
+private:
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  unsigned OpNum,
+                                  SmallVector<MachineOperand,4> &MOs) const;
 };
 
 // getX86SubSuperRegister - X86 utility function. It returns the sub or super
