@@ -822,9 +822,11 @@ CFGBlock* CFGBuilder::VisitSwitchCase(SwitchCase* S) {
   // A SwitchCase is either a "default" or "case" statement.  We handle
   // both in the same way.  They are essentially labels, so they are the
   // first statement in a block.      
-  CFGBlock* CaseBlock = Visit(S->getSubStmt());
-  assert (CaseBlock);
-  
+
+  if (S->getSubStmt()) Visit(S->getSubStmt());
+  CFGBlock* CaseBlock = Block;
+  if (!CaseBlock) CaseBlock = createBlock();  
+    
   // Cases/Default statements partition block, so this is the top of
   // the basic block we were processing (the case/default is the label).
   CaseBlock->setLabel(S);
