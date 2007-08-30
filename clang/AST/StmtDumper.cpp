@@ -16,6 +16,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include <cstdio>
 using namespace clang;
@@ -26,7 +27,7 @@ using namespace clang;
 
 namespace  {
   class VISIBILITY_HIDDEN StmtDumper : public StmtVisitor<StmtDumper> {
-    const SourceManager *SM;
+    SourceManager *SM;
     FILE *F;
     unsigned IndentLevel;
     
@@ -34,9 +35,17 @@ namespace  {
     /// the first few levels of an AST.  This keeps track of how many ast levels
     /// are left.
     unsigned MaxDepth;
+    
+    /// LastLocFilename/LastLocLine - Keep track of the last location we print
+    /// out so that we can print out deltas from then on out.
+    const char *LastLocFilename;
+    unsigned LastLocLine;
   public:
-    StmtDumper(const SourceManager *sm, FILE *f, unsigned maxDepth)
-      : SM(sm), F(f), IndentLevel(0-1), MaxDepth(maxDepth) {}
+    StmtDumper(SourceManager *sm, FILE *f, unsigned maxDepth)
+      : SM(sm), F(f), IndentLevel(0-1), MaxDepth(maxDepth) {
+      LastLocFilename = "";
+      LastLocLine = ~0U;
+    }
     
     void DumpSubTree(Stmt *S) {
       // Prune the recursion if not using dump all.
@@ -83,11 +92,16 @@ namespace  {
       fprintf(F, "(%s %p", Node->getStmtClassName(), (void*)Node);
     }
     
-    void DumpExpr(Expr *Node) const {
+    void DumpExpr(Expr *Node) {
       DumpStmt(Node);
       fprintf(F, " ");
       DumpType(Node->getType());
+      DumpSourceRange(Node);
     }
+    
+    void DumpSourceRange(Expr *Node);
+    void DumpLocation(SourceLocation Loc);
+
     
     // Stmts.
     void VisitStmt(Stmt *Node);
@@ -120,6 +134,50 @@ namespace  {
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
   };
 }
+
+//===----------------------------------------------------------------------===//
+//  Utilities
+//===----------------------------------------------------------------------===//
+
+void StmtDumper::DumpLocation(SourceLocation Loc) {
+  SourceLocation PhysLoc = SM->getPhysicalLoc(Loc);
+
+  // The general format we print out is filename:line:col, but we drop pieces
+  // that haven't changed since the last loc printed.
+  const char *Filename = SM->getSourceName(PhysLoc);
+  unsigned LineNo = SM->getLineNumber(PhysLoc);
+  if (strcmp(Filename, LastLocFilename) != 0) {
+    fprintf(stderr, "%s:%u:%u", Filename, LineNo, SM->getColumnNumber(PhysLoc));
+    LastLocFilename = Filename;
+    LastLocLine = LineNo;
+  } else if (LineNo != LastLocLine) {
+    fprintf(stderr, "line:%u:%u", LineNo, SM->getColumnNumber(PhysLoc));
+    LastLocLine = LineNo;
+  } else {
+    fprintf(stderr, "col:%u", SM->getColumnNumber(PhysLoc));
+  }
+}
+
+void StmtDumper::DumpSourceRange(Expr *Node) {
+  // Can't translate locations if a SourceManager isn't available.
+  if (SM == 0) return;
+  
+  // TODO: If the parent expression is available, we can print a delta vs its
+  // location.
+  SourceRange R = Node->getSourceRange();
+  
+  fprintf(stderr, " <");
+  DumpLocation(R.Begin());
+  if (R.Begin() != R.End()) {
+    fprintf(stderr, ", ");
+    DumpLocation(R.End());
+  }
+  fprintf(stderr, ">");
+    
+  // <t2.c:123:421[blah], t2.c:412:321>
+
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Stmt printing methods.
@@ -342,7 +400,7 @@ void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 /// dump - This does a local dump of the specified AST fragment.  It dumps the
 /// specified node and a few nodes underneath it, but not the whole subtree.
 /// This is useful in a debugger.
-void Stmt::dump(const SourceManager &SM) const {
+void Stmt::dump(SourceManager &SM) const {
   StmtDumper P(&SM, stderr, 4);
   P.DumpSubTree(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");
@@ -358,7 +416,7 @@ void Stmt::dump() const {
 }
 
 /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
-void Stmt::dumpAll(const SourceManager &SM) const {
+void Stmt::dumpAll(SourceManager &SM) const {
   StmtDumper P(&SM, stderr, ~0U);
   P.DumpSubTree(const_cast<Stmt*>(this));
   fprintf(stderr, "\n");

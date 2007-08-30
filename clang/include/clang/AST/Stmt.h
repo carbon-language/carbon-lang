@@ -58,11 +58,11 @@ public:
   /// specified node and a few nodes underneath it, but not the whole subtree.
   /// This is useful in a debugger.
   void dump() const;
-  void dump(const SourceManager &SM) const;
+  void dump(SourceManager &SM) const;
 
   /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
   void dumpAll() const;
-  void dumpAll(const SourceManager &SM) const;
+  void dumpAll(SourceManager &SM) const;
 
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
