@@ -234,7 +234,7 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 /// getSourceName - This method returns the name of the file or buffer that
 /// the SourceLocation specifies.  This can be modified with #line directives,
 /// etc.
-const char *SourceManager::getSourceName(SourceLocation Loc) {
+const char *SourceManager::getSourceName(SourceLocation Loc) const {
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return "";
   return getFileInfo(FileID)->Buffer->getBufferIdentifier();
