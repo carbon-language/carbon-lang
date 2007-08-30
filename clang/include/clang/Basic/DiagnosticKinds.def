@@ -534,7 +534,7 @@ DIAG(err_typecheck_illegal_vla, ERROR,
      "variable length array declared outside of any function")
 DIAG(err_typecheck_negative_array_size, ERROR,
      "array size is negative")
-DIAG(err_typecheck_zero_array_size, EXTENSION,
+DIAG(ext_typecheck_zero_array_size, EXTENSION,
      "zero size arrays are an extension")
 DIAG(err_array_size_non_int, ERROR,
      "size of array has non-integer type '%0'")

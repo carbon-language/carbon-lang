@@ -202,13 +202,33 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           D.setInvalidType(true);
         }
       }
+      // C99 6.7.5.2p1: The size expression shall have integer type.
+      if (ArraySize && !ArraySize->getType()->isIntegerType()) {
+        Diag(ArraySize->getLocStart(), diag::err_array_size_non_int, 
+             ArraySize->getType().getAsString(), ArraySize->getSourceRange());
+        D.setInvalidType(true);
+      }
       llvm::APSInt ConstVal(32);
       // If no expression was provided, we consider it a VLA.
       if (!ArraySize || !ArraySize->isIntegerConstantExpr(ConstVal, Context))
         T = Context.getVariableArrayType(T, ArraySize, ASM, ATI.TypeQuals);
-      else
+      else {
+        // C99 6.7.5.2p1: If the expression is a constant expression, it shall
+        // have a value greater than zero.
+        if (ConstVal.isSigned()) {
+          if (ConstVal.isNegative()) {
+            Diag(ArraySize->getLocStart(), 
+                 diag::err_typecheck_negative_array_size,
+                 ArraySize->getSourceRange());
+            D.setInvalidType(true);
+          } else if (ConstVal == 0) {
+            // GCC accepts zero sized static arrays.
+            Diag(ArraySize->getLocStart(), diag::ext_typecheck_zero_array_size,
+                 ArraySize->getSourceRange());
+          }
+        } 
         T = Context.getConstantArrayType(T, ConstVal, ASM, ATI.TypeQuals);
-        
+      }
       // If this is not C99, extwarn about VLA's and C99 array size modifiers.
       if (!getLangOptions().C99 && 
           (ASM != ArrayType::Normal ||

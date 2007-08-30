@@ -31,3 +31,11 @@ typedef int (*pfunc)(void);
 pfunc xx(int f[](void)) { // expected-error {{'f' declared as array of functions}}
   return f;
 }
+
+void check_size() {
+  float f;
+  int size_not_int[f]; // expected-error {{size of array has non-integer type 'float'}}
+  int negative_size[1-2]; // expected-error{{array size is negative}}
+  int zero_size[0]; // expected-warning{{zero size arrays are an extension}}
+}
+

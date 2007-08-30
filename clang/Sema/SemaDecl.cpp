@@ -25,58 +25,21 @@
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
 
-// C99: 6.7.5p3: Used by ParseDeclarator/ParseField to make sure we have
-// a constant expression of type int with a value greater than zero.
+// C99 6.7.2.1p8: Used by ParseDeclarator/ParseField to make sure we have
+// a constant expression. We return true if we don't have a ConstantArrayType. 
 bool Sema::VerifyConstantArrayType(const ArrayType *Array,
                                    SourceLocation DeclLoc) { 
   if (const VariableArrayType *VLA = dyn_cast<VariableArrayType>(Array)) {
     Expr *Size = VLA->getSizeExpr();
-    if (Size == 0)
-      return false; // incomplete type.
-  
-    if (!Size->getType()->isIntegerType()) {
-      Diag(Size->getLocStart(), diag::err_array_size_non_int, 
-           Size->getType().getAsString(), Size->getSourceRange());
-      return false;
-    }
-    // FIXME: I don't think this is needed. It remains to keep test
-    // builtin_classify_type() happy...will revisit soon (today is 8/29/07:-)
-    SourceLocation Loc;
-    llvm::APSInt SizeVal(32);
-    if (!Size->isIntegerConstantExpr(SizeVal, Context, &Loc)) {
+    if (Size) {  
       // FIXME: This emits the diagnostic to enforce 6.7.2.1p8, but the message
       // is wrong.  It is also wrong for static variables.
       // FIXME: This is also wrong for:
       // int sub1(int i, char *pi) { typedef int foo[i];
       // struct bar {foo f1; int f2:3; int f3:4} *p; }
       Diag(DeclLoc, diag::err_typecheck_illegal_vla, Size->getSourceRange());
-      return false;
     }
     return true;
-  }
-  const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(Array);  
-
-  assert(CAT && "Sema::VerifyConstantArrayType(): Illegal array type");
-  
-  llvm::APSInt SizeVal(32);
-  SizeVal = CAT->getSize();
-
-  // We have a constant expression with an integer type, now make sure 
-  // value greater than zero (C99 6.7.5.2p1).
-  
-  // FIXME: This check isn't specific to static VLAs, this should be moved
-  // elsewhere or replicated.  'int X[-1];' inside a function should emit an
-  // error.
-  if (SizeVal.isSigned()) {
-    llvm::APSInt Zero(SizeVal.getBitWidth());
-    Zero.setIsUnsigned(false);
-    if (SizeVal < Zero) {
-      Diag(DeclLoc, diag::err_typecheck_negative_array_size);
-      return true;
-    } else if (SizeVal == 0) {
-      // GCC accepts zero sized static arrays.
-      Diag(DeclLoc, diag::err_typecheck_zero_array_size);
-    }
   }
   return false;
 }
