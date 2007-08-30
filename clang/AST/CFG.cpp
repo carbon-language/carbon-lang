@@ -938,11 +938,11 @@ public:
   
   void VisitForStmt(ForStmt* F) {
     OS << "for (" ;
-    if (Stmt* I = F->getInit()) I->printPretty(OS);
-    OS << " ; ";
+    if (F->getInit()) OS << "...";
+    OS << "; ";
     if (Stmt* C = F->getCond()) C->printPretty(OS);
-    OS << " ; ";
-    if (Stmt* I = F->getInc()) I->printPretty(OS);
+    OS << "; ";
+    if (F->getInc()) OS << "...";
     OS << ")\n";                                                       
   }
   
