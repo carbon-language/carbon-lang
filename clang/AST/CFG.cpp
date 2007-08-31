@@ -243,6 +243,28 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       Block->setTerminator(C);
       return addStmt(C->getCond());
     }
+    
+    case Stmt::ChooseExprClass: {
+      ChooseExpr* C = cast<ChooseExpr>(S);      
+      
+      CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
+      ConfluenceBlock->appendStmt(C);
+      FinishBlock(ConfluenceBlock);
+      
+      Succ = ConfluenceBlock;
+      Block = NULL;
+      CFGBlock* LHSBlock = Visit(C->getLHS());
+      
+      Succ = ConfluenceBlock;
+      Block = NULL;
+      CFGBlock* RHSBlock = Visit(C->getRHS());
+      
+      Block = createBlock(false);
+      Block->addSuccessor(LHSBlock);
+      Block->addSuccessor(RHSBlock);
+      Block->setTerminator(C);
+      return addStmt(C->getCond());
+    }
 
     case Stmt::DeclStmtClass:      
       if (VarDecl* V = dyn_cast<VarDecl>(cast<DeclStmt>(S)->getDecl())) {      
