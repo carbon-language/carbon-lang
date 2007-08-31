@@ -657,6 +657,8 @@ ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   Expr *castExpr = static_cast<Expr*>(Op);
   QualType castType = QualType::getFromOpaquePtr(Ty);
 
+  UsualUnaryConversions(castExpr);
+
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
   if (!castType->isScalarType() && !castType->isVoidType()) { 
