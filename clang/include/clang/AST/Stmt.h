@@ -153,7 +153,7 @@ public:
 
   SourceLocation getSemiLoc() const { return SemiLoc; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const { return SourceRange(SemiLoc); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == NullStmtClass; 
@@ -520,13 +520,16 @@ public:
 ///
 class GotoStmt : public Stmt {
   LabelStmt *Label;
+  SourceLocation GotoLoc;
 public:
-  GotoStmt(LabelStmt *label) : Stmt(GotoStmtClass), Label(label) {}
+  GotoStmt(LabelStmt *label, SourceLocation GL) : Stmt(GotoStmtClass), 
+    Label(label), GotoLoc(GL) {}
   
   LabelStmt *getLabel() const { return Label; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
-  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(GotoLoc, Label->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == GotoStmtClass; 
   }
@@ -563,11 +566,13 @@ public:
 /// ContinueStmt - This represents a continue.
 ///
 class ContinueStmt : public Stmt {
+  SourceLocation ContinueLoc;
 public:
-  ContinueStmt() : Stmt(ContinueStmtClass) {}
+  ContinueStmt(SourceLocation CL) : Stmt(ContinueStmtClass), ContinueLoc(CL) {}
   
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
-
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(ContinueLoc); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ContinueStmtClass; 
   }
@@ -581,10 +586,11 @@ public:
 /// BreakStmt - This represents a break.
 ///
 class BreakStmt : public Stmt {
+  SourceLocation BreakLoc;
 public:
-  BreakStmt() : Stmt(BreakStmtClass) {}
+  BreakStmt(SourceLocation BL) : Stmt(BreakStmtClass), BreakLoc(BL) {}
   
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const { return SourceRange(BreakLoc); }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BreakStmtClass; 
@@ -601,13 +607,15 @@ public:
 ///
 class ReturnStmt : public Stmt {
   Expr *RetExpr;
+  SourceLocation RetLoc;
 public:
-  ReturnStmt(Expr *E = 0) : Stmt(ReturnStmtClass), RetExpr(E) {}
+  ReturnStmt(SourceLocation RL, Expr *E = 0) : Stmt(ReturnStmtClass), 
+    RetExpr(E), RetLoc(RL) {}
   
   const Expr *getRetValue() const { return RetExpr; }
   Expr *getRetValue() { return RetExpr; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const;
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ReturnStmtClass; 

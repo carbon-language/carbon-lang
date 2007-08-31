@@ -81,6 +81,14 @@ const char *LabelStmt::getName() const {
   return getID()->getName();
 }
 
+// This is defined here to avoid polluting Stmt.h with importing Expr.h
+SourceRange ReturnStmt::getSourceRange() const { 
+  if (RetExpr)
+    return SourceRange(RetLoc, RetExpr->getLocEnd());
+  else
+    return SourceRange(RetLoc);
+}
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//

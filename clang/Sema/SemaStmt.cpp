@@ -506,7 +506,7 @@ Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
   if (LabelDecl == 0)
     LabelDecl = new LabelStmt(LabelLoc, LabelII, 0);
   
-  return new GotoStmt(LabelDecl);
+  return new GotoStmt(LabelDecl, GotoLoc);
 }
 
 Action::StmtResult 
@@ -526,7 +526,7 @@ Sema::ParseContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
     return true;
   }
   
-  return new ContinueStmt();
+  return new ContinueStmt(ContinueLoc);
 }
 
 Action::StmtResult 
@@ -538,7 +538,7 @@ Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
     return true;
   }
   
-  return new BreakStmt();
+  return new BreakStmt(BreakLoc);
 }
 
 
@@ -552,7 +552,7 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
       Diag(ReturnLoc, diag::ext_return_has_expr, 
            CurFunctionDecl->getIdentifier()->getName(),
            RetValExp->getSourceRange());
-    return new ReturnStmt(RetValExp);
+    return new ReturnStmt(ReturnLoc, RetValExp);
   } else {
     if (!RetValExp) {
       const char *funcName = CurFunctionDecl->getIdentifier()->getName();
@@ -560,7 +560,7 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
         Diag(ReturnLoc, diag::ext_return_missing_expr, funcName);
       else  // C90 6.6.6.4p4
         Diag(ReturnLoc, diag::warn_return_missing_expr, funcName);
-      return new ReturnStmt((Expr*)0);
+      return new ReturnStmt(ReturnLoc, (Expr*)0);
     }
   }
   // we have a non-void function with an expression, continue checking
@@ -608,6 +608,6 @@ Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   
   if (RetValExp) CheckReturnStackAddr(RetValExp, lhsType, ReturnLoc);
   
-  return new ReturnStmt((Expr*)RetValExp);
+  return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
 }
 
