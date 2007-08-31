@@ -960,7 +960,8 @@ public:
 };
 
 class CFGBlockTerminatorPrint : public StmtVisitor<CFGBlockTerminatorPrint,
-void > {
+                                                    void > 
+{
   std::ostream& OS;
   StmtPrinterHelper* Helper;
 public:
@@ -974,7 +975,7 @@ public:
   }
   
   // Default case.
-  void VisitStmt(Stmt* S) { S->printPretty(OS,Helper); }
+  void VisitStmt(Stmt* S) { S->printPretty(OS); }
   
   void VisitForStmt(ForStmt* F) {
     OS << "for (" ;
@@ -1002,6 +1003,31 @@ public:
     OS << "switch ";
     S->getCond()->printPretty(OS,Helper);
     OS << '\n';
+  }
+  
+  void VisitConditionalOperator(ConditionalOperator* C) {
+    C->getCond()->printPretty(OS,Helper);
+    OS << " ? ... : ...\n";  
+  }
+  
+  void VisitBinaryOperator(BinaryOperator* B) {
+    if (!B->isLogicalOp()) {
+      VisitExpr(B);
+      return;
+    }
+    
+    B->getLHS()->printPretty(OS,Helper);
+    
+    switch (B->getOpcode()) {
+      case BinaryOperator::LOr:
+        OS << " || ...\n";
+        return;
+      case BinaryOperator::LAnd:
+        OS << " && ...\n";
+        return;
+      default:
+        assert(false && "Invalid logical operator.");
+    }  
   }
   
   void VisitExpr(Expr* E) {
