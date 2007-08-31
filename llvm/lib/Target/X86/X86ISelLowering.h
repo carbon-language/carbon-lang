@@ -19,6 +19,7 @@
 #include "X86RegisterInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 
 namespace llvm {
   namespace X86ISD {
@@ -378,6 +379,12 @@ namespace llvm {
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
         
+
+    SDOperand LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
+                               const SDOperand &StackPtr,
+                               const CCValAssign &VA, SDOperand Chain,
+                               SDOperand Arg);
+
     // C and StdCall Calling Convention implementation.
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
                                 bool isStdCall = false);

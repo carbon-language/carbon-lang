@@ -1036,6 +1036,34 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
                      &ArgValues[0], ArgValues.size()).getValue(Op.ResNo);
 }
 
+SDOperand
+X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
+                                    const SDOperand &StackPtr,
+                                    const CCValAssign &VA,
+                                    SDOperand Chain,
+                                    SDOperand Arg) {
+  SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
+  PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+  SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
+  unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
+  if (Flags & ISD::ParamFlags::ByVal) {
+    unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
+                           ISD::ParamFlags::ByValAlignOffs);
+
+    assert (Align >= 8);
+    unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
+        ISD::ParamFlags::ByValSizeOffs;
+
+    SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
+    SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
+
+    return DAG.getNode(ISD::MEMCPY, MVT::Other, Chain, PtrOff, Arg, SizeNode,
+                       AlignNode);
+  } else {
+    return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
+  }
+}
+
 SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
                                                unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
@@ -1375,29 +1403,9 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
       assert(VA.isMemLoc());
       if (StackPtr.Val == 0)
         StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
-      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
 
-      SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
-      unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
-      if (Flags & ISD::ParamFlags::ByVal) {
-        unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
-                               ISD::ParamFlags::ByValAlignOffs);
-        unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
-            ISD::ParamFlags::ByValSizeOffs;
-
-        SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
-        SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
-
-        assert(0 && "Not Implemented");
-
-        SDOperand Copy = DAG.getNode(ISD::MEMCPY, MVT::Other, Chain, PtrOff,
-                                     Arg, SizeNode, AlignNode);
-        MemOpChains.push_back(Copy);
-      }
-      else {
-        MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
-      }
+      MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
+                                             Arg));
     }
   }
   
