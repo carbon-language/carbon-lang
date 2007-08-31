@@ -1060,9 +1060,9 @@ void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* S) {
       CompoundStmt* Sub = SE->getSubStmt();
       
       if (Sub->child_begin() != Sub->child_end()) {
-        OS << "{ ... ; ";
+        OS << "({ ... ; ";
         Helper->handledStmt(*SE->getSubStmt()->child_rbegin(),OS);
-        OS << " }\n";
+        OS << " })\n";
         return;
       }
     }
