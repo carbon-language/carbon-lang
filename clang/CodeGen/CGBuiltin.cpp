@@ -17,12 +17,16 @@
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Constants.h"
+#include "llvm/Function.h"
 using namespace clang;
 using namespace CodeGen;
 
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   switch (BuiltinID) {
   default:
+    if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
+      return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), E);
+    
     fprintf(stderr, "Unimplemented builtin!!\n");
     E->dump();
 
@@ -45,10 +49,4 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
       
   return RValue::get(0);
-}
-
-RValue CodeGenFunction::EmitBuiltinLibFuncExpr(unsigned BuiltinID, 
-                                               const CallExpr *E) {
-  //llvm::Function *Callee = CGM.getBuiltinLibFunction(BuiltinID);
-  return RValue();
 }

@@ -376,7 +376,10 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
           return EmitBuiltinExpr(builtinID, E);
         
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
-  
+  return EmitCallExpr(Callee, E);
+}
+
+RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, const CallExpr *E) {
   // The callee type will always be a pointer to function type, get the function
   // type.
   QualType CalleeTy = E->getCallee()->getType();

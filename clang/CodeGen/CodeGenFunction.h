@@ -324,8 +324,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   RValue EmitCallExpr(const CallExpr *E);
+  RValue EmitCallExpr(llvm::Value *Callee, const CallExpr *E);
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
-  RValue EmitBuiltinLibFuncExpr(unsigned BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
 

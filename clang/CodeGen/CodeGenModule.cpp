@@ -127,7 +127,11 @@ llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   // and for the existing one to be turned into a constantexpr cast of the
   // builtin.  In the case where the existing one is a static function, it
   // should just be renamed.
-  assert(getModule().getFunction(Name) == 0 && "FIXME: Name collision");
+  if (llvm::Function *Existing = getModule().getFunction(Name)) {
+    if (Existing->getFunctionType() == Ty && Existing->hasExternalLinkage())
+      return FunctionSlot = Existing;
+    assert(Existing == 0 && "FIXME: Name collision");
+  }
 
   // FIXME: param attributes for sext/zext etc.
   return FunctionSlot = new llvm::Function(Ty, llvm::Function::ExternalLinkage,
