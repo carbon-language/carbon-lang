@@ -44,6 +44,22 @@ llvm::Value *CodeGenFunction::EvaluateExprAsBool(const Expr *E) {
   return EmitComplexToScalarConversion(EmitComplexExpr(E), E->getType(),BoolTy);
 }
 
+/// EmitAnyExpr - Emit code to compute the specified expression which can have
+/// any type.  The result is returned as an RValue struct.  If this is an
+/// aggregate expression, the aggloc/agglocvolatile arguments indicate where
+/// the result should be returned.
+RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc, 
+                                    bool isAggLocVolatile) {
+  if (!hasAggregateLLVMType(E->getType()))
+    return RValue::get(EmitScalarExpr(E));
+  else if (E->getType()->isComplexType())
+    return RValue::getComplex(EmitComplexExpr(E));
+  
+  EmitAggExpr(E, AggLoc, isAggLocVolatile);
+  return RValue::getAggregate(AggLoc);
+}
+
+
 //===----------------------------------------------------------------------===//
 //                         LValue Expression Emission
 //===----------------------------------------------------------------------===//
@@ -185,7 +201,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
       // Read/modify/write the vector, inserting the new element.
       // FIXME: Volatility.
       llvm::Value *Vec = Builder.CreateLoad(Dst.getVectorAddr(), "tmp");
-      Vec = Builder.CreateInsertElement(Vec, Src.getVal(),
+      Vec = Builder.CreateInsertElement(Vec, Src.getScalarVal(),
                                         Dst.getVectorIdx(), "vecins");
       Builder.CreateStore(Vec, Dst.getVectorAddr());
       return;
@@ -201,14 +217,14 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   llvm::Value *DstAddr = Dst.getAddress();
   assert(Src.isScalar() && "Can't emit an agg store with this method");
   // FIXME: Handle volatility etc.
-  const llvm::Type *SrcTy = Src.getVal()->getType();
+  const llvm::Type *SrcTy = Src.getScalarVal()->getType();
   const llvm::Type *AddrTy = 
     cast<llvm::PointerType>(DstAddr->getType())->getElementType();
   
   if (AddrTy != SrcTy)
     DstAddr = Builder.CreateBitCast(DstAddr, llvm::PointerType::get(SrcTy),
                                     "storetmp");
-  Builder.CreateStore(Src.getVal(), DstAddr);
+  Builder.CreateStore(Src.getScalarVal(), DstAddr);
 }
 
 void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, 
@@ -219,7 +235,7 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
   // FIXME: Volatility.
   unsigned EncFields = Dst.getOCUVectorElts();
   
-  llvm::Value *SrcVal = Src.getVal();
+  llvm::Value *SrcVal = Src.getScalarVal();
   
   if (const VectorType *VTy = Ty->getAsVectorType()) {
     unsigned NumSrcElts = VTy->getNumElements();
@@ -425,6 +441,8 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, const CallExpr *E) {
   llvm::Value *V = Builder.CreateCall(Callee, &Args[0], &Args[0]+Args.size());
   if (V->getType() != llvm::Type::VoidTy)
     V->setName("call");
+  else if (E->getType()->isComplexType())
+    return RValue::getComplex(LoadComplexFromAddr(Args[0], false));
   else if (hasAggregateLLVMType(E->getType()))
     // Struct return.
     return RValue::getAggregate(Args[0]);

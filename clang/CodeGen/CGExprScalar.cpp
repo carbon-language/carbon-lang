@@ -51,7 +51,7 @@ public:
   LValue EmitLValue(const Expr *E) { return CGF.EmitLValue(E); }
 
   Value *EmitLoadOfLValue(LValue LV, QualType T) {
-    return CGF.EmitLoadOfLValue(LV, T).getVal();
+    return CGF.EmitLoadOfLValue(LV, T).getScalarVal();
   }
     
   /// EmitLoadOfLValue - Given an expression with complex type that represents a
@@ -126,7 +126,7 @@ public:
   Value *EmitCastExpr(const Expr *E, QualType T);
 
   Value *VisitCallExpr(const CallExpr *E) {
-    return CGF.EmitCallExpr(E).getVal();
+    return CGF.EmitCallExpr(E).getScalarVal();
   }
   
   Value *VisitStmtExpr(const StmtExpr *E);
@@ -440,7 +440,7 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
 }
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
-  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getVal();
+  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getScalarVal();
 }
 
 
@@ -453,7 +453,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   LValue LV = EmitLValue(E->getSubExpr());
   // FIXME: Handle volatile!
   Value *InVal = CGF.EmitLoadOfLValue(LV, // false
-                                      E->getSubExpr()->getType()).getVal();
+                                     E->getSubExpr()->getType()).getScalarVal();
   
   int AmountVal = isInc ? 1 : -1;
   

@@ -63,7 +63,8 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
 /// EmitCompoundStmt - Emit a compound statement {..} node.  If GetLast is true,
 /// this captures the expression result of the last sub-statement and returns it
 /// (for use by the statement expression extension).
-RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast) {
+RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
+                                         llvm::Value *AggLoc, bool isAggVol) {
   // FIXME: handle vla's etc.
   if (S.body_empty() || !isa<Expr>(S.body_back())) GetLast = false;
   
@@ -74,15 +75,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast) {
   
   if (!GetLast)
     return RValue::get(0);
-    
-  const Expr *Last = cast<Expr>(S.body_back());
-  if (!hasAggregateLLVMType(Last->getType()))
-    return RValue::get(EmitScalarExpr(Last));
-  assert(0 && "Unimp");
-  //else if (Last->getType()->isComplexType())
-  //  EmitComplexExpr(Last);
-  //else
-  //  EmitAggExpr(E, 0, false);
+  
+  return EmitAnyExpr(cast<Expr>(S.body_back()), AggLoc);
 }
 
 void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {

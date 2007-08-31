@@ -71,44 +71,65 @@ namespace CodeGen {
   
 
 /// RValue - This trivial value class is used to represent the result of an
-/// expression that is evaluated.  It can be one of two things: either a simple
-/// LLVM SSA value, or the address of an aggregate value in memory.  These two
-/// possibilities are discriminated by isAggregate/isScalar.
+/// expression that is evaluated.  It can be one of three things: either a
+/// simple LLVM SSA value, a pair of SSA values for complex numbers, or the
+/// address of an aggregate value in memory.
 class RValue {
-  llvm::Value *V;
+  llvm::Value *V1, *V2;
   // TODO: Encode this into the low bit of pointer for more efficient
   // return-by-value.
-  bool IsAggregate;
+  enum { Scalar, Complex, Aggregate } Flavor;
   
   // FIXME: Aggregate rvalues need to retain information about whether they are
   // volatile or not.
 public:
   
-  bool isAggregate() const { return IsAggregate; }
-  bool isScalar() const { return !IsAggregate; }
+  bool isScalar() const { return Flavor == Scalar; }
+  bool isComplex() const { return Flavor == Complex; }
+  bool isAggregate() const { return Flavor == Aggregate; }
   
-  /// getVal() - Return the Value* of this scalar value.
-  llvm::Value *getVal() const {
-    assert(!isAggregate() && "Not a scalar!");
-    return V;
+  /// getScalar() - Return the Value* of this scalar value.
+  llvm::Value *getScalarVal() const {
+    assert(isScalar() && "Not a scalar!");
+    return V1;
   }
 
+  /// getComplexVal - Return the real/imag components of this complex value.
+  ///
+  std::pair<llvm::Value *, llvm::Value *> getComplexVal() const {
+    return std::pair<llvm::Value *, llvm::Value *>(V1, V2);
+  }
+  
   /// getAggregateAddr() - Return the Value* of the address of the aggregate.
   llvm::Value *getAggregateAddr() const {
     assert(isAggregate() && "Not an aggregate!");
-    return V;
+    return V1;
   }
   
   static RValue get(llvm::Value *V) {
     RValue ER;
-    ER.V = V;
-    ER.IsAggregate = false;
+    ER.V1 = V;
+    ER.Flavor = Scalar;
+    return ER;
+  }
+  static RValue getComplex(llvm::Value *V1, llvm::Value *V2) {
+    RValue ER;
+    ER.V1 = V1;
+    ER.V2 = V2;
+    ER.Flavor = Complex;
+    return ER;
+  }
+  static RValue getComplex(const std::pair<llvm::Value *, llvm::Value *> &C) {
+    RValue ER;
+    ER.V1 = C.first;
+    ER.V2 = C.second;
+    ER.Flavor = Complex;
     return ER;
   }
   static RValue getAggregate(llvm::Value *V) {
     RValue ER;
-    ER.V = V;
-    ER.IsAggregate = true;
+    ER.V1 = V;
+    ER.Flavor = Aggregate;
     return ER;
   }
 };
@@ -249,6 +270,12 @@ public:
   /// expression and compare the result against zero, returning an Int1Ty value.
   llvm::Value *EvaluateExprAsBool(const Expr *E);
 
+  /// EmitAnyExpr - Emit code to compute the specified expression which can have
+  /// any type.  The result is returned as an RValue struct.  If this is an
+  /// aggregate expression, the aggloc/agglocvolatile arguments indicate where
+  /// the result should be returned.
+  RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0, 
+                     bool isAggLocVolatile = false);
   
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
@@ -265,7 +292,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   void EmitStmt(const Stmt *S);
-  RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false);
+  RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false,
+                          llvm::Value *AggLoc = 0, bool isAggVol = false);
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
   void EmitIfStmt(const IfStmt &S);
@@ -364,6 +392,8 @@ public:
   /// of complex type, storing into the specified Value*.
   void EmitComplexExprIntoAddr(const Expr *E, llvm::Value *DestAddr,
                                bool DestIsVolatile);
+  /// LoadComplexFromAddr - Load a complex number from the specified address.
+  ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

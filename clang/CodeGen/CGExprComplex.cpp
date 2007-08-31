@@ -239,8 +239,7 @@ VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
 
 
 ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
-  llvm::Value *AggPtr = CGF.EmitCallExpr(E).getAggregateAddr();
-  return EmitLoadOfComplex(AggPtr, false);
+  return CGF.EmitCallExpr(E).getComplexVal();
 }
 
 /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
@@ -510,4 +509,10 @@ void CodeGenFunction::EmitComplexExprIntoAddr(const Expr *E,
   ComplexExprEmitter Emitter(*this);
   ComplexPairTy Val = Emitter.Visit(const_cast<Expr*>(E));
   Emitter.EmitStoreOfComplex(Val, DestAddr, DestIsVolatile);
+}
+
+/// LoadComplexFromAddr - Load a complex number from the specified address.
+ComplexPairTy CodeGenFunction::LoadComplexFromAddr(llvm::Value *SrcAddr, 
+                                                   bool SrcIsVolatile) {
+  return ComplexExprEmitter(*this).EmitLoadOfComplex(SrcAddr, SrcIsVolatile);
 }
