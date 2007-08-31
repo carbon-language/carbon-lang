@@ -412,8 +412,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 ///
 static unsigned ComputeUltimateVN(VNInfo *VNI,
                                   SmallVector<VNInfo*, 16> &NewVNInfo,
-                                  std::map<VNInfo*, VNInfo*> &ThisFromOther,
-                                  std::map<VNInfo*, VNInfo*> &OtherFromThis,
+                                  DenseMap<VNInfo*, VNInfo*> &ThisFromOther,
+                                  DenseMap<VNInfo*, VNInfo*> &OtherFromThis,
                                   SmallVector<int, 16> &ThisValNoAssignments,
                                   SmallVector<int, 16> &OtherValNoAssignments) {
   unsigned VN = VNI->id;
@@ -425,7 +425,7 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
 
   // If this val is not a copy from the other val, then it must be a new value
   // number in the destination.
-  std::map<VNInfo*, VNInfo*>::iterator I = ThisFromOther.find(VNI);
+  DenseMap<VNInfo*, VNInfo*>::iterator I = ThisFromOther.find(VNI);
   if (I == ThisFromOther.end()) {
     NewVNInfo.push_back(VNI);
     return ThisValNoAssignments[VN] = NewVNInfo.size()-1;
@@ -590,8 +590,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
-  std::map<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
-  std::map<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
+  DenseMap<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
+  DenseMap<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
   SmallVector<VNInfo*, 16> NewVNInfo;
                           
   // If a live interval is a physical register, conservatively check if any
@@ -799,7 +799,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   }
 
   // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (std::map<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
+  for (DenseMap<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
          E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
     VNInfo *VNI = I->first;
     unsigned RHSValID = RHSValNoAssignments[VNI->id];
@@ -807,7 +807,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     LHS.addKills(*NewVNInfo[RHSValID], VNI->kills);
   }
 
-  for (std::map<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
+  for (DenseMap<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
          E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
     VNInfo *VNI = I->first;
     unsigned LHSValID = LHSValNoAssignments[VNI->id];
