@@ -979,20 +979,32 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
       APFloat::cmpResult R = N1C->getValueAPF().compare(N2C->getValueAPF());
       switch (Cond) {
       default: break;
-      case ISD::SETOEQ:
-      case ISD::SETEQ:  return getConstant(R==APFloat::cmpEqual, VT);
-      case ISD::SETONE:
-      case ISD::SETNE:  return getConstant(R==APFloat::cmpGreaterThan ||
+      case ISD::SETEQ:  if (R==APFloat::cmpUnordered) 
+                          return getNode(ISD::UNDEF, VT);
+                        // fall through
+      case ISD::SETOEQ: return getConstant(R==APFloat::cmpEqual, VT);
+      case ISD::SETNE:  if (R==APFloat::cmpUnordered) 
+                          return getNode(ISD::UNDEF, VT);
+                        // fall through
+      case ISD::SETONE: return getConstant(R==APFloat::cmpGreaterThan ||
                                            R==APFloat::cmpLessThan, VT);
-      case ISD::SETOLT:
-      case ISD::SETLT:  return getConstant(R==APFloat::cmpLessThan, VT);
-      case ISD::SETOGT:
-      case ISD::SETGT:  return getConstant(R==APFloat::cmpGreaterThan, VT);
-      case ISD::SETOLE:
-      case ISD::SETLE:  return getConstant(R==APFloat::cmpLessThan ||
+      case ISD::SETLT:  if (R==APFloat::cmpUnordered) 
+                          return getNode(ISD::UNDEF, VT);
+                        // fall through
+      case ISD::SETOLT: return getConstant(R==APFloat::cmpLessThan, VT);
+      case ISD::SETGT:  if (R==APFloat::cmpUnordered) 
+                          return getNode(ISD::UNDEF, VT);
+                        // fall through
+      case ISD::SETOGT: return getConstant(R==APFloat::cmpGreaterThan, VT);
+      case ISD::SETLE:  if (R==APFloat::cmpUnordered) 
+                          return getNode(ISD::UNDEF, VT);
+                        // fall through
+      case ISD::SETOLE: return getConstant(R==APFloat::cmpLessThan ||
                                            R==APFloat::cmpEqual, VT);
-      case ISD::SETOGE:
-      case ISD::SETGE:  return getConstant(R==APFloat::cmpGreaterThan ||
+      case ISD::SETGE:  if (R==APFloat::cmpUnordered) 
+                          return getNode(ISD::UNDEF, VT);
+                        // fall through
+      case ISD::SETOGE: return getConstant(R==APFloat::cmpGreaterThan ||
                                            R==APFloat::cmpEqual, VT);
       case ISD::SETO:   return getConstant(R!=APFloat::cmpUnordered, VT);
       case ISD::SETUO:  return getConstant(R==APFloat::cmpUnordered, VT);

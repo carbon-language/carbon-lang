@@ -404,9 +404,11 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
 
     SDOperand V;
-    if (cast<ConstantFPSDNode>(N)->getValueAPF().isPosZero()) {
+    ConstantFPSDNode* N2 = cast<ConstantFPSDNode>(N);
+    if (N2->getValueAPF().isPosZero()) {
       V = CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
-    } else if (cast<ConstantFPSDNode>(N)->isExactlyValue(APFloat(+1.0))) {
+    } else if (N2->isExactlyValue(N2->getValueType(0) == MVT::f32 ? 
+                                  APFloat(+1.0f) : APFloat(+1.0))) {
       V = CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
     } else
       assert(0 && "Unexpected FP constant!");

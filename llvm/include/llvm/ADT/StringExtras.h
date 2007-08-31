@@ -93,7 +93,7 @@ static inline std::string ftostr(double V) {
   return B;
 }
 
-static inline std::string ftostr(APFloat V) {
+static inline std::string ftostr(const APFloat& V) {
   if (&V.getSemantics() == &APFloat::IEEEsingle)
     return ftostr(V.convertToDouble());
   else if (&V.getSemantics() == &APFloat::IEEEdouble)
