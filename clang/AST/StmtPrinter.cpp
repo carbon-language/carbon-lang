@@ -15,6 +15,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include <iostream>
@@ -29,8 +30,10 @@ namespace  {
   class VISIBILITY_HIDDEN StmtPrinter : public StmtVisitor<StmtPrinter> {
     std::ostream &OS;
     unsigned IndentLevel;
+    clang::PrinterHelper* Helper;
   public:
-    StmtPrinter(std::ostream &os) : OS(os), IndentLevel(0) {}
+    StmtPrinter(std::ostream &os, PrinterHelper* helper) : 
+      OS(os), IndentLevel(0), Helper(helper) {}
     
     void PrintStmt(Stmt *S, int SubIndent = 1) {
       IndentLevel += SubIndent;
@@ -66,6 +69,12 @@ namespace  {
     
     bool PrintOffsetOfDesignator(Expr *E);
     void VisitUnaryOffsetOf(UnaryOperator *Node);
+    
+    void Visit(Stmt* S) {    
+      if (Helper && Helper->handledStmt(S,OS))
+          return;
+      else StmtVisitor<StmtPrinter>::Visit(S);
+    }
     
     void VisitStmt(Stmt *Node);
 #define STMT(N, CLASS, PARENT) \
@@ -593,12 +602,19 @@ void Stmt::dumpPretty() const {
   printPretty(std::cerr);
 }
 
-void Stmt::printPretty(std::ostream &OS) const {
+void Stmt::printPretty(std::ostream &OS, PrinterHelper* Helper) const {
   if (this == 0) {
     OS << "<NULL>";
     return;
   }
 
-  StmtPrinter P(OS);
+  StmtPrinter P(OS, Helper);
   P.Visit(const_cast<Stmt*>(this));
 }
+
+//===----------------------------------------------------------------------===//
+// PrinterHelper
+//===----------------------------------------------------------------------===//
+
+// Implement virtual destructor.
+PrinterHelper::~PrinterHelper() {}

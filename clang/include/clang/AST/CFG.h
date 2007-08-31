@@ -22,8 +22,9 @@
 
 namespace clang {
 
-class Stmt;
-class CFG;
+  class Stmt;
+  class CFG;
+  class PrinterHelper;
   
 /// CFGBlock - Represents a single basic block in a source-level CFG.
 ///  It consists of:
@@ -160,7 +161,7 @@ public:
   unsigned getBlockID() const { return BlockID; }
   
   void dump(const CFG* cfg) const;
-  void print(std::ostream& OS, const CFG* cfg, bool print_edges = true) const;
+  void print(std::ostream& OS, const CFG* cfg) const;
 };
   
 

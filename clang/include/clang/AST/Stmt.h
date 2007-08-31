@@ -25,7 +25,8 @@ namespace clang {
   class IdentifierInfo;
   class SourceManager;
   class SwitchStmt;
-  
+  class PrinterHelper;
+    
 /// Stmt - This represents one statement.
 ///
 class Stmt {
@@ -67,7 +68,7 @@ public:
   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
   /// back to its original source language syntax.
   void dumpPretty() const;
-  void printPretty(std::ostream &OS) const;
+  void printPretty(std::ostream &OS, PrinterHelper* = NULL) const;
   
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }  

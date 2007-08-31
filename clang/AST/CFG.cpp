@@ -15,6 +15,7 @@
 #include "clang/AST/CFG.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/PrettyPrinter.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/GraphWriter.h"
@@ -921,48 +922,65 @@ void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 // CFG pretty printing
 //===----------------------------------------------------------------------===//
 
-/// dump - A simple pretty printer of a CFG that outputs to stderr.
-void CFG::dump() const { print(std::cerr); }
-
-/// print - A simple pretty printer of a CFG that outputs to an ostream.
-void CFG::print(std::ostream& OS) const {
-  
-  // Print the entry block.
-  getEntry().print(OS,this);
-
-  // Iterate through the CFGBlocks and print them one by one.
-  for (const_iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
-    // Skip the entry block, because we already printed it.
-    if (&(*I) == &getEntry() || &(*I) == &getExit()) continue;
-    I->print(OS,this);
-  }
-  
-  // Print the exit block.
-  getExit().print(OS,this);
-}
-
 namespace {
 
-class CFGBlockTerminatorPrint : public StmtVisitor<CFGBlockTerminatorPrint,
-                                                   void > {
-  std::ostream& OS;
+class StmtPrinterHelper : public PrinterHelper {
+  typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
+  StmtMapTy StmtMap;
+  signed CurrentBlock;
+  unsigned CurrentStmt;
 public:
-  CFGBlockTerminatorPrint(std::ostream& os) : OS(os) {}
+  StmtPrinterHelper(const CFG* cfg) : CurrentBlock(0), CurrentStmt(0) {
+    for (CFG::const_iterator I = cfg->begin(), E = cfg->end(); I != E; ++I ) {
+      unsigned j = 1;
+      for (CFGBlock::const_iterator BI = I->begin(), BEnd = I->end() ;
+           BI != BEnd; ++BI, ++j )
+        StmtMap[*BI] = std::make_pair(I->getBlockID(),j);
+      }
+  }
+            
+  virtual ~StmtPrinterHelper() {}
+  
+  void setBlockID(signed i) { CurrentBlock = i; }
+  void setStmtID(unsigned i) { CurrentStmt = i; }
+  
+  virtual bool handledStmt(Stmt* E, std::ostream& OS) {
+    StmtMapTy::iterator I = StmtMap.find(E);
+
+    if (I == StmtMap.end())
+      return false;
+    
+    if (CurrentBlock >= 0 && I->second.first == (unsigned) CurrentBlock 
+                          && I->second.second == CurrentStmt)
+      return false;
+      
+    OS << "[B" << I->second.first << "." << I->second.second << "]";
+      return true;
+  }
+};
+
+class CFGBlockTerminatorPrint : public StmtVisitor<CFGBlockTerminatorPrint,
+void > {
+  std::ostream& OS;
+  StmtPrinterHelper* Helper;
+public:
+  CFGBlockTerminatorPrint(std::ostream& os, StmtPrinterHelper* helper)
+    : OS(os), Helper(helper) {}
   
   void VisitIfStmt(IfStmt* I) {
     OS << "if ";
-    I->getCond()->printPretty(OS);
+    I->getCond()->printPretty(OS,Helper);
     OS << "\n";
   }
   
   // Default case.
-  void VisitStmt(Stmt* S) { S->printPretty(OS); }
+  void VisitStmt(Stmt* S) { S->printPretty(OS,Helper); }
   
   void VisitForStmt(ForStmt* F) {
     OS << "for (" ;
     if (F->getInit()) OS << "...";
     OS << "; ";
-    if (Stmt* C = F->getCond()) C->printPretty(OS);
+    if (Stmt* C = F->getCond()) C->printPretty(OS,Helper);
     OS << "; ";
     if (F->getInc()) OS << "...";
     OS << ")\n";                                                       
@@ -970,48 +988,52 @@ public:
   
   void VisitWhileStmt(WhileStmt* W) {
     OS << "while " ;
-    if (Stmt* C = W->getCond()) C->printPretty(OS);
+    if (Stmt* C = W->getCond()) C->printPretty(OS,Helper);
     OS << "\n";
   }
   
   void VisitDoStmt(DoStmt* D) {
     OS << "do ... while ";
-    if (Stmt* C = D->getCond()) C->printPretty(OS);
+    if (Stmt* C = D->getCond()) C->printPretty(OS,Helper);
     OS << '\n';
   }
-                                                       
+  
   void VisitSwitchStmt(SwitchStmt* S) {
     OS << "switch ";
-    S->getCond()->printPretty(OS);
+    S->getCond()->printPretty(OS,Helper);
     OS << '\n';
   }
   
   void VisitExpr(Expr* E) {
-    E->printPretty(OS);
+    E->printPretty(OS,Helper);
     OS << '\n';
   }                                                       
 };
-} // end anonymous namespace
-
-/// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
-void CFGBlock::dump(const CFG* cfg) const { print(std::cerr,cfg); }
-
-/// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
-///   Generally this will only be called from CFG::print.
-void CFGBlock::print(std::ostream& OS, const CFG* cfg, bool print_edges) const {
-
+  
+  
+void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
+                 StmtPrinterHelper* Helper, bool print_edges) {
+ 
+  if (Helper) Helper->setBlockID(B.getBlockID());
+  
   // Print the header.
-  OS << "\n [ B" << getBlockID();  
-  if (this == &cfg->getEntry()) { OS << " (ENTRY) ]\n"; }
-  else if (this == &cfg->getExit()) { OS << " (EXIT) ]\n"; }
-  else if (this == cfg->getIndirectGotoBlock()) { 
+  OS << "\n [ B" << B.getBlockID();  
+    
+  if (&B == &cfg->getEntry())
+    OS << " (ENTRY) ]\n";
+  else if (&B == &cfg->getExit())
+    OS << " (EXIT) ]\n";
+  else if (&B == cfg->getIndirectGotoBlock())
     OS << " (INDIRECT GOTO DISPATCH) ]\n";
-  }
-  else OS << " ]\n";
-
+  else
+    OS << " ]\n";
+ 
   // Print the label of this block.
-  if (Stmt* S = const_cast<Stmt*>(getLabel())) {
-    if (print_edges) OS << "    ";
+  if (Stmt* S = const_cast<Stmt*>(B.getLabel())) {
+
+    if (print_edges)
+      OS << "    ";
+  
     if (LabelStmt* L = dyn_cast<LabelStmt>(S))
       OS << L->getName();
     else if (CaseStmt* C = dyn_cast<CaseStmt>(S)) {
@@ -1021,62 +1043,140 @@ void CFGBlock::print(std::ostream& OS, const CFG* cfg, bool print_edges) const {
         OS << " ... ";
         C->getRHS()->printPretty(OS);
       }
-    }
-    else if (DefaultStmt* D = dyn_cast<DefaultStmt>(D)) {
+    }  
+    else if (DefaultStmt* D = dyn_cast<DefaultStmt>(D))
       OS << "default";
-    }
-    else assert(false && "Invalid label statement in CFGBlock.");
-    
+    else
+      assert(false && "Invalid label statement in CFGBlock.");
+ 
     OS << ":\n";
   }
-  
+ 
   // Iterate through the statements in the block and print them.
   unsigned j = 1;
-  for (const_iterator I = Stmts.begin(), E = Stmts.end() ; I != E ; ++I, ++j ) {
+  
+  for (CFGBlock::const_iterator I = B.begin(), E = B.end() ;
+       I != E ; ++I, ++j ) {
+       
     // Print the statement # in the basic block and the statement itself.
-    if (print_edges) OS << "    ";
-    OS << std::setw(3) << j << ": ";        
-    (*I)->printPretty(OS);
-          
+    if (print_edges)
+      OS << "    ";
+      
+    OS << std::setw(3) << j << ": ";
+    
+    if (Helper)
+      Helper->setStmtID(j);
+      
+    (*I)->printPretty(OS, Helper);
+ 
     // Expressions need a newline.
     if (isa<Expr>(*I)) OS << '\n';
   }
-
+ 
   // Print the terminator of this block.
-  if (getTerminator()) {
-    if (print_edges) OS << "    ";
+  if (B.getTerminator()) {
+    if (print_edges)
+      OS << "    ";
+      
     OS << "  T: ";
-    CFGBlockTerminatorPrint(OS).Visit(const_cast<Stmt*>(getTerminator()));
+    
+    if (Helper) Helper->setBlockID(-1);
+    
+    CFGBlockTerminatorPrint TPrinter(OS,Helper);
+    TPrinter.Visit(const_cast<Stmt*>(B.getTerminator()));
   }
-  
+ 
   if (print_edges) {
     // Print the predecessors of this block.
-    OS << "    Predecessors (" << pred_size() << "):";
+    OS << "    Predecessors (" << B.pred_size() << "):";
     unsigned i = 0;
-    for (const_pred_iterator I = pred_begin(), E = pred_end(); I != E; ++I, ++i) {
-      if (i == 8 || (i-8) == 0) {
-        OS << "\n     ";
-      }
-      OS << " B" << (*I)->getBlockID();
-    }
-    OS << '\n';
 
-    // Print the successors of this block.
-    OS << "    Successors (" << succ_size() << "):";
-    i = 0;
-    for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I, ++i) {
-      if (i == 8 || (i-8) % 10 == 0) {
-        OS << "\n    ";
-      }
+    for (CFGBlock::const_pred_iterator I = B.pred_begin(), E = B.pred_end();
+         I != E; ++I, ++i) {
+                  
+      if (i == 8 || (i-8) == 0)
+        OS << "\n     ";
+      
       OS << " B" << (*I)->getBlockID();
     }
+    
+    OS << '\n';
+ 
+    // Print the successors of this block.
+    OS << "    Successors (" << B.succ_size() << "):";
+    i = 0;
+
+    for (CFGBlock::const_succ_iterator I = B.succ_begin(), E = B.succ_end();
+         I != E; ++I, ++i) {
+         
+      if (i == 8 || (i-8) % 10 == 0)
+        OS << "\n    ";
+
+      OS << " B" << (*I)->getBlockID();
+    }
+    
     OS << '\n';
   }
+}                   
+
+} // end anonymous namespace
+
+/// dump - A simple pretty printer of a CFG that outputs to stderr.
+void CFG::dump() const { print(std::cerr); }
+
+/// print - A simple pretty printer of a CFG that outputs to an ostream.
+void CFG::print(std::ostream& OS) const {
+  
+  StmtPrinterHelper Helper(this);
+  
+  // Print the entry block.
+  print_block(OS, this, getEntry(), &Helper, true);
+                    
+  // Iterate through the CFGBlocks and print them one by one.
+  for (const_iterator I = Blocks.begin(), E = Blocks.end() ; I != E ; ++I) {
+    // Skip the entry block, because we already printed it.
+    if (&(*I) == &getEntry() || &(*I) == &getExit())
+      continue;
+      
+    print_block(OS, this, *I, &Helper, true);
+  }
+  
+  // Print the exit block.
+  print_block(OS, this, getExit(), &Helper, true);
+}  
+
+/// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
+void CFGBlock::dump(const CFG* cfg) const { print(std::cerr, cfg); }
+
+/// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
+///   Generally this will only be called from CFG::print.
+void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
+  StmtPrinterHelper Helper(cfg);
+  print_block(OS, cfg, *this, &Helper, true);
 }
 
 //===----------------------------------------------------------------------===//
 // CFG Graphviz Visualization
 //===----------------------------------------------------------------------===//
+
+
+#ifndef NDEBUG
+namespace {
+  StmtPrinterHelper* GraphHelper;  
+}
+#endif
+
+void CFG::viewCFG() const {
+#ifndef NDEBUG
+  StmtPrinterHelper H(this);
+  GraphHelper = &H;
+  llvm::ViewGraph(this,"CFG");
+  GraphHelper = NULL;
+#else
+  std::cerr << "CFG::viewCFG is only available in debug builds on "
+  << "systems with Graphviz or gv!" << std::endl;
+#endif
+}
 
 namespace llvm {
 template<>
@@ -1084,7 +1184,7 @@ struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph) {
 
     std::ostringstream Out;
-    Node->print(Out,Graph,false);
+    print_block(Out,Graph, *Node, GraphHelper, false);
     std::string OutStr = Out.str();
 
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
@@ -1100,12 +1200,3 @@ struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
   }
 };
 } // end namespace llvm
-
-void CFG::viewCFG() const {
-#ifndef NDEBUG
-  llvm::ViewGraph(this,"CFG");
-#else
-  std::cerr << "CFG::viewCFG is only available in debug builds on "
-            << "systems with Graphviz or gv!" << std::endl;
-#endif
-}
