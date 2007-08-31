@@ -125,7 +125,7 @@ const ReferenceType *Type::getAsReferenceType() const {
 }
 
 const ArrayType *Type::getAsArrayType() const {
-  // If this is directly a reference type, return it.
+  // If this is directly an array type, return it.
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy;
   
@@ -133,6 +133,48 @@ const ArrayType *Type::getAsArrayType() const {
   // losing all typedef information.
   if (isa<ArrayType>(CanonicalType))
     return cast<ArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
+}
+
+const ConstantArrayType *Type::getAsConstantArrayType() const {
+  // If this is directly a constant array type, return it.
+  if (const ConstantArrayType *ATy = dyn_cast<ConstantArrayType>(this))
+    return ATy;
+  
+  // If this is a typedef for an array type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<ConstantArrayType>(CanonicalType))
+    return cast<ConstantArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
+}
+
+const VariableArrayType *Type::getAsVariableArrayType() const {
+  // If this is directly a variable array type, return it.
+  if (const VariableArrayType *ATy = dyn_cast<VariableArrayType>(this))
+    return ATy;
+  
+  // If this is a typedef for an array type, strip the typedef off without
+  // losing all typedef information.
+  if (isa<VariableArrayType>(CanonicalType))
+    return cast<VariableArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  return 0;
+}
+
+/// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
+/// types that have a non-constant expression. This does not include "[]".
+bool Type::isVariablyModifiedType() const {
+  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
+    if (VAT->getSizeExpr())
+      return true;
+  }
+  return false;
+}
+
+const VariableArrayType *Type::getAsVariablyModifiedType() const {
+  if (const VariableArrayType *VAT = getAsVariableArrayType()) {
+    if (VAT->getSizeExpr())
+      return VAT;
+  }
   return 0;
 }
 

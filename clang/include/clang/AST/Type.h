@@ -37,6 +37,8 @@ namespace clang {
   class ReferenceType;
   class VectorType;
   class ArrayType;
+  class ConstantArrayType;
+  class VariableArrayType;
   class RecordType;
   class ComplexType;
   class TagType;
@@ -233,6 +235,10 @@ public:
   /// routine will need to determine if the size is actually required.  
   bool isIncompleteType() const;
   
+  /// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
+  /// types that have a non-constant expression. This does not include "[]".
+  bool isVariablyModifiedType() const;
+  
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
@@ -271,6 +277,9 @@ public:
   const PointerType *getAsPointerType() const;
   const ReferenceType *getAsReferenceType() const;
   const ArrayType *getAsArrayType() const;
+  const ConstantArrayType *getAsConstantArrayType() const;
+  const VariableArrayType *getAsVariableArrayType() const;
+  const VariableArrayType *getAsVariablyModifiedType() const;
   const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;   
   const RecordType *getAsUnionType() const;

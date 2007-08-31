@@ -39,3 +39,13 @@ void check_size() {
   int zero_size[0]; // expected-warning{{zero size arrays are an extension}}
 }
 
+static int I;
+typedef int TA[I]; // expected-error {{variable length array declared outside of any function}}
+
+void strFunc(char *);
+const char staticAry[] = "test";
+int checkStaticAry() { 
+  strFunc(staticAry); // expected-warning{{passing 'char const []' to 'char *' discards qualifiers}}
+}
+
+
