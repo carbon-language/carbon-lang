@@ -38,6 +38,13 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
 }
 
+void Sema::DeleteExpr(ExprTy *E) {
+  delete static_cast<Expr*>(E);
+}
+void Sema::DeleteStmt(StmtTy *S) {
+  delete static_cast<Stmt*>(S);
+}
+
 //===----------------------------------------------------------------------===//
 // Helper functions.
 //===----------------------------------------------------------------------===//

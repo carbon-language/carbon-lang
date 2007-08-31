@@ -120,6 +120,9 @@ public:
             const std::string &Msg1, const std::string &Msg2, 
             SourceRange R1, SourceRange R2);
 
+  virtual void DeleteExpr(ExprTy *E);
+  virtual void DeleteStmt(StmtTy *S);
+
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //

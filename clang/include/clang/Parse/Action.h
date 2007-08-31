@@ -78,6 +78,12 @@ public:
   typedef ActionResult<1> StmtResult;
   typedef ActionResult<2> TypeResult;
   
+  /// Deletion callbacks - Since the parser doesn't know the concrete types of
+  /// the AST nodes being generated, it must do callbacks to delete objects when
+  /// recovering from errors.
+  virtual void DeleteExpr(ExprTy *E) {}
+  virtual void DeleteStmt(StmtTy *E) {}
+  
   //===--------------------------------------------------------------------===//
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//
