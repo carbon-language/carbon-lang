@@ -1065,6 +1065,20 @@ APFloat::changeSign()
   sign = !sign;
 }
 
+void
+APFloat::clearSign()
+{
+  /* So is this one. */
+  sign = 0;
+}
+
+void
+APFloat::copySign(const APFloat &rhs)
+{
+  /* And this one. */
+  sign = rhs.sign;
+}
+
 /* Normalized addition or subtraction.  */
 APFloat::opStatus
 APFloat::addOrSubtract(const APFloat &rhs, roundingMode rounding_mode,
@@ -1145,6 +1159,30 @@ APFloat::divide(const APFloat &rhs, roundingMode rounding_mode)
       fs = (opStatus) (fs | opInexact);
   }
 
+  return fs;
+}
+
+/* Normalized remainder. */
+APFloat::opStatus
+APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
+{
+  opStatus fs;
+  APFloat V = *this;
+  fs = V.divide(rhs, rmNearestTiesToEven);
+  if (fs == opDivByZero)
+    return fs;
+
+  integerPart x;
+  fs = V.convertToInteger(&x, integerPartWidth, true, rmNearestTiesToEven);
+  if (fs==opInvalidOp)
+    return fs;
+
+  fs = V.convertFromInteger(&x, integerPartWidth, true, rmNearestTiesToEven);
+  assert(fs==opOK);   // should always work
+  fs = V.multiply(rhs, rounding_mode);
+  assert(fs==opOK);   // should not overflow or underflow
+  fs = subtract(V, rounding_mode);
+  assert(fs==opOK);
   return fs;
 }
 
