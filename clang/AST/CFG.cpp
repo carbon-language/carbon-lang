@@ -924,12 +924,15 @@ void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 
 namespace {
 
-class StmtPrinterHelper : public PrinterHelper {
+class StmtPrinterHelper : public PrinterHelper  {
+                          
   typedef llvm::DenseMap<Stmt*,std::pair<unsigned,unsigned> > StmtMapTy;
   StmtMapTy StmtMap;
   signed CurrentBlock;
   unsigned CurrentStmt;
+
 public:
+
   StmtPrinterHelper(const CFG* cfg) : CurrentBlock(0), CurrentStmt(0) {
     for (CFG::const_iterator I = cfg->begin(), E = cfg->end(); I != E; ++I ) {
       unsigned j = 1;
@@ -944,8 +947,9 @@ public:
   void setBlockID(signed i) { CurrentBlock = i; }
   void setStmtID(unsigned i) { CurrentStmt = i; }
   
-  virtual bool handledStmt(Stmt* E, std::ostream& OS) {
-    StmtMapTy::iterator I = StmtMap.find(E);
+  virtual bool handledStmt(Stmt* S, std::ostream& OS) {
+    
+    StmtMapTy::iterator I = StmtMap.find(S);
 
     if (I == StmtMap.end())
       return false;
@@ -954,8 +958,8 @@ public:
                           && I->second.second == CurrentStmt)
       return false;
       
-    OS << "[B" << I->second.first << "." << I->second.second << "]";
-      return true;
+      OS << "[B" << I->second.first << "." << I->second.second << "]";
+    return true;
   }
 };
 
@@ -1010,6 +1014,12 @@ public:
     OS << " ? ... : ...\n";  
   }
   
+  void VisitIndirectGotoStmt(IndirectGotoStmt* I) {
+    OS << "goto *";
+    I->getTarget()->printPretty(OS,Helper);
+    OS << '\n';
+  }
+  
   void VisitBinaryOperator(BinaryOperator* B) {
     if (!B->isLogicalOp()) {
       VisitExpr(B);
@@ -1036,6 +1046,37 @@ public:
   }                                                       
 };
   
+  
+void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* S) {    
+  if (Helper) {
+    // special printing for statement-expressions.
+    if (StmtExpr* SE = dyn_cast<StmtExpr>(S)) {
+      CompoundStmt* Sub = SE->getSubStmt();
+      
+      if (Sub->child_begin() != Sub->child_end()) {
+        OS << "{ ... ; ";
+        Helper->handledStmt(*SE->getSubStmt()->child_rbegin(),OS);
+        OS << " }\n";
+        return;
+      }
+    }
+    
+    // special printing for comma expressions.
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+      if (B->getOpcode() == BinaryOperator::Comma) {
+        OS << "... , ";
+        Helper->handledStmt(B->getRHS(),OS);
+        OS << '\n';
+        return;
+      }          
+    }  
+  }
+  
+  S->printPretty(OS, Helper);
+  
+  // Expressions need a newline.
+  if (isa<Expr>(S)) OS << '\n';
+}
   
 void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
                  StmtPrinterHelper* Helper, bool print_edges) {
@@ -1092,11 +1133,8 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
     
     if (Helper)
       Helper->setStmtID(j);
-      
-    (*I)->printPretty(OS, Helper);
- 
-    // Expressions need a newline.
-    if (isa<Expr>(*I)) OS << '\n';
+     
+    print_stmt(OS,Helper,*I);
   }
  
   // Print the terminator of this block.
