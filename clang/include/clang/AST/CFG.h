@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_CFG_H
+#define LLVM_CLANG_CFG_H
+
 #include "llvm/ADT/GraphTraits.h"
 #include <list>
 #include <vector>
@@ -302,3 +305,5 @@ template <> struct GraphTraits<Inverse<const clang::CFG*> >
 };
   
 } // end llvm namespace
+
+#endif
