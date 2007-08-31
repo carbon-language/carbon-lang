@@ -129,6 +129,8 @@ public:
     return CGF.EmitCallExpr(E).getVal();
   }
   
+  Value *VisitStmtExpr(const StmtExpr *E);
+  
   // Unary Operators.
   Value *VisitPrePostIncDec(const UnaryOperator *E, bool isInc, bool isPre);
   Value *VisitUnaryPostDec(const UnaryOperator *E) {
@@ -436,6 +438,11 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
   return EmitComplexToScalarConversion(CGF.EmitComplexExpr(E), E->getType(),
                                        DestTy);
 }
+
+Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
+  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getVal();
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             Unary Operators
