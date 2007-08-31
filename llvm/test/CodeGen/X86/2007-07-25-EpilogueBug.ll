@@ -42,7 +42,9 @@ cond_next351:		; preds = %bb328
 	ret i8 0
 
 cond_false391:		; preds = %cond_next229
-	%tmp400 = fcmp une float 0.000000e+00, 0.000000e+00		; <i1> [#uses=1]
+	%tmp1 = getelementptr %struct.c34006f__TsB* %y, i32 0, i32 3, i32 0, i32 0
+        %tmp2 = load float* %tmp1
+	%tmp400 = fcmp une float %tmp2, 0.000000e+00		; <i1> [#uses=1]
 	%not.tmp400 = xor i1 %tmp400, true		; <i1> [#uses=1]
 	%retval = zext i1 %not.tmp400 to i8		; <i8> [#uses=1]
 	ret i8 %retval
