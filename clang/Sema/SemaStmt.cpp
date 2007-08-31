@@ -61,7 +61,6 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
       Diag(D->getLocation(), diag::ext_mixed_decls_code);
     }
   }
-  
   // Warn about unused expressions in statements.
   for (unsigned i = 0; i != NumElts; ++i) {
     Expr *E = dyn_cast<Expr>(Elts[i]);
@@ -88,7 +87,7 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
       Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
   }
   
-  return new CompoundStmt(Elts, NumElts);
+  return new CompoundStmt(Elts, NumElts, L, R);
 }
 
 Action::StmtResult
@@ -119,7 +118,7 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
     return SubStmt;
   }
 
-  CaseStmt *CS = new CaseStmt(LHSVal, RHSVal, SubStmt);
+  CaseStmt *CS = new CaseStmt(LHSVal, RHSVal, SubStmt, CaseLoc);
   SwitchStack.back()->addSwitchCase(CS);
   return CS;
 }
@@ -182,7 +181,7 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
     return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
-  return new IfStmt(condExpr, (Stmt*)ThenVal, (Stmt*)ElseVal);
+  return new IfStmt(IfLoc, condExpr, (Stmt*)ThenVal, (Stmt*)ElseVal);
 }
 
 Action::StmtResult
@@ -445,7 +444,7 @@ Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
     return Diag(WhileLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
-  return new WhileStmt(condExpr, (Stmt*)Body);
+  return new WhileStmt(condExpr, (Stmt*)Body, WhileLoc);
 }
 
 Action::StmtResult
@@ -461,7 +460,7 @@ Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
     return Diag(DoLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
-  return new DoStmt((Stmt*)Body, condExpr);
+  return new DoStmt((Stmt*)Body, condExpr, DoLoc);
 }
 
 Action::StmtResult 
@@ -493,7 +492,7 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
                SecondType.getAsString(), Second->getSourceRange());
   }
-  return new ForStmt(First, Second, Third, Body);
+  return new ForStmt(First, Second, Third, Body, ForLoc);
 }
 
 

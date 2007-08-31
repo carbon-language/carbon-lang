@@ -49,6 +49,13 @@ public:
 
   StmtClass getStmtClass() const { return sClass; }
   const char *getStmtClassName() const;
+  
+  /// SourceLocation tokens are not useful in isolation - they are low level
+  /// value objects created/interpreted by SourceManager. We assume AST
+  /// clients will have a pointer to the respective SourceManager.
+  virtual SourceRange getSourceRange() const = 0;
+  SourceLocation getLocStart() const { return getSourceRange().Begin(); }
+  SourceLocation getLocEnd() const { return getSourceRange().End(); }
 
   // global temp stats (until we have a per-module visitor)
   static void addStmtClass(const StmtClass s);
@@ -124,6 +131,8 @@ public:
   
   const Decl *getDecl() const { return TheDecl; }
   Decl *getDecl() { return TheDecl; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DeclStmtClass; 
@@ -143,6 +152,8 @@ public:
   NullStmt(SourceLocation L) : Stmt(NullStmtClass), SemiLoc(L) {}
 
   SourceLocation getSemiLoc() const { return SemiLoc; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == NullStmtClass; 
@@ -158,9 +169,12 @@ public:
 ///
 class CompoundStmt : public Stmt {
   llvm::SmallVector<Stmt*, 16> Body;
+  SourceLocation LBracLoc, RBracLoc;
 public:
-  CompoundStmt(Stmt **StmtStart, unsigned NumStmts)
-    : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts) {}
+  CompoundStmt(Stmt **StmtStart, unsigned NumStmts, 
+               SourceLocation LB, SourceLocation RB)
+    : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts),
+      LBracLoc(LB), RBracLoc(RB) {}
   
   bool body_empty() const { return Body.empty(); }
   
@@ -184,7 +198,10 @@ public:
   const_reverse_body_iterator body_rend() const { return Body.rend(); }
     
   void push_back(Stmt *S) { Body.push_back(S); }
-    
+  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(LBracLoc, RBracLoc); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundStmtClass; 
   }
@@ -212,6 +229,8 @@ public:
 
   virtual Stmt* v_getSubStmt() = 0;  
   Stmt *getSubStmt() { return v_getSubStmt(); }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass || 
@@ -224,12 +243,14 @@ class CaseStmt : public SwitchCase {
   enum { SUBSTMT, LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR];  // The expression for the RHS is Non-null for 
                              // GNU "case 1 ... 4" extension
+  SourceLocation CaseLoc;
 public:
-  CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt) 
+  CaseStmt(Expr *lhs, Expr *rhs, Stmt *substmt, SourceLocation caseLoc) 
     : SwitchCase(CaseStmtClass) {
     SubExprs[SUBSTMT] = substmt;
     SubExprs[LHS] = reinterpret_cast<Stmt*>(lhs);
     SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
+    CaseLoc = caseLoc;
   }
   
   Expr *getLHS() { return reinterpret_cast<Expr*>(SubExprs[LHS]); }
@@ -237,6 +258,9 @@ public:
   Stmt *getSubStmt() { return SubExprs[SUBSTMT]; }
   virtual Stmt* v_getSubStmt() { return getSubStmt(); }
 
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(CaseLoc, SubExprs[SUBSTMT]->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CaseStmtClass; 
   }
@@ -253,12 +277,15 @@ class DefaultStmt : public SwitchCase {
 public:
   DefaultStmt(SourceLocation DL, Stmt *substmt) : 
     SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL) {}
-
+    
   Stmt *getSubStmt() { return SubStmt; }
   virtual Stmt* v_getSubStmt() { return getSubStmt(); }
     
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
 
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(DefaultLoc, SubStmt->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DefaultStmtClass; 
   }
@@ -270,12 +297,13 @@ public:
 };
 
 class LabelStmt : public Stmt {
-  SourceLocation IdentLoc;
   IdentifierInfo *Label;
   Stmt *SubStmt;
+  SourceLocation IdentLoc;
 public:
-  LabelStmt(SourceLocation IL, IdentifierInfo *label, Stmt *substmt)
-    : Stmt(LabelStmtClass), IdentLoc(IL), Label(label), SubStmt(substmt) {}
+  LabelStmt(SourceLocation IL, IdentifierInfo *label, Stmt *substmt) 
+    : Stmt(LabelStmtClass), Label(label), 
+      SubStmt(substmt), IdentLoc(IL) {}
   
   SourceLocation getIdentLoc() const { return IdentLoc; }
   IdentifierInfo *getID() const { return Label; }
@@ -285,7 +313,10 @@ public:
 
   void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
-  
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(IdentLoc, SubStmt->getLocEnd()); 
+  }  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == LabelStmtClass; 
   }
@@ -302,11 +333,14 @@ public:
 class IfStmt : public Stmt {
   enum { COND, THEN, ELSE, END_EXPR };
   Stmt* SubExprs[END_EXPR];
+  SourceLocation IfLoc;
 public:
-  IfStmt(Expr *cond, Stmt *then, Stmt *elsev = 0) : Stmt(IfStmtClass)  {
+  IfStmt(SourceLocation IL, Expr *cond, Stmt *then, Stmt *elsev = 0) 
+    : Stmt(IfStmtClass)  {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[THEN] = then;
     SubExprs[ELSE] = elsev;
+    IfLoc = IL;
   }
   
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
@@ -316,6 +350,13 @@ public:
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   Stmt *getThen() { return SubExprs[THEN]; }
   Stmt *getElse() { return SubExprs[ELSE]; }
+
+  virtual SourceRange getSourceRange() const { 
+    if (SubExprs[ELSE])
+      return SourceRange(IfLoc, SubExprs[ELSE]->getLocEnd());
+    else
+      return SourceRange(IfLoc, SubExprs[THEN]->getLocEnd());
+  }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IfStmtClass; 
@@ -357,6 +398,8 @@ public:
     FirstCase = SC;
   }
   
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == SwitchStmtClass; 
   }
@@ -373,17 +416,22 @@ public:
 class WhileStmt : public Stmt {
   enum { COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
+  SourceLocation WhileLoc;
 public:
-  WhileStmt(Expr *cond, Stmt *body) : Stmt(WhileStmtClass) {
+  WhileStmt(Expr *cond, Stmt *body, SourceLocation WL) : Stmt(WhileStmtClass) {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = body;
+    WhileLoc = WL;
   }
   
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   Stmt *getBody() { return SubExprs[BODY]; }
   const Stmt *getBody() const { return SubExprs[BODY]; }
-  
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(WhileLoc, SubExprs[BODY]->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == WhileStmtClass; 
   }
@@ -399,17 +447,23 @@ public:
 class DoStmt : public Stmt {
   enum { COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
+  SourceLocation DoLoc;
 public:
-  DoStmt(Stmt *body, Expr *cond) : Stmt(DoStmtClass) {
+  DoStmt(Stmt *body, Expr *cond, SourceLocation DL) 
+    : Stmt(DoStmtClass), DoLoc(DL) {
     SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
     SubExprs[BODY] = body;
+    DoLoc = DL;
   }  
   
   Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   Stmt *getBody() { return SubExprs[BODY]; }
   const Stmt *getBody() const { return SubExprs[BODY]; }  
-  
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(DoLoc, SubExprs[BODY]->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == DoStmtClass; 
   }
@@ -428,12 +482,15 @@ public:
 class ForStmt : public Stmt {
   enum { INIT, COND, INC, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
+  SourceLocation ForLoc;
 public:
-  ForStmt(Stmt *Init, Expr *Cond, Expr *Inc, Stmt *Body) : Stmt(ForStmtClass) {
+  ForStmt(Stmt *Init, Expr *Cond, Expr *Inc, Stmt *Body, SourceLocation FL) 
+    : Stmt(ForStmtClass) {
     SubExprs[INIT] = Init;
     SubExprs[COND] = reinterpret_cast<Stmt*>(Cond);
     SubExprs[INC] = reinterpret_cast<Stmt*>(Inc);
     SubExprs[BODY] = Body;
+    ForLoc = FL;
   }
   
   Stmt *getInit() { return SubExprs[INIT]; }
@@ -445,7 +502,10 @@ public:
   const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
   const Expr *getInc()  const { return reinterpret_cast<Expr*>(SubExprs[INC]); }
   const Stmt *getBody() const { return SubExprs[BODY]; }
-  
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ForStmtClass; 
   }
@@ -464,6 +524,8 @@ public:
   GotoStmt(LabelStmt *label) : Stmt(GotoStmtClass), Label(label) {}
   
   LabelStmt *getLabel() const { return Label; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == GotoStmtClass; 
@@ -484,6 +546,8 @@ public:
   
   Expr *getTarget() { return Target; }
   const Expr *getTarget() const { return Target; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == IndirectGotoStmtClass; 
@@ -501,6 +565,9 @@ public:
 class ContinueStmt : public Stmt {
 public:
   ContinueStmt() : Stmt(ContinueStmtClass) {}
+  
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ContinueStmtClass; 
   }
@@ -516,6 +583,9 @@ public:
 class BreakStmt : public Stmt {
 public:
   BreakStmt() : Stmt(BreakStmtClass) {}
+  
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == BreakStmtClass; 
   }
@@ -536,6 +606,8 @@ public:
   
   const Expr *getRetValue() const { return RetExpr; }
   Expr *getRetValue() { return RetExpr; }
+
+  virtual SourceRange getSourceRange() const { return SourceRange(); }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ReturnStmtClass; 
