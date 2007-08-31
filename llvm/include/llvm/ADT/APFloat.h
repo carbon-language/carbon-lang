@@ -64,8 +64,11 @@
     so that the smallest denormal has just the least significant bit
     of the significand set.  The sign of zeroes and infinities is
     significant; the exponent and significand of such numbers is
-    indeterminate and meaningless.  For QNaNs the sign bit, as well as
-    the exponent and significand are indeterminate and meaningless.
+    not stored, but has a known implicit (deterministic) value:
+    0 for the significands, 0 for zero exponent, all 1 bits for 
+    infinity exponent.  For NaNs the sign and significand are 
+    deterministic, although not really meaningful; the exponent is
+    implicitly all 1 bits.
 
     TODO
     ====
@@ -155,7 +158,7 @@ namespace llvm {
     /* Category of internally-represented number.  */
     enum fltCategory {
       fcInfinity,
-      fcQNaN,
+      fcNaN,
       fcNormal,
       fcZero
     };
@@ -192,7 +195,7 @@ namespace llvm {
        whatever it is you really mean. */
     // bool operator==(const APFloat &) const;     // DO NOT IMPLEMENT
     
-    /* IEEE comparison with another floating point number (QNaNs
+    /* IEEE comparison with another floating point number (NaNs
        compare unordered, 0==-0). */
     cmpResult compare(const APFloat &) const;
 
@@ -205,6 +208,8 @@ namespace llvm {
     bool isZero() const { return category == fcZero; }
     bool isNonZero() const { return category != fcZero; }
     bool isNegative() const { return sign; }
+    bool isPosZero() const { return isZero() && !isNegative(); }
+    bool isNegZero() const { return isZero() && isNegative(); }
 
     APFloat& operator=(const APFloat &);
 

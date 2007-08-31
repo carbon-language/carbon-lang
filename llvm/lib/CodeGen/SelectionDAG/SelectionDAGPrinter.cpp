@@ -95,7 +95,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Node)) {
     Op += ": " + utostr(CSDN->getValue());
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(Node)) {
-    Op += ": " + ftostr(CSDN->getValue());
+    Op += ": " + ftostr(CSDN->getValueAPF());
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(Node)) {
     int offset = GADN->getOffset();
@@ -115,7 +115,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += "<" + SS.str() + ">";
     } else {
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
-        Op += "<" + ftostr(CFP->getValue()) + ">";
+        Op += "<" + ftostr(CFP->getValueAPF()) + ">";
       else if (ConstantInt *CI = dyn_cast<ConstantInt>(CP->getConstVal()))
         Op += "<" + utostr(CI->getZExtValue()) + ">";
       else {

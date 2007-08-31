@@ -131,15 +131,15 @@ namespace {
 
     static bool isFPZ(SDOperand N) {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      return (CN && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)));
+      return (CN && (CN->getValueAPF().isZero()));
     }
     static bool isFPZn(SDOperand N) {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      return (CN && CN->isExactlyValue(-0.0));
+      return (CN && CN->getValueAPF().isNegZero());
     }
     static bool isFPZp(SDOperand N) {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
-      return (CN && CN->isExactlyValue(+0.0));
+      return (CN && CN->getValueAPF().isPosZero());
     }
 
   public:
@@ -334,11 +334,11 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
     bool isDouble = N->getValueType(0) == MVT::f64;
     MVT::ValueType T = isDouble ? MVT::f64 : MVT::f32;
-    if (CN->isExactlyValue(+0.0)) {
+    if (CN->getValueAPF().isPosZero()) {
       return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
                                   T, CurDAG->getRegister(Alpha::F31, T),
                                   CurDAG->getRegister(Alpha::F31, T));
-    } else if ( CN->isExactlyValue(-0.0)) {
+    } else if (CN->getValueAPF().isNegZero()) {
       return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
                                   T, CurDAG->getRegister(Alpha::F31, T),
                                   CurDAG->getRegister(Alpha::F31, T));

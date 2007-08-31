@@ -817,7 +817,7 @@ static inline bool isZeroNode(SDOperand Elt) {
   return ((isa<ConstantSDNode>(Elt) &&
   cast<ConstantSDNode>(Elt)->getValue() == 0) ||
   (isa<ConstantFPSDNode>(Elt) &&
-  cast<ConstantFPSDNode>(Elt)->isExactlyValue(0.0)));
+  cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
 }
 
 

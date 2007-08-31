@@ -1033,14 +1033,14 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
 /// isFloatingPointZero - Return true if this is +0.0.
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
-    return CFP->isExactlyValue(0.0);
+    return CFP->getValueAPF().isPosZero();
   else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
     // Maybe this has already been legalized into the constant pool?
     if (Op.getOperand(1).getOpcode() == ARMISD::Wrapper) {
       SDOperand WrapperOp = Op.getOperand(1).getOperand(0);
       if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(WrapperOp))
         if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
-          return CFP->isExactlyValue(0.0);
+          return CFP->getValueAPF().isPosZero();
     }
   }
   return false;

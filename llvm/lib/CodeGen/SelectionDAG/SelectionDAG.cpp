@@ -109,11 +109,13 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   } else if (isa<ConstantFPSDNode>(NotZero)) {
     MVT::ValueType VT = NotZero.getValueType();
     if (VT== MVT::f64) {
-      if (DoubleToBits(cast<ConstantFPSDNode>(NotZero)->getValue()) !=
+      if (DoubleToBits(cast<ConstantFPSDNode>(NotZero)->
+                       getValueAPF().convertToDouble()) !=
           (uint64_t)-1)
         return false;
     } else {
-      if (FloatToBits(cast<ConstantFPSDNode>(NotZero)->getValue()) !=
+      if (FloatToBits(cast<ConstantFPSDNode>(NotZero)->
+                      getValueAPF().convertToFloat()) !=
           (uint32_t)-1)
         return false;
     }
@@ -155,7 +157,7 @@ bool ISD::isBuildVectorAllZeros(const SDNode *N) {
     if (!cast<ConstantSDNode>(Zero)->isNullValue())
       return false;
   } else if (isa<ConstantFPSDNode>(Zero)) {
-    if (!cast<ConstantFPSDNode>(Zero)->isExactlyValue(0.0))
+    if (!cast<ConstantFPSDNode>(Zero)->getValueAPF().isPosZero())
       return false;
   } else
     return false;
@@ -320,9 +322,16 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     ID.AddInteger(cast<ConstantSDNode>(N)->getValue());
     break;
   case ISD::TargetConstantFP:
-  case ISD::ConstantFP:
-    ID.AddDouble(cast<ConstantFPSDNode>(N)->getValue());
+  case ISD::ConstantFP: {
+    APFloat V = cast<ConstantFPSDNode>(N)->getValueAPF();
+    if (&V.getSemantics() == &APFloat::IEEEdouble)
+      ID.AddDouble(V.convertToDouble());
+    else if (&V.getSemantics() == &APFloat::IEEEsingle)
+      ID.AddDouble((double)V.convertToFloat());
+    else
+      assert(0);
     break;
+  }
   case ISD::TargetGlobalAddress:
   case ISD::GlobalAddress:
   case ISD::TargetGlobalTLSAddress:
@@ -966,16 +975,36 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
   }
   if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val))
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
-      double C1 = N1C->getValue(), C2 = N2C->getValue();
-      
+
+      APFloat::cmpResult R = N1C->getValueAPF().compare(N2C->getValueAPF());
       switch (Cond) {
-      default: break; // FIXME: Implement the rest of these!
-      case ISD::SETEQ:  return getConstant(C1 == C2, VT);
-      case ISD::SETNE:  return getConstant(C1 != C2, VT);
-      case ISD::SETLT:  return getConstant(C1 < C2, VT);
-      case ISD::SETGT:  return getConstant(C1 > C2, VT);
-      case ISD::SETLE:  return getConstant(C1 <= C2, VT);
-      case ISD::SETGE:  return getConstant(C1 >= C2, VT);
+      default: break;
+      case ISD::SETOEQ:
+      case ISD::SETEQ:  return getConstant(R==APFloat::cmpEqual, VT);
+      case ISD::SETONE:
+      case ISD::SETNE:  return getConstant(R==APFloat::cmpGreaterThan ||
+                                           R==APFloat::cmpLessThan, VT);
+      case ISD::SETOLT:
+      case ISD::SETLT:  return getConstant(R==APFloat::cmpLessThan, VT);
+      case ISD::SETOGT:
+      case ISD::SETGT:  return getConstant(R==APFloat::cmpGreaterThan, VT);
+      case ISD::SETOLE:
+      case ISD::SETLE:  return getConstant(R==APFloat::cmpLessThan ||
+                                           R==APFloat::cmpEqual, VT);
+      case ISD::SETOGE:
+      case ISD::SETGE:  return getConstant(R==APFloat::cmpGreaterThan ||
+                                           R==APFloat::cmpEqual, VT);
+      case ISD::SETO:   return getConstant(R!=APFloat::cmpUnordered, VT);
+      case ISD::SETUO:  return getConstant(R==APFloat::cmpUnordered, VT);
+      case ISD::SETUEQ: return getConstant(R==APFloat::cmpUnordered ||
+                                           R==APFloat::cmpEqual, VT);
+      case ISD::SETUNE: return getConstant(R!=APFloat::cmpEqual, VT);
+      case ISD::SETULT: return getConstant(R==APFloat::cmpUnordered ||
+                                           R==APFloat::cmpLessThan, VT);
+      case ISD::SETUGT: return getConstant(R==APFloat::cmpGreaterThan ||
+                                           R==APFloat::cmpUnordered, VT);
+      case ISD::SETULE: return getConstant(R!=APFloat::cmpGreaterThan, VT);
+      case ISD::SETUGE: return getConstant(R!=APFloat::cmpLessThan, VT);
       }
     } else {
       // Ensure that the constant occurs on the RHS.

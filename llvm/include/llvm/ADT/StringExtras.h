@@ -15,6 +15,7 @@
 #define LLVM_ADT_STRINGEXTRAS_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/APFloat.h"
 #include <cctype>
 #include <cstdio>
 #include <string>
@@ -90,6 +91,14 @@ static inline std::string ftostr(double V) {
   char *B = Buffer;
   while (*B == ' ') ++B;
   return B;
+}
+
+static inline std::string ftostr(APFloat V) {
+  if (&V.getSemantics() == &APFloat::IEEEsingle)
+    return ftostr(V.convertToDouble());
+  else if (&V.getSemantics() == &APFloat::IEEEdouble)
+    return ftostr((double)V.convertToFloat());
+  return 0; // error
 }
 
 static inline std::string LowercaseString(const std::string &S) {

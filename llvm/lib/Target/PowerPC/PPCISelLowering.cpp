@@ -362,12 +362,12 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
 /// isFloatingPointZero - Return true if this is 0.0 or -0.0.
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
-    return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
+    return CFP->getValueAPF().isZero();
   else if (ISD::isEXTLoad(Op.Val) || ISD::isNON_EXTLoad(Op.Val)) {
     // Maybe this has already been legalized into the constant pool?
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
       if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->getConstVal()))
-        return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
+        return CFP->getValueAPF().isZero();
   }
   return false;
 }
@@ -530,7 +530,7 @@ bool PPC::isAllNegativeZeroVector(SDNode *N) {
   assert(N->getOpcode() == ISD::BUILD_VECTOR);
   if (PPC::isSplatShuffleMask(N, N->getNumOperands()))
     if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N))
-      return CFP->isExactlyValue(-0.0);
+      return CFP->getValueAPF().isNegZero();
   return false;
 }
 
@@ -622,7 +622,7 @@ SDOperand PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
     ValSizeInBytes = MVT::getSizeInBits(CN->getValueType(0))/8;
   } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
     assert(CN->getValueType(0) == MVT::f32 && "Only one legal FP vector type!");
-    Value = FloatToBits(CN->getValue());
+    Value = FloatToBits(CN->getValueAPF().convertToFloat());
     ValSizeInBytes = 4;
   }
 
@@ -2194,7 +2194,7 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
     } else if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(OpVal)) {
       assert(CN->getValueType(0) == MVT::f32 &&
              "Only one legal FP vector type!");
-      EltBits = FloatToBits(CN->getValue());
+      EltBits = FloatToBits(CN->getValueAPF().convertToFloat());
     } else {
       // Nonconstant element.
       return true;

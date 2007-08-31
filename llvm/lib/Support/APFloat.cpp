@@ -247,14 +247,14 @@ APFloat::assign(const APFloat &rhs)
   sign = rhs.sign;
   category = rhs.category;
   exponent = rhs.exponent;
-  if(category == fcNormal)
+  if(category == fcNormal || category == fcNaN)
     copySignificand(rhs);
 }
 
 void
 APFloat::copySignificand(const APFloat &rhs)
 {
-  assert(category == fcNormal);
+  assert(category == fcNormal || category == fcNaN);
   assert(rhs.partCount() >= partCount());
 
   APInt::tcAssign(significandParts(), rhs.significandParts(),
@@ -280,15 +280,14 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
   if (this == &rhs)
     return true;
   if (semantics != rhs.semantics ||
-      category != rhs.category)
+      category != rhs.category ||
+      sign != rhs.sign)
     return false;
-  if (category==fcQNaN)
+  if (category==fcZero || category==fcInfinity)
     return true;
-  else if (category==fcZero || category==fcInfinity)
-    return sign==rhs.sign;
+  else if (category==fcNormal && exponent!=rhs.exponent)
+    return false;
   else {
-    if (sign!=rhs.sign || exponent!=rhs.exponent)
-      return false;
     int i= partCount();
     const integerPart* p=significandParts();
     const integerPart* q=rhs.significandParts();
@@ -358,7 +357,7 @@ APFloat::significandParts() const
 integerPart *
 APFloat::significandParts()
 {
-  assert(category == fcNormal);
+  assert(category == fcNormal || category == fcNaN);
 
   if(partCount() > 1)
     return significand.parts;
@@ -701,7 +700,7 @@ bool
 APFloat::roundAwayFromZero(roundingMode rounding_mode,
 			   lostFraction lost_fraction)
 {
-  /* QNaNs and infinities should not have lost fractions.  */
+  /* NaNs and infinities should not have lost fractions.  */
   assert(category == fcNormal || category == fcZero);
 
   /* Our caller has already handled this case.  */
@@ -851,19 +850,20 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
   default:
     assert(0);
 
-  case convolve(fcQNaN, fcZero):
-  case convolve(fcQNaN, fcNormal):
-  case convolve(fcQNaN, fcInfinity):
-  case convolve(fcQNaN, fcQNaN):
+  case convolve(fcNaN, fcZero):
+  case convolve(fcNaN, fcNormal):
+  case convolve(fcNaN, fcInfinity):
+  case convolve(fcNaN, fcNaN):
   case convolve(fcNormal, fcZero):
   case convolve(fcInfinity, fcNormal):
   case convolve(fcInfinity, fcZero):
     return opOK;
 
-  case convolve(fcZero, fcQNaN):
-  case convolve(fcNormal, fcQNaN):
-  case convolve(fcInfinity, fcQNaN):
-    category = fcQNaN;
+  case convolve(fcZero, fcNaN):
+  case convolve(fcNormal, fcNaN):
+  case convolve(fcInfinity, fcNaN):
+    category = fcNaN;
+    copySignificand(rhs);
     return opOK;
 
   case convolve(fcNormal, fcInfinity):
@@ -885,7 +885,9 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
     /* Differently signed infinities can only be validly
        subtracted.  */
     if(sign ^ rhs.sign != subtract) {
-      category = fcQNaN;
+      category = fcNaN;
+      // Arbitrary but deterministic value for significand
+      APInt::tcSet(significandParts(), ~0U, partCount());
       return opInvalidOp;
     }
 
@@ -974,14 +976,17 @@ APFloat::multiplySpecials(const APFloat &rhs)
   default:
     assert(0);
 
-  case convolve(fcQNaN, fcZero):
-  case convolve(fcQNaN, fcNormal):
-  case convolve(fcQNaN, fcInfinity):
-  case convolve(fcQNaN, fcQNaN):
-  case convolve(fcZero, fcQNaN):
-  case convolve(fcNormal, fcQNaN):
-  case convolve(fcInfinity, fcQNaN):
-    category = fcQNaN;
+  case convolve(fcNaN, fcZero):
+  case convolve(fcNaN, fcNormal):
+  case convolve(fcNaN, fcInfinity):
+  case convolve(fcNaN, fcNaN):
+    return opOK;
+
+  case convolve(fcZero, fcNaN):
+  case convolve(fcNormal, fcNaN):
+  case convolve(fcInfinity, fcNaN):
+    category = fcNaN;
+    copySignificand(rhs);
     return opOK;
 
   case convolve(fcNormal, fcInfinity):
@@ -998,7 +1003,9 @@ APFloat::multiplySpecials(const APFloat &rhs)
 
   case convolve(fcZero, fcInfinity):
   case convolve(fcInfinity, fcZero):
-    category = fcQNaN;
+    category = fcNaN;
+    // Arbitrary but deterministic value for significand
+    APInt::tcSet(significandParts(), ~0U, partCount());
     return opInvalidOp;
 
   case convolve(fcNormal, fcNormal):
@@ -1013,20 +1020,21 @@ APFloat::divideSpecials(const APFloat &rhs)
   default:
     assert(0);
 
-  case convolve(fcQNaN, fcZero):
-  case convolve(fcQNaN, fcNormal):
-  case convolve(fcQNaN, fcInfinity):
-  case convolve(fcQNaN, fcQNaN):
+  case convolve(fcNaN, fcZero):
+  case convolve(fcNaN, fcNormal):
+  case convolve(fcNaN, fcInfinity):
+  case convolve(fcNaN, fcNaN):
   case convolve(fcInfinity, fcZero):
   case convolve(fcInfinity, fcNormal):
   case convolve(fcZero, fcInfinity):
   case convolve(fcZero, fcNormal):
     return opOK;
 
-  case convolve(fcZero, fcQNaN):
-  case convolve(fcNormal, fcQNaN):
-  case convolve(fcInfinity, fcQNaN):
-    category = fcQNaN;
+  case convolve(fcZero, fcNaN):
+  case convolve(fcNormal, fcNaN):
+  case convolve(fcInfinity, fcNaN):
+    category = fcNaN;
+    copySignificand(rhs);
     return opOK;
 
   case convolve(fcNormal, fcInfinity):
@@ -1039,7 +1047,9 @@ APFloat::divideSpecials(const APFloat &rhs)
 
   case convolve(fcInfinity, fcInfinity):
   case convolve(fcZero, fcZero):
-    category = fcQNaN;
+    category = fcNaN;
+    // Arbitrary but deterministic value for significand
+    APInt::tcSet(significandParts(), ~0U, partCount());
     return opInvalidOp;
 
   case convolve(fcNormal, fcNormal):
@@ -1172,7 +1182,7 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
     /* FS can only be opOK or opInvalidOp.  There is no more work
        to do in the latter case.  The IEEE-754R standard says it is
        implementation-defined in this case whether, if ADDEND is a
-       quiet QNaN, we raise invalid op; this implementation does so.
+       quiet NaN, we raise invalid op; this implementation does so.
 
        If we need to do the addition we can do so with normal
        precision.  */
@@ -1195,13 +1205,13 @@ APFloat::compare(const APFloat &rhs) const
   default:
     assert(0);
 
-  case convolve(fcQNaN, fcZero):
-  case convolve(fcQNaN, fcNormal):
-  case convolve(fcQNaN, fcInfinity):
-  case convolve(fcQNaN, fcQNaN):
-  case convolve(fcZero, fcQNaN):
-  case convolve(fcNormal, fcQNaN):
-  case convolve(fcInfinity, fcQNaN):
+  case convolve(fcNaN, fcZero):
+  case convolve(fcNaN, fcNormal):
+  case convolve(fcNaN, fcInfinity):
+  case convolve(fcNaN, fcNaN):
+  case convolve(fcZero, fcNaN):
+  case convolve(fcNormal, fcNaN):
+  case convolve(fcInfinity, fcNaN):
     return cmpUnordered;
 
   case convolve(fcInfinity, fcNormal):
@@ -1309,7 +1319,7 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
   int bits;
 
   /* Handle the three special cases first.  */
-  if(category == fcInfinity || category == fcQNaN)
+  if(category == fcInfinity || category == fcNaN)
     return opInvalidOp;
 
   partsCount = partCountForBits(width);
@@ -1517,7 +1527,7 @@ uint32_t
 APFloat::getHashValue() const { 
   if (category==fcZero) return sign<<8 | semantics->precision ;
   else if (category==fcInfinity) return sign<<9 | semantics->precision;
-  else if (category==fcQNaN) return 1<<10 | semantics->precision;
+  else if (category==fcNaN) return 1<<10 | semantics->precision;
   else {
     uint32_t hash = sign<<11 | semantics->precision | exponent<<12;
     const integerPart* p = significandParts();
@@ -1538,28 +1548,25 @@ APFloat::convertToDouble() const {
   assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
   assert (partCount()==1);
 
-  uint64_t myexponent, mysign, mysignificand;
+  uint64_t myexponent, mysignificand;
 
   if (category==fcNormal) {
-    mysign = sign;
     mysignificand = *significandParts();
     myexponent = exponent+1023; //bias
   } else if (category==fcZero) {
-    mysign = sign;
     myexponent = 0;
     mysignificand = 0;
   } else if (category==fcInfinity) {
-    mysign = sign;
     myexponent = 0x7ff;
     mysignificand = 0;
-  } else if (category==fcQNaN) {
-    mysign = 0;
+  } else if (category==fcNaN) {
     myexponent = 0x7ff;
-    mysignificand = 0xfffffffffffffLL;
+    mysignificand = *significandParts();
   } else
     assert(0);
 
-  return BitsToDouble(((mysign & 1) << 63) | ((myexponent & 0x7ff) <<  52) | 
+  return BitsToDouble((((uint64_t)sign & 1) << 63) | 
+        ((myexponent & 0x7ff) <<  52) | 
         (mysignificand & 0xfffffffffffffLL));
 }
 
@@ -1568,82 +1575,74 @@ APFloat::convertToFloat() const {
   assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
   assert (partCount()==1);
 
-  uint32_t mysign, myexponent, mysignificand;
+  uint32_t myexponent, mysignificand;
 
   if (category==fcNormal) {
-    mysign = sign;
     myexponent = exponent+127; //bias
     mysignificand = *significandParts();
   } else if (category==fcZero) {
-    mysign = sign;
     myexponent = 0;
     mysignificand = 0;
   } else if (category==fcInfinity) {
-    mysign = sign;
     myexponent = 0xff;
     mysignificand = 0;
-  } else if (category==fcQNaN) {
-    mysign = sign;
+  } else if (category==fcNaN) {
     myexponent = 0x7ff;
-    mysignificand = 0x7fffff;
+    mysignificand = *significandParts();
   } else
     assert(0);
 
-  return BitsToFloat(((mysign&1) << 31) | ((myexponent&0xff) << 23) | 
+  return BitsToFloat(((sign&1) << 31) | ((myexponent&0xff) << 23) | 
         (mysignificand & 0x7fffff));
 }
 
 APFloat::APFloat(double d) {
   uint64_t i = DoubleToBits(d);
-  uint64_t mysign = i >> 63;
   uint64_t myexponent = (i >> 52) & 0x7ff;
   uint64_t mysignificand = i & 0xfffffffffffffLL;
 
   initialize(&APFloat::IEEEdouble);
   assert(partCount()==1);
 
+  sign = i>>63;
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
     category = fcZero;
-    sign = mysign;
   } else if (myexponent==0x7ff && mysignificand==0) {
     // exponent, significand meaningless
     category = fcInfinity;
-    sign = mysign;
-  } else if (myexponent==0x7ff && (mysignificand & 0x8000000000000LL)) {
-    // sign, exponent, significand meaningless
-    category = fcQNaN;
+  } else if (myexponent==0x7ff && mysignificand!=0) {
+    // exponent meaningless
+    category = fcNaN;
+    *significandParts() = mysignificand;
   } else {
-    sign = mysign;
     category = fcNormal;
     exponent = myexponent - 1023;
-    *significandParts() = mysignificand | 0x10000000000000LL;
-  }
+    *significandParts() = mysignificand | 0x10000000000000LL; 
+ }
 }
 
 APFloat::APFloat(float f) {
   uint32_t i = FloatToBits(f);
-  uint32_t mysign = i >> 31;
   uint32_t myexponent = (i >> 23) & 0xff;
   uint32_t mysignificand = i & 0x7fffff;
 
   initialize(&APFloat::IEEEsingle);
   assert(partCount()==1);
 
+  sign = i >> 31;
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
     category = fcZero;
-    sign = mysign;
   } else if (myexponent==0xff && mysignificand==0) {
     // exponent, significand meaningless
     category = fcInfinity;
-    sign = mysign;
   } else if (myexponent==0xff && (mysignificand & 0x400000)) {
     // sign, exponent, significand meaningless
-    category = fcQNaN;
+    category = fcNaN;
+    *significandParts() = mysignificand;
   } else {
     category = fcNormal;
-    sign = mysign;
     exponent = myexponent - 127;  //bias
     *significandParts() = mysignificand | 0x800000; // integer bit
   }
