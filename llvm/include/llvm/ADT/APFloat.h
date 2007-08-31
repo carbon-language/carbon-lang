@@ -95,6 +95,7 @@
 
 // APInt contains static functions implementing bignum arithmetic.
 #include "llvm/ADT/APInt.h"
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
 
@@ -177,8 +178,11 @@ namespace llvm {
     opStatus subtract(const APFloat &, roundingMode);
     opStatus multiply(const APFloat &, roundingMode);
     opStatus divide(const APFloat &, roundingMode);
+    opStatus mod(const APFloat &, roundingMode);
+    void copySign(const APFloat &);
     opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
-    void changeSign();
+    void changeSign();    // neg
+    void clearSign();     // abs
 
     /* Conversions.  */
     opStatus convert(const fltSemantics &, roundingMode);

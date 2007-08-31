@@ -410,9 +410,11 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
   assert(Depth <= 6 && "GetNegatedExpression doesn't match isNegatibleForFree");
   switch (Op.getOpcode()) {
   default: assert(0 && "Unknown code");
-  case ISD::ConstantFP:
-    return DAG.getConstantFP(-cast<ConstantFPSDNode>(Op)->getValue(),
-                             Op.getValueType());
+  case ISD::ConstantFP: {
+    APFloat V = cast<ConstantFPSDNode>(Op)->getValueAPF();
+    V.changeSign();
+    return DAG.getConstantFP(V, Op.getValueType());
+  }
   case ISD::FADD:
     // FIXME: determine better conditions for this xform.
     assert(UnsafeFPMath);
@@ -432,7 +434,7 @@ static SDOperand GetNegatedExpression(SDOperand Op, SelectionDAG &DAG,
 
     // -(0-B) -> B
     if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(Op.getOperand(0)))
-      if (N0CFP->getValue() == 0.0)
+      if (N0CFP->getValueAPF().isZero())
         return Op.getOperand(1);
     
     // -(A-B) -> B-A
@@ -3080,7 +3082,7 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   if (N0CFP && N1CFP)
     return DAG.getNode(ISD::FSUB, VT, N0, N1);
   // fold (0-B) -> -B
-  if (UnsafeFPMath && N0CFP && N0CFP->getValue() == 0.0) {
+  if (UnsafeFPMath && N0CFP && N0CFP->getValueAPF().isZero()) {
     if (isNegatibleForFree(N1))
       return GetNegatedExpression(N1, DAG);
     return DAG.getNode(ISD::FNEG, VT, N1);
@@ -3304,7 +3306,7 @@ SDOperand DAGCombiner::visitFP_ROUND_INREG(SDNode *N) {
   
   // fold (fp_round_inreg c1fp) -> c1fp
   if (N0CFP) {
-    SDOperand Round = DAG.getConstantFP(N0CFP->getValue(), EVT);
+    SDOperand Round = DAG.getConstantFP(N0CFP->getValueAPF(), EVT);
     return DAG.getNode(ISD::FP_EXTEND, VT, Round);
   }
   return SDOperand();
@@ -4207,7 +4209,7 @@ SDOperand DAGCombiner::SimplifyVBinOp(SDNode *N) {
         if ((RHSOp.getOpcode() == ISD::Constant &&
              cast<ConstantSDNode>(RHSOp.Val)->isNullValue()) ||
             (RHSOp.getOpcode() == ISD::ConstantFP &&
-             !cast<ConstantFPSDNode>(RHSOp.Val)->getValue()))
+             cast<ConstantFPSDNode>(RHSOp.Val)->getValueAPF().isZero()))
           break;
       }
       Ops.push_back(DAG.getNode(N->getOpcode(), EltType, LHSOp, RHSOp));

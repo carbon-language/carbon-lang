@@ -727,7 +727,8 @@ SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT::ValueType VT,
     if (!MVT::isVector(VT))
       return SDOperand(N, 0);
   if (!N) {
-    N = new ConstantFPSDNode(isTarget, Val, EltVT);
+    N = new ConstantFPSDNode(isTarget, 
+      isDouble ? APFloat(Val) : APFloat((float)Val), EltVT);
     CSEMap.InsertNode(N, IP);
     AllNodes.push_back(N);
   }
@@ -1665,27 +1666,44 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
   }
 
-  // Constant fold unary operations with an floating point constant operand.
-  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val))
+  // Constant fold unary operations with a floating point constant operand.
+  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val)) {
+    APFloat V = C->getValueAPF();    // make copy
     switch (Opcode) {
     case ISD::FNEG:
-      return getConstantFP(-C->getValue(), VT);
+      V.changeSign();
+      return getConstantFP(V, VT);
     case ISD::FABS:
-      return getConstantFP(fabs(C->getValue()), VT);
+      V.clearSign();
+      return getConstantFP(V, VT);
     case ISD::FP_ROUND:
     case ISD::FP_EXTEND:
-      return getConstantFP(C->getValue(), VT);
+      // This can return overflow, underflow, or inexact; we don't care.
+      // FIXME need to be more flexible about rounding mode.
+      (void) V.convert(VT==MVT::f32 ? APFloat::IEEEsingle : 
+                                      APFloat::IEEEdouble,
+                       APFloat::rmNearestTiesToEven);
+      return getConstantFP(V, VT);
     case ISD::FP_TO_SINT:
-      return getConstant((int64_t)C->getValue(), VT);
-    case ISD::FP_TO_UINT:
-      return getConstant((uint64_t)C->getValue(), VT);
+    case ISD::FP_TO_UINT: {
+      integerPart x;
+      assert(integerPartWidth >= 64);
+      // FIXME need to be more flexible about rounding mode.
+      APFloat::opStatus s = V.convertToInteger(&x, 64U,
+                            Opcode==ISD::FP_TO_SINT,
+                            APFloat::rmTowardZero);
+      if (s==APFloat::opInvalidOp)     // inexact is OK, in fact usual
+        break;
+      return getConstant(x, VT);
+    }
     case ISD::BIT_CONVERT:
       if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
-        return getConstant(FloatToBits(C->getValue()), VT);
+        return getConstant(FloatToBits(V.convertToFloat()), VT);
       else if (VT == MVT::i64 && C->getValueType(0) == MVT::f64)
-        return getConstant(DoubleToBits(C->getValue()), VT);
+        return getConstant(DoubleToBits(V.convertToDouble()), VT);
       break;
     }
+  }
 
   unsigned OpOpcode = Operand.Val->getOpcode();
   switch (Opcode) {
@@ -1914,29 +1932,37 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
   if (N1CFP) {
     if (N2CFP) {
-      double C1 = N1CFP->getValue(), C2 = N2CFP->getValue();
+      APFloat V1 = N1CFP->getValueAPF(), V2 = N2CFP->getValueAPF();
+      APFloat::opStatus s;
       switch (Opcode) {
-      case ISD::FADD: return getConstantFP(C1 + C2, VT);
-      case ISD::FSUB: return getConstantFP(C1 - C2, VT);
-      case ISD::FMUL: return getConstantFP(C1 * C2, VT);
+      case ISD::FADD: 
+        s = V1.add(V2, APFloat::rmNearestTiesToEven);
+        if (s!=APFloat::opInvalidOp)
+          return getConstantFP(V1, VT);
+        break;
+      case ISD::FSUB: 
+        s = V1.subtract(V2, APFloat::rmNearestTiesToEven);
+        if (s!=APFloat::opInvalidOp)
+          return getConstantFP(V1, VT);
+        break;
+      case ISD::FMUL:
+        s = V1.multiply(V2, APFloat::rmNearestTiesToEven);
+        if (s!=APFloat::opInvalidOp)
+          return getConstantFP(V1, VT);
+        break;
       case ISD::FDIV:
-        if (C2) return getConstantFP(C1 / C2, VT);
+        s = V1.divide(V2, APFloat::rmNearestTiesToEven);
+        if (s!=APFloat::opInvalidOp && s!=APFloat::opDivByZero)
+          return getConstantFP(V1, VT);
         break;
       case ISD::FREM :
-        if (C2) return getConstantFP(fmod(C1, C2), VT);
+        s = V1.mod(V2, APFloat::rmNearestTiesToEven);
+        if (s!=APFloat::opInvalidOp && s!=APFloat::opDivByZero)
+          return getConstantFP(V1, VT);
         break;
-      case ISD::FCOPYSIGN: {
-        union {
-          double   F;
-          uint64_t I;
-        } u1;
-        u1.F = C1;
-        if (int64_t(DoubleToBits(C2)) < 0)  // Sign bit of RHS set?
-          u1.I |= 1ULL << 63;      // Set the sign bit of the LHS.
-        else 
-          u1.I &= (1ULL << 63)-1;  // Clear the sign bit of the LHS.
-        return getConstantFP(u1.F, VT);
-      }
+      case ISD::FCOPYSIGN:
+        V1.copySign(V2);
+        return getConstantFP(V1, VT);
       default: break;
       }
     } else {      // Cannonicalize constant to RHS if commutative
@@ -3688,7 +3714,9 @@ void SDNode::dump(const SelectionDAG *G) const {
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
     cerr << "<" << CSDN->getValue() << ">";
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
-    cerr << "<" << CSDN->getValue() << ">";
+    cerr << "<" << (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEsingle ? 
+                    CSDN->getValueAPF().convertToFloat() :
+                    CSDN->getValueAPF().convertToDouble()) << ">";
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
     int offset = GADN->getOffset();
