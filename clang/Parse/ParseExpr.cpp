@@ -374,15 +374,19 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
   
-    // Combine the LHS and RHS into the LHS (e.g. build AST).
-    if (TernaryMiddle.isInvalid)
-      LHS = Actions.ParseBinOp(OpToken.getLocation(), OpToken.getKind(),
-                               LHS.Val, RHS.Val);
-    else
-      LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
-                                       LHS.Val, TernaryMiddle.Val, RHS.Val);
-    if (LHS.isInvalid)
-      return LHS;
+    if (!LHS.isInvalid) {
+      // Combine the LHS and RHS into the LHS (e.g. build AST).
+      if (TernaryMiddle.isInvalid)
+        LHS = Actions.ParseBinOp(OpToken.getLocation(), OpToken.getKind(),
+                                 LHS.Val, RHS.Val);
+      else
+        LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
+                                         LHS.Val, TernaryMiddle.Val, RHS.Val);
+    } else {
+      // We had a semantic error on the LHS.  Just free the RHS and continue.
+      Actions.DeleteExpr(TernaryMiddle.Val);
+      Actions.DeleteExpr(RHS.Val);
+    }
   }
 }
 
