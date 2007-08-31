@@ -1014,6 +1014,12 @@ public:
     OS << " ? ... : ...\n";  
   }
   
+  void VisitChooseExpr(ChooseExpr* C) {
+    OS << "__builtin_choose_expr( ";
+    C->getCond()->printPretty(OS,Helper);
+    OS << " )\n";
+  }
+  
   void VisitIndirectGotoStmt(IndirectGotoStmt* I) {
     OS << "goto *";
     I->getTarget()->printPretty(OS,Helper);
