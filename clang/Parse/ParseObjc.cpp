@@ -224,7 +224,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
         ConsumeToken();
         continue;
       } else if (ocKind == tok::objc_property) {
-        ParseObjCPropertyDecl(AtLoc);
+        ParseObjCPropertyDecl(0/*FIXME*/);
         continue;
       } else {
         Diag(Tok, diag::err_objc_illegal_interface_qual);
@@ -246,8 +246,96 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
   }
 }
 
-void Parser::ParseObjCPropertyDecl(SourceLocation atLoc) {
-  assert(0 && "Unimp");
+///   Parse property attribute declarations.
+///
+///   property-attr-decl: '(' property-attrlist ')'
+///   property-attrlist:
+///     property-attribute
+///     property-attrlist ',' property-attribute
+///   property-attribute:
+///     getter '=' identifier
+///     setter '=' identifier ':'
+///     readonly
+///     readwrite
+///     assign
+///     retain
+///     copy
+///     nonatomic
+///
+void Parser::ParseObjCPropertyAttribute (DeclTy *interfaceDecl) {
+  SourceLocation loc = ConsumeParen(); // consume '('
+  while (isObjCPropertyAttribute()) {
+    const IdentifierInfo *II = Tok.getIdentifierInfo();
+    // getter/setter require extra treatment.
+    if (II == ObjcPropertyAttrs[objc_getter] || 
+        II == ObjcPropertyAttrs[objc_setter]) {
+      // skip getter/setter part.
+      SourceLocation loc = ConsumeToken();
+      if (Tok.getKind() == tok::equal) {
+        loc = ConsumeToken();
+        if (Tok.getKind() == tok::identifier) {
+          if (II == ObjcPropertyAttrs[objc_setter]) {
+            loc = ConsumeToken();  // consume method name
+            if (Tok.getKind() != tok::colon) {
+              Diag(loc, diag::err_expected_colon);
+              SkipUntil(tok::r_paren,true,true);
+              break;
+            }
+          }
+        }
+        else {
+          Diag(loc, diag::err_expected_ident);
+	  SkipUntil(tok::r_paren,true,true);
+	  break;
+	}
+      }
+      else {
+        Diag(loc, diag::err_objc_expected_equal);    
+        SkipUntil(tok::r_paren,true,true);
+        break;
+      }
+    }
+    ConsumeToken(); // consume last attribute token
+    if (Tok.getKind() == tok::comma) {
+      loc = ConsumeToken();
+      continue;
+    }
+    if (Tok.getKind() == tok::r_paren)
+      break;
+    Diag(loc, diag::err_expected_rparen);
+    SkipUntil(tok::semi);
+    return;
+  }
+  if (Tok.getKind() == tok::r_paren)
+    ConsumeParen();
+  else {
+    Diag(loc, diag::err_objc_expected_property_attr);
+    SkipUntil(tok::r_paren); // recover from error inside attribute list
+  }
+}
+
+///   Main routine to parse property declaration.
+///
+///   @property property-attr-decl[opt] property-component-decl ';'
+///
+void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
+  assert(Tok.isObjCAtKeyword(tok::objc_property) &&
+         "ParseObjCPropertyDecl(): Expected @property");
+  ConsumeToken(); // the "property" identifier
+  // Parse property attribute list, if any. 
+  if (Tok.getKind() == tok::l_paren) {
+    // property has attribute list.
+    ParseObjCPropertyAttribute(0/*FIXME*/);
+  }
+  // Parse declaration portion of @property.
+  llvm::SmallVector<DeclTy*, 32> PropertyDecls;
+  ParseStructDeclaration(interfaceDecl, PropertyDecls);
+  if (Tok.getKind() == tok::semi) 
+    ConsumeToken();
+  else {
+    Diag(Tok, diag::err_expected_semi_decl_list);
+    SkipUntil(tok::r_brace, true, true);
+  }
 }
 
 ///   objc-methodproto:
@@ -311,6 +399,18 @@ bool Parser::isObjCTypeQualifier() {
   }
   return false;
 }
+
+///  property-attrlist: one of
+///    readonly getter setter assign retain copy nonatomic
+///
+bool Parser::isObjCPropertyAttribute() {
+  if (Tok.getKind() == tok::identifier) {
+    const IdentifierInfo *II = Tok.getIdentifierInfo();
+    for (unsigned i = 0; i < objc_NumAttrs; ++i)
+      if (II == ObjcPropertyAttrs[i]) return true;
+  }
+  return false;
+} 
 
 ///   objc-type-name:
 ///     '(' objc-type-qualifiers[opt] type-name ')'

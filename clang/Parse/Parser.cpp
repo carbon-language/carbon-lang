@@ -258,6 +258,18 @@ void Parser::Initialize() {
     ObjcTypeQuals[objc_bycopy] = &PP.getIdentifierTable().get("bycopy");
     ObjcTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
   }
+  if (getLang().ObjC2) {
+    ObjcPropertyAttrs[objc_readonly] = &PP.getIdentifierTable().get("readonly");
+    ObjcPropertyAttrs[objc_getter] = &PP.getIdentifierTable().get("getter");
+    ObjcPropertyAttrs[objc_setter] = &PP.getIdentifierTable().get("setter");
+    ObjcPropertyAttrs[objc_assign] = &PP.getIdentifierTable().get("assign");
+    ObjcPropertyAttrs[objc_readwrite] = 
+                                  &PP.getIdentifierTable().get("readwrite");
+    ObjcPropertyAttrs[objc_retain] = &PP.getIdentifierTable().get("retain");
+    ObjcPropertyAttrs[objc_copy] = &PP.getIdentifierTable().get("copy");
+    ObjcPropertyAttrs[objc_nonatomic] = 
+                                  &PP.getIdentifierTable().get("nonatomic");
+  }
 }
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the

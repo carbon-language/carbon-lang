@@ -274,11 +274,20 @@ private:
   };
   IdentifierInfo *ObjcTypeQuals[objc_NumQuals];
   bool isObjCTypeQualifier();
+  // Definitions for ObjC2's @property attributes.
+  enum ObjCPropertyAttr {
+    objc_readonly=0, objc_getter, objc_setter, objc_assign, 
+    objc_readwrite, objc_retain, objc_copy, objc_nonatomic, objc_NumAttrs
+  };
+  IdentifierInfo *ObjcPropertyAttrs[objc_NumAttrs];
+  bool isObjCPropertyAttribute();
+
   void ParseObjCTypeName();
   void ParseObjCMethodRequirement();
   void ParseObjCMethodPrototype();
   void ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
-  void ParseObjCPropertyDecl(SourceLocation atLoc);
+  void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
+  void ParseObjCPropertyDecl(DeclTy *interfaceDecl);
   
   void ParseObjCInstanceMethodDefinition();
   void ParseObjCClassMethodDefinition();

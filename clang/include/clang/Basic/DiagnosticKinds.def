@@ -399,6 +399,10 @@ DIAG(err_objc_illegal_visibility_spec, ERROR,
      "illegal visibility specification")
 DIAG(err_objc_illegal_interface_qual, ERROR,
      "illegal interface qualifier")
+DIAG(err_objc_expected_equal, ERROR,
+     "setter/getter expects '=' followed by name")
+DIAG(err_objc_expected_property_attr, ERROR,
+     "unknown property attribute detected")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
