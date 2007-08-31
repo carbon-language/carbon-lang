@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Constants.h"
@@ -44,4 +45,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
       
   return RValue::get(0);
+}
+
+RValue CodeGenFunction::EmitBuiltinLibFuncExpr(unsigned BuiltinID, 
+                                               const CallExpr *E) {
+  //llvm::Function *Callee = CGM.getBuiltinLibFunction(BuiltinID);
+  return RValue();
 }

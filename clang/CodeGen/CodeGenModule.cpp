@@ -18,8 +18,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
 using namespace clang;
 using namespace CodeGen;
@@ -101,6 +100,41 @@ void CodeGenModule::EmitGlobalVarDeclarator(const FileVarDecl *D) {
     EmitGlobalVar(D);
 }
 
+/// getBuiltinLibFunction
+llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
+  if (BuiltinFunctions.size() <= BuiltinID)
+    BuiltinFunctions.resize(BuiltinID);
+  
+  // Already available?
+  llvm::Function *&FunctionSlot = BuiltinFunctions[BuiltinID];
+  if (FunctionSlot)
+    return FunctionSlot;
+  
+  assert(Context.BuiltinInfo.isLibFunction(BuiltinID) && "isn't a lib fn");
+  
+  // Get the name, skip over the __builtin_ prefix.
+  const char *Name = Context.BuiltinInfo.GetName(BuiltinID)+10;
+  
+  // Get the type for the builtin.
+  QualType Type = Context.BuiltinInfo.GetBuiltinType(BuiltinID, Context);
+  const llvm::FunctionType *Ty = 
+    cast<llvm::FunctionType>(getTypes().ConvertType(Type));
+
+  // FIXME: This has a serious problem with code like this:
+  //  void abs() {}
+  //    ... __builtin_abs(x);
+  // The two versions of abs will collide.  The fix is for the builtin to win,
+  // and for the existing one to be turned into a constantexpr cast of the
+  // builtin.  In the case where the existing one is a static function, it
+  // should just be renamed.
+  assert(getModule().getFunction(Name) == 0 && "FIXME: Name collision");
+
+  // FIXME: param attributes for sext/zext etc.
+  return FunctionSlot = new llvm::Function(Ty, llvm::Function::ExternalLinkage,
+                                           Name, &getModule());
+}
+
+
 llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
   llvm::Intrinsic::ID IID;
@@ -114,8 +148,8 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   return MemCpyFn = llvm::Intrinsic::getDeclaration(&TheModule, IID);
 }
 
-llvm::Constant *CodeGenModule::GetAddrOfConstantCFString(const std::string &str)
-{
+llvm::Constant *CodeGenModule::
+GetAddrOfConstantCFString(const std::string &str) {
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
     CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
   

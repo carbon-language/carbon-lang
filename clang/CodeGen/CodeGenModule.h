@@ -44,6 +44,8 @@ class CodeGenModule {
   
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::Constant *CFConstantStringClassRef;
+  
+  std::vector<llvm::Function *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, llvm::Module &M);
   
@@ -52,8 +54,14 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   
   llvm::Constant *GetAddrOfGlobalDecl(const Decl *D);
+  
+  /// getBuiltinLibFunction - Given a builtin id for a function like
+  /// "__builtin_fabsf", return a Function* for "fabsf".
+  ///
+  llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
   llvm::Function *getMemCpyFn();
+  
   
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
