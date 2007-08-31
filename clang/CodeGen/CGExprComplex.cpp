@@ -92,7 +92,8 @@ public:
     return EmitCast(E->getSubExpr(), E->getType());
   }
   ComplexPairTy VisitCallExpr(const CallExpr *E);
-  
+  ComplexPairTy VisitStmtExpr(const StmtExpr *E);
+
   // Operators.
   ComplexPairTy VisitPrePostIncDec(const UnaryOperator *E,
                                    bool isInc, bool isPre);
@@ -240,6 +241,10 @@ VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
 
 ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
   return CGF.EmitCallExpr(E).getComplexVal();
+}
+
+ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {
+  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getComplexVal();
 }
 
 /// EmitComplexToComplexCast - Emit a cast from complex value Val to DestType.
