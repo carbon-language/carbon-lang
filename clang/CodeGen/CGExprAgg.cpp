@@ -67,6 +67,7 @@ public:
   //  case Expr::ImplicitCastExprClass:
   //  case Expr::CastExprClass: 
   //  case Expr::CallExprClass:
+  void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
 
@@ -127,6 +128,10 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
+  CGF.EmitCompoundStmt(*E->getSubStmt(), true, DestPtr, VolatileDest);
+}
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
   fprintf(stderr, "Unimplemented aggregate binary expr!\n");
