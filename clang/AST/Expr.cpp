@@ -194,6 +194,18 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   }
 }
 
+InitListExpr::InitListExpr(SourceLocation lbraceloc, 
+                           Expr **initexprs, unsigned numinits,
+                           SourceLocation rbraceloc)
+  : Expr(InitListExprClass, QualType())
+  , NumInits(numinits)
+  , LBraceLoc(lbraceloc)
+  , RBraceLoc(rbraceloc)
+{
+  InitExprs = new Expr*[numinits];
+  for (unsigned i = 0; i != numinits; i++)
+    InitExprs[i] = initexprs[i];
+}
 
 //===----------------------------------------------------------------------===//
 // Generic Expression Routines
@@ -869,6 +881,14 @@ Stmt::child_iterator ChooseExpr::child_begin() {
 
 Stmt::child_iterator ChooseExpr::child_end() {
   return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
+}
+
+// InitListExpr
+Stmt::child_iterator InitListExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&InitExprs[0]);
+}
+Stmt::child_iterator InitListExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&InitExprs[NumInits]);
 }
 
 // ObjCStringLiteral

@@ -967,6 +967,43 @@ public:
   virtual child_iterator child_end();
 };
 
+/// InitListExpr, used for struct and array initializers.
+class InitListExpr : public Expr {
+  Expr **InitExprs;
+  unsigned NumInits;
+  SourceLocation LBraceLoc, RBraceLoc;
+public:
+  InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
+               SourceLocation rbraceloc);
+  ~InitListExpr() {
+    delete [] InitExprs;
+  }
+  
+  unsigned getNumInits() const { return NumInits; }
+  
+  const Expr* getInit(unsigned Init) const { 
+    assert(Init < NumInits && "Initializer access out of range!");
+    return InitExprs[Init];
+  }
+  
+  Expr* getInit(unsigned Init) { 
+    assert(Init < NumInits && "Initializer access out of range!");
+    return InitExprs[Init];
+  }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(LBraceLoc, RBraceLoc);
+  } 
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == InitListExprClass; 
+  }
+  static bool classof(const InitListExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 /// ObjCStringLiteral, used for Objective-C string literals
 /// i.e. @"foo".
 class ObjCStringLiteral : public Expr {

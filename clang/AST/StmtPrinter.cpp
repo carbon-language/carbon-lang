@@ -550,6 +550,15 @@ void StmtPrinter::VisitChooseExpr(ChooseExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
+  OS << "{ ";
+  for (unsigned i = 0, e = Node->getNumInits(); i != e; ++i) {
+    if (i) OS << ", ";
+    PrintExpr(Node->getInit(i));
+  }
+  OS << " }";
+}
+
 // C++
 
 void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {

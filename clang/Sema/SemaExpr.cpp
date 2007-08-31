@@ -640,12 +640,16 @@ ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
 }
 
 Action::ExprResult Sema::
-ParseInitList(SourceLocation LParenLoc, ExprTy **InitList, unsigned NumInit,
-              SourceLocation RParenLoc) {
+ParseInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
+              SourceLocation RBraceLoc) {
+//  Expr **InitList = reinterpret_cast<Expr**>(initlist);
+
   // FIXME: add semantic analysis (C99 6.7.8). This involves 
   // knowledge of the object being intialized. As a result, the code for
   // doing the semantic analysis will likely be located elsewhere (i.e. in 
   // consumers of InitListExpr (e.g. ParseDeclarator, ParseCompoundLiteral).
+  
+  //return new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
   return false; // FIXME instantiate an InitListExpr.
 }
 
