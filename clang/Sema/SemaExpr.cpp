@@ -1743,6 +1743,12 @@ Sema::ExprResult Sema::ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
   // iteratively process the offsetof designators.
   Expr *Res = new CompoundLiteralExpr(ArgTy, 0);
   
+  // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
+  // GCC extension, diagnose them.
+  if (NumComponents != 1)
+    Diag(BuiltinLoc, diag::ext_offsetof_extended_field_designator,
+         SourceRange(CompPtr[1].LocStart, CompPtr[NumComponents-1].LocEnd));
+  
   for (unsigned i = 0; i != NumComponents; ++i) {
     const OffsetOfComponent &OC = CompPtr[i];
     if (OC.isBrackets) {
