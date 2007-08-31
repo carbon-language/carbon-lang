@@ -412,8 +412,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 ///
 static unsigned ComputeUltimateVN(VNInfo *VNI,
                                   SmallVector<VNInfo*, 16> &NewVNInfo,
-                                  SmallVector<VNInfo*, 16> &ThisFromOther,
-                                  SmallVector<VNInfo*, 16> &OtherFromThis,
+                                  std::map<VNInfo*, VNInfo*> &ThisFromOther,
+                                  std::map<VNInfo*, VNInfo*> &OtherFromThis,
                                   SmallVector<int, 16> &ThisValNoAssignments,
                                   SmallVector<int, 16> &OtherValNoAssignments) {
   unsigned VN = VNI->id;
@@ -425,11 +425,12 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
 
   // If this val is not a copy from the other val, then it must be a new value
   // number in the destination.
-  VNInfo *OtherValNo = ThisFromOther[VN];
-  if (!OtherValNo) {
+  std::map<VNInfo*, VNInfo*>::iterator I = ThisFromOther.find(VNI);
+  if (I == ThisFromOther.end()) {
     NewVNInfo.push_back(VNI);
     return ThisValNoAssignments[VN] = NewVNInfo.size()-1;
   }
+  VNInfo *OtherValNo = I->second;
 
   // Otherwise, this *is* a copy from the RHS.  If the other side has already
   // been computed, return it.
@@ -589,8 +590,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   // coalesced.
   SmallVector<int, 16> LHSValNoAssignments;
   SmallVector<int, 16> RHSValNoAssignments;
-  SmallVector<VNInfo*, 16> LHSValsDefinedFromRHS;
-  SmallVector<VNInfo*, 16> RHSValsDefinedFromLHS;
+  std::map<VNInfo*, VNInfo*> LHSValsDefinedFromRHS;
+  std::map<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
   SmallVector<VNInfo*, 16> NewVNInfo;
                           
   // If a live interval is a physical register, conservatively check if any
@@ -614,9 +615,6 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
       }
   }
                           
-  LHSValsDefinedFromRHS.resize(LHS.getNumValNums(), NULL);
-  RHSValsDefinedFromLHS.resize(RHS.getNumValNums(), NULL);
-
   // Compute ultimate value numbers for the LHS and RHS values.
   if (RHS.containsOneValue()) {
     // Copies from a liveinterval with a single value are simple to handle and
@@ -627,7 +625,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     int RHSVal0DefinedFromLHS = -1;
     int RHSValID = -1;
     VNInfo *RHSValNoInfo = NULL;
-    unsigned RHSSrcReg = RHS.getFirstValNumInfo()->reg;
+    VNInfo *RHSValNoInfo0 = RHS.getFirstValNumInfo();
+    unsigned RHSSrcReg = RHSValNoInfo0->reg;
     if ((RHSSrcReg == 0 || rep(RHSSrcReg) != LHS.reg)) {
       // If RHS is not defined as a copy from the LHS, we can use simpler and
       // faster checks to see if the live ranges are coalescable.  This joiner
@@ -635,12 +634,11 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
       if (!MRegisterInfo::isPhysicalRegister(RHS.reg)) {
         return SimpleJoin(LHS, RHS);
       } else {
-        RHSValNoInfo = RHS.getFirstValNumInfo();
+        RHSValNoInfo = RHSValNoInfo0;
       }
     } else {
       // It was defined as a copy from the LHS, find out what value # it is.
-      const VNInfo *VNI = RHS.getFirstValNumInfo();
-      RHSValNoInfo = LHS.getLiveRangeContaining(VNI->def-1)->valno;
+      RHSValNoInfo = LHS.getLiveRangeContaining(RHSValNoInfo0->def-1)->valno;
       RHSValID = RHSValNoInfo->id;
       RHSVal0DefinedFromLHS = RHSValID;
     }
@@ -666,13 +664,13 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
           // value# for it.  Keep the current value number, but remember it.
           LHSValNoAssignments[VN] = RHSValID = VN;
           NewVNInfo[VN] = RHSValNoInfo;
-          LHSValsDefinedFromRHS[VN] = VNI;
+          LHSValsDefinedFromRHS[VNI] = RHSValNoInfo0;
         } else {
           // Otherwise, use the specified value #.
           LHSValNoAssignments[VN] = RHSValID;
           if (VN == (unsigned)RHSValID) {  // Else this val# is dead.
             NewVNInfo[VN] = RHSValNoInfo;
-            LHSValsDefinedFromRHS[VN] = VNI;
+            LHSValsDefinedFromRHS[VNI] = RHSValNoInfo0;
           }
         }
       } else {
@@ -684,8 +682,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     assert(RHSValID != -1 && "Didn't find value #?");
     RHSValNoAssignments[0] = RHSValID;
     if (RHSVal0DefinedFromLHS != -1) {
-      const VNInfo *VNI = RHS.getFirstValNumInfo();
-      RHSValsDefinedFromLHS[0] = LHS.getLiveRangeContaining(VNI->def-1)->valno;
+      RHSValsDefinedFromLHS[RHSValNoInfo0] =
+        LHS.getLiveRangeContaining(RHSValNoInfo0->def-1)->valno;
     }
   } else {
     // Loop over the value numbers of the LHS, seeing if any are defined from
@@ -693,7 +691,6 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
          i != e; ++i) {
       VNInfo *VNI = *i;
-      unsigned VN = VNI->id;
       unsigned ValSrcReg = VNI->reg;
       if (ValSrcReg == 0)  // Src not defined by a copy?
         continue;
@@ -704,7 +701,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
         continue;
       
       // Figure out the value # from the RHS.
-      LHSValsDefinedFromRHS[VN] = RHS.getLiveRangeContaining(VNI->def-1)->valno;
+      LHSValsDefinedFromRHS[VNI] = RHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
     
     // Loop over the value numbers of the RHS, seeing if any are defined from
@@ -712,7 +709,6 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
          i != e; ++i) {
       VNInfo *VNI = *i;
-      unsigned VN = VNI->id;
       unsigned ValSrcReg = VNI->reg;
       if (ValSrcReg == 0)  // Src not defined by a copy?
         continue;
@@ -723,7 +719,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
         continue;
       
       // Figure out the value # from the LHS.
-      RHSValsDefinedFromLHS[VN] = LHS.getLiveRangeContaining(VNI->def-1)->valno;
+      RHSValsDefinedFromLHS[VNI]= LHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
     
     LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
@@ -747,7 +743,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
       if (RHSValNoAssignments[VN] >= 0 || VNI->def == ~1U)
         continue;
       // If this value number isn't a copy from the LHS, it's a new number.
-      if (!RHSValsDefinedFromLHS[VN]) {
+      if (RHSValsDefinedFromLHS.find(VNI) == RHSValsDefinedFromLHS.end()) {
         NewVNInfo.push_back(VNI);
         RHSValNoAssignments[VN] = NewVNInfo.size()-1;
         continue;
@@ -803,23 +799,18 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
   }
 
   // Update kill info. Some live ranges are extended due to copy coalescing.
-  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
-       i != e; ++i) {
-    VNInfo *VNI = *i;
-    unsigned VN = VNI->id;
-    if (VN >= RHSValsDefinedFromLHS.size() || !RHSValsDefinedFromLHS[VN])
-      continue;
-    unsigned RHSValID = RHSValNoAssignments[VN];
+  for (std::map<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
+         E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
+    VNInfo *VNI = I->first;
+    unsigned RHSValID = RHSValNoAssignments[VNI->id];
     LiveInterval::removeKill(*NewVNInfo[RHSValID], VNI->def);
     LHS.addKills(*NewVNInfo[RHSValID], VNI->kills);
   }
-  for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
-       i != e; ++i) {
-    VNInfo *VNI = *i;
-    unsigned VN = VNI->id;
-    if (VN >= LHSValsDefinedFromRHS.size() || !LHSValsDefinedFromRHS[VN])
-      continue;
-    unsigned LHSValID = LHSValNoAssignments[VN];
+
+  for (std::map<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
+         E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
+    VNInfo *VNI = I->first;
+    unsigned LHSValID = LHSValNoAssignments[VNI->id];
     LiveInterval::removeKill(*NewVNInfo[LHSValID], VNI->def);
     RHS.addKills(*NewVNInfo[LHSValID], VNI->kills);
   }
