@@ -9,15 +9,48 @@
 # variables. 
 process_arguments "$@"
 
-# See if we have previously been configured by sensing the presense
+# See if we have previously been configured by sensing the presence
 # of the config.status scripts
 if test ! -x "config.status" ; then
   # We must configure so build a list of configure options
   config_options="--prefix=$PREFIX --with-llvmgccdir=$PREFIX"
+  if test "$OPTIMIZED" -eq 1 ; then
+    config_options="$config_options --enable-optimized"
+  else
+    config_options="$config_options --disable-optimized"
+  fi
+  if test "$DEBUG" -eq 1 ; then
+    config_options="$config_options --enable-debug"
+  else
+    config_options="$config_options --disable-debug"
+  fi
+  if test "$ASSERTIONS" -eq 1 ; then
+    config_options="$config_options --enable-assertions"
+  else
+    config_options="$config_options --disable-assertions"
+  fi
+  if test "$CHECKING" -eq 1 ; then
+    config_options="$config_options --enable-expensive-checks"
+  else
+    config_options="$config_options --disable-expensive-checks"
+  fi
+  if test "$DOXYGEN" -eq 1 ; then
+    config_options="$config_options --enable-doxygen"
+  else
+    config_options="$config_options --disable-doxygen"
+  fi
+  if test "$THREADS" -eq 1 ; then
+    config_options="$config_options --enable-threads"
+  else
+    config_options="$config_options --disable-threads"
+  fi
   config_options="$config_options $OPTIONS_DASH $OPTIONS_DASH_DASH"
   msg 0 Configuring $module with:
   msg 0 "  ./configure" $config_options
-  ./configure $config_options || (echo "Can't configure llvm" ; exit 1)
+  $LLVM_TOP/llvm/configure $config_options || \
+    die $? "Configuring llvm module failed"
+else
+  msg 0 Module $module already configured, ignoring configure options.
 fi
 
 msg 0 Building $module with:
