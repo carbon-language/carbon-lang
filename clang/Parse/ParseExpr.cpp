@@ -315,7 +315,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
         // In particular, the RHS of the '?' is 'expression', not
         // 'logical-OR-expression' as we might expect.
         TernaryMiddle = ParseExpression();
-        if (TernaryMiddle.isInvalid) return TernaryMiddle;
+        if (TernaryMiddle.isInvalid) {
+          Actions.DeleteExpr(LHS.Val);
+          return TernaryMiddle;
+        }
       } else {
         // Special case handling of "X ? Y : Z" where Y is empty:
         //   logical-OR-expression '?' ':' conditional-expression   [GNU]
@@ -326,6 +329,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       if (Tok.getKind() != tok::colon) {
         Diag(Tok, diag::err_expected_colon);
         Diag(OpToken, diag::err_matching, "?");
+        Actions.DeleteExpr(LHS.Val);
+        Actions.DeleteExpr(TernaryMiddle.Val);
         return ExprResult(true);
       }
       
@@ -335,7 +340,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     
     // Parse another leaf here for the RHS of the operator.
     ExprResult RHS = ParseCastExpression(false);
-    if (RHS.isInvalid) return RHS;
+    if (RHS.isInvalid) {
+      Actions.DeleteExpr(LHS.Val);
+      Actions.DeleteExpr(TernaryMiddle.Val);
+      return RHS;
+    }
 
     // Remember the precedence of this operator and get the precedence of the
     // operator immediately to the right of the RHS.
@@ -355,7 +364,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
       // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
       // A=(B=(C=D)), where each paren is a level of recursion here.
       RHS = ParseRHSOfBinaryExpression(RHS, ThisPrec + !isRightAssoc);
-      if (RHS.isInvalid) return RHS;
+      if (RHS.isInvalid) {
+        Actions.DeleteExpr(LHS.Val);
+        Actions.DeleteExpr(TernaryMiddle.Val);
+        return RHS;
+      }
 
       NextTokPrec = getBinOpPrecedence(Tok.getKind());
     }
@@ -368,6 +381,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     else
       LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
                                        LHS.Val, TernaryMiddle.Val, RHS.Val);
+    if (LHS.isInvalid)
+      return LHS;
   }
 }
 
