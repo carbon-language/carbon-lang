@@ -30,3 +30,8 @@ void t3(int c) {
   c ? t1() : t2();
 }
 
+// This shouldn't warn: the expr at the end of the stmtexpr really is used.
+int stmt_expr(int x, int y) {
+  return ({int _a = x, _b = y; _a > _b ? _a : _b; });
+}
+

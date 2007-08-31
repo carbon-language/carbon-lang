@@ -191,7 +191,8 @@ public:
   }
   
   virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
-                                       StmtTy **Elts, unsigned NumElts) {
+                                       StmtTy **Elts, unsigned NumElts,
+                                       bool isStmtExpr) {
     return 0;
   }
   virtual StmtResult ParseDeclStmt(DeclTy *Decl) {

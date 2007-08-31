@@ -366,7 +366,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 /// [OMP]   barrier-directive
 /// [OMP]   flush-directive
 ///
-Parser::StmtResult Parser::ParseCompoundStatement() {
+Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
   assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
   
   // Enter a scope to hold everything within the compound stmt.  Compound
@@ -374,7 +374,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
   EnterScope(Scope::DeclScope);
 
   // Parse the statements in the body.
-  StmtResult Body = ParseCompoundStatementBody();
+  StmtResult Body = ParseCompoundStatementBody(isStmtExpr);
 
   ExitScope();
   return Body;
@@ -385,7 +385,7 @@ Parser::StmtResult Parser::ParseCompoundStatement() {
 /// ParseCompoundStmt action.  This expects the '{' to be the current token, and
 /// consume the '}' at the end of the block.  It does not manipulate the scope
 /// stack.
-Parser::StmtResult Parser::ParseCompoundStatementBody() {
+Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   SourceLocation LBraceLoc = ConsumeBrace();  // eat the '{'.
 
   // TODO: "__label__ X, Y, Z;" is the GNU "Local Label" extension.  These are
@@ -442,7 +442,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody() {
   
   SourceLocation RBraceLoc = ConsumeBrace();
   return Actions.ParseCompoundStmt(LBraceLoc, RBraceLoc,
-                                   &Stmts[0], Stmts.size());
+                                   &Stmts[0], Stmts.size(), isStmtExpr);
 }
 
 /// ParseIfStatement

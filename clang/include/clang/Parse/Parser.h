@@ -361,8 +361,8 @@ private:
   StmtResult ParseIdentifierStatement(bool OnlyStatement);
   StmtResult ParseCaseStatement();
   StmtResult ParseDefaultStatement();
-  StmtResult ParseCompoundStatement();
-  StmtResult ParseCompoundStatementBody();
+  StmtResult ParseCompoundStatement(bool isStmtExpr = false);
+  StmtResult ParseCompoundStatementBody(bool isStmtExpr = false);
   StmtResult ParseIfStatement();
   StmtResult ParseSwitchStatement();
   StmtResult ParseWhileStatement();

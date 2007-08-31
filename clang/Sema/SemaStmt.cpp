@@ -21,29 +21,9 @@
 #include "clang/Lex/IdentifierTable.h"
 using namespace clang;
 
-/// DiagnoseDeadExpr - The specified expression is side-effect free and
-/// evaluated in a context where the result is unused.  Emit a diagnostic to
-/// warn about this if appropriate.
-static void DiagnoseDeadExpr(Expr *E, Sema &S) {
-  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E))
-    S.Diag(BO->getOperatorLoc(), diag::warn_unused_expr,
-           BO->getLHS()->getSourceRange(), BO->getRHS()->getSourceRange());
-  else if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
-    S.Diag(UO->getOperatorLoc(), diag::warn_unused_expr,
-           UO->getSubExpr()->getSourceRange());
-  else 
-    S.Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
-}
-
 Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
   Expr *E = static_cast<Expr*>(expr);
   assert(E && "ParseExprStmt(): missing expression");
-  
-  // Exprs are statements, so there is no need to do a conversion here. However,
-  // diagnose some potentially bad code.
-  if (!E->hasLocalSideEffect() && !E->getType()->isVoidType())
-    DiagnoseDeadExpr(E, *this);
-  
   return E;
 }
 
@@ -61,7 +41,7 @@ Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
 
 Action::StmtResult 
 Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
-                        StmtTy **elts, unsigned NumElts) {
+                        StmtTy **elts, unsigned NumElts, bool isStmtExpr) {
   Stmt **Elts = reinterpret_cast<Stmt**>(elts);
   // If we're in C89 mode, check that we don't have any decls after stmts.  If
   // so, emit an extension diagnostic.
@@ -80,6 +60,32 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
       Decl *D = cast<DeclStmt>(Elts[i])->getDecl();
       Diag(D->getLocation(), diag::ext_mixed_decls_code);
     }
+  }
+  
+  // Warn about unused expressions in statements.
+  for (unsigned i = 0; i != NumElts; ++i) {
+    Expr *E = dyn_cast<Expr>(Elts[i]);
+    if (!E) continue;
+    
+    // Warn about expressions with unused results.
+    if (E->hasLocalSideEffect() || E->getType()->isVoidType())
+      continue;
+    
+    // The last expr in a stmt expr really is used.
+    if (isStmtExpr && i == NumElts-1)
+      continue;
+    
+    /// DiagnoseDeadExpr - This expression is side-effect free and evaluated in
+    /// a context where the result is unused.  Emit a diagnostic to warn about
+    /// this.
+    if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E))
+      Diag(BO->getOperatorLoc(), diag::warn_unused_expr,
+           BO->getLHS()->getSourceRange(), BO->getRHS()->getSourceRange());
+    else if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E))
+      Diag(UO->getOperatorLoc(), diag::warn_unused_expr,
+           UO->getSubExpr()->getSourceRange());
+    else 
+      Diag(E->getExprLoc(), diag::warn_unused_expr, E->getSourceRange());
   }
   
   return new CompoundStmt(Elts, NumElts);

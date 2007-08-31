@@ -928,10 +928,9 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
   ExprResult Result(true);
   CastTy = 0;
   
-  if (ExprType >= CompoundStmt && Tok.getKind() == tok::l_brace &&
-      !getLang().NoExtensions) {
+  if (ExprType >= CompoundStmt && Tok.getKind() == tok::l_brace) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    Parser::StmtResult Stmt = ParseCompoundStatement();
+    Parser::StmtResult Stmt = ParseCompoundStatement(true);
     ExprType = CompoundStmt;
     
     // If the substmt parsed correctly, build the AST node.
