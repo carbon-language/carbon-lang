@@ -349,13 +349,11 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   // Update val# info. Renumber them and make sure they all belong to this
   // LiveInterval now.
   valnos.clear();
-  numvals = 0;
   for (unsigned i = 0, e = NewVNInfo.size(); i != e; ++i) {
     VNInfo *VNI = NewVNInfo[i];
     VNI->parent = this;
     VNI->id = i;  // Renumber val#.
     valnos.push_back(VNI);
-    ++numvals;
   }
 
   // Okay, now insert the RHS live ranges into the LHS.
@@ -484,7 +482,6 @@ void LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
       VNInfo *VNI = valnos.back();
       valnos.pop_back();
       delete VNI;
-      --numvals;
     } while (valnos.back()->def == ~1U);
   } else {
     V1->def = ~1U;

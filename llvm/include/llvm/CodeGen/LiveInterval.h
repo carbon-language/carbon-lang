@@ -106,12 +106,11 @@ namespace llvm {
     unsigned preference; // preferred register to allocate for this interval
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
-    unsigned numvals;    // number of value#'s
     VNInfoList valnos;   // value#'s
 
   public:
     LiveInterval(unsigned Reg, float Weight)
-      : reg(Reg), preference(0), weight(Weight), numvals(0) {
+      : reg(Reg), preference(0), weight(Weight) {
     }
 
     typedef Ranges::iterator iterator;
@@ -151,9 +150,9 @@ namespace llvm {
       return I;
     }
 
-    bool containsOneValue() const { return numvals == 1; }
+    bool containsOneValue() const { return valnos.size() == 1; }
 
-    unsigned getNumValNums() const { return numvals; }
+    unsigned getNumValNums() const { return valnos.size(); }
     
     /// getFirstValNumInfo - Returns pointer to the first val#.
     ///
@@ -175,7 +174,7 @@ namespace llvm {
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
     VNInfo *getNextValue(unsigned MIIdx, unsigned SrcReg) {
-      VNInfo *VNI = new VNInfo(this, numvals++, MIIdx, SrcReg);
+      VNInfo *VNI = new VNInfo(this, valnos.size(), MIIdx, SrcReg);
       valnos.push_back(VNI);
       return VNI;
     }
