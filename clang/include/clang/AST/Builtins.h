@@ -61,6 +61,23 @@ public:
     return GetRecord(ID).Name;
   }
   
+  /// isConst - Return true if this function has no side effects and doesn't
+  /// read memory.
+  bool isConst(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'c') != 0;
+  }
+  
+  /// isNoThrow - Return true if we know this builtin never throws an exception.
+  bool isNoThrow(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'n') != 0;
+  }
+  
+  /// isLibFunction - Return true if this is a builtin for a libc/libm function,
+  /// with a "__builtin_" prefix (e.g. __builtin_inf).
+  bool isLibFunction(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'F') != 0;
+  }
+  
   /// GetBuiltinType - Return the type for the specified builtin.
   QualType GetBuiltinType(unsigned ID, ASTContext &Context) const;
 private:
