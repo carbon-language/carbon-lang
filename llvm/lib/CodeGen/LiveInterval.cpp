@@ -288,26 +288,24 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
                         int *RHSValNoAssignments, 
                         SmallVector<VNInfo*, 16> &NewVNInfo) {
-
-  // There might be some dead val#, create VNInfo for them.
-  for (unsigned i = 0, e = NewVNInfo.size(); i != e; ++i) {
-    VNInfo *VNI = NewVNInfo[i];
-    if (!VNI) {
-      VNI = new VNInfo(this, i, ~1U, 0);
-      NewVNInfo[i] = VNI;
-    }
-  }
-
   // Determine if any of our live range values are mapped.  This is uncommon, so
-  // we want to avoid the interval scan if not.
+  // we want to avoid the interval scan if not. 
   bool MustMapCurValNos = false;
-  for (vni_iterator i = vni_begin(), e = vni_end(); i != e; ++i) {
-    VNInfo *VNI = *i;
-    unsigned VN = VNI->id;
-    if (VNI->def == ~1U) continue;  // tombstone value #
-    if (VNI != NewVNInfo[LHSValNoAssignments[VN]]) {
+  unsigned NumVals = getNumValNums();
+  unsigned NumNewVals = NewVNInfo.size();
+  for (unsigned i = 0; i != NumVals; ++i) {
+    unsigned LHSValID = LHSValNoAssignments[i];
+    if (i != LHSValID ||
+        (NewVNInfo[LHSValID] && NewVNInfo[LHSValID]->parent != this))
       MustMapCurValNos = true;
-      break;
+
+    // There might be some dead val#, create VNInfo for them.
+    if (i < NumNewVals) {
+      VNInfo *VNI = NewVNInfo[i];
+      if (!VNI) {
+        VNI = new VNInfo(this, i, ~1U, 0);
+        NewVNInfo[i] = VNI;
+      }
     }
   }
 
@@ -342,19 +340,34 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   }
 
   // Remember assignements because val# ids are changing.
-  std::vector<unsigned> OtherAssignments;
+  SmallVector<unsigned, 16> OtherAssignments;
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I)
     OtherAssignments.push_back(RHSValNoAssignments[I->valno->id]);
 
   // Update val# info. Renumber them and make sure they all belong to this
   // LiveInterval now.
-  valnos.clear();
-  for (unsigned i = 0, e = NewVNInfo.size(); i != e; ++i) {
+  for (unsigned i = 0; i != NumVals; ++i) {
+    if (i == NumNewVals)
+      break;
     VNInfo *VNI = NewVNInfo[i];
-    VNI->parent = this;
-    VNI->id = i;  // Renumber val#.
+    if (VNI->parent != this || VNI->id != i) {
+      VNI->parent = this;
+      VNI->id = i;  // Renumber val#.
+      valnos[i] = VNI;
+    }
+  }
+  for (unsigned i = NumVals; i < NumNewVals; ++i) {
+    VNInfo *VNI = NewVNInfo[i];
+    if (!VNI)
+      VNI = new VNInfo(this, i, ~1U, 0);
+    else {
+      VNI->parent = this;
+      VNI->id = i;  // Renumber val#.
+    }
     valnos.push_back(VNI);
   }
+  if (NumNewVals < NumVals)
+    valnos.resize(NumNewVals);  // shrinkify
 
   // Okay, now insert the RHS live ranges into the LHS.
   iterator InsertPos = begin();
