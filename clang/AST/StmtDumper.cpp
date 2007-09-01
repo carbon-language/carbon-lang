@@ -78,7 +78,7 @@ namespace  {
         fprintf(F, "  ");
     }
     
-    void DumpType(QualType T) const {
+    void DumpType(QualType T) {
       fprintf(F, "'%s'", T.getAsString().c_str());
 
       // If the type is directly a typedef, strip off typedefness to give at
@@ -86,22 +86,18 @@ namespace  {
       if (TypedefType *TDT = dyn_cast<TypedefType>(T))
         fprintf(F, ":'%s'", TDT->LookThroughTypedefs().getAsString().c_str());
     }
-    
-    void DumpStmt(const Stmt *Node) const {
+    void DumpStmt(const Stmt *Node) {
       Indent();
       fprintf(F, "(%s %p", Node->getStmtClassName(), (void*)Node);
+      DumpSourceRange(Node);
     }
-    
-    void DumpExpr(Expr *Node) {
+    void DumpExpr(const Expr *Node) {
       DumpStmt(Node);
       fprintf(F, " ");
       DumpType(Node->getType());
-      DumpSourceRange(Node);
     }
-    
-    void DumpSourceRange(Expr *Node);
+    void DumpSourceRange(const Stmt *Node);
     void DumpLocation(SourceLocation Loc);
-
     
     // Stmts.
     void VisitStmt(Stmt *Node);
@@ -158,7 +154,7 @@ void StmtDumper::DumpLocation(SourceLocation Loc) {
   }
 }
 
-void StmtDumper::DumpSourceRange(Expr *Node) {
+void StmtDumper::DumpSourceRange(const Stmt *Node) {
   // Can't translate locations if a SourceManager isn't available.
   if (SM == 0) return;
   

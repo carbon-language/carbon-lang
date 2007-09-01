@@ -260,7 +260,7 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   SwitchStmt *SS = SwitchStack.back();
   assert(SS == (SwitchStmt*)Switch && "switch stack missing push/pop!");
     
-  SS->setBody(BodyStmt);
+  SS->setBody(BodyStmt, SwitchLoc);
   SwitchStack.pop_back(); 
 
   Expr *CondExpr = SS->getCond();

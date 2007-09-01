@@ -375,6 +375,7 @@ class SwitchStmt : public Stmt {
   Stmt* SubExprs[END_EXPR];  
   // This points to a linked list of case and default statements.
   SwitchCase *FirstCase;
+  SourceLocation SwitchLoc;
 public:
   SwitchStmt(Expr *cond) : Stmt(SwitchStmtClass), FirstCase(0) {
       SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
@@ -389,17 +390,19 @@ public:
   Stmt *getBody() { return SubExprs[BODY]; }
   SwitchCase *getSwitchCaseList() { return FirstCase; }
 
-  void setBody(Stmt *S) { SubExprs[BODY] = S; }  
-  
+  void setBody(Stmt *S, SourceLocation SL) { 
+    SubExprs[BODY] = S; 
+    SwitchLoc = SL;
+  }  
   void addSwitchCase(SwitchCase *SC) {
     if (FirstCase)
       SC->setNextSwitchCase(FirstCase);
 
     FirstCase = SC;
   }
-  
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
-
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(SwitchLoc, SubExprs[BODY]->getLocEnd()); 
+  }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == SwitchStmtClass; 
   }
