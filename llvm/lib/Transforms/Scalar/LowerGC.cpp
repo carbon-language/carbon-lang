@@ -262,7 +262,7 @@ bool LowerGC::runOnFunction(Function &F) {
     cast<PointerType>(GCRootInt->getFunctionType()->getParamType(0));
   Constant *Null = ConstantPointerNull::get(PtrLocTy);
 
-  // Initialize all of the gcroot records now, and eliminate them as we go.
+  // Initialize all of the gcroot records now.
   for (unsigned i = 0, e = GCRoots.size(); i != e; ++i) {
     // Initialize the meta-data pointer.
     Par[2] = ConstantInt::get(Type::Int32Ty, i);
@@ -282,13 +282,16 @@ bool LowerGC::runOnFunction(Function &F) {
     new StoreInst(Constant::getNullValue(PtrLocTy->getElementType()),
                   GCRoots[i]->getOperand(1), GCRoots[i]);
     new StoreInst(GCRoots[i]->getOperand(1), RootPtrPtr, GCRoots[i]);
-    GCRoots[i]->getParent()->getInstList().erase(GCRoots[i]);
   }
 
   // Now that the record is all initialized, store the pointer into the global
   // pointer.
   Value *C = new BitCastInst(AI, PointerType::get(MainRootRecordType), "", IP);
   new StoreInst(C, RootChain, IP);
+
+  // Eliminate all the gcroot records now.
+  for (unsigned i = 0, e = GCRoots.size(); i != e; ++i)
+    GCRoots[i]->getParent()->getInstList().erase(GCRoots[i]);
 
   // On exit from the function we have to remove the entry from the GC root
   // chain.  Doing this is straight-forward for return and unwind instructions:
