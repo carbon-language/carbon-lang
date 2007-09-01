@@ -262,9 +262,11 @@ private:
   bool ParseObjCProtocolReferences();
   void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl);
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
-  DeclTy *ParseObjCAtImplementationDeclaration();
-  DeclTy *ParseObjCAtEndDeclaration();
+  DeclTy *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
+  DeclTy *ParseObjCAtEndDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtAliasDeclaration();
+  DeclTy *ParseObjCPropertySynthesize(SourceLocation atLoc);
+  DeclTy *ParseObjCPropertyDynamic(SourceLocation atLoc);
   
   IdentifierInfo *ParseObjCSelector();
   // Definitions for Objective-c context sensitive keywords recognition.
@@ -284,7 +286,7 @@ private:
 
   void ParseObjCTypeName();
   void ParseObjCMethodRequirement();
-  void ParseObjCMethodPrototype();
+  void ParseObjCMethodPrototype(bool decl);
   void ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
   void ParseObjCPropertyDecl(DeclTy *interfaceDecl);

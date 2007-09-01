@@ -37,11 +37,15 @@ Parser::DeclTy *Parser::ParseObjCAtDirectives() {
     case tok::objc_protocol:
       return ParseObjCAtProtocolDeclaration(AtLoc);
     case tok::objc_implementation:
-      return ParseObjCAtImplementationDeclaration();
+      return ParseObjCAtImplementationDeclaration(AtLoc);
     case tok::objc_end:
-      return ParseObjCAtEndDeclaration();
+      return ParseObjCAtEndDeclaration(AtLoc);
     case tok::objc_compatibility_alias:
       return ParseObjCAtAliasDeclaration();
+    case tok::objc_synthesize:
+      return ParseObjCPropertySynthesize(AtLoc);
+    case tok::objc_dynamic:
+      return ParseObjCPropertyDynamic(AtLoc);
     default:
       Diag(AtLoc, diag::err_unexpected_at);
       SkipUntil(tok::semi);
@@ -232,7 +236,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
       }
     }
     if (Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) {
-      ParseObjCMethodPrototype();
+      ParseObjCMethodPrototype(true);
       continue;
     }
     if (Tok.getKind() == tok::semi)
@@ -339,8 +343,9 @@ void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
 }
 
 ///   objc-methodproto:
-///     objc-instance-method objc-method-decl objc-method-attributes[opt] ';'
-///     objc-class-method objc-method-decl objc-method-attributes[opt] ';'
+///     objc-instance-method objc-method-decl objc-method-attributes[opt] 
+///       ';'[opt]
+///     objc-class-method objc-method-decl objc-method-attributes[opt] ';'[opt]
 ///
 ///   objc-instance-method: '-'
 ///   objc-class-method: '+'
@@ -348,7 +353,7 @@ void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
 ///   objc-method-attributes:         [OBJC2]
 ///     __attribute__((deprecated))
 ///
-void Parser::ParseObjCMethodPrototype() {
+void Parser::ParseObjCMethodPrototype(bool decl) {
   assert((Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) && 
          "expected +/-");
 
@@ -362,8 +367,9 @@ void Parser::ParseObjCMethodPrototype() {
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute)
     ParseAttributes();
     
-  // Consume the ';'.
-  ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "method proto");
+  if (decl)
+    // Consume the ';'.
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "method proto");
 }
 
 ///   objc-selector:
@@ -700,12 +706,60 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
 ///   objc-category-implementation-prologue:
 ///     @implementation identifier ( identifier )
 
-Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration() {
-  assert(0 && "Unimp");
+Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
+  SourceLocation atLoc) {
+  assert(Tok.isObjCAtKeyword(tok::objc_implementation) &&
+         "ParseObjCAtImplementationDeclaration(): Expected @implementation");
+  ConsumeToken(); // the "implementation" identifier
+  
+  if (Tok.getKind() != tok::identifier) {
+    Diag(Tok, diag::err_expected_ident); // missing class or category name.
+    return 0;
+  }
+  // We have a class or category name - consume it.
+  SourceLocation nameLoc = ConsumeToken(); // consume class or category name
+  
+  if (Tok.getKind() == tok::l_paren) { 
+    // we have a category implementation.
+    SourceLocation lparenLoc = ConsumeParen();
+    SourceLocation categoryLoc, rparenLoc;
+    IdentifierInfo *categoryId = 0;
+    
+    if (Tok.getKind() == tok::identifier) {
+      categoryId = Tok.getIdentifierInfo();
+      categoryLoc = ConsumeToken();
+    } else {
+      Diag(Tok, diag::err_expected_ident); // missing category name.
+      return 0;
+    }   
+    if (Tok.getKind() != tok::r_paren) {
+      Diag(Tok, diag::err_expected_rparen);
+      SkipUntil(tok::r_paren, false); // don't stop at ';'
+      return 0;
+    }
+    rparenLoc = ConsumeParen();
+    return 0;
+  }
+  // We have a class implementation
+  if (Tok.getKind() == tok::colon) {
+    // We have a super class
+    ConsumeToken();
+    if (Tok.getKind() != tok::identifier) {
+      Diag(Tok, diag::err_expected_ident); // missing super class name.
+      return 0;
+    }
+    ConsumeToken(); // Consume super class name
+  }
+  if (Tok.getKind() == tok::l_brace)
+    ParseObjCClassInstanceVariables(0/*FIXME*/); // we have ivars
+  
   return 0;
 }
-Parser::DeclTy *Parser::ParseObjCAtEndDeclaration() {
-  assert(0 && "Unimp");
+Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
+  assert(Tok.isObjCAtKeyword(tok::objc_end) &&
+         "ParseObjCAtEndDeclaration(): Expected @end");
+  ConsumeToken(); // the "end" identifier
+
   return 0;
 }
 Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration() {
@@ -713,12 +767,104 @@ Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration() {
   return 0;
 }
 
-void Parser::ParseObjCInstanceMethodDefinition() {
-  assert(0 && "Parser::ParseObjCInstanceMethodDefinition():: Unimp");
+///   property-synthesis:
+///     @synthesize property-ivar-list ';'
+///
+///   property-ivar-list:
+///     property-ivar
+///     property-ivar-list ',' property-ivar
+///
+///   property-ivar:
+///     identifier
+///     identifier '=' identifier
+///
+Parser::DeclTy *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
+  assert(Tok.isObjCAtKeyword(tok::objc_synthesize) &&
+         "ParseObjCPropertyDynamic(): Expected '@synthesize'");
+  SourceLocation loc = ConsumeToken(); // consume dynamic
+  if (Tok.getKind() != tok::identifier) {
+    Diag(Tok, diag::err_expected_ident);
+    return 0;
+  }
+  while (Tok.getKind() == tok::identifier) {
+    ConsumeToken(); // consume property name
+    if (Tok.getKind() == tok::equal) {
+      // property '=' ivar-name
+      ConsumeToken(); // consume '='
+      if (Tok.getKind() != tok::identifier) {
+        Diag(Tok, diag::err_expected_ident);
+        break;
+      }
+      ConsumeToken(); // consume ivar-name
+    }
+    if (Tok.getKind() != tok::comma)
+      break;
+    ConsumeToken(); // consume ','
+  }
+  if (Tok.getKind() != tok::semi)
+    Diag(Tok, diag::err_expected_semi_after, "@synthesize");
+  return 0;
 }
 
+///   property-dynamic:
+///     @dynamic  property-list
+///
+///   property-list:
+///     identifier
+///     property-list ',' identifier
+///
+Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
+  assert(Tok.isObjCAtKeyword(tok::objc_dynamic) &&
+         "ParseObjCPropertyDynamic(): Expected '@dynamic'");
+  SourceLocation loc = ConsumeToken(); // consume dynamic
+  if (Tok.getKind() != tok::identifier) {
+    Diag(Tok, diag::err_expected_ident);
+    return 0;
+  }
+  while (Tok.getKind() == tok::identifier) {
+    ConsumeToken(); // consume property name
+    if (Tok.getKind() != tok::comma)
+      break;
+    ConsumeToken(); // consume ','
+  }
+  if (Tok.getKind() != tok::semi)
+    Diag(Tok, diag::err_expected_semi_after, "@dynamic");
+  return 0;
+}
+
+///   objc-method-def: objc-methodproto ';'[opt] '{' body '}'
+///
+void Parser::ParseObjCInstanceMethodDefinition() {
+  assert(Tok.getKind() == tok::minus &&
+         "ParseObjCInstanceMethodDefinition(): Expected '-'");
+  ParseObjCMethodPrototype(false);
+  // parse optional ';'
+  if (Tok.getKind() == tok::semi)
+    ConsumeToken();
+
+  if (Tok.getKind() != tok::l_brace) {
+    Diag (Tok, diag::err_expected_lbrace);
+    return;
+  }
+    
+  StmtResult FnBody = ParseCompoundStatementBody();
+}
+
+///   objc-method-def: objc-methodproto ';'[opt] '{' body '}'
+///
 void Parser::ParseObjCClassMethodDefinition() {
-  assert(0 && "Parser::ParseObjCClassMethodDefinition():: Unimp");
+  assert(Tok.getKind() == tok::plus &&
+         "ParseObjCClassMethodDefinition(): Expected '+'");
+  ParseObjCMethodPrototype(false);
+  // parse optional ';'
+  if (Tok.getKind() == tok::semi)
+    ConsumeToken();
+  if (Tok.getKind() != tok::l_brace) {
+    Diag (Tok, diag::err_expected_lbrace);
+    return;
+  }
+  
+  StmtResult FnBody = ParseCompoundStatementBody();
 }
 
 Parser::ExprResult Parser::ParseObjCExpression() {
