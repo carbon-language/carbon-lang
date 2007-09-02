@@ -823,17 +823,24 @@ public:
   MachineModuleInfo *getMMI() const { return MMI; }
   const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
 
+  void PrintRelDirective(bool Force32Bit = false, bool isInSection = false)
+                                                                         const {
+    if (isInSection && TAI->getDwarfSectionOffsetDirective())
+      O << TAI->getDwarfSectionOffsetDirective();
+    else if (Force32Bit || TAI->getAddressSize() == sizeof(int32_t))
+      O << TAI->getData32bitsDirective();
+    else
+      O << TAI->getData64bitsDirective();
+  }
+  
   /// PrintLabelName - Print label name in form used by Dwarf writer.
   ///
   void PrintLabelName(DWLabel Label) const {
     PrintLabelName(Label.Tag, Label.Number);
   }
-  void PrintLabelName(const char *Tag, unsigned Number,
-                      bool isInSection = false) const {
-    if (isInSection && TAI->getDwarfSectionOffsetDirective())
-      O << TAI->getDwarfSectionOffsetDirective() << Tag;
-    else
-      O << TAI->getPrivateGlobalPrefix() << Tag;
+  void PrintLabelName(const char *Tag, unsigned Number) const {
+    
+    O << TAI->getPrivateGlobalPrefix() << Tag;
     if (Number) O << Number;
   }
   
@@ -854,21 +861,14 @@ public:
   }
   void EmitReference(const char *Tag, unsigned Number,
                      bool IsPCRelative = false) const {
-    if (TAI->getAddressSize() == sizeof(int32_t))
-      O << TAI->getData32bitsDirective();
-    else
-      O << TAI->getData64bitsDirective();
-      
+    PrintRelDirective();
     PrintLabelName(Tag, Number);
     
     if (IsPCRelative) O << "-" << TAI->getPCSymbol();
   }
   void EmitReference(const std::string &Name, bool IsPCRelative = false) const {
-    if (TAI->getAddressSize() == sizeof(int32_t))
-      O << TAI->getData32bitsDirective();
-    else
-      O << TAI->getData64bitsDirective();
-      
+    PrintRelDirective();
+    
     O << Name;
     
     if (IsPCRelative) O << "-" << TAI->getPCSymbol();
@@ -894,20 +894,14 @@ public:
       O << "-";
       PrintLabelName(TagLo, NumberLo);
       O << "\n";
-      
-      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
+
+      PrintRelDirective(IsSmall);
         
       PrintLabelName("set", SetCounter);
       
       ++SetCounter;
     } else {
-      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
+      PrintRelDirective(IsSmall);
         
       PrintLabelName(TagHi, NumberHi);
       O << "-";
@@ -923,7 +917,7 @@ public:
       O << "\t.set\t";
       PrintLabelName("set", SetCounter);
       O << ",";
-      PrintLabelName(Label, LabelNumber, true);
+      PrintLabelName(Label, LabelNumber);
 
       if (isEH)
         printAbsolute = TAI->isAbsoluteEHSectionOffsets();
@@ -935,21 +929,15 @@ public:
         PrintLabelName(Section, SectionNumber);
       }      
       O << "\n";
-      
-      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
+
+      PrintRelDirective(IsSmall);
         
       PrintLabelName("set", SetCounter);
       ++SetCounter;
     } else {
-      if (IsSmall || TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
+      PrintRelDirective(IsSmall, true);
         
-      PrintLabelName(Label, LabelNumber, true);
+      PrintLabelName(Label, LabelNumber);
 
       if (isEH)
         printAbsolute = TAI->isAbsoluteEHSectionOffsets();
@@ -2811,12 +2799,12 @@ private:
         Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
         O << "-" << TAI->getPCSymbol();
         Asm->EOL("Set Personality");
-        O << TAI->getData32bitsDirective();
+        PrintRelDirective();
         PrintLabelName("set", SetCounter);
         Asm->EOL("Personality");
         ++SetCounter;
       } else {
-        O << TAI->getData32bitsDirective();
+        PrintRelDirective();
         Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
         O << "-" << TAI->getPCSymbol();
         Asm->EOL("Personality");
@@ -3188,11 +3176,8 @@ private:
     // Emit the type ids.
     for (unsigned M = TypeInfos.size(); M; --M) {
       GlobalVariable *GV = TypeInfos[M - 1];
-      
-      if (TAI->getAddressSize() == sizeof(int32_t))
-        O << TAI->getData32bitsDirective();
-      else
-        O << TAI->getData64bitsDirective();
+
+      PrintRelDirective();
 
       if (GV)
         O << Asm->getGlobalLinkName(GV);
