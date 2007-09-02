@@ -253,6 +253,10 @@ bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
   case Compatible:
     break;
   case Incompatible:
+    // FIXME: tighten up this check which should allow:
+    // char s[] = "abc", which is identical to char s[] = { 'a', 'b', 'c' };
+    if (rhsType == Context.getPointerType(Context.CharTy))
+      break;
     Diag(loc, diag::err_typecheck_assign_incompatible, 
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
@@ -285,13 +289,36 @@ bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
   return false;
 }
 
-QualType Sema::CheckInitializer(Expr *Init, QualType DeclType) {
+bool Sema::RequireConstantExprs(InitListExpr *IList) {
+  bool hadError = false;
+  for (unsigned i = 0; i < IList->getNumInits(); i++) {
+    Expr *expr = IList->getInit(i);
+    
+    if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr))
+      RequireConstantExprs(InitList);
+    else {
+      SourceLocation loc;
+      // FIXME: should be isConstantExpr()...
+      if (!expr->isIntegerConstantExpr(Context, &loc)) {
+        Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
+        hadError = true;
+      }
+    }
+  }
+  return hadError;
+}
+
+QualType Sema::CheckInitializer(Expr *Init, QualType DeclType, bool isStatic) {
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList) {
     return CheckSingleInitializer(Init, DeclType) ? QualType() : DeclType;
   }
   // We have an InitListExpr, make sure we set the type.
   Init->setType(DeclType);
+  
+  if (isStatic) // C99 6.7.8p4.
+    RequireConstantExprs(InitList);
+  
   // FIXME: Lot of checking still to do...
   return DeclType;
 }
@@ -395,6 +422,11 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       case DeclSpec::SCS_register:    SC = VarDecl::Register; break;
     }    
     if (S->getParent() == 0) {
+      if (Init) {
+        if (SC == VarDecl::Extern)
+          Diag(D.getIdentifierLoc(), diag::warn_extern_init);
+        CheckInitializer(Init, R, true);
+      }
       // File scope. C99 6.9.2p2: A declaration of an identifier for and 
       // object that has file scope without an initializer, and without a
       // storage-class specifier or with the storage-class specifier "static",
@@ -434,7 +466,12 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     } else {
       if (Init) {
-        CheckInitializer(Init, R);
+        if (SC == VarDecl::Extern) { // C99 6.7.8p5
+          Diag(D.getIdentifierLoc(), diag::err_block_extern_cant_init);
+          InvalidDecl = true;
+        } else {
+          CheckInitializer(Init, R, SC == VarDecl::Static);
+        }
       }
       // Block scope. C99 6.7p7: If an identifier for an object is declared with
       // no linkage (C99 6.2.2p6), the type for the object shall be complete...

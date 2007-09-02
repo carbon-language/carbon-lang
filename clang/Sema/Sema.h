@@ -30,6 +30,7 @@ namespace clang {
   class Preprocessor;
   class Decl;
   class Expr;
+  class InitListExpr;
   class VarDecl;
   class ParmVarDecl;
   class TypedefDecl;
@@ -441,8 +442,10 @@ private:
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
-  QualType CheckInitializer(Expr *simpleInit_or_initList, QualType declType);
+  QualType CheckInitializer(Expr *simpleInit_or_initList, QualType declType,
+                            bool isStatic);
   bool CheckSingleInitializer(Expr *simpleInit, QualType declType);
+  bool RequireConstantExprs(InitListExpr *IList);
   
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit

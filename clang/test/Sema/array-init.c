@@ -1,5 +1,12 @@
 // RUN: clang -parse-ast-check -pedantic %s
 
+static int x, y, z;
+
+static int ary[] = { x, y, z }; // expected-error{{initializer element is not constant}}
+int ary2[] = { x, y, z }; // expected-error{{initializer element is not constant}}
+
+extern int fileScopeExtern[3] = { 1, 3, 5 }; // expected-warning{{'extern' variable has an initializer}}
+
 void func() {
   int x = 1;
 
@@ -24,4 +31,6 @@ void func() {
   } z = { 1 };
 
   struct threeElements *p = 7; // expected-warning{{incompatible types assigning 'int' to 'struct threeElements *'}}
+  
+  extern int blockScopeExtern[3] = { 1, 3, 5 }; // expected-error{{'extern' variable cannot have an initializer}}
 }
