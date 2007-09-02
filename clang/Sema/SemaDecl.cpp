@@ -239,6 +239,63 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return 0;
 }
 
+bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
+  AssignmentCheckResult result;
+  SourceLocation loc = Init->getLocStart();
+  // Get the type before calling CheckSingleAssignmentConstraints(), since
+  // it can promote the expression.
+  QualType rhsType = Init->getType(); 
+  
+  result = CheckSingleAssignmentConstraints(DeclType, Init);
+  
+  // decode the result (notice that extensions still return a type).
+  switch (result) {
+  case Compatible:
+    break;
+  case Incompatible:
+    Diag(loc, diag::err_typecheck_assign_incompatible, 
+         DeclType.getAsString(), rhsType.getAsString(), 
+         Init->getSourceRange());
+    return true;
+  case PointerFromInt:
+    // check for null pointer constant (C99 6.3.2.3p3)
+    if (!Init->isNullPointerConstant(Context)) {
+      Diag(loc, diag::ext_typecheck_assign_pointer_int,
+           DeclType.getAsString(), rhsType.getAsString(), 
+           Init->getSourceRange());
+      return true;
+    }
+    break;
+  case IntFromPointer: 
+    Diag(loc, diag::ext_typecheck_assign_pointer_int, 
+         DeclType.getAsString(), rhsType.getAsString(), 
+         Init->getSourceRange());
+    break;
+  case IncompatiblePointer:
+    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer,
+         DeclType.getAsString(), rhsType.getAsString(), 
+         Init->getSourceRange());
+    break;
+  case CompatiblePointerDiscardsQualifiers:
+    Diag(loc, diag::ext_typecheck_assign_discards_qualifiers,
+         DeclType.getAsString(), rhsType.getAsString(), 
+         Init->getSourceRange());
+    break;
+  }
+  return false;
+}
+
+QualType Sema::CheckInitializer(Expr *Init, QualType DeclType) {
+  InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
+  if (!InitList) {
+    return CheckSingleInitializer(Init, DeclType) ? QualType() : DeclType;
+  }
+  // We have an InitListExpr, make sure we set the type.
+  Init->setType(DeclType);
+  // FIXME: Lot of checking still to do...
+  return DeclType;
+}
+
 Sema::DeclTy *
 Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
                       DeclTy *lastDeclarator) {
@@ -375,7 +432,10 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
         }
       }
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
-    } else { 
+    } else {
+      if (Init) {
+        CheckInitializer(Init, R);
+      }
       // Block scope. C99 6.7p7: If an identifier for an object is declared with
       // no linkage (C99 6.2.2p6), the type for the object shall be complete...
       if (SC != VarDecl::Extern) {
@@ -410,10 +470,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
-    if (Init) {
-      AssignmentCheckResult result;
-      result = CheckSingleAssignmentConstraints(R, Init);
-      // FIXME: emit errors if appropriate.
+    if (Init) { // FIXME: This will likely move up above...for now, it stays.
       NewVD->setInit(Init);
     }
     New = NewVD;

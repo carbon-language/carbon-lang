@@ -440,6 +440,10 @@ private:
   QualType CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
+  /// type checking declaration initializers (C99 6.7.8)
+  QualType CheckInitializer(Expr *simpleInit_or_initList, QualType declType);
+  bool CheckSingleInitializer(Expr *simpleInit, QualType declType);
+  
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit
   /// the specified diagnostic.
