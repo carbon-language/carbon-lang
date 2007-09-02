@@ -81,7 +81,8 @@ void ilist_traits<MachineInstr>::transferNodesFromList(
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   const TargetInstrInfo& TII = *getParent()->getTarget().getInstrInfo();
   iterator I = end();
-  while (I != begin() && TII.isTerminatorInstr((--I)->getOpcode()));
+  while (I != begin() && TII.isTerminatorInstr((--I)->getOpcode()))
+    ; /*noop */
   if (I != end() && !TII.isTerminatorInstr(I->getOpcode())) ++I;
   return I;
 }

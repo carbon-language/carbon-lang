@@ -122,7 +122,8 @@ AllocaInst* llvm::DemotePHIToStack(PHINode *P) {
   // Insert load in place of the phi and replace all uses.
   BasicBlock::iterator InsertPt;
   for (InsertPt = P->getParent()->getInstList().begin(); 
-       isa<PHINode>(InsertPt); ++InsertPt);
+       isa<PHINode>(InsertPt); ++InsertPt)
+    ; /*noop */
   Value *V = new LoadInst(Slot, P->getName()+".reload", P);
   P->replaceAllUsesWith(V);
   
