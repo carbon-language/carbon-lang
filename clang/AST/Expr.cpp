@@ -350,6 +350,120 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   return MLV_Valid;    
 }
 
+bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
+  
+  switch (getStmtClass()) {
+  default:
+    if (Loc) *Loc = getLocStart();
+    return false;
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr(Ctx, Loc);
+  case StringLiteralClass:
+  case FloatingLiteralClass:
+  case IntegerLiteralClass:
+  case CharacterLiteralClass:
+  case ImaginaryLiteralClass:
+  case TypesCompatibleExprClass: 
+    break;
+  case CallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(this);
+    llvm::APSInt Result(32);
+    Result.zextOrTrunc(Ctx.getTypeSize(getType(), CE->getLocStart()));
+    if (CE->isBuiltinClassifyType(Result))
+      break;
+    if (Loc) *Loc = getLocStart();
+    return false;
+  }
+  case DeclRefExprClass:
+    if (isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl()))
+      break;
+    if (Loc) *Loc = getLocStart();
+    return false;
+  case UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(this);
+    
+    // Get the operand value.  If this is sizeof/alignof, do not evalute the
+    // operand.  This affects C99 6.6p3.
+    if (!Exp->isSizeOfAlignOfOp() &&
+        !Exp->getSubExpr()->isConstantExpr(Ctx, Loc))
+      return false;
+  
+    switch (Exp->getOpcode()) {
+    // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
+    // See C99 6.6p3.
+    default:
+      if (Loc) *Loc = Exp->getOperatorLoc();
+      return false;
+    case UnaryOperator::Extension:
+      return true;  // FIXME: this is wrong.
+    case UnaryOperator::SizeOf:
+    case UnaryOperator::AlignOf:
+      // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx, Loc))
+        return false;
+      break;
+    case UnaryOperator::LNot:
+    case UnaryOperator::Plus:
+    case UnaryOperator::Minus:
+    case UnaryOperator::Not:
+      break;
+    }
+    break;
+  }
+  case SizeOfAlignOfTypeExprClass: {
+    const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
+    // alignof always evaluates to a constant.
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx,Loc))
+      return false;
+    break;
+  }
+  case BinaryOperatorClass: {
+    const BinaryOperator *Exp = cast<BinaryOperator>(this);
+    
+    // The LHS of a constant expr is always evaluated and needed.
+    if (!Exp->getLHS()->isConstantExpr(Ctx, Loc))
+      return false;
+
+    if (!Exp->getRHS()->isConstantExpr(Ctx, Loc))
+      return false;
+    
+    break;
+  }
+  case ImplicitCastExprClass:
+  case CastExprClass: {
+    const Expr *SubExpr;
+    SourceLocation CastLoc;
+    if (const CastExpr *C = dyn_cast<CastExpr>(this)) {
+      SubExpr = C->getSubExpr();
+      CastLoc = C->getLParenLoc();
+    } else {
+      SubExpr = cast<ImplicitCastExpr>(this)->getSubExpr();
+      CastLoc = getLocStart();
+    }
+    if (!SubExpr->isConstantExpr(Ctx, Loc)) {
+      if (Loc) *Loc = SubExpr->getLocStart();
+      return false;
+    }
+    break;
+  }
+  case ConditionalOperatorClass: {
+    const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
+    
+    if (!Exp->getCond()->isConstantExpr(Ctx, Loc))
+      return false;
+
+    if (!Exp->getLHS()->isConstantExpr(Ctx, Loc))
+      return false;
+
+    if (!Exp->getRHS()->isConstantExpr(Ctx, Loc))
+      return false;
+    break;
+  }
+  }
+
+  return true;
+}
+
 /// isIntegerConstantExpr - this recursive routine will test if an expression is
 /// an integer constant expression. Note: With the introduction of VLA's in
 /// C99 the result of the sizeof operator is no longer always a constant

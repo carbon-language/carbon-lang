@@ -289,19 +289,21 @@ bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
   return false;
 }
 
-bool Sema::RequireConstantExprs(InitListExpr *IList) {
+bool Sema::CheckInitList(InitListExpr *IList, QualType DType, bool isStatic) {
   bool hadError = false;
   for (unsigned i = 0; i < IList->getNumInits(); i++) {
     Expr *expr = IList->getInit(i);
     
     if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr))
-      RequireConstantExprs(InitList);
+      CheckInitList(InitList, DType, isStatic);
     else {
       SourceLocation loc;
-      // FIXME: should be isConstantExpr()...
-      if (!expr->isIntegerConstantExpr(Context, &loc)) {
+
+      if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
         Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
         hadError = true;
+      } else if (CheckSingleInitializer(expr, DType)) {
+        hadError = true; // types didn't match.
       }
     }
   }
@@ -316,10 +318,27 @@ QualType Sema::CheckInitializer(Expr *Init, QualType DeclType, bool isStatic) {
   // We have an InitListExpr, make sure we set the type.
   Init->setType(DeclType);
   
-  if (isStatic) // C99 6.7.8p4.
-    RequireConstantExprs(InitList);
-  
-  // FIXME: Lot of checking still to do...
+  // C99 6.7.8p3: The type of the entity to be initialized shall be an array
+  // of unknown size ("[]") or an object type that is not a variable array type.
+  if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) { 
+    Expr *expr = VAT->getSizeExpr();
+    if (expr) { 
+      Diag(expr->getLocStart(), diag::err_variable_object_no_init, 
+           expr->getSourceRange());
+      return QualType();
+    }
+  }
+  if (const ArrayType *Ary = DeclType->getAsArrayType()) {
+    // We have a ConstantArrayType or VariableArrayType with unknown size.
+    QualType ElmtType = Ary->getElementType();
+    
+    // If we have a multi-dimensional array, navigate to the base type.
+    while ((Ary = ElmtType->getAsArrayType()))
+      ElmtType = Ary->getElementType();
+
+    CheckInitList(InitList, ElmtType, isStatic);
+  }
+  // FIXME: Handle struct/union types.
   return DeclType;
 }
 

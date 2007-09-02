@@ -99,6 +99,8 @@ public:
     llvm::APSInt X(32);
     return isIntegerConstantExpr(X, Ctx, Loc);
   }
+  /// isConstantExpr - Return true if this expression is a valid constant expr.
+  bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&

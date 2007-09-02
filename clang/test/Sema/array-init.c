@@ -7,12 +7,14 @@ int ary2[] = { x, y, z }; // expected-error{{initializer element is not constant
 
 extern int fileScopeExtern[3] = { 1, 3, 5 }; // expected-warning{{'extern' variable has an initializer}}
 
+static int ary3[] = { 1, "abc", 3 }; // expected-warning{{incompatible types assigning 'char *' to 'int'}}
+
 void func() {
   int x = 1;
 
   //int x2[] = { 1, 3, 5 };
 
-  int x3[x] = { 1, 2 }; // gcc-error {{variable-sized object may not be initialized}}
+  int x3[x] = { 1, 2 }; // expected-error{{variable-sized object may not be initialized}}
 
   int x4 = { 1, 2 }; // gcc-warning {{excess elements in array initializer}}
 
@@ -33,4 +35,6 @@ void func() {
   struct threeElements *p = 7; // expected-warning{{incompatible types assigning 'int' to 'struct threeElements *'}}
   
   extern int blockScopeExtern[3] = { 1, 3, 5 }; // expected-error{{'extern' variable cannot have an initializer}}
+  
+  static int x2[3] = { 1.0, "abc" , 5.8 }; // expected-warning{{incompatible types assigning 'char *' to 'int'}}
 }

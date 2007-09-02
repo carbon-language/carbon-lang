@@ -649,7 +649,9 @@ ParseInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
   // doing the semantic analysis will likely be located elsewhere (i.e. in 
   // consumers of InitListExpr (e.g. ParseDeclarator, ParseCompoundLiteral).
   
-  return new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
+  InitListExpr *e = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
+  e->setType(Context.VoidTy); // FIXME: just a place holder for now.
+  return e;
 }
 
 Action::ExprResult Sema::
