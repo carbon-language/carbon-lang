@@ -246,6 +246,10 @@ namespace {
                     const llvm::APSInt &RHS) {
       return LHS.first < RHS;
     }
+    bool operator()(const std::pair<llvm::APSInt, CaseStmt*> &LHS,
+                    const std::pair<llvm::APSInt, CaseStmt*> &RHS) {
+      return LHS.first < RHS.first;
+    }
     bool operator()(const llvm::APSInt &LHS,
                     const std::pair<llvm::APSInt, CaseStmt*> &RHS) {
       return LHS < RHS.first;
