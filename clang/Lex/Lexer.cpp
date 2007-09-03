@@ -141,26 +141,26 @@ static void InitCharacterInfo() {
 /// isIdentifierBody - Return true if this is the body character of an
 /// identifier, which is [a-zA-Z0-9_].
 static inline bool isIdentifierBody(unsigned char c) {
-  return CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER);
+  return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER)) ? true : false;
 }
 
 /// isHorizontalWhitespace - Return true if this character is horizontal
 /// whitespace: ' ', '\t', '\f', '\v'.  Note that this returns false for '\0'.
 static inline bool isHorizontalWhitespace(unsigned char c) {
-  return CharInfo[c] & CHAR_HORZ_WS;
+  return (CharInfo[c] & CHAR_HORZ_WS) ? true : false;
 }
 
 /// isWhitespace - Return true if this character is horizontal or vertical
 /// whitespace: ' ', '\t', '\f', '\v', '\n', '\r'.  Note that this returns false
 /// for '\0'.
 static inline bool isWhitespace(unsigned char c) {
-  return CharInfo[c] & (CHAR_HORZ_WS|CHAR_VERT_WS);
+  return (CharInfo[c] & (CHAR_HORZ_WS|CHAR_VERT_WS)) ? true : false;
 }
 
 /// isNumberBody - Return true if this is the body character of an
 /// preprocessing number, which is [a-zA-Z0-9_.].
 static inline bool isNumberBody(unsigned char c) {
-  return CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD);
+  return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD)) ? true : false;
 }
 
 

@@ -106,13 +106,13 @@ public:
   }
 
   bool isConstQualified() const {
-    return ThePtr & Const;
+    return (ThePtr & Const) ? true : false;
   }
   bool isVolatileQualified() const {
-    return ThePtr & Volatile;
+    return (ThePtr & Volatile) ? true : false;
   }
   bool isRestrictQualified() const {
-    return ThePtr & Restrict;
+    return (ThePtr & Restrict) ? true : false;
   }
   
   /// addConst/addVolatile/addRestrict - add the specified type qual to this

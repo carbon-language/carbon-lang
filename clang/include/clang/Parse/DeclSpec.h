@@ -20,11 +20,11 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
-  class LangOptions;
+  struct LangOptions;
   class IdentifierInfo;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
-/// which encompases storage-class-specifiers, type-specifiers, type-qualifiers,
+/// which encompasses storage-class-specifiers, type-specifiers, type-qualifiers,
 /// and function-specifiers.
 class DeclSpec {
 public:

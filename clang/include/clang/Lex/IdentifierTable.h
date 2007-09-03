@@ -21,7 +21,7 @@
 
 namespace clang {
   class MacroInfo;
-  class LangOptions;
+  struct LangOptions;
   
 /// IdentifierInfo - One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was #define'd,

@@ -96,15 +96,15 @@ public:
   
   /// isAtStartOfLine - Return true if this token is at the start of a line.
   ///
-  bool isAtStartOfLine() const { return Flags & StartOfLine; }
+  bool isAtStartOfLine() const { return (Flags & StartOfLine) ? true : false; }
   
   /// hasLeadingSpace - Return true if this token has whitespace before it.
   ///
-  bool hasLeadingSpace() const { return Flags & LeadingSpace; }
+  bool hasLeadingSpace() const { return (Flags & LeadingSpace) ? true : false; }
   
   /// isExpandDisabled - Return true if this identifier token should never
   /// be expanded in the future, due to C99 6.10.3.4p2.
-  bool isExpandDisabled() const { return Flags & DisableExpand; }
+  bool isExpandDisabled() const { return (Flags & DisableExpand) ? true : false; }
   
   /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
   bool isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const;
@@ -115,7 +115,7 @@ public:
   /// needsCleaning - Return true if this token has trigraphs or escaped
   /// newlines in it.
   ///
-  bool needsCleaning() const { return Flags & NeedsCleaning; }
+  bool needsCleaning() const { return (Flags & NeedsCleaning) ? true : false; }
 };
 
 /// PPConditionalInfo - Information about the conditional stack (#if directives)

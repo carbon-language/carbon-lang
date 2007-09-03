@@ -15,6 +15,7 @@
 #define LLVM_CLANG_BASIC_TARGETINFO_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/Support/DataTypes.h"
 #include <vector>
 #include <string>
 

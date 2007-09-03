@@ -88,7 +88,7 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     for (; ThisTokBuf != ThisTokEnd; ++ThisTokBuf) {
       int CharVal = HexDigitValue(ThisTokBuf[0]);
       if (CharVal == -1) break;
-      Overflow |= ResultChar & 0xF0000000;  // About to shift out a digit?
+      Overflow |= (ResultChar & 0xF0000000) ? true : false;  // About to shift out a digit?
       ResultChar <<= 4;
       ResultChar |= CharVal;
     }
