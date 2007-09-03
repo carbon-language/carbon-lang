@@ -25,6 +25,9 @@ using namespace clang;
 // FIXME: Enhance libsystem to support inode and other fields.
 #include <sys/stat.h>
 
+#if defined(_MSC_VER)
+#define S_ISDIR(s) (_S_IFDIR & s)
+#endif
 
 /// NON_EXISTANT_DIR - A special value distinct from null that is used to
 /// represent a dir name that doesn't exist on the disk.
