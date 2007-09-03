@@ -41,8 +41,12 @@ SourceManager::~SourceManager() {
 // FIXME: REMOVE THESE
 #include <unistd.h>
 #include <sys/types.h>
+#if !defined(_MSC_VER)
 #include <sys/uio.h>
 #include <sys/fcntl.h>
+#else
+#include <io.h>
+#endif
 #include <cerrno>
 
 static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
@@ -61,8 +65,12 @@ static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
   MemoryBuffer *SB = MemoryBuffer::getNewUninitMemBuffer(FileEnt->getSize(),
                                                          FileEnt->getName());
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
-  
+
+#if defined(_WIN32) || defined(_WIN64)
+  int FD = ::open(FileEnt->getName(), O_RDONLY|O_BINARY);
+#else
   int FD = ::open(FileEnt->getName(), O_RDONLY);
+#endif
   if (FD == -1) {
     delete SB;
     return 0;

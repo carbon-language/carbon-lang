@@ -73,7 +73,9 @@ static void CleanupOutputBuffer() {
 }
 
 static void OutputChar(char c) {
-#ifdef USE_STDIO
+#if defined(_MSC_VER)
+  putchar(c);
+#elif defined(USE_STDIO)
   putchar_unlocked(c);
 #else
   if (OutBufCur >= OutBufEnd)
