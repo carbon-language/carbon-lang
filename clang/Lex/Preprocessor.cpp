@@ -38,6 +38,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <iostream>
+#include <ctime>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
