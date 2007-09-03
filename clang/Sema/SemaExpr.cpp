@@ -644,10 +644,8 @@ ParseInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
               SourceLocation RBraceLoc) {
   Expr **InitList = reinterpret_cast<Expr**>(initlist);
 
-  // FIXME: add semantic analysis (C99 6.7.8). This involves 
-  // knowledge of the object being intialized. As a result, the code for
-  // doing the semantic analysis will likely be located elsewhere (i.e. in 
-  // consumers of InitListExpr (e.g. ParseDeclarator, ParseCompoundLiteral).
+  // Semantic analysis for initializers is done by ParseDeclarator() and
+  // CheckInitializer() - it requires knowledge of the object being intialized. 
   
   InitListExpr *e = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
   e->setType(Context.VoidTy); // FIXME: just a place holder for now.

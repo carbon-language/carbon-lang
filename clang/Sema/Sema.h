@@ -442,10 +442,11 @@ private:
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
-  QualType CheckInitializer(Expr *simpleInit_or_initList, QualType declType,
-                            bool isStatic);
+  bool CheckInitializer(Expr *simpleInit_or_initList, QualType &declType,
+                        bool isStatic);
   bool CheckSingleInitializer(Expr *simpleInit, QualType declType);
-  bool CheckInitList(InitListExpr *IList, QualType DType, bool isStatic);
+  void CheckInitList(InitListExpr *IList, QualType DType, bool isStatic,
+                     int &nInitializers, int maxElements, bool &hadError);
   
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit
