@@ -244,6 +244,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setExceptionPointerRegister(X86::EAX);
     setExceptionSelectorRegister(X86::EDX);
   }
+  setOperationAction(ISD::FRAME_TO_ARGS_OFFSET, MVT::i32, Custom);
   
   setOperationAction(ISD::ADJUST_TRAMP, MVT::i32,   Expand);
   setOperationAction(ISD::ADJUST_TRAMP, MVT::i64,   Expand);
