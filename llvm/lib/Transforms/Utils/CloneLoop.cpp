@@ -145,7 +145,9 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
 
   BasicBlock *Latch = OrigL->getLoopLatch();
   Function *F = Latch->getParent();
-  F->getBasicBlockList().insert(Latch, NewBlocks.begin(), NewBlocks.end());
+  F->getBasicBlockList().insert(OrigL->getHeader(), 
+                                NewBlocks.begin(), NewBlocks.end());
+
 
   return NewParentLoop;
 }
