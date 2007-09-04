@@ -277,6 +277,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createLoopRotatePass());
   addPass(PM, createLICMPass());                 // Hoist loop invariants
   addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
+  addPass(PM, createLoopIndexSplitPass());       // Index split loops.
   addPass(PM, createInstructionCombiningPass()); // Clean up after LICM/reassoc
   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createLoopUnrollPass());           // Unroll small loops
