@@ -94,9 +94,9 @@ static inline std::string ftostr(double V) {
 }
 
 static inline std::string ftostr(const APFloat& V) {
-  if (&V.getSemantics() == &APFloat::IEEEsingle)
+  if (&V.getSemantics() == &APFloat::IEEEdouble)
     return ftostr(V.convertToDouble());
-  else if (&V.getSemantics() == &APFloat::IEEEdouble)
+  else if (&V.getSemantics() == &APFloat::IEEEsingle)
     return ftostr((double)V.convertToFloat());
   return 0; // error
 }
