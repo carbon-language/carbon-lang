@@ -313,15 +313,7 @@ void Sema::CheckVariableInitList(QualType DeclType, InitListExpr *IList,
     
     if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
       if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
-        QualType ElmtType = CAT->getElementType();
-        int maxElements = CAT->getSize().getZExtValue();
-        
-        // If we have a multi-dimensional array, navigate to the base type. Also
-        // compute the absolute array, so we can detect excess elements.
-        while ((CAT = ElmtType->getAsConstantArrayType())) {
-          ElmtType = CAT->getElementType();
-          maxElements *= CAT->getSize().getZExtValue();
-        }
+        int maxElements = CAT->getMaximumElements();
         CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
                               maxElements, hadError);
       }
@@ -342,19 +334,9 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
 
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
     // We have a constant array type, compute maxElements *at this level*.
-    QualType ElmtType = CAT->getElementType();
-    maxElementsAtThisLevel = CAT->getSize().getZExtValue();
-    
-    // Set DeclType, important for correctly handling multi-dimensional arrays.
-    DeclType = ElmtType;
-    
-    // If we have a multi-dimensional array, navigate to the base type. Also
-    // compute the absolute size of the array *at this level* array, so we can 
-    // detect excess elements.
-    while ((CAT = ElmtType->getAsConstantArrayType())) {
-      ElmtType = CAT->getElementType();
-      maxElementsAtThisLevel *= CAT->getSize().getZExtValue();
-    }
+    maxElementsAtThisLevel = CAT->getMaximumElements();
+    // Set DeclType, used below to recurse (for multi-dimensional arrays).
+    DeclType = CAT->getElementType();
   } else if (DeclType->isScalarType()) {
     Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
          IList->getSourceRange());
@@ -410,22 +392,11 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
       return Diag(expr->getLocStart(), diag::err_variable_object_no_init, 
                   expr->getSourceRange());
 
-    // We have a VariableArrayType with unknown size.
-    QualType ElmtType = VAT->getElementType();
-    
-    // Set DeclType, important for correctly handling multi-dimensional arrays.
-    DeclType = ElmtType;
-    
-    // If we have a multi-dimensional array, navigate to the base type.
-    // Use getAsArrayType(), since it is illegal for an array to have an 
-    // incomplete element type. For example, "int [][]" is illegal.
-    const ArrayType *ATY;
-    while ((ATY = ElmtType->getAsArrayType())) {
-      ElmtType = ATY->getElementType();
-    }
+    // We have a VariableArrayType with unknown size. Note that only the first
+    // array can have unknown size. For example, "int [][]" is illegal.
     int numInits = 0;
-    CheckVariableInitList(DeclType, InitList, ElmtType, isStatic, numInits, 
-                          hadError);
+    CheckVariableInitList(VAT->getElementType(), InitList, VAT->getBaseType(), 
+                          isStatic, numInits, hadError);
     if (!hadError) {
       // Return a new array type from the number of initializers (C99 6.7.8p22).
       llvm::APSInt ConstVal(32);
@@ -436,17 +407,9 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
     return hadError;
   }
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
-    QualType ElmtType = CAT->getElementType();
-    int maxElements = CAT->getSize().getZExtValue();
-    
-    // If we have a multi-dimensional array, navigate to the base type. Also
-    // compute the absolute size of the array, so we can detect excess elements.
-    while ((CAT = ElmtType->getAsConstantArrayType())) {
-      ElmtType = CAT->getElementType();
-      maxElements *= CAT->getSize().getZExtValue();
-    }
-    CheckConstantInitList(DeclType, InitList, ElmtType, isStatic, maxElements, 
-                          hadError);
+    int maxElements = CAT->getMaximumElements();
+    CheckConstantInitList(DeclType, InitList, CAT->getBaseType(), 
+                          isStatic, maxElements, hadError);
     return hadError;
   }
   if (DeclType->isScalarType()) { // C99 6.7.8p11: Allow "int x = { 1, 2 };"

@@ -471,6 +471,14 @@ public:
   ArraySizeModifier getSizeModifier() const { return SizeModifier; }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
   
+  QualType getBaseType() const {
+    const ArrayType *AT;
+    QualType ElmtType = getElementType();
+    // If we have a multi-dimensional array, navigate to the base type.
+    while ((AT = ElmtType->getAsArrayType()))
+      ElmtType = AT->getElementType();
+    return ElmtType;
+  }
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
            T->getTypeClass() == VariableArray;
@@ -487,7 +495,18 @@ class ConstantArrayType : public ArrayType, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
 public:
   llvm::APInt getSize() const { return Size; }
+  int getMaximumElements() const {
+    QualType ElmtType = getElementType();
+    int maxElements = getSize().getZExtValue();
 
+    const ConstantArrayType *CAT;
+    // If we have a multi-dimensional array, include it's elements.
+    while ((CAT = ElmtType->getAsConstantArrayType())) {
+      ElmtType = CAT->getElementType();
+      maxElements *= CAT->getSize().getZExtValue();
+    }
+    return maxElements;
+  }
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID) {
