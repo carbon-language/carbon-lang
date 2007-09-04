@@ -191,14 +191,18 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                              SrcPtr->getNameStart()+SrcPtr->getNameLen());
   
   Name += ".realp";
-  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Zero, Zero, Name.c_str());
+  llvm::Value *Ops[] = {Zero, Zero};
+  llvm::Value *RealPtr = Builder.CreateGEP(SrcPtr, Ops, Ops+2, Name.c_str());
 
   Name.pop_back();  // .realp -> .real
   llvm::Value *Real = Builder.CreateLoad(RealPtr, isVolatile, Name.c_str());
   
   Name.resize(Name.size()-4); // .real -> .imagp
   Name += "imagp";
-  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Zero, One, Name.c_str());
+  
+  Ops[1] = One; // { Ops = { Zero, One }
+  llvm::Value *ImagPtr = Builder.CreateGEP(SrcPtr, Ops, Ops+2, Name.c_str());
+
   Name.pop_back();  // .imagp -> .imag
   llvm::Value *Imag = Builder.CreateLoad(ImagPtr, isVolatile, Name.c_str());
   return ComplexPairTy(Real, Imag);
@@ -210,8 +214,12 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
                                             bool isVolatile) {
   llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   llvm::Constant *One  = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
-  llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Zero, Zero, "real");
-  llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Zero, One, "imag");
+
+  llvm::Value *Ops[] = {Zero, Zero};
+  llvm::Value *RealPtr = Builder.CreateGEP(Ptr, Ops, Ops+2, "real");
+  
+  Ops[1] = One; // { Ops = { Zero, One }
+  llvm::Value *ImagPtr = Builder.CreateGEP(Ptr, Ops, Ops+2, "imag");
   
   Builder.CreateStore(Val.first, RealPtr, isVolatile);
   Builder.CreateStore(Val.second, ImagPtr, isVolatile);

@@ -415,7 +415,9 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
                                 ->getElementType()) &&
            "Doesn't support VLAs yet!");
     llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    return Builder.CreateGEP(V, Idx0, Idx0, "arraydecay");
+    
+    llvm::Value *Ops[] = {Idx0, Idx0};
+    return Builder.CreateGEP(V, Ops, Ops+2, "arraydecay");
   }
   
   return EmitCastExpr(Op, E->getType());
