@@ -16,7 +16,7 @@
 
 namespace clang {
 class Preprocessor;
-class LangOptions;
+struct LangOptions;
 class MinimalAction;
 class TargetInfo;
 class Diagnostic;
