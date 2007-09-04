@@ -338,6 +338,10 @@ def RLDIMI : MDForm_1<30, 3,
 }
 
 // Rotate instructions.
+def RLDCL  : MDForm_1<30, 0,
+                      (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB, u6imm:$MB),
+                      "rldcl $rA, $rS, $rB, $MB", IntRotateD,
+                      []>, isPPC64;
 def RLDICL : MDForm_1<30, 0,
                       (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH, u6imm:$MB),
                       "rldicl $rA, $rS, $SH, $MB", IntRotateD,
@@ -578,6 +582,12 @@ def : Pat<(shl G8RC:$in, (i32 imm:$imm)),
           (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
 def : Pat<(srl G8RC:$in, (i32 imm:$imm)),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
+
+// ROTL
+def : Pat<(rotl G8RC:$in, GPRC:$sh),
+          (RLDCL G8RC:$in, GPRC:$sh, 0)>;
+def : Pat<(rotl G8RC:$in, (i32 imm:$imm)),
+          (RLDICL G8RC:$in, imm:$imm, 0)>;
 
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS8 tglobaladdr:$in)>;
