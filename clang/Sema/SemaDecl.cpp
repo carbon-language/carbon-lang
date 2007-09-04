@@ -1190,7 +1190,8 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
     } else {
       // First value, set to zero.
       EltTy = Context.IntTy;
-      EnumVal.zextOrTrunc(Context.getTypeSize(EltTy, IdLoc));
+      EnumVal.zextOrTrunc(
+        static_cast<uint32_t>(Context.getTypeSize(EltTy, IdLoc)));
     }
   }
   
@@ -1420,7 +1421,7 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
   }
   // unlike gcc's vector_size attribute, the size is specified as the 
   // number of elements, not the number of bytes.
-  unsigned vectorSize = vecSize.getZExtValue(); 
+  unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue()); 
   
   if (vectorSize == 0) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_zero_size,
@@ -1473,9 +1474,10 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
          curType.getCanonicalType().getAsString());
     return QualType();
   }
-  unsigned typeSize = Context.getTypeSize(curType, rawAttr->getAttributeLoc());
+  unsigned typeSize = static_cast<unsigned>(
+    Context.getTypeSize(curType, rawAttr->getAttributeLoc()));
   // vecSize is specified in bytes - convert to bits.
-  unsigned vectorSize = vecSize.getZExtValue() * 8; 
+  unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue() * 8); 
   
   // the vector size needs to be an integral multiple of the type size.
   if (vectorSize % typeSize) {

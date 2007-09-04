@@ -475,7 +475,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       break;
     case tok::lessless: {
       // Determine whether overflow is about to happen.
-      unsigned ShAmt = RHS.getLimitedValue();
+      unsigned ShAmt = static_cast<unsigned>(RHS.getLimitedValue());
       if (ShAmt >= LHS.getBitWidth())
         Overflow = true, ShAmt = LHS.getBitWidth()-1;
       else if (LHS.isUnsigned())
@@ -490,7 +490,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     }
     case tok::greatergreater: {
       // Determine whether overflow is about to happen.
-      unsigned ShAmt = RHS.getLimitedValue();
+      unsigned ShAmt = static_cast<unsigned>(RHS.getLimitedValue());
       if (ShAmt >= LHS.getBitWidth())
         Overflow = true, ShAmt = LHS.getBitWidth()-1;
       Res = LHS >> ShAmt;

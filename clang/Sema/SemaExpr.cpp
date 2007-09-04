@@ -129,7 +129,8 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
   if (Tok.getLength() == 1) {
     const char *t = PP.getSourceManager().getCharacterData(Tok.getLocation());
     
-    unsigned IntSize = Context.getTypeSize(Context.IntTy, Tok.getLocation());
+    unsigned IntSize = static_cast<unsigned>(
+      Context.getTypeSize(Context.IntTy, Tok.getLocation()));
     return ExprResult(new IntegerLiteral(llvm::APInt(IntSize, *t-'0'),
                                          Context.IntTy, 
                                          Tok.getLocation()));
@@ -181,7 +182,8 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
       // Check from smallest to largest, picking the smallest type we can.
       if (!Literal.isLong && !Literal.isLongLong) {
         // Are int/unsigned possibilities?
-        unsigned IntSize = Context.getTypeSize(Context.IntTy,Tok.getLocation());
+        unsigned IntSize = static_cast<unsigned>(
+          Context.getTypeSize(Context.IntTy,Tok.getLocation()));
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
           // Does it fit in a signed int?
@@ -197,8 +199,8 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
       
       // Are long/unsigned long possibilities?
       if (t.isNull() && !Literal.isLongLong) {
-        unsigned LongSize = Context.getTypeSize(Context.LongTy,
-                                                Tok.getLocation());
+        unsigned LongSize = static_cast<unsigned>(
+          Context.getTypeSize(Context.LongTy, Tok.getLocation()));
      
         // Does it fit in a unsigned long?
         if (ResultVal.isIntN(LongSize)) {
@@ -214,8 +216,8 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
       
       // Finally, check long long if needed.
       if (t.isNull()) {
-        unsigned LongLongSize =
-          Context.getTypeSize(Context.LongLongTy, Tok.getLocation());
+        unsigned LongLongSize = static_cast<unsigned>(
+          Context.getTypeSize(Context.LongLongTy, Tok.getLocation()));
         
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {

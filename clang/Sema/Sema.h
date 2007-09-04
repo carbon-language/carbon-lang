@@ -36,8 +36,8 @@ namespace clang {
   class TypedefDecl;
   class FunctionDecl;
   class QualType;
-  class LangOptions;
-  class DeclaratorChunk;
+  struct LangOptions;
+  struct DeclaratorChunk;
   class Token;
   class IntegerLiteral;
   class ArrayType;

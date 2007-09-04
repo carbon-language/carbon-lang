@@ -499,20 +499,23 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     break;
   case CharacterLiteralClass: {
     const CharacterLiteral *CL = cast<CharacterLiteral>(this);
-    Result.zextOrTrunc(Ctx.getTypeSize(getType(), CL->getLoc()));                              
+    Result.zextOrTrunc(
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CL->getLoc())));
     Result = CL->getValue();
     Result.setIsUnsigned(!getType()->isSignedIntegerType());
     break;
   }
   case TypesCompatibleExprClass: {
     const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
-    Result.zextOrTrunc(Ctx.getTypeSize(getType(), TCE->getLocStart()));                              
+    Result.zextOrTrunc(
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), TCE->getLocStart())));
     Result = TCE->typesAreCompatible();
     break;
   }
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
-    Result.zextOrTrunc(Ctx.getTypeSize(getType(), CE->getLocStart()));
+    Result.zextOrTrunc(
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CE->getLocStart())));
     if (CE->isBuiltinClassifyType(Result))
       break;
     if (Loc) *Loc = getLocStart();
@@ -550,7 +553,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
         return false;
       
       // Return the result in the right width.
-      Result.zextOrTrunc(Ctx.getTypeSize(getType(), Exp->getOperatorLoc()));
+      Result.zextOrTrunc(
+        static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
 
       // Get information about the size or align.
       if (Exp->getOpcode() == UnaryOperator::SizeOf)
@@ -562,7 +566,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       break;
     case UnaryOperator::LNot: {
       bool Val = Result != 0;
-      Result.zextOrTrunc(Ctx.getTypeSize(getType(), Exp->getOperatorLoc()));
+      Result.zextOrTrunc(
+        static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
       Result = Val;
       break;
     }
@@ -584,7 +589,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       return false;
 
     // Return the result in the right width.
-    Result.zextOrTrunc(Ctx.getTypeSize(getType(), Exp->getOperatorLoc()));
+    Result.zextOrTrunc(
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
     
     // Get information about the size or align.
     if (Exp->isSizeOf())
@@ -647,10 +653,12 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case BinaryOperator::Add: Result += RHS; break;
     case BinaryOperator::Sub: Result -= RHS; break;
     case BinaryOperator::Shl:
-      Result <<= RHS.getLimitedValue(Result.getBitWidth()-1);
+      Result <<= 
+        static_cast<uint32_t>(RHS.getLimitedValue(Result.getBitWidth()-1));
       break;
     case BinaryOperator::Shr:
-      Result >>= RHS.getLimitedValue(Result.getBitWidth()-1);
+      Result >>= 
+        static_cast<uint32_t>(RHS.getLimitedValue(Result.getBitWidth()-1));
       break;
     case BinaryOperator::LT:  Result = Result < RHS; break;
     case BinaryOperator::GT:  Result = Result > RHS; break;
@@ -711,7 +719,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
         return false;
       
       // Figure out if this is a truncate, extend or noop cast.
-      unsigned DestWidth = Ctx.getTypeSize(getType(), CastLoc);
+      unsigned DestWidth = 
+        static_cast<uint32_t>(Ctx.getTypeSize(getType(), CastLoc));
       
       // If the input is signed, do a sign extend, noop, or truncate.
       if (SubExpr->getType()->isSignedIntegerType())
