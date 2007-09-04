@@ -1,6 +1,7 @@
 // RUN: clang -fsyntax-only %s
 int g(int);
 
+#if 0
 void f() {
   int i;
   int &r = i;
@@ -16,3 +17,5 @@ void f() {
   int *& P = Q;
   P[1] = 1;
 }
+
+#endif
