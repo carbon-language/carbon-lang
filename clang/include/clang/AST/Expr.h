@@ -991,6 +991,11 @@ public:
     return InitExprs[Init];
   }
   
+  void setInit(unsigned Init, Expr *expr) { 
+    assert(Init < NumInits && "Initializer access out of range!");
+    InitExprs[Init] = expr;
+  }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(LBraceLoc, RBraceLoc);
   } 

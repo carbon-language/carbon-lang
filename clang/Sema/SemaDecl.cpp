@@ -239,7 +239,7 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return 0;
 }
 
-bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
+bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {
   AssignmentCheckResult result;
   SourceLocation loc = Init->getLocStart();
   // Get the type before calling CheckSingleAssignmentConstraints(), since
@@ -289,8 +289,10 @@ bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
   return false;
 }
 
-bool Sema::CheckInitExpr(Expr *expr, bool isStatic, QualType ElementType) {
+bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
+                         bool isStatic, QualType ElementType) {
   SourceLocation loc;
+  Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
 
   if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
     Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
@@ -298,6 +300,8 @@ bool Sema::CheckInitExpr(Expr *expr, bool isStatic, QualType ElementType) {
   } else if (CheckSingleInitializer(expr, ElementType)) {
     return true; // types weren't compatible.
   }
+  if (savExpr != expr) // The type was promoted, update initializer list.
+    IList->setInit(slot, expr);
   return false;
 }
 
@@ -322,7 +326,7 @@ void Sema::CheckVariableInitList(QualType DeclType, InitListExpr *IList,
                               maxElements, hadError);
       }
     } else {
-      hadError = CheckInitExpr(expr, isStatic, ElementType);
+      hadError = CheckInitExpr(expr, IList, i, isStatic, ElementType);
     }
     nInitializers++;
   }
@@ -366,7 +370,7 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
         CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
                               totalInits, hadError);
       } else {
-        hadError = CheckInitExpr(expr, isStatic, ElementType);
+        hadError = CheckInitExpr(expr, IList, i, isStatic, ElementType);
         nInitsAtLevel++; // increment the number of initializers at this level.
         totalInits--;    // decrement the total number of initializers.
         
@@ -388,7 +392,7 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
   return;
 }
 
-bool Sema::CheckInitializer(Expr *Init, QualType &DeclType, bool isStatic) {
+bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList)
     return CheckSingleInitializer(Init, DeclType);
