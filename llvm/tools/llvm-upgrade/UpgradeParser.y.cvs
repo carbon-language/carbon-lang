@@ -1533,8 +1533,8 @@ const Type* upgradeGEPCEIndices(const Type* PTy,
       }
     }
     Result.push_back(Index);
-    Ty = GetElementPtrInst::getIndexedType(PTy, (Value**)&Result[0], 
-                                           Result.size(),true);
+    Ty = GetElementPtrInst::getIndexedType(PTy, Result.begin(), 
+                                           Result.end(),true);
     if (!Ty)
       error("Index list invalid for constant getelementptr");
   }
@@ -1579,7 +1579,8 @@ const Type* upgradeGEPInstIndices(const Type* PTy,
       }
     }
     Result.push_back(Index);
-    Ty = GetElementPtrInst::getIndexedType(PTy, &Result[0], Result.size(),true);
+    Ty = GetElementPtrInst::getIndexedType(PTy, Result.begin(),
+                                           Result.end(),true);
     if (!Ty)
       error("Index list invalid for constant getelementptr");
   }
@@ -3342,7 +3343,8 @@ BBTerminatorInst
 
     // Create the call node...
     if (!$6) {                                   // Has no arguments?
-      $$.TI = new InvokeInst(V, Normal, Except, 0, 0);
+      std::vector<Value*> Args;
+      $$.TI = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
       // correctly!
@@ -3362,7 +3364,7 @@ BBTerminatorInst
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         error("Invalid number of parameters detected");
 
-      $$.TI = new InvokeInst(V, Normal, Except, &Args[0], Args.size());
+      $$.TI = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     }
     cast<InvokeInst>($$.TI)->setCallingConv(upgradeCallingConv($2));
     delete $3.PAT;
@@ -3889,7 +3891,7 @@ MemoryInst
     upgradeGEPInstIndices(Ty, $4, VIndices);
 
     Value* tmpVal = getVal(Ty, $3);
-    $$.I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
+    $$.I = new GetElementPtrInst(tmpVal, VIndices.begin(), VIndices.end());
     ValueInfo VI; VI.V = tmpVal; VI.S.copy($2.S);
     $$.S.copy(getElementSign(VI, VIndices));
     delete $2.PAT;
