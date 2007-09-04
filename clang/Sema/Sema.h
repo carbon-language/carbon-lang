@@ -445,9 +445,14 @@ private:
   bool CheckInitializer(Expr *simpleInit_or_initList, QualType &declType,
                         bool isStatic);
   bool CheckSingleInitializer(Expr *simpleInit, QualType declType);
-  void CheckInitList(InitListExpr *IList, QualType DType, bool isStatic,
-                     int &nInitializers, int maxElements, bool &hadError);
-  
+  bool CheckInitExpr(Expr *expr, bool isStatic, QualType ElementType);
+  void CheckVariableInitList(QualType DeclType, InitListExpr *IList, 
+                             QualType ElementType, bool isStatic, 
+                             int &nInitializers, bool &hadError);
+  void CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
+                             QualType ElementType, bool isStatic, 
+                             int &nInitializers, bool &hadError);
+   
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit
   /// the specified diagnostic.

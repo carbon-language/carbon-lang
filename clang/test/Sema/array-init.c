@@ -16,7 +16,7 @@ void func() {
 
   int x3[x] = { 1, 2 }; // expected-error{{variable-sized object may not be initialized}}
 
-  int x4 = { 1, 2 }; // // expected-warning{{excess elements in array initializer}}
+  int x4 = { 1, 2 }; // expected-warning{{braces around scalar initializer}} expected-warning{{excess elements in array initializer}}
 
   int y[4][3] = { 
     { 1, 3, 5 },
@@ -46,3 +46,85 @@ void func() {
   
   static int x2[3] = { 1.0, "abc" , 5.8 }; // expected-warning{{incompatible types assigning 'char *' to 'int'}}
 }
+
+void test() {
+  int y1[3] = { 
+    { 1, 2, 3 } // expected-warning{{braces around scalar initializer}} expected-warning{{excess elements in array initializer}}
+  };
+  int y3[4][3] = {  
+    { 1, 3, 5 },
+    { 2, 4, 6 },
+    { 3, 5, 7 },
+    { 4, 6, 8 },
+    {  }, // expected-warning{{use of GNU empty initializer extension}} expected-warning{{excess elements in array initializer}}
+  };
+  int y4[4][3] = {  
+    { 1, 3, 5, 2 }, // expected-warning{{excess elements in array initializer}}
+    { 4, 6 },
+    { 3, 5, 7 },
+    { 4, 6, 8 }, // expected-warning{{excess elements in array initializer}}
+  };
+}
+
+void allLegalAndSynonymous() {
+  short q[4][3][2] = {
+    { 1 },
+    { 2, 3 },
+    { 4, 5, 6 }
+  };
+  short q2[4][3][2] = {
+    { 1, 0, 0, 0, 0, 0 },
+    { 2, 3, 0, 0, 0, 0 },
+    { 4, 5, 6 }
+  };
+  short q3[4][3][2] = {
+    { 
+      { 1 },
+    },
+    { 
+      { 2, 3 },
+    },
+    { 
+      { 4, 5 },
+      { 6 },
+    },
+  };
+}
+
+void legal() {
+  short q[][3][2] = {
+    { 1 },
+    { 2, 3 },
+    { 4, 5, 6 }
+  };
+}
+
+void illegal() {
+  short q2[4][][2] = { // expected-error{{array has incomplete element type 'short [][2]'}}
+    { 1, 0, 0, 0, 0, 0 },
+    { 2, 3, 0, 0, 0, 0 },
+    { 4, 5, 6 }
+  };
+  short q3[4][3][] = { // expected-error{{array has incomplete element type 'short []'}}
+    { 
+      { 1 },
+    },
+    { 
+      { 2, 3 },
+    },
+    { 
+      { 4, 5 },
+      { 6 },
+    },
+  };
+  // FIXME: the following two errors are redundant
+  int a[][] = { 1, 2 }; // expected-error{{array has incomplete element type 'int []'}} expected-error{{variable has incomplete type 'int []'}}
+}
+
+typedef int AryT[];
+
+void testTypedef()
+{
+  AryT a = { 1, 2 }, b = { 3, 4, 5 };
+}
+

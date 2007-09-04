@@ -289,29 +289,101 @@ bool Sema::CheckSingleInitializer(Expr *Init, QualType DeclType) {
   return false;
 }
 
-void Sema::CheckInitList(InitListExpr *IList, QualType DType, 
-                         bool isStatic, int &nInitializers, int maxElements,
-                         bool &hadError) {
+bool Sema::CheckInitExpr(Expr *expr, bool isStatic, QualType ElementType) {
+  SourceLocation loc;
+
+  if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
+    Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
+    return true;
+  } else if (CheckSingleInitializer(expr, ElementType)) {
+    return true; // types weren't compatible.
+  }
+  return false;
+}
+
+void Sema::CheckVariableInitList(QualType DeclType, InitListExpr *IList, 
+                                 QualType ElementType, bool isStatic, 
+                                 int &nInitializers, bool &hadError) {
   for (unsigned i = 0; i < IList->getNumInits(); i++) {
     Expr *expr = IList->getInit(i);
     
-    if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr))
-      CheckInitList(InitList, DType, isStatic, nInitializers, maxElements,
-                    hadError);
-    else {
-      SourceLocation loc = expr->getLocStart();
-
-      if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
-        Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
-        hadError = true;
-      } else if (CheckSingleInitializer(expr, DType)) {
-        hadError = true; // types didn't match.
+    if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
+      if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
+        QualType ElmtType = CAT->getElementType();
+        int maxElements = CAT->getSize().getZExtValue();
+        
+        // If we have a multi-dimensional array, navigate to the base type. Also
+        // compute the absolute array, so we can detect excess elements.
+        while ((CAT = ElmtType->getAsConstantArrayType())) {
+          ElmtType = CAT->getElementType();
+          maxElements *= CAT->getSize().getZExtValue();
+        }
+        CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
+                              maxElements, hadError);
       }
-      // Does the element fit?
-      nInitializers++;
-      if ((maxElements >= 0) && (nInitializers > maxElements))
-        Diag(loc, diag::warn_excess_initializers, expr->getSourceRange());
+    } else {
+      hadError = CheckInitExpr(expr, isStatic, ElementType);
     }
+    nInitializers++;
+  }
+  return;
+}
+
+// FIXME: Doesn't deal with arrays of structures yet.
+void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
+                                 QualType ElementType, bool isStatic,
+                                 int &totalInits, bool &hadError) {
+  int maxElementsAtThisLevel = 0;
+  int nInitsAtLevel = 0;
+
+  if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
+    // We have a constant array type, compute maxElements *at this level*.
+    QualType ElmtType = CAT->getElementType();
+    maxElementsAtThisLevel = CAT->getSize().getZExtValue();
+    
+    // Set DeclType, important for correctly handling multi-dimensional arrays.
+    DeclType = ElmtType;
+    
+    // If we have a multi-dimensional array, navigate to the base type. Also
+    // compute the absolute size of the array *at this level* array, so we can 
+    // detect excess elements.
+    while ((CAT = ElmtType->getAsConstantArrayType())) {
+      ElmtType = CAT->getElementType();
+      maxElementsAtThisLevel *= CAT->getSize().getZExtValue();
+    }
+  } else if (DeclType->isScalarType()) {
+    Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
+         IList->getSourceRange());
+    maxElementsAtThisLevel = 1;
+  } 
+  // The empty init list "{ }" is treated specially below.
+  unsigned numInits = IList->getNumInits();
+  if (numInits) {
+    for (unsigned i = 0; i < numInits; i++) {
+      Expr *expr = IList->getInit(i);
+      
+      if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
+        CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
+                              totalInits, hadError);
+      } else {
+        hadError = CheckInitExpr(expr, isStatic, ElementType);
+        nInitsAtLevel++; // increment the number of initializers at this level.
+        totalInits--;    // decrement the total number of initializers.
+        
+        // Check if we have space for another initializer.
+        if ((nInitsAtLevel > maxElementsAtThisLevel) || (totalInits < 0))
+          Diag(expr->getLocStart(), diag::warn_excess_initializers, 
+               expr->getSourceRange());
+      }
+    }
+    if (nInitsAtLevel < maxElementsAtThisLevel) // fill the remaining elements.
+      totalInits -= (maxElementsAtThisLevel - nInitsAtLevel);
+  } else { 
+    // we have an initializer list with no elements.
+    totalInits -= maxElementsAtThisLevel;
+    if (totalInits < 0)
+      Diag(IList->getLocStart(), diag::warn_excess_initializers, 
+           IList->getSourceRange());
   }
   return;
 }
@@ -325,7 +397,6 @@ bool Sema::CheckInitializer(Expr *Init, QualType &DeclType, bool isStatic) {
   Init->setType(DeclType);
 
   bool hadError = false;
-  int nInits = 0;
   
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
@@ -338,36 +409,46 @@ bool Sema::CheckInitializer(Expr *Init, QualType &DeclType, bool isStatic) {
     // We have a VariableArrayType with unknown size.
     QualType ElmtType = VAT->getElementType();
     
-    // If we have a multi-dimensional array, navigate to the base type.
-    while ((VAT = ElmtType->getAsVariableArrayType())) {
-      ElmtType = VAT->getElementType();
-    }
-    CheckInitList(InitList, ElmtType, isStatic, nInits, -1, hadError);
+    // Set DeclType, important for correctly handling multi-dimensional arrays.
+    DeclType = ElmtType;
     
+    // If we have a multi-dimensional array, navigate to the base type.
+    // Use getAsArrayType(), since it is illegal for an array to have an 
+    // incomplete element type. For example, "int [][]" is illegal.
+    const ArrayType *ATY;
+    while ((ATY = ElmtType->getAsArrayType())) {
+      ElmtType = ATY->getElementType();
+    }
+    int numInits = 0;
+    CheckVariableInitList(DeclType, InitList, ElmtType, isStatic, numInits, 
+                          hadError);
     if (!hadError) {
       // Return a new array type from the number of initializers (C99 6.7.8p22).
       llvm::APSInt ConstVal(32);
-      ConstVal = nInits;
-      DeclType = Context.getConstantArrayType(ElmtType, ConstVal, 
+      ConstVal = numInits;
+      DeclType = Context.getConstantArrayType(DeclType, ConstVal, 
                                               ArrayType::Normal, 0);
     }
     return hadError;
   }
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
     QualType ElmtType = CAT->getElementType();
-    unsigned numElements = CAT->getSize().getZExtValue();
+    int maxElements = CAT->getSize().getZExtValue();
     
     // If we have a multi-dimensional array, navigate to the base type. Also
     // compute the absolute size of the array, so we can detect excess elements.
     while ((CAT = ElmtType->getAsConstantArrayType())) {
       ElmtType = CAT->getElementType();
-      numElements *= CAT->getSize().getZExtValue();
+      maxElements *= CAT->getSize().getZExtValue();
     }
-    CheckInitList(InitList, ElmtType, isStatic, nInits, numElements, hadError);
+    CheckConstantInitList(DeclType, InitList, ElmtType, isStatic, maxElements, 
+                          hadError);
     return hadError;
   }
-  if (DeclType->isScalarType()) { // C99 6.7.8p11
-    CheckInitList(InitList, DeclType, isStatic, nInits, 1, hadError);
+  if (DeclType->isScalarType()) { // C99 6.7.8p11: Allow "int x = { 1, 2 };"
+    int maxElements = 1;
+    CheckConstantInitList(DeclType, InitList, DeclType, isStatic, maxElements, 
+                          hadError);
     return hadError;
   }
   // FIXME: Handle struct/union types.
@@ -476,7 +557,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       if (Init) {
         if (SC == VarDecl::Extern)
           Diag(D.getIdentifierLoc(), diag::warn_extern_init);
-        CheckInitializer(Init, R, true);
+        if (!D.getInvalidType())
+          CheckInitializer(Init, R, true);
       }
       // File scope. C99 6.9.2p2: A declaration of an identifier for and 
       // object that has file scope without an initializer, and without a
@@ -520,7 +602,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
         if (SC == VarDecl::Extern) { // C99 6.7.8p5
           Diag(D.getIdentifierLoc(), diag::err_block_extern_cant_init);
           InvalidDecl = true;
-        } else {
+        } else if (!D.getInvalidType()) {
           CheckInitializer(Init, R, SC == VarDecl::Static);
         }
       }
