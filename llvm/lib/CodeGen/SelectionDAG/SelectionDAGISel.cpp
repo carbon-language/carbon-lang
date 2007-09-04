@@ -2703,7 +2703,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       }
 
       // Insert the EHSELECTION instruction.
-      SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+      SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
       SDOperand Ops[2];
       Ops[0] = getValue(I.getOperand(1));
       Ops[1] = getRoot();
