@@ -58,7 +58,8 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::ULong:
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
-      return llvm::IntegerType::get(Context.getTypeSize(T, SourceLocation()));
+      return llvm::IntegerType::get(
+        static_cast<unsigned>(Context.getTypeSize(T, SourceLocation())));
       
     case BuiltinType::Float:      return llvm::Type::FloatTy;
     case BuiltinType::Double:     return llvm::Type::DoubleTy;

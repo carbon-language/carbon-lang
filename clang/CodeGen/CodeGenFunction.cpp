@@ -51,9 +51,9 @@ bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
 
 void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   LLVMIntTy = ConvertType(getContext().IntTy);
-  LLVMPointerWidth =
+  LLVMPointerWidth = static_cast<unsigned>(
     getContext().getTypeSize(getContext().getPointerType(getContext().VoidTy),
-                             SourceLocation());
+                             SourceLocation()));
   
   CurFn = cast<llvm::Function>(CGM.GetAddrOfGlobalDecl(FD));
   CurFuncDecl = FD;
