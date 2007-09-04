@@ -464,7 +464,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
         Idxs.push_back(NullInt);
         for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
           Idxs.push_back(GEPI->getOperand(i));
-        NewPtr = new GetElementPtrInst(NewPtr, &Idxs[0], Idxs.size(),
+        NewPtr = new GetElementPtrInst(NewPtr, Idxs.begin(), Idxs.end(),
                                        GEPI->getName()+"."+utostr(Val), GEPI);
       }
     GEP->replaceAllUsesWith(NewPtr);
@@ -698,7 +698,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                      MI->getAlignment(), MI->getName(), MI);
     Value* Indices[2];
     Indices[0] = Indices[1] = Constant::getNullValue(Type::Int32Ty);
-    Value *NewGEP = new GetElementPtrInst(NewMI, Indices, 2,
+    Value *NewGEP = new GetElementPtrInst(NewMI, Indices, Indices + 2,
                                           NewMI->getName()+".el0", MI);
     MI->replaceAllUsesWith(NewGEP);
     MI->eraseFromParent();
@@ -926,7 +926,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr,
     GEPIdx.push_back(GEPI->getOperand(1));
     GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
 
-    Value *NGEPI = new GetElementPtrInst(NewPtr, &GEPIdx[0], GEPIdx.size(),
+    Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx.begin(), GEPIdx.end(),
                                          GEPI->getName(), GEPI);
     GEPI->replaceAllUsesWith(NGEPI);
     GEPI->eraseFromParent();

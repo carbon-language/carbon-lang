@@ -1533,8 +1533,8 @@ const Type* upgradeGEPCEIndices(const Type* PTy,
       }
     }
     Result.push_back(Index);
-    Ty = GetElementPtrInst::getIndexedType(PTy, (Value**)&Result[0], 
-                                           Result.size(),true);
+    Ty = GetElementPtrInst::getIndexedType(PTy, Result.begin(), 
+                                           Result.end(),true);
     if (!Ty)
       error("Index list invalid for constant getelementptr");
   }
@@ -1579,7 +1579,8 @@ const Type* upgradeGEPInstIndices(const Type* PTy,
       }
     }
     Result.push_back(Index);
-    Ty = GetElementPtrInst::getIndexedType(PTy, &Result[0], Result.size(),true);
+    Ty = GetElementPtrInst::getIndexedType(PTy, Result.begin(),
+                                           Result.end(),true);
     if (!Ty)
       error("Index list invalid for constant getelementptr");
   }
@@ -3890,7 +3891,7 @@ MemoryInst
     upgradeGEPInstIndices(Ty, $4, VIndices);
 
     Value* tmpVal = getVal(Ty, $3);
-    $$.I = new GetElementPtrInst(tmpVal, &VIndices[0], VIndices.size());
+    $$.I = new GetElementPtrInst(tmpVal, VIndices.begin(), VIndices.end());
     ValueInfo VI; VI.V = tmpVal; VI.S.copy($2.S);
     $$.S.copy(getElementSign(VI, VIndices));
     delete $2.PAT;

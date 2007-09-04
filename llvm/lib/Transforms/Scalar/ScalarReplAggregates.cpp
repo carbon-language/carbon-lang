@@ -319,8 +319,8 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       SmallVector<Value*, 8> NewArgs;
       NewArgs.push_back(Constant::getNullValue(Type::Int32Ty));
       NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
-      RepValue = new GetElementPtrInst(AllocaToUse, &NewArgs[0],
-                                       NewArgs.size(), "", GEPI);
+      RepValue = new GetElementPtrInst(AllocaToUse, NewArgs.begin(),
+                                       NewArgs.end(), "", GEPI);
       RepValue->takeName(GEPI);
     }
     
@@ -626,8 +626,10 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
       // If this is a memcpy/memmove, emit a GEP of the other element address.
       Value *OtherElt = 0;
       if (OtherPtr) {
-        OtherElt = new GetElementPtrInst(OtherPtr, Zero,
-                                         ConstantInt::get(Type::Int32Ty, i),
+        Value *Idx[2];
+        Idx[0] = Zero;
+        Idx[1] = ConstantInt::get(Type::Int32Ty, i);
+        OtherElt = new GetElementPtrInst(OtherPtr, Idx, Idx + 2,
                                          OtherPtr->getNameStr()+"."+utostr(i),
                                          MI);
       }
@@ -829,11 +831,13 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
           SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
           Indices[1] = Constant::getNullValue(Type::Int32Ty);
           Value *ZeroIdx = new GetElementPtrInst(GEPI->getOperand(0),
-                                                 &Indices[0], Indices.size(),
+                                                 Indices.begin(),
+                                                 Indices.end(),
                                                  GEPI->getName()+".0", GEPI);
           Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
           Value *OneIdx = new GetElementPtrInst(GEPI->getOperand(0),
-                                                &Indices[0], Indices.size(),
+                                                Indices.begin(),
+                                                Indices.end(),
                                                 GEPI->getName()+".1", GEPI);
           // Replace all loads of the variable index GEP with loads from both
           // indexes and a select.

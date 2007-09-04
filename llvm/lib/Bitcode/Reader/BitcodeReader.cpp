@@ -1234,7 +1234,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         GEPIdx.push_back(Op);
       }
 
-      I = new GetElementPtrInst(BasePtr, &GEPIdx[0], GEPIdx.size());
+      I = new GetElementPtrInst(BasePtr, GEPIdx.begin(), GEPIdx.end());
       break;
     }
       

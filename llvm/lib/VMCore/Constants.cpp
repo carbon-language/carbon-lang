@@ -1799,7 +1799,7 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                            Value* const *Idxs,
                                            unsigned NumIdx) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs, NumIdx, true) &&
+  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx, true) &&
          "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(C, (Constant**)Idxs, NumIdx))
@@ -1821,7 +1821,7 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
                                          unsigned NumIdx) {
   // Get the result type of the getelementptr!
   const Type *Ty = 
-    GetElementPtrInst::getIndexedType(C->getType(), Idxs, NumIdx, true);
+    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx, true);
   assert(Ty && "GEP indices invalid!");
   return getGetElementPtrTy(PointerType::get(Ty), C, Idxs, NumIdx);
 }

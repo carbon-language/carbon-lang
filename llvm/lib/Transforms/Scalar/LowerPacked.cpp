@@ -235,7 +235,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
 
             // Get the pointer
             Value* val = new GetElementPtrInst(array,
-                                               &Idx[0], Idx.size(),
+                                               Idx.begin(), Idx.end(),
                                                LI.getName() +
                                                ".ge." + utostr(i),
                                                &LI);
@@ -333,7 +333,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
             // Generate the indices for getelementptr
             Idx[1] = ConstantInt::get(Type::Int32Ty,i);
             Value* val = new GetElementPtrInst(array,
-                                               &Idx[0], Idx.size(),
+                                               Idx.begin(), Idx.end(),
                                                "store.ge." +
                                                utostr(i) + ".",
                                                &SI);

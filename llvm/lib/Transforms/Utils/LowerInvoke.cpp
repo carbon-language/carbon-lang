@@ -450,8 +450,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::Int32Ty));
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 1));
-    OldJmpBufPtr = new GetElementPtrInst(JmpBuf, &Idx[0], 2, "OldBuf",
-                                         EntryBB->getTerminator());
+    OldJmpBufPtr = new GetElementPtrInst(JmpBuf, Idx.begin(), Idx.end(),
+                                         "OldBuf", EntryBB->getTerminator());
 
     // Copy the JBListHead to the alloca.
     Value *OldBuf = new LoadInst(JBListHead, "oldjmpbufptr", true,
@@ -489,7 +489,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                                      "setjmp.cont");
 
     Idx[1] = ConstantInt::get(Type::Int32Ty, 0);
-    Value *JmpBufPtr = new GetElementPtrInst(JmpBuf, &Idx[0], Idx.size(),
+    Value *JmpBufPtr = new GetElementPtrInst(JmpBuf, Idx.begin(), Idx.end(),
                                              "TheJmpBuf",
                                              EntryBB->getTerminator());
     Value *SJRet = new CallInst(SetJmpFn, JmpBufPtr, "sjret",
@@ -540,7 +540,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   std::vector<Value*> Idx;
   Idx.push_back(Constant::getNullValue(Type::Int32Ty));
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
-  Idx[0] = new GetElementPtrInst(BufPtr, &Idx[0], 2, "JmpBuf", UnwindBlock);
+  Idx[0] = new GetElementPtrInst(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
+                                 UnwindBlock);
   Idx[1] = ConstantInt::get(Type::Int32Ty, 1);
   new CallInst(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
   new UnreachableInst(UnwindBlock);

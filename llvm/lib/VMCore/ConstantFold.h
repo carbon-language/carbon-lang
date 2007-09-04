@@ -19,6 +19,8 @@
 #ifndef CONSTANTFOLDING_H
 #define CONSTANTFOLDING_H
 
+#include <iterator>
+
 namespace llvm {
   class Value;
   class Constant;
@@ -46,6 +48,7 @@ namespace llvm {
   Constant *ConstantFoldCompareInstruction(unsigned short predicate, 
                                            const Constant *C1, 
                                            const Constant *C2);
+
   Constant *ConstantFoldGetElementPtr(const Constant *C,
                                       Constant* const *Idxs, unsigned NumIdx);
 } // End llvm namespace

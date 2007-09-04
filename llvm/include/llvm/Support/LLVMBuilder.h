@@ -217,16 +217,13 @@ public:
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
-  GetElementPtrInst *CreateGEP(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-                               const char *Name = "") {
-    return Insert(new GetElementPtrInst(Ptr, Idx, NumIdx, Name));
+  template<typename InputIterator>
+  GetElementPtrInst *CreateGEP(Value *Ptr, InputIterator IdxBegin, 
+                               InputIterator IdxEnd, const char *Name = "") {
+    return(Insert(new GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Name)));
   }
   GetElementPtrInst *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
-    return Insert(new GetElementPtrInst(Ptr, &Idx, 1, Name));
-  }
-  GetElementPtrInst *CreateGEP(Value *Ptr, Value *Idx0, Value *Idx1,
-                               const char *Name = "") {
-    return Insert(new GetElementPtrInst(Ptr, Idx0, Idx1, Name));
+    return Insert(new GetElementPtrInst(Ptr, Idx, Name));
   }
   
   //===--------------------------------------------------------------------===//

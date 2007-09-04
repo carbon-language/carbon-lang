@@ -945,7 +945,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
     
     if (newOp1 != U->getPointerOperand() || changed_idx) {
       Instruction* newVal = new GetElementPtrInst(newOp1,
-                                       &newIdx[0], newIdx.size(),
+                                       newIdx.begin(), newIdx.end(),
                                        U->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
@@ -1675,7 +1675,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                                   C->getName()+".gvnpre", 
                                   (*PI)->getTerminator());
       else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(U))
-        newVal = new GetElementPtrInst(s1, &sVarargs[0], sVarargs.size(), 
+        newVal = new GetElementPtrInst(s1, sVarargs.begin(), sVarargs.end(), 
                                        G->getName()+".gvnpre", 
                                        (*PI)->getTerminator());
                                 

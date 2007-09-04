@@ -367,6 +367,14 @@ public:
 //                             GetElementPtrInst Class
 //===----------------------------------------------------------------------===//
 
+// checkType - Simple wrapper function to give a better assertion failure
+// message on bad indexes for a gep instruction.
+//
+static inline const Type *checkType(const Type *Ty) {
+  assert(Ty && "Invalid GetElementPtrInst indices for type!");
+  return Ty;
+}
+
 /// GetElementPtrInst - an instruction for type-safe pointer arithmetic to
 /// access elements of arrays and structs
 ///
@@ -380,27 +388,93 @@ class GetElementPtrInst : public Instruction {
       OL[i].init(GEPIOL[i], this);
   }
   void init(Value *Ptr, Value* const *Idx, unsigned NumIdx);
-  void init(Value *Ptr, Value *Idx0, Value *Idx1);
   void init(Value *Ptr, Value *Idx);
+
+  template<typename InputIterator>
+  void init(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
+            const std::string &Name,
+            // This argument ensures that we have an iterator we can
+            // do arithmetic on in constant time
+            std::random_access_iterator_tag) {
+    typename std::iterator_traits<InputIterator>::difference_type NumIdx = 
+      std::distance(IdxBegin, IdxEnd);
+    
+    if (NumIdx > 0) {
+      // This requires that the itoerator points to contiguous memory.
+      init(Ptr, &*IdxBegin, NumIdx);
+    }
+    else {
+      init(Ptr, 0, NumIdx);
+    }
+
+    setName(Name);
+  }
+
+  /// getIndexedType - Returns the type of the element that would be loaded with
+  /// a load instruction with the specified parameters.
+  ///
+  /// A null type is returned if the indices are invalid for the specified
+  /// pointer type.
+  ///
+  static const Type *getIndexedType(const Type *Ptr,
+                                    Value* const *Idx, unsigned NumIdx,
+                                    bool AllowStructLeaf = false);
+
+  template<typename InputIterator>
+  static const Type *getIndexedType(const Type *Ptr,
+                                    InputIterator IdxBegin, 
+                                    InputIterator IdxEnd,
+                                    bool AllowStructLeaf,
+                                    // This argument ensures that we
+                                    // have an iterator we can do
+                                    // arithmetic on in constant time
+                                    std::random_access_iterator_tag) {
+    typename std::iterator_traits<InputIterator>::difference_type NumIdx = 
+      std::distance(IdxBegin, IdxEnd);
+
+    if (NumIdx > 0) {
+      // This requires that the iterator points to contiguous memory.
+      return(getIndexedType(Ptr, (Value *const *)&*IdxBegin, NumIdx,
+                            AllowStructLeaf));
+    }
+    else {
+      return(getIndexedType(Ptr, (Value *const*)0, NumIdx, AllowStructLeaf));
+    }
+  }
+
 public:
   /// Constructors - Create a getelementptr instruction with a base pointer an
   /// list of indices.  The first ctor can optionally insert before an existing
   /// instruction, the second appends the new instruction to the specified
   /// BasicBlock.
-  GetElementPtrInst(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-                    const std::string &Name = "", Instruction *InsertBefore =0);
-  GetElementPtrInst(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
-  
+  template<typename InputIterator>
+  GetElementPtrInst(Value *Ptr, InputIterator IdxBegin, 
+                    InputIterator IdxEnd,
+                    const std::string &Name = "",
+                    Instruction *InsertBefore =0)
+      : Instruction(PointerType::get(
+                      checkType(getIndexedType(Ptr->getType(),
+                                               IdxBegin, IdxEnd, true))),
+                    GetElementPtr, 0, 0, InsertBefore) {
+    init(Ptr, IdxBegin, IdxEnd, Name,
+         typename std::iterator_traits<InputIterator>::iterator_category());
+  }
+  template<typename InputIterator>
+  GetElementPtrInst(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
+                    const std::string &Name, BasicBlock *InsertAtEnd)
+      : Instruction(PointerType::get(
+                      checkType(getIndexedType(Ptr->getType(),
+                                               IdxBegin, IdxEnd, true))),
+                    GetElementPtr, 0, 0, InsertAtEnd) {
+    init(Ptr, IdxBegin, IdxEnd, Name,
+         typename std::iterator_traits<InputIterator>::iterator_category());
+  }
+
   /// Constructors - These two constructors are convenience methods because one
   /// and two index getelementptr instructions are so common.
   GetElementPtrInst(Value *Ptr, Value *Idx,
                     const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, Value *Idx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
-  GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
-                    const std::string &Name = "", Instruction *InsertBefore =0);
-  GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
                     const std::string &Name, BasicBlock *InsertAtEnd);
   ~GetElementPtrInst();
 
@@ -417,12 +491,15 @@ public:
   /// A null type is returned if the indices are invalid for the specified
   /// pointer type.
   ///
+  template<typename InputIterator>
   static const Type *getIndexedType(const Type *Ptr,
-                                    Value* const *Idx, unsigned NumIdx,
-                                    bool AllowStructLeaf = false);
-  
-  static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
-                                    bool AllowStructLeaf = false);
+                                    InputIterator IdxBegin,
+                                    InputIterator IdxEnd,
+                                    bool AllowStructLeaf = false) {
+    return(getIndexedType(Ptr, IdxBegin, IdxEnd, AllowStructLeaf, 
+                          typename std::iterator_traits<InputIterator>::
+                          iterator_category()));
+  }  
   static const Type *getIndexedType(const Type *Ptr, Value *Idx);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }

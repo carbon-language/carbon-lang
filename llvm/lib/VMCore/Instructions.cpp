@@ -864,14 +864,6 @@ void StoreInst::setAlignment(unsigned Align) {
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
 
-// checkType - Simple wrapper function to give a better assertion failure
-// message on bad indexes for a gep instruction.
-//
-static inline const Type *checkType(const Type *Ty) {
-  assert(Ty && "Invalid GetElementPtrInst indices for type!");
-  return Ty;
-}
-
 void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx) {
   NumOperands = 1+NumIdx;
   Use *OL = OperandList = new Use[NumOperands];
@@ -881,14 +873,6 @@ void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx) {
     OL[i+1].init(Idx[i], this);
 }
 
-void GetElementPtrInst::init(Value *Ptr, Value *Idx0, Value *Idx1) {
-  NumOperands = 3;
-  Use *OL = OperandList = new Use[3];
-  OL[0].init(Ptr, this);
-  OL[1].init(Idx0, this);
-  OL[2].init(Idx1, this);
-}
-
 void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
   NumOperands = 2;
   Use *OL = OperandList = new Use[2];
@@ -896,27 +880,6 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
   OL[1].init(Idx, this);
 }
 
-
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx,
-                                     unsigned NumIdx,
-                                     const std::string &Name, Instruction *InBe)
-: Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                        Idx, NumIdx, true))),
-              GetElementPtr, 0, 0, InBe) {
-  init(Ptr, Idx, NumIdx);
-  setName(Name);
-}
-
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value* const *Idx, 
-                                     unsigned NumIdx,
-                                     const std::string &Name, BasicBlock *IAE)
-: Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                        Idx, NumIdx, true))),
-              GetElementPtr, 0, 0, IAE) {
-  init(Ptr, Idx, NumIdx);
-  setName(Name);
-}
-
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
@@ -930,24 +893,6 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
                 GetElementPtr, 0, 0, IAE) {
   init(Ptr, Idx);
-  setName(Name);
-}
-
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
-                                     const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx0, Idx1, true))),
-                GetElementPtr, 0, 0, InBe) {
-  init(Ptr, Idx0, Idx1);
-  setName(Name);
-}
-
-GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
-                                     const std::string &Name, BasicBlock *IAE)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
-                                                          Idx0, Idx1, true))),
-                GetElementPtr, 0, 0, IAE) {
-  init(Ptr, Idx0, Idx1);
   setName(Name);
 }
 
@@ -997,24 +942,6 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
     }
   }
   return CurIdx == NumIdx ? Ptr : 0;
-}
-
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
-                                              Value *Idx0, Value *Idx1,
-                                              bool AllowCompositeLeaf) {
-  const PointerType *PTy = dyn_cast<PointerType>(Ptr);
-  if (!PTy) return 0;   // Type isn't a pointer type!
-
-  // Check the pointer index.
-  if (!PTy->indexValid(Idx0)) return 0;
-
-  const CompositeType *CT = dyn_cast<CompositeType>(PTy->getElementType());
-  if (!CT || !CT->indexValid(Idx1)) return 0;
-
-  const Type *ElTy = CT->getTypeAtIndex(Idx1);
-  if (AllowCompositeLeaf || ElTy->isFirstClassType())
-    return ElTy;
-  return 0;
 }
 
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {

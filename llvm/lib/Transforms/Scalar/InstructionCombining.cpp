@@ -6564,8 +6564,9 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
             // If we were able to index down into an element, create the GEP
             // and bitcast the result.  This eliminates one bitcast, potentially
             // two.
-            Instruction *NGEP = new GetElementPtrInst(OrigBase, &NewIndices[0],
-                                                      NewIndices.size(), "");
+            Instruction *NGEP = new GetElementPtrInst(OrigBase, 
+                                                      NewIndices.begin(),
+                                                      NewIndices.end(), "");
             InsertNewInstBefore(NGEP, CI);
             NGEP->takeName(GEP);
             
@@ -7057,7 +7058,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // If we found a path from the src to dest, create the getelementptr now.
     if (SrcElTy == DstElTy) {
       SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
-      return new GetElementPtrInst(Src, &Idxs[0], Idxs.size());
+      return new GetElementPtrInst(Src, Idxs.begin(), Idxs.end());
     }
   }
 
@@ -8502,8 +8503,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
 
     if (!Indices.empty())
-      return new GetElementPtrInst(SrcGEPOperands[0], &Indices[0],
-                                   Indices.size(), GEP.getName());
+      return new GetElementPtrInst(SrcGEPOperands[0], Indices.begin(),
+                                   Indices.end(), GEP.getName());
 
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(PtrOp)) {
     // GEP of global variable.  If all of the indices for this GEP are
@@ -8554,9 +8555,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (isa<ArrayType>(SrcElTy) &&
           TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
           TD->getTypeSize(ResElTy)) {
+        Value *Idx[2];
+        Idx[0] = Constant::getNullValue(Type::Int32Ty);
+        Idx[1] = GEP.getOperand(1);
         Value *V = InsertNewInstBefore(
-               new GetElementPtrInst(X, Constant::getNullValue(Type::Int32Ty),
-                                     GEP.getOperand(1), GEP.getName()), GEP);
+               new GetElementPtrInst(X, Idx, Idx + 2, GEP.getName()), GEP);
         // V and GEP are both pointer types --> BitCast
         return new BitCastInst(V, GEP.getType());
       }
@@ -8609,9 +8612,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           }
 
           // Insert the new GEP instruction.
+          Value *Idx[2];
+          Idx[0] = Constant::getNullValue(Type::Int32Ty);
+          Idx[1] = NewIdx;
           Instruction *NewGEP =
-            new GetElementPtrInst(X, Constant::getNullValue(Type::Int32Ty),
-                                  NewIdx, GEP.getName());
+            new GetElementPtrInst(X, Idx, Idx + 2, GEP.getName());
           NewGEP = InsertNewInstBefore(NewGEP, GEP);
           // The NewGEP must be pointer typed, so must the old one -> BitCast
           return new BitCastInst(NewGEP, GEP.getType());
@@ -8651,7 +8656,10 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       // insert our getelementptr instruction...
       //
       Value *NullIdx = Constant::getNullValue(Type::Int32Ty);
-      Value *V = new GetElementPtrInst(New, NullIdx, NullIdx,
+      Value *Idx[2];
+      Idx[0] = NullIdx;
+      Idx[1] = NullIdx;
+      Value *V = new GetElementPtrInst(New, Idx, Idx + 2,
                                        New->getName()+".sub", It);
 
       // Now make everything use the getelementptr instead of the original

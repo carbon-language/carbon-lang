@@ -178,8 +178,11 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
               Constant *NCE = ConstantExpr::getGetElementPtr(CE->getOperand(0),
                                                              &CEIdxs[0],
                                                              CEIdxs.size());
+              Value *Idx[2];
+              Idx[0] = Constant::getNullValue(Type::Int32Ty);
+              Idx[1] = NewAdd;
               GetElementPtrInst *NGEPI = new GetElementPtrInst(
-                  NCE, Constant::getNullValue(Type::Int32Ty), NewAdd, 
+                  NCE, Idx, Idx + 2, 
                   GEPI->getName(), GEPI);
               SE->deleteValueFromRecords(GEPI);
               GEPI->replaceAllUsesWith(NGEPI);

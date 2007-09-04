@@ -787,7 +787,8 @@ void CppWriter::printConstant(const Constant *CV) {
       Out << "Constant* " << constName 
           << " = ConstantExpr::getGetElementPtr(" 
           << getCppName(CE->getOperand(0)) << ", " 
-          << "&" << constName << "_indices[0], " << CE->getNumOperands() - 1
+          << constName << "_indices.begin(), "
+          << constName << "_indices.end(), "
           << " );";
     } else if (CE->isCast()) {
       printConstant(CE->getOperand(0));
@@ -1253,8 +1254,8 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
           nl(Out);
         }
         Out << "Instruction* " << iName << " = new GetElementPtrInst(" 
-            << opNames[0] << ", &" << iName << "_indices[0], " 
-            << gep->getNumOperands() - 1;
+            << opNames[0] << ", " << iName << "_indices.begin(), " 
+            << iName << "_indices.end()";
       }
       Out << ", \"";
       printEscapedString(gep->getName());

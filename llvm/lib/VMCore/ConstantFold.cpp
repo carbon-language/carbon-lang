@@ -1350,7 +1350,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
 }
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
-                                          Constant* const *Idxs, 
+                                          Constant* const *Idxs,
                                           unsigned NumIdx) {
   if (NumIdx == 0 ||
       (NumIdx == 1 && Idxs[0]->isNullValue()))
@@ -1358,7 +1358,8 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
 
   if (isa<UndefValue>(C)) {
     const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(),
-                                                       (Value**)Idxs, NumIdx,
+                                                       (Value **)Idxs,
+                                                       (Value **)Idxs+NumIdx,
                                                        true);
     assert(Ty != 0 && "Invalid indices for GEP!");
     return UndefValue::get(PointerType::get(Ty));
@@ -1374,7 +1375,8 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
       }
     if (isNull) {
       const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(),
-                                                         (Value**)Idxs, NumIdx,
+                                                         (Value**)Idxs,
+                                                         (Value**)Idxs+NumIdx,
                                                          true);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty));

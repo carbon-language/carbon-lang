@@ -294,11 +294,12 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
     Value *RewriteVal;
     if (AggregateArgs) {
-      Value *Idx0 = Constant::getNullValue(Type::Int32Ty);
-      Value *Idx1 = ConstantInt::get(Type::Int32Ty, i);
+      Value *Idx[2];
+      Idx[0] = Constant::getNullValue(Type::Int32Ty);
+      Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       std::string GEPname = "gep_" + inputs[i]->getName();
       TerminatorInst *TI = newFunction->begin()->getTerminator();
-      GetElementPtrInst *GEP = new GetElementPtrInst(AI, Idx0, Idx1, 
+      GetElementPtrInst *GEP = new GetElementPtrInst(AI, Idx, Idx+2, 
                                                      GEPname, TI);
       RewriteVal = new LoadInst(GEP, "load" + GEPname, TI);
     } else
@@ -381,10 +382,11 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     params.push_back(Struct);
 
     for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
-      Value *Idx0 = Constant::getNullValue(Type::Int32Ty);
-      Value *Idx1 = ConstantInt::get(Type::Int32Ty, i);
+      Value *Idx[2];
+      Idx[0] = Constant::getNullValue(Type::Int32Ty);
+      Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       GetElementPtrInst *GEP =
-        new GetElementPtrInst(Struct, Idx0, Idx1,
+        new GetElementPtrInst(Struct, Idx, Idx + 2,
                               "gep_" + StructValues[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       StoreInst *SI = new StoreInst(StructValues[i], GEP);
@@ -406,10 +408,11 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   for (unsigned i = 0, e = outputs.size(); i != e; ++i) {
     Value *Output = 0;
     if (AggregateArgs) {
-      Value *Idx0 = Constant::getNullValue(Type::Int32Ty);
-      Value *Idx1 = ConstantInt::get(Type::Int32Ty, FirstOut + i);
+      Value *Idx[2];
+      Idx[0] = Constant::getNullValue(Type::Int32Ty);
+      Idx[1] = ConstantInt::get(Type::Int32Ty, FirstOut + i);
       GetElementPtrInst *GEP
-        = new GetElementPtrInst(Struct, Idx0, Idx1,
+        = new GetElementPtrInst(Struct, Idx, Idx + 2,
                                 "gep_reload_" + outputs[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
       Output = GEP;
@@ -506,10 +509,11 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
             if (DominatesDef) {
               if (AggregateArgs) {
-                Value *Idx0 = Constant::getNullValue(Type::Int32Ty);
-                Value *Idx1 = ConstantInt::get(Type::Int32Ty,FirstOut+out);
+                Value *Idx[2];
+                Idx[0] = Constant::getNullValue(Type::Int32Ty);
+                Idx[1] = ConstantInt::get(Type::Int32Ty,FirstOut+out);
                 GetElementPtrInst *GEP =
-                  new GetElementPtrInst(OAI, Idx0, Idx1,
+                  new GetElementPtrInst(OAI, Idx, Idx + 2,
                                         "gep_" + outputs[out]->getName(),
                                         NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);

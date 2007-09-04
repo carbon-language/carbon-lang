@@ -913,7 +913,7 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   const Type *ElTy =
     GetElementPtrInst::getIndexedType(GEP.getOperand(0)->getType(),
-                                      &Idxs[0], Idxs.size(), true);
+                                      Idxs.begin(), Idxs.end(), true);
   Assert1(ElTy, "Invalid indices for GEP pointer type!", &GEP);
   Assert2(isa<PointerType>(GEP.getType()) &&
           cast<PointerType>(GEP.getType())->getElementType() == ElTy,
