@@ -3811,47 +3811,41 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       OpcodeVTMap.find(OpName);
     std::vector<std::string> &OpVTs = OpVTI->second;
     OS << "  case " << OpName << ": {\n";
-    if (OpVTs.size() == 1) {
-      std::string &VTStr = OpVTs[0];
-      OS << "    return Select_" << getLegalCName(OpName)
-         << VTStr << "(N);\n";
-    } else {
-      // Keep track of whether we see a pattern that has an iPtr result.
-      bool HasPtrPattern = false;
-      bool HasDefaultPattern = false;
+    // Keep track of whether we see a pattern that has an iPtr result.
+    bool HasPtrPattern = false;
+    bool HasDefaultPattern = false;
       
-      OS << "    switch (NVT) {\n";
-      for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
-        std::string &VTStr = OpVTs[i];
-        if (VTStr.empty()) {
-          HasDefaultPattern = true;
-          continue;
-        }
+    OS << "    switch (NVT) {\n";
+    for (unsigned i = 0, e = OpVTs.size(); i < e; ++i) {
+      std::string &VTStr = OpVTs[i];
+      if (VTStr.empty()) {
+        HasDefaultPattern = true;
+        continue;
+      }
 
-        // If this is a match on iPTR: don't emit it directly, we need special
-        // code.
-        if (VTStr == "_iPTR") {
-          HasPtrPattern = true;
-          continue;
-        }
-        OS << "    case MVT::" << VTStr.substr(1) << ":\n"
-           << "      return Select_" << getLegalCName(OpName)
-           << VTStr << "(N);\n";
+      // If this is a match on iPTR: don't emit it directly, we need special
+      // code.
+      if (VTStr == "_iPTR") {
+        HasPtrPattern = true;
+        continue;
       }
-      OS << "    default:\n";
-      
-      // If there is an iPTR result version of this pattern, emit it here.
-      if (HasPtrPattern) {
-        OS << "      if (NVT == TLI.getPointerTy())\n";
-        OS << "        return Select_" << getLegalCName(OpName) <<"_iPTR(N);\n";
-      }
-      if (HasDefaultPattern) {
-        OS << "      return Select_" << getLegalCName(OpName) << "(N);\n";
-      }
-      OS << "      break;\n";
-      OS << "    }\n";
-      OS << "    break;\n";
+      OS << "    case MVT::" << VTStr.substr(1) << ":\n"
+         << "      return Select_" << getLegalCName(OpName)
+         << VTStr << "(N);\n";
     }
+    OS << "    default:\n";
+      
+    // If there is an iPTR result version of this pattern, emit it here.
+    if (HasPtrPattern) {
+      OS << "      if (NVT == TLI.getPointerTy())\n";
+      OS << "        return Select_" << getLegalCName(OpName) <<"_iPTR(N);\n";
+    }
+    if (HasDefaultPattern) {
+      OS << "      return Select_" << getLegalCName(OpName) << "(N);\n";
+    }
+    OS << "      break;\n";
+    OS << "    }\n";
+    OS << "    break;\n";
     OS << "  }\n";
   }
 
