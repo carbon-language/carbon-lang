@@ -781,7 +781,7 @@ Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
   }
   ConsumeToken(); // consume class-name;
   if (Tok.getKind() != tok::semi)
-    Diag(Tok, diag::err_expected_semi_after, "@synthesize");
+    Diag(Tok, diag::err_expected_semi_after, "@compatibility_alias");
   return 0;
 }
 
