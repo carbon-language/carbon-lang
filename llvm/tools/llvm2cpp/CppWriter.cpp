@@ -787,8 +787,8 @@ void CppWriter::printConstant(const Constant *CV) {
       Out << "Constant* " << constName 
           << " = ConstantExpr::getGetElementPtr(" 
           << getCppName(CE->getOperand(0)) << ", " 
-          << constName << "_indices.begin(), "
-          << constName << "_indices.end()"
+          << "&" << constName << "_indices[0], "
+          << constName << "_indices.size()"
           << " );";
     } else if (CE->isCast()) {
       printConstant(CE->getOperand(0));
