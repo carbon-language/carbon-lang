@@ -264,7 +264,7 @@ private:
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtEndDeclaration(SourceLocation atLoc);
-  DeclTy *ParseObjCAtAliasDeclaration();
+  DeclTy *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCPropertySynthesize(SourceLocation atLoc);
   DeclTy *ParseObjCPropertyDynamic(SourceLocation atLoc);
   

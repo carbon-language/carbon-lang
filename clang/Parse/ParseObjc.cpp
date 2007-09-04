@@ -41,7 +41,7 @@ Parser::DeclTy *Parser::ParseObjCAtDirectives() {
     case tok::objc_end:
       return ParseObjCAtEndDeclaration(AtLoc);
     case tok::objc_compatibility_alias:
-      return ParseObjCAtAliasDeclaration();
+      return ParseObjCAtAliasDeclaration(AtLoc);
     case tok::objc_synthesize:
       return ParseObjCPropertySynthesize(AtLoc);
     case tok::objc_dynamic:
@@ -762,8 +762,26 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
 
   return 0;
 }
-Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration() {
-  assert(0 && "Unimp");
+
+///   compatibility-alias-decl:
+///     @compatibility_alias alias-name  class-name ';'
+///
+Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
+  assert(Tok.isObjCAtKeyword(tok::objc_compatibility_alias) &&
+         "ParseObjCAtAliasDeclaration(): Expected @compatibility_alias");
+  ConsumeToken(); // consume compatibility_alias
+  if (Tok.getKind() != tok::identifier) {
+    Diag(Tok, diag::err_expected_ident);
+    return 0;
+  }
+  ConsumeToken(); // consume alias-name
+  if (Tok.getKind() != tok::identifier) {
+    Diag(Tok, diag::err_expected_ident);
+    return 0;
+  }
+  ConsumeToken(); // consume class-name;
+  if (Tok.getKind() != tok::semi)
+    Diag(Tok, diag::err_expected_semi_after, "@synthesize");
   return 0;
 }
 
