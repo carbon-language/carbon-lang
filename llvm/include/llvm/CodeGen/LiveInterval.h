@@ -163,7 +163,8 @@ namespace llvm {
 
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
-    VNInfo *getNextValue(unsigned MIIdx, unsigned SrcReg) {
+    VNInfo *getNextValue(unsigned MIIdx, unsigned SrcReg,
+                         BumpPtrAllocator &VNInfoAllocator) {
 #ifdef __GNUC__
       unsigned Alignment = __alignof__(VNInfo);
 #else
