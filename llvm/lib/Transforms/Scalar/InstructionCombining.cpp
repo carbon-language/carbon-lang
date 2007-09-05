@@ -7058,7 +7058,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // If we found a path from the src to dest, create the getelementptr now.
     if (SrcElTy == DstElTy) {
       SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
-      return new GetElementPtrInst(Src, Idxs.begin(), Idxs.end());
+      return new GetElementPtrInst(Src, Idxs.begin(), Idxs.end(), "", ((Instruction*) NULL));
     }
   }
 
