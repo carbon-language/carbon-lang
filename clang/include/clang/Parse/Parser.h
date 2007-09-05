@@ -354,6 +354,7 @@ private:
   ExprResult ParseObjCStringLiteral();
   ExprResult ParseObjCEncodeExpression();
   ExprResult ParseObjCProtocolExpression();
+  ExprResult ParseObjCMessageExpression();
 
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.

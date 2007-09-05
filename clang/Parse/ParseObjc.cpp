@@ -384,10 +384,9 @@ IdentifierInfo *Parser::ParseObjCSelector() {
   tok::TokenKind tKind = Tok.getKind();
   IdentifierInfo *II = 0;
   
-  if (tKind == tok::identifier || 
+  if (tKind == tok::identifier   || tKind == tok::kw_typeof ||
+      tKind == tok::kw___alignof ||
       (tKind >= tok::kw_auto && tKind <= tok::kw__Complex)) {
-    // FIXME: make sure the list of keywords jives with gcc. For example,
-    // the above test does not include in/out/inout/bycopy/byref/oneway.
     II = Tok.getIdentifierInfo();
     ConsumeToken();
   } 
@@ -516,7 +515,12 @@ void Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc) {
         ConsumeToken();
         break;
       }
-      ParseDeclaration(Declarator::PrototypeContext);
+      // Parse the c-style argument declaration-specifier.
+      DeclSpec DS;
+      ParseDeclarationSpecifiers(DS);
+      // Parse the declarator. 
+      Declarator ParmDecl(DS, Declarator::PrototypeContext);
+      ParseDeclarator(ParmDecl);
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -907,6 +911,37 @@ Parser::ExprResult Parser::ParseObjCExpression() {
       break;
   }
   
+  return 0;
+}
+
+///   objc-message-expr: 
+///     '[' objc-receiver objc-message-args ']'
+///
+///   objc-receiver:
+///     expression
+///     class-name
+///     type-name
+///  
+///   objc-message-args:
+///     objc-selector
+///     objc-keywordarg-list
+///
+///   objc-keywordarg-list:
+///     objc-keywordarg
+///     objc-keywordarg-list objc-keywordarg
+///
+///   objc-keywordarg: 
+///     selector-name[opt] ':' objc-keywordexpr
+///
+///   objc-keywordexpr:
+///     nonempty-expr-list
+///
+///   nonempty-expr-list:
+///     assignment-expression
+///     nonempty-expr-list , assignment-expression
+///   
+Parser::ExprResult Parser::ParseObjCMessageExpression() {
+  assert(false && "Unimp");
   return 0;
 }
 

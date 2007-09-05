@@ -427,11 +427,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [GNU]   '__builtin_choose_expr' '(' assign-expr ',' assign-expr ','
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
-/// [OBC]   '[' objc-receiver objc-message-args ']'    [TODO]
-/// [OBC]   '@selector' '(' objc-selector-arg ')'      [TODO]
-/// [OBC]   '@protocol' '(' identifier ')'             [TODO]
-/// [OBC]   '@encode' '(' type-name ')'                [TODO]
-/// [OBC]   objc-string-literal
+/// [OBJC]  '[' objc-message-expr ']'    [TODO]
+/// [OBJC]  '@selector' '(' objc-selector-arg ')'      [TODO]
+/// [OBJC]  '@protocol' '(' identifier ')'             [TODO]
+/// [OBJC]  '@encode' '(' type-name ')'                [TODO]
+/// [OBJC]  objc-string-literal
 /// [C++]   'const_cast' '<' type-name '>' '(' expression ')'       [C++ 5.2p1]
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
@@ -590,6 +590,8 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParseCXXCasts();
   case tok::at:
     return ParseObjCExpression();
+  case tok::l_square:
+    return ParseObjCMessageExpression ();
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
