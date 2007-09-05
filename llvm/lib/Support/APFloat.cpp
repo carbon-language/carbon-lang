@@ -1168,21 +1168,30 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 {
   opStatus fs;
   APFloat V = *this;
+  unsigned int origSign = sign;
   fs = V.divide(rhs, rmNearestTiesToEven);
   if (fs == opDivByZero)
     return fs;
 
-  integerPart x;
-  fs = V.convertToInteger(&x, integerPartWidth, true, rmNearestTiesToEven);
+  int parts = partCount();
+  integerPart *x = new integerPart[parts];
+  fs = V.convertToInteger(x, parts * integerPartWidth, true, 
+                          rmNearestTiesToEven);
   if (fs==opInvalidOp)
     return fs;
 
-  fs = V.convertFromInteger(&x, integerPartWidth, true, rmNearestTiesToEven);
+  fs = V.convertFromInteger(x, parts, true, rmNearestTiesToEven);
   assert(fs==opOK);   // should always work
+
   fs = V.multiply(rhs, rounding_mode);
-  assert(fs==opOK);   // should not overflow or underflow
+  assert(fs==opOK || fs==opInexact);   // should not overflow or underflow
+
   fs = subtract(V, rounding_mode);
-  assert(fs==opOK);
+  assert(fs==opOK || fs==opInexact);   // likewise
+
+  if (isZero())
+    sign = origSign;    // IEEE754 requires this
+  delete[] x;
   return fs;
 }
 
@@ -1581,6 +1590,9 @@ APFloat::getHashValue() const {
 // Current implementation requires partCount()==1, which is correct at the
 // moment but could be made more general.
 
+// Denormals have exponent minExponent in APFloat, but minExponent-1 in
+// the actual IEEE respresentation.  We compensate for that here.
+
 double
 APFloat::convertToDouble() const {
   assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
@@ -1589,8 +1601,10 @@ APFloat::convertToDouble() const {
   uint64_t myexponent, mysignificand;
 
   if (category==fcNormal) {
-    mysignificand = *significandParts();
     myexponent = exponent+1023; //bias
+    mysignificand = *significandParts();
+    if (myexponent==1 && !(mysignificand & 0x10000000000000LL))
+      myexponent = 0;   // denormal
   } else if (category==fcZero) {
     myexponent = 0;
     mysignificand = 0;
@@ -1618,6 +1632,8 @@ APFloat::convertToFloat() const {
   if (category==fcNormal) {
     myexponent = exponent+127; //bias
     mysignificand = *significandParts();
+    if (myexponent == 1 && !(mysignificand & 0x400000))
+      myexponent = 0;   // denormal
   } else if (category==fcZero) {
     myexponent = 0;
     mysignificand = 0;
@@ -1625,7 +1641,7 @@ APFloat::convertToFloat() const {
     myexponent = 0xff;
     mysignificand = 0;
   } else if (category==fcNaN) {
-    myexponent = 0x7ff;
+    myexponent = 0xff;
     mysignificand = *significandParts();
   } else
     assert(0);
@@ -1656,7 +1672,11 @@ APFloat::APFloat(double d) {
   } else {
     category = fcNormal;
     exponent = myexponent - 1023;
-    *significandParts() = mysignificand | 0x10000000000000LL; 
+    *significandParts() = mysignificand;
+    if (myexponent==0)          // denormal
+      exponent = -1022;
+    else
+      *significandParts() |= 0x10000000000000LL;  // integer bit
  }
 }
 
@@ -1682,6 +1702,10 @@ APFloat::APFloat(float f) {
   } else {
     category = fcNormal;
     exponent = myexponent - 127;  //bias
-    *significandParts() = mysignificand | 0x800000; // integer bit
+    *significandParts() = mysignificand;
+    if (myexponent==0)    // denormal
+      exponent = -126;
+    else
+      *significandParts() |= 0x800000; // integer bit
   }
 }
