@@ -3098,10 +3098,9 @@ private:
 
         unsigned BeginLabel = MI->getOperand(0).getImmedValue();
         assert(BeginLabel && "Invalid label!");
-        if (BeginLabel == LastLabel) {
+
+        if (BeginLabel == LastLabel)
           MayThrow = false;
-          continue;
-        }
 
         RangeMapType::iterator L = PadMap.find(BeginLabel);
 
