@@ -179,9 +179,10 @@ class CFG {
   CFGBlock* IndirectGotoBlock;  // Special block to contain collective dispatch
                                 // for indirect gotos
   CFGBlockListTy Blocks;
+  unsigned NumBlockIDs;
   
 public:
-  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL) {};
+  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0) {};
   ~CFG() {};
   
   // Block iterators
@@ -213,7 +214,9 @@ public:
   
   // Utility
   
-  CFGBlock* createBlock(unsigned blockID);
+  CFGBlock* createBlock();
+  unsigned getNumBlockIDs() const { return NumBlockIDs; }
+  
   static CFG* buildCFG(Stmt* AST);
   void viewCFG() const;
   void print(std::ostream& OS) const;

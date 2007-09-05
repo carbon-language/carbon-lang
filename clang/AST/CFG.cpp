@@ -63,7 +63,6 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
   CFGBlock* ContinueTargetBlock;
   CFGBlock* BreakTargetBlock;
   CFGBlock* SwitchTerminatedBlock;
-  unsigned NumBlocks;
   
   // LabelMap records the mapping from Label expressions to their blocks.
   typedef llvm::DenseMap<LabelStmt*,CFGBlock*> LabelMapTy;
@@ -81,8 +80,7 @@ class CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
 public:  
   explicit CFGBuilder() : cfg(NULL), Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
-                          SwitchTerminatedBlock(NULL),
-                          NumBlocks(0) {
+                          SwitchTerminatedBlock(NULL) {
     // Create an empty CFG.
     cfg = new CFG();                        
   }
@@ -194,7 +192,7 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
 /// createBlock - Used to lazily create blocks that are connected
 ///  to the current (global) succcessor.
 CFGBlock* CFGBuilder::createBlock(bool add_successor) { 
-  CFGBlock* B = cfg->createBlock(NumBlocks++);
+  CFGBlock* B = cfg->createBlock();
   if (add_successor && Succ) B->addSuccessor(Succ);
   return B;
 }
@@ -894,11 +892,11 @@ CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
 ///  block has no successors or predecessors.  If this is the first block
 ///  created in the CFG, it is automatically set to be the Entry and Exit
 ///  of the CFG.
-CFGBlock* CFG::createBlock(unsigned blockID) {
+CFGBlock* CFG::createBlock() {
   bool first_block = begin() == end();
 
   // Create the block.
-  Blocks.push_front(CFGBlock(blockID));
+  Blocks.push_front(CFGBlock(NumBlockIDs++));
 
   // If this is the first block, set it as the Entry and Exit.
   if (first_block) Entry = Exit = &front();
