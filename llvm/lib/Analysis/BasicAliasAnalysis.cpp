@@ -220,6 +220,7 @@ static bool AddressMightEscape(const Value *V) {
     case Instruction::GetElementPtr:
       if (AddressMightEscape(I))
         return true;
+      break; // next use.
     case Instruction::BitCast:
       if (!isa<PointerType>(I->getType()))
         return true;
