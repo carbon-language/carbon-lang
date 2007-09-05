@@ -562,7 +562,24 @@ public:
   bool getInvalidType() { return InvalidType; }
 };
 
+struct ObjcKeywordInfo {
+  IdentifierInfo *SelectorName; // optional
+  SourceLocation SelectorLoc;
+  SourceLocation ColonLoc;
+  Action::TypeTy *TypeInfo; // optional
+  bool InvalidType;
+  IdentifierInfo *ArgumentName;
+  AttributeList *AttrList;
   
+  ObjcKeywordInfo() {}
+  ObjcKeywordInfo(IdentifierInfo *selName, SourceLocation sLoc, 
+                  SourceLocation cLoc, Action::TypeTy *tInfo,
+                  IdentifierInfo *argName, AttributeList *aList)
+    : SelectorName(selName), SelectorLoc(sLoc), ColonLoc(cLoc), TypeInfo(tInfo), 
+      ArgumentName(argName), AttrList(aList) {
+  }
+};
+
 }  // end namespace clang
 
 #endif

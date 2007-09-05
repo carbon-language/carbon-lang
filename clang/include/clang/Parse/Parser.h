@@ -258,9 +258,11 @@ private:
   DeclTy *ParseObjCAtClassDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc, 
                                           AttributeList *prefixAttrs = 0);
-  void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl);
-  bool ParseObjCProtocolReferences();
-  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl);
+  void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
+                              llvm::SmallVectorImpl<DeclTy*> &IvarDecls);
+  bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierInfo*> &);
+  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
+                                  llvm::SmallVectorImpl<DeclTy*> &MethodDecls);
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtEndDeclaration(SourceLocation atLoc);
@@ -284,10 +286,10 @@ private:
   IdentifierInfo *ObjcPropertyAttrs[objc_NumAttrs];
   bool isObjCPropertyAttribute();
 
-  void ParseObjCTypeName();
+  TypeTy *ParseObjCTypeName();
   void ParseObjCMethodRequirement();
-  void ParseObjCMethodPrototype(bool decl);
-  void ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
+  DeclTy *ParseObjCMethodPrototype(bool decl);
+  DeclTy *ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
   void ParseObjCPropertyDecl(DeclTy *interfaceDecl);
   

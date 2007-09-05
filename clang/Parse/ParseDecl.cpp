@@ -406,8 +406,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
           else { // FIXME: restrict this to "id" and ObjC classnames.
             DS.Range.setEnd(Tok.getLocation());
             ConsumeToken(); // The identifier
-            if (Tok.getKind() == tok::less)
-              ParseObjCProtocolReferences();
+            if (Tok.getKind() == tok::less) {
+              llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+              ParseObjCProtocolReferences(ProtocolRefs);
+            }
             continue;
           }
         }

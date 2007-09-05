@@ -21,6 +21,7 @@ namespace clang {
   // Semantic.
   class DeclSpec;
   class Declarator;
+  class ObjcKeywordInfo;
   class AttributeList;
   // Parse.
   class Scope;
@@ -430,7 +431,35 @@ public:
                                          tok::TokenKind Kind) {
     return 0;
   }
+  //===----------------------- Obj-C Declarations -------------------------===//
   
+  virtual DeclTy *ObjcStartClassInterface(SourceLocation AtInterafceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    AttributeList *AttrList) {
+    return 0;
+  }
+  virtual void ObjCContinueClassInterface(SourceLocation InterfaceLoc) {
+    return;
+  }
+  virtual void ObjCStartCategoryInterface() {
+    return;
+  }
+  virtual void ObjCFinishInterface() {
+    return;
+  }
+  virtual DeclTy *ObjcBuildMethodDeclaration(
+    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
+    ObjcKeywordInfo *Keywords, unsigned NumKeywords, AttributeList *attrs) {
+    return 0;
+  }
+  virtual DeclTy *ObjcBuildMethodDeclaration(
+    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
+    IdentifierInfo *SelectorName, AttributeList *attrs) {
+    return 0;
+  }
+    
   //===----------------------- Obj-C Expressions --------------------------===//
   virtual ExprResult ParseObjCStringLiteral(ExprTy *string) {
     return 0;
