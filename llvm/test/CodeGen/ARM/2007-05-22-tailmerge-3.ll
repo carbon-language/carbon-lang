@@ -2,7 +2,12 @@
 ; RUN: llvm-as < %s | llc -march=arm | grep bl.*quux | count 1
 ; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 | grep bl.*baz | count 2
 ; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 | grep bl.*quux | count 2
+; RUN: llvm-as < %s | llc -march=arm -enable-eh | grep bl.*baz | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-eh | grep bl.*quux | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 -enable-eh | grep bl.*baz | count 2
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge=0 -enable-eh | grep bl.*quux | count 2
 ; Check that tail merging is the default on ARM, and that -enable-tail-merge=0 works.
+; PR1628
 
 ; ModuleID = 'tail.c'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"

@@ -1,6 +1,9 @@
 ; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*baz | count 1
 ; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*quux | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge -enable-eh | grep bl.*baz | count 1
+; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge -enable-eh | grep bl.*quux | count 1
 ; Check that calls to baz and quux are tail-merged.
+; PR1628
 
 ; ModuleID = 'tail.c'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
