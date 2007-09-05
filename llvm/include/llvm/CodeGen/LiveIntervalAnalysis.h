@@ -27,6 +27,7 @@
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 
 namespace llvm {
 
@@ -42,6 +43,10 @@ namespace llvm {
     const MRegisterInfo* mri_;
     const TargetInstrInfo* tii_;
     LiveVariables* lv_;
+
+    /// Special pool allocator for VNInfo's (LiveInterval val#).
+    ///
+    BumpPtrAllocator VNInfoAllocator;
 
     /// MBB2IdxMap - The indexes of the first and last instructions in the
     /// specified basic block.
@@ -193,6 +198,8 @@ namespace llvm {
         mi2iMap_.erase(mi2i);
       }
     }
+
+    BumpPtrAllocator& getVNInfoAllocator() { return VNInfoAllocator; }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual void releaseMemory();

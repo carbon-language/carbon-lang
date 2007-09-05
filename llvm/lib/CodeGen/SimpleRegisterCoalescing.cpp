@@ -158,7 +158,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
     for (const unsigned *AS = mri_->getSubRegisters(IntB.reg); *AS; ++AS) {
       LiveInterval &AliasLI = li_->getInterval(*AS);
       AliasLI.addRange(LiveRange(FillerStart, FillerEnd,
-                                 AliasLI.getNextValue(FillerStart, 0)));
+              AliasLI.getNextValue(FillerStart, 0, li_->getVNInfoAllocator())));
     }
   }
 
@@ -366,7 +366,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 
     // Update the liveintervals of sub-registers.
     for (const unsigned *AS = mri_->getSubRegisters(repDstReg); *AS; ++AS)
-      li_->getInterval(*AS).MergeInClobberRanges(*ResSrcInt);
+      li_->getInterval(*AS).MergeInClobberRanges(*ResSrcInt,
+                                                 li_->getVNInfoAllocator());
   } else {
     // Merge use info if the destination is a virtual register.
     LiveVariables::VarInfo& dVI = lv_->getVarInfo(repDstReg);
@@ -564,13 +565,13 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
   // Okay, now that there is a single LHS value number that we're merging the
   // RHS into, update the value number info for the LHS to indicate that the
   // value number is defined where the RHS value number was.
-  const VNInfo *VNI = RHS.getFirstValNumInfo();
+  const VNInfo *VNI = RHS.getValNumInfo(0);
   LHSValNo->def = VNI->def;
   LHSValNo->reg = VNI->reg;
   
   // Okay, the final step is to loop over the RHS live intervals, adding them to
   // the LHS.
-  LHS.addKills(*LHSValNo, VNI->kills);
+  LHS.addKills(LHSValNo, VNI->kills);
   LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.weight += RHS.weight;
   if (RHS.preference && !LHS.preference)
@@ -625,7 +626,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     int RHSVal0DefinedFromLHS = -1;
     int RHSValID = -1;
     VNInfo *RHSValNoInfo = NULL;
-    VNInfo *RHSValNoInfo0 = RHS.getFirstValNumInfo();
+    VNInfo *RHSValNoInfo0 = RHS.getValNumInfo(0);
     unsigned RHSSrcReg = RHSValNoInfo0->reg;
     if ((RHSSrcReg == 0 || rep(RHSSrcReg) != LHS.reg)) {
       // If RHS is not defined as a copy from the LHS, we can use simpler and
@@ -809,8 +810,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
            E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
       VNInfo *VNI = I->first;
       unsigned LHSValID = LHSValNoAssignments[VNI->id];
-      LiveInterval::removeKill(*NewVNInfo[LHSValID], VNI->def);
-      RHS.addKills(*NewVNInfo[LHSValID], VNI->kills);
+      LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
+      RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
     }
 
     RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0], NewVNInfo);
@@ -821,8 +822,8 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
            E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
       VNInfo *VNI = I->first;
       unsigned RHSValID = RHSValNoAssignments[VNI->id];
-      LiveInterval::removeKill(*NewVNInfo[RHSValID], VNI->def);
-      LHS.addKills(*NewVNInfo[RHSValID], VNI->kills);
+      LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
+      LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
     }
 
     LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);

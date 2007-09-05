@@ -124,7 +124,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   ranges.erase(next(I), MergeTo);
 
   // Update kill info.
-  removeKills(*ValNo, OldEnd, I->end-1);
+  removeKills(ValNo, OldEnd, I->end-1);
 
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
@@ -233,7 +233,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // If the span we are removing is at the start of the LiveRange, adjust it.
   if (I->start == Start) {
     if (I->end == End) {
-      removeKills(*I->valno, Start, End);
+      removeKills(I->valno, Start, End);
       ranges.erase(I);  // Removed the whole LiveRange.
     } else
       I->start = End;
@@ -243,7 +243,7 @@ void LiveInterval::removeRange(unsigned Start, unsigned End) {
   // Otherwise if the span we are removing is at the end of the LiveRange,
   // adjust the other way.
   if (I->end == End) {
-    removeKills(*I->valno, Start, End);
+    removeKills(I->valno, Start, End);
     I->end = Start;
     return;
   }
@@ -296,17 +296,8 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   for (unsigned i = 0; i != NumVals; ++i) {
     unsigned LHSValID = LHSValNoAssignments[i];
     if (i != LHSValID ||
-        (NewVNInfo[LHSValID] && NewVNInfo[LHSValID]->parent != this))
+        (NewVNInfo[LHSValID] && NewVNInfo[LHSValID] != getValNumInfo(i)))
       MustMapCurValNos = true;
-
-    // There might be some dead val#, create VNInfo for them.
-    if (i < NumNewVals) {
-      VNInfo *VNI = NewVNInfo[i];
-      if (!VNI) {
-        VNI = new VNInfo(this, i, ~1U, 0);
-        NewVNInfo[i] = VNI;
-      }
-    }
   }
 
   // If we have to apply a mapping to our base interval assignment, rewrite it
@@ -345,26 +336,17 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
     OtherAssignments.push_back(RHSValNoAssignments[I->valno->id]);
 
   // Update val# info. Renumber them and make sure they all belong to this
-  // LiveInterval now.
-  for (unsigned i = 0; i != NumVals; ++i) {
-    if (i == NumNewVals)
-      break;
+  // LiveInterval now. Also remove dead val#'s.
+  unsigned NumValNos = 0;
+  for (unsigned i = 0; i < NumNewVals; ++i) {
     VNInfo *VNI = NewVNInfo[i];
-    if (VNI->parent != this || VNI->id != i) {
-      VNI->parent = this;
-      VNI->id = i;  // Renumber val#.
-      valnos[i] = VNI;
+    if (VNI) {
+      if (i >= NumVals)
+        valnos.push_back(VNI);
+      else 
+        valnos[NumValNos] = VNI;
+      VNI->id = NumValNos++;  // Renumber val#.
     }
-  }
-  for (unsigned i = NumVals; i < NumNewVals; ++i) {
-    VNInfo *VNI = NewVNInfo[i];
-    if (!VNI)
-      VNI = new VNInfo(this, i, ~1U, 0);
-    else {
-      VNI->parent = this;
-      VNI->id = i;  // Renumber val#.
-    }
-    valnos.push_back(VNI);
   }
   if (NumNewVals < NumVals)
     valnos.resize(NumNewVals);  // shrinkify
@@ -375,6 +357,7 @@ void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
   for (iterator I = Other.begin(), E = Other.end(); I != E; ++I, ++RangeNo) {
     // Map the valno in the other live range to the current live range.
     I->valno = NewVNInfo[OtherAssignments[RangeNo]];
+    assert(I->valno && "Adding a dead range?");
     InsertPos = addRangeFrom(*I, InsertPos);
   }
 
@@ -403,13 +386,14 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 /// MergeInClobberRanges - For any live ranges that are not defined in the
 /// current interval, but are defined in the Clobbers interval, mark them
 /// used with an unknown definition value.
-void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers) {
+void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
+                                        BumpPtrAllocator &VNInfoAllocator) {
   if (Clobbers.begin() == Clobbers.end()) return;
   
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
   // FIXME: Use a single sentinal number for these!
-  VNInfo *ClobberValNo = getNextValue(~0U, 0);
+  VNInfo *ClobberValNo = getNextValue(~0U, 0, VNInfoAllocator);
   
   iterator IP = begin();
   for (const_iterator I = Clobbers.begin(), E = Clobbers.end(); I != E; ++I) {
@@ -448,7 +432,7 @@ void LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
 
   // Make sure V2 is smaller than V1.
   if (V1->id < V2->id) {
-    copyValNumInfo(*V1, *V2);
+    copyValNumInfo(V1, V2);
     std::swap(V1, V2);
   }
 
@@ -492,9 +476,7 @@ void LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   // ~1U so it can be nuked later.
   if (V1->id == getNumValNums()-1) {
     do {
-      VNInfo *VNI = valnos.back();
       valnos.pop_back();
-      delete VNI;
     } while (valnos.back()->def == ~1U);
   } else {
     V1->def = ~1U;

@@ -62,6 +62,7 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LiveIntervals::releaseMemory() {
+  VNInfoAllocator.Reset();
   mi2iMap_.clear();
   i2miMap_.clear();
   r2iMap_.clear();
@@ -448,13 +449,13 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
 
           if (HasUse) {
             LiveRange LR(getLoadIndex(index), getUseIndex(index),
-                         nI.getNextValue(~0U, 0));
+                         nI.getNextValue(~0U, 0, VNInfoAllocator));
             DOUT << " +" << LR;
             nI.addRange(LR);
           }
           if (HasDef) {
             LiveRange LR(getDefIndex(index), getStoreIndex(index),
-                         nI.getNextValue(~0U, 0));
+                         nI.getNextValue(~0U, 0, VNInfoAllocator));
             DOUT << " +" << LR;
             nI.addRange(LR);
           }
@@ -500,9 +501,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     VNInfo *ValNo;
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
-      ValNo = interval.getNextValue(defIndex, 0);
+      ValNo = interval.getNextValue(defIndex, 0, VNInfoAllocator);
     else
-      ValNo = interval.getNextValue(defIndex, SrcReg);
+      ValNo = interval.getNextValue(defIndex, SrcReg, VNInfoAllocator);
 
     assert(ValNo->id == 0 && "First value in interval is not 0?");
 
@@ -526,7 +527,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LiveRange LR(defIndex, killIdx, ValNo);
         interval.addRange(LR);
         DOUT << " +" << LR << "\n";
-        interval.addKill(*ValNo, killIdx);
+        interval.addKill(ValNo, killIdx);
         return;
       }
     }
@@ -565,7 +566,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(getMBBStartIdx(Kill->getParent()),
                    killIdx, ValNo);
       interval.addRange(LR);
-      interval.addKill(*ValNo, killIdx);
+      interval.addKill(ValNo, killIdx);
       DOUT << " +" << LR;
     }
 
@@ -597,8 +598,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // The new value number (#1) is defined by the instruction we claimed
       // defined value #0.
-      VNInfo *ValNo = interval.getNextValue(0, 0);
-      interval.copyValNumInfo(*ValNo, *OldValNo);
+      VNInfo *ValNo = interval.getNextValue(0, 0, VNInfoAllocator);
+      interval.copyValNumInfo(ValNo, OldValNo);
       
       // Value#0 is now defined by the 2-addr instruction.
       OldValNo->def = RedefIndex;
@@ -608,8 +609,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(DefIndex, RedefIndex, ValNo);
       DOUT << " replace range with " << LR;
       interval.addRange(LR);
-      interval.addKill(*ValNo, RedefIndex);
-      interval.removeKills(*ValNo, RedefIndex, OldEnd);
+      interval.addKill(ValNo, RedefIndex);
+      interval.removeKills(ValNo, RedefIndex, OldEnd);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
@@ -628,22 +629,22 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                "PHI elimination vreg should have one kill, the PHI itself!");
 
         // Remove the old range that we now know has an incorrect number.
-        VNInfo *VNI = interval.getFirstValNumInfo();
+        VNInfo *VNI = interval.getValNumInfo(0);
         MachineInstr *Killer = vi.Kills[0];
         unsigned Start = getMBBStartIdx(Killer->getParent());
         unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        interval.addKill(*VNI, Start+1); // odd # means phi node
+        interval.addKill(VNI, Start+1); // odd # means phi node
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
         // value number isn't actually defined by an instruction, weird huh? :)
-        LiveRange LR(Start, End, interval.getNextValue(~0, 0));
+        LiveRange LR(Start, End, interval.getNextValue(~0, 0, VNInfoAllocator));
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
-        interval.addKill(*LR.valno, End);
+        interval.addKill(LR.valno, End);
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
       }
 
@@ -655,14 +656,14 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       VNInfo *ValNo;
       unsigned SrcReg, DstReg;
       if (!tii_->isMoveInstr(*mi, SrcReg, DstReg))
-        ValNo = interval.getNextValue(defIndex, 0);
+        ValNo = interval.getNextValue(defIndex, 0, VNInfoAllocator);
       else
-        ValNo = interval.getNextValue(defIndex, SrcReg);
+        ValNo = interval.getNextValue(defIndex, SrcReg, VNInfoAllocator);
       
       unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      interval.addKill(*ValNo, killIndex-1); // odd # means phi node
+      interval.addKill(ValNo, killIndex-1); // odd # means phi node
       DOUT << " +" << LR;
     }
   }
@@ -724,10 +725,10 @@ exit:
   // Already exists? Extend old live interval.
   LiveInterval::iterator OldLR = interval.FindLiveRangeContaining(start);
   VNInfo *ValNo = (OldLR != interval.end())
-    ? OldLR->valno : interval.getNextValue(start, SrcReg);
+    ? OldLR->valno : interval.getNextValue(start, SrcReg, VNInfoAllocator);
   LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
-  interval.addKill(*LR.valno, end);
+  interval.addKill(LR.valno, end);
   DOUT << " +" << LR << '\n';
 }
 
@@ -792,9 +793,9 @@ exit:
     }
   }
 
-  LiveRange LR(start, end, interval.getNextValue(start, 0));
+  LiveRange LR(start, end, interval.getNextValue(start, 0, VNInfoAllocator));
   interval.addRange(LR);
-  interval.addKill(*LR.valno, end);
+  interval.addKill(LR.valno, end);
   DOUT << " +" << LR << '\n';
 }
 
