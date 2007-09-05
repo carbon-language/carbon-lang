@@ -23,6 +23,7 @@ public:
   MallocAllocator() {}
   ~MallocAllocator() {}
   
+  void Reset() {}
   void *Allocate(unsigned Size, unsigned Alignment) { return malloc(Size); }
   void Deallocate(void *Ptr) { free(Ptr); }
   void PrintStats() const {}
@@ -38,6 +39,7 @@ public:
   BumpPtrAllocator();
   ~BumpPtrAllocator();
   
+  void Reset();
   void *Allocate(unsigned Size, unsigned Alignment);
   void Deallocate(void *Ptr) {}
   void PrintStats() const;

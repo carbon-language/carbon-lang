@@ -92,6 +92,12 @@ BumpPtrAllocator::~BumpPtrAllocator() {
   ((MemRegion*)TheMemory)->Deallocate();
 }
 
+void BumpPtrAllocator::Reset() {
+  ((MemRegion*)TheMemory)->Deallocate();
+  TheMemory = malloc(4096);
+  ((MemRegion*)TheMemory)->Init(4096, 1, 0);
+}
+
 void *BumpPtrAllocator::Allocate(unsigned Size, unsigned Align) {
   MemRegion *MRP = (MemRegion*)TheMemory;
   void *Ptr = MRP->Allocate(Size, Align, &MRP);
