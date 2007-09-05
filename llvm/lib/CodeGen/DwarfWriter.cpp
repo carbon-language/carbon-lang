@@ -2896,7 +2896,7 @@ private:
       O << UsedDirective << EHFrameInfo.FnName << ".eh\n\n";
   }
 
-  /// EmitExceptionTable - Emit landpads and actions.
+  /// EmitExceptionTable - Emit landing pads and actions.
   ///
   /// The general organization of the table is complex, but the basic concepts
   /// are easy.  First there is a header which describes the location and
@@ -2951,17 +2951,29 @@ private:
     static bool isPod() { return true; }
   };
 
-  struct PadSite {
-    unsigned PadIndex;
-    unsigned SiteIndex;
-  };
-
-  typedef DenseMap<unsigned, PadSite, KeyInfo> PadMapType;
-
+  /// ActionEntry - Structure describing an entry in the actions table.
   struct ActionEntry {
     int ValueForTypeID; // The value to write - may not be equal to the type id.
     int NextAction;
     struct ActionEntry *Previous;
+  };
+
+  /// PadRange - Structure holding a try-range and the associated landing pad.
+  struct PadRange {
+    // The index of the landing pad.
+    unsigned PadIndex;
+    // The index of the begin and end labels in the landing pad's label lists.
+    unsigned RangeIndex;
+  };
+
+  typedef DenseMap<unsigned, PadRange, KeyInfo> RangeMapType;
+
+  /// CallSiteEntry - Structure describing an entry in the call-site table.
+  struct CallSiteEntry {
+    unsigned BeginLabel; // zero indicates the start of the function.
+    unsigned EndLabel;   // zero indicates the end of the function.
+    unsigned PadLabel;   // zero indicates that there is no landing pad.
+    unsigned Action;
   };
 
   void EmitExceptionTable() {
@@ -2980,13 +2992,6 @@ private:
     for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
       LandingPads.push_back(&PadInfos[i]);
     std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
-
-    // Gather first action index for each landing pad site.
-    SmallVector<unsigned, 64> FirstActions;
-    FirstActions.reserve(PadInfos.size());
-
-    // The actions table.
-    SmallVector<ActionEntry, 32> Actions;
 
     // Negative type ids index into FilterIds, positive type ids index into
     // TypeInfos.  The value written for a positive type id is just the type
@@ -3007,14 +3012,14 @@ private:
       Offset -= Asm->SizeULEB128(*I);
     }
 
-    // Compute sizes for exception table.
-    unsigned SizeSites = 0;
-    unsigned SizeActions = 0;
+    // Compute the actions table and gather the first action index for each
+    // landing pad site.
+    SmallVector<ActionEntry, 32> Actions;
+    SmallVector<unsigned, 64> FirstActions;
+    FirstActions.reserve(LandingPads.size());
 
-    // Look at each landing pad site to compute size.  We need the size of each
-    // landing pad site info and the size of the landing pad's actions.
     int FirstAction = 0;
-
+    unsigned SizeActions = 0;
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo *LP = LandingPads[i];
       const std::vector<int> &TypeIds = LP->TypeIds;
@@ -3063,14 +3068,96 @@ private:
 
       // Compute this sites contribution to size.
       SizeActions += SizeSiteActions;
-      unsigned M = LP->BeginLabels.size();
-      SizeSites += M*(sizeof(int32_t) +               // Site start.
-                      sizeof(int32_t) +               // Site length.
-                      sizeof(int32_t) +               // Landing pad.
-                      Asm->SizeULEB128(FirstAction)); // Action.
     }
-    
+
+    // Compute the call-site table.  Entries must be ordered by address.
+    SmallVector<CallSiteEntry, 64> CallSites;
+
+    RangeMapType PadMap;
+    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+      const LandingPadInfo *LandingPad = LandingPads[i];
+      for (unsigned j=0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
+        unsigned BeginLabel = LandingPad->BeginLabels[j];
+        assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
+        PadRange P = { i, j };
+        PadMap[BeginLabel] = P;
+      }
+    }
+
+    bool MayThrow = false;
+    unsigned LastLabel = 0;
+    const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+    for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+         I != E; ++I) {
+      for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
+           MI != E; ++MI) {
+        if (MI->getOpcode() != TargetInstrInfo::LABEL) {
+          MayThrow |= TII->isCall(MI->getOpcode());
+          continue;
+        }
+
+        unsigned BeginLabel = MI->getOperand(0).getImmedValue();
+        assert(BeginLabel && "Invalid label!");
+        if (BeginLabel == LastLabel) {
+          MayThrow = false;
+          continue;
+        }
+
+        RangeMapType::iterator L = PadMap.find(BeginLabel);
+
+        if (L == PadMap.end())
+          continue;
+
+        PadRange P = L->second;
+        const LandingPadInfo *LandingPad = LandingPads[P.PadIndex];
+
+        assert(BeginLabel == LandingPad->BeginLabels[P.RangeIndex] &&
+               "Inconsistent landing pad map!");
+
+        // If some instruction between the previous try-range and this one may
+        // throw, create a call-site entry with no landing pad for the region
+        // between the try-ranges.
+        if (MayThrow) {
+          CallSiteEntry Site = {LastLabel, BeginLabel, 0, 0};
+          CallSites.push_back(Site);
+        }
+
+        LastLabel = LandingPad->EndLabels[P.RangeIndex];
+        CallSiteEntry Site = {BeginLabel, LastLabel,
+          LandingPad->LandingPadLabel, FirstActions[P.PadIndex]};
+
+        assert(Site.BeginLabel && Site.EndLabel && Site.PadLabel &&
+               "Invalid landing pad!");
+
+        // Try to merge with the previous call-site.
+        if (CallSites.size()) {
+          CallSiteEntry &Prev = CallSites[CallSites.size()-1];
+          if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
+            // Extend the range of the previous entry.
+            Prev.EndLabel = Site.EndLabel;
+            continue;
+          }
+        }
+
+        // Otherwise, create a new call-site.
+        CallSites.push_back(Site);
+      }
+    }
+    // If some instruction between the previous try-range and the end of the
+    // function may throw, create a call-site entry with no landing pad for the
+    // region following the try-range.
+    if (MayThrow) {
+      CallSiteEntry Site = {LastLabel, 0, 0, 0};
+      CallSites.push_back(Site);
+    }
+
     // Final tallies.
+    unsigned SizeSites = CallSites.size() * (sizeof(int32_t) + // Site start.
+                                             sizeof(int32_t) + // Site length.
+                                             sizeof(int32_t)); // Landing pad.
+    for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
+      SizeSites += Asm->SizeULEB128(CallSites[i].Action);
+
     unsigned SizeTypes = TypeInfos.size() * TAI->getAddressSize();
 
     unsigned TypeOffset = sizeof(int8_t) + // Call site format
@@ -3106,61 +3193,44 @@ private:
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call-site table length");
 
-    // Emit the landing pad site information in order of address.
-    PadMapType PadMap;
+    // Emit the landing pad site information.
+    for (unsigned i = 0; i < CallSites.size(); ++i) {
+      CallSiteEntry &S = CallSites[i];
+      const char *BeginTag;
+      unsigned BeginNumber;
 
-    for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-      const LandingPadInfo *LandingPad = LandingPads[i];
-      for (unsigned j=0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
-        unsigned BeginLabel = LandingPad->BeginLabels[j];
-        assert(!PadMap.count(BeginLabel) && "duplicate landing pad labels!");
-        PadSite P = { i, j };
-        PadMap[BeginLabel] = P;
+      if (!S.BeginLabel) {
+        BeginTag = "eh_func_begin";
+        BeginNumber = SubprogramCount;
+      } else {
+        BeginTag = "label";
+        BeginNumber = S.BeginLabel;
       }
-    }
 
-    for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
-         I != E; ++I) {
-      for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
-           MI != E; ++MI) {
-        if (MI->getOpcode() != TargetInstrInfo::LABEL)
-          continue;
+      EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
+                        false, true);
+      Asm->EOL("Region start");
 
-        unsigned BeginLabel = MI->getOperand(0).getImmedValue();
-        PadMapType::iterator L = PadMap.find(BeginLabel);
+      if (!S.EndLabel) {
+        EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber);
+      } else {
+        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber);
+      }
+      Asm->EOL("Region length");
 
-        if (L == PadMap.end())
-          continue;
-
-        PadSite P = L->second;
-        const LandingPadInfo *LandingPad = LandingPads[P.PadIndex];
-
-        assert(BeginLabel == LandingPad->BeginLabels[P.SiteIndex] &&
-               "Inconsistent landing pad map!");
-
-        EmitSectionOffset("label", "eh_func_begin", BeginLabel, SubprogramCount,
+      if (!S.PadLabel) {
+        if (TAI->getAddressSize() == sizeof(int32_t))
+          Asm->EmitInt32(0);
+        else
+          Asm->EmitInt64(0);
+      } else {
+        EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
                           false, true);
-        Asm->EOL("Region start");
-
-        EmitDifference("label", LandingPad->EndLabels[P.SiteIndex],
-                       "label", BeginLabel);
-        Asm->EOL("Region length");
-
-        if (LandingPad->TypeIds.empty()) {
-          if (TAI->getAddressSize() == sizeof(int32_t))
-            Asm->EmitInt32(0);
-          else
-            Asm->EmitInt64(0);
-        } else {
-          EmitSectionOffset("label", "eh_func_begin",
-                            LandingPad->LandingPadLabel, SubprogramCount,
-                            false, true);
-        }
-        Asm->EOL("Landing pad");
-
-        Asm->EmitULEB128Bytes(FirstActions[P.PadIndex]);
-        Asm->EOL("Action");
       }
+      Asm->EOL("Landing pad");
+
+      Asm->EmitULEB128Bytes(S.Action);
+      Asm->EOL("Action");
     }
 
     // Emit the actions.
@@ -3183,7 +3253,7 @@ private:
         O << Asm->getGlobalLinkName(GV);
       else
         O << "0";
-      
+
       Asm->EOL("TypeInfo");
     }
 
@@ -3193,7 +3263,7 @@ private:
       Asm->EmitULEB128Bytes(TypeID);
       Asm->EOL("Filter TypeInfo index");
     }
-    
+
     Asm->EmitAlignment(2);
   }
 

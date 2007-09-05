@@ -2928,7 +2928,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     Args.push_back(Entry);
   }
 
-  if (ExceptionHandling && MMI) {
+  if (ExceptionHandling && MMI && LandingPad) {
     // Insert a label before the invoke call to mark the try range.  This can be
     // used to detect deletion of the invoke via the MachineModuleInfo.
     BeginLabel = MMI->NextLabelID();
@@ -2945,7 +2945,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 
-  if (ExceptionHandling && MMI) {
+  if (ExceptionHandling && MMI && LandingPad) {
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();

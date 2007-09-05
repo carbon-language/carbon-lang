@@ -1740,22 +1740,18 @@ void MachineModuleInfo::TidyLandingPads() {
     LandingPadInfo &LandingPad = LandingPads[i];
     LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
 
-    if (!LandingPad.LandingPadBlock)
-      // Must not have cleanups if no landing pad.
-      LandingPad.TypeIds.clear();
-
     // Special case: we *should* emit LPs with null LP MBB. This indicates
     // "rethrow" case.
     if (!LandingPad.LandingPadLabel && LandingPad.LandingPadBlock) {
       LandingPads.erase(LandingPads.begin() + i);
       continue;
     }
-          
+
     for (unsigned j=0; j != LandingPads[i].BeginLabels.size(); ) {
       unsigned BeginLabel = MappedLabel(LandingPad.BeginLabels[j]);
       unsigned EndLabel = MappedLabel(LandingPad.EndLabels[j]);
-            
-          
+
+
       if (!BeginLabel || !EndLabel) {
         LandingPad.BeginLabels.erase(LandingPad.BeginLabels.begin() + j);
         LandingPad.EndLabels.erase(LandingPad.EndLabels.begin() + j);
@@ -1766,7 +1762,19 @@ void MachineModuleInfo::TidyLandingPads() {
       LandingPad.EndLabels[j] = EndLabel;
       ++j;
     }
-    
+
+    // Remove landing pads with no try-ranges.
+    if (!LandingPads[i].BeginLabels.size()) {
+      LandingPads.erase(LandingPads.begin() + i);
+      continue;
+    }
+
+    // If there is no landing pad, ensure that the list of typeids is empty.
+    // If the only typeid is a cleanup, this is the same as having no typeids.
+    if (!LandingPad.LandingPadBlock ||
+        (LandingPad.TypeIds.size() == 1 && !LandingPad.TypeIds[0]))
+      LandingPad.TypeIds.clear();
+
     ++i;
   }
 }
