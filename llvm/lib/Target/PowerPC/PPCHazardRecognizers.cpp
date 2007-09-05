@@ -204,6 +204,7 @@ getHazardType(SDNode *Node) {
       LoadSize = 8;
       break;
     case PPC::LVX:
+    case PPC::LVXL:
       LoadSize = 16;
       break;
     }
@@ -268,6 +269,7 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
       ThisStoreSize = 8;
       break;
     case PPC::STVX:
+    case PPC::STVXL:
       ThisStoreSize = 16;
       break;
     }
