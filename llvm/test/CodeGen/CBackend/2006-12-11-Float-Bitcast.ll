@@ -38,9 +38,9 @@ float %test6(float %F) {
 }
 
 int %main(int %argc, sbyte** %argv) {
-  %a = call int %test1(float 3.1415926)
+  %a = call int %test1(float 0x400921FB40000000)
   %b = call float %test2(int %a)
-  %c = call long %test3(double 3.1415926)
+  %c = call long %test3(double 0x400921FB4D12D84A)
   %d = call double %test4(long %c)
   %e = call double %test5(double 7.0)
   %f = call float %test6(float 7.0)

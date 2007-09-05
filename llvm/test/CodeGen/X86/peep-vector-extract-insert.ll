@@ -6,7 +6,7 @@ define float @foo(<4 x float> %a) {
   ret float %c
 }
 define float @bar(float %a) {
-  %b = insertelement <4 x float> <float 3.4, float 4.5, float 0.0, float 9.2>, float %a, i32 3
+  %b = insertelement <4 x float> <float 0x400B333340000000, float 4.5, float 0.0, float 0x4022666660000000>, float %a, i32 3
   %c = extractelement <4 x float> %b, i32 2
   ret float %c
 }

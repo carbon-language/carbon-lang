@@ -12,9 +12,9 @@ declare void %extdouble(double)
 implementation
 
 void %testfloatstore() {
-        call void %extfloat(float 1234.4)
-        call void %extdouble(double 1234.4123)
-	store float 13.0123, float* %G
+        call void %extfloat(float 0x40934999A0000000)
+        call void %extdouble(double 0x409349A631F8A090)
+	store float 0x402A064C20000000, float* %G
         ret void
 }
 

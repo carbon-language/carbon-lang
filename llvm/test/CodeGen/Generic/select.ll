@@ -15,7 +15,7 @@ begin
 	%i = add int %N, 12345678	; constant has to be loaded
 	%b = add short 4, 3		; one of the operands shd be immed
 	%c = add float %X, 0.0		; will this be optimzzed?
-	%d = add float %X, 3.1415	; constant has to be loaded
+	%d = add float %X, 0x400921CAC0000000	; constant has to be loaded
 	%f = add uint 4294967295, 10    ; result shd be  9   (not in immed fld)
 	%g = add ushort 20, 65535	; result shd be 19 (65536 in immed fld)
 	%j = add ushort 65535, 30	; result shd be 29   (not in immed fld)

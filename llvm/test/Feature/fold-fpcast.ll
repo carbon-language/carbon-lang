@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | not grep bitcast
 
 int %test1() {
-   ret int bitcast(float 3.7 to int)
+   ret int bitcast(float 0x400D9999A0000000 to int)
 }
 
 float %test2() {
@@ -9,7 +9,7 @@ float %test2() {
 }
 
 long %test3() {
-  ret long bitcast (double 3.1415926 to long)
+  ret long bitcast (double 0x400921FB4D12D84A to long)
 }
 
 double %test4() {

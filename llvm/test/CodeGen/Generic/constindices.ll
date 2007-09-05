@@ -21,14 +21,14 @@ begin
 	%ArrayB  = alloca %MixedB, uint 3
 
 	%I1 = getelementptr %MixedA* %ScalarA, long 0, uint 0	
-	store float 1.4142, float *%I1
+	store float 0x3FF6A09020000000, float *%I1
 	%I2 = getelementptr %MixedB* %ScalarB, long 0, uint 1, uint 0 
-	store float 2.7183, float *%I2
+	store float 0x4005BF1420000000, float *%I2
 	
   	%fptrA = getelementptr %MixedA* %ArrayA, long 1, uint 0 
 	%fptrB = getelementptr %MixedB* %ArrayB, long 2, uint 1, uint 0 
 	
-	store float 3.1415, float* %fptrA
+	store float 0x400921CAC0000000, float* %fptrA
 	store float 5.0,    float* %fptrB
 	
 	;; Test that a sequence of GEPs with constant indices are folded right

@@ -65,7 +65,7 @@ void %test_div(%f8 *%P, %f8* %Q, %f8 *%S) {
 
 void %test_cst(%f4 *%P, %f4 *%S) {
   %p = load %f4* %P
-  %R = add %f4 %p, <float 0.1, float 1.0, float 2.0, float 4.5>
+  %R = add %f4 %p, <float 0x3FB99999A0000000, float 1.0, float 2.0, float 4.5>
   store %f4 %R, %f4 *%S
   ret void
 }

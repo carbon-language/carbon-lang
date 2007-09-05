@@ -6,6 +6,6 @@ implementation
 
 float "test"()
 begin
-	%tmp = mul float 1.0e100, 1.0e1
+	%tmp = mul float 0x7FF0000000000000, 1.0e1
 	ret float %tmp
 end

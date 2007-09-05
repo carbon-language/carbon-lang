@@ -5,7 +5,7 @@
 
 %X = constant int 42
 %Y = constant [2 x { int, float }] [ { int, float } { int 12, float 1.0 }, 
-                                     { int, float } { int 37, float 1.2312 } ]
+                                     { int, float } { int 37, float 0x3FF3B2FEC0000000 } ]
 int %test1() {
 	%B = load int* %X
 	ret int %B

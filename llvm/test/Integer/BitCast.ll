@@ -14,10 +14,10 @@ begin
         %t3 = zext i31 %i to i1280
         %t4 = sext i31 %i to i1280
 
-        %t5 = fptoui float 3.14159 to i31
+        %t5 = fptoui float 0x400921FA00000000 to i31
         %t6 = uitofp i31 %t5 to double
 
-        %t7 = fptosi double -1234.5678 to i28
+        %t7 = fptosi double 0xC0934A456D5CFAAD to i28
         %t8 = sitofp i8 -1 to double
         %t9 = uitofp i8 255 to double
         

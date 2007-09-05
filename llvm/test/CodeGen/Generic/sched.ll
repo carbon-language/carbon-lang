@@ -13,7 +13,7 @@ bb1:
 	%z1 = add float %x1, %y1		;; z1 = x1 + y1
 	
 	%x2 = mul float %x, 0.5			;; x2
-	%y2 = mul float %y, 0.9			;; y2
+	%y2 = mul float %y, 0x3FECCCCCC0000000	;; y2
 	%z2 = add float %x2, %y2		;; z2 = x2 + y2
 	
 	%z3 = add float %z1, %z2		;; z3 = z1 + z2

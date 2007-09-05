@@ -13,11 +13,11 @@ int %test2() {
 }
 
 float %test3() {
-	%R = rem float 12.45, 123.213
+	%R = rem float 0x4028E66660000000, 0x405ECDA1C0000000
 	ret float %R
 }
 
 double %test4() {
-	%R = rem double 312.20213123, 12.3333412
+	%R = rem double 0x4073833BEE07AFF8, 0x4028AAABB2A0D19C
 	ret double %R
 }
