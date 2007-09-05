@@ -941,7 +941,47 @@ Parser::ExprResult Parser::ParseObjCExpression() {
 ///     nonempty-expr-list , assignment-expression
 ///   
 Parser::ExprResult Parser::ParseObjCMessageExpression() {
-  assert(false && "Unimp");
+  assert(Tok.getKind() == tok::l_square && "'[' expected");
+  SourceLocation Loc = ConsumeBracket(); // consume '['
+  // Parse receiver
+  // FIXME: receiver as type-name/class-name
+  ParseAssignmentExpression();
+  // Parse objc-selector
+  IdentifierInfo *selIdent = ParseObjCSelector();
+  if (Tok.getKind() == tok::colon) {
+    while (1) {
+      // Each iteration parses a single keyword argument.
+      if (Tok.getKind() != tok::colon) {
+        Diag(Tok, diag::err_expected_colon);
+        SkipUntil(tok::semi);
+        return 0;
+      }
+      ConsumeToken(); // Eat the ':'.
+      ///  Parse the expression after ':' 
+      ParseAssignmentExpression();
+      IdentifierInfo *keywordSelector = ParseObjCSelector();
+      
+      if (!keywordSelector && Tok.getKind() != tok::colon)
+        break;
+      // We have a selector or a colon, continue parsing.
+    }
+    // Parse the, optional, argument list, comma separated.
+    while (Tok.getKind() == tok::comma) {
+      ConsumeToken();
+      /// Parse the expression after ','
+      ParseAssignmentExpression();
+    }
+  } else if (!selIdent) {
+    Diag(Tok, diag::err_expected_ident); // missing selector name.
+    SkipUntil(tok::semi);
+    return 0;
+  }
+  if (Tok.getKind() != tok::r_square) {
+    Diag(Tok, diag::err_expected_rsquare);
+    SkipUntil(tok::semi);
+    return 0;
+  }
+  ConsumeBracket(); // consume ']'
   return 0;
 }
 
