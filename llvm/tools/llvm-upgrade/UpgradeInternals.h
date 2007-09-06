@@ -159,7 +159,7 @@ struct ValID {
     char    *Name;        // If it's a named reference.  Memory must be free'd.
     int64_t  ConstPool64; // Constant pool reference.  This is the value
     uint64_t UConstPool64;// Unsigned constant pool reference.
-    double   ConstPoolFP; // Floating point constant pool reference
+    APFloat *ConstPoolFP; // Floating point constant pool reference
     Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
     InlineAsmDescriptor *IAD;
   };
@@ -187,7 +187,7 @@ struct ValID {
     return D;
   }
 
-  static ValID create(double Val) {
+  static ValID create(APFloat* Val) {
     ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val;
     D.S.makeSignless();
     return D;
@@ -245,7 +245,7 @@ struct ValID {
     switch (Type) {
     case NumberVal     : return std::string("#") + itostr(Num);
     case NameVal       : return Name;
-    case ConstFPVal    : return ftostr(ConstPoolFP);
+    case ConstFPVal    : return ftostr(*ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUndefVal : return "undef";
     case ConstZeroVal  : return "zeroinitializer";
@@ -271,7 +271,8 @@ struct ValID {
     case NameVal:       return strcmp(Name, V.Name) < 0;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
-    case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;
+    case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) ==
+                               APFloat::cmpLessThan;
     case ConstNullVal:  return false;
     case ConstUndefVal: return false;
     case ConstZeroVal: return false;

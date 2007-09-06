@@ -829,8 +829,8 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     // FP Constants are printed as integer constants to avoid losing
     // precision...
-    double Val = CFP->getValue();
     if (CFP->getType() == Type::DoubleTy) {
+      double Val = CFP->getValueAPF().convertToDouble();
       if (TAI->getData64bitsDirective())
         O << TAI->getData64bitsDirective() << DoubleToBits(Val) << "\t"
           << TAI->getCommentString() << " double value: " << Val << "\n";
@@ -851,6 +851,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       }
       return;
     } else {
+      float Val = CFP->getValueAPF().convertToFloat();
       O << TAI->getData32bitsDirective() << FloatToBits(Val)
         << "\t" << TAI->getCommentString() << " float " << Val << "\n";
       return;

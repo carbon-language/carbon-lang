@@ -486,7 +486,10 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     // make sure that we only output it in exponential format if we can parse
     // the value back and get the same value.
     //
-    std::string StrVal = ftostr(CFP->getValue());
+    bool isDouble = &CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble;
+    double Val = (isDouble) ? CFP->getValueAPF().convertToDouble() :
+                              CFP->getValueAPF().convertToFloat();
+    std::string StrVal = ftostr(CFP->getValueAPF());
 
     // Check to make sure that the stringized number is not some string like
     // "Inf" or NaN, that atof will accept, but the lexer will not.  Check that
@@ -496,7 +499,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
         ((StrVal[0] == '-' || StrVal[0] == '+') &&
          (StrVal[1] >= '0' && StrVal[1] <= '9')))
       // Reparse stringized version!
-      if (atof(StrVal.c_str()) == CFP->getValue()) {
+      if (atof(StrVal.c_str()) == Val) {
         Out << StrVal;
         return;
       }
@@ -505,7 +508,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     // output the string in hexadecimal format!
     assert(sizeof(double) == sizeof(uint64_t) &&
            "assuming that double is 64 bits!");
-    Out << "0x" << utohexstr(DoubleToBits(CFP->getValue()));
+    Out << "0x" << utohexstr(DoubleToBits(Val));
 
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "zeroinitializer";

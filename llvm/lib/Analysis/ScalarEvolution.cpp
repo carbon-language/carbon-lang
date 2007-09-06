@@ -485,7 +485,8 @@ SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
   if (Val == 0)
     C = Constant::getNullValue(Ty);
   else if (Ty->isFloatingPoint())
-    C = ConstantFP::get(Ty, Val);
+    C = ConstantFP::get(Ty, APFloat(Ty==Type::FloatTy ? APFloat::IEEEsingle : 
+                            APFloat::IEEEdouble, Val));
   else 
     C = ConstantInt::get(Ty, Val);
   return SCEVUnknown::get(C);

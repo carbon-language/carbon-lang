@@ -22,7 +22,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/ADT/StringExtras.h"
-
+#include "llvm/ADT/APFloat.h"
 
 // Global variables exported from the lexer...
 
@@ -93,10 +93,10 @@ struct ValID {
     std::string *Name;    // If it's a named reference.  Memory must be deleted.
     int64_t  ConstPool64; // Constant pool reference.  This is the value
     uint64_t UConstPool64;// Unsigned constant pool reference.
-    double   ConstPoolFP; // Floating point constant pool reference
+    APFloat *ConstPoolFP; // Floating point constant pool reference
     Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
     InlineAsmDescriptor *IAD;
-  };
+ };
 
   static ValID createLocalID(unsigned Num) {
     ValID D; D.Type = LocalID; D.Num = Num; return D;
@@ -119,7 +119,7 @@ struct ValID {
     ValID D; D.Type = ConstUIntVal; D.UConstPool64 = Val; return D;
   }
 
-  static ValID create(double Val) {
+  static ValID create(APFloat *Val) {
     ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; return D;
   }
 
@@ -168,7 +168,7 @@ struct ValID {
     case GlobalID      : return '@' + utostr(Num);
     case LocalName     : return *Name;
     case GlobalName    : return *Name;
-    case ConstFPVal    : return ftostr(ConstPoolFP);
+    case ConstFPVal    : return ftostr(*ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUndefVal : return "undef";
     case ConstZeroVal  : return "zeroinitializer";
@@ -194,7 +194,8 @@ struct ValID {
     case GlobalName:    return *Name < *V.Name;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
-    case ConstFPVal:    return ConstPoolFP  < V.ConstPoolFP;
+    case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) ==
+                               APFloat::cmpLessThan;
     case ConstNullVal:  return false;
     case ConstUndefVal: return false;
     case ConstZeroVal: return false;
@@ -212,7 +213,8 @@ struct ValID {
         case GlobalName: return *Name == *(V.Name);
         case ConstSIntVal:  return ConstPool64  == V.ConstPool64;
         case ConstUIntVal:  return UConstPool64 == V.UConstPool64;
-        case ConstFPVal:    return ConstPoolFP  == V.ConstPoolFP;
+        case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) == 
+                                   APFloat::cmpEqual;
         case ConstantVal:   return ConstantValue == V.ConstantValue;
         case ConstNullVal:  return true;
         case ConstUndefVal: return true;

@@ -217,29 +217,13 @@ class ConstantFP : public Constant {
   APFloat Val;
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
-  ConstantFP(const Type *Ty, double V);
   ConstantFP(const Type *Ty, const APFloat& V);
 public:
   /// get() - Static factory methods - Return objects of the specified value
-  static ConstantFP *get(const Type *Ty, double V);
   static ConstantFP *get(const Type *Ty, const APFloat& V);
 
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);
-  static bool isValueValidForType(const Type *Ty, double V) {
-    if (Ty == Type::FloatTy)
-      return isValueValidForType(Ty, APFloat((float)V));
-    else
-      return isValueValidForType(Ty, APFloat(V));
-  }
-  inline double getValue() const { 
-    if (&Val.getSemantics() == &APFloat::IEEEdouble)
-      return Val.convertToDouble();
-    else if (&Val.getSemantics() == &APFloat::IEEEsingle)
-      return (double)Val.convertToFloat();
-    else
-      assert(0);
-  }
   inline const APFloat& getValueAPF() const { return Val; }
 
   /// isNullValue - Return true if this is the value that would be returned by
@@ -250,8 +234,11 @@ public:
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
   /// As such, this method can be used to do an exact bit-for-bit comparison of
-  /// two floating point values.
+  /// two floating point values.  The version with a double operand is retained
+  /// because it's so convenient to write isExactlyValue(2.0), but please use
+  /// it only for constants.
   bool isExactlyValue(const APFloat& V) const;
+
   bool isExactlyValue(double V) const {
     if (&Val.getSemantics() == &APFloat::IEEEdouble)
       return isExactlyValue(APFloat(V));

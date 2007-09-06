@@ -437,8 +437,10 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                   return GLOBALVAL_ID;
                 }
 
-{FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
-{HexFPConstant} { llvmAsmlval.FPVal = HexToFP(yytext); return FPVAL; }
+{FPConstant}    { llvmAsmlval.FPVal = new APFloat(atof(yytext)); return FPVAL; }
+{HexFPConstant} { llvmAsmlval.FPVal = new APFloat(HexToFP(yytext)); 
+                  return FPVAL; 
+                }
 
 <<EOF>>         {
                   /* Make sure to free the internal buffers for flex when we are

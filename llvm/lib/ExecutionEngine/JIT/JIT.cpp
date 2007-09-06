@@ -206,8 +206,10 @@ GenericValue JIT::runFunction(Function *F,
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
     case Type::IntegerTyID: C = ConstantInt::get(AV.IntVal); break;
-    case Type::FloatTyID:   C = ConstantFP ::get(ArgTy, AV.FloatVal);  break;
-    case Type::DoubleTyID:  C = ConstantFP ::get(ArgTy, AV.DoubleVal); break;
+    case Type::FloatTyID:   C = ConstantFP ::get(ArgTy, APFloat(AV.FloatVal));
+                            break;
+    case Type::DoubleTyID:  C = ConstantFP ::get(ArgTy, APFloat(AV.DoubleVal));
+                             break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4) {

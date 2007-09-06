@@ -861,7 +861,8 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         break;
       }
       case Type::FloatTyID: {
-        uint64_t val = FloatToBits(cast<ConstantFP>(PC)->getValue());
+        uint64_t val = FloatToBits(cast<ConstantFP>(PC)->
+                                   getValueAPF().convertToFloat());
         if (TD->isBigEndian())
           val = ByteSwap_32(val);
         ptr[0] = val;
@@ -871,7 +872,8 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         break;
       }
       case Type::DoubleTyID: {
-        uint64_t val = DoubleToBits(cast<ConstantFP>(PC)->getValue());
+        uint64_t val = DoubleToBits(cast<ConstantFP>(PC)->
+                                    getValueAPF().convertToDouble());
         if (TD->isBigEndian())
           val = ByteSwap_64(val);
         ptr[0] = val;

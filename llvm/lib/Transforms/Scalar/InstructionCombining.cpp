@@ -2348,7 +2348,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
-      if (Op1F->getValue() == 1.0)
+      if (Op1F->isExactlyValue(1.0))
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
     }
     

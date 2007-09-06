@@ -1118,27 +1118,32 @@ public:
     Value* base = ci->getOperand(1);
     Value* expn = ci->getOperand(2);
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(base)) {
-      double Op1V = Op1->getValue();
-      if (Op1V == 1.0) // pow(1.0,x) -> 1.0
-        return ReplaceCallWith(ci, ConstantFP::get(Ty, 1.0));
+      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+        return false;   // FIXME long double not yet supported
+      if (Op1->isExactlyValue(1.0)) // pow(1.0,x) -> 1.0
+        return ReplaceCallWith(ci, ConstantFP::get(Ty, 
+          Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
     }  else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(expn)) {
-      double Op2V = Op2->getValue();
-      if (Op2V == 0.0) {
+      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+        return false;   // FIXME long double not yet supported
+      if (Op2->getValueAPF().isZero()) {
         // pow(x,0.0) -> 1.0
-        return ReplaceCallWith(ci, ConstantFP::get(Ty,1.0));
-      } else if (Op2V == 0.5) {
+        return ReplaceCallWith(ci, ConstantFP::get(Ty,
+            Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
+      } else if (Op2->isExactlyValue(0.5)) {
         // pow(x,0.5) -> sqrt(x)
         CallInst* sqrt_inst = new CallInst(SLC.get_sqrt(), base,
             ci->getName()+".pow",ci);
         return ReplaceCallWith(ci, sqrt_inst);
-      } else if (Op2V == 1.0) {
+      } else if (Op2->isExactlyValue(1.0)) {
         // pow(x,1.0) -> x
         return ReplaceCallWith(ci, base);
-      } else if (Op2V == -1.0) {
+      } else if (Op2->isExactlyValue(-1.0)) {
         // pow(x,-1.0)    -> 1.0/x
         Value *div_inst = 
-          BinaryOperator::createFDiv(ConstantFP::get(Ty, 1.0), base,
-                                     ci->getName()+".pow", ci);
+          BinaryOperator::createFDiv(ConstantFP::get(Ty,
+            Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)), 
+            base, ci->getName()+".pow", ci);
         return ReplaceCallWith(ci, div_inst);
       }
     }

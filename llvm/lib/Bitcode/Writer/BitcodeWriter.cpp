@@ -527,9 +527,10 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Code = bitc::CST_CODE_FLOAT;
       const Type *Ty = CFP->getType();
       if (Ty == Type::FloatTy) {
-        Record.push_back(FloatToBits((float)CFP->getValue()));
+        Record.push_back(DoubleToBits((double)CFP->getValueAPF().
+                          convertToFloat()));
       } else if (Ty == Type::DoubleTy) {
-        Record.push_back(DoubleToBits((double)CFP->getValue()));
+        Record.push_back(DoubleToBits(CFP->getValueAPF().convertToDouble()));
       // FIXME: make long double constants work.
       } else if (Ty == Type::X86_FP80Ty ||
                  Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {

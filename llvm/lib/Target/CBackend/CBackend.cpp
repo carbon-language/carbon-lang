@@ -604,17 +604,19 @@ void CWriter::printConstantVector(ConstantVector *CP) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
+  APFloat APF = APFloat(CFP->getValueAPF());  // copy
+  if (CFP->getType()==Type::FloatTy)
+    APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
 #if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
   char Buffer[100];
-  sprintf(Buffer, "%a", CFP->getValue());
-
+  sprintf(Buffer, "%a", APF.convertToDouble());
   if (!strncmp(Buffer, "0x", 2) ||
       !strncmp(Buffer, "-0x", 3) ||
       !strncmp(Buffer, "+0x", 3))
-    return atof(Buffer) == CFP->getValue();
+    return APF.bitwiseIsEqual(APFloat(atof(Buffer)));
   return false;
 #else
-  std::string StrVal = ftostr(CFP->getValue());
+  std::string StrVal = ftostr(APF);
 
   while (StrVal[0] == ' ')
     StrVal.erase(StrVal.begin());
@@ -625,7 +627,7 @@ static bool isFPCSafeToPrint(const ConstantFP *CFP) {
       ((StrVal[0] == '-' || StrVal[0] == '+') &&
        (StrVal[1] >= '0' && StrVal[1] <= '9')))
     // Reparse stringized version!
-    return atof(StrVal.c_str()) == CFP->getValue();
+    return APF.bitwiseIsEqual(APFloat(atof(StrVal.c_str())));
   return false;
 #endif
 }
@@ -882,9 +884,13 @@ void CWriter::printConstant(Constant *CPV) {
       Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
           << "*)&FPConstant" << I->second << ')';
     } else {
-      if (IsNAN(FPC->getValue())) {
+      double V = FPC->getType() == Type::FloatTy ? 
+                 FPC->getValueAPF().convertToFloat() : 
+                 FPC->getValueAPF().convertToDouble();
+      if (IsNAN(V)) {
         // The value is NaN
 
+        // FIXME the actual NaN bits should be emitted.
         // The prefix for a quiet NaN is 0x7FF8. For a signalling NaN,
         // it's 0x7ff4.
         const unsigned long QuietNaN = 0x7ff8UL;
@@ -893,7 +899,7 @@ void CWriter::printConstant(Constant *CPV) {
         // We need to grab the first part of the FP #
         char Buffer[100];
 
-        uint64_t ll = DoubleToBits(FPC->getValue());
+        uint64_t ll = DoubleToBits(V);
         sprintf(Buffer, "0x%llx", static_cast<long long>(ll));
 
         std::string Num(&Buffer[0], &Buffer[6]);
@@ -905,9 +911,9 @@ void CWriter::printConstant(Constant *CPV) {
         else
           Out << "LLVM_NAN" << (Val == QuietNaN ? "" : "S") << "(\""
               << Buffer << "\") /*nan*/ ";
-      } else if (IsInf(FPC->getValue())) {
+      } else if (IsInf(V)) {
         // The value is Inf
-        if (FPC->getValue() < 0) Out << '-';
+        if (V < 0) Out << '-';
         Out << "LLVM_INF" << (FPC->getType() == Type::FloatTy ? "F" : "")
             << " /*inf*/ ";
       } else {
@@ -915,12 +921,12 @@ void CWriter::printConstant(Constant *CPV) {
 #if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
         // Print out the constant as a floating point number.
         char Buffer[100];
-        sprintf(Buffer, "%a", FPC->getValue());
+        sprintf(Buffer, "%a", V);
         Num = Buffer;
 #else
-        Num = ftostr(FPC->getValue());
+        Num = ftostr(FPC->getValueAPF());
 #endif
-        Out << Num;
+       Out << Num;
       }
     }
     break;
@@ -1715,15 +1721,15 @@ void CWriter::printFloatingPointConstants(Function &F) {
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(*I))
       if (!isFPCSafeToPrint(FPC) && // Do not put in FPConstantMap if safe.
           !FPConstantMap.count(FPC)) {
-        double Val = FPC->getValue();
-
         FPConstantMap[FPC] = FPCounter;  // Number the FP constants
 
         if (FPC->getType() == Type::DoubleTy) {
+          double Val = FPC->getValueAPF().convertToDouble();
           Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
               << " = 0x" << std::hex << DoubleToBits(Val) << std::dec
               << "ULL;    /* " << Val << " */\n";
         } else if (FPC->getType() == Type::FloatTy) {
+          float Val = FPC->getValueAPF().convertToFloat();
           Out << "static const ConstantFloatTy FPConstant" << FPCounter++
               << " = 0x" << std::hex << FloatToBits(Val) << std::dec
               << "U;    /* " << Val << " */\n";

@@ -626,13 +626,16 @@ bool BitcodeReader::ParseConstants() {
       if (Record.empty())
         return Error("Invalid FLOAT record");
       if (CurTy == Type::FloatTy)
-        V = ConstantFP::get(CurTy, BitsToFloat(Record[0]));
+        V = ConstantFP::get(CurTy, APFloat((float)BitsToDouble(Record[0])));
       else if (CurTy == Type::DoubleTy)
-        V = ConstantFP::get(CurTy, BitsToDouble(Record[0]));
-      // FIXME: Make long double constants work.
-      else if (CurTy == Type::X86_FP80Ty ||
-               CurTy == Type::FP128Ty || CurTy == Type::PPC_FP128Ty)
-        assert(0 && "Long double constants not handled yet.");
+        V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
+      // FIXME: Make long double constants work.  BitsToDouble does not make it.
+      else if (CurTy == Type::X86_FP80Ty)
+        V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
+      else if (CurTy == Type::FP128Ty)
+        V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
+      else if (CurTy == Type::PPC_FP128Ty)
+        assert(0 && "PowerPC long double constants not handled yet.");
       else
         V = UndefValue::get(CurTy);
       break;

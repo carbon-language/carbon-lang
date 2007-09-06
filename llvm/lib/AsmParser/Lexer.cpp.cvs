@@ -2129,15 +2129,17 @@ YY_RULE_SETUP
 case 145:
 YY_RULE_SETUP
 #line 440 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
-{ llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
+{ llvmAsmlval.FPVal = new APFloat(atof(yytext)); return FPVAL; }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
 #line 441 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
-{ llvmAsmlval.FPVal = HexToFP(yytext); return FPVAL; }
+{ llvmAsmlval.FPVal = new APFloat(HexToFP(yytext)); 
+                  return FPVAL; 
+                }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 443 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
+#line 445 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 {
                   /* Make sure to free the internal buffers for flex when we are
                    * done reading our input!
@@ -2148,20 +2150,20 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 451 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
+#line 453 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 { /* Ignore whitespace */ }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 452 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
+#line 454 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 { return yytext[0]; }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 454 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
+#line 456 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 2165 "Lexer.cpp"
+#line 2167 "Lexer.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3043,5 +3045,5 @@ int main()
 	return 0;
 	}
 #endif
-#line 454 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
+#line 456 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 

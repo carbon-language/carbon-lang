@@ -355,7 +355,7 @@ typedef union YYSTYPE {
   uint64_t                          UInt64Val;
   int                               SIntVal;
   unsigned                          UIntVal;
-  double                            FPVal;
+  llvm::APFloat                    *FPVal;
   bool                              BoolVal;
 
   std::string                      *StrVal;   // This memory must be deleted

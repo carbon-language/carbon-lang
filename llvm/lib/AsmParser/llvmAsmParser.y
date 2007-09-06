@@ -412,11 +412,15 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
     }
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
-    if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP)) {
+    if (!ConstantFP::isValueValidForType(Ty, *D.ConstPoolFP)) {
       GenerateError("FP constant invalid for type");
       return 0;
     }
-    return ConstantFP::get(Ty, D.ConstPoolFP);
+    // Lexer has no type info, so builds all FP constants as double.
+    // Fix this here.
+    if (Ty==Type::FloatTy)
+      D.ConstPoolFP->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
+    return ConstantFP::get(Ty, *D.ConstPoolFP);
 
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty)) {
@@ -992,7 +996,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   uint64_t                          UInt64Val;
   int                               SIntVal;
   unsigned                          UIntVal;
-  double                            FPVal;
+  llvm::APFloat                    *FPVal;
   bool                              BoolVal;
 
   std::string                      *StrVal;   // This memory must be deleted
@@ -1862,9 +1866,13 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     CHECK_FOR_ERROR
   }
   | FPType FPVAL {                   // Float & Double constants
-    if (!ConstantFP::isValueValidForType($1, $2))
+    if (!ConstantFP::isValueValidForType($1, *$2))
       GEN_ERROR("Floating point constant invalid for type");
-    $$ = ConstantFP::get($1, $2);
+    // Lexer has no type info, so builds all FP constants as double.
+    // Fix this here.
+    if ($1==Type::FloatTy)
+      $2->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
+    $$ = ConstantFP::get($1, *$2);
     CHECK_FOR_ERROR
   };
 

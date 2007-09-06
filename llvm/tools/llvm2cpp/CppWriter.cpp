@@ -209,25 +209,30 @@ CppWriter::error(const std::string& msg) {
 // result so that we don't lose precision.
 void 
 CppWriter::printCFP(const ConstantFP *CFP) {
+  APFloat APF = APFloat(CFP->getValueAPF());  // copy
+  if (CFP->getType() == Type::FloatTy)
+    APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
   Out << "ConstantFP::get(";
   if (CFP->getType() == Type::DoubleTy)
     Out << "Type::DoubleTy, ";
   else
     Out << "Type::FloatTy, ";
+  Out << "APFloat(";
 #if HAVE_PRINTF_A
   char Buffer[100];
-  sprintf(Buffer, "%A", CFP->getValue());
+  sprintf(Buffer, "%A", APF.convertToDouble());
   if ((!strncmp(Buffer, "0x", 2) ||
        !strncmp(Buffer, "-0x", 3) ||
        !strncmp(Buffer, "+0x", 3)) &&
-      (atof(Buffer) == CFP->getValue()))
+      APF.bitwiseIsEqual(APFloat(atof(Buffer)))) {
     if (CFP->getType() == Type::DoubleTy)
       Out << "BitsToDouble(" << Buffer << ")";
     else
-      Out << "BitsToFloat(" << Buffer << ")";
-  else {
+      Out << "BitsToFloat((float)" << Buffer << ")";
+    Out << ")";
+  } else {
 #endif
-    std::string StrVal = ftostr(CFP->getValue());
+    std::string StrVal = ftostr(CFP->getValueAPF());
 
     while (StrVal[0] == ' ')
       StrVal.erase(StrVal.begin());
@@ -237,17 +242,21 @@ CppWriter::printCFP(const ConstantFP *CFP) {
     if (((StrVal[0] >= '0' && StrVal[0] <= '9') ||
         ((StrVal[0] == '-' || StrVal[0] == '+') &&
          (StrVal[1] >= '0' && StrVal[1] <= '9'))) &&
-        (atof(StrVal.c_str()) == CFP->getValue()))
+        (CFP->isExactlyValue(atof(StrVal.c_str())))) {
       if (CFP->getType() == Type::DoubleTy)
         Out <<  StrVal;
       else
-        Out << StrVal;
+        Out << StrVal << "f";
+      }
     else if (CFP->getType() == Type::DoubleTy)
-      Out << "BitsToDouble(0x" << std::hex << DoubleToBits(CFP->getValue()) 
+      Out << "BitsToDouble(0x" << std::hex 
+          << DoubleToBits(CFP->getValueAPF().convertToDouble()) 
           << std::dec << "ULL) /* " << StrVal << " */";
     else 
-      Out << "BitsToFloat(0x" << std::hex << FloatToBits(CFP->getValue()) 
+      Out << "BitsToFloat(0x" << std::hex 
+          << FloatToBits(CFP->getValueAPF().convertToFloat())
           << std::dec << "U) /* " << StrVal << " */";
+    Out << ")";
 #if HAVE_PRINTF_A
   }
 #endif

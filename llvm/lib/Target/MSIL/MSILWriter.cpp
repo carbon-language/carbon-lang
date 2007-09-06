@@ -428,10 +428,10 @@ void MSILWriter::printConstLoad(const Constant* C) {
     uint64_t X;
     unsigned Size;
     if (FP->getType()->getTypeID()==Type::FloatTyID) {
-      X = FloatToBits(FP->getValue());
+      X = FloatToBits(FP->getValueAPF().convertToFloat());
       Size = 4;  
     } else {
-      X = DoubleToBits(FP->getValue());
+      X = DoubleToBits(FP->getValueAPF().convertToDouble());
       Size = 8;  
     }
     Out << "\tldc.r" << Size << "\t( " << utohexstr(X) << ')';
@@ -1472,9 +1472,11 @@ void MSILWriter::printStaticConstant(const Constant* C, uint64_t& Offset) {
     TySize = TD->getTypeSize(Ty);
     const ConstantFP* FP = cast<ConstantFP>(C);
     if (Ty->getTypeID() == Type::FloatTyID)
-      Out << "int32 (" << FloatToBits(FP->getValue()) << ')';
+      Out << "int32 (" << 
+        FloatToBits(FP->getValueAPF().convertToFloat()) << ')';
     else
-      Out << "int64 (" << DoubleToBits(FP->getValue()) << ')';
+      Out << "int64 (" << 
+        DoubleToBits(FP->getValueAPF().convertToDouble()) << ')';
     break;
   }
   case Type::ArrayTyID:

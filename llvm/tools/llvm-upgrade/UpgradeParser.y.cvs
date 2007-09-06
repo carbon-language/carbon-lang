@@ -533,9 +533,13 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
       return ConstantInt::get(Ty, D.UConstPool64);
 
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
-    if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP))
+    if (!ConstantFP::isValueValidForType(Ty, *D.ConstPoolFP))
       error("FP constant invalid for type");
-    return ConstantFP::get(Ty, D.ConstPoolFP);
+    // Lexer has no type info, so builds all FP constants as double.
+    // Fix this here.
+    if (Ty==Type::FloatTy)
+      D.ConstPoolFP->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
+    return ConstantFP::get(Ty, *D.ConstPoolFP);
 
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty))
@@ -1773,7 +1777,7 @@ using namespace llvm;
   uint64_t                          UInt64Val;
   int                               SIntVal;
   unsigned                          UIntVal;
-  double                            FPVal;
+  llvm::APFloat                    *FPVal;
   bool                              BoolVal;
 
   char                             *StrVal;   // This memory is strdup'd!
@@ -2514,9 +2518,13 @@ ConstVal
     $$.S.makeUnsigned();
   }
   | FPType FPVAL {                   // Float & Double constants
-    if (!ConstantFP::isValueValidForType($1.T, $2))
+    if (!ConstantFP::isValueValidForType($1.T, *$2))
       error("Floating point constant invalid for type");
-    $$.C = ConstantFP::get($1.T, $2);
+    // Lexer has no type info, so builds all FP constants as double.
+    // Fix this here.
+    if ($1.T==Type::FloatTy)
+      $2->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
+    $$.C = ConstantFP::get($1.T, *$2);
     $$.S.makeSignless();
   }
   ;

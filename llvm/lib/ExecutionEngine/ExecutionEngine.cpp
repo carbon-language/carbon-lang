@@ -525,10 +525,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
   switch (C->getType()->getTypeID()) {
   case Type::FloatTyID: 
-    Result.FloatVal = (float)cast<ConstantFP>(C)->getValue(); 
+    Result.FloatVal = cast<ConstantFP>(C)->getValueAPF().convertToFloat(); 
     break;
   case Type::DoubleTyID:
-    Result.DoubleVal = (double)cast<ConstantFP>(C)->getValue(); 
+    Result.DoubleVal = cast<ConstantFP>(C)->getValueAPF().convertToDouble();
     break;
   case Type::IntegerTyID:
     Result.IntVal = cast<ConstantInt>(C)->getValue();

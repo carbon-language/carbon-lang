@@ -3412,11 +3412,11 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
   const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
-    Constant *C = ConstantFP::get(OpNTy, BitsToDouble(~(1ULL << 63)));
+    Constant *C = ConstantFP::get(OpNTy, APFloat(BitsToDouble(~(1ULL << 63))));
     CV.push_back(C);
     CV.push_back(C);
   } else {
-    Constant *C = ConstantFP::get(OpNTy, BitsToFloat(~(1U << 31)));
+    Constant *C = ConstantFP::get(OpNTy, APFloat(BitsToFloat(~(1U << 31))));
     CV.push_back(C);
     CV.push_back(C);
     CV.push_back(C);
@@ -3440,11 +3440,11 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
   const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
-    Constant *C = ConstantFP::get(OpNTy, BitsToDouble(1ULL << 63));
+    Constant *C = ConstantFP::get(OpNTy, APFloat(BitsToDouble(1ULL << 63)));
     CV.push_back(C);
     CV.push_back(C);
   } else {
-    Constant *C = ConstantFP::get(OpNTy, BitsToFloat(1U << 31));
+    Constant *C = ConstantFP::get(OpNTy, APFloat(BitsToFloat(1U << 31)));
     CV.push_back(C);
     CV.push_back(C);
     CV.push_back(C);
@@ -3475,18 +3475,19 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   if (MVT::getSizeInBits(SrcVT) < MVT::getSizeInBits(VT)) {
     Op1 = DAG.getNode(ISD::FP_EXTEND, VT, Op1);
     SrcVT = VT;
+    SrcTy = MVT::getTypeForValueType(SrcVT);
   }
 
   // First get the sign bit of second operand.
   std::vector<Constant*> CV;
   if (SrcVT == MVT::f64) {
-    CV.push_back(ConstantFP::get(SrcTy, BitsToDouble(1ULL << 63)));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(BitsToDouble(1ULL << 63))));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0)));
   } else {
-    CV.push_back(ConstantFP::get(SrcTy, BitsToFloat(1U << 31)));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(BitsToFloat(1U << 31))));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0f)));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0f)));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0f)));
   }
   Constant *C = ConstantVector::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);
@@ -3508,13 +3509,13 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   // Clear first operand sign bit.
   CV.clear();
   if (VT == MVT::f64) {
-    CV.push_back(ConstantFP::get(SrcTy, BitsToDouble(~(1ULL << 63))));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(BitsToDouble(~(1ULL << 63)))));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0)));
   } else {
-    CV.push_back(ConstantFP::get(SrcTy, BitsToFloat(~(1U << 31))));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
-    CV.push_back(ConstantFP::get(SrcTy, 0.0));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(BitsToFloat(~(1U << 31)))));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0f)));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0f)));
+    CV.push_back(ConstantFP::get(SrcTy, APFloat(0.0f)));
   }
   C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);

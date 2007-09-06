@@ -107,11 +107,13 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
+    return ConstantFP::get(Ty, APFloat(0.0f));
   case Type::DoubleTyID:
+    return ConstantFP::get(Ty, APFloat(0.0));
   case Type::X86_FP80TyID:
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:
-    return ConstantFP::get(Ty, 0.0);
+    return ConstantFP::get(Ty, APFloat(0.0));   //FIXME
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
@@ -238,11 +240,6 @@ ConstantInt *ConstantInt::get(const APInt& V) {
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
 
-
-ConstantFP::ConstantFP(const Type *Ty, double V)
-  : Constant(Ty, ConstantFPVal, 0, 0), 
-             Val(Ty==Type::FloatTy ? APFloat((float)V) : APFloat(V)) {
-}
 ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
   : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
   // temporary
@@ -292,27 +289,6 @@ typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*,
                  DenseMapAPFloatKeyInfo> FPMapTy;
 
 static ManagedStatic<FPMapTy> FPConstants;
-
-ConstantFP *ConstantFP::get(const Type *Ty, double V) {
-  if (Ty == Type::FloatTy) {
-    DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((float)V));
-    ConstantFP *&Slot = (*FPConstants)[Key];
-    if (Slot) return Slot;
-    return Slot = new ConstantFP(Ty, APFloat((float)V));
-  } else if (Ty == Type::DoubleTy) {
-    // Without the redundant cast, the following is taken to be
-    // a function declaration.  What a language.
-    DenseMapAPFloatKeyInfo::KeyTy Key(APFloat((double)V));
-    ConstantFP *&Slot = (*FPConstants)[Key];
-    if (Slot) return Slot;
-    return Slot = new ConstantFP(Ty, APFloat(V));
-  } else if (Ty == Type::X86_FP80Ty ||
-             Ty == Type::PPC_FP128Ty || Ty == Type::FP128Ty) {
-    assert(0 && "Long double constants not handled yet.");
-  } else {
-    assert(0 && "Unknown FP Type!");
-  }
-}
 
 ConstantFP *ConstantFP::get(const Type *Ty, const APFloat& V) {
   // temporary
@@ -1934,12 +1910,15 @@ Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
     if (PTy->getElementType()->isFloatingPoint()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
-                                   ConstantFP::get(PTy->getElementType(),-0.0));
+                                   ConstantFP::get(PTy->getElementType(),
+                                       PTy->getElementType()==Type::FloatTy ?
+                                       APFloat(-0.0f) : APFloat(0.0)));
       return ConstantVector::get(PTy, zeros);
     }
 
   if (Ty->isFloatingPoint())
-    return ConstantFP::get(Ty, -0.0);
+    return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat(-0.0f) : 
+                                                   APFloat(-0.0));
 
   return Constant::getNullValue(Ty);
 }
