@@ -16,16 +16,37 @@
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
-#include <iosfwd>
 #include <vector>
 
 namespace clang {
 
   class Stmt;
-  class DeclRefStmt;
+  class DeclRefExpr;
   class Decl;
   class CFG;
   class CFGBlock;
+  class SourceManager;
+  class LiveVariables;
+  
+class LiveVariablesAuditor {
+public:
+  virtual ~LiveVariablesAuditor();
+
+  /// AuditStmt - A callback invoked right before invoking the liveness
+  ///  transfer function on the given statement.  If the liveness information
+  ///  has been previously calculated by running LiveVariables::runOnCFG,
+  ///  then V contains the liveness information after the execution of
+  ///  the given statement.
+  virtual void AuditStmt(Stmt* S, LiveVariables& L, llvm::BitVector& V) = 0;
+
+  /// AuditBlockExit - A callback invoked right before invoking the liveness
+  ///  transfer function on the given block.  If the liveness information
+  ///  has been previously calculated by running LiveVariables::runOnCFG,
+  ///  then V contains the liveness information after the execution of
+  ///  the given block.
+  virtual void AuditBlockExit(const CFGBlock* B, LiveVariables& L,
+                              llvm::BitVector& V) = 0;  
+};
 
 class LiveVariables {
 public:
@@ -39,11 +60,17 @@ public:
     /// Kills - List of statements which are the last use of a variable
     ///  (kill it) in their basic block.  The first pointer in the pair
     ///  is the statement in the list of statements of a basic block where
-    ///  this occurs, while the DeclRefStmt is the subexpression of this
+    ///  this occurs, while the DeclRefExpr is the subexpression of this
     ///  statement where the actual last reference takes place.
-    std::vector< std::pair<const Stmt*,const DeclRefStmt*> > Kills;
+    typedef std::vector< std::pair<const Stmt*,const DeclRefExpr*> > KillsSet;
+    KillsSet Kills;
     
-    void print(std::ostream& OS) const;
+    // AddKill - Adds a kill site to the list of places where a
+    //  a variable is killed.
+    void AddKill(Stmt* S, DeclRefExpr* DR) {
+      Kills.push_back(std::make_pair(const_cast<const Stmt*>(S),
+                                     const_cast<const DeclRefExpr*>(DR)));
+    }
   };
   
   struct VPair {
@@ -59,7 +86,13 @@ public:
   LiveVariables() : NumDecls(0) {}
 
   /// runOnCFG - Computes live variable information for a given CFG.
-  void runOnCFG(const CFG& cfg);
+  void runOnCFG(const CFG& cfg, LiveVariablesAuditor* A = NULL);
+  
+  /// runOnBlock - Computes live variable information for a given block.
+  ///  This should usually be invoked only after previously computing
+  ///  live variable information using runOnCFG, and is intended to
+  ///  only be used for auditing the liveness within a block.
+  void runOnBlock(const CFGBlock* B, LiveVariablesAuditor* A);
   
   /// KillsVar - Return true if the specified statement kills the
   ///  specified variable.
@@ -80,12 +113,11 @@ public:
 
   const VarInfoMap& getVarInfoMap() const { return VarInfos; }
   
-  // printLiveness
-  void printLiveness(const llvm::BitVector& V, std::ostream& OS) const;
+  // dumpLiveness
+  void dumpLiveness(const llvm::BitVector& V, SourceManager& M) const;
   
-  // printBlockLiveness
-  void printBlockLiveness(std::ostream& OS) const;
-  void DumpBlockLiveness() const;
+  // dumpBlockLiveness
+  void dumpBlockLiveness(SourceManager& M) const;
   
   // getLiveAtBlockEntryMap
   BlockLivenessMap& getLiveAtBlockEntryMap() { return LiveAtBlockEntryMap; }

@@ -198,7 +198,7 @@ void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID)
         if (CFG* C = CFG::buildCFG(FD->getBody())) {
           LiveVariables L;
           L.runOnCFG(*C);
-          L.DumpBlockLiveness();
+          L.dumpBlockLiveness(PP.getSourceManager());
         }
         else
           fprintf(stderr," Error processing CFG.\n");

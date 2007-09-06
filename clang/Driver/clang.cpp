@@ -92,9 +92,9 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValN(ParseCFGView, "view-cfg",
                         "Run parser, then build and view CFGs with Graphviz."),
              clEnumValN(AnalysisLiveVariables, "dump-live-variables",
-                     "Run parser and print results of live variable analysis."),
+                        "Print results of live variable analysis."),
              clEnumValN(EmitLLVM, "emit-llvm",
-                     "Build ASTs then convert to LLVM, emit .ll file"),
+                        "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
