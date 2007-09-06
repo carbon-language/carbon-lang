@@ -62,10 +62,11 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LiveIntervals::releaseMemory() {
-  VNInfoAllocator.Reset();
   mi2iMap_.clear();
   i2miMap_.clear();
   r2iMap_.clear();
+  // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
+  VNInfoAllocator.Reset();
   for (unsigned i = 0, e = ClonedMIs.size(); i != e; ++i)
     delete ClonedMIs[i];
 }

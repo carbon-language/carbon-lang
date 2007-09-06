@@ -476,7 +476,9 @@ void LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   // ~1U so it can be nuked later.
   if (V1->id == getNumValNums()-1) {
     do {
+      VNInfo *VNI = valnos.back();
       valnos.pop_back();
+      VNI->~VNInfo();
     } while (valnos.back()->def == ~1U);
   } else {
     V1->def = ~1U;
