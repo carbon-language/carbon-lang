@@ -250,10 +250,16 @@ namespace {
       TII = MF.getTarget().getInstrInfo();
       DOUT << "\n**** Local spiller rewriting function '"
            << MF.getFunction()->getName() << "':\n";
+      DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!) ****\n";
+      DEBUG(MF.dump());
 
       for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
            MBB != E; ++MBB)
         RewriteMBB(*MBB, VRM);
+
+      DOUT << "**** Post Machine Instrs ****\n";
+      DEBUG(MF.dump());
+
       return true;
     }
   private:
