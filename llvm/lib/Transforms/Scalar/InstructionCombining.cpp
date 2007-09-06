@@ -4563,7 +4563,9 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
       if (NumDifferences == 0)   // SAME GEP?
         return ReplaceInstUsesWith(I, // No comparison is needed here.
                                    ConstantInt::get(Type::Int1Ty, 
-                                                    Cond == ICmpInst::ICMP_EQ));
+                                                    Cond == ICmpInst::ICMP_EQ ||
+                     Cond == ICmpInst::ICMP_ULE || Cond == ICmpInst::ICMP_UGE ||
+                     Cond == ICmpInst::ICMP_SLE || Cond == ICmpInst::ICMP_SGE));
       else if (NumDifferences == 1) {
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
