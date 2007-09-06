@@ -40,7 +40,9 @@ public:
     
   void VisitStmt(Stmt* S);
   void VisitDeclRefExpr(DeclRefExpr* DR);
+  void VisitDeclStmt(DeclStmt* DS);
   void Register(Decl* D);
+  void RegisterDeclChain(Decl* D);
   void RegisterUsedDecls();
 };
 
@@ -50,7 +52,15 @@ void RegisterDecls::VisitStmt(Stmt* S) {
 }
 
 void RegisterDecls::VisitDeclRefExpr(DeclRefExpr* DR) {
-  for (Decl* D = DR->getDecl() ; D != NULL ; D = D->getNextDeclarator())
+  RegisterDeclChain(DR->getDecl());
+}
+
+void RegisterDecls::VisitDeclStmt(DeclStmt* DS) {
+  RegisterDeclChain(DS->getDecl());
+}
+
+void RegisterDecls::RegisterDeclChain(Decl* D) {
+  for (; D != NULL ; D = D->getNextDeclarator())
     Register(D);
 }
 
@@ -363,7 +373,6 @@ void LiveVariables::runOnCFG(const CFG& cfg, LiveVariablesAuditor* Auditor) {
 
 void LiveVariables::runOnBlock(const CFGBlock* B, LiveVariablesAuditor* Auditor)
 {
-  assert (NumDecls && "You must use runOnCFG before using runOnBlock.");
   LivenessTFuncs TF(*this,Auditor);
   TF.ProcessBlock(B);
 }
