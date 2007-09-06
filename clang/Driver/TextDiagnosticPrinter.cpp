@@ -165,7 +165,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   case Diagnostic::Warning: std::cerr << "warning: "; break;
   case Diagnostic::Error:   std::cerr << "error: "; break;
   case Diagnostic::Fatal:   std::cerr << "fatal error: "; break;
-  case Diagnostic::Sorry:   std::cerr << "sorry, unimplemented: ";
     break;
   }
   

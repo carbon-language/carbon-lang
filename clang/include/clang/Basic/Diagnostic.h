@@ -116,7 +116,7 @@ public:
   
   /// Level - The level of the diagnostic 
   enum Level {
-    Ignored, Note, Warning, Error, Fatal, Sorry
+    Ignored, Note, Warning, Error, Fatal
   };
   
   /// isNoteWarningOrExtension - Return true if the unmapped diagnostic level of
