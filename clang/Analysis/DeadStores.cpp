@@ -47,6 +47,19 @@ public:
         }
       }
     }
+    else if(DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
+      // Iterate through the decls.  Warn if any of them (which have
+      // initializers) are not live.
+      for (Decl* D = DS->getDecl() ; D != NULL ; D = D->getNextDeclarator())
+        if (VarDecl* V = dyn_cast<VarDecl>(D))
+          if (Expr* E = V->getInit())
+            if (!L.isLive(Live,D)) {
+              SourceRange R = E->getSourceRange();
+              PP.getDiagnostics().Report(D->getLocation(),
+                                         diag::warn_dead_store, 0, 0,
+                                         &R,1);
+            }
+    }
   }
 };
   

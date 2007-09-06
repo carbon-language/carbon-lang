@@ -252,7 +252,10 @@ void LivenessTFuncs::VisitAssign(BinaryOperator* B) {
     // We only need to register kills once, so we check if this block
     // has been previously processed.
     if (!blockPreviouslyProcessed)
-      V.AddKill(CurrentStmt,DR);    
+      V.AddKill(CurrentStmt,DR);
+      
+    if (B->getOpcode() != BinaryOperator::Assign)
+      Visit(LHS);
   }
   else
     Visit(LHS);
