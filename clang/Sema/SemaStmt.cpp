@@ -510,7 +510,7 @@ Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
   if (LabelDecl == 0)
     LabelDecl = new LabelStmt(LabelLoc, LabelII, 0);
   
-  return new GotoStmt(LabelDecl, GotoLoc);
+  return new GotoStmt(LabelDecl, GotoLoc, LabelLoc);
 }
 
 Action::StmtResult 

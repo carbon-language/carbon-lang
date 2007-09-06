@@ -524,14 +524,15 @@ public:
 class GotoStmt : public Stmt {
   LabelStmt *Label;
   SourceLocation GotoLoc;
+  SourceLocation LabelLoc;
 public:
-  GotoStmt(LabelStmt *label, SourceLocation GL) : Stmt(GotoStmtClass), 
-    Label(label), GotoLoc(GL) {}
+  GotoStmt(LabelStmt *label, SourceLocation GL, SourceLocation LL) 
+    : Stmt(GotoStmtClass), Label(label), GotoLoc(GL), LabelLoc(LL) {}
   
   LabelStmt *getLabel() const { return Label; }
 
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(GotoLoc, Label->getLocEnd()); 
+    return SourceRange(GotoLoc, LabelLoc); 
   }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == GotoStmtClass; 
