@@ -26,6 +26,8 @@ void DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 
 void DumpCFGs(Preprocessor &PP, unsigned MainFileID,
               bool Stats, bool use_graphviz = false);  
+              
+void AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID);
 
 } // end clang namespace
 

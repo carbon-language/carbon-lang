@@ -14,6 +14,7 @@
 #include "ASTStreamers.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/CFG.h"
+#include "clang/Analysis/LiveVariables.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/ASTStreamer.h"
 using namespace clang;
@@ -181,6 +182,30 @@ void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID,
     Context.PrintStats();
   }
   
+  ASTStreamer_Terminate(Streamer);
+}
+
+void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID)
+{
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
+  
+  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {      
+      if (FD->getBody()) {
+        PrintFunctionDeclStart(FD);
+        fprintf(stderr,"\n");
+        if (CFG* C = CFG::buildCFG(FD->getBody())) {
+          LiveVariables L;
+          L.runOnCFG(*C);
+          L.DumpBlockLiveness();
+        }
+        else
+          fprintf(stderr," Error processing CFG.\n");
+      }
+    }
+  }
+      
   ASTStreamer_Terminate(Streamer);
 }
 

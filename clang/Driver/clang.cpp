@@ -54,6 +54,7 @@ enum ProgActions {
   ParseAST,                     // Parse ASTs.
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs (Graphviz).
+  AnalysisLiveVariables,        // Print results of live-variable analysis.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
@@ -89,9 +90,11 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValN(ParseCFGDump, "dump-cfg",
                         "Run parser, then build and print CFGs."),
              clEnumValN(ParseCFGView, "view-cfg",
-                        "Run parser, then build and view CFGs with Graphviz."),  
+                        "Run parser, then build and view CFGs with Graphviz."),
+             clEnumValN(AnalysisLiveVariables, "dump-live-variables",
+                     "Run parser and print results of live variable analysis."),
              clEnumValN(EmitLLVM, "emit-llvm",
-                        "Build ASTs then convert to LLVM, emit .ll file"),
+                     "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
@@ -846,6 +849,9 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   case ParseCFGView:
     DumpCFGs(PP, MainFileID, Stats, true);
     break;
+  case AnalysisLiveVariables:
+    AnalyzeLiveVariables(PP, MainFileID);
+    break;  
   case EmitLLVM:
     EmitLLVMFromASTs(PP, MainFileID, Stats);
     break;
