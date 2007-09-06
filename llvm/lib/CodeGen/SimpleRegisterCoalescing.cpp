@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -48,6 +49,9 @@ namespace {
 
   RegisterPass<SimpleRegisterCoalescing> 
   X("simple-register-coalescing", "Simple Register Coalescing");
+
+  // Declare that we implement the RegisterCoalescer interface
+  RegisterAnalysisGroup<RegisterCoalescer, true/*The Default*/> V(X);
 }
 
 const PassInfo *llvm::SimpleRegisterCoalescingID = X.getPassInfo();
@@ -1191,3 +1195,10 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 void SimpleRegisterCoalescing::print(std::ostream &O, const Module* m) const {
    li_->print(O, m);
 }
+
+RegisterCoalescer* llvm::createSimpleRegisterCoalescer() {
+  return new SimpleRegisterCoalescing();
+}
+
+// Make sure that anything that uses RegisterCoalescer pulls in this file...
+DEFINING_FILE_FOR(SimpleRegisterCoalescing)

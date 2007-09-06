@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -96,7 +97,9 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LiveIntervals>();
-      AU.addRequiredID(SimpleRegisterCoalescingID);
+      // Make sure PassManager knows which analyses to make available
+      // to coalescing and which analyses coalescing invalidates.
+      AU.addRequiredTransitive<RegisterCoalescer>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -193,6 +196,11 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
   li_ = &getAnalysis<LiveIntervals>();
+
+  // We don't run the coalescer here because we have no reason to
+  // interact with it.  If the coalescer requires interaction, it
+  // won't do anything.  If it doesn't require interaction, we assume
+  // it was run as a separate pass.
 
   // If this is the first function compiled, compute the related reg classes.
   if (RelatedRegClasses.empty())

@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 
@@ -27,7 +28,8 @@ namespace llvm {
   class TargetInstrInfo;
   class VirtRegMap;
 
-  class SimpleRegisterCoalescing : public MachineFunctionPass {
+  class SimpleRegisterCoalescing : public MachineFunctionPass,
+                                   public RegisterCoalescer {
     MachineFunction* mf_;
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
@@ -75,6 +77,11 @@ namespace llvm {
 
     /// runOnMachineFunction - pass entry point
     virtual bool runOnMachineFunction(MachineFunction&);
+
+    bool coalesceFunction(MachineFunction &mf, RegallocQuery &) {
+      // This runs as an independent pass, so don't do anything.
+      return(false);
+    };
 
     /// print - Implement the dump method.
     virtual void print(std::ostream &O, const Module* = 0) const;

@@ -23,6 +23,7 @@ namespace llvm {
   class FunctionPass;
   class PassInfo;
   class TargetMachine;
+  class RegisterCoalescer;
 
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a
@@ -83,6 +84,11 @@ namespace llvm {
   /// register allocation algorithm, a global register allocator.
   ///
   FunctionPass *createLinearScanRegisterAllocator();
+
+  /// SimpleRegisterCoalescing Pass - Coalesce all copies possible.  Can run
+  /// independently of the register allocator.
+  ///
+  RegisterCoalescer *createSimpleRegisterCoalescer();
 
   /// PrologEpilogCodeInserter Pass - This pass inserts prolog and epilog code,
   /// and eliminates abstract frame references.
