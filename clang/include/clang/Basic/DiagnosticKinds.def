@@ -18,7 +18,6 @@
 //     WARNING   - Warning.
 //     EXTENSION - Notification that an extension to the language is being used.
 //     ERROR     - Error, compilation will stop after parsing completes.
-//     FATAL     - Fatal error: parsing must stop.
 
 //===----------------------------------------------------------------------===//
 // Portability

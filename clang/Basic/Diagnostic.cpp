@@ -23,7 +23,6 @@ enum {
   WARNING    = 0x02,
   EXTENSION  = 0x03,
   ERROR      = 0x04,
-  FATAL      = 0x05,
   class_mask = 0x07
 };
 
@@ -112,7 +111,6 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   case NOTE:        return Diagnostic::Note;
   case WARNING:     return Diagnostic::Warning;
   case ERROR:       return Diagnostic::Error;
-  case FATAL:       return Diagnostic::Fatal;
   }
 }
 
