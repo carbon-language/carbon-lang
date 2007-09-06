@@ -31,6 +31,7 @@ namespace clang {
   class TagDecl;
   class RecordDecl;
   class EnumDecl;
+  class ObjcInterfaceDecl;
   class Expr;
   class SourceLocation;
   class PointerType;
@@ -203,6 +204,7 @@ public:
     Vector, OCUVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, 
+    ObjcInterface,
     TypeOfExp, TypeOfTyp // GNU typeof extension.
   };
 private:
@@ -808,6 +810,23 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Tagged; }
   static bool classof(const TagType *) { return true; }
+};
+
+class ObjcInterfaceType : public Type {
+  ObjcInterfaceDecl *Decl;
+  ObjcInterfaceType(ObjcInterfaceDecl *D) : 
+    Type(ObjcInterface, QualType()), Decl(D) { }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+  
+  ObjcInterfaceDecl *getDecl() const { return Decl; }
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
+
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ObjcInterface; 
+  }
+  static bool classof(const ObjcInterfaceType *) { return true; }
 };
 
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast

@@ -26,7 +26,11 @@
 using namespace clang;
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
-  return dyn_cast_or_null<TypedefDecl>(II.getFETokenInfo<Decl>());
+  Decl *IIDecl = II.getFETokenInfo<Decl>();
+  if (dyn_cast_or_null<TypedefDecl>(IIDecl) || 
+      dyn_cast_or_null<ObjcInterfaceDecl>(IIDecl))
+    return IIDecl;
+  return 0;
 }
 
 void Sema::PopScope(SourceLocation Loc, Scope *S) {
@@ -833,6 +837,45 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
   if (D.getInvalidType())
     NewTD->setInvalidDecl();
   return NewTD;
+}
+
+Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    AttributeList *AttrList) {
+  assert(ClassName && "Missing class identifier");
+  ObjcInterfaceDecl *IDecl;
+    
+  IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, ClassName);
+  
+  // Chain & install the interface decl into the identifier.
+  IDecl->setNext(ClassName->getFETokenInfo<Decl>());
+  ClassName->setFETokenInfo(IDecl);
+  return IDecl;
+}
+
+/// ObjcClassDeclaration - 
+/// Scope will always be top level file scope. 
+Action::DeclTy *
+Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                           IdentifierInfo **IdentList, unsigned NumElts) {
+  ObjcClassDecl *CDecl = new ObjcClassDecl(AtClassLoc, NumElts);
+
+  for (unsigned i = 0; i != NumElts; ++i) {
+    ObjcInterfaceDecl *IDecl;
+      
+    IDecl = new ObjcInterfaceDecl(SourceLocation(), IdentList[i], true);
+    // Chain & install the interface decl into the identifier.
+    IDecl->setNext(IdentList[i]->getFETokenInfo<Decl>());
+    IdentList[i]->setFETokenInfo(IDecl);
+    
+    // Remember that this needs to be removed when the scope is popped.
+    S->AddDecl(IdentList[i]);
+    
+    CDecl->setInterfaceDecl((int)i, IDecl);
+  }
+  return CDecl;
 }
 
 

@@ -34,7 +34,7 @@ public:
     // Concrete sub-classes of ValueDecl
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
-    Typedef, Struct, Union, Class, Enum, 
+    Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass,
     // Concrete sub-class of Decl
     Field
   };
@@ -501,6 +501,47 @@ public:
            D->getKind() == Class;
   }
   static bool classof(const RecordDecl *D) { return true; }
+};
+
+class ObjcInterfaceDecl : public TypeDecl {
+  /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
+  FieldDecl **Ivars;   // Null if not defined.
+  int NumIvars;   // -1 if not defined.
+  
+  bool isForwardDecl; // declared with @class.
+public:
+  ObjcInterfaceDecl(SourceLocation L, IdentifierInfo *Id, bool FD = false)
+    : TypeDecl(ObjcInterface, L, Id, 0), Ivars(0), NumIvars(-1), 
+      isForwardDecl(FD) { }
+     
+  void addInstanceVariable(FieldDecl ivar);
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcInterface;
+  }
+  static bool classof(const ObjcInterfaceDecl *D) { return true; }
+};
+
+class ObjcClassDecl : public TypeDecl {
+  ObjcInterfaceDecl **ForwardDecls;   // Null if not defined.
+  int NumForwardDecls;               // -1 if not defined.
+public:
+  ObjcClassDecl(SourceLocation L, unsigned nElts)
+    : TypeDecl(ObjcClass, L, 0, 0) { 
+    if (nElts) {
+      ForwardDecls = new ObjcInterfaceDecl*[nElts];
+      bzero(ForwardDecls, nElts*sizeof(ObjcInterfaceDecl*));
+    }
+    NumForwardDecls = nElts;
+  }
+  void setInterfaceDecl(int idx, ObjcInterfaceDecl *OID) {
+    assert((idx < NumForwardDecls) && "index out of range");
+    ForwardDecls[idx] = OID;
+  }
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcClass;
+  }
+  static bool classof(const ObjcClassDecl *D) { return true; }
 };
 
 }  // end namespace clang

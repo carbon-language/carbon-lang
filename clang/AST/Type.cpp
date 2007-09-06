@@ -836,6 +836,12 @@ void TypedefType::getAsStringInternal(std::string &InnerString) const {
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
+void ObjcInterfaceType::getAsStringInternal(std::string &InnerString) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+  InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+}
+
 void TagType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;

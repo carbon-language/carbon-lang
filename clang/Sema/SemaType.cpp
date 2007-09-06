@@ -102,6 +102,10 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
+    // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
+    // we have this "hack" for now... 
+    if (isa<ObjcInterfaceDecl>(D))
+      return Ctx.getObjcInterfaceType(cast<ObjcInterfaceDecl>(D));
     // TypeQuals handled by caller.
     return Ctx.getTypedefType(cast<TypedefDecl>(D));
   }

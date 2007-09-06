@@ -68,12 +68,24 @@ MinimalAction::ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
   return 0;
 }
 
-/// ParsedObjcClassDeclaration - 
+Action::DeclTy *
+MinimalAction::ObjcStartClassInterface(SourceLocation AtInterafceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    AttributeList *AttrList) {
+  TypeNameInfo *TI =
+    new TypeNameInfo(1, ClassName->getFETokenInfo<TypeNameInfo>());
+
+  ClassName->setFETokenInfo(TI);
+  return 0;
+}
+
+/// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-MinimalAction::ParsedObjcClassDeclaration(Scope *S,
-                                          IdentifierInfo **IdentList,
-                                          unsigned NumElts) {
+MinimalAction::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                                IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     TypeNameInfo *TI =
       new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());

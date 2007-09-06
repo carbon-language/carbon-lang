@@ -596,6 +596,16 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
+/// getObjcInterfaceType - Return the unique reference to the type for the
+/// specified ObjC interface decl.
+QualType ASTContext::getObjcInterfaceType(ObjcInterfaceDecl *Decl) {
+  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+  
+  Decl->TypeForDecl = new ObjcInterfaceType(Decl);
+  Types.push_back(Decl->TypeForDecl);
+  return QualType(Decl->TypeForDecl, 0);
+}
+
 /// getTypeOfExpr - Unlike many "get<Type>" functions, we can't unique
 /// TypeOfExpr AST's (since expression's are never shared). For example,
 /// multiple declarations that refer to "typeof(x)" all contain different

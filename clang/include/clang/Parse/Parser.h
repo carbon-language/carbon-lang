@@ -253,17 +253,17 @@ private:
   void ParseSimpleAsm();
   void ParseAsmStringLiteral();
 
-  // Objective-C External Declarations 
+  // Objective-C External Declarations
   DeclTy *ParseObjCAtDirectives(); 
   DeclTy *ParseObjCAtClassDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc, 
                                           AttributeList *prefixAttrs = 0);
-  void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
-                              llvm::SmallVectorImpl<DeclTy*> &IvarDecls);
+  void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl);
   bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierInfo*> &);
-  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
-                                  llvm::SmallVectorImpl<DeclTy*> &MethodDecls);
+  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl);
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
+  
+  DeclTy *ObjcImpDecl;
   DeclTy *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtEndDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
@@ -288,7 +288,7 @@ private:
 
   TypeTy *ParseObjCTypeName();
   void ParseObjCMethodRequirement();
-  DeclTy *ParseObjCMethodPrototype(bool decl);
+  DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat);
   DeclTy *ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
   void ParseObjCPropertyDecl(DeclTy *interfaceDecl);

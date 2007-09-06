@@ -136,9 +136,9 @@ public:
     return 0;
   }
   
-  virtual DeclTy *ParsedObjcClassDeclaration(Scope *S,
-                                             IdentifierInfo **IdentList,
-                                             unsigned NumElts) {
+  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                                       IdentifierInfo **IdentList,
+                                       unsigned NumElts) {
     return 0;
   }
 
@@ -440,24 +440,29 @@ public:
                     AttributeList *AttrList) {
     return 0;
   }
-  virtual void ObjCContinueClassInterface(SourceLocation InterfaceLoc) {
+  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy *Ivars, 
+                                       tok::ObjCKeywordKind visibility) {
     return;
   }
-  virtual void ObjCStartCategoryInterface() {
+  virtual void ObjcAddMethod(DeclTy *ClassDec, DeclTy *Meth, 
+                             AttributeList *AttrList) {
+    return;
+  }
+  virtual DeclTy *ObjcBuildMethodDeclaration(
+    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
+    ObjcKeywordInfo *Keywords, unsigned NumKeywords) {
+    return 0;
+  }
+  virtual DeclTy *ObjcBuildMethodDeclaration(
+    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
+    IdentifierInfo *SelectorName) {
+    return 0;
+  }
+  virtual void ObjCStartCategoryInterface() { // FIXME
     return;
   }
   virtual void ObjCFinishInterface() {
     return;
-  }
-  virtual DeclTy *ObjcBuildMethodDeclaration(
-    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
-    ObjcKeywordInfo *Keywords, unsigned NumKeywords, AttributeList *attrs) {
-    return 0;
-  }
-  virtual DeclTy *ObjcBuildMethodDeclaration(
-    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
-    IdentifierInfo *SelectorName, AttributeList *attrs) {
-    return 0;
   }
     
   //===----------------------- Obj-C Expressions --------------------------===//
@@ -496,10 +501,15 @@ public:
   /// they are removed from the IdentifierInfo::FETokenInfo field.
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
-  virtual DeclTy *ParsedObjcClassDeclaration(Scope *S,
-                                             IdentifierInfo **IdentList,
-                                             unsigned NumElts);
+  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                                       IdentifierInfo **IdentList,
+                                       unsigned NumElts);
   
+  virtual DeclTy *ObjcStartClassInterface(SourceLocation AtInterafceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    AttributeList *AttrList);
 };
 
 }  // end namespace clang

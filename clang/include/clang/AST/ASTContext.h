@@ -109,6 +109,7 @@ public:
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
+  QualType getObjcInterfaceType(ObjcInterfaceDecl *Decl);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExpr(Expr *e);

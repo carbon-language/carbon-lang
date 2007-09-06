@@ -347,6 +347,17 @@ public:
                                                TypeTy *Ty,
                                                SourceLocation RParenLoc);
   
+  // Objective-C declarations.
+  virtual DeclTy *ObjcStartClassInterface(SourceLocation AtInterafceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    AttributeList *AttrList);
+                    
+  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                                       IdentifierInfo **IdentList,
+                                       unsigned NumElts);
+
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

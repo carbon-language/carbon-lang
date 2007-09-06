@@ -25,6 +25,7 @@ static unsigned nEnumConst = 0;
 static unsigned nEnumDecls = 0;
 static unsigned nTypedef = 0;
 static unsigned nFieldDecls = 0;
+static unsigned nInterfaceDecls = 0;
 static bool StatSwitch = false;
 
 bool Decl::CollectingStats(bool enable) {
@@ -100,6 +101,9 @@ void Decl::addDeclKind(const Kind k) {
       break;
     case Enum:
       nEnumDecls++;
+      break;
+    case ObjcInterface:
+      nInterfaceDecls++;
       break;
   }
 }

@@ -22,6 +22,7 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   CurScope = 0;
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
+  ObjcImpDecl = 0;
 }
 
 ///  Out-of-line virtual destructor to provide home for Action class.
