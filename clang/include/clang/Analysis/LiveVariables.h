@@ -30,14 +30,14 @@ namespace clang {
   
 class LiveVariablesAuditor {
 public:
-  virtual ~LiveVariablesAuditor();
+  virtual ~LiveVariablesAuditor() {}
 
   /// AuditStmt - A callback invoked right before invoking the liveness
   ///  transfer function on the given statement.  If the liveness information
   ///  has been previously calculated by running LiveVariables::runOnCFG,
   ///  then V contains the liveness information after the execution of
   ///  the given statement.
-  virtual void AuditStmt(Stmt* S, LiveVariables& L, llvm::BitVector& V) = 0;
+  virtual void AuditStmt(Stmt* S, LiveVariables& L, llvm::BitVector& V);
 
   /// AuditBlockExit - A callback invoked right before invoking the liveness
   ///  transfer function on the given block.  If the liveness information
@@ -45,7 +45,7 @@ public:
   ///  then V contains the liveness information after the execution of
   ///  the given block.
   virtual void AuditBlockExit(const CFGBlock* B, LiveVariables& L,
-                              llvm::BitVector& V) = 0;  
+                              llvm::BitVector& V);  
 };
 
 class LiveVariables {
@@ -100,7 +100,12 @@ public:
   
   /// IsLive - Return true if a variable is live at beginning of a specified
   //    block.
-  bool IsLive(const CFGBlock* B, const Decl* D) const;
+  bool isLive(const CFGBlock* B, const Decl* D) const;
+  
+  /// IsLive - Return true if a variable is live according to the provided
+  ///  livness bitvector.  This is typically used by classes that subclass
+  ///  LiveVariablesAuditor.
+  bool isLive(llvm::BitVector& V, const Decl* D) const;
   
   /// getVarInfo - Return the liveness information associated with a given
   ///  variable.

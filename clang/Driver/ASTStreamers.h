@@ -29,6 +29,8 @@ void DumpCFGs(Preprocessor &PP, unsigned MainFileID,
               
 void AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID);
 
+void RunDeadStoresCheck(Preprocessor &PP, unsigned MainFileID, bool Stats);
+
 } // end clang namespace
 
 #endif

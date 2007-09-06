@@ -372,7 +372,7 @@ void LiveVariables::runOnBlock(const CFGBlock* B, LiveVariablesAuditor* Auditor)
 // liveness queries
 //
 
-bool LiveVariables::IsLive(const CFGBlock* B, const Decl* D) const {
+bool LiveVariables::isLive(const CFGBlock* B, const Decl* D) const {
   BlockLivenessMap::const_iterator I = LiveAtBlockEntryMap.find(B);
   assert (I != LiveAtBlockEntryMap.end());
   
@@ -380,6 +380,12 @@ bool LiveVariables::IsLive(const CFGBlock* B, const Decl* D) const {
   assert (VI != VarInfos.end());
   
   return I->second[VI->second.Idx];
+}
+
+bool LiveVariables::isLive(llvm::BitVector& Live, const Decl* D) const {
+  VarInfoMap::const_iterator VI = VarInfos.find(D);
+  assert (VI != VarInfos.end());
+  return Live[VI->second.Idx];
 }
 
 bool LiveVariables::KillsVar(const Stmt* S, const Decl* D) const {
@@ -404,6 +410,15 @@ const LiveVariables::VarInfo& LiveVariables::getVarInfo(const Decl* D) const {
   return const_cast<LiveVariables*>(this)->getVarInfo(D);
 }
 
+//===----------------------------------------------------------------------===//
+// Defaults for LiveVariablesAuditor
+
+void LiveVariablesAuditor::AuditStmt(Stmt* S, LiveVariables& L,
+                                     llvm::BitVector& V) {}
+
+void LiveVariablesAuditor::AuditBlockExit(const CFGBlock* B, LiveVariables& L,
+                                          llvm::BitVector& V) {}
+                            
 //===----------------------------------------------------------------------===//
 // printing liveness state for debugging
 //

@@ -13,6 +13,7 @@
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
+		355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355CF6830C90A8D400A08AA3 /* DeadStores.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
@@ -210,6 +211,8 @@
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
 		35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExprCXX.cpp; path = AST/ExprCXX.cpp; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
+		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
+		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
 		356EF9B20C8F7DBA006650F5 /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/LiveVariables.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
@@ -377,9 +380,18 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		355CF6850C90A8D600A08AA3 /* LocalCheckers */ = {
+			isa = PBXGroup;
+			children = (
+				355CF6830C90A8D400A08AA3 /* DeadStores.cpp */,
+			);
+			name = LocalCheckers;
+			sourceTree = "<group>";
+		};
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
 				356EF9B20C8F7DBA006650F5 /* LiveVariables.h */,
 			);
 			name = Analysis;
@@ -389,6 +401,7 @@
 			isa = PBXGroup;
 			children = (
 				356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */,
+				355CF6850C90A8D600A08AA3 /* LocalCheckers */,
 			);
 			name = Analysis;
 			sourceTree = "<group>";
@@ -741,6 +754,7 @@
 				35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */,
 				DE2255FC0C8004E600D370A5 /* ParseDeclCXX.cpp in Sources */,
 				356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */,
+				355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

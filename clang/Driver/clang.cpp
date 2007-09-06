@@ -53,8 +53,9 @@ enum ProgActions {
   ParseASTCheck,                // Parse ASTs and check diagnostics.
   ParseAST,                     // Parse ASTs.
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
-  ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs (Graphviz).
+  ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   AnalysisLiveVariables,        // Print results of live-variable analysis.
+  WarnDeadStores,               // Run DeadStores checker on parsed ASTs.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
@@ -93,6 +94,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser, then build and view CFGs with Graphviz."),
              clEnumValN(AnalysisLiveVariables, "dump-live-variables",
                         "Print results of live variable analysis."),
+             clEnumValN(WarnDeadStores, "check-dead-stores",
+                        "Flag warnings of stores to dead variables."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValEnd));
@@ -851,7 +854,10 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
   case AnalysisLiveVariables:
     AnalyzeLiveVariables(PP, MainFileID);
-    break;  
+    break;
+  case WarnDeadStores:
+    RunDeadStoresCheck(PP, MainFileID, Stats);
+    break;
   case EmitLLVM:
     EmitLLVMFromASTs(PP, MainFileID, Stats);
     break;

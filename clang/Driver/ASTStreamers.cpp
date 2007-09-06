@@ -15,6 +15,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/LiveVariables.h"
+#include "clang/Analysis/LocalCheckers.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/ASTStreamer.h"
 using namespace clang;
@@ -206,6 +207,32 @@ void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID)
     }
   }
       
+  ASTStreamer_Terminate(Streamer);
+}
+
+void clang::RunDeadStoresCheck(Preprocessor &PP, unsigned MainFileID,bool Stats)
+{
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
+  
+  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {      
+      if (FD->getBody()) {
+        if (CFG* C = CFG::buildCFG(FD->getBody())) {
+          clang::CheckDeadStores(*C,PP);
+        }
+        else
+          fprintf(stderr," Error processing CFG.\n");
+      }
+    }
+  }
+  
+  if (Stats) {
+    fprintf(stderr, "\nSTATISTICS:\n");
+    ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
+  }
+  
   ASTStreamer_Terminate(Streamer);
 }
 

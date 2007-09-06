@@ -748,6 +748,9 @@ DIAG(warn_ret_stack_ref, WARNING,
 DIAG(warn_floatingpoint_eq, WARNING,
   "comparing floating point with == or != is unsafe")
 
+// CHECK: stores to variables that are no longer live (dead stores)
+DIAG(warn_dead_store, WARNING, "value stored to variable is never used")
+
 // CFString checking
 DIAG(err_cfstring_literal_not_string_constant, ERROR,
   "CFString literal is not a string constant")
