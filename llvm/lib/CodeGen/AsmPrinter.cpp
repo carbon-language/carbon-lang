@@ -132,13 +132,11 @@ bool AsmPrinter::doFinalization(Module &M) {
          I!=E; ++I) {
       std::string Name = Mang->getValueName(I);
       std::string Target;
+
+      const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
+      Target = Mang->getValueName(GV);
       
-      if (const GlobalValue *GV = I->getAliasedGlobal())
-        Target = Mang->getValueName(GV);
-      else
-        assert(0 && "Unsupported aliasee");
-      
-      if (I->hasExternalLinkage())
+      if (I->hasExternalLinkage() || !TAI->getWeakRefDirective())
         O << "\t.globl\t" << Name << "\n";
       else if (I->hasWeakLinkage())
         O << TAI->getWeakRefDirective() << Name << "\n";
@@ -146,6 +144,15 @@ bool AsmPrinter::doFinalization(Module &M) {
         assert(0 && "Invalid alias linkage");
       
       O << TAI->getSetDirective() << Name << ", " << Target << "\n";
+
+      // If the aliasee has external weak linkage it can be referenced only by
+      // alias itself. In this case it can be not in ExtWeakSymbols list. Emit
+      // weak reference in such case.
+      if (GV->hasExternalWeakLinkage())
+        if (TAI->getWeakRefDirective())
+          O << TAI->getWeakRefDirective() << Target << "\n";
+        else
+          O << "\t.globl\t" << Target << "\n";
     }
   }
 
