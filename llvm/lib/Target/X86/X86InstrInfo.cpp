@@ -210,39 +210,30 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   }
   case X86::SHL16ri: {
     assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
-      // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
-      // the flags produced by a shift yet, so this is safe.
-      unsigned Dest = MI->getOperand(0).getReg();
-      unsigned Src = MI->getOperand(1).getReg();
-      unsigned ShAmt = MI->getOperand(2).getImm();
-      if (ShAmt == 0 || ShAmt >= 4) return 0;
+    // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
+    // the flags produced by a shift yet, so this is safe.
+    unsigned Dest = MI->getOperand(0).getReg();
+    unsigned Src = MI->getOperand(1).getReg();
+    unsigned ShAmt = MI->getOperand(2).getImm();
+    if (ShAmt == 0 || ShAmt >= 4) return 0;
     
     if (DisableLEA16) {
       // If 16-bit LEA is disabled, use 32-bit LEA via subregisters.
       SSARegMap *RegMap = MFI->getParent()->getSSARegMap();
-      unsigned Opc, leaInReg, leaOutReg;
-      MVT::ValueType leaVT;
-      if (TM.getSubtarget<X86Subtarget>().is64Bit()) {
-        Opc = X86::LEA64_32r;
-        leaVT = MVT::i64;
-        leaInReg = RegMap->createVirtualRegister(&X86::GR64RegClass);
-        leaOutReg = RegMap->createVirtualRegister(&X86::GR64RegClass);
-      } else {
-        Opc = X86::LEA32r;
-        leaVT = MVT::i32;
-        leaInReg = RegMap->createVirtualRegister(&X86::GR32RegClass);
-        leaOutReg = RegMap->createVirtualRegister(&X86::GR32RegClass);
-      }
+      unsigned Opc = TM.getSubtarget<X86Subtarget>().is64Bit()
+        ? X86::LEA64_32r : X86::LEA32r;
+      unsigned leaInReg = RegMap->createVirtualRegister(&X86::GR32RegClass);
+      unsigned leaOutReg = RegMap->createVirtualRegister(&X86::GR32RegClass);
             
-      MachineInstr *Ins = NULL, *Ext = NULL;
-        
-      Ins = BuildMI(get(X86::INSERT_SUBREG), leaInReg).addReg(Src).addImm(2);
+      MachineInstr *Ins =
+        BuildMI(get(X86::INSERT_SUBREG), leaInReg).addReg(Src).addImm(2);
       Ins->copyKillDeadInfo(MI);
       
       NewMI = BuildMI(get(Opc), leaOutReg)
         .addReg(0).addImm(1 << ShAmt).addReg(leaInReg).addImm(0);
       
-      Ext = BuildMI(get(X86::EXTRACT_SUBREG), Dest).addReg(leaOutReg).addImm(2);
+      MachineInstr *Ext =
+        BuildMI(get(X86::EXTRACT_SUBREG), Dest).addReg(leaOutReg).addImm(2);
       Ext->copyKillDeadInfo(MI);
       
       MFI->insert(MBBI, Ins);            // Insert the insert_subreg
@@ -250,8 +241,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       LV.addVirtualRegisterKilled(leaInReg, NewMI);
       MFI->insert(MBBI, NewMI);          // Insert the new inst
       LV.addVirtualRegisterKilled(leaOutReg, Ext);
-      MFI->insert(MBBI, Ext);            // Insert the extract_subreg
-      
+      MFI->insert(MBBI, Ext);            // Insert the extract_subreg      
       return Ext;
     } else {
       NewMI = BuildMI(get(X86::LEA16r), Dest)
