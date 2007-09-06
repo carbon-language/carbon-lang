@@ -1663,14 +1663,20 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   return MadeChange ? I : 0;
 }
 
-/// @returns true if the specified compare instruction is
+/// @returns true if the specified compare predicate is
 /// true when both operands are equal...
-/// @brief Determine if the ICmpInst returns true if both operands are equal
-static bool isTrueWhenEqual(ICmpInst &ICI) {
-  ICmpInst::Predicate pred = ICI.getPredicate();
+/// @brief Determine if the icmp Predicate is true when both operands are equal
+static bool isTrueWhenEqual(ICmpInst::Predicate pred) {
   return pred == ICmpInst::ICMP_EQ  || pred == ICmpInst::ICMP_UGE ||
          pred == ICmpInst::ICMP_SGE || pred == ICmpInst::ICMP_ULE ||
          pred == ICmpInst::ICMP_SLE;
+}
+
+/// @returns true if the specified compare instruction is
+/// true when both operands are equal...
+/// @brief Determine if the ICmpInst returns true when both operands are equal
+static bool isTrueWhenEqual(ICmpInst &ICI) {
+  return isTrueWhenEqual(ICI.getPredicate());
 }
 
 /// AssociativeOpt - Perform an optimization on an associative operator.  This
@@ -4562,10 +4568,9 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
 
       if (NumDifferences == 0)   // SAME GEP?
         return ReplaceInstUsesWith(I, // No comparison is needed here.
-                                   ConstantInt::get(Type::Int1Ty, 
-                                                    Cond == ICmpInst::ICMP_EQ ||
-                     Cond == ICmpInst::ICMP_ULE || Cond == ICmpInst::ICMP_UGE ||
-                     Cond == ICmpInst::ICMP_SLE || Cond == ICmpInst::ICMP_SGE));
+                                   ConstantInt::get(Type::Int1Ty,
+                                                    isTrueWhenEqual(Cond)));
+
       else if (NumDifferences == 1) {
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
