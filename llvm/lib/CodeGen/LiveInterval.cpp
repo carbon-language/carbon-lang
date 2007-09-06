@@ -285,8 +285,8 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
 /// join - Join two live intervals (this, and other) together.  This applies
 /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
 /// the intervals are not joinable, this aborts.
-void LiveInterval::join(LiveInterval &Other, int *LHSValNoAssignments,
-                        int *RHSValNoAssignments, 
+void LiveInterval::join(LiveInterval &Other, const int *LHSValNoAssignments,
+                        const int *RHSValNoAssignments, 
                         SmallVector<VNInfo*, 16> &NewVNInfo) {
   // Determine if any of our live range values are mapped.  This is uncommon, so
   // we want to avoid the interval scan if not. 

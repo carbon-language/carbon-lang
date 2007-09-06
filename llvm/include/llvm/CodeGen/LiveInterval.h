@@ -310,8 +310,9 @@ namespace llvm {
     /// join - Join two live intervals (this, and other) together.  This applies
     /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
     /// the intervals are not joinable, this aborts.
-    void join(LiveInterval &Other, int *ValNoAssignments,
-              int *RHSValNoAssignments, SmallVector<VNInfo*, 16> &NewVNInfo);
+    void join(LiveInterval &Other, const int *ValNoAssignments,
+              const int *RHSValNoAssignments,
+	      SmallVector<VNInfo*, 16> &NewVNInfo);
 
     /// removeRange - Remove the specified range from this interval.  Note that
     /// the range must already be in this interval in its entirety.
