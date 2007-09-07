@@ -2313,6 +2313,7 @@ def CDQ : I<0x99, RawFrm, (outs), (ins),
 
 // Alias instructions that map movr0 to xor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+let isReMaterializable = 1 in {
 def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
                  "xor{b}\t$dst, $dst",
                  [(set GR8:$dst, 0)]>;
@@ -2322,6 +2323,7 @@ def MOV16r0  : I<0x31, MRMInitReg,  (outs GR16:$dst), (ins),
 def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
                  "xor{l}\t$dst, $dst",
                  [(set GR32:$dst, 0)]>;
+}
 
 // Basic operations on GR16 / GR32 subclasses GR16_ and GR32_ which contains only
 // those registers that have GR8 sub-registers (i.e. AX - DX, EAX - EDX).

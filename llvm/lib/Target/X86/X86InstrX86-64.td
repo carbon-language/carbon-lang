@@ -156,12 +156,14 @@ def REP_STOSQ : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
 def MOV64rr : RI<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}", []>;
 
+let isReMaterializable = 1 in {
 def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
                     "movabs{q}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, imm:$src)]>;
 def MOV64ri32 : RIi32<0xC7, MRM0r, (outs GR64:$dst), (ins i64i32imm:$src),
                       "mov{q}\t{$src, $dst|$dst, $src}",
                       [(set GR64:$dst, i64immSExt32:$src)]>;
+}
 
 let isLoad = 1 in
 def MOV64rm : RI<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
@@ -990,13 +992,13 @@ def PsMOVZX64rm32: I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 // FIXME: AddedComplexity gives MOV64r0 a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
-let AddedComplexity = 1 in
+let AddedComplexity = 1, isReMaterializable = 1 in
 def MOV64r0  : RI<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
                  "xor{q}\t$dst, $dst",
                  [(set GR64:$dst, 0)]>;
 
 // Materialize i64 constant where top 32-bits are zero.
-let AddedComplexity = 1 in
+let AddedComplexity = 1, isReMaterializable = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                         [(set GR64:$dst, i64immZExt32:$src)]>;
