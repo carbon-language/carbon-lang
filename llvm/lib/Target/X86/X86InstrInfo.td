@@ -552,7 +552,7 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
-               []>,
+               [(set AL, (mul AL, GR8:$src))]>,
              Imp<[AL],[AL,AH]>;               // AL,AH = AL*GR8
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src), "mul{w}\t$src", []>,
              Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*GR16
@@ -563,7 +563,7 @@ def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
-               []>,
+               [(set AL, (mul AL, (loadi8 addr:$src)))]>,
              Imp<[AL],[AL,AH]>;          // AL,AH = AL*[mem8]
 def MUL16m : I<0xF7, MRM4m, (outs), (ins i16mem:$src),
                "mul{w}\t$src", []>, Imp<[AX],[AX,DX]>,

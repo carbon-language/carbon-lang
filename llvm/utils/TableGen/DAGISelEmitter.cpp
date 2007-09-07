@@ -2768,8 +2768,8 @@ public:
         PatternHasProperty(Pattern, SDNPOptInFlag, ISE);
       bool NodeHasInFlag  = isRoot &&
         PatternHasProperty(Pattern, SDNPInFlag, ISE);
-      bool NodeHasOutFlag = HasImpResults || (isRoot &&
-        PatternHasProperty(Pattern, SDNPOutFlag, ISE));
+      bool NodeHasOutFlag = isRoot &&
+        PatternHasProperty(Pattern, SDNPOutFlag, ISE);
       bool NodeHasChain = InstPatNode &&
         PatternHasProperty(InstPatNode, SDNPHasChain, ISE);
       bool InputHasChain = isRoot &&
@@ -2869,7 +2869,7 @@ public:
 
       unsigned ResNo = TmpNo++;
       if (!isRoot || InputHasChain || NodeHasChain || NodeHasOutFlag ||
-          NodeHasOptInFlag) {
+          NodeHasOptInFlag || HasImpResults) {
         std::string Code;
         std::string Code2;
         std::string NodeName;
@@ -2894,6 +2894,18 @@ public:
         if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
           Code += ", VT" + utostr(VTNo);
           emitVT(getEnumName(N->getTypeNum(0)));
+        }
+        // Add types for implicit results in physical registers, scheduler will
+        // care of adding copyfromreg nodes.
+        if (HasImpResults) {
+          for (unsigned i = 0, e = Inst.getNumImpResults(); i < e; i++) {
+            Record *RR = Inst.getImpResult(i);
+            if (RR->isSubClassOf("Register")) {
+              MVT::ValueType RVT = getRegisterValueType(RR, CGT);
+              Code += ", " + getEnumName(RVT);
+              ++NumResults;
+            }
+          }
         }
         if (NodeHasChain)
           Code += ", MVT::Other";
@@ -2997,11 +3009,6 @@ public:
           } else
             emitCode("InFlag = SDOperand(ResNode, " + 
                      utostr(NumResults + (unsigned)NodeHasChain) + ");");
-        }
-
-        if (HasImpResults && EmitCopyFromRegs(N, ResNodeDecled, ChainEmitted)) {
-          emitCode("ReplaceUses(SDOperand(N.Val, 0), SDOperand(ResNode, 0));");
-          NumResults = 1;
         }
 
         if (FoldedChains.size() > 0) {
@@ -3201,42 +3208,6 @@ private:
                ".getOperand(" + utostr(OpNo) + ");");
       emitCode("AddToISelQueue(InFlag);");
     }
-  }
-
-  /// EmitCopyFromRegs - Emit code to copy result to physical registers
-  /// as specified by the instruction. It returns true if any copy is
-  /// emitted.
-  bool EmitCopyFromRegs(TreePatternNode *N, bool &ResNodeDecled,
-                        bool &ChainEmitted) {
-    bool RetVal = false;
-    Record *Op = N->getOperator();
-    if (Op->isSubClassOf("Instruction")) {
-      const DAGInstruction &Inst = ISE.getInstruction(Op);
-      const CodeGenTarget &CGT = ISE.getTargetInfo();
-      unsigned NumImpResults  = Inst.getNumImpResults();
-      for (unsigned i = 0; i < NumImpResults; i++) {
-        Record *RR = Inst.getImpResult(i);
-        if (RR->isSubClassOf("Register")) {
-          MVT::ValueType RVT = getRegisterValueType(RR, CGT);
-          if (RVT != MVT::Flag) {
-            if (!ChainEmitted) {
-              emitCode("SDOperand Chain = CurDAG->getEntryNode();");
-              ChainEmitted = true;
-              ChainName = "Chain";
-            }
-            std::string Decl = (!ResNodeDecled) ? "SDNode *" : "";
-            emitCode(Decl + "ResNode = CurDAG->getCopyFromReg(" + ChainName +
-                     ", " + ISE.getQualifiedName(RR) + ", " + getEnumName(RVT) +
-                     ", InFlag).Val;");
-            ResNodeDecled = true;
-            emitCode(ChainName + " = SDOperand(ResNode, 1);");
-            emitCode("InFlag = SDOperand(ResNode, 2);");
-            RetVal = true;
-          }
-        }
-      }
-    }
-    return RetVal;
   }
 };
 
