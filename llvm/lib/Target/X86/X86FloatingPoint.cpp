@@ -299,16 +299,13 @@ static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
   return -1;
 }
 
-#define ARRAY_SIZE(TABLE)  \
-   (sizeof(TABLE)/sizeof(TABLE[0]))
-
 #ifdef NDEBUG
 #define ASSERT_SORTED(TABLE)
 #else
 #define ASSERT_SORTED(TABLE)                                              \
   { static bool TABLE##Checked = false;                                   \
     if (!TABLE##Checked) {                                                \
-       assert(TableIsSorted(TABLE, ARRAY_SIZE(TABLE)) &&                  \
+       assert(TableIsSorted(TABLE, array_lengthof(TABLE)) &&              \
               "All lookup tables must be sorted for efficient access!");  \
        TABLE##Checked = true;                                             \
     }                                                                     \
@@ -487,7 +484,7 @@ static const TableEntry OpcodeTable[] = {
 
 static unsigned getConcreteOpcode(unsigned Opcode) {
   ASSERT_SORTED(OpcodeTable);
-  int Opc = Lookup(OpcodeTable, ARRAY_SIZE(OpcodeTable), Opcode);
+  int Opc = Lookup(OpcodeTable, array_lengthof(OpcodeTable), Opcode);
   assert(Opc != -1 && "FP Stack instruction not in OpcodeTable!");
   return Opc;
 }
@@ -535,7 +532,7 @@ void FPS::popStackAfter(MachineBasicBlock::iterator &I) {
   RegMap[Stack[--StackTop]] = ~0;     // Update state
 
   // Check to see if there is a popping version of this instruction...
-  int Opcode = Lookup(PopTable, ARRAY_SIZE(PopTable), I->getOpcode());
+  int Opcode = Lookup(PopTable, array_lengthof(PopTable), I->getOpcode());
   if (Opcode != -1) {
     I->setInstrDescriptor(TII->get(Opcode));
     if (Opcode == X86::UCOM_FPPr)
@@ -830,7 +827,8 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
       InstTable = ReverseSTiTable;
   }
 
-  int Opcode = Lookup(InstTable, ARRAY_SIZE(ForwardST0Table), MI->getOpcode());
+  int Opcode = Lookup(InstTable, array_lengthof(ForwardST0Table),
+                      MI->getOpcode());
   assert(Opcode != -1 && "Unknown TwoArgFP pseudo instruction!");
 
   // NotTOS - The register which is not on the top of stack...

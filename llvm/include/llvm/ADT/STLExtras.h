@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <utility> // for std::pair
+#include <cstring> // for std::size_t
 #include "llvm/ADT/iterator"
 
 namespace llvm {
@@ -197,6 +198,24 @@ namespace
 template <typename T1, typename T2>
 inline tier<T1, T2> tie(T1& f, T2& s) {
   return tier<T1, T2>(f, s);
+}
+
+//===----------------------------------------------------------------------===//
+//     Extra additions to arrays
+//===----------------------------------------------------------------------===//
+
+/// Find where an array ends (for ending iterators)
+/// This returns a pointer to the byte immediately
+/// after the end of an array.
+template<class T, std::size_t N>
+inline T *array_endof(T (&x)[N]) {
+  return x+N;
+}
+
+/// Find the length of an array.
+template<class T, std::size_t N>
+inline size_t array_lengthof(T (&x)[N]) {
+  return N;
 }
 
 } // End llvm namespace

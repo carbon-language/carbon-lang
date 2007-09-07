@@ -13,12 +13,13 @@
 
 #include "SparcInstrInfo.h"
 #include "Sparc.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "SparcGenInstrInfo.inc"
 using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
-  : TargetInstrInfo(SparcInsts, sizeof(SparcInsts)/sizeof(SparcInsts[0])),
+  : TargetInstrInfo(SparcInsts, array_lengthof(SparcInsts)),
     RI(ST, *this) {
 }
 

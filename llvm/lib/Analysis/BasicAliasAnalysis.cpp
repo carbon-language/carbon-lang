@@ -27,6 +27,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -890,13 +891,11 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
   if (!Initialized) {
     NoMemoryTable->insert(NoMemoryTable->end(),
                           DoesntAccessMemoryFns, 
-                          DoesntAccessMemoryFns+
-                sizeof(DoesntAccessMemoryFns)/sizeof(DoesntAccessMemoryFns[0]));
+                          array_endof(DoesntAccessMemoryFns));
 
     OnlyReadsMemoryTable->insert(OnlyReadsMemoryTable->end(),
-                                OnlyReadsMemoryFns, 
-                                OnlyReadsMemoryFns+
-                      sizeof(OnlyReadsMemoryFns)/sizeof(OnlyReadsMemoryFns[0]));
+                                 OnlyReadsMemoryFns, 
+                                 array_endof(OnlyReadsMemoryFns));
 
     // Sort the table the first time through.
     std::sort(NoMemoryTable->begin(), NoMemoryTable->end(), StringCompare());

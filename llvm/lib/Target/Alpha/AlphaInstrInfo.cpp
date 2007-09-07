@@ -14,11 +14,12 @@
 #include "Alpha.h"
 #include "AlphaInstrInfo.h"
 #include "AlphaGenInstrInfo.inc"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()
-  : TargetInstrInfo(AlphaInsts, sizeof(AlphaInsts)/sizeof(AlphaInsts[0])),
+  : TargetInstrInfo(AlphaInsts, array_lengthof(AlphaInsts)),
     RI(*this) { }
 
 

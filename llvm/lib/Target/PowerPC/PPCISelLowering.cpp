@@ -16,6 +16,7 @@
 #include "PPCPredicates.h"
 #include "PPCTargetMachine.h"
 #include "PPCPerfectShuffle.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -1264,9 +1265,9 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
 
-  const unsigned Num_GPR_Regs = sizeof(GPR_32)/sizeof(GPR_32[0]);
+  const unsigned Num_GPR_Regs = array_lengthof(GPR_32);
   const unsigned Num_FPR_Regs = isMachoABI ? 13 : 8;
-  const unsigned Num_VR_Regs  = sizeof( VR)/sizeof( VR[0]);
+  const unsigned Num_VR_Regs  = array_lengthof( VR);
 
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
   
@@ -1583,9 +1584,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
-  const unsigned NumGPRs = sizeof(GPR_32)/sizeof(GPR_32[0]);
+  const unsigned NumGPRs = array_lengthof(GPR_32);
   const unsigned NumFPRs = isMachoABI ? 13 : 8;
-  const unsigned NumVRs  = sizeof( VR)/sizeof( VR[0]);
+  const unsigned NumVRs  = array_lengthof( VR);
   
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
 
@@ -2399,7 +2400,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       -8, 8, -9, 9, -10, 10, -11, 11, -12, 12, -13, 13, 14, -14, 15, -15, -16
     };
     
-    for (unsigned idx = 0; idx < sizeof(SplatCsts)/sizeof(SplatCsts[0]); ++idx){
+    for (unsigned idx = 0; idx < array_lengthof(SplatCsts); ++idx) {
       // Indirect through the SplatCsts array so that we favor 'vsplti -1' for
       // cases which are ambiguous (e.g. formation of 0x8000_0000).  'vsplti -1'
       int i = SplatCsts[idx];

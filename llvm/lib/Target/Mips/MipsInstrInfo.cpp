@@ -13,6 +13,7 @@
 
 #include "Mips.h"
 #include "MipsInstrInfo.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "MipsGenInstrInfo.inc"
 
@@ -20,7 +21,7 @@ using namespace llvm;
 
 // TODO: Add the subtarget support on this constructor
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
-  : TargetInstrInfo(MipsInsts, sizeof(MipsInsts)/sizeof(MipsInsts[0])),
+  : TargetInstrInfo(MipsInsts, array_lengthof(MipsInsts)),
     TM(tm), RI(*this) {}
 
 static bool isZeroImm(const MachineOperand &op) {

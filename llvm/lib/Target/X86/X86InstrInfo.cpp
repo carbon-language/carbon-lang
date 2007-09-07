@@ -17,13 +17,14 @@
 #include "X86InstrBuilder.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/SSARegMap.h"
 using namespace llvm;
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
-  : TargetInstrInfo(X86Insts, sizeof(X86Insts)/sizeof(X86Insts[0])),
+  : TargetInstrInfo(X86Insts, array_lengthof(X86Insts)),
     TM(tm), RI(tm, *this) {
 }
 

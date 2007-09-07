@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -145,8 +146,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD->getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
-  memset(TargetDAGCombineArray, 0, 
-         sizeof(TargetDAGCombineArray)/sizeof(TargetDAGCombineArray[0]));
+  memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;
   allowUnalignedMemoryAccesses = false;
   UseUnderscoreSetJmp = false;

@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
 #include <map>
 #include <vector>
 
@@ -154,8 +155,7 @@ public:
     }
     void setTypeAction(MVT::ValueType VT, LegalizeAction Action) {
       assert(!MVT::isExtendedVT(VT));
-      assert(unsigned(VT >> 4) < 
-             sizeof(ValueTypeActions)/sizeof(ValueTypeActions[0]));
+      assert(unsigned(VT >> 4) < array_lengthof(ValueTypeActions));
       ValueTypeActions[VT>>4] |= Action << ((VT*2) & 31);
     }
   };
@@ -711,7 +711,7 @@ protected:
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT::ValueType VT,
                           LegalizeAction Action) {
-    assert(VT < 32 && Op < sizeof(OpActions)/sizeof(OpActions[0]) &&
+    assert(VT < 32 && Op < array_lengthof(OpActions) &&
            "Table isn't big enough!");
     OpActions[Op] &= ~(uint64_t(3UL) << VT*2);
     OpActions[Op] |= (uint64_t)Action << VT*2;
@@ -721,7 +721,7 @@ protected:
   /// work with the with specified type and indicate what to do about it.
   void setLoadXAction(unsigned ExtType, MVT::ValueType VT,
                       LegalizeAction Action) {
-    assert(VT < 32 && ExtType < sizeof(LoadXActions)/sizeof(LoadXActions[0]) &&
+    assert(VT < 32 && ExtType < array_lengthof(LoadXActions) &&
            "Table isn't big enough!");
     LoadXActions[ExtType] &= ~(uint64_t(3UL) << VT*2);
     LoadXActions[ExtType] |= (uint64_t)Action << VT*2;
@@ -742,7 +742,7 @@ protected:
   void setIndexedLoadAction(unsigned IdxMode, MVT::ValueType VT,
                             LegalizeAction Action) {
     assert(VT < 32 && IdxMode <
-           sizeof(IndexedModeActions[0]) / sizeof(IndexedModeActions[0][0]) &&
+           array_lengthof(IndexedModeActions[0]) &&
            "Table isn't big enough!");
     IndexedModeActions[0][IdxMode] &= ~(uint64_t(3UL) << VT*2);
     IndexedModeActions[0][IdxMode] |= (uint64_t)Action << VT*2;
@@ -755,7 +755,7 @@ protected:
   void setIndexedStoreAction(unsigned IdxMode, MVT::ValueType VT,
                              LegalizeAction Action) {
     assert(VT < 32 && IdxMode <
-           sizeof(IndexedModeActions[1]) / sizeof(IndexedModeActions[1][0]) &&
+           array_lengthof(IndexedModeActions[1]) &&
            "Table isn't big enough!");
     IndexedModeActions[1][IdxMode] &= ~(uint64_t(3UL) << VT*2);
     IndexedModeActions[1][IdxMode] |= (uint64_t)Action << VT*2;

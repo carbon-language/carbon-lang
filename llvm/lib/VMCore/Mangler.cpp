@@ -14,6 +14,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -185,9 +186,7 @@ void Mangler::InsertName(GlobalValue *GV,
 Mangler::Mangler(Module &M, const char *prefix)
   : Prefix(prefix), UseQuotes(false), PreserveAsmNames(false),
     Count(0), TypeCounter(0) {
-  std::fill(AcceptableChars, 
-          AcceptableChars+sizeof(AcceptableChars)/sizeof(AcceptableChars[0]),
-            0);
+  std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 
   // Letters and numbers are acceptable.
   for (unsigned char X = 'a'; X <= 'z'; ++X)

@@ -17,6 +17,7 @@
 #include "ARMAddressingModes.h"
 #include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -28,7 +29,7 @@ static cl::opt<bool> EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                                   cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
-  : TargetInstrInfo(ARMInsts, sizeof(ARMInsts)/sizeof(ARMInsts[0])),
+  : TargetInstrInfo(ARMInsts, array_lengthof(ARMInsts)),
     RI(*this, STI) {
 }
 

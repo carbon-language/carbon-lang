@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "llvm/ADT/STLExtras.h"
 #include <vector>
 #include <algorithm>
 #if HAVE_EXECINFO_H
@@ -40,7 +41,7 @@ std::vector<sys::Path> *DirectoriesToRemove = 0;
 const int IntSigs[] = {
   SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
-const int *IntSigsEnd = IntSigs + sizeof(IntSigs)/sizeof(IntSigs[0]);
+const int *IntSigsEnd = array_endof(IntSigs);
 
 // KillSigs - Signals that are synchronous with the program that will cause it
 // to die.
@@ -50,7 +51,7 @@ const int KillSigs[] = {
   , SIGEMT
 #endif
 };
-const int *KillSigsEnd = KillSigs + sizeof(KillSigs)/sizeof(KillSigs[0]);
+const int *KillSigsEnd = array_endof(KillSigs);
 
 #ifdef HAVE_BACKTRACE
 void* StackTrace[256];
@@ -68,7 +69,7 @@ void* StackTrace[256];
 void PrintStackTrace() {
 #ifdef HAVE_BACKTRACE
   // Use backtrace() to output a backtrace on Linux systems with glibc.
-  int depth = backtrace(StackTrace, sizeof(StackTrace)/sizeof(StackTrace[0]));
+  int depth = backtrace(StackTrace, array_lengthof(StackTrace));
   
   // Create a one-way unix pipe.  The backtracing process writes to PipeFDs[1],
   // the c++filt process reads from PipeFDs[0].

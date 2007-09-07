@@ -392,16 +392,13 @@ static const TableEntry *TableLookup(const TableEntry *Table, unsigned N,
   return NULL;
 }
 
-#define ARRAY_SIZE(TABLE)  \
-   (sizeof(TABLE)/sizeof(TABLE[0]))
-
 #ifdef NDEBUG
 #define ASSERT_SORTED(TABLE)
 #else
 #define ASSERT_SORTED(TABLE)                                              \
   { static bool TABLE##Checked = false;                                   \
     if (!TABLE##Checked) {                                                \
-       assert(TableIsSorted(TABLE, ARRAY_SIZE(TABLE)) &&                  \
+       assert(TableIsSorted(TABLE, array_lengthof(TABLE)) &&              \
               "All lookup tables must be sorted for efficient access!");  \
        TABLE##Checked = true;                                             \
     }                                                                     \
@@ -590,7 +587,7 @@ X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
     };
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
-    OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
+    OpcodeTableSize = array_lengthof(OpcodeTable);
     isTwoAddrFold = true;
   } else if (i == 0) { // If operand 0
     if (MI->getOpcode() == X86::MOV16r0)
@@ -675,7 +672,7 @@ X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
 
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
-    OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
+    OpcodeTableSize = array_lengthof(OpcodeTable);
   } else if (i == 1) {
     static const TableEntry OpcodeTable[] = {
       { X86::CMP16rr,         X86::CMP16rm },
@@ -784,7 +781,7 @@ X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
 
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
-    OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
+    OpcodeTableSize = array_lengthof(OpcodeTable);
   } else if (i == 2) {
     static const TableEntry OpcodeTable[] = {
       { X86::ADC32rr,         X86::ADC32rm },
@@ -979,7 +976,7 @@ X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
 
     ASSERT_SORTED(OpcodeTable);
     OpcodeTablePtr = OpcodeTable;
-    OpcodeTableSize = ARRAY_SIZE(OpcodeTable);
+    OpcodeTableSize = array_lengthof(OpcodeTable);
   }
   
   // If table selected...

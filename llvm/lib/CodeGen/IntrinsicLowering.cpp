@@ -20,6 +20,7 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
 template <class ArgIt>
@@ -421,7 +422,7 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     CI->getOperand(2),
     CI->getOperand(3)
   };
-  return new CallInst(F, Args, Args+sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
+  return new CallInst(F, Args, array_endof(Args), CI->getName(), CI);
 }
 
 /// Convert the llvm.part.set.iX.iY.iZ intrinsic. This intrinsic takes 
@@ -587,7 +588,7 @@ static Instruction *LowerPartSet(CallInst *CI) {
     CI->getOperand(3),
     CI->getOperand(4)
   };
-  return new CallInst(F, Args, Args+sizeof(Args)/sizeof(Args[0]), CI->getName(), CI);
+  return new CallInst(F, Args, array_endof(Args), CI->getName(), CI);
 }
 
 
