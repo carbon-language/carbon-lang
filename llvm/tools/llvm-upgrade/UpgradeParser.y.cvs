@@ -2525,6 +2525,7 @@ ConstVal
     if ($1.T==Type::FloatTy)
       $2->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
     $$.C = ConstantFP::get($1.T, *$2);
+    delete $2;
     $$.S.makeSignless();
   }
   ;

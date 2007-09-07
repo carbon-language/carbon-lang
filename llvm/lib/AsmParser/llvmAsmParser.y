@@ -1873,6 +1873,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     if ($1==Type::FloatTy)
       $2->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
     $$ = ConstantFP::get($1, *$2);
+    delete $2;
     CHECK_FOR_ERROR
   };
 
