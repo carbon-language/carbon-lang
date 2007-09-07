@@ -9066,7 +9066,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     // the pointer we're loading and is producing the pointer we're storing,
     // then *this* store is dead (X = load P; store X -> P).
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
-      if (LI == Val && LI->getOperand(0) == Ptr) {
+      if (LI == Val && LI->getOperand(0) == Ptr && !SI.isVolatile()) {
         EraseInstFromFunction(SI);
         ++NumCombined;
         return 0;
