@@ -626,7 +626,7 @@ bool BitcodeReader::ParseConstants() {
       if (Record.empty())
         return Error("Invalid FLOAT record");
       if (CurTy == Type::FloatTy)
-        V = ConstantFP::get(CurTy, APFloat((float)BitsToDouble(Record[0])));
+        V = ConstantFP::get(CurTy, APFloat(BitsToFloat(Record[0])));
       else if (CurTy == Type::DoubleTy)
         V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
       // FIXME: Make long double constants work.  BitsToDouble does not make it.
