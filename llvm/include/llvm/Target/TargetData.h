@@ -38,7 +38,8 @@ enum AlignTypeEnum {
   INTEGER_ALIGN = 'i',               ///< Integer type alignment
   VECTOR_ALIGN = 'v',                ///< Vector type alignment
   FLOAT_ALIGN = 'f',                 ///< Floating point type alignment
-  AGGREGATE_ALIGN = 'a'              ///< Aggregate alignment
+  AGGREGATE_ALIGN = 'a',             ///< Aggregate alignment
+  STACK_ALIGN = 's'                  ///< Stack objects alignment
 };
 /// Target alignment element.
 ///
@@ -165,6 +166,11 @@ public:
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
   unsigned char getABITypeAlignment(const Type *Ty) const;
+
+  /// getCallFrameTypeAlignment - Return the minimum ABI-required alignment
+  /// for the specified type when it is part of a call frame.
+  unsigned char getCallFrameTypeAlignment(const Type *Ty) const;
+
 
   /// getPrefTypeAlignment - Return the preferred stack/global alignment for
   /// the specified type.

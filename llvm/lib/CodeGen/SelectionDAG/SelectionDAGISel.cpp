@@ -3870,7 +3870,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(I->getType());
       const StructType *STy = cast<StructType>(Ty->getElementType());
-      unsigned StructAlign = Log2_32(getTargetData()->getABITypeAlignment(STy));
+      unsigned StructAlign =
+          Log2_32(getTargetData()->getCallFrameTypeAlignment(STy));
       unsigned StructSize  = getTargetData()->getTypeSize(STy);
       Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
@@ -3999,7 +4000,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(Args[i].Ty);
       const StructType *STy = cast<StructType>(Ty->getElementType());
-      unsigned StructAlign = Log2_32(getTargetData()->getABITypeAlignment(STy));
+      unsigned StructAlign =
+          Log2_32(getTargetData()->getCallFrameTypeAlignment(STy));
       unsigned StructSize  = getTargetData()->getTypeSize(STy);
       Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);

@@ -182,7 +182,8 @@ void TargetData::init(const std::string &TargetDescription) {
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct, union, class, ...
-  
+  setAlignment(STACK_ALIGN,     0,  8,  0);  // objects on the stack
+
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
     std::string arg0 = getToken(token, ":");
@@ -204,10 +205,16 @@ void TargetData::init(const std::string &TargetDescription) {
     case 'i':
     case 'v':
     case 'f':
-    case 'a': {
-      AlignTypeEnum align_type = 
-        (*p == 'i' ? INTEGER_ALIGN : (*p == 'f' ? FLOAT_ALIGN :
-           (*p == 'v' ? VECTOR_ALIGN : AGGREGATE_ALIGN)));
+    case 'a':
+    case 's': {
+      AlignTypeEnum align_type;
+      switch(*p) {
+        case 'i': align_type = INTEGER_ALIGN; break;
+        case 'v': align_type = VECTOR_ALIGN; break;
+        case 'f': align_type = FLOAT_ALIGN; break;
+        case 'a': align_type = AGGREGATE_ALIGN; break;
+        case 's': align_type = STACK_ALIGN; break;
+      }
       uint32_t size = (uint32_t) atoi(++p);
       unsigned char abi_align = atoi(getToken(token, ":").c_str()) / 8;
       unsigned char pref_align = atoi(getToken(token, ":").c_str()) / 8;
@@ -527,6 +534,14 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
 
 unsigned char TargetData::getABITypeAlignment(const Type *Ty) const {
   return getAlignment(Ty, true);
+}
+
+unsigned char TargetData::getCallFrameTypeAlignment(const Type *Ty) const {
+  for (unsigned i = 0, e = Alignments.size(); i != e; ++i)
+    if (Alignments[i].AlignType == STACK_ALIGN)
+      return Alignments[i].ABIAlign;
+
+  return getABITypeAlignment(Ty);
 }
 
 unsigned char TargetData::getPrefTypeAlignment(const Type *Ty) const {
