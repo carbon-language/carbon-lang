@@ -530,7 +530,7 @@ public:
     : TypeDecl(ObjcClass, L, 0, 0) { 
     if (nElts) {
       ForwardDecls = new ObjcInterfaceDecl*[nElts];
-      bzero(ForwardDecls, nElts*sizeof(ObjcInterfaceDecl*));
+      memset(ForwardDecls, '\0', nElts*sizeof(ObjcInterfaceDecl*));
     }
     NumForwardDecls = nElts;
   }

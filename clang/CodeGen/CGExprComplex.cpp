@@ -296,13 +296,14 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   // FIXME: Handle volatile!
   ComplexPairTy InVal = EmitLoadOfComplex(LV.getAddress(), false);
   
-  int AmountVal = isInc ? 1 : -1;
+  uint64_t AmountVal = isInc ? 1 : -1;
   
   llvm::Value *NextVal;
   if (isa<llvm::IntegerType>(InVal.first->getType()))
     NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal);
   else
-    NextVal = llvm::ConstantFP::get(InVal.first->getType(), AmountVal);
+    NextVal = llvm::ConstantFP::get(InVal.first->getType(), 
+                                    static_cast<double>(AmountVal));
   
   // Add the inc/dec to the real part.
   NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");

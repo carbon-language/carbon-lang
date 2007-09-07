@@ -215,8 +215,10 @@ private:
   /// subclasses can pack their bitfields into the same word.
   TypeClass TC : 4;
 protected:
+  // silence VC++ warning C4355: 'this' : used in base member initializer list
+  Type *this_() { return this; }
   Type(TypeClass tc, QualType Canonical)
-    : CanonicalType(Canonical.isNull() ? QualType(this,0) : Canonical), TC(tc){}
+    : CanonicalType(Canonical.isNull() ? QualType(this_(),0) : Canonical), TC(tc){}
   virtual ~Type();
   friend class ASTContext;
 public:
@@ -499,13 +501,13 @@ public:
   llvm::APInt getSize() const { return Size; }
   int getMaximumElements() const {
     QualType ElmtType = getElementType();
-    int maxElements = getSize().getZExtValue();
+    int maxElements = static_cast<int>(getSize().getZExtValue());
 
     const ConstantArrayType *CAT;
     // If we have a multi-dimensional array, include it's elements.
     while ((CAT = ElmtType->getAsConstantArrayType())) {
       ElmtType = CAT->getElementType();
-      maxElements *= CAT->getSize().getZExtValue();
+      maxElements *= static_cast<int>(CAT->getSize().getZExtValue());
     }
     return maxElements;
   }

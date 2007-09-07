@@ -469,7 +469,8 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     if (isa<llvm::IntegerType>(InVal->getType()))
       NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
     else
-      NextVal = llvm::ConstantFP::get(InVal->getType(), AmountVal);
+      NextVal = llvm::ConstantFP::get(InVal->getType(), 
+                                      static_cast<double>(AmountVal));
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   }
   
