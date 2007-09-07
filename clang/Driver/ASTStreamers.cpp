@@ -259,6 +259,7 @@ namespace {
   public:
     DeadStoreVisitor(Preprocessor& pp) : PP(pp) {}
     virtual void VisitCFG(CFG& C) { CheckDeadStores(C,PP); }
+    virtual bool printFuncDeclStart() { return false; }
   }; 
 } // end anonymous namespace
 
