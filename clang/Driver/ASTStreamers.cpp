@@ -157,83 +157,112 @@ void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   ASTStreamer_Terminate(Streamer);
 }
 
+//===----------------------------------------------------------------------===//
+// CFGVisitor & VisitCFGs - Boilerplate interface and logic to visit
+//   the CFGs for all function definitions.
+
+namespace {
+
+class CFGVisitor {
+public:
+  virtual ~CFGVisitor() {}
+  virtual void VisitCFG(CFG& C) = 0;
+  virtual bool printFuncDeclStart() { return true; }
+};
+
+} // end anonymous namespace
+
+static void VisitCFGs(CFGVisitor& Visitor, Preprocessor& PP, 
+                      unsigned MainFileID, bool Stats) {
+
+  bool printFDecl = Visitor.printFuncDeclStart();
+  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
+  
+  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+      if (FD->getBody()) {
+        
+        if (printFDecl) {
+          PrintFunctionDeclStart(FD);          
+          fprintf(stderr,"\n");
+        }
+        
+        if (CFG* C = CFG::buildCFG(FD->getBody())) {
+          Visitor.VisitCFG(*C);
+          delete C;
+        }
+        else
+          fprintf(stderr," Error processing CFG.\n");          
+      }
+  }
+  
+  if (Stats) {
+    fprintf(stderr, "\nSTATISTICS:\n");
+    ASTStreamer_PrintStats(Streamer);
+    Context.PrintStats();
+  }
+  
+  ASTStreamer_Terminate(Streamer);
+}
+
+//===----------------------------------------------------------------------===//
+// DumpCFGs - Dump CFGs to stderr or visualize with Graphviz
+
+namespace {
+  class CFGDumper : public CFGVisitor {
+    const bool UseGraphviz;
+  public:
+    CFGDumper(bool use_graphviz) : UseGraphviz(use_graphviz) {}
+    
+    virtual void VisitCFG(CFG& C) {
+      if (UseGraphviz) C.viewCFG();
+      else C.dump();
+    }    
+  }; 
+} // end anonymous namespace 
+  
 void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID,
-                     bool Stats, bool use_graphviz) 
-{
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-  
-  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {      
-      if (FD->getBody()) {
-        PrintFunctionDeclStart(FD);
-        fprintf(stderr,"\n");
-        if (CFG* C = CFG::buildCFG(FD->getBody())) {
-          if (use_graphviz) C->viewCFG(); else C->dump();
-        }
-        else
-          fprintf(stderr," Error processing CFG.\n");
-      }
-    }
-  }
-  
-  if (Stats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
-    ASTStreamer_PrintStats(Streamer);
-    Context.PrintStats();
-  }
-  
-  ASTStreamer_Terminate(Streamer);
+                     bool Stats, bool use_graphviz) {
+  CFGDumper Visitor(use_graphviz);
+  VisitCFGs(Visitor,PP,MainFileID,Stats);
 }
 
-void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID)
-{
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-  
-  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {      
-      if (FD->getBody()) {
-        PrintFunctionDeclStart(FD);
-        fprintf(stderr,"\n");
-        if (CFG* C = CFG::buildCFG(FD->getBody())) {
-          LiveVariables L;
-          L.runOnCFG(*C);
-          L.dumpBlockLiveness(PP.getSourceManager());
-        }
-        else
-          fprintf(stderr," Error processing CFG.\n");
-      }
+//===----------------------------------------------------------------------===//
+// AnalyzeLiveVariables - perform live variable analysis and dump results
+
+namespace {
+  class LivenessVisitor : public CFGVisitor {
+    Preprocessor& PP;
+  public:
+    LivenessVisitor(Preprocessor& pp) : PP(pp) {}
+    
+    virtual void VisitCFG(CFG& C) {
+      LiveVariables L;
+      L.runOnCFG(C);
+      L.dumpBlockLiveness(PP.getSourceManager());
     }
-  }
-      
-  ASTStreamer_Terminate(Streamer);
+  };
+} // end anonymous namespace
+  
+void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID) {
+  LivenessVisitor Visitor(PP);
+  VisitCFGs(Visitor,PP,MainFileID,false);
 }
 
-void clang::RunDeadStoresCheck(Preprocessor &PP, unsigned MainFileID,bool Stats)
-{
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-  
-  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {      
-      if (FD->getBody()) {
-        if (CFG* C = CFG::buildCFG(FD->getBody())) {
-          clang::CheckDeadStores(*C,PP);
-        }
-        else
-          fprintf(stderr," Error processing CFG.\n");
-      }
-    }
-  }
-  
-  if (Stats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
-    ASTStreamer_PrintStats(Streamer);
-    Context.PrintStats();
-  }
-  
-  ASTStreamer_Terminate(Streamer);
+//===----------------------------------------------------------------------===//
+// RunDeadStores - run checker to locate dead stores in a function
+
+namespace {
+  class DeadStoreVisitor : public CFGVisitor {
+    Preprocessor& PP;
+  public:
+    DeadStoreVisitor(Preprocessor& pp) : PP(pp) {}
+    virtual void VisitCFG(CFG& C) { CheckDeadStores(C,PP); }
+  }; 
+} // end anonymous namespace
+
+void clang::RunDeadStoresCheck(Preprocessor &PP,unsigned MainFileID,bool Stats){
+  DeadStoreVisitor Visitor(PP);
+  VisitCFGs(Visitor,PP,MainFileID,Stats);
 }
-
-
