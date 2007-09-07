@@ -710,11 +710,13 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;    // Simply strip out debugging intrinsics
 
   case Intrinsic::eh_exception:
-  case Intrinsic::eh_selector:
+  case Intrinsic::eh_selector_i32:
+  case Intrinsic::eh_selector_i64:
     CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;
 
-  case Intrinsic::eh_typeid_for:
+  case Intrinsic::eh_typeid_for_i32:
+  case Intrinsic::eh_typeid_for_i64:
     // Return something different to eh_selector.
     CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
     break;

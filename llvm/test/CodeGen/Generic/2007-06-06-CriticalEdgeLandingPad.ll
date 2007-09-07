@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-eh -asm-verbose -o - | \
+; RUN: llvm-as < %s | llc -march=x86 -enable-eh -asm-verbose -o - | \
 ; RUN:   grep -A 3 {Llabel137.*Region start} | grep {3.*Action}
 ; PR1422
 ; PR1508
@@ -270,8 +270,8 @@ cond_true465:		; preds = %cond_next437
 
 unwind:		; preds = %cleanup798, %unwind783, %cond_true465
 	%eh_ptr = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid8065921 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid8065921 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp8085923 = icmp eq i32 %eh_select, %eh_typeid8065921		; <i1> [#uses=1]
 	br i1 %tmp8085923, label %eh_then809, label %eh_else823
 
@@ -281,8 +281,8 @@ cond_next467:		; preds = %cond_next437
 
 unwind468:		; preds = %cleanup, %unwind480, %cond_next467
 	%eh_ptr469 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select471 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr469, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid5928 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select471 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr469, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid5928 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp7815929 = icmp eq i32 %eh_select471, %eh_typeid5928		; <i1> [#uses=1]
 	br i1 %tmp7815929, label %eh_then, label %cleanup805
 
@@ -296,7 +296,7 @@ invcont472:		; preds = %cond_next467
 
 unwind480:		; preds = %invcont734, %invcont717, %cond_next665, %cond_true663, %cond_next639, %cond_true637, %cond_next613, %cond_true611, %cond_next587, %cond_true585, %cond_next561, %cond_true559, %cond_next535, %cond_true533, %cond_next509, %cond_true507, %invcont472
 	%eh_ptr481 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select483 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr481, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select483 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr481, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
 	%tmp7685575 = ptrtoint i8* %tmp476 to i32		; <i32> [#uses=1]
 	%tmp76855755576 = zext i32 %tmp7685575 to i64		; <i64> [#uses=1]
 	%tmp7715572 = zext i32 %tmp479 to i64		; <i64> [#uses=1]
@@ -441,7 +441,7 @@ cleanup:		; preds = %invcont734
 			to label %cond_true856 unwind label %unwind468
 
 cleanup779:		; preds = %unwind480
-	%eh_typeid = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp781 = icmp eq i32 %eh_select483, %eh_typeid		; <i1> [#uses=1]
 	br i1 %tmp781, label %eh_then, label %cleanup805
 
@@ -452,7 +452,7 @@ eh_then:		; preds = %cleanup779, %unwind468
 
 unwind783:		; preds = %invcont789, %invcont787, %eh_then
 	%eh_ptr784 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select786 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr784, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select786 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr784, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	invoke void @__gnat_end_handler( i8* %eh_exception.35924.0 )
 			to label %cleanup805 unwind label %unwind
 
@@ -472,7 +472,7 @@ cleanup798:		; preds = %invcont789
 cleanup805:		; preds = %unwind783, %cleanup779, %unwind468
 	%eh_selector.0 = phi i32 [ %eh_select471, %unwind468 ], [ %eh_select483, %cleanup779 ], [ %eh_select786, %unwind783 ]		; <i32> [#uses=2]
 	%eh_exception.0 = phi i8* [ %eh_ptr469, %unwind468 ], [ %eh_ptr481, %cleanup779 ], [ %eh_ptr784, %unwind783 ]		; <i8*> [#uses=2]
-	%eh_typeid806 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid806 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp808 = icmp eq i32 %eh_selector.0, %eh_typeid806		; <i1> [#uses=1]
 	br i1 %tmp808, label %eh_then809, label %eh_else823
 
@@ -502,7 +502,7 @@ cleanup819:		; preds = %invcont815
 eh_else823:		; preds = %cleanup805, %unwind
 	%eh_selector.05912.1 = phi i32 [ %eh_select, %unwind ], [ %eh_selector.0, %cleanup805 ]		; <i32> [#uses=1]
 	%eh_exception.05914.1 = phi i8* [ %eh_ptr, %unwind ], [ %eh_exception.0, %cleanup805 ]		; <i8*> [#uses=4]
-	%eh_typeid824 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid824 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp826 = icmp eq i32 %eh_selector.05912.1, %eh_typeid824		; <i1> [#uses=1]
 	br i1 %tmp826, label %eh_then827, label %Unwind
 
@@ -542,8 +542,8 @@ cond_true870:		; preds = %cond_true856, %cleanup819
 unwind871:		; preds = %cond_next905, %bb887, %cond_true870
 	%sat.3 = phi i8 [ %tmp340341, %cond_true870 ], [ %sat.1, %bb887 ], [ %sat.0, %cond_next905 ]		; <i8> [#uses=2]
 	%eh_ptr872 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=8]
-	%eh_select874 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr872, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid915 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select874 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr872, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid915 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp917 = icmp eq i32 %eh_select874, %eh_typeid915		; <i1> [#uses=1]
 	br i1 %tmp917, label %eh_then918, label %eh_else932
 
@@ -588,7 +588,7 @@ cleanup928:		; preds = %invcont924
 	br i1 %tmp462, label %cond_true973, label %UnifiedReturnBlock35
 
 eh_else932:		; preds = %unwind871
-	%eh_typeid933 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid933 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp935 = icmp eq i32 %eh_select874, %eh_typeid933		; <i1> [#uses=1]
 	br i1 %tmp935, label %eh_then936, label %Unwind
 
@@ -626,8 +626,8 @@ cond_true973:		; preds = %finally913, %cleanup928
 
 unwind974:		; preds = %cond_true973
 	%eh_ptr975 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=8]
-	%eh_select977 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr975, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid13135959 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select977 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr975, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid13135959 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp13155961 = icmp eq i32 %eh_select977, %eh_typeid13135959		; <i1> [#uses=1]
 	br i1 %tmp13155961, label %eh_then1316, label %eh_else1330
 
@@ -651,7 +651,7 @@ cleanup1326:		; preds = %invcont1322
 	br label %finally1311
 
 eh_else1330:		; preds = %unwind974
-	%eh_typeid1331 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid1331 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp1333 = icmp eq i32 %eh_select977, %eh_typeid1331		; <i1> [#uses=1]
 	br i1 %tmp1333, label %eh_then1334, label %Unwind
 
@@ -705,8 +705,8 @@ cond_true1418:		; preds = %cond_true1404
 
 unwind1419:		; preds = %cleanup1702, %cleanup1686, %unwind1676, %cond_next1548, %cond_true1546, %cond_true1418
 	%eh_ptr1420 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select1422 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr1420, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid17215981 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select1422 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr1420, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid17215981 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp17235983 = icmp eq i32 %eh_select1422, %eh_typeid17215981		; <i1> [#uses=1]
 	br i1 %tmp17235983, label %eh_then1724, label %eh_else1742
 
@@ -785,8 +785,8 @@ cond_true1573:		; preds = %invcont1552
 
 unwind1574:		; preds = %invcont1638, %invcont1621, %bb1607, %bb1605, %cond_true1573
 	%eh_ptr1575 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select1577 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr1575, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid1652 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select1577 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr1575, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid1652 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp1654 = icmp eq i32 %eh_select1577, %eh_typeid1652		; <i1> [#uses=1]
 	br i1 %tmp1654, label %eh_then1655, label %cleanup1686
 
@@ -840,7 +840,7 @@ eh_then1655:		; preds = %unwind1574
 
 unwind1659:		; preds = %invcont1665, %invcont1663, %eh_then1655
 	%eh_ptr1660 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select1662 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr1660, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select1662 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr1660, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	invoke void @__gnat_end_handler( i8* %eh_ptr1575 )
 			to label %cleanup1686 unwind label %unwind1676
 
@@ -859,7 +859,7 @@ cleanup1674:		; preds = %invcont1665
 
 unwind1676:		; preds = %cleanup1674, %unwind1659
 	%eh_ptr1677 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select1679 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr1677, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select1679 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr1677, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	%tmp169255575995 = ptrtoint i8* %tmp1556 to i32		; <i32> [#uses=1]
 	%tmp1692555755585996 = zext i32 %tmp169255575995 to i64		; <i64> [#uses=1]
 	%tmp169555545997 = zext i32 %tmp1559 to i64		; <i64> [#uses=1]
@@ -891,7 +891,7 @@ cleanup1702:		; preds = %cleanup1674, %invcont1638
 cleanup1720:		; preds = %cleanup1686, %unwind1676
 	%eh_selector.185993.1 = phi i32 [ %eh_select1679, %unwind1676 ], [ %eh_selector.18, %cleanup1686 ]		; <i32> [#uses=2]
 	%eh_exception.185994.1 = phi i8* [ %eh_ptr1677, %unwind1676 ], [ %eh_exception.18, %cleanup1686 ]		; <i8*> [#uses=2]
-	%eh_typeid1721 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid1721 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp1723 = icmp eq i32 %eh_selector.185993.1, %eh_typeid1721		; <i1> [#uses=1]
 	br i1 %tmp1723, label %eh_then1724, label %eh_else1742
 
@@ -924,7 +924,7 @@ unwind1736:		; preds = %cleanup1763, %unwind1750, %cleanup1734, %unwind1728
 eh_else1742:		; preds = %cleanup1720, %unwind1419
 	%eh_selector.135972.1 = phi i32 [ %eh_select1422, %unwind1419 ], [ %eh_selector.185993.1, %cleanup1720 ]		; <i32> [#uses=1]
 	%eh_exception.135974.1 = phi i8* [ %eh_ptr1420, %unwind1419 ], [ %eh_exception.185994.1, %cleanup1720 ]		; <i8*> [#uses=4]
-	%eh_typeid1743 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid1743 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp1745 = icmp eq i32 %eh_selector.135972.1, %eh_typeid1743		; <i1> [#uses=1]
 	br i1 %tmp1745, label %eh_then1746, label %cleanup1771
 
@@ -997,8 +997,8 @@ cond_next1888:		; preds = %cond_next1888, %cond_next1888.preheader
 
 unwind1895:		; preds = %cleanup2300, %cleanup2284, %unwind2274, %cond_next2149, %cond_true1946
 	%eh_ptr1896 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select1898 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr1896, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid23196018 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select1898 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr1896, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid23196018 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp23216020 = icmp eq i32 %eh_select1898, %eh_typeid23196018		; <i1> [#uses=1]
 	br i1 %tmp23216020, label %eh_then2322, label %eh_else2340
 
@@ -1043,8 +1043,8 @@ cond_true2171:		; preds = %invcont2150
 
 unwind2172:		; preds = %invcont2236, %invcont2219, %bb2205, %bb2203, %cond_true2171
 	%eh_ptr2173 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select2175 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2173, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid2250 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select2175 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2173, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid2250 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp2252 = icmp eq i32 %eh_select2175, %eh_typeid2250		; <i1> [#uses=1]
 	br i1 %tmp2252, label %eh_then2253, label %cleanup2284
 
@@ -1099,7 +1099,7 @@ eh_then2253:		; preds = %unwind2172
 
 unwind2257:		; preds = %invcont2263, %invcont2261, %eh_then2253
 	%eh_ptr2258 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select2260 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2258, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select2260 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2258, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	invoke void @__gnat_end_handler( i8* %eh_ptr2173 )
 			to label %cleanup2284 unwind label %unwind2274
 
@@ -1118,7 +1118,7 @@ cleanup2272:		; preds = %invcont2263
 
 unwind2274:		; preds = %cleanup2272, %unwind2257
 	%eh_ptr2275 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select2277 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2275, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select2277 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2275, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	%tmp229055456023 = ptrtoint i8* %tmp2154 to i32		; <i32> [#uses=1]
 	%tmp2290554555466024 = zext i32 %tmp229055456023 to i64		; <i64> [#uses=1]
 	%tmp229355426025 = zext i32 %tmp2157 to i64		; <i64> [#uses=1]
@@ -1150,7 +1150,7 @@ cleanup2300:		; preds = %cleanup2272, %invcont2236
 cleanup2318:		; preds = %cleanup2284, %unwind2274
 	%eh_selector.246021.1 = phi i32 [ %eh_select2277, %unwind2274 ], [ %eh_selector.24, %cleanup2284 ]		; <i32> [#uses=2]
 	%eh_exception.266022.1 = phi i8* [ %eh_ptr2275, %unwind2274 ], [ %eh_exception.26, %cleanup2284 ]		; <i8*> [#uses=2]
-	%eh_typeid2319 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid2319 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp2321 = icmp eq i32 %eh_selector.246021.1, %eh_typeid2319		; <i1> [#uses=1]
 	br i1 %tmp2321, label %eh_then2322, label %eh_else2340
 
@@ -1183,7 +1183,7 @@ unwind2334:		; preds = %cleanup2361, %unwind2348, %cleanup2332, %unwind2326
 eh_else2340:		; preds = %cleanup2318, %unwind1895
 	%eh_selector.196009.1 = phi i32 [ %eh_select1898, %unwind1895 ], [ %eh_selector.246021.1, %cleanup2318 ]		; <i32> [#uses=1]
 	%eh_exception.216011.1 = phi i8* [ %eh_ptr1896, %unwind1895 ], [ %eh_exception.266022.1, %cleanup2318 ]		; <i8*> [#uses=4]
-	%eh_typeid2341 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid2341 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp2343 = icmp eq i32 %eh_selector.196009.1, %eh_typeid2341		; <i1> [#uses=1]
 	br i1 %tmp2343, label %eh_then2344, label %cleanup2369
 
@@ -1224,8 +1224,8 @@ cleanup2371:		; preds = %cleanup2361, %cleanup2332, %cleanup2300
 
 unwind2378:		; preds = %cleanup2371
 	%eh_ptr2379 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2381 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2379, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid26496037 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select2381 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2379, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid26496037 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp26516039 = icmp eq i32 %eh_select2381, %eh_typeid26496037		; <i1> [#uses=1]
 	br i1 %tmp26516039, label %eh_then2652, label %eh_else2666
 
@@ -1250,7 +1250,7 @@ cond_true2410:		; preds = %cond_true2396
 
 unwind2411:		; preds = %invcont2591, %invcont2574, %bb2560, %bb2558, %bb2524, %bb2506, %cond_true2410
 	%eh_ptr2412 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2414 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2412, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select2414 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2412, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
 	%tmp26315527 = ptrtoint i8* %tmp2386 to i32		; <i32> [#uses=1]
 	%tmp263155275528 = zext i32 %tmp26315527 to i64		; <i64> [#uses=1]
 	%tmp26345524 = zext i32 %tmp2389 to i64		; <i64> [#uses=1]
@@ -1326,9 +1326,9 @@ cleanup2604:		; preds = %invcont2591
 
 unwind2618:		; preds = %cleanup2604, %unwind2411
 	%eh_ptr2619 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2621 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2619, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select2621 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2619, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
 	call void @llvm.stackrestore( i8* %tmp2390 )
-	%eh_typeid26493 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid26493 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp26514 = icmp eq i32 %eh_select2621, %eh_typeid26493		; <i1> [#uses=1]
 	br i1 %tmp26514, label %eh_then2652, label %eh_else2666
 
@@ -1339,7 +1339,7 @@ cleanup2642:		; preds = %cleanup2604
 
 cleanup2644:		; preds = %unwind2411
 	call void @llvm.stackrestore( i8* %tmp2390 )
-	%eh_typeid2649 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid2649 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp2651 = icmp eq i32 %eh_select2414, %eh_typeid2649		; <i1> [#uses=1]
 	br i1 %tmp2651, label %eh_then2652, label %eh_else2666
 
@@ -1367,7 +1367,7 @@ cleanup2662:		; preds = %invcont2658
 eh_else2666:		; preds = %cleanup2644, %unwind2618, %unwind2378
 	%eh_selector.256028.1 = phi i32 [ %eh_select2381, %unwind2378 ], [ %eh_select2621, %unwind2618 ], [ %eh_select2414, %cleanup2644 ]		; <i32> [#uses=1]
 	%eh_exception.296030.1 = phi i8* [ %eh_ptr2379, %unwind2378 ], [ %eh_ptr2619, %unwind2618 ], [ %eh_ptr2412, %cleanup2644 ]		; <i8*> [#uses=4]
-	%eh_typeid2667 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid2667 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp2669 = icmp eq i32 %eh_selector.256028.1, %eh_typeid2667		; <i1> [#uses=1]
 	br i1 %tmp2669, label %eh_then2670, label %Unwind
 
@@ -1407,8 +1407,8 @@ cond_true2711:		; preds = %cond_true2697
 
 unwind2712:		; preds = %cleanup2990, %unwind2975, %cond_true2711
 	%eh_ptr2713 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2715 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2713, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid29996053 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select2715 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2713, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid29996053 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp30016055 = icmp eq i32 %eh_select2715, %eh_typeid29996053		; <i1> [#uses=1]
 	br i1 %tmp30016055, label %eh_then3002, label %eh_else3016
 
@@ -1418,8 +1418,8 @@ cond_next2718:		; preds = %cond_true2697, %cleanup2687, %cleanup2662, %cleanup26
 
 unwind2762:		; preds = %cond_next2718
 	%eh_ptr2763 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2765 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2763, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid29686060 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select2765 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2763, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid29686060 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp29706061 = icmp eq i32 %eh_select2765, %eh_typeid29686060		; <i1> [#uses=1]
 	br i1 %tmp29706061, label %eh_then2971, label %cleanup2998
 
@@ -1440,7 +1440,7 @@ bb2821:		; preds = %invcont2766
 
 unwind2822:		; preds = %invcont2910, %invcont2893, %bb2879, %bb2877, %bb2843, %bb2821
 	%eh_ptr2823 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2825 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2823, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select2825 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2823, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
 	%tmp29295521 = ptrtoint i8* %tmp2770 to i32		; <i32> [#uses=1]
 	%tmp292955215522 = zext i32 %tmp29295521 to i64		; <i64> [#uses=1]
 	%tmp29325518 = zext i32 %tmp2773 to i64		; <i64> [#uses=1]
@@ -1497,9 +1497,9 @@ invcont2910:		; preds = %invcont2893
 
 unwind2937:		; preds = %cleanup2943, %unwind2822
 	%eh_ptr2938 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select2940 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2938, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select2940 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2938, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
 	call void @llvm.stackrestore( i8* %tmp2774 )
-	%eh_typeid29685 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid29685 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp29706 = icmp eq i32 %eh_select2940, %eh_typeid29685		; <i1> [#uses=1]
 	br i1 %tmp29706, label %eh_then2971, label %cleanup2998
 
@@ -1521,7 +1521,7 @@ cleanup2961:		; preds = %cleanup2943
 
 cleanup2963:		; preds = %unwind2822
 	call void @llvm.stackrestore( i8* %tmp2774 )
-	%eh_typeid2968 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid2968 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp2970 = icmp eq i32 %eh_select2825, %eh_typeid2968		; <i1> [#uses=1]
 	br i1 %tmp2970, label %eh_then2971, label %cleanup2998
 
@@ -1532,7 +1532,7 @@ eh_then2971:		; preds = %cleanup2963, %unwind2937, %unwind2762
 
 unwind2975:		; preds = %invcont2981, %invcont2979, %eh_then2971
 	%eh_ptr2976 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select2978 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr2976, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select2978 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr2976, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	invoke void @__gnat_end_handler( i8* %eh_exception.356056.0 )
 			to label %cleanup2998 unwind label %unwind2712
 
@@ -1552,7 +1552,7 @@ cleanup2990:		; preds = %invcont2981
 cleanup2998:		; preds = %unwind2975, %cleanup2963, %unwind2937, %unwind2762
 	%eh_selector.29 = phi i32 [ %eh_select2765, %unwind2762 ], [ %eh_select2940, %unwind2937 ], [ %eh_select2825, %cleanup2963 ], [ %eh_select2978, %unwind2975 ]		; <i32> [#uses=2]
 	%eh_exception.33 = phi i8* [ %eh_ptr2763, %unwind2762 ], [ %eh_ptr2938, %unwind2937 ], [ %eh_ptr2823, %cleanup2963 ], [ %eh_ptr2976, %unwind2975 ]		; <i8*> [#uses=2]
-	%eh_typeid2999 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid2999 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp3001 = icmp eq i32 %eh_selector.29, %eh_typeid2999		; <i1> [#uses=1]
 	br i1 %tmp3001, label %eh_then3002, label %eh_else3016
 
@@ -1582,7 +1582,7 @@ cleanup3012:		; preds = %invcont3008
 eh_else3016:		; preds = %cleanup2998, %unwind2712
 	%eh_selector.296044.1 = phi i32 [ %eh_select2715, %unwind2712 ], [ %eh_selector.29, %cleanup2998 ]		; <i32> [#uses=1]
 	%eh_exception.336046.1 = phi i8* [ %eh_ptr2713, %unwind2712 ], [ %eh_exception.33, %cleanup2998 ]		; <i8*> [#uses=4]
-	%eh_typeid3017 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid3017 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp3019 = icmp eq i32 %eh_selector.296044.1, %eh_typeid3017		; <i1> [#uses=1]
 	br i1 %tmp3019, label %eh_then3020, label %Unwind
 
@@ -1621,8 +1621,8 @@ cond_true3061:		; preds = %finally2997, %cleanup3012, %cleanup2961
 
 unwind3062:		; preds = %cleanup3340, %unwind3325, %cond_true3061
 	%eh_ptr3063 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select3065 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3063, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid33496081 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_select3065 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3063, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid33496081 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp33516083 = icmp eq i32 %eh_select3065, %eh_typeid33496081		; <i1> [#uses=1]
 	br i1 %tmp33516083, label %eh_then3352, label %eh_else3366
 
@@ -1632,8 +1632,8 @@ cond_next3068:		; preds = %finally2997, %cleanup3012, %cleanup2961
 
 unwind3112:		; preds = %cond_next3068
 	%eh_ptr3113 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select3115 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3113, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
-	%eh_typeid33186088 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select3115 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3113, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_typeid33186088 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp33206089 = icmp eq i32 %eh_select3115, %eh_typeid33186088		; <i1> [#uses=1]
 	br i1 %tmp33206089, label %eh_then3321, label %cleanup3348
 
@@ -1653,7 +1653,7 @@ bb3171:		; preds = %invcont3116
 
 unwind3172:		; preds = %invcont3260, %invcont3243, %bb3229, %bb3227, %bb3193, %bb3171
 	%eh_ptr3173 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select3175 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3173, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select3175 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3173, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
 	%tmp32795509 = ptrtoint i8* %tmp3120 to i32		; <i32> [#uses=1]
 	%tmp327955095510 = zext i32 %tmp32795509 to i64		; <i64> [#uses=1]
 	%tmp32825506 = zext i32 %tmp3123 to i64		; <i64> [#uses=1]
@@ -1710,9 +1710,9 @@ invcont3260:		; preds = %invcont3243
 
 unwind3287:		; preds = %cleanup3293, %unwind3172
 	%eh_ptr3288 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=3]
-	%eh_select3290 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3288, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
+	%eh_select3290 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3288, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=2]
 	call void @llvm.stackrestore( i8* %tmp3124 )
-	%eh_typeid33187 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid33187 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp33208 = icmp eq i32 %eh_select3290, %eh_typeid33187		; <i1> [#uses=1]
 	br i1 %tmp33208, label %eh_then3321, label %cleanup3348
 
@@ -1731,7 +1731,7 @@ cleanup3311:		; preds = %cleanup3293
 
 cleanup3313:		; preds = %unwind3172
 	call void @llvm.stackrestore( i8* %tmp3124 )
-	%eh_typeid3318 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid3318 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp3320 = icmp eq i32 %eh_select3175, %eh_typeid3318		; <i1> [#uses=1]
 	br i1 %tmp3320, label %eh_then3321, label %cleanup3348
 
@@ -1742,7 +1742,7 @@ eh_then3321:		; preds = %cleanup3313, %unwind3287, %unwind3112
 
 unwind3325:		; preds = %invcont3331, %invcont3329, %eh_then3321
 	%eh_ptr3326 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select3328 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3326, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select3328 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3326, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), %struct.exception* @constraint_error, i32* @__gnat_others_value )		; <i32> [#uses=1]
 	invoke void @__gnat_end_handler( i8* %eh_exception.416084.0 )
 			to label %cleanup3348 unwind label %unwind3062
 
@@ -1762,7 +1762,7 @@ cleanup3340:		; preds = %invcont3331
 cleanup3348:		; preds = %unwind3325, %cleanup3313, %unwind3287, %unwind3112
 	%eh_selector.35 = phi i32 [ %eh_select3115, %unwind3112 ], [ %eh_select3290, %unwind3287 ], [ %eh_select3175, %cleanup3313 ], [ %eh_select3328, %unwind3325 ]		; <i32> [#uses=2]
 	%eh_exception.39 = phi i8* [ %eh_ptr3113, %unwind3112 ], [ %eh_ptr3288, %unwind3287 ], [ %eh_ptr3173, %cleanup3313 ], [ %eh_ptr3326, %unwind3325 ]		; <i8*> [#uses=2]
-	%eh_typeid3349 = call i32 @llvm.eh.typeid.for( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
+	%eh_typeid3349 = call i32 @llvm.eh.typeid.for.i32( i8* getelementptr (%struct.exception* @constraint_error, i32 0, i32 0) )		; <i32> [#uses=1]
 	%tmp3351 = icmp eq i32 %eh_selector.35, %eh_typeid3349		; <i1> [#uses=1]
 	br i1 %tmp3351, label %eh_then3352, label %eh_else3366
 
@@ -1789,7 +1789,7 @@ cleanup3362:		; preds = %invcont3358
 eh_else3366:		; preds = %cleanup3348, %unwind3062
 	%eh_selector.356072.1 = phi i32 [ %eh_select3065, %unwind3062 ], [ %eh_selector.35, %cleanup3348 ]		; <i32> [#uses=1]
 	%eh_exception.396074.1 = phi i8* [ %eh_ptr3063, %unwind3062 ], [ %eh_exception.39, %cleanup3348 ]		; <i8*> [#uses=4]
-	%eh_typeid3367 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid3367 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp3369 = icmp eq i32 %eh_selector.356072.1, %eh_typeid3367		; <i1> [#uses=1]
 	br i1 %tmp3369, label %eh_then3370, label %Unwind
 
@@ -1823,9 +1823,9 @@ finally3347:		; preds = %cleanup3387, %cleanup3362, %cleanup3340, %cleanup3311
 
 unwind3393:		; preds = %cond_true3555, %cond_true3543, %cond_next3451, %cond_true3448, %cond_true3420, %finally3347
 	%eh_ptr3394 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select3396 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3394, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select3396 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3394, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
 	call void @llvm.stackrestore( i8* %tmp3392 )
-	%eh_typeid3571 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid3571 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp3573 = icmp eq i32 %eh_select3396, %eh_typeid3571		; <i1> [#uses=1]
 	br i1 %tmp3573, label %eh_then3574, label %Unwind
 
@@ -1918,8 +1918,8 @@ unwind3618:		; preds = %bb3743, %cond_true3729, %bb3689, %cond_true3675, %bb3635
 	%tue.3 = phi i8 [ %tmp204205, %cond_true3617 ], [ %tue.2, %bb3743 ], [ %tue.2, %bb3689 ], [ %tue.1, %bb3635 ], [ %tue.2, %cond_true3675 ], [ %tue.2, %cond_true3729 ]		; <i8> [#uses=1]
 	%mon.3 = phi i8 [ %tmp170171, %cond_true3617 ], [ %mon.2, %bb3743 ], [ %mon.1, %bb3689 ], [ %tmp170171, %bb3635 ], [ %tmp170171, %cond_true3675 ], [ %mon.2, %cond_true3729 ]		; <i8> [#uses=1]
 	%eh_ptr3619 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select3621 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3619, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid3854 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select3621 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3619, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid3854 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp3856 = icmp eq i32 %eh_select3621, %eh_typeid3854		; <i1> [#uses=1]
 	br i1 %tmp3856, label %eh_then3857, label %Unwind
 
@@ -2048,8 +2048,8 @@ finally3852:		; preds = %cleanup3874, %invcont3744, %cond_next3732
 
 unwind3880:		; preds = %cond_true4138, %invcont4122, %cond_next4120, %cond_true4117, %cond_true4027, %cond_next3938, %cond_true3935, %cond_true3907, %finally3852
 	%eh_ptr3881 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select3883 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr3881, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid4149 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select3883 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr3881, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid4149 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp4151 = icmp eq i32 %eh_select3883, %eh_typeid4149		; <i1> [#uses=1]
 	br i1 %tmp4151, label %eh_then4152, label %Unwind
 
@@ -2164,8 +2164,8 @@ finally4147:		; preds = %cleanup4169, %cond_true4138, %invcont4133
 
 unwind4175:		; preds = %cond_true4292, %cond_true4187, %finally4147
 	%eh_ptr4176 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select4178 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr4176, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid4304 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select4178 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr4176, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid4304 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp4306 = icmp eq i32 %eh_select4178, %eh_typeid4304		; <i1> [#uses=1]
 	br i1 %tmp4306, label %eh_then4307, label %cleanup4334
 
@@ -2283,8 +2283,8 @@ cond_next4446:		; preds = %cond_next4446, %cond_next4446.preheader
 
 unwind4453:		; preds = %cond_true4609, %cond_true4504, %cond_true4481
 	%eh_ptr4454 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=4]
-	%eh_select4456 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr4454, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid4710 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select4456 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr4454, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid4710 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp4712 = icmp eq i32 %eh_select4456, %eh_typeid4710		; <i1> [#uses=1]
 	br i1 %tmp4712, label %eh_then4713, label %cleanup4740
 
@@ -2449,9 +2449,9 @@ cleanup4742:		; preds = %cond_next4702, %bb4682.preheader, %cond_false4673, %con
 
 unwind4770:		; preds = %cond_next4776
 	%eh_ptr4771 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select4773 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr4771, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_select4773 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr4771, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
 	call void @llvm.stackrestore( i8* %tmp4749 )
-	%eh_typeid4874 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_typeid4874 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp4876 = icmp eq i32 %eh_select4773, %eh_typeid4874		; <i1> [#uses=1]
 	br i1 %tmp4876, label %eh_then4877, label %Unwind
 
@@ -2505,8 +2505,8 @@ cond_true4918:		; preds = %cond_true4904
 unwind4919:		; preds = %cond_next4925, %cond_true4918
 	%tue.96161.2 = phi i8 [ %tue.96161.0, %cond_true4918 ], [ %tue.96161.1, %cond_next4925 ]		; <i8> [#uses=1]
 	%eh_ptr4920 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select4922 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr4920, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid4987 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select4922 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr4920, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid4987 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp4989 = icmp eq i32 %eh_select4922, %eh_typeid4987		; <i1> [#uses=1]
 	br i1 %tmp4989, label %eh_then4990, label %Unwind
 
@@ -2573,8 +2573,8 @@ unwind5032:		; preds = %cond_next5038, %cond_true5031
 	%tue.96161.6 = phi i8 [ %tue.96161.4, %cond_true5031 ], [ %tue.96161.5, %cond_next5038 ]		; <i8> [#uses=1]
 	%mon.86171.2 = phi i8 [ %mon.86171.0, %cond_true5031 ], [ %mon.86171.1, %cond_next5038 ]		; <i8> [#uses=1]
 	%eh_ptr5033 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select5035 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr5033, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid5100 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select5035 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr5033, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid5100 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp5102 = icmp eq i32 %eh_select5035, %eh_typeid5100		; <i1> [#uses=1]
 	br i1 %tmp5102, label %eh_then5103, label %Unwind
 
@@ -2653,8 +2653,8 @@ cond_true5259:		; preds = %finally5098
 
 unwind5266:		; preds = %cond_true5462, %invcont5429, %cond_next5401, %cond_true5393, %cond_next5374, %bb5359, %cond_next5347, %invcont5330, %invcont5305, %invcont5303, %invcont5294, %bb5293, %cond_next5281, %cond_next5271, %cond_true5259
 	%eh_ptr5267 = call i8* @llvm.eh.exception( )		; <i8*> [#uses=5]
-	%eh_select5269 = call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr5267, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
-	%eh_typeid5473 = call i32 @llvm.eh.typeid.for( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
+	%eh_select5269 = call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr5267, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i32* @__gnat_others_value )		; <i32> [#uses=1]
+	%eh_typeid5473 = call i32 @llvm.eh.typeid.for.i32( i8* bitcast (i32* @__gnat_others_value to i8*) )		; <i32> [#uses=1]
 	%tmp5475 = icmp eq i32 %eh_select5269, %eh_typeid5473		; <i1> [#uses=1]
 	br i1 %tmp5475, label %eh_then5476, label %Unwind
 
@@ -2821,9 +2821,9 @@ declare void @report__test(i64, i64)
 
 declare i8* @llvm.eh.exception()
 
-declare i32 @llvm.eh.selector(i8*, i8*, ...)
+declare i32 @llvm.eh.selector.i32(i8*, i8*, ...)
 
-declare i32 @llvm.eh.typeid.for(i8*)
+declare i32 @llvm.eh.typeid.for.i32(i8*)
 
 declare i32 @__gnat_eh_personality(...)
 

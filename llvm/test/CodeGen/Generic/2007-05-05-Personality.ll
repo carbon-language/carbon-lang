@@ -9,8 +9,8 @@ entry:
 
 unwind:		; preds = %entry
 	%eh_ptr = tail call i8* @llvm.eh.exception( )		; <i8*> [#uses=2]
-	%eh_select = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector( i8* %eh_ptr, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i8* @error )		; <i32> [#uses=1]
-	%eh_typeid = tail call i32 @llvm.eh.typeid.for( i8* @error )		; <i32> [#uses=1]
+	%eh_select = tail call i32 (i8*, i8*, ...)* @llvm.eh.selector.i32( i8* %eh_ptr, i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*), i8* @error )		; <i32> [#uses=1]
+	%eh_typeid = tail call i32 @llvm.eh.typeid.for.i32( i8* @error )		; <i32> [#uses=1]
 	%tmp2 = icmp eq i32 %eh_select, %eh_typeid		; <i1> [#uses=1]
 	br i1 %tmp2, label %eh_then, label %Unwind
 
@@ -26,9 +26,9 @@ declare void @raise()
 
 declare i8* @llvm.eh.exception()
 
-declare i32 @llvm.eh.selector(i8*, i8*, ...)
+declare i32 @llvm.eh.selector.i32(i8*, i8*, ...)
 
-declare i32 @llvm.eh.typeid.for(i8*)
+declare i32 @llvm.eh.typeid.for.i32(i8*)
 
 declare i32 @__gnat_eh_personality(...)
 

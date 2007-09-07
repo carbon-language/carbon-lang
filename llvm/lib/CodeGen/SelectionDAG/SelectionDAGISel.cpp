@@ -212,7 +212,8 @@ namespace llvm {
 /// eh.selector intrinsic.
 static bool isSelector(Instruction *I) {
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
-    return II->getIntrinsicID() == Intrinsic::eh_selector;
+    return (II->getIntrinsicID() == Intrinsic::eh_selector_i32 ||
+            II->getIntrinsicID() == Intrinsic::eh_selector_i64);
   return false;
 }
 
@@ -2688,9 +2689,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
-  case Intrinsic::eh_selector:{
+  case Intrinsic::eh_selector_i32:
+  case Intrinsic::eh_selector_i64: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-
+    MVT::ValueType VT = (Intrinsic == Intrinsic::eh_selector_i32 ?
+                         MVT::i32 : MVT::i64);
+    
     if (ExceptionHandling && MMI) {
       if (CurMBB->isLandingPad())
         addCatchInfo(I, MMI, CurMBB);
@@ -2704,7 +2708,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       }
 
       // Insert the EHSELECTION instruction.
-      SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
+      SDVTList VTs = DAG.getVTList(VT, MVT::Other);
       SDOperand Ops[2];
       Ops[0] = getValue(I.getOperand(1));
       Ops[1] = getRoot();
@@ -2712,24 +2716,27 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       setValue(&I, Op);
       DAG.setRoot(Op.getValue(1));
     } else {
-      setValue(&I, DAG.getConstant(0, TLI.getPointerTy()));
+      setValue(&I, DAG.getConstant(0, VT));
     }
     
     return 0;
   }
-  
-  case Intrinsic::eh_typeid_for: {
+
+  case Intrinsic::eh_typeid_for_i32:
+  case Intrinsic::eh_typeid_for_i64: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+    MVT::ValueType VT = (Intrinsic == Intrinsic::eh_typeid_for_i32 ?
+                         MVT::i32 : MVT::i64);
     
     if (MMI) {
       // Find the type id for the given typeinfo.
       GlobalVariable *GV = ExtractTypeInfo(I.getOperand(1));
 
       unsigned TypeID = MMI->getTypeIDFor(GV);
-      setValue(&I, DAG.getConstant(TypeID, MVT::i32));
+      setValue(&I, DAG.getConstant(TypeID, VT));
     } else {
       // Return something different to eh_selector.
-      setValue(&I, DAG.getConstant(1, MVT::i32));
+      setValue(&I, DAG.getConstant(1, VT));
     }
 
     return 0;
@@ -4205,7 +4212,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
   // If the source and destination are known to not be aliases, we can
   // lower memmove as memcpy.
   if (Op == ISD::MEMMOVE) {
-    uint64_t Size = -1;
+    uint64_t Size = -1ULL;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
       Size = C->getValue();
     if (AA.alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
