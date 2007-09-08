@@ -166,8 +166,7 @@ void Optimize(Module* M) {
     addPass(Passes, createGlobalsModRefPass());      // IP alias analysis
 
     addPass(Passes, createLICMPass());               // Hoist loop invariants
-    addPass(Passes, createLoadValueNumberingPass()); // GVN for load instrs
-    addPass(Passes, createGCSEPass());               // Remove common subexprs
+    addPass(Passes, createGVNPass());                  // Remove redundancies
     addPass(Passes, createDeadStoreEliminationPass()); // Nuke dead stores
 
     // Cleanup and simplify the code after the scalar optimizations.

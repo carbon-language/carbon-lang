@@ -282,8 +282,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createLoopUnrollPass());           // Unroll small loops
   addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
-  addPass(PM, createLoadValueNumberingPass());   // GVN for load instructions
-  addPass(PM, createGCSEPass());                 // Remove common subexprs
+  addPass(PM, createGVNPass());                  // Remove redundancies
   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
 
   // Run instcombine after redundancy elimination to exploit opportunities
