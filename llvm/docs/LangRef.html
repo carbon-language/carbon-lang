@@ -3581,7 +3581,7 @@ value argument; otherwise, it returns the second value argument.
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)
+  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] &lt;ty&gt; [&lt;fnty&gt;*] &lt;fnptrval&gt;(&lt;param list&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -3606,10 +3606,15 @@ value argument; otherwise, it returns the second value argument.
     to using C calling conventions.
   </li>
   <li>
-    <p>'<tt>ty</tt>': shall be the signature of the pointer to function value
-    being invoked.  The argument types must match the types implied by this
-    signature.  This type can be omitted if the function is not varargs and
-    if the function type does not return a pointer to a function.</p>
+    <p>'<tt>ty</tt>': the type of the call instruction itself which is also
+    the type of the return value.  Functions that return no value are marked
+    <tt><a href="#t_void">void</a></tt>.</p>
+  </li>
+  <li>
+    <p>'<tt>fnty</tt>': shall be the signature of the pointer to function
+    value being invoked.  The argument types must match the types implied by
+    this signature.  This type can be omitted if the function is not varargs
+    and if the function type does not return a pointer to a function.</p>
   </li>
   <li>
     <p>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a function to
@@ -3639,10 +3644,11 @@ the <a href="#i_invoke">invoke</a> instruction.</p>
 <h5>Example:</h5>
 
 <pre>
-  %retval = call i32 %test(i32 %argc)
-  call i32(i8 *, ...) *%printf(i8 * %msg, i32 12, i8 42);
-  %X = tail call i32 %foo()
-  %Y = tail call <a href="#callingconv">fastcc</a> i32 %foo()
+  %retval = call i32 @test(i32 %argc)
+  call i32 (i8 *, ...)* @printf(i8 * %msg, i32 12, i8 42);
+  %X = tail call i32 @foo()
+  %Y = tail call <a href="#callingconv">fastcc</a> i32 @foo()
+  %Z = call void %foo(i8 97 signext)
 </pre>
 
 </div>
