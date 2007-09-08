@@ -61,7 +61,7 @@ public:
   void setLocation(SourceLocation L) { Loc = L; }
   void setLength(unsigned Len) { Length = Len; }
   
-  const char *getName() const { return getTokenName(Kind); }
+  const char *getName() const { return tok::getTokenName(Kind); }
   
   /// startToken - Reset all flags to cleared.
   ///
