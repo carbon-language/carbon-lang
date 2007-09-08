@@ -276,7 +276,9 @@ namespace llvm {
     exponent_t exponent;
 
     /* What kind of floating point number this is.  */
-    fltCategory category: 2;
+    /* Only 2 bits are required, but VisualStudio incorrectly sign extends 
+       it.  Using the extra bit keeps it from failing under VisualStudio */
+    fltCategory category: 3;
 
     /* The sign bit of this number.  */
     unsigned int sign: 1;
