@@ -68,13 +68,24 @@ public:
     return NewRegion->Allocate(AllocSize, Alignment, RegPtr);
   }
   
-  /// Deallocate - Release all memory for this region to the system.
-  ///
+  /// Deallocate - Recursively release all memory for this and its next regions
+  /// to the system.
   void Deallocate() {
     MemRegion *next = Next;
     free(this);
     if (next)
       next->Deallocate();
+  }
+
+  /// DeallocateAllButLast - Recursively release all memory for this and its
+  /// next regions to the system stopping at the last region in the list.
+  /// Returns the pointer to the last region.
+  MemRegion *DeallocateAllButLast() {
+    MemRegion *next = Next;
+    if (!next)
+      return this;
+    free(this);
+    return next->DeallocateAllButLast();
   }
 };
 }
@@ -93,9 +104,10 @@ BumpPtrAllocator::~BumpPtrAllocator() {
 }
 
 void BumpPtrAllocator::Reset() {
-  ((MemRegion*)TheMemory)->Deallocate();
-  TheMemory = malloc(4096);
-  ((MemRegion*)TheMemory)->Init(4096, 1, 0);
+  MemRegion *MRP = (MemRegion*)TheMemory;
+  MRP = MRP->DeallocateAllButLast();
+  MRP->Init(4096, 1, 0);
+  TheMemory = MRP;
 }
 
 void *BumpPtrAllocator::Allocate(unsigned Size, unsigned Align) {
