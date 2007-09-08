@@ -557,17 +557,32 @@ SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT::ValueType NVT,
 static
 SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
                                TargetLowering &TLI) {
-  assert(MVT::isInteger(ST->getStoredVT()) &&
-         "Non integer unaligned stores not implemented.");
-  int SVOffset = ST->getSrcValueOffset();
   SDOperand Chain = ST->getChain();
   SDOperand Ptr = ST->getBasePtr();
   SDOperand Val = ST->getValue();
   MVT::ValueType VT = Val.getValueType();
+  int Alignment = ST->getAlignment();
+  int SVOffset = ST->getSrcValueOffset();
+  if (MVT::isFloatingPoint(ST->getStoredVT())) {
+    // Expand to a bitconvert of the value to the integer type of the 
+    // same size, then a (misaligned) int store.
+    MVT::ValueType intVT;
+    if (VT==MVT::f64)
+      intVT = MVT::i64;
+    else if (VT==MVT::f32)
+      intVT = MVT::i32;
+    else
+      assert(0 && "Unaligned load of unsupported floating point type");
+
+    SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, intVT, Val);
+    return DAG.getStore(Chain, Result, Ptr, ST->getSrcValue(),
+                        SVOffset, ST->isVolatile(), Alignment);
+  }
+  assert(MVT::isInteger(ST->getStoredVT()) &&
+         "Unaligned store of unknown type.");
   // Get the half-size VT
   MVT::ValueType NewStoredVT = ST->getStoredVT() - 1;
   int NumBits = MVT::getSizeInBits(NewStoredVT);
-  int Alignment = ST->getAlignment();
   int IncrementSize = NumBits / 8;
 
   // Divide the stored value in two parts.
@@ -593,13 +608,35 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
 static
 SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                               TargetLowering &TLI) {
-  assert(MVT::isInteger(LD->getLoadedVT()) &&
-         "Non integer unaligned loads not implemented.");
   int SVOffset = LD->getSrcValueOffset();
   SDOperand Chain = LD->getChain();
   SDOperand Ptr = LD->getBasePtr();
   MVT::ValueType VT = LD->getValueType(0);
-  MVT::ValueType NewLoadedVT = LD->getLoadedVT() - 1;
+  MVT::ValueType LoadedVT = LD->getLoadedVT();
+  if (MVT::isFloatingPoint(VT)) {
+    // Expand to a (misaligned) integer load of the same size,
+    // then bitconvert to floating point.
+    MVT::ValueType intVT;
+    if (LoadedVT==MVT::f64)
+      intVT = MVT::i64;
+    else if (LoadedVT==MVT::f32)
+      intVT = MVT::i32;
+    else
+      assert(0 && "Unaligned load of unsupported floating point type");
+
+    SDOperand newLoad = DAG.getLoad(intVT, Chain, Ptr, LD->getSrcValue(),
+                                    SVOffset, LD->isVolatile(), 
+                                    LD->getAlignment());
+    SDOperand Result = DAG.getNode(ISD::BIT_CONVERT, LoadedVT, newLoad);
+    if (LoadedVT != VT)
+      Result = DAG.getNode(ISD::FP_EXTEND, VT, Result);
+
+    SDOperand Ops[] = { Result, Chain };
+    return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other), 
+                       Ops, 2);
+  }
+  assert(MVT::isInteger(LoadedVT) && "Unaligned load of unsupported type.");
+  MVT::ValueType NewLoadedVT = LoadedVT - 1;
   int NumBits = MVT::getSizeInBits(NewLoadedVT);
   int Alignment = LD->getAlignment();
   int IncrementSize = NumBits / 8;
@@ -1640,8 +1677,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                          TLI);
             Tmp3 = Result.getOperand(0);
             Tmp4 = Result.getOperand(1);
-            LegalizeOp(Tmp3);
-            LegalizeOp(Tmp4);
+            Tmp3 = LegalizeOp(Tmp3);
+            Tmp4 = LegalizeOp(Tmp4);
           }
         }
         break;
@@ -1709,8 +1746,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                            TLI);
               Tmp1 = Result.getOperand(0);
               Tmp2 = Result.getOperand(1);
-              LegalizeOp(Tmp1);
-              LegalizeOp(Tmp2);
+              Tmp1 = LegalizeOp(Tmp1);
+              Tmp2 = LegalizeOp(Tmp2);
             }
           }
         }
