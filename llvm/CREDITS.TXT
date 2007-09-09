@@ -29,6 +29,7 @@ D: Target-independent code generator and analysis improvements
 N: Daniel Berlin
 E: dberlin@dberlin.org
 D: ET-Forest implementation.
+D: Sparse bitmap
 
 N: Neil Booth
 E: neil@daikokuya.co.uk
