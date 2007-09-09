@@ -21,8 +21,14 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/Statistic.h"
+
+#define DEBUG_TYPE "memdep"
 
 using namespace llvm;
+
+STATISTIC(NumCacheNonlocal, "Number of cached non-local responses");
+STATISTIC(NumUncacheNonlocal, "Number of uncached non-local responses");
 
 char MemoryDependenceAnalysis::ID = 0;
   
@@ -205,17 +211,12 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
                                          DenseMap<BasicBlock*, Value*>& resp) {
   if (depGraphNonLocal.count(query)) {
     resp = depGraphNonLocal[query];
+    NumCacheNonlocal++;
     return;
-  }
+  } else
+    NumUncacheNonlocal++;
   
-  // First check that we don't actually have a local dependency.
-  Instruction* localDep = getDependency(query);
-  if (localDep != NonLocal) {
-    resp.insert(std::make_pair(query->getParent(),localDep));
-    return;
-  }
-  
-  // If not, go ahead and search for non-local ones.
+  // If not, go ahead and search for non-local deps.
   nonLocalHelper(query, query->getParent(), resp);
   
   // Update the non-local dependency cache
