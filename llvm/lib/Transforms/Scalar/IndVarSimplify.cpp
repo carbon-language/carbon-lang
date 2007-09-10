@@ -75,9 +75,9 @@ namespace {
    bool runOnLoop(Loop *L, LPPassManager &LPM);
    bool doInitialization(Loop *L, LPPassManager &LPM);
    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+     AU.addRequired<ScalarEvolution>();
      AU.addRequiredID(LCSSAID);
      AU.addRequiredID(LoopSimplifyID);
-     AU.addRequired<ScalarEvolution>();
      AU.addRequired<LoopInfo>();
      AU.addPreservedID(LoopSimplifyID);
      AU.addPreservedID(LCSSAID);
