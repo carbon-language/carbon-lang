@@ -23,6 +23,8 @@ class IdentifierInfo;
 class Expr;
 class Stmt;
 class FunctionDecl;
+class ObjcMethodDecl;
+class AttributeList;
 
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -34,7 +36,7 @@ public:
     // Concrete sub-classes of ValueDecl
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
-    Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass,
+    Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
     // Concrete sub-class of Decl
     Field
   };
@@ -508,13 +510,25 @@ class ObjcInterfaceDecl : public TypeDecl {
   FieldDecl **Ivars;   // Null if not defined.
   int NumIvars;   // -1 if not defined.
   
+  /// instance methods
+  ObjcMethodDecl **InsMethods;  // Null if not defined
+  int NumInsMethods;  // -1 if not defined
+  
+  /// class methods
+  ObjcMethodDecl **ClsMethods;  // Null if not defined
+  int NumClsMethods;  // -1 if not defined
+  
   bool isForwardDecl; // declared with @class.
 public:
   ObjcInterfaceDecl(SourceLocation L, IdentifierInfo *Id, bool FD = false)
-    : TypeDecl(ObjcInterface, L, Id, 0), Ivars(0), NumIvars(-1), 
+    : TypeDecl(ObjcInterface, L, Id, 0), Ivars(0), NumIvars(-1),
+      InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1),
       isForwardDecl(FD) { }
      
   void addInstanceVariable(FieldDecl ivar);
+
+  void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                      ObjcMethodDecl **clsMethods, unsigned numClsMembers);
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcInterface;
@@ -544,6 +558,43 @@ public:
   static bool classof(const ObjcClassDecl *D) { return true; }
 };
 
-}  // end namespace clang
+/// ObjcMethodDecl - An instance of this class is created to represent an instance
+/// or class method declaration.
+class ObjcMethodDecl : public ValueDecl {
+public:
+  ObjcMethodDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+		 bool isInstance = true, Decl *PrevDecl = 0)
+    : ValueDecl(ObjcMethod, L, Id, T, PrevDecl), ParamInfo(0), 
+      MethodAttrs(0), IsInstance(isInstance) {}
 
+  virtual ~ObjcMethodDecl();
+  unsigned getNumParams() const;
+  ParmVarDecl *getParamDecl(unsigned i) {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }
+  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+
+  bool isInstance() const { return IsInstance; }
+  QualType getResultType() const { return getType(); }
+  
+  void setMethodAttrs(AttributeList *attrs) {MethodAttrs = attrs;}
+  AttributeList *getMethodAttrs() const {return MethodAttrs;}
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
+  static bool classof(const ObjcMethodDecl *D) { return true; }
+
+private:
+  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
+  /// parameters of this Method.  This is null if there are no formals.  
+  ParmVarDecl **ParamInfo;
+  
+  /// List of attributes for this method declaration.
+  AttributeList *MethodAttrs;
+
+  bool IsInstance : 1;
+};
+
+}  // end namespace clang
 #endif

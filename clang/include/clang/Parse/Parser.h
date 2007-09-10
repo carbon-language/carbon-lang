@@ -288,7 +288,7 @@ private:
 
   TypeTy *ParseObjCTypeName();
   void ParseObjCMethodRequirement();
-  DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat);
+  DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat); 
   DeclTy *ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
   void ParseObjCPropertyDecl(DeclTy *interfaceDecl);

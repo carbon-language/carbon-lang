@@ -1140,6 +1140,30 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   Record->defineBody(&RecFields[0], RecFields.size());
 }
 
+void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl, 
+				 DeclTy **allMethods, unsigned allNum) { 
+  // FIXME: Add method insertion code here.
+#if 0
+  ObjcInterfaceDecl *Interface = cast<ObjcInterfaceDecl>(
+				   static_cast<Decl*>(ClassDecl));
+  llvm::SmallVector<ObjcMethodDecl*, 32> insMethods;
+  llvm::SmallVector<ObjcMethodDecl*, 16> clsMethods;
+
+  for (unsigned i = 0; i < allNum; i++ ) {
+    ObjcMethodDecl *Method = 
+      cast_or_null<ObjcMethodDecl>(static_cast<Decl*>(allMethods[i]));
+    if (!Method) continue;  // Already issued a diagnostic.
+    if (Method->isInstance())
+      insMethods.push_back(Method);
+    else
+      clsMethods.push_back(Method);
+  }
+  Interface->ObjcAddMethods(&insMethods[0], insMethods.size(), 
+			    &clsMethods[0], clsMethods.size());
+#endif
+  return;
+}
+
 Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
                                       DeclTy *lastEnumConst,
                                       SourceLocation IdLoc, IdentifierInfo *Id,

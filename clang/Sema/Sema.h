@@ -156,6 +156,8 @@ private:
                              Declarator &D, ExprTy *BitfieldWidth);
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
                                DeclTy **Fields, unsigned NumFields);
+  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
+				     DeclTy **allMethods, unsigned allNum); 
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,

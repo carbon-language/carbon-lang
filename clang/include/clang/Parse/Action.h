@@ -174,6 +174,9 @@ public:
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
                                DeclTy **Fields, unsigned NumFields) {}
 
+  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl,
+				     DeclTy **allMethods, unsigned allNum) {}
+
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -450,12 +453,13 @@ public:
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
-    ObjcKeywordInfo *Keywords, unsigned NumKeywords) {
+    ObjcKeywordInfo *Keywords, unsigned NumKeywords, 
+    AttributeList *AttrList) {
     return 0;
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
-    IdentifierInfo *SelectorName) {
+    IdentifierInfo *SelectorName, AttributeList *AttrList) {
     return 0;
   }
   virtual void ObjCStartCategoryInterface() { // FIXME

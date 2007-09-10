@@ -163,3 +163,23 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   }
   return 0;
 }
+
+/// addObjcMethods - Insert instance and methods declarations into
+/// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
+///
+void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods, 
+				       unsigned numInsMembers,
+                                       ObjcMethodDecl **clsMethods,
+                                       unsigned numClsMembers) {
+  NumInsMethods = numInsMembers;
+  if (numInsMembers) {
+    InsMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(InsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+  }
+  NumClsMethods = numClsMembers;
+  if (numClsMembers) {
+    ClsMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(ClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+  }
+}
+
