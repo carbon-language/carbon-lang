@@ -528,3 +528,48 @@ _foo:
 This apparently occurs in real code.
 
 //===---------------------------------------------------------------------===//
+
+This:
+        #include <algorithm>
+        std::pair<unsigned, bool> full_add(unsigned a, unsigned b)
+        { return std::make_pair(a + b, a + b < a); }
+        bool no_overflow(unsigned a, unsigned b)
+        { return !full_add(a, b).second; }
+
+Should compile to:
+
+_Z8full_addjj:
+	adds	r2, r1, r2
+	movcc	r1, #0
+	movcs	r1, #1
+	str	r2, [r0, #0]
+	strb	r1, [r0, #4]
+	mov	pc, lr
+
+_Z11no_overflowjj:
+	cmn	r0, r1
+	movcs	r0, #0
+	movcc	r0, #1
+	mov	pc, lr
+
+not:
+
+__Z8full_addjj:
+        add r3, r2, r1
+        str r3, [r0]
+        mov r2, #1
+        mov r12, #0
+        cmp r3, r1
+        movlo r12, r2
+        str r12, [r0, #+4]
+        bx lr
+__Z11no_overflowjj:
+        add r3, r1, r0
+        mov r2, #1
+        mov r1, #0
+        cmp r3, r0
+        movhs r1, r2
+        mov r0, r1
+        bx lr
+
+//===---------------------------------------------------------------------===//

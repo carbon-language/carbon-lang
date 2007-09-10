@@ -677,5 +677,33 @@ LBB1_1: ;bb
         cmplwi cr0, r6, 33920
         bne cr0, LBB1_1
 
-===-------------------------------------------------------------------------===
+//===---------------------------------------------------------------------===//
+
+This:
+        #include <algorithm>
+        inline std::pair<unsigned, bool> full_add(unsigned a, unsigned b)
+        { return std::make_pair(a + b, a + b < a); }
+        bool no_overflow(unsigned a, unsigned b)
+        { return !full_add(a, b).second; }
+
+Should compile to:
+
+__Z11no_overflowjj:
+        add r4,r3,r4
+        subfc r3,r3,r4
+        li r3,0
+        adde r3,r3,r3
+        blr
+
+(or better) not:
+
+__Z11no_overflowjj:
+        add r2, r4, r3
+        cmplw cr7, r2, r3
+        mfcr r2
+        rlwinm r2, r2, 29, 31, 31
+        xori r3, r2, 1
+        blr 
+
+//===---------------------------------------------------------------------===//
 

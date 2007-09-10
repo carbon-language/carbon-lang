@@ -1178,3 +1178,30 @@ We should sink the load into xmm3 into the LBB1_2 block.  This should
 be pretty easy, and will nuke all the copies.
 
 //===---------------------------------------------------------------------===//
+
+This:
+        #include <algorithm>
+        inline std::pair<unsigned, bool> full_add(unsigned a, unsigned b)
+        { return std::make_pair(a + b, a + b < a); }
+        bool no_overflow(unsigned a, unsigned b)
+        { return !full_add(a, b).second; }
+
+Should compile to:
+
+
+        _Z11no_overflowjj:
+                addl    %edi, %esi
+                setae   %al
+                ret
+
+on x86-64, not:
+
+__Z11no_overflowjj:
+        addl    %edi, %esi
+        cmpl    %edi, %esi
+        setae   %al
+        movzbl  %al, %eax
+        ret
+
+
+//===---------------------------------------------------------------------===//
