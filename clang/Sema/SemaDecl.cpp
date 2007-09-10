@@ -865,6 +865,7 @@ Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
   for (unsigned i = 0; i != NumElts; ++i) {
     ObjcInterfaceDecl *IDecl;
       
+    // FIXME: before we create one, look up the interface decl in a hash table.
     IDecl = new ObjcInterfaceDecl(SourceLocation(), IdentList[i], true);
     // Chain & install the interface decl into the identifier.
     IDecl->setNext(IdentList[i]->getFETokenInfo<Decl>());

@@ -195,7 +195,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().
   if (Tok.isObjCAtKeyword(tok::objc_end)) {
     ConsumeToken(); // the "end" identifier
-    return 0;
+    return ClsType;
   }
   Diag(Tok, diag::err_objc_missing_end);
   return 0;
@@ -370,7 +370,7 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *CDecl) {
   
   DeclTy *MDecl = ParseObjCMethodDecl(methodType, methodLoc);
   // Since this rule is used for both method declarations and definitions,
-  // the caller is responsible for consuming the ';'.
+  // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
 }
 

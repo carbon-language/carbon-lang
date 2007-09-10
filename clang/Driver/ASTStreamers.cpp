@@ -99,6 +99,12 @@ static void PrintTypeDefDecl(TypedefDecl *TD) {
   fprintf(stderr, "typedef %s;\n", S.c_str());
 }
 
+static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
+  std::string S = OID->getName();
+  fprintf(stderr, "@interface %s;\n", S.c_str());
+  // FIXME: implement the rest...
+}
+
 void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
   ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
@@ -114,6 +120,8 @@ void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       }
     } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
       PrintTypeDefDecl(TD);
+    } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
+      PrintObjcInterfaceDecl(OID);
     } else {
       fprintf(stderr, "Read top-level variable decl: '%s'\n", D->getName());
     }

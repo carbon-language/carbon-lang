@@ -343,8 +343,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return 0;
   case tok::at:
     // @ is not a legal token unless objc is enabled, no need to check.
-    ParseObjCAtDirectives();
-    return 0;
+    return ParseObjCAtDirectives();
   case tok::minus:
     if (getLang().ObjC1) {
       ParseObjCInstanceMethodDefinition();
@@ -549,6 +548,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       // Ask the actions module to compute the type for this declarator.
       Action::TypeResult TR =
         Actions.ParseParamDeclaratorType(CurScope, ParmDeclarator);
+
       if (!TR.isInvalid && 
           // A missing identifier has already been diagnosed.
           ParmDeclarator.getIdentifier()) {
