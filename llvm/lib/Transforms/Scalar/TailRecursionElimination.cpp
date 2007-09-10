@@ -302,6 +302,15 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
 
   if (&BB->front() == Ret) // Make sure there is something before the ret...
     return false;
+  
+  // If the return is in the entry block, then making this transformation would
+  // turn infinite recursion into an infinite loop.  This transformation is ok
+  // in theory, but breaks some code like:
+  //   double fabs(double f) { return __builtin_fabs(f); } // a 'fabs' call
+  // disable this xform in this case, because the code generator will lower the
+  // call to fabs into inline code.
+  if (BB == &F->getEntryBlock())
+    return false;
 
   // Scan backwards from the return, checking to see if there is a tail call in
   // this block.  If so, set CI to it.
