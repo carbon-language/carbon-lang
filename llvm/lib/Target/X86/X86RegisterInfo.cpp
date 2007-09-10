@@ -265,9 +265,28 @@ void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator I,
                                     unsigned DestReg,
                                     const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
-  MI->getOperand(0).setReg(DestReg);
-  MBB.insert(I, MI);
+  // MOV32r0 etc. are implemented with xor which clobbers condition code.
+  // Re-materialize them as movri instructions to avoid side effects.
+  switch (Orig->getOpcode()) {
+  case X86::MOV8r0:
+    BuildMI(MBB, I, TII.get(X86::MOV8ri), DestReg).addImm(0);
+    break;
+  case X86::MOV16r0:
+    BuildMI(MBB, I, TII.get(X86::MOV16ri), DestReg).addImm(0);
+    break;
+  case X86::MOV32r0:
+    BuildMI(MBB, I, TII.get(X86::MOV32ri), DestReg).addImm(0);
+    break;
+  case X86::MOV64r0:
+    BuildMI(MBB, I, TII.get(X86::MOV64ri32), DestReg).addImm(0);
+    break;
+  default: {
+    MachineInstr *MI = Orig->clone();
+    MI->getOperand(0).setReg(DestReg);
+    MBB.insert(I, MI);
+    break;
+  }
+  }
 }
 
 static const MachineInstrBuilder &FuseInstrAddOperand(MachineInstrBuilder &MIB,
