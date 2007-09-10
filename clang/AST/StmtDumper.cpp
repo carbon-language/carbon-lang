@@ -256,8 +256,25 @@ void StmtDumper::VisitExpr(Expr *Node) {
 
 void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " Decl='%s' %p", Node->getDecl()->getName(),
-          (void*)Node->getDecl());
+
+  fprintf(F, " ");
+  switch (Node->getDecl()->getKind()) {
+    case Decl::Function: fprintf(F,"FunctionDecl"); break;
+    case Decl::BlockVariable: fprintf(F,"BlockVariable"); break;
+    case Decl::FileVariable: fprintf(F,"FileVariable"); break;
+    case Decl::ParmVariable: fprintf(F,"ParmVariable"); break;
+    case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
+    case Decl::Typedef: fprintf(F,"Typedef"); break;
+    case Decl::Struct: fprintf(F,"Struct"); break;
+    case Decl::Union: fprintf(F,"Union"); break;
+    case Decl::Class: fprintf(F,"Class"); break;
+    case Decl::Enum: fprintf(F,"Enum"); break;
+    case Decl::ObjcInterface: fprintf(F,"ObjcInterface"); break;
+    case Decl::ObjcClass: fprintf(F,"ObjcClass"); break;
+    default: fprintf(F,"Decl"); break;
+  }
+  
+  fprintf(F, "='%s' %p", Node->getDecl()->getName(), (void*)Node->getDecl());
 }
 
 void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {
