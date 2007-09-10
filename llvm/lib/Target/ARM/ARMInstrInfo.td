@@ -418,8 +418,9 @@ class PseudoInst<dag oops, dag iops, string asm, list<dag> pattern>
 }
 
 // Almost all ARM instructions are predicable.
-class I<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz, IndexMode im,
-        Format f, string opc, string asm, string cstr, list<dag> pattern>
+class I<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+        IndexMode im, Format f, string opc, string asm, string cstr,
+        list<dag> pattern>
   : InstARM<opcod, am, sz, im, f, cstr> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ops pred:$p));
@@ -431,8 +432,9 @@ class I<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz, IndexMod
 // Same as I except it can optionally modify CPSR. Note it's modeled as
 // an input operand since by default it's a zero register. It will
 // become an implicit def once it's "flipped".
-class sI<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz, IndexMode im,
-         Format f, string opc, string asm, string cstr, list<dag> pattern>
+class sI<bits<4> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+         IndexMode im, Format f, string opc, string asm, string cstr,
+         list<dag> pattern>
   : InstARM<opcod, am, sz, im, f, cstr> {
   let OutOperandList = oops;
   let InOperandList = !con(iops, (ops pred:$p, cc_out:$s));
