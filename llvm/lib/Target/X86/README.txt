@@ -1205,3 +1205,6 @@ __Z11no_overflowjj:
 
 
 //===---------------------------------------------------------------------===//
+
+Re-materialize MOV32r0 etc. with xor instead of changing them to moves if the
+condition register is dead. xor reg reg is shorter than mov reg, #0.
