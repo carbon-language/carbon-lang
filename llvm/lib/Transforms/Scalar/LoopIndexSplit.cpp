@@ -332,7 +332,9 @@ void LoopIndexSplit::findLoopConditionals() {
   if (CI->getPredicate() == ICmpInst::ICMP_SGT
       || CI->getPredicate() == ICmpInst::ICMP_UGT
       || CI->getPredicate() == ICmpInst::ICMP_SGE
-      || CI->getPredicate() == ICmpInst::ICMP_UGE)
+      || CI->getPredicate() == ICmpInst::ICMP_UGE
+      || CI->getPredicate() == ICmpInst::ICMP_EQ
+      || CI->getPredicate() == ICmpInst::ICMP_NE)
     return;
 
   ExitCondition = CI;
