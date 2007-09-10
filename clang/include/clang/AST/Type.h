@@ -870,7 +870,7 @@ inline bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType);
 }
 inline bool Type::isFunctionPointerType() const {
-  if (const PointerType* T = dyn_cast<PointerType>(this))
+  if (const PointerType* T = getAsPointerType())
     return T->getPointeeType()->isFunctionType();
   else
     return false;
