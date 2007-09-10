@@ -265,11 +265,12 @@ public:
   // type, ignoring typedefs.
   bool isFunctionType() const;
   bool isPointerType() const;
+  bool isFunctionPointerType() const;
   bool isReferenceType() const;
   bool isArrayType() const;
   bool isRecordType() const;
   bool isStructureType() const;   
-  bool isUnionType() const;
+  bool isUnionType() const;  
   bool isVectorType() const; // GCC vector type.
   bool isOCUVectorType() const; // OCU vector type.
   
@@ -867,6 +868,12 @@ inline bool Type::isFunctionType() const {
 }
 inline bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType);
+}
+inline bool Type::isFunctionPointerType() const {
+  if (const PointerType* T = dyn_cast<PointerType>(this))
+    return T->getPointeeType()->isFunctionType();
+  else
+    return false;
 }
 inline bool Type::isReferenceType() const {
   return isa<ReferenceType>(CanonicalType);
