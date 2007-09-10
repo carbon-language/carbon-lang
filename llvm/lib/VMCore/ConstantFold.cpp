@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -951,12 +952,14 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
     // Now we know that the RHS is a GlobalValue or simple constant,
     // which (since the types must match) means that it's a ConstantPointerNull.
     if (const GlobalValue *CPR2 = dyn_cast<GlobalValue>(V2)) {
-      if (!CPR1->hasExternalWeakLinkage() || !CPR2->hasExternalWeakLinkage())
-        return ICmpInst::ICMP_NE;
+      // Don't try to decide equality of aliases.
+      if (!isa<GlobalAlias>(CPR1) && !isa<GlobalAlias>(CPR2))
+        if (!CPR1->hasExternalWeakLinkage() || !CPR2->hasExternalWeakLinkage())
+          return ICmpInst::ICMP_NE;
     } else {
-      // GlobalVals can never be null.
       assert(isa<ConstantPointerNull>(V2) && "Canonicalization guarantee!");
-      if (!CPR1->hasExternalWeakLinkage())
+      // GlobalVals can never be null.  Don't try to evaluate aliases.
+      if (!CPR1->hasExternalWeakLinkage() && !isa<GlobalAlias>(CPR1))
         return ICmpInst::ICMP_NE;
     }
   } else {
