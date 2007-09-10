@@ -2129,6 +2129,27 @@ Definition
                                       CurModule.CurrentModule);
     GA->setVisibility($2);
     InsertValue(GA, CurModule.Values);
+    
+    
+    // If there was a forward reference of this alias, resolve it now.
+    
+    ValID ID;
+    if (!Name.empty())
+      ID = ValID::createGlobalName(Name);
+    else
+      ID = ValID::createGlobalID(CurModule.Values.size()-1);
+    
+    if (GlobalValue *FWGV =
+          CurModule.GetForwardRefForGlobal(GA->getType(), ID)) {
+      // Replace uses of the fwdref with the actual alias.
+      FWGV->replaceAllUsesWith(GA);
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(FWGV))
+        GV->eraseFromParent();
+      else
+        cast<Function>(FWGV)->eraseFromParent();
+    }
+    ID.destroy();
+    
     CHECK_FOR_ERROR
   }
   | TARGET TargetDefinition { 
