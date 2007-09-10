@@ -28,23 +28,23 @@ namespace clang {
   class SourceManager;
   class LiveVariables;
   
-class LiveVariablesAuditor {
+class LiveVariablesObserver {
 public:
-  virtual ~LiveVariablesAuditor() {}
+  virtual ~LiveVariablesObserver() {}
 
-  /// AuditStmt - A callback invoked right before invoking the liveness
+  /// ObserveStmt - A callback invoked right before invoking the liveness
   ///  transfer function on the given statement.  If the liveness information
   ///  has been previously calculated by running LiveVariables::runOnCFG,
   ///  then V contains the liveness information after the execution of
   ///  the given statement.
-  virtual void AuditStmt(Stmt* S, LiveVariables& L, llvm::BitVector& V);
+  virtual void ObserveStmt(Stmt* S, LiveVariables& L, llvm::BitVector& V);
 
-  /// AuditBlockExit - A callback invoked right before invoking the liveness
+  /// ObserveBlockExit - A callback invoked right before invoking the liveness
   ///  transfer function on the given block.  If the liveness information
   ///  has been previously calculated by running LiveVariables::runOnCFG,
   ///  then V contains the liveness information after the execution of
   ///  the given block.
-  virtual void AuditBlockExit(const CFGBlock* B, LiveVariables& L,
+  virtual void ObserveBlockExit(const CFGBlock* B, LiveVariables& L,
                               llvm::BitVector& V);  
 };
 
@@ -70,7 +70,7 @@ public:
     void AddKill(Stmt* S, DeclRefExpr* DR) {
       Kills.push_back(std::make_pair(const_cast<const Stmt*>(S),
                                      const_cast<const DeclRefExpr*>(DR)));
-    }
+    }                                 
   };
   
   struct VPair {
@@ -86,13 +86,13 @@ public:
   LiveVariables() : NumDecls(0) {}
 
   /// runOnCFG - Computes live variable information for a given CFG.
-  void runOnCFG(const CFG& cfg, LiveVariablesAuditor* A = NULL);
+  void runOnCFG(const CFG& cfg, LiveVariablesObserver* A = NULL);
   
   /// runOnBlock - Computes live variable information for a given block.
   ///  This should usually be invoked only after previously computing
   ///  live variable information using runOnCFG, and is intended to
   ///  only be used for auditing the liveness within a block.
-  void runOnBlock(const CFGBlock* B, LiveVariablesAuditor* A);
+  void runOnBlock(const CFGBlock* B, LiveVariablesObserver* A);
   
   /// KillsVar - Return true if the specified statement kills the
   ///  specified variable.
@@ -104,7 +104,7 @@ public:
   
   /// IsLive - Return true if a variable is live according to the provided
   ///  livness bitvector.  This is typically used by classes that subclass
-  ///  LiveVariablesAuditor.
+  ///  LiveVariablesObserver.
   bool isLive(llvm::BitVector& V, const Decl* D) const;
   
   /// getVarInfo - Return the liveness information associated with a given

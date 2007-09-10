@@ -23,13 +23,13 @@ using namespace clang;
 
 namespace {
 
-class DeadStoreAuditor : public LiveVariablesAuditor {
+class DeadStoreObserver : public LiveVariablesObserver {
   Preprocessor& PP;
 public:
-  DeadStoreAuditor(Preprocessor& pp) : PP(pp) {}
-  virtual ~DeadStoreAuditor() {}
+  DeadStoreObserver(Preprocessor& pp) : PP(pp) {}
+  virtual ~DeadStoreObserver() {}
 
-  virtual void AuditStmt(Stmt* S, LiveVariables& L, llvm::BitVector& Live) {                                 
+  virtual void ObserveStmt(Stmt* S, LiveVariables& L, llvm::BitVector& Live) {                                 
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {    
       // Is this an assignment?
       if (!B->isAssignmentOp())
@@ -68,7 +68,7 @@ public:
 namespace clang {
 
 void CheckDeadStores(CFG& cfg, LiveVariables& L, Preprocessor& PP) {
-  DeadStoreAuditor A(PP);
+  DeadStoreObserver A(PP);
   
   for (CFG::iterator I = cfg.begin(), E = cfg.end(); I != E; ++I)
     L.runOnBlock(&(*I),&A);

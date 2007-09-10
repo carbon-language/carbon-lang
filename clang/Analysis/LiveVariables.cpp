@@ -117,11 +117,11 @@ class LivenessTFuncs : public StmtVisitor<LivenessTFuncs,void> {
   Stmt* CurrentStmt;
   const CFGBlock* CurrentBlock;
   bool blockPreviouslyProcessed;
-  LiveVariablesAuditor* Auditor;
+  LiveVariablesObserver* Observer;
 public:
-  LivenessTFuncs(LiveVariables& l, LiveVariablesAuditor* A = NULL)
+  LivenessTFuncs(LiveVariables& l, LiveVariablesObserver* A = NULL)
     : L(l), CurrentStmt(NULL), CurrentBlock(NULL),
-      blockPreviouslyProcessed(false), Auditor(A)
+      blockPreviouslyProcessed(false), Observer(A)
   {
     Live.resize(l.getNumDecls());
     KilledAtLeastOnce.resize(l.getNumDecls());
@@ -148,8 +148,8 @@ public:
 };
 
 void LivenessTFuncs::VisitStmt(Stmt* S) {
-  if (Auditor)
-    Auditor->AuditStmt(S,L,Live);
+  if (Observer)
+    Observer->ObserveStmt(S,L,Live);
     
   // Evaluate the transfer functions for all subexpressions.  Note that
   // each invocation of "Visit" will have a side-effect: "Liveness" and "Kills"
@@ -159,8 +159,8 @@ void LivenessTFuncs::VisitStmt(Stmt* S) {
 }
 
 void LivenessTFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
-  if (Auditor)
-    Auditor->AuditStmt(DR,L,Live);
+  if (Observer)
+    Observer->ObserveStmt(DR,L,Live);
     
   // Register a use of the variable.
   Live.set(getIdx(DR->getDecl()));
@@ -240,8 +240,8 @@ LiveVariables::VarInfo& LivenessTFuncs::KillVar(Decl* D) {
 }  
 
 void LivenessTFuncs::VisitAssign(BinaryOperator* B) {
-  if (Auditor)
-    Auditor->AuditStmt(B,L,Live);
+  if (Observer)
+    Observer->ObserveStmt(B,L,Live);
     
   // Check if we are assigning to a variable.
   Stmt* LHS = B->getLHS();
@@ -264,8 +264,8 @@ void LivenessTFuncs::VisitAssign(BinaryOperator* B) {
 }
 
 void LivenessTFuncs::VisitDeclStmt(DeclStmt* DS) {
-  if (Auditor)
-    Auditor->AuditStmt(DS,L,Live);
+  if (Observer)
+    Observer->ObserveStmt(DS,L,Live);
     
   // Declarations effectively "kill" a variable since they cannot possibly
   // be live before they are declared.  Declarations, however, are not kills
@@ -299,8 +299,8 @@ bool LivenessTFuncs::ProcessBlock(const CFGBlock* B) {
     if (llvm::BitVector* V = getBlockEntryLiveness(*I))    
       Live |= *V;
 
-  if (Auditor)
-    Auditor->AuditBlockExit(B,L,Live);
+  if (Observer)
+    Observer->ObserveBlockExit(B,L,Live);
       
   // Tentatively mark all variables alive at the end of the current block
   // as being alive during the whole block.  We then cull these out as
@@ -343,7 +343,7 @@ bool LivenessTFuncs::ProcessBlock(const CFGBlock* B) {
 // runOnCFG - Method to run the actual liveness computation.
 //
 
-void LiveVariables::runOnCFG(const CFG& cfg, LiveVariablesAuditor* Auditor) {
+void LiveVariables::runOnCFG(const CFG& cfg, LiveVariablesObserver* Observer) {
   // Scan a CFG for DeclRefStmts.  For each one, create a VarInfo object.
   {
     RegisterDecls R(*this,cfg);
@@ -355,7 +355,7 @@ void LiveVariables::runOnCFG(const CFG& cfg, LiveVariablesAuditor* Auditor) {
   WorkList.enqueue(&cfg.getExit());
   
   // Create the state for transfer functions.
-  LivenessTFuncs TF(*this,Auditor);
+  LivenessTFuncs TF(*this,Observer);
   
   // Process the worklist until it is empty.
   
@@ -374,9 +374,10 @@ void LiveVariables::runOnCFG(const CFG& cfg, LiveVariablesAuditor* Auditor) {
 }
 
 
-void LiveVariables::runOnBlock(const CFGBlock* B, LiveVariablesAuditor* Auditor)
+void LiveVariables::runOnBlock(const CFGBlock* B,
+                               LiveVariablesObserver* Observer)
 {
-  LivenessTFuncs TF(*this,Auditor);
+  LivenessTFuncs TF(*this,Observer);
   TF.ProcessBlock(B);
 }
 
@@ -423,13 +424,14 @@ const LiveVariables::VarInfo& LiveVariables::getVarInfo(const Decl* D) const {
 }
 
 //===----------------------------------------------------------------------===//
-// Defaults for LiveVariablesAuditor
+// Defaults for LiveVariablesObserver
 
-void LiveVariablesAuditor::AuditStmt(Stmt* S, LiveVariables& L,
-                                     llvm::BitVector& V) {}
+void LiveVariablesObserver::ObserveStmt(Stmt* S, LiveVariables& L,
+                                        llvm::BitVector& V) {}
 
-void LiveVariablesAuditor::AuditBlockExit(const CFGBlock* B, LiveVariables& L,
-                                          llvm::BitVector& V) {}
+void LiveVariablesObserver::ObserveBlockExit(const CFGBlock* B,
+                                             LiveVariables& L,
+                                             llvm::BitVector& V) {}
                             
 //===----------------------------------------------------------------------===//
 // printing liveness state for debugging
