@@ -240,7 +240,8 @@ namespace {
     virtual void VisitCFG(CFG& C) {
       LiveVariables L;
       L.runOnCFG(C);
-      L.dumpBlockLiveness(PP.getSourceManager());
+      L.dumpBlockLiveness(PP.getSourceManager());    
+      L.dumpVarLiveness(PP.getSourceManager());
     }
   };
 } // end anonymous namespace

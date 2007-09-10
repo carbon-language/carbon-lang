@@ -22,7 +22,7 @@ namespace clang {
 
   class Stmt;
   class DeclRefExpr;
-  class Decl;
+  class VarDecl;
   class CFG;
   class CFGBlock;
   class SourceManager;
@@ -45,7 +45,7 @@ public:
   ///  then V contains the liveness information after the execution of
   ///  the given block.
   virtual void ObserveBlockExit(const CFGBlock* B, LiveVariables& L,
-                              llvm::BitVector& V);  
+                                llvm::BitVector& V);
 };
 
 class LiveVariables {
@@ -70,7 +70,10 @@ public:
     void AddKill(Stmt* S, DeclRefExpr* DR) {
       Kills.push_back(std::make_pair(const_cast<const Stmt*>(S),
                                      const_cast<const DeclRefExpr*>(DR)));
-    }                                 
+    }
+    
+    // Dump - prints VarInfo data to stderr.
+    void Dump(SourceManager& M) const;
   };
   
   struct VPair {
@@ -78,7 +81,7 @@ public:
     unsigned Idx;
   };
   
-  typedef llvm::DenseMap<const Decl*, VPair > VarInfoMap;
+  typedef llvm::DenseMap<const VarDecl*, VPair > VarInfoMap;
   typedef llvm::DenseMap<const CFGBlock*, llvm::BitVector > BlockLivenessMap;
 
 public:
@@ -96,22 +99,22 @@ public:
   
   /// KillsVar - Return true if the specified statement kills the
   ///  specified variable.
-  bool KillsVar(const Stmt* S, const Decl* D) const;
+  bool KillsVar(const Stmt* S, const VarDecl* D) const;
   
   /// IsLive - Return true if a variable is live at beginning of a specified
   //    block.
-  bool isLive(const CFGBlock* B, const Decl* D) const;
+  bool isLive(const CFGBlock* B, const VarDecl* D) const;
   
   /// IsLive - Return true if a variable is live according to the provided
   ///  livness bitvector.  This is typically used by classes that subclass
   ///  LiveVariablesObserver.
-  bool isLive(llvm::BitVector& V, const Decl* D) const;
+  bool isLive(llvm::BitVector& V, const VarDecl* D) const;
   
   /// getVarInfo - Return the liveness information associated with a given
   ///  variable.
-  VarInfo& getVarInfo(const Decl* D);
+  VarInfo& getVarInfo(const VarDecl* D);
 
-  const VarInfo& getVarInfo(const Decl* D) const;
+  const VarInfo& getVarInfo(const VarDecl* D) const;
   
   /// getVarInfoMap
   VarInfoMap& getVarInfoMap() { return VarInfos; }
@@ -123,6 +126,9 @@ public:
   
   // dumpBlockLiveness
   void dumpBlockLiveness(SourceManager& M) const;
+  
+  // dumpVarLiveness
+  void dumpVarLiveness(SourceManager& M) const;
   
   // getLiveAtBlockEntryMap
   BlockLivenessMap& getLiveAtBlockEntryMap() { return LiveAtBlockEntryMap; }

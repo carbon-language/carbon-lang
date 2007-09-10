@@ -36,29 +36,28 @@ public:
         return;
       
       // Is this an assignment to a variable?
-      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS())) {
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
         // Is the variable live?
-        if (!L.isLive(Live,DR->getDecl())) {
+        if (!L.isLive(Live,cast<VarDecl>(DR->getDecl()))) {
           SourceRange R = B->getRHS()->getSourceRange();
           PP.getDiagnostics().Report(DR->getSourceRange().Begin(),
                                      diag::warn_dead_store, 0, 0,
                                      &R,1);
                                                                         
         }
-      }
     }
     else if(DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
       // Iterate through the decls.  Warn if any of them (which have
       // initializers) are not live.
-      for (Decl* D = DS->getDecl() ; D != NULL ; D = D->getNextDeclarator())
-        if (VarDecl* V = dyn_cast<VarDecl>(D))
-          if (Expr* E = V->getInit())
-            if (!L.isLive(Live,D)) {
-              SourceRange R = E->getSourceRange();
-              PP.getDiagnostics().Report(D->getLocation(),
-                                         diag::warn_dead_store, 0, 0,
-                                         &R,1);
-            }
+      for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
+                    V = cast<VarDecl>(V->getNextDeclarator()))
+        if (Expr* E = V->getInit())
+          if (!L.isLive(Live,V)) {
+            SourceRange R = E->getSourceRange();
+            PP.getDiagnostics().Report(V->getLocation(),
+                                       diag::warn_dead_store, 0, 0,
+                                       &R,1);
+          }
     }
   }
 };

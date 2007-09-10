@@ -65,10 +65,12 @@ void RegisterDecls::RegisterDeclChain(Decl* D) {
 }
 
 void RegisterDecls::Register(Decl* D) {
-  LiveVariables::VPair& VP = L.getVarInfoMap()[const_cast<const Decl*>(D)];
+  if (VarDecl* V = dyn_cast<VarDecl>(D)) {
+    LiveVariables::VPair& VP = L.getVarInfoMap()[V];
 
-  VP.V.AliveBlocks.reserve(cfg.getNumBlockIDs());
-  VP.Idx = L.getNumDecls()++;
+    VP.V.AliveBlocks.resize(cfg.getNumBlockIDs());
+    VP.Idx = L.getNumDecls()++;
+  }
 }
 
 void RegisterDecls::RegisterUsedDecls() {
@@ -135,7 +137,7 @@ public:
   void VisitDeclStmt(DeclStmt* DS);
   void VisitUnaryOperator(UnaryOperator* U);
 
-  unsigned getIdx(const Decl* D) {
+  unsigned getIdx(const VarDecl* D) {
     LiveVariables::VarInfoMap& V = L.getVarInfoMap();
     LiveVariables::VarInfoMap::iterator I = V.find(D);
     assert (I != V.end());
@@ -144,7 +146,7 @@ public:
   
   bool ProcessBlock(const CFGBlock* B);
   llvm::BitVector* getBlockEntryLiveness(const CFGBlock* B);
-  LiveVariables::VarInfo& KillVar(Decl* D);
+  LiveVariables::VarInfo& KillVar(VarDecl* D);
 };
 
 void LivenessTFuncs::VisitStmt(Stmt* S) {
@@ -163,7 +165,8 @@ void LivenessTFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
     Observer->ObserveStmt(DR,L,Live);
     
   // Register a use of the variable.
-  Live.set(getIdx(DR->getDecl()));
+  if (VarDecl* V = dyn_cast<VarDecl>(DR->getDecl()))
+    Live.set(getIdx(V));
 }
 
 void LivenessTFuncs::VisitStmtExpr(StmtExpr* S) {
@@ -205,7 +208,8 @@ void LivenessTFuncs::VisitUnaryOperator(UnaryOperator* U) {
         }
         else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
           // Treat the --/++/& operator as a kill.
-          LiveVariables::VarInfo& V = KillVar(DR->getDecl());
+          LiveVariables::VarInfo& V = 
+            KillVar(cast<VarDecl>(DR->getDecl()));
 
           if (!blockPreviouslyProcessed)
             V.AddKill(CurrentStmt,DR); 
@@ -225,7 +229,7 @@ void LivenessTFuncs::VisitUnaryOperator(UnaryOperator* U) {
   }
 }
 
-LiveVariables::VarInfo& LivenessTFuncs::KillVar(Decl* D) {
+LiveVariables::VarInfo& LivenessTFuncs::KillVar(VarDecl* D) {
   LiveVariables::VarInfoMap::iterator I =  L.getVarInfoMap().find(D);
   
   assert (I != L.getVarInfoMap().end() && 
@@ -247,7 +251,7 @@ void LivenessTFuncs::VisitAssign(BinaryOperator* B) {
   Stmt* LHS = B->getLHS();
   
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
-    LiveVariables::VarInfo& V = KillVar(DR->getDecl());
+    LiveVariables::VarInfo& V = KillVar(cast<VarDecl>(DR->getDecl()));
     
     // We only need to register kills once, so we check if this block
     // has been previously processed.
@@ -272,7 +276,7 @@ void LivenessTFuncs::VisitDeclStmt(DeclStmt* DS) {
   // in the sense that the value is obliterated, so we do not register
   // DeclStmts as a "kill site" for a variable.
   for (Decl* D = DS->getDecl(); D != NULL ; D = D->getNextDeclarator())
-    KillVar(D);
+    KillVar(cast<VarDecl>(D));
 }
 
 llvm::BitVector* LivenessTFuncs::getBlockEntryLiveness(const CFGBlock* B) {
@@ -385,7 +389,7 @@ void LiveVariables::runOnBlock(const CFGBlock* B,
 // liveness queries
 //
 
-bool LiveVariables::isLive(const CFGBlock* B, const Decl* D) const {
+bool LiveVariables::isLive(const CFGBlock* B, const VarDecl* D) const {
   BlockLivenessMap::const_iterator I = LiveAtBlockEntryMap.find(B);
   assert (I != LiveAtBlockEntryMap.end());
   
@@ -395,13 +399,13 @@ bool LiveVariables::isLive(const CFGBlock* B, const Decl* D) const {
   return I->second[VI->second.Idx];
 }
 
-bool LiveVariables::isLive(llvm::BitVector& Live, const Decl* D) const {
+bool LiveVariables::isLive(llvm::BitVector& Live, const VarDecl* D) const {
   VarInfoMap::const_iterator VI = VarInfos.find(D);
   assert (VI != VarInfos.end());
   return Live[VI->second.Idx];
 }
 
-bool LiveVariables::KillsVar(const Stmt* S, const Decl* D) const {
+bool LiveVariables::KillsVar(const Stmt* S, const VarDecl* D) const {
   VarInfoMap::const_iterator VI = VarInfos.find(D);
   assert (VI != VarInfos.end());
   
@@ -413,13 +417,13 @@ bool LiveVariables::KillsVar(const Stmt* S, const Decl* D) const {
   return false;        
 }
 
-LiveVariables::VarInfo& LiveVariables::getVarInfo(const Decl* D) {
+LiveVariables::VarInfo& LiveVariables::getVarInfo(const VarDecl* D) {
   VarInfoMap::iterator VI = VarInfos.find(D);
   assert (VI != VarInfos.end());
   return VI->second.V;
 }
 
-const LiveVariables::VarInfo& LiveVariables::getVarInfo(const Decl* D) const {
+const LiveVariables::VarInfo& LiveVariables::getVarInfo(const VarDecl* D) const{
   return const_cast<LiveVariables*>(this)->getVarInfo(D);
 }
 
@@ -465,4 +469,44 @@ void LiveVariables::dumpBlockLiveness(SourceManager& M) const {
             
     dumpLiveness(I->second,M);
   }
+
+  fprintf(stderr,"\n");
+}
+
+void LiveVariables::dumpVarLiveness(SourceManager& SM) const {
+  
+  for (VarInfoMap::iterator I = VarInfos.begin(), E=VarInfos.end(); I!=E; ++I) {      
+      SourceLocation PhysLoc = SM.getPhysicalLoc(I->first->getLocation());
+      
+    fprintf(stderr, "[ %s <%s:%u:%u> ]\n", 
+            I->first->getIdentifier()->getName(),
+            SM.getSourceName(PhysLoc),
+            SM.getLineNumber(PhysLoc),
+            SM.getColumnNumber(PhysLoc));
+            
+    I->second.V.Dump(SM);
+  } 
+}                                  
+
+void LiveVariables::VarInfo::Dump(SourceManager& SM) const {
+  fprintf(stderr,"  Blocks Alive:");
+  for (unsigned i = 0; i < AliveBlocks.size(); ++i) {
+    if (i % 5 == 0)
+      fprintf(stderr,"\n    ");
+
+    fprintf(stderr," B%d", i);
+  }
+  
+  fprintf(stderr,"\n  Kill Sites:\n");
+  for (KillsSet::const_iterator I = Kills.begin(), E = Kills.end(); I!=E; ++I) {
+    SourceLocation PhysLoc = 
+      SM.getPhysicalLoc(I->second->getSourceRange().Begin());
+      
+    fprintf(stderr, "    <%s:%u:%u>\n",
+            SM.getSourceName(PhysLoc),
+            SM.getLineNumber(PhysLoc),
+            SM.getColumnNumber(PhysLoc));
+  }
+  
+  fprintf(stderr,"\n");
 }
