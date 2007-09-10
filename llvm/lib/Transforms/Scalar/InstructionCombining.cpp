@@ -4691,14 +4691,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
 
-  // icmp of GlobalValues can never equal each other as long as they aren't
-  // external weak linkage type.
-  if (GlobalValue *GV0 = dyn_cast<GlobalValue>(Op0))
-    if (GlobalValue *GV1 = dyn_cast<GlobalValue>(Op1))
-      if (!GV0->hasExternalWeakLinkage() || !GV1->hasExternalWeakLinkage())
-        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty,
-                                                       !isTrueWhenEqual(I)));
-
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
   if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) ||
@@ -6399,6 +6391,7 @@ static bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // of casts in the input.
     if (I->getOpcode() == CastOpc)
       return true;
+    
     break;
   default:
     // TODO: Can handle more cases here.
