@@ -261,11 +261,28 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
           QualType ArgTy = QualType::getFromOpaquePtr(FTI.ArgInfo[i].TypeInfo);
           assert(!ArgTy.isNull() && "Couldn't parse type?");
-          
+          //
+          // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
+          // This matches the conversion that is done in 
+          // Sema::ParseParamDeclarator(). Without this conversion, the
+          // argument type in the function prototype *will not* match the
+          // type in ParmVarDecl (which makes the code generator unhappy).
+          //
+          // FIXME: We still apparently need the conversion in 
+          // Sema::ParseParamDeclarator(). This doesn't make any sense, since
+          // it should be driving off the type being created here.
+          // 
+          // FIXME: If a source translation tool needs to see the original type,
+          // then we need to consider storing both types somewhere...
+          // 
+          if (const ArrayType *AT = ArgTy->getAsArrayType())
+            ArgTy = Context.getPointerType(AT->getElementType());
+          else if (ArgTy->isFunctionType())
+            ArgTy = Context.getPointerType(ArgTy);
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
           // int(void) as a FunctionTypeProto with an empty argument list.
-          if (ArgTy->isVoidType()) {
+          else if (ArgTy->isVoidType()) {
             // If this is something like 'float(int, void)', reject it.  'void'
             // is an incomplete type (C99 6.2.5p19) and function decls cannot
             // have arguments of incomplete type.
