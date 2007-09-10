@@ -1941,6 +1941,16 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
     assert(0 && "Unhandled SetCC Equivalent!");
     abort();
   }
+  // fold (not (zext (setcc x, y))) -> (zext (not (setcc x, y)))
+  if (N1C && N1C->getValue() == 1 && N0.getOpcode() == ISD::ZERO_EXTEND &&
+      N0.Val->hasOneUse() && isSetCCEquivalent(N0.getOperand(0), LHS, RHS, CC)){
+    SDOperand V = N0.getOperand(0);
+    V = DAG.getNode(ISD::XOR, V.getValueType(), V, 
+                    DAG.getConstant(V.getValueType(), 1));
+    AddToWorkList(V.Val);
+    return DAG.getNode(ISD::ZERO_EXTEND, VT, V);
+  }
+  
   // fold !(x or y) -> (!x and !y) iff x or y are setcc
   if (N1C && N1C->getValue() == 1 && VT == MVT::i1 &&
       (N0.getOpcode() == ISD::OR || N0.getOpcode() == ISD::AND)) {
