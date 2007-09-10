@@ -2969,50 +2969,64 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
 void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {
-    if (F->isDeclaration())
+    if (F->isDeclaration()) {
       if (unsigned IID = F->getIntrinsicID()) {
         RenameFn = visitIntrinsicCall(I, IID);
         if (!RenameFn)
           return;
-      } else {    // Not an LLVM intrinsic.
-        const std::string &Name = F->getName();
-        if (Name[0] == 'c' && (Name == "copysign" || Name == "copysignf")) {
-          if (I.getNumOperands() == 3 &&   // Basic sanity checks.
-              I.getOperand(1)->getType()->isFloatingPoint() &&
-              I.getType() == I.getOperand(1)->getType() &&
-              I.getType() == I.getOperand(2)->getType()) {
-            SDOperand LHS = getValue(I.getOperand(1));
-            SDOperand RHS = getValue(I.getOperand(2));
-            setValue(&I, DAG.getNode(ISD::FCOPYSIGN, LHS.getValueType(),
-                                     LHS, RHS));
-            return;
-          }
-        } else if (Name[0] == 'f' && (Name == "fabs" || Name == "fabsf")) {
-          if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-              I.getOperand(1)->getType()->isFloatingPoint() &&
-              I.getType() == I.getOperand(1)->getType()) {
-            SDOperand Tmp = getValue(I.getOperand(1));
-            setValue(&I, DAG.getNode(ISD::FABS, Tmp.getValueType(), Tmp));
-            return;
-          }
-        } else if (Name[0] == 's' && (Name == "sin" || Name == "sinf")) {
-          if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-              I.getOperand(1)->getType()->isFloatingPoint() &&
-              I.getType() == I.getOperand(1)->getType()) {
-            SDOperand Tmp = getValue(I.getOperand(1));
-            setValue(&I, DAG.getNode(ISD::FSIN, Tmp.getValueType(), Tmp));
-            return;
-          }
-        } else if (Name[0] == 'c' && (Name == "cos" || Name == "cosf")) {
-          if (I.getNumOperands() == 2 &&   // Basic sanity checks.
-              I.getOperand(1)->getType()->isFloatingPoint() &&
-              I.getType() == I.getOperand(1)->getType()) {
-            SDOperand Tmp = getValue(I.getOperand(1));
-            setValue(&I, DAG.getNode(ISD::FCOS, Tmp.getValueType(), Tmp));
-            return;
-          }
+      }
+    }
+
+    // Check for well-known libc/libm calls.  If the function is internal, it
+    // can't be a library call.
+    unsigned NameLen = F->getNameLen();
+    if (!F->hasInternalLinkage() && NameLen) {
+      const char *NameStr = F->getNameStart();
+      if (NameStr[0] == 'c' &&
+          ((NameLen == 8 && !strcmp(NameStr, "copysign")) ||
+           (NameLen == 9 && !strcmp(NameStr, "copysignf")))) {
+        if (I.getNumOperands() == 3 &&   // Basic sanity checks.
+            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getType() == I.getOperand(1)->getType() &&
+            I.getType() == I.getOperand(2)->getType()) {
+          SDOperand LHS = getValue(I.getOperand(1));
+          SDOperand RHS = getValue(I.getOperand(2));
+          setValue(&I, DAG.getNode(ISD::FCOPYSIGN, LHS.getValueType(),
+                                   LHS, RHS));
+          return;
+        }
+      } else if (NameStr[0] == 'f' &&
+                 ((NameLen == 4 && !strcmp(NameStr, "fabs")) ||
+                  (NameLen == 5 && !strcmp(NameStr, "fabsf")))) {
+        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getType() == I.getOperand(1)->getType()) {
+          SDOperand Tmp = getValue(I.getOperand(1));
+          setValue(&I, DAG.getNode(ISD::FABS, Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if (NameStr[0] == 's' && 
+                 ((NameLen == 3 && !strcmp(NameStr, "sin")) ||
+                  (NameLen == 4 && !strcmp(NameStr, "sinf")))) {
+        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getType() == I.getOperand(1)->getType()) {
+          SDOperand Tmp = getValue(I.getOperand(1));
+          setValue(&I, DAG.getNode(ISD::FSIN, Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if (NameStr[0] == 'c' &&
+                 ((NameLen == 3 && !strcmp(NameStr, "cos")) ||
+                  (NameLen == 4 && !strcmp(NameStr, "cosf")))) {
+        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getType() == I.getOperand(1)->getType()) {
+          SDOperand Tmp = getValue(I.getOperand(1));
+          setValue(&I, DAG.getNode(ISD::FCOS, Tmp.getValueType(), Tmp));
+          return;
         }
       }
+    }
   } else if (isa<InlineAsm>(I.getOperand(0))) {
     visitInlineAsm(I);
     return;
