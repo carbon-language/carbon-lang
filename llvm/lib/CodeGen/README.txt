@@ -143,3 +143,8 @@ load [T + 7]
 ...
 load [T + 15]
 //===---------------------------------------------------------------------===//
+
+It's not always a good idea to choose rematerialization over spilling. If all
+the load / store instructions would be folded then spilling is cheaper because
+it won't require new live intervals / registers. See 2003-05-31-LongShifts for
+an example.
