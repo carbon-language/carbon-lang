@@ -379,7 +379,6 @@ void LoopIndexSplit::findSplitCondition() {
 
   SplitInfo SD;
   // Check all basic block's terminators.
-
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
     BasicBlock *BB = *I;
@@ -395,10 +394,10 @@ void LoopIndexSplit::findSplitCondition() {
 
     ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
     if (!CI || CI == ExitCondition)
-      return;
+      continue;
 
     if (CI->getPredicate() == ICmpInst::ICMP_NE)
-      return;
+      continue;
 
     // If split condition predicate is GT or GE then first execute
     // false branch of split condition.
@@ -508,7 +507,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   //      SplitCondition : icmp eq i32 IndVar, SplitValue
   // into
   //      c1 = icmp uge i32 SplitValue, StartValue
-  //      c2 = icmp ult i32 vSplitValue, ExitValue
+  //      c2 = icmp ult i32 SplitValue, ExitValue
   //      and i32 c1, c2 
   bool SignedPredicate = ExitCondition->isSignedPredicate();
   Instruction *C1 = new ICmpInst(SignedPredicate ? 
