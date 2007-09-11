@@ -161,6 +161,9 @@ let Namespace = "X86" in {
   def ST5 : Register<"ST(5)">, DwarfRegNum<16>;
   def ST6 : Register<"ST(6)">, DwarfRegNum<17>;
   def ST7 : Register<"ST(7)">, DwarfRegNum<18>; 
+
+  // Status flags register
+  def EFLAGS : Register<"EFLAGS">;
 }
 
 
@@ -516,3 +519,6 @@ def VR128 : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],128,
     }
   }];
 }
+
+// Status flags registers.
+def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]>;
