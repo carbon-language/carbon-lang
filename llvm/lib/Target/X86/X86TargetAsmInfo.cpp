@@ -68,6 +68,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
       StaticCtorsSection = ".mod_init_func";
       StaticDtorsSection = ".mod_term_func";
     }
+    PersonalityPrefix = "L";
+    PersonalitySuffix = "$non_lazy_ptr";
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";

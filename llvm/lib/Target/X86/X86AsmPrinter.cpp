@@ -352,6 +352,15 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
     O << "\n";
 
+    if (MMI) {
+      // Add the (possibly multiple) personalities to the set of global values.
+      const std::vector<Function *>& Personalities = MMI->getPersonalities();
+
+      for (std::vector<Function *>::const_iterator I = Personalities.begin(),
+             E = Personalities.end(); I != E; ++I)
+        if (*I) GVStubs.insert("_" + (*I)->getName());
+    }
+
     // Output stubs for external and common global variables.
     if (GVStubs.begin() != GVStubs.end())
       SwitchToDataSection(

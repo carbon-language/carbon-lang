@@ -30,10 +30,11 @@ namespace llvm {
 
 struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
   DwarfWriter DW;
+  MachineModuleInfo *MMI;
 
   X86SharedAsmPrinter(std::ostream &O, X86TargetMachine &TM,
                       const TargetAsmInfo *T)
-    : AsmPrinter(O, TM, T), DW(O, this, T) {
+    : AsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 

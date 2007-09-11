@@ -2789,26 +2789,15 @@ private:
     if (Personality) {
       Asm->EmitULEB128Bytes(7);
       Asm->EOL("Augmentation Size");
-      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
-      Asm->EOL("Personality (pcrel sdata4)");
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4 | DW_EH_PE_indirect);
+      Asm->EOL("Personality (pcrel sdata4 indirect)");
       
-      if (TAI->needsSet()) {
-        O << "\t.set\t";
-        PrintLabelName("set", SetCounter);
-        O << ",";
-        Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
-        O << "-" << TAI->getPCSymbol();
-        Asm->EOL("Set Personality");
-        PrintRelDirective();
-        PrintLabelName("set", SetCounter);
-        Asm->EOL("Personality");
-        ++SetCounter;
-      } else {
-        PrintRelDirective();
-        Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
-        O << "-" << TAI->getPCSymbol();
-        Asm->EOL("Personality");
-      }
+      PrintRelDirective();
+      O << TAI->getPersonalityPrefix();
+      Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
+      O << TAI->getPersonalitySuffix();
+      O << "-" << TAI->getPCSymbol();
+      Asm->EOL("Personality");
 
       Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
       Asm->EOL("LSDA Encoding (pcrel)");
@@ -3297,7 +3286,7 @@ public:
     const std::vector<Function *> Personalities = MMI->getPersonalities();
     for (unsigned i =0; i < Personalities.size(); ++i)
       EmitCommonEHFrame(Personalities[i], i);
-    
+
     for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
            E = EHFrames.end(); I != E; ++I)
       EmitEHFrame(*I);

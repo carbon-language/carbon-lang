@@ -74,7 +74,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->doesSupportDebugInformation()) {
     // Let PassManager know we need debug information and relay
     // the MachineModuleInfo address on to DwarfWriter.
-    DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
+    MMI = &getAnalysis<MachineModuleInfo>();
+    DW.SetModuleInfo(MMI);
   }
 
   SetupMachineFunction(MF);

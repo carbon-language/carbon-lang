@@ -38,6 +38,8 @@ TargetAsmInfo::TargetAsmInfo() :
   GlobalVarAddrSuffix(""),
   FunctionAddrPrefix(""),
   FunctionAddrSuffix(""),
+  PersonalityPrefix(""),
+  PersonalitySuffix(""),
   InlineAsmStart("#APP"),
   InlineAsmEnd("#NO_APP"),
   AssemblerDialect(0),
