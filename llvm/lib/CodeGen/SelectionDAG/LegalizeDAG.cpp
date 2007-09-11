@@ -491,8 +491,9 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   if (!UseCP) {
     const APFloat& Val = LLVMC->getValueAPF();
     return isDouble
-      ? DAG.getConstant(DoubleToBits(Val.convertToDouble()), MVT::i64)
-      : DAG.getConstant(FloatToBits(Val.convertToFloat()), MVT::i32);
+      ? DAG.getConstant(*Val.convertToAPInt().getRawData(), MVT::i64)
+      : DAG.getConstant((uint32_t )*Val.convertToAPInt().getRawData(), 
+                        MVT::i32);
   }
 
   if (isDouble && CFP->isValueValidForType(MVT::f32, CFP->getValueAPF()) &&
@@ -1980,12 +1981,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // together.
       if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
         if (CFP->getValueType(0) == MVT::f32) {
-          Tmp3 = DAG.getConstant(FloatToBits(CFP->getValueAPF().
-                                             convertToFloat()), MVT::i32);
+          Tmp3 = DAG.getConstant((uint32_t)*CFP->getValueAPF().
+                                          convertToAPInt().getRawData(),
+                                  MVT::i32);
         } else {
           assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
-          Tmp3 = DAG.getConstant(DoubleToBits(CFP->getValueAPF().
-                                              convertToDouble()), MVT::i64);
+          Tmp3 = DAG.getConstant(*CFP->getValueAPF().convertToAPInt().
+                                   getRawData(), MVT::i64);
         }
         Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                               SVOffset, isVolatile, Alignment);

@@ -3800,7 +3800,8 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       default: assert(0 && "Unknown FP type");
       case MVT::f32:
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i32)) {
-          Tmp = DAG.getConstant(FloatToBits(CFP->getValueAPF().convertToFloat()), MVT::i32);
+          Tmp = DAG.getConstant((uint32_t)*CFP->getValueAPF().
+                              convertToAPInt().getRawData(), MVT::i32);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
@@ -3808,7 +3809,8 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
         break;
       case MVT::f64:
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i64)) {
-          Tmp = DAG.getConstant(DoubleToBits(CFP->getValueAPF().convertToDouble()), MVT::i64);
+          Tmp = DAG.getConstant(*CFP->getValueAPF().convertToAPInt().
+                                  getRawData(), MVT::i64);
           return DAG.getStore(Chain, Tmp, Ptr, ST->getSrcValue(),
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
@@ -3816,7 +3818,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
           // Many FP stores are not make apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
           // 64-bit integer store into two 32-bit stores.
-          uint64_t Val = DoubleToBits(CFP->getValueAPF().convertToDouble());
+          uint64_t Val = *CFP->getValueAPF().convertToAPInt().getRawData();
           SDOperand Lo = DAG.getConstant(Val & 0xFFFFFFFF, MVT::i32);
           SDOperand Hi = DAG.getConstant(Val >> 32, MVT::i32);
           if (!TLI.isLittleEndian()) std::swap(Lo, Hi);

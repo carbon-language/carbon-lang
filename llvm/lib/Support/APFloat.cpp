@@ -339,7 +339,8 @@ APFloat::~APFloat()
 unsigned int
 APFloat::partCount() const
 {
-  return partCountForBits(semantics->precision + 1);
+  return partCountForBits(semantics->precision + 
+                          semantics->implicitIntegerBit ? 1 : 0);
 }
 
 unsigned int
@@ -1593,8 +1594,41 @@ APFloat::getHashValue() const {
 // Denormals have exponent minExponent in APFloat, but minExponent-1 in
 // the actual IEEE respresentation.  We compensate for that here.
 
-double
-APFloat::convertToDouble() const {
+APInt
+APFloat::convertF80LongDoubleAPFloatToAPInt() const {
+  assert(semantics == (const llvm::fltSemantics* const)&x87DoubleExtended);
+  assert (partCount()==1);
+
+  uint64_t myexponent, mysignificand;
+
+  if (category==fcNormal) {
+    myexponent = exponent+16383; //bias
+    mysignificand = *significandParts();
+    if (myexponent==1 && !(mysignificand & 0x8000000000000000ULL))
+      myexponent = 0;   // denormal
+  } else if (category==fcZero) {
+    myexponent = 0;
+    mysignificand = 0;
+  } else if (category==fcInfinity) {
+    myexponent = 0x7fff;
+    mysignificand = 0x8000000000000000ULL;
+  } else if (category==fcNaN) {
+    myexponent = 0x7fff;
+    mysignificand = *significandParts();
+  } else
+    assert(0);
+
+  uint64_t words[2];
+  words[0] =  (((uint64_t)sign & 1) << 63) | 
+              ((myexponent & 0x7fff) <<  48) | 
+              ((mysignificand >>16) & 0xffffffffffffLL);
+  words[1] = mysignificand & 0xffff;
+  APInt api(80, 2, words);
+  return api;
+}
+
+APInt
+APFloat::convertDoubleAPFloatToAPInt() const {
   assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
   assert (partCount()==1);
 
@@ -1617,16 +1651,17 @@ APFloat::convertToDouble() const {
   } else
     assert(0);
 
-  return BitsToDouble((((uint64_t)sign & 1) << 63) | 
-        ((myexponent & 0x7ff) <<  52) | 
-        (mysignificand & 0xfffffffffffffLL));
+  APInt api(64, (((((uint64_t)sign & 1) << 63) | 
+                 ((myexponent & 0x7ff) <<  52) | 
+                 (mysignificand & 0xfffffffffffffLL))));
+  return api;
 }
 
-float
-APFloat::convertToFloat() const {
+APInt
+APFloat::convertFloatAPFloatToAPInt() const {
   assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
   assert (partCount()==1);
-
+  
   uint32_t myexponent, mysignificand;
 
   if (category==fcNormal) {
@@ -1646,12 +1681,78 @@ APFloat::convertToFloat() const {
   } else
     assert(0);
 
-  return BitsToFloat(((sign&1) << 31) | ((myexponent&0xff) << 23) | 
-        (mysignificand & 0x7fffff));
+  APInt api(32, (((sign&1) << 31) | ((myexponent&0xff) << 23) | 
+                 (mysignificand & 0x7fffff)));
+  return api;
 }
 
-APFloat::APFloat(double d) {
-  uint64_t i = DoubleToBits(d);
+APInt
+APFloat::convertToAPInt() const {
+  if (semantics == (const llvm::fltSemantics* const)&IEEEsingle)
+    return convertFloatAPFloatToAPInt();
+  else if (semantics == (const llvm::fltSemantics* const)&IEEEdouble)
+    return convertDoubleAPFloatToAPInt();
+  else if (semantics == (const llvm::fltSemantics* const)&x87DoubleExtended)
+    return convertF80LongDoubleAPFloatToAPInt();
+  else 
+    assert(0);
+}
+
+float 
+APFloat::convertToFloat() const {
+  assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
+  APInt api = convertToAPInt();
+  return api.bitsToFloat();
+}
+
+double 
+APFloat::convertToDouble() const {
+  assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
+  APInt api = convertToAPInt();
+  return api.bitsToDouble();
+}
+
+/// Integer bit is explicit in this format.  Current Intel book does not
+/// define meaning of:
+///  exponent = all 1's, integer bit not set.
+///  exponent = 0, integer bit set. (formerly "psuedodenormals")
+///  exponent!=0 nor all 1's, integer bit not set. (formerly "unnormals")
+void
+APFloat::initFromF80LongDoubleAPInt(const APInt &api) {
+  assert(api.getBitWidth()==80);
+  uint64_t i1 = api.getRawData()[0];
+  uint64_t i2 = api.getRawData()[1];
+  uint64_t myexponent = (i1 >> 48) & 0x7fff;
+  uint64_t mysignificand = ((i1 << 16) &  0xffffffffffff0000ULL) |
+                          (i2 & 0xffff);
+
+  initialize(&APFloat::x87DoubleExtended);
+  assert(partCount()==1);
+
+  sign = i1>>63;
+  if (myexponent==0 && mysignificand==0) {
+    // exponent, significand meaningless
+    category = fcZero;
+  } else if (myexponent==0x7fff && mysignificand==0x8000000000000000ULL) {
+    // exponent, significand meaningless
+    category = fcInfinity;
+  } else if (myexponent==0x7fff && mysignificand!=0x8000000000000000ULL) {
+    // exponent meaningless
+    category = fcNaN;
+    *significandParts() = mysignificand;
+  } else {
+    category = fcNormal;
+    exponent = myexponent - 16383;
+    *significandParts() = mysignificand;
+    if (myexponent==0)          // denormal
+      exponent = -16382;
+ }
+}
+
+void
+APFloat::initFromDoubleAPInt(const APInt &api) {
+  assert(api.getBitWidth()==64);
+  uint64_t i = *api.getRawData();
   uint64_t myexponent = (i >> 52) & 0x7ff;
   uint64_t mysignificand = i & 0xfffffffffffffLL;
 
@@ -1680,8 +1781,10 @@ APFloat::APFloat(double d) {
  }
 }
 
-APFloat::APFloat(float f) {
-  uint32_t i = FloatToBits(f);
+void
+APFloat::initFromFloatAPInt(const APInt & api) {
+  assert(api.getBitWidth()==32);
+  uint32_t i = (uint32_t)*api.getRawData();
   uint32_t myexponent = (i >> 23) & 0xff;
   uint32_t mysignificand = i & 0x7fffff;
 
@@ -1709,3 +1812,34 @@ APFloat::APFloat(float f) {
       *significandParts() |= 0x800000; // integer bit
   }
 }
+
+/// Treat api as containing the bits of a floating point number.  Currently
+/// we infer the floating point type from the size of the APInt.  FIXME: This
+/// breaks when we get to PPC128 and IEEE128 (but both cannot exist in the
+/// same compile...)
+void
+APFloat::initFromAPInt(const APInt& api) {
+  if (api.getBitWidth() == 32)
+    return initFromFloatAPInt(api);
+  else if (api.getBitWidth()==64)
+    return initFromDoubleAPInt(api);
+  else if (api.getBitWidth()==80)
+    return initFromF80LongDoubleAPInt(api);
+  else
+    assert(0);
+}
+
+APFloat::APFloat(const APInt& api) {
+  initFromAPInt(api);
+}
+
+APFloat::APFloat(float f) {
+  APInt api = APInt(32, 0);
+  initFromAPInt(api.floatToBits(f));
+}
+
+APFloat::APFloat(double d) {
+  APInt api = APInt(64, 0);
+  initFromAPInt(api.doubleToBits(d));
+}
+

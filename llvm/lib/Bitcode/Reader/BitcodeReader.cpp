@@ -622,23 +622,24 @@ bool BitcodeReader::ParseConstants() {
                                  NumWords, &Words[0]));
       break;
     }
-    case bitc::CST_CODE_FLOAT:     // FLOAT: [fpval]
+    case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
       if (Record.empty())
         return Error("Invalid FLOAT record");
       if (CurTy == Type::FloatTy)
-        V = ConstantFP::get(CurTy, APFloat(BitsToFloat(Record[0])));
+        V = ConstantFP::get(CurTy, APFloat(APInt(32, (uint32_t)Record[0])));
       else if (CurTy == Type::DoubleTy)
-        V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
+        V = ConstantFP::get(CurTy, APFloat(APInt(64, Record[0])));
       // FIXME: Make long double constants work.  BitsToDouble does not make it.
       else if (CurTy == Type::X86_FP80Ty)
-        V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
+        V = ConstantFP::get(CurTy, APFloat(APInt(80, 2, &Record[0])));
       else if (CurTy == Type::FP128Ty)
-        V = ConstantFP::get(CurTy, APFloat(BitsToDouble(Record[0])));
+        V = ConstantFP::get(CurTy, APFloat(APInt(128, 2, &Record[0])));
       else if (CurTy == Type::PPC_FP128Ty)
         assert(0 && "PowerPC long double constants not handled yet.");
       else
         V = UndefValue::get(CurTy);
       break;
+    }
       
     case bitc::CST_CODE_AGGREGATE: {// AGGREGATE: [n x value number]
       if (Record.empty())

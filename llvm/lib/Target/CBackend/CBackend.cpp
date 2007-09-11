@@ -1715,13 +1715,16 @@ void CWriter::printFloatingPointConstants(Function &F) {
 
         if (FPC->getType() == Type::DoubleTy) {
           double Val = FPC->getValueAPF().convertToDouble();
+          uint64_t i = *FPC->getValueAPF().convertToAPInt().getRawData();
           Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
-              << " = 0x" << std::hex << DoubleToBits(Val) << std::dec
+              << " = 0x" << std::hex << i << std::dec
               << "ULL;    /* " << Val << " */\n";
         } else if (FPC->getType() == Type::FloatTy) {
           float Val = FPC->getValueAPF().convertToFloat();
+          uint32_t i = (uint32_t)*FPC->getValueAPF().convertToAPInt().
+                                    getRawData();
           Out << "static const ConstantFloatTy FPConstant" << FPCounter++
-              << " = 0x" << std::hex << FloatToBits(Val) << std::dec
+              << " = 0x" << std::hex << i << std::dec
               << "U;    /* " << Val << " */\n";
         } else
           assert(0 && "Unknown float type!");

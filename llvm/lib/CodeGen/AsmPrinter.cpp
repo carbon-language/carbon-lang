@@ -830,29 +830,31 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     // FP Constants are printed as integer constants to avoid losing
     // precision...
     if (CFP->getType() == Type::DoubleTy) {
-      double Val = CFP->getValueAPF().convertToDouble();
+      double Val = CFP->getValueAPF().convertToDouble();  // for comment only
+      uint64_t i = *CFP->getValueAPF().convertToAPInt().getRawData();
       if (TAI->getData64bitsDirective())
-        O << TAI->getData64bitsDirective() << DoubleToBits(Val) << "\t"
+        O << TAI->getData64bitsDirective() << i << "\t"
           << TAI->getCommentString() << " double value: " << Val << "\n";
       else if (TD->isBigEndian()) {
-        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val) >> 32)
+        O << TAI->getData32bitsDirective() << unsigned(i >> 32)
           << "\t" << TAI->getCommentString()
           << " double most significant word " << Val << "\n";
-        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val))
+        O << TAI->getData32bitsDirective() << unsigned(i)
           << "\t" << TAI->getCommentString()
           << " double least significant word " << Val << "\n";
       } else {
-        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val))
+        O << TAI->getData32bitsDirective() << unsigned(i)
           << "\t" << TAI->getCommentString()
           << " double least significant word " << Val << "\n";
-        O << TAI->getData32bitsDirective() << unsigned(DoubleToBits(Val) >> 32)
+        O << TAI->getData32bitsDirective() << unsigned(i >> 32)
           << "\t" << TAI->getCommentString()
           << " double most significant word " << Val << "\n";
       }
       return;
     } else {
-      float Val = CFP->getValueAPF().convertToFloat();
-      O << TAI->getData32bitsDirective() << FloatToBits(Val)
+      float Val = CFP->getValueAPF().convertToFloat();  // for comment only
+      O << TAI->getData32bitsDirective()
+        << (uint32_t)*CFP->getValueAPF().convertToAPInt().getRawData()
         << "\t" << TAI->getCommentString() << " float " << Val << "\n";
       return;
     }

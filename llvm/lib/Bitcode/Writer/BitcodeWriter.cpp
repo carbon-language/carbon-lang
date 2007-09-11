@@ -527,13 +527,20 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       Code = bitc::CST_CODE_FLOAT;
       const Type *Ty = CFP->getType();
       if (Ty == Type::FloatTy)
-        Record.push_back(FloatToBits(CFP->getValueAPF().convertToFloat()));
+        Record.push_back((uint32_t)*CFP->getValueAPF().convertToAPInt().
+                                      getRawData());
       else if (Ty == Type::DoubleTy) {
-        Record.push_back(DoubleToBits(CFP->getValueAPF().convertToDouble()));
-      // FIXME: make long double constants work.
-      } else if (Ty == Type::X86_FP80Ty ||
-                 Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {
-        assert (0 && "Long double constants not handled yet.");
+        Record.push_back(*CFP->getValueAPF().convertToAPInt().getRawData());
+      } else if (Ty == Type::X86_FP80Ty) {
+        const uint64_t *p = CFP->getValueAPF().convertToAPInt().getRawData();
+        Record.push_back(p[0]);
+        Record.push_back((uint16_t)p[1]);
+      } else if (Ty == Type::FP128Ty) {
+        const uint64_t *p = CFP->getValueAPF().convertToAPInt().getRawData();
+        Record.push_back(p[0]);
+        Record.push_back(p[1]);
+      } else if (Ty == Type::PPC_FP128Ty) {
+        assert(0 && "PowerPC long double constants not handled yet.");
       } else {
         assert (0 && "Unknown FP type!");
       }

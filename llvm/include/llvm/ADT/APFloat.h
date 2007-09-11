@@ -170,6 +170,7 @@ namespace llvm {
     APFloat(const fltSemantics &, fltCategory, bool negative);
     APFloat(double d);
     APFloat(float f);
+    APFloat(const APInt &);
     APFloat(const APFloat &);
     ~APFloat();
 
@@ -191,6 +192,7 @@ namespace llvm {
     opStatus convertFromInteger(const integerPart *, unsigned int, bool,
 				roundingMode);
     opStatus convertFromString(const char *, roundingMode);
+    APInt convertToAPInt() const;
     double convertToDouble() const;
     float convertToFloat() const;
 
@@ -256,6 +258,13 @@ namespace llvm {
 					roundingMode);
     lostFraction combineLostFractions(lostFraction, lostFraction);
     opStatus convertFromHexadecimalString(const char *, roundingMode);
+    APInt convertFloatAPFloatToAPInt() const;
+    APInt convertDoubleAPFloatToAPInt() const;
+    APInt convertF80LongDoubleAPFloatToAPInt() const;
+    void initFromAPInt(const APInt& api);
+    void initFromFloatAPInt(const APInt& api);
+    void initFromDoubleAPInt(const APInt& api);
+    void initFromF80LongDoubleAPInt(const APInt& api);
 
     void assign(const APFloat &);
     void copySignificand(const APFloat &);
