@@ -181,7 +181,7 @@ public:
   
 private:
   void CopyFrom(const DenseMap& other) {
-    if (NumEntries != 0) {
+    if (NumBuckets != 0 && !KeyInfoT::isPod()) {
       const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
       for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
         if (P->first != EmptyKey && P->first != TombstoneKey)
@@ -197,8 +197,14 @@ private:
       delete[] reinterpret_cast<char*>(Buckets);
     Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT) *
                                                   other.NumBuckets]);
-    memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
     
+    if (KeyInfoT::isPod())
+      memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
+    else
+      for (size_t i = 0; i < other.NumBuckets; ++i) {
+        new (Buckets[i].first) KeyT(other.Buckets[i].first);
+        new (Buckets[i].second) ValueT(other.Buckets[i].second);
+      }
     NumBuckets = other.NumBuckets;
   }
   
