@@ -18,6 +18,7 @@
 #include "clang/AST/CFG.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/AST/ASTContext.h"
 
 using namespace clang;
 
@@ -25,8 +26,11 @@ namespace {
 
 class DeadStoreObserver : public LiveVariablesObserver {
   Preprocessor& PP;
+  ASTContext Ctx;
 public:
-  DeadStoreObserver(Preprocessor& pp) : PP(pp) {}
+  DeadStoreObserver(Preprocessor& pp) : 
+    PP(pp), Ctx(PP.getTargetInfo(), PP.getIdentifierTable()) {}
+    
   virtual ~DeadStoreObserver() {}
 
   virtual void ObserveStmt(Stmt* S, LiveVariables& L, llvm::BitVector& Live) {                                 
@@ -52,12 +56,22 @@ public:
       for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
                     V = cast_or_null<VarDecl>(V->getNextDeclarator()))
         if (Expr* E = V->getInit())
-          if (!L.isLive(Live,V)) {
-            SourceRange R = E->getSourceRange();
-            PP.getDiagnostics().Report(V->getLocation(),
-                                       diag::warn_dead_store, 0, 0,
-                                       &R,1);
-          }
+          if (!L.isLive(Live,V))
+            // Special case: check for initializations with constants.
+            //
+            //  e.g. : int x = 0;
+            //
+            // If x is EVER assigned a new value later, don't issue
+            // a warning.  This is because such initialization can be
+            // due to defensive programming.
+            if (!E->isConstantExpr(Ctx,NULL) || 
+                L.getVarInfo(V).Kills.size() == 0) {
+              // Flag a warning.
+              SourceRange R = E->getSourceRange();
+              PP.getDiagnostics().Report(V->getLocation(),
+                                         diag::warn_dead_store, 0, 0,
+                                         &R,1);
+            }
     }
   }
 };
