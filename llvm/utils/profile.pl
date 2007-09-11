@@ -62,11 +62,10 @@ my $BytecodeFile = $ARGV[0];
 
 shift @ARGV;
 
-my $LLIPath = `which lli`;
-$LLIPath = `dirname $LLIPath`;
-chomp $LLIPath;
+my $libdir = `llvm-config --libdir`;
+chomp $libdir;
 
-my $LibProfPath = $LLIPath . "/../../Debug/lib/profile_rt.so";
+my $LibProfPath = $libdir . "/profile_rt.so";
 
 system "opt -q -f $ProfilePass $BytecodeFile -o $BytecodeFile.inst";
 system "lli -fake-argv0 '$BytecodeFile' -load $LibProfPath " .
