@@ -855,6 +855,35 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   return IDecl;
 }
 
+void Sema::ObjcAddInstanceVariable(DeclTy *ClassDecl, DeclTy *Ivar,
+                                   tok::ObjCKeywordKind visibility) {
+  assert((ClassDecl && Ivar) && "missing class or instance variable");
+  ObjcInterfaceDecl *OInterface = dyn_cast<ObjcInterfaceDecl>(
+                                    static_cast<Decl *>(ClassDecl));
+  ObjcIvarDecl *OIvar = dyn_cast<ObjcIvarDecl>(static_cast<Decl *>(Ivar));
+  
+  assert((OInterface && OIvar) && "mistyped class or instance variable");
+  
+  switch (visibility) {
+  case tok::objc_private:
+    OIvar->setAccessControl(ObjcIvarDecl::Private);
+    break;
+  case tok::objc_public:
+    OIvar->setAccessControl(ObjcIvarDecl::Public);
+    break;
+  case tok::objc_protected:
+    OIvar->setAccessControl(ObjcIvarDecl::Protected);
+    break;
+  case tok::objc_package:
+    OIvar->setAccessControl(ObjcIvarDecl::Package);
+    break;
+  default:
+    OIvar->setAccessControl(ObjcIvarDecl::None);
+    break;
+  }
+  // FIXME: add to the class...
+}
+
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -989,7 +1018,6 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
                                Declarator &D, ExprTy *BitfieldWidth) {
   IdentifierInfo *II = D.getIdentifier();
   Expr *BitWidth = (Expr*)BitfieldWidth;
-  
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
   
@@ -1023,7 +1051,15 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
     InvalidDecl = true;
   }
   // FIXME: Chain fielddecls together.
-  FieldDecl *NewFD = new FieldDecl(Loc, II, T, 0);
+  FieldDecl *NewFD;
+  
+  if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
+    NewFD = new FieldDecl(Loc, II, T, 0);
+  else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl)))
+    NewFD = new ObjcIvarDecl(Loc, II, T, 0);
+  else
+    assert(0 && "Sema::ParseField(): Unknown TagDecl");
+    
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
   return NewFD;

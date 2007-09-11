@@ -38,7 +38,7 @@ public:
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
     // Concrete sub-class of Decl
-    Field
+    Field, ObjcIvar
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -306,6 +306,8 @@ class FieldDecl : public Decl {
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
     : Decl(Field, L, Id, PrevDecl), DeclType(T) {}
+  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T, 
+            Decl *PrevDecl) : Decl(DK, L, Id, PrevDecl), DeclType(T) {}
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -534,6 +536,24 @@ public:
     return D->getKind() == ObjcInterface;
   }
   static bool classof(const ObjcInterfaceDecl *D) { return true; }
+};
+
+class ObjcIvarDecl : public FieldDecl {
+public:
+  ObjcIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
+    : FieldDecl(ObjcIvar, L, Id, T, PrevDecl) {}
+    
+  enum AccessControl {
+    None, Private, Protected, Public, Package
+  };
+  void setAccessControl(AccessControl ac) { DeclAccess = ac; }
+  AccessControl getAccessControl() const { return DeclAccess; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == ObjcIvar; }
+  static bool classof(const ObjcIvarDecl *D) { return true; }
+private:
+  AccessControl DeclAccess : 3;
 };
 
 class ObjcClassDecl : public TypeDecl {

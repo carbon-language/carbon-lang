@@ -156,8 +156,6 @@ private:
                              Declarator &D, ExprTy *BitfieldWidth);
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
                                DeclTy **Fields, unsigned NumFields);
-  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
-				     DeclTy **allMethods, unsigned allNum); 
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -360,6 +358,11 @@ public:
                                        IdentifierInfo **IdentList,
                                        unsigned NumElts);
 
+  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
+				     DeclTy **allMethods, unsigned allNum);
+                                      
+  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy *Ivars,
+                                       tok::ObjCKeywordKind visibility);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

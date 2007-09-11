@@ -174,9 +174,6 @@ public:
   virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
                                DeclTy **Fields, unsigned NumFields) {}
 
-  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl,
-				     DeclTy **allMethods, unsigned allNum) {}
-
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -447,8 +444,8 @@ public:
                                        tok::ObjCKeywordKind visibility) {
     return;
   }
-  virtual void ObjcAddMethod(DeclTy *ClassDec, DeclTy *Meth, 
-                             AttributeList *AttrList) {
+  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl,
+				     DeclTy **allMethods, unsigned allNum) {
     return;
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(
