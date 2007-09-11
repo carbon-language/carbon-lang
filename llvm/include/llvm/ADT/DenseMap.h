@@ -41,15 +41,29 @@ struct DenseMapKeyInfo<T*> {
   static bool isPod() { return true; }
 };
 
+template<typename T>
+struct DenseMapValueInfo {
+  //static bool isPod()
+};
+
+// Provide DenseMapValueInfo for all pointers.
+template<typename T>
+struct DenseMapValueInfo<T*> {
+  static bool isPod() { return true; }
+};
+
 template<typename KeyT, typename ValueT, 
-         typename KeyInfoT = DenseMapKeyInfo<KeyT> >
+         typename KeyInfoT = DenseMapKeyInfo<KeyT>,
+         typename ValueInfoT = DenseMapValueInfo<ValueT> >
 class DenseMapIterator;
 template<typename KeyT, typename ValueT,
-         typename KeyInfoT = DenseMapKeyInfo<KeyT> >
+         typename KeyInfoT = DenseMapKeyInfo<KeyT>,
+         typename ValueInfoT = DenseMapValueInfo<ValueT> >
 class DenseMapConstIterator;
 
 template<typename KeyT, typename ValueT,
-         typename KeyInfoT = DenseMapKeyInfo<KeyT> >
+         typename KeyInfoT = DenseMapKeyInfo<KeyT>,
+         typename ValueInfoT = DenseMapValueInfo<ValueT> >
 class DenseMap {
   typedef std::pair<KeyT, ValueT> BucketT;
   unsigned NumBuckets;
@@ -181,7 +195,7 @@ public:
   
 private:
   void CopyFrom(const DenseMap& other) {
-    if (NumBuckets != 0 && !KeyInfoT::isPod()) {
+    if (NumBuckets != 0 && (!KeyInfoT::isPod() || !ValueInfoT::isPod())) {
       const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
       for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
         if (P->first != EmptyKey && P->first != TombstoneKey)
@@ -198,13 +212,13 @@ private:
     Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT) *
                                                   other.NumBuckets]);
     
-    if (KeyInfoT::isPod())
+    if (KeyInfoT::isPod() && ValueInfoT::isPod())
       memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
     else
       for (size_t i = 0; i < other.NumBuckets; ++i) {
         new (Buckets[i].first) KeyT(other.Buckets[i].first);
         if (Buckets[i].first != getEmptyKey() &&
-	    Buckets[i].first != getTombstoneKey())
+            Buckets[i].first != getTombstoneKey())
           new (Buckets[i].second) ValueT(other.Buckets[i].second);
       }
     NumBuckets = other.NumBuckets;
@@ -373,7 +387,7 @@ private:
   }
 };
 
-template<typename KeyT, typename ValueT, typename KeyInfoT>
+template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
 class DenseMapIterator {
   typedef std::pair<KeyT, ValueT> BucketT;
 protected:
@@ -416,7 +430,7 @@ private:
   }
 };
 
-template<typename KeyT, typename ValueT, typename KeyInfoT>
+template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
 class DenseMapConstIterator : public DenseMapIterator<KeyT, ValueT, KeyInfoT> {
 public:
   DenseMapConstIterator(const std::pair<KeyT, ValueT> *Pos,
