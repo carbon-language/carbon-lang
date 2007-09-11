@@ -285,7 +285,8 @@ def FMDRR : ADI<(outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
 
 // FMSRR: GPR -> SPR
 
-def FMSTAT : ASI<(outs), (ins), "fmstat", "", [(arm_fmstat)]>, Imp<[], [CPSR]>;
+let Defs = [CPSR] in
+def FMSTAT : ASI<(outs), (ins), "fmstat", "", [(arm_fmstat)]>;
 
 // FMXR: GPR -> VFP Sstem reg
 

@@ -2012,10 +2012,10 @@ def PMOVMSKBrr : PDI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
                      [(set GR32:$dst, (int_x86_sse2_pmovmskb_128 VR128:$src))]>;
 
 // Conditional store
+let Uses = [EDI] in
 def MASKMOVDQU : PDI<0xF7, MRMSrcReg, (outs), (ins VR128:$src, VR128:$mask),
                      "maskmovdqu\t{$mask, $src|$src, $mask}",
-                     [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>,
-                 Imp<[EDI],[]>;
+                     [(int_x86_sse2_maskmov_dqu VR128:$src, VR128:$mask, EDI)]>;
 
 // Non-temporal stores
 def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),

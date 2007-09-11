@@ -160,15 +160,17 @@ def t_addrmode_sp : Operand<i32>,
 //  Miscellaneous Instructions.
 //
 
+let Defs = [SP], Uses = [SP] in {
 def tADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt),
            "@ tADJCALLSTACKUP $amt",
-           [(ARMcallseq_end imm:$amt)]>, Imp<[SP],[SP]>, Requires<[IsThumb]>;
+           [(ARMcallseq_end imm:$amt)]>, Requires<[IsThumb]>;
 
 def tADJCALLSTACKDOWN : 
 PseudoInst<(outs), (ins i32imm:$amt),
            "@ tADJCALLSTACKDOWN $amt",
-           [(ARMcallseq_start imm:$amt)]>, Imp<[SP],[SP]>, Requires<[IsThumb]>;
+           [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb]>;
+}
 
 let isNotDuplicable = 1 in
 def tPICADD : TIt<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),

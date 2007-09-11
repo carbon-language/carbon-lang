@@ -517,31 +517,35 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode> {
 
 /// ASI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
 /// instruction modifies the CSPR register.
+let Defs = [CPSR] in {
 multiclass ASI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRImS,
                opc, "s $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>, Imp<[], [CPSR]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPRRegS,
                opc, "s $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>, Imp<[], [CPSR]>;
+               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
   def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoRegS,
                opc, "s $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>, Imp<[], [CPSR]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
+}
 }
 
 /// AI1_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
 /// patterns. Similar to AsI1_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
+let Defs = [CPSR] in {
 multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPRnIm,
                opc, " $a, $b",
-               [(opnode GPR:$a, so_imm:$b)]>, Imp<[], [CPSR]>;
+               [(opnode GPR:$a, so_imm:$b)]>;
   def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPRnReg,
                opc, " $a, $b",
-               [(opnode GPR:$a, GPR:$b)]>, Imp<[], [CPSR]>;
+               [(opnode GPR:$a, GPR:$b)]>;
   def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPRnSoReg,
                opc, " $a, $b",
-               [(opnode GPR:$a, so_reg:$b)]>, Imp<[], [CPSR]>;
+               [(opnode GPR:$a, so_reg:$b)]>;
+}
 }
 
 /// AI_unary_rrot - A unary operation with two forms: one whose operand is a
@@ -620,16 +624,18 @@ class JTI2<bits<4> opcod, dag oops, dag iops, string asm, list<dag> pattern>
 
 /// AsXI1_bin_c_irs - Same as AsI1_bin_irs but without the predicate operand and
 /// setting carry bit. But it can optionally set CPSR.
+let Uses = [CPSR] in {
 multiclass AsXI1_bin_c_irs<bits<4> opcod, string opc, PatFrag opnode> {
   def ri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b, cc_out:$s),
                 DPRIm, !strconcat(opc, "${s} $dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>, Imp<[CPSR], []>;
+               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
   def rr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b, cc_out:$s),
                 DPRReg, !strconcat(opc, "${s} $dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>, Imp<[CPSR], []>;
+               [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>;
   def rs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b, cc_out:$s),
                 DPRSoReg, !strconcat(opc, "${s} $dst, $a, $b"),
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>, Imp<[CPSR], []>;
+               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
+}
 }
 
 //===----------------------------------------------------------------------===//
@@ -655,15 +661,17 @@ PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
                         i32imm:$size),
            "${instid:label} ${cpidx:cpentry}", []>;
 
+let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt, pred:$p),
            "@ ADJCALLSTACKUP $amt",
-           [(ARMcallseq_end imm:$amt)]>, Imp<[SP],[SP]>;
+           [(ARMcallseq_end imm:$amt)]>;
 
 def ADJCALLSTACKDOWN : 
 PseudoInst<(outs), (ins i32imm:$amt, pred:$p),
            "@ ADJCALLSTACKDOWN $amt",
-           [(ARMcallseq_start imm:$amt)]>, Imp<[SP],[SP]>;
+           [(ARMcallseq_start imm:$amt)]>;
+}
 
 def DWARF_LOC :
 PseudoInst<(outs), (ins i32imm:$line, i32imm:$col, i32imm:$file),
@@ -963,12 +971,14 @@ def MOVrx : AsI1<0xD, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
 // These aren't really mov instructions, but we have to define them this way
 // due to flag operands.
 
+let Defs = [CPSR] in {
 def MOVsrl_flag : AI1<0xD, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
                       "mov", "s $dst, $src, lsr #1",
-                      [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>, Imp<[], [CPSR]>;
+                      [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>;
 def MOVsra_flag : AI1<0xD, (outs GPR:$dst), (ins GPR:$src), DPRdMisc,
                       "mov", "s $dst, $src, asr #1",
-                      [(set GPR:$dst, (ARMsra_flag GPR:$src))]>, Imp<[], [CPSR]>;
+                      [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Extend Instructions.
@@ -1034,20 +1044,24 @@ def RSBrs : AsI1<0x3, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
                   [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]>;
 
 // RSB with 's' bit set.
+let Defs = [CPSR] in {
 def RSBSri : AI1<0x3, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPRIm,
                  "rsb", "s $dst, $a, $b",
-                 [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]>, Imp<[], [CPSR]>;
+                 [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]>;
 def RSBSrs : AI1<0x3, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPRSoReg,
                  "rsb", "s $dst, $a, $b",
-                 [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>, Imp<[], [CPSR]>;
+                 [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>;
+}
 
 // FIXME: Do not allow RSC to be predicated for now. But they can set CPSR.
+let Uses = [CPSR] in {
 def RSCri : AXI1<0x7, (outs GPR:$dst), (ins GPR:$a, so_imm:$b, cc_out:$s),
                  DPRIm, "rsc${s} $dst, $a, $b",
-                 [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>, Imp<[CPSR], []>;
+                 [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>;
 def RSCrs : AXI1<0x7, (outs GPR:$dst), (ins GPR:$a, so_reg:$b, cc_out:$s),
                  DPRSoReg, "rsc${s} $dst, $a, $b",
-                 [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>, Imp<[CPSR], []>;
+                 [(set GPR:$dst, (sube so_reg:$b, GPR:$a))]>;
+}
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 def : ARMPat<(add    GPR:$src, so_imm_neg:$imm),

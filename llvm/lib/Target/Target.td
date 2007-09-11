@@ -203,13 +203,6 @@ class Instruction {
   string DisableEncoding = "";
 }
 
-/// Imp - Helper class for specifying the implicit uses/defs set for an
-/// instruction.
-class Imp<list<Register> uses, list<Register> defs> {
-  list<Register> Uses = uses;
-  list<Register> Defs = defs;
-}
-
 /// Predicates - These are extra conditionals which are turned into instruction
 /// selector matching code. Currently each predicate is just a string.
 class Predicate<string cond> {

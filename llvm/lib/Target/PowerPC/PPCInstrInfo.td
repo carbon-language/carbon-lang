@@ -297,22 +297,24 @@ def FPContractions : Predicate<"!NoExcessFPPrecision">;
 // Pseudo-instructions:
 
 let hasCtrlDep = 1 in {
+let Defs = [R1], Uses = [R1] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm:$amt),
                               "${:comment} ADJCALLSTACKDOWN",
-                              [(callseq_start imm:$amt)]>, Imp<[R1],[R1]>;
+                              [(callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt),
                               "${:comment} ADJCALLSTACKUP",
-                              [(callseq_end imm:$amt)]>, Imp<[R1],[R1]>;
+                              [(callseq_end imm:$amt)]>;
+}
 
 def UPDATE_VRSAVE    : Pseudo<(outs GPRC:$rD), (ins GPRC:$rS),
                               "UPDATE_VRSAVE $rD, $rS", []>;
 }
 
+let Defs = [R1], Uses = [R1] in
 def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi),
                        "${:comment} DYNALLOC $result, $negsize, $fpsi",
                        [(set GPRC:$result,
-                             (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>,
-                        Imp<[R1],[R1]>;
+                             (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>;
                          
 def IMPLICIT_DEF_GPRC: Pseudo<(outs GPRC:$rD), (ins),
                               "${:comment}IMPLICIT_DEF_GPRC $rD",

@@ -201,12 +201,14 @@ multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
 class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
    : InstSP<outs, ins, asmstr, pattern>;
 
+let Defs = [O6], Uses = [O6] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
-                               [(callseq_start imm:$amt)]>, Imp<[O6],[O6]>;
+                               [(callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
-                            [(callseq_end imm:$amt)]>, Imp<[O6],[O6]>;
+                            [(callseq_end imm:$amt)]>;
+}
 def IMPLICIT_DEF_Int : Pseudo<(outs IntRegs:$dst), (ins),
                               "!IMPLICIT_DEF $dst",
                               [(set IntRegs:$dst, (undef))]>;

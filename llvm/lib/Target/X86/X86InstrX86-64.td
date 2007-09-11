@@ -113,12 +113,15 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
+let Defs = [RBP,RSP], Uses = [RBP,RSP] in
 def LEAVE64  : I<0xC9, RawFrm,
-                 (outs), (ins), "leave", []>, Imp<[RBP,RSP],[RBP,RSP]>;
+                 (outs), (ins), "leave", []>;
+let Defs = [RSP], Uses = [RSP] in {
 def POP64r   : I<0x58, AddRegFrm,
-                 (outs GR64:$reg), (ins), "pop{q}\t$reg", []>, Imp<[RSP],[RSP]>;
+                 (outs GR64:$reg), (ins), "pop{q}\t$reg", []>;
 def PUSH64r  : I<0x50, AddRegFrm,
-                 (outs), (ins GR64:$reg), "push{q}\t$reg", []>, Imp<[RSP],[RSP]>;
+                 (outs), (ins GR64:$reg), "push{q}\t$reg", []>;
+}
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
                   (outs GR32:$dst), (ins lea64_32mem:$src),
@@ -142,12 +145,12 @@ def XCHG64rm : RI<0x87, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
                   "xchg{q}\t{$src2|$src1}, {$src1|$src2}", []>;
 
 // Repeat string ops
+let Defs = [RCX,RDI,RSI], Uses = [RCX,RDI,RSI] in
 def REP_MOVSQ : RI<0xA5, RawFrm, (outs), (ins), "{rep;movsq|rep movsq}",
-                   [(X86rep_movs i64)]>,
-                Imp<[RCX,RDI,RSI], [RCX,RDI,RSI]>, REP;
+                   [(X86rep_movs i64)]>, REP;
+let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI] in
 def REP_STOSQ : RI<0xAB, RawFrm, (outs), (ins), "{rep;stosq|rep stosq}",
-                   [(X86rep_stos i64)]>,
-                Imp<[RAX,RCX,RDI], [RCX,RDI]>, REP;
+                   [(X86rep_stos i64)]>, REP;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
@@ -211,11 +214,13 @@ def MOVZX64rm16: RI<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                     "movz{wq|x}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
 
+let Defs = [RAX], Uses = [EAX] in
 def CDQE : RI<0x98, RawFrm, (outs), (ins),
-             "{cltq|cdqe}", []>, Imp<[EAX],[RAX]>;     // RAX = signext(EAX)
+             "{cltq|cdqe}", []>;     // RAX = signext(EAX)
 
+let Defs = [RAX,RDX], Uses = [RAX] in
 def CQO  : RI<0x99, RawFrm, (outs), (ins),
-              "{cqto|cqo}", []>, Imp<[RAX],[RAX,RDX]>; // RDX:RAX = signext(RAX)
+              "{cqto|cqo}", []>; // RDX:RAX = signext(RAX)
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions...
@@ -334,20 +339,18 @@ def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 
 // Unsigned multiplication
+let Defs = [RAX,RDX], Uses = [RAX] in {
 def MUL64r : RI<0xF7, MRM4r, (outs), (ins GR64:$src),
-                "mul{q}\t$src", []>,
-             Imp<[RAX],[RAX,RDX]>;         // RAX,RDX = RAX*GR64
+                "mul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
 def MUL64m : RI<0xF7, MRM4m, (outs), (ins i64mem:$src),
-                "mul{q}\t$src", []>,
-             Imp<[RAX],[RAX,RDX]>;         // RAX,RDX = RAX*[mem64]
+                "mul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
 
 // Signed multiplication
 def IMUL64r : RI<0xF7, MRM5r, (outs), (ins GR64:$src),
-                 "imul{q}\t$src", []>,
-              Imp<[RAX],[RAX,RDX]>;         // RAX,RDX = RAX*GR64
+                 "imul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
 def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
-                 "imul{q}\t$src", []>,
-              Imp<[RAX],[RAX,RDX]>;         // RAX,RDX = RAX*[mem64]
+                 "imul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
+}
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
@@ -379,16 +382,18 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
                  [(set GR64:$dst, (mul (load addr:$src1), i64immSExt8:$src2))]>;
 
 // Unsigned division / remainder
+let Defs = [RAX,RDX], Uses = [RAX,RDX] in {
 def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),        // RDX:RAX/r64 = RAX,RDX
-                "div{q}\t$src", []>, Imp<[RAX,RDX],[RAX,RDX]>;
+                "div{q}\t$src", []>;
 def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
-                "div{q}\t$src", []>, Imp<[RAX,RDX],[RAX,RDX]>;
+                "div{q}\t$src", []>;
 
 // Signed division / remainder
 def IDIV64r: RI<0xF7, MRM7r, (outs), (ins GR64:$src),        // RDX:RAX/r64 = RAX,RDX
-                "idiv{q}\t$src", []>, Imp<[RAX,RDX],[RAX,RDX]>;
+                "idiv{q}\t$src", []>;
 def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
-                "idiv{q}\t$src", []>, Imp<[RAX,RDX],[RAX,RDX]>;
+                "idiv{q}\t$src", []>;
+}
 
 // Unary instructions
 let CodeSize = 2 in {
@@ -431,10 +436,10 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src), "dec{l}\t$dst"
 
 // Shift instructions
 let isTwoAddress = 1 in {
+let Uses = [CL] in
 def SHL64rCL : RI<0xD3, MRM4r, (outs GR64:$dst), (ins GR64:$src),
                   "shl{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (shl GR64:$src, CL))]>,
-               Imp<[CL],[]>;
+                  [(set GR64:$dst, (shl GR64:$src, CL))]>;
 def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                     "shl{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (shl GR64:$src1, (i8 imm:$src2)))]>;
@@ -442,10 +447,10 @@ def SHL64r1  : RI<0xD1, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
                  "shl{q}\t$dst", []>;
 } // isTwoAddress
 
+let Uses = [CL] in
 def SHL64mCL : RI<0xD3, MRM4m, (outs), (ins i64mem:$dst),
                   "shl{q}\t{%cl, $dst|$dst, %CL}",
-                  [(store (shl (loadi64 addr:$dst), CL), addr:$dst)]>,
-               Imp<[CL],[]>;
+                  [(store (shl (loadi64 addr:$dst), CL), addr:$dst)]>;
 def SHL64mi : RIi8<0xC1, MRM4m, (outs), (ins i64mem:$dst, i8imm:$src),
                   "shl{q}\t{$src, $dst|$dst, $src}",
                  [(store (shl (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
@@ -454,10 +459,10 @@ def SHL64m1 : RI<0xD1, MRM4m, (outs), (ins i64mem:$dst),
                  [(store (shl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
+let Uses = [CL] in
 def SHR64rCL : RI<0xD3, MRM5r, (outs GR64:$dst), (ins GR64:$src),
                   "shr{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (srl GR64:$src, CL))]>,
-               Imp<[CL],[]>;
+                  [(set GR64:$dst, (srl GR64:$src, CL))]>;
 def SHR64ri : RIi8<0xC1, MRM5r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                   "shr{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (srl GR64:$src1, (i8 imm:$src2)))]>;
@@ -466,10 +471,10 @@ def SHR64r1  : RI<0xD1, MRM5r, (outs GR64:$dst), (ins GR64:$src1),
                  [(set GR64:$dst, (srl GR64:$src1, (i8 1)))]>;
 } // isTwoAddress
 
+let Uses = [CL] in
 def SHR64mCL : RI<0xD3, MRM5m, (outs), (ins i64mem:$dst),
                   "shr{q}\t{%cl, $dst|$dst, %CL}",
-                  [(store (srl (loadi64 addr:$dst), CL), addr:$dst)]>,
-               Imp<[CL],[]>;
+                  [(store (srl (loadi64 addr:$dst), CL), addr:$dst)]>;
 def SHR64mi : RIi8<0xC1, MRM5m, (outs), (ins i64mem:$dst, i8imm:$src),
                   "shr{q}\t{$src, $dst|$dst, $src}",
                  [(store (srl (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
@@ -478,9 +483,10 @@ def SHR64m1 : RI<0xD1, MRM5m, (outs), (ins i64mem:$dst),
                  [(store (srl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
+let Uses = [CL] in
 def SAR64rCL : RI<0xD3, MRM7r, (outs GR64:$dst), (ins GR64:$src),
                  "sar{q}\t{%cl, $dst|$dst, %CL}",
-                 [(set GR64:$dst, (sra GR64:$src, CL))]>, Imp<[CL],[]>;
+                 [(set GR64:$dst, (sra GR64:$src, CL))]>;
 def SAR64ri  : RIi8<0xC1, MRM7r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                    "sar{q}\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (sra GR64:$src1, (i8 imm:$src2)))]>;
@@ -489,10 +495,10 @@ def SAR64r1  : RI<0xD1, MRM7r, (outs GR64:$dst), (ins GR64:$src1),
                  [(set GR64:$dst, (sra GR64:$src1, (i8 1)))]>;
 } // isTwoAddress
 
+let Uses = [CL] in
 def SAR64mCL : RI<0xD3, MRM7m, (outs), (ins i64mem:$dst), 
                  "sar{q}\t{%cl, $dst|$dst, %CL}",
-                 [(store (sra (loadi64 addr:$dst), CL), addr:$dst)]>,
-               Imp<[CL],[]>;
+                 [(store (sra (loadi64 addr:$dst), CL), addr:$dst)]>;
 def SAR64mi  : RIi8<0xC1, MRM7m, (outs), (ins i64mem:$dst, i8imm:$src),
                     "sar{q}\t{$src, $dst|$dst, $src}",
                  [(store (sra (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
@@ -502,9 +508,10 @@ def SAR64m1 : RI<0xD1, MRM7m, (outs), (ins i64mem:$dst),
 
 // Rotate instructions
 let isTwoAddress = 1 in {
+let Uses = [CL] in
 def ROL64rCL : RI<0xD3, MRM0r, (outs GR64:$dst), (ins GR64:$src),
                   "rol{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (rotl GR64:$src, CL))]>, Imp<[CL],[]>;
+                  [(set GR64:$dst, (rotl GR64:$src, CL))]>;
 def ROL64ri  : RIi8<0xC1, MRM0r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                     "rol{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (rotl GR64:$src1, (i8 imm:$src2)))]>;
@@ -513,10 +520,10 @@ def ROL64r1  : RI<0xD1, MRM0r, (outs GR64:$dst), (ins GR64:$src1),
                   [(set GR64:$dst, (rotl GR64:$src1, (i8 1)))]>;
 } // isTwoAddress
 
+let Uses = [CL] in
 def ROL64mCL :  I<0xD3, MRM0m, (outs), (ins i64mem:$dst),
                   "rol{q}\t{%cl, $dst|$dst, %CL}",
-                  [(store (rotl (loadi64 addr:$dst), CL), addr:$dst)]>,
-               Imp<[CL],[]>;
+                  [(store (rotl (loadi64 addr:$dst), CL), addr:$dst)]>;
 def ROL64mi  : RIi8<0xC1, MRM0m, (outs), (ins i64mem:$dst, i8imm:$src),
                     "rol{q}\t{$src, $dst|$dst, $src}",
                 [(store (rotl (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
@@ -525,9 +532,10 @@ def ROL64m1  : RI<0xD1, MRM0m, (outs), (ins i64mem:$dst),
                [(store (rotl (loadi64 addr:$dst), (i8 1)), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
+let Uses = [CL] in
 def ROR64rCL : RI<0xD3, MRM1r, (outs GR64:$dst), (ins GR64:$src),
                   "ror{q}\t{%cl, $dst|$dst, %CL}",
-                  [(set GR64:$dst, (rotr GR64:$src, CL))]>, Imp<[CL],[]>;
+                  [(set GR64:$dst, (rotr GR64:$src, CL))]>;
 def ROR64ri  : RIi8<0xC1, MRM1r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                     "ror{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (rotr GR64:$src1, (i8 imm:$src2)))]>;
@@ -536,10 +544,10 @@ def ROR64r1  : RI<0xD1, MRM1r, (outs GR64:$dst), (ins GR64:$src1),
                   [(set GR64:$dst, (rotr GR64:$src1, (i8 1)))]>;
 } // isTwoAddress
 
+let Uses = [CL] in
 def ROR64mCL : RI<0xD3, MRM1m, (outs), (ins i64mem:$dst), 
                   "ror{q}\t{%cl, $dst|$dst, %CL}",
-                  [(store (rotr (loadi64 addr:$dst), CL), addr:$dst)]>,
-               Imp<[CL],[]>;
+                  [(store (rotr (loadi64 addr:$dst), CL), addr:$dst)]>;
 def ROR64mi  : RIi8<0xC1, MRM1m, (outs), (ins i64mem:$dst, i8imm:$src),
                     "ror{q}\t{$src, $dst|$dst, $src}",
                 [(store (rotr (loadi64 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
@@ -549,12 +557,12 @@ def ROR64m1  : RI<0xD1, MRM1m, (outs), (ins i64mem:$dst),
 
 // Double shift instructions (generalizations of rotate)
 let isTwoAddress = 1 in {
+let Uses = [CL] in {
 def SHLD64rrCL : RI<0xA5, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>,
-                 Imp<[CL],[]>, TB;
+                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
 def SHRD64rrCL : RI<0xAD, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>,
-                 Imp<[CL],[]>, TB;
+                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
+}
 
 let isCommutable = 1 in {  // FIXME: Update X86InstrInfo::commuteInstruction
 def SHLD64rri8 : RIi8<0xA4, MRMDestReg,
@@ -570,12 +578,12 @@ def SHRD64rri8 : RIi8<0xAC, MRMDestReg,
 
 // Temporary hack: there is no patterns associated with these instructions
 // so we have to tell tblgen that these do not produce results.
+let Uses = [CL] in {
 def SHLD64mrCL : RI<0xA5, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>,
-                 Imp<[CL],[]>, TB;
+                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
 def SHRD64mrCL : RI<0xAD, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>,
-                 Imp<[CL],[]>, TB;
+                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
+}
 def SHLD64mri8 : RIi8<0xA4, MRMDestMem,
                       (outs), (ins i64mem:$dst, GR64:$src2, i8imm:$src3),
                       "shld{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}", []>,

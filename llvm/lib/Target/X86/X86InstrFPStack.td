@@ -141,14 +141,16 @@ def FpGETRESULT64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP,
 def FpGETRESULT80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP,
                       [(set RFP80:$dst, X86fpget)]>;           // FPR = ST(0)
 
+let Defs = [ST0] in {
 def FpSETRESULT32 : FpI_<(outs), (ins RFP32:$src), SpecialFP,
-                      [(X86fpset RFP32:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
+                      [(X86fpset RFP32:$src)]>;// ST(0) = FPR
 
 def FpSETRESULT64 : FpI_<(outs), (ins RFP64:$src), SpecialFP,
-                      [(X86fpset RFP64:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
+                      [(X86fpset RFP64:$src)]>;// ST(0) = FPR
 
 def FpSETRESULT80 : FpI_<(outs), (ins RFP80:$src), SpecialFP,
-                      [(X86fpset RFP80:$src)]>, Imp<[], [ST0]>;// ST(0) = FPR
+                      [(X86fpset RFP80:$src)]>;// ST(0) = FPR
+}
 
 // FpI - Floating Point Psuedo Instruction template. Predicated on FPStack.
 // Note that f80-only instructions are used even in SSE mode and use FpI_
@@ -486,26 +488,29 @@ def UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
 def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   [(X86cmp RFP80:$lhs, RFP80:$rhs)]>; // CC = ST(0) cmp ST(i)
 
+let Uses = [ST0] in {
 def UCOM_Fr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
-                    "fucom\t$reg">, DD, Imp<[ST0],[]>;
+                    "fucom\t$reg">, DD;
 def UCOM_FPr   : FPI<0xE8, AddRegFrm,    // FPSW = cmp ST(0) with ST(i), pop
                     (outs), (ins RST:$reg),
-                    "fucomp\t$reg">, DD, Imp<[ST0],[]>;
+                    "fucomp\t$reg">, DD;
 def UCOM_FPPr  : FPI<0xE9, RawFrm,       // cmp ST(0) with ST(1), pop, pop
                     (outs), (ins),
-                    "fucompp">, DA, Imp<[ST0],[]>;
+                    "fucompp">, DA;
 
 def UCOM_FIr   : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
-                    "fucomi\t{$reg, %st(0)|%ST(0), $reg}">, DB, Imp<[ST0],[]>;
+                    "fucomi\t{$reg, %st(0)|%ST(0), $reg}">, DB;
 def UCOM_FIPr  : FPI<0xE8, AddRegFrm,     // CC = cmp ST(0) with ST(i), pop
                     (outs), (ins RST:$reg),
-                    "fucomip\t{$reg, %st(0)|%ST(0), $reg}">, DF, Imp<[ST0],[]>;
+                    "fucomip\t{$reg, %st(0)|%ST(0), $reg}">, DF;
+}
 
 // Floating point flag ops.
+let Defs = [AX] in
 def FNSTSW8r  : I<0xE0, RawFrm,                  // AX = fp flags
-                  (outs), (ins), "fnstsw", []>, DF, Imp<[],[AX]>;
+                  (outs), (ins), "fnstsw", []>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
                   (outs), (ins i16mem:$dst), "fnstcw\t$dst", []>;

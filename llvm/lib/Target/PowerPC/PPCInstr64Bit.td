@@ -130,11 +130,11 @@ def MTCTR8 : XFXForm_7_ext<31, 467, 9, (outs), (ins G8RC:$rS),
              PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
+let Defs = [X1], Uses = [X1] in
 def DYNALLOC8 : Pseudo<(outs G8RC:$result), (ins G8RC:$negsize, memri:$fpsi),
                        "${:comment} DYNALLOC8 $result, $negsize, $fpsi",
                        [(set G8RC:$result,
-                             (PPCdynalloc G8RC:$negsize, iaddr:$fpsi))]>,
-                        Imp<[X1],[X1]>;
+                             (PPCdynalloc G8RC:$negsize, iaddr:$fpsi))]>;
 
 def MTLR8  : XFXForm_7_ext<31, 467, 8, (outs), (ins G8RC:$rS),
                            "mtlr $rS", SprMTSPR>,

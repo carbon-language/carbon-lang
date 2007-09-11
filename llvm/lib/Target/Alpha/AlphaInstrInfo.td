@@ -147,11 +147,11 @@ def IDEF_F64 : PseudoInstAlpha<(outs F8RC:$RA), (ins), ";#idef $RA",
 
 def WTF : PseudoInstAlpha<(outs), (ins variable_ops), "#wtf", [], s_pseudo>;
 
-let isLoad = 1, hasCtrlDep = 1 in {
+let isLoad = 1, hasCtrlDep = 1, Defs = [R30], Uses = [R30] in {
 def ADJUSTSTACKUP : PseudoInstAlpha<(outs), (ins s64imm:$amt), "; ADJUP $amt", 
-                [(callseq_start imm:$amt)], s_pseudo>, Imp<[R30],[R30]>;
+                [(callseq_start imm:$amt)], s_pseudo>;
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(outs), (ins s64imm:$amt), "; ADJDOWN $amt", 
-                [(callseq_end imm:$amt)], s_pseudo>, Imp<[R30],[R30]>;
+                [(callseq_end imm:$amt)], s_pseudo>;
 }
 def ALTENT : PseudoInstAlpha<(outs), (ins s64imm:$TARGET), "$$$TARGET..ng:\n", [], s_pseudo>;
 def PCLABEL : PseudoInstAlpha<(outs), (ins s64imm:$num), "PCMARKER_$num:\n",[], s_pseudo>;

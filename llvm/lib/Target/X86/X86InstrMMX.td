@@ -476,10 +476,10 @@ def MMX_PMOVMSKBrr : MMXI<0xD7, MRMSrcReg, (outs GR32:$dst), (ins VR64:$src),
                           [(set GR32:$dst, (int_x86_mmx_pmovmskb VR64:$src))]>;
 
 // Misc.
+let Uses = [EDI] in
 def MMX_MASKMOVQ : MMXI<0xF7, MRMDestMem, (outs), (ins VR64:$src, VR64:$mask),
                         "maskmovq\t{$mask, $src|$src, $mask}",
-                        [(int_x86_mmx_maskmovq VR64:$src, VR64:$mask, EDI)]>,
-                        Imp<[EDI],[]>;
+                        [(int_x86_mmx_maskmovq VR64:$src, VR64:$mask, EDI)]>;
 
 //===----------------------------------------------------------------------===//
 // Alias Instructions

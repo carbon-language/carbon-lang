@@ -341,12 +341,14 @@ class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
       MipsInst<outs, ins, asmstr, pattern, IIPseudo>;
 
 // As stack alignment is always done with addiu, we need a 16-bit immediate
+let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins uimm16:$amt),
                               "!ADJCALLSTACKDOWN $amt",
-                              [(callseq_start imm:$amt)]>, Imp<[SP],[SP]>;
+                              [(callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : Pseudo<(outs), (ins uimm16:$amt),
                               "!ADJCALLSTACKUP $amt",
-                              [(callseq_end imm:$amt)]>, Imp<[SP],[SP]>;
+                              [(callseq_end imm:$amt)]>;
+}
 
 def IMPLICIT_DEF_CPURegs : Pseudo<(outs CPURegs:$dst), (ins),
                                   "!IMPLICIT_DEF $dst",
