@@ -50,7 +50,7 @@ public:
       // Iterate through the decls.  Warn if any of them (which have
       // initializers) are not live.
       for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
-                    V = cast<VarDecl>(V->getNextDeclarator()))
+                    V = cast_or_null<VarDecl>(V->getNextDeclarator()))
         if (Expr* E = V->getInit())
           if (!L.isLive(Live,V)) {
             SourceRange R = E->getSourceRange();
