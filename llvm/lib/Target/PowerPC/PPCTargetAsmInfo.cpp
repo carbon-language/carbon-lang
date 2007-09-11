@@ -60,6 +60,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
   SupportsExceptionHandling = false;
+  NeedsIndirectEncoding = true;
 
   DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
   DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";

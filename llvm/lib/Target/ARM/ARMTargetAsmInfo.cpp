@@ -60,6 +60,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
     EightByteConstantSection = "\t.literal8\n";
     ReadOnlySection = "\t.const\n";
     HasDotTypeDotSizeDirective = false;
+    NeedsIndirectEncoding = true;
     if (TM.getRelocationModel() == Reloc::Static) {
       StaticCtorsSection = ".constructor";
       StaticDtorsSection = ".destructor";
