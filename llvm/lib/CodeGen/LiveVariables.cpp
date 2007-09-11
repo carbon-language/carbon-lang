@@ -249,9 +249,6 @@ bool LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
 }
 
 void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
-  // There is a now a proper use, forget about the last partial use.
-  PhysRegPartUse[Reg] = NULL;
-
   // Turn previous partial def's into read/mod/write.
   for (unsigned i = 0, e = PhysRegPartDef[Reg].size(); i != e; ++i) {
     MachineInstr *Def = PhysRegPartDef[Reg][i];
@@ -266,12 +263,15 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
   // A: EAX = ...
   // B:     = AX
   // Add implicit def to A.
-  if (PhysRegInfo[Reg] && !PhysRegUsed[Reg]) {
+  if (PhysRegInfo[Reg] && PhysRegInfo[Reg] != PhysRegPartUse[Reg] &&
+      !PhysRegUsed[Reg]) {
     MachineInstr *Def = PhysRegInfo[Reg];
     if (!Def->findRegisterDefOperand(Reg))
       Def->addRegOperand(Reg, true/*IsDef*/,true/*IsImp*/);
   }
 
+  // There is a now a proper use, forget about the last partial use.
+  PhysRegPartUse[Reg] = NULL;
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = true;
 
@@ -373,7 +373,8 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
       } else if (PhysRegPartUse[SubReg])
         // Add implicit use / kill to last use of a sub-register.
         addRegisterKilled(SubReg, PhysRegPartUse[SubReg], true);
-      else
+      else if (LastRef != MI)
+        // This must be a def of the subreg on the same MI.
         addRegisterDead(SubReg, LastRef);
     }
   }
@@ -381,7 +382,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
   if (MI) {
     for (const unsigned *SuperRegs = RegInfo->getSuperRegisters(Reg);
          unsigned SuperReg = *SuperRegs; ++SuperRegs) {
-      if (PhysRegInfo[SuperReg]) {
+      if (PhysRegInfo[SuperReg] && PhysRegInfo[SuperReg] != MI) {
         // The larger register is previously defined. Now a smaller part is
         // being re-defined. Treat it as read/mod/write.
         // EAX =
