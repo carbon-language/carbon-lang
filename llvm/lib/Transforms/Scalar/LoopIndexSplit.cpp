@@ -382,6 +382,7 @@ void LoopIndexSplit::findSplitCondition() {
   // Check all basic block's terminators.
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {
+    SD.clear();
     BasicBlock *BB = *I;
 
     // If this basic block does not terminate in a conditional branch
