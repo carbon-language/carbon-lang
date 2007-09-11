@@ -203,7 +203,9 @@ private:
     else
       for (size_t i = 0; i < other.NumBuckets; ++i) {
         new (Buckets[i].first) KeyT(other.Buckets[i].first);
-        new (Buckets[i].second) ValueT(other.Buckets[i].second);
+        if (Buckets[i].first != getEmptyKey() &&
+	    Buckets[i].first != getTombstoneKey())
+          new (Buckets[i].second) ValueT(other.Buckets[i].second);
       }
     NumBuckets = other.NumBuckets;
   }
