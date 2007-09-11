@@ -676,14 +676,20 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   
   // special handling for set, which isn't really an SDNode.
   if (getOperator()->getName() == "set") {
-    assert (getNumChildren() == 2 && "Only handle 2 operand set's for now!");
-    bool MadeChange = getChild(0)->ApplyTypeConstraints(TP, NotRegisters);
-    MadeChange |= getChild(1)->ApplyTypeConstraints(TP, NotRegisters);
+    assert (getNumChildren() >= 2 && "Missing RHS of a set?");
+    unsigned NC = getNumChildren();
+    bool MadeChange = false;
+    for (unsigned i = 0; i < NC-1; ++i) {
+      MadeChange = getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
+      MadeChange |= getChild(NC-1)->ApplyTypeConstraints(TP, NotRegisters);
     
-    // Types of operands must match.
-    MadeChange |= getChild(0)->UpdateNodeType(getChild(1)->getExtTypes(), TP);
-    MadeChange |= getChild(1)->UpdateNodeType(getChild(0)->getExtTypes(), TP);
-    MadeChange |= UpdateNodeType(MVT::isVoid, TP);
+      // Types of operands must match.
+      MadeChange |= getChild(i)->UpdateNodeType(getChild(NC-1)->getExtTypes(),
+                                                TP);
+      MadeChange |= getChild(NC-1)->UpdateNodeType(getChild(i)->getExtTypes(),
+                                                   TP);
+      MadeChange |= UpdateNodeType(MVT::isVoid, TP);
+    }
     return MadeChange;
   } else if (getOperator() == ISE.get_intrinsic_void_sdnode() ||
              getOperator() == ISE.get_intrinsic_w_chain_sdnode() ||
@@ -1316,6 +1322,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
         I->error("Input " + DI->getDef()->getName() + " must be named!");
       else if (DI && DI->getDef()->isSubClassOf("Register")) 
         InstImpInputs.push_back(DI->getDef());
+        ;
     }
     return false;
   }
@@ -1393,15 +1400,13 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
   // Otherwise, this is a set, validate and collect instruction results.
   if (Pat->getNumChildren() == 0)
     I->error("set requires operands!");
-  else if (Pat->getNumChildren() & 1)
-    I->error("set requires an even number of operands");
   
   if (Pat->getTransformFn())
     I->error("Cannot specify a transform function on a set node!");
   
   // Check the set destinations.
-  unsigned NumValues = Pat->getNumChildren()/2;
-  for (unsigned i = 0; i != NumValues; ++i) {
+  unsigned NumDests = Pat->getNumChildren()-1;
+  for (unsigned i = 0; i != NumDests; ++i) {
     TreePatternNode *Dest = Pat->getChild(i);
     if (!Dest->isLeaf())
       I->error("set destination should be a register!");
@@ -1419,15 +1424,16 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       InstResults[Dest->getName()] = Dest;
     } else if (Val->getDef()->isSubClassOf("Register")) {
       InstImpResults.push_back(Val->getDef());
+      ;
     } else {
       I->error("set destination should be a register!");
     }
-    
-    // Verify and collect info from the computation.
-    FindPatternInputsAndOutputs(I, Pat->getChild(i+NumValues),
-                                InstInputs, InstResults,
-                                InstImpInputs, InstImpResults);
   }
+    
+  // Verify and collect info from the computation.
+  FindPatternInputsAndOutputs(I, Pat->getChild(NumDests),
+                              InstInputs, InstResults,
+                              InstImpInputs, InstImpResults);
 }
 
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
@@ -1644,10 +1650,7 @@ void DAGISelEmitter::ParseInstructions() {
     TreePatternNode *Pattern = I->getTree(0);
     TreePatternNode *SrcPattern;
     if (Pattern->getOperator()->getName() == "set") {
-      if (Pattern->getNumChildren() != 2)
-        continue;  // Not a set of a single value (not handled so far)
-
-      SrcPattern = Pattern->getChild(1)->clone();    
+      SrcPattern = Pattern->getChild(Pattern->getNumChildren()-1)->clone();
     } else{
       // Not a set (store or something?)
       SrcPattern = Pattern;
@@ -2759,7 +2762,7 @@ public:
         isRoot ? (InstPat ? InstPat->getOnlyTree() : Pattern)
                : (InstPat ? InstPat->getOnlyTree() : NULL);
       if (InstPatNode && InstPatNode->getOperator()->getName() == "set") {
-        InstPatNode = InstPatNode->getChild(1);
+        InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
       }
       bool HasVarOps     = isRoot && II.hasVariableNumberOfOperands;
       bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
