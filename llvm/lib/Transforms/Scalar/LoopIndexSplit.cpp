@@ -89,6 +89,13 @@ namespace {
     };
     
   private:
+
+    // safeIcmpInst - CI is considered safe instruction if one of the operand
+    // is SCEVAddRecExpr based on induction variable and other operand is
+    // loop invariant. If CI is safe then populate SplitInfo object SD appropriately
+    // and return true;
+    bool safeICmpInst(ICmpInst *CI, SplitInfo &SD);
+
     /// Find condition inside a loop that is suitable candidate for index split.
     void findSplitCondition();
 
@@ -411,37 +418,49 @@ void LoopIndexSplit::findSplitCondition() {
 
     // If one operand is loop invariant and second operand is SCEVAddRecExpr
     // based on induction variable then CI is a candidate split condition.
-    Value *V0 = CI->getOperand(0);
-    Value *V1 = CI->getOperand(1);
+    if (safeICmpInst(CI, SD))
+      SplitData.push_back(SD);
+  }
+}
 
-    SCEVHandle SH0 = SE->getSCEV(V0);
-    SCEVHandle SH1 = SE->getSCEV(V1);
+// safeIcmpInst - CI is considered safe instruction if one of the operand
+// is SCEVAddRecExpr based on induction variable and other operand is
+// loop invariant. If CI is safe then populate SplitInfo object SD appropriately
+// and return true;
+bool LoopIndexSplit::safeICmpInst(ICmpInst *CI, SplitInfo &SD) {
 
-    if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
-      SD.SplitValue = V0;
-      SD.SplitCondition = CI;
-      if (PHINode *PN = dyn_cast<PHINode>(V1)) {
-        if (PN == IndVar)
-          SplitData.push_back(SD);
-      }
-      else  if (Instruction *Insn = dyn_cast<Instruction>(V1)) {
-        if (IndVarIncrement && IndVarIncrement == Insn)
-          SplitData.push_back(SD);
-      }
+  Value *V0 = CI->getOperand(0);
+  Value *V1 = CI->getOperand(1);
+  
+  SCEVHandle SH0 = SE->getSCEV(V0);
+  SCEVHandle SH1 = SE->getSCEV(V1);
+  
+  if (SH0->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH1)) {
+    SD.SplitValue = V0;
+    SD.SplitCondition = CI;
+    if (PHINode *PN = dyn_cast<PHINode>(V1)) {
+      if (PN == IndVar)
+        return true;
     }
-    else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
-      SD.SplitValue =  V1;
-      SD.SplitCondition = CI;
-      if (PHINode *PN = dyn_cast<PHINode>(V0)) {
-        if (PN == IndVar)
-          SplitData.push_back(SD);
-      }
-      else  if (Instruction *Insn = dyn_cast<Instruction>(V0)) {
-        if (IndVarIncrement && IndVarIncrement == Insn)
-          SplitData.push_back(SD);
-      }
+    else  if (Instruction *Insn = dyn_cast<Instruction>(V1)) {
+      if (IndVarIncrement && IndVarIncrement == Insn)
+        return true;
     }
   }
+  else if (SH1->isLoopInvariant(L) && isa<SCEVAddRecExpr>(SH0)) {
+    SD.SplitValue =  V1;
+    SD.SplitCondition = CI;
+    if (PHINode *PN = dyn_cast<PHINode>(V0)) {
+      if (PN == IndVar)
+        return true;
+    }
+    else  if (Instruction *Insn = dyn_cast<Instruction>(V0)) {
+      if (IndVarIncrement && IndVarIncrement == Insn)
+        return true;
+    }
+  }
+
+  return false;
 }
 
 /// processOneIterationLoop - Current loop L contains compare instruction
