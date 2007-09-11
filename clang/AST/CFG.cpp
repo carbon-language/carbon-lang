@@ -116,6 +116,7 @@ private:
   CFGBlock* WalkAST_VisitChildren(Stmt* S);
   CFGBlock* WalkAST_VisitVarDecl(VarDecl* D);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* S);
+  CFGBlock* WalkAST_VisitCallExpr(CallExpr* C);
   void FinishBlock(CFGBlock* B);
   
 };
@@ -231,10 +232,12 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       Succ = ConfluenceBlock;
       Block = NULL;
       CFGBlock* LHSBlock = Visit(C->getLHS());
+      FinishBlock(LHSBlock);
       
       Succ = ConfluenceBlock;
       Block = NULL;
       CFGBlock* RHSBlock = Visit(C->getRHS());
+      FinishBlock(RHSBlock);
       
       Block = createBlock(false);
       Block->addSuccessor(LHSBlock);
@@ -253,10 +256,12 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       Succ = ConfluenceBlock;
       Block = NULL;
       CFGBlock* LHSBlock = Visit(C->getLHS());
-      
+      FinishBlock(LHSBlock);
+
       Succ = ConfluenceBlock;
       Block = NULL;
       CFGBlock* RHSBlock = Visit(C->getRHS());
+      FinishBlock(RHSBlock);
       
       Block = createBlock(false);
       Block->addSuccessor(LHSBlock);
@@ -279,6 +284,9 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       if (AlwaysAddStmt) Block->appendStmt(S);
       return Block;
     }
+    
+    case Stmt::CallExprClass:
+      return WalkAST_VisitCallExpr(cast<CallExpr>(S));
       
     case Stmt::StmtExprClass:
       return WalkAST_VisitStmtExpr(cast<StmtExpr>(S));
@@ -356,6 +364,14 @@ CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
 CFGBlock* CFGBuilder::WalkAST_VisitStmtExpr(StmtExpr* S) {
   Block->appendStmt(S);
   return VisitCompoundStmt(S->getSubStmt());  
+}
+
+/// WalkAST_VisitCallExpr - Utility method to handle function calls that
+///  are nested in expressions.  The idea is that each function call should
+///  appear as a distinct statement in the CFGBlock.
+CFGBlock* CFGBuilder::WalkAST_VisitCallExpr(CallExpr* C) {
+  Block->appendStmt(C);
+  return WalkAST_VisitChildren(C);
 }
 
 /// VisitStmt - Handle statements with no branching control flow.
@@ -458,6 +474,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // newly created blocks will be pointed to be "Block".
   return addStmt(I->getCond());
 }
+  
     
 CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
   // If we were in the middle of a block we stop processing that block
