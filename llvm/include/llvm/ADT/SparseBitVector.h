@@ -195,6 +195,15 @@ public:
     return changed;
   }
 
+  // Return true if we have any bits in common with RHS
+  bool intersects(const SparseBitVectorElement &RHS) const {
+    for (unsigned i = 0; i < BITWORDS_PER_ELEMENT; ++i) {
+      if (RHS.Bits[i] & Bits[i])
+        return true;  
+    }
+    return false;
+  }
+  
   // Intersect this Element with RHS and return true if this one changed.
   // BecameZero is set to true if this element became all-zero bits.
   bool intersectWith(const SparseBitVectorElement &RHS,
@@ -207,6 +216,28 @@ public:
       BitWord old = changed ? 0 : Bits[i];
 
       Bits[i] &= RHS.Bits[i];
+      if (Bits[i] != 0)
+        allzero = false;
+
+      if (old != Bits[i])
+        changed = true;
+    }
+    BecameZero = !allzero;
+    return changed;
+  }
+  // Intersect this Element with the complement of RHS and return true if this
+  // one changed.  BecameZero is set to true if this element became all-zero
+  // bits.
+  bool intersectWithComplement(const SparseBitVectorElement &RHS,
+                     bool &BecameZero) {
+    bool changed = false;
+    bool allzero = true;
+
+    BecameZero = false;
+    for (unsigned i = 0; i < BITWORDS_PER_ELEMENT; ++i) {
+      BitWord old = changed ? 0 : Bits[i];
+
+      Bits[i] &= ~RHS.Bits[i];
       if (Bits[i] != 0)
         allzero = false;
 
@@ -265,11 +296,11 @@ class SparseBitVector {
 
   // Iterator to walk set bits in the bitmap.  This iterator is a lot uglier
   // than it would be, in order to be efficient.
-  struct SparseBitVectorIterator {
+  class SparseBitVectorIterator {
   private:
     bool AtEnd;
 
-    SparseBitVector<ElementSize> &BitVector;
+    const SparseBitVector<ElementSize> *BitVector;
 
     // Current element inside of bitmap.
     ElementListConstIter Iter;
@@ -287,11 +318,11 @@ class SparseBitVector {
     void AdvanceToFirstNonZero() {
       if (AtEnd)
         return;
-      if (BitVector.Elements.empty()) {
+      if (BitVector->Elements.empty()) {
         AtEnd = true;
         return;
       }
-      Iter = BitVector.Elements.begin();
+      Iter = BitVector->Elements.begin();
       BitNumber = (*Iter)->index() * ElementSize;
       unsigned BitPos = (*Iter)->find_first();
       BitNumber += BitPos;
@@ -319,7 +350,7 @@ class SparseBitVector {
           WordNumber = 0;
 
           // We may run out of elements in the bitmap.
-          if (Iter == BitVector.Elements.end()) {
+          if (Iter == BitVector->Elements.end()) {
             AtEnd = true;
             return;
           }
@@ -369,10 +400,13 @@ class SparseBitVector {
     bool operator!=(const SparseBitVectorIterator &RHS) const {
       return !(*this == RHS);
     }
-
-    explicit SparseBitVectorIterator(SparseBitVector<ElementSize> &RHS,
-                                     bool end = false):BitVector(RHS) {
-      Iter = BitVector.Elements.begin();
+    SparseBitVectorIterator(): BitVector(NULL) { 
+    }
+    
+      
+    SparseBitVectorIterator(const SparseBitVector<ElementSize> *RHS,
+                            bool end = false):BitVector(RHS) {
+      Iter = BitVector->Elements.begin();
       BitNumber = 0;
       Bits = 0;
       WordNumber = ~0;
@@ -382,7 +416,6 @@ class SparseBitVector {
   };
 public:
   typedef SparseBitVectorIterator iterator;
-  typedef const SparseBitVectorIterator const_iterator;
 
   SparseBitVector () {
     CurrElementIter = Elements.begin ();
@@ -463,6 +496,13 @@ public:
       }
     }
     Element->set(Idx % ElementSize);
+  }
+  
+  bool test_and_set (unsigned Idx) {
+    bool old = test(Idx);
+    if (!old)
+      set(Idx);
+    return !old;
   }
 
   // Union our bitmap with the RHS and return true if we changed.
@@ -547,14 +587,156 @@ public:
     return changed;
   }
 
+  // Intersect our bitmap with the complement of the RHS and return true if ours
+  // changed.
+  bool intersectWithComplement(const SparseBitVector &RHS) {
+    bool changed = false;
+    ElementListIter Iter1 = Elements.begin();
+    ElementListConstIter Iter2 = RHS.Elements.begin();
+
+    // IE They may both be end.
+    if (Iter1 == Iter2)
+      return false;
+
+    // See if the first bitmap element is the same in both.  This is only
+    // possible if they are the same bitmap.
+    if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
+      if (*Iter1 == *Iter2) {
+        Elements.clear();
+        return true;
+      }
+    
+    // Loop through, intersecting as we go, erasing elements when necessary.
+    while (Iter2 != RHS.Elements.end()) {
+      if (Iter1 == Elements.end())
+        return changed;
+
+      if ((*Iter1)->index() > (*Iter2)->index()) {
+        Iter2++;
+      } else if ((*Iter1)->index() == (*Iter2)->index()) {
+        bool BecameZero;
+        changed |= (*Iter1)->intersectWithComplement(*(*Iter2), BecameZero);
+        if (BecameZero) {
+          ElementListIter IterTmp = Iter1;
+          delete *IterTmp;
+          Elements.erase(IterTmp);
+          Iter1++;
+        } else {
+          Iter1++;
+        }
+        Iter2++;
+      } else {
+        ElementListIter IterTmp = Iter1;
+        Iter1++;
+        delete *IterTmp;
+        Elements.erase(IterTmp);
+      }
+    }
+    CurrElementIter = Elements.begin();
+    return changed;
+  }
+
+  bool intersectWithComplement(const SparseBitVector<ElementSize> *RHS) const {
+    return intersectWithComplement(*RHS);
+  }
+  
+                               
+  bool intersects(const SparseBitVector<ElementSize> *RHS) const {
+    return intersects(*RHS);
+  }
+  
+  // Return true if we share any bits in common with RHS
+  bool intersects(const SparseBitVector<ElementSize> &RHS) const {
+    ElementListConstIter Iter1 = Elements.begin();
+    ElementListConstIter Iter2 = RHS.Elements.begin();
+
+    // IE They may both be end.
+    if (Iter1 == Iter2)
+      return false;
+
+    // See if the first bitmap element is the same in both.  This is only
+    // possible if they are the same bitmap.
+    if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
+      if (*Iter1 == *Iter2) {
+        return true;
+      }
+    
+    // Loop through, intersecting stopping when we hit bits in common.
+    while (Iter2 != RHS.Elements.end()) {
+      if (Iter1 == Elements.end())
+        return false;
+
+      if ((*Iter1)->index() > (*Iter2)->index()) {
+        Iter2++;
+      } else if ((*Iter1)->index() == (*Iter2)->index()) {
+        if ((*Iter1)->intersects(*(*Iter2)))
+          return true;
+        Iter1++;
+        Iter2++;
+      } else {
+        Iter1++;
+      }
+    }
+    return false;
+  }
+  
+  // Return the first set bit in the bitmap.  Return -1 if no bits are set.
+  int find_first() const {
+    if (Elements.empty())
+      return -1;
+    const SparseBitVectorElement<ElementSize> *First = *(Elements.begin());
+    return (First->index() * ElementSize) + First->find_first();
+  }
+
+  // Return true if the SparseBitVector is empty
+  bool empty() const {
+    return Elements.empty();
+  }
+  
+  unsigned count() const {
+    unsigned BitCount = 0;
+    for (ElementListConstIter Iter = Elements.begin();
+         Iter != Elements.end();
+         ++Iter)
+      BitCount += (*Iter)->count();
+    
+    return BitCount;
+  }
   iterator begin() const {
-    return iterator(*this);
+    return iterator(this);
   }
 
   iterator end() const {
-    return iterator(*this, ~0);
+    return iterator(this, ~0);
   }
 };
+
+// Convenience functions to allow Or and And without dereferencing in the user
+// code. 
+template <unsigned ElementSize>
+inline void operator |=(SparseBitVector<ElementSize> *LHS,
+                        const SparseBitVector<ElementSize> &RHS) {
+  LHS->operator|=(RHS);
+}
+
+template <unsigned ElementSize>
+inline void operator |=(SparseBitVector<ElementSize> *LHS,
+                        const SparseBitVector<ElementSize> *RHS) {
+  LHS->operator|=(RHS);
+}
+
+template <unsigned ElementSize>
+inline void operator &=(SparseBitVector<ElementSize> *LHS,
+                        const SparseBitVector<ElementSize> &RHS) {
+  LHS->operator&=(RHS);
+}
+
+template <unsigned ElementSize>
+inline void operator &=(SparseBitVector<ElementSize> *LHS,
+                        const SparseBitVector<ElementSize> *RHS) {
+  LHS->operator&=(RHS);
+}
+  
 }
 
 #endif
