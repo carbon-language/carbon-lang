@@ -17,12 +17,11 @@
 
 #include <cassert>
 #include <cstring>
-#include <list>
 #include <algorithm>
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
-
+#include "llvm/ADT/ilist"
 namespace llvm {
 
 /// SparseBitVector is an implementation of a bitvector that is sparse by only
@@ -48,11 +47,35 @@ public:
     BITWORDS_PER_ELEMENT = (ElementSize + BITWORD_SIZE - 1) / BITWORD_SIZE,
     BITS_PER_ELEMENT = ElementSize
   };
+
+  SparseBitVectorElement<ElementSize> *getNext() const {
+    return Next;
+  }
+  SparseBitVectorElement<ElementSize> *getPrev() const {
+    return Prev;
+  }
+
+  void setNext(SparseBitVectorElement<ElementSize> *RHS) {
+    Next = RHS;
+  }
+  void setPrev(SparseBitVectorElement<ElementSize> *RHS) {
+    Prev = RHS;
+  }
+
 private:
+  SparseBitVectorElement<ElementSize> *Next;
+  SparseBitVectorElement<ElementSize> *Prev;
   // Index of Element in terms of where first bit starts.
   unsigned ElementIndex;
   BitWord Bits[BITWORDS_PER_ELEMENT];
-  SparseBitVectorElement();
+  // Needed for sentinels
+  SparseBitVectorElement() {
+    ElementIndex = ~0UL;
+    memset(&Bits[0], 0, sizeof (BitWord) * BITWORDS_PER_ELEMENT);
+  }
+
+  friend struct ilist_traits<SparseBitVectorElement<ElementSize> >;
+
 public:
   explicit SparseBitVectorElement(unsigned Idx) {
     ElementIndex = Idx;
@@ -262,12 +285,11 @@ public:
     }
     BecameZero = !allzero;
   }
-
 };
 
 template <unsigned ElementSize = 128>
 class SparseBitVector {
-  typedef std::list<SparseBitVectorElement<ElementSize> *> ElementList;
+  typedef ilist<SparseBitVectorElement<ElementSize> > ElementList;
   typedef typename ElementList::iterator ElementListIter;
   typedef typename ElementList::const_iterator ElementListConstIter;
   enum {
@@ -294,15 +316,15 @@ class SparseBitVector {
     // Search from our current iterator, either backwards or forwards,
     // depending on what element we are looking for.
     ElementListIter ElementIter = CurrElementIter;
-    if ((*CurrElementIter)->index() == ElementIndex) {
+    if (CurrElementIter->index() == ElementIndex) {
       return ElementIter;
-    } else if ((*CurrElementIter)->index() > ElementIndex) {
+    } else if (CurrElementIter->index() > ElementIndex) {
       while (ElementIter != Elements.begin()
-             && (*ElementIter)->index() > ElementIndex)
+             && ElementIter->index() > ElementIndex)
         --ElementIter;
     } else {
       while (ElementIter != Elements.end() &&
-             (*ElementIter)->index() <= ElementIndex)
+             ElementIter->index() <= ElementIndex)
         ++ElementIter;
       --ElementIter;
     }
@@ -339,11 +361,11 @@ class SparseBitVector {
         return;
       }
       Iter = BitVector->Elements.begin();
-      BitNumber = (*Iter)->index() * ElementSize;
-      unsigned BitPos = (*Iter)->find_first();
+      BitNumber = Iter->index() * ElementSize;
+      unsigned BitPos = Iter->find_first();
       BitNumber += BitPos;
       WordNumber = (BitNumber % ElementSize) / BITWORD_SIZE;
-      Bits = (*Iter)->word(WordNumber);
+      Bits = Iter->word(WordNumber);
       Bits >>= BitPos % BITWORD_SIZE;
     }
 
@@ -359,7 +381,7 @@ class SparseBitVector {
 
       // See if we ran out of Bits in this word.
       if (!Bits) {
-        int NextSetBitNumber = (*Iter)->find_next(BitNumber % ElementSize) ;
+        int NextSetBitNumber = Iter->find_next(BitNumber % ElementSize) ;
         // If we ran out of set bits in this element, move to next element.
         if (NextSetBitNumber == -1 || (BitNumber % ElementSize == 0)) {
           ++Iter;
@@ -371,15 +393,15 @@ class SparseBitVector {
             return;
           }
           // Set up for next non zero word in bitmap.
-          BitNumber = (*Iter)->index() * ElementSize;
-          NextSetBitNumber = (*Iter)->find_first();
+          BitNumber = Iter->index() * ElementSize;
+          NextSetBitNumber = Iter->find_first();
           BitNumber += NextSetBitNumber;
           WordNumber = (BitNumber % ElementSize) / BITWORD_SIZE;
-          Bits = (*Iter)->word(WordNumber);
+          Bits = Iter->word(WordNumber);
           Bits >>= NextSetBitNumber % BITWORD_SIZE;
         } else {
           WordNumber = (NextSetBitNumber % ElementSize) / BITWORD_SIZE;
-          Bits = (*Iter)->word(WordNumber);
+          Bits = Iter->word(WordNumber);
           Bits >>= NextSetBitNumber % BITWORD_SIZE;
         }
       }
@@ -438,17 +460,14 @@ public:
   }
 
   ~SparseBitVector() {
-    for_each(Elements.begin(), Elements.end(),
-             deleter<SparseBitVectorElement<ElementSize> >);
   }
 
   // SparseBitVector copy ctor.
   SparseBitVector(const SparseBitVector &RHS) {
     ElementListConstIter ElementIter = RHS.Elements.begin();
     while (ElementIter != RHS.Elements.end()) {
-      SparseBitVectorElement<ElementSize> *ElementCopy;
-      ElementCopy = new SparseBitVectorElement<ElementSize>(*(*ElementIter));
-      Elements.push_back(ElementCopy);
+      Elements.push_back(SparseBitVectorElement<ElementSize>(*ElementIter));
+      ++ElementIter;
     }
 
     CurrElementIter = Elements.begin ();
@@ -465,9 +484,9 @@ public:
     // If we can't find an element that is supposed to contain this bit, there
     // is nothing more to do.
     if (ElementIter == Elements.end() ||
-        (*ElementIter)->index() != ElementIndex)
+        ElementIter->index() != ElementIndex)
       return false;
-    return (*ElementIter)->test(Idx % ElementSize);
+    return ElementIter->test(Idx % ElementSize);
   }
 
   void reset(unsigned Idx) {
@@ -480,38 +499,36 @@ public:
     // If we can't find an element that is supposed to contain this bit, there
     // is nothing more to do.
     if (ElementIter == Elements.end() ||
-        (*ElementIter)->index() != ElementIndex)
+        ElementIter->index() != ElementIndex)
       return;
-    (*ElementIter)->reset(Idx % ElementSize);
+    ElementIter->reset(Idx % ElementSize);
 
     // When the element is zeroed out, delete it.
-    if ((*ElementIter)->empty()) {
-      delete (*ElementIter);
+    if (ElementIter->empty()) {
       ++CurrElementIter;
       Elements.erase(ElementIter);
     }
   }
 
   void set(unsigned Idx) {
-    SparseBitVectorElement<ElementSize> *Element;
     unsigned ElementIndex = Idx / ElementSize;
-
+    SparseBitVectorElement<ElementSize> *Element;
+    ElementListIter ElementIter;
     if (Elements.empty()) {
       Element = new SparseBitVectorElement<ElementSize>(ElementIndex);
-      Elements.push_back(Element);
-    } else {
-      ElementListIter ElementIter = FindLowerBound(ElementIndex);
+      ElementIter = Elements.insert(Elements.end(), Element);
 
-      if (ElementIter != Elements.end() &&
-          (*ElementIter)->index() == ElementIndex)
-        Element = *ElementIter;
-      else {
+    } else {
+      ElementIter = FindLowerBound(ElementIndex);
+
+      if (ElementIter == Elements.end() ||
+          ElementIter->index() != ElementIndex) {
         Element = new SparseBitVectorElement<ElementSize>(ElementIndex);
         // Insert does insert before, and lower bound gives the one before.
-        Elements.insert(++ElementIter, Element);
+        ElementIter = Elements.insert(++ElementIter, Element);
       }
     }
-    Element->set(Idx % ElementSize);
+    ElementIter->set(Idx % ElementSize);
   }
 
   bool test_and_set (unsigned Idx) {
@@ -527,8 +544,8 @@ public:
     ElementListIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    // IE They may both be end
-    if (Iter1 == Iter2)
+    // Check if both bitmaps are empty
+    if (Elements.empty() && RHS.Elements.empty())
       return false;
 
     // See if the first bitmap element is the same in both.  This is only
@@ -538,15 +555,13 @@ public:
         return false;
 
     while (Iter2 != RHS.Elements.end()) {
-      if (Iter1 == Elements.end() || (*Iter1)->index() > (*Iter2)->index()) {
-        SparseBitVectorElement<ElementSize> *NewElem;
-
-        NewElem = new SparseBitVectorElement<ElementSize>(*(*Iter2));
-        Elements.insert(Iter1, NewElem);
+      if (Iter1 == Elements.end() || Iter1->index() > Iter2->index()) {
+        Elements.insert(Iter1,
+                        new SparseBitVectorElement<ElementSize>(*Iter2));
         ++Iter2;
         changed = true;
-      } else if ((*Iter1)->index() == (*Iter2)->index()) {
-        changed |= (*Iter1)->unionWith(*(*Iter2));
+      } else if (Iter1->index() == Iter2->index()) {
+        changed |= Iter1->unionWith(*Iter2);
         ++Iter1;
         ++Iter2;
       } else {
@@ -563,8 +578,8 @@ public:
     ElementListIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    // IE They may both be end.
-    if (Iter1 == Iter2)
+    // Check if both bitmaps are empty.
+    if (Elements.empty() && RHS.Elements.empty())
       return false;
 
     // See if the first bitmap element is the same in both.  This is only
@@ -578,14 +593,13 @@ public:
       if (Iter1 == Elements.end())
         return changed;
 
-      if ((*Iter1)->index() > (*Iter2)->index()) {
+      if (Iter1->index() > Iter2->index()) {
         ++Iter2;
-      } else if ((*Iter1)->index() == (*Iter2)->index()) {
+      } else if (Iter1->index() == Iter2->index()) {
         bool BecameZero;
-        changed |= (*Iter1)->intersectWith(*(*Iter2), BecameZero);
+        changed |= Iter1->intersectWith(*Iter2, BecameZero);
         if (BecameZero) {
           ElementListIter IterTmp = Iter1;
-          delete *IterTmp;
           Elements.erase(IterTmp);
         }
         ++Iter1;
@@ -593,12 +607,9 @@ public:
       } else {
         ElementListIter IterTmp = Iter1;
         ++Iter1;
-        delete *IterTmp;
         Elements.erase(IterTmp);
       }
     }
-    for_each(Iter1, Elements.end(),
-             deleter<SparseBitVectorElement<ElementSize> >);
     Elements.erase(Iter1, Elements.end());
     CurrElementIter = Elements.begin();
     return changed;
@@ -611,16 +622,14 @@ public:
     ElementListIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    // IE They may both be end.
-    if (Iter1 == Iter2)
+    // Check if they are both empty
+    if (Elements.empty() && RHS.Elements.empty())
       return false;
 
     // See if the first bitmap element is the same in both.  This is only
     // possible if they are the same bitmap.
     if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
       if (*Iter1 == *Iter2) {
-        for_each(Elements.begin(), Elements.end(),
-                 deleter<SparseBitVectorElement<ElementSize> >);
         Elements.clear();
         return true;
       }
@@ -630,14 +639,13 @@ public:
       if (Iter1 == Elements.end())
         return changed;
 
-      if ((*Iter1)->index() > (*Iter2)->index()) {
+      if (Iter1->index() > Iter2->index()) {
         ++Iter2;
-      } else if ((*Iter1)->index() == (*Iter2)->index()) {
+      } else if (Iter1->index() == Iter2->index()) {
         bool BecameZero;
-        changed |= (*Iter1)->intersectWithComplement(*(*Iter2), BecameZero);
+        changed |= Iter1->intersectWithComplement(*Iter2, BecameZero);
         if (BecameZero) {
           ElementListIter IterTmp = Iter1;
-          delete *IterTmp;
           Elements.erase(IterTmp);
         }
         ++Iter1;
@@ -645,7 +653,6 @@ public:
       } else {
         ElementListIter IterTmp = Iter1;
         ++Iter1;
-        delete *IterTmp;
         Elements.erase(IterTmp);
       }
     }
@@ -663,15 +670,12 @@ public:
   void intersectWithComplement(const SparseBitVector<ElementSize> &RHS1,
                                const SparseBitVector<ElementSize> &RHS2)
   {
-    for_each(Elements.begin(), Elements.end(),
-             deleter<SparseBitVectorElement<ElementSize> >);
     Elements.clear();
-
     ElementListConstIter Iter1 = RHS1.Elements.begin();
     ElementListConstIter Iter2 = RHS2.Elements.begin();
 
-    // IE They may both be end.
-    if (Iter1 == Iter2)
+    // Check if they are both empty.
+    if (RHS1.empty() && RHS2.empty())
       return;
 
     // See if the first bitmap element is the same in both.  This is only
@@ -686,19 +690,18 @@ public:
       if (Iter1 == RHS1.Elements.end())
         return;
 
-      if ((*Iter1)->index() > (*Iter2)->index()) {
+      if (Iter1->index() > Iter2->index()) {
         ++Iter2;
-      } else if ((*Iter1)->index() == (*Iter2)->index()) {
+      } else if (Iter1->index() == Iter2->index()) {
         bool BecameZero = false;
         SparseBitVectorElement<ElementSize> *NewElement =
-          new SparseBitVectorElement<ElementSize>((*Iter1)->index());
-
-        NewElement->intersectWithComplement(*(*Iter1), *(*Iter2), BecameZero);
-        if (BecameZero) {
-          delete NewElement;
-        } else {
+          new SparseBitVectorElement<ElementSize>(Iter1->index());
+        NewElement->intersectWithComplement(*Iter1, *Iter2, BecameZero);
+        if (!BecameZero) {
           Elements.push_back(NewElement);
         }
+        else
+          delete NewElement;
 
         ++Iter1;
         ++Iter2;
@@ -706,14 +709,15 @@ public:
         ++Iter1;
       }
     }
+
     // copy the remaining elements
-    
     while (Iter1 != RHS1.Elements.end()) {
         SparseBitVectorElement<ElementSize> *NewElement =
-          new SparseBitVectorElement<ElementSize>(*(*Iter1));
+          new SparseBitVectorElement<ElementSize>(*Iter1);
         Elements.push_back(NewElement);
+        ++Iter1;
       }
-    
+
     CurrElementIter = Elements.begin();
     return;
   }
@@ -732,8 +736,8 @@ public:
     ElementListConstIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    // IE They may both be end.
-    if (Iter1 == Iter2)
+    // Check if both bitmaps are empty.
+    if (Elements.empty() && RHS.Elements.empty())
       return false;
 
     // See if the first bitmap element is the same in both.  This is only
@@ -748,10 +752,10 @@ public:
       if (Iter1 == Elements.end())
         return false;
 
-      if ((*Iter1)->index() > (*Iter2)->index()) {
+      if (Iter1->index() > Iter2->index()) {
         ++Iter2;
-      } else if ((*Iter1)->index() == (*Iter2)->index()) {
-        if ((*Iter1)->intersects(*(*Iter2)))
+      } else if (Iter1->index() == Iter2->index()) {
+        if (Iter1->intersects(*Iter2))
           return true;
         ++Iter1;
         ++Iter2;
@@ -766,8 +770,8 @@ public:
   int find_first() const {
     if (Elements.empty())
       return -1;
-    const SparseBitVectorElement<ElementSize> *First = *(Elements.begin());
-    return (First->index() * ElementSize) + First->find_first();
+    const SparseBitVectorElement<ElementSize> &First = *(Elements.begin());
+    return (First.index() * ElementSize) + First.find_first();
   }
 
   // Return true if the SparseBitVector is empty
@@ -780,7 +784,7 @@ public:
     for (ElementListConstIter Iter = Elements.begin();
          Iter != Elements.end();
          ++Iter)
-      BitCount += (*Iter)->count();
+      BitCount += Iter->count();
 
     return BitCount;
   }
@@ -790,6 +794,17 @@ public:
 
   iterator end() const {
     return iterator(this, ~0);
+  }
+
+  // Dump our bits to stderr
+  void dump(llvm::OStream &out) const {
+    out << "[ ";
+    for (iterator bi = begin();
+         bi != end();
+         ++bi) {
+      out << *bi << " ";
+    }
+    out << std::endl;
   }
 };
 
