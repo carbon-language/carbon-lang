@@ -425,7 +425,7 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     reverseDep.erase(rem);
   }
   
-  if (depGraphNonLocal.count(rem)) {
+  if (reverseDepNonLocal.count(rem)) {
     SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[rem];
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
