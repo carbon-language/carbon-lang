@@ -116,6 +116,11 @@ namespace llvm {
     const char *PersonalityPrefix;        // Defaults to ""
     const char *PersonalitySuffix;        // Defaults to ""
 
+    /// NeedsIndirectEncoding - If set, we need to set the indirect encoding bit
+    /// for EH in Dwarf.
+    /// 
+    bool NeedsIndirectEncoding;           // Defaults to false
+
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
     const char *InlineAsmStart;           // Defaults to "#APP\n"

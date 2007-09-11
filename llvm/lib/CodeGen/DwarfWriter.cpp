@@ -2789,7 +2789,12 @@ private:
     if (Personality) {
       Asm->EmitULEB128Bytes(7);
       Asm->EOL("Augmentation Size");
-      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4 | DW_EH_PE_indirect);
+
+      if (TAI->getNeedsIndirectEncoding())
+        Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4 | DW_EH_PE_indirect);
+      else
+        Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+
       Asm->EOL("Personality (pcrel sdata4 indirect)");
       
       PrintRelDirective();

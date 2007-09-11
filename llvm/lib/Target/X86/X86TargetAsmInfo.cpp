@@ -70,6 +70,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     }
     PersonalityPrefix = "L";
     PersonalitySuffix = "$non_lazy_ptr";
+    NeedsIndirectEncoding = true;
     InlineAsmStart = "# InlineAsm Start";
     InlineAsmEnd = "# InlineAsm End";
     SetDirective = "\t.set";
