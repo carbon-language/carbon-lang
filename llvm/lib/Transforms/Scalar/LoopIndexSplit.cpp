@@ -64,8 +64,8 @@ namespace {
       // Induction variable's range is split at this value.
       Value *SplitValue;
       
-      // This compare instruction compares IndVar against SplitValue.
-      ICmpInst *SplitCondition;
+      // This instruction compares IndVar against SplitValue.
+      Instruction *SplitCondition;
 
       // True if after loop index split, first loop will execute split condition's
       // true branch.
@@ -221,7 +221,8 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
   for (SmallVector<SplitInfo, 4>::iterator SI = SplitData.begin(),
          E = SplitData.end(); SI != E;) {
     SplitInfo &SD = *SI;
-    if (SD.SplitCondition->getPredicate() == ICmpInst::ICMP_EQ) {
+    ICmpInst *CI = dyn_cast<ICmpInst>(SD.SplitCondition);
+    if (CI && CI->getPredicate() == ICmpInst::ICMP_EQ) {
       Changed = processOneIterationLoop(SD);
       if (Changed) {
         ++NumIndexSplit;
@@ -790,7 +791,8 @@ bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
 /// based on split value. 
 void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
 
-  ICmpInst::Predicate SP = SD.SplitCondition->getPredicate();
+  ICmpInst *SC = cast<ICmpInst>(SD.SplitCondition);
+  ICmpInst::Predicate SP = SC->getPredicate();
   const Type *Ty = SD.SplitValue->getType();
   bool Sign = ExitCondition->isSignedPredicate();
   BasicBlock *Preheader = L->getLoopPreheader();
@@ -1140,7 +1142,8 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
   ICmpInst *B_SplitCondition = cast<ICmpInst>(ValueMap[SD.SplitCondition]);
 
   moveExitCondition(A_SplitCondBlock, A_ActiveBranch, A_ExitBlock, ExitCondition,
-                    SD.SplitCondition, IndVar, IndVarIncrement, ALoop);
+                    cast<ICmpInst>(SD.SplitCondition), IndVar, IndVarIncrement, 
+                    ALoop);
 
   moveExitCondition(B_SplitCondBlock, B_ActiveBranch, B_ExitBlock, B_ExitCondition,
                     B_SplitCondition, B_IndVar, B_IndVarIncrement, BLoop);
