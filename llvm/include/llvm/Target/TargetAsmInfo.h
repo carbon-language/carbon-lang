@@ -445,6 +445,9 @@ namespace llvm {
     const char *getPersonalitySuffix() const {
       return PersonalitySuffix;
     }
+    bool getNeedsIndirectEncoding() const {
+      return NeedsIndirectEncoding;
+    }
     const char *getInlineAsmStart() const {
       return InlineAsmStart;
     }
