@@ -410,10 +410,10 @@ void LoopIndexSplit::findSplitCondition() {
 
     // If split condition predicate is GT or GE then first execute
     // false branch of split condition.
-    if (CI->getPredicate() != ICmpInst::ICMP_ULT
-        && CI->getPredicate() != ICmpInst::ICMP_SLT
-        && CI->getPredicate() != ICmpInst::ICMP_ULE
-        && CI->getPredicate() != ICmpInst::ICMP_SLE)
+    if (CI->getPredicate() == ICmpInst::ICMP_UGT
+        || CI->getPredicate() == ICmpInst::ICMP_SGT
+        || CI->getPredicate() == ICmpInst::ICMP_UGE
+        || CI->getPredicate() == ICmpInst::ICMP_SGE)
       SD.UseTrueBranchFirst = false;
 
     // If one operand is loop invariant and second operand is SCEVAddRecExpr
