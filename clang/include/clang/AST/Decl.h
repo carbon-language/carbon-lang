@@ -560,32 +560,33 @@ public:
 
 /// ObjcMethodDecl - An instance of this class is created to represent an instance
 /// or class method declaration.
-class ObjcMethodDecl : public ValueDecl {
+class ObjcMethodDecl : public Decl {
 public:
   ObjcMethodDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-		 bool isInstance = true, Decl *PrevDecl = 0)
-    : ValueDecl(ObjcMethod, L, Id, T, PrevDecl), ParamInfo(0), 
-      MethodAttrs(0), IsInstance(isInstance) {}
+		 AttributeList *M = 0, bool isInstance = true, 
+		 Decl *PrevDecl = 0)
+    : Decl(ObjcMethod, L, Id, PrevDecl), MethodDeclType(T), ParamInfo(0), 
+      MethodAttrs(M), IsInstance(isInstance) {}
 
   virtual ~ObjcMethodDecl();
-  unsigned getNumParams() const;
-  ParmVarDecl *getParamDecl(unsigned i) {
-    assert(i < getNumParams() && "Illegal param #");
+  QualType getMethodType() const { return MethodDeclType; }
+  unsigned getNumMethodParams() const;
+  ParmVarDecl *getMethodParamDecl(unsigned i) {
+    assert(i < getNumMethodParams() && "Illegal param #");
     return ParamInfo[i];
   }
   void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
-  bool isInstance() const { return IsInstance; }
-  QualType getResultType() const { return getType(); }
-  
-  void setMethodAttrs(AttributeList *attrs) {MethodAttrs = attrs;}
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
-
+  bool isInstance() const { return IsInstance; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
   static bool classof(const ObjcMethodDecl *D) { return true; }
 
 private:
+  // Type of this method.
+  QualType MethodDeclType;
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this Method.  This is null if there are no formals.  
   ParmVarDecl **ParamInfo;
@@ -593,6 +594,7 @@ private:
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
 
+  /// instance (true) or class (false) method.
   bool IsInstance : 1;
 };
 
