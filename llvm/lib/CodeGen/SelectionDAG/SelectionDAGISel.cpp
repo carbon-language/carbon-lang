@@ -2881,12 +2881,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     // Discard annotate attributes
     return 0;
 
-  case Intrinsic::adjust_trampoline: {
-    SDOperand Arg = getValue(I.getOperand(1));
-    setValue(&I, DAG.getNode(ISD::ADJUST_TRAMP, TLI.getPointerTy(), Arg));
-    return 0;
-  }
-
   case Intrinsic::init_trampoline: {
     const Function *F =
       cast<Function>(IntrinsicInst::StripPointerCasts(I.getOperand(2)));
@@ -2899,7 +2893,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     Ops[4] = DAG.getSrcValue(I.getOperand(1));
     Ops[5] = DAG.getSrcValue(F);
 
-    DAG.setRoot(DAG.getNode(ISD::TRAMPOLINE, MVT::Other, Ops, 6));
+    SDOperand Tmp = DAG.getNode(ISD::TRAMPOLINE,
+                                DAG.getNodeValueTypes(TLI.getPointerTy(),
+                                                      MVT::Other), 2,
+                                Ops, 6);
+
+    setValue(&I, Tmp);
+    DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
   }

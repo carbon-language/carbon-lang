@@ -3384,21 +3384,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
-  case ISD::ADJUST_TRAMP: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1);
-      Result = TLI.LowerOperation(Result, DAG);
-      if (Result.Val) break;
-      // FALL THROUGH
-    case TargetLowering::Expand:
-      Result = Tmp1;
-      break;
-    }
-    break;
-  }
   case ISD::TRAMPOLINE: {
     SDOperand Ops[6];
     for (unsigned i = 0; i != 6; ++i)
@@ -3407,7 +3392,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // The only option for this node is to custom lower it.
     Result = TLI.LowerOperation(Result, DAG);
     assert(Result.Val && "Should always custom lower!");
-    break;
+
+    // Since trampoline produces two values, make sure to remember that we
+    // legalized both of them.
+    Tmp1 = LegalizeOp(Result.getValue(1));
+    Result = LegalizeOp(Result);
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Tmp1);
+    return Op.ResNo ? Tmp1 : Result;
   }
   }
   

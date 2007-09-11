@@ -124,9 +124,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
 
-  setOperationAction(ISD::ADJUST_TRAMP, MVT::i32, Expand);
-  setOperationAction(ISD::ADJUST_TRAMP, MVT::i64, Expand);
-
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::VAEND,   MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,  MVT::Other, Custom);

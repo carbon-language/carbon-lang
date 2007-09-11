@@ -246,9 +246,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   }
   setOperationAction(ISD::FRAME_TO_ARGS_OFFSET, MVT::i32, Custom);
   
-  setOperationAction(ISD::ADJUST_TRAMP, MVT::i32,   Expand);
-  setOperationAction(ISD::ADJUST_TRAMP, MVT::i64,   Expand);
-  setOperationAction(ISD::TRAMPOLINE,   MVT::Other, Custom);
+  setOperationAction(ISD::TRAMPOLINE, MVT::Other, Custom);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
@@ -4406,7 +4404,9 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     OutChains[3] = DAG.getStore(Root, Disp, Addr, TrmpSV->getValue(),
                                 TrmpSV->getOffset() + 6, false, 1);
 
-    return DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains, 4);
+    SDOperand Ops[] =
+      { Trmp, DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains, 4) };
+    return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(), Ops, 2);
   }
 }
 

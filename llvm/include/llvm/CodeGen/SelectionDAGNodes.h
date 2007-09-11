@@ -540,16 +540,13 @@ namespace ISD {
     // produces a token chain as output.
     DEBUG_LOC,
 
-    // ADJUST_TRAMP - This corresponds to the adjust_trampoline intrinsic.
-    // It takes a value as input and returns a value as output.
-    ADJUST_TRAMP,
-
     // TRAMPOLINE - This corresponds to the init_trampoline intrinsic.
     // It takes as input a token chain, the pointer to the trampoline,
     // the pointer to the nested function, the pointer to pass for the
     // 'nest' parameter, a SRCVALUE for the trampoline and another for
     // the nested function (allowing targets to access the original
-    // Function*).  It produces a token chain as output.
+    // Function*).  It produces the result of the intrinsic and a token
+    // chain as output.
     TRAMPOLINE,
 
     // BUILTIN_OP_END - This must be the last enum value in this list.

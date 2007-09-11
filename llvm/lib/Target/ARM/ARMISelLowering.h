@@ -138,7 +138,6 @@ namespace llvm {
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBR_JT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerADJUST_TRAMP(SDOperand Op, SelectionDAG &DAG);
   };
 }
 

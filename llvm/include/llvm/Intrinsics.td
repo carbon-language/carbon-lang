@@ -243,11 +243,9 @@ def int_var_annotation : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
 
 //===------------------------ Trampoline Intrinsics -----------------------===//
 //
-def int_init_trampoline   : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
-                                       llvm_ptr_ty], []>,
-                            GCCBuiltin<"__builtin_init_trampoline">;
-def int_adjust_trampoline : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty], [IntrNoMem]>,
-                            GCCBuiltin<"__builtin_adjust_trampoline">;
+def int_init_trampoline : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty,
+                                     llvm_ptr_ty], []>,
+                          GCCBuiltin<"__builtin_init_trampoline">;
 
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics

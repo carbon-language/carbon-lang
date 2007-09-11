@@ -3643,8 +3643,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::DEBUG_LOC: return "debug_loc";
 
   // Trampolines
-  case ISD::ADJUST_TRAMP: return "adjust_tramp";
-  case ISD::TRAMPOLINE:   return "trampoline";
+  case ISD::TRAMPOLINE: return "trampoline";
 
   case ISD::CONDCODE:
     switch (cast<CondCodeSDNode>(this)->get()) {

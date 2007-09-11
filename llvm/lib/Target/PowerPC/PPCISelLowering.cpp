@@ -171,9 +171,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET               , MVT::Other, Custom);
 
-  setOperationAction(ISD::ADJUST_TRAMP, MVT::i32, Expand);
-  setOperationAction(ISD::ADJUST_TRAMP, MVT::i64, Expand);
-
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   
