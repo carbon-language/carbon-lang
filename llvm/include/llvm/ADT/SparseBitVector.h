@@ -796,16 +796,6 @@ public:
     return iterator(this, ~0);
   }
 
-  // Dump our bits to stderr
-  void dump(llvm::OStream &out) const {
-    out << "[ ";
-    for (iterator bi = begin();
-         bi != end();
-         ++bi) {
-      out << *bi << " ";
-    }
-    out << std::endl;
-  }
 };
 
 // Convenience functions to allow Or and And without dereferencing in the user
@@ -833,6 +823,19 @@ template <unsigned ElementSize>
 inline bool operator &=(SparseBitVector<ElementSize> &LHS,
                         const SparseBitVector<ElementSize> *RHS) {
   return LHS &= (*RHS);
+}
+ 
+
+// Dump a SparseBitVector to a stream
+template <unsigned ElementSize>
+void dump(const SparseBitVector<ElementSize> &LHS, llvm::OStream &out) {
+  out << "[ ";
+
+  typename SparseBitVector<ElementSize>::iterator bi;
+  for (bi = LHS.begin(); bi != LHS.end(); ++bi) {
+    out << *bi << " ";
+  }
+    out << "\n";
 }
 
 }
