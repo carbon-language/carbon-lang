@@ -222,7 +222,45 @@ public:
   void print(std::ostream& OS) const;
   void dump() const;
   void setEntry(CFGBlock *B) { Entry = B; }
-  void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }   
+  void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }
+  
+  // Useful Predicates
+  
+  /// hasImplicitControlFlow - Returns true if a given expression is
+  ///  is represented within a CFG as having a designated "statement slot"
+  ///  within a CFGBlock to represent the execution of that expression.  This
+  ///  is usefull for expressions that contain implicit control flow, such
+  ///  as &&, ||, and ? operators, as well as commas and statement expressions.
+  ///
+  ///  For example, considering a CFGBlock with the following statement:
+  ///  
+  ///    (1) x = ... ? ... ? ...
+  ///  
+  ///  When the CFG is built, this logically becomes:
+  ///  
+  ///    (1) ... ? ... : ...  (a unique statement	slot for the ternary ?)
+  ///    (2) x	= [E1]        (where E1 is	actually the ConditionalOperator*)
+  ///  
+  ///  A client of the CFG, when walking the statement at (2), will encounter
+  ///  E1.  In	this case, hasImplicitControlFlow(E1) == true, and the client
+  ///  will know that the expression E1 is explicitly placed into its own 
+  ///  statement slot to	capture	the implicit control-flow it has.
+  ///  
+  ///  Special cases:
+  ///
+  ///  (1) Function calls.
+  ///  Function calls are placed in their own statement slot so that
+  ///  that we have a clear identification of "call-return" sites.  If
+  ///  you see a CallExpr nested as a subexpression of E, the CallExpr appears
+  ///  in a statement slot in the CFG that dominates the location of E.
+  ///
+  ///  (2) DeclStmts
+  ///  We include DeclStmts because the initializer expressions for Decls
+  ///  will be separated out into distinct statements in the CFG.  These
+  ///  statements will dominate the Decl.
+  ///
+  static bool hasImplicitControlFlow(const Stmt* S);  
+  
 };
 } // end namespace clang
 

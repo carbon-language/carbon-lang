@@ -1240,6 +1240,30 @@ void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
   print_block(OS, cfg, *this, &Helper, true);
 }
 
+/// hasImplicitControlFlow - Returns true if a given expression is
+///  is represented within a CFG as having a designated "statement slot"
+bool CFG::hasImplicitControlFlow(const Stmt* S) {
+  switch (S->getStmtClass()) {
+    default:
+      return false;
+
+    case Stmt::CallExprClass:
+    case Stmt::ConditionalOperatorClass:
+    case Stmt::ChooseExprClass:
+    case Stmt::StmtExprClass:
+    case Stmt::DeclStmtClass:
+      return true;    
+      
+    case Stmt::BinaryOperatorClass: {
+      const BinaryOperator* B = cast<BinaryOperator>(S);
+      if (B->isLogicalOp() || B->getOpcode() == BinaryOperator::Comma)
+        return true;
+      else
+        return false;
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // CFG Graphviz Visualization
 //===----------------------------------------------------------------------===//
