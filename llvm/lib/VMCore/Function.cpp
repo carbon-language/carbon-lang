@@ -124,6 +124,10 @@ static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
 ParamAttrsList *
 ParamAttrsList::get(const ParamAttrsVector &attrVec) {
   assert(!attrVec.empty() && "Illegal to create empty ParamAttrsList");
+#ifndef NDEBUG
+  for (unsigned i = 1, e = attrVec.size(); i < e; ++i)
+    assert(attrVec[i-1].index < attrVec[i].index && "Misordered ParamAttrsList!");
+#endif
   ParamAttrsList key(attrVec);
   FoldingSetNodeID ID;
   key.Profile(ID);
