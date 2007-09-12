@@ -164,6 +164,22 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   return 0;
 }
 
+void ObjcMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo, 
+		       unsigned NumParams) {
+  assert(ParamInfo == 0 && "Already has param info!");
+
+  // Zero params -> null pointer.
+  if (NumParams) {
+    ParamInfo = new ParmVarDecl*[NumParams];
+    memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
+    NumMethodParams = NumParams;
+  }
+}
+
+ObjcMethodDecl::~ObjcMethodDecl() {
+  delete[] ParamInfo;
+}
+
 /// addObjcMethods - Insert instance and methods declarations into
 /// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
 ///

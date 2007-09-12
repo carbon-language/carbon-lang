@@ -583,19 +583,21 @@ public:
 class ObjcMethodDecl : public Decl {
 public:
   ObjcMethodDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod, L, Id, PrevDecl), MethodDeclType(T), ParamInfo(0), 
+    : Decl(ObjcMethod, L, Id, PrevDecl), MethodDeclType(T), 
+      ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 
   virtual ~ObjcMethodDecl();
   QualType getMethodType() const { return MethodDeclType; }
-  unsigned getNumMethodParams() const;
+  unsigned getNumMethodParams() const { return NumMethodParams; }
   ParmVarDecl *getMethodParamDecl(unsigned i) {
     assert(i < getNumMethodParams() && "Illegal param #");
     return ParamInfo[i];
   }
-  void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+  void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
   bool isInstance() const { return IsInstance; }
@@ -610,6 +612,7 @@ private:
   /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
   /// parameters of this Method.  This is null if there are no formals.  
   ParmVarDecl **ParamInfo;
+  int NumMethodParams;  // -1 if no parameters
   
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;

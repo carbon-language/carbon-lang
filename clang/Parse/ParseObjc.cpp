@@ -229,7 +229,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
         ConsumeToken();
         continue;
       } else if (ocKind == tok::objc_property) {
-        ParseObjCPropertyDecl(0/*FIXME*/);
+        ParseObjCPropertyDecl(interfaceDecl);
         continue;
       } else {
         Diag(Tok, diag::err_objc_illegal_interface_qual);

@@ -1197,8 +1197,10 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
 
 void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				 DeclTy **allMethods, unsigned allNum) { 
-  // FIXME: Add method insertion code here.
-#if 0
+  // FIXME: Fix this when we can handle methods declared in protocols.
+  // See Parser::ParseObjCAtProtocolDeclaration
+  if (!ClassDecl)
+    return;
   ObjcInterfaceDecl *Interface = cast<ObjcInterfaceDecl>(
 				   static_cast<Decl*>(ClassDecl));
   llvm::SmallVector<ObjcMethodDecl*, 32> insMethods;
@@ -1215,8 +1217,44 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
   }
   Interface->ObjcAddMethods(&insMethods[0], insMethods.size(), 
 			    &clsMethods[0], clsMethods.size());
-#endif
   return;
+}
+
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+                      tok::TokenKind MethodType, TypeTy *ReturnType,
+                      ObjcKeywordInfo *Keywords, unsigned NumKeywords,
+                      AttributeList *AttrList) {
+  assert(NumKeywords && "Selector must be specified");
+  // FIXME: SelectorName to be changed to comform to objc's abi for method names
+  IdentifierInfo *SelectorName = Keywords[0].SelectorName;
+  llvm::SmallVector<ParmVarDecl*, 16> Params;
+
+  for (unsigned i = 0; i < NumKeywords; i++) {
+    ObjcKeywordInfo *arg = &Keywords[i];
+    // FIXME: arg->AttrList must be stored too!
+    ParmVarDecl* Param = new ParmVarDecl(arg->ColonLoc, arg->ArgumentName, 
+					 QualType::getFromOpaquePtr(arg->TypeInfo), 
+					 VarDecl::None, 0);
+    // FIXME: 'InvalidType' does not get set by caller yet.
+    if (arg->InvalidType)
+      Param->setInvalidDecl();
+    Params.push_back(Param);
+  }
+  QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
+  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, 
+				      SelectorName, resultDeclType, 
+				      0, -1, AttrList, MethodType == tok::minus);
+  ObjcMethod->setMethodParams(&Params[0], NumKeywords);
+  return ObjcMethod;
+}
+
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,  
+                      tok::TokenKind MethodType, TypeTy *ReturnType,
+                      IdentifierInfo *SelectorName, AttributeList *AttrList) {
+  // FIXME: SelectorName to be changed to comform to objc's abi for method names
+  QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
+  return new ObjcMethodDecl(MethodLoc, SelectorName, resultDeclType, 0, -1,
+			    AttrList, MethodType == tok::minus);
 }
 
 Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,

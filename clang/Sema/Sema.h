@@ -360,6 +360,13 @@ public:
 
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
+  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+	            tok::TokenKind MethodType, TypeTy *ReturnType,
+     		    ObjcKeywordInfo *Keywords, unsigned NumKeywords, 
+     		    AttributeList *AttrList);
+  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+ 	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
+     		    IdentifierInfo *SelectorName, AttributeList *AttrList);
                                       
   virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy *Ivar,
                                        tok::ObjCKeywordKind visibility);
