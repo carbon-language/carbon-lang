@@ -3589,7 +3589,7 @@ case 179:
     break;}
 case 180:
 #line 1869 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/llvmAsmParser.y"
-{                   // Float & Double constants
+{                   // Floating point constants
     if (!ConstantFP::isValueValidForType(yyvsp[-1].PrimType, *yyvsp[0].FPVal))
       GEN_ERROR("Floating point constant invalid for type");
     // Lexer has no type info, so builds all float and double FP constants 

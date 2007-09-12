@@ -1866,7 +1866,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     $$ = ConstantInt::getFalse();
     CHECK_FOR_ERROR
   }
-  | FPType FPVAL {                   // Float & Double constants
+  | FPType FPVAL {                   // Floating point constants
     if (!ConstantFP::isValueValidForType($1, *$2))
       GEN_ERROR("Floating point constant invalid for type");
     // Lexer has no type info, so builds all float and double FP constants 

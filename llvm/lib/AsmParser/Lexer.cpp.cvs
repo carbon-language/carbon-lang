@@ -2181,7 +2181,7 @@ YY_RULE_SETUP
 case 146:
 YY_RULE_SETUP
 #line 480 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
-{ llvmAsmlval.FPVal = new APFloat(HexToFP(yytext)); 
+{ llvmAsmlval.FPVal = new APFloat(HexToFP(yytext+2)); 
                   return FPVAL; 
                 }
 	YY_BREAK
@@ -2189,7 +2189,7 @@ case 147:
 YY_RULE_SETUP
 #line 483 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 { uint64_t Pair[2];
-                    HexToIntPair(yytext, Pair);
+                    HexToIntPair(yytext+3, Pair);
                     llvmAsmlval.FPVal = new APFloat(APInt(80, 2, Pair));
                     return FPVAL;
                 }
@@ -2198,7 +2198,7 @@ case 148:
 YY_RULE_SETUP
 #line 488 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 { uint64_t Pair[2];
-                    HexToIntPair(yytext, Pair);
+                    HexToIntPair(yytext+3, Pair);
                     llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair));
                     return FPVAL;
                 }
@@ -2207,7 +2207,7 @@ case 149:
 YY_RULE_SETUP
 #line 493 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 { uint64_t Pair[2];
-                    HexToIntPair(yytext, Pair);
+                    HexToIntPair(yytext+3, Pair);
                     llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair));
                     return FPVAL;
                 }
