@@ -170,7 +170,7 @@ void LivenessTFuncs::VisitUnaryOperator(UnaryOperator* U) {
     case UnaryOperator::PostDec:
     case UnaryOperator::PreInc:
     case UnaryOperator::PreDec:
-        case UnaryOperator::AddrOf:
+    case UnaryOperator::AddrOf:
       // Walk through the subexpressions, blasting through ParenExprs until
       // we either find a DeclRefExpr or some non-DeclRefExpr expression.
       for (Stmt* S = U->getSubExpr() ; ; ) {
@@ -188,8 +188,7 @@ void LivenessTFuncs::VisitUnaryOperator(UnaryOperator* U) {
         
           VisitDeclRefExpr(DR);          
         }
-        else
-          Visit(S);
+        else Visit(S);
           
         break;                  
       }        
@@ -237,9 +236,6 @@ void LivenessTFuncs::VisitAssign(BinaryOperator* B) {
 }
 
 void LivenessTFuncs::VisitDeclStmt(DeclStmt* DS) {
-  if (Observer)
-    Observer->ObserveStmt(DS,L,Live);
-    
   // Declarations effectively "kill" a variable since they cannot possibly
   // be live before they are declared.  Declarations, however, are not kills
   // in the sense that the value is obliterated, so we do not register
