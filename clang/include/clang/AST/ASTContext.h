@@ -19,6 +19,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 #include <vector>
 
 namespace clang {
@@ -37,6 +38,7 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
   RecordDecl *CFConstantStringTypeDecl;
+  llvm::StringMap<char> SelectorNames;
 public:
   TargetInfo &Target;
   IdentifierTable &Idents;
@@ -174,6 +176,16 @@ public:
   /// 'typeSize' is a real floating point or complex type.
   QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize, 
                                              QualType typeDomain) const;
+
+  //===--------------------------------------------------------------------===//
+  //                            Objective-C
+  //===--------------------------------------------------------------------===//
+  
+  /// getSelectorName - Return a uniqued character string for the selector.
+  char &getSelectorName(const char *NameStart, const char *NameEnd) {
+    return SelectorNames.GetOrCreateValue(NameStart, NameEnd).getValue();
+  }
+
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
