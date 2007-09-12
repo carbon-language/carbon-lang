@@ -56,8 +56,8 @@ public:
 
   void BlockStmt_Visit(Stmt* S, dataflow::forward_analysis_tag) {      
     // Process statements in a postorder traversal of the AST. 
-    if (!CFG::hasImplicitControlFlow(S) &&
-        S->getStmtClass() != Stmt::CallExprClass)
+    if (!CFG::hasImplicitControlFlow(S) ||
+        S->getStmtClass() == Stmt::CallExprClass)
       static_cast<ImplClass*>(this)->VisitChildren(S);
       
     static_cast<ImplClass*>(this)->ObserveBlockStmt(S);
@@ -69,8 +69,8 @@ public:
     static_cast<ImplClass*>(this)->ObserveBlockStmt(S);
     static_cast<CFGStmtVisitor<ImplClass,void>*>(this)->BlockStmt_Visit(S);
     
-    if (!CFG::hasImplicitControlFlow(S) &&
-        S->getStmtClass() != Stmt::CallExprClass)
+    if (!CFG::hasImplicitControlFlow(S) ||
+        S->getStmtClass() == Stmt::CallExprClass)
       static_cast<ImplClass*>(this)->VisitChildren(S);
   }
   
