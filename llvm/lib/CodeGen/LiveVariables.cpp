@@ -306,9 +306,8 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI,
   for (const unsigned *SubRegs = RegInfo->getImmediateSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs) {
     MachineInstr *LastRef = PhysRegInfo[SubReg];
-    if (LastRef != RefMI)
-      SubKills.insert(SubReg);
-    else if (!HandlePhysRegKill(SubReg, RefMI, SubKills))
+    if (LastRef != RefMI ||
+        !HandlePhysRegKill(SubReg, RefMI, SubKills))
       SubKills.insert(SubReg);
   }
 
@@ -336,7 +335,7 @@ void LiveVariables::addRegisterKills(unsigned Reg, MachineInstr *MI,
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *RefMI) {
   SmallSet<unsigned, 4> SubKills;
   if (HandlePhysRegKill(Reg, RefMI, SubKills)) {
-    addRegisterKilled(Reg, RefMI);
+    addRegisterKilled(Reg, RefMI, true);
     return true;
   } else {
     // Some sub-registers are killed by another MI.
