@@ -561,32 +561,31 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDeclarator) {
 }
 
 void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
-  VarDecl *Dcl = dyn_cast<VarDecl>(static_cast<Decl *>(dcl));
+  Decl *RealDecl = static_cast<Decl *>(dcl);
   Expr *Init = static_cast<Expr *>(init);
   
-  assert((Dcl && Init) && "missing decl or initializer");
+  assert((RealDecl && Init) && "missing decl or initializer");
   
-  // FIXME: moved these directly from ParseDeclarator(). Need to convert
-  // asserts to actual error diagnostics!
-  if (isa<FunctionDecl>(Dcl))
-    assert(0 && "Can't have an initializer for a functiondecl!");
-  if (isa<TypedefDecl>(Dcl))
-    assert(0 && "Can't have an initializer for a typedef!");
-  
+  VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
+  if (!VDecl) {
+    Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
+    RealDecl->setInvalidDecl();
+    return;
+  }  
   // Get the decls type and save a reference for later, since
   // CheckInitializer may change it.
-  QualType DclT = Dcl->getType(), SavT = DclT;
-  if (BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(Dcl)) {
+  QualType DclT = VDecl->getType(), SavT = DclT;
+  if (BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(VDecl)) {
     VarDecl::StorageClass SC = BVD->getStorageClass();
     if (SC == VarDecl::Extern) { // C99 6.7.8p5
-      Diag(Dcl->getLocation(), diag::err_block_extern_cant_init);
+      Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
       BVD->setInvalidDecl();
     } else if (!BVD->isInvalidDecl()) {
       CheckInitializer(Init, DclT, SC == VarDecl::Static);
     }
-  } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(Dcl)) {
+  } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(VDecl)) {
     if (FVD->getStorageClass() == VarDecl::Extern)
-      Diag(Dcl->getLocation(), diag::warn_extern_init);
+      Diag(VDecl->getLocation(), diag::warn_extern_init);
     if (!FVD->isInvalidDecl())
       CheckInitializer(Init, DclT, true);
   }
@@ -594,11 +593,11 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   // completed by the initializer. For example: 
   //   int ary[] = { 1, 3, 5 };
   // "ary" transitions from a VariableArrayType to a ConstantArrayType.
-  if (!Dcl->isInvalidDecl() && (DclT != SavT))
-    Dcl->setType(DclT);
+  if (!VDecl->isInvalidDecl() && (DclT != SavT))
+    VDecl->setType(DclT);
     
   // Attach the initializer to the decl.
-  Dcl->setInit(Init);
+  VDecl->setInit(Init);
   return;
 }
 

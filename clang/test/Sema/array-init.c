@@ -1,5 +1,7 @@
 // RUN: clang -parse-ast-check -pedantic %s
 
+extern int foof() = 1; // expected-error{{illegal initializer (only variables can be initialized)}}
+
 static int x, y, z;
 
 static int ary[] = { x, y, z }; // expected-error{{initializer element is not constant}}
@@ -11,6 +13,8 @@ static int ary3[] = { 1, "abc", 3, 4 }; // expected-warning{{incompatible types 
 
 void func() {
   int x = 1;
+
+  typedef int TInt = 1; // expected-error{{illegal initializer (only variables can be initialized)}}
 
   int xComputeSize[] = { 1, 3, 5 };
 
