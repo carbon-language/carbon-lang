@@ -182,7 +182,7 @@ void ScheduleDAG::BuildSchedUnits() {
 void ScheduleDAG::CalculateDepths() {
   std::vector<std::pair<SUnit*, unsigned> > WorkList;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i)
-    if (SUnits[i].Preds.size() == 0/* && &SUnits[i] != Entry*/)
+    if (SUnits[i].Preds.size() == 0)
       WorkList.push_back(std::make_pair(&SUnits[i], 0U));
 
   while (!WorkList.empty()) {
