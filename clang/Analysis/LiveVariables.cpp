@@ -196,7 +196,7 @@ void LivenessTFuncs::VisitUnaryOperator(UnaryOperator* U) {
       break;      
     
     default:
-      VisitStmt(U->getSubExpr());
+      Visit(U->getSubExpr());
       break;
   }
 }
