@@ -13,6 +13,7 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
+#include "llvm/Config/config.h" 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
@@ -66,7 +67,7 @@ static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
                                                          FileEnt->getName());
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(LLVM_ON_WIN32)
   int FD = ::open(FileEnt->getName(), O_RDONLY|O_BINARY);
 #else
   int FD = ::open(FileEnt->getName(), O_RDONLY);
