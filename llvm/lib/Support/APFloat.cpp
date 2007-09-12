@@ -47,7 +47,7 @@ namespace llvm {
   const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53, true };
   const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113, true };
   const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, false };
-  const fltSemantics APFloat::Bogus = { 0, 0, 0, false };
+  const fltSemantics APFloat::Bogus = { 0, 0, 0, true };
 }
 
 /* Put a bunch of private, handy routines in an anonymous namespace.  */
