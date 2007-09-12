@@ -371,6 +371,7 @@ namespace llvm {
     unsigned getNumOperands() const { return Operands.size(); }
     unsigned getNumImpResults() const { return ImpResults.size(); }
     unsigned getNumImpOperands() const { return ImpOperands.size(); }
+    const std::vector<Record*>& getImpResults() const { return ImpResults; }
     
     void setResultPattern(TreePatternNode *R) { ResultPattern = R; }
     
@@ -402,18 +403,21 @@ namespace llvm {
 struct PatternToMatch {
   PatternToMatch(ListInit *preds,
                  TreePatternNode *src, TreePatternNode *dst,
+                 const std::vector<Record*> &dstregs,
                  unsigned complexity):
-    Predicates(preds), SrcPattern(src), DstPattern(dst),
+    Predicates(preds), SrcPattern(src), DstPattern(dst), Dstregs(dstregs),
     AddedComplexity(complexity) {};
 
   ListInit        *Predicates;  // Top level predicate conditions to match.
   TreePatternNode *SrcPattern;  // Source pattern to match.
   TreePatternNode *DstPattern;  // Resulting pattern.
+  std::vector<Record*> Dstregs; // Physical register defs being matched.
   unsigned         AddedComplexity; // Add to matching pattern complexity.
 
   ListInit        *getPredicates() const { return Predicates; }
   TreePatternNode *getSrcPattern() const { return SrcPattern; }
   TreePatternNode *getDstPattern() const { return DstPattern; }
+  const std::vector<Record*> &getDstRegs() const { return Dstregs; }
   unsigned         getAddedComplexity() const { return AddedComplexity; }
 };
 

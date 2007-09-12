@@ -197,6 +197,8 @@ class SDNode<string opcode, SDTypeProfile typeprof,
 }
 
 def set;
+def modify;
+def parallel;
 def node;
 def srcvalue;
 
