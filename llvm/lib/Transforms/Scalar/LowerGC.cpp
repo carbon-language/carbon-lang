@@ -284,10 +284,7 @@ bool LowerGC::runOnFunction(Function &F) {
     new StoreInst(Null, RootPtrPtr, IP);
 
     // Each occurrance of the llvm.gcroot intrinsic now turns into an
-    // initialization of the slot with the address and a zeroing out of the
-    // address specified.
-    new StoreInst(Constant::getNullValue(PtrLocTy->getElementType()),
-                  GCRoots[i]->getOperand(1), GCRoots[i]);
+    // initialization of the slot with the address.
     new StoreInst(GCRoots[i]->getOperand(1), RootPtrPtr, GCRoots[i]);
   }
 

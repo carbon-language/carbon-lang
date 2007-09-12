@@ -166,9 +166,7 @@ interface that front-end authors should generate code for.
 The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM of a pointer variable
 on the stack.  The first argument contains the address of the variable on the
 stack, and the second contains a pointer to metadata that should be associated
-with the pointer (which <b>must</b> be a constant or global value address).  At
-runtime, the <tt>llvm.gcroot</tt> intrinsic stores a null pointer into the
-specified location to initialize the pointer.</p>
+with the pointer (which <b>must</b> be a constant or global value address).</p>
 
 <p>
 Consider the following fragment of Java code:
@@ -192,6 +190,9 @@ Entry:
    ;; stack space for X, which is an LLVM pointer.
    %X = alloca %Object*
    ...
+
+   ;; Java null-initializes pointers.
+   store %Object* null, %Object** %X
 
    ;; "CodeBlock" is the block corresponding to the start
    ;;  of the scope above.
