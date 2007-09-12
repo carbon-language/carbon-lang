@@ -262,7 +262,11 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     // If attributes are present, parse them.
     if (Tok.getKind() == tok::kw___attribute)
       D.AddAttributes(ParseAttributes());
-    
+
+    // Inform the current actions module that we just parsed this declarator.
+    // FIXME: pass asm & attributes.
+    LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, LastDeclInGroup);
+        
     // Parse declarator '=' initializer.
     ExprResult Init;
     if (Tok.getKind() == tok::equal) {
@@ -272,12 +276,8 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
         SkipUntil(tok::semi);
         return 0;
       }
+      Actions.AddInitializerToDecl(LastDeclInGroup, Init.Val);
     }
-    
-    // Inform the current actions module that we just parsed this declarator.
-    // FIXME: pass asm & attributes.
-    LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, Init.Val,
-                                              LastDeclInGroup);
     
     // If we don't have a comma, it is either the end of the list (a ';') or an
     // error, bail out.

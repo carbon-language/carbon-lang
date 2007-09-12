@@ -427,10 +427,8 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
 }
 
 Sema::DeclTy *
-Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
-                      DeclTy *lastDeclarator) {
+Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDeclarator) {
   Decl *LastDeclarator = (Decl*)lastDeclarator;
-  Expr *Init = static_cast<Expr*>(init);
   IdentifierInfo *II = D.getIdentifier();
   
   // All of these full declarators require an identifier.  If it doesn't have
@@ -457,7 +455,6 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
   bool InvalidDecl = false;
   
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    assert(Init == 0 && "Can't have initializer for a typedef!");
     TypedefDecl *NewTD = ParseTypedefDecl(S, D, LastDeclarator);
     if (!NewTD) return 0;
 
@@ -481,8 +478,6 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       }
     }
   } else if (D.isFunctionDeclarator()) {
-    assert(Init == 0 && "Can't have an initializer for a functiondecl!");
-    
     QualType R = GetTypeForDeclarator(D, S);
     assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
@@ -525,27 +520,6 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
       case DeclSpec::SCS_register:    SC = VarDecl::Register; break;
     }    
     if (S->getParent() == 0) {
-      if (Init) {
-        if (SC == VarDecl::Extern)
-          Diag(D.getIdentifierLoc(), diag::warn_extern_init);
-        if (!D.getInvalidType())
-          CheckInitializer(Init, R, true);
-      }
-      // File scope. C99 6.9.2p2: A declaration of an identifier for and 
-      // object that has file scope without an initializer, and without a
-      // storage-class specifier or with the storage-class specifier "static",
-      // constitutes a tentative definition. Note: A tentative definition with
-      // external linkage is valid (C99 6.2.2p5).
-      if (!Init && SC == VarDecl::Static) {
-        // C99 6.9.2p3: If the declaration of an identifier for an object is
-        // a tentative definition and has internal linkage (C99 6.2.2p3), the  
-        // declared type shall not be an incomplete type.
-        if (R->isIncompleteType()) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type,
-               R.getAsString());
-          InvalidDecl = true;
-        }
-      }
       // C99 6.9p2: The storage-class specifiers auto and register shall not
       // appear in the declaration specifiers in an external declaration.
       if (SC == VarDecl::Auto || SC == VarDecl::Register) {
@@ -553,53 +527,8 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
              R.getAsString());
         InvalidDecl = true;
       }
-      if (SC == VarDecl::Static) {
-        // C99 6.7.5.2p2: If an identifier is declared to be an object with 
-        // static storage duration, it shall not have a variable length array.
-        if (const VariableArrayType *VLA = R->getAsVariableArrayType()) {
-          Expr *Size = VLA->getSizeExpr();
-          if (Size || (!Size && !Init)) {  
-            // FIXME: Since we don't support initializers yet, we only emit this
-            // error when we don't have an initializer. Once initializers are 
-            // implemented, the VLA will change to a CLA.
-            Diag(D.getIdentifierLoc(), diag::err_typecheck_illegal_vla);
-            InvalidDecl = true;
-          }
-        }
-      }
       NewVD = new FileVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     } else {
-      if (Init) {
-        if (SC == VarDecl::Extern) { // C99 6.7.8p5
-          Diag(D.getIdentifierLoc(), diag::err_block_extern_cant_init);
-          InvalidDecl = true;
-        } else if (!D.getInvalidType()) {
-          CheckInitializer(Init, R, SC == VarDecl::Static);
-        }
-      }
-      // Block scope. C99 6.7p7: If an identifier for an object is declared with
-      // no linkage (C99 6.2.2p6), the type for the object shall be complete...
-      if (SC != VarDecl::Extern) {
-        if (R->isIncompleteType()) {
-          Diag(D.getIdentifierLoc(), diag::err_typecheck_decl_incomplete_type,
-               R.getAsString());
-          InvalidDecl = true;
-        }
-      }
-      if (SC == VarDecl::Static) {
-        // C99 6.7.5.2p2: If an identifier is declared to be an object with 
-        // static storage duration, it shall not have a variable length array.
-        if (const VariableArrayType *VLA = R->getAsVariableArrayType()) {
-          Expr *Size = VLA->getSizeExpr();
-          if (Size || (!Size && !Init)) {  
-            // FIXME: Since we don't support initializers yet, we only emit this
-            // error when we don't have an initializer. Once initializers are 
-            // implemented, the VLA will change to a CLA.
-            Diag(D.getIdentifierLoc(), diag::err_typecheck_illegal_vla);
-            InvalidDecl = true;
-          }
-        }
-      }
       NewVD = new BlockVarDecl(D.getIdentifierLoc(), II, R, SC, LastDeclarator);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
@@ -610,9 +539,6 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
     if (PrevDecl) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
-    }
-    if (Init) { // FIXME: This will likely move up above...for now, it stays.
-      NewVD->setInit(Init);
     }
     New = NewVD;
   }
@@ -634,18 +560,110 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, ExprTy *init,
   return New;
 }
 
+void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
+  VarDecl *Dcl = dyn_cast<VarDecl>(static_cast<Decl *>(dcl));
+  Expr *Init = static_cast<Expr *>(init);
+  
+  assert((Dcl && Init) && "missing decl or initializer");
+  
+  // FIXME: moved these directly from ParseDeclarator(). Need to convert
+  // asserts to actual error diagnostics!
+  if (isa<FunctionDecl>(Dcl))
+    assert(0 && "Can't have an initializer for a functiondecl!");
+  if (isa<TypedefDecl>(Dcl))
+    assert(0 && "Can't have an initializer for a typedef!");
+  
+  // Get the decls type and save a reference for later, since
+  // CheckInitializer may change it.
+  QualType DclT = Dcl->getType(), SavT = DclT;
+  if (BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(Dcl)) {
+    VarDecl::StorageClass SC = BVD->getStorageClass();
+    if (SC == VarDecl::Extern) { // C99 6.7.8p5
+      Diag(Dcl->getLocation(), diag::err_block_extern_cant_init);
+      BVD->setInvalidDecl();
+    } else if (!BVD->isInvalidDecl()) {
+      CheckInitializer(Init, DclT, SC == VarDecl::Static);
+    }
+  } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(Dcl)) {
+    if (FVD->getStorageClass() == VarDecl::Extern)
+      Diag(Dcl->getLocation(), diag::warn_extern_init);
+    if (!FVD->isInvalidDecl())
+      CheckInitializer(Init, DclT, true);
+  }
+  // If the type changed, it means we had an incomplete type that was
+  // completed by the initializer. For example: 
+  //   int ary[] = { 1, 3, 5 };
+  // "ary" transitions from a VariableArrayType to a ConstantArrayType.
+  if (!Dcl->isInvalidDecl() && (DclT != SavT))
+    Dcl->setType(DclT);
+    
+  // Attach the initializer to the decl.
+  Dcl->setInit(Init);
+  return;
+}
+
 /// The declarators are chained together backwards, reverse the list.
 Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   // Often we have single declarators, handle them quickly.
   Decl *Group = static_cast<Decl*>(group);
-  if (Group == 0 || Group->getNextDeclarator() == 0) return Group;
-  
+  if (Group == 0)
+    return 0;
+    
   Decl *NewGroup = 0;
-  while (Group) {
-    Decl *Next = Group->getNextDeclarator();
-    Group->setNextDeclarator(NewGroup);
+  if (Group->getNextDeclarator() == 0) 
     NewGroup = Group;
-    Group = Next;
+  else { // reverse the list.
+    while (Group) {
+      Decl *Next = Group->getNextDeclarator();
+      Group->setNextDeclarator(NewGroup);
+      NewGroup = Group;
+      Group = Next;
+    }
+  }
+  // Perform semantic analysis that depends on having fully processed both
+  // the declarator and initializer.
+  for (Decl *ID = NewGroup; ID; ID = ID->getNextDeclarator()) {
+    VarDecl *IDecl = dyn_cast<VarDecl>(ID);
+    if (!IDecl)
+      continue;
+    FileVarDecl *FVD = dyn_cast<FileVarDecl>(IDecl);
+    BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(IDecl);
+    QualType T = IDecl->getType();
+    
+    // C99 6.7.5.2p2: If an identifier is declared to be an object with 
+    // static storage duration, it shall not have a variable length array.
+    if ((FVD || BVD) && IDecl->getStorageClass() == VarDecl::Static) {
+      if (const VariableArrayType *VLA = T->getAsVariableArrayType()) {
+        if (VLA->getSizeExpr()) {  
+          Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
+          IDecl->setInvalidDecl();
+        }
+      }
+    }
+    // Block scope. C99 6.7p7: If an identifier for an object is declared with
+    // no linkage (C99 6.2.2p6), the type for the object shall be complete...
+    if (BVD && IDecl->getStorageClass() != VarDecl::Extern) {
+      if (T->isIncompleteType()) {
+        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
+             T.getAsString());
+        IDecl->setInvalidDecl();
+      }
+    }
+    // File scope. C99 6.9.2p2: A declaration of an identifier for and 
+    // object that has file scope without an initializer, and without a
+    // storage-class specifier or with the storage-class specifier "static",
+    // constitutes a tentative definition. Note: A tentative definition with
+    // external linkage is valid (C99 6.2.2p5).
+    if (FVD && !FVD->getInit() && FVD->getStorageClass() == VarDecl::Static) {
+      // C99 6.9.2p3: If the declaration of an identifier for an object is
+      // a tentative definition and has internal linkage (C99 6.2.2p3), the  
+      // declared type shall not be an incomplete type.
+      if (T->isIncompleteType()) {
+        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
+             T.getAsString());
+        IDecl->setInvalidDecl();
+      }
+    }
   }
   return NewGroup;
 }
@@ -737,7 +755,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   Scope *GlobalScope = FnBodyScope->getParent();
   
   FunctionDecl *FD =
-    static_cast<FunctionDecl*>(ParseDeclarator(GlobalScope, D, 0, 0));
+    static_cast<FunctionDecl*>(ParseDeclarator(GlobalScope, D, 0));
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
@@ -820,7 +838,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   while (S->getParent())
     S = S->getParent();
   
-  return static_cast<Decl*>(ParseDeclarator(S, D, 0, 0));
+  return static_cast<Decl*>(ParseDeclarator(S, D, 0));
 }
 
 

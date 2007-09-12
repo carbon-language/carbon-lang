@@ -100,11 +100,20 @@ public:
   /// LastInGroup is non-null for cases where one declspec has multiple
   /// declarators on it.  For example in 'int A, B', ParseDeclarator will be
   /// called with LastInGroup=A when invoked for B.
-  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D,
-                                  ExprTy *Init, DeclTy *LastInGroup) {
+  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D,DeclTy *LastInGroup) {
     return 0;
   }
 
+  /// AddInitializerToDecl - This action is called immediately after 
+  /// ParseDeclarator (when an initializer is present). The code is factored 
+  /// this way to make sure we are able to handle the following:
+  ///   void func() { int xx = xx; }
+  /// This allows ParseDeclarator to register "xx" prior to parsing the
+  /// initializer. The declaration above should still result in a warning, 
+  /// since the reference to "xx" is uninitialized.
+  virtual void AddInitializerToDecl(DeclTy *Dcl, ExprTy *Init) {
+    return;
+  }
   /// FinalizeDeclaratorGroup - After a sequence of declarators are parsed, this
   /// gives the actions implementation a chance to process the group as a whole.
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group) {
@@ -116,7 +125,7 @@ public:
   /// information about formal arguments that are part of this function.
   virtual DeclTy *ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // Default to ParseDeclarator.
-    return ParseDeclarator(FnBodyScope, D, 0, 0);
+    return ParseDeclarator(FnBodyScope, D, 0);
   }
 
   /// ParseFunctionDefBody - This is called when a function body has completed
@@ -495,8 +504,7 @@ public:
   /// ParseDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.
-  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
-                                  DeclTy *LastInGroup);
+  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   
   /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
   /// they are removed from the IdentifierInfo::FETokenInfo field.

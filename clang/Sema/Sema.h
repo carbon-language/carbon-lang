@@ -137,8 +137,8 @@ private:
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
-  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
-                                  DeclTy *LastInGroup);
+  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D);
@@ -361,7 +361,7 @@ public:
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
                                       
-  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy *Ivars,
+  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy *Ivar,
                                        tok::ObjCKeywordKind visibility);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts

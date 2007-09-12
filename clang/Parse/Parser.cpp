@@ -242,7 +242,7 @@ void Parser::Initialize() {
     
     Declarator D(DS, Declarator::FileContext);
     D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
-    Actions.ParseDeclarator(CurScope, D, 0, 0);
+    Actions.ParseDeclarator(CurScope, D, 0);
   }
   
   if (Tok.getKind() == tok::eof &&

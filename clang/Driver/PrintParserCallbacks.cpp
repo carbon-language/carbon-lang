@@ -25,7 +25,7 @@ namespace {
     /// ParseDeclarator - This callback is invoked when a declarator is parsed
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
-    virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, ExprTy *Init,
+    virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D,
                                     DeclTy *LastInGroup) {
       std::cout << "ParseDeclarator ";
       if (IdentifierInfo *II = D.getIdentifier()) {
@@ -36,7 +36,7 @@ namespace {
       std::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      return MinimalAction::ParseDeclarator(S, D, Init, LastInGroup);
+      return MinimalAction::ParseDeclarator(S, D, LastInGroup);
     }
     
     /// PopScope - This callback is called immediately before the specified scope
