@@ -410,6 +410,10 @@ public:
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                         MVT::ValueType VT2, MVT::ValueType VT3,
                         const SDOperand *Ops, unsigned NumOps);
+  SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
+                        MVT::ValueType VT2, MVT::ValueType VT3,
+                        MVT::ValueType VT4,
+                        const SDOperand *Ops, unsigned NumOps);
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
