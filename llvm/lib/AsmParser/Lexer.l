@@ -284,8 +284,8 @@ void            { RET_TY(Type::VoidTy,  VOID);  }
 float           { RET_TY(Type::FloatTy, FLOAT); }
 double          { RET_TY(Type::DoubleTy,DOUBLE);}
 x86_fp80        { RET_TY(Type::X86_FP80Ty, X86_FP80);}
-fp128            { RET_TY(Type::FP128Ty, FP128);}
-ppc_fp128         { RET_TY(Type::PPC_FP128Ty, PPC_FP128);}
+fp128           { RET_TY(Type::FP128Ty, FP128);}
+ppc_fp128       { RET_TY(Type::PPC_FP128Ty, PPC_FP128);}
 label           { RET_TY(Type::LabelTy, LABEL); }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
@@ -477,21 +477,21 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                 }
 
 {FPConstant}    { llvmAsmlval.FPVal = new APFloat(atof(yytext)); return FPVAL; }
-{HexFPConstant} { llvmAsmlval.FPVal = new APFloat(HexToFP(yytext)); 
+{HexFPConstant} { llvmAsmlval.FPVal = new APFloat(HexToFP(yytext+2)); 
                   return FPVAL; 
                 }
 {HexFP80Constant} { uint64_t Pair[2];
-                    HexToIntPair(yytext, Pair);
+                    HexToIntPair(yytext+3, Pair);
                     llvmAsmlval.FPVal = new APFloat(APInt(80, 2, Pair));
                     return FPVAL;
                 }
 {HexFP128Constant} { uint64_t Pair[2];
-                    HexToIntPair(yytext, Pair);
+                    HexToIntPair(yytext+3, Pair);
                     llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair));
                     return FPVAL;
                 }
 {HexPPC128Constant} { uint64_t Pair[2];
-                    HexToIntPair(yytext, Pair);
+                    HexToIntPair(yytext+3, Pair);
                     llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair));
                     return FPVAL;
                 }

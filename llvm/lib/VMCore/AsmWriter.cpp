@@ -481,35 +481,64 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     else 
       Out << CI->getValue().toStringSigned(10);
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    // We would like to output the FP constant value in exponential notation,
-    // but we cannot do this if doing so will lose precision.  Check here to
-    // make sure that we only output it in exponential format if we can parse
-    // the value back and get the same value.
-    //
-    bool isDouble = &CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble;
-    double Val = (isDouble) ? CFP->getValueAPF().convertToDouble() :
-                              CFP->getValueAPF().convertToFloat();
-    std::string StrVal = ftostr(CFP->getValueAPF());
+    if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble ||
+        &CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle) {
+      // We would like to output the FP constant value in exponential notation,
+      // but we cannot do this if doing so will lose precision.  Check here to
+      // make sure that we only output it in exponential format if we can parse
+      // the value back and get the same value.
+      //
+      bool isDouble = &CFP->getValueAPF().getSemantics()==&APFloat::IEEEdouble;
+      double Val = (isDouble) ? CFP->getValueAPF().convertToDouble() :
+                                CFP->getValueAPF().convertToFloat();
+      std::string StrVal = ftostr(CFP->getValueAPF());
 
-    // Check to make sure that the stringized number is not some string like
-    // "Inf" or NaN, that atof will accept, but the lexer will not.  Check that
-    // the string matches the "[-+]?[0-9]" regex.
-    //
-    if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-        ((StrVal[0] == '-' || StrVal[0] == '+') &&
-         (StrVal[1] >= '0' && StrVal[1] <= '9')))
-      // Reparse stringized version!
-      if (atof(StrVal.c_str()) == Val) {
-        Out << StrVal;
-        return;
+      // Check to make sure that the stringized number is not some string like
+      // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
+      // that the string matches the "[-+]?[0-9]" regex.
+      //
+      if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+          ((StrVal[0] == '-' || StrVal[0] == '+') &&
+           (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
+        // Reparse stringized version!
+        if (atof(StrVal.c_str()) == Val) {
+          Out << StrVal;
+          return;
+        }
       }
-
-    // Otherwise we could not reparse it to exactly the same value, so we must
-    // output the string in hexadecimal format!
-    assert(sizeof(double) == sizeof(uint64_t) &&
-           "assuming that double is 64 bits!");
-    Out << "0x" << utohexstr(DoubleToBits(Val));
-
+      // Otherwise we could not reparse it to exactly the same value, so we must
+      // output the string in hexadecimal format!
+      assert(sizeof(double) == sizeof(uint64_t) &&
+             "assuming that double is 64 bits!");
+      Out << "0x" << utohexstr(DoubleToBits(Val));
+    } else {
+      // Some form of long double.  These appear as a magic letter identifying
+      // the type, then a fixed number of hex digits.
+      Out << "0x";
+      if (&CFP->getValueAPF().getSemantics() == &APFloat::x87DoubleExtended)
+        Out << 'K';
+      else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
+        Out << 'L';
+      else
+        assert(0 && "Unsupported floating point type");
+      const uint64_t* p = CFP->getValueAPF().convertToAPInt().getRawData();
+      uint64_t word = *p;
+      int shiftcount=60;
+      int width = CFP->getValueAPF().convertToAPInt().getBitWidth();
+      for (int j=0; j<width; j+=4, shiftcount-=4) {
+        unsigned int nibble = (word>>shiftcount) & 15;
+        if (nibble < 10)
+          Out << (unsigned char)(nibble + '0');
+        else
+          Out << (unsigned char)(nibble - 10 + 'A');
+        if (shiftcount == 0) {
+          word = *(++p);
+          shiftcount = 60;
+          if (width-j-4 < 64)
+            shiftcount = width-j-4;
+        }
+      }
+    }
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "zeroinitializer";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {

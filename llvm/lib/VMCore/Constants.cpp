@@ -245,8 +245,14 @@ ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
   // temporary
   if (Ty==Type::FloatTy)
     assert(&V.getSemantics()==&APFloat::IEEEsingle);
-  else
+  else if (Ty==Type::DoubleTy)
     assert(&V.getSemantics()==&APFloat::IEEEdouble);
+  else if (Ty==Type::X86_FP80Ty)
+    assert(&V.getSemantics()==&APFloat::x87DoubleExtended);
+  else if (Ty==Type::FP128Ty)
+    assert(&V.getSemantics()==&APFloat::IEEEquad);
+  else
+    assert(0);
 }
 
 bool ConstantFP::isNullValue() const {
@@ -294,8 +300,14 @@ ConstantFP *ConstantFP::get(const Type *Ty, const APFloat& V) {
   // temporary
   if (Ty==Type::FloatTy)
     assert(&V.getSemantics()==&APFloat::IEEEsingle);
-  else
+  else if (Ty==Type::DoubleTy)
     assert(&V.getSemantics()==&APFloat::IEEEdouble);
+  else if (Ty==Type::X86_FP80Ty)
+    assert(&V.getSemantics()==&APFloat::x87DoubleExtended);
+  else if (Ty==Type::FP128Ty)
+    assert(&V.getSemantics()==&APFloat::IEEEquad);
+  else
+    assert(0);
   
   DenseMapAPFloatKeyInfo::KeyTy Key(V);
   ConstantFP *&Slot = (*FPConstants)[Key];
@@ -713,11 +725,14 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
            &Val2.getSemantics() == &APFloat::IEEEdouble ||
            Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven) == 
              APFloat::opOK;
-  // TODO: Figure out how to test if we can use a shorter type instead!
   case Type::X86_FP80TyID:
-  case Type::PPC_FP128TyID:
+    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+           &Val2.getSemantics() == &APFloat::IEEEdouble ||
+           &Val2.getSemantics() == &APFloat::x87DoubleExtended;
   case Type::FP128TyID:
-    return true;
+    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+           &Val2.getSemantics() == &APFloat::IEEEdouble ||
+           &Val2.getSemantics() == &APFloat::IEEEquad;
   }
 }
 

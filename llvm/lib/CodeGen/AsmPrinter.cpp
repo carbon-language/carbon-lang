@@ -831,7 +831,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     // precision...
     if (CFP->getType() == Type::DoubleTy) {
       double Val = CFP->getValueAPF().convertToDouble();  // for comment only
-      uint64_t i = *CFP->getValueAPF().convertToAPInt().getRawData();
+      uint64_t i = CFP->getValueAPF().convertToAPInt().getZExtValue();
       if (TAI->getData64bitsDirective())
         O << TAI->getData64bitsDirective() << i << "\t"
           << TAI->getCommentString() << " double value: " << Val << "\n";
@@ -851,13 +851,50 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
           << " double most significant word " << Val << "\n";
       }
       return;
-    } else {
+    } else if (CFP->getType() == Type::FloatTy) {
       float Val = CFP->getValueAPF().convertToFloat();  // for comment only
       O << TAI->getData32bitsDirective()
-        << (uint32_t)*CFP->getValueAPF().convertToAPInt().getRawData()
+        << CFP->getValueAPF().convertToAPInt().getZExtValue()
         << "\t" << TAI->getCommentString() << " float " << Val << "\n";
       return;
-    }
+    } else if (CFP->getType() == Type::X86_FP80Ty) {
+      // all long double variants are printed as hex
+      const uint64_t *p = CFP->getValueAPF().convertToAPInt().getRawData();
+      if (TD->isBigEndian()) {
+        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
+          << "\t" << TAI->getCommentString()
+          << " long double most significant halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
+          << "\t" << TAI->getCommentString()
+          << " long double next halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
+          << "\t" << TAI->getCommentString()
+          << " long double next halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0])
+          << "\t" << TAI->getCommentString()
+          << " long double next halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[1])
+          << "\t" << TAI->getCommentString()
+          << " long double least significant halfword\n";
+       } else {
+        O << TAI->getData16bitsDirective() << uint16_t(p[1])
+          << "\t" << TAI->getCommentString()
+          << " long double least significant halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0])
+          << "\t" << TAI->getCommentString()
+          << " long double next halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 16)
+          << "\t" << TAI->getCommentString()
+          << " long double next halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 32)
+          << "\t" << TAI->getCommentString()
+          << " long double next halfword\n";
+        O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
+          << "\t" << TAI->getCommentString()
+          << " long double most significant halfword\n";
+      }
+      return;
+    } else assert(0 && "Floating point constant type not handled");
   } else if (CV->getType() == Type::Int64Ty) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint64_t Val = CI->getZExtValue();

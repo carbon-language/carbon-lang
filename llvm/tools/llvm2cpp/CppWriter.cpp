@@ -250,11 +250,11 @@ CppWriter::printCFP(const ConstantFP *CFP) {
       }
     else if (CFP->getType() == Type::DoubleTy)
       Out << "BitsToDouble(0x" << std::hex 
-          << *CFP->getValueAPF().convertToAPInt().getRawData()
+          << CFP->getValueAPF().convertToAPInt().getZExtValue()
           << std::dec << "ULL) /* " << StrVal << " */";
     else 
       Out << "BitsToFloat(0x" << std::hex 
-          << (uint32_t)*CFP->getValueAPF().convertToAPInt().getRawData()
+          << (uint32_t)CFP->getValueAPF().convertToAPInt().getZExtValue()
           << std::dec << "U) /* " << StrVal << " */";
     Out << ")";
 #if HAVE_PRINTF_A

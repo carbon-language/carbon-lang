@@ -526,11 +526,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
       const Type *Ty = CFP->getType();
-      if (Ty == Type::FloatTy)
-        Record.push_back((uint32_t)*CFP->getValueAPF().convertToAPInt().
-                                      getRawData());
-      else if (Ty == Type::DoubleTy) {
-        Record.push_back(*CFP->getValueAPF().convertToAPInt().getRawData());
+      if (Ty == Type::FloatTy || Ty == Type::DoubleTy) {
+        Record.push_back(CFP->getValueAPF().convertToAPInt().getZExtValue());
       } else if (Ty == Type::X86_FP80Ty) {
         const uint64_t *p = CFP->getValueAPF().convertToAPInt().getRawData();
         Record.push_back(p[0]);

@@ -629,7 +629,6 @@ bool BitcodeReader::ParseConstants() {
         V = ConstantFP::get(CurTy, APFloat(APInt(32, (uint32_t)Record[0])));
       else if (CurTy == Type::DoubleTy)
         V = ConstantFP::get(CurTy, APFloat(APInt(64, Record[0])));
-      // FIXME: Make long double constants work.  BitsToDouble does not make it.
       else if (CurTy == Type::X86_FP80Ty)
         V = ConstantFP::get(CurTy, APFloat(APInt(80, 2, &Record[0])));
       else if (CurTy == Type::FP128Ty)

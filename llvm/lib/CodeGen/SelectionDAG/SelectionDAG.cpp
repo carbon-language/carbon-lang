@@ -109,12 +109,12 @@ bool ISD::isBuildVectorAllOnes(const SDNode *N) {
   } else if (isa<ConstantFPSDNode>(NotZero)) {
     MVT::ValueType VT = NotZero.getValueType();
     if (VT== MVT::f64) {
-      if (*((cast<ConstantFPSDNode>(NotZero)->getValueAPF().
-                  convertToAPInt().getRawData())) != (uint64_t)-1)
+      if (((cast<ConstantFPSDNode>(NotZero)->getValueAPF().
+                  convertToAPInt().getZExtValue())) != (uint64_t)-1)
         return false;
     } else {
-      if ((uint32_t)*cast<ConstantFPSDNode>(NotZero)->
-                      getValueAPF().convertToAPInt().getRawData() != 
+      if ((uint32_t)cast<ConstantFPSDNode>(NotZero)->
+                      getValueAPF().convertToAPInt().getZExtValue() != 
           (uint32_t)-1)
         return false;
     }
@@ -1697,9 +1697,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
     case ISD::BIT_CONVERT:
       if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
-        return getConstant((uint32_t)*V.convertToAPInt().getRawData(), VT);
+        return getConstant((uint32_t)V.convertToAPInt().getZExtValue(), VT);
       else if (VT == MVT::i64 && C->getValueType(0) == MVT::f64)
-        return getConstant(*V.convertToAPInt().getRawData(), VT);
+        return getConstant(V.convertToAPInt().getZExtValue(), VT);
       break;
     }
   }
