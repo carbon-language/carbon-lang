@@ -811,7 +811,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 /// like dereferencing the pointer, but not storing through the address, unless
 /// it is to the specified global.
 static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
-                                                      GlobalVariable *GV) {
+                                                      GlobalVariable *GV,
+                                              SmallPtrSet<PHINode*, 8> &PHIs) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;++UI)
     if (isa<LoadInst>(*UI) || isa<CmpInst>(*UI)) {
       // Fine, ignore.
@@ -819,9 +820,16 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
       if (SI->getOperand(0) == V && SI->getOperand(1) != GV)
         return false;  // Storing the pointer itself... bad.
       // Otherwise, storing through it, or storing into GV... fine.
-    } else if (isa<GetElementPtrInst>(*UI) || isa<SelectInst>(*UI)) {
-      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(cast<Instruction>(*UI),GV))
+    } else if (isa<GetElementPtrInst>(*UI) || isa<SelectInst>(*UI) ||
+               isa<BitCastInst>(*UI)) {
+      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(cast<Instruction>(*UI),
+                                                     GV, PHIs))
         return false;
+    } else if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
+      // PHIs are ok if all uses are ok.  Don't infinitely recurse through PHI
+      // cycles.
+      if (PHIs.insert(PN))
+        return ValueIsOnlyUsedLocallyOrStoredToOneGlobal(PN, GV, PHIs);
     } else {
       return false;
     }
@@ -1125,8 +1133,11 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       // malloc to be stored into the specified global, loaded setcc'd, and
       // GEP'd.  These are all things we could transform to using the global
       // for.
-      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV))
-        return false;
+      {
+        SmallPtrSet<PHINode*, 8> PHIs;
+        if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(MI, GV, PHIs))
+          return false;
+      }
 
       
       // If we have a global that is only initialized with a fixed size malloc,
