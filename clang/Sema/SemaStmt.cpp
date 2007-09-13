@@ -481,7 +481,7 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
     // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
     // identifiers for objects having storage class 'auto' or 'register'.
-    for (Decl *D = DS->getDecl(); D; D = D->getNextDeclarator()) {
+    for (ScopedDecl *D = DS->getDecl(); D; D = D->getNextDeclarator()) {
       BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(D);
       if (BVD && !BVD->hasLocalStorage())
         BVD = 0;

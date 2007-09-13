@@ -41,8 +41,8 @@ public:
   void VisitStmt(Stmt* S);
   void VisitDeclRefExpr(DeclRefExpr* DR);
   void VisitDeclStmt(DeclStmt* DS);
-  void Register(Decl* D);
-  void RegisterDeclChain(Decl* D);
+  void Register(ScopedDecl* D);
+  void RegisterDeclChain(ScopedDecl* D);
   void RegisterUsedDecls();
 };
 
@@ -59,12 +59,12 @@ void RegisterDecls::VisitDeclStmt(DeclStmt* DS) {
   RegisterDeclChain(DS->getDecl());
 }
 
-void RegisterDecls::RegisterDeclChain(Decl* D) {
+void RegisterDecls::RegisterDeclChain(ScopedDecl* D) {
   for (; D != NULL ; D = D->getNextDeclarator())
     Register(D);
 }
 
-void RegisterDecls::Register(Decl* D) {
+void RegisterDecls::Register(ScopedDecl* D) {
   if (VarDecl* V = dyn_cast<VarDecl>(D)) {
     LiveVariables::VPair& VP = L.getVarInfoMap()[V];
 
@@ -240,7 +240,7 @@ void LivenessTFuncs::VisitDeclStmt(DeclStmt* DS) {
   // be live before they are declared.  Declarations, however, are not kills
   // in the sense that the value is obliterated, so we do not register
   // DeclStmts as a "kill site" for a variable.
-  for (Decl* D = DS->getDecl(); D != NULL ; D = D->getNextDeclarator())
+  for (ScopedDecl* D = DS->getDecl(); D != NULL ; D = D->getNextDeclarator())
     KillVar(cast<VarDecl>(D));
 }
 

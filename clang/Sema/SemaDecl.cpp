@@ -430,8 +430,8 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
 }
 
 Sema::DeclTy *
-Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDeclarator) {
-  Decl *LastDeclarator = (Decl*)lastDeclarator;
+Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
+  ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
   IdentifierInfo *II = D.getIdentifier();
   
   // All of these full declarators require an identifier.  If it doesn't have
@@ -608,16 +608,17 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
 /// The declarators are chained together backwards, reverse the list.
 Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   // Often we have single declarators, handle them quickly.
-  Decl *Group = static_cast<Decl*>(group);
-  if (Group == 0)
+  Decl *GroupDecl = static_cast<Decl*>(group);
+  if (GroupDecl == 0)
     return 0;
-    
-  Decl *NewGroup = 0;
+  
+  ScopedDecl *Group = dyn_cast<ScopedDecl>(GroupDecl);
+  ScopedDecl *NewGroup = 0;
   if (Group->getNextDeclarator() == 0) 
     NewGroup = Group;
   else { // reverse the list.
     while (Group) {
-      Decl *Next = Group->getNextDeclarator();
+      ScopedDecl *Next = Group->getNextDeclarator();
       Group->setNextDeclarator(NewGroup);
       NewGroup = Group;
       Group = Next;
@@ -625,7 +626,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
   }
   // Perform semantic analysis that depends on having fully processed both
   // the declarator and initializer.
-  for (Decl *ID = NewGroup; ID; ID = ID->getNextDeclarator()) {
+  for (ScopedDecl *ID = NewGroup; ID; ID = ID->getNextDeclarator()) {
     VarDecl *IDecl = dyn_cast<VarDecl>(ID);
     if (!IDecl)
       continue;
@@ -846,7 +847,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
 
 
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
-                                    Decl *LastDeclarator) {
+                                    ScopedDecl *LastDeclarator) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   
   QualType T = GetTypeForDeclarator(D, S);

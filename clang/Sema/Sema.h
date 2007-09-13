@@ -165,7 +165,7 @@ private:
                              DeclTy **Elements, unsigned NumElements);
 private:
   /// Subroutines of ParseDeclarator()...
-  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *LastDeclarator);
+  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, ScopedDecl *LastDecl);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, ScopedDecl *Old);
   VarDecl *MergeVarDecl(VarDecl *New, ScopedDecl *Old);

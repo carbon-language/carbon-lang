@@ -56,13 +56,8 @@ private:
   /// InvalidDecl - This indicates a semantic error occurred.
   int InvalidDecl :  1;
 
-  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
-  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
-  Decl *NextDeclarator;
-  
 protected:
-  Decl(Kind DK, Decl *NextDecl)
-    : DeclKind(DK), InvalidDecl(0), NextDeclarator(NextDecl) {
+  Decl(Kind DK) : DeclKind(DK), InvalidDecl(0) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   virtual ~Decl();
@@ -75,13 +70,6 @@ public:
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
   int isInvalidDecl() const { return InvalidDecl; }
-  
-  /// getNextDeclarator - If this decl was part of a multi-declarator
-  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
-  /// declarator.  Otherwise it returns null.
-  Decl *getNextDeclarator() { return NextDeclarator; }
-  const Decl *getNextDeclarator() const { return NextDeclarator; }
-  void setNextDeclarator(Decl *N) { NextDeclarator = N; }
   
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
@@ -119,14 +107,18 @@ class ScopedDecl : public Decl {
   /// Loc - The location that this decl.
   SourceLocation Loc;
   
+  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
+  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
+  ScopedDecl *NextDeclarator;
+  
   /// When this decl is in scope while parsing, the Next field contains a
   /// pointer to the shadowed decl of the same name.  When the scope is popped,
   /// Decls are relinked onto a containing decl object.
   ///
   ScopedDecl *Next;
 protected:
-  ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl) 
-    : Decl(DK, PrevDecl), Identifier(Id), Loc(L), Next(0) {}
+  ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl) 
+    : Decl(DK), Identifier(Id), Loc(L), NextDeclarator(PrevDecl), Next(0) {}
 public:
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getLocation() const { return Loc; }
@@ -135,6 +127,13 @@ public:
 
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
+  
+  /// getNextDeclarator - If this decl was part of a multi-declarator
+  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
+  /// declarator.  Otherwise it returns null.
+  ScopedDecl *getNextDeclarator() { return NextDeclarator; }
+  const ScopedDecl *getNextDeclarator() const { return NextDeclarator; }
+  void setNextDeclarator(ScopedDecl *N) { NextDeclarator = N; }
   
   // Implement isa/cast/dyncast/etc. - true for all ValueDecl's and TypeDecl's.
   static bool classof(const Decl *D) {
@@ -151,7 +150,7 @@ class ValueDecl : public ScopedDecl {
   QualType DeclType;
 protected:
   ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-            Decl *PrevDecl) : ScopedDecl(DK, L, Id, PrevDecl), DeclType(T) {}
+            ScopedDecl *PrevDecl) : ScopedDecl(DK, L, Id, PrevDecl), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
@@ -211,7 +210,7 @@ public:
   static bool classof(const VarDecl *D) { return true; }
 protected:
   VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-          StorageClass SC, Decl *PrevDecl)
+          StorageClass SC, ScopedDecl *PrevDecl)
     : ValueDecl(DK, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 private:
   StorageClass SClass;
@@ -222,7 +221,7 @@ private:
 class BlockVarDecl : public VarDecl {
 public:
   BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-               Decl *PrevDecl)
+               ScopedDecl *PrevDecl)
     : VarDecl(BlockVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -237,7 +236,7 @@ public:
 class FileVarDecl : public VarDecl {
 public:
   FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-              Decl *PrevDecl)
+              ScopedDecl *PrevDecl)
     : VarDecl(FileVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -249,7 +248,7 @@ public:
 class ParmVarDecl : public VarDecl {
 public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-              Decl *PrevDecl)
+              ScopedDecl *PrevDecl)
     : VarDecl(ParmVariable, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
@@ -265,7 +264,8 @@ public:
     None, Extern, Static
   };
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-               StorageClass S = None, bool isInline = false, Decl *PrevDecl = 0)
+               StorageClass S = None, bool isInline = false, 
+               ScopedDecl *PrevDecl = 0)
     : ValueDecl(Function, L, Id, T, PrevDecl), 
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), IsInline(isInline) {}
   virtual ~FunctionDecl();
@@ -324,18 +324,30 @@ class FieldDecl : public Decl {
   /// Loc - The location that this decl.
   SourceLocation Loc;
   
+  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
+  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
+  FieldDecl *NextDeclarator;
+  
   QualType DeclType;  
 public:
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
-    : Decl(Field, PrevDecl), Identifier(Id), Loc(L), DeclType(T) {}
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, FieldDecl *PrevD)
+    : Decl(Field), Identifier(Id), Loc(L), NextDeclarator(PrevD), 
+      DeclType(T) {}
   FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T, 
-            Decl *PrevDecl) : Decl(DK, PrevDecl), Identifier(Id), Loc(L), 
-            DeclType(T) {}
+            FieldDecl *PrevD) : Decl(DK), Identifier(Id), Loc(L), 
+            NextDeclarator(PrevD), DeclType(T) {}
 
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
   const char *getName() const;
+
+  /// getNextDeclarator - If this decl was part of a multi-declarator
+  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
+  /// declarator.  Otherwise it returns null.
+  FieldDecl *getNextDeclarator() { return NextDeclarator; }
+  const FieldDecl *getNextDeclarator() const { return NextDeclarator; }
+  void setNextDeclarator(FieldDecl *N) { NextDeclarator = N; }
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -356,7 +368,7 @@ class EnumConstantDecl : public ValueDecl {
   llvm::APSInt Val; // The value.
 public:
   EnumConstantDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *E,
-                   const llvm::APSInt &V, Decl *PrevDecl)
+                   const llvm::APSInt &V, ScopedDecl *PrevDecl)
     : ValueDecl(EnumConstant, L, Id, T, PrevDecl), Init(E), Val(V) {}
 
   const Expr *getInitExpr() const { return Init; }
@@ -383,7 +395,7 @@ class TypeDecl : public ScopedDecl {
   Type *TypeForDecl;
   friend class ASTContext;
 protected:
-  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+  TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : ScopedDecl(DK, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
   // Implement isa/cast/dyncast/etc.
@@ -398,8 +410,8 @@ class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   QualType UnderlyingType;
 public:
-  TypedefDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
-    : TypeDecl(Typedef, L, Id, PrevDecl), UnderlyingType(T) {}
+  TypedefDecl(SourceLocation L, IdentifierInfo *Id, QualType T, ScopedDecl *PD) 
+    : TypeDecl(Typedef, L, Id, PD), UnderlyingType(T) {}
   
   QualType getUnderlyingType() const { return UnderlyingType; }
   void setUnderlyingType(QualType newType) { UnderlyingType = newType; }
@@ -416,7 +428,7 @@ class TagDecl : public TypeDecl {
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
-  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+  TagDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TypeDecl(DK, L, Id, PrevDecl) {
     IsDefinition = false;
   }
@@ -459,7 +471,7 @@ class EnumDecl : public TagDecl {
   /// have a different type than this does.
   QualType IntegerType;
 public:
-  EnumDecl(SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+  EnumDecl(SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TagDecl(Enum, L, Id, PrevDecl) {
     ElementList = 0;
   }
@@ -502,7 +514,7 @@ class RecordDecl : public TagDecl {
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
 public:
-  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
+  RecordDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl*PrevDecl)
     : TagDecl(DK, L, Id, PrevDecl) {
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
@@ -568,8 +580,8 @@ public:
 
 class ObjcIvarDecl : public FieldDecl {
 public:
-  ObjcIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
-    : FieldDecl(ObjcIvar, L, Id, T, PrevDecl) {}
+  ObjcIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+               FieldDecl *PrevDecl) : FieldDecl(ObjcIvar, L, Id, T, PrevDecl) {}
     
   enum AccessControl {
     None, Private, Protected, Public, Package
@@ -614,7 +626,7 @@ public:
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod, PrevDecl), MethodDeclType(T), 
+    : Decl(ObjcMethod), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 

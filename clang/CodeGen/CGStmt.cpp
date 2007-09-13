@@ -318,7 +318,8 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
 }
 
 void CodeGenFunction::EmitDeclStmt(const DeclStmt &S) {
-  for (const Decl *Decl = S.getDecl(); Decl; Decl = Decl->getNextDeclarator())
+  for (const ScopedDecl *Decl = S.getDecl(); Decl; 
+       Decl = Decl->getNextDeclarator())
     EmitDecl(*Decl);
 }
 

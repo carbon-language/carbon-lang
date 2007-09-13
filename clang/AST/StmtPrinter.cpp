@@ -144,7 +144,7 @@ void StmtPrinter::VisitNullStmt(NullStmt *Node) {
 }
 
 void StmtPrinter::VisitDeclStmt(DeclStmt *Node) {
-  for (Decl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
+  for (ScopedDecl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
     Indent();
     PrintRawDecl(D);
     OS << ";\n";
