@@ -201,6 +201,10 @@ public:
     return get(Opcode).numOperands;
   }
 
+  int getNumDefs(MachineOpCode Opcode) const {
+    return get(Opcode).numDefs;
+  }
+
   InstrSchedClass getSchedClass(MachineOpCode Opcode) const {
     return get(Opcode).schedClass;
   }
