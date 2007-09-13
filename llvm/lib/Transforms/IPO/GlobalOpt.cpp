@@ -867,7 +867,8 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 
 /// GlobalLoadUsesSimpleEnoughForHeapSRA - If all users of values loaded from
 /// GV are simple enough to perform HeapSRA, return true.
-static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
+static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
+                                                 MallocInst *MI) {
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
        ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
@@ -883,15 +884,35 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
         }
         
         // getelementptr is also ok, but only a simple form.
-        GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI);
-        if (!GEPI) return false;
+        if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
+          // Must index into the array and into the struct.
+          if (GEPI->getNumOperands() < 3)
+            return false;
+          
+          // Otherwise the GEP is ok.
+          continue;
+        }
         
-        // Must index into the array and into the struct.
-        if (GEPI->getNumOperands() < 3)
-          return false;
+        if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
+          // We have a phi of a load from the global.  We can only handle this
+          // if the other PHI'd values are actually the same.  In this case,
+          // the rewriter will just drop the phi entirely.
+          for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+            Value *IV = PN->getIncomingValue(i);
+            if (IV == LI) continue;  // Trivial the same.
+            
+            // If the phi'd value is from the malloc that initializes the value,
+            // we can xform it.
+            if (IV == MI) continue;
+            
+            // Otherwise, we don't know what it is.
+            return false;
+          }
+          return true;
+        }
         
-        // Otherwise the GEP is ok.
-        continue;
+        // Otherwise we don't know what this is, not ok.
+        return false;
       }
     }
   return true;
@@ -899,7 +920,7 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
 
 /// GetHeapSROALoad - Return the load for the specified field of the HeapSROA'd
 /// value, lazily creating it on demand.
-static Value *GetHeapSROALoad(LoadInst *Load, unsigned FieldNo,
+static Value *GetHeapSROALoad(Instruction *Load, unsigned FieldNo,
                               const std::vector<GlobalVariable*> &FieldGlobals,
                               std::vector<Value *> &InsertedLoadsForPtr) {
   if (InsertedLoadsForPtr.size() <= FieldNo)
@@ -958,12 +979,39 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
     return;
   }
   
-  // Handle PHI nodes.  All PHI nodes must be merging in the same values, so
-  // just treat them like a copy.
+  // Handle PHI nodes.  PHI nodes must be merging in the same values, plus
+  // potentially the original malloc.  Insert phi nodes for each field, then
+  // process uses of the PHI.
   PHINode *PN = cast<PHINode>(LoadUser);
+  std::vector<Value *> PHIsForField;
+  PHIsForField.resize(FieldGlobals.size());
+  for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
+    Value *LoadV = GetHeapSROALoad(Load, i, FieldGlobals, InsertedLoadsForPtr);
+
+    PHINode *FieldPN = new PHINode(LoadV->getType(),
+                                   PN->getName()+"."+utostr(i), PN);
+    // Fill in the predecessor values.
+    for (unsigned pred = 0, e = PN->getNumIncomingValues(); pred != e; ++pred) {
+      // Each predecessor either uses the load or the original malloc.
+      Value *InVal = PN->getIncomingValue(pred);
+      BasicBlock *BB = PN->getIncomingBlock(pred);
+      Value *NewVal;
+      if (isa<MallocInst>(InVal)) {
+        // Insert a reload from the global in the predecessor.
+        NewVal = GetHeapSROALoad(BB->getTerminator(), i, FieldGlobals,
+                                 PHIsForField);
+      } else {
+        NewVal = InsertedLoadsForPtr[i];
+      }
+      FieldPN->addIncoming(NewVal, BB);
+    }
+    PHIsForField[i] = FieldPN;
+  }
+  
+  // Since PHIsForField specifies a phi for every input value, the lazy inserter
+  // will never insert a load.
   while (!PN->use_empty())
-    RewriteHeapSROALoadUser(Load, PN->use_back(),
-                            FieldGlobals, InsertedLoadsForPtr);
+    RewriteHeapSROALoadUser(Load, PN->use_back(), FieldGlobals, PHIsForField);
   PN->eraseFromParent();
 }
 
@@ -1193,7 +1241,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
         // This the structure has an unreasonable number of fields, leave it
         // alone.
         if (AllocTy->getNumElements() <= 16 && AllocTy->getNumElements() > 0 &&
-            GlobalLoadUsesSimpleEnoughForHeapSRA(GV)) {
+            GlobalLoadUsesSimpleEnoughForHeapSRA(GV, MI)) {
           GVI = PerformHeapAllocSRoA(GV, MI);
           return true;
         }
