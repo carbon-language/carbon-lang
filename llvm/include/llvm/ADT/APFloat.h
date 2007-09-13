@@ -168,9 +168,9 @@ namespace llvm {
     APFloat(const fltSemantics &, const char *);
     APFloat(const fltSemantics &, integerPart);
     APFloat(const fltSemantics &, fltCategory, bool negative);
-    APFloat(double d);
-    APFloat(float f);
-    APFloat(const APInt &);
+    explicit APFloat(double d);
+    explicit APFloat(float f);
+    explicit APFloat(const APInt &);
     APFloat(const APFloat &);
     ~APFloat();
 
