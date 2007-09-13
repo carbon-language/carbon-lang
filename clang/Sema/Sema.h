@@ -29,6 +29,7 @@ namespace clang {
   class ASTContext;
   class Preprocessor;
   class Decl;
+  class ScopedDecl;
   class Expr;
   class InitListExpr;
   class VarDecl;
@@ -175,9 +176,9 @@ private:
   /// More parsing and symbol table subroutines...
   ParmVarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
                                     Scope *FnBodyScope);
-  Decl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, SourceLocation IdLoc,
-                         Scope *S);  
-  Decl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
+  ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
+                               SourceLocation IdLoc, Scope *S);  
+  ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 

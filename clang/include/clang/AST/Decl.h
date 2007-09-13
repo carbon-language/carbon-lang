@@ -63,19 +63,13 @@ private:
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
   
-  /// When this decl is in scope while parsing, the Next field contains a
-  /// pointer to the shadowed decl of the same name.  When the scope is popped,
-  /// Decls are relinked onto a containing decl object.
-  ///
-  Decl *Next;
-
   /// NextDeclarator - If this decl was part of a multi-declarator declaration,
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   Decl *NextDeclarator;
   
 protected:
   Decl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *NextDecl)
-    : DeclKind(DK), InvalidDecl(0), Loc(L), Identifier(Id), Next(0), 
+    : DeclKind(DK), InvalidDecl(0), Loc(L), Identifier(Id),
       NextDeclarator(NextDecl) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
@@ -88,8 +82,6 @@ public:
   const char *getName() const;
   
   Kind getKind() const { return DeclKind; }
-  Decl *getNext() const { return Next; }
-  void setNext(Decl *N) { Next = N; }
 
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
@@ -129,14 +121,37 @@ public:
   static bool classof(const Decl *) { return true; }
 };
 
+/// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
+/// and TypeDecl's.
+class ScopedDecl : public Decl {
+  /// When this decl is in scope while parsing, the Next field contains a
+  /// pointer to the shadowed decl of the same name.  When the scope is popped,
+  /// Decls are relinked onto a containing decl object.
+  ///
+  ScopedDecl *Next;
+protected:
+  ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl) 
+    : Decl(DK, L, Id, PrevDecl), Next(0) {}
+public:
+  ScopedDecl *getNext() const { return Next; }
+  void setNext(ScopedDecl *N) { Next = N; }
+  
+  // Implement isa/cast/dyncast/etc. - true for all ValueDecl's and TypeDecl's.
+  static bool classof(const Decl *D) {
+    return (D->getKind() >= Function && D->getKind() <= EnumConstant) || 
+           (D->getKind() >= Typedef && D->getKind() <= Enum);
+  }
+  static bool classof(const ScopedDecl *D) { return true; }
+};
+
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant. 
-class ValueDecl : public Decl {
+class ValueDecl : public ScopedDecl {
   QualType DeclType;
 protected:
   ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-            Decl *PrevDecl) : Decl(DK, L, Id, PrevDecl), DeclType(T) {}
+            Decl *PrevDecl) : ScopedDecl(DK, L, Id, PrevDecl), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
@@ -258,8 +273,8 @@ public:
   Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
   
-  Decl *getDeclChain() const { return DeclChain; }
-  void setDeclChain(Decl *D) { DeclChain = D; }
+  ScopedDecl *getDeclChain() const { return DeclChain; }
+  void setDeclChain(ScopedDecl *D) { DeclChain = D; }
 
   unsigned getNumParams() const;
   const ParmVarDecl *getParamDecl(unsigned i) const {
@@ -292,7 +307,7 @@ private:
   
   /// DeclChain - Linked list of declarations that are defined inside this
   /// function.
-  Decl *DeclChain;
+  ScopedDecl *DeclChain;
 
   StorageClass SClass : 2;
   bool IsInline : 1;
@@ -348,7 +363,7 @@ public:
 
 /// TypeDecl - Represents a declaration of a type.
 ///
-class TypeDecl : public Decl {
+class TypeDecl : public ScopedDecl {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getTypedefType and
   /// ASTContext::getTagDeclType.
@@ -356,7 +371,7 @@ class TypeDecl : public Decl {
   friend class ASTContext;
 protected:
   TypeDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl)
-    : Decl(DK, L, Id, PrevDecl), TypeForDecl(0) {}
+    : ScopedDecl(DK, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

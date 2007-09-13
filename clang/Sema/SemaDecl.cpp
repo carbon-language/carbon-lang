@@ -39,8 +39,11 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
          
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
-    Decl *D = static_cast<Decl*>(*I);
-    assert(D && "This decl didn't get pushed??");
+    Decl *TmpD = static_cast<Decl*>(*I);
+    assert(TmpD && "This decl didn't get pushed??");
+    ScopedDecl *D = dyn_cast<ScopedDecl>(TmpD);
+    assert(D && "This decl isn't a ScopedDecl?");
+    
     IdentifierInfo *II = D->getIdentifier();
     if (!II) continue;
     
@@ -53,7 +56,7 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
     } else {
       // Scan ahead.  There are only three namespaces in C, so this loop can
       // never execute more than 3 times.
-      Decl *SomeDecl = II->getFETokenInfo<Decl>();
+      ScopedDecl *SomeDecl = II->getFETokenInfo<ScopedDecl>();
       while (SomeDecl->getNext() != D) {
         SomeDecl = SomeDecl->getNext();
         assert(SomeDecl && "Didn't find this decl on its identifier's chain!");
@@ -76,15 +79,15 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
 
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
 /// namespace.
-Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
-                             SourceLocation IdLoc, Scope *S) {
+ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
+                                   SourceLocation IdLoc, Scope *S) {
   if (II == 0) return 0;
   Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
   
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
   // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
-  for (Decl *D = II->getFETokenInfo<Decl>(); D; D = D->getNext())
+  for (ScopedDecl *D = II->getFETokenInfo<ScopedDecl>(); D; D = D->getNext())
     if (D->getIdentifierNamespace() == NS)
       return D;
   
@@ -110,7 +113,7 @@ Decl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
 
 /// LazilyCreateBuiltin - The specified Builtin-ID was first used at file scope.
 /// lazily create a decl for it.
-Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
+ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
@@ -125,7 +128,7 @@ Decl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
   S->AddDecl(New);
   
   // Add this decl to the end of the identifier info.
-  if (Decl *LastDecl = II->getFETokenInfo<Decl>()) {
+  if (ScopedDecl *LastDecl = II->getFETokenInfo<ScopedDecl>()) {
     // Scan until we find the last (outermost) decl in the id chain. 
     while (LastDecl->getNext())
       LastDecl = LastDecl->getNext();
@@ -446,12 +449,12 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDeclarator) {
     S = S->getParent();
   
   // See if this is a redefinition of a variable in the same scope.
-  Decl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
-                                    D.getIdentifierLoc(), S);
+  ScopedDecl *PrevDecl = LookupScopedDecl(II, Decl::IDNS_Ordinary,
+                                          D.getIdentifierLoc(), S);
   if (PrevDecl && !S->isDeclScope(PrevDecl))
     PrevDecl = 0;   // If in outer scope, it isn't the same thing.
 
-  Decl *New;
+  ScopedDecl *New;
   bool InvalidDecl = false;
   
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
@@ -545,7 +548,7 @@ Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDeclarator) {
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
-    New->setNext(II->getFETokenInfo<Decl>());
+    New->setNext(II->getFETokenInfo<ScopedDecl>());
     II->setFETokenInfo(New);
     S->AddDecl(New);
   }
@@ -715,7 +718,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
     
   // If this has an identifier, add it to the scope stack.
   if (II) {
-    New->setNext(II->getFETokenInfo<Decl>());
+    New->setNext(II->getFETokenInfo<ScopedDecl>());
     II->setFETokenInfo(New);
     FnScope->AddDecl(New);
   }
@@ -867,7 +870,7 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, ClassName);
   
   // Chain & install the interface decl into the identifier.
-  IDecl->setNext(ClassName->getFETokenInfo<Decl>());
+  IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
   ClassName->setFETokenInfo(IDecl);
   return IDecl;
 }
@@ -914,7 +917,7 @@ Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
     // FIXME: before we create one, look up the interface decl in a hash table.
     IDecl = new ObjcInterfaceDecl(SourceLocation(), IdentList[i], true);
     // Chain & install the interface decl into the identifier.
-    IDecl->setNext(IdentList[i]->getFETokenInfo<Decl>());
+    IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
     IdentList[i]->setFETokenInfo(IDecl);
     
     // Remember that this needs to be removed when the scope is popped.
@@ -1020,7 +1023,7 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
       S = S->getParent();
     
     // Add it to the decl chain.
-    New->setNext(Name->getFETokenInfo<Decl>());
+    New->setNext(Name->getFETokenInfo<ScopedDecl>());
     Name->setFETokenInfo(New);
     S->AddDecl(New);
   }
@@ -1325,7 +1328,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
                                                LastEnumConst);
   
   // Register this decl in the current scope stack.
-  New->setNext(Id->getFETokenInfo<Decl>());
+  New->setNext(Id->getFETokenInfo<ScopedDecl>());
   Id->setFETokenInfo(New);
   S->AddDecl(New);
   return New;
