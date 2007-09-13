@@ -40,6 +40,7 @@ class ASTContext {
   RecordDecl *CFConstantStringTypeDecl;
   llvm::StringMap<char> SelectorNames;
 public:
+  SourceManager &SourceMgr;
   TargetInfo &Target;
   IdentifierTable &Idents;
   Builtin::Context BuiltinInfo;
@@ -54,8 +55,8 @@ public:
   QualType FloatTy, DoubleTy, LongDoubleTy;
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
-  ASTContext(TargetInfo &t, IdentifierTable &idents) : 
-    CFConstantStringTypeDecl(0), Target(t), Idents(idents) {
+  ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents) : 
+    CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), Idents(idents) {
     InitBuiltinTypes();
     BuiltinInfo.InitializeBuiltins(idents, Target);
   }    

@@ -29,7 +29,9 @@ class DeadStoreObserver : public LiveVariablesObserver {
   ASTContext Ctx;
 public:
   DeadStoreObserver(Preprocessor& pp) : 
-    PP(pp), Ctx(PP.getTargetInfo(), PP.getIdentifierTable()) {}
+    PP(pp), Ctx(PP.getSourceManager(), PP.getTargetInfo(),
+                PP.getIdentifierTable()) {
+  }
     
   virtual ~DeadStoreObserver() {}
 

@@ -29,7 +29,8 @@ void clang::EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
                              bool PrintStats) {
   Diagnostic &Diags = PP.getDiagnostics();
   // Create the streamer to read the file.
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+                     PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
   // Create the module to codegen into.

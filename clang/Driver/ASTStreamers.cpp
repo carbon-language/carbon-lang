@@ -27,7 +27,8 @@ void clang::BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
     Stmt::CollectingStats(true);
   }
 
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+                     PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
 
   while (ASTStreamer_ReadTopLevelDecl(Streamer))
@@ -106,7 +107,8 @@ static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
 }
 
 void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+                     PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
@@ -137,7 +139,8 @@ void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
 }
 
 void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+                     PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
@@ -184,7 +187,8 @@ static void VisitCFGs(CFGVisitor& Visitor, Preprocessor& PP,
                       unsigned MainFileID, bool Stats) {
 
   bool printFDecl = Visitor.printFuncDeclStart();
-  ASTContext Context(PP.getTargetInfo(), PP.getIdentifierTable());
+  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+                     PP.getIdentifierTable());
   ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
   
   while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
