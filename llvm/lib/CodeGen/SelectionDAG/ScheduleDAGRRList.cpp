@@ -123,7 +123,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
     if (!SU) continue;
     if (SU->isCommutable) {
       unsigned Opc = SU->Node->getTargetOpcode();
-      unsigned NumRes = CountResults(SU->Node);
+      unsigned NumRes = TII->getNumDefs(Opc);
       unsigned NumOps = CountOperands(SU->Node);
       for (unsigned j = 0; j != NumOps; ++j) {
         if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) == -1)
@@ -521,7 +521,7 @@ namespace {
 
     bool isDUOperand(const SUnit *SU1, const SUnit *SU2) {
       unsigned Opc = SU1->Node->getTargetOpcode();
-      unsigned NumRes = ScheduleDAG::CountResults(SU1->Node);
+      unsigned NumRes = TII->getNumDefs(Opc);
       unsigned NumOps = ScheduleDAG::CountOperands(SU1->Node);
       for (unsigned i = 0; i != NumOps; ++i) {
         if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) == -1)
@@ -705,7 +705,7 @@ template<class SF>
 bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->Node->getTargetOpcode();
-    unsigned NumRes = ScheduleDAG::CountResults(SU->Node);
+    unsigned NumRes = TII->getNumDefs(Opc);
     unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) != -1) {
@@ -735,7 +735,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     unsigned Opc = Node->getTargetOpcode();
-    unsigned NumRes = ScheduleDAG::CountResults(Node);
+    unsigned NumRes = TII->getNumDefs(Opc);
     unsigned NumOps = ScheduleDAG::CountOperands(Node);
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) != -1) {
