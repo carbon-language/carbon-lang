@@ -844,17 +844,23 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Instruction *V,
 static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc, 
                                           GlobalVariable *GV) {
   while (!Alloc->use_empty()) {
-    Instruction *U = Alloc->use_back();
+    Instruction *U = cast<Instruction>(*Alloc->use_begin());
+    Instruction *InsertPt = U;
     if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       // If this is the store of the allocation into the global, remove it.
       if (SI->getOperand(1) == GV) {
         SI->eraseFromParent();
         continue;
       }
+    } else if (PHINode *PN = dyn_cast<PHINode>(U)) {
+      // Insert the load in the corresponding predecessor, not right before the
+      // PHI.
+      unsigned PredNo = Alloc->use_begin().getOperandNo()/2;
+      InsertPt = PN->getIncomingBlock(PredNo)->getTerminator();
     }
     
     // Insert a load from the global, and use it instead of the malloc.
-    Value *NL = new LoadInst(GV, GV->getName()+".val", U);
+    Value *NL = new LoadInst(GV, GV->getName()+".val", InsertPt);
     U->replaceUsesOfWith(Alloc, NL);
   }
 }
@@ -891,6 +897,20 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
   return true;
 }
 
+/// GetHeapSROALoad - Return the load for the specified field of the HeapSROA'd
+/// value, lazily creating it on demand.
+static Value *GetHeapSROALoad(LoadInst *Load, unsigned FieldNo,
+                              const std::vector<GlobalVariable*> &FieldGlobals,
+                              std::vector<Value *> &InsertedLoadsForPtr) {
+  if (InsertedLoadsForPtr.size() <= FieldNo)
+    InsertedLoadsForPtr.resize(FieldNo+1);
+  if (InsertedLoadsForPtr[FieldNo] == 0)
+    InsertedLoadsForPtr[FieldNo] = new LoadInst(FieldGlobals[FieldNo],
+                                                Load->getName()+".f" + 
+                                                utostr(FieldNo), Load);
+  return InsertedLoadsForPtr[FieldNo];
+}
+
 /// RewriteHeapSROALoadUser - Given a load instruction and a value derived from
 /// the load, rewrite the derived value to use the HeapSRoA'd load.
 static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser, 
@@ -903,8 +923,7 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
     // field.
     Value *NPtr;
     if (InsertedLoadsForPtr.empty()) {
-      NPtr = new LoadInst(FieldGlobals[0], Load->getName()+".f0", Load);
-      InsertedLoadsForPtr.push_back(Load);
+      NPtr = GetHeapSROALoad(Load, 0, FieldGlobals, InsertedLoadsForPtr);
     } else {
       NPtr = InsertedLoadsForPtr.back();
     }
@@ -917,30 +936,35 @@ static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser,
     return;
   }
   
-  // Otherwise, this should be: 'getelementptr Ptr, Idx, uint FieldNo ...'
-  GetElementPtrInst *GEPI = cast<GetElementPtrInst>(LoadUser);
-  assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
-         && "Unexpected GEPI!");
+  // Handle 'getelementptr Ptr, Idx, uint FieldNo ...'
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(LoadUser)) {
+    assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
+           && "Unexpected GEPI!");
   
-  // Load the pointer for this field.
-  unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
-  if (InsertedLoadsForPtr.size() <= FieldNo)
-    InsertedLoadsForPtr.resize(FieldNo+1);
-  if (InsertedLoadsForPtr[FieldNo] == 0)
-    InsertedLoadsForPtr[FieldNo] = new LoadInst(FieldGlobals[FieldNo],
-                                                Load->getName()+".f" + 
-                                                utostr(FieldNo), Load);
-  Value *NewPtr = InsertedLoadsForPtr[FieldNo];
+    // Load the pointer for this field.
+    unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
+    Value *NewPtr = GetHeapSROALoad(Load, FieldNo,
+                                    FieldGlobals, InsertedLoadsForPtr);
+    
+    // Create the new GEP idx vector.
+    SmallVector<Value*, 8> GEPIdx;
+    GEPIdx.push_back(GEPI->getOperand(1));
+    GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
+    
+    Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx.begin(), GEPIdx.end(),
+                                         GEPI->getName(), GEPI);
+    GEPI->replaceAllUsesWith(NGEPI);
+    GEPI->eraseFromParent();
+    return;
+  }
   
-  // Create the new GEP idx vector.
-  SmallVector<Value*, 8> GEPIdx;
-  GEPIdx.push_back(GEPI->getOperand(1));
-  GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
-  
-  Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx.begin(), GEPIdx.end(),
-                                       GEPI->getName(), GEPI);
-  GEPI->replaceAllUsesWith(NGEPI);
-  GEPI->eraseFromParent();
+  // Handle PHI nodes.  All PHI nodes must be merging in the same values, so
+  // just treat them like a copy.
+  PHINode *PN = cast<PHINode>(LoadUser);
+  while (!PN->use_empty())
+    RewriteHeapSROALoadUser(Load, PN->use_back(),
+                            FieldGlobals, InsertedLoadsForPtr);
+  PN->eraseFromParent();
 }
 
 /// RewriteUsesOfLoadForHeapSRoA - We are performing Heap SRoA on a global.  Ptr
