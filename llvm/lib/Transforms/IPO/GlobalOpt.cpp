@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -493,8 +494,10 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
 }
 
 /// AllUsesOfValueWillTrapIfNull - Return true if all users of the specified
-/// value will trap if the value is dynamically null.
-static bool AllUsesOfValueWillTrapIfNull(Value *V) {
+/// value will trap if the value is dynamically null.  PHIs keeps track of any 
+/// phi nodes we've seen to avoid reprocessing them.
+static bool AllUsesOfValueWillTrapIfNull(Value *V,
+                                         SmallPtrSet<PHINode*, 8> &PHIs) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (isa<LoadInst>(*UI)) {
       // Will trap.
@@ -513,10 +516,15 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
         //cerr << "NONTRAPPING USE: " << **UI;
         return false;  // Not calling the ptr
       }
-    } else if (CastInst *CI = dyn_cast<CastInst>(*UI)) {
-      if (!AllUsesOfValueWillTrapIfNull(CI)) return false;
+    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(*UI)) {
+      if (!AllUsesOfValueWillTrapIfNull(CI, PHIs)) return false;
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
-      if (!AllUsesOfValueWillTrapIfNull(GEPI)) return false;
+      if (!AllUsesOfValueWillTrapIfNull(GEPI, PHIs)) return false;
+    } else if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
+      // If we've already seen this phi node, ignore it, it has already been
+      // checked.
+      if (PHIs.insert(PN))
+        return AllUsesOfValueWillTrapIfNull(PN, PHIs);
     } else if (isa<ICmpInst>(*UI) &&
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore setcc X, null
@@ -533,7 +541,8 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
 static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI!=E; ++UI)
     if (LoadInst *LI = dyn_cast<LoadInst>(*UI)) {
-      if (!AllUsesOfValueWillTrapIfNull(LI))
+      SmallPtrSet<PHINode*, 8> PHIs;
+      if (!AllUsesOfValueWillTrapIfNull(LI, PHIs))
         return false;
     } else if (isa<StoreInst>(*UI)) {
       // Ignore stores to the global.
