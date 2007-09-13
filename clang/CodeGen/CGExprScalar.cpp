@@ -93,7 +93,13 @@ public:
     return llvm::ConstantInt::get(E->getValue());
   }
   Value *VisitFloatingLiteral(const FloatingLiteral *E) {
-    return llvm::ConstantFP::get(ConvertType(E->getType()), E->getValue());
+    double V = E->getValue();
+    // FIXME: Change this when FloatingLiteral uses an APFloat internally.
+    const llvm::Type *Ty = ConvertType(E->getType());
+    if (Ty == llvm::Type::FloatTy)
+      return llvm::ConstantFP::get(Ty, llvm::APFloat((float)V));
+    assert(Ty == llvm::Type::DoubleTy && "Unknown float type!");
+    return llvm::ConstantFP::get(Ty, llvm::APFloat((double)V));
   }
   Value *VisitCharacterLiteral(const CharacterLiteral *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
