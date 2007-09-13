@@ -81,7 +81,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   Value *VisitStmt(Stmt *S) {
-    S->dump();
+    S->dump(CGF.getContext().SourceMgr);
     assert(0 && "Stmt can't have complex result type!");
     return 0;
   }
@@ -374,7 +374,7 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 
 Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   fprintf(stderr, "Unimplemented scalar expr!\n");
-  E->dump();
+  E->dump(CGF.getContext().SourceMgr);
   if (E->getType()->isVoidType())
     return 0;
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));

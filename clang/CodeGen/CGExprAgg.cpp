@@ -54,7 +54,7 @@ public:
   
   void VisitStmt(Stmt *S) {
     fprintf(stderr, "Unimplemented agg expr!\n");
-    S->dump();
+    S->dump(CGF.getContext().SourceMgr);
   }
   void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
 
@@ -135,7 +135,7 @@ void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
   fprintf(stderr, "Unimplemented aggregate binary expr!\n");
-  E->dump();
+  E->dump(CGF.getContext().SourceMgr);
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {

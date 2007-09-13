@@ -67,7 +67,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   ComplexPairTy VisitStmt(Stmt *S) {
-    S->dump();
+    S->dump(CGF.getContext().SourceMgr);
     assert(0 && "Stmt can't have complex result type!");
     return ComplexPairTy();
   }
@@ -233,7 +233,7 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
 
 ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
   fprintf(stderr, "Unimplemented complex expr!\n");
-  E->dump();
+  E->dump(CGF.getContext().SourceMgr);
   const llvm::Type *EltTy = 
     CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
   llvm::Value *U = llvm::UndefValue::get(EltTy);

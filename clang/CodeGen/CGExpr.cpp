@@ -84,7 +84,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: {
     fprintf(stderr, "Unimplemented lvalue expr!\n");
-    E->dump();
+    E->dump(getContext().SourceMgr);
     llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
     return LValue::MakeAddr(llvm::UndefValue::get(Ty));
   }
