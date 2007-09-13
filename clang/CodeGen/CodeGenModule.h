@@ -28,6 +28,7 @@ namespace clang {
   class ASTContext;
   class FunctionDecl;
   class Decl;
+  class ValueDecl;
   class FileVarDecl;
     
 namespace CodeGen {
@@ -53,7 +54,7 @@ public:
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   
-  llvm::Constant *GetAddrOfGlobalDecl(const Decl *D);
+  llvm::Constant *GetAddrOfGlobalDecl(const ValueDecl *D);
   
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".

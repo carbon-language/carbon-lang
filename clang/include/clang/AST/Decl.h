@@ -56,30 +56,18 @@ private:
   /// InvalidDecl - This indicates a semantic error occurred.
   int InvalidDecl :  1;
 
-  /// Loc - The location that this decl.
-  SourceLocation Loc;
-  
-  /// Identifier - The identifier for this declaration (e.g. the name for the
-  /// variable, the tag for a struct).
-  IdentifierInfo *Identifier;
-  
   /// NextDeclarator - If this decl was part of a multi-declarator declaration,
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   Decl *NextDeclarator;
   
 protected:
-  Decl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *NextDecl)
-    : DeclKind(DK), InvalidDecl(0), Loc(L), Identifier(Id),
-      NextDeclarator(NextDecl) {
+  Decl(Kind DK, Decl *NextDecl)
+    : DeclKind(DK), InvalidDecl(0), NextDeclarator(NextDecl) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   virtual ~Decl();
   
 public:
-  IdentifierInfo *getIdentifier() const { return Identifier; }
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
-  const char *getName() const;
   
   Kind getKind() const { return DeclKind; }
 
@@ -124,6 +112,13 @@ public:
 /// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
 /// and TypeDecl's.
 class ScopedDecl : public Decl {
+  /// Identifier - The identifier for this declaration (e.g. the name for the
+  /// variable, the tag for a struct).
+  IdentifierInfo *Identifier;
+  
+  /// Loc - The location that this decl.
+  SourceLocation Loc;
+  
   /// When this decl is in scope while parsing, the Next field contains a
   /// pointer to the shadowed decl of the same name.  When the scope is popped,
   /// Decls are relinked onto a containing decl object.
@@ -131,8 +126,13 @@ class ScopedDecl : public Decl {
   ScopedDecl *Next;
 protected:
   ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, Decl *PrevDecl) 
-    : Decl(DK, L, Id, PrevDecl), Next(0) {}
+    : Decl(DK, PrevDecl), Identifier(Id), Loc(L), Next(0) {}
 public:
+  IdentifierInfo *getIdentifier() const { return Identifier; }
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+  const char *getName() const;
+
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
   
@@ -317,12 +317,25 @@ private:
 /// FieldDecl - An instance of this class is created by Sema::ParseField to 
 /// represent a member of a struct/union/class.
 class FieldDecl : public Decl {
-  QualType DeclType;
+  /// Identifier - The identifier for this declaration (e.g. the name for the
+  /// variable, the tag for a struct).
+  IdentifierInfo *Identifier;
+  
+  /// Loc - The location that this decl.
+  SourceLocation Loc;
+  
+  QualType DeclType;  
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Decl *PrevDecl)
-    : Decl(Field, L, Id, PrevDecl), DeclType(T) {}
+    : Decl(Field, PrevDecl), Identifier(Id), Loc(L), DeclType(T) {}
   FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T, 
-            Decl *PrevDecl) : Decl(DK, L, Id, PrevDecl), DeclType(T) {}
+            Decl *PrevDecl) : Decl(DK, PrevDecl), Identifier(Id), Loc(L), 
+            DeclType(T) {}
+
+  IdentifierInfo *getIdentifier() const { return Identifier; }
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+  const char *getName() const;
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -601,7 +614,7 @@ public:
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod, L, Id, PrevDecl), MethodDeclType(T), 
+    : Decl(ObjcMethod, PrevDecl), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 

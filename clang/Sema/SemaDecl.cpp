@@ -147,7 +147,7 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
+TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
   // Verify the old decl was also a typedef.
   TypedefDecl *Old = dyn_cast<TypedefDecl>(OldD);
   if (!Old) {
@@ -169,7 +169,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
 ///
-FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
+FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
   // Verify the old decl was also a function.
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
@@ -202,7 +202,7 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// FIXME: Need to carefully consider tentative definition rules (C99 6.9.2p2).
 /// For example, we incorrectly complain about i1, i4 from C99 6.9.2p4.
 /// 
-VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
+VarDecl *Sema::MergeVarDecl(VarDecl *New, ScopedDecl *OldD) {
   // Verify the old decl was also a variable.
   VarDecl *Old = dyn_cast<VarDecl>(OldD);
   if (!Old) {
@@ -571,7 +571,8 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
-    Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
+    Diag(dyn_cast<ScopedDecl>(RealDecl)->getLocation(), 
+         diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
     return;
   }  
@@ -1280,7 +1281,8 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
   
   // Verify that there isn't already something declared with this name in this
   // scope.
-  if (Decl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary, IdLoc, S)) {
+  if (ScopedDecl *PrevDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary, 
+                                              IdLoc, S)) {
     if (S->isDeclScope(PrevDecl)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());

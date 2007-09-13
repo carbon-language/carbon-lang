@@ -33,9 +33,11 @@ Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {
 }
 
 Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
-  if (decl)
-    return new DeclStmt(static_cast<Decl *>(decl));
-  else 
+  if (decl) {
+    ScopedDecl *SD = dyn_cast<ScopedDecl>(static_cast<Decl *>(decl));
+    assert(SD && "Sema::ParseDeclStmt(): expected ScopedDecl");
+    return new DeclStmt(SD);
+  } else 
     return true; // error
 }
 
@@ -57,7 +59,7 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
       /*empty*/;
     
     if (i != NumElts) {
-      Decl *D = cast<DeclStmt>(Elts[i])->getDecl();
+      ScopedDecl *D = cast<DeclStmt>(Elts[i])->getDecl();
       Diag(D->getLocation(), diag::ext_mixed_decls_code);
     }
   }
@@ -484,7 +486,8 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       if (BVD && !BVD->hasLocalStorage())
         BVD = 0;
       if (BVD == 0)
-        Diag(D->getLocation(), diag::err_non_variable_decl_in_for);
+        Diag(dyn_cast<ScopedDecl>(D)->getLocation(), 
+             diag::err_non_variable_decl_in_for);
       // FIXME: mark decl erroneous!
     }
   }

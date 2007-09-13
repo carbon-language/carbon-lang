@@ -261,7 +261,7 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
 
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
-  const Decl *D = E->getDecl();
+  const ValueDecl *D = E->getDecl();
   if (isa<BlockVarDecl>(D) || isa<ParmVarDecl>(D)) {
     llvm::Value *V = LocalDeclMap[D];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");

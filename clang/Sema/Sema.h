@@ -166,9 +166,9 @@ private:
 private:
   /// Subroutines of ParseDeclarator()...
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, Decl *LastDeclarator);
-  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
-  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
-  VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
+  TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *Old);
+  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, ScopedDecl *Old);
+  VarDecl *MergeVarDecl(VarDecl *New, ScopedDecl *Old);
   /// AddTopLevelDecl - called after the decl has been fully processed.
   /// Allows for bookkeeping and post-processing of each declaration.
   void AddTopLevelDecl(Decl *current, Decl *last);

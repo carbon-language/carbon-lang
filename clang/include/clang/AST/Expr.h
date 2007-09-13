@@ -116,14 +116,14 @@ public:
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
-  Decl *D; // a ValueDecl or EnumConstantDecl
+  ValueDecl *D; 
   SourceLocation Loc;
 public:
-  DeclRefExpr(Decl *d, QualType t, SourceLocation l) : 
+  DeclRefExpr(ValueDecl *d, QualType t, SourceLocation l) : 
     Expr(DeclRefExprClass, t), D(d), Loc(l) {}
   
-  Decl *getDecl() { return D; }
-  const Decl *getDecl() const { return D; }
+  ValueDecl *getDecl() { return D; }
+  const ValueDecl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
   

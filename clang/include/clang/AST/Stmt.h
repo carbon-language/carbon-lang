@@ -22,6 +22,7 @@
 namespace clang {
   class Expr;
   class Decl;
+  class ScopedDecl;
   class IdentifierInfo;
   class SourceManager;
   class SwitchStmt;
@@ -125,12 +126,12 @@ public:
 /// the first statement can be an expression or a declaration.
 ///
 class DeclStmt : public Stmt {
-  Decl *TheDecl;
+  ScopedDecl *TheDecl;
 public:
-  DeclStmt(Decl *D) : Stmt(DeclStmtClass), TheDecl(D) {}
+  DeclStmt(ScopedDecl *D) : Stmt(DeclStmtClass), TheDecl(D) {}
   
-  const Decl *getDecl() const { return TheDecl; }
-  Decl *getDecl() { return TheDecl; }
+  const ScopedDecl *getDecl() const { return TheDecl; }
+  ScopedDecl *getDecl() { return TheDecl; }
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
   

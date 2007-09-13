@@ -124,8 +124,8 @@ void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       PrintTypeDefDecl(TD);
     } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
       PrintObjcInterfaceDecl(OID);
-    } else {
-      fprintf(stderr, "Read top-level variable decl: '%s'\n", D->getName());
+    } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+      fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
     }
   }
   
@@ -154,8 +154,8 @@ void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
       }
     } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
       PrintTypeDefDecl(TD);
-    } else {
-      fprintf(stderr, "Read top-level variable decl: '%s'\n", D->getName());
+    } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+      fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
     }
   }
   
