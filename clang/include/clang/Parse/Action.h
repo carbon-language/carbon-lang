@@ -449,8 +449,9 @@ public:
                     AttributeList *AttrList) {
     return 0;
   }
-  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy *Ivars, 
-                                       tok::ObjCKeywordKind visibility) {
+  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy **Ivars, 
+				       unsigned numIvars, 
+                                       tok::ObjCKeywordKind *visibility) {
     return;
   }
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl,

@@ -875,31 +875,36 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   return IDecl;
 }
 
-void Sema::ObjcAddInstanceVariable(DeclTy *ClassDecl, DeclTy *Ivar,
-                                   tok::ObjCKeywordKind visibility) {
-  assert((ClassDecl && Ivar) && "missing class or instance variable");
+void Sema::ObjcAddInstanceVariable(DeclTy *ClassDecl, DeclTy **Ivar,
+				   unsigned numIvars,
+                                   tok::ObjCKeywordKind *visibility) {
+  assert((ClassDecl && numIvars) && "missing class or instance variable");
   ObjcInterfaceDecl *OInterface = dyn_cast<ObjcInterfaceDecl>(
                                     static_cast<Decl *>(ClassDecl));
-  ObjcIvarDecl *OIvar = dyn_cast<ObjcIvarDecl>(static_cast<Decl *>(Ivar));
+  assert (OInterface && "mistyped class");
+  for (unsigned i = 0; i != numIvars; ++i) {
+    ObjcIvarDecl *OIvar = dyn_cast<ObjcIvarDecl>(static_cast<Decl *>(Ivar[i]));
+    tok::ObjCKeywordKind ivarVisibility = visibility[i];
   
-  assert((OInterface && OIvar) && "mistyped class or instance variable");
+    assert(OIvar && "mistyped instance variable");
   
-  switch (visibility) {
-  case tok::objc_private:
-    OIvar->setAccessControl(ObjcIvarDecl::Private);
-    break;
-  case tok::objc_public:
-    OIvar->setAccessControl(ObjcIvarDecl::Public);
-    break;
-  case tok::objc_protected:
-    OIvar->setAccessControl(ObjcIvarDecl::Protected);
-    break;
-  case tok::objc_package:
-    OIvar->setAccessControl(ObjcIvarDecl::Package);
-    break;
-  default:
-    OIvar->setAccessControl(ObjcIvarDecl::None);
-    break;
+    switch (ivarVisibility) {
+    case tok::objc_private:
+      OIvar->setAccessControl(ObjcIvarDecl::Private);
+      break;
+    case tok::objc_public:
+      OIvar->setAccessControl(ObjcIvarDecl::Public);
+      break;
+    case tok::objc_protected:
+      OIvar->setAccessControl(ObjcIvarDecl::Protected);
+      break;
+    case tok::objc_package:
+      OIvar->setAccessControl(ObjcIvarDecl::Package);
+      break;
+    default:
+      OIvar->setAccessControl(ObjcIvarDecl::None);
+      break;
+    }
   }
   // FIXME: add to the class...
 }

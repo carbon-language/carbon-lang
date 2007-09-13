@@ -606,9 +606,12 @@ bool Parser::ParseObjCProtocolReferences(
 void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
   assert(Tok.getKind() == tok::l_brace && "expected {");
   llvm::SmallVector<DeclTy*, 16> IvarDecls;
+  llvm::SmallVector<DeclTy*, 32> AllIvarDecls;
+  llvm::SmallVector<tok::ObjCKeywordKind, 32> AllVisibilities;
   
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
   
+  tok::ObjCKeywordKind visibility = tok::objc_private;
   // While we still have something to read, read the instance variables.
   while (Tok.getKind() != tok::r_brace && 
          Tok.getKind() != tok::eof) {
@@ -621,7 +624,6 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
       continue;
     }
     // Set the default visibility to private.
-    tok::ObjCKeywordKind visibility = tok::objc_private;
     if (Tok.getKind() == tok::at) { // parse objc-visibility-spec
       ConsumeToken(); // eat the @ sign
       switch (Tok.getObjCKeywordID()) {
@@ -639,8 +641,10 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
       }
     }
     ParseStructDeclaration(interfaceDecl, IvarDecls);
-    for (unsigned i = 0; i < IvarDecls.size(); i++) 
-      Actions.ObjcAddInstanceVariable(interfaceDecl, IvarDecls[i], visibility);
+    for (unsigned i = 0; i < IvarDecls.size(); i++) {
+	AllIvarDecls.push_back(IvarDecls[i]);
+	AllVisibilities.push_back(visibility);
+    }
     IvarDecls.clear();
     
     if (Tok.getKind() == tok::semi) {
@@ -653,6 +657,10 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
       // Skip to end of block or statement
       SkipUntil(tok::r_brace, true, true);
     }
+  }
+  if (AllIvarDecls.size()) {  // Check for {} - no ivars in braces
+    Actions.ObjcAddInstanceVariable(interfaceDecl, 
+	      &AllIvarDecls[0], AllIvarDecls.size(), &AllVisibilities[0]);
   }
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   return;
