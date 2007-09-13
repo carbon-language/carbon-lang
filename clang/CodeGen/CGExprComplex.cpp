@@ -301,9 +301,16 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   llvm::Value *NextVal;
   if (isa<llvm::IntegerType>(InVal.first->getType()))
     NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal);
-  else
+  else if (InVal.first->getType() == llvm::Type::FloatTy)
+    // FIXME: Handle long double.
     NextVal = llvm::ConstantFP::get(InVal.first->getType(), 
-                                    static_cast<double>(AmountVal));
+                                    llvm::APFloat(static_cast<float>(AmountVal)));
+  else {
+    // FIXME: Handle long double.
+    assert(InVal.first->getType() == llvm::Type::DoubleTy);
+    NextVal = llvm::ConstantFP::get(InVal.first->getType(), 
+                                    llvm::APFloat(static_cast<double>(AmountVal)));
+  }
   
   // Add the inc/dec to the real part.
   NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
