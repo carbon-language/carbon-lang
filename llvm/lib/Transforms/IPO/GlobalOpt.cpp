@@ -891,63 +891,69 @@ static bool GlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV) {
   return true;
 }
 
+/// RewriteHeapSROALoadUser - Given a load instruction and a value derived from
+/// the load, rewrite the derived value to use the HeapSRoA'd load.
+static void RewriteHeapSROALoadUser(LoadInst *Load, Instruction *LoadUser, 
+                               const std::vector<GlobalVariable*> &FieldGlobals,
+                                    std::vector<Value *> &InsertedLoadsForPtr) {
+  // If this is a comparison against null, handle it.
+  if (ICmpInst *SCI = dyn_cast<ICmpInst>(LoadUser)) {
+    assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
+    // If we have a setcc of the loaded pointer, we can use a setcc of any
+    // field.
+    Value *NPtr;
+    if (InsertedLoadsForPtr.empty()) {
+      NPtr = new LoadInst(FieldGlobals[0], Load->getName()+".f0", Load);
+      InsertedLoadsForPtr.push_back(Load);
+    } else {
+      NPtr = InsertedLoadsForPtr.back();
+    }
+    
+    Value *New = new ICmpInst(SCI->getPredicate(), NPtr,
+                              Constant::getNullValue(NPtr->getType()),
+                              SCI->getName(), SCI);
+    SCI->replaceAllUsesWith(New);
+    SCI->eraseFromParent();
+    return;
+  }
+  
+  // Otherwise, this should be: 'getelementptr Ptr, Idx, uint FieldNo ...'
+  GetElementPtrInst *GEPI = cast<GetElementPtrInst>(LoadUser);
+  assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
+         && "Unexpected GEPI!");
+  
+  // Load the pointer for this field.
+  unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
+  if (InsertedLoadsForPtr.size() <= FieldNo)
+    InsertedLoadsForPtr.resize(FieldNo+1);
+  if (InsertedLoadsForPtr[FieldNo] == 0)
+    InsertedLoadsForPtr[FieldNo] = new LoadInst(FieldGlobals[FieldNo],
+                                                Load->getName()+".f" + 
+                                                utostr(FieldNo), Load);
+  Value *NewPtr = InsertedLoadsForPtr[FieldNo];
+  
+  // Create the new GEP idx vector.
+  SmallVector<Value*, 8> GEPIdx;
+  GEPIdx.push_back(GEPI->getOperand(1));
+  GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
+  
+  Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx.begin(), GEPIdx.end(),
+                                       GEPI->getName(), GEPI);
+  GEPI->replaceAllUsesWith(NGEPI);
+  GEPI->eraseFromParent();
+}
+
 /// RewriteUsesOfLoadForHeapSRoA - We are performing Heap SRoA on a global.  Ptr
 /// is a value loaded from the global.  Eliminate all uses of Ptr, making them
 /// use FieldGlobals instead.  All uses of loaded values satisfy
 /// GlobalLoadUsesSimpleEnoughForHeapSRA.
-static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Ptr, 
+static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load, 
                              const std::vector<GlobalVariable*> &FieldGlobals) {
   std::vector<Value *> InsertedLoadsForPtr;
   //InsertedLoadsForPtr.resize(FieldGlobals.size());
-  while (!Ptr->use_empty()) {
-    Instruction *User = Ptr->use_back();
-    
-    // If this is a comparison against null, handle it.
-    if (ICmpInst *SCI = dyn_cast<ICmpInst>(User)) {
-      assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
-      // If we have a setcc of the loaded pointer, we can use a setcc of any
-      // field.
-      Value *NPtr;
-      if (InsertedLoadsForPtr.empty()) {
-        NPtr = new LoadInst(FieldGlobals[0], Ptr->getName()+".f0", Ptr);
-        InsertedLoadsForPtr.push_back(Ptr);
-      } else {
-        NPtr = InsertedLoadsForPtr.back();
-      }
-      
-      Value *New = new ICmpInst(SCI->getPredicate(), NPtr,
-                                Constant::getNullValue(NPtr->getType()),
-                                SCI->getName(), SCI);
-      SCI->replaceAllUsesWith(New);
-      SCI->eraseFromParent();
-      continue;
-    }
-    
-    // Otherwise, this should be: 'getelementptr Ptr, Idx, uint FieldNo ...'
-    GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
-    assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
-           && "Unexpected GEPI!");
-    
-    // Load the pointer for this field.
-    unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
-    if (InsertedLoadsForPtr.size() <= FieldNo)
-      InsertedLoadsForPtr.resize(FieldNo+1);
-    if (InsertedLoadsForPtr[FieldNo] == 0)
-      InsertedLoadsForPtr[FieldNo] = new LoadInst(FieldGlobals[FieldNo],
-                                                  Ptr->getName()+".f" + 
-                                                  utostr(FieldNo), Ptr);
-    Value *NewPtr = InsertedLoadsForPtr[FieldNo];
-
-    // Create the new GEP idx vector.
-    SmallVector<Value*, 8> GEPIdx;
-    GEPIdx.push_back(GEPI->getOperand(1));
-    GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
-
-    Value *NGEPI = new GetElementPtrInst(NewPtr, GEPIdx.begin(), GEPIdx.end(),
-                                         GEPI->getName(), GEPI);
-    GEPI->replaceAllUsesWith(NGEPI);
-    GEPI->eraseFromParent();
-  }
+  while (!Load->use_empty())
+    RewriteHeapSROALoadUser(Load, Load->use_back(), 
+                            FieldGlobals, InsertedLoadsForPtr);
 }
 
 /// PerformHeapAllocSRoA - MI is an allocation of an array of structures.  Break
