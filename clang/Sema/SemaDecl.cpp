@@ -1096,8 +1096,10 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
 // it also used for ivar semantics check.
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
                            DeclTy **Fields, unsigned NumFields) {
-  RecordDecl *Record = 
-		dyn_cast_or_null<RecordDecl>(static_cast<Decl*>(RecDecl));
+  Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
+  assert(EnclosingDecl && "missing record or interface decl");
+  RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
+  
   if (Record && Record->isDefinition()) {
     // Diagnose code like:
     //     struct S { struct S {} X; };
@@ -1106,60 +1108,60 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     Diag(Record->getLocation(), diag::err_nested_redefinition,
          Record->getKindName());
     Diag(RecLoc, diag::err_previous_definition);
+    Record->setInvalidDecl();
     return;
   }
-
   // Verify that all the fields are okay.
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   llvm::SmallSet<const IdentifierInfo*, 32> FieldIDs;
+  
   for (unsigned i = 0; i != NumFields; ++i) {
     
-    FieldDecl *FD;
-    if (Record)
-      FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
-    else
-      FD = cast_or_null<ObjcIvarDecl>(static_cast<Decl*>(Fields[i]));
-    if (!FD) continue;  // Already issued a diagnostic.
+    FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
+    assert(FD && "missing field decl");
+    
+    // Remember all fields.
+    RecFields.push_back(FD);
     
     // Get the type for the field.
     Type *FDTy = FD->getType().getTypePtr();
     
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {
-      Diag(FD->getLocation(), diag::err_field_declared_as_function,
+      Diag(FD->getLocation(), diag::err_field_declared_as_function, 
            FD->getName());
-      delete FD;
+      FD->setInvalidDecl();
+      EnclosingDecl->setInvalidDecl();
       continue;
     }
-
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FDTy->isIncompleteType()) {
       if (!Record) {  // Incomplete ivar type is always an error.
 	Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
-	delete FD;
+        FD->setInvalidDecl();
+        EnclosingDecl->setInvalidDecl();
 	continue;
       }
       if (i != NumFields-1 ||                   // ... that the last member ...
           Record->getKind() != Decl::Struct ||  // ... of a structure ...
           !FDTy->isArrayType()) {         //... may have incomplete array type.
         Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
-        delete FD;
+        FD->setInvalidDecl();
+        EnclosingDecl->setInvalidDecl();
         continue;
       }
       if (NumNamedMembers < 1) {  //... must have more than named member ...
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct,
              FD->getName());
-        delete FD;
+        FD->setInvalidDecl();
+        EnclosingDecl->setInvalidDecl();
         continue;
       }
-      
       // Okay, we have a legal flexible array member at the end of the struct.
       if (Record)
         Record->setHasFlexibleArrayMember(true);
     }
-    
-    
     /// C99 6.7.2.1p2 - a struct ending in a flexible array member cannot be the
     /// field of another structure or the element of an array.
     if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
@@ -1174,10 +1176,10 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
           if (i != NumFields-1) {
             Diag(FD->getLocation(), diag::err_variable_sized_type_in_struct,
                  FD->getName());
-            delete FD;
+            FD->setInvalidDecl();
+            EnclosingDecl->setInvalidDecl();
             continue;
           }
-
           // We support flexible arrays at the end of structs in other structs
           // as an extension.
           Diag(FD->getLocation(), diag::ext_flexible_array_in_struct,
@@ -1187,7 +1189,6 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
         }
       }
     }
-    
     // Keep track of the number of named members.
     if (IdentifierInfo *II = FD->getIdentifier()) {
       // Detect duplicate member names.
@@ -1203,17 +1204,14 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
           }
         }
         Diag(PrevLoc, diag::err_previous_definition);
-        delete FD;
+        FD->setInvalidDecl();
+        EnclosingDecl->setInvalidDecl();
         continue;
       }
       ++NumNamedMembers;
     }
-    
-    // Remember good fields.
-    RecFields.push_back(FD);
   }
  
-  
   // Okay, we successfully defined 'Record'.
   if (Record)
     Record->defineBody(&RecFields[0], RecFields.size());

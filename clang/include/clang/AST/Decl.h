@@ -342,7 +342,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() == Field;
+    return D->getKind() == Field || D->getKind() == ObjcIvar;
   }
   static bool classof(const FieldDecl *D) { return true; }
 };
