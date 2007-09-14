@@ -157,8 +157,8 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                       .addReg(PPC::R0, false, false, true), FrameIdx);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
-    // R11 = ADDI FI#
-    // Dest = LVX R0, R11
+    // R0 = ADDI FI#
+    // STVX VAL, 0, R0
     // 
     // FIXME: We use R0 here, because it isn't available for RA.
     addFrameReference(BuildMI(MBB, MI, TII.get(PPC::ADDI), PPC::R0),
@@ -210,8 +210,8 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, TII.get(PPC::MTCRF), DestReg).addReg(PPC::R0);
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
-    // R11 = ADDI FI#
-    // Dest = LVX R0, R11
+    // R0 = ADDI FI#
+    // Dest = LVX 0, R0
     // 
     // FIXME: We use R0 here, because it isn't available for RA.
     addFrameReference(BuildMI(MBB, MI, TII.get(PPC::ADDI), PPC::R0),
