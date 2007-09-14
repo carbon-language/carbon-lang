@@ -131,10 +131,6 @@ public:
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
-  bool isReg() const { return opType == MO_Register; }
-  bool isImm() const { return opType == MO_Immediate; }
-  bool isMBB() const { return opType == MO_MachineBasicBlock; }
-  
   bool isRegister() const { return opType == MO_Register; }
   bool isImmediate() const { return opType == MO_Immediate; }
   bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
@@ -145,12 +141,12 @@ public:
   bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
   int64_t getImm() const {
-    assert(isImm() && "Wrong MachineOperand accessor");
+    assert(isImmediate() && "Wrong MachineOperand accessor");
     return contents.immedVal;
   }
   
   int64_t getImmedValue() const {
-    assert(isImm() && "Wrong MachineOperand accessor");
+    assert(isImmediate() && "Wrong MachineOperand accessor");
     return contents.immedVal;
   }
   MachineBasicBlock *getMBB() const {
@@ -257,11 +253,11 @@ public:
   }
 
   void setImmedValue(int64_t immVal) {
-    assert(isImm() && "Wrong MachineOperand mutator");
+    assert(isImmediate() && "Wrong MachineOperand mutator");
     contents.immedVal = immVal;
   }
   void setImm(int64_t immVal) {
-    assert(isImm() && "Wrong MachineOperand mutator");
+    assert(isImmediate() && "Wrong MachineOperand mutator");
     contents.immedVal = immVal;
   }
 

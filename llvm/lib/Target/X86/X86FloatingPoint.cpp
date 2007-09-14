@@ -220,7 +220,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     SmallVector<unsigned, 8> DeadRegs;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg() && MO.isDead())
+      if (MO.isRegister() && MO.isDead())
         DeadRegs.push_back(MO.getReg());
     }
 

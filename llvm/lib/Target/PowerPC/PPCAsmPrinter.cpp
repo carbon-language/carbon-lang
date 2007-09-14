@@ -450,7 +450,7 @@ bool PPCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'I':
       // Write 'i' if an integer constant, otherwise nothing.  Used to print
       // addi vs add, etc.
-      if (MI->getOperand(OpNo).isImm())
+      if (MI->getOperand(OpNo).isImmediate())
         O << "i";
       return false;
     }

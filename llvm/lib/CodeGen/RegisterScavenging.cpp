@@ -102,7 +102,7 @@ void RegScavenger::forward() {
   BitVector ChangedRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isRegister() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0)
@@ -125,7 +125,7 @@ void RegScavenger::forward() {
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isRegister() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
     // If it's dead upon def, then it is now free.
@@ -155,7 +155,7 @@ void RegScavenger::backward() {
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isRegister() || !MO.isDef())
       continue;
     // Skip two-address destination operand.
     if (TID->findTiedToSrcOperand(i) != -1)
@@ -170,7 +170,7 @@ void RegScavenger::backward() {
   BitVector ChangedRegs(NumPhysRegs);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isRegister() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0)
@@ -257,7 +257,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Exclude all the registers being used by the instruction.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = I->getOperand(i);
-    if (MO.isReg())
+    if (MO.isRegister())
       Candidates.reset(MO.getReg());
   }
 

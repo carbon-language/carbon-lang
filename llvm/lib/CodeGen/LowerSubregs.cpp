@@ -66,7 +66,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
    
    assert(MI->getOperand(0).isRegister() && MI->getOperand(0).isDef() &&
           MI->getOperand(1).isRegister() && MI->getOperand(1).isUse() &&
-          MI->getOperand(2).isImm() && "Malformed extract_subreg");
+          MI->getOperand(2).isImmediate() && "Malformed extract_subreg");
 
    unsigned SuperReg = MI->getOperand(1).getReg();
    unsigned SubIdx = MI->getOperand(2).getImm();
@@ -113,7 +113,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   if (MI->getNumOperands() == 3) {
     assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
            (MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) &&
-            MI->getOperand(2).isImm() && "Invalid extract_subreg");
+            MI->getOperand(2).isImmediate() && "Invalid extract_subreg");
     DstReg = MI->getOperand(0).getReg();
     SrcReg = DstReg;
     InsReg = MI->getOperand(1).getReg();
@@ -122,7 +122,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     assert((MI->getOperand(0).isRegister() && MI->getOperand(0).isDef()) &&
            (MI->getOperand(1).isRegister() && MI->getOperand(1).isUse()) &&
            (MI->getOperand(2).isRegister() && MI->getOperand(2).isUse()) &&
-            MI->getOperand(3).isImm() && "Invalid extract_subreg");
+            MI->getOperand(3).isImmediate() && "Invalid extract_subreg");
     DstReg = MI->getOperand(0).getReg();
     SrcReg = MI->getOperand(1).getReg();
     InsReg = MI->getOperand(2).getReg();

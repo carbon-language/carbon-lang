@@ -291,9 +291,9 @@ void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
 
 static const MachineInstrBuilder &FuseInstrAddOperand(MachineInstrBuilder &MIB,
                                                       MachineOperand &MO) {
-  if (MO.isReg())
+  if (MO.isRegister())
     MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
-  else if (MO.isImm())
+  else if (MO.isImmediate())
     MIB = MIB.addImm(MO.getImm());
   else if (MO.isFrameIndex())
     MIB = MIB.addFrameIndex(MO.getFrameIndex());
@@ -340,7 +340,7 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (i == OpNo) {
-      assert(MO.isReg() && "Expected to fold into reg operand!");
+      assert(MO.isRegister() && "Expected to fold into reg operand!");
       unsigned NumAddrOps = MOs.size();
       for (unsigned i = 0; i != NumAddrOps; ++i)
         MIB = FuseInstrAddOperand(MIB, MOs[i]);
@@ -440,8 +440,8 @@ X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
   if (isTwoAddr && NumOps >= 2 && i < 2 &&
-      MI->getOperand(0).isReg() && 
-      MI->getOperand(1).isReg() &&
+      MI->getOperand(0).isRegister() && 
+      MI->getOperand(1).isRegister() &&
       MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) { 
     static const TableEntry OpcodeTable[] = {
       { X86::ADC32ri,     X86::ADC32mi },
@@ -1528,7 +1528,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   if (RetOpcode == X86::EH_RETURN) {
     MBBI = prior(MBB.end());
     MachineOperand &DestAddr  = MBBI->getOperand(0);
-    assert(DestAddr.isReg() && "Offset should be in register!");
+    assert(DestAddr.isRegister() && "Offset should be in register!");
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
       addReg(DestAddr.getReg());
   }

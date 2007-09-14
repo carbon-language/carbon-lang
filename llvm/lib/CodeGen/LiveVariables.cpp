@@ -78,7 +78,7 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
 bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isKill()) {
+    if (MO.isRegister() && MO.isKill()) {
       if ((MO.getReg() == Reg) ||
           (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            MRegisterInfo::isPhysicalRegister(Reg) &&
@@ -92,7 +92,7 @@ bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
 bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isDead()) {
+    if (MO.isRegister() && MO.isDead()) {
       if ((MO.getReg() == Reg) ||
           (MRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            MRegisterInfo::isPhysicalRegister(Reg) &&
@@ -106,7 +106,7 @@ bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
 bool LiveVariables::ModifiesRegister(MachineInstr *MI, unsigned Reg) const {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isDef() && MO.getReg() == Reg)
+    if (MO.isRegister() && MO.isDef() && MO.getReg() == Reg)
       return true;
   }
   return false;
@@ -190,7 +190,7 @@ bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isUse()) {
+    if (MO.isRegister() && MO.isUse()) {
       unsigned Reg = MO.getReg();
       if (!Reg)
         continue;
@@ -221,7 +221,7 @@ bool LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isDef()) {
+    if (MO.isRegister() && MO.isDef()) {
       unsigned Reg = MO.getReg();
       if (!Reg)
         continue;
@@ -614,7 +614,7 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
 void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isKill()) {
+    if (MO.isRegister() && MO.isKill()) {
       MO.unsetIsKill();
       unsigned Reg = MO.getReg();
       if (MRegisterInfo::isVirtualRegister(Reg)) {
@@ -630,7 +630,7 @@ void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
 void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.isDead()) {
+    if (MO.isRegister() && MO.isDead()) {
       MO.unsetIsDead();
       unsigned Reg = MO.getReg();
       if (MRegisterInfo::isVirtualRegister(Reg)) {

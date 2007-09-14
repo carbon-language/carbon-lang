@@ -129,7 +129,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       unsigned MBBStartOffset = 0;
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
            I != E; ++I) {
-        if (I->getOpcode() != PPC::BCC || I->getOperand(2).isImm()) {
+        if (I->getOpcode() != PPC::BCC || I->getOperand(2).isImmediate()) {
           MBBStartOffset += getNumBytesForInstruction(I);
           continue;
         }

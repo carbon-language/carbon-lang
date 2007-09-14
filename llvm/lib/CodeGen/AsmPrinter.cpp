@@ -982,7 +982,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
   
   // Count the number of register definitions.
   unsigned NumDefs = 0;
-  for (; MI->getOperand(NumDefs).isReg() && MI->getOperand(NumDefs).isDef();
+  for (; MI->getOperand(NumDefs).isRegister() && MI->getOperand(NumDefs).isDef();
        ++NumDefs)
     assert(NumDefs != NumOperands-1 && "No asm string?");
   

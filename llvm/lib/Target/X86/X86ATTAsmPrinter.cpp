@@ -547,7 +547,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'h': // Print QImode high register
     case 'w': // Print HImode register
     case 'k': // Print SImode register
-      if (MI->getOperand(OpNo).isReg())
+      if (MI->getOperand(OpNo).isRegister())
         return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
       printOperand(MI, OpNo);
       return false;

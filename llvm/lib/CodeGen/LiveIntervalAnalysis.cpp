@@ -413,7 +413,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
           bool HasUse = mop.isUse();
           bool HasDef = mop.isDef();
           for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
-            if (MI->getOperand(j).isReg() &&
+            if (MI->getOperand(j).isRegister() &&
                 MI->getOperand(j).getReg() == li.reg) {
               MI->getOperand(j).setReg(NewVReg);
               HasUse |= MI->getOperand(j).isUse();

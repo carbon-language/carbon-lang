@@ -68,7 +68,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
   default: break;
   case ARM::LDR:
     if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isReg() &&
+        MI->getOperand(2).isRegister() &&
         MI->getOperand(3).isImmediate() && 
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImmedValue() == 0) {
@@ -102,7 +102,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
   default: break;
   case ARM::STR:
     if (MI->getOperand(1).isFrameIndex() &&
-        MI->getOperand(2).isReg() &&
+        MI->getOperand(2).isRegister() &&
         MI->getOperand(3).isImmediate() && 
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImmedValue() == 0) {
@@ -521,7 +521,7 @@ bool ARMInstrInfo::DefinesPredicate(MachineInstr *MI,
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.getReg() == ARM::CPSR) {
+    if (MO.isRegister() && MO.getReg() == ARM::CPSR) {
       Pred.push_back(MO);
       Found = true;
     }

@@ -68,13 +68,13 @@ bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
     for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
         MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg()) {
+        if (MO.isRegister()) {
           MO.setReg(Pred[j].getReg());
           MadeChange = true;
-        } else if (MO.isImm()) {
+        } else if (MO.isImmediate()) {
           MO.setImm(Pred[j].getImmedValue());
           MadeChange = true;
-        } else if (MO.isMBB()) {
+        } else if (MO.isMachineBasicBlock()) {
           MO.setMachineBasicBlock(Pred[j].getMachineBasicBlock());
           MadeChange = true;
         }

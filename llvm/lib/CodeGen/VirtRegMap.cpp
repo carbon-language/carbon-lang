@@ -446,7 +446,7 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
                             SmallVector<unsigned, 1> *KillRegs = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
+    if (!MO.isRegister() || !MO.isUse() || !MO.isKill())
       continue;
     unsigned Reg = MO.getReg();
     if (KillRegs)
@@ -471,7 +471,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
   MachineOperand *DefOp = NULL;
   for (unsigned i = 0, e = DefMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = DefMI->getOperand(i);
-    if (MO.isReg() && MO.isDef()) {
+    if (MO.isRegister() && MO.isDef()) {
       if (MO.getReg() == Reg)
         DefOp = &MO;
       else if (!MO.isDead())
@@ -488,7 +488,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
     MachineInstr *NMI = I;
     for (unsigned j = 0, ee = NMI->getNumOperands(); j != ee; ++j) {
       MachineOperand &MO = NMI->getOperand(j);
-      if (!MO.isReg() || MO.getReg() != Reg)
+      if (!MO.isRegister() || MO.getReg() != Reg)
         continue;
       if (MO.isUse())
         FoundUse = true;
@@ -511,7 +511,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
   const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isUse())
+    if (!MO.isRegister() || !MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0)
@@ -535,7 +535,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
 
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
-    if (!MO.isReg() || !MO.isDef())
+    if (!MO.isRegister() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
     RegKills.reset(Reg);
@@ -826,7 +826,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         bool CanReuse = true;
         int ti = TID->getOperandConstraint(i, TOI::TIED_TO);
         if (ti != -1 &&
-            MI.getOperand(ti).isReg() && 
+            MI.getOperand(ti).isRegister() && 
             MI.getOperand(ti).getReg() == VirtReg) {
           // Okay, we have a two address operand.  We can reuse this physreg as
           // long as we are allowed to clobber the value and there isn't an
