@@ -7861,7 +7861,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       if (const ParamAttrsList *NestAttrs = NestFTy->getParamAttrs()) {
         unsigned NestIdx = 1;
         const Type *NestTy = 0;
-        uint16_t NestAttr;
+        uint16_t NestAttr = 0;
 
         Instruction *Caller = CS.getInstruction();
 
