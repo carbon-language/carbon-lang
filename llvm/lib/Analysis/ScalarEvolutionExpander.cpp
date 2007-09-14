@@ -94,7 +94,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   }
 
   // If we don't have 
-  return BinaryOperator::create(Opcode, LHS, RHS, "tmp.", InsertPt);
+  return BinaryOperator::create(Opcode, LHS, RHS, "tmp", InsertPt);
 }
 
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
