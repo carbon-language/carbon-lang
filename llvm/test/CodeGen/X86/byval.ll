@@ -1,4 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movq.*8.*rsp.*rax
+; RUN: llvm-as < %s | llc -march=x86-64 | grep {movq	8(%rsp), %rax}
+; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: grep {movl	8(%esp), %edx} %t
+; RUN: grep {movl	4(%esp), %eax} %t
 
 %struct.s = type { i64, i64, i64 }
 

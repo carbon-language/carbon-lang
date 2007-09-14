@@ -380,6 +380,10 @@ namespace llvm {
                             unsigned CallingConv, SelectionDAG &DAG);
         
 
+    SDOperand LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
+                               const CCValAssign &VA,  MachineFrameInfo *MFI,
+                               SDOperand Root, unsigned i);
+
     SDOperand LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
                                const SDOperand &StackPtr,
                                const CCValAssign &VA, SDOperand Chain,

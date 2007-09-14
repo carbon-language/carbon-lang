@@ -694,6 +694,23 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
+SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
+                                              const CCValAssign &VA,
+                                              MachineFrameInfo *MFI,
+                                              SDOperand Root, unsigned i) {
+  // Create the nodes corresponding to a load from this parameter slot.
+  int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+                                  VA.getLocMemOffset());
+  SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
+
+  unsigned Flags =  cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
+
+  if (Flags & ISD::ParamFlags::ByVal)
+    return FIN;
+  else
+    return DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0);
+}
+
 SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
                                                bool isStdCall) {
   unsigned NumArgs = Op.Val->getNumValues() - 1;
@@ -747,12 +764,7 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
       ArgValues.push_back(ArgValue);
     } else {
       assert(VA.isMemLoc());
-      
-      // Create the nodes corresponding to a load from this parameter slot.
-      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      VA.getLocMemOffset());
-      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+      ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, Root, i));
     }
   }
   
@@ -1279,17 +1291,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
       ArgValues.push_back(ArgValue);
     } else {
       assert(VA.isMemLoc());
-    
-      // Create the nodes corresponding to a load from this parameter slot.
-      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      VA.getLocMemOffset());
-      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-
-      unsigned Flags =  cast<ConstantSDNode>(Op.getOperand(3 + i))->getValue();
-      if (Flags & ISD::ParamFlags::ByVal)
-        ArgValues.push_back(FIN);
-      else
-        ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+      ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, Root, i));
     }
   }
   
