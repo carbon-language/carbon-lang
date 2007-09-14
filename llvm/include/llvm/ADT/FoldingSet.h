@@ -149,6 +149,7 @@ public:
     void AddPointer(const void *Ptr);
     void AddInteger(signed I);
     void AddInteger(unsigned I);
+    void AddInteger(int64_t I);
     void AddInteger(uint64_t I);
     void AddFloat(float F);
     void AddDouble(double D);

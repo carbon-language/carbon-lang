@@ -40,6 +40,9 @@ void FoldingSetImpl::NodeID::AddInteger(signed I) {
 void FoldingSetImpl::NodeID::AddInteger(unsigned I) {
   Bits.push_back(I);
 }
+void FoldingSetImpl::NodeID::AddInteger(int64_t I) {
+  AddInteger((uint64_t)I);
+}
 void FoldingSetImpl::NodeID::AddInteger(uint64_t I) {
   Bits.push_back(unsigned(I));
   
