@@ -1949,7 +1949,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (RHSC->isNullValue())
         return ReplaceInstUsesWith(I, LHS);
     } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
-      if (CFP->isExactlyValue(-0.0))
+      if (CFP->isExactlyValue(ConstantFP::getNegativeZero
+                              (I.getType())->getValueAPF()))
         return ReplaceInstUsesWith(I, LHS);
     }
 
@@ -2349,8 +2350,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
-      if (Op1F->isExactlyValue(1.0))
-        return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
+      // We need a better interface for long double here.
+      if (Op1->getType() == Type::FloatTy || Op1->getType() == Type::DoubleTy)
+        if (Op1F->isExactlyValue(1.0))
+          return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
     }
     
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))

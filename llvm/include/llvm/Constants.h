@@ -231,6 +231,9 @@ public:
   /// considers -0.0 to be null as well as 0.0.  :(
   virtual bool isNullValue() const;
 
+  // Get a negative zero.
+  static ConstantFP *getNegativeZero(const Type* Ty);
+
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
   /// As such, this method can be used to do an exact bit-for-bit comparison of

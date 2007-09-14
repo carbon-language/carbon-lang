@@ -322,13 +322,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     break;
   case ISD::TargetConstantFP:
   case ISD::ConstantFP: {
-    APFloat V = cast<ConstantFPSDNode>(N)->getValueAPF();
-    if (&V.getSemantics() == &APFloat::IEEEdouble)
-      ID.AddDouble(V.convertToDouble());
-    else if (&V.getSemantics() == &APFloat::IEEEsingle)
-      ID.AddDouble((double)V.convertToFloat());
-    else
-      assert(0);
+    ID.AddAPFloat(cast<ConstantFPSDNode>(N)->getValueAPF());
     break;
   }
   case ISD::TargetGlobalAddress:
@@ -709,25 +703,21 @@ SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT::ValueType VT,
                                 
   MVT::ValueType EltVT =
     MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
-  bool isDouble = (EltVT == MVT::f64);
-  double Val = isDouble ? V.convertToDouble() : (double)V.convertToFloat();
 
   // Do the map lookup using the actual bit pattern for the floating point
   // value, so that we don't have problems with 0.0 comparing equal to -0.0, and
   // we don't have issues with SNANs.
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
-  // ?? Should we store float/double/longdouble separately in ID?
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
-  ID.AddDouble(Val);
+  ID.AddAPFloat(V);
   void *IP = 0;
   SDNode *N = NULL;
   if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
     if (!MVT::isVector(VT))
       return SDOperand(N, 0);
   if (!N) {
-    N = new ConstantFPSDNode(isTarget, 
-      isDouble ? APFloat(Val) : APFloat((float)Val), EltVT);
+    N = new ConstantFPSDNode(isTarget, V, EltVT);
     CSEMap.InsertNode(N, IP);
     AllNodes.push_back(N);
   }
@@ -3724,9 +3714,15 @@ void SDNode::dump(const SelectionDAG *G) const {
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
     cerr << "<" << CSDN->getValue() << ">";
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
-    cerr << "<" << (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEsingle ? 
-                    CSDN->getValueAPF().convertToFloat() :
-                    CSDN->getValueAPF().convertToDouble()) << ">";
+    if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEsingle)
+      cerr << "<" << CSDN->getValueAPF().convertToFloat() << ">";
+    else if (&CSDN->getValueAPF().getSemantics()==&APFloat::IEEEdouble)
+      cerr << "<" << CSDN->getValueAPF().convertToDouble() << ">";
+    else {
+      cerr << "<APFloat(";
+      CSDN->getValueAPF().convertToAPInt().dump();
+      cerr << ")>";
+    }
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
     int offset = GADN->getOffset();

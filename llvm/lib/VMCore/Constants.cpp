@@ -103,17 +103,19 @@ bool Constant::ContainsRelocations() const {
 
 // Static constructor to create a '0' constant of arbitrary type...
 Constant *Constant::getNullValue(const Type *Ty) {
+  static uint64_t zero[2] = {0, 0};
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
-    return ConstantFP::get(Ty, APFloat(0.0f));
+    return ConstantFP::get(Ty, APFloat(APInt(32, 0)));
   case Type::DoubleTyID:
-    return ConstantFP::get(Ty, APFloat(0.0));
+    return ConstantFP::get(Ty, APFloat(APInt(64, 0)));
   case Type::X86_FP80TyID:
-  case Type::PPC_FP128TyID:
+    return ConstantFP::get(Ty, APFloat(APInt(80, 2, zero)));
   case Type::FP128TyID:
-    return ConstantFP::get(Ty, APFloat(0.0));   //FIXME
+  case Type::PPC_FP128TyID:
+    return ConstantFP::get(Ty, APFloat(APInt(128, 2, zero)));
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
@@ -257,6 +259,12 @@ ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
 
 bool ConstantFP::isNullValue() const {
   return Val.isZero() && !Val.isNegative();
+}
+
+ConstantFP *ConstantFP::getNegativeZero(const Type *Ty) {
+  APFloat apf = cast <ConstantFP>(Constant::getNullValue(Ty))->getValueAPF();
+  apf.changeSign();
+  return ConstantFP::get(Ty, apf);
 }
 
 bool ConstantFP::isExactlyValue(const APFloat& V) const {
@@ -1925,15 +1933,12 @@ Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
   if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
     if (PTy->getElementType()->isFloatingPoint()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
-                                   ConstantFP::get(PTy->getElementType(),
-                                       PTy->getElementType()==Type::FloatTy ?
-                                       APFloat(-0.0f) : APFloat(0.0)));
+                           ConstantFP::getNegativeZero(PTy->getElementType()));
       return ConstantVector::get(PTy, zeros);
     }
 
-  if (Ty->isFloatingPoint())
-    return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat(-0.0f) : 
-                                                   APFloat(-0.0));
+  if (Ty->isFloatingPoint()) 
+    return ConstantFP::getNegativeZero(Ty);
 
   return Constant::getNullValue(Ty);
 }

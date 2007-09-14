@@ -99,9 +99,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
   // SSE has no i16 to fp conversion, only i32
-  if (X86ScalarSSE)
+  if (X86ScalarSSE) {
     setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
-  else {
+    // f32 and f64 cases are Legal, f80 case is not
+    setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
+  } else {
     setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Custom);
     setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
   }
@@ -119,6 +121,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   if (X86ScalarSSE) {
     setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Promote);
+    // f32 and f64 cases are Legal, f80 case is not
+    setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
   } else {
     setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Custom);
     setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
@@ -189,11 +193,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT          , MVT::i32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f32  , Custom);
   setOperationAction(ISD::SELECT          , MVT::f64  , Custom);
+  setOperationAction(ISD::SELECT          , MVT::f80  , Custom);
   setOperationAction(ISD::SETCC           , MVT::i8   , Custom);
   setOperationAction(ISD::SETCC           , MVT::i16  , Custom);
   setOperationAction(ISD::SETCC           , MVT::i32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f32  , Custom);
   setOperationAction(ISD::SETCC           , MVT::f64  , Custom);
+  setOperationAction(ISD::SETCC           , MVT::f80  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::SELECT        , MVT::i64  , Custom);
     setOperationAction(ISD::SETCC         , MVT::i64  , Custom);
@@ -334,6 +340,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // Long double always uses X87.
   addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
+  setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
 
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.
@@ -3326,9 +3335,14 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Chain = DAG.getStore(DAG.getEntryNode(), Op.getOperand(0),
                                  StackSlot, NULL, 0);
 
+  // These are really Legal; caller falls through into that case.
+  if (SrcVT==MVT::i32 && Op.getValueType() != MVT::f80 && X86ScalarSSE)
+    return Result;
+
   // Build the FILD
   SDVTList Tys;
-  if (X86ScalarSSE)
+  bool useSSE = X86ScalarSSE && Op.getValueType() != MVT::f80;
+  if (useSSE)
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
     Tys = DAG.getVTList(Op.getValueType(), MVT::Other);
@@ -3336,10 +3350,10 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(Chain);
   Ops.push_back(StackSlot);
   Ops.push_back(DAG.getValueType(SrcVT));
-  Result = DAG.getNode(X86ScalarSSE ? X86ISD::FILD_FLAG :X86ISD::FILD,
+  Result = DAG.getNode(useSSE ? X86ISD::FILD_FLAG :X86ISD::FILD,
                        Tys, &Ops[0], Ops.size());
 
-  if (X86ScalarSSE) {
+  if (useSSE) {
     Chain = Result.getValue(1);
     SDOperand InFlag = Result.getValue(2);
 
@@ -3368,10 +3382,16 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
          "Unknown FP_TO_SINT to lower!");
   // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
   // stack slot.
+  SDOperand Result;
   MachineFunction &MF = DAG.getMachineFunction();
   unsigned MemSize = MVT::getSizeInBits(Op.getValueType())/8;
   int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
   SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+
+  // These are really Legal.
+  if (Op.getValueType() == MVT::i32 && X86ScalarSSE && 
+      Op.getOperand(0).getValueType() != MVT::f80)
+    return Result;
 
   unsigned Opc;
   switch (Op.getValueType()) {
@@ -3383,7 +3403,7 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Chain = DAG.getEntryNode();
   SDOperand Value = Op.getOperand(0);
-  if (X86ScalarSSE) {
+  if (X86ScalarSSE && Op.getOperand(0).getValueType() != MVT::f80) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot, NULL, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);

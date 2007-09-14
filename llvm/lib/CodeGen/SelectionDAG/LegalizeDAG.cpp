@@ -486,15 +486,23 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   // double.
   MVT::ValueType VT = CFP->getValueType(0);
   bool isDouble = VT == MVT::f64;
-  ConstantFP *LLVMC = ConstantFP::get(isDouble ? Type::DoubleTy :
-                                      Type::FloatTy, CFP->getValueAPF());
+  ConstantFP *LLVMC = ConstantFP::get(VT==MVT::f64 ? Type::DoubleTy :
+                                      VT==MVT::f32 ? Type::FloatTy :
+                                      VT==MVT::f80 ? Type::X86_FP80Ty :
+                                      VT==MVT::f128 ? Type::FP128Ty :
+                                      VT==MVT::ppcf128 ? Type::PPC_FP128Ty :
+                                      Type::VoidTy,   // error
+                                      CFP->getValueAPF());
   if (!UseCP) {
+    if (VT!=MVT::f64 && VT!=MVT::f32)
+      assert(0 && "Invalid type expansion");
     return DAG.getConstant(LLVMC->getValueAPF().convertToAPInt().getZExtValue(),
                            isDouble ? MVT::i64 : MVT::i32);
   }
 
   if (isDouble && CFP->isValueValidForType(MVT::f32, CFP->getValueAPF()) &&
       // Only do this if the target has a native EXTLOAD instruction from f32.
+      // Do not try to be clever about long doubles (so far)
       TLI.isLoadXLegal(ISD::EXTLOAD, MVT::f32)) {
     LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC,Type::FloatTy));
     VT = MVT::f32;
@@ -1976,19 +1984,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // to phase ordering between legalized code and the dag combiner.  This
       // probably means that we need to integrate dag combiner and legalizer
       // together.
-      if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
+      // We generally can't do this one for long doubles.
+      if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(ST->getValue())) {
         if (CFP->getValueType(0) == MVT::f32) {
           Tmp3 = DAG.getConstant((uint32_t)CFP->getValueAPF().
                                           convertToAPInt().getZExtValue(),
                                   MVT::i32);
-        } else {
-          assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
+          Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                SVOffset, isVolatile, Alignment);
+          break;
+        } else if (CFP->getValueType(0) == MVT::f64) {
           Tmp3 = DAG.getConstant(CFP->getValueAPF().convertToAPInt().
                                    getZExtValue(), MVT::i64);
+          Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                SVOffset, isVolatile, Alignment);
+          break;
         }
-        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                              SVOffset, isVolatile, Alignment);
-        break;
       }
       
       switch (getTypeAction(ST->getStoredVT())) {
@@ -4609,12 +4620,16 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand FudgeInReg;
     if (DestTy == MVT::f32)
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
-    else {
-      assert(DestTy == MVT::f64 && "Unexpected conversion");
+    else if (DestTy == MVT::f64)
       // FIXME: Avoid the extend by construction the right constantpool?
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
                                   CPIdx, NULL, 0, MVT::f32);
-    }
+    else if (DestTy == MVT::f80)
+      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f80, DAG.getEntryNode(),
+                                  CPIdx, NULL, 0, MVT::f32);
+    else 
+      assert(0 && "Unexpected conversion");
+
     MVT::ValueType SCVT = SignedConv.getValueType();
     if (SCVT != DestTy) {
       // Destination type needs to be expanded as well. The FADD now we are
@@ -4722,9 +4737,11 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     if (DestVT == MVT::f64) {
       // do nothing
       Result = Sub;
-    } else {
+    } else if (DestVT == MVT::f32) {
      // if f32 then cast to f32
       Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
+    } else if (DestVT == MVT::f80) {
+      Result = DAG.getNode(ISD::FP_EXTEND, MVT::f80, Sub);
     }
     return Result;
   }

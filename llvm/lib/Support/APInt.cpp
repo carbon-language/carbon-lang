@@ -2009,7 +2009,7 @@ void APInt::dump() const
     cerr << pVal[i-1] << " ";
   }
   cerr << " U(" << this->toStringUnsigned(10) << ") S("
-       << this->toStringSigned(10) << ")\n" << std::setbase(10);
+       << this->toStringSigned(10) << ")" << std::setbase(10);
 }
 #endif
 

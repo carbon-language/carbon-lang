@@ -18,6 +18,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/APFloat.h"
 #include <string>
 
 namespace llvm {
@@ -153,6 +154,7 @@ public:
     void AddInteger(uint64_t I);
     void AddFloat(float F);
     void AddDouble(double D);
+    void AddAPFloat(const APFloat& apf);
     void AddString(const std::string &String);
     
     /// ComputeHash - Compute a strong hash value for this NodeID, used to 

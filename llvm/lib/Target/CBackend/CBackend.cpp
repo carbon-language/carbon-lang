@@ -604,6 +604,9 @@ void CWriter::printConstantVector(ConstantVector *CP) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
+  // Do long doubles the hard way for now.
+  if (CFP->getType()!=Type::FloatTy && CFP->getType()!=Type::DoubleTy)
+    return false;
   APFloat APF = APFloat(CFP->getValueAPF());  // copy
   if (CFP->getType()==Type::FloatTy)
     APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);

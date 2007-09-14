@@ -153,11 +153,6 @@ class APInt {
                      const APInt &RHS, uint32_t rhsWords,
                      APInt *Quotient, APInt *Remainder);
 
-#ifndef NDEBUG
-  /// @brief debug method
-  void dump() const;
-#endif
-
 public:
   /// @name Constructors
   /// @{
@@ -1164,6 +1159,11 @@ public:
   /// Set the least significant BITS and clear the rest.
   static void tcSetLeastSignificantBits(integerPart *, unsigned int,
 					unsigned int bits);
+
+#ifndef NDEBUG
+  /// @brief debug method
+  void dump() const;
+#endif
 
   /// @}
 };
