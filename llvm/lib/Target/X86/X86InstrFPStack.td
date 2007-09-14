@@ -488,7 +488,7 @@ def UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
 def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   [(X86cmp RFP80:$lhs, RFP80:$rhs)]>; // CC = ST(0) cmp ST(i)
 
-let Uses = [ST0] in {
+let Defs = [EFLAGS], Uses = [ST0] in {
 def UCOM_Fr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (outs), (ins RST:$reg),
                     "fucom\t$reg">, DD;

@@ -182,7 +182,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     break;
   }
   case X86::SHL64ri: {
-    assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown shift instruction!");
     // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
     // the flags produced by a shift yet, so this is safe.
     unsigned Dest = MI->getOperand(0).getReg();
@@ -195,7 +195,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     break;
   }
   case X86::SHL32ri: {
-    assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown shift instruction!");
     // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
     // the flags produced by a shift yet, so this is safe.
     unsigned Dest = MI->getOperand(0).getReg();
@@ -210,7 +210,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     break;
   }
   case X86::SHL16ri: {
-    assert(MI->getNumOperands() == 3 && "Unknown shift instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown shift instruction!");
     // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
     // the flags produced by a shift yet, so this is safe.
     unsigned Dest = MI->getOperand(0).getReg();
@@ -259,40 +259,40 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   switch (MI->getOpcode()) {
   case X86::INC32r:
   case X86::INC64_32r:
-    assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
+    assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
     NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src, 1);
     break;
   case X86::INC16r:
   case X86::INC64_16r:
     if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() == 2 && "Unknown inc instruction!");
+    assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
     NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, 1);
     break;
   case X86::DEC32r:
   case X86::DEC64_32r:
-    assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
+    assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
     NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src, -1);
     break;
   case X86::DEC16r:
   case X86::DEC64_16r:
     if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() == 2 && "Unknown dec instruction!");
+    assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
     NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, -1);
     break;
   case X86::ADD32rr:
-    assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
     NewMI = addRegReg(BuildMI(get(X86::LEA32r), Dest), Src,
                      MI->getOperand(2).getReg());
     break;
   case X86::ADD16rr:
     if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
     NewMI = addRegReg(BuildMI(get(X86::LEA16r), Dest), Src,
                      MI->getOperand(2).getReg());
     break;
   case X86::ADD32ri:
   case X86::ADD32ri8:
-    assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
       NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src,
                           MI->getOperand(2).getImmedValue());
@@ -300,7 +300,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   case X86::ADD16ri:
   case X86::ADD16ri8:
     if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() == 3 && "Unknown add instruction!");
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
     if (MI->getOperand(2).isImmediate())
       NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src,
                           MI->getOperand(2).getImmedValue());
@@ -308,7 +308,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   case X86::SHL16ri:
     if (DisableLEA16) return 0;
   case X86::SHL32ri:
-    assert(MI->getNumOperands() == 3 && MI->getOperand(2).isImmediate() &&
+    assert(MI->getNumOperands() >= 3 && MI->getOperand(2).isImmediate() &&
            "Unknown shl instruction!");
     unsigned ShAmt = MI->getOperand(2).getImmedValue();
     if (ShAmt == 1 || ShAmt == 2 || ShAmt == 3) {

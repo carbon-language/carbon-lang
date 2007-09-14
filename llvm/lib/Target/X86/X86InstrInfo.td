@@ -547,45 +547,45 @@ def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
 //
 
 // Extra precision multiplication
-let Defs = [AL,AH], Uses = [AL] in
+let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
                [(set AL, (mul AL, GR8:$src))]>;               // AL,AH = AL*GR8
-let Defs = [AX,DX], Uses = [AX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src), "mul{w}\t$src", []>,
              OpSize;    // AX,DX = AX*GR16
-let Defs = [EAX,EDX], Uses = [EAX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def MUL32r : I<0xF7, MRM4r, (outs),  (ins GR32:$src), "mul{l}\t$src", []>;
                        // EAX,EDX = EAX*GR32
-let Defs = [AL,AH], Uses = [AL] in
+let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def MUL8m  : I<0xF6, MRM4m, (outs), (ins i8mem :$src),
                "mul{b}\t$src",
                // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
                // This probably ought to be moved to a def : Pat<> if the
                // syntax can be accepted.
                [(set AL, (mul AL, (loadi8 addr:$src)))]>;   // AL,AH = AL*[mem8]
-let Defs = [AX,DX], Uses = [AX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def MUL16m : I<0xF7, MRM4m, (outs), (ins i16mem:$src),
                "mul{w}\t$src", []>, OpSize; // AX,DX = AX*[mem16]
-let Defs = [EAX,EDX], Uses = [EAX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def MUL32m : I<0xF7, MRM4m, (outs), (ins i32mem:$src),
               "mul{l}\t$src", []>;          // EAX,EDX = EAX*[mem32]
 
-let Defs = [AL,AH], Uses = [AL] in
+let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def IMUL8r  : I<0xF6, MRM5r, (outs),  (ins GR8:$src), "imul{b}\t$src", []>;
               // AL,AH = AL*GR8
-let Defs = [AX,DX], Uses = [AX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def IMUL16r : I<0xF7, MRM5r, (outs),  (ins GR16:$src), "imul{w}\t$src", []>,
               OpSize;    // AX,DX = AX*GR16
-let Defs = [EAX,EDX], Uses = [EAX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX] in
 def IMUL32r : I<0xF7, MRM5r, (outs),  (ins GR32:$src), "imul{l}\t$src", []>;
               // EAX,EDX = EAX*GR32
-let Defs = [AL,AH], Uses = [AL] in
+let Defs = [AL,AH,EFLAGS], Uses = [AL] in
 def IMUL8m  : I<0xF6, MRM5m, (outs), (ins i8mem :$src),
                 "imul{b}\t$src", []>;    // AL,AH = AL*[mem8]
-let Defs = [AX,DX], Uses = [AX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX] in
 def IMUL16m : I<0xF7, MRM5m, (outs), (ins i16mem:$src),
                 "imul{w}\t$src", []>, OpSize; // AX,DX = AX*[mem16]
 let Defs = [EAX,EDX], Uses = [EAX] in
@@ -593,42 +593,42 @@ def IMUL32m : I<0xF7, MRM5m, (outs), (ins i32mem:$src),
                 "imul{l}\t$src", []>;  // EAX,EDX = EAX*[mem32]
 
 // unsigned division/remainder
-let Defs = [AX], Uses = [AL,AH] in
+let Defs = [AX,EFLAGS], Uses = [AL,AH] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),          // AX/r8 = AL,AH
                "div{b}\t$src", []>;
-let Defs = [AX,DX], Uses = [AX,DX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def DIV16r : I<0xF7, MRM6r, (outs),  (ins GR16:$src),         // DX:AX/r16 = AX,DX
                "div{w}\t$src", []>, OpSize;
-let Defs = [EAX,EDX], Uses = [EAX,EDX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32r : I<0xF7, MRM6r, (outs),  (ins GR32:$src),         // EDX:EAX/r32 = EAX,EDX
                "div{l}\t$src", []>;
-let Defs = [AX], Uses = [AL,AH] in
+let Defs = [AX,EFLAGS], Uses = [AL,AH] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),       // AX/[mem8] = AL,AH
                "div{b}\t$src", []>;
-let Defs = [AX,DX], Uses = [AX,DX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def DIV16m : I<0xF7, MRM6m, (outs), (ins i16mem:$src),      // DX:AX/[mem16] = AX,DX
                "div{w}\t$src", []>, OpSize;
-let Defs = [EAX,EDX], Uses = [EAX,EDX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32m : I<0xF7, MRM6m, (outs), (ins i32mem:$src),      // EDX:EAX/[mem32] = EAX,EDX
                "div{l}\t$src", []>;
 
 // Signed division/remainder.
-let Defs = [AX], Uses = [AL,AH] in
+let Defs = [AX,EFLAGS], Uses = [AL,AH] in
 def IDIV8r : I<0xF6, MRM7r, (outs),  (ins GR8:$src),          // AX/r8 = AL,AH
                "idiv{b}\t$src", []>;
-let Defs = [AX,DX], Uses = [AX,DX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def IDIV16r: I<0xF7, MRM7r, (outs),  (ins GR16:$src),         // DX:AX/r16 = AX,DX
                "idiv{w}\t$src", []>, OpSize;
-let Defs = [EAX,EDX], Uses = [EAX,EDX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32r: I<0xF7, MRM7r, (outs),  (ins GR32:$src),         // EDX:EAX/r32 = EAX,EDX
                "idiv{l}\t$src", []>;
-let Defs = [AX], Uses = [AL,AH] in
+let Defs = [AX,EFLAGS], Uses = [AL,AH] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),      // AX/[mem8] = AL,AH
                "idiv{b}\t$src", []>;
-let Defs = [AX,DX], Uses = [AX,DX] in
+let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def IDIV16m: I<0xF7, MRM7m, (outs), (ins i16mem:$src),     // DX:AX/[mem16] = AX,DX
                "idiv{w}\t$src", []>, OpSize;
-let Defs = [EAX,EDX], Uses = [EAX,EDX] in
+let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src),     // EDX:EAX/[mem32] = EAX,EDX
                "idiv{l}\t$src", []>;
 
@@ -992,6 +992,7 @@ def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, GR32 = [mem32]
 
 // unary instructions
 let CodeSize = 2 in {
+let Defs = [EFLAGS] in {
 def NEG8r  : I<0xF6, MRM3r, (outs GR8 :$dst), (ins GR8 :$src), "neg{b}\t$dst",
                [(set GR8:$dst, (ineg GR8:$src))]>;
 def NEG16r : I<0xF7, MRM3r, (outs GR16:$dst), (ins GR16:$src), "neg{w}\t$dst",
@@ -1007,6 +1008,7 @@ let isTwoAddress = 0 in {
                  [(store (ineg (loadi32 addr:$dst)), addr:$dst)]>;
 
 }
+} // Defs = [EFLAGS]
 
 def NOT8r  : I<0xF6, MRM2r, (outs GR8 :$dst), (ins GR8 :$src), "not{b}\t$dst",
                [(set GR8:$dst, (not GR8:$src))]>;
@@ -1025,6 +1027,7 @@ let isTwoAddress = 0 in {
 } // CodeSize
 
 // TODO: inc/dec is slow for P4, but fast for Pentium-M.
+let Defs = [EFLAGS] in {
 let CodeSize = 2 in
 def INC8r  : I<0xFE, MRM0r, (outs GR8 :$dst), (ins GR8 :$src), "inc{b}\t$dst",
                [(set GR8:$dst, (add GR8:$src, 1))]>;
@@ -1063,8 +1066,10 @@ let isTwoAddress = 0, CodeSize = 2 in {
   def DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
                [(store (add (loadi32 addr:$dst), -1), addr:$dst)]>;
 }
+} // Defs = [EFLAGS]
 
 // Logical operators...
+let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // X = AND Y, Z   --> X = AND Z, Y
 def AND8rr   : I<0x20, MRMDestReg,
                 (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
@@ -1307,8 +1312,10 @@ let isTwoAddress = 0 in {
                      "xor{l}\t{$src, $dst|$dst, $src}",
                  [(store (xor (load addr:$dst), i32immSExt8:$src), addr:$dst)]>;
 }
+} // Defs = [EFLAGS]
 
 // Shift instructions
+let Defs = [EFLAGS] in {
 let Uses = [CL] in {
 def SHL8rCL  : I<0xD2, MRM4r, (outs GR8 :$dst), (ins GR8 :$src),
                  "shl{b}\t{%cl, $dst|$dst, %CL}",
@@ -1750,9 +1757,11 @@ let isTwoAddress = 0 in {
                                         (i8 imm:$src3)), addr:$dst)]>,
                        TB, OpSize;
 }
+} // Defs = [EFLAGS]
 
 
 // Arithmetic.
+let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // X = ADD Y, Z   --> X = ADD Z, Y
 def ADD8rr   : I<0x00, MRMDestReg, (outs GR8 :$dst),
                                    (ins GR8 :$src1, GR8 :$src2),
@@ -1812,7 +1821,7 @@ let isTwoAddress = 0 in {
   def ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    "add{w}\t{$src2, $dst|$dst, $src2}",
                    [(store (add (load addr:$dst), GR16:$src2), addr:$dst)]>,
-                   OpSize;
+                 OpSize;
   def ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                    "add{l}\t{$src2, $dst|$dst, $src2}",
                    [(store (add (load addr:$dst), GR32:$src2), addr:$dst)]>;
@@ -1822,14 +1831,14 @@ let isTwoAddress = 0 in {
   def ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
                       "add{w}\t{$src2, $dst|$dst, $src2}",
                   [(store (add (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
-                   OpSize;
+                 OpSize;
   def ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
                       "add{l}\t{$src2, $dst|$dst, $src2}",
                   [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
                      "add{w}\t{$src2, $dst|$dst, $src2}",
                 [(store (add (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
-                   OpSize;
+                 OpSize;
   def ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                      "add{l}\t{$src2, $dst|$dst, $src2}",
                 [(store (add (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
@@ -1893,7 +1902,7 @@ def SUB32ri  : Ii32<0x81, MRM5r, (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2
 def SUB16ri8 : Ii8<0x83, MRM5r, (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
                    [(set GR16:$dst, (sub GR16:$src1, i16immSExt8:$src2))]>,
-                   OpSize;
+               OpSize;
 def SUB32ri8 : Ii8<0x83, MRM5r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                    "sub{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (sub GR32:$src1, i32immSExt8:$src2))]>;
@@ -1904,7 +1913,7 @@ let isTwoAddress = 0 in {
   def SUB16mr  : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
                    "sub{w}\t{$src2, $dst|$dst, $src2}",
                    [(store (sub (load addr:$dst), GR16:$src2), addr:$dst)]>,
-                   OpSize;
+                 OpSize;
   def SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
                    "sub{l}\t{$src2, $dst|$dst, $src2}",
                    [(store (sub (load addr:$dst), GR32:$src2), addr:$dst)]>;
@@ -1914,14 +1923,14 @@ let isTwoAddress = 0 in {
   def SUB16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2), 
                       "sub{w}\t{$src2, $dst|$dst, $src2}",
                   [(store (sub (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
-                   OpSize;
+                 OpSize;
   def SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2), 
                       "sub{l}\t{$src2, $dst|$dst, $src2}",
                   [(store (sub (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
                      "sub{w}\t{$src2, $dst|$dst, $src2}",
                 [(store (sub (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
-                   OpSize;
+                 OpSize;
   def SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2), 
                      "sub{l}\t{$src2, $dst|$dst, $src2}",
                 [(store (sub (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
@@ -1929,7 +1938,7 @@ let isTwoAddress = 0 in {
 
 def SBB32rr    : I<0x19, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "sbb{l}\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (sube GR32:$src1, GR32:$src2))]>;
+                 [(set GR32:$dst, (sube GR32:$src1, GR32:$src2))]>;
 
 let isTwoAddress = 0 in {
   def SBB32mr  : I<0x19, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
@@ -1943,7 +1952,7 @@ let isTwoAddress = 0 in {
                   [(store (sube (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def SBB32mi8 : Ii8<0x83, MRM3m, (outs), (ins i32mem:$dst, i32i8imm :$src2), 
                      "sbb{l}\t{$src2, $dst|$dst, $src2}",
-             [(store (sube (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
+               [(store (sube (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 def SBB32rm  : I<0x1B, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                     "sbb{l}\t{$src2, $dst|$dst, $src2}",
@@ -1954,7 +1963,9 @@ def SBB32ri  : Ii32<0x81, MRM3r, (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2
 def SBB32ri8 : Ii8<0x83, MRM3r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (sube GR32:$src1, i32immSExt8:$src2))]>;
+} // Defs = [EFLAGS]
 
+let Defs = [EFLAGS] in {
 let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
 def IMUL16rr : I<0xAF, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                  "imul{w}\t{$src2, $dst|$dst, $src2}",
@@ -1970,10 +1981,11 @@ def IMUL16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst), (ins GR16:$src1, i16mem:$src
 def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                  "imul{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (mul GR32:$src1, (load addr:$src2)))]>, TB;
-
+} // Defs = [EFLAGS]
 } // end Two Address instructions
 
 // Suprisingly enough, these are not two address instructions!
+let Defs = [EFLAGS] in {
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16
                       (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -2010,10 +2022,12 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
                      (outs GR32:$dst), (ins i32mem:$src1, i32i8imm: $src2),
                      "imul{l}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                   [(set GR32:$dst, (mul (load addr:$src1), i32immSExt8:$src2))]>;
+} // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
 // Test instructions are just like AND, except they don't generate a result.
 //
+  let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMDestReg, (outs),  (ins GR8:$src1, GR8:$src2),
                  "test{b}\t{$src2, $src1|$src1, $src2}",
@@ -2063,12 +2077,13 @@ def TEST32mi : Ii32<0xF7, MRM0m,                     // flags = [mem32] & imm32
                     (outs), (ins i32mem:$src1, i32imm:$src2),
                     "test{l}\t{$src2, $src1|$src1, $src2}",
                     [(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0)]>;
+} // Defs = [EFLAGS]
 
 
 // Condition code ops, incl. set if equal/not equal/...
-let Uses = [AH] in
+let Defs = [EFLAGS], Uses = [AH] in
 def SAHF     : I<0x9E, RawFrm, (outs),  (ins), "sahf", []>;  // flags = AH
-let Defs = [AH] in
+let Defs = [AH], Uses = [EFLAGS] in
 def LAHF     : I<0x9F, RawFrm, (outs),  (ins), "lahf", []>;  // AH = flags
 
 def SETEr    : I<0x94, MRM0r, 
@@ -2215,6 +2230,7 @@ def SETNPm   : I<0x9B, MRM0m,
                TB;                        // [mem8] = not parity
 
 // Integer comparisons
+let Defs = [EFLAGS] in {
 def CMP8rr  : I<0x38, MRMDestReg,
                 (outs), (ins GR8 :$src1, GR8 :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
@@ -2291,6 +2307,7 @@ def CMP32ri8 : Ii8<0x83, MRM7r,
                    (outs), (ins GR32:$src1, i32i8imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
                    [(X86cmp GR32:$src1, i32immSExt8:$src2)]>;
+} // Defs = [EFLAGS]
 
 // Sign/Zero extenders
 def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
@@ -2352,7 +2369,7 @@ def CDQ : I<0x99, RawFrm, (outs), (ins),
 
 // Alias instructions that map movr0 to xor.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-let isReMaterializable = 1 in {
+let Defs = [EFLAGS], isReMaterializable = 1 in {
 def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
                  "xor{b}\t$dst, $dst",
                  [(set GR8:$dst, 0)]>;

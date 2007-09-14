@@ -226,6 +226,7 @@ def CQO  : RI<0x99, RawFrm, (outs), (ins),
 //  Arithmetic Instructions...
 //
 
+let Defs = [EFLAGS] in {
 let isTwoAddress = 1 in {
 let isConvertibleToThreeAddress = 1 in {
 let isCommutable = 1 in
@@ -337,9 +338,10 @@ def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
 def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
                [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+} // Defs = [EFLAGS]
 
 // Unsigned multiplication
-let Defs = [RAX,RDX], Uses = [RAX] in {
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX] in {
 def MUL64r : RI<0xF7, MRM4r, (outs), (ins GR64:$src),
                 "mul{q}\t$src", []>;         // RAX,RDX = RAX*GR64
 def MUL64m : RI<0xF7, MRM4m, (outs), (ins i64mem:$src),
@@ -352,6 +354,7 @@ def IMUL64m : RI<0xF7, MRM5m, (outs), (ins i64mem:$src),
                  "imul{q}\t$src", []>;         // RAX,RDX = RAX*[mem64]
 }
 
+let Defs = [EFLAGS] in {
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
 def IMUL64rr : RI<0xAF, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
@@ -380,9 +383,10 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
                       (outs GR64:$dst), (ins i64mem:$src1, i64i8imm: $src2),
                       "imul{q}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                  [(set GR64:$dst, (mul (load addr:$src1), i64immSExt8:$src2))]>;
+} // Defs = [EFLAGS]
 
 // Unsigned division / remainder
-let Defs = [RAX,RDX], Uses = [RAX,RDX] in {
+let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in {
 def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),        // RDX:RAX/r64 = RAX,RDX
                 "div{q}\t$src", []>;
 def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] = RAX,RDX
@@ -396,7 +400,7 @@ def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),      // RDX:RAX/[mem64] 
 }
 
 // Unary instructions
-let CodeSize = 2 in {
+let Defs = [EFLAGS], CodeSize = 2 in {
 let isTwoAddress = 1 in
 def NEG64r : RI<0xF7, MRM3r, (outs GR64:$dst), (ins GR64:$src), "neg{q}\t$dst",
                 [(set GR64:$dst, (ineg GR64:$src))]>;
@@ -431,9 +435,10 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src), "dec{l}\t$dst"
                   [(set GR32:$dst, (add GR32:$src, -1))]>,
                 Requires<[In64BitMode]>;
 } // isConvertibleToThreeAddress
-} // CodeSize
+} // Defs = [EFLAGS], CodeSize
 
 
+let Defs = [EFLAGS] in {
 // Shift instructions
 let isTwoAddress = 1 in {
 let Uses = [CL] in
@@ -592,6 +597,7 @@ def SHRD64mri8 : RIi8<0xAC, MRMDestMem,
                       (outs), (ins i64mem:$dst, GR64:$src2, i8imm:$src3),
                       "shrd{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}", []>,
                  TB;
+} // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
 //  Logical Instructions...
@@ -603,6 +609,7 @@ def NOT64r : RI<0xF7, MRM2r, (outs GR64:$dst), (ins GR64:$src), "not{q}\t$dst",
 def NOT64m : RI<0xF7, MRM2m, (outs), (ins i64mem:$dst), "not{q}\t$dst",
                 [(store (not (loadi64 addr:$dst)), addr:$dst)]>;
 
+let Defs = [EFLAGS] in {
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
 def AND64rr  : RI<0x21, MRMDestReg, 
@@ -688,12 +695,14 @@ def XOR64mi32 : RIi32<0x81, MRM6m, (outs), (ins i64mem:$dst, i64i32imm:$src),
 def XOR64mi8 : RIi8<0x83, MRM6m, (outs), (ins i64mem:$dst, i64i8imm :$src),
                     "xor{q}\t{$src, $dst|$dst, $src}",
                  [(store (xor (load addr:$dst), i64immSExt8:$src), addr:$dst)]>;
+} // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
 //
 
 // Integer comparison
+let Defs = [EFLAGS] in {
 let isCommutable = 1 in
 def TEST64rr : RI<0x85, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                   "test{q}\t{$src2, $src1|$src1, $src2}",
@@ -729,6 +738,7 @@ def CMP64mi8 : RIi8<0x83, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
 def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
                     "cmp{q}\t{$src2, $src1|$src1, $src2}",
                     [(X86cmp GR64:$src1, i64immSExt8:$src2)]>;
+} // Defs = [EFLAGS]
 
 // Conditional moves
 let isTwoAddress = 1 in {
@@ -1000,7 +1010,7 @@ def PsMOVZX64rm32: I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 // FIXME: AddedComplexity gives MOV64r0 a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
-let AddedComplexity = 1, isReMaterializable = 1 in
+let Defs = [EFLAGS], AddedComplexity = 1, isReMaterializable = 1 in
 def MOV64r0  : RI<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
                  "xor{q}\t$dst, $dst",
                  [(set GR64:$dst, 0)]>;

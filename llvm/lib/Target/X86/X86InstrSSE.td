@@ -360,12 +360,14 @@ let isTwoAddress = 1 in {
                     "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
 }
 
+let Defs = [EFLAGS] in {
 def UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs), (ins FR32:$src1, FR32:$src2),
                    "ucomiss\t{$src2, $src1|$src1, $src2}",
                    [(X86cmp FR32:$src1, FR32:$src2)]>;
 def UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins FR32:$src1, f32mem:$src2),
                    "ucomiss\t{$src2, $src1|$src1, $src2}",
                    [(X86cmp FR32:$src1, (loadf32 addr:$src2))]>;
+} // Defs = [EFLAGS]
 
 // Aliases to match intrinsics which expect XMM operand(s).
 let isTwoAddress = 1 in {
@@ -381,6 +383,7 @@ let isTwoAddress = 1 in {
                                            (load addr:$src), imm:$cc))]>;
 }
 
+let Defs = [EFLAGS] in {
 def Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
                        "ucomiss\t{$src2, $src1|$src1, $src2}",
                        [(X86ucomi (v4f32 VR128:$src1), VR128:$src2)]>;
@@ -394,6 +397,7 @@ def Int_COMISSrr: PSI<0x2F, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
 def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
                       "comiss\t{$src2, $src1|$src1, $src2}",
                       [(X86comi (v4f32 VR128:$src1), (load addr:$src2))]>;
+} // Defs = [EFLAGS]
 
 // Aliases of packed SSE1 instructions for scalar use. These all have names that
 // start with 'Fs'.
