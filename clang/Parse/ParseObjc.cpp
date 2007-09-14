@@ -661,6 +661,8 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
   if (AllIvarDecls.size()) {  // Check for {} - no ivars in braces
     Actions.ObjcAddInstanceVariable(interfaceDecl, 
 	      &AllIvarDecls[0], AllIvarDecls.size(), &AllVisibilities[0]);
+    Actions.ParseRecordBody(LBraceLoc, interfaceDecl, 
+			    &AllIvarDecls[0], AllIvarDecls.size());
   }
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   return;

@@ -1092,10 +1092,13 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   return NewFD;
 }
 
+// FIXME: Change ParseRecordBody name to something more generic as 
+// it also used for ivar semantics check.
 void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
                            DeclTy **Fields, unsigned NumFields) {
-  RecordDecl *Record = cast<RecordDecl>(static_cast<Decl*>(RecDecl));
-  if (Record->isDefinition()) {
+  RecordDecl *Record = 
+		dyn_cast_or_null<RecordDecl>(static_cast<Decl*>(RecDecl));
+  if (Record && Record->isDefinition()) {
     // Diagnose code like:
     //     struct S { struct S {} X; };
     // We discover this when we complete the outer S.  Reject and ignore the
@@ -1110,9 +1113,13 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   unsigned NumNamedMembers = 0;
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   llvm::SmallSet<const IdentifierInfo*, 32> FieldIDs;
-  
   for (unsigned i = 0; i != NumFields; ++i) {
-    FieldDecl *FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
+    
+    FieldDecl *FD;
+    if (Record)
+      FD = cast_or_null<FieldDecl>(static_cast<Decl*>(Fields[i]));
+    else
+      FD = cast_or_null<ObjcIvarDecl>(static_cast<Decl*>(Fields[i]));
     if (!FD) continue;  // Already issued a diagnostic.
     
     // Get the type for the field.
@@ -1128,6 +1135,11 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
 
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FDTy->isIncompleteType()) {
+      if (!Record) {  // Incomplete ivar type is always an error.
+	Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
+	delete FD;
+	continue;
+      }
       if (i != NumFields-1 ||                   // ... that the last member ...
           Record->getKind() != Decl::Struct ||  // ... of a structure ...
           !FDTy->isArrayType()) {         //... may have incomplete array type.
@@ -1135,7 +1147,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
         delete FD;
         continue;
       }
-      if (NumNamedMembers < 1) {      //... must have more than named member ...
+      if (NumNamedMembers < 1) {  //... must have more than named member ...
         Diag(FD->getLocation(), diag::err_flexible_array_empty_struct,
              FD->getName());
         delete FD;
@@ -1143,7 +1155,8 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
       }
       
       // Okay, we have a legal flexible array member at the end of the struct.
-      Record->setHasFlexibleArrayMember(true);
+      if (Record)
+        Record->setHasFlexibleArrayMember(true);
     }
     
     
@@ -1152,7 +1165,7 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
-        if (Record->getKind() == Decl::Union) {
+        if (Record && Record->getKind() == Decl::Union) {
           Record->setHasFlexibleArrayMember(true);
         } else {
           // If this is a struct/class and this is not the last element, reject
@@ -1169,7 +1182,8 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
           // as an extension.
           Diag(FD->getLocation(), diag::ext_flexible_array_in_struct,
                FD->getName());
-          Record->setHasFlexibleArrayMember(true);
+	  if (Record)
+            Record->setHasFlexibleArrayMember(true);
         }
       }
     }
@@ -1201,7 +1215,8 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
  
   
   // Okay, we successfully defined 'Record'.
-  Record->defineBody(&RecFields[0], RecFields.size());
+  if (Record)
+    Record->defineBody(&RecFields[0], RecFields.size());
 }
 
 void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl, 
