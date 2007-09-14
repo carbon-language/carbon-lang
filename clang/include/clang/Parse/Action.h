@@ -180,9 +180,9 @@ public:
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
   }
-  virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
-                               DeclTy **Fields, unsigned NumFields) {}
-
+  virtual void ProcessFieldDecls(SourceLocation RecLoc, DeclTy *TagDecl,
+                                 DeclTy **Fields, unsigned NumFields,
+                                 tok::ObjCKeywordKind *visibility = 0) {}
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -448,11 +448,6 @@ public:
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList) {
     return 0;
-  }
-  virtual void ObjcAddVisibilityToIvars(DeclTy *ClassDec, DeclTy **Ivars, 
-				        unsigned numIvars, 
-                                        tok::ObjCKeywordKind *visibility) {
-    return;
   }
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl,
 				     DeclTy **allMethods, unsigned allNum) {

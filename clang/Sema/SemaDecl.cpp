@@ -877,40 +877,6 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   return IDecl;
 }
 
-void Sema::ObjcAddVisibilityToIvars(DeclTy *ClassDecl, DeclTy **Ivar,
-				    unsigned numIvars,
-                                    tok::ObjCKeywordKind *visibility) {
-  assert((ClassDecl && numIvars) && "missing class or instance variable");
-  ObjcInterfaceDecl *OInterface = dyn_cast<ObjcInterfaceDecl>(
-                                    static_cast<Decl *>(ClassDecl));
-  assert (OInterface && "mistyped class");
-  for (unsigned i = 0; i != numIvars; ++i) {
-    ObjcIvarDecl *OIvar = dyn_cast<ObjcIvarDecl>(static_cast<Decl *>(Ivar[i]));
-    tok::ObjCKeywordKind ivarVisibility = visibility[i];
-  
-    assert(OIvar && "mistyped instance variable");
-  
-    switch (ivarVisibility) {
-    case tok::objc_private:
-      OIvar->setAccessControl(ObjcIvarDecl::Private);
-      break;
-    case tok::objc_public:
-      OIvar->setAccessControl(ObjcIvarDecl::Public);
-      break;
-    case tok::objc_protected:
-      OIvar->setAccessControl(ObjcIvarDecl::Protected);
-      break;
-    case tok::objc_package:
-      OIvar->setAccessControl(ObjcIvarDecl::Package);
-      break;
-    default:
-      OIvar->setAccessControl(ObjcIvarDecl::None);
-      break;
-    }
-  }
-  // FIXME: add to the class...
-}
-
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -1092,10 +1058,31 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   return NewFD;
 }
 
-// FIXME: Change ParseRecordBody name to something more generic as 
-// it also used for ivar semantics check.
-void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
-                           DeclTy **Fields, unsigned NumFields) {
+static void ObjcSetIvarVisibility(ObjcIvarDecl *OIvar,
+                                  tok::ObjCKeywordKind ivarVisibility) {
+  assert(OIvar && "missing instance variable");
+  switch (ivarVisibility) {
+  case tok::objc_private:
+    OIvar->setAccessControl(ObjcIvarDecl::Private);
+    break;
+  case tok::objc_public:
+    OIvar->setAccessControl(ObjcIvarDecl::Public);
+    break;
+  case tok::objc_protected:
+    OIvar->setAccessControl(ObjcIvarDecl::Protected);
+    break;
+  case tok::objc_package:
+    OIvar->setAccessControl(ObjcIvarDecl::Package);
+    break;
+  default:
+    OIvar->setAccessControl(ObjcIvarDecl::None);
+    break;
+  }
+}
+
+void Sema::ProcessFieldDecls(SourceLocation RecLoc, DeclTy *RecDecl,
+                             DeclTy **Fields, unsigned NumFields,
+                             tok::ObjCKeywordKind *visibility) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
@@ -1127,6 +1114,10 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
     // Get the type for the field.
     Type *FDTy = FD->getType().getTypePtr();
     
+    // If we have visibility info, make sure the AST is set accordingly.
+    if (visibility)
+      ObjcSetIvarVisibility(dyn_cast<ObjcIvarDecl>(FD), visibility[i]);
+      
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {
       Diag(FD->getLocation(), diag::err_field_declared_as_function, 

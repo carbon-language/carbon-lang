@@ -155,8 +155,11 @@ private:
                            SourceLocation NameLoc, AttributeList *Attr);
   virtual DeclTy *ParseField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
-  virtual void ParseRecordBody(SourceLocation RecLoc, DeclTy *TagDecl,
-                               DeclTy **Fields, unsigned NumFields);
+                                      
+  // This is used for both record definitions and ObjC interface declarations.
+  virtual void ProcessFieldDecls(SourceLocation RecLoc, DeclTy *TagDecl,
+                                 DeclTy **Fields, unsigned NumFields,
+                                 tok::ObjCKeywordKind *visibility = 0);
   virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -368,10 +371,6 @@ public:
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
  	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
      		    IdentifierInfo *SelectorName, AttributeList *AttrList);
-                                      
-  virtual void ObjcAddVisibilityToIvars(DeclTy *ClassDec, DeclTy **Ivar,
-				        unsigned numIvars,
-                                        tok::ObjCKeywordKind *visibility);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 
