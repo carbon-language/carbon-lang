@@ -323,31 +323,18 @@ class FieldDecl : public Decl {
   
   /// Loc - The location that this decl.
   SourceLocation Loc;
-  
-  /// NextDeclarator - If this decl was part of a multi-declarator declaration,
-  /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
-  FieldDecl *NextDeclarator;
-  
+
   QualType DeclType;  
 public:
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, FieldDecl *PrevD)
-    : Decl(Field), Identifier(Id), Loc(L), NextDeclarator(PrevD), 
-      DeclType(T) {}
-  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T, 
-            FieldDecl *PrevD) : Decl(DK), Identifier(Id), Loc(L), 
-            NextDeclarator(PrevD), DeclType(T) {}
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
+    : Decl(Field), Identifier(Id), Loc(L), DeclType(T) {}
+  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T) 
+    : Decl(DK), Identifier(Id), Loc(L), DeclType(T) {}
 
   IdentifierInfo *getIdentifier() const { return Identifier; }
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
   const char *getName() const;
-
-  /// getNextDeclarator - If this decl was part of a multi-declarator
-  /// declaration, such as "int X, Y, *Z;" this returns the decl for the next
-  /// declarator.  Otherwise it returns null.
-  FieldDecl *getNextDeclarator() { return NextDeclarator; }
-  const FieldDecl *getNextDeclarator() const { return NextDeclarator; }
-  void setNextDeclarator(FieldDecl *N) { NextDeclarator = N; }
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
@@ -580,8 +567,8 @@ public:
 
 class ObjcIvarDecl : public FieldDecl {
 public:
-  ObjcIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
-               FieldDecl *PrevDecl) : FieldDecl(ObjcIvar, L, Id, T, PrevDecl) {}
+  ObjcIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T) 
+    : FieldDecl(ObjcIvar, L, Id, T) {}
     
   enum AccessControl {
     None, Private, Protected, Public, Package

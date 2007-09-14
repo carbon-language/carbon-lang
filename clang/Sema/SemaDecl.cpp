@@ -1081,9 +1081,9 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   FieldDecl *NewFD;
   
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
-    NewFD = new FieldDecl(Loc, II, T, 0);
+    NewFD = new FieldDecl(Loc, II, T);
   else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl)))
-    NewFD = new ObjcIvarDecl(Loc, II, T, 0);
+    NewFD = new ObjcIvarDecl(Loc, II, T);
   else
     assert(0 && "Sema::ParseField(): Unknown TagDecl");
     
