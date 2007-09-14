@@ -59,7 +59,7 @@ void FoldingSetImpl::NodeID::AddDouble(double D) {
 void FoldingSetImpl::NodeID::AddAPFloat(const APFloat& apf) {
   APInt api = apf.convertToAPInt();
   const uint64_t *p = api.getRawData();
-  for (int i=0; i<api.getNumWords(); i++)
+  for (unsigned i=0; i<api.getNumWords(); i++)
     AddInteger(*p++);
 }
 void FoldingSetImpl::NodeID::AddString(const std::string &String) {
