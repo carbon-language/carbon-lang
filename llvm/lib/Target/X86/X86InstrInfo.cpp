@@ -338,7 +338,9 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
   case X86::SHRD16rri8: // A = SHRD16rri8 B, C, I -> A = SHLD16rri8 C, B, (16-I)
   case X86::SHLD16rri8: // A = SHLD16rri8 B, C, I -> A = SHRD16rri8 C, B, (16-I)
   case X86::SHRD32rri8: // A = SHRD32rri8 B, C, I -> A = SHLD32rri8 C, B, (32-I)
-  case X86::SHLD32rri8:{// A = SHLD32rri8 B, C, I -> A = SHRD32rri8 C, B, (32-I)
+  case X86::SHLD32rri8: // A = SHLD32rri8 B, C, I -> A = SHRD32rri8 C, B, (32-I)
+  case X86::SHRD64rri8: // A = SHRD64rri8 B, C, I -> A = SHLD64rri8 C, B, (64-I)
+  case X86::SHLD64rri8:{// A = SHLD64rri8 B, C, I -> A = SHRD64rri8 C, B, (64-I)
     unsigned Opc;
     unsigned Size;
     switch (MI->getOpcode()) {
@@ -347,6 +349,8 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     case X86::SHLD16rri8: Size = 16; Opc = X86::SHRD16rri8; break;
     case X86::SHRD32rri8: Size = 32; Opc = X86::SHLD32rri8; break;
     case X86::SHLD32rri8: Size = 32; Opc = X86::SHRD32rri8; break;
+    case X86::SHRD64rri8: Size = 64; Opc = X86::SHLD64rri8; break;
+    case X86::SHLD64rri8: Size = 64; Opc = X86::SHRD64rri8; break;
     }
     unsigned Amt = MI->getOperand(3).getImmedValue();
     unsigned A = MI->getOperand(0).getReg();

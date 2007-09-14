@@ -564,38 +564,50 @@ def ROR64m1  : RI<0xD1, MRM1m, (outs), (ins i64mem:$dst),
 let isTwoAddress = 1 in {
 let Uses = [CL] in {
 def SHLD64rrCL : RI<0xA5, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
+                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    [(set GR64:$dst, (X86shld GR64:$src1, GR64:$src2, CL))]>, TB;
 def SHRD64rrCL : RI<0xAD, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
+                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    [(set GR64:$dst, (X86shrd GR64:$src1, GR64:$src2, CL))]>, TB;
 }
 
 let isCommutable = 1 in {  // FIXME: Update X86InstrInfo::commuteInstruction
 def SHLD64rri8 : RIi8<0xA4, MRMDestReg,
                       (outs GR64:$dst), (ins GR64:$src1, GR64:$src2, i8imm:$src3),
-                      "shld{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}", []>,
-                      TB;
+                      "shld{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(set GR64:$dst, (X86shld GR64:$src1, GR64:$src2,
+                                       (i8 imm:$src3)))]>,
+                 TB;
 def SHRD64rri8 : RIi8<0xAC, MRMDestReg,
                       (outs GR64:$dst), (ins GR64:$src1, GR64:$src2, i8imm:$src3),
-                      "shrd{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                      "shrd{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(set GR64:$dst, (X86shrd GR64:$src1, GR64:$src2,
+                                       (i8 imm:$src3)))]>,
                  TB;
 } // isCommutable
 } // isTwoAddress
 
-// Temporary hack: there is no patterns associated with these instructions
-// so we have to tell tblgen that these do not produce results.
 let Uses = [CL] in {
 def SHLD64mrCL : RI<0xA5, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
+                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    [(store (X86shld (loadi64 addr:$dst), GR64:$src2, CL),
+                      addr:$dst)]>, TB;
 def SHRD64mrCL : RI<0xAD, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}", []>, TB;
+                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    [(store (X86shrd (loadi64 addr:$dst), GR64:$src2, CL),
+                      addr:$dst)]>, TB;
 }
 def SHLD64mri8 : RIi8<0xA4, MRMDestMem,
                       (outs), (ins i64mem:$dst, GR64:$src2, i8imm:$src3),
-                      "shld{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                      "shld{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(store (X86shld (loadi64 addr:$dst), GR64:$src2,
+                                       (i8 imm:$src3)), addr:$dst)]>,
                  TB;
 def SHRD64mri8 : RIi8<0xAC, MRMDestMem, 
                       (outs), (ins i64mem:$dst, GR64:$src2, i8imm:$src3),
-                      "shrd{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                      "shrd{q}\t{$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(store (X86shrd (loadi64 addr:$dst), GR64:$src2,
+                                       (i8 imm:$src3)), addr:$dst)]>,
                  TB;
 } // Defs = [EFLAGS]
 
