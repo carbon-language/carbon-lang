@@ -186,6 +186,18 @@ ObjcMethodDecl::~ObjcMethodDecl() {
   delete[] ParamInfo;
 }
 
+/// ObjcAddInstanceVariablesToClass - Inserts instance variables
+/// into ObjcInterfaceDecl's fields.
+///
+void ObjcInterfaceDecl::ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars,
+					   		unsigned numIvars) {
+  NumIvars = numIvars;
+  if (numIvars) {
+    Ivars = new ObjcIvarDecl*[numIvars];
+    memcpy(Ivars, ivars, numIvars*sizeof(ObjcIvarDecl*));
+  }
+}
+
 /// addObjcMethods - Insert instance and methods declarations into
 /// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
 ///

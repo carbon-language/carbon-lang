@@ -369,9 +369,9 @@ public:
  	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
      		    IdentifierInfo *SelectorName, AttributeList *AttrList);
                                       
-  virtual void ObjcAddInstanceVariable(DeclTy *ClassDec, DeclTy **Ivar,
-				       unsigned numIvars,
-                                       tok::ObjCKeywordKind *visibility);
+  virtual void ObjcAddVisibilityToIvars(DeclTy *ClassDec, DeclTy **Ivar,
+				        unsigned numIvars,
+                                        tok::ObjCKeywordKind *visibility);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

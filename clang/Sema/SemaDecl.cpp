@@ -877,9 +877,9 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   return IDecl;
 }
 
-void Sema::ObjcAddInstanceVariable(DeclTy *ClassDecl, DeclTy **Ivar,
-				   unsigned numIvars,
-                                   tok::ObjCKeywordKind *visibility) {
+void Sema::ObjcAddVisibilityToIvars(DeclTy *ClassDecl, DeclTy **Ivar,
+				    unsigned numIvars,
+                                    tok::ObjCKeywordKind *visibility) {
   assert((ClassDecl && numIvars) && "missing class or instance variable");
   ObjcInterfaceDecl *OInterface = dyn_cast<ObjcInterfaceDecl>(
                                     static_cast<Decl *>(ClassDecl));
@@ -1217,6 +1217,12 @@ void Sema::ParseRecordBody(SourceLocation RecLoc, DeclTy *RecDecl,
   // Okay, we successfully defined 'Record'.
   if (Record)
     Record->defineBody(&RecFields[0], RecFields.size());
+  else {
+    ObjcIvarDecl **ClsFields = 
+                    reinterpret_cast<ObjcIvarDecl**>(&RecFields[0]);
+    cast<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl))->
+      ObjcAddInstanceVariablesToClass(ClsFields, RecFields.size());
+  }
 }
 
 void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl, 

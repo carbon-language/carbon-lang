@@ -23,6 +23,7 @@ class IdentifierInfo;
 class Expr;
 class Stmt;
 class FunctionDecl;
+class ObjcIvarDecl;
 class ObjcMethodDecl;
 class AttributeList;
 
@@ -536,7 +537,7 @@ public:
 
 class ObjcInterfaceDecl : public TypeDecl {
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
-  FieldDecl **Ivars;   // Null if not defined.
+  ObjcIvarDecl **Ivars;   // Null if not defined.
   int NumIvars;   // -1 if not defined.
   
   /// instance methods
@@ -554,7 +555,8 @@ public:
       InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1),
       isForwardDecl(FD) { }
      
-  void addInstanceVariable(FieldDecl ivar);
+  void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
+				       unsigned numIvars);
 
   void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                       ObjcMethodDecl **clsMethods, unsigned numClsMembers);
