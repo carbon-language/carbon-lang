@@ -332,13 +332,6 @@ FunctionPass *createGVNPREPass();
 
 //===----------------------------------------------------------------------===//
 //
-// RedundantLoadElimination - This pass deletes loads that are dominated by
-// must-aliased loads and are not stored to between the loads.
-//
-FunctionPass *createRedundantLoadEliminationPass();
-
-//===----------------------------------------------------------------------===//
-//
 // GVN - This pass performs global value numbering and redundant load 
 // elimination cotemporaneously.
 //
