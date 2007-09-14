@@ -363,7 +363,7 @@ public:
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
-  const int getOpcode() const;
+  int getOpcode() const;
 
   /// Access to explicit operands of the instruction.
   ///

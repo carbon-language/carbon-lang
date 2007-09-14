@@ -1629,7 +1629,7 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const {
 
 APInt
 APFloat::convertDoubleAPFloatToAPInt() const {
-  assert(semantics == (const llvm::fltSemantics* const)&IEEEdouble);
+  assert(semantics == (const llvm::fltSemantics*)&IEEEdouble);
   assert (partCount()==1);
 
   uint64_t myexponent, mysignificand;
@@ -1659,7 +1659,7 @@ APFloat::convertDoubleAPFloatToAPInt() const {
 
 APInt
 APFloat::convertFloatAPFloatToAPInt() const {
-  assert(semantics == (const llvm::fltSemantics* const)&IEEEsingle);
+  assert(semantics == (const llvm::fltSemantics*)&IEEEsingle);
   assert (partCount()==1);
   
   uint32_t myexponent, mysignificand;

@@ -196,9 +196,9 @@ Program::ExecuteAndWait(const Path& path,
       
       // Execute!
       if (envp != 0)
-        execve (path.c_str(), (char** const)args, (char**)envp);
+        execve (path.c_str(), (char**)args, (char**)envp);
       else
-        execv (path.c_str(), (char** const)args);
+        execv (path.c_str(), (char**)args);
       // If the execve() failed, we should exit and let the parent pick up
       // our non-zero exit status.
       exit (errno);

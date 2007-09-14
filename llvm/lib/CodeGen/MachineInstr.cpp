@@ -116,7 +116,7 @@ MachineInstr::~MachineInstr() {
 
 /// getOpcode - Returns the opcode of this MachineInstr.
 ///
-const int MachineInstr::getOpcode() const {
+int MachineInstr::getOpcode() const {
   return TID->Opcode;
 }
 
