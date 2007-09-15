@@ -16,20 +16,14 @@
 
 namespace clang {
 
-class Preprocessor;
-class FunctionDecl;
-class TypedefDecl;
 class ASTConsumer;
+class Diagnostic;
 
 ASTConsumer *CreateASTPrinter();
 ASTConsumer *CreateASTDumper();
-
-void DumpCFGs(Preprocessor &PP, unsigned MainFileID,
-              bool Stats, bool use_graphviz = false);  
-              
-void AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID);
-
-void RunDeadStoresCheck(Preprocessor &PP, unsigned MainFileID, bool Stats);
+ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
+ASTConsumer *CreateLiveVarAnalyzer();
+ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 
 } // end clang namespace
 

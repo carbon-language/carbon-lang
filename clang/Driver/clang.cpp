@@ -855,17 +855,21 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
   }
   case ParseCFGDump:
-    DumpCFGs(PP, MainFileID, Stats);
+  case ParseCFGView: {
+    std::auto_ptr<ASTConsumer> C(CreateCFGDumper(ProgAction == ParseCFGView));
+    ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
-  case ParseCFGView:
-    DumpCFGs(PP, MainFileID, Stats, true);
+  }
+  case AnalysisLiveVariables: {
+    std::auto_ptr<ASTConsumer> C(CreateLiveVarAnalyzer());
+    ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
-  case AnalysisLiveVariables:
-    AnalyzeLiveVariables(PP, MainFileID);
+  }
+  case WarnDeadStores: {
+    std::auto_ptr<ASTConsumer> C(CreateDeadStoreChecker(PP.getDiagnostics()));
+    ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
-  case WarnDeadStores:
-    RunDeadStoresCheck(PP, MainFileID, Stats);
-    break;
+  }
   case EmitLLVM:
     EmitLLVMFromASTs(PP, MainFileID, Stats);
     break;

@@ -17,7 +17,6 @@
 #include "clang/Analysis/LiveVariables.h"
 #include "clang/AST/CFG.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ASTContext.h"
 
 using namespace clang;
@@ -25,12 +24,11 @@ using namespace clang;
 namespace {
 
 class DeadStoreObserver : public LiveVariablesObserver {
-  Preprocessor& PP;
-  ASTContext Ctx;
+  ASTContext &Ctx;
+  Diagnostic &Diags;
 public:
-  DeadStoreObserver(Preprocessor& pp) : 
-    PP(pp), Ctx(PP.getSourceManager(), PP.getTargetInfo(),
-                PP.getIdentifierTable()) {
+  DeadStoreObserver(ASTContext &ctx, Diagnostic &diags)
+    : Ctx(ctx), Diags(diags) {
   }
     
   virtual ~DeadStoreObserver() {}
@@ -46,9 +44,8 @@ public:
         // Is the variable live?
         if (!L.isLive(Live,cast<VarDecl>(DR->getDecl()))) {
           SourceRange R = B->getRHS()->getSourceRange();
-          PP.getDiagnostics().Report(DR->getSourceRange().Begin(),
-                                     diag::warn_dead_store, 0, 0,
-                                     &R,1);
+          Diags.Report(DR->getSourceRange().Begin(), diag::warn_dead_store,
+                       0, 0, &R, 1);
                                                                         
         }
     }
@@ -70,9 +67,8 @@ public:
                 L.getVarInfo(V).Kills.size() == 0) {
               // Flag a warning.
               SourceRange R = E->getSourceRange();
-              PP.getDiagnostics().Report(V->getLocation(),
-                                         diag::warn_dead_store, 0, 0,
-                                         &R,1);
+              Diags.Report(V->getLocation(), diag::warn_dead_store, 0, 0,
+                           &R,1);
             }
     }
   }
@@ -82,17 +78,18 @@ public:
 
 namespace clang {
 
-void CheckDeadStores(CFG& cfg, LiveVariables& L, Preprocessor& PP) {
-  DeadStoreObserver A(PP);
+void CheckDeadStores(CFG& cfg, LiveVariables& L,
+                     ASTContext &Ctx, Diagnostic &Diags) {
+  DeadStoreObserver A(Ctx, Diags);
   
   for (CFG::iterator I = cfg.begin(), E = cfg.end(); I != E; ++I)
     L.runOnBlock(&(*I),&A);
 }
 
-void CheckDeadStores(CFG& cfg, Preprocessor& PP) {
+void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
   LiveVariables L;
   L.runOnCFG(cfg);
-  CheckDeadStores(cfg,L,PP);
+  CheckDeadStores(cfg,L, Ctx, Diags);
 }
 
 } // end namespace clang

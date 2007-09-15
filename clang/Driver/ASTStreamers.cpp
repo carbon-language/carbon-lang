@@ -17,8 +17,6 @@
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Sema/ASTStreamer.h"
 using namespace clang;
 
 
@@ -139,48 +137,32 @@ ASTConsumer *clang::CreateASTDumper() { return new ASTDumper(); }
 
 namespace {
 
-class CFGVisitor {
+class CFGVisitor : public ASTConsumer {
 public:
-  virtual ~CFGVisitor() {}
+  // CFG Visitor interface to be implemented by subclass.
   virtual void VisitCFG(CFG& C) = 0;
   virtual bool printFuncDeclStart() { return true; }
+  
+  virtual void HandleTopLevelDecl(Decl *D);
 };
 
 } // end anonymous namespace
 
-static void VisitCFGs(CFGVisitor& Visitor, Preprocessor& PP, 
-                      unsigned MainFileID, bool Stats) {
-
-  bool printFDecl = Visitor.printFuncDeclStart();
-  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
-                     PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-  
-  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-      if (FD->getBody()) {
-        
-        if (printFDecl) {
-          PrintFunctionDeclStart(FD);          
-          fprintf(stderr,"\n");
-        }
-        
-        if (CFG* C = CFG::buildCFG(FD->getBody())) {
-          Visitor.VisitCFG(*C);
-          delete C;
-        }
-        else
-          fprintf(stderr," Error processing CFG.\n");          
-      }
+void CFGVisitor::HandleTopLevelDecl(Decl *D) {
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD || !FD->getBody())
+    return;
+      
+  if (printFuncDeclStart()) {
+    PrintFunctionDeclStart(FD);          
+    fprintf(stderr,"\n");
   }
-  
-  if (Stats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
-    ASTStreamer_PrintStats(Streamer);
-    Context.PrintStats();
-  }
-  
-  ASTStreamer_Terminate(Streamer);
+    
+  if (CFG *C = CFG::buildCFG(FD->getBody())) {
+    VisitCFG(*C);
+    delete C;
+  } else
+    fprintf(stderr, " Error processing CFG.\n");          
 }
 
 //===----------------------------------------------------------------------===//
@@ -192,17 +174,17 @@ namespace {
   public:
     CFGDumper(bool use_graphviz) : UseGraphviz(use_graphviz) {}
     
-    virtual void VisitCFG(CFG& C) {
-      if (UseGraphviz) C.viewCFG();
-      else C.dump();
-    }    
+    virtual void VisitCFG(CFG &C) {
+      if (UseGraphviz)
+        C.viewCFG();
+      else
+        C.dump();
+    }
   }; 
 } // end anonymous namespace 
   
-void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID,
-                     bool Stats, bool use_graphviz) {
-  CFGDumper Visitor(use_graphviz);
-  VisitCFGs(Visitor,PP,MainFileID,Stats);
+ASTConsumer *clang::CreateCFGDumper(bool ViewGraphs) {
+  return new CFGDumper(ViewGraphs);
 }
 
 //===----------------------------------------------------------------------===//
@@ -210,22 +192,23 @@ void clang::DumpCFGs(Preprocessor &PP, unsigned MainFileID,
 
 namespace {
   class LivenessVisitor : public CFGVisitor {
-    Preprocessor& PP;
+    SourceManager *SM;
   public:
-    LivenessVisitor(Preprocessor& pp) : PP(pp) {}
-    
+    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+      SM = &Context.SourceMgr;
+    }
+
     virtual void VisitCFG(CFG& C) {
       LiveVariables L;
       L.runOnCFG(C);
-      L.dumpBlockLiveness(PP.getSourceManager());    
-      L.dumpVarLiveness(PP.getSourceManager());
+      L.dumpBlockLiveness(*SM);    
+      L.dumpVarLiveness(*SM);
     }
   };
 } // end anonymous namespace
   
-void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID) {
-  LivenessVisitor Visitor(PP);
-  VisitCFGs(Visitor,PP,MainFileID,false);
+ASTConsumer *clang::CreateLiveVarAnalyzer() {
+  return new LivenessVisitor();
 }
 
 //===----------------------------------------------------------------------===//
@@ -233,15 +216,19 @@ void clang::AnalyzeLiveVariables(Preprocessor &PP, unsigned MainFileID) {
 
 namespace {
   class DeadStoreVisitor : public CFGVisitor {
-    Preprocessor& PP;
+    Diagnostic &Diags;
+    ASTContext *Ctx;
   public:
-    DeadStoreVisitor(Preprocessor& pp) : PP(pp) {}
-    virtual void VisitCFG(CFG& C) { CheckDeadStores(C,PP); }
+    DeadStoreVisitor(Diagnostic &diags) : Diags(diags) {}
+    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+      Ctx = &Context;
+    }
+    
+    virtual void VisitCFG(CFG& C) { CheckDeadStores(C, *Ctx, Diags); }
     virtual bool printFuncDeclStart() { return false; }
   }; 
 } // end anonymous namespace
 
-void clang::RunDeadStoresCheck(Preprocessor &PP,unsigned MainFileID,bool Stats){
-  DeadStoreVisitor Visitor(PP);
-  VisitCFGs(Visitor,PP,MainFileID,Stats);
+ASTConsumer *clang::CreateDeadStoreChecker(Diagnostic &Diags) {
+  return new DeadStoreVisitor(Diags);
 }

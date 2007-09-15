@@ -17,12 +17,13 @@
 
 namespace clang {
 
-class Preprocessor;
 class CFG;
 class LiveVariables;
+class Diagnostic;
   
-void CheckDeadStores(CFG& cfg, LiveVariables& L, Preprocessor& PP);
-void CheckDeadStores(CFG& cfg, Preprocessor& PP);  
+void CheckDeadStores(CFG& cfg, LiveVariables& L,
+                     ASTContext &Ctx, Diagnostic &Diags);
+void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags);  
 
 } // end namespace clang
 
