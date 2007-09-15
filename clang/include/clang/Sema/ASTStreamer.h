@@ -18,6 +18,13 @@ namespace clang {
   class Preprocessor;
   class ASTContext;
   class Decl;
+  class ASTConsumer;
+  
+  /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
+  /// the file is parsed.  This does not take ownership of the ASTConsumer.
+  void ParseAST(Preprocessor &pp, unsigned MainFileID, 
+                ASTConsumer &C, bool PrintStats = false);
+  
   
   /// ASTStreamerTy - This is an opaque type used to reference ASTStreamer
   /// objects.

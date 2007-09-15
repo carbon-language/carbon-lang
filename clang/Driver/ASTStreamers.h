@@ -19,8 +19,8 @@ namespace clang {
 class Preprocessor;
 class FunctionDecl;
 class TypedefDecl;
+class ASTConsumer;
 
-void BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 void PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 void DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
 

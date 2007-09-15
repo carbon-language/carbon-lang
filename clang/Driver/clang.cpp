@@ -26,6 +26,8 @@
 #include "ASTStreamers.h"
 #include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
+#include "clang/Sema/ASTStreamer.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Basic/FileManager.h"
@@ -51,7 +53,7 @@ enum ProgActions {
   ParseASTPrint,                // Parse ASTs and print them.
   ParseASTDump,                 // Parse ASTs and dump them.
   ParseASTCheck,                // Parse ASTs and check diagnostics.
-  ParseAST,                     // Parse ASTs.
+  BuildAST,                     // Parse ASTs.
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   AnalysisLiveVariables,        // Print results of live-variable analysis.
@@ -80,7 +82,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser and perform semantic analysis"),
              clEnumValN(ParsePrintCallbacks, "parse-print-callbacks",
                         "Run parser and print each callback invoked"),
-             clEnumValN(ParseAST, "parse-ast",
+             clEnumValN(BuildAST, "parse-ast",
                         "Run parser and build ASTs"),
              clEnumValN(ParseASTPrint, "parse-ast-print",
                         "Run parser, build ASTs, then print ASTs"),
@@ -837,9 +839,11 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     ClearSourceMgr = true;
     break;
   case ParseSyntaxOnly:              // -fsyntax-only
-  case ParseAST:
-    BuildASTs(PP, MainFileID, Stats);
+  case BuildAST: {
+    ASTConsumer NullConsumer;
+    ParseAST(PP, MainFileID, NullConsumer, Stats);
     break;
+  }
   case ParseASTPrint:
     PrintASTs(PP, MainFileID, Stats);
     break;

@@ -13,10 +13,13 @@
 
 #include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTConsumer.h"
 #include "Sema.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
 using namespace clang;
+
+ASTConsumer::~ASTConsumer() {}
 
 namespace {
   class ASTStreamer {
@@ -83,6 +86,39 @@ void ASTStreamer::PrintStats() const {
 //===----------------------------------------------------------------------===//
 // Public interface to the file
 //===----------------------------------------------------------------------===//
+
+/// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
+/// the file is parsed.
+void clang::ParseAST(Preprocessor &PP, unsigned MainFileID, 
+                     ASTConsumer &Consumer, bool PrintStats) {
+  // Collect global stats on Decls/Stmts (until we have a module streamer).
+  if (PrintStats) {
+    Decl::CollectingStats(true);
+    Stmt::CollectingStats(true);
+  }
+  
+  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+                     PP.getIdentifierTable());
+  
+  ASTStreamer Streamer(PP, Context, MainFileID);
+  
+  Consumer.Initialize(Context, MainFileID);
+  
+  while (Decl *D = Streamer.ReadTopLevelDecl())
+    Consumer.HandleTopLevelDecl(D);
+  
+  if (PrintStats) {
+    fprintf(stderr, "\nSTATISTICS:\n");
+    Streamer.PrintStats();
+    Context.PrintStats();
+    Decl::PrintStats();
+    Stmt::PrintStats();
+    Consumer.PrintStats();
+    
+    Decl::CollectingStats(false);
+    Stmt::CollectingStats(false);
+  }
+}
 
 /// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
 /// and FileID.

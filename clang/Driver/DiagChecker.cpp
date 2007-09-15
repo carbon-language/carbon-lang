@@ -14,6 +14,8 @@
 #include "clang.h"
 #include "ASTStreamers.h"
 #include "TextDiagnosticBuffer.h"
+#include "clang/Sema/ASTStreamer.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Preprocessor.h"
 using namespace clang;
@@ -223,8 +225,12 @@ static bool CheckResults(Preprocessor &PP,
 
 /// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
 bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
-  // Parse the specified input file.
-  BuildASTs(PP, MainFileID, false);
+  // Parse the specified input file, building ASTs and performing sema, but
+  // doing nothing else.
+{
+  ASTConsumer NullConsumer;
+  ParseAST(PP, MainFileID, NullConsumer);
+}
 
   // Gather the set of expected diagnostics.
   DiagList ExpectedErrors, ExpectedWarnings;

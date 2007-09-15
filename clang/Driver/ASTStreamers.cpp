@@ -20,32 +20,6 @@
 #include "clang/Sema/ASTStreamer.h"
 using namespace clang;
 
-void clang::BuildASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
-  // collect global stats on Decls/Stmts (until we have a module streamer)
-  if (Stats) {
-    Decl::CollectingStats(true);
-    Stmt::CollectingStats(true);
-  }
-
-  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
-                     PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-
-  while (ASTStreamer_ReadTopLevelDecl(Streamer))
-    /* keep reading */;
-
-  if (Stats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
-    ASTStreamer_PrintStats(Streamer);
-    Context.PrintStats();
-    Decl::PrintStats();
-    Stmt::PrintStats();
-  }
-  
-  ASTStreamer_Terminate(Streamer);
-}
-
-
 
 static void PrintFunctionDeclStart(FunctionDecl *FD) {
   bool HasBody = FD->getBody();
