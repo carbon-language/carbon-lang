@@ -243,9 +243,17 @@ void StmtPrinter::VisitWhileStmt(WhileStmt *Node) {
 }
 
 void StmtPrinter::VisitDoStmt(DoStmt *Node) {
-  Indent() << "do\n";
-  PrintStmt(Node->getBody());
-  Indent() << "while ";
+  Indent() << "do ";
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Node->getBody())) {
+    PrintRawCompoundStmt(CS);
+    OS << " ";
+  } else {
+    OS << "\n";
+    PrintStmt(Node->getBody());
+    Indent();
+  }
+  
+  OS << "while ";
   PrintExpr(Node->getCond());
   OS << ";\n";
 }
@@ -258,14 +266,25 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
     else
       PrintExpr(cast<Expr>(Node->getInit()));
   }
-  OS << "; ";
-  if (Node->getCond())
+  OS << ";";
+  if (Node->getCond()) {
+    OS << " ";
     PrintExpr(Node->getCond());
-  OS << "; ";
-  if (Node->getInc())
+  }
+  OS << ";";
+  if (Node->getInc()) {
+    OS << " ";
     PrintExpr(Node->getInc());
-  OS << ")\n";
-  PrintStmt(Node->getBody());
+  }
+  OS << ") ";
+  
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Node->getBody())) {
+    PrintRawCompoundStmt(CS);
+    OS << "\n";
+  } else {
+    OS << "\n";
+    PrintStmt(Node->getBody());
+  }
 }
 
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
