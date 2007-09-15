@@ -26,6 +26,7 @@ class FunctionDecl;
 class ObjcIvarDecl;
 class ObjcMethodDecl;
 class AttributeList;
+class ObjcProtoMethodDecl;
 
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -38,6 +39,7 @@ public:
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
+    ObjcProtoMethod, ObjcProtocol,
     // Concrete sub-class of Decl
     Field, ObjcIvar
   };
@@ -619,6 +621,14 @@ public:
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 
+  ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
+		 ParmVarDecl **paramInfo = 0, int numParams=-1,
+		 AttributeList *M = 0, bool isInstance = true, 
+		 Decl *PrevDecl = 0)
+    : Decl(DK), MethodDeclType(T), 
+      ParamInfo(paramInfo), NumMethodParams(numParams),
+      MethodAttrs(M), IsInstance(isInstance) {}
+
   virtual ~ObjcMethodDecl();
   QualType getMethodType() const { return MethodDeclType; }
   unsigned getNumMethodParams() const { return NumMethodParams; }
@@ -632,7 +642,10 @@ public:
   bool isInstance() const { return IsInstance; }
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
+  static bool classof(const Decl *D) { 
+    return D->getKind() == ObjcMethod 
+	   || D->getKind() == ObjcProtoMethod; 
+  }
   static bool classof(const ObjcMethodDecl *D) { return true; }
 
 private:
@@ -648,6 +661,58 @@ private:
 
   /// instance (true) or class (false) method.
   bool IsInstance : 1;
+};
+
+/// ObjcProtoMethodDecl - Each instance represents a method declared
+/// in a protocol. 
+///
+class ObjcProtoMethodDecl : ObjcMethodDecl {
+public:
+  ObjcProtoMethodDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+                      ParmVarDecl **paramInfo = 0, int numParams=-1,
+                      AttributeList *M = 0, bool isInstance = true,
+                      Decl *PrevDecl = 0) :
+  ObjcMethodDecl(ObjcProtoMethod, L, Id, T, paramInfo, numParams, 
+		 M, isInstance, PrevDecl) {}
+
+  enum ImplementationControl { None, Required, Optional };
+
+  void setDeclImplementation(ImplementationControl ic) 
+         { DeclImplementation = ic; }
+  ImplementationControl  getImplementationControl() const 
+			   { return DeclImplementation; }
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == ObjcProtoMethod; }
+  static bool classof(const ObjcMethodDecl *D) { return true; }
+
+private:
+  ImplementationControl DeclImplementation : 2;
+};
+
+class ObjcProtocolDecl : public TypeDecl {
+  /// protocol instance methods
+  ObjcProtoMethodDecl **ProtoInsMethods;  // Null if not defined
+  int NumProtoInsMethods;  // -1 if not defined
+
+  /// protocol class methods
+  ObjcProtoMethodDecl **ProtoClsMethods;  // Null if not defined
+  int NumProtoClsMethods;  // -1 if not defined
+
+  bool isForwardProtoDecl; // declared with @protocol.
+public:
+  ObjcProtocolDecl(SourceLocation L, IdentifierInfo *Id, bool FD = false)
+    : TypeDecl(ObjcProtocol, L, Id, 0), 
+      ProtoInsMethods(0), NumProtoInsMethods(-1), 
+      ProtoClsMethods(0), NumProtoClsMethods(-1),
+      isForwardProtoDecl(FD) { }
+
+  void ObjcAddProtoMethods(ObjcProtoMethodDecl **insMethods, unsigned numInsMembers,
+                      ObjcProtoMethodDecl **clsMethods, unsigned numClsMembers);
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcProtocol;
+  }
+  static bool classof(const ObjcProtocolDecl *D) { return true; }
 };
 
 }  // end namespace clang
