@@ -659,9 +659,9 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
     }
   }
   if (AllIvarDecls.size()) {  // Check for {} - no ivars in braces
-    Actions.ProcessFieldDecls(LBraceLoc, interfaceDecl, 
-			      &AllIvarDecls[0], AllIvarDecls.size(),
-                              &AllVisibilities[0]);
+    Actions.ActOnFields(LBraceLoc, interfaceDecl, 
+                        &AllIvarDecls[0], AllIvarDecls.size(),
+                        &AllVisibilities[0]);
   }
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   return;

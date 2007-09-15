@@ -317,7 +317,7 @@ private:
 };
 
 
-/// FieldDecl - An instance of this class is created by Sema::ParseField to 
+/// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
 class FieldDecl : public Decl {
   /// Identifier - The identifier for this declaration (e.g. the name for the

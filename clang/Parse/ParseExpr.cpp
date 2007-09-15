@@ -200,7 +200,7 @@ ParseExpressionWithLeadingIdentifier(const Token &IdTok) {
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, IdTok.getLocation(),
+  ExprResult Res = Actions.ActOnIdentifierExpr(CurScope, IdTok.getLocation(),
                                                *IdTok.getIdentifierInfo(),
                                                Tok.getKind() == tok::l_paren);
   
@@ -231,7 +231,7 @@ ParseAssignmentExprWithLeadingIdentifier(const Token &IdTok) {
   //   primary-expression: identifier
   
   // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ParseIdentifierExpr(CurScope, IdTok.getLocation(),
+  ExprResult Res = Actions.ActOnIdentifierExpr(CurScope, IdTok.getLocation(),
                                                *IdTok.getIdentifierInfo(),
                                                Tok.getKind() == tok::l_paren);
   
@@ -513,7 +513,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // not.
     IdentifierInfo &II = *Tok.getIdentifierInfo();
     SourceLocation L = ConsumeToken();
-    Res = Actions.ParseIdentifierExpr(CurScope, L, II,
+    Res = Actions.ActOnIdentifierExpr(CurScope, L, II,
                                       Tok.getKind() == tok::l_paren);
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);

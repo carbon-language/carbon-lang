@@ -242,7 +242,7 @@ void Parser::Initialize() {
     
     Declarator D(DS, Declarator::FileContext);
     D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
-    Actions.ParseDeclarator(CurScope, D, 0);
+    Actions.ActOnDeclarator(CurScope, D, 0);
   }
   
   if (Tok.getKind() == tok::eof &&
@@ -547,7 +547,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       
       // Ask the actions module to compute the type for this declarator.
       Action::TypeResult TR =
-        Actions.ParseParamDeclaratorType(CurScope, ParmDeclarator);
+        Actions.ActOnParamDeclaratorType(CurScope, ParmDeclarator);
 
       if (!TR.isInvalid && 
           // A missing identifier has already been diagnosed.

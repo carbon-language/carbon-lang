@@ -33,7 +33,7 @@ Parser::TypeTy *Parser::ParseTypeName() {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParseDeclarator(DeclaratorInfo);
   
-  return Actions.ParseTypeName(CurScope, DeclaratorInfo).Val;
+  return Actions.ActOnTypeName(CurScope, DeclaratorInfo).Val;
 }
 
 /// ParseAttributes - Parse a non-empty attributes list.
@@ -265,7 +265,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
 
     // Inform the current actions module that we just parsed this declarator.
     // FIXME: pass asm & attributes.
-    LastDeclInGroup = Actions.ParseDeclarator(CurScope, D, LastDeclInGroup);
+    LastDeclInGroup = Actions.ActOnDeclarator(CurScope, D, LastDeclInGroup);
         
     // Parse declarator '=' initializer.
     ExprResult Init;
@@ -589,7 +589,7 @@ bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
     TK = Action::TK_Declaration;
   else
     TK = Action::TK_Reference;
-  Decl = Actions.ParseTag(CurScope, TagType, TK, StartLoc, Name, NameLoc, Attr);
+  Decl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, Name, NameLoc, Attr);
   return false;
 }
 
@@ -686,7 +686,7 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
       DeclaratorInfo.AddAttributes(ParseAttributes());
     
     // Install the declarator into the current TagDecl.
-    DeclTy *Field = Actions.ParseField(CurScope, TagDecl, SpecQualLoc,
+    DeclTy *Field = Actions.ActOnField(CurScope, TagDecl, SpecQualLoc,
                                        DeclaratorInfo, BitfieldSize);
     FieldDecls.push_back(Field);
     
@@ -757,7 +757,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   
-  Actions.ProcessFieldDecls(RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size());
+  Actions.ActOnFields(RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size());
   
   AttributeList *AttrList = 0;
   // If attributes exist after struct contents, parse them.
@@ -830,7 +830,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
     }
     
     // Install the enumerator constant into EnumDecl.
-    DeclTy *EnumConstDecl = Actions.ParseEnumConstant(CurScope, EnumDecl,
+    DeclTy *EnumConstDecl = Actions.ActOnEnumConstant(CurScope, EnumDecl,
                                                       LastEnumConstDecl,
                                                       IdentLoc, Ident,
                                                       EqualLoc, AssignedVal);
@@ -848,7 +848,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclTy *EnumDecl) {
   // Eat the }.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
-  Actions.ParseEnumBody(StartLoc, EnumDecl, &EnumConstantDecls[0],
+  Actions.ActOnEnumBody(StartLoc, EnumDecl, &EnumConstantDecls[0],
                         EnumConstantDecls.size());
   
   DeclTy *AttrList = 0;
@@ -1322,7 +1322,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
       Action::TypeResult ParamTy =
-        Actions.ParseParamDeclaratorType(CurScope, ParmDecl);
+        Actions.ActOnParamDeclaratorType(CurScope, ParmDecl);
         
       // Remember this parsed parameter in ParamInfo.
       IdentifierInfo *ParmII = ParmDecl.getIdentifier();

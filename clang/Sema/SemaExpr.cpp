@@ -53,10 +53,10 @@ Sema::ParseStringLiteral(const Token *StringToks, unsigned NumStringToks) {
 }
 
 
-/// ParseIdentifierExpr - The parser read an identifier in expression context,
+/// ActOnIdentifierExpr - The parser read an identifier in expression context,
 /// validate it per-C99 6.5.1.  HasTrailingLParen indicates whether this
 /// identifier is used in an function call context.
-Sema::ExprResult Sema::ParseIdentifierExpr(Scope *S, SourceLocation Loc,
+Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                            IdentifierInfo &II,
                                            bool HasTrailingLParen) {
   // Could be enum-constant or decl.
@@ -646,7 +646,7 @@ ParseInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
               SourceLocation RBraceLoc) {
   Expr **InitList = reinterpret_cast<Expr**>(initlist);
 
-  // Semantic analysis for initializers is done by ParseDeclarator() and
+  // Semantic analysis for initializers is done by ActOnDeclarator() and
   // CheckInitializer() - it requires knowledge of the object being intialized. 
   
   InitListExpr *e = new InitListExpr(LBraceLoc, InitList, NumInit, RBraceLoc);
@@ -1031,7 +1031,7 @@ Sema::AssignmentCheckResult
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // This check seems unnatural, however it is necessary to insure the proper
   // conversion of functions/arrays. If the conversion were done for all
-  // DeclExpr's (created by ParseIdentifierExpr), it would mess up the unary
+  // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
   DefaultFunctionArrayConversion(rExpr);
 

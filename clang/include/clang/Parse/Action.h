@@ -93,14 +93,14 @@ public:
   /// in the current scope.
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const = 0;
   
-  /// ParseDeclarator - This callback is invoked when a declarator is parsed and
+  /// ActOnDeclarator - This callback is invoked when a declarator is parsed and
   /// 'Init' specifies the initializer if any.  This is for things like:
   /// "int X = 4" or "typedef int foo".
   ///
   /// LastInGroup is non-null for cases where one declspec has multiple
-  /// declarators on it.  For example in 'int A, B', ParseDeclarator will be
+  /// declarators on it.  For example in 'int A, B', ActOnDeclarator will be
   /// called with LastInGroup=A when invoked for B.
-  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D,DeclTy *LastInGroup) {
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D,DeclTy *LastInGroup) {
     return 0;
   }
 
@@ -108,7 +108,7 @@ public:
   /// ParseDeclarator (when an initializer is present). The code is factored 
   /// this way to make sure we are able to handle the following:
   ///   void func() { int xx = xx; }
-  /// This allows ParseDeclarator to register "xx" prior to parsing the
+  /// This allows ActOnDeclarator to register "xx" prior to parsing the
   /// initializer. The declaration above should still result in a warning, 
   /// since the reference to "xx" is uninitialized.
   virtual void AddInitializerToDecl(DeclTy *Dcl, ExprTy *Init) {
@@ -121,11 +121,11 @@ public:
   }
 
   /// ParseStartOfFunctionDef - This is called at the start of a function
-  /// definition, instead of calling ParseDeclarator.  The Declarator includes
+  /// definition, instead of calling ActOnDeclarator.  The Declarator includes
   /// information about formal arguments that are part of this function.
   virtual DeclTy *ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
-    // Default to ParseDeclarator.
-    return ParseDeclarator(FnBodyScope, D, 0);
+    // Default to ActOnDeclarator.
+    return ActOnDeclarator(FnBodyScope, D, 0);
   }
 
   /// ParseFunctionDefBody - This is called when a function body has completed
@@ -155,11 +155,11 @@ public:
   // Type Parsing Callbacks.
   //===--------------------------------------------------------------------===//
   
-  virtual TypeResult ParseTypeName(Scope *S, Declarator &D) {
+  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
     return 0;
   }
   
-  virtual TypeResult ParseParamDeclaratorType(Scope *S, Declarator &D) {
+  virtual TypeResult ActOnParamDeclaratorType(Scope *S, Declarator &D) {
     return 0;
   }
   
@@ -168,7 +168,7 @@ public:
     TK_Declaration, // Fwd decl of a tag:   'struct foo;'
     TK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
   };
-  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
+  virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
@@ -176,20 +176,20 @@ public:
     return 0;
   }
   
-  virtual DeclTy *ParseField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
+  virtual DeclTy *ActOnField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
   }
-  virtual void ProcessFieldDecls(SourceLocation RecLoc, DeclTy *TagDecl,
+  virtual void ActOnFields(SourceLocation RecLoc, DeclTy *TagDecl,
                                  DeclTy **Fields, unsigned NumFields,
                                  tok::ObjCKeywordKind *visibility = 0) {}
-  virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
+  virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
                                     SourceLocation EqualLoc, ExprTy *Val) {
     return 0;
   }
-  virtual void ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
+  virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements) {}
 
   //===--------------------------------------------------------------------===//
@@ -288,10 +288,10 @@ public:
   
   // Primary Expressions.
   
-  /// ParseIdentifierExpr - Parse an identifier in expression context.
+  /// ActOnIdentifierExpr - Parse an identifier in expression context.
   /// 'HasTrailingLParen' indicates whether or not the identifier has a '('
   /// token immediately after it.
-  virtual ExprResult ParseIdentifierExpr(Scope *S, SourceLocation Loc,
+  virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen) {
     return 0;
@@ -497,10 +497,10 @@ public:
   /// determine whether the name is a typedef or not in this scope.
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   
-  /// ParseDeclarator - If this is a typedef declarator, we modify the
+  /// ActOnDeclarator - If this is a typedef declarator, we modify the
   /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
   /// popped.
-  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   
   /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
   /// they are removed from the IdentifierInfo::FETokenInfo field.

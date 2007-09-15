@@ -39,11 +39,11 @@ MinimalAction::isTypeName(const IdentifierInfo &II, Scope *S) const {
   return 0;
 }
 
-/// ParseDeclarator - If this is a typedef declarator, we modify the
+/// ActOnDeclarator - If this is a typedef declarator, we modify the
 /// IdentifierInfo::FETokenInfo field to keep track of this fact, until S is
 /// popped.
 Action::DeclTy *
-MinimalAction::ParseDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
+MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
   IdentifierInfo *II = D.getIdentifier();
   
   // If there is no identifier associated with this declarator, bail out.

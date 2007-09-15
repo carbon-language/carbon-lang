@@ -44,7 +44,7 @@ public:
       // FIXME: before we delete the vector, we need to make sure the Expr's 
       // have been deleted. Since Action::ExprTy is "void", we are dependent
       // on the actions module for actually freeing the memory. The specific
-      // hooks are ParseDeclarator, ParseTypeName, ParseParamDeclaratorType, 
+      // hooks are ActOnDeclarator, ActOnTypeName, ActOnParamDeclaratorType, 
       // ParseField, ParseTag. Once these routines have freed the expression, 
       // they should zero out the Args slot (to indicate the memory has been 
       // freed). If any element of the vector is non-null, we should assert.

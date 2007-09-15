@@ -430,7 +430,7 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
 }
 
 Sema::DeclTy *
-Sema::ParseDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
+Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
   IdentifierInfo *II = D.getIdentifier();
   
@@ -759,7 +759,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   Scope *GlobalScope = FnBodyScope->getParent();
   
   FunctionDecl *FD =
-    static_cast<FunctionDecl*>(ParseDeclarator(GlobalScope, D, 0));
+    static_cast<FunctionDecl*>(ActOnDeclarator(GlobalScope, D, 0));
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
@@ -842,7 +842,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   while (S->getParent())
     S = S->getParent();
   
-  return static_cast<Decl*>(ParseDeclarator(S, D, 0));
+  return static_cast<Decl*>(ActOnDeclarator(S, D, 0));
 }
 
 
@@ -902,11 +902,11 @@ Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
 }
 
 
-/// ParseTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
+/// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagType indicates what kind of tag this is. TK indicates whether this is a
 /// reference/declaration/definition of a tag.
-Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
+Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                              SourceLocation KWLoc, IdentifierInfo *Name,
                              SourceLocation NameLoc, AttributeList *Attr) {
   // If this is a use of an existing tag, it must have a name.
@@ -1004,9 +1004,9 @@ Sema::DeclTy *Sema::ParseTag(Scope *S, unsigned TagType, TagKind TK,
   return New;
 }
 
-/// ParseField - Each field of a struct/union/class is passed into this in order
+/// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
-Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
+Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
   IdentifierInfo *II = D.getIdentifier();
@@ -1051,7 +1051,7 @@ Sema::DeclTy *Sema::ParseField(Scope *S, DeclTy *TagDecl,
   else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new ObjcIvarDecl(Loc, II, T);
   else
-    assert(0 && "Sema::ParseField(): Unknown TagDecl");
+    assert(0 && "Sema::ActOnField(): Unknown TagDecl");
     
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
@@ -1080,9 +1080,9 @@ static void ObjcSetIvarVisibility(ObjcIvarDecl *OIvar,
   }
 }
 
-void Sema::ProcessFieldDecls(SourceLocation RecLoc, DeclTy *RecDecl,
-                             DeclTy **Fields, unsigned NumFields,
-                             tok::ObjCKeywordKind *visibility) {
+void Sema::ActOnFields(SourceLocation RecLoc, DeclTy *RecDecl,
+                       DeclTy **Fields, unsigned NumFields,
+                       tok::ObjCKeywordKind *visibility) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
@@ -1276,7 +1276,7 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
 			    AttrList, MethodType == tok::minus);
 }
 
-Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
+Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
                                       DeclTy *lastEnumConst,
                                       SourceLocation IdLoc, IdentifierInfo *Id,
                                       SourceLocation EqualLoc, ExprTy *val) {
@@ -1352,7 +1352,7 @@ Sema::DeclTy *Sema::ParseEnumConstant(Scope *S, DeclTy *theEnumDecl,
   return New;
 }
 
-void Sema::ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
+void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
                          DeclTy **Elements, unsigned NumElements) {
   EnumDecl *Enum = cast<EnumDecl>(static_cast<Decl*>(EnumDeclX));
   assert(!Enum->isDefinition() && "Enum redefinitions can't reach here");

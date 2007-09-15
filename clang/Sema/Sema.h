@@ -130,15 +130,15 @@ public:
   //
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
   
-  virtual TypeResult ParseTypeName(Scope *S, Declarator &D);
+  virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
   
-  virtual TypeResult ParseParamDeclaratorType(Scope *S, Declarator &D);
+  virtual TypeResult ActOnParamDeclaratorType(Scope *S, Declarator &D);
 private:
   //===--------------------------------------------------------------------===//
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
-  virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
@@ -150,24 +150,24 @@ private:
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS);  
   
-  virtual DeclTy *ParseTag(Scope *S, unsigned TagType, TagKind TK,
+  virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr);
-  virtual DeclTy *ParseField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
+  virtual DeclTy *ActOnField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
                                       
   // This is used for both record definitions and ObjC interface declarations.
-  virtual void ProcessFieldDecls(SourceLocation RecLoc, DeclTy *TagDecl,
+  virtual void ActOnFields(SourceLocation RecLoc, DeclTy *TagDecl,
                                  DeclTy **Fields, unsigned NumFields,
                                  tok::ObjCKeywordKind *visibility = 0);
-  virtual DeclTy *ParseEnumConstant(Scope *S, DeclTy *EnumDecl,
+  virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
                                     SourceLocation EqualLoc, ExprTy *Val);
-  virtual void ParseEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
+  virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
 private:
-  /// Subroutines of ParseDeclarator()...
+  /// Subroutines of ActOnDeclarator()...
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, ScopedDecl *LastDecl);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *Old);
   FunctionDecl *MergeFunctionDecl(FunctionDecl *New, ScopedDecl *Old);
@@ -250,7 +250,7 @@ public:
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
   // Primary Expressions.
-  virtual ExprResult ParseIdentifierExpr(Scope *S, SourceLocation Loc,
+  virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen);
   virtual ExprResult ParsePreDefinedExpr(SourceLocation Loc,

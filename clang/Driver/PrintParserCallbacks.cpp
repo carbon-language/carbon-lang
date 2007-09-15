@@ -22,12 +22,12 @@ using namespace clang;
 namespace {
   class ParserPrintActions : public MinimalAction {
     
-    /// ParseDeclarator - This callback is invoked when a declarator is parsed
+    /// ActOnDeclarator - This callback is invoked when a declarator is parsed
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
-    virtual DeclTy *ParseDeclarator(Scope *S, Declarator &D,
+    virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D,
                                     DeclTy *LastInGroup) {
-      std::cout << "ParseDeclarator ";
+      std::cout << "ActOnDeclarator ";
       if (IdentifierInfo *II = D.getIdentifier()) {
         std::cout << "'" << II->getName() << "'";
       } else {
@@ -36,7 +36,7 @@ namespace {
       std::cout << "\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      return MinimalAction::ParseDeclarator(S, D, LastInGroup);
+      return MinimalAction::ActOnDeclarator(S, D, LastInGroup);
     }
     
     /// PopScope - This callback is called immediately before the specified scope
