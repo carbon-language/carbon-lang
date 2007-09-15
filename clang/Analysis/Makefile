@@ -1,4 +1,4 @@
-##===- clang/CodeGen/Makefile ------------------------------*- Makefile -*-===##
+##===- clang/Analysis/Makefile -----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
