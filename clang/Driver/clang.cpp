@@ -844,12 +844,16 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     ParseAST(PP, MainFileID, NullConsumer, Stats);
     break;
   }
-  case ParseASTPrint:
-    PrintASTs(PP, MainFileID, Stats);
+  case ParseASTPrint: {
+    std::auto_ptr<ASTConsumer> C(CreateASTPrinter());
+    ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
-  case ParseASTDump:
-    DumpASTs(PP, MainFileID, Stats);
+  }
+  case ParseASTDump: {
+    std::auto_ptr<ASTConsumer> C(CreateASTDumper());
+    ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
+  }
   case ParseCFGDump:
     DumpCFGs(PP, MainFileID, Stats);
     break;

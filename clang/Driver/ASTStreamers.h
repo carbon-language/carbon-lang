@@ -21,8 +21,8 @@ class FunctionDecl;
 class TypedefDecl;
 class ASTConsumer;
 
-void PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
-void DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats);
+ASTConsumer *CreateASTPrinter();
+ASTConsumer *CreateASTDumper();
 
 void DumpCFGs(Preprocessor &PP, unsigned MainFileID,
               bool Stats, bool use_graphviz = false);  

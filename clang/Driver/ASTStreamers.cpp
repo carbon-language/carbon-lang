@@ -13,6 +13,7 @@
 
 #include "ASTStreamers.h"
 #include "clang/AST/AST.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -80,67 +81,57 @@ static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   // FIXME: implement the rest...
 }
 
-void clang::PrintASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
-  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
-                     PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-  
-  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      PrintFunctionDeclStart(FD);
-
-      if (FD->getBody()) {
-        fprintf(stderr, " ");
-        FD->getBody()->dumpPretty();
-        fprintf(stderr, "\n");
+namespace {
+  class ASTPrinter : public ASTConsumer {
+    virtual void HandleTopLevelDecl(Decl *D) {
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        PrintFunctionDeclStart(FD);
+        
+        if (FD->getBody()) {
+          fprintf(stderr, " ");
+          FD->getBody()->dumpPretty();
+          fprintf(stderr, "\n");
+        }
+      } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+        PrintTypeDefDecl(TD);
+      } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
+        PrintObjcInterfaceDecl(OID);
+      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+        fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
       }
-    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-      PrintTypeDefDecl(TD);
-    } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
-      PrintObjcInterfaceDecl(OID);
-    } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-      fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
     }
-  }
-  
-  if (Stats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
-    ASTStreamer_PrintStats(Streamer);
-    Context.PrintStats();
-  }
-  
-  ASTStreamer_Terminate(Streamer);
+  };
 }
 
-void clang::DumpASTs(Preprocessor &PP, unsigned MainFileID, bool Stats) {
-  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
-                     PP.getIdentifierTable());
-  ASTStreamerTy *Streamer = ASTStreamer_Init(PP, Context, MainFileID);
-  
-  while (Decl *D = ASTStreamer_ReadTopLevelDecl(Streamer)) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      PrintFunctionDeclStart(FD);
-      
-      if (FD->getBody()) {
-        fprintf(stderr, "\n");
-        FD->getBody()->dumpAll(PP.getSourceManager());
-        fprintf(stderr, "\n");
-      }
-    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-      PrintTypeDefDecl(TD);
-    } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-      fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
+ASTConsumer *clang::CreateASTPrinter() { return new ASTPrinter(); }
+
+namespace {
+  class ASTDumper : public ASTConsumer {
+    SourceManager *SM;
+  public:
+    void Initialize(ASTContext &Context, unsigned MainFileID) {
+      SM = &Context.SourceMgr;
     }
-  }
-  
-  if (Stats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
-    ASTStreamer_PrintStats(Streamer);
-    Context.PrintStats();
-  }
-  
-  ASTStreamer_Terminate(Streamer);
+    
+    virtual void HandleTopLevelDecl(Decl *D) {
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        PrintFunctionDeclStart(FD);
+        
+        if (FD->getBody()) {
+          fprintf(stderr, "\n");
+          FD->getBody()->dumpAll(*SM);
+          fprintf(stderr, "\n");
+        }
+      } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+        PrintTypeDefDecl(TD);
+      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+        fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
+      }
+    }
+  };
 }
+
+ASTConsumer *clang::CreateASTDumper() { return new ASTDumper(); }
 
 //===----------------------------------------------------------------------===//
 // CFGVisitor & VisitCFGs - Boilerplate interface and logic to visit
