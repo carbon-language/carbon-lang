@@ -131,6 +131,8 @@
 		DEF2EDA70C6A4252000C4259 /* StmtDumper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */; };
 		DEF2EFF30C6CDD74000C4259 /* CGExprAgg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */; };
 		DEF2F0100C6CFED5000C4259 /* SemaChecking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */; };
+		DEF7D9F70C9C8B1A0001F598 /* Rewriter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */; };
+		DEF7D9F90C9C8B1D0001F598 /* Rewriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */; };
 		F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */; };
 		F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */; };
 /* End PBXBuildFile section */
@@ -199,6 +201,7 @@
 				DEF2E9320C5FB9FB000C4259 /* ASTStreamers.h in CopyFiles */,
 				DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */,
 				DEC63B1C0C7B940600DBF169 /* CFG.h in CopyFiles */,
+				DEF7D9F70C9C8B1A0001F598 /* Rewriter.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -339,6 +342,8 @@
 		DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = StmtDumper.cpp; path = AST/StmtDumper.cpp; sourceTree = "<group>"; };
 		DEF2EFF20C6CDD74000C4259 /* CGExprAgg.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprAgg.cpp; path = CodeGen/CGExprAgg.cpp; sourceTree = "<group>"; };
 		DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaChecking.cpp; path = Sema/SemaChecking.cpp; sourceTree = "<group>"; };
+		DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Rewriter.h; path = clang/Rewrite/Rewriter.h; sourceTree = "<group>"; };
+		DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Rewriter.cpp; path = Rewrite/Rewriter.cpp; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -376,6 +381,7 @@
 				DE67E7070C020EAB00F66BC5 /* Sema */,
 				DE927FCC0C0557CD00231DA4 /* CodeGen */,
 				356EF9B30C8F7DCA006650F5 /* Analysis */,
+				DEF7D9F50C9C8B0C0001F598 /* Rewrite */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -588,6 +594,7 @@
 				DE67E7260C02108300F66BC5 /* Sema */,
 				DE928B140C05659A00231DA4 /* CodeGen */,
 				356EF9AF0C8F7DA4006650F5 /* Analysis */,
+				DEF7D9F40C9C8B020001F598 /* Rewrite */,
 			);
 			path = include;
 			sourceTree = "<group>";
@@ -657,6 +664,22 @@
 				DED7D9E40A5257F6003AD0FB /* ScratchBuffer.cpp */,
 			);
 			path = Lex;
+			sourceTree = "<group>";
+		};
+		DEF7D9F40C9C8B020001F598 /* Rewrite */ = {
+			isa = PBXGroup;
+			children = (
+				DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */,
+			);
+			name = Rewrite;
+			sourceTree = "<group>";
+		};
+		DEF7D9F50C9C8B0C0001F598 /* Rewrite */ = {
+			isa = PBXGroup;
+			children = (
+				DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */,
+			);
+			name = Rewrite;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -770,6 +793,7 @@
 				356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */,
 				355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */,
 				35AE0F690C9B4CC200CC1279 /* UnintializedValues.cpp in Sources */,
+				DEF7D9F90C9C8B1D0001F598 /* Rewriter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
