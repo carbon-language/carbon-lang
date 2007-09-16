@@ -119,29 +119,3 @@ void clang::ParseAST(Preprocessor &PP, unsigned MainFileID,
     Stmt::CollectingStats(false);
   }
 }
-
-/// ASTStreamer_Init - Create an ASTStreamer with the specified preprocessor
-/// and FileID.
-ASTStreamerTy *clang::ASTStreamer_Init(Preprocessor &pp, ASTContext &ctxt,
-                                       unsigned MainFileID) {
-  return new ASTStreamer(pp, ctxt, MainFileID);
-}
-
-/// ASTStreamer_ReadTopLevelDecl - Parse and return one top-level declaration.
-/// This returns null at end of file.
-Decl *clang::ASTStreamer_ReadTopLevelDecl(ASTStreamerTy *Streamer) {
-  return static_cast<ASTStreamer*>(Streamer)->ReadTopLevelDecl();
-}
-
-
-/// ASTStreamer_PrintStats - Emit statistic information to stderr.
-///
-void clang::ASTStreamer_PrintStats(ASTStreamerTy *Streamer) {
-  return static_cast<ASTStreamer*>(Streamer)->PrintStats();
-}
-
-/// ASTStreamer_Terminate - Gracefully shut down the streamer.
-///
-void clang::ASTStreamer_Terminate(ASTStreamerTy *Streamer) {
-  delete static_cast<ASTStreamer*>(Streamer);
-}
