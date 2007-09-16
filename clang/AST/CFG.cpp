@@ -1132,7 +1132,7 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
         C->getRHS()->printPretty(OS);
       }
     }  
-    else if (DefaultStmt* D = dyn_cast<DefaultStmt>(S))
+    else if (isa<DefaultStmt>(S))
       OS << "default";
     else
       assert(false && "Invalid label statement in CFGBlock.");
