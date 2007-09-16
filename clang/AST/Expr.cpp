@@ -368,7 +368,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     llvm::APSInt Result(32);
-    Result.zextOrTrunc(Ctx.getTypeSize(getType(), CE->getLocStart()));
+    Result.zextOrTrunc(
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CE->getLocStart())));
     if (CE->isBuiltinClassifyType(Result))
       break;
     if (Loc) *Loc = getLocStart();

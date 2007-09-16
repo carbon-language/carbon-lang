@@ -198,10 +198,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Driver\LLVMCodegen.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Driver\PrintParserCallbacks.cpp"
 				>
 			</File>
