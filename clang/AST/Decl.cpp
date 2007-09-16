@@ -141,6 +141,13 @@ void Decl::addDeclKind(const Kind k) {
     case ObjcInterface:
       nInterfaceDecls++;
       break;
+    case ObjcClass:
+    case ObjcMethod:
+    case ObjcProtoMethod:
+    case ObjcProtocol:
+    case ObjcIvar:
+      assert(0 && "FIXME: Count these decls!");
+      break;
   }
 }
 
