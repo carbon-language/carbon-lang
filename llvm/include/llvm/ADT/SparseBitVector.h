@@ -212,7 +212,7 @@ public:
       BitWord old = changed ? 0 : Bits[i];
 
       Bits[i] |= RHS.Bits[i];
-      if (old != Bits[i])
+      if (!changed && old != Bits[i])
         changed = true;
     }
     return changed;
@@ -242,17 +242,17 @@ public:
       if (Bits[i] != 0)
         allzero = false;
 
-      if (old != Bits[i])
+      if (!changed && old != Bits[i])
         changed = true;
     }
-    BecameZero = !allzero;
+    BecameZero = allzero;
     return changed;
   }
   // Intersect this Element with the complement of RHS and return true if this
   // one changed.  BecameZero is set to true if this element became all-zero
   // bits.
   bool intersectWithComplement(const SparseBitVectorElement &RHS,
-                     bool &BecameZero) {
+                               bool &BecameZero) {
     bool changed = false;
     bool allzero = true;
 
@@ -264,10 +264,10 @@ public:
       if (Bits[i] != 0)
         allzero = false;
 
-      if (old != Bits[i])
+      if (!changed && old != Bits[i])
         changed = true;
     }
-    BecameZero = !allzero;
+    BecameZero = allzero;
     return changed;
   }
   // Three argument version of intersectWithComplement that intersects
@@ -283,7 +283,7 @@ public:
       if (Bits[i] != 0)
         allzero = false;
     }
-    BecameZero = !allzero;
+    BecameZero = allzero;
   }
 };
 
@@ -548,12 +548,6 @@ public:
     if (Elements.empty() && RHS.Elements.empty())
       return false;
 
-    // See if the first bitmap element is the same in both.  This is only
-    // possible if they are the same bitmap.
-    if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
-      if (*Iter1 == *Iter2)
-        return false;
-
     while (Iter2 != RHS.Elements.end()) {
       if (Iter1 == Elements.end() || Iter1->index() > Iter2->index()) {
         Elements.insert(Iter1,
@@ -582,12 +576,6 @@ public:
     if (Elements.empty() && RHS.Elements.empty())
       return false;
 
-    // See if the first bitmap element is the same in both.  This is only
-    // possible if they are the same bitmap.
-    if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
-      if (*Iter1 == *Iter2)
-        return false;
-
     // Loop through, intersecting as we go, erasing elements when necessary.
     while (Iter2 != RHS.Elements.end()) {
       if (Iter1 == Elements.end())
@@ -600,9 +588,11 @@ public:
         changed |= Iter1->intersectWith(*Iter2, BecameZero);
         if (BecameZero) {
           ElementListIter IterTmp = Iter1;
+          ++Iter1;
           Elements.erase(IterTmp);
+        } else {
+          ++Iter1;
         }
-        ++Iter1;
         ++Iter2;
       } else {
         ElementListIter IterTmp = Iter1;
@@ -626,14 +616,6 @@ public:
     if (Elements.empty() && RHS.Elements.empty())
       return false;
 
-    // See if the first bitmap element is the same in both.  This is only
-    // possible if they are the same bitmap.
-    if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
-      if (*Iter1 == *Iter2) {
-        Elements.clear();
-        return true;
-      }
-
     // Loop through, intersecting as we go, erasing elements when necessary.
     while (Iter2 != RHS.Elements.end()) {
       if (Iter1 == Elements.end())
@@ -646,9 +628,11 @@ public:
         changed |= Iter1->intersectWithComplement(*Iter2, BecameZero);
         if (BecameZero) {
           ElementListIter IterTmp = Iter1;
+          ++Iter1;
           Elements.erase(IterTmp);
+        } else {
+          ++Iter1;
         }
-        ++Iter1;
         ++Iter2;
       } else {
         ElementListIter IterTmp = Iter1;
@@ -678,13 +662,6 @@ public:
     if (RHS1.empty() && RHS2.empty())
       return;
 
-    // See if the first bitmap element is the same in both.  This is only
-    // possible if they are the same bitmap.
-    if (Iter1 != RHS1.Elements.end() && Iter2 != RHS2.Elements.end())
-      if (*Iter1 == *Iter2) {
-        return;
-      }
-
     // Loop through, intersecting as we go, erasing elements when necessary.
     while (Iter2 != RHS2.Elements.end()) {
       if (Iter1 == RHS1.Elements.end())
@@ -702,7 +679,6 @@ public:
         }
         else
           delete NewElement;
-
         ++Iter1;
         ++Iter2;
       } else {
@@ -739,13 +715,6 @@ public:
     // Check if both bitmaps are empty.
     if (Elements.empty() && RHS.Elements.empty())
       return false;
-
-    // See if the first bitmap element is the same in both.  This is only
-    // possible if they are the same bitmap.
-    if (Iter1 != Elements.end() && Iter2 != RHS.Elements.end())
-      if (*Iter1 == *Iter2) {
-        return true;
-      }
 
     // Loop through, intersecting stopping when we hit bits in common.
     while (Iter2 != RHS.Elements.end()) {
@@ -824,7 +793,7 @@ inline bool operator &=(SparseBitVector<ElementSize> &LHS,
                         const SparseBitVector<ElementSize> *RHS) {
   return LHS &= (*RHS);
 }
- 
+
 
 // Dump a SparseBitVector to a stream
 template <unsigned ElementSize>
