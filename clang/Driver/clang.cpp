@@ -870,9 +870,11 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
   }
-  case EmitLLVM:
-    EmitLLVMFromASTs(PP, MainFileID, Stats);
+  case EmitLLVM: {
+    std::auto_ptr<ASTConsumer> C(CreateLLVMEmitter(PP.getDiagnostics()));
+    ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
+  }
   case ParseASTCheck:
     exit(CheckDiagnostics(PP, MainFileID));
     break;

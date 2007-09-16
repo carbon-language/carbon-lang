@@ -232,3 +232,57 @@ namespace {
 ASTConsumer *clang::CreateDeadStoreChecker(Diagnostic &Diags) {
   return new DeadStoreVisitor(Diags);
 }
+
+//===----------------------------------------------------------------------===//
+// LLVM Emitter
+
+#include "clang/Basic/Diagnostic.h"
+#include "clang/CodeGen/ModuleBuilder.h"
+#include "llvm/Module.h"
+#include <iostream>
+
+namespace {
+  class LLVMEmitter : public ASTConsumer {
+    Diagnostic &Diags;
+    llvm::Module *M;
+    ASTContext *Ctx;
+    CodeGen::BuilderTy *Builder;
+  public:
+    LLVMEmitter(Diagnostic &diags) : Diags(diags) {}
+    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+      Ctx = &Context;
+      M = new llvm::Module("foo");
+      Builder = CodeGen::Init(Context, *M);
+    }
+    
+    virtual void HandleTopLevelDecl(Decl *D) {
+      // If an error occurred, stop code generation, but continue parsing and
+      // semantic analysis (to ensure all warnings and errors are emitted).
+      if (Diags.hasErrorOccurred())
+        return;
+      
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        CodeGen::CodeGenFunction(Builder, FD);
+      } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
+        CodeGen::CodeGenGlobalVar(Builder, FVD);
+      } else {
+        assert(isa<TypedefDecl>(D) && "Only expected typedefs here");
+        // don't codegen for now, eventually pass down for debug info.
+        //std::cerr << "Read top-level typedef decl: '" << D->getName() << "'\n";
+      }
+    }
+    
+    ~LLVMEmitter() {
+      CodeGen::Terminate(Builder);
+      
+      // Print the generated code.
+      M->print(std::cout);
+      delete M;
+    }
+  }; 
+} // end anonymous namespace
+
+ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags) {
+  return new LLVMEmitter(Diags);
+}
+
