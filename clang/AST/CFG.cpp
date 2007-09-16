@@ -1292,6 +1292,7 @@ template<>
 struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const CFGBlock* Node, const CFG* Graph) {
 
+#ifndef NDEBUG
     std::ostringstream Out;
     print_block(Out,Graph, *Node, GraphHelper, false);
     std::string OutStr = Out.str();
@@ -1306,6 +1307,9 @@ struct DOTGraphTraits<const CFG*> : public DefaultDOTGraphTraits {
       }
       
     return OutStr;
+#else
+    return "";
+#endif
   }
 };
 } // end namespace llvm
