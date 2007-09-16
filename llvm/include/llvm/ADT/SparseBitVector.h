@@ -128,9 +128,11 @@ public:
 
   bool test_and_set (unsigned Idx) {
     bool old = test(Idx);
-    if (!old)
+    if (!old) {
       set(Idx);
-    return !old;
+      return true;
+    }
+    return false;
   }
 
   void reset(unsigned Idx) {
@@ -533,9 +535,29 @@ public:
 
   bool test_and_set (unsigned Idx) {
     bool old = test(Idx);
-    if (!old)
+    if (!old) {
       set(Idx);
-    return !old;
+      return true;
+    }
+    return false;
+  }
+
+  bool operator!=(const SparseBitVector &RHS) {
+    return !(*this == RHS);
+  }
+
+  bool operator==(const SparseBitVector &RHS) {
+    ElementListConstIter Iter1 = Elements.begin();
+    ElementListConstIter Iter2 = RHS.Elements.begin();
+
+    while (Iter2 != RHS.Elements.end()) {
+      if (Iter1->index() != Iter2->index()
+          || *Iter1 != *Iter2)
+        return false;
+      ++Iter1;
+      ++Iter2;
+    }
+    return Iter1 == Elements.end();
   }
 
   // Union our bitmap with the RHS and return true if we changed.

@@ -1212,10 +1212,9 @@ void Andersens::SolveConstraints() {
   }
 
   do {
-     Changed = false;
-
+    Changed = false;
     ++NumIters;
-    DOUT << "Starting iteration #" << Iteration++ << "!\n";
+    DOUT << "Starting iteration #" << Iteration++;
     // TODO: In the microoptimization category, we could just make Topo2Node
     // a fast map and thus only contain the visited nodes.
     for (unsigned i = 0; i < GraphNodes.size(); ++i) {
@@ -1295,7 +1294,7 @@ void Andersens::SolveConstraints() {
 
           // Add an edge to the graph, so we can just do regular bitmap ior next
           // time.  It may also let us notice a cycle.
-          if (!GraphNodes[*Src].Edges->test_and_set(*Dest)) {
+          if (GraphNodes[*Src].Edges->test_and_set(*Dest)) {
             if (GraphNodes[*Dest].PointsTo |= *(GraphNodes[*Src].PointsTo)) {
               GraphNodes[*Dest].Changed = true;
               // If we changed a node we've already processed, we need another
