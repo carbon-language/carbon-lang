@@ -68,7 +68,8 @@ protected:
 public:
   
   Kind getKind() const { return DeclKind; }
-
+  const char *getDeclKindName();
+  
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
@@ -83,6 +84,7 @@ public:
     case FileVariable:
     case ParmVariable:
     case EnumConstant:
+    case ObjcInterface:
       return IDNS_Ordinary;
     case Struct:
     case Union:

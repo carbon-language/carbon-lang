@@ -986,8 +986,11 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.getKind() == tok::l_square && "'[' expected");
   SourceLocation Loc = ConsumeBracket(); // consume '['
   // Parse receiver
-  // FIXME: receiver as type-name/class-name
-  ParseAssignmentExpression();
+  if (Tok.getKind() == tok::identifier &&
+      Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))
+    ConsumeToken();
+  else
+    ParseAssignmentExpression();
   // Parse objc-selector
   IdentifierInfo *selIdent = ParseObjCSelector();
   if (Tok.getKind() == tok::colon) {
@@ -1024,7 +1027,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     return 0;
   }
   ConsumeBracket(); // consume ']'
-  return 0;
+  return 0; // FIXME: return a message expr AST!
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

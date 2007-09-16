@@ -182,7 +182,7 @@ private:
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);  
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
-  Decl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
+  ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 
   void HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,

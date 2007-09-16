@@ -815,8 +815,8 @@ Sema::DeclTy *Sema::ParseFunctionDefBody(DeclTy *D, StmtTy *Body) {
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
-Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
-                                     Scope *S) {
+ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, 
+                                           IdentifierInfo &II, Scope *S) {
   if (getLangOptions().C99)  // Extension in C99.
     Diag(Loc, diag::ext_implicit_function_decl, II.getName());
   else  // Legal in C90, but warn about it.
@@ -842,7 +842,7 @@ Decl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
   while (S->getParent())
     S = S->getParent();
   
-  return static_cast<Decl*>(ActOnDeclarator(S, D, 0));
+  return dyn_cast<ScopedDecl>(static_cast<Decl*>(ActOnDeclarator(S, D, 0)));
 }
 
 

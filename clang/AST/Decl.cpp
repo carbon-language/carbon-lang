@@ -28,6 +28,42 @@ static unsigned nFieldDecls = 0;
 static unsigned nInterfaceDecls = 0;
 static bool StatSwitch = false;
 
+const char *Decl::getDeclKindName() {
+  switch (DeclKind) {
+  default: assert(0 && "Unknown decl kind!");
+  case Typedef:
+    return "Typedef";
+  case Function:
+    return "Function";
+  case BlockVariable:
+    return "BlockVariable";
+  case FileVariable:
+    return "FileVariable";
+  case ParmVariable:
+    return "ParmVariable";
+  case EnumConstant:
+    return "EnumConstant";
+  case ObjcInterface:
+    return "ObjcInterface";
+  case ObjcClass:
+    return "ObjcClass";
+  case ObjcMethod:
+    return "ObjcMethod";
+  case ObjcProtoMethod:
+    return "ObjcProtoMethod";
+  case ObjcProtocol:
+    return "ObjcProtocol";
+  case Struct:
+    return "Struct";
+  case Union:
+    return "Union";
+  case Class:
+    return "Class";
+  case Enum:
+    return "Enum";
+  }
+}
+
 bool Decl::CollectingStats(bool enable) {
   if (enable) StatSwitch = true;
 	return StatSwitch;
