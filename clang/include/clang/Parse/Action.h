@@ -21,7 +21,7 @@ namespace clang {
   // Semantic.
   class DeclSpec;
   class Declarator;
-  class ObjcKeywordInfo;
+  struct ObjcKeywordInfo;
   class AttributeList;
   // Parse.
   class Scope;

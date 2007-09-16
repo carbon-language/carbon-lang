@@ -203,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\clang\AST\ASTConsumer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\clang\AST\ASTContext.h"
 				>
 			</File>
@@ -224,6 +228,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\AST\ExprCXX.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\clang\AST\PrettyPrinter.h"
 				>
 			</File>
 			<File

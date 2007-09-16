@@ -150,7 +150,8 @@ public:
   
   /// getFloatInfo - Return the size of 'float' for this target, in bits.  
   void getFloatInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
-    Align = Size = 32;  // FIXME: implement correctly.
+    Align = 32;  // FIXME: implement correctly.
+    Size = 32;
   }
 
   /// getDoubleInfo - Return the size of 'double' for this target, in bits.  
@@ -191,31 +192,31 @@ public:
   unsigned getCharWidth(SourceLocation Loc) {
     uint64_t Size; unsigned Align;
     getCharInfo(Size, Align, Loc);
-    return Size;
+    return static_cast<unsigned>(Size);
   }
   
   unsigned getWCharWidth(SourceLocation Loc) {
     uint64_t Size; unsigned Align;
     getWCharInfo(Size, Align, Loc);
-    return Size;
+    return static_cast<unsigned>(Size);
   }
   
   unsigned getIntWidth(SourceLocation Loc) {
     uint64_t Size; unsigned Align;
     getIntInfo(Size, Align, Loc);
-    return Size;
+    return static_cast<unsigned>(Size);
   }
   
   unsigned getLongWidth(SourceLocation Loc) {
     uint64_t Size; unsigned Align;
     getLongInfo(Size, Align, Loc);
-    return Size;
+    return static_cast<unsigned>(Size);
   }
 
   unsigned getLongLongWidth(SourceLocation Loc) {
     uint64_t Size; unsigned Align;
     getLongLongInfo(Size, Align, Loc);
-    return Size;
+    return static_cast<unsigned>(Size);
   }
 private:
   void ComputeWCharInfo(SourceLocation Loc);

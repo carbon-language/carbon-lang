@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="clangAnalysis"
-	ProjectGUID="{6C98551A-4C36-4E74-8419-4D3EEEC9D8E0}"
-	RootNamespace="clangAnalysis"
+	Name="clangRewrite"
+	ProjectGUID="{F9FBDDA2-9EE1-473C-A456-BE20B7B2439D}"
+	RootNamespace="clangRewrite"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -41,16 +41,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\include;..\..\..\..\include;..\..\..\..\win32"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;__STDC_LIMIT_MACROS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE;__STDC_LIMIT_MACROS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4146"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -106,14 +104,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\include;..\..\..\..\include;..\..\..\..\win32"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;__STDC_LIMIT_MACROS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE;__STDC_LIMIT_MACROS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
-				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4146"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -153,15 +149,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\Analysis\DeadStores.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Analysis\LiveVariables.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Analysis\UnintializedValues.cpp"
+				RelativePath="..\..\Rewrite\Rewriter.cpp"
 				>
 			</File>
 		</Filter>
@@ -171,35 +159,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\include\clang\Analysis\CFGStmtVisitor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\CFGVarDeclVisitor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Analysis\DataflowSolver.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\DataflowStmtVisitor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\DataflowValues.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\LiveVariables.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\LocalCheckers.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\UninitializedValues.h"
+				RelativePath="..\..\include\clang\Rewrite\Rewriter.h"
 				>
 			</File>
 		</Filter>

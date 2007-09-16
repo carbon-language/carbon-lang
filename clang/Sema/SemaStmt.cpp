@@ -280,7 +280,8 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   
   // Get the bitwidth of the switched-on value before promotions.  We must
   // convert the integer case values to this width before comparison.
-  unsigned CondWidth = Context.getTypeSize(CondType, SwitchLoc);
+  unsigned CondWidth = 
+    static_cast<unsigned>(Context.getTypeSize(CondType, SwitchLoc));
   bool CondIsSigned = CondType->isSignedIntegerType();
   
   // Accumulate all of the case values in a vector so that we can sort them
