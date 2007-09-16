@@ -730,6 +730,9 @@ QualType ASTContext::getFloatingTypeOfSizeWithinDomain(
     }
   }
   assert(0 && "getFloatingTypeOfSizeWithinDomain(): illegal domain");
+  //an invalid return value, but the assert
+  //will ensure that this code is never reached.
+  return VoidTy;
 }
 
 /// compareFloatingType - Handles 3 different combos: 

@@ -136,6 +136,11 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     
     return llvm::FunctionType::get(ResultType, ArgTys, isVarArg, 0);
   }
+
+  case Type::ObjcInterface:
+    assert(0 && "FIXME: add missing functionality here");
+    break;
+
   case Type::Tagged:
     const TagType &TT = cast<TagType>(Ty);
     const TagDecl *TD = TT.getDecl();

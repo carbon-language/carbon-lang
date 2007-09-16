@@ -134,6 +134,9 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
     return EmitLoadOfOCUElementLValue(LV, ExprType);
   
   assert(0 && "Bitfield ref not impl!");
+  //an invalid RValue, but the assert will
+  //ensure that this point is never reached
+  return RValue();
 }
 
 // If this is a reference to a subset of the elements of a vector, either
@@ -270,6 +273,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LValue::MakeAddr(CGM.GetAddrOfGlobalDecl(D));
   }
   assert(0 && "Unimp declref");
+  //an invalid LValue, but the assert will
+  //ensure that this point is never reached.
+  return LValue();
 }
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
