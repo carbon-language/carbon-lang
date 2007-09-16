@@ -1685,8 +1685,8 @@ Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   return new UnaryOperator(Input, Opc, resultType, OpLoc);
 }
 
-/// ParseAddrLabel - Parse the GNU address of label extension: "&&foo".
-Sema::ExprResult Sema::ParseAddrLabel(SourceLocation OpLoc, 
+/// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
+Sema::ExprResult Sema::ActOnAddrLabel(SourceLocation OpLoc, 
                                       SourceLocation LabLoc,
                                       IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
@@ -1701,7 +1701,7 @@ Sema::ExprResult Sema::ParseAddrLabel(SourceLocation OpLoc,
                            Context.getPointerType(Context.VoidTy));
 }
 
-Sema::ExprResult Sema::ParseStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
+Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
                                      SourceLocation RPLoc) { // "({..})"
   Stmt *SubStmt = static_cast<Stmt*>(substmt);
   assert(SubStmt && isa<CompoundStmt>(SubStmt) && "Invalid action invocation!");
@@ -1725,7 +1725,7 @@ Sema::ExprResult Sema::ParseStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
   return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
 }
 
-Sema::ExprResult Sema::ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
+Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
                                             SourceLocation TypeLoc,
                                             TypeTy *argty,
                                             OffsetOfComponent *CompPtr,
@@ -1799,7 +1799,7 @@ Sema::ExprResult Sema::ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
 }
 
 
-Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
+Sema::ExprResult Sema::ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                                 TypeTy *arg1, TypeTy *arg2,
                                                 SourceLocation RPLoc) {
   QualType argT1 = QualType::getFromOpaquePtr(arg1);
@@ -1810,7 +1810,7 @@ Sema::ExprResult Sema::ParseTypesCompatibleExpr(SourceLocation BuiltinLoc,
   return new TypesCompatibleExpr(Context.IntTy, BuiltinLoc, argT1, argT2,RPLoc);
 }
 
-Sema::ExprResult Sema::ParseChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond, 
+Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond, 
                                        ExprTy *expr1, ExprTy *expr2,
                                        SourceLocation RPLoc) {
   Expr *CondExpr = static_cast<Expr*>(cond);

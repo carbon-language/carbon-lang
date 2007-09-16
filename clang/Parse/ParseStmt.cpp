@@ -84,7 +84,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 
   default:
     if (!OnlyStatement && isDeclarationSpecifier()) {
-      return Actions.ParseDeclStmt(ParseDeclaration(Declarator::BlockContext));
+      return Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
     } else if (Tok.getKind() == tok::r_brace) {
       Diag(Tok, diag::err_expected_statement);
       return true;
@@ -100,7 +100,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       }
       // Otherwise, eat the semicolon.
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-      return Actions.ParseExprStmt(Res.Val);
+      return Actions.ActOnExprStmt(Res.Val);
     }
     
   case tok::kw_case:                // C99 6.8.1: labeled-statement
@@ -111,7 +111,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::l_brace:                // C99 6.8.2: compound-statement
     return ParseCompoundStatement();
   case tok::semi:                   // C99 6.8.3p3: expression[opt] ';'
-    return Actions.ParseNullStmt(ConsumeToken());
+    return Actions.ActOnNullStmt(ConsumeToken());
     
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement();
@@ -193,9 +193,9 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     
     // Broken substmt shouldn't prevent the label from being added to the AST.
     if (SubStmt.isInvalid)
-      SubStmt = Actions.ParseNullStmt(ColonLoc);
+      SubStmt = Actions.ActOnNullStmt(ColonLoc);
     
-    return Actions.ParseLabelStmt(IdentTok.getLocation(), 
+    return Actions.ActOnLabelStmt(IdentTok.getLocation(), 
                                   IdentTok.getIdentifierInfo(),
                                   ColonLoc, SubStmt.Val);
   }
@@ -233,7 +233,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
     ParseDeclarator(DeclaratorInfo);
     
     DeclTy *Decl = ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
-    return Decl ? Actions.ParseDeclStmt(Decl) : 0;
+    return Decl ? Actions.ActOnDeclStmt(Decl) : 0;
   }
   
   // Otherwise, this is an expression.  Seed it with II and parse it.
@@ -248,7 +248,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   } else {
     ConsumeToken();
     // Convert expr to a stmt.
-    return Actions.ParseExprStmt(Res.Val);
+    return Actions.ActOnExprStmt(Res.Val);
   }
 }
 
@@ -302,9 +302,9 @@ Parser::StmtResult Parser::ParseCaseStatement() {
 
   // Broken substmt shouldn't prevent the case from being added to the AST.
   if (SubStmt.isInvalid)
-    SubStmt = Actions.ParseNullStmt(ColonLoc);
+    SubStmt = Actions.ActOnNullStmt(ColonLoc);
   
-  return Actions.ParseCaseStmt(CaseLoc, LHS.Val, DotDotDotLoc, RHSVal, ColonLoc,
+  return Actions.ActOnCaseStmt(CaseLoc, LHS.Val, DotDotDotLoc, RHSVal, ColonLoc,
                                SubStmt.Val);
 }
 
@@ -335,7 +335,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
   if (SubStmt.isInvalid)
     return true;
   
-  return Actions.ParseDefaultStmt(DefaultLoc, ColonLoc, SubStmt.Val, CurScope);
+  return Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc, SubStmt.Val, CurScope);
 }
 
 
@@ -382,7 +382,7 @@ Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
 
 
 /// ParseCompoundStatementBody - Parse a sequence of statements and invoke the
-/// ParseCompoundStmt action.  This expects the '{' to be the current token, and
+/// ActOnCompoundStmt action.  This expects the '{' to be the current token, and
 /// consume the '}' at the end of the block.  It does not manipulate the scope
 /// stack.
 Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
@@ -408,7 +408,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
       if (isDeclarationSpecifier()) {
         // FIXME: Save the __extension__ on the decl as a node somehow.
         // FIXME: disable extwarns.
-        R = Actions.ParseDeclStmt(ParseDeclaration(Declarator::BlockContext));
+        R = Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
       } else {
         // Otherwise this was a unary __extension__ marker.  Parse the
         // subexpression and add the __extension__ unary op. 
@@ -426,7 +426,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         
         // Eat the semicolon at the end of stmt and convert the expr into a stmt.
         ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
-        R = Actions.ParseExprStmt(Res.Val);
+        R = Actions.ActOnExprStmt(Res.Val);
       }
     }
     
@@ -441,7 +441,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   }
   
   SourceLocation RBraceLoc = ConsumeBrace();
-  return Actions.ParseCompoundStmt(LBraceLoc, RBraceLoc,
+  return Actions.ActOnCompoundStmt(LBraceLoc, RBraceLoc,
                                    &Stmts[0], Stmts.size(), isStmtExpr);
 }
 
@@ -485,7 +485,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
 
   // Broken substmt shouldn't prevent the label from being added to the AST.
   if (CondStmt.isInvalid)
-    CondStmt = Actions.ParseNullStmt(Tok.getLocation());
+    CondStmt = Actions.ActOnNullStmt(Tok.getLocation());
   
   // Pop the 'if' scope if needed.
   if (NeedsInnerScope) ExitScope();
@@ -509,13 +509,13 @@ Parser::StmtResult Parser::ParseIfStatement() {
     if (NeedsInnerScope) ExitScope();
     
     if (ElseStmt.isInvalid)
-      ElseStmt = Actions.ParseNullStmt(ElseLoc);
+      ElseStmt = Actions.ActOnNullStmt(ElseLoc);
   }
   
   if (getLang().C99)
     ExitScope();
 
-  return Actions.ParseIfStmt(IfLoc, CondExp.Val, CondStmt.Val,
+  return Actions.ActOnIfStmt(IfLoc, CondExp.Val, CondStmt.Val,
                              ElseLoc, ElseStmt.Val);
 }
 
@@ -547,7 +547,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
     return true;
   }
     
-  StmtResult Switch = Actions.StartSwitchStmt(Cond.Val);
+  StmtResult Switch = Actions.ActOnStartOfSwitchStmt(Cond.Val);
   
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
@@ -562,13 +562,13 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   if (NeedsInnerScope) ExitScope();
   
   if (Body.isInvalid) {
-    Body = Actions.ParseNullStmt(Tok.getLocation());
+    Body = Actions.ActOnNullStmt(Tok.getLocation());
     // FIXME: Remove the case statement list from the Switch statement.
   }
   
   ExitScope();
   
-  return Actions.FinishSwitchStmt(SwitchLoc, Switch.Val, Body.Val);
+  return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.Val, Body.Val);
 }
 
 /// ParseWhileStatement
@@ -611,7 +611,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   
   if (Cond.isInvalid || Body.isInvalid) return true;
   
-  return Actions.ParseWhileStmt(WhileLoc, Cond.Val, Body.Val);
+  return Actions.ActOnWhileStmt(WhileLoc, Cond.Val, Body.Val);
 }
 
 /// ParseDoStatement
@@ -664,7 +664,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   
   if (Cond.isInvalid || Body.isInvalid) return true;
   
-  return Actions.ParseDoStmt(DoLoc, Body.Val, WhileLoc, Cond.Val);
+  return Actions.ActOnDoStmt(DoLoc, Body.Val, WhileLoc, Cond.Val);
 }
 
 /// ParseForStatement
@@ -704,14 +704,14 @@ Parser::StmtResult Parser::ParseForStatement() {
     if (!getLang().C99)   // Use of C99-style for loops in C90 mode?
       Diag(Tok, diag::ext_c99_variable_decl_in_for_loop);
     DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
-    StmtResult stmtResult = Actions.ParseDeclStmt(aBlockVarDecl);
+    StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
     FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
   } else {
     Value = ParseExpression();
 
     // Turn the expression into a stmt.
     if (!Value.isInvalid) {
-      StmtResult R = Actions.ParseExprStmt(Value.Val);
+      StmtResult R = Actions.ActOnExprStmt(Value.Val);
       if (!R.isInvalid)
         FirstPart = R.Val;
     }
@@ -749,7 +749,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     Value = ParseExpression();
     if (!Value.isInvalid) {
       // Turn the expression into a stmt.
-      StmtResult R = Actions.ParseExprStmt(Value.Val);
+      StmtResult R = Actions.ActOnExprStmt(Value.Val);
       if (!R.isInvalid)
         ThirdPart = R.Val;
     }
@@ -776,7 +776,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   if (Body.isInvalid)
     return Body;
   
-  return Actions.ParseForStmt(ForLoc, LParenLoc, FirstPart, SecondPart,
+  return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, SecondPart,
                               ThirdPart, RParenLoc, Body.Val);
 }
 
@@ -793,7 +793,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
   
   StmtResult Res;
   if (Tok.getKind() == tok::identifier) {
-    Res = Actions.ParseGotoStmt(GotoLoc, Tok.getLocation(),
+    Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
                                 Tok.getIdentifierInfo());
     ConsumeToken();
   } else if (Tok.getKind() == tok::star && !getLang().NoExtensions) {
@@ -805,7 +805,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
       SkipUntil(tok::semi, false, true);
       return true;
     }
-    Res = Actions.ParseIndirectGotoStmt(GotoLoc, StarLoc, R.Val);
+    Res = Actions.ActOnIndirectGotoStmt(GotoLoc, StarLoc, R.Val);
   } else {
     Diag(Tok, diag::err_expected_ident);
     return true;
@@ -822,7 +822,7 @@ Parser::StmtResult Parser::ParseGotoStatement() {
 ///
 Parser::StmtResult Parser::ParseContinueStatement() {
   SourceLocation ContinueLoc = ConsumeToken();  // eat the 'continue'.
-  return Actions.ParseContinueStmt(ContinueLoc, CurScope);
+  return Actions.ActOnContinueStmt(ContinueLoc, CurScope);
 }
 
 /// ParseBreakStatement
@@ -833,7 +833,7 @@ Parser::StmtResult Parser::ParseContinueStatement() {
 ///
 Parser::StmtResult Parser::ParseBreakStatement() {
   SourceLocation BreakLoc = ConsumeToken();  // eat the 'break'.
-  return Actions.ParseBreakStmt(BreakLoc, CurScope);
+  return Actions.ActOnBreakStmt(BreakLoc, CurScope);
 }
 
 /// ParseReturnStatement
@@ -851,7 +851,7 @@ Parser::StmtResult Parser::ParseReturnStatement() {
       return true;
     }
   }
-  return Actions.ParseReturnStmt(ReturnLoc, R.Val);
+  return Actions.ActOnReturnStmt(ReturnLoc, R.Val);
 }
 
 /// ParseAsmStatement - Parse a GNU extended asm statement.

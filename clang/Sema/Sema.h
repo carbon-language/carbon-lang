@@ -203,47 +203,47 @@ private:
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
-  virtual StmtResult ParseExprStmt(ExprTy *Expr);
+  virtual StmtResult ActOnExprStmt(ExprTy *Expr);
   
-  virtual StmtResult ParseNullStmt(SourceLocation SemiLoc);
-  virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
+  virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc);
+  virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts,
                                        bool isStmtExpr);
-  virtual StmtResult ParseDeclStmt(DeclTy *Decl);
-  virtual StmtResult ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+  virtual StmtResult ActOnDeclStmt(DeclTy *Decl);
+  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
                                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                                    SourceLocation ColonLoc, StmtTy *SubStmt);
-  virtual StmtResult ParseDefaultStmt(SourceLocation DefaultLoc,
+  virtual StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                       SourceLocation ColonLoc, StmtTy *SubStmt,
                                       Scope *CurScope);
-  virtual StmtResult ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+  virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                                     SourceLocation ColonLoc, StmtTy *SubStmt);
-  virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+  virtual StmtResult ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
-  virtual StmtResult StartSwitchStmt(ExprTy *Cond);
-  virtual StmtResult FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, 
+  virtual StmtResult ActOnStartOfSwitchStmt(ExprTy *Cond);
+  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, 
                                       ExprTy *Body);
-  virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
+  virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body);
-  virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
                                  SourceLocation WhileLoc, ExprTy *Cond);
   
-  virtual StmtResult ParseForStmt(SourceLocation ForLoc, 
+  virtual StmtResult ActOnForStmt(SourceLocation ForLoc, 
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second, ExprTy *Third,
                                   SourceLocation RParenLoc, StmtTy *Body);
-  virtual StmtResult ParseGotoStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation LabelLoc,
                                    IdentifierInfo *LabelII);
-  virtual StmtResult ParseIndirectGotoStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
                                            SourceLocation StarLoc,
                                            ExprTy *DestExp);
-  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc,
+  virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
                                        Scope *CurScope);
-  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc, Scope *CurScope);
+  virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc, Scope *CurScope);
   
-  virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
+  virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);
   
   //===--------------------------------------------------------------------===//
@@ -309,39 +309,39 @@ public:
                                         SourceLocation ColonLoc,
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
 
-  /// ParseAddrLabel - Parse the GNU address of label extension: "&&foo".
-  virtual ExprResult ParseAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
+  /// ActOnAddrLabel - Parse the GNU address of label extension: "&&foo".
+  virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                     IdentifierInfo *LabelII);
   
-  virtual ExprResult ParseStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
+  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
                                    SourceLocation RPLoc); // "({..})"
 
   /// __builtin_offsetof(type, a.b[123][456].c)
-  virtual ExprResult ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
                                           SourceLocation TypeLoc, TypeTy *Arg1,
                                           OffsetOfComponent *CompPtr,
                                           unsigned NumComponents,
                                           SourceLocation RParenLoc);
     
   // __builtin_types_compatible_p(type1, type2)
-  virtual ExprResult ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
+  virtual ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                               TypeTy *arg1, TypeTy *arg2,
                                               SourceLocation RPLoc);
                                               
   // __builtin_choose_expr(constExpr, expr1, expr2)
-  virtual ExprResult ParseChooseExpr(SourceLocation BuiltinLoc, 
+  virtual ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc, 
                                      ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
                                      SourceLocation RPLoc);
   
-  /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
+  /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
+  virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,
                                    SourceLocation RAngleBracketLoc,
                                    SourceLocation LParenLoc, ExprTy *E,
                                    SourceLocation RParenLoc);
 
-  /// ParseCXXBoolLiteral - Parse {true,false} literals.
-  virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
+  /// ActOnCXXBoolLiteral - Parse {true,false} literals.
+  virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
   
   // ParseObjCStringLiteral - Parse Objective-C string literals.
@@ -406,7 +406,7 @@ private:
   AssignmentCheckResult CheckAssignmentConstraints(QualType lhs, QualType rhs);
   
   // CheckSingleAssignmentConstraints - Currently used by ActOnCallExpr,
-  // CheckAssignmentOperands, and ParseReturnStmt. Prior to type checking, 
+  // CheckAssignmentOperands, and ActOnReturnStmt. Prior to type checking, 
   // this routine performs the default function/array converions.
   AssignmentCheckResult CheckSingleAssignmentConstraints(QualType lhs, 
                                                          Expr *&rExpr);

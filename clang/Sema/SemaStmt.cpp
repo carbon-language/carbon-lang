@@ -21,28 +21,28 @@
 #include "clang/Lex/IdentifierTable.h"
 using namespace clang;
 
-Sema::StmtResult Sema::ParseExprStmt(ExprTy *expr) {
+Sema::StmtResult Sema::ActOnExprStmt(ExprTy *expr) {
   Expr *E = static_cast<Expr*>(expr);
-  assert(E && "ParseExprStmt(): missing expression");
+  assert(E && "ActOnExprStmt(): missing expression");
   return E;
 }
 
 
-Sema::StmtResult Sema::ParseNullStmt(SourceLocation SemiLoc) {
+Sema::StmtResult Sema::ActOnNullStmt(SourceLocation SemiLoc) {
   return new NullStmt(SemiLoc);
 }
 
-Sema::StmtResult Sema::ParseDeclStmt(DeclTy *decl) {
+Sema::StmtResult Sema::ActOnDeclStmt(DeclTy *decl) {
   if (decl) {
     ScopedDecl *SD = dyn_cast<ScopedDecl>(static_cast<Decl *>(decl));
-    assert(SD && "Sema::ParseDeclStmt(): expected ScopedDecl");
+    assert(SD && "Sema::ActOnDeclStmt(): expected ScopedDecl");
     return new DeclStmt(SD);
   } else 
     return true; // error
 }
 
 Action::StmtResult 
-Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
+Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                         StmtTy **elts, unsigned NumElts, bool isStmtExpr) {
   Stmt **Elts = reinterpret_cast<Stmt**>(elts);
   // If we're in C89 mode, check that we don't have any decls after stmts.  If
@@ -93,7 +93,7 @@ Sema::ParseCompoundStmt(SourceLocation L, SourceLocation R,
 }
 
 Action::StmtResult
-Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
+Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
                     SourceLocation DotDotDotLoc, ExprTy *rhsval,
                     SourceLocation ColonLoc, StmtTy *subStmt) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt);
@@ -126,7 +126,7 @@ Sema::ParseCaseStmt(SourceLocation CaseLoc, ExprTy *lhsval,
 }
 
 Action::StmtResult
-Sema::ParseDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
+Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
                        StmtTy *subStmt, Scope *CurScope) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt);
   
@@ -142,7 +142,7 @@ Sema::ParseDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
 }
 
 Action::StmtResult
-Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+Sema::ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                      SourceLocation ColonLoc, StmtTy *subStmt) {
   Stmt *SubStmt = static_cast<Stmt*>(subStmt);
   // Look up the record for this label identifier.
@@ -170,11 +170,11 @@ Sema::ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
 }
 
 Action::StmtResult 
-Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                   StmtTy *ThenVal, SourceLocation ElseLoc,
                   StmtTy *ElseVal) {
   Expr *condExpr = (Expr *)CondVal;
-  assert(condExpr && "ParseIfStmt(): missing expression");
+  assert(condExpr && "ActOnIfStmt(): missing expression");
   
   DefaultFunctionArrayConversion(condExpr);
   QualType condType = condExpr->getType();
@@ -187,7 +187,7 @@ Sema::ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
 }
 
 Action::StmtResult
-Sema::StartSwitchStmt(ExprTy *cond) {
+Sema::ActOnStartOfSwitchStmt(ExprTy *cond) {
   Expr *Cond = static_cast<Expr*>(cond);
   
   // C99 6.8.4.2p5 - Integer promotions are performed on the controlling expr.
@@ -260,7 +260,7 @@ namespace {
 }
 
 Action::StmtResult
-Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
+Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
   Stmt *BodyStmt = (Stmt*)Body;
   
   SwitchStmt *SS = SwitchStack.back();
@@ -440,9 +440,9 @@ Sema::FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
 }
 
 Action::StmtResult
-Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
+Sema::ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
   Expr *condExpr = (Expr *)Cond;
-  assert(condExpr && "ParseWhileStmt(): missing expression");
+  assert(condExpr && "ActOnWhileStmt(): missing expression");
   
   DefaultFunctionArrayConversion(condExpr);
   QualType condType = condExpr->getType();
@@ -455,10 +455,10 @@ Sema::ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond, StmtTy *Body) {
 }
 
 Action::StmtResult
-Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+Sema::ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
                   SourceLocation WhileLoc, ExprTy *Cond) {
   Expr *condExpr = (Expr *)Cond;
-  assert(condExpr && "ParseDoStmt(): missing expression");
+  assert(condExpr && "ActOnDoStmt(): missing expression");
   
   DefaultFunctionArrayConversion(condExpr);
   QualType condType = condExpr->getType();
@@ -471,7 +471,7 @@ Sema::ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
 }
 
 Action::StmtResult 
-Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
+Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc, 
                    StmtTy *first, ExprTy *second, ExprTy *third,
                    SourceLocation RParenLoc, StmtTy *body) {
   Stmt *First  = static_cast<Stmt*>(first);
@@ -505,7 +505,7 @@ Sema::ParseForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 
 
 Action::StmtResult 
-Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
+Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
                     IdentifierInfo *LabelII) {
   // Look up the record for this label identifier.
   LabelStmt *&LabelDecl = LabelMap[LabelII];
@@ -518,7 +518,7 @@ Sema::ParseGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,
 }
 
 Action::StmtResult 
-Sema::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
+Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
                             ExprTy *DestExp) {
   // FIXME: Verify that the operand is convertible to void*.
   
@@ -526,7 +526,7 @@ Sema::ParseIndirectGotoStmt(SourceLocation GotoLoc,SourceLocation StarLoc,
 }
 
 Action::StmtResult 
-Sema::ParseContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
+Sema::ActOnContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
   Scope *S = CurScope->getContinueParent();
   if (!S) {
     // C99 6.8.6.2p1: A break shall appear only in or as a loop body.
@@ -538,7 +538,7 @@ Sema::ParseContinueStmt(SourceLocation ContinueLoc, Scope *CurScope) {
 }
 
 Action::StmtResult 
-Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
+Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
   Scope *S = CurScope->getBreakParent();
   if (!S) {
     // C99 6.8.6.3p1: A break shall appear only in or as a switch/loop body.
@@ -551,7 +551,7 @@ Sema::ParseBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 
 
 Action::StmtResult
-Sema::ParseReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
+Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   Expr *RetValExp = static_cast<Expr *>(rex);
   QualType lhsType = CurFunctionDecl->getResultType();
 

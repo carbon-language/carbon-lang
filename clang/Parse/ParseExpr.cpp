@@ -578,7 +578,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     }
     
     Diag(AmpAmpLoc, diag::ext_gnu_address_of_label);
-    Res = Actions.ParseAddrLabel(AmpAmpLoc, Tok.getLocation(),
+    Res = Actions.ActOnAddrLabel(AmpAmpLoc, Tok.getLocation(),
                                  Tok.getIdentifierInfo());
     ConsumeToken();
     return Res;
@@ -848,7 +848,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
         Comps.back().LocEnd =
           MatchRHSPunctuation(tok::r_square, Comps.back().LocStart);
       } else if (Tok.getKind() == tok::r_paren) {
-        Res = Actions.ParseBuiltinOffsetOf(StartLoc, TypeLoc, Ty, &Comps[0],
+        Res = Actions.ActOnBuiltinOffsetOf(StartLoc, TypeLoc, Ty, &Comps[0],
                                            Comps.size(), ConsumeParen());
         break;
       } else {
@@ -884,7 +884,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    Res = Actions.ParseChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
+    Res = Actions.ActOnChooseExpr(StartLoc, Cond.Val, Expr1.Val, Expr2.Val,
                                   ConsumeParen());
     break;
   }
@@ -900,7 +900,7 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
       Diag(Tok, diag::err_expected_rparen);
       return ExprResult(true);
     }
-    Res = Actions.ParseTypesCompatibleExpr(StartLoc, Ty1, Ty2, ConsumeParen());
+    Res = Actions.ActOnTypesCompatibleExpr(StartLoc, Ty1, Ty2, ConsumeParen());
     break;
   }      
   
@@ -937,7 +937,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
     
     // If the substmt parsed correctly, build the AST node.
     if (!Stmt.isInvalid && Tok.getKind() == tok::r_paren)
-      Result = Actions.ParseStmtExpr(OpenLoc, Stmt.Val, Tok.getLocation());
+      Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.Val, Tok.getLocation());
     
   } else if (ExprType >= CompoundLiteral && isTypeSpecifierQualifier()) {
     // Otherwise, this is a compound literal expression or cast expression.

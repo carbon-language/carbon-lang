@@ -16,9 +16,9 @@
 #include "clang/AST/ASTContext.h"
 using namespace clang;
 
-/// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
+/// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
 Action::ExprResult
-Sema::ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
+Sema::ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                     SourceLocation LAngleBracketLoc, TypeTy *Ty,
                     SourceLocation RAngleBracketLoc,
                     SourceLocation LParenLoc, ExprTy *E,
@@ -36,9 +36,9 @@ Sema::ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
   return new CXXCastExpr(Op, QualType::getFromOpaquePtr(Ty), (Expr*)E, OpLoc);
 }
 
-/// ParseCXXBoolLiteral - Parse {true,false} literals.
+/// ActOnCXXBoolLiteral - Parse {true,false} literals.
 Action::ExprResult
-Sema::ParseCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
+Sema::ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
   assert((Kind != tok::kw_true || Kind != tok::kw_false) &&
          "Unknown C++ Boolean value!");
   return new CXXBoolLiteralExpr(Kind == tok::kw_true, Context.BoolTy, OpLoc);

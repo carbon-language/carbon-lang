@@ -196,88 +196,88 @@ public:
   // Statement Parsing Callbacks.
   //===--------------------------------------------------------------------===//
   
-  virtual StmtResult ParseNullStmt(SourceLocation SemiLoc) {
+  virtual StmtResult ActOnNullStmt(SourceLocation SemiLoc) {
     return 0;
   }
   
-  virtual StmtResult ParseCompoundStmt(SourceLocation L, SourceLocation R,
+  virtual StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        StmtTy **Elts, unsigned NumElts,
                                        bool isStmtExpr) {
     return 0;
   }
-  virtual StmtResult ParseDeclStmt(DeclTy *Decl) {
+  virtual StmtResult ActOnDeclStmt(DeclTy *Decl) {
     return 0;
   }
   
-  virtual StmtResult ParseExprStmt(ExprTy *Expr) {
+  virtual StmtResult ActOnExprStmt(ExprTy *Expr) {
     return StmtResult(Expr);
   }
   
-  /// ParseCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
+  /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
   /// which can specify an RHS value.
-  virtual StmtResult ParseCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
+  virtual StmtResult ActOnCaseStmt(SourceLocation CaseLoc, ExprTy *LHSVal,
                                    SourceLocation DotDotDotLoc, ExprTy *RHSVal,
                                    SourceLocation ColonLoc, StmtTy *SubStmt) {
     return 0;
   }
-  virtual StmtResult ParseDefaultStmt(SourceLocation DefaultLoc,
+  virtual StmtResult ActOnDefaultStmt(SourceLocation DefaultLoc,
                                       SourceLocation ColonLoc, StmtTy *SubStmt,
                                       Scope *CurScope){
     return 0;
   }
   
-  virtual StmtResult ParseLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
+  virtual StmtResult ActOnLabelStmt(SourceLocation IdentLoc, IdentifierInfo *II,
                                     SourceLocation ColonLoc, StmtTy *SubStmt) {
     return 0;
   }
   
-  virtual StmtResult ParseIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
+  virtual StmtResult ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal) {
     return 0; 
   }
   
-  virtual StmtResult StartSwitchStmt(ExprTy *Cond) {
+  virtual StmtResult ActOnStartOfSwitchStmt(ExprTy *Cond) {
     return 0;
   }
   
-  virtual StmtResult FinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
-                                      ExprTy *Body) {
+  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc, 
+                                           StmtTy *Switch, ExprTy *Body) {
     return 0;
   }
 
-  virtual StmtResult ParseWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
+  virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body) {
     return 0;
   }
-  virtual StmtResult ParseDoStmt(SourceLocation DoLoc, StmtTy *Body,
+  virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,
                                  SourceLocation WhileLoc, ExprTy *Cond) {
     return 0;
   }
-  virtual StmtResult ParseForStmt(SourceLocation ForLoc, 
+  virtual StmtResult ActOnForStmt(SourceLocation ForLoc, 
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second, ExprTy *Third,
                                   SourceLocation RParenLoc, StmtTy *Body) {
     return 0;
   }
-  virtual StmtResult ParseGotoStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation LabelLoc,
                                    IdentifierInfo *LabelII) {
     return 0;
   }
-  virtual StmtResult ParseIndirectGotoStmt(SourceLocation GotoLoc,
+  virtual StmtResult ActOnIndirectGotoStmt(SourceLocation GotoLoc,
                                            SourceLocation StarLoc,
                                            ExprTy *DestExp) {
     return 0;
   }
-  virtual StmtResult ParseContinueStmt(SourceLocation ContinueLoc,
+  virtual StmtResult ActOnContinueStmt(SourceLocation ContinueLoc,
                                        Scope *CurScope) {
     return 0;
   }
-  virtual StmtResult ParseBreakStmt(SourceLocation GotoLoc, Scope *CurScope) {
+  virtual StmtResult ActOnBreakStmt(SourceLocation GotoLoc, Scope *CurScope) {
     return 0;
   }
-  virtual StmtResult ParseReturnStmt(SourceLocation ReturnLoc,
+  virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp) {
     return 0;
   }
@@ -383,12 +383,12 @@ public:
   
   //===---------------------- GNU Extension Expressions -------------------===//
 
-  virtual ExprResult ParseAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
+  virtual ExprResult ActOnAddrLabel(SourceLocation OpLoc, SourceLocation LabLoc,
                                     IdentifierInfo *LabelII) { // "&&foo"
     return 0;
   }
   
-  virtual ExprResult ParseStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
+  virtual ExprResult ActOnStmtExpr(SourceLocation LPLoc, StmtTy *SubStmt,
                                    SourceLocation RPLoc) { // "({..})"
     return 0;
   }
@@ -403,7 +403,7 @@ public:
     } U;
   };
   
-  virtual ExprResult ParseBuiltinOffsetOf(SourceLocation BuiltinLoc,
+  virtual ExprResult ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
                                           SourceLocation TypeLoc, TypeTy *Arg1,
                                           OffsetOfComponent *CompPtr,
                                           unsigned NumComponents,
@@ -412,13 +412,13 @@ public:
   }
   
   // __builtin_types_compatible_p(type1, type2)
-  virtual ExprResult ParseTypesCompatibleExpr(SourceLocation BuiltinLoc, 
+  virtual ExprResult ActOnTypesCompatibleExpr(SourceLocation BuiltinLoc, 
                                               TypeTy *arg1, TypeTy *arg2,
                                               SourceLocation RPLoc) {
     return 0;
   }
   // __builtin_choose_expr(constExpr, expr1, expr2)
-  virtual ExprResult ParseChooseExpr(SourceLocation BuiltinLoc, 
+  virtual ExprResult ActOnChooseExpr(SourceLocation BuiltinLoc, 
                                      ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
                                      SourceLocation RPLoc) {
     return 0;
@@ -426,8 +426,8 @@ public:
 
   //===------------------------- C++ Expressions --------------------------===//
   
-  /// ParseCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
-  virtual ExprResult ParseCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
+  /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
+  virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,
                                    SourceLocation RAngleBracketLoc,
                                    SourceLocation LParenLoc, ExprTy *Op,
@@ -435,8 +435,8 @@ public:
     return 0;
   }
 
-  /// ParseCXXBoolLiteral - Parse {true,false} literals.
-  virtual ExprResult ParseCXXBoolLiteral(SourceLocation OpLoc,
+  /// ActOnCXXBoolLiteral - Parse {true,false} literals.
+  virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind) {
     return 0;
   }

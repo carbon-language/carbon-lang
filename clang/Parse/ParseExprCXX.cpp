@@ -60,7 +60,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
   ExprResult Result = ParseSimpleParenExpression(RParenLoc);
 
   if (!Result.isInvalid)
-    Result = Actions.ParseCXXCasts(OpLoc, Kind,
+    Result = Actions.ActOnCXXCasts(OpLoc, Kind,
                                    LAngleBracketLoc, CastTy, RAngleBracketLoc,
                                    LParenLoc, Result.Val, RParenLoc);
 
@@ -74,5 +74,5 @@ Parser::ExprResult Parser::ParseCXXCasts() {
 ///         'false'
 Parser::ExprResult Parser::ParseCXXBoolLiteral() {
   tok::TokenKind Kind = Tok.getKind();
-  return Actions.ParseCXXBoolLiteral(ConsumeToken(), Kind);
+  return Actions.ActOnCXXBoolLiteral(ConsumeToken(), Kind);
 }
