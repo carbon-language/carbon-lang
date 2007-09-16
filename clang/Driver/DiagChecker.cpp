@@ -51,7 +51,7 @@ static void FindDiagnostics(const std::string &Comment,
                             const char * const ExpectedStr) {
   // Find all expected diagnostics
   typedef std::string::size_type size_type;
-  size_type ColNo = std::string::npos;
+  size_type ColNo = 0;
 
   for (;;) {
     ColNo = Comment.find(ExpectedStr, ColNo);
