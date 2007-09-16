@@ -57,7 +57,7 @@ private:
   Kind DeclKind   :  8;
   
   /// InvalidDecl - This indicates a semantic error occurred.
-  int InvalidDecl :  1;
+  unsigned int InvalidDecl :  1;
 
 protected:
   Decl(Kind DK) : DeclKind(DK), InvalidDecl(0) {
