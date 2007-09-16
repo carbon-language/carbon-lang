@@ -486,12 +486,7 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   // double.
   MVT::ValueType VT = CFP->getValueType(0);
   bool isDouble = VT == MVT::f64;
-  ConstantFP *LLVMC = ConstantFP::get(VT==MVT::f64 ? Type::DoubleTy :
-                                      VT==MVT::f32 ? Type::FloatTy :
-                                      VT==MVT::f80 ? Type::X86_FP80Ty :
-                                      VT==MVT::f128 ? Type::FP128Ty :
-                                      VT==MVT::ppcf128 ? Type::PPC_FP128Ty :
-                                      Type::VoidTy,   // error
+  ConstantFP *LLVMC = ConstantFP::get(MVT::getTypeForValueType(VT),
                                       CFP->getValueAPF());
   if (!UseCP) {
     if (VT!=MVT::f64 && VT!=MVT::f32)
@@ -4620,12 +4615,9 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand FudgeInReg;
     if (DestTy == MVT::f32)
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
-    else if (DestTy == MVT::f64)
+    else if (MVT::getSizeInBits(DestTy) > MVT::getSizeInBits(MVT::f32))
       // FIXME: Avoid the extend by construction the right constantpool?
-      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                                  CPIdx, NULL, 0, MVT::f32);
-    else if (DestTy == MVT::f80)
-      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f80, DAG.getEntryNode(),
+      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
                                   CPIdx, NULL, 0, MVT::f32);
     else 
       assert(0 && "Unexpected conversion");
@@ -4737,11 +4729,10 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     if (DestVT == MVT::f64) {
       // do nothing
       Result = Sub;
-    } else if (DestVT == MVT::f32) {
-     // if f32 then cast to f32
-      Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
-    } else if (DestVT == MVT::f80) {
-      Result = DAG.getNode(ISD::FP_EXTEND, MVT::f80, Sub);
+    } else if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(MVT::f64)) {
+      Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub);
+    } else if (MVT::getSizeInBits(DestVT) > MVT::getSizeInBits(MVT::f64)) {
+      Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
     }
     return Result;
   }
