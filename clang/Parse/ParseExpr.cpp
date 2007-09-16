@@ -269,7 +269,7 @@ ParseAssignmentExpressionWithLeadingStar(const Token &StarTok) {
   if (Res.isInvalid) return Res;
 
   // Combine StarTok + Res to get the new AST for the combined expression..
-  Res = Actions.ParseUnaryOp(StarTok.getLocation(), tok::star, Res.Val);
+  Res = Actions.ActOnUnaryOp(StarTok.getLocation(), tok::star, Res.Val);
   if (Res.isInvalid) return Res;
   
   
@@ -377,10 +377,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     if (!LHS.isInvalid) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
       if (TernaryMiddle.isInvalid)
-        LHS = Actions.ParseBinOp(OpToken.getLocation(), OpToken.getKind(),
+        LHS = Actions.ActOnBinOp(OpToken.getLocation(), OpToken.getKind(),
                                  LHS.Val, RHS.Val);
       else
-        LHS = Actions.ParseConditionalOp(OpToken.getLocation(), ColonLoc,
+        LHS = Actions.ActOnConditionalOp(OpToken.getLocation(), ColonLoc,
                                          LHS.Val, TernaryMiddle.Val, RHS.Val);
     } else {
       // We had a semantic error on the LHS.  Just free the RHS and continue.
@@ -482,7 +482,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
       // TODO: For cast expression with CastTy.
       Res = ParseCastExpression(false);
       if (!Res.isInvalid)
-        Res = Actions.ParseCastExpr(LParenLoc, CastTy, RParenLoc, Res.Val);
+        Res = Actions.ActOnCastExpr(LParenLoc, CastTy, RParenLoc, Res.Val);
       return Res;
     }
       
@@ -495,7 +495,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     // constant: integer-constant
     // constant: floating-constant
     
-    Res = Actions.ParseNumericConstant(Tok);
+    Res = Actions.ActOnNumericConstant(Tok);
     ConsumeToken();
     
     // These can be followed by postfix-expr pieces.
@@ -519,14 +519,14 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParsePostfixExpressionSuffix(Res);
   }
   case tok::char_constant:     // constant: character-constant
-    Res = Actions.ParseCharacterConstant(Tok);
+    Res = Actions.ActOnCharacterConstant(Tok);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);    
   case tok::kw___func__:       // primary-expression: __func__ [C99 6.4.2.2]
   case tok::kw___FUNCTION__:   // primary-expression: __FUNCTION__ [GNU]
   case tok::kw___PRETTY_FUNCTION__:  // primary-expression: __P..Y_F..N__ [GNU]
-    Res = Actions.ParsePreDefinedExpr(Tok.getLocation(), SavedKind);
+    Res = Actions.ActOnPreDefinedExpr(Tok.getLocation(), SavedKind);
     ConsumeToken();
     // These can be followed by postfix-expr pieces.
     return ParsePostfixExpressionSuffix(Res);
@@ -546,7 +546,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(true);
     if (!Res.isInvalid)
-      Res = Actions.ParseUnaryOp(SavedLoc, SavedKind, Res.Val);
+      Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
     return Res;
   }
   case tok::amp:           // unary-expression: '&' cast-expression
@@ -562,7 +562,7 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     SourceLocation SavedLoc = ConsumeToken();
     Res = ParseCastExpression(false);
     if (!Res.isInvalid)
-      Res = Actions.ParseUnaryOp(SavedLoc, SavedKind, Res.Val);
+      Res = Actions.ActOnUnaryOp(SavedLoc, SavedKind, Res.Val);
     return Res;
   }
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
@@ -635,7 +635,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       SourceLocation RLoc = Tok.getLocation();
       
       if (!LHS.isInvalid && !Idx.isInvalid && Tok.getKind() == tok::r_square)
-        LHS = Actions.ParseArraySubscriptExpr(LHS.Val, Loc, Idx.Val, RLoc);
+        LHS = Actions.ActOnArraySubscriptExpr(LHS.Val, Loc, Idx.Val, RLoc);
       else 
         LHS = ExprResult(true);
 
@@ -670,7 +670,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       if (!LHS.isInvalid && Tok.getKind() == tok::r_paren) {
         assert((ArgExprs.size() == 0 || ArgExprs.size()-1 == CommaLocs.size())&&
                "Unexpected number of commas!");
-        LHS = Actions.ParseCallExpr(LHS.Val, Loc, &ArgExprs[0], ArgExprs.size(),
+        LHS = Actions.ActOnCallExpr(LHS.Val, Loc, &ArgExprs[0], ArgExprs.size(),
                                     &CommaLocs[0], Tok.getLocation());
       }
       
@@ -688,7 +688,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       }
       
       if (!LHS.isInvalid)
-        LHS = Actions.ParseMemberReferenceExpr(LHS.Val, OpLoc, OpKind,
+        LHS = Actions.ActOnMemberReferenceExpr(LHS.Val, OpLoc, OpKind,
                                                Tok.getLocation(),
                                                *Tok.getIdentifierInfo());
       ConsumeToken();
@@ -697,7 +697,7 @@ Parser::ExprResult Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
     case tok::minusminus:  // postfix-expression: postfix-expression '--'
       if (!LHS.isInvalid)
-        LHS = Actions.ParsePostfixUnaryOp(Tok.getLocation(), Tok.getKind(),
+        LHS = Actions.ActOnPostfixUnaryOp(Tok.getLocation(), Tok.getKind(),
                                           LHS.Val);
       ConsumeToken();
       break;
@@ -736,7 +736,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
     // If ParseParenExpression parsed a '(typename)' sequence only, the this is
     // sizeof/alignof a type.  Otherwise, it is sizeof/alignof an expression.
     if (ExprType == CastExpr) {
-      return Actions.ParseSizeOfAlignOfTypeExpr(OpTok.getLocation(),
+      return Actions.ActOnSizeOfAlignOfTypeExpr(OpTok.getLocation(),
                                               OpTok.getKind() == tok::kw_sizeof,
                                                 LParenLoc, CastTy, RParenLoc);
     }
@@ -744,7 +744,7 @@ Parser::ExprResult Parser::ParseSizeofAlignofExpression() {
   
   // If we get here, the operand to the sizeof/alignof was an expresion.
   if (!Operand.isInvalid)
-    Operand = Actions.ParseUnaryOp(OpTok.getLocation(), OpTok.getKind(),
+    Operand = Actions.ActOnUnaryOp(OpTok.getLocation(), OpTok.getKind(),
                                    Operand.Val);
   return Operand;
 }
@@ -955,7 +955,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
       Result = ParseInitializer();
       ExprType = CompoundLiteral;
       if (!Result.isInvalid)
-        return Actions.ParseCompoundLiteral(OpenLoc, Ty, RParenLoc, Result.Val);
+        return Actions.ActOnCompoundLiteral(OpenLoc, Ty, RParenLoc, Result.Val);
     } else if (ExprType == CastExpr) {
       // Note that this doesn't parse the subsequence cast-expression, it just
       // returns the parsed type to the callee.
@@ -971,7 +971,7 @@ Parser::ExprResult Parser::ParseParenExpression(ParenParseOption &ExprType,
     Result = ParseExpression();
     ExprType = SimpleExpr;
     if (!Result.isInvalid && Tok.getKind() == tok::r_paren)
-      Result = Actions.ParseParenExpr(OpenLoc, Tok.getLocation(), Result.Val);
+      Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(), Result.Val);
   }
   
   // Match the ')'.
@@ -1006,5 +1006,5 @@ Parser::ExprResult Parser::ParseStringLiteralExpression() {
   } while (isTokenStringLiteral());
 
   // Pass the set of string tokens, ready for concatenation, to the actions.
-  return Actions.ParseStringLiteral(&StringToks[0], StringToks.size());
+  return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
 }

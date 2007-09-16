@@ -253,59 +253,59 @@ public:
   virtual ExprResult ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                          IdentifierInfo &II,
                                          bool HasTrailingLParen);
-  virtual ExprResult ParsePreDefinedExpr(SourceLocation Loc,
+  virtual ExprResult ActOnPreDefinedExpr(SourceLocation Loc,
                                             tok::TokenKind Kind);
-  virtual ExprResult ParseNumericConstant(const Token &);
-  virtual ExprResult ParseCharacterConstant(const Token &);
-  virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
+  virtual ExprResult ActOnNumericConstant(const Token &);
+  virtual ExprResult ActOnCharacterConstant(const Token &);
+  virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val);
 
-  /// ParseStringLiteral - The specified tokens were lexed as pasted string
+  /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringLiteral(const Token *Toks, unsigned NumToks);
+  virtual ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks);
     
   // Binary/Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+  virtual ExprResult ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                                   ExprTy *Input);
   virtual ExprResult 
-    ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+    ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                                SourceLocation LParenLoc, TypeTy *Ty,
                                SourceLocation RParenLoc);
   
-  virtual ExprResult ParsePostfixUnaryOp(SourceLocation OpLoc, 
+  virtual ExprResult ActOnPostfixUnaryOp(SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input);
   
-  virtual ExprResult ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+  virtual ExprResult ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                                              ExprTy *Idx, SourceLocation RLoc);
-  virtual ExprResult ParseMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
+  virtual ExprResult ActOnMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
                                               tok::TokenKind OpKind,
                                               SourceLocation MemberLoc,
                                               IdentifierInfo &Member);
   
-  /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+  /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
-  virtual ExprResult ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+  virtual ExprResult ActOnCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
                                    ExprTy **Args, unsigned NumArgs,
                                    SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc);
   
-  virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+  virtual ExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op);
                                    
-  virtual ExprResult ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
+  virtual ExprResult ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                                           SourceLocation RParenLoc, ExprTy *Op);
   
-  virtual ExprResult ParseInitList(SourceLocation LParenLoc, 
+  virtual ExprResult ActOnInitList(SourceLocation LParenLoc, 
                                    ExprTy **InitList, unsigned NumInit,
                                    SourceLocation RParenLoc);
                                    
-  virtual ExprResult ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+  virtual ExprResult ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
                                 ExprTy *LHS,ExprTy *RHS);
   
-  /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+  /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
-  virtual ExprResult ParseConditionalOp(SourceLocation QuestionLoc, 
+  virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc, 
                                         SourceLocation ColonLoc,
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS);
 
@@ -405,7 +405,7 @@ private:
   // This routine is only used by the following two methods. C99 6.5.16.
   AssignmentCheckResult CheckAssignmentConstraints(QualType lhs, QualType rhs);
   
-  // CheckSingleAssignmentConstraints - Currently used by ParseCallExpr,
+  // CheckSingleAssignmentConstraints - Currently used by ActOnCallExpr,
   // CheckAssignmentOperands, and ParseReturnStmt. Prior to type checking, 
   // this routine performs the default function/array converions.
   AssignmentCheckResult CheckSingleAssignmentConstraints(QualType lhs, 
@@ -423,7 +423,7 @@ private:
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).
     
-  /// type checking binary operators (subroutines of ParseBinOp).
+  /// type checking binary operators (subroutines of ActOnBinOp).
   inline void InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
@@ -452,7 +452,7 @@ private:
   inline QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
   
-  /// type checking unary operators (subroutines of ParseUnaryOp).
+  /// type checking unary operators (subroutines of ActOnUnaryOp).
   /// C99 6.5.3.1, 6.5.3.2, 6.5.3.4
   QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc);   
   QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);

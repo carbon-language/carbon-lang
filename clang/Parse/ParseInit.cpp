@@ -156,7 +156,7 @@ Parser::ExprResult Parser::ParseInitializer() {
   if (Tok.getKind() == tok::r_brace) {
     Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
-    return Actions.ParseInitList(LBraceLoc, 0, 0, ConsumeBrace());
+    return Actions.ActOnInitList(LBraceLoc, 0, 0, ConsumeBrace());
   }
   llvm::SmallVector<ExprTy*, 8> InitExprs;
   bool InitExprsOk = true;
@@ -190,7 +190,7 @@ Parser::ExprResult Parser::ParseInitializer() {
     if (Tok.getKind() == tok::r_brace) break;
   }
   if (InitExprsOk && Tok.getKind() == tok::r_brace)
-    return Actions.ParseInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
+    return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
                                  ConsumeBrace());
   // Match the '}'.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);

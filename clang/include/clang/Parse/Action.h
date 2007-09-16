@@ -297,45 +297,45 @@ public:
     return 0;
   }
   
-  virtual ExprResult ParsePreDefinedExpr(SourceLocation Loc,
+  virtual ExprResult ActOnPreDefinedExpr(SourceLocation Loc,
                                          tok::TokenKind Kind) {
     return 0;
   }
-  virtual ExprResult ParseCharacterConstant(const Token &) { return 0; }
-  virtual ExprResult ParseNumericConstant(const Token &) { return 0; }
+  virtual ExprResult ActOnCharacterConstant(const Token &) { return 0; }
+  virtual ExprResult ActOnNumericConstant(const Token &) { return 0; }
   
-  /// ParseStringLiteral - The specified tokens were lexed as pasted string
+  /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
-  virtual ExprResult ParseStringLiteral(const Token *Toks, unsigned NumToks) {
+  virtual ExprResult ActOnStringLiteral(const Token *Toks, unsigned NumToks) {
     return 0;
   }
   
-  virtual ExprResult ParseParenExpr(SourceLocation L, SourceLocation R,
+  virtual ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R,
                                     ExprTy *Val) {
     return Val;  // Default impl returns operand.
   }
   
   // Postfix Expressions.
-  virtual ExprResult ParsePostfixUnaryOp(SourceLocation OpLoc, 
+  virtual ExprResult ActOnPostfixUnaryOp(SourceLocation OpLoc, 
                                          tok::TokenKind Kind, ExprTy *Input) {
     return 0;
   }
-  virtual ExprResult ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+  virtual ExprResult ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                                              ExprTy *Idx, SourceLocation RLoc) {
     return 0;
   }
-  virtual ExprResult ParseMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
+  virtual ExprResult ActOnMemberReferenceExpr(ExprTy *Base,SourceLocation OpLoc,
                                               tok::TokenKind OpKind,
                                               SourceLocation MemberLoc,
                                               IdentifierInfo &Member) {
     return 0;
   }
   
-  /// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+  /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.  There are guaranteed to be one fewer commas than arguments,
   /// unless there are zero arguments.
-  virtual ExprResult ParseCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
+  virtual ExprResult ActOnCallExpr(ExprTy *Fn, SourceLocation LParenLoc,
                                    ExprTy **Args, unsigned NumArgs,
                                    SourceLocation *CommaLocs,
                                    SourceLocation RParenLoc) {
@@ -343,39 +343,39 @@ public:
   }
   
   // Unary Operators.  'Tok' is the token for the operator.
-  virtual ExprResult ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+  virtual ExprResult ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                                   ExprTy *Input) {
     return 0;
   }
   virtual ExprResult 
-    ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+    ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                                SourceLocation LParenLoc, TypeTy *Ty,
                                SourceLocation RParenLoc) {
     return 0;
   }
   
-  virtual ExprResult ParseCompoundLiteral(SourceLocation LParen, TypeTy *Ty,
+  virtual ExprResult ActOnCompoundLiteral(SourceLocation LParen, TypeTy *Ty,
                                           SourceLocation RParen, ExprTy *Op) {
     return 0;
   }
-  virtual ExprResult ParseInitList(SourceLocation LParenLoc,
+  virtual ExprResult ActOnInitList(SourceLocation LParenLoc,
                                    ExprTy **InitList, unsigned NumInit,
                                    SourceLocation RParenLoc) {
     return 0;
   }
-  virtual ExprResult ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+  virtual ExprResult ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
                                    SourceLocation RParenLoc, ExprTy *Op) {
     return 0;
   }
   
-  virtual ExprResult ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+  virtual ExprResult ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
                                 ExprTy *LHS, ExprTy *RHS) {
     return 0;
   }
 
-  /// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+  /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
   /// in the case of a the GNU conditional expr extension.
-  virtual ExprResult ParseConditionalOp(SourceLocation QuestionLoc, 
+  virtual ExprResult ActOnConditionalOp(SourceLocation QuestionLoc, 
                                         SourceLocation ColonLoc,
                                         ExprTy *Cond, ExprTy *LHS, ExprTy *RHS){
     return 0;

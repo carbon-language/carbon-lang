@@ -25,14 +25,14 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
-/// ParseStringLiteral - The specified tokens were lexed as pasted string
+/// ActOnStringLiteral - The specified tokens were lexed as pasted string
 /// fragments (e.g. "foo" "bar" L"baz").  The result string has to handle string
 /// concatenation ([C99 5.1.1.2, translation phase #6]), so it may come from
 /// multiple tokens.  However, the common case is that StringToks points to one
 /// string.
 /// 
 Action::ExprResult
-Sema::ParseStringLiteral(const Token *StringToks, unsigned NumStringToks) {
+Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
   assert(NumStringToks && "Must have at least one string!");
 
   StringLiteralParser Literal(StringToks, NumStringToks, PP, Context.Target);
@@ -87,7 +87,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   abort();
 }
 
-Sema::ExprResult Sema::ParsePreDefinedExpr(SourceLocation Loc,
+Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
                                            tok::TokenKind Kind) {
   PreDefinedExpr::IdentType IT;
   
@@ -109,7 +109,7 @@ Sema::ExprResult Sema::ParsePreDefinedExpr(SourceLocation Loc,
   return new PreDefinedExpr(Loc, Context.getPointerType(Context.CharTy), IT);
 }
 
-Sema::ExprResult Sema::ParseCharacterConstant(const Token &Tok) {
+Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
   llvm::SmallString<16> CharBuffer;
   CharBuffer.resize(Tok.getLength());
   const char *ThisTokBegin = &CharBuffer[0];
@@ -123,7 +123,7 @@ Sema::ExprResult Sema::ParseCharacterConstant(const Token &Tok) {
                               Tok.getLocation());
 }
 
-Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
+Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // fast path for a single digit (which is quite common). A single digit 
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
@@ -247,10 +247,10 @@ Action::ExprResult Sema::ParseNumericConstant(const Token &Tok) {
   return Res;
 }
 
-Action::ExprResult Sema::ParseParenExpr(SourceLocation L, SourceLocation R,
+Action::ExprResult Sema::ActOnParenExpr(SourceLocation L, SourceLocation R,
                                         ExprTy *Val) {
   Expr *e = (Expr *)Val;
-  assert((e != 0) && "ParseParenExpr() missing expr");
+  assert((e != 0) && "ActOnParenExpr() missing expr");
   return new ParenExpr(L, R, e);
 }
 
@@ -275,7 +275,7 @@ QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType,
 }
 
 Action::ExprResult Sema::
-ParseSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
+ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof, 
                            SourceLocation LPLoc, TypeTy *Ty,
                            SourceLocation RPLoc) {
   // If error parsing type, ignore.
@@ -309,7 +309,7 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc) {
 
 
 
-Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc, 
+Action::ExprResult Sema::ActOnPostfixUnaryOp(SourceLocation OpLoc, 
                                              tok::TokenKind Kind,
                                              ExprTy *Input) {
   UnaryOperator::Opcode Opc;
@@ -325,7 +325,7 @@ Action::ExprResult Sema::ParsePostfixUnaryOp(SourceLocation OpLoc,
 }
 
 Action::ExprResult Sema::
-ParseArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
+ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
                         ExprTy *Idx, SourceLocation RLoc) {
   Expr *LHSExp = static_cast<Expr*>(Base), *RHSExp = static_cast<Expr*>(Idx);
 
@@ -449,7 +449,7 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
 }
 
 Action::ExprResult Sema::
-ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
+ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          tok::TokenKind OpKind, SourceLocation MemberLoc,
                          IdentifierInfo &Member) {
   Expr *BaseExpr = static_cast<Expr *>(Base);
@@ -491,11 +491,11 @@ ParseMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                 SourceRange(MemberLoc));
 }
 
-/// ParseCallExpr - Handle a call to Fn with the specified array of arguments.
+/// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
 Action::ExprResult Sema::
-ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
+ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
               ExprTy **args, unsigned NumArgsInCall,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   Expr *Fn = static_cast<Expr *>(fn);
@@ -542,7 +542,7 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     // Continue to check argument types (even if we have too few/many args).
     for (unsigned i = 0; i < NumArgsToCheck; i++) {
       Expr *argExpr = Args[i];
-      assert(argExpr && "ParseCallExpr(): missing argument expression");
+      assert(argExpr && "ActOnCallExpr(): missing argument expression");
       
       QualType lhsType = proto->getArgType(i);
       QualType rhsType = argExpr->getType();
@@ -596,7 +596,7 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       // Promote the arguments (C99 6.5.2.2p7).
       for (unsigned i = NumArgsInProto; i < NumArgsInCall; i++) {
         Expr *argExpr = Args[i];
-        assert(argExpr && "ParseCallExpr(): missing argument expression");
+        assert(argExpr && "ActOnCallExpr(): missing argument expression");
         
         DefaultArgumentPromotion(argExpr);
         if (Args[i] != argExpr) // The expression was converted.
@@ -610,7 +610,7 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     // Promote the arguments (C99 6.5.2.2p6).
     for (unsigned i = 0; i < NumArgsInCall; i++) {
       Expr *argExpr = Args[i];
-      assert(argExpr && "ParseCallExpr(): missing argument expression");
+      assert(argExpr && "ActOnCallExpr(): missing argument expression");
       
       DefaultArgumentPromotion(argExpr);
       if (Args[i] != argExpr) // The expression was converted.
@@ -629,12 +629,12 @@ ParseCallExpr(ExprTy *fn, SourceLocation LParenLoc,
 }
 
 Action::ExprResult Sema::
-ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
+ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
                      SourceLocation RParenLoc, ExprTy *InitExpr) {
-  assert((Ty != 0) && "ParseCompoundLiteral(): missing type");
+  assert((Ty != 0) && "ActOnCompoundLiteral(): missing type");
   QualType literalType = QualType::getFromOpaquePtr(Ty);
   // FIXME: put back this assert when initializers are worked out.
-  //assert((InitExpr != 0) && "ParseCompoundLiteral(): missing expression");
+  //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
   Expr *literalExpr = static_cast<Expr*>(InitExpr);
   
   // FIXME: add semantic analysis (C99 6.5.2.5).
@@ -642,7 +642,7 @@ ParseCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
 }
 
 Action::ExprResult Sema::
-ParseInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
+ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
               SourceLocation RBraceLoc) {
   Expr **InitList = reinterpret_cast<Expr**>(initlist);
 
@@ -655,9 +655,9 @@ ParseInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
 }
 
 Action::ExprResult Sema::
-ParseCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
+ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
-  assert((Ty != 0) && (Op != 0) && "ParseCastExpr(): missing type or expr");
+  assert((Ty != 0) && (Op != 0) && "ActOnCastExpr(): missing type or expr");
 
   Expr *castExpr = static_cast<Expr*>(Op);
   QualType castType = QualType::getFromOpaquePtr(Ty);
@@ -755,9 +755,9 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   return QualType();
 }
 
-/// ParseConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
+/// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
 /// in the case of a the GNU conditional expr extension.
-Action::ExprResult Sema::ParseConditionalOp(SourceLocation QuestionLoc, 
+Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc, 
                                             SourceLocation ColonLoc,
                                             ExprTy *Cond, ExprTy *LHS,
                                             ExprTy *RHS) {
@@ -1516,13 +1516,13 @@ static inline UnaryOperator::Opcode ConvertTokenKindToUnaryOpcode(
 }
 
 // Binary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
+Action::ExprResult Sema::ActOnBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
                                     ExprTy *LHS, ExprTy *RHS) {
   BinaryOperator::Opcode Opc = ConvertTokenKindToBinaryOpcode(Kind);
   Expr *lhs = (Expr *)LHS, *rhs = (Expr*)RHS;
 
-  assert((lhs != 0) && "ParseBinOp(): missing left expression");
-  assert((rhs != 0) && "ParseBinOp(): missing right expression");
+  assert((lhs != 0) && "ActOnBinOp(): missing left expression");
+  assert((rhs != 0) && "ActOnBinOp(): missing right expression");
 
   QualType ResultTy;  // Result type of the binary operator.
   QualType CompTy;    // Computation type for compound assignments (e.g. '+=')
@@ -1616,7 +1616,7 @@ Action::ExprResult Sema::ParseBinOp(SourceLocation TokLoc, tok::TokenKind Kind,
 }
 
 // Unary Operators.  'Tok' is the token for the operator.
-Action::ExprResult Sema::ParseUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
+Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
                                       ExprTy *input) {
   Expr *Input = (Expr*)input;
   UnaryOperator::Opcode Opc = ConvertTokenKindToUnaryOpcode(Op);
