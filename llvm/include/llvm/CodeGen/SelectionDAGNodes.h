@@ -766,6 +766,10 @@ public:
   /// hasOneUse - Return true if there is exactly one operation using this
   /// result value of the defining operator.
   inline bool hasOneUse() const;
+
+  /// use_empty - Return true if there are no operations using this
+  /// result value of the defining operator.
+  inline bool use_empty() const;
 };
 
 
@@ -1034,6 +1038,9 @@ inline unsigned SDOperand::getTargetOpcode() const {
 }
 inline bool SDOperand::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);
+}
+inline bool SDOperand::use_empty() const {
+  return !Val->hasAnyUseOfValue(ResNo);
 }
 
 /// UnarySDNode - This class is used for single-operand SDNodes.  This is solely
