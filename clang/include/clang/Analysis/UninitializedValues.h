@@ -28,27 +28,33 @@ namespace clang {
 ///   Unitialized Values analysis.
 class UninitializedValues_ValueTypes {
 public:
-  class ValTy {
-    llvm::BitVector BV;
-  public:
-    // Accessors to internal bitvector.    
-    unsigned size() const { return BV.size(); }
-    void resize(unsigned i) { BV.resize(i); }
-    llvm::BitVector::reference operator[](unsigned i) { return BV[i]; }
-    void operator|=(const ValTy& RHS) { BV |= RHS.BV; }
-    
+  struct ValTy {
+    llvm::BitVector DeclBV;
+    llvm::BitVector ExprBV;
+
     // Used by the solver.
-    void resetValues() { BV.reset(); }
-    bool equal(ValTy& RHS) const { return BV == RHS.BV; }
-    void copyValues(ValTy& RHS) { BV = RHS.BV; }    
+    void resetValues() {
+      DeclBV.reset();
+      ExprBV.reset();
+    }
+    
+    bool equal(ValTy& RHS) const { 
+      return DeclBV == RHS.DeclBV && ExprBV == RHS.ExprBV; 
+    }
+    
+    void copyValues(ValTy& RHS) {
+      DeclBV = RHS.DeclBV;
+      ExprBV = RHS.ExprBV;
+    }    
   };
   
   struct AnalysisDataTy {
     llvm::DenseMap<const VarDecl*, unsigned > VMap;
     llvm::DenseMap<const Expr*, unsigned > EMap;
-    unsigned Counter;
+    unsigned NumDecls;
+    unsigned NumBlockExprs;
     
-    AnalysisDataTy() : Counter(0) {}
+    AnalysisDataTy() : NumDecls(0), NumBlockExprs(0) {}
   };
 };
 
