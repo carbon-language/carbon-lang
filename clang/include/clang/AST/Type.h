@@ -222,7 +222,10 @@ protected:
   virtual ~Type();
   friend class ASTContext;
 public:
-  TypeClass getTypeClass() const { return TC; }
+  // Masking the 4 bits from the bitfield above is necessary, since at least
+  // VC++ fills the unused bits of the word the bitfield is stored in with
+  // '1' resulting in invalid values returned from this function otherwise.
+  TypeClass getTypeClass() const { return static_cast<TypeClass>(TC & 0xf); }
   
   bool isCanonical() const { return CanonicalType.getTypePtr() == this; }
 
