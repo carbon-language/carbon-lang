@@ -94,7 +94,7 @@ public:
   /// getValueName - Returns the mangled name of V, an LLVM Value,
   /// in the current module.
   ///
-  std::string getValueName(const GlobalValue *V);
+  std::string getValueName(const GlobalValue *V, const char *Suffix = "");
   std::string getValueName(const Value *V);
 
   /// makeNameProper - We don't want identifier names with ., space, or

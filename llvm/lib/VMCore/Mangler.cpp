@@ -126,7 +126,7 @@ std::string Mangler::getValueName(const Value *V) {
 }
 
 
-std::string Mangler::getValueName(const GlobalValue *GV) {
+std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
   // Check to see whether we've already named V.
   std::string &Name = Memo[GV];
   if (!Name.empty())
@@ -143,7 +143,7 @@ std::string Mangler::getValueName(const GlobalValue *GV) {
     static unsigned GlobalID = 0;
     Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(GlobalID++);
   } else if (!MangledGlobals.count(GV)) {
-    Name = makeNameProper(GV->getName(), Prefix);
+    Name = makeNameProper(GV->getName() + Suffix, Prefix);
   } else {
     unsigned TypeUniqueID = getTypeID(GV->getType());
     Name = "l" + utostr(TypeUniqueID) + "_" + makeNameProper(GV->getName());
