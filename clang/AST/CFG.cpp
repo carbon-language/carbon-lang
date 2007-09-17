@@ -1270,9 +1270,7 @@ bool CFG::hasImplicitControlFlow(const Stmt* S) {
 
 
 #ifndef NDEBUG
-namespace {
-  StmtPrinterHelper* GraphHelper;  
-}
+static StmtPrinterHelper* GraphHelper;  
 #endif
 
 void CFG::viewCFG() const {
@@ -1283,7 +1281,7 @@ void CFG::viewCFG() const {
   GraphHelper = NULL;
 #else
   std::cerr << "CFG::viewCFG is only available in debug builds on "
-  << "systems with Graphviz or gv!" << std::endl;
+            << "systems with Graphviz or gv!\";
 #endif
 }
 
