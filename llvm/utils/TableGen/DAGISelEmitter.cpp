@@ -2649,7 +2649,6 @@ public:
   /// we actually have to build a DAG!
   std::vector<std::string>
   EmitResultCode(TreePatternNode *N, std::vector<Record*> DstRegs,
-                 bool RetSelected,
                  bool InFlagDecled, bool ResNodeDecled,
                  bool LikeLeaf = false, bool isRoot = false) {
     // List of arguments of getTargetNode() or SelectNodeTo().
@@ -2867,7 +2866,7 @@ public:
         if ((!OperandNode->isSubClassOf("PredicateOperand") &&
              !OperandNode->isSubClassOf("OptionalDefOperand")) ||
             ISE.getDefaultOperand(OperandNode).DefaultOps.empty()) {
-          Ops = EmitResultCode(N->getChild(ChildNo), DstRegs, RetSelected, 
+          Ops = EmitResultCode(N->getChild(ChildNo), DstRegs,
                                InFlagDecled, ResNodeDecled);
           AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
           ++ChildNo;
@@ -2877,7 +2876,7 @@ public:
           const DAGDefaultOperand &DefaultOp =
             ISE.getDefaultOperand(II.OperandList[InstOpNo].Rec);
           for (unsigned i = 0, e = DefaultOp.DefaultOps.size(); i != e; ++i) {
-            Ops = EmitResultCode(DefaultOp.DefaultOps[i], DstRegs, RetSelected, 
+            Ops = EmitResultCode(DefaultOp.DefaultOps[i], DstRegs,
                                  InFlagDecled, ResNodeDecled);
             AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
             NumEAInputs += Ops.size();
@@ -3039,11 +3038,11 @@ public:
         if (NodeHasOutFlag) {
           if (!InFlagDecled) {
             emitCode("SDOperand InFlag(ResNode, " + 
-                     utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) + ");");
+                   utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) + ");");
             InFlagDecled = true;
           } else
             emitCode("InFlag = SDOperand(ResNode, " + 
-                     utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) + ");");
+                   utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) + ");");
         }
 
         if (FoldedChains.size() > 0) {
@@ -3058,20 +3057,15 @@ public:
 
         if (NodeHasOutFlag) {
           emitCode("ReplaceUses(SDOperand(N.Val, " +
-                   utostr(NumPatResults + (unsigned)InputHasChain) +"), InFlag);");
+                   utostr(NumPatResults + (unsigned)InputHasChain)
+                   +"), InFlag);");
           NeedReplace = true;
         }
 
-        if (NeedReplace) {
-          for (unsigned i = 0; i < NumPatResults; i++)
-            emitCode("ReplaceUses(SDOperand(N.Val, " +
-                     utostr(i) + "), SDOperand(ResNode, " + utostr(i) + "));");
-          if (InputHasChain)
-            emitCode("ReplaceUses(SDOperand(N.Val, " + 
-                     utostr(NumPatResults) + "), SDOperand(" + ChainName + ".Val, "
-                     + ChainName + ".ResNo" + "));");
-        } else
-          RetSelected = true;
+        if (NeedReplace && InputHasChain)
+          emitCode("ReplaceUses(SDOperand(N.Val, " + 
+                   utostr(NumPatResults) + "), SDOperand(" + ChainName
+                   + ".Val, " + ChainName + ".ResNo" + "));");
 
         // User does not expect the instruction would produce a chain!
         if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
@@ -3081,18 +3075,11 @@ public:
           if (NodeHasOutFlag)
 	    emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults+1) +
 		     "), SDOperand(ResNode, N.ResNo-1));");
-	  for (unsigned i = 0; i < NumPatResults; ++i)
-	    emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(i) +
-		     "), SDOperand(ResNode, " + utostr(i) + "));");
 	  emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults) +
 		   "), " + ChainName + ");");
-	  RetSelected = false;
         }
 
-	if (RetSelected)
-	  emitCode("return ResNode;");
-	else
-	  emitCode("return NULL;");
+        emitCode("return ResNode;");
       } else {
         std::string Code = "return CurDAG->SelectNodeTo(N.Val, Opc" +
           utostr(OpcNo);
@@ -3133,7 +3120,7 @@ public:
       // PatLeaf node - the operand may or may not be a leaf node. But it should
       // behave like one.
       std::vector<std::string> Ops =
-        EmitResultCode(N->getChild(0), DstRegs, RetSelected, InFlagDecled,
+        EmitResultCode(N->getChild(0), DstRegs, InFlagDecled,
                        ResNodeDecled, true);
       unsigned ResNo = TmpNo++;
       emitCode("SDOperand Tmp" + utostr(ResNo) + " = Transform_" + Op->getName()
@@ -3300,7 +3287,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
   } while (Emitter.InsertOneTypeCheck(Pat, Pattern.getSrcPattern(), "N", true));
 
   Emitter.EmitResultCode(Pattern.getDstPattern(), Pattern.getDstRegs(),
-                         false, false, false, false, true);
+                         false, false, false, true);
   delete Pat;
 }
 
@@ -3957,9 +3944,11 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  RemoveKilled();\n";
   OS << "}\n";
   OS << "void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {\n";
-  OS << "  unsigned NumVals = F->getNumValues();\n";
-  OS << "  if (NumVals < T->getNumValues()) {\n";
-  OS << "    for (unsigned i = 0; i < NumVals; ++i)\n";
+  OS << "  unsigned FNumVals = F->getNumValues();\n";
+  OS << "  unsigned TNumVals = T->getNumValues();\n";
+  OS << "  if (FNumVals != TNumVals) {\n";
+  OS << "    for (unsigned i = 0, e = std::min(FNumVals, TNumVals); "
+     << "i < e; ++i)\n";
   OS << "      CurDAG->ReplaceAllUsesOfValueWith(SDOperand(F, i), "
      << "SDOperand(T, i), ISelKilled);\n";
   OS << "  } else {\n";
