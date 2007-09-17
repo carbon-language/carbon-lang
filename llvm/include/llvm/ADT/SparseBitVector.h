@@ -405,8 +405,8 @@ class SparseBitVector {
           WordNumber = (NextSetBitNumber % ElementSize) / BITWORD_SIZE;
           Bits = Iter->word(WordNumber);
           Bits >>= NextSetBitNumber % BITWORD_SIZE;
-	  BitNumber = Iter->index() * ElementSize;
-	  BitNumber += NextSetBitNumber;
+          BitNumber = Iter->index() * ElementSize;
+          BitNumber += NextSetBitNumber;
         }
       }
     }
