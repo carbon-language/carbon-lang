@@ -161,7 +161,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Analysis\UnintializedValues.cpp"
+				RelativePath="..\..\Analysis\UninitializedValues.cpp"
 				>
 			</File>
 		</Filter>
