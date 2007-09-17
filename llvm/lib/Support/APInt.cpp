@@ -21,9 +21,7 @@
 #include <limits>
 #include <cstring>
 #include <cstdlib>
-#ifndef NDEBUG
 #include <iomanip>
-#endif
 
 using namespace llvm;
 
@@ -1999,7 +1997,6 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
   return result;
 }
 
-#ifndef NDEBUG
 void APInt::dump() const
 {
   cerr << "APInt(" << BitWidth << ")=" << std::setbase(16);
@@ -2011,7 +2008,6 @@ void APInt::dump() const
   cerr << " U(" << this->toStringUnsigned(10) << ") S("
        << this->toStringSigned(10) << ")" << std::setbase(10);
 }
-#endif
 
 // This implements a variety of operations on a representation of
 // arbitrary precision, two's-complement, bignum integer values.

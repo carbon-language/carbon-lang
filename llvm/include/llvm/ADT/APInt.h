@@ -1160,10 +1160,8 @@ public:
   static void tcSetLeastSignificantBits(integerPart *, unsigned int,
 					unsigned int bits);
 
-#ifndef NDEBUG
   /// @brief debug method
   void dump() const;
-#endif
 
   /// @}
 };

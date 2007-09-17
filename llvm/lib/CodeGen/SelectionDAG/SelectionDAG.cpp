@@ -3720,9 +3720,7 @@ void SDNode::dump(const SelectionDAG *G) const {
       cerr << "<" << CSDN->getValueAPF().convertToDouble() << ">";
     else {
       cerr << "<APFloat(";
-#ifndef NDEBUG
       CSDN->getValueAPF().convertToAPInt().dump();
-#endif
       cerr << ")>";
     }
   } else if (const GlobalAddressSDNode *GADN =
