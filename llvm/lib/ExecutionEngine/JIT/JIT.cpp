@@ -178,6 +178,11 @@ GenericValue JIT::runFunction(Function *F,
     case Type::DoubleTyID:
       rv.DoubleVal = ((double(*)())(intptr_t)FPtr)();
       return rv;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      assert(0 && "long double not supported yet");
+      return rv;
     case Type::PointerTyID:
       return PTOGV(((void*(*)())(intptr_t)FPtr)());
     }
@@ -209,7 +214,11 @@ GenericValue JIT::runFunction(Function *F,
     case Type::FloatTyID:   C = ConstantFP ::get(ArgTy, APFloat(AV.FloatVal));
                             break;
     case Type::DoubleTyID:  C = ConstantFP ::get(ArgTy, APFloat(AV.DoubleVal));
-                             break;
+                            break;
+    case Type::PPC_FP128TyID:
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:   C = ConstantFP ::get(ArgTy, APFloat(AV.IntVal));
+                            break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4) {

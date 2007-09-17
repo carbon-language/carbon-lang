@@ -376,11 +376,13 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       return GV;
     }
     case Instruction::FPTrunc: {
+      // FIXME long double
       GenericValue GV = getConstantValue(Op0);
       GV.FloatVal = float(GV.DoubleVal);
       return GV;
     }
     case Instruction::FPExt:{
+      // FIXME long double
       GenericValue GV = getConstantValue(Op0);
       GV.DoubleVal = double(GV.FloatVal);
       return GV;
@@ -389,16 +391,30 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       GenericValue GV = getConstantValue(Op0);
       if (CE->getType() == Type::FloatTy)
         GV.FloatVal = float(GV.IntVal.roundToDouble());
-      else
+      else if (CE->getType() == Type::DoubleTy)
         GV.DoubleVal = GV.IntVal.roundToDouble();
+       else if (CE->getType() == Type::X86_FP80Ty) {
+        const uint64_t zero[] = {0, 0};
+        APFloat apf = APFloat(APInt(80, 2, zero));
+        (void)apf.convertFromInteger(GV.IntVal.getRawData(), 2, false, 
+                               APFloat::rmTowardZero);
+        GV.IntVal = apf.convertToAPInt();
+      }
       return GV;
     }
     case Instruction::SIToFP: {
       GenericValue GV = getConstantValue(Op0);
       if (CE->getType() == Type::FloatTy)
         GV.FloatVal = float(GV.IntVal.signedRoundToDouble());
-      else
+      else if (CE->getType() == Type::DoubleTy)
         GV.DoubleVal = GV.IntVal.signedRoundToDouble();
+      else if (CE->getType() == Type::X86_FP80Ty) {
+        const uint64_t zero[] = { 0, 0};
+        APFloat apf = APFloat(APInt(80, 2, zero));
+        (void)apf.convertFromInteger(GV.IntVal.getRawData(), 2, true,
+                               APFloat::rmTowardZero);
+        GV.IntVal = apf.convertToAPInt();
+      }
       return GV;
     }
     case Instruction::FPToUI: // double->APInt conversion handles sign
@@ -407,8 +423,16 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
       if (Op0->getType() == Type::FloatTy)
         GV.IntVal = APIntOps::RoundFloatToAPInt(GV.FloatVal, BitWidth);
-      else
+      else if (Op0->getType() == Type::DoubleTy)
         GV.IntVal = APIntOps::RoundDoubleToAPInt(GV.DoubleVal, BitWidth);
+      else if (Op0->getType() == Type::X86_FP80Ty) {
+        APFloat apf = APFloat(GV.IntVal);
+        uint64_t v;
+        (void)apf.convertToInteger(&v, BitWidth,
+                                   CE->getOpcode()==Instruction::FPToSI, 
+                                   APFloat::rmTowardZero);
+        GV.IntVal = v; // endian?
+      }
       return GV;
     }
     case Instruction::PtrToInt: {
@@ -512,6 +536,35 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
             GV.DoubleVal = ::fmod(LHS.DoubleVal,RHS.DoubleVal); break;
         }
         break;
+      case Type::X86_FP80TyID:
+      case Type::PPC_FP128TyID:
+      case Type::FP128TyID: {
+        APFloat apfLHS = APFloat(LHS.IntVal);
+        switch (CE->getOpcode()) {
+          default: assert(0 && "Invalid long double opcode"); abort();
+          case Instruction::Add:  
+            apfLHS.add(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
+            GV.IntVal = apfLHS.convertToAPInt();
+            break;
+          case Instruction::Sub:  
+            apfLHS.subtract(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
+            GV.IntVal = apfLHS.convertToAPInt();
+            break;
+          case Instruction::Mul:  
+            apfLHS.multiply(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
+            GV.IntVal = apfLHS.convertToAPInt();
+            break;
+          case Instruction::FDiv: 
+            apfLHS.divide(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
+            GV.IntVal = apfLHS.convertToAPInt();
+            break;
+          case Instruction::FRem: 
+            apfLHS.mod(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
+            GV.IntVal = apfLHS.convertToAPInt();
+            break;
+          }
+        }
+        break;
       }
       return GV;
     }
@@ -529,6 +582,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     break;
   case Type::DoubleTyID:
     Result.DoubleVal = cast<ConstantFP>(C)->getValueAPF().convertToDouble();
+    break;
+  case Type::X86_FP80TyID:
+  case Type::FP128TyID:
+  case Type::PPC_FP128TyID:
+    Result.IntVal = cast <ConstantFP>(C)->getValueAPF().convertToAPInt();
     break;
   case Type::IntegerTyID:
     Result.IntVal = cast<ConstantInt>(C)->getValue();
@@ -583,6 +641,17 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *
   case Type::DoubleTyID:
     *((double*)Ptr) = Val.DoubleVal;
     break;
+  case Type::X86_FP80TyID: {
+      uint16_t *Dest = (uint16_t*)Ptr;
+      const uint16_t *Src = (uint16_t*)Val.IntVal.getRawData();
+      // This is endian dependent, but it will only work on x86 anyway.
+      Dest[0] = Src[4];
+      Dest[1] = Src[0];
+      Dest[2] = Src[1];
+      Dest[3] = Src[2];
+      Dest[4] = Src[3];
+      break;
+    }
   case Type::PointerTyID: 
     *((PointerTy*)Ptr) = Val.PointerVal;
     break;
@@ -620,6 +689,17 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
   case Type::PointerTyID: 
     Result.PointerVal = *((PointerTy*)Ptr);
     break;
+  case Type::X86_FP80TyID: {
+    // This is endian dependent, but it will only work on x86 anyway.
+    uint16_t x[8], *p = (uint16_t*)Ptr;
+    x[0] = p[1];
+    x[1] = p[2];
+    x[2] = p[3];
+    x[3] = p[4];
+    x[4] = p[0];
+    Result.IntVal = APInt(80, 2, x);
+    break;
+  }
   default:
     cerr << "Cannot load value of type " << *Ty << "!\n";
     abort();

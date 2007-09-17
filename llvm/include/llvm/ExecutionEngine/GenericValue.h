@@ -31,7 +31,7 @@ struct GenericValue {
     struct { unsigned int first; unsigned int second; } UIntPairVal;
     unsigned char   Untyped[8];
   };
-  APInt IntVal;
+  APInt IntVal;   // also used for long doubles
 
   GenericValue() : DoubleVal(0.0), IntVal(1,0) {}
   GenericValue(void *V) : PointerVal(V), IntVal(1,0) { }
