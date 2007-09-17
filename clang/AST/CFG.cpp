@@ -175,11 +175,8 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
       }
                                                         
     // Create an empty entry block that has no predecessors.    
-    if (B->pred_size() > 0) {
-      Succ = B;
-      cfg->setEntry(createBlock());
-    }
-    else cfg->setEntry(B);
+    Succ = B;
+    cfg->setEntry(createBlock());
     
     // NULL out cfg so that repeated calls to the builder will fail and that
     // the ownership of the constructed CFG is passed to the caller.
@@ -187,7 +184,10 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
     cfg = NULL;
     return t;
   }
-  else return NULL;
+  else {
+    assert (false && "CFG construction failed.");
+    return NULL;
+  }
 }
   
 /// createBlock - Used to lazily create blocks that are connected
