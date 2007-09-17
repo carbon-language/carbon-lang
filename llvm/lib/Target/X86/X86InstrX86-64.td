@@ -1076,6 +1076,12 @@ def : Pat<(X86tailcall (i64 texternalsym:$dst)),
 def : Pat<(X86tailcall GR64:$dst),
           (CALL64r GR64:$dst)>;
 
+// Comparisons.
+
+// TEST R,R is smaller than CMP R,0
+def : Pat<(X86cmp GR64:$src1, 0),
+          (TEST64rr GR64:$src1, GR64:$src1)>;
+
 // {s|z}extload bool -> {s|z}extload byte
 def : Pat<(sextloadi64i1 addr:$src), (MOVSX64rm8 addr:$src)>;
 def : Pat<(zextloadi64i1 addr:$src), (MOVZX64rm8 addr:$src)>;
