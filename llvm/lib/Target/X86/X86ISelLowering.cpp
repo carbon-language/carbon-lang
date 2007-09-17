@@ -1546,6 +1546,11 @@ static bool translateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
         // X < 0   -> X == 0, jump on sign.
         X86CC = X86::COND_S;
         return true;
+      } else if (SetCCOpcode == ISD::SETLT && RHSC->getValue() == 1) {
+        // X < 1   -> X <= 0
+        RHS = DAG.getConstant(0, RHS.getValueType());
+        X86CC = X86::COND_LE;
+        return true;
       }
     }
 
