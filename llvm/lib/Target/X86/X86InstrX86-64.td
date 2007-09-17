@@ -1018,13 +1018,15 @@ def PsMOVZX64rm32: I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                      [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
 
 
-// Alias instructions that map movr0 to xor.
+// Alias instructions that map movr0 to xor. Use xorl instead of xorq; it's
+// equivalent due to implicit zero-extending, and it sometimes has a smaller
+// encoding.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 // FIXME: AddedComplexity gives MOV64r0 a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
 let Defs = [EFLAGS], AddedComplexity = 1, isReMaterializable = 1 in
 def MOV64r0  : RI<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
-                 "xor{q}\t$dst, $dst",
+                 "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
                  [(set GR64:$dst, 0)]>;
 
 // Materialize i64 constant where top 32-bits are zero.
