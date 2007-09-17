@@ -528,6 +528,20 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   if (!safeExitingBlock(SD, ExitCondition->getParent())) 
     return false;
 
+  // If split condition is not safe then do not process this loop.
+  // For example,
+  // for(int i = 0; i < N; i++) {
+  //    if ( i == XYZ) {
+  //      A;
+  //    else
+  //      B;
+  //    }
+  //   C;
+  //   D;
+  // }
+  if (!safeSplitCondition(SD))
+    return false;
+
   // Update CFG.
 
   // Replace index variable with split value in loop body. Loop body is executed
@@ -956,24 +970,11 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
 bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
 
   BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
-  
-  // Unable to handle triange loops at the moment.
-  // In triangle loop, split condition is in header and one of the
-  // the split destination is loop latch. If split condition is EQ
-  // then such loops are already handle in processOneIterationLoop().
-  BasicBlock *Latch = L->getLoopLatch();
+  BasicBlock *Latch = L->getLoopLatch();  
   BranchInst *SplitTerminator = 
     cast<BranchInst>(SplitCondBlock->getTerminator());
   BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
   BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
-  if (L->getHeader() == SplitCondBlock 
-      && (Latch == Succ0 || Latch == Succ1))
-    return false;
-  
-  // If split condition branches heads do not have single predecessor, 
-  // SplitCondBlock, then is not possible to remove inactive branch.
-  if (!Succ0->getSinglePredecessor() || !Succ1->getSinglePredecessor())
-    return false;
 
   // Finally this split condition is safe only if merge point for
   // split condition branch is loop latch. This check along with previous
@@ -1194,6 +1195,26 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
 bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
   if (!safeSplitCondition(SD))
+    return false;
+
+  BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
+  
+  // Unable to handle triange loops at the moment.
+  // In triangle loop, split condition is in header and one of the
+  // the split destination is loop latch. If split condition is EQ
+  // then such loops are already handle in processOneIterationLoop().
+  BasicBlock *Latch = L->getLoopLatch();
+  BranchInst *SplitTerminator = 
+    cast<BranchInst>(SplitCondBlock->getTerminator());
+  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
+  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
+  if (L->getHeader() == SplitCondBlock 
+      && (Latch == Succ0 || Latch == Succ1))
+    return false;
+
+  // If split condition branches heads do not have single predecessor, 
+  // SplitCondBlock, then is not possible to remove inactive branch.
+  if (!Succ0->getSinglePredecessor() || !Succ1->getSinglePredecessor())
     return false;
 
   // After loop is cloned there are two loops.
