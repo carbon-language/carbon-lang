@@ -366,7 +366,7 @@ public:
 				     DeclTy **allMethods, unsigned allNum);
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
 	            tok::TokenKind MethodType, TypeTy *ReturnType,
-     		    ObjcKeywordInfo *Keywords, unsigned NumKeywords, 
+     		    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
      		    AttributeList *AttrList);
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
  	     	    tok::TokenKind MethodType, TypeTy *ReturnType,

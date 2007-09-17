@@ -486,12 +486,12 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
     ReturnType = ParseObjCTypeName();
   IdentifierInfo *selIdent = ParseObjCSelector();
 
-  llvm::SmallVector<ObjcKeywordInfo, 12> KeyInfo;
+  llvm::SmallVector<ObjcKeywordDecl, 12> KeyInfo;
   
   if (Tok.getKind() == tok::colon) {
     
     while (1) {
-      ObjcKeywordInfo KeyInfoDecl;
+      ObjcKeywordDecl KeyInfoDecl;
       KeyInfoDecl.SelectorName = selIdent;
       
       // Each iteration parses a single keyword argument.
@@ -514,11 +514,11 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
       KeyInfoDecl.ArgumentName = Tok.getIdentifierInfo();
       ConsumeToken(); // Eat the identifier.
       
-      // Rather than call out to the actions, try packaging up the info
-      // locally, like we do for Declarator.
-      // FIXME: add Actions.BuildObjCKeyword()
-      
+      // Rather than call out to the actions, package up the info locally, 
+      // like we do for Declarator.      
       KeyInfo.push_back(KeyInfoDecl);
+      
+      // Check for another keyword selector.
       selIdent = ParseObjCSelector();
       if (!selIdent && Tok.getKind() != tok::colon)
         break;
@@ -984,28 +984,52 @@ Parser::ExprResult Parser::ParseObjCExpression() {
 Parser::ExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.getKind() == tok::l_square && "'[' expected");
   SourceLocation Loc = ConsumeBracket(); // consume '['
+  IdentifierInfo *ReceiverName = 0;
+  ExprTy *ReceiverExpr = 0;
   // Parse receiver
   if (Tok.getKind() == tok::identifier &&
-      Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))
+      Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
+    ReceiverName = Tok.getIdentifierInfo();
     ConsumeToken();
-  else
-    ParseAssignmentExpression();
+  } else {
+    ExprResult Res = ParseAssignmentExpression();
+    if (Res.isInvalid) {
+      SkipUntil(tok::identifier);
+      return Res;
+    }
+    ReceiverExpr = Res.Val;
+  }
   // Parse objc-selector
   IdentifierInfo *selIdent = ParseObjCSelector();
+  llvm::SmallVector<ObjcKeywordMessage, 12> KeyInfo;
   if (Tok.getKind() == tok::colon) {
     while (1) {
       // Each iteration parses a single keyword argument.
+      ObjcKeywordMessage KeyInfoMess;
+      KeyInfoMess.SelectorName = selIdent;
+
       if (Tok.getKind() != tok::colon) {
         Diag(Tok, diag::err_expected_colon);
         SkipUntil(tok::semi);
-        return 0;
+        return true;
       }
-      ConsumeToken(); // Eat the ':'.
+      KeyInfoMess.ColonLoc = ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':' 
-      ParseAssignmentExpression();
-      IdentifierInfo *keywordSelector = ParseObjCSelector();
+      ExprResult Res = ParseAssignmentExpression();
+      if (Res.isInvalid) {
+        SkipUntil(tok::identifier);
+        return Res;
+      }
+      // We have a valid expression.
+      KeyInfoMess.KeywordExpr = Res.Val;
       
-      if (!keywordSelector && Tok.getKind() != tok::colon)
+      // Rather than call out to the actions, package up the info locally, 
+      // like we do for Declarator.      
+      KeyInfo.push_back(KeyInfoMess);
+      
+      // Check for another keyword selector.
+      selIdent = ParseObjCSelector();
+      if (!selIdent && Tok.getKind() != tok::colon)
         break;
       // We have a selector or a colon, continue parsing.
     }
@@ -1026,7 +1050,12 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     return 0;
   }
   ConsumeBracket(); // consume ']'
-  return 0; // FIXME: return a message expr AST!
+  
+  if (ReceiverName) 
+    return Actions.ActOnMessageExpression(ReceiverName, 
+                                          &KeyInfo[0], KeyInfo.size());
+  return Actions.ActOnMessageExpression(ReceiverExpr, 
+                                          &KeyInfo[0], KeyInfo.size());
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

@@ -1239,41 +1239,33 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
   return;
 }
 
-/// Build objective-c style method name.
-static SelectorInfo &
-  ObjcGetSelectorInfo(ObjcKeywordInfo* KeyInfo, unsigned numKeyInfo,
-                      ASTContext &Context)
-{
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+                      tok::TokenKind MethodType, TypeTy *ReturnType,
+                      ObjcKeywordDecl *Keywords, unsigned NumKeywords,
+                      AttributeList *AttrList) {
+  assert(NumKeywords && "Selector must be specified");
+
+  // Derive the selector name from the keyword declarations.
   int len=0;
   char *methodName;
-  for (unsigned int i = 0; i < numKeyInfo; i++) {
-    IdentifierInfo *selectorName = KeyInfo[i].SelectorName;
-    if (selectorName)
-      len += strlen(selectorName->getName());
+  for (unsigned int i = 0; i < NumKeywords; i++) {
+    if (Keywords[i].SelectorName)
+      len += strlen(Keywords[i].SelectorName->getName());
     len++;
   }
   methodName = (char *) alloca (len + 1);
   methodName[0] = '\0';
-  for (unsigned int i = 0; i < numKeyInfo; i++) {
-    IdentifierInfo *selectorName = KeyInfo[i].SelectorName;
-    if (selectorName)
-      strcat(methodName, selectorName->getName());
+  for (unsigned int i = 0; i < NumKeywords; i++) {
+    if (Keywords[i].SelectorName)
+      strcat(methodName, Keywords[i].SelectorName->getName());
     strcat(methodName, ":");
   }
-  return Context.getSelectorInfo(methodName, methodName+len);
-}
+  SelectorInfo &SelName = Context.getSelectorInfo(methodName, methodName+len);
 
-
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-                      tok::TokenKind MethodType, TypeTy *ReturnType,
-                      ObjcKeywordInfo *Keywords, unsigned NumKeywords,
-                      AttributeList *AttrList) {
-  assert(NumKeywords && "Selector must be specified");
-  SelectorInfo &SelName = ObjcGetSelectorInfo(Keywords, NumKeywords, Context);
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
   for (unsigned i = 0; i < NumKeywords; i++) {
-    ObjcKeywordInfo *arg = &Keywords[i];
+    ObjcKeywordDecl *arg = &Keywords[i];
     // FIXME: arg->AttrList must be stored too!
     ParmVarDecl* Param = new ParmVarDecl(arg->ColonLoc, arg->ArgumentName, 
 					 QualType::getFromOpaquePtr(arg->TypeInfo), 
@@ -1284,9 +1276,9 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
     Params.push_back(Param);
   }
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, 
-				      SelName, resultDeclType, 
-				      0, -1, AttrList, MethodType == tok::minus);
+  ObjcMethodDecl* ObjcMethod;
+  ObjcMethod = new ObjcMethodDecl(MethodLoc, SelName, resultDeclType, 
+                                  0, -1, AttrList, MethodType == tok::minus);
   ObjcMethod->setMethodParams(&Params[0], NumKeywords);
   return ObjcMethod;
 }

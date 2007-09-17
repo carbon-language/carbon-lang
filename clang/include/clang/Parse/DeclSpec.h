@@ -566,20 +566,37 @@ struct ObjcKeywordInfo {
   IdentifierInfo *SelectorName; // optional
   SourceLocation SelectorLoc;
   SourceLocation ColonLoc;
-  Action::TypeTy *TypeInfo; // optional
-  bool InvalidType;
-  IdentifierInfo *ArgumentName;
-  AttributeList *AttrList;
-  
+
   ObjcKeywordInfo() {}
   ObjcKeywordInfo(IdentifierInfo *selName, SourceLocation sLoc, 
-                  SourceLocation cLoc, Action::TypeTy *tInfo,
-                  IdentifierInfo *argName, AttributeList *aList)
-    : SelectorName(selName), SelectorLoc(sLoc), ColonLoc(cLoc), TypeInfo(tInfo), 
-      ArgumentName(argName), AttrList(aList) {
-  }
+                  SourceLocation cLoc)
+    : SelectorName(selName), SelectorLoc(sLoc), ColonLoc(cLoc) {} 
 };
 
-}  // end namespace clang
+struct ObjcKeywordDecl : ObjcKeywordInfo {
+  Action::TypeTy *TypeInfo; // optional
+  IdentifierInfo *ArgumentName;
+  AttributeList *AttrList;
+  bool InvalidType;  // FIXME: is this used?
+  
+  ObjcKeywordDecl() {}
+  ObjcKeywordDecl(IdentifierInfo *selName, SourceLocation sLoc, 
+                  SourceLocation cLoc, Action::TypeTy *tInfo,
+                  IdentifierInfo *argName, AttributeList *aList)
+    : ObjcKeywordInfo(selName, sLoc, cLoc), 
+      TypeInfo(tInfo), ArgumentName(argName), AttrList(aList) {
+  }
+};
+  
+struct ObjcKeywordMessage : ObjcKeywordInfo {
+  Action::ExprTy *KeywordExpr;
+
+  ObjcKeywordMessage() {}
+  ObjcKeywordMessage(IdentifierInfo *selName, SourceLocation sLoc, 
+                     SourceLocation cLoc, Action::ExprTy *expr)
+    : ObjcKeywordInfo(selName, sLoc, cLoc), KeywordExpr(expr) {}
+};
+
+} // end namespace clang
 
 #endif

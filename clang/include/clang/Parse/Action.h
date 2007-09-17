@@ -21,7 +21,8 @@ namespace clang {
   // Semantic.
   class DeclSpec;
   class Declarator;
-  struct ObjcKeywordInfo;
+  struct ObjcKeywordDecl;
+  struct ObjcKeywordMessage;
   class AttributeList;
   // Parse.
   class Scope;
@@ -145,12 +146,6 @@ public:
     return 0;
   }
   
-  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
-                                       IdentifierInfo **IdentList,
-                                       unsigned NumElts) {
-    return 0;
-  }
-
   //===--------------------------------------------------------------------===//
   // Type Parsing Callbacks.
   //===--------------------------------------------------------------------===//
@@ -455,13 +450,28 @@ public:
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
-    ObjcKeywordInfo *Keywords, unsigned NumKeywords, 
+    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
     AttributeList *AttrList) {
     return 0;
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
     IdentifierInfo *SelectorName, AttributeList *AttrList) {
+    return 0;
+  }
+  // This actions handles keyword message to classes.
+  virtual DeclTy *ActOnMessageExpression(IdentifierInfo *receivingClassName, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
+    return 0;
+  }
+  // This action handles keyword messages to instances.
+  virtual DeclTy *ActOnMessageExpression(ExprTy *receiver, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
+    return 0;
+  }
+  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                                       IdentifierInfo **IdentList,
+                                       unsigned NumElts) {
     return 0;
   }
   virtual void ObjCStartCategoryInterface() { // FIXME
