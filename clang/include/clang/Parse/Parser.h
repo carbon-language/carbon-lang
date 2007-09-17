@@ -260,7 +260,8 @@ private:
                                           AttributeList *prefixAttrs = 0);
   void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl);
   bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierInfo*> &);
-  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl);
+  void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
+				  tok::ObjCKeywordKind contextKey);
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
   
   DeclTy *ObjcImpDecl;
@@ -288,8 +289,11 @@ private:
 
   TypeTy *ParseObjCTypeName();
   void ParseObjCMethodRequirement();
-  DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat); 
-  DeclTy *ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc);
+  DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat,
+				   tok::ObjCKeywordKind& pi);
+  DeclTy *ParseObjCMethodDecl(DeclTy *CDecl, tok::ObjCKeywordKind& pi,
+			      tok::TokenKind mType, 
+			      SourceLocation mLoc);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
   void ParseObjCPropertyDecl(DeclTy *interfaceDecl);
   

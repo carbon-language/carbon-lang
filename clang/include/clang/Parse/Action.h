@@ -448,13 +448,20 @@ public:
 				     DeclTy **allMethods, unsigned allNum) {
     return;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(
+  virtual DeclTy *ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+                    IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+    return 0;
+  }
+  virtual DeclTy *ObjcBuildMethodDeclaration(DeclTy *IDecl,
+    tok::ObjCKeywordKind& pi, 
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
     ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
     AttributeList *AttrList) {
     return 0;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(
+  virtual DeclTy *ObjcBuildMethodDeclaration(DeclTy *IDecl,
+    tok::ObjCKeywordKind& pi, 
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
     IdentifierInfo *SelectorName, AttributeList *AttrList) {
     return 0;
@@ -534,6 +541,10 @@ public:
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
+  virtual DeclTy *ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+                    IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
+
 };
 
 }  // end namespace clang

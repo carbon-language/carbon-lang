@@ -402,6 +402,10 @@ DIAG(err_objc_expected_equal, ERROR,
      "setter/getter expects '=' followed by name")
 DIAG(err_objc_expected_property_attr, ERROR,
      "unknown property attribute detected")
+DIAG(err_objc_protocol_required, ERROR,
+     "@required may be specified in protocols only")
+DIAG(err_objc_protocol_optional, ERROR,
+     "@optional may be specified in protocols only")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

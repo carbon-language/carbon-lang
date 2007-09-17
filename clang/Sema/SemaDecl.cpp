@@ -28,7 +28,8 @@ using namespace clang;
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *IIDecl = II.getFETokenInfo<Decl>();
   if (dyn_cast_or_null<TypedefDecl>(IIDecl) || 
-      dyn_cast_or_null<ObjcInterfaceDecl>(IIDecl))
+      dyn_cast_or_null<ObjcInterfaceDecl>(IIDecl) ||
+      dyn_cast_or_null<ObjcProtocolDecl>(IIDecl))
     return IIDecl;
   return 0;
 }
@@ -877,6 +878,20 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   return IDecl;
 }
 
+Sema::DeclTy *Sema::ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+                IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
+                IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+  assert(ProtocolName && "Missing protocol identifier");
+  ObjcProtocolDecl *PDecl;
+
+  PDecl = new ObjcProtocolDecl(AtProtoInterfaceLoc, ProtocolName);
+
+  // Chain & install the protocol decl into the identifier.
+  PDecl->setNext(ProtocolName->getFETokenInfo<ScopedDecl>());
+  ProtocolName->setFETokenInfo(PDecl);
+  return PDecl;
+}
+
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -1214,19 +1229,17 @@ void Sema::ActOnFields(SourceLocation RecLoc, DeclTy *RecDecl,
   }
 }
 
-void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl, 
-				 DeclTy **allMethods, unsigned allNum) { 
+void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
+                                 DeclTy **allMethods, unsigned allNum) {
   // FIXME: Fix this when we can handle methods declared in protocols.
   // See Parser::ParseObjCAtProtocolDeclaration
   if (!ClassDecl)
     return;
-  ObjcInterfaceDecl *Interface = cast<ObjcInterfaceDecl>(
-				   static_cast<Decl*>(ClassDecl));
   llvm::SmallVector<ObjcMethodDecl*, 32> insMethods;
   llvm::SmallVector<ObjcMethodDecl*, 16> clsMethods;
 
   for (unsigned i = 0; i < allNum; i++ ) {
-    ObjcMethodDecl *Method = 
+    ObjcMethodDecl *Method =
       cast_or_null<ObjcMethodDecl>(static_cast<Decl*>(allMethods[i]));
     if (!Method) continue;  // Already issued a diagnostic.
     if (Method->isInstance())
@@ -1234,12 +1247,26 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
     else
       clsMethods.push_back(Method);
   }
-  Interface->ObjcAddMethods(&insMethods[0], insMethods.size(), 
-			    &clsMethods[0], clsMethods.size());
+  if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(ClassDecl))) {
+    ObjcInterfaceDecl *Interface = cast<ObjcInterfaceDecl>(
+                                          static_cast<Decl*>(ClassDecl));
+    Interface->ObjcAddMethods(&insMethods[0], insMethods.size(),
+                              &clsMethods[0], clsMethods.size());
+  }
+  else if (isa<ObjcProtocolDecl>(static_cast<Decl *>(ClassDecl))) {
+    ObjcProtocolDecl *Protocol = cast<ObjcProtocolDecl>(
+                                        static_cast<Decl*>(ClassDecl));
+    Protocol->ObjcAddProtoMethods(&insMethods[0], insMethods.size(),
+                                  &clsMethods[0], clsMethods.size());
+  }
+  else
+    assert(0 && "Sema::ObjcAddMethodsToClass(): Unknown DeclTy");
   return;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(DeclTy *IDecl,
+		      tok::ObjCKeywordKind& pi,
+		      SourceLocation MethodLoc, 
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       ObjcKeywordDecl *Keywords, unsigned NumKeywords,
                       AttributeList *AttrList) {
@@ -1277,21 +1304,57 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
   }
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   ObjcMethodDecl* ObjcMethod;
-  ObjcMethod = new ObjcMethodDecl(MethodLoc, SelName, resultDeclType, 
-                                  0, -1, AttrList, MethodType == tok::minus);
-  ObjcMethod->setMethodParams(&Params[0], NumKeywords);
+// FIXME: Added !IDecl for now to handle @implementation
+  if (!IDecl || isa<ObjcInterfaceDecl>(static_cast<Decl *>(IDecl))) {
+    ObjcMethod =  new ObjcMethodDecl(MethodLoc, SelName, resultDeclType,
+                        0, -1, AttrList, MethodType == tok::minus);
+    ObjcMethod->setMethodParams(&Params[0], NumKeywords);
+  }
+  else if (isa<ObjcProtocolDecl>(static_cast<Decl *>(IDecl))) {
+    ObjcMethod =  new ObjcProtoMethodDecl(MethodLoc, SelName, resultDeclType,
+                        0, -1, AttrList, MethodType == tok::minus);
+    ObjcMethod->setMethodParams(&Params[0], NumKeywords);
+    if (pi == tok::objc_optional)
+      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
+                 setDeclImplementation(ObjcProtoMethodDecl::Optional);
+    else
+      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
+                 setDeclImplementation(ObjcProtoMethodDecl::Required);
+  }
+  else
+    assert(0 && "Sema::ObjcBuildMethodDeclaration(): Unknown DeclTy");
   return ObjcMethod;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,  
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(DeclTy *IDecl,
+		      tok::ObjCKeywordKind& pi,
+		      SourceLocation MethodLoc,  
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       IdentifierInfo *SelectorName, AttributeList *AttrList) {
   const char *methodName = SelectorName->getName();
   SelectorInfo &SelName = Context.getSelectorInfo(methodName, 
                                                   methodName+strlen(methodName));
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  return new ObjcMethodDecl(MethodLoc, SelName, resultDeclType, 0, -1,
-			    AttrList, MethodType == tok::minus);
+  ObjcMethodDecl* ObjcMethod;
+// FIXME: Remove after IDecl is always non-null
+  if (!IDecl || isa<ObjcInterfaceDecl>(static_cast<Decl *>(IDecl))) {
+    ObjcMethod = new ObjcMethodDecl(MethodLoc, SelName, resultDeclType, 0, -1,
+                                    AttrList, MethodType == tok::minus);
+  }
+  else if (isa<ObjcProtocolDecl>(static_cast<Decl *>(IDecl))) {
+    ObjcMethod = new ObjcProtoMethodDecl(MethodLoc, SelName, resultDeclType,
+                                         0, -1,
+                                         AttrList, MethodType == tok::minus);
+    if (pi == tok::objc_optional)
+      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
+                 setDeclImplementation(ObjcProtoMethodDecl::Optional);
+    else
+      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
+                 setDeclImplementation(ObjcProtoMethodDecl::Required);
+  }
+  else
+    assert(0 && "Sema::ObjcBuildMethodDeclaration(): Unknown DeclTy");
+  return ObjcMethod;
 }
 
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,

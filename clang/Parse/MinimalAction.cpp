@@ -80,6 +80,18 @@ MinimalAction::ObjcStartClassInterface(SourceLocation AtInterafceLoc,
   return 0;
 }
 
+Action::DeclTy *
+MinimalAction::ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
+                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+  
+  TypeNameInfo *TI =
+  new TypeNameInfo(1, ProtocolName->getFETokenInfo<TypeNameInfo>());
+  
+  ProtocolName->setFETokenInfo(TI);
+  return 0;
+}
+
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *

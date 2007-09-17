@@ -289,3 +289,23 @@ void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods,
   }
 }
 
+/// ObjcAddProtoMethods - Insert instance and methods declarations into
+/// ObjcProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
+///
+void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods, 
+					   unsigned numInsMembers,
+					   ObjcMethodDecl **clsMethods,
+					   unsigned numClsMembers) {
+  NumProtoInsMethods = numInsMembers;
+  if (numInsMembers) {
+    ProtoInsMethods = new ObjcProtoMethodDecl*[numInsMembers];
+    memcpy(ProtoInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+  }
+  NumProtoClsMethods = numClsMembers;
+  if (numClsMembers) {
+    ProtoClsMethods = new ObjcProtoMethodDecl*[numClsMembers];
+    memcpy(ProtoClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+  }
+}
+
+

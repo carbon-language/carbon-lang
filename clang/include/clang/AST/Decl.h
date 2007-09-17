@@ -670,7 +670,7 @@ public:
 /// ObjcProtoMethodDecl - Each instance represents a method declared
 /// in a protocol. 
 ///
-class ObjcProtoMethodDecl : ObjcMethodDecl {
+class ObjcProtoMethodDecl : public ObjcMethodDecl {
 public:
   ObjcProtoMethodDecl(SourceLocation L, SelectorInfo &Id, QualType T,
                       ParmVarDecl **paramInfo = 0, int numParams=-1,
@@ -710,8 +710,8 @@ public:
       ProtoClsMethods(0), NumProtoClsMethods(-1),
       isForwardProtoDecl(FD) { }
 
-  void ObjcAddProtoMethods(ObjcProtoMethodDecl **insMethods, unsigned numInsMembers,
-                      ObjcProtoMethodDecl **clsMethods, unsigned numClsMembers);
+  void ObjcAddProtoMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                           ObjcMethodDecl **clsMethods, unsigned numClsMembers);
 
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcProtocol;

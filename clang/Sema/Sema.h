@@ -358,17 +358,25 @@ public:
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
                     
+  virtual DeclTy *ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+                    IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
+  
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
                                        IdentifierInfo **IdentList,
                                        unsigned NumElts);
 
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
-  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+  virtual DeclTy *ObjcBuildMethodDeclaration(DeclTy *InterfaceDecl,
+                    tok::ObjCKeywordKind& pi, 
+		    SourceLocation MethodLoc, 
 	            tok::TokenKind MethodType, TypeTy *ReturnType,
      		    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
      		    AttributeList *AttrList);
-  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+  virtual DeclTy *ObjcBuildMethodDeclaration(DeclTy *InterfaceDecl,
+                    tok::ObjCKeywordKind& pi, 
+		    SourceLocation MethodLoc, 
  	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
      		    IdentifierInfo *SelectorName, AttributeList *AttrList);
                     

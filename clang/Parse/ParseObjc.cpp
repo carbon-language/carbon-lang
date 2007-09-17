@@ -154,7 +154,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    ParseObjCInterfaceDeclList(0/*FIXME*/);
+    ParseObjCInterfaceDeclList(0, tok::objc_not_keyword/*FIXME*/);
 
     // The @ sign was already consumed by ParseObjCInterfaceDeclList().
     if (Tok.isObjCAtKeyword(tok::objc_end)) {
@@ -190,7 +190,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   if (Tok.getKind() == tok::l_brace)
     ParseObjCClassInstanceVariables(ClsType);
 
-  ParseObjCInterfaceDeclList(ClsType);
+  ParseObjCInterfaceDeclList(ClsType, tok::objc_interface);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().
   if (Tok.isObjCAtKeyword(tok::objc_end)) {
@@ -213,8 +213,10 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
 ///     @required
 ///     @optional
 ///
-void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
+void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
+					tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclTy*, 32>  allMethods;
+  tok::ObjCKeywordKind pi = tok::objc_not_keyword;
   while (1) {
     if (Tok.getKind() == tok::at) {
       SourceLocation AtLoc = ConsumeToken(); // the "@"
@@ -224,10 +226,14 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
         break;
       } else if (ocKind == tok::objc_required) { // protocols only
         ConsumeToken();
-        continue;
+	pi = ocKind;
+	if (contextKey != tok::objc_protocol)
+	  Diag(AtLoc, diag::err_objc_protocol_required);
       } else if (ocKind == tok::objc_optional) { // protocols only
         ConsumeToken();
-        continue;
+	pi = ocKind;
+	if (contextKey != tok::objc_protocol)
+	  Diag(AtLoc, diag::err_objc_protocol_optional);
       } else if (ocKind == tok::objc_property) {
         ParseObjCPropertyDecl(interfaceDecl);
         continue;
@@ -237,7 +243,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
       }
     }
     if (Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) {
-      allMethods.push_back(ParseObjCMethodPrototype(interfaceDecl));
+      DeclTy *methodPrototype = ParseObjCMethodPrototype(interfaceDecl, pi);
+      allMethods.push_back(methodPrototype);
       // Consume the ';' here, since ParseObjCMethodPrototype() is re-used for
       // method definitions.
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after,"method proto");
@@ -360,14 +367,15 @@ void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
 ///   objc-method-attributes:         [OBJC2]
 ///     __attribute__((deprecated))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *CDecl) {
+Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
+                          tok::ObjCKeywordKind& pi) {
   assert((Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) && 
          "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();  
   SourceLocation methodLoc = ConsumeToken();
   
-  DeclTy *MDecl = ParseObjCMethodDecl(methodType, methodLoc);
+  DeclTy *MDecl = ParseObjCMethodDecl(IDecl, pi, methodType, methodLoc);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -476,8 +484,10 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///   objc-keyword-attributes:         [OBJC2]
 ///     __attribute__((unused))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, 
-                                            SourceLocation mLoc) {
+Parser::DeclTy *Parser::ParseObjCMethodDecl(DeclTy *IDecl,
+                          tok::ObjCKeywordKind& pi, 
+			  tok::TokenKind mType, SourceLocation mLoc) {
+
   TypeTy *ReturnType = 0;
   AttributeList *methodAttrs = 0;
   
@@ -542,7 +552,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
     // If attributes exist after the method, parse them.
     if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
       methodAttrs = ParseAttributes();
-    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, 
+    return Actions.ObjcBuildMethodDeclaration(IDecl, pi, mLoc, mType, 
+                                              ReturnType, 
                                               &KeyInfo[0], KeyInfo.size(), 
 					      methodAttrs);
   } else if (!selIdent) {
@@ -552,8 +563,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
     methodAttrs = ParseAttributes();
 
-  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, selIdent, 
-					    methodAttrs);
+  return Actions.ObjcBuildMethodDeclaration(IDecl, pi,
+                                            mLoc, mType, ReturnType, 
+                                            selIdent, methodAttrs);
 }
 
 ///   objc-protocol-refs:
@@ -724,12 +736,17 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
     return 0; // FIXME
   }
   // Last, and definitely not least, parse a protocol declaration.
+  llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
   if (Tok.getKind() == tok::less) {
-    llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
     if (ParseObjCProtocolReferences(ProtocolRefs))
       return 0;
   }
-  ParseObjCInterfaceDeclList(0/*FIXME*/);
+  
+  DeclTy *ProtoType = Actions.ObjcStartProtoInterface(AtLoc, 
+                                protocolName, nameLoc,
+                                &ProtocolRefs[0],
+                                ProtocolRefs.size());
+  ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().
   if (Tok.isObjCAtKeyword(tok::objc_end)) {
@@ -900,7 +917,9 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 void Parser::ParseObjCInstanceMethodDefinition() {
   assert(Tok.getKind() == tok::minus &&
          "ParseObjCInstanceMethodDefinition(): Expected '-'");
-  ParseObjCMethodPrototype(ObjcImpDecl);
+  // FIXME: @optional/@protocol??
+  tok::ObjCKeywordKind pi = tok::objc_not_keyword;
+  ParseObjCMethodPrototype(ObjcImpDecl, pi);
   // parse optional ';'
   if (Tok.getKind() == tok::semi)
     ConsumeToken();
@@ -918,7 +937,9 @@ void Parser::ParseObjCInstanceMethodDefinition() {
 void Parser::ParseObjCClassMethodDefinition() {
   assert(Tok.getKind() == tok::plus &&
          "ParseObjCClassMethodDefinition(): Expected '+'");
-  ParseObjCMethodPrototype(ObjcImpDecl);
+  // FIXME: @optional/@protocol??
+  tok::ObjCKeywordKind pi = tok::objc_not_keyword;
+  ParseObjCMethodPrototype(ObjcImpDecl, pi);
   // parse optional ';'
   if (Tok.getKind() == tok::semi)
     ConsumeToken();
