@@ -22,48 +22,39 @@
 namespace llvm {
   
 template<typename T>
-struct DenseMapKeyInfo {
+struct DenseMapInfo {
   //static inline T getEmptyKey();
   //static inline T getTombstoneKey();
   //static unsigned getHashValue(const T &Val);
+  //static bool isEqual(const T &LHS, const T &RHS);
   //static bool isPod()
 };
 
-// Provide DenseMapKeyInfo for all pointers.
+// Provide DenseMapInfo for all pointers.
 template<typename T>
-struct DenseMapKeyInfo<T*> {
+struct DenseMapInfo<T*> {
   static inline T* getEmptyKey() { return reinterpret_cast<T*>(-1); }
   static inline T* getTombstoneKey() { return reinterpret_cast<T*>(-2); }
   static unsigned getHashValue(const T *PtrVal) {
     return (unsigned(uintptr_t(PtrVal)) >> 4) ^ 
            (unsigned(uintptr_t(PtrVal)) >> 9);
   }
-  static bool isPod() { return true; }
-};
-
-template<typename T>
-struct DenseMapValueInfo {
-  //static bool isPod()
-};
-
-// Provide DenseMapValueInfo for all pointers.
-template<typename T>
-struct DenseMapValueInfo<T*> {
+  static bool isEqual(const T *LHS, const T *RHS) { return LHS == RHS; }
   static bool isPod() { return true; }
 };
 
 template<typename KeyT, typename ValueT, 
-         typename KeyInfoT = DenseMapKeyInfo<KeyT>,
-         typename ValueInfoT = DenseMapValueInfo<ValueT> >
+         typename KeyInfoT = DenseMapInfo<KeyT>,
+         typename ValueInfoT = DenseMapInfo<ValueT> >
 class DenseMapIterator;
 template<typename KeyT, typename ValueT,
-         typename KeyInfoT = DenseMapKeyInfo<KeyT>,
-         typename ValueInfoT = DenseMapValueInfo<ValueT> >
+         typename KeyInfoT = DenseMapInfo<KeyT>,
+         typename ValueInfoT = DenseMapInfo<ValueT> >
 class DenseMapConstIterator;
 
 template<typename KeyT, typename ValueT,
-         typename KeyInfoT = DenseMapKeyInfo<KeyT>,
-         typename ValueInfoT = DenseMapValueInfo<ValueT> >
+         typename KeyInfoT = DenseMapInfo<KeyT>,
+         typename ValueInfoT = DenseMapInfo<ValueT> >
 class DenseMap {
   typedef std::pair<KeyT, ValueT> BucketT;
   unsigned NumBuckets;
@@ -280,14 +271,14 @@ private:
     while (1) {
       BucketT *ThisBucket = BucketsPtr + (BucketNo & (NumBuckets-1));
       // Found Val's bucket?  If so, return it.
-      if (ThisBucket->first == Val) {
+      if (KeyInfoT::isEqual(ThisBucket->first, Val)) {
         FoundBucket = ThisBucket;
         return true;
       }
       
       // If we found an empty bucket, the key doesn't exist in the set.
       // Insert it and return the default value.
-      if (ThisBucket->first == EmptyKey) {
+      if (KeyInfoT::isEqual(ThisBucket->first, EmptyKey)) {
         // If we've already seen a tombstone while probing, fill it in instead
         // of the empty bucket we eventually probed to.
         if (FoundTombstone) ThisBucket = FoundTombstone;
@@ -297,7 +288,7 @@ private:
       
       // If this is a tombstone, remember it.  If Val ends up not in the map, we
       // prefer to return it than something that would require more probing.
-      if (ThisBucket->first == TombstoneKey && !FoundTombstone)
+      if (KeyInfoT::isEqual(ThisBucket->first, TombstoneKey) && !FoundTombstone)
         FoundTombstone = ThisBucket;  // Remember the first tombstone found.
       
       // Otherwise, it's a hash collision or a tombstone, continue quadratic
@@ -425,7 +416,9 @@ private:
     const KeyT Empty = KeyInfoT::getEmptyKey();
     const KeyT Tombstone = KeyInfoT::getTombstoneKey();
 
-    while (Ptr != End && (Ptr->first == Empty || Ptr->first == Tombstone))
+    while (Ptr != End && 
+           (KeyInfoT::isEqual(Ptr->first, Empty) ||
+            KeyInfoT::isEqual(Ptr->first, Tombstone)))
       ++Ptr;
   }
 };

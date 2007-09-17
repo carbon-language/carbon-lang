@@ -145,7 +145,7 @@ namespace {
 }
 
 namespace llvm {
-template <> struct DenseMapKeyInfo<Expression> {
+template <> struct DenseMapInfo<Expression> {
   static inline Expression getEmptyKey() {
     return Expression(Expression::EMPTY);
   }
@@ -170,6 +170,9 @@ template <> struct DenseMapKeyInfo<Expression> {
       hash = *I + hash * 37;
     
     return hash;
+  }
+  static bool isEqual(const Expression &LHS, const Expression &RHS) {
+    return LHS == RHS;
   }
   static bool isPod() { return true; }
 };

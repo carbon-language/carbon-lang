@@ -203,8 +203,11 @@ namespace {
     static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), 0); }
     static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), 0); }
     static unsigned getHashValue(const KeyTy &Key) {
-      return DenseMapKeyInfo<void*>::getHashValue(Key.type) ^ 
+      return DenseMapInfo<void*>::getHashValue(Key.type) ^ 
         Key.val.getHashValue();
+    }
+    static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
+      return LHS == RHS;
     }
     static bool isPod() { return false; }
   };
@@ -292,6 +295,9 @@ namespace {
     }
     static unsigned getHashValue(const KeyTy &Key) {
       return Key.val.getHashValue();
+    }
+    static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
+      return LHS == RHS;
     }
     static bool isPod() { return false; }
   };

@@ -316,9 +316,13 @@ struct DenseMapLayoutKeyInfo {
     return LayoutKey((TargetData*)(intptr_t)-1, 0);
   }
   static unsigned getHashValue(const LayoutKey &Val) {
-    return DenseMapKeyInfo<void*>::getHashValue(Val.first) ^
-           DenseMapKeyInfo<void*>::getHashValue(Val.second);
+    return DenseMapInfo<void*>::getHashValue(Val.first) ^
+           DenseMapInfo<void*>::getHashValue(Val.second);
   }
+  static bool isEqual(const LayoutKey &LHS, const LayoutKey &RHS) {
+    return LHS == RHS;
+  }
+
   static bool isPod() { return true; }
 };
 
