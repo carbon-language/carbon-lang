@@ -170,9 +170,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opc = X86::MOV16_mr;
   } else if (RC == &X86::RFP80RegClass) {
     Opc = X86::ST_FpP80m;   // pops
-  } else if (RC == &X86::RFP64RegClass || RC == &X86::RSTRegClass) {
-    /// FIXME spilling long double values as 64 bit does not work.
-    /// We need RST80, unfortunately.
+  } else if (RC == &X86::RFP64RegClass) {
     Opc = X86::ST_Fp64m;
   } else if (RC == &X86::RFP32RegClass) {
     Opc = X86::ST_Fp32m;
@@ -211,7 +209,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opc = X86::MOV16_rm;
   } else if (RC == &X86::RFP80RegClass) {
     Opc = X86::LD_Fp80m;
-  } else if (RC == &X86::RFP64RegClass || RC == &X86::RSTRegClass) {
+  } else if (RC == &X86::RFP64RegClass) {
     Opc = X86::LD_Fp64m;
   } else if (RC == &X86::RFP32RegClass) {
     Opc = X86::LD_Fp32m;

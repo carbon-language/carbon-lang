@@ -608,7 +608,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   // If we have one _and_ we don't want to pop the operand, duplicate the value
   // on the stack instead of moving it.  This ensure that popping the value is
   // always ok.
-  // Ditto FISTTP16m, FISTTP32m, FISTTP64m.
+  // Ditto FISTTP16m, FISTTP32m, FISTTP64m, ST_FpP80m.
   //
   if (!KillsSrc &&
       (MI->getOpcode() == X86::IST_Fp64m32 ||
