@@ -582,7 +582,9 @@ bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   case X86::TAILJMPm:
   case X86::JMP:     // Uncond branch.
   case X86::JMP32r:  // Indirect branch.
+  case X86::JMP64r:  // Indirect branch (64-bit).
   case X86::JMP32m:  // Indirect branch through mem.
+  case X86::JMP64m:  // Indirect branch through mem (64-bit).
     return true;
   default: return false;
   }
