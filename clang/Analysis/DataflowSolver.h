@@ -85,6 +85,9 @@ public:
   ///  only be used for querying the dataflow values within a block with
   ///  and Observer object.
   void runOnBlock(const CFGBlock* B) {
+    if (D.getBlockDataMap().find(B) == D.getBlockDataMap().end())
+      return;
+      
     TransferFuncsTy TF (D.getAnalysisData());
     ProcessBlock(B,TF,AnalysisDirTag());
   }
@@ -118,14 +121,6 @@ private:
              I != E; ++I)
           WorkList.enqueue(*I);    
     }
-    
-    // For blocks that have no associated dataflow value, instantiate a
-    // default value.
-    BlockDataMapTy& M = D.getBlockDataMap();
-    
-    for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
-      if (M.find(&*I) == M.end())
-        M[&*I].resetValues(D.getAnalysisData());
   }       
   
   /// SolveDataflowEquations (BACKWARD ANALYSIS) - Perform the actual
@@ -155,7 +150,7 @@ private:
   
   /// ProcessBlock (FORWARD ANALYSIS) - Process the transfer functions
   ///  for a given block based on a forward analysis.
-  bool ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF, 
+  bool ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
                     dataflow::forward_analysis_tag) {
     
     ValTy& V = TF.getVal();
@@ -164,9 +159,21 @@ private:
     V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
   
+    BlockDataMapTy& M = D.getBlockDataMap();
+    bool firstMerge = true;
+  
     for (CFGBlock::const_pred_iterator I=B->pred_begin(), 
-                                       E=B->pred_end(); I!=E; ++I)
-      Merge(V,D.getBlockData(*I));
+                                      E=B->pred_end(); I!=E; ++I) {
+      typename BlockDataMapTy::iterator BI = M.find(*I);
+      if (BI != M.end()) {
+        if (firstMerge) {
+          firstMerge = false;
+          V.copyValues(BI->second);
+        }
+        else
+          Merge(V,BI->second);
+      }
+    }
 
     // Process the statements in the block in the forward direction.
     for (CFGBlock::const_iterator I=B->begin(), E=B->end(); I!=E; ++I)
@@ -186,9 +193,21 @@ private:
     V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
     
+    BlockDataMapTy& M = D.getBlockDataMap();
+    bool firstMerge = true;
+
     for (CFGBlock::const_succ_iterator I=B->succ_begin(), 
-                                       E=B->succ_end(); I!=E; ++I)
-      Merge(V,D.getBlockData(*I));
+                                       E=B->succ_end(); I!=E; ++I) {
+      typename BlockDataMapTy::iterator BI = M.find(*I);
+      if (BI != M.end()) {
+        if (firstMerge) {
+          firstMerge = false;
+          V.copyValues(BI->second);
+        }
+        else
+          Merge(V,BI->second);
+      }
+    }
     
     // Process the statements in the block in the forward direction.
     for (CFGBlock::const_reverse_iterator I=B->begin(), E=B->end(); I!=E; ++I)

@@ -75,8 +75,8 @@ void UninitializedValues::InitializeValues(const CFG& cfg) {
       R.BlockStmt_Visit(*BI);
   
   // Initialize the values of the last block.
-  UninitializedValues::ValTy& V = getBlockDataMap()[&cfg.getEntry()];
-  V.resetValues(getAnalysisData());
+//  UninitializedValues::ValTy& V = getBlockDataMap()[&cfg.getEntry()];
+//  V.resetValues(getAnalysisData());
 }
 
 //===----------------------------------------------------------------------===//
@@ -88,8 +88,11 @@ namespace {
 class TransferFuncs : public CFGStmtVisitor<TransferFuncs,bool> {
   UninitializedValues::ValTy V;
   UninitializedValues::AnalysisDataTy& AD;
+  bool InitWithAssigns;
 public:
-  TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {
+  TransferFuncs(UninitializedValues::AnalysisDataTy& ad, 
+                bool init_with_assigns=true) : 
+    AD(ad), InitWithAssigns(init_with_assigns) {
     V.resetValues(AD);
   }
   
@@ -134,9 +137,21 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
       else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
         if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
           assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-          return V.DeclBV[ AD.VMap[VD] ] = Visit(B->getRHS());
+          
+          if(InitWithAssigns) {
+            // Pseudo-hack to prevent cascade of warnings.  If the RHS uses
+            // an uninitialized value, then we are already going to flag a warning
+            // related to the "cause".  Thus, propogating uninitialized doesn't
+            // make sense, since we are just adding extra messages that don't
+            // contribute to diagnosing the bug.  In InitWithAssigns mode
+            // we unconditionally set the assigned variable to Initialized to
+            // prevent Uninitialized propogation.
+            return V.DeclBV[AD.VMap[VD]] = Initialized();
+          }
+          else 
+            return V.DeclBV[ AD.VMap[VD] ] = Visit(B->getRHS());
         }
-  
+
       break;
     }
   }
@@ -154,7 +169,8 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
                  AD.EMap.end() && "Unknown Expr.");
                  
         assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-        x = V.DeclBV[ AD.VMap[VD] ] = V.ExprBV[ AD.EMap[cast<Expr>(I)] ];
+        x = V.ExprBV[ AD.EMap[cast<Expr>(I)] ];
+        V.DeclBV[ AD.VMap[VD] ] = x;
       }
       
   return x;
@@ -246,7 +262,7 @@ struct Merge {
     assert (Dst.ExprBV.size() == Src.ExprBV.size()
             && "Bitvector sizes do not match.");
 
-    Dst.ExprBV |= Src.ExprBV;
+    Dst.ExprBV &= Src.ExprBV;
   }
 };
 } // end anonymous namespace
