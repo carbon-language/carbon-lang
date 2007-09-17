@@ -240,7 +240,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
       allMethods.push_back(ParseObjCMethodPrototype(interfaceDecl));
       // Consume the ';' here, since ParseObjCMethodPrototype() is re-used for
       // method definitions.
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "method proto");
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,"method proto");
       continue;
     }
     if (Tok.getKind() == tok::semi)
@@ -253,9 +253,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl) {
       ParseDeclarationOrFunctionDefinition();
     }
   }
-  
   /// Insert collected methods declarations into the @interface object.
-  Actions.ObjcAddMethodsToClass(interfaceDecl, &allMethods[0], allMethods.size());
+  Actions.ObjcAddMethodsToClass(interfaceDecl,&allMethods[0],allMethods.size());
   return;
 }
 
@@ -477,8 +476,8 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///   objc-keyword-attributes:         [OBJC2]
 ///     __attribute__((unused))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc) {
-
+Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, 
+                                            SourceLocation mLoc) {
   TypeTy *ReturnType = 0;
   AttributeList *methodAttrs = 0;
   
