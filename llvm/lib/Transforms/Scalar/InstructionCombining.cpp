@@ -2257,6 +2257,17 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Constant *CP1 = Subtract(ConstantInt::get(I.getType(), 1), C2);
         return BinaryOperator::createMul(Op0, CP1);
       }
+
+      // X - ((X / Y) * Y) --> X % Y
+      if (Op1I->getOpcode() == Instruction::Mul)
+        if (Instruction *I = dyn_cast<Instruction>(Op1I->getOperand(0)))
+          if (Op0 == I->getOperand(0) &&
+              Op1I->getOperand(1) == I->getOperand(1)) {
+            if (I->getOpcode() == Instruction::SDiv)
+              return BinaryOperator::createSRem(Op0, Op1I->getOperand(1));
+            if (I->getOpcode() == Instruction::UDiv)
+              return BinaryOperator::createURem(Op0, Op1I->getOperand(1));
+          }
     }
   }
 
@@ -2902,7 +2913,7 @@ static unsigned getICmpCode(const ICmpInst *ICI) {
 
 /// getICmpValue - This is the complement of getICmpCode, which turns an
 /// opcode and two operands into either a constant true or false, or a brand 
-/// new /// ICmp instruction. The sign is passed in to determine which kind
+/// new ICmp instruction. The sign is passed in to determine which kind
 /// of predicate to use in new icmp instructions.
 static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS) {
   switch (code) {
