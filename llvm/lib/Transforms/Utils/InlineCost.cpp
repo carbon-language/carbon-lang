@@ -96,7 +96,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   unsigned NumInsts = 0, NumBlocks = 0;
 
   // Look at the size of the callee.  Each basic block counts as 20 units, and
-  // each instruction counts as 10.
+  // each instruction counts as 5.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
          II != E; ++II) {
